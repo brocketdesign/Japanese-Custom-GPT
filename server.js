@@ -68,13 +68,17 @@ fastify.get('/test-db', async (request, reply) => {
 });
 
 // Run the server
+// Run the server
 const start = async () => {
   try {
-    await fastify.listen(3000, '0.0.0.0');
+    const port = process.env.PORT || 3000;
+    await fastify.listen(port, '0.0.0.0');
     fastify.log.info(`server listening on ${fastify.server.address().port}`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
   }
 };
+
 start();
+

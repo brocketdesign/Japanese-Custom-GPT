@@ -54,9 +54,13 @@ fastify.get('/add-story', (request, reply) => {
     reply.view('/views/add-story.hbs', { title: 'Add New Story' });
 });
 
-// MongoDB Connection Test Route
+// Define a test route to check MongoDB connection
 fastify.get('/test-db', async (request, reply) => {
   const db = fastify.mongo.db;
+  if (!db) {
+    reply.status(500).send({ message: 'MongoDB not initialized' });
+    return;
+  }
   try {
     await db.command({ ping: 1 });
     console.log('MongoDB connection is healthy');

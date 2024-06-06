@@ -33,7 +33,7 @@ fastify.get('/story/:id', (request, reply) => {
     // Retrieve the story ID from the URL parameter
     const storyId = request.params.id;
     // Pass the story ID to the Handlebars template
-    reply.view('/views/index.hbs', { title: 'Quiz App', storyId: storyId });
+    reply.view('/views/index.hbs', { title: 'LAMIX | Powered by Hato,Ltd', storyId: storyId });
   });
   
 fastify.get('/stories', async (request, reply) => {
@@ -70,7 +70,7 @@ fastify.get('/test-db', async (request, reply) => {
 // Run the server
 const start = async () => {
   try {
-    await fastify.listen(3000);
+    await fastify.listen(3000, '0.0.0.0');
     fastify.log.info(`server listening on ${fastify.server.address().port}`);
   } catch (err) {
     fastify.log.error(err);

@@ -1,18 +1,96 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{title}}</title>
+    <link rel="icon" href="/img/logo.webp" type="image/webp">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-<div class="container mt-4">
-    <h1>Welcome to the Quiz App</h1>
-    <div id="storyContainer"></div>
-</div>
+<nav class="navbar navbar-light bg-transparent fixed-top pb-3" style="border-bottom: 1px solid rgba(210, 184, 255, 0.2);">
+  <div class="container-fluid justify-content-between">
+    <a class="navbar-brand d-flex flex-row align-items-center bg-white px-5 py-2" href="#">
+      <img src="/img/logo.webp" alt="" class="logo">
+      <span class="brand-name ms-3">LAMIX</span>
+    </a>
+    <a href="#quizSection" class="btn btn-gradient-3d-orange">クイズセクションを受ける</a>
+  </div>
+</nav>
+
+<div class="p-fv">
+    <div style="padding-top:160px;">
+        <p class="text-center display-6 p-fv-copy__top fw-bold ">ピッタリの<br>収入源を診断！</p>
+        <p class="text-center display-3 p-fv-copy__middle fw-bold mb-5">意外な収入増に繋がるかも</p>
+        <div class="text-center w-100">
+            <span class="p-fv-copy__bottom">あなたの隠れた才能を活かそう！<br>AIが導く驚きの収入アップ</span>
+        </div>
+    </div>
+    <div  id="quizSection" class="text-center pt-5">
+        <i class="fas fa-chevron-down" style="font-size: 36px;"></i>
+        <i class="fas fa-chevron-down" style="font-size: 36px;"></i>
+        <i class="fas fa-chevron-down" style="font-size: 36px;"></i>
+    </div>
+    <div class="container mt-4">
+        <div class="card my-5">
+            <div class="card-header text-center bg-dark text-white"></div>
+            <div class="card-body text-center p-5" style="min-height:250px;">
+                <h5 class="card-title d-none">Card Title</h5>
+                <p id="storyContainer" class="card-text"></p>
+                <div id="storyChoice" class="my-1"></div>
+            </div>
+            <div class="card-footer text-muted text-center d-none">
+                フッターコンテンツ
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <section class="p-best mb-5">
+      <div class="c-section-inner">
+        <h2 class="c-section-title u-tal">
+          未来への一歩は、<br>
+          <span class="u-font-manrope u-color-grad">Lamix</span>から始まる！
+          <div class="p-best-illust">
+            <span><img src="https://lumar.seo-dash.net/img/best_illust.svg" alt="" class="u-rocketman"></span>
+          </div>
+        </h2>
+        <ul class="p-best__lists" style="list-style: none;padding: 0;">
+          <li class="p-best__list u-border-grad">
+            <div class="p-best__listInner u-border-grad--bg">
+              <div class="p-best__title--flex">
+                <img src="https://lumar.seo-dash.net/img/icon01.svg" alt="">
+                <h3 class="p-best__title">
+                  <span class="u-color-grad">Stability</span>
+                  <span class="p-best__title--sub">安定性</span>
+                </h3>
+              </div>
+              <p class="p-best__text">現職に留まることは、安定した収入と生活を維持するための最も確実な方法です。特に家族がいる場合、安定した収入は生活の質を保つために重要です。現職での安定したポジションは、将来の予測可能な収入を提供し、経済的な不安を軽減します。さらに、現職でのキャリアアップを目指すことで、収入の増加も期待できます。安定性を重視する場合、資格取得や追加トレーニングを通じて専門スキルを強化し、現在の職場での価値を高めることが有効です。</span>
+              </p>
+            </div>
+          </li>
+          <li class="p-best__list u-border-grad">
+            <div class="p-best__listInner u-border-grad--bg">
+              <div class="p-best__title--flex">
+                <img src="https://lumar.seo-dash.net/img/icon03.svg" alt="">
+                <h3 class="p-best__title"><span class="u-color-grad">Risk</span><span class="p-best__title--sub">リスク</span></h3>
+              </div>
+              <p class="p-best__text">新しいビジネスを始めることや、スタートアップに参加することは大きなリスクを伴います。不安定な収入や不確実な将来性があるため、十分な準備と計画が必要です。特に家族がいる場合、リスクを冒すことは慎重に検討する必要があります。新しい挑戦は成長と学びの機会を提供する一方で、経済的な安定を損なう可能性もあります。リスクを取る場合は、十分な資金とサポート体制を確保し、最悪のシナリオにも対応できる準備が重要です。
+              </p>
+            </div>
+          </li>
+        </ul>
+        <div class="text-center mt-4">
+          <a href="#quizSection" class="btn btn-gradient-radius"><span>クイズセクションに戻る</span></a>
+        </div>
+      </div>
+    </section>
+
+<script src="/js/quiz.js"></script>
 <script>
 $(document).ready(function() {
     const userId = 'user_' + Date.now(); // Generate a unique user ID for the session.
@@ -26,8 +104,10 @@ $(document).ready(function() {
     window.choosePath = function(choiceId) {
         if (currentStep === totalSteps - 1) {
             // Call email prompt function before showing the last step conclusion
-            promptForEmail().then(() => {
-                displayConclusion(choiceId); // Fetch and display choice result after email submission
+            promptForEmail().then((result) => {
+                if(result){
+                    displayConclusion(choiceId);
+                }
             });
         } else {
             currentStep++;
@@ -43,56 +123,81 @@ $(document).ready(function() {
             success: function(data) {
                 storyData = data.content.story;
                 totalSteps = Object.keys(storyData).length;
+                storyName = data.name
+
+                $('h1').text(storyName)
                 displayStep(storyData, currentStep);
             },
             error: function(xhr, status, error) {
                 Swal.fire({
-                    title: 'Error!',
-                    text: 'Failed to load the story: ' + error,
+                    title: 'エラー!',
+                    text: 'ストーリーの読み込みに失敗しました: ' + error,
                     icon: 'error',
-                    confirmButtonText: 'Ok'
+                    confirmButtonText: 'Ok',
+                    showCancelButton: true,
+                    cancelButtonText: '一覧を見る'
+                }).then((result) => {
+                    if (result.dismiss === Swal.DismissReason.cancel) {
+                        window.location.href = '/stories';
+                    }
                 });
+
             }
         });
     }
 
     function displayStep(storyData, currentStep) {
         const step = storyData[`step${currentStep + 1}`];
-        $('#storyContainer').html(`<p>${step.introduction}</p>`);
-        step.choices.forEach(choice => {
-            $('#storyContainer').append(
-                `<button class="btn btn-primary my-2" onclick="choosePath('${choice.choiceId}')">${choice.choiceText}</button>`
-            );
+        $(`.card-header`).text(`${currentStep + 1}/${totalSteps}`)
+        $('#storyChoice').html('')
+        step.choices.forEach((choice, index) => {
+            const button = $(`<button class="btn btn-flat-border my-2" onclick="choosePath('${choice.choiceId}')">${choice.choiceText}</button>`);
+            button.css('opacity',0)
+            $('#storyChoice').append(button);
         });
+        clearContentFromEnd($('#storyContainer'),function(){
+            appendHeadlineCharacterByCharacter($('#storyContainer'), step.introduction,function(){
+                $('#storyChoice button').each(function(){
+                   $(this).css('opacity',1)
+                })
+            })
+        })
     }
 
     function updateStoryContent(choiceId) {
         const previousStep = storyData[`step${currentStep}`]; // Previous step where the choice was made
         const choice = previousStep.choices.find(c => c.choiceId === choiceId);
-        $('#storyContainer').html(`<p>${choice.result}</p>`);
-
-        if (currentStep < totalSteps) {
-            const nextStep = storyData[`step${currentStep + 1}`];
-            $('#storyContainer').append(`<p>${nextStep.introduction}</p>`);
-            nextStep.choices.forEach(choice => {
-                $('#storyContainer').append(
-                    `<button class="btn btn-primary my-2" onclick="choosePath('${choice.choiceId}')">${choice.choiceText}</button>`
-                );
-            });
-        }
+        $(`.card-header`).text(`${currentStep + 1}/${totalSteps}`)
+        $('#storyChoice').html('')
+        clearContentFromEnd($('#storyContainer'),function(){
+            //appendHeadlineCharacterByCharacter($('#storyContainer'),choice.result)
+            if (currentStep < totalSteps) {
+                const nextStep = storyData[`step${currentStep + 1}`];
+                $('#storyChoice').html('')
+                appendHeadlineCharacterByCharacter($('#storyContainer'), nextStep.introduction,function(){
+                    nextStep.choices.forEach(choice => {
+                        $('#storyChoice').append(
+                            `<button class="btn btn-flat-border my-2" onclick="choosePath('${choice.choiceId}')">${choice.choiceText}</button>`
+                        );
+                    });
+                });
+            }
+        })
     }
 
     function displayConclusion(choiceId) {
         const previousStep = storyData[`step${currentStep + 1}`]; // Previous step where the choice was made
         const choice = previousStep.choices.find(c => c.choiceId === choiceId);
-        $('#storyContainer').html(`<p>${choice.result}</p>`);
+        $('#storyChoice').html('');
+        clearContentFromEnd($('#storyContainer'),function(){
+            appendHeadlineCharacterByCharacter($('#storyContainer'), choice.result)
 
+        })
         const lastStep = storyData[`step${currentStep + 1}`];
-        $('#storyContainer').append(`<p>${lastStep.conclusion}</p>`);
     }
 function promptForEmail() {
     return Swal.fire({
-        title: '物語の終わり',
+        title: '結果を受け取る',
         text: '結果を受け取るにはGmailを入力してください！',
         input: 'email',
         inputLabel: 'あなたのGmail',
@@ -125,10 +230,15 @@ function promptForEmail() {
         }
     }).then((result) => {
         if (result.isConfirmed) {
-            Swal.fire('送信完了！', 'メールが送信されました。', 'success');
+            //Swal.fire('送信完了！', 'メールが送信されました。', 'success')
+            return true
+        } else {
+            Swal.fire('残念です', 'それは残念です。', 'info');
+            return false
         }
     });
 }
+
 
 });
 </script>

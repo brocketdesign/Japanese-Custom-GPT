@@ -113,6 +113,59 @@ async function routes(fastify, options) {
         }
     });
     
+    fastify.get('/api/users', async (request, reply) => {
+        try {
+            const collectionEmail = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userEmails');
+    
+            // Find all user emails
+            const users = await collectionEmail.find({}).project({ userId: 1, email: 1 }).toArray();
+    
+            if (users.length === 0) {
+                return reply.status(404).send({ error: 'No users found' });
+            }
+    
+            return reply.send(users);
+        } catch (error) {
+            console.error('Failed to retrieve users:', error);
+            return reply.status(500).send({ error: 'Failed to retrieve users' });
+        }
+    });
+    
+    fastify.get('/api/user-info/:userId', async (request, reply) => {
+        const { userId } = request.params;
+    
+        try {
+            const collectionChoice = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChoice');
+            const collectionEmail = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userEmails');
+    
+            // Find the user choices by userId
+            const userChoices = await collectionChoice.findOne({ userId });
+    
+            if (!userChoices) {
+                console.log('User not found');
+                return reply.status(404).send({ error: 'User not found' });
+            }
+    
+            // Find the user email by userId
+            const userEmail = await collectionEmail.findOne({ userId: userChoices._id });
+    
+            // Combine the data
+            const userInfo = {
+                userId: userChoices.userId,
+                choices: userChoices.choices,
+                email: userEmail ? userEmail.email : null,
+                ip: userChoices.ip,
+                createdAt: userChoices.createdAt,
+                emailTimestamp: userEmail ? userEmail.timestamp : null
+            };
+    
+            return reply.send(userInfo);
+        } catch (error) {
+            console.error('Failed to retrieve user information:', error);
+            return reply.status(500).send({ error: 'Failed to retrieve user information' });
+        }
+    });
+        
         
 }
 

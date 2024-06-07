@@ -15,6 +15,11 @@ function appendHeadlineCharacterByCharacter($element, headline, callback) {
 }
 
 function clearContentFromEnd($element, callback) {
+    $element.html('')
+    if (typeof callback === 'function') {
+        callback();
+    }
+    return
     let currentContent = $element.text();
 
     let clearIntervalID = setInterval(function() {

@@ -100,8 +100,8 @@ $(document).ready(function() {
     let storyData = {};
 
     fetchStoryData(storyId); // Fetch the initial story data when the page loads
-
-    window.choosePath = function(choiceId) {
+ 
+     window.choosePath = function(choiceId) {
         if (currentStep === totalSteps - 1) {
             // Call email prompt function before showing the last step conclusion
             promptForEmail().then((result) => {
@@ -113,6 +113,20 @@ $(document).ready(function() {
             currentStep++;
             updateStoryContent(choiceId);
         }
+        $.ajax({
+            url: '/api/data',
+            type: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            data: JSON.stringify({ choice: choiceId, userId: userId }),
+            success: function(response) {
+                resolve(response);
+            },
+            error: function(error) {
+                reject(error.statusText);
+            }
+        });
     };
 
     function fetchStoryData(storyId) {

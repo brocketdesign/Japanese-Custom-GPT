@@ -41,7 +41,9 @@
                         'Success!',
                         'Story added successfully!',
                         'success'
-                    );
+                    ).then(()=>{
+                        window.location = '/stories'
+                    })
                 },
                 error: function(error) {
                     Swal.fire(

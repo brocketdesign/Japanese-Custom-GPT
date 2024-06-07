@@ -14,7 +14,7 @@
 <body>
 <nav class="navbar navbar-light bg-transparent fixed-top pb-3" style="border-bottom: 1px solid rgba(210, 184, 255, 0.2);">
   <div class="container-fluid justify-content-between">
-    <a class="navbar-brand d-flex flex-row align-items-center bg-white px-5 py-2" href="#">
+    <a class="navbar-brand d-flex flex-row align-items-center bg-white px-5 py-2" href="/">
       <img src="/img/logo.webp" alt="" class="logo">
       <span class="brand-name ms-3">LAMIX</span>
     </a>
@@ -198,9 +198,9 @@ $(document).ready(function() {
 function promptForEmail() {
     return Swal.fire({
         title: '結果を受け取る',
-        text: '結果を受け取るにはGmailを入力してください！',
+        text: '結果を受け取るにはメールアドレスを入力してください！',
         input: 'email',
-        inputLabel: 'あなたのGmail',
+        inputLabel: 'あなたのメールアドレス',
         inputPlaceholder: 'メールアドレスを入力してください',
         showCancelButton: true,
         confirmButtonText: '送信',

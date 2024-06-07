@@ -87,7 +87,7 @@ async function routes(fastify, options) {
     });
     
     fastify.post('/api/submit-email', async (request, reply) => {
-        // Handle Gmail submission
+        const  {email , userId } = request.body;
         return { status: 'success' };
     });
 }

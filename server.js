@@ -45,7 +45,15 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
           reply.status(500).send({ error: 'Failed to retrieve the latest story' });
       }
   });
-  
+ 
+    fastify.get('/users', (request, reply) => {
+      if(process.env.MODE == 'local'){
+        reply.view('/views/user-list.hbs', { title: 'LAMIX | Powered by Hato,Ltd'});
+      }else{
+        reply.redirect(`/`);
+      }
+    });
+
 
     fastify.get('/story/:id', (request, reply) => {
       // Retrieve the story ID from the URL parameter

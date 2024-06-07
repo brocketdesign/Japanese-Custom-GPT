@@ -108,8 +108,39 @@
   </footer>
 <script src="/js/quiz.js"></script>
 <script>
+var userId
+var userIp
 $(document).ready(function() {
-    const userId = 'user_' + Date.now(); // Generate a unique user ID for the session.
+    // Function to hash the IP address to generate a unique ID
+    function hashIP(ip) {
+        let hash = 0, i, chr;
+        if (ip.length === 0) return hash;
+        for (i = 0; i < ip.length; i++) {
+            chr = ip.charCodeAt(i);
+            hash = ((hash << 5) - hash) + chr;
+            hash |= 0; // Convert to 32bit integer
+        }
+        return hash;
+    }
+
+    // Function to fetch the user's IP address using an API
+    function fetchUserIP(callback) {
+        $.getJSON('https://api.ipify.org?format=json', function(data) {
+            userIp = data.ip;
+            userId = hashIP(userIp); // Assign the generated userID to the global variable
+            console.log("User IP: " + userIp);
+            console.log("Generated User ID: " + userId);
+            if (callback) {
+                callback(userId,userIp); // Call the callback function with userID
+            }
+        });
+    }
+
+    // Fetch the user's IP address and generate a unique ID
+    fetchUserIP(function(userId,userIp) {
+        console.log("User ID available globally: " + userId + '-' + userIp);
+        // Now you can use the userID variable or id parameter here
+    });
     const storyId = "{{storyId}}";
     let currentStep = 0;
     let totalSteps = 0;
@@ -135,12 +166,12 @@ $(document).ready(function() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            data: JSON.stringify({ choice: choiceId, userId: userId }),
+            data: JSON.stringify({ choice: choiceId, userId: userId, userIp: userIp }),
             success: function(response) {
-                resolve(response);
+                console.log(`Successfully sent data`);
             },
             error: function(error) {
-                reject(error.statusText);
+                console.log(error.statusText);
             }
         });
     };
@@ -243,7 +274,7 @@ function promptForEmail() {
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    data: JSON.stringify({ email, userId: userId }),
+                    data: JSON.stringify({ email, userId: userId, userIp: userIp }),
                     success: function(response) {
                         resolve(response);
                     },

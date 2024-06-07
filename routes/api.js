@@ -50,61 +50,57 @@ async function routes(fastify, options) {
             reply.status(500).send({ error: 'Failed to retrieve story' });
         }
     });
+    
     fastify.post('/api/data', async (request, reply) => {
-        const { choice, userId } = request.body;
-    
+        const { choice, userId, userIp } = request.body;
+
         const serverUserId = userId || 'user_' + Date.now();
-        const clientIp = request.headers['x-forwarded-for'] || request.ip;
     
-        const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChoice');
+        const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
     
         const query = { userId: serverUserId };
         const update = {
             $push: { choices: { choice, timestamp: new Date() } },
-            $setOnInsert: { userId: serverUserId, ip: clientIp, createdAt: new Date() }
+            $setOnInsert: { userId: serverUserId, userIp: userIp, createdAt: new Date() }
         };
         const options = { upsert: true };
     
         try {
             await collection.updateOne(query, update, options);
-            console.log('User choice updated:', { userId: serverUserId, choice, ip: clientIp });
-    
+            console.log('User choice updated:', { userId: serverUserId, choice, userIp: userIp });
+ 
             return reply.send({ nextStoryPart: "You chose the path and...", endOfStory: true });
         } catch (error) {
             console.error('Failed to save user choice:', error);
             return reply.status(500).send({ error: 'Failed to save user choice' });
         }
     });
-
+    
     fastify.post('/api/submit-email', async (request, reply) => {
         const { email, userId } = request.body;
     
-        const collectionChoice = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChoice');
-        const userObj = await collectionChoice.findOne({ userId });
+        const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
+    
+        const userObj = await collection.findOne({ userId });
     
         if (!userObj) {
             console.log('User not found');
             return reply.status(500).send({ error: 'User not found' });
         }
     
-        const collectionEmail = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userEmails');
-        
         // Check if the email already exists
-        const existingEmail = await collectionEmail.findOne({ email });
+        const existingEmail = await collection.findOne({ email });
         if (existingEmail) {
             console.log('Email already exists');
             return reply.status(400).send({ error: 'Email already exists' });
         }
     
-        const emailDoc = {
-            userId: userObj._id,
-            email,
-            timestamp: new Date()
-        };
+        const query = { userId };
+        const update = { $set: { email, createdAt: new Date() } };
     
         try {
-            await collectionEmail.insertOne(emailDoc);
-            console.log('User email saved:', emailDoc);
+            await collection.updateOne(query, update);
+            console.log('User email saved:', { userId, email });
     
             return reply.send({ status: 'success' });
         } catch (error) {
@@ -113,59 +109,32 @@ async function routes(fastify, options) {
         }
     });
     
-    fastify.get('/api/users', async (request, reply) => {
-        try {
-            const collectionEmail = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userEmails');
-    
-            // Find all user emails
-            const users = await collectionEmail.find({}).project({ userId: 1, email: 1 }).toArray();
-    
-            if (users.length === 0) {
-                return reply.status(404).send({ error: 'No users found' });
-            }
-    
+    fastify.get('/api/user-data', async (request, reply) => {
+        if(process.env.MODE != 'local'){
             return reply.send([]);
-        } catch (error) {
-            console.error('Failed to retrieve users:', error);
-            return reply.status(500).send({ error: 'Failed to retrieve users' });
         }
-    });
-    
-    fastify.get('/api/user-info/:userId', async (request, reply) => {
-        const { userId } = request.params;
-    
+        const { userId } = request.query;
+        const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
+
         try {
-            const collectionChoice = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChoice');
-            const collectionEmail = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userEmails');
-    
-            // Find the user choices by userId
-            const userChoices = await collectionChoice.findOne({ userId });
-    
-            if (!userChoices) {
-                console.log('User not found');
-                return reply.status(404).send({ error: 'User not found' });
+            if (userId) {
+                // Fetch specific user's data
+                const userData = await collection.findOne({ userId: parseInt(userId) });
+                if (!userData) {
+                    return reply.status(404).send({ error: 'User not found' });
+                }
+                return reply.send(userData);
+            } else {
+                // Fetch all users' data
+                const allUsersData = await collection.find({}).toArray();
+                return reply.send(allUsersData);
             }
-    
-            // Find the user email by userId
-            const userEmail = await collectionEmail.findOne({ userId: userChoices._id });
-    
-            // Combine the data
-            const userInfo = {
-                userId: userChoices.userId,
-                choices: userChoices.choices,
-                email: userEmail ? userEmail.email : null,
-                ip: userChoices.ip,
-                createdAt: userChoices.createdAt,
-                emailTimestamp: userEmail ? userEmail.timestamp : null
-            };
-    
-            return reply.send({});
         } catch (error) {
-            console.error('Failed to retrieve user information:', error);
-            return reply.status(500).send({ error: 'Failed to retrieve user information' });
+            console.error('Failed to retrieve user data:', error);
+            return reply.status(500).send({ error: 'Failed to retrieve user data' });
         }
     });
-        
+    
         
 }
 

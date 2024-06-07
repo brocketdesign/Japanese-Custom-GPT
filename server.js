@@ -28,13 +28,29 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     fastify.register(require('./routes/api'));
 
     // A simple root route
-    fastify.get('/', (request, reply) => {
-      reply.view('/views/index.hbs', { title: 'Quiz App' });
-    });
+    fastify.get('/', async (request, reply) => {
+      const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('stories');
+      
+      try {
+          const latestStory = await collection.findOne({}, { sort: { createdAt: -1 } });
+          const storyId = latestStory ? latestStory._id.toString() : null;
+
+          if (storyId) {
+              reply.redirect(`/story/${storyId}`);
+          } else {
+              reply.status(404).send({ error: 'No stories found' });
+          }
+      } catch (error) {
+          fastify.log.error('Failed to retrieve the latest story:', error);
+          reply.status(500).send({ error: 'Failed to retrieve the latest story' });
+      }
+  });
+  
 
     fastify.get('/story/:id', (request, reply) => {
       // Retrieve the story ID from the URL parameter
       const storyId = request.params.id;
+      console.log({storyId})
       // Pass the story ID to the Handlebars template
       reply.view('/views/index.hbs', { title: 'LAMIX | Powered by Hato,Ltd', storyId: storyId });
     });

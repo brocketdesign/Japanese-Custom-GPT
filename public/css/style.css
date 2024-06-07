@@ -104,11 +104,6 @@
 
 /* Reset some default browser styles */
 
-
-html {
-  font-size: 16px; /* Base font size */
-}
-
 body {
   font-family: 'Noto Sans JP', sans-serif; /* Common Japanese font */
   line-height: 1.6;
@@ -175,7 +170,6 @@ body {
 
 
 html {
-  font-size: 62.5%;
   line-height: 1.6;
   height: 100%;
   scroll-behavior: smooth;
@@ -184,7 +178,6 @@ html {
 body {
   color: #020034;
   font-family: 'Noto Sans JP', sans-serif;
-  font-size: 1.6rem;
   font-weight: normal;
   width: 100%;
   letter-spacing: 0.05em;

@@ -2622,9 +2622,8 @@ padding: 6px 20px 2px;
 
 .p-footer {
   padding: 56px 0;
-  background: #F7F6F4;
+  border-top: 1px solid #F7F6F4;
 }
-
 .p-footer-flex {
   display: flex;
   justify-content: space-between;

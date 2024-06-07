@@ -5,7 +5,7 @@ const mongodb = require('mongodb');
 
 mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then((client) => {
-    const db = client.db('mydb');
+    const db = client.db(process.env.MONGODB_NAME);
 
     // Register static file plugin
     fastify.register(require('@fastify/static'), {

@@ -8,8 +8,7 @@ async function routes(fastify, options) {
         }
     
         // Access the MongoDB collection
-        const db = fastify.mongo.db;
-        const collection = db.collection('stories');
+        const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('stories');
     
         // Check if a story with the same name already exists
         const existingStory = await collection.findOne({ name: name });
@@ -38,8 +37,7 @@ async function routes(fastify, options) {
 
     fastify.get('/api/story/:id', async (request, reply) => {
         const storyId = request.params.id;
-        const db = fastify.mongo.db;
-        const collection = db.collection('stories');
+        const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('stories');
     
         try {
             const story = await collection.findOne({ _id: new fastify.mongo.ObjectId(storyId) });
@@ -64,8 +62,7 @@ async function routes(fastify, options) {
         const clientIp = request.headers['x-forwarded-for'] || request.ip;
     
         // Access the MongoDB collection
-        const db = fastify.mongo.db;
-        const collection = db.collection('userChoices');
+        const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChoices');
     
         // Create a document to insert
         const doc = {
@@ -95,6 +92,4 @@ async function routes(fastify, options) {
     });
 }
 
-  
-  module.exports = routes;
-  
+module.exports = routes;

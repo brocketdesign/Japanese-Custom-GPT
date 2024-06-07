@@ -124,7 +124,7 @@ async function routes(fastify, options) {
                 return reply.status(404).send({ error: 'No users found' });
             }
     
-            return reply.send(users);
+            return reply.send([]);
         } catch (error) {
             console.error('Failed to retrieve users:', error);
             return reply.status(500).send({ error: 'Failed to retrieve users' });
@@ -159,7 +159,7 @@ async function routes(fastify, options) {
                 emailTimestamp: userEmail ? userEmail.timestamp : null
             };
     
-            return reply.send(userInfo);
+            return reply.send({});
         } catch (error) {
             console.error('Failed to retrieve user information:', error);
             return reply.status(500).send({ error: 'Failed to retrieve user information' });

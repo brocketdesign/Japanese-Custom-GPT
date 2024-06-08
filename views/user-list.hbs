@@ -45,39 +45,57 @@
                 .catch(error => console.error('Failed to fetch user data:', error));
         });
 
-        function showUserChoices(userId) {
-            fetch(`/api/user-data?userId=${userId}`)
-                .then(response => response.json())
-                .then(user => {
-                    const choicesTable = user.choices.map(choice => `
-                        <tr>
-                            <td>${choice.choice}</td>
-                            <td>${new Date(choice.timestamp).toLocaleString()}</td>
-                        </tr>
-                    `).join('');
+function showUserChoices(userId) {
+    fetch(`/api/user-data?userId=${userId}`)
+        .then(response => response.json())
+        .then(user => {
+            if (user.choices && user.choices.length > 0) {
+                const choicesTable = user.choices.map(choice => `
+                    <tr>
+                        <td>${choice.choice}</td>
+                        <td>${new Date(choice.timestamp).toLocaleString()}</td>
+                    </tr>
+                `).join('');
 
-                    Swal.fire({
-                        title: 'ユーザーの選択肢',
-                        html: `
-                            <table class="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>選択</th>
-                                        <th>タイムスタンプ</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${choicesTable}
-                                </tbody>
-                            </table>
-                        `,
-                        width: '600px',
-                        showCloseButton: true,
-                        focusConfirm: false
-                    });
-                })
-                .catch(error => console.error('Failed to fetch user choices:', error));
-        }
+                Swal.fire({
+                    title: 'ユーザーの選択肢',
+                    html: `
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>選択</th>
+                                    <th>タイムスタンプ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${choicesTable}
+                            </tbody>
+                        </table>
+                    `,
+                    width: '600px',
+                    showCloseButton: true,
+                    focusConfirm: false
+                });
+            } else {
+                Swal.fire({
+                    title: '情報',
+                    text: '選択肢が見つかりませんでした。',
+                    icon: 'info',
+                    confirmButtonText: 'OK'
+                });
+            }
+        })
+        .catch(error => {
+            Swal.fire({
+                title: 'エラー',
+                text: 'ユーザーの選択肢を取得できませんでした。',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+            console.error('Failed to fetch user choices:', error);
+        });
+}
+
     </script>
 </body>
 </html>

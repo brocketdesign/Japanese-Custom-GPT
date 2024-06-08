@@ -108,6 +108,31 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to save user email' });
         }
     });
+
+    fastify.post('/api/feedback', async (request, reply) => {
+        const { reason, userId } = request.body;
+    
+        if (!userId || !reason) {
+            return reply.status(400).send({ error: 'UserId and reason are required' });
+        }
+    
+        const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
+    
+        const query = { userId: userId };
+        const update = { $set: { reason: reason } };
+    
+        try {
+            await collection.updateOne(query, update);
+    
+            console.log('User reason updated:', { userId: userId, reason: reason });
+    
+            return reply.send({ message: 'Feedback saved successfully' });
+        } catch (error) {
+            console.error('Failed to save user feedback:', error);
+            return reply.status(500).send({ error: 'Failed to save user feedback' });
+        }
+    });
+    
     
     fastify.get('/api/user-data', async (request, reply) => {
         if(process.env.MODE != 'local'){

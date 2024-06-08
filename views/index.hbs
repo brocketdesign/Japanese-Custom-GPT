@@ -330,7 +330,7 @@ function showLoadingAnimation() {
         }
     });
 }
-
+promptForEmail()
 function promptForEmail() {
     return Swal.fire({
         title: '生成を完了しました。',
@@ -372,13 +372,49 @@ function promptForEmail() {
             Swal.fire('送信完了', 'あなたのメールアドレスが正常に送信されました。', 'success');
             return true;
         } else {
-            Swal.fire('残念です', 'それは残念です。', 'info');
+            Swal.fire({
+                title: '残念です',
+                icon: 'info',
+                showCancelButton: false,
+                showConfirmButton: false,
+                html:
+                    '<p>それは残念です。なぜ結果を見たくなかったのですか？</p>'+
+                    '<button id="option1" class="swal2-confirm swal2-styled">興味がない</button>' +
+                    '<button id="option2" class="swal2-confirm swal2-styled">結果に自信がない</button>' +
+                    '<button id="option3" class="swal2-confirm swal2-styled">テストに問題があった</button>',
+                allowOutsideClick: false
+            });
             return false;
         }
     });
 }
 
+    $(document).on('click', '#option1', function() {
+        sendFeedback('興味がない');
+    });
 
+    $(document).on('click', '#option2', function() {
+        sendFeedback('結果に自信がない');
+    });
+
+    $(document).on('click', '#option3', function() {
+        sendFeedback('テストに問題があった');
+    });
+
+    function sendFeedback(choice) {
+        $.ajax({
+            url: '/api/feedback',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ reason: choice, userId: userId }),
+            success: function(response) {
+                Swal.fire('ありがとうございました', 'フィードバックを送信しました。', 'success');
+            },
+            error: function(xhr, status, error) {
+                Swal.fire('エラー', 'フィードバックの送信中にエラーが発生しました。', 'error');
+            }
+        });
+    }
 
 });
 </script>

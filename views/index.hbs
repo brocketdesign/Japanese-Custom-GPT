@@ -127,9 +127,7 @@ $(document).ready(function() {
     function fetchUserIP(callback) {
         $.getJSON('https://api.ipify.org?format=json', function(data) {
             userIp = data.ip;
-            userId = hashIP(userIp); // Assign the generated userID to the global variable
-            console.log("User IP: " + userIp);
-            console.log("Generated User ID: " + userId);
+            userId = hashIP(userIp); 
             if (callback) {
                 callback(userId,userIp); // Call the callback function with userID
             }
@@ -168,7 +166,7 @@ $(document).ready(function() {
             },
             data: JSON.stringify({ choice: choiceId, userId: userId, userIp: userIp }),
             success: function(response) {
-                console.log(`Successfully sent data`);
+                
             },
             error: function(error) {
                 console.log(error.statusText);

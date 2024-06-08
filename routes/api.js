@@ -1,3 +1,4 @@
+const { ObjectId } = require('mongodb');
 const {moduleCompletion} = require('../models/openai')
 
 async function routes(fastify, options) {
@@ -54,23 +55,23 @@ async function routes(fastify, options) {
     });
     
     fastify.post('/api/data', async (request, reply) => {
-        const { choice, userId, userIp } = request.body;
+        const { choice, userId, userIp, storyId } = request.body;
 
-        const serverUserId = userId || 'user_' + Date.now();
+        const serverUserId = parseInt(userId) || 'user_' + Date.now();
     
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
     
         const query = { userId: serverUserId };
         const update = {
             $push: { choices: { choice, timestamp: new Date() } },
-            $setOnInsert: { userId: serverUserId, userIp: userIp, createdAt: new Date() }
+            $setOnInsert: { userId: serverUserId, userIp: userIp, storyId:storyId, createdAt: new Date() }
         };
         const options = { upsert: true };
     
         try {
             await collection.updateOne(query, update, options);
-            console.log('User choice updated:', { userId: serverUserId, choice, userIp: userIp });
- 
+            console.log('User choice updated:', { userId: serverUserId, choice, userIp: userIp, storyId:storyId });
+
             return reply.send({ nextStoryPart: "You chose the path and...", endOfStory: true });
         } catch (error) {
             console.error('Failed to save user choice:', error);
@@ -137,11 +138,11 @@ async function routes(fastify, options) {
     
     fastify.post('/api/generate', async (request, reply) => {
         const { userId } = request.body;
-    
+
         try {
             // Retrieve user data
             const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
-            const userData = await userDataCollection.findOne({ userId: userId });
+            const userData = await userDataCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
     
             if (!userData) {
                 return reply.status(404).send({ error: 'User data not found' });
@@ -149,29 +150,37 @@ async function routes(fastify, options) {
     
             // Extract storyId from user data
             const { storyId, choices } = userData;
-    
+
             // Retrieve story
             const storiesCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('stories');
-            const story = await storiesCollection.findOne({ storyId: storyId });
+            const story = await storiesCollection.findOne({ _id: new fastify.mongo.ObjectId(storyId) });
     
             if (!story) {
                 return reply.status(404).send({ error: 'Story not found' });
             }
-    
+
             // Construct the prompt with story introduction and user choices
-            let prompt = "次のストーリーの導入部分とユーザーの選択肢に基づいて、友好的で励みになる分析とアドバイスを提供してください。\n\n";
+            let prompt = `
+            下記の内容を入れてこの人にピッタリの収入増を目指す方法を診断してください。診断の結果だけを出してください。
+            性格の強みと弱みを明確にする
+            具体的な行動ステップを提案する
+            目標設定の支援
+            リソースの提供
+            継続的なフィードバックとサポートの提案
+            最後にコメントで「さあ、新しい収入の道が見えてきました。」のようなスタートするための励ましコメントを入れて、友好的で励みになる分析とアドバイスを提供してください。\n\n`;
     
-            for (const step in story.story) {
-                const storyStep = story.story[step];
-                const userChoice = choices.find(choice => choice.step === step);
-    
+
+            for (const step in story.content.story) {
+                const storyStep = story.content.story[step];
+                const userChoice = choices.find(choice => storyStep.choices.some(choiceOption => choiceOption.choiceId === choice.choice));
+
                 if (userChoice) {
-                    const selectedChoice = storyStep.choices.find(choice => choice.choiceId === userChoice.choice.choiceId);
+                    const selectedChoice = storyStep.choices.find(choice => choice.choiceId === userChoice.choice);
                     prompt += `Q: ${storyStep.introduction}\n`;
-                    prompt += `A: ユーザーの選択: ${selectedChoice.choiceText}\n\n`;
+                    prompt += `A: ${selectedChoice.choiceText}\n\n`;
                 }
             }
-    
+            
             // Call the moduleCompletion function
             const analysis = await moduleCompletion({
                 model: "gpt-4o",

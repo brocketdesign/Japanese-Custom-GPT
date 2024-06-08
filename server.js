@@ -30,7 +30,6 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     // A simple root route
     fastify.get('/', async (request, reply) => {
       const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('stories');
-     
       reply.redirect(`/story/6663fb138a86c7625959ffa6`);
       return
       try {

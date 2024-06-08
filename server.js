@@ -80,6 +80,13 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       reply.view('/views/add-story.hbs', { title: 'Add New Story' });
     });
 
+    fastify.get('/generate/:userid', (request, reply) => {
+      // Retrieve the story ID from the URL parameter
+      const userId = request.params.userid;
+      // Pass the story ID to the Handlebars template
+      reply.view('/views/generate.hbs', { title: 'LAMIX | Powered by Hato,Ltd', userId: userId });
+    });
+
     // Define a test route to check MongoDB connection
     fastify.get('/test-db', async (request, reply) => {
       if (!db) {

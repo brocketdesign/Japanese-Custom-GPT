@@ -180,7 +180,7 @@ $(document).ready(function() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            data: JSON.stringify({ choice: choiceId, userId: userId, userIp: userIp }),
+            data: JSON.stringify({ choice: choiceId, userId: userId, userIp: userIp, storyId:storyId }),
             success: function(response) {
                 
             },
@@ -474,7 +474,8 @@ function lastchance(){
         promptForEmail(true);
     });
 }
-lastchance()
+
+
 });
 </script>
 </body>

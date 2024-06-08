@@ -17,6 +17,7 @@
                     <th>タイムスタンプ</th>
                     <th>詳細</th>
                     <th>フィードバック</th>
+                    <th>生成</th>
                 </tr>
             </thead>
             <tbody id="userTableBody">
@@ -40,6 +41,7 @@
                             <td>${new Date(user.createdAt).toLocaleString()}</td>
                             <td><button class="btn btn-primary" onclick="showUserChoices('${user.userId}')">詳細</button></td>
                             <td>${user.reason || 'N/A'}</td>
+                            <td><a href="/generate/${user.userId}" target="_blank">生成</a></td>
                         `;
                         tableBody.appendChild(row);
                     });

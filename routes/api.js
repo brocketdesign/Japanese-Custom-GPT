@@ -1,3 +1,5 @@
+const {moduleCompletion} = require('../models/openai')
+
 async function routes(fastify, options) {
     fastify.post('/api/add-story', async (request, reply) => {
         const { name, content } = request.body;
@@ -133,7 +135,60 @@ async function routes(fastify, options) {
         }
     });
     
+    fastify.post('/api/generate', async (request, reply) => {
+        const { userId } = request.body;
     
+        try {
+            // Retrieve user data
+            const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
+            const userData = await userDataCollection.findOne({ userId: userId });
+    
+            if (!userData) {
+                return reply.status(404).send({ error: 'User data not found' });
+            }
+    
+            // Extract storyId from user data
+            const { storyId, choices } = userData;
+    
+            // Retrieve story
+            const storiesCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('stories');
+            const story = await storiesCollection.findOne({ storyId: storyId });
+    
+            if (!story) {
+                return reply.status(404).send({ error: 'Story not found' });
+            }
+    
+            // Construct the prompt with story introduction and user choices
+            let prompt = "次のストーリーの導入部分とユーザーの選択肢に基づいて、友好的で励みになる分析とアドバイスを提供してください。\n\n";
+    
+            for (const step in story.story) {
+                const storyStep = story.story[step];
+                const userChoice = choices.find(choice => choice.step === step);
+    
+                if (userChoice) {
+                    const selectedChoice = storyStep.choices.find(choice => choice.choiceId === userChoice.choice.choiceId);
+                    prompt += `Q: ${storyStep.introduction}\n`;
+                    prompt += `A: ユーザーの選択: ${selectedChoice.choiceText}\n\n`;
+                }
+            }
+    
+            // Call the moduleCompletion function
+            const analysis = await moduleCompletion({
+                model: "gpt-4o",
+                role: '友好的で励みになるアドバイザー',
+                prompt: prompt,
+                max_tokens: 600
+            });
+    
+            // Send the analysis as the response
+            return reply.send({ analysis: analysis });
+        } catch (error) {
+            console.error('Failed to generate analysis:', error);
+            return reply.status(500).send({ error: 'Failed to generate analysis' });
+        }
+    });
+    
+        
     fastify.get('/api/user-data', async (request, reply) => {
         if(process.env.MODE != 'local'){
             return reply.send([]);

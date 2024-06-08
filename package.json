@@ -21,9 +21,11 @@
     "@fastify/static": "^7.0.4",
     "@fastify/view": "^9.1.0",
     "dotenv": "^16.4.5",
+    "eventsource-parser": "^1.1.2",
     "fastify": "^4.8.1",
     "handlebars": "^4.7.8",
-    "mongodb": "^6.7.0"
+    "mongodb": "^6.7.0",
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "nodemon": "^2.0.19"

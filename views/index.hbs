@@ -36,7 +36,7 @@
         <i class="fas fa-chevron-down" style="font-size: 36px;"></i>
     </div>
     <div class="container mt-4">
-        <div class="card my-5">
+        <div id="chat-container" class="card my-5">
             <div class="d-flex justify-content-between card-header text-center bg-dark text-white">
                 <div>LAMIXチャット</div>
                 <div class="d-flex align-items-center">
@@ -52,6 +52,7 @@
                 フッターコンテンツ
             </div>
         </div>
+        <div id="lastchance"></div>
     </div>
     </div>
 
@@ -147,7 +148,7 @@ $(document).ready(function() {
     let currentStep = 0;
     let totalSteps = 0;
     let storyData = {};
-
+    let feedback = false
     fetchStoryData(storyId); // Fetch the initial story data when the page loads
     
      window.choosePath = function(choiceId) {
@@ -315,7 +316,7 @@ $(document).ready(function() {
     }
 
 function hideOtherChoice(choiceId, currentStep, callback) {
-console.log({currentStep})
+
     $(`#response-${currentStep - 1} button`).each(function() {
         const currentId = $(this).data('id')
         if(choiceId == currentId){
@@ -356,7 +357,7 @@ function showLoadingAnimation() {
     });
 }
 
-function promptForEmail() {
+function promptForEmail(lastchance = false) {
     return Swal.fire({
         title: '生成を完了しました。',
         text: 'メールアドレスを入力して結果を見る',
@@ -368,6 +369,8 @@ function promptForEmail() {
             confirmButton: 'btn-gradient-3d-orange'
         },
         cancelButtonText: 'キャンセル',
+        showCancelButton:!lastchance,
+        allowOutsideClick:!lastchance,
         footer: '<small>メールアドレスは <a href="https://hatoltd.com/privacy-policy/" target="_blank">プライバシーポリシー</a> に従ってのみ使用され、スパムや他の目的には使用されません。</small>',
         preConfirm: (email) => {
             return new Promise((resolve, reject) => {
@@ -397,6 +400,10 @@ function promptForEmail() {
             Swal.fire('送信完了', 'あなたのメールアドレスが正常に送信されました。', 'success');
             return true;
         } else {
+            if(feedback){
+                return false
+            }
+            feedback = true
             Swal.fire({
                 title: '残念です',
                 icon: 'info',
@@ -434,12 +441,39 @@ function promptForEmail() {
             data: JSON.stringify({ reason: choice, userId: userId }),
             success: function(response) {
                 Swal.fire('ありがとうございました', 'フィードバックを送信しました。', 'success');
+                lastchance()
             },
             error: function(xhr, status, error) {
                 Swal.fire('エラー', 'フィードバックの送信中にエラーが発生しました。', 'error');
             }
         });
     }
+
+function lastchance(){
+    var timer = 59;
+    $('#chat-container').hide()
+    $('#lastchance').html(`
+        <div style="text-align: center;">
+            <p id="title" class="display-6">最後のチャンス</p>
+            <p id="description">すぐに行動しないと、診断結果が消えてしまいます。</p>
+            <p id="timer" class="display-3 fw-bold">${timer}s</p>
+            <button id="resultButton" class="btn-gradient-3d-orange">結果を取得</button>
+        </div>
+    `);
+    
+    var countdown = setInterval(function() {
+        if (timer > 0) {
+            timer--;
+            $('#timer').text(`${timer}s`);
+        } else {
+            clearInterval(countdown);
+        }
+    }, 1000);
+    
+    $('#resultButton').click(function() {
+        promptForEmail(true);
+    });
+}
 
 });
 </script>

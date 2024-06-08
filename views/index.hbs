@@ -259,13 +259,13 @@ $(document).ready(function() {
 function promptForEmail() {
     return Swal.fire({
         title: '結果を受け取る',
-        text: '結果を受け取るにはメールアドレスを入力してください！',
+        text: 'メールアドレスを入力して結果を見る',
         input: 'email',
-        inputLabel: 'あなたのメールアドレス',
         inputPlaceholder: 'メールアドレスを入力してください',
         showCancelButton: true,
         confirmButtonText: '送信',
         cancelButtonText: 'キャンセル',
+        footer: '<small>メールアドレスは <a href="https://hatoltd.com/privacy-policy/" target="_blank">プライバシーポリシー</a> に従ってのみ使用され、スパムや他の目的には使用されません。</small>',
         preConfirm: (email) => {
             return new Promise((resolve, reject) => {
                 $.ajax({
@@ -291,14 +291,14 @@ function promptForEmail() {
         }
     }).then((result) => {
         if (result.isConfirmed) {
-            //Swal.fire('送信完了！', 'メールが送信されました。', 'success')
-            return true
+            return true;
         } else {
             Swal.fire('残念です', 'それは残念です。', 'info');
-            return false
+            return false;
         }
     });
 }
+
 
 
 });

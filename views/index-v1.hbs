@@ -141,6 +141,7 @@ $(document).ready(function() {
 
     // Fetch the user's IP address and generate a unique ID
     fetchUserIP(function(userId,userIp) {
+        console.log("User ID available globally: " + userId + '-' + userIp);
         // Now you can use the userID variable or id parameter here
     });
     const storyId = "{{storyId}}";
@@ -152,26 +153,22 @@ $(document).ready(function() {
     
      window.choosePath = function(choiceId) {
         if (currentStep === totalSteps - 1) {
-            hideOtherChoice(choiceId,currentStep + 1,function(){
-                displayConclusion(choiceId,function(){
-                    // Chain the functions to display the messages and prompts sequentially
-                    showCongratulations().then(() => {
-                        showLoadingAnimation();
-                        setTimeout(() => {
-                            Swal.close(); // Close the loading animation after a delay
-                            promptForEmail();
-                        }, 5000); // Show the loading animation for 3 seconds
-                    });
-                });
-            })
+            hideOtherChoice(choiceId,currentStep)
+            displayConclusion(choiceId);
 
-
+            // Chain the functions to display the messages and prompts sequentially
+            showCongratulations().then(() => {
+                showLoadingAnimation();
+                setTimeout(() => {
+                    Swal.close(); // Close the loading animation after a delay
+                    promptForEmail();
+                }, 5000); // Show the loading animation for 3 seconds
+            });
             
         } else {
             currentStep++;
-            hideOtherChoice(choiceId,currentStep,function(){
-                updateStoryContent(choiceId);
-            })
+            hideOtherChoice(choiceId,currentStep - 1)
+            updateStoryContent(choiceId);
         }
         $.ajax({
             url: '/api/data',
@@ -251,11 +248,10 @@ $(document).ready(function() {
         $('#chatContainer').append(`
         <div id="container-${currentStep}">
 
-            <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
-                <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
-                <div id="result-${currentStep - 1}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
+            <div class="d-flex flex-row justify-content-end mb-4 message-container" style="opacity:0;">
+                <div id="result-${currentStep - 1}" class="p-3 me-3 border" style="border-radius: 15px; background-color: #fbfbfb;"></div>
             </div>
-            
+
             <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
                 <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
                 <div id="message-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
@@ -273,63 +269,42 @@ $(document).ready(function() {
                 $(`#response-${currentStep}`).append(button);
             });
 
+            $(`#result-${currentStep - 1}`).append(choice.result)
             $(`#result-${currentStep - 1}`).closest('.message-container').animate({ opacity: 1 }, 1000, function() { 
-
-                appendHeadlineCharacterByCharacter($(`#result-${currentStep - 1}`),choice.result,function(){
-                    appendHeadlineCharacterByCharacter($(`#message-${currentStep}`), nextStep.introduction,function(){
-                        $(`#response-${currentStep} button`).each(function(){
-                            $(this).css('opacity',1)
-                        })
-                    });
-                })
-                
+                appendHeadlineCharacterByCharacter($(`#message-${currentStep}`), nextStep.introduction,function(){
+                    $(`#response-${currentStep} button`).each(function(){
+                        $(this).css('opacity',1)
+                    })
+                });
             })
 
 
         }
     }
 
-    function displayConclusion(choiceId,callback) {
+    function displayConclusion(choiceId) {
         const previousStep = storyData[`step${currentStep + 1}`]; // Previous step where the choice was made      
         const choice = previousStep.choices.find(c => c.choiceId === choiceId);
         const lastStep = storyData[`step${currentStep + 1}`];
-        console.log({choiceId,currentStep})
         $('#chatContainer').append(`
         <div id="container-${currentStep}">
-            <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
-                <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
-                <div id="result-${currentStep + 1}" class="p-3 ms-3 text-start" style="border-radius: 15px; background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
+             <div class="d-flex flex-row justify-content-end mb-4 message-container" style="opacity:0;">
+                <div id="result-${currentStep + 1}" class="p-3 me-3 border" style="border-radius: 15px; background-color: #fbfbfb;"></div>
             </div>
             <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
                 <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
                 <div id="response-${currentStep + 1}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
             </div>
         </div>`)
+        $(`#result-${currentStep + 1}`).append(choice.result)
         $(`#result-${currentStep + 1}`).closest('.message-container').animate({ opacity: 1 }, 1000, function() { 
-            appendHeadlineCharacterByCharacter($(`#result-${currentStep + 1}`),choice.result,function(){
-                appendHeadlineCharacterByCharacter($(`#response-${currentStep + 1}`), previousStep.conclusion,function(){
-                    callback()
-                });  
-            })
+            //appendHeadlineCharacterByCharacter($(`#response-${currentStep + 1}`), previousStep.conclusion);
         })
     }
 
-function hideOtherChoice(choiceId, currentStep, callback) {
-console.log({currentStep})
-    $(`#response-${currentStep - 1} button`).each(function() {
-        const currentId = $(this).data('id')
-        if(choiceId == currentId){
-            const response = $(this).text()
-            $(`#response-${currentStep - 1}`).remove()
-            $(`#container-${currentStep - 1}`).append(`
-                <div class="d-flex flex-row justify-content-end mb-4 message-container" style="opacity:0;">
-                    <div id="response-${currentStep - 1}" class="p-3 me-3 border" style="border-radius: 15px; background-color: #fbfbfb;">${response}</div>
-                </div>
-            `)
-            $(`#response-${currentStep - 1}`).closest('.message-container').animate({ opacity: 1 }, 1000,function(){
-                callback()
-            })
-        }
+function hideOtherChoice(choiceId, currentStep) {
+
+    $(`#response-${currentStep} button`).each(function() {
         $(this).remove()
     });
 }

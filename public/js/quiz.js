@@ -7,7 +7,7 @@ function appendHeadlineCharacterByCharacter($element, headline, callback) {
     $element.append(spinner)
     $element.closest(`.message-container`).animate({ opacity: 1 }, 1000, function() { 
         setTimeout(() => {
-            spinner.css(`opacity`,0)
+            spinner.css('visibility', 'hidden');
             setTimeout(() => {
                 let intervalID = setInterval(function() {
                     if (index < headline.length) {

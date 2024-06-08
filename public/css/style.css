@@ -8,8 +8,8 @@
     display: inline-block;
     padding: 0.3em 1em;
     text-decoration: none;
-    color: #67c5ff;
-    border: solid 2px #67c5ff;
+    color: #742af4;
+    border: solid 2px #b58df9;
     border-radius: 3px;
     transition: .4s;
     margin-right: 5px;
@@ -18,7 +18,7 @@
   }
   
   .btn-flat-border:hover {
-    background: #67c5ff;
+    background: #742af4;
     color: white;
   }
   .btn-gradient-radius {

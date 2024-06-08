@@ -20,10 +20,16 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       },
       viewPath: path.join(__dirname, 'views')
     });
-
+    fastify.register(require('@fastify/cors'), {
+      origin: true,
+      methods: ['POST'],
+      allowedHeaders: ['Content-Type', 'Authorization']
+  });
+  
     // Register MongoDB with the pre-configured client
     fastify.register(require('@fastify/mongodb'), { client: client });
-
+    // Register the SSE plugin
+    fastify.register(require('fastify-sse'));
     // Register API routes
     fastify.register(require('./routes/api'));
 

@@ -1,6 +1,6 @@
 const { ObjectId } = require('mongodb');
-const {moduleCompletion} = require('../models/openai')
-
+const {moduleCompletion,fetchOpenAICompletion} = require('../models/openai')
+const sessions = new Map(); // Define sessions map
 async function routes(fastify, options) {
     fastify.post('/api/add-story', async (request, reply) => {
         const { name, content } = request.body;
@@ -196,6 +196,37 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to generate analysis' });
         }
     });
+
+
+    fastify.post('/api/openai-completion', (request, reply) => {
+        const { messages } = request.body;
+        const sessionId = Math.random().toString(36).substring(2, 15); // Generate a unique session ID
+        sessions.set(sessionId, { messages });
+        reply.send({ sessionId });
+    });
+    
+    fastify.get('/api/openai-completion-stream/:sessionId', async (request, reply) => {
+        const { sessionId } = request.params;
+        const session = sessions.get(sessionId);
+    
+        if (!session) {
+            reply.status(404).send({ error: 'Session not found' });
+            return;
+        }
+    
+        reply.raw.setHeader('Content-Type', 'text/event-stream');
+        reply.raw.setHeader('Cache-Control', 'no-cache');
+        reply.raw.setHeader('Connection', 'keep-alive');
+        reply.raw.flushHeaders();
+    
+        try {
+            const completion = await fetchOpenAICompletion(session.messages, reply.raw);
+            reply.raw.end();
+        } catch (error) {
+            reply.status(500).send({ error: 'Error fetching OpenAI completion' });
+        }
+    });
+    
     
         
     fastify.get('/api/user-data', async (request, reply) => {

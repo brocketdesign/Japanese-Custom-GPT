@@ -17,9 +17,9 @@ function appendHeadlineCharacterByCharacter($element, headline, callback) {
                         clearInterval(intervalID);
                         if (callback) callback();
                     }
-                }, 50);
-            }, 500);
-        }, 2000);
+                }, 25);
+            }, 250);
+        }, 500);
     });
 
 

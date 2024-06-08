@@ -37,8 +37,12 @@
     </div>
     <div class="container mt-4">
         <div class="card my-5">
-            <div class="card-header text-center bg-dark text-white"></div>
-            <div class="card-body text-center py-5" style="min-height:250px;height: 50vh;overflow-y: auto;">
+            <div class="d-flex justify-content-between card-header text-center bg-dark text-white">
+                <div>LAMIXチャット</div>
+                <div class="count"></div>
+                <div><i class="fas fa-comment"></i></div>
+            </div>
+            <div class="card-body text-center py-5" style="min-height:250px;height: 75vh;overflow-y: auto;">
                 <h5 class="card-title d-none">Card Title</h5>
                 <div id="chatContainer">
                 </div>
@@ -211,7 +215,7 @@ $(document).ready(function() {
 
     function displayStep(storyData, currentStep) {
         const step = storyData[`step${currentStep + 1}`];
-        $(`.card-header`).text(`${currentStep + 1}/${totalSteps}`)
+        $(`.card-header .count`).text(`${currentStep + 1}/${totalSteps}`)
         $('#chatContainer').append(`
         <div id="container-${currentStep}">
             <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
@@ -236,7 +240,7 @@ $(document).ready(function() {
     function updateStoryContent(choiceId) {
         const previousStep = storyData[`step${currentStep}`]; // Previous step where the choice was made
         const choice = previousStep.choices.find(c => c.choiceId === choiceId);
-        $(`.card-header`).text(`${currentStep + 1}/${totalSteps}`)
+        $(`.card-header .count`).text(`${currentStep + 1}/${totalSteps}`)
         $('#chatContainer').append(`
         <div id="container-${currentStep}">
 

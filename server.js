@@ -30,7 +30,9 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     // A simple root route
     fastify.get('/', async (request, reply) => {
       const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('stories');
-      
+     
+      reply.redirect(`/story/66627fa16a81edfcd4f35d3d`);
+      return
       try {
           const latestStory = await collection.findOne({}, { sort: { createdAt: -1 } });
           const storyId = latestStory ? latestStory._id.toString() : null;

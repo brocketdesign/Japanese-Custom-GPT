@@ -38,10 +38,10 @@
     <div class="container mt-4">
         <div class="card my-5">
             <div class="card-header text-center bg-dark text-white"></div>
-            <div class="card-body text-center p-5" style="min-height:250px;">
+            <div class="card-body text-center p-5" style="min-height:250px;height: 50vh;overflow-y: auto;">
                 <h5 class="card-title d-none">Card Title</h5>
-                <p id="storyContainer" class="card-text"></p>
-                <div id="storyChoice" class="my-1"></div>
+                <div id="chatContainer">
+                </div>
             </div>
             <div class="card-footer text-muted text-center d-none">
                 フッターコンテンツ
@@ -148,14 +148,18 @@ $(document).ready(function() {
 
      window.choosePath = function(choiceId) {
         if (currentStep === totalSteps - 1) {
+            hideOtherChoice(choiceId,currentStep)
             // Call email prompt function before showing the last step conclusion
+            
             promptForEmail().then((result) => {
                 if(result){
                     displayConclusion(choiceId);
                 }
             });
+            
         } else {
             currentStep++;
+            hideOtherChoice(choiceId,currentStep - 1)
             updateStoryContent(choiceId);
         }
         $.ajax({
@@ -208,17 +212,23 @@ $(document).ready(function() {
     function displayStep(storyData, currentStep) {
         const step = storyData[`step${currentStep + 1}`];
         $(`.card-header`).text(`${currentStep + 1}/${totalSteps}`)
-        $('#storyChoice').html('')
+        $('#chatContainer').append(`
+        <div id="container-${currentStep}">
+            <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
+                <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
+                <div id="message-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
+            </div>
+            
+            <div id="response-${currentStep}"></div>
+        </div>`)
         step.choices.forEach((choice, index) => {
-            const button = $(`<button class="btn btn-flat-border my-2" onclick="choosePath('${choice.choiceId}')">${choice.choiceText}</button>`);
+            const button = $(`<button class="btn btn-flat-border my-2" data-id="${choice.choiceId}" onclick="choosePath('${choice.choiceId}')">${choice.choiceText}</button>`);
             button.css('opacity',0)
-            $('#storyChoice').append(button);
+            $(`#response-${currentStep}`).append(button);
         });
-        clearContentFromEnd($('#storyContainer'),function(){
-            appendHeadlineCharacterByCharacter($('#storyContainer'), step.introduction,function(){
-                $('#storyChoice button').each(function(){
-                   $(this).css('opacity',1)
-                })
+        appendHeadlineCharacterByCharacter($(`#message-${currentStep}`), step.introduction,function(){
+            $(`#response-${currentStep} button`).each(function(){
+                $(this).css('opacity',1)
             })
         })
     }
@@ -227,33 +237,71 @@ $(document).ready(function() {
         const previousStep = storyData[`step${currentStep}`]; // Previous step where the choice was made
         const choice = previousStep.choices.find(c => c.choiceId === choiceId);
         $(`.card-header`).text(`${currentStep + 1}/${totalSteps}`)
-        $('#storyChoice').html('')
-        clearContentFromEnd($('#storyContainer'),function(){
-            //appendHeadlineCharacterByCharacter($('#storyContainer'),choice.result)
-            if (currentStep < totalSteps) {
-                const nextStep = storyData[`step${currentStep + 1}`];
-                $('#storyChoice').html('')
-                appendHeadlineCharacterByCharacter($('#storyContainer'), nextStep.introduction,function(){
-                    nextStep.choices.forEach(choice => {
-                        $('#storyChoice').append(
-                            `<button class="btn btn-flat-border my-2" onclick="choosePath('${choice.choiceId}')">${choice.choiceText}</button>`
-                        );
-                    });
+        $('#chatContainer').append(`
+        <div id="container-${currentStep}">
+
+            <div class="d-flex flex-row justify-content-end mb-4 message-container" style="opacity:0;">
+                <div id="result-${currentStep - 1}" class="p-3 me-3 border" style="border-radius: 15px; background-color: #fbfbfb;"></div>
+            </div>
+
+            <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
+                <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
+                <div id="message-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
+            </div>
+
+            <div id="response-${currentStep}"></div>
+        </div>`)
+
+        if (currentStep < totalSteps) {
+
+            const nextStep = storyData[`step${currentStep + 1}`];
+            nextStep.choices.forEach(choice => {
+                const button = $(`<button class="btn btn-flat-border my-2" data-id="${choice.choiceId}" onclick="choosePath('${choice.choiceId}')">${choice.choiceText}</button>`)
+                button.css('opacity',0)
+                $(`#response-${currentStep}`).append(button);
+            });
+
+            $(`#result-${currentStep - 1}`).append(choice.result)
+            $(`#result-${currentStep - 1}`).closest('.message-container').animate({ opacity: 1 }, 1000, function() { 
+                appendHeadlineCharacterByCharacter($(`#message-${currentStep}`), nextStep.introduction,function(){
+                    $(`#response-${currentStep} button`).each(function(){
+                        $(this).css('opacity',1)
+                    })
                 });
-            }
-        })
+            })
+
+
+        }
     }
 
     function displayConclusion(choiceId) {
-        const previousStep = storyData[`step${currentStep + 1}`]; // Previous step where the choice was made
+        const previousStep = storyData[`step${currentStep + 1}`]; // Previous step where the choice was made      
         const choice = previousStep.choices.find(c => c.choiceId === choiceId);
-        $('#storyChoice').html('');
-        clearContentFromEnd($('#storyContainer'),function(){
-            appendHeadlineCharacterByCharacter($('#storyContainer'), choice.result)
-
-        })
         const lastStep = storyData[`step${currentStep + 1}`];
+        $('#chatContainer').append(`
+        <div id="container-${currentStep}">
+             <div class="d-flex flex-row justify-content-end mb-4 message-container" style="opacity:0;">
+                <div id="result-${currentStep + 1}" class="p-3 me-3 border" style="border-radius: 15px; background-color: #fbfbfb;"></div>
+            </div>
+            <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
+                <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
+                <div id="response-${currentStep + 1}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
+            </div>
+        </div>`)
+        $(`#result-${currentStep + 1}`).append(choice.result)
+        $(`#result-${currentStep + 1}`).closest('.message-container').animate({ opacity: 1 }, 1000, function() { 
+            appendHeadlineCharacterByCharacter($(`#response-${currentStep + 1}`), previousStep.conclusion);
+        })
     }
+
+function hideOtherChoice(choiceId, currentStep) {
+
+    $(`#response-${currentStep} button`).each(function() {
+        $(this).remove()
+    });
+}
+
+
 function promptForEmail() {
     return Swal.fire({
         title: '結果を受け取る',

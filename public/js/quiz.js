@@ -3,15 +3,26 @@
 function appendHeadlineCharacterByCharacter($element, headline, callback) {
     let index = 0;
 
-    let intervalID = setInterval(function() {
-        if (index < headline.length) {
-            $element.append(headline.charAt(index));
-            index++;
-        } else {
-            clearInterval(intervalID);
-            if (callback) callback();
-        }
-    }, 50);
+    const spinner = $(`<div class="spinner-grow spinner-grow-sm text-light" role="status"><span class="visually-hidden">Loading...</span></div>`)
+    $element.append(spinner)
+    $element.closest(`.message-container`).animate({ opacity: 1 }, 1000, function() { 
+        setTimeout(() => {
+            spinner.css(`opacity`,0)
+            setTimeout(() => {
+                let intervalID = setInterval(function() {
+                    if (index < headline.length) {
+                        $element.append(headline.charAt(index));
+                        index++;
+                    } else {
+                        clearInterval(intervalID);
+                        if (callback) callback();
+                    }
+                }, 50);
+            }, 500);
+        }, 2000);
+    });
+
+
 }
 
 function clearContentFromEnd($element, callback) {

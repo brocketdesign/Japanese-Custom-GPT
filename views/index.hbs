@@ -150,16 +150,19 @@ $(document).ready(function() {
     let storyData = {};
 
     fetchStoryData(storyId); // Fetch the initial story data when the page loads
-
+    
      window.choosePath = function(choiceId) {
         if (currentStep === totalSteps - 1) {
             hideOtherChoice(choiceId,currentStep)
-            // Call email prompt function before showing the last step conclusion
-            
-            promptForEmail().then((result) => {
-                if(result){
-                    displayConclusion(choiceId);
-                }
+            displayConclusion(choiceId);
+
+            // Chain the functions to display the messages and prompts sequentially
+            showCongratulations().then(() => {
+                showLoadingAnimation();
+                setTimeout(() => {
+                    Swal.close(); // Close the loading animation after a delay
+                    promptForEmail();
+                }, 5000); // Show the loading animation for 3 seconds
             });
             
         } else {
@@ -295,7 +298,7 @@ $(document).ready(function() {
         </div>`)
         $(`#result-${currentStep + 1}`).append(choice.result)
         $(`#result-${currentStep + 1}`).closest('.message-container').animate({ opacity: 1 }, 1000, function() { 
-            appendHeadlineCharacterByCharacter($(`#response-${currentStep + 1}`), previousStep.conclusion);
+            //appendHeadlineCharacterByCharacter($(`#response-${currentStep + 1}`), previousStep.conclusion);
         })
     }
 
@@ -307,14 +310,38 @@ function hideOtherChoice(choiceId, currentStep) {
 }
 
 
+function showCongratulations() {
+    return Swal.fire({
+        title: 'おめでとうございます！',
+        text: '私たちは最新のAIを使用してあなたの応答を分析しています。',
+        icon: 'success',
+        showConfirmButton: false,
+        timer: 3000 // Show for 2 seconds
+    });
+}
+
+function showLoadingAnimation() {
+    return Swal.fire({
+        title: '分析中...',
+        html: '最新のAIを使用して応答を分析しています。',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+}
+
 function promptForEmail() {
     return Swal.fire({
-        title: '結果を受け取る',
+        title: '生成を完了しました。',
         text: 'メールアドレスを入力して結果を見る',
         input: 'email',
         inputPlaceholder: 'メールアドレスを入力してください',
         showCancelButton: true,
-        confirmButtonText: '送信',
+        confirmButtonText: '結果を見る',
+        customClass: {
+            confirmButton: 'btn-gradient-3d-orange'
+        },
         cancelButtonText: 'キャンセル',
         footer: '<small>メールアドレスは <a href="https://hatoltd.com/privacy-policy/" target="_blank">プライバシーポリシー</a> に従ってのみ使用され、スパムや他の目的には使用されません。</small>',
         preConfirm: (email) => {
@@ -342,6 +369,7 @@ function promptForEmail() {
         }
     }).then((result) => {
         if (result.isConfirmed) {
+            Swal.fire('送信完了', 'あなたのメールアドレスが正常に送信されました。', 'success');
             return true;
         } else {
             Swal.fire('残念です', 'それは残念です。', 'info');

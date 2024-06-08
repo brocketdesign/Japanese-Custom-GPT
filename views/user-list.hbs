@@ -15,7 +15,8 @@
                 <tr>
                     <th>メール</th>
                     <th>タイムスタンプ</th>
-                    <th>アクション</th>
+                    <th>詳細</th>
+                    <th>フィードバック</th>
                 </tr>
             </thead>
             <tbody id="userTableBody">
@@ -38,6 +39,7 @@
                             <td>${user.email || 'N/A'}</td>
                             <td>${new Date(user.createdAt).toLocaleString()}</td>
                             <td><button class="btn btn-primary" onclick="showUserChoices('${user.userId}')">詳細</button></td>
+                            <td>${user.reason || 'N/A'}</td>
                         `;
                         tableBody.appendChild(row);
                     });

@@ -379,9 +379,9 @@ function promptForEmail() {
                 showConfirmButton: false,
                 html:
                     '<p>それは残念です。なぜ結果を見たくなかったのですか？</p>'+
-                    '<button id="option1" class="swal2-confirm swal2-styled">興味がない</button>' +
-                    '<button id="option2" class="swal2-confirm swal2-styled">結果に自信がない</button>' +
-                    '<button id="option3" class="swal2-confirm swal2-styled">テストに問題があった</button>',
+                    '<button id="option1" class="swal2-confirm swal2-styled">結果に価値を感じない</button>' +
+                    '<button id="option2" class="swal2-confirm swal2-styled">プライバシーの心配</button>' +
+                    '<button id="option3" class="swal2-confirm swal2-styled">メールを共有したくない</button>',
                 allowOutsideClick: false
             });
             return false;
@@ -390,15 +390,15 @@ function promptForEmail() {
 }
 
     $(document).on('click', '#option1', function() {
-        sendFeedback('興味がない');
+        sendFeedback('結果に価値を感じない');
     });
 
     $(document).on('click', '#option2', function() {
-        sendFeedback('結果に自信がない');
+        sendFeedback('プライバシーの心配');
     });
 
     $(document).on('click', '#option3', function() {
-        sendFeedback('テストに問題があった');
+        sendFeedback('メールを共有したくない');
     });
 
     function sendFeedback(choice) {

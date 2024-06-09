@@ -144,6 +144,7 @@ $(document).ready(function() {
     // Fetch the user's IP address and generate a unique ID
     fetchUserIP(function(userId,userIp) {
         // Now you can use the userID variable or id parameter here
+        sendCustomData({action:'viewpage'})
     });
     const storyId = "{{storyId}}";
     let currentStep = 0;
@@ -183,6 +184,8 @@ $(document).ready(function() {
     };
 
     $(document).on('click','#unlock-result',function(){
+
+        sendCustomData({action:'unlock-result'})
         promptForEmail()
     })
     function fetchStoryData(storyId) {
@@ -477,12 +480,13 @@ function lastchance(){
     }, 1000);
     
     $('#resultButton').click(function() {
+        sendCustomData({action:'lastCHance resultButton'})
         promptForEmail(true);
     });
 }
 
 function generateCompletion($element){
-    console.log(`generateCompletion : ${userId}`)
+    
     const apiUrl = '/api/openai-completion';
 
     $.ajax({
@@ -494,7 +498,7 @@ function generateCompletion($element){
             const sessionId = response.sessionId;
             const streamUrl = `/api/openai-completion-stream/${sessionId}`;
             const eventSource = new EventSource(streamUrl);
-
+            sendCustomData({action:'generateCompletion',sessionId})
             let markdownContent = "";
 
             eventSource.onmessage = function(event) {
@@ -513,6 +517,22 @@ function generateCompletion($element){
         },
         error: function(error) {
             console.error('Error:', error);
+        }
+    });
+}
+function sendCustomData(cutsomData){
+    $.ajax({
+        url: '/api/custom-data',
+        type: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        data: JSON.stringify({ userId: userId, cutsomData: cutsomData }),
+        success: function(response) {
+            
+        },
+        error: function(error) {
+            console.log(error.statusText);
         }
     });
 }

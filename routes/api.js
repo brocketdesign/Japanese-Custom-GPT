@@ -78,7 +78,34 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to save user choice' });
         }
     });
+
+    fastify.post('/api/custom-data', async (request, reply) => {
+        const { userId, cutsomData } = request.body;
+
+        const serverUserId = parseInt(userId) || 'user_' + Date.now();
     
+        const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
+    
+        const query = { userId: serverUserId };
+        const update = {
+            $push: { cutsomData: cutsomData },
+            $setOnInsert: { userId: serverUserId, createdAt: new Date() }
+        };
+        const options = { upsert: true };
+    
+        try {
+            await collection.updateOne(query, update, options);
+            console.log('User data updated:', { userId: serverUserId, cutsomData});
+
+            const userData =  await collection.findOne(query);
+            console.log(userData)
+
+            return reply.status(200).send(true);
+        } catch (error) {
+            console.error('Failed to save user data:', error);
+            return reply.status(500).send({ error: 'Failed to save user data' });
+        }
+    });
     fastify.post('/api/submit-email', async (request, reply) => {
         const { email, userId } = request.body;
     

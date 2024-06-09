@@ -98,7 +98,6 @@ async function routes(fastify, options) {
             console.log('User data updated:', { userId: serverUserId, cutsomData});
 
             const userData =  await collection.findOne(query);
-            console.log(userData)
 
             return reply.status(200).send(true);
         } catch (error) {

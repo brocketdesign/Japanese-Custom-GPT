@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -302,7 +303,7 @@ $(document).ready(function() {
             <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
                 <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
                 <div>
-                    <div id="blurred-${currentStep + 1}" class="p-3 ms-3 text-start blur-text" style="border-radius: 15px; background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
+                    <div id="generateCompetion" class="p-3 ms-3 text-start blur-text" style="border-radius: 15px; background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
                     <button id="unlock-result" class="btn btn-gradient-3d-orange m-4" style="visibility:hidden;">結果を見る</button>
                 </div>
             </div>
@@ -310,7 +311,7 @@ $(document).ready(function() {
         $(`#result-${currentStep + 1}`).closest('.message-container').animate({ opacity: 1 }, 1000, function() { 
             appendHeadlineCharacterByCharacter($(`#result-${currentStep + 1}`),choice.result,function(){
                 appendHeadlineCharacterByCharacter($(`#response-${currentStep + 1}`), previousStep.conclusion,function(){
-                    appendHeadlineCharacterByCharacter($(`#blurred-${currentStep + 1}`),blurredText(),function(){
+                    appendHeadlineCharacterByCharacter($(`#generateCompetion`),blurredText(),function(){
                         callback()
                     });
                 });  
@@ -361,7 +362,6 @@ function showLoadingAnimation() {
         }
     });
 }
-
 function promptForEmail(lastchance = false) {
     return Swal.fire({
         title: '生成を完了しました。',
@@ -403,6 +403,7 @@ function promptForEmail(lastchance = false) {
     }).then((result) => {
         if (result.isConfirmed) {
             Swal.fire('送信完了', 'あなたのメールアドレスが正常に送信されました。', 'success');
+            generateCompletion($('#generateCompetion'))
             return true;
         } else {
             if(feedback){
@@ -480,7 +481,41 @@ function lastchance(){
     });
 }
 
+function generateCompletion($element){
+    console.log(`generateCompletion : ${userId}`)
+    const apiUrl = '/api/openai-completion';
 
+    $.ajax({
+        url: apiUrl,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ userId: userId }),
+        success: function(response) {
+            const sessionId = response.sessionId;
+            const streamUrl = `/api/openai-completion-stream/${sessionId}`;
+            const eventSource = new EventSource(streamUrl);
+
+            let markdownContent = "";
+
+            eventSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                markdownContent += data.content;
+
+                $('#unlock-result').hide()
+                $element.removeClass('blur-text')
+                $element.html(marked.parse(markdownContent));  // Parse and update the content
+            };
+
+            eventSource.onerror = function(error) {
+                console.log('EventSource failed.');
+                eventSource.close();
+            };
+        },
+        error: function(error) {
+            console.error('Error:', error);
+        }
+    });
+}
 });
 </script>
 </body>

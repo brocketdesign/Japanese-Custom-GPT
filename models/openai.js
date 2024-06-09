@@ -12,7 +12,7 @@ const fetchOpenAICompletion = async (messages, res) => {
                 },
                 method: "POST",
                 body: JSON.stringify({
-                    model: 'gpt-3.5-turbo',
+                    model: 'gpt-4o',
                     messages,
                     temperature: 0.75,
                     top_p: 0.95,
@@ -41,7 +41,7 @@ const fetchOpenAICompletion = async (messages, res) => {
                         const content = JSON.parse(event.data).choices[0].delta?.content || "";
                         fullCompletion += content;
                         res.write(`data: ${JSON.stringify({ content })}\n\n`);
-                        res.flush();
+                        //res.flush();
                         chunkIndex++;
                     }
                 }

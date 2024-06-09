@@ -3,6 +3,10 @@
 #storyContainer {
   font-size: 18px;
 }
+.blur-text {
+  color: transparent;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.83);
+}
 
 .btn-flat-border {
     display: inline-block;

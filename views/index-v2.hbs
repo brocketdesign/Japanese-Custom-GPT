@@ -155,10 +155,23 @@ $(document).ready(function() {
         if (currentStep === totalSteps - 1) {
             hideOtherChoice(choiceId,currentStep + 1,function(){
                 displayConclusion(choiceId,function(){
-                    $('#unlock-result').css('visibility','initial')
+                    // Chain the functions to display the messages and prompts sequentially
+
+                    setTimeout(function(){
+                        showCongratulations().then(() => {
+                            showLoadingAnimation();
+                            setTimeout(() => {
+                                Swal.close(); // Close the loading animation after a delay
+                                promptForEmail();
+                            }, 3000); // Show the loading animation for 3 seconds
+                        });
+                    },5000)
+
                 });
             })
 
+
+            
         } else {
             currentStep++;
             hideOtherChoice(choiceId,currentStep,function(){
@@ -181,9 +194,6 @@ $(document).ready(function() {
         });
     };
 
-    $(document).on('click','#unlock-result',function(){
-        promptForEmail()
-    })
     function fetchStoryData(storyId) {
         $.ajax({
             url: `/api/story/${storyId}`,
@@ -288,7 +298,7 @@ $(document).ready(function() {
         const previousStep = storyData[`step${currentStep + 1}`]; // Previous step where the choice was made      
         const choice = previousStep.choices.find(c => c.choiceId === choiceId);
         const lastStep = storyData[`step${currentStep + 1}`];
-
+        console.log({choiceId,currentStep})
         $('#chatContainer').append(`
         <div id="container-${currentStep}">
             <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
@@ -301,24 +311,20 @@ $(document).ready(function() {
             </div>
             <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
                 <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
-                <div>
-                    <div id="blurred-${currentStep + 1}" class="p-3 ms-3 text-start blur-text" style="border-radius: 15px; background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
-                    <button id="unlock-result" class="btn btn-gradient-3d-orange m-4" style="visibility:hidden;">結果を見る</button>
-                </div>
+                <div id="blurred-${currentStep + 1}" class="p-3 ms-3 text-start blur-text" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
             </div>
         </div>`)
         $(`#result-${currentStep + 1}`).closest('.message-container').animate({ opacity: 1 }, 1000, function() { 
             appendHeadlineCharacterByCharacter($(`#result-${currentStep + 1}`),choice.result,function(){
                 appendHeadlineCharacterByCharacter($(`#response-${currentStep + 1}`), previousStep.conclusion,function(){
-                    appendHeadlineCharacterByCharacter($(`#blurred-${currentStep + 1}`),blurredText(),function(){
+                    appendHeadlineCharacterByCharacter($(`#blurred-${currentStep + 1}`),blurredText())
                         callback()
-                    });
                 });  
             })
         })
     }
 function blurredText(){
-    return `オンラインビジネスを始めるには、まずビジネスアイデアを具体化し、ターゲット市場を調査します。次に、ビジネスプランを作成し、必要な資金を確保します。ウェブサイトやオンラインショップを設立し、商品やサービスを提供します。`
+    return `オンラインビジネスを始めるには、まずビジネスアイデアを具体化し、ターゲット市場を調査します。次に、ビジネスプランを作成し、必要な資金を確保します。ウェブサイトやオンラインショップを設立し、商品やサービスを提供します。SEOやSNSを活用してマーケティングを行い、顧客基盤を広げます。信頼性を高めるために顧客サポートを充実させ、フィードバックを元に改善を続けます。これにより、持続可能なオンラインビジネスを構築できます。オンラインビジネスを始めるには、まずビジネスアイデアを具体化し、ターゲット市場を調査します。次に、ビジネスプランを作成し、必要な資金を確保します。ウェブサイトやオンラインショップを設立し、商品やサービスを提供します。SEOやSNSを活用してマーケティングを行い、顧客基盤を広げます。信頼性を高めるために顧客サポートを充実させ、フィードバックを元に改善を続けます。これにより、持続可能なオンラインビジネスを構築できます。オンラインビジネスを始めるには、まずビジネスアイデアを具体化し、ターゲット市場を調査します。次に、ビジネスプランを作成し、必要な資金を確保します。ウェブサイトやオンラインショップを設立し、商品やサービスを提供します。SEOやSNSを活用してマーケティングを行い、顧客基盤を広げます。信頼性を高めるために顧客サポートを充実させ、フィードバックを元に改善を続けます。これにより、持続可能なオンラインビジネスを構築できます。オンラインビジネスを始めるには、まずビジネスアイデアを具体化し、ターゲット市場を調査します。次に、ビジネスプランを作成し、必要な資金を確保します。ウェブサイトやオンラインショップを設立し、商品やサービスを提供します。SEOやSNSを活用してマーケティングを行い、顧客基盤を広げます。信頼性を高めるために顧客サポートを充実させ、フィードバックを元に改善を続けます。これにより、持続可能なオンラインビジネスを構築できます。`
 }
 function hideOtherChoice(choiceId, currentStep, callback) {
 

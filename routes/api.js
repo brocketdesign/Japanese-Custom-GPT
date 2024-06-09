@@ -199,16 +199,17 @@ async function routes(fastify, options) {
 
 
     fastify.post('/api/openai-completion', (request, reply) => {
-        const { messages } = request.body;
+        const {userId} = request.body
         const sessionId = Math.random().toString(36).substring(2, 15); // Generate a unique session ID
-        sessions.set(sessionId, { messages });
+        sessions.set(sessionId , {userId} );
         reply.send({ sessionId });
     });
     
     fastify.get('/api/openai-completion-stream/:sessionId', async (request, reply) => {
         const { sessionId } = request.params;
         const session = sessions.get(sessionId);
-    
+        const userId = session.userId;
+
         if (!session) {
             reply.status(404).send({ error: 'Session not found' });
             return;
@@ -220,7 +221,52 @@ async function routes(fastify, options) {
         reply.raw.flushHeaders();
     
         try {
-            const completion = await fetchOpenAICompletion(session.messages, reply.raw);
+            // Retrieve user data
+            const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
+            const userData = await userDataCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
+    
+            if (!userData) {
+                return reply.status(404).send({ error: 'User data not found' });
+            }
+    
+            // Extract storyId from user data
+            const { storyId, choices } = userData;
+
+            // Retrieve story
+            const storiesCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('stories');
+            const story = await storiesCollection.findOne({ _id: new fastify.mongo.ObjectId(storyId) });
+    
+            if (!story) {
+                return reply.status(404).send({ error: 'Story not found' });
+            }
+
+            // Construct the prompt with story introduction and user choices
+            let prompt = `
+            下記の内容を入れてこの人にピッタリの収入増を目指す方法を診断してください。診断の結果だけを出してください。
+            性格の強みと弱みを明確にする
+            具体的な行動ステップを提案する
+            目標設定の支援
+            リソースの提供
+            継続的なフィードバックとサポートの提案
+            最後にコメントで「さあ、新しい収入の道が見えてきました。」のようなスタートするための励ましコメントを入れて、友好的で励みになる分析とアドバイスを提供してください。\n\n`;
+    
+            for (const step in story.content.story) {
+                const storyStep = story.content.story[step];
+                const userChoice = choices.find(choice => storyStep.choices.some(choiceOption => choiceOption.choiceId === choice.choice));
+
+                if (userChoice) {
+                    const selectedChoice = storyStep.choices.find(choice => choice.choiceId === userChoice.choice);
+                    prompt += `Q: ${storyStep.introduction}\n`;
+                    prompt += `A: ${selectedChoice.choiceText}\n\n`;
+                }
+            }
+
+            const messages = [
+                {"role": "system", "content": "友好的で励みになるアドバイザー"},
+                {"role": "user", "content": prompt},
+            ]          
+
+            const completion = await fetchOpenAICompletion(messages, reply.raw);
             reply.raw.end();
         } catch (error) {
             reply.status(500).send({ error: 'Error fetching OpenAI completion' });

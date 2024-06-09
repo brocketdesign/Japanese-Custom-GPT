@@ -18,7 +18,7 @@ function appendHeadlineCharacterByCharacter($element, headline, callback) {
                         if (callback) callback();
                     }
                 }, 25);
-            }, 250);
+            }, 100);
         }, 500);
     });
 

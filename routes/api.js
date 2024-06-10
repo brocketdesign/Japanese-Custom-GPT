@@ -53,7 +53,46 @@ async function routes(fastify, options) {
             reply.status(500).send({ error: 'Failed to retrieve story' });
         }
     });
-    
+
+    fastify.post('/api/set-story', async (request, reply) => {
+        const storyId = request.body.storyId;
+
+        if (!storyId) {
+            return reply.status(400).send({ error: 'Story ID is required' });
+        }
+
+        const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+        const activeStoryCollection = db.collection('activeStory');
+        const storiesCollection = db.collection('stories');
+
+        try {
+            // Convert storyId to ObjectId
+            const objectId = new fastify.mongo.ObjectId(storyId);
+
+            // Find the story with the given _id
+            const story = await storiesCollection.findOne({ _id: objectId });
+
+            if (!story) {
+            return reply.status(404).send({ error: 'Story not found' });
+            }
+
+            // Remove any existing active story in the activeStory collection
+            await activeStoryCollection.deleteMany({});
+
+            // Set the new active story in the activeStory collection
+            await activeStoryCollection.insertOne({ storyId });
+
+            // Set isActive to true for the selected story and false for all others
+            await storiesCollection.updateOne({ _id: objectId }, { $set: { isActive: true } });
+            await storiesCollection.updateMany({ _id: { $ne: objectId } }, { $set: { isActive: false } });
+
+            reply.send({ message: 'Story activated successfully', storyId });
+        } catch (err) {
+            request.log.error(err);
+            reply.status(500).send({ error: 'An error occurred while setting the active story' });
+        }
+    });
+
     fastify.post('/api/data', async (request, reply) => {
         const { choice, userId, userIp, storyId } = request.body;
 
@@ -225,7 +264,6 @@ async function routes(fastify, options) {
     
     fastify.post('/api/openai-completion', (request, reply) => {
         const { userId } = request.body;
-        console.log({userId})
         const sessionId = Math.random().toString(36).substring(2, 15); // Generate a unique session ID
         sessions.set(sessionId, { userId });
         reply.send({ sessionId });

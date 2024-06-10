@@ -12,7 +12,6 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       root: path.join(__dirname, 'public'),
       prefix: '/', // serving static files from 'public'
     });
-
     // Register Handlebars as view engine using @fastify/view
     fastify.register(require('@fastify/view'), {
       engine: {
@@ -24,34 +23,35 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       origin: true,
       methods: ['POST'],
       allowedHeaders: ['Content-Type', 'Authorization']
-  });
-  
+    });
     // Register MongoDB with the pre-configured client
     fastify.register(require('@fastify/mongodb'), { client: client });
     // Register the SSE plugin
     fastify.register(require('fastify-sse'));
+    // Register the formbody plugin to handle application/x-www-form-urlencoded
+    fastify.register(require('@fastify/formbody'));
     // Register API routes
     fastify.register(require('./routes/api'));
 
     // A simple root route
     fastify.get('/', async (request, reply) => {
-      const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('stories');
-      reply.redirect(`/story/6665824f9e78ccaff4c644f5`);
-      return
+      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const activeStoryCollection = db.collection('activeStory');
+    
       try {
-          const latestStory = await collection.findOne({}, { sort: { createdAt: -1 } });
-          const storyId = latestStory ? latestStory._id.toString() : null;
-
-          if (storyId) {
-              reply.redirect(`/story/${storyId}`);
-          } else {
-              reply.status(404).send({ error: 'No stories found' });
-          }
+        // Find the active story
+        const activeStory = await activeStoryCollection.findOne({});
+    
+        if (activeStory && activeStory.storyId) {
+          reply.redirect(`/story/${activeStory.storyId}`);
+        } else {
+          reply.status(404).send({ error: 'No active story found' });
+        }
       } catch (error) {
-          fastify.log.error('Failed to retrieve the latest story:', error);
-          reply.status(500).send({ error: 'Failed to retrieve the latest story' });
+        fastify.log.error('Failed to retrieve the active story:', error);
+        reply.status(500).send({ error: 'Failed to retrieve the active story' });
       }
-  });
+    });
  
     fastify.get('/users', (request, reply) => {
       if(process.env.MODE == 'local'){

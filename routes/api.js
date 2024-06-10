@@ -18,12 +18,13 @@ async function routes(fastify, options) {
         if (existingStory) {
             return reply.status(409).send({ error: 'A story with this name already exists' });
         }
-    
+        const today = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
+        const dateObj = new Date(today + ' UTC');
         // Create a document to insert
         const storyDocument = {
             name: name,
             content: content,
-            createdAt: new Date()
+            createdAt: dateObj
         };
     
         try {
@@ -100,10 +101,12 @@ async function routes(fastify, options) {
     
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
     
+        const today = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
+        const dateObj = new Date(today + ' UTC');
         const query = { userId: serverUserId };
         const update = {
-            $push: { choices: { choice, timestamp: new Date() } },
-            $setOnInsert: { userId: serverUserId, userIp: userIp, storyId:storyId, createdAt: new Date() }
+            $push: { choices: { choice, timestamp: dateObj } },
+            $setOnInsert: { userId: serverUserId, userIp: userIp, storyId:storyId, createdAt: dateObj }
         };
         const options = { upsert: true };
     
@@ -119,31 +122,60 @@ async function routes(fastify, options) {
     });
 
     fastify.post('/api/custom-data', async (request, reply) => {
-        const { userId, cutsomData } = request.body;
-
-        const serverUserId = parseInt(userId) || 'user_' + Date.now();
+        const { userId, customData } = request.body;
     
+        const serverUserId = parseInt(userId) || 'user_' + Date.now();
+        
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
     
+        const today = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
+        const dateObj = new Date(today + ' UTC');
         const query = { userId: serverUserId };
-        const update = {
-            $push: { cutsomData: cutsomData },
-            $setOnInsert: { userId: serverUserId, createdAt: new Date() }
-        };
-        const options = { upsert: true };
-    
+        
         try {
-            await collection.updateOne(query, update, options);
-            console.log('User data updated:', { userId: serverUserId, cutsomData});
-
-            const userData =  await collection.findOne(query);
-
+            const userData = await collection.findOne(query);
+            
+            if (userData) {
+                // Check if the action already exists
+                const existingActionIndex = userData.customData.findIndex(data => data && data.action === customData.action);
+    
+                if (existingActionIndex !== -1) {
+                    // Update the existing action
+                    userData.customData[existingActionIndex] = customData;
+                } else {
+                    // Add the new action
+                    userData.customData.push(customData);
+                }
+    
+                // Remove duplicate actions if any (only the first occurrence should remain)
+                const uniqueActions = [];
+                userData.customData = userData.customData.filter(data => {
+                    if (data === null) return false;
+                    const isDuplicate = uniqueActions.includes(data.action);
+                    if (!isDuplicate) uniqueActions.push(data.action);
+                    return !isDuplicate;
+                });                
+    
+                await collection.updateOne(query, { $set: { customData: userData.customData } });
+            } else {
+                // Insert new user data if it doesn't exist
+                const update = {
+                    $push: { customData: customData },
+                    $setOnInsert: { userId: serverUserId, createdAt: dateObj }
+                };
+                const options = { upsert: true };
+                await collection.updateOne(query, update, options);
+            }
+    
+            console.log('User data updated:', { userId: serverUserId, customData, createdAt: dateObj });
             return reply.status(200).send(true);
         } catch (error) {
             console.error('Failed to save user data:', error);
             return reply.status(500).send({ error: 'Failed to save user data' });
         }
     });
+    
+
     fastify.post('/api/submit-email', async (request, reply) => {
         const { email, userId } = request.body;
     
@@ -162,9 +194,10 @@ async function routes(fastify, options) {
             console.log('Email already exists');
             return reply.status(400).send({ error: 'Email already exists' });
         }
-    
+        const today = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
+        const dateObj = new Date(today + ' UTC');
         const query = { userId };
-        const update = { $set: { email, createdAt: new Date() } };
+        const update = { $set: { email, createdAt: dateObj } };
     
         try {
             await collection.updateOne(query, update);

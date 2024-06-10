@@ -3,14 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/img/logo.webp" type="image/webp">
     <title>ユーザーデータ</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 </head>
 <body>
     <div class="container mt-5">
         <h1 class="mb-4">ユーザーデータ</h1>
+        <div class="d-flex mb-3">
+            <input type="text" id="datepicker" class="form-control me-2" placeholder="Select Date">
+            <button id="yesterdayButton" class="btn btn-secondary me-2">Yesterday</button>
+            <button id="todayButton" class="btn btn-secondary">Today</button>
+        </div>
         <div class="d-flex">
             <p><span id="count"></span>/<span id="total-count"></span></p>
         </div>
@@ -19,6 +27,7 @@
                 <tr>
                     <th>メール</th>
                     <th>タイムスタンプ</th>
+                    <th>スクロール</th>
                     <th>詳細</th>
                     <th>フィードバック</th>
                     <th>生成</th>
@@ -32,88 +41,156 @@
 
     <script>
         $(document).ready(function() {
-            $.ajax({
-                url: '/api/user-data',
-                method: 'GET',
-                dataType: 'json',
-                success: function(data) {
-                    let count = 0;
-                    $('#total-count').append(data.length);
-                    const tableBody = $('#userTableBody');
-                    tableBody.empty();
-
-                    data.forEach(function(user) {
-                        if (user.choices && user.choices.length > 0) {
-                            count++;
-                            const row = $('<tr>').html(`
-                                <td>${user.email || 'N/A'}</td>
-                                <td>${new Date(user.createdAt).toLocaleString()}</td>
-                                <td><button class="btn btn-primary" onclick="showUserChoices('${user.userId}')">詳細</button></td>
-                                <td>${user.reason || 'N/A'}</td>
-                                <td><a href="/generate/${user._id}" target="_blank">生成</a>
-                            `);
-                            tableBody.append(row);
-                        }
-                    });
-                    $('#count').append(count);
-                },
-                error: function(error) {
-                    console.error('Failed to fetch user data:', error);
+            $("#datepicker").datepicker({
+                dateFormat: "yy-mm-dd",
+                onSelect: function(dateText) {
+                    updateTable(new Date(dateText));
                 }
             });
-        });
 
+            $('#yesterdayButton').click(function() {
+                let yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                updateTable(yesterday);
+            });
 
-function showUserChoices(userId) {
-    fetch(`/api/user-data?userId=${userId}`)
-        .then(response => response.json())
-        .then(user => {
-            if (user.choices && user.choices.length > 0) {
-                const choicesTable = user.choices.map(choice => `
-                    <tr>
-                        <td>${choice.choice}</td>
-                        <td>${new Date(choice.timestamp).toLocaleString()}</td>
-                    </tr>
-                `).join('');
+            $('#todayButton').click(function() {
+                updateTable(new Date());
+            });
 
-                Swal.fire({
-                    title: 'ユーザーの選択肢',
-                    html: `
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>選択</th>
-                                    <th>タイムスタンプ</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${choicesTable}
-                            </tbody>
-                        </table>
-                    `,
-                    width: '600px',
-                    showCloseButton: true,
-                    focusConfirm: false
-                });
-            } else {
-                Swal.fire({
-                    title: '情報',
-                    text: '選択肢が見つかりませんでした。',
-                    icon: 'info',
-                    confirmButtonText: 'OK'
+            function updateTable(selectedDate) {
+                // Define options for Japanese date format
+                const options = {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    timeZone: 'Asia/Tokyo',
+                    timeZoneName: 'short'
+                };
+                $.ajax({
+                    url: '/api/user-data',
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function(data) {
+                        let count = 0;
+                        $('#total-count').text(data.length);
+                        const tableBody = $('#userTableBody');
+                        tableBody.empty();
+
+                        // Define the start and end of the selected date
+                        var startDate = new Date(selectedDate);
+                        startDate.setHours(0, 0, 0, 0);
+                        var endDate = new Date(startDate);
+                        endDate.setDate(endDate.getDate() + 1);
+
+                        data.forEach(function(user) {
+                            if (user.choices && user.choices.length > 0) {
+                                var date = new Date(user.createdAt);
+                                // Check if the user's createdAt date is within the selected date
+                                if (date >= startDate && date < endDate) {
+                                    count++;
+                                    var formattedDate = date.toLocaleDateString('ja-JP', options);
+                                    let maxScroll = getActionObject(user.customData, 'scroll');
+                                    maxScroll = maxScroll ? parseInt(maxScroll.scrollPercentage) : 0;
+                                    const row = $('<tr>').html(`
+                                        <td>${user.email || 'N/A'}</td>
+                                        <td>${formattedDate}</td>
+                                        <td>${maxScroll}%</td>
+                                        <td><button class="btn btn-primary" onclick="showUserChoices('${user.userId}')">詳細</button></td>
+                                        <td>${user.reason || 'N/A'}</td>
+                                        <td><a href="/generate/${user._id}" target="_blank">生成</a></td>
+                                    `);
+                                    tableBody.append(row);
+                                }
+                            }
+                        });
+
+                        $('#count').text(count);
+                    },
+                    error: function(error) {
+                        console.error('Failed to fetch user data:', error);
+                    }
                 });
             }
-        })
-        .catch(error => {
-            Swal.fire({
-                title: 'エラー',
-                text: 'ユーザーの選択肢を取得できませんでした。',
-                icon: 'error',
-                confirmButtonText: 'OK'
-            });
-            console.error('Failed to fetch user choices:', error);
+
+            // Initial load for today
+            updateTable(new Date());
         });
-}
+
+        function getActionObject(customData, action) {
+            // Implement your logic to extract the action object from customData
+            return customData.find(item => item.action === action);
+        }
+
+        function showUserChoices(userId) {
+            // Implement your logic to show user choices
+            alert('Showing choices for user: ' + userId);
+        }
+
+    function getActionObject(customData, actionName) {
+        var actionObject = null;
+        $.each(customData, function(index, data) {
+            if (data && data.action === actionName) {
+                actionObject = data;
+                return false; // Break the loop once the action is found
+            }
+        });
+        return actionObject;
+    }
+
+    function showUserChoices(userId) {
+        fetch(`/api/user-data?userId=${userId}`)
+            .then(response => response.json())
+            .then(user => {
+                if (user.choices && user.choices.length > 0) {
+                    const choicesTable = user.choices.map(choice => `
+                        <tr>
+                            <td>${choice.choice}</td>
+                            <td>${new Date(choice.timestamp).toLocaleString()}</td>
+                        </tr>
+                    `).join('');
+
+                    Swal.fire({
+                        title: 'ユーザーの選択肢',
+                        html: `
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>選択</th>
+                                        <th>タイムスタンプ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${choicesTable}
+                                </tbody>
+                            </table>
+                        `,
+                        width: '600px',
+                        showCloseButton: true,
+                        focusConfirm: false
+                    });
+                } else {
+                    Swal.fire({
+                        title: '情報',
+                        text: '選択肢が見つかりませんでした。',
+                        icon: 'info',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    title: 'エラー',
+                    text: 'ユーザーの選択肢を取得できませんでした。',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+                console.error('Failed to fetch user choices:', error);
+            });
+    }
 
     </script>
 </body>

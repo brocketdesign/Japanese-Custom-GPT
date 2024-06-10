@@ -672,7 +672,6 @@ select {
 
 .p-best-illust span:before {
   content: '';
-  background: url(/img/flag.gif);
   background-size: cover;
   width: 66px;
   height: 59px;

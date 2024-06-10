@@ -225,6 +225,7 @@ async function routes(fastify, options) {
     
     fastify.post('/api/openai-completion', (request, reply) => {
         const { userId } = request.body;
+        console.log({userId})
         const sessionId = Math.random().toString(36).substring(2, 15); // Generate a unique session ID
         sessions.set(sessionId, { userId });
         reply.send({ sessionId });
@@ -233,7 +234,7 @@ async function routes(fastify, options) {
     fastify.get('/api/openai-completion-stream/:sessionId', async (request, reply) => {
         const { sessionId } = request.params;
         const session = sessions.get(sessionId);
-
+        console.log({sessionId})
         if (!session) {
             reply.status(404).send({ error: 'Session not found' });
             return;
@@ -246,6 +247,7 @@ async function routes(fastify, options) {
     
         try {
             const userId = session.userId;
+            console.log({userId})
 
             const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
             let userData = isNewObjectId(userId) ? await userDataCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) }) : await userDataCollection.findOne({ userId: parseInt(userId) });

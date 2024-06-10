@@ -170,400 +170,403 @@ $(document).ready(function() {
     } 
 
     // Fetch the user's IP address and generate a unique ID
-    fetchUserIP(function(userId,userIp) {
+    fetchUserIP(function(new_userId,userIp) {
+        sendCustomData({action: 'viewpage'});
         // Now you can use the userID variable or id parameter here
-        sendCustomData({action:'viewpage'})
-    });
-    const storyId = "{{storyId}}";
-    let currentStep = 0;
-    let totalSteps = 0;
-    let storyData = {};
-    let feedback = false
-    fetchStoryData(storyId); // Fetch the initial story data when the page loads
-    
-     window.choosePath = function(choiceId) {
-        if (currentStep === totalSteps - 1) {
-            hideOtherChoice(choiceId,currentStep + 1,function(){
-                displayConclusion(choiceId,function(){
-                    $('#unlock-result').css('visibility','initial')
-                });
-            })
+        const storyId = "{{storyId}}";
+        let currentStep = 0;
+        let totalSteps = 0;
+        let storyData = {};
+        let feedback = false
+        fetchStoryData(storyId); // Fetch the initial story data when the page loads
+        
+        window.choosePath = function(choiceId) {
+            if (currentStep === totalSteps - 1) {
+                hideOtherChoice(choiceId,currentStep + 1,function(){
+                    displayConclusion(choiceId,function(){
+                        $('#unlock-result').css('visibility','initial')
+                    });
+                })
 
-        } else {
-            currentStep++;
-            hideOtherChoice(choiceId,currentStep,function(){
-                updateStoryContent(choiceId);
-            })
-        }
-        $.ajax({
-            url: '/api/data',
-            type: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            data: JSON.stringify({ choice: choiceId, userId: userId, userIp: userIp, storyId:storyId }),
-            success: function(response) {
-                
-            },
-            error: function(error) {
-                console.log(error.statusText);
+            } else {
+                currentStep++;
+                hideOtherChoice(choiceId,currentStep,function(){
+                    updateStoryContent(choiceId);
+                })
             }
-        });
-    };
+            $.ajax({
+                url: '/api/data',
+                type: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify({ choice: choiceId, userId: userId, userIp: userIp, storyId:storyId }),
+                success: function(response) {
+                    
+                },
+                error: function(error) {
+                    console.log(error.statusText);
+                }
+            });
+        };
 
-    $(document).on('click','#unlock-result',function(){
+        $(document).on('click','#unlock-result',function(){
 
-        sendCustomData({action:'unlock-result'})
-        promptForEmail()
-    })
-    function fetchStoryData(storyId) {
-        $.ajax({
-            url: `/api/story/${storyId}`,
-            type: 'GET',
-            dataType: 'json',
-            success: function(data) {
-                storyData = data.content.story;
-                totalSteps = Object.keys(storyData).length;
-                storyName = data.name
-
-                $('h1').text(storyName)
-                displayStep(storyData, currentStep);
-            },
-            error: function(xhr, status, error) {
-                Swal.fire({
-                    title: 'エラー!',
-                    text: 'ストーリーの読み込みに失敗しました: ' + error,
-                    icon: 'error',
-                    confirmButtonText: 'Ok',
-                    showCancelButton: true,
-                    cancelButtonText: '一覧を見る'
-                }).then((result) => {
-                    if (result.dismiss === Swal.DismissReason.cancel) {
-                        window.location.href = '/stories';
-                    }
-                });
-
-            }
-        });
-    }
-
-    function displayStep(storyData, currentStep) {
-        const step = storyData[`step${currentStep + 1}`];
-        $(`.card-header .count`).text(`${currentStep + 1}/${totalSteps}`)
-        $('#chatContainer').append(`
-        <div id="container-${currentStep}">
-            <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
-                <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
-                <div id="message-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
-            </div>
-            
-            <div id="response-${currentStep}"></div>
-        </div>`)
-        step.choices.forEach((choice, index) => {
-            const button = $(`<button class="btn btn-flat-border my-2" data-id="${choice.choiceId}" onclick="choosePath('${choice.choiceId}')">${choice.choiceText}</button>`);
-            button.css('opacity',0)
-            $(`#response-${currentStep}`).append(button);
-        });
-        appendHeadlineCharacterByCharacter($(`#message-${currentStep}`), step.introduction,function(){
-            $(`#response-${currentStep} button`).each(function(){
-                $(this).css('opacity',1)
-            })
+            sendCustomData({action:'unlock-result'})
+            promptForEmail()
         })
-    }
+        function fetchStoryData(storyId) {
+            $.ajax({
+                url: `/api/story/${storyId}`,
+                type: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    storyData = data.content.story;
+                    totalSteps = Object.keys(storyData).length;
+                    storyName = data.name
 
-    function updateStoryContent(choiceId) {
-        const previousStep = storyData[`step${currentStep}`]; // Previous step where the choice was made
-        const choice = previousStep.choices.find(c => c.choiceId === choiceId);
-        $(`.card-header .count`).text(`${currentStep + 1}/${totalSteps}`)
-        $('#chatContainer').append(`
-        <div id="container-${currentStep}">
+                    $('h1').text(storyName)
+                    displayStep(storyData, currentStep);
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        title: 'エラー!',
+                        text: 'ストーリーの読み込みに失敗しました: ' + error,
+                        icon: 'error',
+                        confirmButtonText: 'Ok',
+                        showCancelButton: true,
+                        cancelButtonText: '一覧を見る'
+                    }).then((result) => {
+                        if (result.dismiss === Swal.DismissReason.cancel) {
+                            window.location.href = '/stories';
+                        }
+                    });
 
-            <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
-                <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
-                <div id="result-${currentStep - 1}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
-            </div>
-            
-            <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
-                <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
-                <div id="message-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
-            </div>
+                }
+            });
+        }
 
-            <div id="response-${currentStep}"></div>
-        </div>`)
-
-        if (currentStep < totalSteps) {
-
-            const nextStep = storyData[`step${currentStep + 1}`];
-            nextStep.choices.forEach(choice => {
-                const button = $(`<button class="btn btn-flat-border my-2" data-id="${choice.choiceId}" onclick="choosePath('${choice.choiceId}')">${choice.choiceText}</button>`)
+        function displayStep(storyData, currentStep) {
+            const step = storyData[`step${currentStep + 1}`];
+            $(`.card-header .count`).text(`${currentStep + 1}/${totalSteps}`)
+            $('#chatContainer').append(`
+            <div id="container-${currentStep}">
+                <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
+                    <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
+                    <div id="message-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
+                </div>
+                
+                <div id="response-${currentStep}"></div>
+            </div>`)
+            step.choices.forEach((choice, index) => {
+                const button = $(`<button class="btn btn-flat-border my-2" data-id="${choice.choiceId}" onclick="choosePath('${choice.choiceId}')">${choice.choiceText}</button>`);
                 button.css('opacity',0)
                 $(`#response-${currentStep}`).append(button);
             });
-
-            $(`#result-${currentStep - 1}`).closest('.message-container').animate({ opacity: 1 }, 1000, function() { 
-
-                appendHeadlineCharacterByCharacter($(`#result-${currentStep - 1}`),choice.result,function(){
-                    appendHeadlineCharacterByCharacter($(`#message-${currentStep}`), nextStep.introduction,function(){
-                        $(`#response-${currentStep} button`).each(function(){
-                            $(this).css('opacity',1)
-                        })
-                    });
+            appendHeadlineCharacterByCharacter($(`#message-${currentStep}`), step.introduction,function(){
+                $(`#response-${currentStep} button`).each(function(){
+                    $(this).css('opacity',1)
                 })
+            })
+        }
+
+        function updateStoryContent(choiceId) {
+            const previousStep = storyData[`step${currentStep}`]; // Previous step where the choice was made
+            const choice = previousStep.choices.find(c => c.choiceId === choiceId);
+            $(`.card-header .count`).text(`${currentStep + 1}/${totalSteps}`)
+            $('#chatContainer').append(`
+            <div id="container-${currentStep}">
+
+                <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
+                    <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
+                    <div id="result-${currentStep - 1}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
+                </div>
                 
-            })
-
-
-        }
-    }
-
-    function displayConclusion(choiceId,callback) {
-        const previousStep = storyData[`step${currentStep + 1}`]; // Previous step where the choice was made      
-        const choice = previousStep.choices.find(c => c.choiceId === choiceId);
-        const lastStep = storyData[`step${currentStep + 1}`];
-
-        $('#chatContainer').append(`
-        <div id="container-${currentStep}">
-            <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
-                <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
-                <div id="result-${currentStep + 1}" class="p-3 ms-3 text-start" style="border-radius: 15px; background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
-            </div>
-            <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
-                <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
-                <div id="response-${currentStep + 1}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
-            </div>
-            <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
-                <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
-                <div>
-                    <div id="generateCompetion" class="p-3 ms-3 text-start blur-text" style="border-radius: 15px; background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
-                    <button id="unlock-result" class="btn btn-gradient-3d-orange m-4" style="visibility:hidden;">無料で結果を見る</button>
+                <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
+                    <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
+                    <div id="message-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
                 </div>
-            </div>
-        </div>`)
-        $(`#result-${currentStep + 1}`).closest('.message-container').animate({ opacity: 1 }, 1000, function() { 
-            appendHeadlineCharacterByCharacter($(`#result-${currentStep + 1}`),choice.result,function(){
-                appendHeadlineCharacterByCharacter($(`#response-${currentStep + 1}`), previousStep.conclusion,function(){
-                    appendHeadlineCharacterByCharacter($(`#generateCompetion`),blurredText(),function(){
-                        callback()
-                    });
-                });  
-            })
-        })
-    }
-function blurredText(){
-    return `オンラインビジネスを始めるには、まずビジネスアイデアを具体化し、ターゲット市場を調査します。次に、ビジネスプランを作成し、必要な資金を確保します。ウェブサイトやオンラインショップを設立し、商品やサービスを提供します。`
-}
-function hideOtherChoice(choiceId, currentStep, callback) {
 
-    $(`#response-${currentStep - 1} button`).each(function() {
-        const currentId = $(this).data('id')
-        if(choiceId == currentId){
-            const response = $(this).text()
-            $(`#response-${currentStep - 1}`).remove()
-            $(`#container-${currentStep - 1}`).append(`
-                <div class="d-flex flex-row justify-content-end mb-4 message-container" style="opacity:0;">
-                    <div id="response-${currentStep - 1}" class="p-3 me-3 border" style="border-radius: 15px; background-color: #fbfbfb;">${response}</div>
-                </div>
-            `)
-            $(`#response-${currentStep - 1}`).closest('.message-container').animate({ opacity: 1 }, 1000,function(){
-                callback()
-            })
-        }
-        $(this).remove()
-    });
-}
+                <div id="response-${currentStep}"></div>
+            </div>`)
 
+            if (currentStep < totalSteps) {
 
-function showCongratulations() {
-    return Swal.fire({
-        title: 'おめでとうございます！',
-        text: '私たちは最新のAIを使用してあなたの応答を分析しています。',
-        icon: 'success',
-        showConfirmButton: false,
-        timer: 3000 // Show for 2 seconds
-    });
-}
-
-function showLoadingAnimation() {
-    return Swal.fire({
-        title: '分析中...',
-        html: '最新のAIを使用して応答を分析しています。',
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
-    });
-}
-function promptForEmail(lastchance = false) {
-    return Swal.fire({
-        title: '生成を完了しました。',
-        text: 'メールアドレスを入力して結果を見る',
-        input: 'email',
-        inputPlaceholder: 'メールアドレスを入力してください',
-        showCancelButton: true,
-        confirmButtonText: '結果を見る',
-        customClass: {
-            confirmButton: 'btn-gradient-3d-orange'
-        },
-        cancelButtonText: 'キャンセル',
-        showCancelButton:!lastchance,
-        allowOutsideClick:!lastchance,
-        footer: '<small>メールアドレスは <a href="https://hatoltd.com/privacy-policy/" target="_blank">プライバシーポリシー</a> に従ってのみ使用され、スパムや他の目的には使用されません。</small>',
-        preConfirm: (email) => {
-            return new Promise((resolve, reject) => {
-                $.ajax({
-                    url: '/api/submit-email',
-                    type: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    data: JSON.stringify({ email, userId: userId, userIp: userIp }),
-                    success: function(response) {
-                        resolve(response);
-                    },
-                    error: function(error) {
-                        reject(error.statusText);
-                    }
+                const nextStep = storyData[`step${currentStep + 1}`];
+                nextStep.choices.forEach(choice => {
+                    const button = $(`<button class="btn btn-flat-border my-2" data-id="${choice.choiceId}" onclick="choosePath('${choice.choiceId}')">${choice.choiceText}</button>`)
+                    button.css('opacity',0)
+                    $(`#response-${currentStep}`).append(button);
                 });
+
+                $(`#result-${currentStep - 1}`).closest('.message-container').animate({ opacity: 1 }, 1000, function() { 
+
+                    appendHeadlineCharacterByCharacter($(`#result-${currentStep - 1}`),choice.result,function(){
+                        appendHeadlineCharacterByCharacter($(`#message-${currentStep}`), nextStep.introduction,function(){
+                            $(`#response-${currentStep} button`).each(function(){
+                                $(this).css('opacity',1)
+                            })
+                        });
+                    })
+                    
+                })
+
+
+            }
+        }
+
+        function displayConclusion(choiceId,callback) {
+            const previousStep = storyData[`step${currentStep + 1}`]; // Previous step where the choice was made      
+            const choice = previousStep.choices.find(c => c.choiceId === choiceId);
+            const lastStep = storyData[`step${currentStep + 1}`];
+
+            $('#chatContainer').append(`
+            <div id="container-${currentStep}">
+                <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
+                    <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
+                    <div id="result-${currentStep + 1}" class="p-3 ms-3 text-start" style="border-radius: 15px; background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
+                </div>
+                <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
+                    <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
+                    <div id="response-${currentStep + 1}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
+                </div>
+                <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
+                    <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
+                    <div>
+                        <div id="generateCompetion" class="p-3 ms-3 text-start blur-text" style="border-radius: 15px; background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
+                        <button id="unlock-result" class="btn btn-gradient-3d-orange m-4" style="visibility:hidden;">無料で結果を見る</button>
+                    </div>
+                </div>
+            </div>`)
+            $(`#result-${currentStep + 1}`).closest('.message-container').animate({ opacity: 1 }, 1000, function() { 
+                appendHeadlineCharacterByCharacter($(`#result-${currentStep + 1}`),choice.result,function(){
+                    appendHeadlineCharacterByCharacter($(`#response-${currentStep + 1}`), previousStep.conclusion,function(){
+                        appendHeadlineCharacterByCharacter($(`#generateCompetion`),blurredText(),function(){
+                            callback()
+                        });
+                    });  
+                })
             })
-            .catch(error => {
-                Swal.showValidationMessage(
-                    `メールアドレスをもう一度ご確認ください。`
-                );
+        }
+        function blurredText(){
+            return `オンラインビジネスを始めるには、まずビジネスアイデアを具体化し、ターゲット市場を調査します。次に、ビジネスプランを作成し、必要な資金を確保します。ウェブサイトやオンラインショップを設立し、商品やサービスを提供します。`
+        }
+        function hideOtherChoice(choiceId, currentStep, callback) {
+
+            $(`#response-${currentStep - 1} button`).each(function() {
+                const currentId = $(this).data('id')
+                if(choiceId == currentId){
+                    const response = $(this).text()
+                    $(`#response-${currentStep - 1}`).remove()
+                    $(`#container-${currentStep - 1}`).append(`
+                        <div class="d-flex flex-row justify-content-end mb-4 message-container" style="opacity:0;">
+                            <div id="response-${currentStep - 1}" class="p-3 me-3 border" style="border-radius: 15px; background-color: #fbfbfb;">${response}</div>
+                        </div>
+                    `)
+                    $(`#response-${currentStep - 1}`).closest('.message-container').animate({ opacity: 1 }, 1000,function(){
+                        callback()
+                    })
+                }
+                $(this).remove()
             });
         }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            Swal.fire('送信完了', 'あなたのメールアドレスが正常に送信されました。', 'success');
-            generateCompletion($('#generateCompetion'))
-            return true;
-        } else {
-            if(feedback){
-                return false
-            }
-            feedback = true
-            Swal.fire({
-                title: '残念です',
-                icon: 'info',
-                showCancelButton: false,
+
+
+        function showCongratulations() {
+            return Swal.fire({
+                title: 'おめでとうございます！',
+                text: '私たちは最新のAIを使用してあなたの応答を分析しています。',
+                icon: 'success',
                 showConfirmButton: false,
-                html:
-                    '<p>なぜ結果を見たくなかったのですか？</p>'+
-                    '<button id="option1" class="swal2-confirm swal2-styled">結果に価値を感じない</button>' +
-                    '<button id="option2" class="swal2-confirm swal2-styled">プライバシーの心配</button>' +
-                    '<button id="option3" class="swal2-confirm swal2-styled">メールを共有したくない</button>',
-                allowOutsideClick: false
+                timer: 3000 // Show for 2 seconds
             });
-            return false;
         }
-    });
-}
 
-    $(document).on('click', '#option1', function() {
-        sendFeedback('結果に価値を感じない');
-    });
+        function showLoadingAnimation() {
+            return Swal.fire({
+                title: '分析中...',
+                html: '最新のAIを使用して応答を分析しています。',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        }
+        function promptForEmail(lastchance = false) {
+            return Swal.fire({
+                title: '生成を完了しました。',
+                text: 'メールアドレスを入力して結果を見る',
+                input: 'email',
+                inputPlaceholder: 'メールアドレスを入力してください',
+                showCancelButton: true,
+                confirmButtonText: '結果を見る',
+                customClass: {
+                    confirmButton: 'btn-gradient-3d-orange'
+                },
+                cancelButtonText: 'キャンセル',
+                showCancelButton:!lastchance,
+                allowOutsideClick:!lastchance,
+                footer: '<small>メールアドレスは <a href="https://hatoltd.com/privacy-policy/" target="_blank">プライバシーポリシー</a> に従ってのみ使用され、スパムや他の目的には使用されません。</small>',
+                preConfirm: (email) => {
+                    return new Promise((resolve, reject) => {
+                        $.ajax({
+                            url: '/api/submit-email',
+                            type: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            data: JSON.stringify({ email, userId: userId, userIp: userIp }),
+                            success: function(response) {
+                                resolve(response);
+                            },
+                            error: function(error) {
+                                reject(error.statusText);
+                            }
+                        });
+                    })
+                    .catch(error => {
+                        Swal.showValidationMessage(
+                            `メールアドレスをもう一度ご確認ください。`
+                        );
+                    });
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire('送信完了', 'あなたのメールアドレスが正常に送信されました。', 'success');
+                    generateCompletion($('#generateCompetion'))
+                    return true;
+                } else {
+                    if(feedback){
+                        return false
+                    }
+                    feedback = true
+                    Swal.fire({
+                        title: '残念です',
+                        icon: 'info',
+                        showCancelButton: false,
+                        showConfirmButton: false,
+                        html:
+                            '<p>なぜ結果を見たくなかったのですか？</p>'+
+                            '<button id="option1" class="swal2-confirm swal2-styled">結果に価値を感じない</button>' +
+                            '<button id="option2" class="swal2-confirm swal2-styled">プライバシーの心配</button>' +
+                            '<button id="option3" class="swal2-confirm swal2-styled">メールを共有したくない</button>',
+                        allowOutsideClick: false
+                    });
+                    return false;
+                }
+            });
+        }
 
-    $(document).on('click', '#option2', function() {
-        sendFeedback('プライバシーの心配');
-    });
-
-    $(document).on('click', '#option3', function() {
-        sendFeedback('メールを共有したくない');
-    });
-
-    function sendFeedback(choice) {
-        $.ajax({
-            url: '/api/feedback',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ reason: choice, userId: userId }),
-            success: function(response) {
-                Swal.fire('ありがとうございました', 'フィードバックを送信しました。', 'success');
-                lastchance()
-            },
-            error: function(xhr, status, error) {
-                Swal.fire('エラー', 'フィードバックの送信中にエラーが発生しました。', 'error');
-            }
+        $(document).on('click', '#option1', function() {
+            sendFeedback('結果に価値を感じない');
         });
-    }
 
-function lastchance(){
-    var timer = 59;
-    $('#chat-container').hide()
-    $('#lastchance').html(`
-        <div style="text-align: center;">
-            <p id="title" class="display-6">最後のチャンス</p>
-            <p id="description">すぐに行動しないと、診断結果が消えてしまいます。</p>
-            <p id="timer" class="display-3 fw-bold">${timer}s</p>
-            <button id="resultButton" class="btn-gradient-3d-orange my-4" style="font-size: 26px;">無料で結果を取得</button>
-        </div>
-    `);
-    
-    var countdown = setInterval(function() {
-        if (timer > 0) {
-            timer--;
-            $('#timer').text(`${timer}s`);
-        } else {
-            clearInterval(countdown);
+        $(document).on('click', '#option2', function() {
+            sendFeedback('プライバシーの心配');
+        });
+
+        $(document).on('click', '#option3', function() {
+            sendFeedback('メールを共有したくない');
+        });
+
+        function sendFeedback(choice) {
+            $.ajax({
+                url: '/api/feedback',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ reason: choice, userId: userId }),
+                success: function(response) {
+                    Swal.fire('ありがとうございました', 'フィードバックを送信しました。', 'success');
+                    lastchance()
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire('エラー', 'フィードバックの送信中にエラーが発生しました。', 'error');
+                }
+            });
         }
-    }, 1000);
-    
-    $('#resultButton').click(function() {
-        sendCustomData({action:'lastCHance resultButton'})
-        promptForEmail(true);
-    });
-}
 
-function generateCompletion($element){
-    
-    const apiUrl = '/api/openai-completion';
-
-    $.ajax({
-        url: apiUrl,
-        method: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify({ userId: userId }),
-        success: function(response) {
-            const sessionId = response.sessionId;
-            const streamUrl = `/api/openai-completion-stream/${sessionId}`;
-            const eventSource = new EventSource(streamUrl);
-            sendCustomData({action:'generateCompletion',sessionId})
-            let markdownContent = "";
-
-            eventSource.onmessage = function(event) {
-                const data = JSON.parse(event.data);
-                markdownContent += data.content;
-
-                $('#unlock-result').hide()
-                $element.removeClass('blur-text')
-                $element.html(marked.parse(markdownContent));  // Parse and update the content
-            };
-
-            eventSource.onerror = function(error) {
-                console.log('EventSource failed.');
-                eventSource.close();
-            };
-        },
-        error: function(error) {
-            console.error('Error:', error);
-        }
-    });
-}
-function sendCustomData(cutsomData){
-    $.ajax({
-        url: '/api/custom-data',
-        type: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        data: JSON.stringify({ userId: userId, cutsomData: cutsomData }),
-        success: function(response) {
+        function lastchance(){
+            var timer = 59;
+            $('#chat-container').hide()
+            $('#lastchance').html(`
+                <div style="text-align: center;">
+                    <p id="title" class="display-6">最後のチャンス</p>
+                    <p id="description">すぐに行動しないと、診断結果が消えてしまいます。</p>
+                    <p id="timer" class="display-3 fw-bold">${timer}s</p>
+                    <button id="resultButton" class="btn-gradient-3d-orange my-4" style="font-size: 26px;">無料で結果を取得</button>
+                </div>
+            `);
             
-        },
-        error: function(error) {
-            console.log(error.statusText);
+            var countdown = setInterval(function() {
+                if (timer > 0) {
+                    timer--;
+                    $('#timer').text(`${timer}s`);
+                } else {
+                    clearInterval(countdown);
+                }
+            }, 1000);
+            
+            $('#resultButton').click(function() {
+                sendCustomData({action:'lastCHance resultButton'})
+                promptForEmail(true);
+            });
+        }
+        
+        function generateCompletion($element){
+            
+            const apiUrl = '/api/openai-completion';
+  
+            $.ajax({
+                url: apiUrl,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ userId: userId }),
+                success: function(response) {
+                    const sessionId = response.sessionId;
+                    const streamUrl = `/api/openai-completion-stream/${sessionId}`;
+                    const eventSource = new EventSource(streamUrl);
+                    sendCustomData({action:'generateCompletion',sessionId})
+                    let markdownContent = "";
+
+                    eventSource.onmessage = function(event) {
+                        const data = JSON.parse(event.data);
+                        markdownContent += data.content;
+
+                        $('#unlock-result').hide()
+                        if($element){
+                            $element.removeClass('blur-text')
+                            $element.html(marked.parse(markdownContent));
+                        }
+
+                    };
+
+                    eventSource.onerror = function(error) {
+                        console.log('EventSource failed.');
+                        eventSource.close();
+                    };
+                },
+                error: function(error) {
+                    console.error('Error:', error);
+                }
+            });
+        }
+        function sendCustomData(cutsomData){
+            $.ajax({
+                url: '/api/custom-data',
+                type: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify({ userId: userId, cutsomData: cutsomData }),
+                success: function(response) {
+                    
+                },
+                error: function(error) {
+                    console.log(error.statusText);
+                }
+            });
         }
     });
-}
 });
 </script>
 </body>

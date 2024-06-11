@@ -2,6 +2,9 @@ const fastify = require('fastify')({ logger: false });
 const path = require('path');
 require('dotenv').config();
 const mongodb = require('mongodb');
+const cron = require('node-cron');
+const fastifyCookie = require('fastify-cookie');
+const { getCounter, updateCounter } = require('./models/tool')
 
 mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then((client) => {
@@ -18,6 +21,10 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         handlebars: require('handlebars')
       },
       viewPath: path.join(__dirname, 'views')
+    });
+    fastify.register(fastifyCookie, {
+      secret: "my-secret", // for cookies signature
+      parseOptions: {}     // options for parsing cookies
     });
     fastify.register(require('@fastify/cors'), {
       origin: true,
@@ -60,15 +67,44 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         reply.redirect(`/`);
       }
     });
-
-
+    
     fastify.get('/story/:id', (request, reply) => {
-      // Retrieve the story ID from the URL parameter
       const storyId = request.params.id;
-      // Pass the story ID to the Handlebars template
-      reply.view('/views/index.hbs', { title: 'LAMIX | Powered by Hato,Ltd', storyId: storyId });
+      let variant = request.cookies.variant;
+      if (!variant) {
+        getCounter(db).then(counter => {
+          variant = counter % 2 === 0 ? 'A' : 'B';
+          counter++;
+          updateCounter(db, counter).then(() => {
+            reply
+              .setCookie('variant', variant, {
+                path: '/',
+                sameSite: 'None',
+                httpOnly: true,  // Ensures the cookie is sent only in HTTP(S) requests, not in client-side scripts
+                maxAge: 60 * 60 * 24  // 24 hours
+              })
+              .view('/views/index.hbs', { title: 'LAMIX | Powered by Hato,Ltd', storyId: storyId, variant: variant });
+          }).catch(err => {
+            reply.send(err);
+          });
+        }).catch(err => {
+          reply.send(err);
+        });
+      } else {
+        reply.view('/views/index.hbs', { title: 'LAMIX | Powered by Hato,Ltd', storyId: storyId, variant: variant });
+      }
     });
-
+    
+    // Schedule a task to reset the counter every day at midnight
+    cron.schedule('0 0 * * *', async () => {
+      try {
+        const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+        await updateCounter(db, 0);
+        fastify.log.info('Counter has been reset to 0.');
+      } catch (err) {
+        fastify.log.error('Failed to reset counter:', err);
+      }
+    });
     fastify.get('/stories', async (request, reply) => {
       const collection = db.collection('stories');
       try {

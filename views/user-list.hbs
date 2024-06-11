@@ -38,6 +38,7 @@
                     <th>メール</th>
                     <th>タイムスタンプ</th>
                     <th>スクロール</th>
+                    <th>A/B</th>
                     <th>詳細</th>
                     <th>フィードバック</th>
                     <th>生成</th>
@@ -106,10 +107,13 @@
                                     var formattedDate = date.toLocaleDateString('ja-JP', options);
                                     let maxScroll = getActionObject(user.customData, 'scroll');
                                     maxScroll = maxScroll ? parseInt(maxScroll.scrollPercentage) : 0;
+                                    let abTest = getActionObject(user.customData, 'a/b');
+                                    abTest = abTest ? abTest.variant : ''
                                     const row = $('<tr>').html(`
                                         <td>${user.email || 'N/A'}</td>
                                         <td>${formattedDate}</td>
                                         <td>${maxScroll}%</td>
+                                        <td>${abTest}</td>
                                         <td><button class="btn btn-primary" onclick="showUserChoices('${user.userId}')">詳細</button></td>
                                         <td>${user.reason || 'N/A'}</td>
                                         <td><a href="/generate/${user._id}" target="_blank">生成</a></td>

@@ -26,11 +26,13 @@
     "dotenv": "^16.4.5",
     "eventsource-parser": "^1.1.2",
     "fastify": "^4.8.1",
+    "fastify-cookie": "^5.7.0",
     "fastify-sse": "^1.0.0",
     "handlebars": "^4.7.8",
     "install": "^0.13.0",
     "mongodb": "^6.7.0",
     "ndjson": "^2.0.0",
+    "node-cron": "^3.0.3",
     "node-fetch": "^3.3.2",
     "npm": "^10.8.1",
     "openai": "^4.49.1"

@@ -19,9 +19,17 @@
       <img src="/img/logo.webp" alt="" class="logo">
       <span class="brand-name ms-3">LAMIX</span>
     </a>
-    <a href="#quizSection" class="btn btn-gradient-3d-orange">無料診断を受ける</a>
+    <a href="#quizSection" class="btn btn-gradient-3d-orange">無料診断</a>
   </div>
 </nav>
+
+<div class="image-container">
+    <img src="/img/bg-{{variant}}.png" alt="Background Image">
+    <!-- Content inside the div will be centered -->
+    <div class="content">
+        <!-- Your content here -->
+    </div>
+</div>
 
 <div class="p-fv">
 
@@ -171,13 +179,16 @@ $(document).ready(function() {
 
     // Fetch the user's IP address and generate a unique ID
     fetchUserIP(function(new_userId,userIp) {
-        sendCustomData({action: 'viewpage'});
         // Now you can use the userID variable or id parameter here
+        const variant = "{{variant}}";
         const storyId = "{{storyId}}";
         let currentStep = 0;
         let totalSteps = 0;
         let storyData = {};
         let feedback = false
+
+        sendCustomData({action: 'viewpage'});
+        sendCustomData({action: 'a/b', variant: variant});
         fetchStoryData(storyId); // Fetch the initial story data when the page loads
         
         window.choosePath = function(choiceId) {

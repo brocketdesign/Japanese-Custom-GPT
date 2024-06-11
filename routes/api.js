@@ -18,8 +18,7 @@ async function routes(fastify, options) {
         if (existingStory) {
             return reply.status(409).send({ error: 'A story with this name already exists' });
         }
-        const today = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-        const dateObj = new Date(today + ' UTC');
+        const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
         // Create a document to insert
         const storyDocument = {
             name: name,
@@ -101,8 +100,7 @@ async function routes(fastify, options) {
     
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
     
-        const today = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-        const dateObj = new Date(today + ' UTC');
+        const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
         const query = { userId: serverUserId };
         const update = {
             $push: { choices: { choice, timestamp: dateObj } },
@@ -128,8 +126,7 @@ async function routes(fastify, options) {
         
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
     
-        const today = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-        const dateObj = new Date(today + ' UTC');
+        const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
         const query = { userId: serverUserId };
         
         try {
@@ -194,8 +191,7 @@ async function routes(fastify, options) {
             console.log('Email already exists');
             return reply.status(400).send({ error: 'Email already exists' });
         }
-        const today = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-        const dateObj = new Date(today + ' UTC');
+        const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
         const query = { userId };
         const update = { $set: { email, createdAt: dateObj } };
     

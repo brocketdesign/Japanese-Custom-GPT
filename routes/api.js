@@ -104,14 +104,16 @@ async function routes(fastify, options) {
         const query = { userId: serverUserId };
         const update = {
             $push: { choices: { choice, timestamp: dateObj } },
-            $setOnInsert: { userId: serverUserId, userIp: userIp, storyId:storyId, createdAt: dateObj }
+            $setOnInsert: { userId: serverUserId, userIp: userIp, createdAt: dateObj },
+            $set: { storyId: storyId }
         };
         const options = { upsert: true };
     
         try {
             await collection.updateOne(query, update, options);
             console.log('User choice updated:', { userId: serverUserId, choice, userIp: userIp, storyId:storyId });
-
+            //const userData = await collection.findOne(query);
+            //console.log(userData)
             return reply.send({ nextStoryPart: "You chose the path and...", endOfStory: true });
         } catch (error) {
             console.error('Failed to save user choice:', error);
@@ -326,6 +328,7 @@ async function routes(fastify, options) {
             }
 
             const { storyId, choices } = userData;
+            console.log({ storyId, choices })
             const storiesCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('stories');
             const story = await storiesCollection.findOne({ _id: new fastify.mongo.ObjectId(storyId) });
 
@@ -359,6 +362,7 @@ async function routes(fastify, options) {
                 { "role": "user", "content": prompt },
             ];
 
+            console.log(`Start completion`)
             const completion = await fetchOpenAICompletion(messages, reply.raw);
 
             // End the stream only after the completion has been sent

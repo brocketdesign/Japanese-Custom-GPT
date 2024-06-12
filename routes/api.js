@@ -390,32 +390,70 @@ function isNewObjectId(userId) {
     }
   }
     
-        
     fastify.get('/api/user-data', async (request, reply) => {
-        if(process.env.MODE != 'local'){
+        if (process.env.MODE != 'local') {
             return reply.send([]);
         }
-        const { userId } = request.query;
+        const { userId, query, date } = request.query;
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
 
         try {
             if (userId) {
-                // Fetch specific user's data
                 const userData = await collection.findOne({ userId: parseInt(userId) });
                 if (!userData) {
                     return reply.status(404).send({ error: 'User not found' });
                 }
                 return reply.send(userData);
             } else {
-                // Fetch all users' data
                 const allUsersData = await collection.find({}).toArray();
-                return reply.send(allUsersData);
+                
+                // Filter and sort data based on query and date
+                let filteredData = allUsersData;
+
+                if (date) {
+                    const startDate = new Date(date);
+                    startDate.setHours(0, 0, 0, 0);
+                    const endDate = new Date(startDate);
+                    endDate.setDate(endDate.getDate() + 1);
+
+                    filteredData = filteredData.filter(user => {
+                        const createdAt = new Date(user.createdAt);
+                        return createdAt >= startDate && createdAt < endDate;
+                    });
+                }
+
+                const sortBy = query || false
+                filteredData = filteredData.filter(user => {
+                    let maxScroll = getActionObject(user.customData, 'scroll');
+                    maxScroll = maxScroll ? parseInt(maxScroll.scrollPercentage) : 0;
+                    let result;
+                    switch (sortBy) {
+                        case 'choice':
+                            result = user.choices && user.choices.length > 0;
+                            break;
+                        case 'scroll':
+                            result = maxScroll && maxScroll > 0;
+                            break;
+                        default:
+                            result = user.choices && user.choices.length > 0;
+                    }
+                    return result;
+                });
+                
+
+                return reply.send(filteredData);
             }
         } catch (error) {
             console.error('Failed to retrieve user data:', error);
             return reply.status(500).send({ error: 'Failed to retrieve user data' });
         }
     });
+
+    function getActionObject(customData, action) {
+        if(!customData){return false}
+        return customData.find(item => item && item.action === action);
+    }
+
     
         
 }

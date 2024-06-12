@@ -29,8 +29,14 @@
                 <button id="todayButton" class="btn btn-secondary">今日</button>
             </div>
         </div>
-        <div class="d-flex">
-            <p><span id="count"></span>/<span id="total-count"></span></p>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <p class="mb-0">
+                <span id="count"></span>/<span id="total-count"></span>
+            </p>
+            <div>
+                <button class="btn btn-primary me-2 sort-button" data-query="choice">Sort by Choice</button>
+                <button class="btn btn-secondary sort-button" data-query="scroll">Sort by Scroll</button>
+            </div>
         </div>
         <table class="table table-bordered">
             <thead>
@@ -48,13 +54,22 @@
                 <!-- ユーザーデータがここに表示されます -->
             </tbody>
         </table>
+        <div class="w-100 text-center">
+            <div id="spinner" class="spinner-border text-primary" role="status" style="display: none;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
     </div>
 
     <script>
+        
+        var selectedDate = null;
         $(document).ready(function() {
+
             $("#datepicker").datepicker({
                 dateFormat: "yy-mm-dd",
                 onSelect: function(dateText) {
+                    selectedDate = new Date(dateText);
                     updateTable(new Date(dateText));
                 }
             });
@@ -69,8 +84,13 @@
                 updateTable(new Date());
             });
 
-            function updateTable(selectedDate) {
-                // Define options for Japanese date format
+            $(".sort-button").on("click", function() {
+                const query = $(this).data('query')
+                var dateToUse = selectedDate ? selectedDate : new Date();
+                updateTable(dateToUse, query);
+            });
+
+            function updateTable(selectedDate, query) {
                 const options = {
                     year: 'numeric',
                     month: 'long',
@@ -81,46 +101,43 @@
                     timeZone: 'Asia/Tokyo',
                     timeZoneName: 'short'
                 };
+                
+                const tableBody = $('#userTableBody');
+                tableBody.empty();
+                $('#spinner').show();
+
                 $.ajax({
                     url: '/api/user-data',
                     method: 'GET',
                     dataType: 'json',
+                    data: {
+                        query: query,
+                        date: selectedDate
+                    },
                     success: function(data) {
                         let count = 0;
-                        let totalCount = 0
-                        const tableBody = $('#userTableBody');
-                        tableBody.empty();
-
-                        // Define the start and end of the selected date
-                        var startDate = new Date(selectedDate);
-                        startDate.setHours(0, 0, 0, 0);
-                        var endDate = new Date(startDate);
-                        endDate.setDate(endDate.getDate() + 1);
+                        let totalCount = 0;
 
                         data.forEach(function(user) {
                             var date = new Date(user.createdAt);
-                            if (date >= startDate && date < endDate ) {
-                                totalCount++
-                                // Check if the user's createdAt date is within the selected date
-                                if (user.choices && user.choices.length > 0) {
-                                    count++;
-                                    var formattedDate = date.toLocaleDateString('ja-JP', options);
-                                    let maxScroll = getActionObject(user.customData, 'scroll');
-                                    maxScroll = maxScroll ? parseInt(maxScroll.scrollPercentage) : 0;
-                                    let abTest = getActionObject(user.customData, 'a/b');
-                                    abTest = abTest ? abTest.variant : ''
-                                    const row = $('<tr>').html(`
-                                        <td>${user.email || 'N/A'}</td>
-                                        <td>${formattedDate}</td>
-                                        <td>${maxScroll}%</td>
-                                        <td>${abTest}</td>
-                                        <td><button class="btn btn-primary" onclick="showUserChoices('${user.userId}')">詳細</button></td>
-                                        <td>${user.reason || 'N/A'}</td>
-                                        <td><a href="/generate/${user._id}" target="_blank">生成</a></td>
-                                    `);
-                                    tableBody.append(row);
-                                }
-                            }
+                            var formattedDate = date.toLocaleDateString('ja-JP', options);
+                            let maxScroll = getActionObject(user.customData, 'scroll');
+                            maxScroll = maxScroll ? parseInt(maxScroll.scrollPercentage) : 0;
+                            let abTest = getActionObject(user.customData, 'a/b');
+                            abTest = abTest ? abTest.variant : '';
+                            totalCount++;
+                            count++;
+
+                            const row = $('<tr>').html(`
+                                <td>${user.email || 'N/A'}</td>
+                                <td>${formattedDate}</td>
+                                <td>${maxScroll}%</td>
+                                <td>${abTest}</td>
+                                <td><button class="btn btn-primary" onclick="showUserChoices('${user.userId}')">詳細</button></td>
+                                <td>${user.reason || 'N/A'}</td>
+                                <td><a href="/generate/${user._id}" target="_blank">生成</a></td>
+                            `);
+                            tableBody.append(row);
                         });
 
                         $('#count').text(count);
@@ -128,6 +145,10 @@
                     },
                     error: function(error) {
                         console.error('Failed to fetch user data:', error);
+                    },
+                    complete: function() {
+                        // Hide the spinner
+                        $('#spinner').hide();
                     }
                 });
             }

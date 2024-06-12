@@ -103,7 +103,7 @@ async function routes(fastify, options) {
         const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
         const query = { userId: serverUserId };
         const update = {
-            $push: { choices: { choice, timestamp: dateObj } },
+            $push: { choices: { choice, storyId, timestamp: dateObj } },
             $setOnInsert: { userId: serverUserId, userIp: userIp, createdAt: dateObj },
             $set: { storyId: storyId }
         };

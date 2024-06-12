@@ -34,6 +34,11 @@
                 <span id="count"></span>/<span id="total-count"></span>
             </p>
             <div>
+                <p class="mb-0">
+                    <span id="abTest_A"></span>-<span id="abTest_B"></span>
+                </p>
+            </div>
+            <div>
                 <button class="btn btn-primary me-2 sort-button" data-query="choice">Sort by Choice</button>
                 <button class="btn btn-secondary sort-button" data-query="scroll">Sort by Scroll</button>
             </div>
@@ -117,7 +122,9 @@
                     success: function(data) {
                         let count = 0;
                         let totalCount = 0;
+                        let abTest_All = [];
 
+                    
                         data.forEach(function(user) {
                             var date = new Date(user.createdAt);
                             var formattedDate = date.toLocaleDateString('ja-JP', options);
@@ -125,6 +132,7 @@
                             maxScroll = maxScroll ? parseInt(maxScroll.scrollPercentage) : 0;
                             let abTest = getActionObject(user.customData, 'a/b');
                             abTest = abTest ? abTest.variant : '';
+                            abTest_All.push(abTest)
                             totalCount++;
                             count++;
 
@@ -142,6 +150,11 @@
 
                         $('#count').text(count);
                         $('#total-count').text(totalCount);
+                        var countA = abTest_All.filter(item => item === 'A').length;
+                        var countB = abTest_All.filter(item => item === 'B').length;
+
+                        $('#abTest_A').text(`A : ${countA}`);
+                        $('#abTest_B').text(`B : ${countB}`);
                     },
                     error: function(error) {
                         console.error('Failed to fetch user data:', error);

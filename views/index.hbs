@@ -403,22 +403,54 @@ $(document).ready(function() {
                 }
             });
         }
+        function getPrivacyPolicies() {
+            return `
+            <small class="text-muted text-center">私たちもスパムが嫌いです。お客様のプライバシーは非常に重要であり、提供された情報は意図された目的以外には使用しません。</small>
+            <div class="p-contact-scroll" style="height: 200px; overflow-y: scroll; margin-top: 10px; padding: 10px; border: 1px solid #ccc;text-align: start;font-size: 13px;">
+                <h3>プライバシーポリシー</h3>
+                <p>お客様のプライバシーを守ることは当社にとって最も重要なことです。以下のポリシーは、当社がどのようにお客様の情報を取り扱うかを説明しています。</p>
+                <h3>1. 個人情報の収集</h3>
+                <p>当社は、お客様から提供された個人情報（氏名、メールアドレスなど）を厳重に管理し、無断で第三者に提供することはありません。</p>
+                <h3>2. 利用目的</h3>
+                <p>お客様の個人情報は、以下の目的で使用されます：</p>
+                <ul>
+                    <li>サービスの提供および向上</li>
+                    <li>お客様への連絡</li>
+                    <li>カスタマーサポートの提供</li>
+                </ul>
+                <h3>3. データの保存と保護</h3>
+                <p>当社は、お客様のデータを安全に保存し、不正アクセス、紛失、破壊から保護するための合理的な対策を講じています。</p>
+                <h3>4. 情報の共有</h3>
+                <p>お客様の同意がない限り、当社はお客様の個人情報を第三者と共有することはありません。ただし、法令に基づき要求された場合は除きます。</p>
+                <h3>5. クッキーの使用</h3>
+                <p>当社のウェブサイトでは、サービス向上のためにクッキーを使用しています。クッキーは、ユーザーのブラウザに保存される小さなテキストファイルで、サイトの利用状況を分析するために使用されます。</p>
+                <h3>6. お問い合わせ</h3>
+                <p>プライバシーポリシーに関するご質問やご不明点がございましたら、<a href="https://hatoltd.com/contact/" target="_blank">お問い合わせフォーム</a>よりご連絡ください。</p>
+                <p>詳細なプライバシーポリシーについては、<a href="https://hatoltd.com/privacy-policy/" target="_blank">こちら</a>をご覧ください。</p>
+            </div>`;
+        }
         function promptForEmail(lastchance = false) {
             return Swal.fire({
-                title: '生成を完了しました。',
-                text: 'メールアドレスを入力して結果を見る',
-                input: 'email',
-                inputPlaceholder: 'メールアドレスを入力してください',
-                showCancelButton: true,
+                title: 'おめでとうございます！',
+                html: `
+                    <span style="font-size:16px">リッチマインドになるための具体的なアドバイスを含む診断結果を確認するには、<br>以下にメールアドレスを入力してください。<br>あなたのマインドセットを向上させるための貴重なフィードバックをお届けします！</span>
+                    <div class="input-group mt-3">
+                        <div class="input-group-text">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <input type="email" id="swal-input1" class="form-control" placeholder="メールアドレスを入力してください">
+                    </div>
+                `,
+                showCancelButton: false,
+                showCloseButton: true,
                 confirmButtonText: '結果を見る',
                 customClass: {
                     confirmButton: 'btn-gradient-3d-orange'
                 },
-                cancelButtonText: 'キャンセル',
-                showCancelButton:!lastchance,
-                allowOutsideClick:!lastchance,
-                footer: '<small>メールアドレスは <a href="https://hatoltd.com/privacy-policy/" target="_blank">プライバシーポリシー</a> に従ってのみ使用され、スパムや他の目的には使用されません。</small>',
-                preConfirm: (email) => {
+                allowOutsideClick: !lastchance,
+                footer: getPrivacyPolicies(),
+                preConfirm: () => {
+                    const email = $('#swal-input1').val();
                     return new Promise((resolve, reject) => {
                         $.ajax({
                             url: '/api/submit-email',
@@ -434,8 +466,7 @@ $(document).ready(function() {
                                 reject(error.statusText);
                             }
                         });
-                    })
-                    .catch(error => {
+                    }).catch(error => {
                         Swal.showValidationMessage(
                             `メールアドレスをもう一度ご確認ください。`
                         );
@@ -444,29 +475,37 @@ $(document).ready(function() {
             }).then((result) => {
                 if (result.isConfirmed) {
                     Swal.fire('送信完了', 'あなたのメールアドレスが正常に送信されました。', 'success');
-                    generateCompletion($('#generateCompetion'))
+                    generateCompletion($('#generateCompetion'));
                     return true;
                 } else {
                     if(feedback){
-                        return false
+                        return false;
                     }
-                    feedback = true
+                    feedback = true;
                     Swal.fire({
                         title: '残念です',
                         icon: 'info',
                         showCancelButton: false,
                         showConfirmButton: false,
                         html:
-                            '<p>なぜ結果を見たくなかったのですか？</p>'+
+                            '<button id="go-back" class="swal2-confirm swal2-styled" style="position: absolute; top: 10px; left: 10px;"><i class="fas fa-arrow-left"></i> 戻る</button>' +
+                            '<p>なぜ結果を見たくなかったのですか？</p>' +
                             '<button id="option1" class="swal2-confirm swal2-styled">結果に価値を感じない</button>' +
                             '<button id="option2" class="swal2-confirm swal2-styled">プライバシーの心配</button>' +
                             '<button id="option3" class="swal2-confirm swal2-styled">メールを共有したくない</button>',
                         allowOutsideClick: false
                     });
+
+                    $('#go-back').on('click', function() {
+                        promptForEmail(lastchance);
+                    });
+
                     return false;
                 }
             });
         }
+
+
 
         $(document).on('click', '#option1', function() {
             sendFeedback('結果に価値を感じない');
@@ -488,7 +527,7 @@ $(document).ready(function() {
                 data: JSON.stringify({ reason: choice, userId: userId }),
                 success: function(response) {
                     Swal.fire('ありがとうございました', 'フィードバックを送信しました。', 'success');
-                    lastchance()
+                    //lastchance()
                 },
                 error: function(xhr, status, error) {
                     Swal.fire('エラー', 'フィードバックの送信中にエラーが発生しました。', 'error');

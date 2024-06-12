@@ -16,6 +16,7 @@
         <thead>
             <tr>
                 <th scope="col">ストーリー名</th>
+                <th scope="col">JSON</th>
                 <th scope="col">アクティブ</th>
             </tr>
         </thead>
@@ -23,6 +24,7 @@
             {{#each stories}}
             <tr>
                 <td><a href="/story/{{this._id}}" target="_blank">{{this.name}}</a></td>
+                <td><button class="copyButton btn btn-dark" data-storyid="{{this._id}}">コピー</button></td>
                 <td>
                     <div class="form-check form-switch">
                         <input class="form-check-input story-switch" type="checkbox" data-storyid="{{this._id}}" {{#if this.isActive}}checked{{/if}}>
@@ -36,6 +38,31 @@
 
 <script>
 $(document).ready(function() {
+    $('.copyButton').click(function() {
+        var storyId = $(this).data('storyid');
+        
+        $.ajax({
+            url: '/api/story/' + storyId,
+            method: 'GET',
+            success: function(story) {
+                var tempInput = $('<input>');
+                $('body').append(tempInput);
+                tempInput.val(JSON.stringify(story.content)).select();
+                var successful = document.execCommand('copy');
+                tempInput.remove();
+
+                if (successful) {
+                    Swal.fire('Success', 'コンテンツがクリップボードにコピーされました。', 'success');
+                } else {
+                    Swal.fire('Error', 'コンテンツのコピーに失敗しました。', 'error');
+                }
+            },
+            error: function() {
+                Swal.fire('Error', 'コンテンツの取得に失敗しました。', 'error');
+            }
+        });
+    });
+
     $('.story-switch').on('change', function() {
         $('.story-switch').not(this).prop('checked', false);
         let storyId = $(this).data('storyid');

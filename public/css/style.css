@@ -3554,7 +3554,7 @@ _::-webkit-full-page-media, _:future,
 @media screen and (min-width: 1441px) {
 
   .p-fv {
-    background-position: bottom center;
+    background-position: top center;
   }
 
   .p-fv .c-section-inner {

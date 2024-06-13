@@ -53,7 +53,7 @@
 var userId
 var userIp
 $(document).ready(function() {
-
+    var count = 0
 
     // Fetch the user's IP address and generate a unique ID
     fetchUserIP(function(new_userId,userIp) {
@@ -69,6 +69,16 @@ $(document).ready(function() {
         //sendMessage(`こんにちわ`,false)
         // Function to send a message
         function sendMessage(customMessage,displayStatus = true) {
+            count ++
+            if(count >= 10){
+                Swal.fire({
+                    title: '注意',
+                    text: '無料ユーザーのメッセージの最大数は1日10件です。',
+                    icon: 'warning',
+                    confirmButtonText: 'OK'
+                });
+                return
+            }
             const message = customMessage || $('#userMessage').val();
             if (message.trim() !== '') {
                 if(displayStatus){

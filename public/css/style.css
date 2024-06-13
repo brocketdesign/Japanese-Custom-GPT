@@ -1,40 +1,5 @@
 @charset "utf-8";
 
-#quizSection {
-  height: 100vh;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-}
-#chat-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-.card-header, .card-footer {
-  flex-shrink: 0;
-}
-.card-body {
-  flex-grow: 1;
-  overflow-y: auto;
-  position: relative;
-}
-#messages {
-  padding: 10px;
-  padding-bottom: 100px;
-  border-radius: 5px;
-}
-#chatInput {
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  right: 0;
-  left: 0;
-  background: white;
-  z-index: 1000;
-  padding: 10px;
-  border-top: 1px solid #ccc;
-}
 #storyContainer {
   font-size: 18px;
 }

@@ -13,38 +13,26 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-    <nav class="navbar navbar-light bg-transparent py-1 sticky-top d-none" style="border-bottom: 1px solid rgba(210, 184, 255, 0.2);">
-    <div class="container-fluid justify-content-between">
-        <a class="navbar-brand d-flex flex-row align-items-center bg-white px-5 py-2" href="/">
-        <img src="/img/logo.webp" alt="" class="logo">
-        <span class="brand-name ms-3">LAMIX</span>
-        </a>
-        <a href="#quizSection" class="btn btn-gradient-3d-orange">無料診断</a>
-    </div>
-    </nav>
-    <div id="quizSection" class="m-0">
-        <div id="chat-container" class="card mb-5 rounded-0" style="height: 100vh;" >
-            <div class="d-flex justify-content-between card-header text-center bg-dark text-white rounded-0">
-                <div>LAMIXチャット</div>
-                <div class="d-flex align-items-center">
-                    <div class="count me-2"></div><i class="fas fa-comment"></i>
-                </div>
-            </div>
-            <div class="card-body text-center pb-5 shadow rounded-0" style="min-height:250px;overflow-y: auto;">
-                <div id="chatContainer">
-                    <div id="messages"></div>
-                </div>
-                <div id="chatInput" class="input-group position-absolute bg-white pb-5 px-3">
-                    <input type="text" id="userMessage" class="form-control py-3" placeholder="メッセージを入力してください">
-                    <button id="sendMessage" class="btn btn-dark px-4"><i class="fas fa-paper-plane"></i></button>
-                </div>
-            </div>
-            <div class="card-footer text-muted text-center d-none">
-                フッターコンテンツ
+<div id="quizSection">
+    <div id="chat-container" class="card mb-5 rounded-0">
+        <div class="d-flex justify-content-between card-header text-center bg-dark text-white rounded-0">
+            <div>LAMIXチャット</div>
+            <div class="d-flex align-items-center">
+                <div class="count me-2"></div><i class="fas fa-comment"></i>
             </div>
         </div>
-        <div id="lastchance"></div>
+        <div class="card-body text-center pb-5 shadow rounded-0">
+            <div id="chatContainer" class="sticky-top">
+                <div id="messages"></div>
+            </div>
+        </div>
+        <div id="chatInput" class="input-group">
+            <input type="text" id="userMessage" class="form-control py-3" placeholder="メッセージを入力してください">
+            <button id="sendMessage" class="btn btn-dark px-4"><i class="fas fa-paper-plane"></i></button>
+        </div>
     </div>
+
+</div>
 <footer class="l-footer p-footer">
     <div class="c-section-inner">
       <div class="p-footer__logo">
@@ -65,6 +53,8 @@
 var userId
 var userIp
 $(document).ready(function() {
+
+
     // Fetch the user's IP address and generate a unique ID
     fetchUserIP(function(new_userId,userIp) {
 

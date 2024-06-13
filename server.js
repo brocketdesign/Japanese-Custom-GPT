@@ -59,7 +59,11 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         reply.status(500).send({ error: 'Failed to retrieve the active story' });
       }
     });
- 
+  
+    fastify.get('/chat', (request, reply) => {
+      reply.view('/views/chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd'});
+    });
+    
     fastify.get('/users', (request, reply) => {
       if(process.env.MODE == 'local'){
         reply.view('/views/user-list.hbs', { title: 'LAMIX | Powered by Hato,Ltd'});

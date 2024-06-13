@@ -129,6 +129,7 @@ async function routes(fastify, options) {
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
     
         const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
+        customData.date = dateObj
         const query = { userId: serverUserId };
         
         try {
@@ -167,6 +168,8 @@ async function routes(fastify, options) {
             }
     
             console.log('User data updated:', { userId: serverUserId, customData, createdAt: dateObj });
+            //const newUuserData = await collection.findOne({ userId: serverUserId });
+            //console.log(newUuserData)
             return reply.status(200).send(true);
         } catch (error) {
             console.error('Failed to save user data:', error);
@@ -292,7 +295,7 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to generate analysis' });
         }
     });
-    
+        
     fastify.post('/api/openai-completion', (request, reply) => {
         const { userId } = request.body;
         const sessionId = Math.random().toString(36).substring(2, 15); // Generate a unique session ID
@@ -303,7 +306,7 @@ async function routes(fastify, options) {
     fastify.get('/api/openai-completion-stream/:sessionId', async (request, reply) => {
         const { sessionId } = request.params;
         const session = sessions.get(sessionId);
-        console.log({sessionId})
+
         if (!session) {
             reply.status(404).send({ error: 'Session not found' });
             return;
@@ -372,6 +375,138 @@ async function routes(fastify, options) {
             reply.status(500).send({ error: 'Error fetching OpenAI completion' });
         }
     });
+    fastify.post('/api/chat', async (request, reply) => {
+        try {
+            const { userId, message, chatId } = request.body;
+            console.log({ userId, message, chatId });
+    
+            const serverUserId = parseInt(userId) || 'user_' + Date.now();
+            const collectionUser = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
+            const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+            
+            const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
+    
+            // Find the user document
+            let userDocument = await collectionUser.findOne({ userId: serverUserId });
+    
+            if (!userDocument) {
+                // Initialize user document if it doesn't exist
+                userDocument = {
+                    userId: serverUserId,
+                    createdAt: dateObj,
+                    updatedAt: dateObj
+                };
+    
+                // Insert the user document and get the _id
+                const result = await collectionUser.insertOne(userDocument);
+                userDocument._id = result.insertedId;
+            }
+    
+            // Use the _id from the user document as the userId in the chat document
+            const userObjectId = userDocument._id;
+    
+            // Find or create the chat document
+            let chatDocument = await collectionChat.findOne({ userId: userObjectId, chatId });
+    
+            if (!chatDocument) {
+                // Initialize chat document if it doesn't exist
+                chatDocument = {
+                    userId: userObjectId,
+                    chatId,
+                    messages: [
+                        { "role": "system", "content": `You are the promoter of the service. I am a user that justes step upon your landing page and start chatting with you. Start by asking general questions to know more about me then start promoting your service. The goal is for you to make me by the service. It is a chat. You must prompt the user the answer and wait for the user answer. The client is Japanese so respond in Japanese.` }
+                    ],
+                    createdAt: dateObj,
+                    updatedAt: dateObj
+                };
+            }
+    
+            // Add the new user message to the chat document
+            chatDocument.messages.push({ "role": "user", "content": message });
+            chatDocument.updatedAt = dateObj;
+    
+            // Update or insert the chat document
+            await collectionChat.updateOne(
+                { userId: userObjectId, chatId },
+                { $set: chatDocument },
+                { upsert: true }
+            );
+    
+            reply.send({ userId: userObjectId, chatId });
+        } catch (err) {
+            console.log(err);
+            fastify.log.error(err);
+            reply.status(500).send({ error: 'An error occurred while saving the message.' });
+        }
+    });
+
+    fastify.post('/api/openai-chat', (request, reply) => {
+        const { userId, chatId } = request.body;
+        const sessionId = Math.random().toString(36).substring(2, 15); // Generate a unique session ID
+        sessions.set(sessionId, { userId, chatId });
+        reply.send({ sessionId });
+    });
+    
+    fastify.get('/api/openai-chat-stream/:sessionId', async (request, reply) => {
+        const { sessionId } = request.params;
+        const session = sessions.get(sessionId);
+    
+        if (!session) {
+            reply.status(404).send({ error: 'Session not found' });
+            return;
+        }
+    
+        reply.raw.setHeader('Content-Type', 'text/event-stream');
+        reply.raw.setHeader('Cache-Control', 'no-cache');
+        reply.raw.setHeader('Connection', 'keep-alive');
+        reply.raw.flushHeaders();
+    
+        try {
+            const userId = session.userId;
+            const chatId = session.chatId;
+            console.log({ userId, chatId });
+    
+            const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
+            let userData = isNewObjectId(userId) ? await userDataCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) }) : await userDataCollection.findOne({ userId: parseInt(userId) });
+    
+            if (!userData) {
+                reply.raw.end(); // End the stream before sending the response
+                return reply.status(404).send({ error: 'User data not found' });
+            }
+    
+            const userObjectId = userData._id;
+    
+            const chatCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+            const chatData = await chatCollection.findOne({ userId: userObjectId, chatId });
+    
+            if (!chatData) {
+                reply.raw.end(); // End the stream before sending the response
+                return reply.status(404).send({ error: 'Chat data not found' });
+            }
+    
+            console.log(chatData.messages)
+            const completion = await fetchOpenAICompletion(chatData.messages, reply.raw);
+    
+            // Append the assistant's response to the messages array in the chat document
+            const assistantMessage = { "role": "assistant", "content": completion };
+            chatData.messages.push(assistantMessage);
+            chatData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
+    
+            // Update the chat document in the database
+            await chatCollection.updateOne(
+                { userId: userObjectId, chatId },
+                { $set: { messages: chatData.messages, updatedAt: chatData.updatedAt } }
+            );
+    
+            // End the stream only after the completion has been sent and stored
+            reply.raw.end();
+        } catch (error) {
+            reply.raw.end(); // End the stream before sending the response
+            reply.status(500).send({ error: 'Error fetching OpenAI completion' });
+        }
+    });
+    
+    
     
 // Function to check if a string is a valid ObjectId
 function isNewObjectId(userId) {

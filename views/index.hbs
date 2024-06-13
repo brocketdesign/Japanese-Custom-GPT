@@ -13,24 +13,48 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-    <nav class="navbar navbar-light bg-transparent py-1 sticky-top d-none" style="border-bottom: 1px solid rgba(210, 184, 255, 0.2);">
-    <div class="container-fluid justify-content-between">
-        <a class="navbar-brand d-flex flex-row align-items-center bg-white px-5 py-2" href="/">
-        <img src="/img/logo.webp" alt="" class="logo">
-        <span class="brand-name ms-3">LAMIX</span>
-        </a>
-        <a href="#quizSection" class="btn btn-gradient-3d-orange">無料診断</a>
+<nav class="navbar navbar-light bg-transparent py-1 sticky-top" style="border-bottom: 1px solid rgba(210, 184, 255, 0.2);">
+  <div class="container-fluid justify-content-between">
+    <a class="navbar-brand d-flex flex-row align-items-center bg-white px-5 py-2" href="/">
+      <img src="/img/logo.webp" alt="" class="logo">
+      <span class="brand-name ms-3">LAMIX</span>
+    </a>
+    <a href="#quizSection" class="btn btn-gradient-3d-orange">無料診断</a>
+  </div>
+</nav>
+
+<div class="image-container">
+    <img src="/img/bg-{{variant}}.png" alt="Background Image">
+    <!-- Content inside the div will be centered -->
+    <div class="content">
+        <!-- Your content here -->
     </div>
-    </nav>
-    <div id="quizSection" class="m-0">
-        <div id="chat-container" class="card mb-5 rounded-0">
-            <div class="d-flex justify-content-between card-header text-center bg-dark text-white rounded-0">
+</div>
+
+<div class="p-fv">
+
+    <div style="padding-top:10px;">
+        <p class="text-center display-6 p-fv-copy__top fw-bold ">AIで無料診断！</p>
+        <p class="text-center display-3 p-fv-copy__middle fw-bold mb-5">新しい未来を見つけよう</p>
+        <div class="text-center w-100">
+            <span class="p-fv-copy__bottom">あなたの隠れた才能を引き出す<br>AIが導く驚きの可能性</span>
+        </div>
+    </div>
+
+    <div  id="quizSection" class="text-center pt-5">
+        <i class="fas fa-chevron-down" style="font-size: 36px;"></i>
+        <i class="fas fa-chevron-down" style="font-size: 36px;"></i>
+        <i class="fas fa-chevron-down" style="font-size: 36px;"></i>
+    </div>
+    <div class="container mt-4">
+        <div id="chat-container" class="card my-5">
+            <div class="d-flex justify-content-between card-header text-center bg-dark text-white">
                 <div>LAMIXチャット</div>
                 <div class="d-flex align-items-center">
                     <div class="count me-2"></div><i class="fas fa-comment"></i>
                 </div>
             </div>
-            <div class="card-body text-center py-5 shadow rounded-0" style="min-height:250px;height: 100vh;overflow-y: auto;">
+            <div class="card-body text-center py-5 shadow" style="min-height:250px;height: 75vh;overflow-y: auto;">
                 <h5 class="card-title d-none">Card Title</h5>
                 <div id="chatContainer">
                 </div>
@@ -41,30 +65,8 @@
         </div>
         <div id="lastchance"></div>
     </div>
-
-    <div class="p-fv">
-
-        <div class="py-5">
-            <p class="text-center display-6 p-fv-copy__top fw-bold ">AIで無料診断！</p>
-            <p class="text-center display-3 p-fv-copy__middle fw-bold mb-5">新しい未来を見つけよう</p>
-            <div class="text-center w-100">
-                <span class="p-fv-copy__bottom">あなたの隠れた才能を引き出す<br>AIが導く驚きの可能性</span>
-            </div>
-        </div>
-
-        <div  class="text-center pt-5 d-none">
-            <i class="fas fa-chevron-down" style="font-size: 36px;"></i>
-            <i class="fas fa-chevron-down" style="font-size: 36px;"></i>
-            <i class="fas fa-chevron-down" style="font-size: 36px;"></i>
-        </div>
     </div>
-    <div class="image-container">
-        <img src="/img/bg-{{variant}}.png" alt="Background Image">
-        <!-- Content inside the div will be centered -->
-        <div class="content">
-            <!-- Your content here -->
-        </div>
-    </div>
+
     <section class="p-best mb-5">
       <div class="c-section-inner">
         <h2 class="c-section-title u-tal">

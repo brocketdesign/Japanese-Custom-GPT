@@ -342,12 +342,14 @@ async function routes(fastify, options) {
     
             let prompt = `
             下記の内容を入れてフィードバックを出してください。フィードバックの構成:
-            メッセージ: お祝いの言葉を入れてリッチマインド、バランスマインド、奴隷マインドに対する参加者の結果を肯定的に伝える。
+            メッセージ: お祝いの言葉
             強み: フィードバックとして、性格の強みを簡潔に説明。
             弱み：フィードバックとして、性格の弱みを簡潔に説明。
             アドバイス: 具体的な改善点や維持方法を提案。
             リソースの紹介: 参考になる書籍、セミナー、オンラインコースなどのリソースを紹介。
-            最後の言葉：最初の一歩を踏み出す言葉を紹介。\n\n`;
+            最後の言葉：最初の一歩を踏み出す言葉を紹介。\n
+            Respond in japanese and in a friendly tone. Like you would with a friend.
+            \n`;
     
             for (const step in story.content.story) {
                 const storyStep = story.content.story[step];

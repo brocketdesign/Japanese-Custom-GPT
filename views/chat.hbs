@@ -76,7 +76,7 @@ $(document).ready(function() {
         console.log('Chat ID:', chatId);
 
         sendCustomData({action: 'chat-page'});
-        sendMessage(`こんにちわ`,false)
+        //sendMessage(`こんにちわ`,false)
         // Function to send a message
         function sendMessage(customMessage,displayStatus = true) {
             const message = customMessage || $('#userMessage').val();

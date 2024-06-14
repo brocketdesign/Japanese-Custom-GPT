@@ -82,12 +82,18 @@
             $('#yesterdayButton').click(function() {
                 let yesterday = new Date();
                 yesterday.setDate(yesterday.getDate() - 1);
+                $("#datepicker").datepicker("setDate", yesterday);
+                selectedDate = yesterday;
                 updateTable(yesterday);
             });
 
             $('#todayButton').click(function() {
-                updateTable(new Date());
+                let today = new Date();
+                $("#datepicker").datepicker("setDate", today);
+                selectedDate = today;
+                updateTable(today);
             });
+
 
             $(".sort-button").on("click", function() {
                 const query = $(this).data('query')

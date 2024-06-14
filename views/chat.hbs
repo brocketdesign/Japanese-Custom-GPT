@@ -13,6 +13,27 @@
     <link rel="stylesheet" href="/css/chat.css">
 </head>
 <body>
+    <nav class="navbar navbar-light bg-transparent py-1 sticky-top" style="border-bottom: 1px solid rgba(210, 184, 255, 0.2);">
+    <div class="container-fluid justify-content-between">
+        <a class="navbar-brand d-flex flex-row align-items-center bg-white px-5 py-2" href="/">
+        <img src="/img/logo.webp" alt="" class="logo">
+        <span class="brand-name ms-3">LAMIX</span>
+        </a>
+        <a href="/authenticate" class="btn btn-gradient-3d-orange">無料ではじめる</a>
+    </div>
+    </nav>
+
+    <section class="hero bg-light py-5 p-fv" style="backgroun-position:bottom">
+        <div class="container text-center d-flex flex-column align-items-center py-5">
+            <img src="/img/logo.webp" alt="LAMIXボット ロゴ" class="mb-4" style="width: 150px;border-radius:50%;">
+            <div>
+                <h1 id="chat-hero" class="display-4 text-center" style="min-height: 150px;"></h1>
+                <p class="lead">LAMIXボットでチャットボットの可能性を最大限に引き出しましょう。</p>
+                <a href="/authenticate" class="btn btn-dark btn-lg px-5 py-3 m-5">無料ではじめる<i class="mx-2 fas fa-arrow-circle-right"></i></a>
+            </div>
+        </div>
+    </section>
+
     <div class="container">
         <div id="quizSection" >
             <div id="chat-container" class="card mt-3 mb-5 shadow rounded">
@@ -221,6 +242,84 @@ $(document).ready(function() {
         return 'chat_' + Math.random().toString(36).substr(2, 9);
     }
 
+    function appendHeadlineCharacterByCharacter($element, headline, callback) {
+        let index = 0;
+
+        setTimeout(() => {
+            setTimeout(() => {
+                let intervalID = setInterval(function() {
+                    if (index < headline.length) {
+                        $element.append(headline.charAt(index));
+                        index++;
+                    } else {
+                        clearInterval(intervalID);
+                        if (callback) callback();
+                    }
+                }, 25);
+            }, 100);
+        }, 500);
+    };
+
+    function clearContentFromEnd($element, callback) {
+        let currentContent = $element.text();
+
+        let clearIntervalID = setInterval(function() {
+            if (currentContent.length > 0) {
+                currentContent = currentContent.substring(0, currentContent.length - 1);
+                $element.text(currentContent);
+            } else {
+                clearInterval(clearIntervalID);
+                if (typeof callback === 'function') {
+                    callback();
+                }
+            }
+        }, 25); // This duration can be adjusted as per your requirement
+    }
+
+    let catchphrases = [
+        'あなたのカスタムチャットボットを簡単に管理',
+        'LAMIXボットでチャットボットの可能性を最大限に',
+        '直感的なダッシュボードで管理が楽々',
+        'リアルタイムでチャットボットの状態を監視',
+        'ビジネスを次のレベルへ'
+    ];
+
+    let index = 0;
+
+    function displayNextCatchphrase() {
+        appendHeadlineCharacterByCharacter($('#chat-hero'), catchphrases[index], function() {
+            setTimeout(function() {
+                clearContentFromEnd($('#chat-hero'), function() {
+                    index = (index + 1) % catchphrases.length;
+                    displayNextCatchphrase();
+                });
+            }, 3000);
+        });
+    }
+
+    displayNextCatchphrase();
+    
+    function displayInitialMessage(message, callback) {
+        const botResponseContainer = $(`
+                <div class="d-flex flex-row justify-content-start mb-4 message-container bot-message" >
+                    <img src="/img/logo.webp" alt="avatar 1" style="min-width: 25px; width: 25px; height: 100%; border-radius: 15%;">
+                    <div class="p-3 ms-3 text-start" style="border-radius: 15px; background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);">
+                        <span id="initial-message"></span>
+                    </div>
+                </div>`);
+        $('#messages').append(botResponseContainer);
+        $('#messages').scrollTop($('#messages')[0].scrollHeight);
+
+        appendHeadlineCharacterByCharacter($('#initial-message'), message, function() {
+            if (typeof callback === 'function') {
+                callback();
+            }
+        });
+    }
+    displayInitialMessage('ようこそLAMIXボットへ！どのようにお手伝いできますか？', function() {
+        console.log('Initial message displayed.');
+        // You can add any additional actions here
+    });
 });
 
 </script>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    <link rel="icon" href="/img/logo.webp" type="image/webp">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-white bg-white sticky-top shadow">
+        <a class="navbar-brand d-flex flex-row" href="#">
+            <img src="/img/logo.webp" alt="" class="mx-3" width="40px">
+            LAMIXボット
+        </a>
+        <button class="navbar-toggler me-2" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#">ダッシュボード</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">チャットボット一覧</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">新規作成</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">設定</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">{{user.username}}</a>
+                </li>
+                <li class="nav-item">
+                    <a id="logout" class="nav-link" href="#"><i class="fas fa-sign-out-alt"></i> ログアウト</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+<div class="container-fluid bg-light" style="min-height: 90vh;padding-bottom:50px">
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="list-group">
+                <a href="#" class="list-group-item list-group-item-action active" aria-current="true">
+                    ダッシュボード
+                </a>
+                <a href="#" class="list-group-item list-group-item-action">チャットボット一覧</a>
+                <a href="#" class="list-group-item list-group-item-action">新規チャットボット作成</a>
+                <a href="#" class="list-group-item list-group-item-action">ユーザー管理</a>
+                <a href="#" class="list-group-item list-group-item-action">設定</a>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header">
+                    <h4>ダッシュボード</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card text-white bg-primary mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">総チャットボット</h5>
+                                    <p class="card-text" id="totalChatbots">10</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card text-white bg-success mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">アクティブチャットボット</h5>
+                                    <p class="card-text" id="activeChatbots">5</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card text-white bg-danger mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">エラーチャットボット</h5>
+                                    <p class="card-text" id="errorChatbots">2</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h5>チャットボット一覧</h5>
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>名前</th>
+                                        <th>ステータス</th>
+                                        <th>作成日</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="chatbotList">
+                                    <tr>
+                                        <td>ボット1</td>
+                                        <td><span class="badge bg-success">アクティブ</span></td>
+                                        <td>2024/06/14</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-info"><i class="fas fa-edit"></i> 編集</button>
+                                            <button class="btn btn-sm btn-danger"><i class="fas fa-trash-alt"></i> 削除</button>
+                                        </td>
+                                    </tr>
+                                    <!-- 他のチャットボットもここにリストされます -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12 text-end">
+                            <button class="btn btn-primary"><i class="fas fa-plus"></i> 新規チャットボット作成</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function() {
+        $('#logout.nav-link').on('click', function(event) {
+            event.preventDefault();
+            $.ajax({
+                url: '/user/logout',
+                type: 'POST',
+                success: function(response) {
+                    Swal.fire({
+                        title: '成功',
+                        text: response.status,
+                        icon: 'success'
+                    }).then(() => {
+                        window.location.href = '/authenticate';
+                    });
+                },
+                error: function() {
+                    Swal.fire({
+                        title: 'エラー',
+                        text: 'ログアウトに失敗しました',
+                        icon: 'error'
+                    });
+                }
+            });
+        });
+    });
+</script>
+
+
+</body>
+</html>

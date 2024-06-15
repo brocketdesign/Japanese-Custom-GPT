@@ -137,9 +137,10 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       preHandler: [fastify.authenticate]
     }, async (request, reply) => {
       try {
-        const stories = await db.collection('stories').find({}).toArray();
+        const stories = await db.collection('stories').find({}).sort({"updatedAt":-1}).toArray();
         return reply.view('chat-list', { title: 'LAMIX | Powered by Hato,Ltd', stories: stories, user: request.user  });      
       } catch (err) {
+        console.log(err)
         return reply.status(500).send({ error: 'Failed to retrieve stories' });
       }
     });

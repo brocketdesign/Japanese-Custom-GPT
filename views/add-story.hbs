@@ -3,12 +3,16 @@
    {{> dashboard-header}}
 <body>
     {{> dashboard-nav}}
+
 <div class="container mt-4">
     <h2>{{#if storyId}}ストーリーを編集{{else}}新しいストーリーを追加{{/if}}</h2>
+    <div class="text-center mb-4" id="imageSection" style="cursor: pointer;">
+        <img id="storyImage" src="/img/logo.webp" alt="Story Thumbnail" class="rounded-circle m-auto" style="width: 150px; height: 150px; object-fit: cover;">
+    </div>
     <form id="storyForm">
-        <div class="mb-3">
+        <div class="mb-3" id="thumbnailInputContainer" style="display: none;">
             <label for="storyThumbnail" class="form-label">ストーリーのサムネイルをアップロード</label>
-            <input type="file" class="form-control" id="storyThumbnail" name="thumbnail" accept="image/*" required>
+            <input type="file" class="form-control" id="storyThumbnail" name="thumbnail" accept="image/*">
         </div>
         <div class="mb-3">
             <label for="storyName" class="form-label">ストーリー名</label>
@@ -22,21 +26,41 @@
     </form>
 </div>
 
-
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
-        const storyId = '{{storyId}}'
-        if(storyId){fetchStoryData(storyId)}
+        const storyId = '{{storyId}}';
+        if (storyId) {
+            fetchStoryData(storyId);
+        }
+
+        $('#imageSection').click(function() {
+            $('#storyThumbnail').click();
+        });
+
+        $('#storyThumbnail').change(function(event) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                $('#storyImage').attr('src', e.target.result).show();
+            }
+            reader.readAsDataURL(event.target.files[0]);
+        });
+
         function fetchStoryData(storyId) {
             $.ajax({
                 url: `/api/story/${storyId}`,
                 type: 'GET',
                 dataType: 'json',
                 success: function(storyData) {
-                    $('#storyName').val(storyData.name)
-                    $('#storyContent').val(JSON.stringify(storyData.content))
+                    $('#storyName').val(storyData.name);
+                    $('#storyContent').val(JSON.stringify(storyData.content));
+
+                    if (storyData.thumbnailUrl) {
+                        $('#storyImage').attr('src', storyData.thumbnailUrl).show();
+                    } else {
+                        $('#storyImage').attr('src', 'placeholder.jpg').show();
+                    }
                 },
                 error: function(xhr, status, error) {
                     Swal.fire({
@@ -51,7 +75,6 @@
                             window.location.href = '/stories';
                         }
                     });
-
                 }
             });
         }
@@ -65,7 +88,10 @@
 
             formData.append('name', name);
             formData.append('content', content);
-            formData.append('thumbnail', thumbnail);
+            
+            if(thumbnail){
+                formData.append('thumbnail', thumbnail);
+            }
             if(storyId){
                 formData.append('storyId', storyId)
             }
@@ -81,7 +107,7 @@
                         'ストーリーが正常に追加されました!',
                         'success'
                     ).then(()=>{
-                        window.location = '/stories'
+                        window.location = '/chat-list'
                     });
                 },
                 error: function(error) {

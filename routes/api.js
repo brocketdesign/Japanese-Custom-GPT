@@ -1,5 +1,6 @@
 const { ObjectId } = require('mongodb');
 const {moduleCompletion,fetchOpenAICompletion} = require('../models/openai')
+const crypto = require('crypto');
 const aws = require('aws-sdk');
 const fastifyMultipart = require('fastify-multipart');
 const sessions = new Map(); // Define sessions map
@@ -13,47 +14,69 @@ async function routes(fastify, options) {
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
         region: process.env.AWS_REGION
     });
-
     
     fastify.post('/api/add-story', async (request, reply) => {
         const parts = request.parts();
-        let name, content, thumbnailUrl, storyId;
-
+        let name, content, thumbnailUrl, storyId, thumbnailHash;
+    
         for await (const part of parts) {
             if (part.fieldname === 'name') {
                 name = part.value;
             } else if (part.fieldname === 'content') {
                 content = JSON.parse(part.value);
             } else if (part.fieldname === 'thumbnail') {
-                // Upload thumbnail to S3
-                const params = {
-                    Bucket: process.env.AWS_S3_BUCKET_NAME,
-                    Key: `${Date.now()}_${part.filename}`,
-                    Body: part.file,
-                };
-
+                console.log(`image exist ?`)
+                // Calculate the hash of the thumbnail
+                const hash = crypto.createHash('md5');
+                hash.update(part.file);
+                thumbnailHash = hash.digest('hex');
+    
+                // Check if a file with this hash already exists in S3
+                let existingFiles;
                 try {
-                    const uploadResult = await s3.upload(params).promise();
-                    thumbnailUrl = uploadResult.Location;
+                    existingFiles = await s3.listObjectsV2({
+                        Bucket: process.env.AWS_S3_BUCKET_NAME,
+                        Prefix: thumbnailHash,
+                    }).promise();
                 } catch (error) {
-                    console.error('Failed to upload thumbnail:', error);
-                    return reply.status(500).send({ error: 'Failed to upload thumbnail' });
+                    console.error('Failed to list objects in S3:', error);
+                    return reply.status(500).send({ error: 'Failed to check existing thumbnails' });
+                }
+    
+                if (existingFiles.Contents.length > 0) {
+                    // File already exists, use its URL
+                    thumbnailUrl = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFiles.Contents[0].Key}`;
+                } else {
+                    // Upload the thumbnail to S3
+                    const params = {
+                        Bucket: process.env.AWS_S3_BUCKET_NAME,
+                        Key: `${thumbnailHash}_${part.filename}`,
+                        Body: part.file,
+                    };
+    
+                    try {
+                        const uploadResult = await s3.upload(params).promise();
+                        thumbnailUrl = uploadResult.Location;
+                    } catch (error) {
+                        console.error('Failed to upload thumbnail:', error);
+                        return reply.status(500).send({ error: 'Failed to upload thumbnail' });
+                    }
                 }
             } else if (part.fieldname === 'storyId') {
                 storyId = part.value;
             }
         }
-
+    
         // Check if the name and content are provided
         if (!name || !content) {
             return reply.status(400).send({ error: 'Missing name or content for the story' });
         }
-
+    
         // Access the MongoDB collection
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('stories');
-
+    
         const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-
+    
         // Create a document to insert or update
         const storyDocument = {
             name: name,
@@ -61,23 +84,23 @@ async function routes(fastify, options) {
             thumbnailUrl: thumbnailUrl,
             updatedAt: dateObj
         };
-
+    
         try {
             if (storyId) {
                 // Update the existing story
                 const existingStory = await collection.findOne({ _id: new fastify.mongo.ObjectId(storyId) });
-
+    
                 if (!existingStory) {
                     return reply.status(404).send({ error: 'Story not found' });
                 }
-
+    
                 // Update only the provided fields
                 if (thumbnailUrl) {
                     storyDocument.thumbnailUrl = thumbnailUrl;
                 } else {
                     delete storyDocument.thumbnailUrl;
                 }
-
+    
                 await collection.updateOne({ _id: new fastify.mongo.ObjectId(storyId) }, { $set: storyDocument });
                 console.log('Story updated');
                 return reply.send({ message: 'Story updated successfully', name: name });
@@ -87,9 +110,9 @@ async function routes(fastify, options) {
                 if (existingStory) {
                     return reply.status(409).send({ error: 'A story with this name already exists' });
                 }
-
+    
                 storyDocument.createdAt = dateObj;
-
+    
                 // Insert the new story into the MongoDB collection
                 await collection.insertOne(storyDocument);
                 console.log('New story added');
@@ -101,6 +124,7 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to add or update the story' });
         }
     });
+    
 
     fastify.get('/api/story/:id', async (request, reply) => {
         const storyId = request.params.id;

@@ -6,6 +6,8 @@ const cron = require('node-cron');
 const fastifyCookie = require('fastify-cookie');
 const { getCounter, updateCounter } = require('./models/tool');
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
+const handlebars = require('handlebars');
 
 mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then((client) => {
@@ -16,6 +18,11 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       root: path.join(__dirname, 'public'),
       prefix: '/',
     });
+
+    const dashboardHeader = fs.readFileSync('views/partials/dashboard-header.hbs', 'utf8');
+    handlebars.registerPartial('dashboard-header', dashboardHeader);
+    const dashboardNav = fs.readFileSync('views/partials/dashboard-nav.hbs', 'utf8');
+    handlebars.registerPartial('dashboard-nav', dashboardNav);
 
     fastify.register(require('@fastify/view'), {
       engine: { handlebars: require('handlebars') },
@@ -44,16 +51,18 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       try {
         const token = request.cookies.token;
         if (!token) {
-          return reply.status(401).send({ error: 'Token is missing' });
+          return reply.redirect('/authenticate')
+          //return reply.status(401).send({ error: 'Token is missing' });
         }
     
         const decoded = await jwt.verify(token, process.env.JWT_SECRET);
         request.user = decoded; // Attach user data to request
       } catch (err) {
-        reply.status(401).send({ error: 'Unauthorized', message: err.message });
+        return reply.redirect('/authenticate')
+        //reply.status(401).send({ error: 'Unauthorized', message: err.message });
       }
-    });    
-    
+    });   
+
     // Routes
     fastify.get('/', async (request, reply) => {
       try {
@@ -120,17 +129,30 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       }
     });
 
-    fastify.get('/stories', async (request, reply) => {
+    fastify.get('/stories', {
+      preHandler: [fastify.authenticate]
+    }, async (request, reply) => {
       try {
         const stories = await db.collection('stories').find({}).toArray();
-        return reply.view('story-list', { stories: stories });
-      } catch (error) {
+        return reply.view('story-list', { title: 'LAMIX | Powered by Hato,Ltd', stories: stories, user: request.user  });      
+      } catch (err) {
         return reply.status(500).send({ error: 'Failed to retrieve stories' });
       }
     });
-
-    fastify.get('/add-story', (request, reply) => {
-      reply.view('add-story.hbs', { title: 'Add New Story' });
+    fastify.get('/story/edit/:storyId', {
+      preHandler: [fastify.authenticate]
+    }, async (request, reply) => {
+      try {
+        const storyId = request.params.storyId
+        if(storyId){
+          return reply.view('add-story.hbs', { title: 'LAMIX | Powered by Hato,Ltd', storyId:storyId, user: request.user  });
+        }else{
+          return reply.view('add-story.hbs', { title: 'LAMIX | Powered by Hato,Ltd', user: request.user  });
+        }
+      } catch (error) {
+        console.log(error)
+        return reply.status(500).send({ error: 'Failed to retrieve stories' });
+      }
     });
 
     fastify.get('/generate/:userid', (request, reply) => {

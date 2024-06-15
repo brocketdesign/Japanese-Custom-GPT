@@ -1,54 +1,93 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add New Story</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
+<html lang="ja">
+   {{> dashboard-header}}
 <body>
+    {{> dashboard-nav}}
 <div class="container mt-4">
-    <h2>Add New Story</h2>
+    <h2>{{#if storyId}}ストーリーを編集{{else}}新しいストーリーを追加{{/if}}</h2>
     <form id="storyForm">
         <div class="mb-3">
-            <label for="storyName" class="form-label">Story Name</label>
+            <label for="storyThumbnail" class="form-label">ストーリーのサムネイルをアップロード</label>
+            <input type="file" class="form-control" id="storyThumbnail" name="thumbnail" accept="image/*" required>
+        </div>
+        <div class="mb-3">
+            <label for="storyName" class="form-label">ストーリー名</label>
             <input type="text" class="form-control" id="storyName" name="name" required>
         </div>
         <div class="mb-3">
-            <label for="storyContent" class="form-label">Story Content (JSON Format)</summary>
+            <label for="storyContent" class="form-label">ストーリーコンテンツ (JSON形式)</label>
             <textarea class="form-control" id="storyContent" name="content" rows="5" required></textarea>
         </div>
-        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="submit" class="btn btn-primary">送信</button>
     </form>
 </div>
+
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
+        const storyId = '{{storyId}}'
+        if(storyId){fetchStoryData(storyId)}
+        function fetchStoryData(storyId) {
+            $.ajax({
+                url: `/api/story/${storyId}`,
+                type: 'GET',
+                dataType: 'json',
+                success: function(storyData) {
+                    $('#storyName').val(storyData.name)
+                    $('#storyContent').val(JSON.stringify(storyData.content))
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        title: 'エラー!',
+                        text: 'ストーリーの読み込みに失敗しました: ' + error,
+                        icon: 'error',
+                        confirmButtonText: 'Ok',
+                        showCancelButton: true,
+                        cancelButtonText: '一覧を見る'
+                    }).then((result) => {
+                        if (result.dismiss === Swal.DismissReason.cancel) {
+                            window.location.href = '/stories';
+                        }
+                    });
+
+                }
+            });
+        }
         $('#storyForm').on('submit', function(e) {
             e.preventDefault();
+
+            const formData = new FormData();
             const name = $('#storyName').val();
             const content = $('#storyContent').val();
+            const thumbnail = $('#storyThumbnail')[0].files[0];
 
+            formData.append('name', name);
+            formData.append('content', content);
+            formData.append('thumbnail', thumbnail);
+            if(storyId){
+                formData.append('storyId', storyId)
+            }
             $.ajax({
                 url: '/api/add-story',
                 type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ name: name, content: JSON.parse(content) }),
+                processData: false,
+                contentType: false,
+                data: formData,
                 success: function(response) {
                     Swal.fire(
-                        'Success!',
-                        'Story added successfully!',
+                        '成功!',
+                        'ストーリーが正常に追加されました!',
                         'success'
                     ).then(()=>{
                         window.location = '/stories'
-                    })
+                    });
                 },
                 error: function(error) {
                     Swal.fire(
-                        'Error!',
-                        'Failed to add story: ' + error.responseJSON.error,
+                        'エラー!',
+                        'ストーリーの追加に失敗しました: ' + error.responseJSON.error,
                         'error'
                     );
                 }

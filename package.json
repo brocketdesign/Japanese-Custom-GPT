@@ -23,14 +23,16 @@
     "@fastify/mongodb": "^8.0.0",
     "@fastify/static": "^7.0.4",
     "@fastify/view": "^9.1.0",
+    "aws-sdk": "^2.1642.0",
     "axios": "^1.7.2",
     "bcrypt": "^5.1.1",
     "dotenv": "^16.4.5",
     "eventsource-parser": "^1.1.2",
-    "fastify": "^4.27.0",
+    "fastify": "^4.28.0",
     "fastify-auth": "^1.2.0",
     "fastify-cookie": "^5.7.0",
     "fastify-mongodb": "^4.2.0",
+    "fastify-multipart": "^5.4.0",
     "fastify-sse": "^1.0.0",
     "handlebars": "^4.7.8",
     "install": "^0.13.0",
@@ -40,7 +42,8 @@
     "node-cron": "^3.0.3",
     "node-fetch": "^3.3.2",
     "npm": "^10.8.1",
-    "openai": "^4.49.1"
+    "openai": "^4.49.1",
+    "point-of-view": "^6.3.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.19"

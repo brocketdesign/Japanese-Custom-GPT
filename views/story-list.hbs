@@ -1,15 +1,31 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="/img/logo.webp" type="image/webp">
-    <title>ストーリーリスト</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-</head>
+       {{> dashboard-header}}
 <body>
+    {{> dashboard-nav}}
+    <style>
+        /* user-dashboard-info-box */
+        .story-list .thumb {
+            margin-right: 20px;
+        }
+        .story-list .thumb img {
+            width: 80px;
+            height: 80px;
+            -o-object-fit: cover;
+            object-fit: cover;
+            overflow: hidden;
+            border-radius: 50%;
+        }
+        .story-list .item {
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-align: center;
+            -ms-flex-align: center;
+            align-items: center;
+            padding: 30px 0;
+        }
+    </style>
 <div class="container mt-4">
     <h2>ストーリーリスト</h2>
     <table class="table">
@@ -22,16 +38,38 @@
         </thead>
         <tbody>
             {{#each stories}}
-            <tr>
-                <td><a href="/story/{{this._id}}" target="_blank">{{this.name}}</a></td>
-                <td><button class="copyButton btn btn-dark" data-storyid="{{this._id}}">コピー</button></td>
-                <td>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input story-switch" type="checkbox" data-storyid="{{this._id}}" {{#if this.isActive}}checked{{/if}}>
-                    </div>
-                </td>
-            </tr>
+                <tr class="story-list">
+                    <td class="item">
+                        <div class="thumb">
+                            <img class="img-fluid" src="{{#if this.thumbnailUrl}}{{this.thumbnailUrl}}{{else}}/img/logo.webp{{/if}}" alt="">
+                        </div>
+                        <div class="story-list-details">
+                            <div class="story-list-info">
+                            <div class="story-list-title mb-1">
+                                <h5 class="mb-0"><a href="/story/{{this._id}}" target="_blank">{{this.name}}</a></h5>
+                            </div>
+                            <div class="story-list-option" style="max-width: 40vw;">
+                                <p>30歳の既婚男性がキャリアや収入増加に悩み、挑戦を決意する人生の選択肢を描くストーリー。</p>
+                            </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><button class="copyButton btn btn-dark" data-storyid="{{this._id}}">コピー</button></td>
+                    <td style="height: 100%;">
+                        <div class="d-flex align-items-center" style="height: 100%;">
+                            <ul class="list-unstyled mb-0 d-flex justify-content-center align-items-center">
+                                <li class="form-check form-switch mx-1">
+                                    <input class="form-check-input story-switch" type="checkbox" data-storyid="{{this._id}}" {{#if this.isActive}}checked{{/if}}>
+                                </li>
+                                <li><a href="/story/{{this._id}}" class="text-primary mx-1" data-toggle="tooltip" title=""><i class="fas fa-eye"></i></i></a></li>
+                                <li><a href="/story/edit/{{this._id}}" class="text-info mx-1" data-toggle="tooltip" title="" data-original-title="Edit"><i class="far fa-edit"></i></a></li>
+                                <li><span data-storyid="{{this._id}}" class="text-danger delete-story mx-1" data-toggle="tooltip" title="" data-original-title="Delete"><i class="fas fa-trash"></i></a></li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
             {{/each}}
+            
         </tbody>
     </table>
 </div>

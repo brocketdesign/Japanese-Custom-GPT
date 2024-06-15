@@ -17,13 +17,15 @@ async function routes(fastify, options) {
     
     fastify.post('/api/add-story', async (request, reply) => {
         const parts = request.parts();
-        let name, content, thumbnailUrl, storyId, thumbnailHash;
+        let name, description, content, thumbnailUrl, storyId, thumbnailHash;
     
         for await (const part of parts) {
             if (part.fieldname === 'name') {
                 name = part.value;
             } else if (part.fieldname === 'content') {
                 content = JSON.parse(part.value);
+            } else if (part.fieldname === 'description') {
+                description = part.value;
             } else if (part.fieldname === 'thumbnail') {
                 console.log(`image exist ?`)
                 // Calculate the hash of the thumbnail
@@ -80,6 +82,7 @@ async function routes(fastify, options) {
         // Create a document to insert or update
         const storyDocument = {
             name: name,
+            description: description,
             content: content,
             thumbnailUrl: thumbnailUrl,
             updatedAt: dateObj
@@ -122,6 +125,47 @@ async function routes(fastify, options) {
             // Handle potential errors
             console.error('Failed to add or update the story:', error);
             return reply.status(500).send({ error: 'Failed to add or update the story' });
+        }
+    });
+    
+    fastify.delete('/api/delete-story/:id', async (request, reply) => {
+        const storyId = request.params.id;
+    
+        try {
+            // Access the MongoDB collection
+            const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('stories');
+    
+            // Find the story by ID
+            const story = await collection.findOne({ _id: new fastify.mongo.ObjectId(storyId) });
+    
+            if (!story) {
+                return reply.status(404).send({ error: 'Story not found' });
+            }
+    
+            // Delete the thumbnail from S3 if it exists
+            if (story.thumbnailUrl) {
+                const thumbnailKey = story.thumbnailUrl.split('/').pop();
+    
+                try {
+                    await s3.deleteObject({
+                        Bucket: process.env.AWS_S3_BUCKET_NAME,
+                        Key: thumbnailKey,
+                    }).promise();
+                } catch (error) {
+                    console.error('Failed to delete thumbnail from S3:', error);
+                    return reply.status(500).send({ error: 'Failed to delete thumbnail from S3' });
+                }
+            }
+    
+            // Delete the story from MongoDB
+            await collection.deleteOne({ _id: new fastify.mongo.ObjectId(storyId) });
+    
+            console.log('Story deleted');
+            return reply.send({ message: 'Story deleted successfully' });
+        } catch (error) {
+            // Handle potential errors
+            console.error('Failed to delete story:', error);
+            return reply.status(500).send({ error: 'Failed to delete story' });
         }
     });
     

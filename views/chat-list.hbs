@@ -38,7 +38,7 @@
         </thead>
         <tbody>
             {{#each stories}}
-                <tr class="story-list">
+                <tr class="story-list" data-id="{{this._id}}">
                     <td class="item">
                         <div class="thumb">
                             <img class="img-fluid" src="{{#if this.thumbnailUrl}}{{this.thumbnailUrl}}{{else}}/img/logo.webp{{/if}}" alt="">
@@ -49,7 +49,7 @@
                                 <h5 class="mb-0"><a href="/chat/{{this._id}}" target="_blank">{{this.name}}</a></h5>
                             </div>
                             <div class="story-list-option" style="max-width: 40vw;">
-                                <p>30歳の既婚男性がキャリアや収入増加に悩み、挑戦を決意する人生の選択肢を描くストーリー。</p>
+                                <p>{{this.description}}</p>
                             </div>
                             </div>
                         </div>
@@ -63,7 +63,7 @@
                                 </li>
                                 <li><a href="/chat/{{this._id}}" class="text-primary mx-1" data-toggle="tooltip" title=""><i class="fas fa-eye"></i></i></a></li>
                                 <li><a href="/story/edit/{{this._id}}" class="text-info mx-1" data-toggle="tooltip" title="" data-original-title="Edit"><i class="far fa-edit"></i></a></li>
-                                <li><span data-storyid="{{this._id}}" class="text-danger delete-story mx-1" data-toggle="tooltip" title="" data-original-title="Delete"><i class="fas fa-trash"></i></a></li>
+                                <li><span data-storyid="{{this._id}}" class="text-danger delete-story mx-1" style="cusrsor:pointer" data-toggle="tooltip" title="" data-original-title="Delete"><i class="fas fa-trash"></i></a></li>
                             </ul>
                         </div>
                     </td>
@@ -100,7 +100,43 @@ $(document).ready(function() {
             }
         });
     });
+    $('.delete-story').on('click', function() {
+        const storyId = $(this).data('storyid');
 
+        Swal.fire({
+            title: '本当に削除しますか？',
+            text: "この操作は元に戻せません！",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'はい、削除します！',
+            cancelButtonText: 'キャンセル'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `/api/delete-story/${storyId}`,
+                    type: 'DELETE',
+                    success: function(response) {
+                        Swal.fire(
+                            '削除されました！',
+                            'ストーリーが削除されました。',
+                            'success'
+                        ).then(() => {
+                            $(`.story-list[data-id="${storyId}"]`).fadeOut()
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        Swal.fire(
+                            'エラー',
+                            'ストーリーの削除に失敗しました。',
+                            'error'
+                        );
+                    }
+                });
+            }
+        });
+    });
     $('.story-switch').on('change', function() {
         $('.story-switch').not(this).prop('checked', false);
         let storyId = $(this).data('storyid');

@@ -19,6 +19,10 @@
             <input type="text" class="form-control" id="storyName" name="name" required>
         </div>
         <div class="mb-3">
+            <label for="storyDescription" class="form-label">ストーリー</label>
+            <textarea class="form-control" id="storyDescription" name="content" rows="3" required></textarea>
+        </div>
+        <div class="mb-3">
             <label for="storyContent" class="form-label">ストーリーコンテンツ (JSON形式)</label>
             <textarea class="form-control" id="storyContent" name="content" rows="5" required></textarea>
         </div>
@@ -54,12 +58,11 @@
                 dataType: 'json',
                 success: function(storyData) {
                     $('#storyName').val(storyData.name);
+                    $('#storyDescription').val(storyData.description);
                     $('#storyContent').val(JSON.stringify(storyData.content));
 
-                    if (storyData.thumbnailUrl) {
+                    if (storyData.thumbnailUrl && storyData.thumbnailUrl != undefined) {
                         $('#storyImage').attr('src', storyData.thumbnailUrl).show();
-                    } else {
-                        $('#storyImage').attr('src', 'placeholder.jpg').show();
                     }
                 },
                 error: function(xhr, status, error) {
@@ -84,9 +87,11 @@
             const formData = new FormData();
             const name = $('#storyName').val();
             const content = $('#storyContent').val();
+            const description = $('#storyDescription').val();
             const thumbnail = $('#storyThumbnail')[0].files[0];
 
             formData.append('name', name);
+            formData.append('description', description);
             formData.append('content', content);
             
             if(thumbnail){

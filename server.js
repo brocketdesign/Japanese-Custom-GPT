@@ -81,7 +81,11 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       reply.view('authenticate.hbs', { title: 'LAMIX | Powered by Hato,Ltd' });
     });
 
-    fastify.get('/chat', (request, reply) => {
+    fastify.get('/chat/:chatId', (request, reply) => {
+      const chatId = request.params.chatId
+      if(chatId){
+        reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd', storyId: chatId });
+      }
       reply.view('chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd' });
     });
 
@@ -129,16 +133,17 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       }
     });
 
-    fastify.get('/stories', {
+    fastify.get('/chat-list', {
       preHandler: [fastify.authenticate]
     }, async (request, reply) => {
       try {
         const stories = await db.collection('stories').find({}).toArray();
-        return reply.view('story-list', { title: 'LAMIX | Powered by Hato,Ltd', stories: stories, user: request.user  });      
+        return reply.view('chat-list', { title: 'LAMIX | Powered by Hato,Ltd', stories: stories, user: request.user  });      
       } catch (err) {
         return reply.status(500).send({ error: 'Failed to retrieve stories' });
       }
     });
+    
     fastify.get('/story/edit/:storyId', {
       preHandler: [fastify.authenticate]
     }, async (request, reply) => {

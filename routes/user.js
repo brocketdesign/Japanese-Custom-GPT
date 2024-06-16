@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 async function routes(fastify, options) {
+  
   fastify.post('/user/register', async (request, reply) => {
     const { username, password } = request.body;
     const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
@@ -13,10 +14,11 @@ async function routes(fastify, options) {
       return reply.status(400).send({ error: 'ユーザーはすでに存在します' });
     }
     
-    await usersCollection.insertOne({ username, password: hashedPassword });
+    const result = await usersCollection.insertOne({ username, password: hashedPassword });
+    const newUser = result.ops[0];
     
     // Generate a token for the new user
-    const token = jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ _id: newUser._id, username: newUser.username }, process.env.JWT_SECRET, { expiresIn: '1h' });
     
     reply
       .setCookie('token', token, { path: '/', httpOnly: true })
@@ -32,7 +34,7 @@ async function routes(fastify, options) {
       return reply.status(401).send({ error: '無効なユーザー名またはパスワード' });
     }
     
-    const token = jwt.sign({ username: user.username }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ _id: user._id, username: user.username }, process.env.JWT_SECRET, { expiresIn: '1h' });
     reply
       .setCookie('token', token, { path: '/', httpOnly: true })
       .send({ redirect: '/dashboard' });

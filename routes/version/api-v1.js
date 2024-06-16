@@ -109,8 +109,8 @@ async function routes(fastify, options) {
                 }
     
                 await collection.updateOne({ _id: new fastify.mongo.ObjectId(chatId) }, { $set: storyDocument });
-                console.log('Chat updated', chatId);
-                return reply.send({ message: 'Chat updated successfully', name: name });
+                console.log('Story updated');
+                return reply.send({ message: 'Story updated successfully', name: name });
             } else {
                 // Check if a story with the same name already exists
                 const existingStory = await collection.findOne({ name: name });
@@ -122,13 +122,13 @@ async function routes(fastify, options) {
     
                 // Insert the new story into the MongoDB collection
                 await collection.insertOne(storyDocument);
-                console.log('New Chat added');
-                return reply.send({ message: 'Chat added successfully', name: name });
+                console.log('New story added');
+                return reply.send({ message: 'Story added successfully', name: name });
             }
         } catch (error) {
             // Handle potential errors
-            console.error('Failed to add or update the Chat:', error);
-            return reply.status(500).send({ error: 'Failed to add or update the Chat' });
+            console.error('Failed to add or update the story:', error);
+            return reply.status(500).send({ error: 'Failed to add or update the story' });
         }
     });
     
@@ -179,7 +179,6 @@ async function routes(fastify, options) {
     
         try {
             const chat = await collection.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
-
             if (!chat) {
                 return reply.status(404).send({ error: 'chat not found' });
             }
@@ -272,37 +271,6 @@ async function routes(fastify, options) {
         }
     });
 
-    fastify.post('/api/chat-data', {
-        preHandler: [fastify.authenticate]
-      },async (request, reply) => {
-
-        const userId = request.user._id
-        const { choice, userIp, chatId } = request.body;
-    
-        console.log({userId,choice,userIp, chatId })
-    
-        try {
-            const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-            const query = { userId: userId };
-            const update = {
-                $push: { choices: { choice, chatId, timestamp: dateObj } },
-                $setOnInsert: { userId: userId, userIp: userIp, createdAt: dateObj },
-                $set: { chatId: chatId }
-            };
-            const options = { upsert: true };
-            const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-
-            await collection.updateOne(query, update, options);
-            console.log('User choice updated:', { userId: userId, choice, userIp: userIp, chatId:chatId });
-            //const userData = await collection.findOne(query);
-            //console.log(userData)
-            return reply.send({ nextStoryPart: "You chose the path and...", endOfStory: true });
-        } catch (error) {
-            console.log(error)
-            console.error('Failed to save user choice:', error);
-            return reply.status(500).send({ error: 'Failed to save user choice' });
-        }
-    });
     fastify.post('/api/custom-data', async (request, reply) => {
         const { userId, customData } = request.body;
     
@@ -559,86 +527,6 @@ async function routes(fastify, options) {
         }
     });
 
-    fastify.post('/api/openai-chat-completion', {
-        preHandler: [fastify.authenticate]
-      }, (request, reply) => {
-        const { chatId } = request.body;
-        const userId = request.user._id
-        const sessionId = Math.random().toString(36).substring(2, 15); // Generate a unique session ID
-        sessions.set(sessionId, { userId, chatId });
-        reply.send({ sessionId });
-    });
-    
-    fastify.get('/api/openai-chat-completion-stream/:sessionId', async (request, reply) => {
-        const { sessionId } = request.params;
-        const session = sessions.get(sessionId);
-
-        if (!session) {
-            reply.status(404).send({ error: 'Session not found' });
-            return;
-        }
-    
-        reply.raw.setHeader('Content-Type', 'text/event-stream');
-        reply.raw.setHeader('Cache-Control', 'no-cache');
-        reply.raw.setHeader('Connection', 'keep-alive');
-        reply.raw.flushHeaders();
-    
-        try {
-            const userId = session.userId;
-            const chatId = session.chatId;
-            console.log({userId,chatId})
-
-            const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-            let userData = await userDataCollection.findOne({ userId: userId })
-
-            if (!userData) {
-                reply.raw.end(); // End the stream before sending the response
-                return reply.status(404).send({ error: 'User data not found' });
-            }
-
-            const { choices } = userData;
-            console.log({ chatId, choices })
-            const storiesCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-            const chat = await storiesCollection.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
-
-            if (!chat) {
-                reply.raw.end(); // End the stream before sending the response
-                return reply.status(404).send({ error: 'Chat not found' });
-            }
-    
-            let prompt = `
-            Providing the below information. Give the user advices to achieve his goal.\n
-            Respond in japanese and in a friendly tone. Like you would with a friend.
-            \n`;
-    
-            for (const step in chat.content.story) {
-                const storyStep = chat.content.story[step];
-                const userChoice = choices.find(choice => storyStep.choices.some(choiceOption => choiceOption.choiceId === choice.choice));
-    
-                if (userChoice) {
-                    const selectedChoice = storyStep.choices.find(choice => choice.choiceId === userChoice.choice);
-                    prompt += `Q: ${storyStep.introduction}\n`;
-                    prompt += `A: ${selectedChoice.choiceText}\n\n`;
-                }
-            }
-    
-            const messages = [
-                { "role": "system", "content": "友好的で励みになるアドバイザー" },
-                { "role": "user", "content": prompt },
-            ];
-
-            console.log(`Start completion`)
-            const completion = await fetchOpenAICompletion(messages, reply.raw);
-
-            // End the stream only after the completion has been sent
-            reply.raw.end();
-        } catch (error) {
-            console.log(error)
-            reply.raw.end(); // End the stream before sending the response
-            reply.status(500).send({ error: 'Error fetching OpenAI completion' });
-        }
-    });
-
     fastify.post('/api/chat', async (request, reply) => {
         try {
             const { userId, message, chatId } = request.body;
@@ -705,9 +593,9 @@ async function routes(fastify, options) {
     });
 
     fastify.post('/api/openai-chat', (request, reply) => {
-        const { userId, chatId } = request.body;
+        const { userId, chatId, message, system } = request.body;
         const sessionId = Math.random().toString(36).substring(2, 15); // Generate a unique session ID
-        sessions.set(sessionId, { userId, chatId });
+        sessions.set(sessionId, { userId, chatId, message, system });
         reply.send({ sessionId });
     });
     
@@ -728,8 +616,10 @@ async function routes(fastify, options) {
         try {
             const userId = session.userId;
             const chatId = session.chatId;
+            const message = session.message;
+            const system = session.system;
 
-            console.log({ userId, chatId });
+            console.log({ userId, chatId, message, system });
     
             const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
             let userData = isNewObjectId(userId) ? await userDataCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) }) : await userDataCollection.findOne({ userId: parseInt(userId) });
@@ -771,71 +661,7 @@ async function routes(fastify, options) {
         }
     });
     
-    fastify.post('/api/openai-chat-creation', {
-        preHandler: [fastify.authenticate]
-      }, (request, reply) => {
-        const { chatId, message, system } = request.body;
-        const userId = request.user._id
-        const sessionId = Math.random().toString(36).substring(2, 15); // Generate a unique session ID
-        sessions.set(sessionId, { userId, chatId, message, system });
-        reply.send({ sessionId });
-    });
     
-    fastify.get('/api/openai-chat-creation-stream/:sessionId', async (request, reply) => {
-        const { sessionId } = request.params;
-        const session = sessions.get(sessionId);
-    
-        if (!session) {
-            reply.status(404).send({ error: 'Session not found' });
-            return;
-        }
-    
-        reply.raw.setHeader('Content-Type', 'text/event-stream');
-        reply.raw.setHeader('Cache-Control', 'no-cache');
-        reply.raw.setHeader('Connection', 'keep-alive');
-        reply.raw.flushHeaders();
-    
-        try {
-            const userId = session.userId;
-            const chatId = session.chatId;
-            const message = session.message;
-            const system = session.system;
-
-            console.log({ userId, chatId, message });
-    
-            const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
-            let userData = await userDataCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) }) 
-
-            if (!userData) {
-                reply.raw.end(); // End the stream before sending the response
-                return reply.status(404).send({ error: 'User data not found' });
-            }
-    
-            const userObjectId = userData._id;
-    
-            const chatCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-    
-            let messages = [
-                { role: "system", content: system },
-                { role: "user", content: message },
-            ]
-
-            const completion = await fetchOpenAICompletion(messages, reply.raw);
-
-            messages.push({ role: "system", content: completion })
-            // Update the chat document in the database
-            await chatCollection.insertOne(
-                { userId: userObjectId, chatId },
-                { $set: { messages: messages, updatedAt: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) } }
-            );
-    
-            // End the stream only after the completion has been sent and stored
-            reply.raw.end();
-        } catch (error) {
-            reply.raw.end(); // End the stream before sending the response
-            reply.status(500).send({ error: 'Error fetching OpenAI completion' });
-        }
-    });
     
 // Function to check if a string is a valid ObjectId
 function isNewObjectId(userId) {

@@ -3,89 +3,119 @@
        {{> dashboard-header}}
 <body>
     {{> dashboard-nav}}
-    <style>
-        /* user-dashboard-info-box */
-        .story-list .thumb {
-            margin-right: 20px;
-        }
-        .story-list .thumb img {
-            width: 80px;
-            height: 80px;
-            -o-object-fit: cover;
-            object-fit: cover;
-            overflow: hidden;
-            border-radius: 50%;
-        }
-        .story-list .item {
-            display: -webkit-box;
-            display: -ms-flexbox;
-            display: flex;
-            -webkit-box-align: center;
-            -ms-flex-align: center;
-            align-items: center;
-            padding: 30px 0;
-        }
-    </style>
+
+<style>
+    /* user-dashboard-info-box */
+    .chat-list .thumb {
+        margin-right: 20px;
+    }
+    .chat-list .thumb img {
+        width: 80px;
+        height: 80px;
+        -o-object-fit: cover;
+        object-fit: cover;
+        overflow: hidden;
+        border-radius: 50%;
+    }
+    .chat-list.item {
+        display: -webkit-box;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-box-align: center;
+        -ms-flex-align: center;
+        align-items: center;
+        padding: 20px 5px;
+        transition: background-color 0.3s ease;
+    }
+    .chat-list.item:hover {
+        background-color: #f8f9fa;
+    }
+    .chat-list .chat-list-details {
+        display: flex;
+        flex-direction: column;
+    }
+    .chat-list .chat-list-actions {
+        display: flex;
+        align-items: center;
+    }
+    hr.separator {
+        border: none;
+        height: 1px;
+        background-color: #b1b1b1;
+        margin: 0;
+    }
+</style>
+
 <div class="container mt-4">
     <h2>チャットボット一覧</h2>
-    <table class="table">
-        <thead>
-            <tr>
-                <th scope="col">チャットボット一名</th>
-                <th scope="col">JSON</th>
-                <th scope="col">アクティブ</th>
-            </tr>
-        </thead>
-        <tbody>
-            {{#each stories}}
-                <tr class="story-list" data-id="{{this._id}}">
-                    <td class="item">
-                        <div class="thumb">
-                            <img class="img-fluid" src="{{#if this.thumbnailUrl}}{{this.thumbnailUrl}}{{else}}/img/logo.webp{{/if}}" alt="">
-                        </div>
-                        <div class="story-list-details">
-                            <div class="story-list-info">
-                            <div class="story-list-title mb-1">
+    <div class="chat-list-container py-5">
+        <div class="chat-list item d-flex align-items-center" style="cursor: pointer;" onclick="window.location.href='/chat/edit/'">
+            <div class="thumb">
+                <i class="fas fa-plus-circle fa-3x"></i>
+            </div>
+            <div class="chat-list-details">
+                <div class="chat-list-info">
+                    <div class="chat-list-title mb-1">
+                        <h5 class="mb-0">新しいチャットボットを追加</h5>
+                    </div>
+                    <div class="chat-list-option" style="max-width: 40vw;">
+                        <span>クリックして新しいチャットボットを作成します。</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr class="separator">
+
+        {{#each chats}}
+            <div class="chat-list item d-flex align-items-center justify-content-between" style="cursor: pointer;" data-id="{{this._id}}" onclick="window.location.href='/chat/edit/{{this._id}}'">
+                <div class="d-flex align-items-center">
+                    <div class="thumb">
+                        <img class="img-fluid" src="{{#if this.thumbnailUrl}}{{this.thumbnailUrl}}{{else}}/img/logo.webp{{/if}}" alt="">
+                    </div>
+                    <div class="chat-list-details">
+                        <div class="chat-list-info">
+                            <div class="chat-list-title mb-1">
                                 <h5 class="mb-0"><a href="/chat/{{this._id}}" target="_blank">{{this.name}}</a></h5>
                             </div>
-                            <div class="story-list-option" style="max-width: 40vw;">
-                                <p>{{this.description}}</p>
-                            </div>
+                            <div class="chat-list-option" style="max-width: 40vw;">
+                                <span>{{this.description}}</span>
                             </div>
                         </div>
-                    </td>
-                    <td><button class="copyButton btn btn-dark" data-storyid="{{this._id}}">コピー</button></td>
-                    <td style="height: 100%;">
-                        <div class="d-flex align-items-center" style="height: 100%;">
-                            <ul class="list-unstyled mb-0 d-flex justify-content-center align-items-center">
-                                <li class="form-check form-switch mx-1">
-                                    <input class="form-check-input story-switch" type="checkbox" data-storyid="{{this._id}}" {{#if this.isActive}}checked{{/if}}>
-                                </li>
-                                <li><a href="/chat/{{this._id}}" class="text-primary mx-1" data-toggle="tooltip" title=""><i class="fas fa-eye"></i></i></a></li>
-                                <li><a href="/story/edit/{{this._id}}" class="text-info mx-1" data-toggle="tooltip" title="" data-original-title="Edit"><i class="far fa-edit"></i></a></li>
-                                <li><span data-storyid="{{this._id}}" class="text-danger delete-story mx-1" style="cursor:pointer" data-toggle="tooltip" title="" data-original-title="Delete"><i class="fas fa-trash"></i></a></li>
-                            </ul>
-                        </div>
-                    </td>
-                </tr>
-            {{/each}}
-            
-        </tbody>
-    </table>
+                    </div>
+                </div>
+                <div class="chat-list-actions">
+                    <button class="copyButton btn btn-dark mx-2" data-chatid="{{this._id}}">コピー</button>
+                    <div class="d-flex align-items-center">
+                        <ul class="list-unstyled mb-0 d-flex justify-content-center align-items-center">
+                            <li class="form-check form-switch mx-1">
+                                <input class="form-check-input chat-switch" type="checkbox" data-chatid="{{this._id}}" {{#if this.isActive}}checked{{/if}}>
+                            </li>
+                            <li><a href="/chat/{{this._id}}" class="text-primary mx-1" data-toggle="tooltip" title=""><i class="fas fa-eye"></i></a></li>
+                            <li><a href="/chat/edit/{{this._id}}" class="text-info mx-1" data-toggle="tooltip" title="" data-original-title="Edit"><i class="far fa-edit"></i></a></li>
+                            <li><span data-chatid="{{this._id}}" class="text-danger delete-chat mx-1" style="cursor:pointer" data-toggle="tooltip" title="" data-original-title="Delete"><i class="fas fa-trash"></i></span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        {{/each}}
+    </div>
 </div>
+
 
 <script>
 $(document).ready(function() {
-    $('.copyButton').click(function() {
-        var storyId = $(this).data('storyid');
+    $('.copyButton').click(function(e) {
+        e.preventDefault()
+        e.stopPropagation();
+        var chatId = $(this).data('chatid');
         
         $.ajax({
-            url: '/api/story/' + storyId,
+            url: '/api/chat/' + chatId,
             method: 'GET',
-            success: function(story) {
+            success: function(chat) {
                 var tempInput = $('<input>');
                 $('body').append(tempInput);
-                tempInput.val(JSON.stringify(story.content)).select();
+                tempInput.val(JSON.stringify(chat.content)).select();
                 var successful = document.execCommand('copy');
                 tempInput.remove();
 
@@ -100,8 +130,10 @@ $(document).ready(function() {
             }
         });
     });
-    $('.delete-story').on('click', function() {
-        const storyId = $(this).data('storyid');
+    $('.delete-chat').on('click', function(e) {
+        e.preventDefault()
+        e.stopPropagation();
+        const chatId = $(this).data('chatid');
 
         Swal.fire({
             title: '本当に削除しますか？',
@@ -115,21 +147,21 @@ $(document).ready(function() {
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: `/api/delete-story/${storyId}`,
+                    url: `/api/delete-chat/${chatId}`,
                     type: 'DELETE',
                     success: function(response) {
                         Swal.fire(
                             '削除されました！',
-                            'ストーリーが削除されました。',
+                            'チャットが削除されました。',
                             'success'
                         ).then(() => {
-                            $(`.story-list[data-id="${storyId}"]`).fadeOut()
+                            $(`.chat-list[data-id="${chatId}"]`).fadeOut().remove()
                         });
                     },
                     error: function(xhr, status, error) {
                         Swal.fire(
                             'エラー',
-                            'ストーリーの削除に失敗しました。',
+                            'チャットの削除に失敗しました。',
                             'error'
                         );
                     }
@@ -137,15 +169,21 @@ $(document).ready(function() {
             }
         });
     });
-    $('.story-switch').on('change', function() {
-        $('.story-switch').not(this).prop('checked', false);
-        let storyId = $(this).data('storyid');
+      $('.chat-switch').on('click', function(e) {
+        e.stopPropagation();
+        
+        // Your button-specific code here
+        console.log("Button clicked, event propagation stopped");
+    });
+    $('.chat-switch').on('change', function() {
+        $('.chat-switch').not(this).prop('checked', false);
+        let chatId = $(this).data('chatid');
         if ($(this).is(':checked')) {
-            $.post('/api/set-story', { storyId: storyId })
+            $.post('/api/set-chat', { chatId: chatId })
                 .done(function(response) {
                     Swal.fire({
                         title: '成功',
-                        text: 'ストーリーがアクティブになりました。',
+                        text: 'チャットがアクティブになりました。',
                         icon: 'success',
                         confirmButtonText: 'OK'
                     });
@@ -153,7 +191,7 @@ $(document).ready(function() {
                 .fail(function(error) {
                     Swal.fire({
                         title: 'エラー',
-                        text: 'ストーリーをアクティブにできませんでした。',
+                        text: 'チャットをアクティブにできませんでした。',
                         icon: 'error',
                         confirmButtonText: 'OK'
                     });

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ja">
+   {{> dashboard-header}}
+<body>
+    {{> dashboard-nav}}
+
+<div class="container mt-4">
+    <h2>{{#if chatId}}チャットを編集{{else}}新しいチャットを追加{{/if}}</h2>
+    <div class="text-center mb-4" id="imageSection" style="cursor: pointer;">
+        <img id="chatImage" src="/img/logo.webp" alt="chat Thumbnail" class="rounded-circle m-auto" style="width: 150px; height: 150px; object-fit: cover;">
+    </div>
+    <form id="chatForm">
+        <div class="mb-3" id="thumbnailInputContainer" style="display: none;">
+            <label for="chatThumbnail" class="form-label">チャットのサムネイルをアップロード</label>
+            <input type="file" class="form-control" id="chatThumbnail" name="thumbnail" accept="image/*">
+        </div>
+        <div class="mb-3">
+            <label for="chatName" class="form-label">チャット名</label>
+            <input type="text" class="form-control" id="chatName" name="name" required>
+        </div>
+        <div class="mb-3">
+            <label for="chatDescription" class="form-label">チャット</label>
+            <textarea class="form-control" id="chatDescription" name="content" rows="3" required></textarea>
+        </div>
+        <div class="mb-3">
+            <label for="chatContent" class="form-label">チャットコンテンツ (JSON形式)</label>
+            <textarea class="form-control" id="chatContent" name="content" rows="5" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">送信</button>
+    </form>
+    <div id="chatInput" class="input-group rounded-0 rounded-bottom my-5" style="bottom: 0px;right: 0;left: 0;width: auto;margin: auto;">
+        <input type="text" id="userMessage" class="form-control py-3" placeholder="メッセージを入力してください">
+        <button id="sendMessage" class="btn btn-dark px-4"><i class="fas fa-paper-plane"></i></button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        var count = 0
+        let chatId = '{{chatId}}';
+
+        if (chatId) {
+            fetchchatData(chatId);
+        }
+
+        $('#imageSection').click(function() {
+            $('#chatThumbnail').click();
+        });
+
+        $('#chatThumbnail').change(function(event) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                $('#chatImage').attr('src', e.target.result).show();
+            }
+            reader.readAsDataURL(event.target.files[0]);
+        });
+
+        function fetchchatData(chatId) {
+            $.ajax({
+                url: `/api/chat/${chatId}`,
+                type: 'GET',
+                dataType: 'json',
+                success: function(chatData) {
+                    $('#chatName').val(chatData.name);
+                    $('#chatDescription').val(chatData.description);
+                    $('#chatContent').val(JSON.stringify(chatData.content));
+
+                    if (chatData.thumbnailUrl && chatData.thumbnailUrl != undefined) {
+                        $('#chatImage').attr('src', chatData.thumbnailUrl).show();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        title: 'エラー!',
+                        text: 'チャットの読み込みに失敗しました: ' + error,
+                        icon: 'error',
+                        confirmButtonText: 'Ok',
+                        showCancelButton: true,
+                        cancelButtonText: '一覧を見る'
+                    }).then((result) => {
+                        if (result.dismiss === Swal.DismissReason.cancel) {
+                            window.location.href = '/chats';
+                        }
+                    });
+                }
+            });
+        }
+        $('#chatForm').on('submit', function(e) {
+            e.preventDefault();
+
+            const formData = new FormData();
+            const name = $('#chatName').val();
+            const content = $('#chatContent').val();
+            const description = $('#chatDescription').val();
+            const thumbnail = $('#chatThumbnail')[0].files[0];
+
+            formData.append('name', name);
+            formData.append('description', description);
+            formData.append('content', content);
+            
+            if(thumbnail){
+                formData.append('thumbnail', thumbnail);
+            }
+            if(chatId){
+                formData.append('chatId', chatId)
+            }
+            $.ajax({
+                url: '/api/add-chat',
+                type: 'POST',
+                processData: false,
+                contentType: false,
+                data: formData,
+                success: function(response) {
+                    Swal.fire(
+                        '成功!',
+                        'チャットが正常に追加されました!',
+                        'success'
+                    ).then(()=>{
+                        window.location = '/chat-list'
+                    });
+                },
+                error: function(error) {
+                    Swal.fire(
+                        'エラー!',
+                        'チャットの追加に失敗しました: ' + error.responseJSON.error,
+                        'error'
+                    );
+                }
+            });
+        });
+
+   
+        // Event handler for the send button
+        $('#sendMessage').on('click', function() {
+            generateCompletion();
+        });
+
+        // Event handler for the Enter key
+        $('#userMessage').on('keypress', function(event) {
+            if (event.which == 13) { // Enter key is pressed
+                generateCompletion();
+            }
+        });
+
+        function generateCompletion() {
+
+            const apiUrl = '/api/openai-chat-creation';
+            const message = $('#userMessage').val();
+            const chatId = 'chat_' + Date.now();
+            
+            $.ajax({
+                url: apiUrl,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ chatId, message, system : getSystem('chatContent') }),
+                success: function(response) {
+
+                    $('#chatContent').html('')
+                    const sessionId = response.sessionId;
+                    const streamUrl = `/api/openai-chat-creation-stream/${sessionId}`;
+                    const eventSource = new EventSource(streamUrl);
+                    let markdownContent = "";
+
+                    eventSource.onmessage = function(event) {
+                        const data = JSON.parse(event.data);
+                        markdownContent += data.content;
+
+                        // Update the bot response container with the new content
+                        $('#chatContent').html(markdownContent);
+
+                    };
+
+                    eventSource.onerror = function(error) {
+                        console.log('EventSource failed.');
+                        eventSource.close();
+                    };
+                },
+                error: function(error) {
+                    console.error('Error:', error);
+                }
+            });
+        }
+        function getSystem(systemType){
+            var system;
+
+            switch (systemType) {
+                case "chatContent":
+                    system = `
+                    Your are a JSON generator. Use the user instruction to generate a JSON following the structure below. Your answer must be in japanese. \n\n
+                        {
+                            "story": {
+                                "step1": {
+                                    "introduction": "Your introduction text for step 1 here.",
+                                    "choices": [
+                                        {
+                                            "choiceId": "uniqueId1",
+                                            "choiceText": "Choice text 1",
+                                            "result": "Result text for choice 1."
+                                        },
+                                        {
+                                            "choiceId": "uniqueId2",
+                                            "choiceText": "Choice text 2",
+                                            "result": "Result text for choice 2."
+                                        },
+                                        {
+                                            "choiceId": "uniqueId3",
+                                            "choiceText": "Choice text 3",
+                                            "result": "Result text for choice 3."
+                                        }
+                                    ],
+                                    "conclusion": "Your conclusion text for step 1 here."
+                                },
+                                "step2": {
+                                    "introduction": "Your introduction text for step 2 here.",
+                                    "choices": [
+                                        {
+                                            "choiceId": "uniqueId4",
+                                            "choiceText": "Choice text 4",
+                                            "result": "Result text for choice 4."
+                                        },
+                                        {
+                                            "choiceId": "uniqueId5",
+                                            "choiceText": "Choice text 5",
+                                            "result": "Result text for choice 5."
+                                        },
+                                        {
+                                            "choiceId": "uniqueId6",
+                                            "choiceText": "Choice text 6",
+                                            "result": "Result text for choice 6."
+                                        }
+                                    ],
+                                    "conclusion": "Your conclusion text for step 2 here."
+                                }
+                            }
+                        }`;
+                    break;
+                default:
+                    system = "Your are a useful assistant.";
+                    break;
+                    
+            }
+            return system
+        }
+    });
+</script>
+</body>
+</html>

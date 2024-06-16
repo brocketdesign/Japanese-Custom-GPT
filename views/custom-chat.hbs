@@ -76,37 +76,40 @@ $(document).ready(function() {
     // Fetch the user's IP address and generate a unique ID
     fetchUserIP(function(new_userId,userIp) {
         // Now you can use the userID variable or id parameter here
-        const storyId = "{{storyId}}";
+        const chatId = "{{chatId}}";
+        console.log({chatId})
         let currentStep = 0;
         let totalSteps = 0;
-        let storyData = {};
+        let chatData = {};
         let feedback = false
         let thumbnail = false
 
         sendCustomData({action: 'viewpage'});
-        fetchStoryData(storyId); // Fetch the initial story data when the page loads
+        fetchchatData(chatId); // Fetch the initial chat data when the page loads
         
         window.choosePath = function(choiceId) {
             if (currentStep === totalSteps - 1) {
                 hideOtherChoice(choiceId,currentStep + 1,function(){
                     displayConclusion(choiceId,function(){
-                        $('#unlock-result').css('visibility','initial')
+                        generateCompletion($('#generateCompetion'));
+                        //$('#unlock-result').css('visibility','initial')
                     });
                 })
 
             } else {
                 currentStep++;
                 hideOtherChoice(choiceId,currentStep,function(){
-                    updateStoryContent(choiceId);
+                    updatechatContent(choiceId);
                 })
             }
+            console.log({choice: choiceId, userIp: userIp, chatId:chatId})
             $.ajax({
-                url: '/api/data',
+                url: '/api/chat-data',
                 type: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                data: JSON.stringify({ choice: choiceId, userId: userId, userIp: userIp, storyId:storyId }),
+                data: JSON.stringify({ choice: choiceId, userIp: userIp, chatId:chatId }),
                 success: function(response) {
                     
                 },
@@ -121,30 +124,30 @@ $(document).ready(function() {
             sendCustomData({action:'unlock-result'})
             promptForEmail()
         })
-        function fetchStoryData(storyId) {
+        function fetchchatData(chatId) {
             $.ajax({
-                url: `/api/story/${storyId}`,
+                url: `/api/chat/${chatId}`,
                 type: 'GET',
                 dataType: 'json',
                 success: function(data) {
-                    storyData = data.content.story;
-                    totalSteps = Object.keys(storyData).length;
-                    storyName = data.name
+                    chatData = data.content.story;
+                    totalSteps = Object.keys(chatData).length;
+                    chatName = data.name
                     thumbnail = data.thumbnailUrl
-                    $('h1').text(storyName)
-                    displayStep(storyData, currentStep);
+                    $('h1').text(chatName)
+                    displayStep(chatData, currentStep);
                 },
                 error: function(xhr, status, error) {
                     Swal.fire({
                         title: 'エラー!',
-                        text: 'ストーリーの読み込みに失敗しました: ' + error,
+                        text: 'チャットの読み込みに失敗しました: ' + error,
                         icon: 'error',
                         confirmButtonText: 'Ok',
                         showCancelButton: true,
                         cancelButtonText: '一覧を見る'
                     }).then((result) => {
                         if (result.dismiss === Swal.DismissReason.cancel) {
-                            window.location.href = '/stories';
+                            window.location.href = '/chat-list';
                         }
                     });
 
@@ -152,8 +155,8 @@ $(document).ready(function() {
             });
         }
 
-        function displayStep(storyData, currentStep) {
-            const step = storyData[`step${currentStep + 1}`];
+        function displayStep(chatData, currentStep) {
+            const step = chatData[`step${currentStep + 1}`];
             $(`.card-header .count`).text(`${currentStep + 1}/${totalSteps}`)
             $('#chatContainer').append(`
             <div id="container-${currentStep}">
@@ -176,8 +179,8 @@ $(document).ready(function() {
             })
         }
 
-        function updateStoryContent(choiceId) {
-            const previousStep = storyData[`step${currentStep}`]; // Previous step where the choice was made
+        function updatechatContent(choiceId) {
+            const previousStep = chatData[`step${currentStep}`]; // Previous step where the choice was made
             const choice = previousStep.choices.find(c => c.choiceId === choiceId);
             $(`.card-header .count`).text(`${currentStep + 1}/${totalSteps}`)
             $('#chatContainer').append(`
@@ -198,7 +201,7 @@ $(document).ready(function() {
 
             if (currentStep < totalSteps) {
 
-                const nextStep = storyData[`step${currentStep + 1}`];
+                const nextStep = chatData[`step${currentStep + 1}`];
                 nextStep.choices.forEach(choice => {
                     const button = $(`<button class="btn btn-flat-border my-2" data-id="${choice.choiceId}" onclick="choosePath('${choice.choiceId}')">${choice.choiceText}</button>`)
                     button.css('opacity',0)
@@ -222,9 +225,9 @@ $(document).ready(function() {
         }
 
         function displayConclusion(choiceId,callback) {
-            const previousStep = storyData[`step${currentStep + 1}`]; // Previous step where the choice was made      
+            const previousStep = chatData[`step${currentStep + 1}`]; // Previous step where the choice was made      
             const choice = previousStep.choices.find(c => c.choiceId === choiceId);
-            const lastStep = storyData[`step${currentStep + 1}`];
+            const lastStep = chatData[`step${currentStep + 1}`];
 
             $('#chatContainer').append(`
             <div id="container-${currentStep}">
@@ -236,20 +239,22 @@ $(document).ready(function() {
                     <img src="${ thumbnail ? thumbnail : '/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
                     <div id="response-${currentStep + 1}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
                 </div>
-                <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
+                <div class="d-flex flex-row justify-content-start mb-4 message-container">
                     <img src="${ thumbnail ? thumbnail : '/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
                     <div>
-                        <div id="generateCompetion" class="p-3 ms-3 text-start blur-text" style="border-radius: 15px; background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
-                        <button id="unlock-result" class="btn btn-gradient-3d-orange m-4" style="visibility:hidden;">無料で結果を見る</button>
+                        <div id="generateCompetion" class="p-3 ms-3 text-start" style="border-radius: 15px; background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
                     </div>
                 </div>
             </div>`)
             $(`#result-${currentStep + 1}`).closest('.message-container').animate({ opacity: 1 }, 1000, function() { 
                 appendHeadlineCharacterByCharacter($(`#result-${currentStep + 1}`),choice.result,function(){
                     appendHeadlineCharacterByCharacter($(`#response-${currentStep + 1}`), previousStep.conclusion,function(){
+                        callback()
+                        /*
                         appendHeadlineCharacterByCharacter($(`#generateCompetion`),blurredText(),function(){
                             callback()
                         });
+                        */
                     });  
                 })
             })
@@ -459,16 +464,16 @@ $(document).ready(function() {
         
         function generateCompletion($element){
             
-            const apiUrl = '/api/openai-completion';
+            const apiUrl = '/api/openai-chat-completion';
   
             $.ajax({
                 url: apiUrl,
                 method: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({ userId: userId }),
+                data: JSON.stringify({ chatId: chatId }),
                 success: function(response) {
                     const sessionId = response.sessionId;
-                    const streamUrl = `/api/openai-completion-stream/${sessionId}`;
+                    const streamUrl = `/api/openai-chat-completion-stream/${sessionId}`;
                     const eventSource = new EventSource(streamUrl);
                     sendCustomData({action:'generateCompletion',sessionId})
                     let markdownContent = "";
@@ -477,7 +482,6 @@ $(document).ready(function() {
                         const data = JSON.parse(event.data);
                         markdownContent += data.content;
 
-                        $('#unlock-result').hide()
                         if($element){
                             $element.removeClass('blur-text')
                             $element.html(marked.parse(markdownContent));
@@ -495,6 +499,7 @@ $(document).ready(function() {
                 }
             });
         }
+        
         function sendCustomData(customData){
             $.ajax({
                 url: '/api/custom-data',

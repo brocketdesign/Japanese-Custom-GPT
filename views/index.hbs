@@ -195,7 +195,8 @@ $(document).ready(function() {
             if (currentStep === totalSteps - 1) {
                 hideOtherChoice(choiceId,currentStep + 1,function(){
                     displayConclusion(choiceId,function(){
-                        $('#unlock-result').css('visibility','initial')
+                        generateCompletion($('#generateCompetion'));
+                        //$('#unlock-result').css('visibility','initial')
                     });
                 })
 
@@ -345,14 +346,14 @@ $(document).ready(function() {
                     <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
                     <div>
                         <div id="generateCompetion" class="p-3 ms-3 text-start blur-text" style="border-radius: 15px; background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
-                        <button id="unlock-result" class="btn btn-gradient-3d-orange m-4" style="visibility:hidden;">無料で結果を見る</button>
+                        <button id="unlock-result" class="btn btn-gradient-3d-orange m-4 d-none" style="visibility:hidden;">無料で結果を見る</button>
                     </div>
                 </div>
             </div>`)
             $(`#result-${currentStep + 1}`).closest('.message-container').animate({ opacity: 1 }, 1000, function() { 
                 appendHeadlineCharacterByCharacter($(`#result-${currentStep + 1}`),choice.result,function(){
-                    appendHeadlineCharacterByCharacter($(`#response-${currentStep + 1}`), previousStep.conclusion,function(){
-                        appendHeadlineCharacterByCharacter($(`#generateCompetion`),blurredText(),function(){
+                    appendHeadlineCharacterByCharacter($(`#response-${currentStep + 1}`), previousStep.conclusion,function(){                        
+                        appendHeadlineCharacterByCharacter($(`#generateCompetion`),'',function(){
                             callback()
                         });
                     });  
@@ -582,7 +583,7 @@ $(document).ready(function() {
                         const data = JSON.parse(event.data);
                         markdownContent += data.content;
 
-                        $('#unlock-result').hide()
+                        //$('#unlock-result').hide()
                         if($element){
                             $element.removeClass('blur-text')
                             $element.html(marked.parse(markdownContent));

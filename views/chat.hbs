@@ -19,7 +19,7 @@
         <img src="/img/logo.webp" alt="" class="logo">
         <span class="brand-name ms-3">LAMIX</span>
         </a>
-        <a href="/authenticate" class="btn btn-gradient-3d-orange">無料ではじめる</a>
+        <a href="/authenticate" class="btn px-4 py-2 border" style="border-radius:40px;background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"><i class="fas fa-plus me-2"></i>作成する</a>
     </div>
     </nav>
 
@@ -79,125 +79,6 @@ $(document).ready(function() {
     // Fetch the user's IP address and generate a unique ID
     fetchUserIP(function(new_userId,userIp) {
 
-        let chatId = "{{chatId}}";
-        if (!chatId) {
-            chatId = generateRandomChatId();
-        }
-
-        console.log('Chat ID:', chatId);
-
-        sendCustomData({action: 'chat-page'});
-        //sendMessage(`こんにちわ`,false)
-        // Function to send a message
-        function sendMessage(customMessage,displayStatus = true) {
-            count ++
-            if(count >= 10){
-                Swal.fire({
-                    title: '注意',
-                    text: '無料ユーザーのメッセージの最大数は1日10件です。',
-                    icon: 'warning',
-                    confirmButtonText: 'OK'
-                });
-                return
-            }
-            const message = customMessage || $('#userMessage').val();
-            if (message.trim() !== '') {
-                if(displayStatus){
-                    displayMessage('user', message);
-                }
-                $('#userMessage').val(''); // Clear the input field
-                
-                // Send the message to the backend (to be implemented)
-                $.ajax({
-                    url: '/api/chat', // Backend endpoint to handle the message
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ message: message, userId:userId, chatId:chatId }),
-                    success: function(response) {
-                        const {userId, chatId } = response
-                        generateCompletion(userId, chatId)
-                    },
-                    error: function(error) {
-                        console.error('Error:', error);
-                        displayMessage('bot', 'An error occurred while sending the message.');
-                    }
-                });
-            }
-        }
-
-        // Function to display a message in the chat
-        function displayMessage(sender, message) {
-            const messageClass = sender === 'user' ? 'user-message' : 'bot-message';
-            console.log({messageClass})
-            if(messageClass == 'user-message'){
-                $('#messages').append(`
-                    <div class="d-flex flex-row justify-content-end mb-4 message-container ${messageClass}">
-                        <div  class="p-3 me-3 border" style="border-radius: 15px; background-color: #fbfbfb;">
-                            <span>${message}</span>
-                        </div>
-                    </div>
-                `);
-            }
-            $('#messages').scrollTop($('#messages')[0].scrollHeight); // Scroll to the bottom
-        }
-
-        // Event handler for the send button
-        $('#sendMessage').on('click', function() {
-            sendMessage();
-        });
-
-        // Event handler for the Enter key
-        $('#userMessage').on('keypress', function(event) {
-            if (event.which == 13) { // Enter key is pressed
-                sendMessage();
-            }
-        });
-
-        function generateCompletion(userId, chatId) {
-            const apiUrl = '/api/openai-chat';
-
-            // Initialize the bot response container
-            const botResponseContainer = $(`
-                    <div class="d-flex flex-row justify-content-start mb-4 message-container bot-message" >
-                        <img src="/img/logo.webp" alt="avatar 1" style="min-width: 25px; width: 25px; height: 100%; border-radius: 15%;">
-                        <div class="p-3 ms-3 text-start" style="border-radius: 15px; background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);">
-                            <span></span>
-                        </div>
-                    </div>`);
-            $('#messages').append(botResponseContainer);
-            $('#messages').scrollTop($('#messages')[0].scrollHeight);
-
-            $.ajax({
-                url: apiUrl,
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ userId, chatId }),
-                success: function(response) {
-                    const sessionId = response.sessionId;
-                    const streamUrl = `/api/openai-chat-stream/${sessionId}`;
-                    const eventSource = new EventSource(streamUrl);
-                    let markdownContent = "";
-
-                    eventSource.onmessage = function(event) {
-                        const data = JSON.parse(event.data);
-                        markdownContent += data.content;
-
-                        // Update the bot response container with the new content
-                        botResponseContainer.find('span').html(marked.parse(markdownContent));
-                        $('#messages').scrollTop($('#messages')[0].scrollHeight); // Scroll to the bottom
-                    };
-
-                    eventSource.onerror = function(error) {
-                        console.log('EventSource failed.');
-                        eventSource.close();
-                    };
-                },
-                error: function(error) {
-                    console.error('Error:', error);
-                }
-            });
-        }
-        
         function sendCustomData(customData){
             $.ajax({
                 url: '/api/custom-data',
@@ -237,10 +118,6 @@ $(document).ready(function() {
             }
         });
     } 
-
-    function generateRandomChatId() {
-        return 'chat_' + Math.random().toString(36).substr(2, 9);
-    }
 
     function appendHeadlineCharacterByCharacter($element, headline, callback) {
         let index = 0;
@@ -299,27 +176,6 @@ $(document).ready(function() {
 
     displayNextCatchphrase();
     
-    function displayInitialMessage(message, callback) {
-        const botResponseContainer = $(`
-                <div class="d-flex flex-row justify-content-start mb-4 message-container bot-message" >
-                    <img src="/img/logo.webp" alt="avatar 1" style="min-width: 25px; width: 25px; height: 100%; border-radius: 15%;">
-                    <div class="p-3 ms-3 text-start" style="border-radius: 15px; background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);">
-                        <span id="initial-message"></span>
-                    </div>
-                </div>`);
-        $('#messages').append(botResponseContainer);
-        $('#messages').scrollTop($('#messages')[0].scrollHeight);
-
-        appendHeadlineCharacterByCharacter($('#initial-message'), message, function() {
-            if (typeof callback === 'function') {
-                callback();
-            }
-        });
-    }
-    displayInitialMessage('ようこそLAMIXボットへ！どのようにお手伝いできますか？', function() {
-        console.log('Initial message displayed.');
-        // You can add any additional actions here
-    });
 });
 
 </script>

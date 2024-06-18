@@ -9,7 +9,11 @@
     <div class="text-center mb-4" id="imageSection" style="cursor: pointer;">
         <img id="chatImage" src="/img/logo.webp" alt="chat Thumbnail" class="rounded-circle m-auto" style="width: 150px; height: 150px; object-fit: cover;">
     </div>
-    <form id="chatForm">
+    <div id="chatInput" class="input-group rounded-0 rounded-bottom mt-5 mb-4" style="bottom: 0px;right: 0;left: 0;width: auto;margin: auto;">
+        <input type="text" id="userMessage" class="form-control py-3" placeholder="チャットについて教えてください">
+        <button id="sendMessage" class="btn btn-light px-4 border"><i class="fas fa-paper-plane"></i></button>
+    </div>
+    <form id="chatForm" class="mb-5 pb-5">
         <div class="mb-3" id="thumbnailInputContainer" style="display: none;">
             <label for="chatThumbnail" class="form-label">チャットのサムネイルをアップロード</label>
             <input type="file" class="form-control" id="chatThumbnail" name="thumbnail" accept="image/*">
@@ -22,16 +26,16 @@
             <label for="chatDescription" class="form-label">チャット</label>
             <textarea class="form-control" id="chatDescription" name="content" rows="3" required></textarea>
         </div>
-        <div class="mb-3">
+        <div class="container mt-5">
+            <div id="chatContentEdition"></div>
+            <button type="button" id="saveButton" class="btn btn-primary mt-3">Save</button>
+        </div>
+        <div class="mb-3 d-none">
             <label for="chatContent" class="form-label">チャットコンテンツ (JSON形式)</label>
             <textarea class="form-control" id="chatContent" name="content" rows="5" required></textarea>
         </div>
-        <button type="submit" class="btn btn-primary">送信</button>
+        <button type="submit" class="btn btn-primary btn-large w-100">送信</button>
     </form>
-    <div id="chatInput" class="input-group rounded-0 rounded-bottom my-5" style="bottom: 0px;right: 0;left: 0;width: auto;margin: auto;">
-        <input type="text" id="userMessage" class="form-control py-3" placeholder="メッセージを入力してください">
-        <button id="sendMessage" class="btn btn-dark px-4"><i class="fas fa-paper-plane"></i></button>
-    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -65,7 +69,11 @@
                 success: function(chatData) {
                     $('#chatName').val(chatData.name);
                     $('#chatDescription').val(chatData.description);
-                    $('#chatContent').val(JSON.stringify(chatData.content));
+                    if(chatData.content){
+                        $('#chatContent').val(JSON.stringify(chatData.content));
+                        createEditor(chatData.content)
+                    }
+                    
 
                     if (chatData.thumbnailUrl && chatData.thumbnailUrl != undefined) {
                         $('#chatImage').attr('src', chatData.thumbnailUrl).show();
@@ -92,7 +100,7 @@
 
             const formData = new FormData();
             const name = $('#chatName').val();
-            const content = $('#chatContent').val();
+            const content = saveJson();
             const description = $('#chatDescription').val();
             const thumbnail = $('#chatThumbnail')[0].files[0];
 
@@ -150,6 +158,11 @@
             const message = $('#userMessage').val();
             const chatId = 'chat_' + Date.now();
             
+            // Clear the chatContent area only if it's not empty
+            if ($('#chatContent').val().trim() !== '') {
+                $('#chatContent').val('');
+            }        
+
             $.ajax({
                 url: apiUrl,
                 method: 'POST',
@@ -157,7 +170,6 @@
                 data: JSON.stringify({ chatId, message, system : getSystem('chatContent') }),
                 success: function(response) {
 
-                    $('#chatContent').html('')
                     const sessionId = response.sessionId;
                     const streamUrl = `/api/openai-chat-creation-stream/${sessionId}`;
                     const eventSource = new EventSource(streamUrl);
@@ -168,7 +180,58 @@
                         markdownContent += data.content;
 
                         // Update the bot response container with the new content
-                        $('#chatContent').html(markdownContent);
+                        $('#chatContent').val($('#chatContent').val() + data.content);
+
+                    };
+
+                    eventSource.onerror = function(error) {
+                        console.log('EventSource failed.');
+                        eventSource.close();
+
+                        // Clean the JSON string when the stream ends
+                        let cleanedContent = cleanJsonString(markdownContent);
+                        $('#chatContent').html(cleanedContent);
+                        $('#chatContent').val(cleanedContent)
+
+                        // Generate title and description based on the cleaned content
+                        generateName(cleanedContent, chatId);
+                        generateDescription(cleanedContent, chatId);
+
+                        createEditor(JSON.parse(cleanedContent))
+                    };
+                },
+                error: function(error) {
+                    console.error('Error:', error);
+                }
+            });
+        }
+        function generateDescription(cleanedContent, chatId) {
+
+            const apiUrl = '/api/openai-chat-creation';
+            // Clear the chatContent area only if it's not empty
+            if ($('#chatDescription').val().trim() !== '') {
+                $('#chatDescription').val('');
+            }        
+
+            $.ajax({
+                url: apiUrl,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ chatId, message: cleanedContent, system : getSystem('chatDescription') }),
+                success: function(response) {
+
+                    $('#chatDescription').html('')
+                    const sessionId = response.sessionId;
+                    const streamUrl = `/api/openai-chat-creation-stream/${sessionId}`;
+                    const eventSource = new EventSource(streamUrl);
+                    let markdownContent = "";
+
+                    eventSource.onmessage = function(event) {
+                        const data = JSON.parse(event.data);
+                        markdownContent += data.content;
+
+                        // Update the bot response container with the new content
+                        $('#chatDescription').val($('#chatDescription').val() + data.content);
 
                     };
 
@@ -182,10 +245,73 @@
                 }
             });
         }
+        function generateName(cleanedContent, chatId) {
+
+            const apiUrl = '/api/openai-chat-creation';
+            
+            $('#chatName').val('')
+            $.ajax({
+                url: apiUrl,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ chatId, message: cleanedContent, system : getSystem('chatName') }),
+                success: function(response) {
+
+                    const sessionId = response.sessionId;
+                    const streamUrl = `/api/openai-chat-creation-stream/${sessionId}`;
+                    const eventSource = new EventSource(streamUrl);
+                    let markdownContent = "";
+
+                    eventSource.onmessage = function(event) {
+                        const data = JSON.parse(event.data);
+                        markdownContent += data.content;
+
+                        // Update the bot response container with the new content
+                        $('#chatName').val(markdownContent);
+
+                    };
+
+                    eventSource.onerror = function(error) {
+                        console.log('EventSource failed.');
+                        eventSource.close();
+                    };
+                },
+                error: function(error) {
+                    console.error('Error:', error);
+                }
+            });
+        }
+        function cleanJsonString(jsonString) {
+            // Remove all characters before the first '{'
+            let start = jsonString.indexOf('{');
+            if (start !== -1) {
+                jsonString = jsonString.substring(start);
+            }
+
+            // Remove all characters after the last '}'
+            let end = jsonString.lastIndexOf('}');
+            if (end !== -1) {
+                jsonString = jsonString.substring(0, end + 1);
+            }
+
+            return jsonString;
+        }
         function getSystem(systemType){
             var system;
 
             switch (systemType) {
+                case 'chatDescription':
+                    system = `
+                        You are a JSON description generator. You take the JSON provided by the user and return a short description of 2 sentences in japanese.
+                        You should respond in plain text with the description only.
+                    `;
+                    break;
+                case 'chatName':
+                    system = `
+                        You are a JSON title generator. You take the JSON provided by the user and return a title in japanese.
+                        You should respond in plain text with the title only.
+                    `;
+                    break;
                 case "chatContent":
                     system = `
                     Your are a JSON generator. Use the user instruction to generate a JSON following the structure below. Your answer must be in japanese. \n\n
@@ -243,6 +369,66 @@
             }
             return system
         }
+        function createEditor(json) {
+            console.log(json)
+            $('#chatContentEdition').empty(); // Clear previous content
+            let count = 0
+            for (const step in json.story) {
+                count ++
+                const stepData = json.story[step];
+                const stepDiv = $('<div></div>').addClass('step card mb-3 bg-light');
+                const stepCardBody = $('<div></div>').addClass('card-body');
+                
+                stepCardBody.append(`<h5 class="card-title">ステップ${count}</h5>`);
+                
+                // Introduction
+                stepCardBody.append(`<div class="mb-3"><label class="form-label">イントロダクション:</label><input type="text" class="form-control introduction" value="${stepData.introduction}" /></div>`);
+                
+                // Choices
+                stepData.choices.forEach((choice, index) => {
+                    const choiceDiv = $('<div></div>').addClass('choice mb-3');
+                    choiceDiv.append(`<h6>選択 ${index + 1}</h6>`);
+                    choiceDiv.append(`<div class="mb-2"><label class="form-label">選択テキスト:</label><input type="text" class="form-control choiceText" value="${choice.choiceText}" /></div>`);
+                    choiceDiv.append(`<div class="mb-2"><label class="form-label">結果：</label><input type="text" class="form-control result" value="${choice.result}" /></div>`);
+                    stepCardBody.append(choiceDiv);
+                });
+                
+                // Conclusion
+                stepCardBody.append(`<div class="mb-3"><label class="form-label">結論：</label><input type="text" class="form-control conclusion" value="${stepData.conclusion}" /></div>`);
+                
+                stepDiv.append(stepCardBody);
+                $('#chatContentEdition').append(stepDiv);
+            }
+        }
+
+        function saveJson() {
+            const updatedJson = { story: {} };
+            $('.step').each(function(index, stepDiv) {
+                const stepKey = `step${index + 1}`;
+                const stepData = {
+                    introduction: $(stepDiv).find('.introduction').val(),
+                    choices: [],
+                    conclusion: $(stepDiv).find('.conclusion').val()
+                };
+                
+                $(stepDiv).find('.choice').each(function(choiceIndex, choiceDiv) {
+                    const choiceData = {
+                        choiceText: $(choiceDiv).find('.choiceText').val(),
+                        result: $(choiceDiv).find('.result').val()
+                    };
+                    stepData.choices.push(choiceData);
+                });
+                
+                updatedJson.story[stepKey] = stepData;
+            });
+            
+            console.log(JSON.stringify(updatedJson, null, 2));
+            return JSON.stringify(updatedJson, null, 2);
+        }
+
+        $('#saveButton').click(function() {
+            saveJson();
+        });
     });
 </script>
 </body>

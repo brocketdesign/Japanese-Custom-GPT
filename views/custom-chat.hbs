@@ -236,11 +236,12 @@ $(document).ready(function() {
                     })
                 })
             }else{
+                console.log({currentStep})
                 const choice = previousStep.choices.find(c => c.choiceText === choiceText);
                 $(`#result-${currentStep - 1}`).closest('.message-container').animate({ opacity: 1 }, 1000, function() { 
                     appendHeadlineCharacterByCharacter($(`#result-${currentStep - 1}`),choice.result,function(){
                         $(`#message-${currentStep}`).closest('.message-container').removeClass('d-flex').hide()
-                        generateCompletion()
+                        generateChoice()
                     })
                 })
             }
@@ -262,7 +263,7 @@ $(document).ready(function() {
                 $(this).remove()
             });
             $(`#response-${currentStep - 1}`).closest('.message-container').animate({ opacity: 1 }, 1000,function(){
-                callback()
+                if (callback) {callback()}
             })
         }
 

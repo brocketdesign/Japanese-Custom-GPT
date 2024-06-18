@@ -671,7 +671,7 @@ async function routes(fastify, options) {
             }
 
             let userMessages = userData.messages;
-            userMessages.push({role:'user',content:'Provide a JSON array containing 3 choices to prompt the user answer. The array contain keywords.'})
+            userMessages.push({role:'user',content:'Provide a JSON array containing 3 choices to prompt the user answer. The array contain keywords.Use the following structure : ["string1","string2","string3"]'})
             const completion = await moduleCompletion(userMessages, reply.raw);
             console.log(completion)
             return reply.send(completion)

@@ -7,7 +7,9 @@
 <div class="container mt-4">
     <h2>{{#if chatId}}チャットを編集{{else}}新しいチャットを追加{{/if}}</h2>
     <div class="text-center mb-4" id="imageSection" style="cursor: pointer;">
-        <img id="chatImage" src="/img/logo.webp" alt="chat Thumbnail" class="rounded-circle m-auto" style="width: 150px; height: 150px; object-fit: cover;">
+        <div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center">
+            <img id="chatImage" src="/img/logo.webp" alt="chat Thumbnail" class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover;">
+        </div>
     </div>
     <div id="chatInput" class="input-group rounded-0 rounded-bottom mt-5 mb-4" style="bottom: 0px;right: 0;left: 0;width: auto;margin: auto;">
         <input type="text" id="userMessage" class="form-control py-3" placeholder="チャットについて教えてください">
@@ -29,7 +31,7 @@
             <label for="chatDescription" class="form-label">チャット</label>
             <textarea class="form-control" id="chatDescription" name="content" rows="3" required></textarea>
         </div>
-        <button type="button" id="displayProcess" class="badge btn-ligh text-muted border mb-2" style="font-size: 12px;border-radius:40px">Display process</button>
+        <button type="button" id="displayProcess" class="badge btn-ligh text-muted border mb-2" style="font-size: 12px;border-radius:40px">プロセスを表示する</button>
         <div id="displayProcessToggle" class="mb-3 d-none">
             <label for="chatContent" class="form-label d-none">チャットコンテンツ (JSON形式)</label>
             <textarea class="form-control" id="chatContent" name="content" rows="10" required></textarea>

@@ -175,7 +175,7 @@ $(document).ready(function() {
 
         function displayStep(chatData, currentStep) {
             const step = chatData[`step${currentStep + 1}`];
-            $(`.card-header .count`).text(`${currentStep + 1}/${totalSteps}`)
+            //$(`.card-header .count`).text(`${currentStep + 1}/${totalSteps}`)
             $('#chatContainer').append(`
             <div id="container-${currentStep}">
                 <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">

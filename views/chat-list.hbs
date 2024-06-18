@@ -44,22 +44,52 @@
         background-color: #b1b1b1;
         margin: 0;
     }
+    .action-button{
+        border:1px solid #ccc;
+    }
+    .action-button:hover{
+        border:1px solid #fff;
+        background-color: #fff;;
+    }
+    .truncate-text {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3; /* Number of lines to show */
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .online-text {
+        width: 200px; /* Adjust the width as needed */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .thumb{
+        width: 10vw;
+    }
+    @media (max-width: 600px) {
+    /* Styles for small screens */
+        .thumb{
+            width: 25vw;
+        }
+    }
 </style>
 
 <div class="container mt-4">
     <h2>チャットボット一覧</h2>
     <div class="chat-list-container py-5">
         <div class="chat-list item d-flex align-items-center" style="cursor: pointer;" onclick="window.location.href='/chat/edit/'">
-            <div class="thumb">
+            <div class="thumb align-items-center text-center justify-content-center d-flex flex-column" >
                 <i class="fas fa-plus-circle fa-3x"></i>
             </div>
             <div class="chat-list-details">
                 <div class="chat-list-info">
                     <div class="chat-list-title mb-1">
-                        <h5 class="mb-0">新しいチャットボットを追加</h5>
+                        <h6 class="mb-0">新しいチャットボットを追加</h6>
                     </div>
                     <div class="chat-list-option" style="max-width: 40vw;">
-                        <span>クリックして新しいチャットボットを作成します。</span>
+                        <span style="font-size: 14px;color: #6c6c6c;" class="truncate-text py-1">クリックして新しいチャットボットを作成します。</span>
                     </div>
                 </div>
             </div>
@@ -67,32 +97,39 @@
         <hr class="separator">
 
         {{#each chats}}
-            <div class="chat-list item d-flex align-items-center justify-content-between" style="cursor: pointer;" data-id="{{this._id}}" onclick="window.location.href='/chat/edit/{{this._id}}'">
+            <div class="chat-list item d-flex align-items-center justify-content-between" style="cursor: pointer;" data-id="{{this._id}}" onclick="window.location.href='/chat/{{this._id}}'">
                 <div class="d-flex align-items-center">
-                    <div class="thumb">
+                    <div class="thumb align-items-center text-center justify-content-center d-flex flex-column" >
                         <img class="img-fluid" src="{{#if this.thumbnailUrl}}{{this.thumbnailUrl}}{{else}}/img/logo.webp{{/if}}" alt="">
+                        <div class="chat-list-actions my-3 d-sm-none">
+                            <div class="d-flex align-items-center">
+                                <ul class="list-unstyled mb-0 d-flex justify-content-center align-items-center">
+                                    <li><a href="/chat/edit/{{this._id}}" class="text-info mx-1 btn action-button" data-toggle="tooltip" title="" data-original-title="Edit"><i class="far fa-edit"></i></a></li>
+                                    <li><span data-chatid="{{this._id}}" class="text-danger delete-chat mx-1 btn action-button" style="cursor:pointer" data-toggle="tooltip" title="" data-original-title="Delete"><i class="fas fa-trash"></i></span></li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                     <div class="chat-list-details">
                         <div class="chat-list-info">
                             <div class="chat-list-title mb-1">
-                                <h5 class="mb-0"><a href="/chat/{{this._id}}" target="_blank">{{this.name}}</a></h5>
+                                <h6 class="mb-0 online-text"><a href="/chat/{{this._id}}" target="_blank">{{this.name}}</a></h6>
                             </div>
                             <div class="chat-list-option" style="max-width: 40vw;">
-                                <span>{{this.description}}</span>
+                                <span style="font-size: 14px;color: #6c6c6c;" class="truncate-text py-1">{{this.description}}</span>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="chat-list-actions">
-                    <button class="copyButton btn btn-dark mx-2" data-chatid="{{this._id}}">コピー</button>
+                <div class="chat-list-actions d-none d-sm-block">
+                    <button class="copyButton btn btn-dark mx-2 d-none" data-chatid="{{this._id}}">コピー</button>
                     <div class="d-flex align-items-center">
                         <ul class="list-unstyled mb-0 d-flex justify-content-center align-items-center">
-                            <li class="form-check form-switch mx-1">
+                            <li class="form-check form-switch mx-1 d-none">
                                 <input class="form-check-input chat-switch" type="checkbox" data-chatid="{{this._id}}" {{#if this.isActive}}checked{{/if}}>
                             </li>
-                            <li><a href="/chat/{{this._id}}" class="text-primary mx-1" data-toggle="tooltip" title=""><i class="fas fa-eye"></i></a></li>
-                            <li><a href="/chat/edit/{{this._id}}" class="text-info mx-1" data-toggle="tooltip" title="" data-original-title="Edit"><i class="far fa-edit"></i></a></li>
-                            <li><span data-chatid="{{this._id}}" class="text-danger delete-chat mx-1" style="cursor:pointer" data-toggle="tooltip" title="" data-original-title="Delete"><i class="fas fa-trash"></i></span></li>
+                            <li><a href="/chat/edit/{{this._id}}" class="text-info mx-1 btn action-button" data-toggle="tooltip" title="" data-original-title="Edit"><i class="far fa-edit"></i></a></li>
+                            <li><span data-chatid="{{this._id}}" class="text-danger delete-chat mx-1 btn action-button" style="cursor:pointer" data-toggle="tooltip" title="" data-original-title="Delete"><i class="fas fa-trash"></i></span></li>
                         </ul>
                     </div>
                 </div>
@@ -100,8 +137,7 @@
         {{/each}}
     </div>
 </div>
-
-
+ {{> dashboard-footer}}
 <script>
 $(document).ready(function() {
     $('.copyButton').click(function(e) {

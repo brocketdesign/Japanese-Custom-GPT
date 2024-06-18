@@ -20,8 +20,8 @@ async function routes(fastify, options) {
     }, async (request, reply) => {
         const parts = request.parts();
         let name, description, content, thumbnailUrl, chatId, thumbnailHash;
-        const userId = new fastify.mongo.ObjectId(request.user._id)
-
+        const userId = new fastify.mongo.ObjectId(request.user._id);
+    
         for await (const part of parts) {
             if (part.fieldname === 'name') {
                 name = part.value;
@@ -30,10 +30,16 @@ async function routes(fastify, options) {
             } else if (part.fieldname === 'description') {
                 description = part.value;
             } else if (part.fieldname === 'thumbnail') {
-                console.log(`image exist ?`)
+                // Read the file stream into a buffer
+                const chunks = [];
+                for await (const chunk of part.file) {
+                    chunks.push(chunk);
+                }
+                const buffer = Buffer.concat(chunks);
+    
                 // Calculate the hash of the thumbnail
                 const hash = crypto.createHash('md5');
-                hash.update(part.file);
+                hash.update(buffer);
                 thumbnailHash = hash.digest('hex');
     
                 // Check if a file with this hash already exists in S3
@@ -56,7 +62,7 @@ async function routes(fastify, options) {
                     const params = {
                         Bucket: process.env.AWS_S3_BUCKET_NAME,
                         Key: `${thumbnailHash}_${part.filename}`,
-                        Body: part.file,
+                        Body: buffer,
                     };
     
                     try {
@@ -88,7 +94,7 @@ async function routes(fastify, options) {
             description: description,
             content: content,
             thumbnailUrl: thumbnailUrl,
-            userId:userId,
+            userId: userId,
             updatedAt: dateObj
         };
     
@@ -205,6 +211,7 @@ async function routes(fastify, options) {
             reply.status(500).send({ error: 'Failed to retrieve Story' });
         }
     });
+
     fastify.post('/api/set-story', async (request, reply) => {
         const storyId = request.body.storyId;
 
@@ -276,26 +283,51 @@ async function routes(fastify, options) {
         preHandler: [fastify.authenticate]
       },async (request, reply) => {
 
+        const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+        const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
         const userId = request.user._id
-        const { choice, userIp, chatId } = request.body;
-    
-        console.log({userId,choice,userIp, chatId })
-    
-        try {
-            const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-            const query = { userId: userId };
-            const update = {
-                $push: { choices: { choice, chatId, timestamp: dateObj } },
-                $setOnInsert: { userId: userId, userIp: userIp, createdAt: dateObj },
-                $set: { chatId: chatId }
-            };
-            const options = { upsert: true };
-            const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+        
+        const { currentStep, message, userIp, chatId } = request.body;    
 
-            await collection.updateOne(query, update, options);
-            console.log('User choice updated:', { userId: userId, choice, userIp: userIp, chatId:chatId });
-            //const userData = await collection.findOne(query);
-            //console.log(userData)
+        try {
+            // Find or create the chat document
+            let userChatDocument = await collectionUserChat.findOne({ userId, chatId });
+            let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
+            const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
+
+            if (!userChatDocument || currentStep == 1) {
+                // Initialize chat document if it doesn't exist
+                userChatDocument = {
+                    userId,
+                    chatId,
+                    messages: [
+                        { "role": "system", "content": 'You are a japanese assistant about : ' + chatDocument.description  +'You provide short and friendly answers. You never answer with lists. You always prompt the user to help continue the conversation smoothly.'},
+                        { "role": "assistant", "content": chatDocument.content.story[`step${currentStep}`].introduction }
+                    ],
+                    createdAt: dateObj,
+                    updatedAt: dateObj
+                };
+            }else{
+                if(chatDocument.content.story[`step${currentStep}`]){
+                    userChatDocument.messages.push({ "role": "assistant", "content": chatDocument.content.story[`step${currentStep}`].introduction });
+                }
+            }
+
+            // Add the new user message to the chat document
+            userChatDocument.messages.push({ "role": "user", "content": message });
+            userChatDocument.updatedAt = dateObj;
+
+            const query = { userId, chatId }
+            // Update or insert the chat document
+            await collectionUserChat.updateOne(
+                query,
+                { $set: userChatDocument },
+                { upsert: true }
+            );
+
+            const userData = await collectionUserChat.findOne(query);
+            console.log(userData);
+
             return reply.send({ nextStoryPart: "You chose the path and...", endOfStory: true });
         } catch (error) {
             console.log(error)
@@ -303,6 +335,7 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to save user choice' });
         }
     });
+
     fastify.post('/api/custom-data', async (request, reply) => {
         const { userId, customData } = request.body;
     
@@ -349,7 +382,7 @@ async function routes(fastify, options) {
                 await collection.updateOne(query, update, options);
             }
     
-            console.log('User data updated:', { userId: serverUserId, customData, createdAt: dateObj });
+            //console.log('User data updated:', { userId: serverUserId, customData, createdAt: dateObj });
             //const newUuserData = await collection.findOne({ userId: serverUserId });
             //console.log(newUuserData)
             return reply.status(200).send(true);
@@ -586,51 +619,32 @@ async function routes(fastify, options) {
         try {
             const userId = session.userId;
             const chatId = session.chatId;
-            console.log({userId,chatId})
 
             const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-            let userData = await userDataCollection.findOne({ userId: userId })
+            const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+            let userData = await userDataCollection.findOne({ userId, chatId })
 
             if (!userData) {
                 reply.raw.end(); // End the stream before sending the response
                 return reply.status(404).send({ error: 'User data not found' });
             }
 
-            const { choices } = userData;
-            console.log({ chatId, choices })
-            const storiesCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-            const chat = await storiesCollection.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
+            const userMessages = userData.messages;
+            //console.log({ message:userMessages })
 
-            if (!chat) {
-                reply.raw.end(); // End the stream before sending the response
-                return reply.status(404).send({ error: 'Chat not found' });
-            }
-    
-            let prompt = `
-            Providing the below information. Give the user advices to achieve his goal.\n
-            Respond in japanese and in a friendly tone. Like you would with a friend.
-            \n`;
-    
-            for (const step in chat.content.story) {
-                const storyStep = chat.content.story[step];
-                const userChoice = choices.find(choice => storyStep.choices.some(choiceOption => choiceOption.choiceId === choice.choice));
-    
-                if (userChoice) {
-                    const selectedChoice = storyStep.choices.find(choice => choice.choiceId === userChoice.choice);
-                    prompt += `Q: ${storyStep.introduction}\n`;
-                    prompt += `A: ${selectedChoice.choiceText}\n\n`;
-                }
-            }
-    
-            const messages = [
-                { "role": "system", "content": "友好的で励みになるアドバイザー" },
-                { "role": "user", "content": prompt },
-            ];
+            const completion = await fetchOpenAICompletion(userMessages, reply.raw);
 
-            console.log(`Start completion`)
-            const completion = await fetchOpenAICompletion(messages, reply.raw);
-
-            // End the stream only after the completion has been sent
+            // Append the assistant's response to the messages array in the chat document
+            const assistantMessage = { "role": "assistant", "content": completion };
+            userMessages.push(assistantMessage);
+            userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
+    
+            // Update the chat document in the database
+            await collectionUserChat.updateOne(
+                { userId , chatId },
+                { $set: { messages: userMessages, updatedAt: userData.updatedAt } }
+            );
+    
             reply.raw.end();
         } catch (error) {
             console.log(error)
@@ -639,24 +653,55 @@ async function routes(fastify, options) {
         }
     });
 
-    fastify.post('/api/chat', async (request, reply) => {
+    fastify.post('/api/openai-chat-choice/',{
+        preHandler: [fastify.authenticate]
+      },async (request, reply) => {
+
+        const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+        const userId = request.user._id
+        const { chatId } = request.body;    
+
         try {
-            const { userId, message, chatId } = request.body;
+
+            let userData = await userDataCollection.findOne({ userId, chatId })
+
+            if (!userData) {
+                console.log(`User data not found`)
+                return reply.status(404).send({ error: 'User data not found' });
+            }
+
+            let userMessages = userData.messages;
+            userMessages.push({role:'user',content:'Provide a JSON array containing 3 choices to prompt the user answer. The array contain keywords.Use the following structure : ["string1","string2","string3"]'})
+            const completion = await moduleCompletion(userMessages, reply.raw);
+            console.log(completion)
+            return reply.send(completion)
+
+        } catch (error) {
+            console.log(error)
+            return reply.status(500).send({ error: 'Error fetching OpenAI completion' });
+        }
+    });
+
+    fastify.post('/api/chat', {
+        preHandler: [fastify.authenticate]
+      },async (request, reply) => {
+        try {
+            const { currentStep, message, chatId } = request.body;
+            const userId = request.user._id
             console.log({ userId, message, chatId });
     
-            const serverUserId = parseInt(userId) || 'user_' + Date.now();
             const collectionUser = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
             const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
             
             const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
     
             // Find the user document
-            let userDocument = await collectionUser.findOne({ userId: serverUserId });
+            let userDocument = await collectionUser.findOne({ userId });
     
             if (!userDocument) {
                 // Initialize user document if it doesn't exist
                 userDocument = {
-                    userId: serverUserId,
+                    userId,
                     createdAt: dateObj,
                     updatedAt: dateObj
                 };
@@ -666,16 +711,13 @@ async function routes(fastify, options) {
                 userDocument._id = result.insertedId;
             }
     
-            // Use the _id from the user document as the userId in the chat document
-            const userObjectId = userDocument._id;
-    
             // Find or create the chat document
-            let chatDocument = await collectionChat.findOne({ userId: userObjectId, chatId });
+            let chatDocument = await collectionChat.findOne({ userId, chatId });
     
             if (!chatDocument) {
                 // Initialize chat document if it doesn't exist
                 chatDocument = {
-                    userId: userObjectId,
+                    userId,
                     chatId,
                     messages: [
                         { "role": "system", "content": `You are the promoter of the service LAMIXボット. LAMIXボット, developed by Hato Ltd., is a sophisticated chatbot management platform designed to empower users to create and manage custom chatbots with ease. This intuitive dashboard, built with Bootstrap 5 and Font Awesome, offers a seamless user experience for handling various aspects of chatbot functionality. Users can effortlessly navigate through sections such as the dashboard overview, chatbot lists, new chatbot creation, and user settings. The platform provides real-time statistics on chatbot activity, including total, active, and error-prone bots, ensuring comprehensive monitoring and management. Additionally, features like editing, deleting, and creating chatbots are readily accessible, with responsive feedback mechanisms such as pop-up alerts for logout confirmations. LAMIXボット, backed by Hato Ltd., aims to streamline and enhance the efficiency of chatbot operations for businesses and developers alike. Use a friendly tone. Avoid responding with lists. The client is Japanese so respond in Japanese. Alway propt the user.` }
@@ -684,19 +726,19 @@ async function routes(fastify, options) {
                     updatedAt: dateObj
                 };
             }
-    
+            console.log(chatDocument)
             // Add the new user message to the chat document
             chatDocument.messages.push({ "role": "user", "content": message });
             chatDocument.updatedAt = dateObj;
     
             // Update or insert the chat document
             await collectionChat.updateOne(
-                { userId: userObjectId, chatId },
+                { userId, chatId },
                 { $set: chatDocument },
                 { upsert: true }
             );
     
-            reply.send({ userId: userObjectId, chatId });
+            reply.send({ userId, chatId });
         } catch (err) {
             console.log(err);
             fastify.log.error(err);

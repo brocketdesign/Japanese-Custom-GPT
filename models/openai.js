@@ -64,7 +64,7 @@ const fetchOpenAICompletion = async (messages, res) => {
     }
 };
 
-const moduleCompletion = async (promptData) => {
+const moduleCompletion = async (messages) => {
   const { OpenAI } = require("openai");
 
   const openai = new OpenAI({
@@ -72,57 +72,35 @@ const moduleCompletion = async (promptData) => {
   });
 
 
-  const response = await getChatResponse(promptData, promptData.max_tokens)
-  if(promptData.model && promptData.model.includes('gpt-3.5-turbo-instruct')){
-    return response.choices[0].text
-  }else{
-    return response.choices[0].message.content
-  }
+  const response = await getChatResponse(messages)
+  return response.choices[0].message.content
 
-    async function getChatResponse(promptData, max_tokens) {
-      try {
-        let modelGPT = promptData.model
+  async function getChatResponse(messages) {
+    try {
 
-        let response
-        if(promptData.model && promptData.model.includes('gpt-3.5-turbo-instruct')){
-          const options = {
-            model: modelGPT || "gpt-3.5-turbo-0125",
-            prompt: promptData.prompt,
-            max_tokens: max_tokens,
-            temperature: 1.2,
-            top_p: 0.95,
-            frequency_penalty: 1.1, // Adjust if you want to penalize frequent tokens
-            presence_penalty: 1.1, // Adjust if you want to penalize new tokens
-            stream: false,
-            n: 1,
-          }
-          response = await openai.completions.create(options);
-        }else{
-          const messages = [
-            {"role": "system", "content": "You are a proficient blog writer."},
-            {"role": "user", "content": promptData.prompt}
-          ]
+      let response
 
-          const options = {
-            model:modelGPT,
-            messages: messages,
-            max_tokens: max_tokens,
-            temperature: 1,
-            top_p: 0.95,
-            frequency_penalty: 0.75, // Adjust if you want to penalize frequent tokens
-            presence_penalty: 0.75, // Adjust if you want to penalize new tokens
-            stream: false,
-            n: 1,
-          }
-          response = await openai.chat.completions.create(options);
-        }
-
-        return response;
-      } catch (error) {
-        console.error("The spell encountered an error:", error);
-        throw error; // Or handle it in a more sophisticated manner
+      const options = {
+        model:'gpt-4o',
+        messages,
+        max_tokens: 600,
+        temperature: 1,
+        top_p: 0.95,
+        frequency_penalty: 0.75, // Adjust if you want to penalize frequent tokens
+        presence_penalty: 0.75, // Adjust if you want to penalize new tokens
+        stream: false,
+        n: 1,
       }
+
+      response = await openai.chat.completions.create(options);
+
+      return response;
+
+    } catch (error) {
+      console.error("The spell encountered an error:", error);
+      throw error; // Or handle it in a more sophisticated manner
     }
+  }
 
 }
 

@@ -23,6 +23,8 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     handlebars.registerPartial('dashboard-header', dashboardHeader);
     const dashboardNav = fs.readFileSync('views/partials/dashboard-nav.hbs', 'utf8');
     handlebars.registerPartial('dashboard-nav', dashboardNav);
+    const dashboardFooter = fs.readFileSync('views/partials/dashboard-footer.hbs', 'utf8');
+    handlebars.registerPartial('dashboard-footer', dashboardFooter);
 
     fastify.register(require('@fastify/view'), {
       engine: { handlebars: require('handlebars') },
@@ -165,16 +167,10 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         fastify.log.error('Failed to reset counter:', err);
       }
     });
-
-
-    
-    
-
     fastify.get('/generate/:userid', (request, reply) => {
       const userId = request.params.userid;
       reply.view('generate.hbs', { title: 'LAMIX | Powered by Hato,Ltd', userId: userId });
     });
-
     fastify.get('/test-db', async (request, reply) => {
       try {
         await db.command({ ping: 1 });
@@ -183,12 +179,12 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         reply.status(500).send({ message: 'MongoDB connection failed', error });
       }
     });
-
     fastify.get('/dashboard', {
       preHandler: [fastify.authenticate]
     }, (request, reply) => {
       try {
-        reply.view('dashboard.hbs', { title: 'LAMIX | Powered by Hato,Ltd', user: request.user });
+        reply.redirect('/chat-list')
+        //reply.view('dashboard.hbs', { title: 'LAMIX | Powered by Hato,Ltd', user: request.user });
       } catch (err) {
         reply.status(500).send({ error: 'Unable to render the dashboard' });
       }

@@ -6,9 +6,9 @@
 
 <div class="container mt-4">
     <h2>{{#if chatId}}チャットを編集{{else}}新しいチャットを追加{{/if}}</h2>
-    <div class="text-center mb-4" id="imageSection" style="cursor: pointer;">
+    <div id="imageSection" class="text-center mb-4" >
         <div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center">
-            <img id="chatImage" src="/img/logo.webp" alt="chat Thumbnail" class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover;">
+            <img id="chatImage" src="/img/logo.webp" alt="chat Thumbnail" class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover;cursor: pointer;">
         </div>
     </div>
     <div id="chatInput" class="input-group rounded-0 rounded-bottom mt-5 mb-4" style="bottom: 0px;right: 0;left: 0;width: auto;margin: auto;">
@@ -18,7 +18,7 @@
             <div class="spinner-grow spinner-grow-sm text-dark" role="status"><span class="visually-hidden">Loading...</span></div>
         </div>
     </div>
-    <form id="chatForm" class="mb-5 pb-5">
+    <form id="chatForm" class="mb-5 pb-5 d-none">
         <div class="mb-3" id="thumbnailInputContainer" style="display: none;">
             <label for="chatThumbnail" class="form-label">チャットのサムネイルをアップロード</label>
             <input type="file" class="form-control" id="chatThumbnail" name="thumbnail" accept="image/*">
@@ -55,7 +55,7 @@
             fetchchatData(chatId);
         }
 
-        $('#imageSection').click(function() {
+        $('#chatImage').click(function() {
             $('#chatThumbnail').click();
         });
 
@@ -207,6 +207,7 @@
                         $('#sendMessage').toggleClass('d-none')
 
                         createEditor(JSON.parse(cleanedContent))
+                        $('#chatForm').toggleClass('d-none')
                     };
                 },
                 error: function(error) {

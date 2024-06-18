@@ -4,6 +4,12 @@
 <body>
     {{> dashboard-nav}}
 
+    <style>
+    label{
+        font-size: 14px;
+        color: #aaaaaa;
+    }
+    </style>
 <div class="container mt-4">
     <h2>{{#if chatId}}チャットを編集{{else}}新しいチャットを追加{{/if}}</h2>
     <div id="imageSection" class="text-center mb-4" >
@@ -18,29 +24,30 @@
             <div class="spinner-grow spinner-grow-sm text-dark" role="status"><span class="visually-hidden">Loading...</span></div>
         </div>
     </div>
-    <form id="chatForm" class="mb-5 pb-5 d-none">
-        <div class="mb-3" id="thumbnailInputContainer" style="display: none;">
+    <button type="button" id="displayProcess" class="badge btn-ligh text-muted border mb-2 mx-3" style="font-size: 12px;border-radius:40px">プロセスを表示する</button>
+    <div id="displayProcessToggle" class="mb-3 mx-3 d-none">
+        <label for="chatContent" class="form-label d-none">チャットコンテンツ (JSON形式)</label>
+        <textarea class="form-control" id="chatContent" name="content" rows="10" required></textarea>
+    </div>
+    <form id="chatForm" class="mb-5 pb-5 mx-3 d-none">
+        <div class="mb-3 mx-3" id="thumbnailInputContainer" style="display: none;">
             <label for="chatThumbnail" class="form-label">チャットのサムネイルをアップロード</label>
             <input type="file" class="form-control" id="chatThumbnail" name="thumbnail" accept="image/*">
         </div>
-        <div class="mb-3">
+        <div class="mb-3 mx-3">
             <label for="chatName" class="form-label">チャット名</label>
             <input type="text" class="form-control" id="chatName" name="name" required>
         </div>
-        <div class="mb-3">
+        <div class="mb-3 mx-3">
             <label for="chatDescription" class="form-label">チャット</label>
             <textarea class="form-control" id="chatDescription" name="content" rows="3" required></textarea>
         </div>
-        <button type="button" id="displayProcess" class="badge btn-ligh text-muted border mb-2" style="font-size: 12px;border-radius:40px">プロセスを表示する</button>
-        <div id="displayProcessToggle" class="mb-3 d-none">
-            <label for="chatContent" class="form-label d-none">チャットコンテンツ (JSON形式)</label>
-            <textarea class="form-control" id="chatContent" name="content" rows="10" required></textarea>
-        </div>
         <div class="container mt-1">
+            <label for="chatContentEdition" class="form-label">チャットの構造</label>
             <div id="chatContentEdition"></div>
             <button type="button" id="saveButton" class="btn btn-primary mt-3 d-none">Save</button>
         </div>
-        <button type="submit" class="btn btn-primary btn-large w-100">送信</button>
+        <button type="submit" class="btn btn-secondary btn-large w-100">保存する</button>
     </form>
 </div>
 
@@ -83,6 +90,7 @@
                     if (chatData.thumbnailUrl && chatData.thumbnailUrl != undefined) {
                         $('#chatImage').attr('src', chatData.thumbnailUrl).show();
                     }
+                        $('#chatForm').toggleClass('d-none')
                 },
                 error: function(xhr, status, error) {
                     Swal.fire({

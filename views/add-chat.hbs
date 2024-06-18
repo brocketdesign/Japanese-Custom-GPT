@@ -12,6 +12,9 @@
     <div id="chatInput" class="input-group rounded-0 rounded-bottom mt-5 mb-4" style="bottom: 0px;right: 0;left: 0;width: auto;margin: auto;">
         <input type="text" id="userMessage" class="form-control py-3" placeholder="チャットについて教えてください">
         <button id="sendMessage" class="btn btn-light px-4 border"><i class="fas fa-paper-plane"></i></button>
+        <div class="load bg-light px-4 d-flex justify-content-center align-items-center border d-none">
+            <div class="spinner-grow spinner-grow-sm text-dark" role="status"><span class="visually-hidden">Loading...</span></div>
+        </div>
     </div>
     <form id="chatForm" class="mb-5 pb-5">
         <div class="mb-3" id="thumbnailInputContainer" style="display: none;">
@@ -26,13 +29,14 @@
             <label for="chatDescription" class="form-label">チャット</label>
             <textarea class="form-control" id="chatDescription" name="content" rows="3" required></textarea>
         </div>
-        <div class="container mt-5">
-            <div id="chatContentEdition"></div>
-            <button type="button" id="saveButton" class="btn btn-primary mt-3">Save</button>
+        <button type="button" id="displayProcess" class="badge btn-ligh text-muted border mb-2" style="font-size: 12px;border-radius:40px">Display process</button>
+        <div id="displayProcessToggle" class="mb-3 d-none">
+            <label for="chatContent" class="form-label d-none">チャットコンテンツ (JSON形式)</label>
+            <textarea class="form-control" id="chatContent" name="content" rows="10" required></textarea>
         </div>
-        <div class="mb-3 d-none">
-            <label for="chatContent" class="form-label">チャットコンテンツ (JSON形式)</label>
-            <textarea class="form-control" id="chatContent" name="content" rows="5" required></textarea>
+        <div class="container mt-1">
+            <div id="chatContentEdition"></div>
+            <button type="button" id="saveButton" class="btn btn-primary mt-3 d-none">Save</button>
         </div>
         <button type="submit" class="btn btn-primary btn-large w-100">送信</button>
     </form>
@@ -70,10 +74,9 @@
                     $('#chatName').val(chatData.name);
                     $('#chatDescription').val(chatData.description);
                     if(chatData.content){
-                        $('#chatContent').val(JSON.stringify(chatData.content));
+                        $('#chatContent').val(JSON.stringify(chatData.content, null, 2));
                         createEditor(chatData.content)
                     }
-                    
 
                     if (chatData.thumbnailUrl && chatData.thumbnailUrl != undefined) {
                         $('#chatImage').attr('src', chatData.thumbnailUrl).show();
@@ -152,7 +155,7 @@
             }
         });
 
-        function generateCompletion() {
+        function generateCompletion(callback) {
 
             const apiUrl = '/api/openai-chat-creation';
             const message = $('#userMessage').val();
@@ -162,7 +165,8 @@
             if ($('#chatContent').val().trim() !== '') {
                 $('#chatContent').val('');
             }        
-
+            $('#chatInput .load').toggleClass('d-none')
+            $('#sendMessage').toggleClass('d-none')
             $.ajax({
                 url: apiUrl,
                 method: 'POST',
@@ -196,6 +200,9 @@
                         // Generate title and description based on the cleaned content
                         generateName(cleanedContent, chatId);
                         generateDescription(cleanedContent, chatId);
+
+                        $('#chatInput .load').toggleClass('d-none')
+                        $('#sendMessage').toggleClass('d-none')
 
                         createEditor(JSON.parse(cleanedContent))
                     };
@@ -429,6 +436,9 @@
         $('#saveButton').click(function() {
             saveJson();
         });
+        $('#displayProcess').click(function(){
+            $('#displayProcessToggle').toggleClass('d-none')
+        })
     });
 </script>
 </body>

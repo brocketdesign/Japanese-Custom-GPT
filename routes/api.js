@@ -211,6 +211,7 @@ async function routes(fastify, options) {
             reply.status(500).send({ error: 'Failed to retrieve Story' });
         }
     });
+
     fastify.post('/api/set-story', async (request, reply) => {
         const storyId = request.body.storyId;
 
@@ -649,6 +650,35 @@ async function routes(fastify, options) {
             console.log(error)
             reply.raw.end(); // End the stream before sending the response
             reply.status(500).send({ error: 'Error fetching OpenAI completion' });
+        }
+    });
+
+    fastify.post('/api/openai-chat-choice/',{
+        preHandler: [fastify.authenticate]
+      },async (request, reply) => {
+
+        const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+        const userId = request.user._id
+        const { chatId } = request.body;    
+
+        try {
+
+            let userData = await userDataCollection.findOne({ userId, chatId })
+
+            if (!userData) {
+                console.log(`User data not found`)
+                return reply.status(404).send({ error: 'User data not found' });
+            }
+
+            let userMessages = userData.messages;
+            userMessages.push({role:'user',content:'Provide a JSON array containing 3 choices to prompt the user answer. The array contain keywords.'})
+            const completion = await moduleCompletion(userMessages, reply.raw);
+            console.log(completion)
+            return reply.send(completion)
+
+        } catch (error) {
+            console.log(error)
+            return reply.status(500).send({ error: 'Error fetching OpenAI completion' });
         }
     });
 

@@ -89,21 +89,19 @@ $(document).ready(function() {
         fetchchatData(chatId); // Fetch the initial chat data when the page loads
         
         window.choosePath = function(choiceText) {
-            console.log({choiceText})
-            
             currentStep++;
+            console.log({choiceText,currentStep})
             hideOtherChoice(choiceText,currentStep,function(){
                 updatechatContent(choiceText);
             })
 
-            //console.log({currentStep:currentStep, message: message, userIp: userIp, chatId:chatId})
             $.ajax({
                 url: '/api/chat-data',
                 type: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                data: JSON.stringify({ currentStep:currentStep, message:choiceText, userIp: userIp, chatId:chatId }),
+                data: JSON.stringify({ currentStep, message:choiceText, userIp: userIp, chatId:chatId }),
                 success: function(response) {
                     
                 },
@@ -112,7 +110,42 @@ $(document).ready(function() {
                 }
             });
         };
+        window.sendMessage = function(customMessage,displayStatus = true) {
+            currentStep ++
+            messagesCount ++
+            if(messagesCount >= 10){
+                Swal.fire({
+                    title: '注意',
+                    text: '無料ユーザーのメッセージの最大数は1日10件です。',
+                    icon: 'warning',
+                    confirmButtonText: 'OK'
+                });
+                return
+            }
+            const message = customMessage || $('#userMessage').val();
+            if (message.trim() !== '') {
+                if(displayStatus){
+                    displayMessage('user', message);
+                }
+                $('#userMessage').val(''); // Clear the input field
 
+                // Send the message to the backend (to be implemented)
+                $.ajax({
+                    url: '/api/chat-data', // Backend endpoint to handle the message
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ currentStep:currentStep, message, userIp, chatId }),
+                    success: function(response) {
+                        const {userId, chatId } = response
+                        generateCompletion(userId, chatId)
+                    },
+                    error: function(error) {
+                        console.error('Error:', error);
+                        displayMessage('bot', 'An error occurred while sending the message.');
+                    }
+                });
+            }
+        }
         $(document).on('click','#unlock-result',function(){
 
             sendCustomData({action:'unlock-result'})
@@ -158,7 +191,6 @@ $(document).ready(function() {
                     <img src="${ thumbnail ? thumbnail : '/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;">
                     <div id="message-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
                 </div>
-                
                 <div id="response-${currentStep}"></div>
             </div>`)
             step.choices.forEach((choice, index) => {
@@ -224,7 +256,7 @@ $(document).ready(function() {
         }
 
         function hideOtherChoice(choiceText, currentStep, callback) {
-
+            console.log(`Hide choices: ${currentStep - 1}`)
             $(`#response-${currentStep - 1} button`).each(function() {
                 const currentChoice = $(this).text()
                 if(choiceText == currentChoice){
@@ -243,6 +275,43 @@ $(document).ready(function() {
             })
         }
 
+        function generateChoice(){
+            const apiUrl = '/api/openai-chat-choice/'
+
+            $.ajax({
+                url: apiUrl,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ chatId: chatId }),
+                success: function(response) {
+                    const cleanResponse = cleanJsonArray(response)
+
+                    cleanResponse.forEach(choice => {
+                        const button = $(`<button class="btn btn-flat-border my-2" onclick="sendMessage('${choice}')">${choice}</button>`)
+                        $(`#response-${currentStep}`).append(button);
+                    });
+                },
+                error: function(error) {
+                    console.error('Error:', error);
+                }
+            });
+        }
+        function cleanJsonArray(jsonString) {
+            // Remove all characters before the first '{'
+            let start = jsonString.indexOf('[');
+            if (start !== -1) {
+                jsonString = jsonString.substring(start);
+            }
+
+            // Remove all characters after the last '}'
+            let end = jsonString.lastIndexOf(']');
+            if (end !== -1) {
+                jsonString = jsonString.substring(0, end + 1);
+            }
+
+            return JSON.parse(jsonString);
+        }
+        
         function generateCompletion($element){
             
             const apiUrl = '/api/openai-chat-completion';
@@ -256,21 +325,23 @@ $(document).ready(function() {
                     const sessionId = response.sessionId;
                     const streamUrl = `/api/openai-chat-completion-stream/${sessionId}`;
                     const eventSource = new EventSource(streamUrl);
-                    sendCustomData({action:'generateCompletion',sessionId})
                     let markdownContent = "";
 
                     if(!$element){
-                        hideOtherChoice(false, currentStep+1,function(){
-                        })
+                        hideOtherChoice(false, currentStep)
                         // Initialize the bot response container
                         const botResponseContainer = $(`
+                            <div id="container-${currentStep}">
                                 <div class="d-flex flex-row justify-content-start mb-4 message-container">
                                     <img src="${ thumbnail ? thumbnail : '/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;">
                                     <div id="completion-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
-                                </div>`);
+                                </div>
+                                <div id="response-${currentStep}"></div>
+                            </div>`);
                         $('#chatContainer').append(botResponseContainer);
                         $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
                     }
+
                     eventSource.onmessage = function(event) {
                         const data = JSON.parse(event.data);
                         markdownContent += data.content;
@@ -287,6 +358,9 @@ $(document).ready(function() {
                     eventSource.onerror = function(error) {
                         console.log('EventSource failed.');
                         eventSource.close();
+                        if(!$element){
+                            generateChoice();
+                        }
                     };
                 },
                 error: function(error) {
@@ -306,43 +380,6 @@ $(document).ready(function() {
                 sendMessage();
             }
         });     
-
-        function sendMessage(customMessage,displayStatus = true) {
-            currentStep ++
-            messagesCount ++
-            if(messagesCount >= 10){
-                Swal.fire({
-                    title: '注意',
-                    text: '無料ユーザーのメッセージの最大数は1日10件です。',
-                    icon: 'warning',
-                    confirmButtonText: 'OK'
-                });
-                return
-            }
-            const message = customMessage || $('#userMessage').val();
-            if (message.trim() !== '') {
-                if(displayStatus){
-                    displayMessage('user', message);
-                }
-                $('#userMessage').val(''); // Clear the input field
-
-                // Send the message to the backend (to be implemented)
-                $.ajax({
-                    url: '/api/chat-data', // Backend endpoint to handle the message
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ currentStep:currentStep, message, userIp, chatId }),
-                    success: function(response) {
-                        const {userId, chatId } = response
-                        generateCompletion(userId, chatId)
-                    },
-                    error: function(error) {
-                        console.error('Error:', error);
-                        displayMessage('bot', 'An error occurred while sending the message.');
-                    }
-                });
-            }
-        }
 
         // Function to display a message in the chat
         function displayMessage(sender, message) {

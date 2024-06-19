@@ -8,6 +8,7 @@ const { getCounter, updateCounter } = require('./models/tool');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const handlebars = require('handlebars');
+const { v4: uuidv4 } = require('uuid');
 
 mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then((client) => {
@@ -47,7 +48,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     fastify.register(require('@fastify/formbody'));
     fastify.register(require('./routes/api'));
     fastify.register(require('./routes/user'));
-
+ 
     // Authentication decorator
     fastify.decorate('authenticate', async function (request, reply) {
       try {
@@ -55,7 +56,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         if (!token) {
           return reply.redirect('/authenticate');
         }
-
+    
         const decoded = await jwt.verify(token, process.env.JWT_SECRET);
         if (decoded && decoded._id) {
           request.user = { _id: decoded._id, ...decoded }; // Attach user _id and other data to request
@@ -66,7 +67,53 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         return reply.redirect('/authenticate');
       }
     });
- 
+    
+  // User decorator
+  fastify.decorate('getUser', async function (request, reply) {
+    try {
+      const token = request.cookies.token;
+      if (token) {
+        const decoded = await jwt.verify(token, process.env.JWT_SECRET);
+        if (decoded && decoded._id) {
+          request.user = { _id: decoded._id, ...decoded }; // Attach user _id and other data to request
+          return request.user;
+        }
+      }
+    } catch (err) {
+      // If any error occurs during token verification, fall through to handle temporary user
+    }
+
+    // Handle temporary user
+    let tempUser = request.cookies.tempUser;
+    if (!tempUser) {
+      tempUser = {
+        _id: uuidv4(),
+        isTemporary: true,
+        role: 'guest',
+        // Add any other temporary user properties if needed
+      };
+      reply.setCookie('tempUser', JSON.stringify(tempUser), {
+        path: '/',
+        httpOnly: true,
+        maxAge: 60 * 60 * 24 * 7 // 1 week
+      });
+    } else {
+      tempUser = JSON.parse(tempUser);
+    }
+
+    request.user = tempUser;
+    return tempUser;
+  });
+    
+    // Example route using the getUser decorator
+    fastify.get('/some-api', async (request, reply) => {
+      const user = await fastify.getUser(request, reply);
+      if (user.isTemporary) {
+        reply.send({ message: 'Hello, guest!', user });
+      } else {
+        reply.send({ message: 'Hello, user!', user });
+      }
+    });
     // Routes
     fastify.get('/', async (request, reply) => {
       try {
@@ -88,10 +135,13 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     fastify.get('/chat', (request, reply) => {
       reply.redirect('chat/');
     });
-    fastify.get('/chat/:chatId', (request, reply) => {
+    fastify.get('/chat/:chatId', {
+      preHandler: [fastify.authenticate]
+    }, (request, reply) => {
       const chatId = request.params.chatId
       if(chatId){
-        reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd', chatId: chatId });
+        const userId = request.user._id
+        reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd', userId, chatId });
       }else{
         reply.view('chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd' });
       }

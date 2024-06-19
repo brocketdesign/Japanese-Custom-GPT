@@ -14,13 +14,11 @@ async function routes(fastify, options) {
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
         region: process.env.AWS_REGION
     });
-    
-    fastify.post('/api/add-chat', {
-        preHandler: [fastify.authenticate]
-    }, async (request, reply) => {
+    fastify.post('/api/add-chat', async (request, reply) => {
         const parts = request.parts();
         let name, description, content, thumbnailUrl, chatId, thumbnailHash;
-        const userId = new fastify.mongo.ObjectId(request.user._id);
+        const user = await fastify.getUser(request, reply);
+        const userId = new fastify.mongo.ObjectId(user._id);
     
         for await (const part of parts) {
             if (part.fieldname === 'name') {
@@ -137,7 +135,6 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to add or update the Chat' });
         }
     });
-    
     fastify.delete('/api/delete-chat/:id', async (request, reply) => {
         const chatId = request.params.id;
     
@@ -178,7 +175,6 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to delete story' });
         }
     });
-    
     fastify.get('/api/chat/:id', async (request, reply) => {
         const chatId = request.params.id;
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
@@ -195,7 +191,6 @@ async function routes(fastify, options) {
             reply.status(500).send({ error: 'Failed to retrieve chat' });
         }
     });
-
     fastify.get('/api/story/:id', async (request, reply) => {
         const storyId = request.params.id;
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('stories');
@@ -211,7 +206,6 @@ async function routes(fastify, options) {
             reply.status(500).send({ error: 'Failed to retrieve Story' });
         }
     });
-
     fastify.post('/api/set-story', async (request, reply) => {
         const storyId = request.body.storyId;
 
@@ -250,9 +244,8 @@ async function routes(fastify, options) {
             reply.status(500).send({ error: 'An error occurred while setting the active story' });
         }
     });
-
     fastify.post('/api/data', async (request, reply) => {
-        const { choice, userId, userIp, storyId } = request.body;
+        const { choice, userId,  storyId } = request.body;
 
         const serverUserId = parseInt(userId) || 'user_' + Date.now();
     
@@ -262,14 +255,14 @@ async function routes(fastify, options) {
         const query = { userId: serverUserId };
         const update = {
             $push: { choices: { choice, storyId, timestamp: dateObj } },
-            $setOnInsert: { userId: serverUserId, userIp: userIp, createdAt: dateObj },
+            $setOnInsert: { userId: serverUserId, createdAt: dateObj },
             $set: { storyId: storyId }
         };
         const options = { upsert: true };
     
         try {
             await collection.updateOne(query, update, options);
-            console.log('User choice updated:', { userId: serverUserId, choice, userIp: userIp, storyId:storyId });
+            console.log('User choice updated:', { userId: serverUserId, choice, storyId:storyId });
             //const userData = await collection.findOne(query);
             //console.log(userData)
             return reply.send({ nextStoryPart: "You chose the path and...", endOfStory: true });
@@ -278,16 +271,14 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to save user choice' });
         }
     });
-
-    fastify.post('/api/chat-data', {
-        preHandler: [fastify.authenticate]
-      },async (request, reply) => {
+    fastify.post('/api/chat-data',async (request, reply) => {
 
         const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
         const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-        const userId = request.user._id
+        const user = await fastify.getUser(request, reply);
+        const userId = user._id
         
-        const { currentStep, message, userIp, chatId } = request.body;    
+        const { currentStep, message, chatId } = request.body;    
 
         try {
             // Find or create the chat document
@@ -335,7 +326,6 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to save user choice' });
         }
     });
-
     fastify.post('/api/custom-data', async (request, reply) => {
         const { userId, customData } = request.body;
     
@@ -391,7 +381,6 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to save user data' });
         }
     });
-
     fastify.post('/api/submit-email', async (request, reply) => {
         const { email, userId } = request.body;
     
@@ -424,7 +413,6 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to save user email' });
         }
     });
-
     fastify.post('/api/feedback', async (request, reply) => {
         const { reason, userId } = request.body;
     
@@ -448,7 +436,6 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to save user feedback' });
         }
     });
-    
     fastify.post('/api/generate', async (request, reply) => {
         const { userId } = request.body;
 
@@ -509,14 +496,12 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to generate analysis' });
         }
     });
-        
     fastify.post('/api/openai-completion', (request, reply) => {
         const { userId } = request.body;
         const sessionId = Math.random().toString(36).substring(2, 15); // Generate a unique session ID
         sessions.set(sessionId, { userId });
         reply.send({ sessionId });
     });
-    
     fastify.get('/api/openai-completion-stream/:sessionId', async (request, reply) => {
         const { sessionId } = request.params;
         const session = sessions.get(sessionId);
@@ -591,17 +576,14 @@ async function routes(fastify, options) {
             reply.status(500).send({ error: 'Error fetching OpenAI completion' });
         }
     });
-
-    fastify.post('/api/openai-chat-completion', {
-        preHandler: [fastify.authenticate]
-      }, (request, reply) => {
+    fastify.post('/api/openai-chat-completion', async (request, reply) => {
         const { chatId } = request.body;
-        const userId = request.user._id
+        const user = await fastify.getUser(request, reply);
+        const userId = user._id
         const sessionId = Math.random().toString(36).substring(2, 15); // Generate a unique session ID
         sessions.set(sessionId, { userId, chatId });
-        reply.send({ sessionId });
+        return reply.send({ sessionId });
     });
-    
     fastify.get('/api/openai-chat-completion-stream/:sessionId', async (request, reply) => {
         const { sessionId } = request.params;
         const session = sessions.get(sessionId);
@@ -652,13 +634,10 @@ async function routes(fastify, options) {
             reply.status(500).send({ error: 'Error fetching OpenAI completion' });
         }
     });
-
-    fastify.post('/api/openai-chat-choice/',{
-        preHandler: [fastify.authenticate]
-      },async (request, reply) => {
-
+    fastify.post('/api/openai-chat-choice/', async (request, reply) => {
+        const user = await fastify.getUser(request, reply);
+        const userId = user._id
         const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-        const userId = request.user._id
         const { chatId } = request.body;    
 
         try {
@@ -681,13 +660,11 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Error fetching OpenAI completion' });
         }
     });
-
-    fastify.post('/api/chat', {
-        preHandler: [fastify.authenticate]
-      },async (request, reply) => {
+    fastify.post('/api/chat',async (request, reply) => {
         try {
             const { currentStep, message, chatId } = request.body;
-            const userId = request.user._id
+            const user = await fastify.getUser(request, reply);
+            const userId = user._id
             console.log({ userId, message, chatId });
     
             const collectionUser = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
@@ -745,14 +722,12 @@ async function routes(fastify, options) {
             reply.status(500).send({ error: 'An error occurred while saving the message.' });
         }
     });
-
     fastify.post('/api/openai-chat', (request, reply) => {
         const { userId, chatId } = request.body;
         const sessionId = Math.random().toString(36).substring(2, 15); // Generate a unique session ID
         sessions.set(sessionId, { userId, chatId });
         reply.send({ sessionId });
     });
-    
     fastify.get('/api/openai-chat-stream/:sessionId', async (request, reply) => {
         const { sessionId } = request.params;
         const session = sessions.get(sessionId);
@@ -812,17 +787,14 @@ async function routes(fastify, options) {
             reply.status(500).send({ error: 'Error fetching OpenAI completion' });
         }
     });
-    
-    fastify.post('/api/openai-chat-creation', {
-        preHandler: [fastify.authenticate]
-      }, (request, reply) => {
+    fastify.post('/api/openai-chat-creation', async (request, reply) => {
         const { chatId, message, system } = request.body;
-        const userId = request.user._id
+        const user = await fastify.getUser(request, reply);
+        const userId = user._id
         const sessionId = Math.random().toString(36).substring(2, 15); // Generate a unique session ID
         sessions.set(sessionId, { userId, chatId, message, system });
-        reply.send({ sessionId });
+        return reply.send({ sessionId });
     });
-    
     fastify.get('/api/openai-chat-creation-stream/:sessionId', async (request, reply) => {
         const { sessionId } = request.params;
         const session = sessions.get(sessionId);
@@ -878,24 +850,6 @@ async function routes(fastify, options) {
             reply.status(500).send({ error: 'Error fetching OpenAI completion' });
         }
     });
-    
-// Function to check if a string is a valid ObjectId
-function isNewObjectId(userId) {
-    try {
-      const objectId = new fastify.mongo.ObjectId(userId);
-  
-      // Check if the userId is a valid ObjectId
-      if (objectId.toString() === userId) {
-        return true;
-      } else {
-        return false;
-      }
-    } catch (err) {
-      // If an error is thrown, it means the userId is not a valid ObjectId
-      return false;
-    }
-  }
-    
     fastify.get('/api/user-data', async (request, reply) => {
         if (process.env.MODE != 'local') {
             return reply.send([]);
@@ -954,13 +908,33 @@ function isNewObjectId(userId) {
             return reply.status(500).send({ error: 'Failed to retrieve user data' });
         }
     });
-
+    fastify.get('/api/user', async (request,reply) => {
+        const user = await fastify.getUser(request, reply);
+        return reply.send({user})
+    })
     function getActionObject(customData, action) {
         if(!customData){return false}
         return customData.find(item => item && item.action === action);
     }
 
+      
+    // Function to check if a string is a valid ObjectId
+    function isNewObjectId(userId) {
+        try {
+        const objectId = new fastify.mongo.ObjectId(userId);
     
+        // Check if the userId is a valid ObjectId
+        if (objectId.toString() === userId) {
+            return true;
+        } else {
+            return false;
+        }
+        } catch (err) {
+        // If an error is thrown, it means the userId is not a valid ObjectId
+        return false;
+        }
+    }
+          
         
 }
 

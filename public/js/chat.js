@@ -29,7 +29,7 @@ $(document).ready(function() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                data: JSON.stringify({ currentStep, message:choiceText, userIp: userIp, chatId:chatId }),
+                data: JSON.stringify({ currentStep, message:choiceText, chatId:chatId }),
                 success: function(response) {
                     
                 },
@@ -62,7 +62,7 @@ $(document).ready(function() {
                     url: '/api/chat-data', // Backend endpoint to handle the message
                     type: 'POST',
                     contentType: 'application/json',
-                    data: JSON.stringify({ currentStep:currentStep, message, userIp, chatId }),
+                    data: JSON.stringify({ currentStep:currentStep, message, chatId }),
                     success: function(response) {
                         const {userId, chatId } = response
                         generateCompletion(userId, chatId)

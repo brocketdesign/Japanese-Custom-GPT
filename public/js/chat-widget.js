@@ -66,7 +66,6 @@
                 }
                 #chat-widget-container{
                     position:initial;
-                    width: 80vw;
                     height: 750px;
                     overflow: hidden;
                     border: 1px solid #ccc;

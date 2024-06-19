@@ -1,19 +1,19 @@
 (function() {
-    // Function to load a CSS file dynamically
-    function loadCSS(href) {
-        var link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = href;
-        document.head.appendChild(link);
-    }
-
-    // Load Bootstrap CSS
-    loadCSS('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css');
-
     // Find the placeholder element by its ID
     var chatWidgetPlaceholder = document.getElementById('lamix-chat-widget');
 
     if (chatWidgetPlaceholder) {
+        // Function to load a CSS file dynamically
+        function loadCSS(href) {
+            var link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = href;
+            document.head.appendChild(link);
+        }
+
+        // Load Bootstrap CSS
+        loadCSS('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css');
+
         // Create the chat widget container
         var chatContainer = document.createElement('div');
         chatContainer.innerHTML = `
@@ -23,7 +23,37 @@
                     overflow: auto;
                     padding: 15px 0px;
                 }
-                #chat-widget-container {
+                #chat-container {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                }
+                .card-header, .card-footer {
+                    flex-shrink: 0;
+                }
+                .card-body {
+                    flex-grow: 1;
+                    overflow-y: auto;
+                    position: relative;
+                }
+                #messages {
+                    padding: 10px;
+                    padding-bottom: 100px;
+                    border-radius: 5px;
+                    z-index: 1;
+                }
+                #chatInput {
+                    position: absolute;
+                    bottom: 0;
+                    width: 100%;
+                    right: 0;
+                    left: 0;
+                    background: white;
+                    z-index: 1000;
+                    padding: 10px;
+                    border-top: 1px solid #ccc;
+                }
+                #chat-widget-container.fixed {
                     position: fixed;
                     bottom: 0;
                     right: 0;
@@ -33,6 +63,19 @@
                     border: 1px solid #ccc;
                     border-radius: 10px;
                     box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                }
+                #chat-widget-container{
+                    position:initial;
+                    width: 80vw;
+                    height: 750px;
+                    overflow: hidden;
+                    border: 1px solid #ccc;
+                    border-radius: 10px;
+                    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                    margin: auto;
+                }
+                #chat-widget-container{
+                    margin-bottom:50px;
                 }
             </style>
             <div id="chat-widget-container" class="card">

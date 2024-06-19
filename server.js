@@ -128,8 +128,13 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       }
     });
 
-    fastify.get('/authenticate', (request, reply) => {
-      reply.view('authenticate.hbs', { title: 'LAMIX | Powered by Hato,Ltd' });
+    fastify.get('/authenticate',async (request, reply) => {
+      const user = await fastify.getUser(request, reply);
+      if (user.isTemporary) {
+        return reply.view('authenticate.hbs', { title: 'LAMIX | Powered by Hato,Ltd' });
+      } else {
+        return reply.redirect('/dashboard')
+      }
     });
 
     fastify.get('/chat', (request, reply) => {
@@ -145,6 +150,9 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       }else{
         reply.view('chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd' });
       }
+    });
+    fastify.get('/chat-index', (request, reply) => {
+      reply.view('chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd' });
     });
     fastify.get('/chat-list', {
       preHandler: [fastify.authenticate]

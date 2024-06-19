@@ -3,7 +3,7 @@ $(document).ready(function() {
     // Fetch the user's IP address and generate a unique ID
     fetchUser(function(error, user){
         // Now you can use the userID variable or id parameter here
-        const chatId = getIdFromUrl(window.location.href);
+        const chatId = getIdFromUrl(window.location.href) || $(`#lamix-chat-widget`).data('id');
         const userId = user._id
         console.log({userId,chatId})
         let messagesCount = 0 

@@ -9,6 +9,36 @@
             overflow: auto;
             padding: 15px 0px;
         }
+        #chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .card-header, .card-footer {
+            flex-shrink: 0;
+        }
+        .card-body {
+            flex-grow: 1;
+            overflow-y: auto;
+            position: relative;
+        }
+        #messages {
+            padding: 10px;
+            padding-bottom: 100px;
+            border-radius: 5px;
+            z-index: 1;
+        }
+        #chatInput {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            right: 0;
+            left: 0;
+            background: white;
+            z-index: 1000;
+            padding: 10px;
+            border-top: 1px solid #ccc;
+        }
     </style>
     <div class="container mt-4">
         <div id="chat-container" class="card my-5">

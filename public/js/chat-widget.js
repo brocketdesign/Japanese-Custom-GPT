@@ -69,7 +69,6 @@
                     background: white;
                     z-index: 1000;
                     padding: 10px;
-                    border-top: 1px solid #ccc;
                 }
                 #chat-widget-container.fixed {
                     position: fixed;
@@ -115,7 +114,7 @@
                         <div class="count me-2"></div><i class="fas fa-comment"></i>
                     </div>
                 </div>
-                <div class="card-body text-center py-5 shadow" style="min-height:250px;height: 300px;overflow-y: auto;">
+                <div class="card-body text-center py-5 shadow" style="min-height:250px;height: 300px;overflow-y: auto;position: initial;">
                     <h5 class="card-title d-none">Card Title</h5>
                     <div id="chatContainer" class="pb-5">
                     </div>

@@ -36,24 +36,6 @@
   z-index: 1;
   /* Add any additional styling for the content here */
 }
-
-.btn-flat-border {
-    display: inline-block;
-    padding: 0.3em 1em;
-    text-decoration: none;
-    color: #742af4;
-    border: solid 2px #b58df9;
-    border-radius: 3px;
-    transition: .4s;
-    margin-right: 5px;
-    margin-left: 5px;
-    font-size: 18px;;
-  }
-  
-  .btn-flat-border:hover {
-    background: #742af4;
-    color: white;
-  }
   .btn-gradient-radius {
     display: inline-block;
     padding: 7px 20px;

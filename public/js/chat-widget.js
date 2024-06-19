@@ -14,7 +14,7 @@
         // Load Bootstrap CSS
         loadCSS('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css');
         loadCSS('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css')
-        
+
         // Create the chat widget container
         var chatContainer = document.createElement('div');
         chatContainer.innerHTML = `
@@ -42,6 +42,23 @@
                     padding-bottom: 100px;
                     border-radius: 5px;
                     z-index: 1;
+                }
+                .btn-flat-border {
+                    display: inline-block;
+                    padding: 0.3em 1em;
+                    text-decoration: none;
+                    color: #742af4;
+                    border: solid 2px #b58df9;
+                    border-radius: 3px;
+                    transition: .4s;
+                    margin-right: 5px;
+                    margin-left: 5px;
+                    font-size: 18px;;
+                }
+                
+                .btn-flat-border:hover {
+                    background: #742af4;
+                    color: white;
                 }
                 #chatInput {
                     position: absolute;

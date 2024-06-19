@@ -94,6 +94,19 @@
                 #chat-widget-container{
                     margin-bottom:50px;
                 }
+                #sendMessage,
+                #chatInput .load {
+                    border-left: 0 !important;
+                    border-radius: 0px 30px 30px 0px !important;
+                }
+                #userMessage {
+                    border-radius: 30px 0px 0px 30px !important;
+                    background-color: #f8f9fa;
+                }
+                #userMessage:focus {
+                    outline: none;
+                    box-shadow: none; /* If there is a box shadow applied on focus */
+                }
             </style>
             <div id="chat-widget-container" class="card">
                 <div class="d-flex justify-content-between card-header text-center bg-dark text-white">

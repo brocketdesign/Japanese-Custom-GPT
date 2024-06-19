@@ -62,7 +62,7 @@
 
         // Load any additional scripts required for the chat functionality
         var script = document.createElement('script');
-        script.src = 'https://lamix.hatoltd.com/js/quiz.js'; // Adjust the path as necessary
+        script.src = 'https://lamix.hatoltd.com/js/chat.js'; // Adjust the path as necessary
         document.head.appendChild(script);
     }
 })();

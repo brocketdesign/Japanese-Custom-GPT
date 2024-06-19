@@ -24,7 +24,7 @@ $(document).ready(function() {
             })
 
             $.ajax({
-                url: '/api/chat-data',
+                url: 'https://lamix.hatoltd.com/api/chat-data',
                 type: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -59,7 +59,7 @@ $(document).ready(function() {
 
                 // Send the message to the backend (to be implemented)
                 $.ajax({
-                    url: '/api/chat-data', // Backend endpoint to handle the message
+                    url: 'https://lamix.hatoltd.com/api/chat-data', // Backend endpoint to handle the message
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify({ currentStep:currentStep, message, chatId }),
@@ -81,7 +81,7 @@ $(document).ready(function() {
         })
         function fetchchatData(chatId) {
             $.ajax({
-                url: `/api/chat/${chatId}`,
+                url: `https://lamix.hatoltd.com/api/chat/${chatId}`,
                 type: 'GET',
                 dataType: 'json',
                 success: function(data) {
@@ -205,7 +205,7 @@ $(document).ready(function() {
         }
 
         function generateChoice(){
-            const apiUrl = '/api/openai-chat-choice/'
+            const apiUrl = 'https://lamix.hatoltd.com/api/openai-chat-choice/'
 
             $.ajax({
                 url: apiUrl,
@@ -243,7 +243,7 @@ $(document).ready(function() {
         
         function generateCompletion($element){
             
-            const apiUrl = '/api/openai-chat-completion';
+            const apiUrl = 'https://lamix.hatoltd.com/api/openai-chat-completion';
   
             $.ajax({
                 url: apiUrl,
@@ -252,7 +252,7 @@ $(document).ready(function() {
                 data: JSON.stringify({ chatId: chatId }),
                 success: function(response) {
                     const sessionId = response.sessionId;
-                    const streamUrl = `/api/openai-chat-completion-stream/${sessionId}`;
+                    const streamUrl = `https://lamix.hatoltd.com/api/openai-chat-completion-stream/${sessionId}`;
                     const eventSource = new EventSource(streamUrl);
                     let markdownContent = "";
 
@@ -328,7 +328,7 @@ $(document).ready(function() {
         
         function sendCustomData(customData){
             $.ajax({
-                url: '/api/custom-data',
+                url: 'https://lamix.hatoltd.com/api/custom-data',
                 type: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -388,7 +388,7 @@ $(document).ready(function() {
     }
     function fetchUser(callback) {
         $.ajax({
-            url: '/api/user',
+            url: 'https://lamix.hatoltd.com/api/user',
             method: 'GET',
             success: function(response) {
                 if (callback && typeof callback === 'function') {

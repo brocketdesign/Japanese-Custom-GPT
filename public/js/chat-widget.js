@@ -13,7 +13,8 @@
 
         // Load Bootstrap CSS
         loadCSS('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css');
-
+        loadCSS('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css')
+        
         // Create the chat widget container
         var chatContainer = document.createElement('div');
         chatContainer.innerHTML = `

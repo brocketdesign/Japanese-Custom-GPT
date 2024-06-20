@@ -277,12 +277,12 @@ async function routes(fastify, options) {
         
         const { currentStep, message, chatId } = request.body;    
         let userId = request.body.userId
-        console.log({userId,chatId})
+
         if(!userId){ 
             const user = await fastify.getUser(request, reply);
             userId = user._id
         }
-        console.log({userId,chatId})
+
         try {
             // Find or create the chat document
             let userChatDocument = await collectionUserChat.findOne({ userId, chatId });
@@ -296,14 +296,14 @@ async function routes(fastify, options) {
                     chatId,
                     messages: [
                         { "role": "system", "content": 'You are a japanese assistant about : ' + chatDocument.description  +'You provide short and friendly answers. You never answer with lists. You always prompt the user to help continue the conversation smoothly.'},
-                        { "role": "assistant", "content": chatDocument.content.story[`step${currentStep}`].introduction }
+                        { "role": "assistant", "content": chatDocument.content[currentStep].question }
                     ],
                     createdAt: dateObj,
                     updatedAt: dateObj
                 };
             }else{
-                if(chatDocument.content.story[`step${currentStep}`]){
-                    userChatDocument.messages.push({ "role": "assistant", "content": chatDocument.content.story[`step${currentStep}`].introduction });
+                if(chatDocument.content[currentStep]){
+                    userChatDocument.messages.push({ "role": "assistant", "content": chatDocument.content[currentStep].question });
                 }
             }
 

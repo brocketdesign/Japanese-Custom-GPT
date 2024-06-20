@@ -82,7 +82,7 @@
                     box-shadow: 0 0 10px rgba(0,0,0,0.1);
                 }
                 #chat-widget-container{
-                    position:initial;
+                    position:relative;
                     height: 500px;
                     overflow: hidden;
                     border: 1px solid #ccc;

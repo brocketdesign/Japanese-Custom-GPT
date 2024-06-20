@@ -122,12 +122,13 @@
                     </div>
                 </div>
                 <div class="chat-list-actions d-none d-sm-block">
-                    <button class="copyButton btn btn-dark mx-2" data-chatid="{{this._id}}">コピー</button>
+                    <button class="copyButton btn btn-dark mx-2 d-none" data-chatid="{{this._id}}">コピー</button>
                     <div class="d-flex align-items-center">
                         <ul class="list-unstyled mb-0 d-flex justify-content-center align-items-center">
                             <li class="form-check form-switch mx-1 d-none">
                                 <input class="form-check-input chat-switch" type="checkbox" data-chatid="{{this._id}}" {{#if this.isActive}}checked{{/if}}>
                             </li>
+                            <li><button class="text-dark mx-1 btn action-button share-button" data-id="{{this._id}}" data-toggle="tooltip" title="Share" data-original-title="Share"><i class="fas fa-share"></i></button></li>
                             <li><a href="/chat/edit/{{this._id}}" class="text-info mx-1 btn action-button" data-toggle="tooltip" title="" data-original-title="Edit"><i class="far fa-edit"></i></a></li>
                             <li><span data-chatid="{{this._id}}" class="text-danger delete-chat mx-1 btn action-button" style="cursor:pointer" data-toggle="tooltip" title="" data-original-title="Delete"><i class="fas fa-trash"></i></span></li>
                         </ul>
@@ -140,6 +141,30 @@
  {{> dashboard-footer}}
 <script>
 $(document).ready(function() {
+    $('.share-button').click(function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        var dataId = $(this).attr('data-id');
+        var codeToCopy = `<div id="lamix-chat-widget" data-id="${dataId}"></div>
+        <script src="https://lamix.hatoltd.com/js/chat-widget.js"></` + `script>`;
+
+        // Create a temporary textarea element to copy the text
+        var $temp = $('<textarea>');
+        $('body').append($temp);
+        $temp.val(codeToCopy).select();
+        document.execCommand('copy');
+        $temp.remove();
+
+        // Show SweetAlert2 notification
+        Swal.fire({
+            title: 'コピー完了',
+            text: 'コードがクリップボードにコピーされました。',
+            icon: 'success',
+            confirmButtonText: 'OK'
+        });
+    });
+
     $('.copyButton').click(function(e) {
         e.preventDefault()
         e.stopPropagation();

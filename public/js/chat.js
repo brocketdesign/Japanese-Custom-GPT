@@ -5,7 +5,7 @@ $(document).ready(function() {
         // Now you can use the userID variable or id parameter here
         const chatId = getIdFromUrl(window.location.href) || $(`#lamix-chat-widget`).data('id');
         const userId = user._id
-        //console.log({userId,chatId})
+        console.log({userId,chatId})
         let messagesCount = 0 
         let currentStep = 0;
         let totalSteps = 0;
@@ -56,7 +56,7 @@ $(document).ready(function() {
                     displayMessage('user', message);
                 }
                 $('#userMessage').val(''); // Clear the input field
-
+                console.log({message})
                 // Send the message to the backend (to be implemented)
                 $.ajax({
                     url: 'https://lamix.hatoltd.com/api/chat-data', // Backend endpoint to handle the message

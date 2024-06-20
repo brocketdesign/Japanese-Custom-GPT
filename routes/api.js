@@ -597,6 +597,10 @@ async function routes(fastify, options) {
             reply.status(404).send({ error: 'Session not found' });
             return;
         }
+        // Set CORS headers
+        reply.raw.setHeader('Access-Control-Allow-Origin', '*'); // Allow any origin or specify your origin
+        reply.raw.setHeader('Access-Control-Allow-Methods', 'GET');
+        reply.raw.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     
         reply.raw.setHeader('Content-Type', 'text/event-stream');
         reply.raw.setHeader('Cache-Control', 'no-cache');

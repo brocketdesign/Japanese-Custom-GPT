@@ -5,7 +5,7 @@ $(document).ready(function() {
         // Now you can use the userID variable or id parameter here
         const chatId = getIdFromUrl(window.location.href) || $(`#lamix-chat-widget`).data('id');
         const userId = user._id
-        console.log({userId,chatId})
+        //console.log({userId,chatId})
         let messagesCount = 0 
         let currentStep = 0;
         let totalSteps = 0;
@@ -18,7 +18,7 @@ $(document).ready(function() {
         
         window.choosePath = function(choiceText) {
             currentStep++;
-            console.log({choiceText,currentStep})
+            //console.log({choiceText,currentStep})
             hideOtherChoice(choiceText,currentStep,function(){
                 updatechatContent(choiceText);
             })

@@ -601,10 +601,9 @@ async function routes(fastify, options) {
         try {
             const userId = session.userId;
             const chatId = session.chatId;
-
-            const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+            console.log({userId,chatId})
             const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-            let userData = await userDataCollection.findOne({ userId, chatId })
+            let userData = await collectionUserChat.findOne({ userId, chatId })
 
             if (!userData) {
                 reply.raw.end(); // End the stream before sending the response

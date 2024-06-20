@@ -391,6 +391,7 @@ $(document).ready(function() {
         const spinner = $(`<div class="spinner-grow spinner-grow-sm text-light" role="status"><span class="visually-hidden">Loading...</span></div>`)
         $element.append(spinner)
         $element.closest(`.message-container`).animate({ opacity: 1 }, 500, function() { 
+            $element.addClass('d-flex')
             setTimeout(() => {
                 spinner.css('visibility', 'hidden');
                 setTimeout(() => {

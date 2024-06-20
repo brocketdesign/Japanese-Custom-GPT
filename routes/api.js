@@ -272,7 +272,6 @@ async function routes(fastify, options) {
         }
     });
     fastify.post('/api/chat-data',async (request, reply) => {
-console.log('hello')
         const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
         const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
         

@@ -277,7 +277,7 @@ async function routes(fastify, options) {
         const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
         
         const { currentStep, message, chatId } = request.body;    
-        let userId = req.body.userId
+        let userId = request.body.userId
         if(!userId){ 
             const user = await fastify.getUser(request, reply);
             userId = user._id
@@ -581,7 +581,7 @@ async function routes(fastify, options) {
     });
     fastify.post('/api/openai-chat-completion', async (request, reply) => {
         const { chatId } = request.body;
-        let userId = req.body.userId
+        let userId = request.body.userId
         if(!userId){ 
             const user = await fastify.getUser(request, reply);
             userId = user._id
@@ -640,7 +640,7 @@ async function routes(fastify, options) {
         }
     });
     fastify.post('/api/openai-chat-choice/', async (request, reply) => {
-        let userId = req.body.userId
+        let userId = request.body.userId
         if(!userId){ 
             const user = await fastify.getUser(request, reply);
             userId = user._id

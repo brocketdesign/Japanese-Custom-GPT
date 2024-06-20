@@ -38,7 +38,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     });
 
     fastify.register(require('@fastify/cors'), {
-      origin: true,
+      origin: '*',
       methods: ['GET', 'POST'],
       allowedHeaders: ['Content-Type', 'Authorization'],
     });

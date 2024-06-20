@@ -56,7 +56,6 @@ $(document).ready(function() {
                     displayMessage('user', message);
                 }
                 $('#userMessage').val(''); // Clear the input field
-                console.log({message})
                 // Send the message to the backend (to be implemented)
                 $.ajax({
                     url: 'https://lamix.hatoltd.com/api/chat-data', // Backend endpoint to handle the message

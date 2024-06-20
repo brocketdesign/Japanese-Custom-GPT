@@ -36,7 +36,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       secret: "my-secret",
       parseOptions: {},
     });
-    fastify.register(cors, {
+    fastify.register(require('@fastify/cors'), {
       origin: '*', // replace with the domain you want to allow
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization'],

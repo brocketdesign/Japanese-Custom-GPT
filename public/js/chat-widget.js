@@ -132,9 +132,17 @@
         // Append the chat container to the placeholder element
         chatWidgetPlaceholder.appendChild(chatContainer);
 
-        // Load any additional scripts required for the chat functionality
-        var script = document.createElement('script');
-        script.src = 'https://lamix.hatoltd.com/js/chat.js'; // Adjust the path as necessary
-        document.head.appendChild(script);
+        function loadScript(src, callback) {
+            var script = document.createElement('script');
+            script.src = src;
+            script.onload = callback;
+            document.head.appendChild(script);
+        }
+    
+        // Load chat.js script
+        loadScript('https://lamix.hatoltd.com/js/chat.js');
+        // Load marked.min.js script
+        loadScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js');
+
     }
 })();

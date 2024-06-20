@@ -84,7 +84,6 @@ $(document).ready(function() {
                 dataType: 'json',
                 success: function(data) {
                     chatData = data.content;
-                    console.log(chatData)
                     totalSteps = chatData.length;
                     chatName = data.name
                     thumbnail = data.thumbnailUrl
@@ -110,7 +109,6 @@ $(document).ready(function() {
         }
 
         function displayStep(chatData, currentStep) {
-            console.log({currentStep})
             const step = chatData[currentStep];
             //$(`.card-header .count`).text(`${currentStep + 1}/${totalSteps}`)
             $('#chatContainer').append(`
@@ -134,23 +132,20 @@ $(document).ready(function() {
         }
 
         function updatechatContent(response) {
-            const previousStep = chatData[currentStep]; // Previous step where the choice was made
+            const previousStep = chatData[currentStep-1]; // Previous step where the choice was made
 
-            $(`.card-header .count`).text(`${currentStep + 1}/${totalSteps}`)
-            $('#chatContainer').append(`
-            <div id="container-${currentStep}">
-                <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
-                    <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;">
-                    <div id="message-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
-                </div>
-                <div id="response-${currentStep}" class="choice-container" ></div>
-            </div>`)
 
             if (currentStep < totalSteps) {
+                $(`.card-header .count`).text(`${currentStep + 1}/${totalSteps}`)
+                $('#chatContainer').append(`
+                <div id="container-${currentStep}">
+                    <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
+                        <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;">
+                        <div id="message-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
+                    </div>
+                    <div id="response-${currentStep}" class="choice-container" ></div>
+                </div>`)
                 const nextStep = chatData[currentStep];
-                console.log(chatData)
-                console.log({currentStep:currentStep})
-                console.log(nextStep)
                 nextStep.responses.forEach(response => {
                     const button = $(`<button class="btn btn-flat-border my-2" onclick="choosePath('${response}')">${response}</button>`)
                     button.css('opacity',0)
@@ -166,10 +161,7 @@ $(document).ready(function() {
                     });
                 })
             }else{
-                console.log({currentStep})
-                const choice = previousStep.responses.find(c => c === response);
-                $(`#message-${currentStep}`).closest('.message-container').removeClass('d-flex').hide()
-                generateChoice()
+                generateCompletion()
             }
         }
 

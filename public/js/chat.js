@@ -1,5 +1,5 @@
 $(document).ready(function() {
-
+    const API_URL = "" // "https://lamix.hatoltd.com/"
     // Fetch the user's IP address and generate a unique ID
     fetchUser(function(error, user){
         // Now you can use the userID variable or id parameter here
@@ -10,6 +10,7 @@ $(document).ready(function() {
         let currentStep = 0;
         let totalSteps = 0;
         let chatData = {};
+        let isNew = true;
         let feedback = false
         let thumbnail = false
 
@@ -23,12 +24,12 @@ $(document).ready(function() {
             })
 
             $.ajax({
-                url: 'https://lamix.hatoltd.com/api/chat-data',
+                url: '/api/chat-data',
                 type: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                data: JSON.stringify({ currentStep, message:response, userId, chatId:chatId }),
+                data: JSON.stringify({ currentStep, message:response, userId, chatId, isNew }),
                 success: function(response) {
                     
                 },
@@ -57,10 +58,10 @@ $(document).ready(function() {
                 $('#userMessage').val(''); // Clear the input field
                 // Send the message to the backend (to be implemented)
                 $.ajax({
-                    url: 'https://lamix.hatoltd.com/api/chat-data', // Backend endpoint to handle the message
+                    url: API_URL+'/api/chat-data', // Backend endpoint to handle the message
                     type: 'POST',
                     contentType: 'application/json',
-                    data: JSON.stringify({ currentStep:currentStep, message, userId, chatId }),
+                    data: JSON.stringify({ currentStep:currentStep, message, userId, chatId, isNew }),
                     success: function(response) {
                         const {userId, chatId } = response
                         generateCompletion(userId, chatId)
@@ -73,23 +74,30 @@ $(document).ready(function() {
             }
         }
         $(document).on('click','#unlock-result',function(){
-
             sendCustomData({action:'unlock-result'})
             promptForEmail()
         })
         function fetchchatData(chatId,userId) {
             $.ajax({
-                url: `https://lamix.hatoltd.com/api/chat/`,
-                type: 'GET',
+                url: `/api/chat/`,
+                type: 'POST',
                 dataType: 'json',
-                data: {userId,chatId},
+                contentType: 'application/json',
+                data: JSON.stringify({ userId, chatId }),
                 success: function(data) {
-                    chatData = data.content;
+                    isNew = data.isNew
+                    console.log({isNew})
+                    chatData = data.chat.content;
                     totalSteps = chatData.length;
-                    chatName = data.name
-                    thumbnail = data.thumbnailUrl
+                    chatName = data.chat.name
+                    thumbnail = data.chat.thumbnailUrl
                     $('h1').text(chatName)
-                    displayStep(chatData, currentStep);
+                    if(!isNew){
+                        displayChat(data.userChat.messages)
+                    }else{
+                        displayStep(chatData, currentStep);
+                    }
+
                 },
                 error: function(xhr, status, error) {
                     Swal.fire({
@@ -108,8 +116,44 @@ $(document).ready(function() {
                 }
             });
         }
+        function displayChat(userChat) {
+            let chatContainer = $('#chatContainer');
+            chatContainer.empty();
+        
+            for (let i = 1; i < userChat.length; i += 2) {
+                currentStep = Math.floor(i / 2) + 1;
+                let systemOrAssistantMessage = userChat[i];
+                let userMessage = userChat[i + 1];
+                
+                let messageHtml = `
+                    <div id="container-${currentStep}">
+                        <div class="d-flex flex-row justify-content-start mb-4 message-container">
+                            <img src="https://lamix.hatoltd.com/img/logo.webp" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;">
+                            <div id="message-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px; background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);">
+                                ${systemOrAssistantMessage.content}
+                            </div>
+                        </div>
+                        ${userMessage && userMessage.content ? 
+                            `<div class="d-flex flex-row justify-content-end mb-4 message-container">
+                                <div id="response-${currentStep}" class="p-3 me-3 border" style="border-radius: 15px; background-color: #fbfbfb;">
+                                    ${userMessage.content}
+                                </div>
+                            </div>` : `<div id="response-${currentStep}" class="choice-container" ></div>`}
+                    </div>
+                `;
+        
+                chatContainer.append(messageHtml);
+            }
+            if(userMessage && userMessage.content){
+                currentStep++
+                generateCompletion()
+            }else{
+                generateChoice()
+            }
 
+        }        
         function displayStep(chatData, currentStep) {
+
             const step = chatData[currentStep];
             $('#chatContainer').append(`
             <div id="container-${currentStep}">
@@ -185,7 +229,7 @@ $(document).ready(function() {
         }
 
         function generateChoice(){
-            const apiUrl = 'https://lamix.hatoltd.com/api/openai-chat-choice/'
+            const apiUrl = API_URL+'/api/openai-chat-choice/'
 
             $.ajax({
                 url: apiUrl,
@@ -223,7 +267,7 @@ $(document).ready(function() {
         
         function generateCompletion($element){
             
-            const apiUrl = 'https://lamix.hatoltd.com/api/openai-chat-completion';
+            const apiUrl = API_URL+'/api/openai-chat-completion';
   
             $.ajax({
                 url: apiUrl,
@@ -232,7 +276,7 @@ $(document).ready(function() {
                 data: JSON.stringify({ userId, chatId }),
                 success: function(response) {
                     const sessionId = response.sessionId;
-                    const streamUrl = `https://lamix.hatoltd.com/api/openai-chat-completion-stream/${sessionId}`;
+                    const streamUrl = API_URL+`/api/openai-chat-completion-stream/${sessionId}`;
                     const eventSource = new EventSource(streamUrl);
                     let markdownContent = "";
 
@@ -308,7 +352,7 @@ $(document).ready(function() {
         
         function sendCustomData(customData){
             $.ajax({
-                url: 'https://lamix.hatoltd.com/api/custom-data',
+                url: API_URL+'/api/custom-data',
                 type: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -368,7 +412,7 @@ $(document).ready(function() {
     }
     function fetchUser(callback) {
         $.ajax({
-            url: 'https://lamix.hatoltd.com/api/user',
+            url: API_URL+'/api/user',
             method: 'GET',
             success: function(response) {
                 if (callback && typeof callback === 'function') {

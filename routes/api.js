@@ -175,16 +175,19 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to delete story' });
         }
     });
-    fastify.get('/api/chat/', async (request, reply) => {
+    fastify.post('/api/chat/', async (request, reply) => {
         const {userId, chatId} = request.body;
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
         const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
     
+        let response = {
+            isNew :true,
+        }
         try {
             let userChatDocument = await collectionUserChat.findOne({ userId, chatId });
-            console.log(userChatDocument)
             if(userChatDocument){
-
+                response.userChat = userChatDocument
+                response.isNew = false
             }
         } catch (error) {
         }
@@ -194,10 +197,11 @@ async function routes(fastify, options) {
             if (!chat) {
                 return reply.status(404).send({ error: 'chat not found' });
             }
-            reply.send(chat);
+            response.chat = chat
+            return reply.send(response);
         } catch (error) {
             console.error('Failed to retrieve chat:', error);
-            reply.status(500).send({ error: 'Failed to retrieve chat' });
+            return reply.status(500).send({ error: 'Failed to retrieve chat' });
         }
     });
     fastify.get('/api/story/:id', async (request, reply) => {
@@ -284,7 +288,7 @@ async function routes(fastify, options) {
         const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
         const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
         
-        const { currentStep, message, chatId } = request.body;    
+        const { currentStep, message, chatId, isNew } = request.body;    
         let userId = request.body.userId
 
         if(!userId){ 
@@ -298,7 +302,7 @@ async function routes(fastify, options) {
             let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
             const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
 
-            if (!userChatDocument || currentStep == 1) {
+            if (!userChatDocument || isNew) {
                 // Initialize chat document if it doesn't exist
                 userChatDocument = {
                     userId,

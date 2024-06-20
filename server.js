@@ -80,7 +80,6 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     } catch (err) {
       // If any error occurs during token verification, fall through to handle temporary user
     }
-
     // Handle temporary user
     let tempUser = request.cookies.tempUser;
     if (!tempUser) {

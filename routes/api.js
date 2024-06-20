@@ -282,6 +282,7 @@ async function routes(fastify, options) {
             const user = await fastify.getUser(request, reply);
             userId = user._id
         }
+        console.log({userId,chatId})
         try {
             // Find or create the chat document
             let userChatDocument = await collectionUserChat.findOne({ userId, chatId });

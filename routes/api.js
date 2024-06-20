@@ -937,6 +937,9 @@ async function routes(fastify, options) {
         const user = await fastify.getUser(request, reply);
         return reply.send({user})
     })
+    fastify.get('/api/mode', async (request,reply) => {
+        return process.env.MODE
+    })
     function getActionObject(customData, action) {
         if(!customData){return false}
         return customData.find(item => item && item.action === action);

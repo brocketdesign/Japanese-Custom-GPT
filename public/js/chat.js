@@ -1,7 +1,11 @@
 $(document).ready(function() {
-    const API_URL = "https://lamix.hatoltd.com/"
-    // Fetch the user's IP address and generate a unique ID
-    fetchUser(function(error, user){
+    let API_URL = ""
+    fetchMode(function(error,mode){
+        console.log(mode) 
+        if(mode != 'local'){
+            API_URL = "https://lamix.hatoltd.com"
+        }
+        fetchUser(function(error, user){
         // Now you can use the userID variable or id parameter here
         const chatId = getIdFromUrl(window.location.href) || $(`#lamix-chat-widget`).data('id');
         const userId = user._id
@@ -397,6 +401,10 @@ $(document).ready(function() {
             maxScroll();
         });
     });
+    })
+
+    // Fetch the user's IP address and generate a unique ID
+   
 
     function getIdFromUrl(url) {
         // Use a regular expression to capture the ID part from the URL
@@ -417,6 +425,24 @@ $(document).ready(function() {
             success: function(response) {
                 if (callback && typeof callback === 'function') {
                     callback(null, response.user);
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.error('Error fetching user:', textStatus, errorThrown);
+                if (callback && typeof callback === 'function') {
+                    callback(new Error(textStatus + ': ' + errorThrown), null);
+                }
+            }
+        });
+    }
+
+    function fetchMode(callback) {
+        $.ajax({
+            url: '/api/mode',
+            method: 'GET',
+            success: function(response) {
+                if (callback && typeof callback === 'function') {
+                    callback(null, response);
                 }
             },
             error: function(jqXHR, textStatus, errorThrown) {

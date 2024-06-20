@@ -275,11 +275,13 @@ async function routes(fastify, options) {
 
         const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
         const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-        const user = await fastify.getUser(request, reply);
-        const userId = user._id
         
         const { currentStep, message, chatId } = request.body;    
-
+        let userId = req.body.userId
+        if(!userId){ 
+            const user = await fastify.getUser(request, reply);
+            userId = user._id
+        }
         try {
             // Find or create the chat document
             let userChatDocument = await collectionUserChat.findOne({ userId, chatId });
@@ -578,8 +580,11 @@ async function routes(fastify, options) {
     });
     fastify.post('/api/openai-chat-completion', async (request, reply) => {
         const { chatId } = request.body;
-        const user = await fastify.getUser(request, reply);
-        const userId = user._id
+        let userId = req.body.userId
+        if(!userId){ 
+            const user = await fastify.getUser(request, reply);
+            userId = user._id
+        }
         const sessionId = Math.random().toString(36).substring(2, 15); // Generate a unique session ID
         sessions.set(sessionId, { userId, chatId });
         return reply.send({ sessionId });
@@ -634,11 +639,14 @@ async function routes(fastify, options) {
         }
     });
     fastify.post('/api/openai-chat-choice/', async (request, reply) => {
-        const user = await fastify.getUser(request, reply);
-        const userId = user._id
+        let userId = req.body.userId
+        if(!userId){ 
+            const user = await fastify.getUser(request, reply);
+            userId = user._id
+        }
         const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
         const { chatId } = request.body;    
-
+        console.log({userId,chatId})
         try {
 
             let userData = await userDataCollection.findOne({ userId, chatId })

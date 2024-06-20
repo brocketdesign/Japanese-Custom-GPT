@@ -29,7 +29,7 @@ $(document).ready(function() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                data: JSON.stringify({ currentStep, message:choiceText, chatId:chatId }),
+                data: JSON.stringify({ currentStep, message:choiceText, userId, chatId:chatId }),
                 success: function(response) {
                     
                 },
@@ -62,7 +62,7 @@ $(document).ready(function() {
                     url: 'https://lamix.hatoltd.com/api/chat-data', // Backend endpoint to handle the message
                     type: 'POST',
                     contentType: 'application/json',
-                    data: JSON.stringify({ currentStep:currentStep, message, chatId }),
+                    data: JSON.stringify({ currentStep:currentStep, message, userId, chatId }),
                     success: function(response) {
                         const {userId, chatId } = response
                         generateCompletion(userId, chatId)
@@ -211,7 +211,7 @@ $(document).ready(function() {
                 url: apiUrl,
                 method: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({ chatId: chatId }),
+                data: JSON.stringify({ userId, chatId }),
                 success: function(response) {
                     const cleanResponse = cleanJsonArray(response)
 
@@ -249,7 +249,7 @@ $(document).ready(function() {
                 url: apiUrl,
                 method: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({ chatId: chatId }),
+                data: JSON.stringify({ userId, chatId }),
                 success: function(response) {
                     const sessionId = response.sessionId;
                     const streamUrl = `https://lamix.hatoltd.com/api/openai-chat-completion-stream/${sessionId}`;
@@ -333,7 +333,7 @@ $(document).ready(function() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                data: JSON.stringify({ userId: userId, customData: customData }),
+                data: JSON.stringify({ userId, customData: customData }),
                 success: function(response) {
                     
                 },

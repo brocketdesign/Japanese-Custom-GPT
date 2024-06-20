@@ -277,6 +277,7 @@ async function routes(fastify, options) {
         
         const { currentStep, message, chatId } = request.body;    
         let userId = request.body.userId
+        console.log({userId,chatId})
         if(!userId){ 
             const user = await fastify.getUser(request, reply);
             userId = user._id

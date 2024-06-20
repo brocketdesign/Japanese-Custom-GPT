@@ -28,6 +28,7 @@
                     flex: 1;
                     display: flex;
                     flex-direction: column;
+                    overflow-x: hidden;
                 }
                 .card-header, .card-footer {
                     flex-shrink: 0;

@@ -16,11 +16,10 @@ $(document).ready(function() {
         sendCustomData({action: 'viewpage'});
         fetchchatData(chatId); // Fetch the initial chat data when the page loads
         
-        window.choosePath = function(choiceText) {
+        window.choosePath = function(response) {
             currentStep++;
-            //console.log({choiceText,currentStep})
-            hideOtherChoice(choiceText,currentStep,function(){
-                updatechatContent(choiceText);
+            hideOtherChoice(response,currentStep,function(){
+                updatechatContent(response);
             })
 
             $.ajax({
@@ -29,7 +28,7 @@ $(document).ready(function() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                data: JSON.stringify({ currentStep, message:choiceText, userId, chatId:chatId }),
+                data: JSON.stringify({ currentStep, message:response, userId, chatId:chatId }),
                 success: function(response) {
                     
                 },
@@ -84,8 +83,9 @@ $(document).ready(function() {
                 type: 'GET',
                 dataType: 'json',
                 success: function(data) {
-                    chatData = data.content.story;
-                    totalSteps = Object.keys(chatData).length;
+                    chatData = data.content;
+                    console.log(chatData)
+                    totalSteps = chatData.length;
                     chatName = data.name
                     thumbnail = data.thumbnailUrl
                     $('h1').text(chatName)
@@ -110,7 +110,8 @@ $(document).ready(function() {
         }
 
         function displayStep(chatData, currentStep) {
-            const step = chatData[`step${currentStep + 1}`];
+            console.log({currentStep})
+            const step = chatData[currentStep];
             //$(`.card-header .count`).text(`${currentStep + 1}/${totalSteps}`)
             $('#chatContainer').append(`
             <div id="container-${currentStep}">
@@ -120,74 +121,63 @@ $(document).ready(function() {
                 </div>
                 <div id="response-${currentStep}" class="choice-container" ></div>
             </div>`)
-            step.choices.forEach((choice, index) => {
-                const button = $(`<button class="btn btn-flat-border my-2" onclick="choosePath('${choice.choiceText}')">${choice.choiceText}</button>`);
+            step.responses.forEach((response, index) => {
+                const button = $(`<button class="btn btn-flat-border my-2" onclick="choosePath('${response}')">${response}</button>`);
                 button.css('opacity',0)
                 $(`#response-${currentStep}`).append(button);
             });
-            appendHeadlineCharacterByCharacter($(`#message-${currentStep}`), step.introduction,function(){
+            appendHeadlineCharacterByCharacter($(`#message-${currentStep}`), step.question,function(){
                 $(`#response-${currentStep} button`).each(function(){
                     $(this).css('opacity',1)
                 })
             })
         }
 
-        function updatechatContent(choiceText) {
-            const previousStep = chatData[`step${currentStep}`]; // Previous step where the choice was made
+        function updatechatContent(response) {
+            const previousStep = chatData[currentStep]; // Previous step where the choice was made
 
             $(`.card-header .count`).text(`${currentStep + 1}/${totalSteps}`)
             $('#chatContainer').append(`
             <div id="container-${currentStep}">
-
-                <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
-                    <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;">
-                    <div id="result-${currentStep - 1}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
-                </div>
-                
                 <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
                     <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;">
                     <div id="message-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
                 </div>
-
                 <div id="response-${currentStep}" class="choice-container" ></div>
             </div>`)
 
             if (currentStep < totalSteps) {
-                const nextStep = chatData[`step${currentStep + 1}`];
-
-                nextStep.choices.forEach(choice => {
-                    const button = $(`<button class="btn btn-flat-border my-2" onclick="choosePath('${choice.choiceText}')">${choice.choiceText}</button>`)
+                const nextStep = chatData[currentStep];
+                console.log(chatData)
+                console.log({currentStep:currentStep})
+                console.log(nextStep)
+                nextStep.responses.forEach(response => {
+                    const button = $(`<button class="btn btn-flat-border my-2" onclick="choosePath('${response}')">${response}</button>`)
                     button.css('opacity',0)
                     $(`#response-${currentStep}`).append(button);
                 });
 
-                const choice = previousStep.choices.find(c => c.choiceText === choiceText);
-                $(`#result-${currentStep - 1}`).closest('.message-container').animate({ opacity: 1 }, 1000, function() { 
-                    appendHeadlineCharacterByCharacter($(`#result-${currentStep - 1}`),choice.result,function(){
-                        appendHeadlineCharacterByCharacter($(`#message-${currentStep}`), nextStep.introduction,function(){
-                            $(`#response-${currentStep} button`).each(function(){
-                                $(this).css('opacity',1)
-                            })
-                        });
-                    })
+                const choice = previousStep.responses.find(c => c === response);
+                $(`#message-${currentStep}`).closest('.message-container').animate({ opacity: 1 }, 500, function() { 
+                    appendHeadlineCharacterByCharacter($(`#message-${currentStep}`), nextStep.question,function(){
+                        $(`#response-${currentStep} button`).each(function(){
+                            $(this).css('opacity',1)
+                        })
+                    });
                 })
             }else{
                 console.log({currentStep})
-                const choice = previousStep.choices.find(c => c.choiceText === choiceText);
-                $(`#result-${currentStep - 1}`).closest('.message-container').animate({ opacity: 1 }, 1000, function() { 
-                    appendHeadlineCharacterByCharacter($(`#result-${currentStep - 1}`),choice.result,function(){
-                        $(`#message-${currentStep}`).closest('.message-container').removeClass('d-flex').hide()
-                        generateChoice()
-                    })
-                })
+                const choice = previousStep.responses.find(c => c === response);
+                $(`#message-${currentStep}`).closest('.message-container').removeClass('d-flex').hide()
+                generateChoice()
             }
         }
 
-        function hideOtherChoice(choiceText, currentStep, callback) {
+        function hideOtherChoice(response, currentStep, callback) {
 
             $(`#response-${currentStep - 1} button`).each(function() {
                 const currentChoice = $(this).text()
-                if(choiceText == currentChoice){
+                if(response == currentChoice){
                     const response = $(this).text()
                     $(`#response-${currentStep - 1}`).remove()
                     $(`#container-${currentStep - 1}`).append(`

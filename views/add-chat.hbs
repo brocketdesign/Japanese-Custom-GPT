@@ -216,7 +216,7 @@
                         eventSource.close();
 
                         // Clean the JSON string when the stream ends
-                        let cleanedContent = cleanJsonString(markdownContent);
+                        let cleanedContent = cleanJsonArray(markdownContent);
                         $('#chatContent').html(cleanedContent);
                         $('#chatContent').val(cleanedContent)
 
@@ -327,6 +327,21 @@
 
             return jsonString;
         }
+        function cleanJsonArray(jsonString) {
+            // Remove all characters before the first '{'
+            let start = jsonString.indexOf('[');
+            if (start !== -1) {
+                jsonString = jsonString.substring(start);
+            }
+
+            // Remove all characters after the last '}'
+            let end = jsonString.lastIndexOf(']');
+            if (end !== -1) {
+                jsonString = jsonString.substring(0, end + 1);
+            }
+
+            return jsonString;
+        }
         function getSystem(systemType){
             var system;
 
@@ -345,53 +360,26 @@
                     break;
                 case "chatContent":
                     system = `
-                    Your are a JSON generator. Use the user instruction to generate a JSON following the structure below. Your answer must be in japanese. \n\n
+                    Your are a JSON array generator. Use the user instruction to generate a JSON following the structure below. Your answer must be in japanese. \n\n
+                    [
                         {
-                            "story": {
-                                "step1": {
-                                    "introduction": "Your introduction text for step 1 here.",
-                                    "choices": [
-                                        {
-                                            "choiceId": "uniqueId1",
-                                            "choiceText": "Choice text 1",
-                                            "result": "Result text for choice 1."
-                                        },
-                                        {
-                                            "choiceId": "uniqueId2",
-                                            "choiceText": "Choice text 2",
-                                            "result": "Result text for choice 2."
-                                        },
-                                        {
-                                            "choiceId": "uniqueId3",
-                                            "choiceText": "Choice text 3",
-                                            "result": "Result text for choice 3."
-                                        }
-                                    ],
-                                    "conclusion": "Your conclusion text for step 1 here."
-                                },
-                                "step2": {
-                                    "introduction": "Your introduction text for step 2 here.",
-                                    "choices": [
-                                        {
-                                            "choiceId": "uniqueId4",
-                                            "choiceText": "Choice text 4",
-                                            "result": "Result text for choice 4."
-                                        },
-                                        {
-                                            "choiceId": "uniqueId5",
-                                            "choiceText": "Choice text 5",
-                                            "result": "Result text for choice 5."
-                                        },
-                                        {
-                                            "choiceId": "uniqueId6",
-                                            "choiceText": "Choice text 6",
-                                            "result": "Result text for choice 6."
-                                        }
-                                    ],
-                                    "conclusion": "Your conclusion text for step 2 here."
-                                }
-                            }
-                        }`;
+                            "question": "string",
+                            "responses": [
+                            "string",
+                            "string",
+                            "string"
+                            ]
+                        },
+                        {
+                            "question": "string",
+                            "responses": [
+                            "string",
+                            "string",
+                            "string"
+                            ]
+                        }
+                    ]
+                    `;
                     break;
                 default:
                     system = "Your are a useful assistant.";
@@ -401,58 +389,44 @@
             return system
         }
         function createEditor(json) {
-            console.log(json)
             $('#chatContentEdition').empty(); // Clear previous content
-            let count = 0
-            for (const step in json.story) {
-                count ++
-                const stepData = json.story[step];
-                const stepDiv = $('<div></div>').addClass('step card mb-3 bg-light');
-                const stepCardBody = $('<div></div>').addClass('card-body');
-                
-                stepCardBody.append(`<h5 class="card-title">ステップ${count}</h5>`);
-                
-                // Introduction
-                stepCardBody.append(`<div class="mb-3"><label class="form-label">イントロダクション:</label><input type="text" class="form-control introduction" value="${stepData.introduction}" /></div>`);
-                
-                // Choices
-                stepData.choices.forEach((choice, index) => {
-                    const choiceDiv = $('<div></div>').addClass('choice mb-3');
-                    choiceDiv.append(`<h6>選択 ${index + 1}</h6>`);
-                    choiceDiv.append(`<div class="mb-2"><label class="form-label">選択テキスト:</label><input type="text" class="form-control choiceText" value="${choice.choiceText}" /></div>`);
-                    choiceDiv.append(`<div class="mb-2"><label class="form-label">結果：</label><input type="text" class="form-control result" value="${choice.result}" /></div>`);
-                    stepCardBody.append(choiceDiv);
+            json.forEach((qa, index) => {
+                const qaDiv = $('<div></div>').addClass('qa card mb-3 bg-light');
+                const qaCardBody = $('<div></div>').addClass('card-body');
+
+                // Question
+                qaCardBody.append(`<h5 class="card-title">質問 ${index + 1}</h5>`);
+                qaCardBody.append(`<div class="mb-3"><label class="form-label">質問:</label><input type="text" class="form-control question" value="${qa.question}" /></div>`);
+
+                // Responses
+                qa.responses.forEach((response, responseIndex) => {
+                    const responseDiv = $('<div></div>').addClass('response mb-3');
+                    responseDiv.append(`<h6>回答 ${responseIndex + 1}</h6>`);
+                    responseDiv.append(`<div class="mb-2"><label class="form-label">回答テキスト:</label><input type="text" class="form-control responseText" value="${response}" /></div>`);
+                    qaCardBody.append(responseDiv);
                 });
-                
-                // Conclusion
-                stepCardBody.append(`<div class="mb-3"><label class="form-label">結論：</label><input type="text" class="form-control conclusion" value="${stepData.conclusion}" /></div>`);
-                
-                stepDiv.append(stepCardBody);
-                $('#chatContentEdition').append(stepDiv);
-            }
+
+                qaDiv.append(qaCardBody);
+                $('#chatContentEdition').append(qaDiv);
+            });
         }
 
         function saveJson() {
-            const updatedJson = { story: {} };
-            $('.step').each(function(index, stepDiv) {
-                const stepKey = `step${index + 1}`;
-                const stepData = {
-                    introduction: $(stepDiv).find('.introduction').val(),
-                    choices: [],
-                    conclusion: $(stepDiv).find('.conclusion').val()
+            const updatedJson = [];
+            $('.qa').each(function(index, qaDiv) {
+                const qaData = {
+                    question: $(qaDiv).find('.question').val(),
+                    responses: []
                 };
-                
-                $(stepDiv).find('.choice').each(function(choiceIndex, choiceDiv) {
-                    const choiceData = {
-                        choiceText: $(choiceDiv).find('.choiceText').val(),
-                        result: $(choiceDiv).find('.result').val()
-                    };
-                    stepData.choices.push(choiceData);
+
+                $(qaDiv).find('.response').each(function(responseIndex, responseDiv) {
+                    const responseText = $(responseDiv).find('.responseText').val();
+                    qaData.responses.push(responseText);
                 });
-                
-                updatedJson.story[stepKey] = stepData;
+
+                updatedJson.push(qaData);
             });
-            
+
             console.log(JSON.stringify(updatedJson, null, 2));
             return JSON.stringify(updatedJson, null, 2);
         }

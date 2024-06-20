@@ -3,7 +3,6 @@ const path = require('path');
 require('dotenv').config();
 const mongodb = require('mongodb');
 const cron = require('node-cron');
-const fastifyCookie = require('fastify-cookie');
 const { getCounter, updateCounter } = require('./models/tool');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
@@ -32,7 +31,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       root: path.join(__dirname, 'views'),
     });
 
-    fastify.register(fastifyCookie, {
+    fastify.register(require('fastify-cookie'), {
       secret: "my-secret",
       parseOptions: {},
     });

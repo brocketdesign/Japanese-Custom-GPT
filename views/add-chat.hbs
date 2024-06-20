@@ -9,6 +9,19 @@
         font-size: 14px;
         color: #aaaaaa;
     }
+    #sendMessage,
+    #chatInput .load {
+        border-left: 0 !important;
+        border-radius: 0px 30px 30px 0px !important;
+    }
+    #userMessage {
+        border-radius: 30px 0px 0px 30px !important;
+        background-color: #f8f9fa;
+    }
+    #userMessage:focus {
+        outline: none;
+        box-shadow: none; /* If there is a box shadow applied on focus */
+    }
     </style>
 <div class="container mt-4">
     <h2 class="d-none">{{#if chatId}}チャットを編集{{else}}新しいチャットを追加{{/if}}</h2>

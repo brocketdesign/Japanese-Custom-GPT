@@ -1,7 +1,6 @@
 $(document).ready(function() {
     let API_URL = ""
     fetchMode(function(error,mode){
-        console.log(mode) 
         if(mode != 'local'){
             API_URL = "https://lamix.hatoltd.com"
         }
@@ -124,38 +123,57 @@ $(document).ready(function() {
             let chatContainer = $('#chatContainer');
             chatContainer.empty();
         
-            for (let i = 1; i < userChat.length; i += 2) {
-                currentStep = Math.floor(i / 2) + 1;
-                let systemOrAssistantMessage = userChat[i];
-                let userMessage = userChat[i + 1];
+            for (let i = 0; i < userChat.length; i++) {
+                if (userChat[i].role === "system") {
+                    continue;
+                }
                 
-                let messageHtml = `
-                    <div id="container-${currentStep}">
-                        <div class="d-flex flex-row justify-content-start mb-4 message-container">
-                            <img src="https://lamix.hatoltd.com/img/logo.webp" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;">
-                            <div id="message-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px; background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);">
-                                ${systemOrAssistantMessage.content}
+                let currentStep = Math.floor(i / 2) + 1;
+                let messageHtml = '';
+        
+                if (userChat[i].role === "assistant") {
+                    let assistantMessage = userChat[i];
+                    let userMessage = userChat[i + 1];
+        
+                    messageHtml += `
+                        <div id="container-${currentStep}">
+                            <div class="d-flex flex-row justify-content-start mb-4 message-container">
+                                <img src="https://lamix.hatoltd.com/img/logo.webp" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;">
+                                <div id="message-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px; background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);">
+                                    ${assistantMessage.content}
+                                </div>
                             </div>
-                        </div>
-                        ${userMessage && userMessage.content ? 
-                            `<div class="d-flex flex-row justify-content-end mb-4 message-container">
+                    `;
+        
+                    if (userMessage && userMessage.role === "user") {
+                        messageHtml += `
+                            <div class="d-flex flex-row justify-content-end mb-4 message-container">
                                 <div id="response-${currentStep}" class="p-3 me-3 border" style="border-radius: 15px; background-color: #fbfbfb;">
                                     ${userMessage.content}
                                 </div>
-                            </div>` : `<div id="response-${currentStep}" class="choice-container" ></div>`}
-                    </div>
-                `;
+                            </div>
+                        </div>
+                        `;
+                    } else {
+                        messageHtml += `
+                            <div id="response-${currentStep}" class="choice-container"></div>
+                        </div>
+                        `;
+                    }
         
-                chatContainer.append(messageHtml);
+                    chatContainer.append(messageHtml);
+                    i++; // Skip the next iteration as we've already handled the user message
+                }
             }
-            if(userMessage && userMessage.content){
-                currentStep++
-                generateCompletion()
-            }else{
-                generateChoice()
+        
+            if (userChat[userChat.length - 1].role === "user" && userChat[userChat.length - 1].content) {
+                generateCompletion();
+            } else {
+                generateChoice();
             }
-
-        }        
+        }
+        
+           
         function displayStep(chatData, currentStep) {
 
             const step = chatData[currentStep];

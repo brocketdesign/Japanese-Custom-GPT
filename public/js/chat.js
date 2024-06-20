@@ -1,5 +1,5 @@
 $(document).ready(function() {
-    const API_URL = "" // "https://lamix.hatoltd.com/"
+    const API_URL = "https://lamix.hatoltd.com/"
     // Fetch the user's IP address and generate a unique ID
     fetchUser(function(error, user){
         // Now you can use the userID variable or id parameter here

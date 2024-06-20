@@ -83,7 +83,7 @@
                 }
                 #chat-widget-container{
                     position:initial;
-                    height: 750px;
+                    height: 500px;
                     overflow: hidden;
                     border: 1px solid #ccc;
                     border-radius: 10px;
@@ -118,10 +118,10 @@
                     <h5 class="card-title d-none">Card Title</h5>
                     <div id="chatContainer" class="pb-5">
                     </div>
-                    <div id="chatInput" class="input-group rounded-0 rounded-bottom bg-white" style="position: absolute;bottom: 0;left: 0;right: 0;padding: 0px 15px 25px 15px;">
-                        <input type="text" id="userMessage" class="form-control py-3 border" placeholder="メッセージを入力してください">
-                        <button id="sendMessage" class="btn btn-light px-4 border"><i class="fas fa-paper-plane"></i></button>
-                    </div>
+                </div>
+                <div id="chatInput" class="input-group rounded-0 rounded-bottom bg-white" style="position: absolute;bottom: 0;left: 0;right: 0;padding: 0px 15px 25px 15px;">
+                    <input type="text" id="userMessage" class="form-control py-3 border" placeholder="メッセージを入力してください">
+                    <button id="sendMessage" class="btn btn-light px-4 border"><i class="fas fa-paper-plane"></i></button>
                 </div>
                 <div class="card-footer text-muted text-center d-none">
                     フッターコンテンツ

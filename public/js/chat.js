@@ -14,7 +14,7 @@ $(document).ready(function() {
         let thumbnail = false
 
         sendCustomData({action: 'viewpage'});
-        fetchchatData(chatId); // Fetch the initial chat data when the page loads
+        fetchchatData(chatId,userId); // Fetch the initial chat data when the page loads
         
         window.choosePath = function(response) {
             currentStep++;
@@ -77,11 +77,12 @@ $(document).ready(function() {
             sendCustomData({action:'unlock-result'})
             promptForEmail()
         })
-        function fetchchatData(chatId) {
+        function fetchchatData(chatId,userId) {
             $.ajax({
-                url: `https://lamix.hatoltd.com/api/chat/${chatId}`,
+                url: `https://lamix.hatoltd.com/api/chat/`,
                 type: 'GET',
                 dataType: 'json',
+                data: {userId,chatId},
                 success: function(data) {
                     chatData = data.content;
                     totalSteps = chatData.length;
@@ -110,7 +111,6 @@ $(document).ready(function() {
 
         function displayStep(chatData, currentStep) {
             const step = chatData[currentStep];
-            //$(`.card-header .count`).text(`${currentStep + 1}/${totalSteps}`)
             $('#chatContainer').append(`
             <div id="container-${currentStep}">
                 <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
@@ -136,7 +136,6 @@ $(document).ready(function() {
 
 
             if (currentStep < totalSteps) {
-                $(`.card-header .count`).text(`${currentStep + 1}/${totalSteps}`)
                 $('#chatContainer').append(`
                 <div id="container-${currentStep}">
                     <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">

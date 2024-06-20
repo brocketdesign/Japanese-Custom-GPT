@@ -175,10 +175,19 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to delete story' });
         }
     });
-    fastify.get('/api/chat/:id', async (request, reply) => {
-        const chatId = request.params.id;
+    fastify.get('/api/chat/', async (request, reply) => {
+        const {userId, chatId} = request.body;
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+        const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
     
+        try {
+            let userChatDocument = await collectionUserChat.findOne({ userId, chatId });
+            console.log(userChatDocument)
+            if(userChatDocument){
+
+            }
+        } catch (error) {
+        }
         try {
             const chat = await collection.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
 

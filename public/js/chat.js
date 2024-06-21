@@ -27,7 +27,7 @@ $(document).ready(function() {
             })
 
             $.ajax({
-                url: '/api/chat-data',
+                url: API_URL+'/api/chat-data',
                 type: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -82,7 +82,7 @@ $(document).ready(function() {
         })
         function fetchchatData(chatId,userId) {
             $.ajax({
-                url: `/api/chat/`,
+                url: API_URL+`/api/chat/`,
                 type: 'POST',
                 dataType: 'json',
                 contentType: 'application/json',

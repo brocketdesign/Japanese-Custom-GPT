@@ -464,7 +464,6 @@ $(document).ready(function() {
                 }
             },
             error: function(jqXHR, textStatus, errorThrown) {
-                console.error('Error fetching user:', textStatus, errorThrown);
                 if (callback && typeof callback === 'function') {
                     callback(null,'online');
                 }

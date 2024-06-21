@@ -144,6 +144,8 @@
         loadScript('https://lamix.hatoltd.com/js/chat.js');
         // Load marked.min.js script
         loadScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js');
+        // Load marked.min.js script
+        loadScript('https://cdn.jsdelivr.net/npm/sweetalert2@11');
 
     }
 })();

@@ -18,8 +18,12 @@ $(document).ready(function() {
         let thumbnail = false
 
         sendCustomData({action: 'viewpage'});
-        fetchchatData(chatId,userId); // Fetch the initial chat data when the page loads
+        fetchchatData(chatId, userId); // Fetch the initial chat data when the page loads
         
+        $('#reset-chat').click(function(){
+            fetchchatData(chatId, userId, true) ;
+        })
+
         window.choosePath = function(response) {
             currentStep++;
             hideOtherChoice(response,currentStep,function(){
@@ -34,7 +38,7 @@ $(document).ready(function() {
                 },
                 data: JSON.stringify({ currentStep, message:response, userId, chatId, isNew }),
                 success: function(response) {
-                    
+                    isNew = false
                 },
                 error: function(error) {
                     console.log(error.statusText);
@@ -68,6 +72,7 @@ $(document).ready(function() {
                     success: function(response) {
                         const {userId, chatId } = response
                         generateCompletion(userId, chatId)
+                        isNew = false
                     },
                     error: function(error) {
                         console.error('Error:', error);
@@ -80,7 +85,11 @@ $(document).ready(function() {
             sendCustomData({action:'unlock-result'})
             promptForEmail()
         })
-        function fetchchatData(chatId,userId) {
+        function fetchchatData(chatId,userId,reset) {
+            $('#chatContainer').empty()
+            if(reset){
+                currentStep = 0
+            }
             $.ajax({
                 url: API_URL+`/api/chat/`,
                 type: 'POST',
@@ -88,8 +97,7 @@ $(document).ready(function() {
                 contentType: 'application/json',
                 data: JSON.stringify({ userId, chatId }),
                 success: function(data) {
-                    isNew = data.isNew
-                    console.log({isNew})
+                    isNew = reset || data.isNew
                     chatData = data.chat.content;
                     totalSteps = chatData.length;
                     chatName = data.chat.name
@@ -138,7 +146,7 @@ $(document).ready(function() {
                     messageHtml += `
                         <div id="container-${currentStep}">
                             <div class="d-flex flex-row justify-content-start mb-4 message-container">
-                                <img src="https://lamix.hatoltd.com/img/logo.webp" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;">
+                                <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;">
                                 <div id="message-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px; background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);">
                                     ${assistantMessage.content}
                                 </div>

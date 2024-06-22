@@ -112,7 +112,7 @@
                 <div class="d-flex justify-content-between card-header text-center bg-dark text-white">
                     <div>LAMIXチャット</div>
                     <div class="d-flex align-items-center">
-                        <div class="count me-2"></div><i class="fas fa-comment"></i>
+                        <div id="reset-chat" style="cursor: pointer;"><i class="fas fa-comment-medical"></i></div>
                     </div>
                 </div>
                 <div class="card-body text-center py-5 shadow" style="min-height:250px;height: 300px;overflow-y: auto;position: initial;">

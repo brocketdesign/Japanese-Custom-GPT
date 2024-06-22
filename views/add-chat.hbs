@@ -89,7 +89,7 @@
 
         function fetchchatData(chatId) {
             $.ajax({
-                url: `/api/chat/${chatId}`,
+                url: `/api/chat-data/${chatId}`,
                 type: 'GET',
                 dataType: 'json',
                 success: function(chatData) {
@@ -103,7 +103,7 @@
                     if (chatData.thumbnailUrl && chatData.thumbnailUrl != undefined) {
                         $('#chatImage').attr('src', chatData.thumbnailUrl).show();
                     }
-                        $('#chatForm').toggleClass('d-none')
+                        $('#chatForm').removeClass('d-none')
                 },
                 error: function(xhr, status, error) {
                     Swal.fire({
@@ -228,7 +228,7 @@
                         $('#sendMessage').toggleClass('d-none')
 
                         createEditor(JSON.parse(cleanedContent))
-                        $('#chatForm').toggleClass('d-none')
+                        $('#chatForm').removeClass('d-none')
                     };
                 },
                 error: function(error) {

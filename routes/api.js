@@ -319,6 +319,20 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to save user choice' });
         }
     });
+    fastify.get('/api/chat-data/:chatId',async (request, reply) => {
+        const chatId = request.params.chatId
+        const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+
+        try{
+            const chat = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
+            if (!chat) {
+                return reply.status(404).send({ error: 'chat not found' });
+            }
+            return reply.send(chat);
+        }catch(error){
+            console.log(error)
+        }
+    });
     fastify.post('/api/chat-data',async (request, reply) => {
         const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
         const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
@@ -718,68 +732,6 @@ async function routes(fastify, options) {
         } catch (error) {
             console.log(error)
             return reply.status(500).send({ error: 'Error fetching OpenAI completion' });
-        }
-    });
-    fastify.post('/api/chat',async (request, reply) => {
-        try {
-            const { currentStep, message, chatId } = request.body;
-            const user = await fastify.getUser(request, reply);
-            const userId = user._id
-            console.log({ userId, message, chatId });
-    
-            const collectionUser = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
-            const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-            
-            const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-    
-            // Find the user document
-            let userDocument = await collectionUser.findOne({ userId });
-    
-            if (!userDocument) {
-                // Initialize user document if it doesn't exist
-                userDocument = {
-                    userId,
-                    createdAt: dateObj,
-                    updatedAt: dateObj
-                };
-    
-                // Insert the user document and get the _id
-                const result = await collectionUser.insertOne(userDocument);
-                userDocument._id = result.insertedId;
-            }
-    
-            // Find or create the chat document
-            let chatDocument = await collectionChat.findOne({ userId, chatId });
-    
-            if (!chatDocument) {
-                // Initialize chat document if it doesn't exist
-                chatDocument = {
-                    userId,
-                    chatId,
-                    messages: [
-                        { "role": "system", "content": `You are the promoter of the service LAMIXボット. LAMIXボット, developed by Hato Ltd., is a sophisticated chatbot management platform designed to empower users to create and manage custom chatbots with ease. This intuitive dashboard, built with Bootstrap 5 and Font Awesome, offers a seamless user experience for handling various aspects of chatbot functionality. Users can effortlessly navigate through sections such as the dashboard overview, chatbot lists, new chatbot creation, and user settings. The platform provides real-time statistics on chatbot activity, including total, active, and error-prone bots, ensuring comprehensive monitoring and management. Additionally, features like editing, deleting, and creating chatbots are readily accessible, with responsive feedback mechanisms such as pop-up alerts for logout confirmations. LAMIXボット, backed by Hato Ltd., aims to streamline and enhance the efficiency of chatbot operations for businesses and developers alike. Use a friendly tone. Avoid responding with lists. The client is Japanese so respond in Japanese. Alway propt the user.` }
-                    ],
-                    createdAt: dateObj,
-                    updatedAt: dateObj
-                };
-            }
-            console.log(chatDocument)
-            // Add the new user message to the chat document
-            chatDocument.messages.push({ "role": "user", "content": message });
-            chatDocument.updatedAt = dateObj;
-    
-            // Update or insert the chat document
-            await collectionChat.updateOne(
-                { userId, chatId },
-                { $set: chatDocument },
-                { upsert: true }
-            );
-    
-            reply.send({ userId, chatId });
-        } catch (err) {
-            console.log(err);
-            fastify.log.error(err);
-            reply.status(500).send({ error: 'An error occurred while saving the message.' });
         }
     });
     fastify.post('/api/openai-chat', (request, reply) => {

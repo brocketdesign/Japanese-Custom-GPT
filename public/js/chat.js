@@ -128,7 +128,7 @@ $(document).ready(function() {
                     continue;
                 }
                 
-                let currentStep = Math.floor(i / 2) + 1;
+                currentStep = Math.floor(i / 2) + 1;
                 let messageHtml = '';
         
                 if (userChat[i].role === "assistant") {

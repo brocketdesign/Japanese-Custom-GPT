@@ -204,6 +204,41 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to retrieve chat' });
         }
     });
+    fastify.post('/api/chat-analyze/', async (request, reply) => {
+        const {chatId} = request.body;
+        const collectionUser = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+        const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+        const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+
+        let response = {}
+        try {
+            let userChatDocument = await collectionUserChat.find({chatId}).toArray();
+            if(userChatDocument){
+                response.total = userChatDocument.length
+            }
+        } catch (error) {
+        }
+        try {
+            const chat = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
+            if (!chat) {
+                return reply.status(404).send({ error: 'chat not found' });
+            }
+            response.chat = chat
+
+            const userId = chat.userId
+            const user = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(userId) });
+            if (!user) {
+                return reply.status(404).send({ error: 'user not found' });
+            }
+            console.log(user)
+            response.author = user.username
+
+            return reply.send(response);
+        } catch (error) {
+            console.error('Failed to retrieve chat:', error);
+            return reply.status(500).send({ error: 'Failed to retrieve chat' });
+        }
+    });
     fastify.get('/api/story/:id', async (request, reply) => {
         const storyId = request.params.id;
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('stories');

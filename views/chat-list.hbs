@@ -128,6 +128,7 @@
                             <li class="form-check form-switch mx-1 d-none">
                                 <input class="form-check-input chat-switch" type="checkbox" data-chatid="{{this._id}}" {{#if this.isActive}}checked{{/if}}>
                             </li>
+                            <li><button class="text-dark mx-1 btn action-button chart-button" data-id="{{this._id}}" data-toggle="tooltip" title="Analyze" data-original-title="Analyze"><i class="fas fa-chart-line"></i></button></li>
                             <li><button class="text-dark mx-1 btn action-button share-button" data-id="{{this._id}}" data-toggle="tooltip" title="Share" data-original-title="Share"><i class="fas fa-share"></i></button></li>
                             <li><a href="/chat/edit/{{this._id}}" class="text-info mx-1 btn action-button" data-toggle="tooltip" title="" data-original-title="Edit"><i class="far fa-edit"></i></a></li>
                             <li><span data-chatid="{{this._id}}" class="text-danger delete-chat mx-1 btn action-button" style="cursor:pointer" data-toggle="tooltip" title="" data-original-title="Delete"><i class="fas fa-trash"></i></span></li>
@@ -139,15 +140,69 @@
     </div>
 </div>
  {{> dashboard-footer}}
+<style>
+    .swal-image {
+        border-radius: 50%;
+    }
+</style>
 <script>
 $(document).ready(function() {
+    $('.chart-button').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        // data-id属性からチャットIDを取得
+        var chatId = $(this).data('id');
+
+        // POSTリクエストを送信
+        $.post('/api/chat-analyze/', { chatId: chatId })
+            .done(function(response) {
+                console.log(response.chat)
+                // 受け取ったデータの長さを取得
+                var dataLength = response.total;
+
+                // SweetAlert2でアラートを表示
+                Swal.fire({
+                    html: `
+                        <div class="card border-0">
+                            <div class="card-body">
+                                <h5 class="card-title">${response.chat.name}</h5>
+                                <p class="card-text text-muted" style="font-size: 16px;">${response.chat.description}</p>
+                                <p class="card-text text-muted" style="font-size: 14px;">作成者: ${response.author}</p>
+                                <div class="d-flex justify-content-between mb-3">
+                                    <div class="card-text text-center d-flex w-100" style="flex-direction: column;"><span class="w-100">${response.chat.rating ? response.chat.rating : '...'}</span><span class="text-muted" style="font-size: 12px;">評価</span></div>
+                                    <div class="card-text text-center d-flex w-100" style="flex-direction: column;" ><span class="w-100">${response.chat.category ? response.chat.category : '...'}</span><span class="text-muted" style="font-size: 12px;">カテゴリー</span></div>
+                                    <div class="card-text text-center d-flex w-100" style="flex-direction: column;" ><span class="w-100">${response.total ? response.total : '0'}</span><span class="text-muted" style="font-size: 12px;">会話の合計</span></div>
+                                </div>
+                                <a href="/chat/${response.chat._id}" class="btn btn-dark w-100 my-4" style="border-radius:50px;">チャットを始める</a>
+                            </div>
+                        </div>
+                    `,
+                    imageUrl: response.chat.thumbnailUrl || '/img/logo.webp',
+                    imageWidth: 100,
+                    imageHeight: 100,
+                    imageAlt: 'Thumbnail',
+                    showCloseButton: true,
+                    showConfirmButton: false,
+                    customClass: {
+                        image: 'swal-image'
+                    }
+                });
+            })
+            .fail(function() {
+                // エラーハンドリング
+                Swal.fire({
+                    title: 'エラー',
+                    text: 'データの取得に失敗しました。',
+                    icon: 'error'
+                });
+            });
+    });
     $('.share-button').click(function(e) {
         e.preventDefault();
         e.stopPropagation();
         
         var dataId = $(this).attr('data-id');
-        var codeToCopy = `<div id="lamix-chat-widget" data-id="${dataId}"></div>
-        <script src="https://lamix.hatoltd.com/js/chat-widget.js"></` + `script>`;
+        var codeToCopy = `<div id="lamix-chat-widget" data-id="${dataId}"></div><script src="https://lamix.hatoltd.com/js/chat-widget.js"></` + `script>`;
 
         // Create a temporary textarea element to copy the text
         var $temp = $('<textarea>');

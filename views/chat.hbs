@@ -15,7 +15,7 @@
 <body>
     <nav class="navbar navbar-light bg-transparent py-1 sticky-top" style="border-bottom: 1px solid rgba(210, 184, 255, 0.2);">
     <div class="container-fluid justify-content-between">
-        <a class="navbar-brand d-flex flex-row align-items-center bg-white px-5 py-2" href="/">
+        <a class="navbar-brand d-flex flex-row align-items-center bg-white px-5 py-2" href="/chat-index">
         <img src="/img/logo.webp" alt="" class="logo">
         <span class="brand-name ms-3">LAMIX</span>
         </a>
@@ -23,30 +23,72 @@
     </div>
     </nav>
 
-    <section class="hero bg-light py-5 p-fv" style="backgroun-position:bottom">
+    <section class="hero bg-light py-5 p-fv" style="background-position:bottom!important">
         <div class="container text-center d-flex flex-column align-items-center py-5">
             <img src="/img/logo.webp" alt="LAMIXボット ロゴ" class="mb-4" style="width: 150px;border-radius:50%;">
             <div>
                 <h1>LAMIXチャットボットであなたのウェブサイトを革新。</h1>
-                <p id="chat-hero" class="display-4 text-center" style="min-height: 150px;"></p>
-                <a href="/authenticate" class="btn btn-dark btn-lg px-5 py-3 m-5">無料ではじめる<i class="mx-2 fas fa-arrow-circle-right"></i></a>
+                <p id="chat-hero" class="text-center" style="min-height: 50px;"></p>
+                <a href="/authenticate" class="btn btn-dark btn-lg px-5 py-3 m-5">無料で試す<i class="mx-2 fas fa-arrow-circle-right"></i></a>
             </div>
         </div>
     </section>
     <section>
-        <div class="container">
-            <div class="row">
-                <div class="col-6 py-5">
-                    <h3>Hello</h3>
-                </div>
-                <div class="col-6 py-5">
-                    <div id="lamix-chat-widget" data-id="66713b454c8efb3949eecb5b"></div>
-                    <script src="https://lamix.hatoltd.com/js/chat-widget.js"></script>
-                </div>
-            </div>
+        <div class="d-flex py-5 justify-content-center align-items-center">
+            <div id="lamix-chat-widget" data-id="667771e469055b40a22b9c20"></div><script src="https://lamix.hatoltd.com/js/chat-widget.js"></script>
         </div>
     </section>
+    <section class="p-best mb-5">
+      <div class="c-section-inner">
+        <h2 class="c-section-title u-tal">
+          未来への一歩は、<br>
+          <span class="u-font-manrope u-color-grad">Lamix</span>から始まる！
+          <div class="p-best-illust">
+            <span><img src="/img/robot.png" alt="" class="u-rocketman" style="max-width: 30vw;"></span>
+          </div>
+        </h2>
+        <ul class="p-best__lists" style="list-style: none;padding: 0;">
+            <li class="p-best__list u-border-grad">
+                <div class="p-best__listInner u-border-grad--bg">
+                    <div class="p-best__title--flex">
+                        <img src="/img/icon03.svg" alt="">
+                        <h3 class="p-best__title"><span class="u-color-grad">作成</span><span class="p-best__title--sub">簡単なチャットボット作成</span></h3>
+                    </div>
+                    <p class="p-best__text">
+                        LAMIXを使えば、指示を入力するだけでチャットボットを作成できます。プラットフォームは、ウェブサイトデータを統合することを含め、あらゆるテーマのチャットボットを生成することが可能です。ユーザーエンゲージメントと満足度を向上させる新しいレベルのインタラクションを体験してください。
+                    </p>
+                </div>
+            </li>
 
+            <li class="p-best__list u-border-grad">
+                <div class="p-best__listInner u-border-grad--bg">
+                    <div class="p-best__title--flex">
+                        <img src="/img/icon03.svg" alt="">
+                        <h3 class="p-best__title"><span class="u-color-grad">統合</span><span class="p-best__title--sub">シームレスな埋め込み</span></h3>
+                    </div>
+                    <p class="p-best__text">
+                        チャットボットをウェブサイト、ブログ、または任意のオンラインプラットフォームに簡単に埋め込むことができます。LAMIXは、チャットボットを迅速に稼働させるための効率的なプロセスを提供し、訪問者と動的にエンゲージし、サイトのSEOを改善する新しい方法を提供します。
+                    </p>
+                </div>
+            </li>
+            <li class="p-best__list u-border-grad">
+                <div class="p-best__listInner u-border-grad--bg">
+                    <div class="p-best__title--flex">
+                        <img src="/img/icon03.svg" alt="">
+                        <h3 class="p-best__title"><span class="u-color-grad">管理</span><span class="p-best__title--sub">ダッシュボードで監視</span></h3>
+                    </div>
+                    <p class="p-best__text">
+                        包括的なダッシュボードでチャットボットのパフォーマンスを監視しましょう。会話数を追跡し、チャットのやり取りをレビューし、オーディエンスエンゲージメント戦略を最適化するための貴重な洞察を得ることができます。
+                    </p>
+                </div>
+            </li>
+        </ul>
+        <div class="text-center mt-4">
+          <a href="/authenticate" class="btn btn-gradient-radius btn-large px-5 py-3 m-auto w-100" style="font-size: 21px;"><span>無料で試す<i class="mx-2 fas fa-arrow-circle-right"></i></span></a>
+        </div>
+      </div>
+    </section>
+ {{> dashboard-footer}}
 <script>
 $(document).ready(function() {
 
@@ -106,7 +148,7 @@ $(document).ready(function() {
         });
     }
 
-    //displayNextCatchphrase();
+    displayNextCatchphrase();
     
 });
 

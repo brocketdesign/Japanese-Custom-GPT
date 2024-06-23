@@ -5,24 +5,44 @@ const jwt = require('jsonwebtoken');
 async function routes(fastify, options) {
   
   fastify.post('/user/register', async (request, reply) => {
-    const { username, password } = request.body;
-    const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
-    const hashedPassword = await bcrypt.hash(password, 10);
-    
-    const user = await usersCollection.findOne({ username });
-    if (user) {
-      return reply.status(400).send({ error: 'ユーザーはすでに存在します' });
+    try {
+      const { username, password } = request.body;
+      
+      // Validate request data
+      if (!username || !password) {
+        return reply.status(400).send({ error: 'ユーザー名とパスワードは必須です' });
+      }
+  
+      const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+      
+      // Check if the user already exists
+      const user = await usersCollection.findOne({ username });
+      if (user) {
+        return reply.status(400).send({ error: 'ユーザーはすでに存在します' });
+      }
+      
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(password, 10);
+  
+      // Insert new user into the database
+      const result = await usersCollection.insertOne({ username, password: hashedPassword });
+  
+      if (!result.insertedId) {
+        return reply.status(500).send({ error: 'ユーザーの登録に失敗しました' });
+      }
+  
+      const newUser = { _id: result.insertedId, username };
+  
+      // Generate a token for the new user
+      const token = jwt.sign(newUser, process.env.JWT_SECRET, { expiresIn: '1h' });
+  
+      return reply
+        .setCookie('token', token, { path: '/', httpOnly: true })
+        .send({ status: 'ユーザーが正常に登録されました', redirect: '/dashboard' });
+    } catch (err) {
+      fastify.log.error(err);
+      return reply.status(500).send({ error: 'サーバーエラーが発生しました' });
     }
-    
-    const result = await usersCollection.insertOne({ username, password: hashedPassword });
-    const newUser = result.ops[0];
-    
-    // Generate a token for the new user
-    const token = jwt.sign({ _id: newUser._id, username: newUser.username }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    
-    reply
-      .setCookie('token', token, { path: '/', httpOnly: true })
-      .send({ status: 'ユーザーが正常に登録されました', redirect: '/dashboard' });
   });
 
   fastify.post('/user/login', async (request, reply) => {
@@ -35,13 +55,13 @@ async function routes(fastify, options) {
     }
     
     const token = jwt.sign({ _id: user._id, username: user.username }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    reply
+    return reply
       .setCookie('token', token, { path: '/', httpOnly: true })
       .send({ redirect: '/dashboard' });
   });
 
   fastify.post('/user/logout', async (request, reply) => {
-    reply
+    return reply
       .clearCookie('token', { path: '/' })
       .send({ status: 'ログアウトに成功しました' });
   });

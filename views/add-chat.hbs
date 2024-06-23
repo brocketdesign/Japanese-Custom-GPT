@@ -22,6 +22,10 @@
         outline: none;
         box-shadow: none; /* If there is a box shadow applied on focus */
     }
+    .button-group{
+        top:0;
+        right: 15px;
+    }
     </style>
 <div class="container mt-4">
     <h2 class="d-none">{{#if chatId}}チャットを編集{{else}}新しいチャットを追加{{/if}}</h2>
@@ -67,9 +71,10 @@
         <div class="container mt-1">
             <label for="chatContentEdition" class="form-label">チャットの構造</label>
             <div id="chatContentEdition"></div>
+            <button type="button" id="addQuestionBtn" class="btn btn-light float-end" data-toggle="tooltip" title="追加" data-original-title="Share"><i class="fas fa-plus"></i> </button>
             <button type="button" id="saveButton" class="btn btn-primary mt-3 d-none">Save</button>
         </div>
-        <button type="submit" class="btn btn-secondary btn-large w-100">保存する</button>
+        <button type="submit" class="btn btn-secondary btn-large w-100 my-5">保存する</button>
     </form>
 </div>
 
@@ -253,6 +258,43 @@
                 }
             });
         }
+        function generateQuestion(cleanedContent, chatId, callback) {
+
+            const apiUrl = '/api/openai-chat-creation';
+
+            const description = $('#chatDescription').val()
+            const category = $('#chatCategory').val()
+            const name = $('#chatName').val()
+            const message = `Name : ${name} \n Category: ${category} \n Description: ${description} \n JSON : ${cleanedContent}`
+
+            $.ajax({
+                url: apiUrl,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ chatId, message, system : getSystem('chatQuestion') }),
+                success: function(response) {
+
+                    const sessionId = response.sessionId;
+                    const streamUrl = `/api/openai-chat-creation-stream/${sessionId}`;
+                    const eventSource = new EventSource(streamUrl);
+                    let markdownContent = "";
+
+                    eventSource.onmessage = function(event) {
+                        const data = JSON.parse(event.data);
+                        markdownContent += data.content;
+
+                    };
+
+                    eventSource.onerror = function(error) {
+                        eventSource.close();
+                        if(callback){callback(markdownContent)}
+                    };
+                },
+                error: function(error) {
+                    console.error('Error:', error);
+                }
+            });
+        }
         function generateDescription(cleanedContent, chatId) {
 
             const apiUrl = '/api/openai-chat-creation';
@@ -297,7 +339,7 @@
 
             const apiUrl = '/api/openai-chat-creation';
             
-            $('#chatName').val('')
+            $('#chatCategory').val('')
             $.ajax({
                 url: apiUrl,
                 method: 'POST',
@@ -399,6 +441,22 @@
             var system;
 
             switch (systemType) {
+                case 'chatQuestion':
+                    system = `
+                        You are a JSON generator. 
+                        You take the information and the JSON provided by the user and return a new question on the same subject.\n
+                        Your answer must be in japanese. Be creative to provide interesting questions.\n
+                        You respond MUST MATCH THE JSON BELOW.\n\n
+                        {
+                            "question": "string",
+                            "responses": [
+                            "string",
+                            "string",
+                            "string"
+                            ]
+                        }
+                    `;
+                    break;
                 case 'chatDescription':
                     system = `
                         You are a JSON description generator. You take the JSON provided by the user and return a short description of 2 sentences in japanese.
@@ -451,6 +509,7 @@
             return system
         }
         function createEditor(json) {
+            console.log(json)
             $('#chatContentEdition').empty(); // Clear previous content
             json.forEach((qa, index) => {
                 const qaDiv = $('<div></div>').addClass('qa card mb-3 bg-light');
@@ -462,17 +521,193 @@
 
                 // Responses
                 qa.responses.forEach((response, responseIndex) => {
-                    const responseDiv = $('<div></div>').addClass('response mb-3');
+                    const responseDiv = $('<div class="ps-5"></div>').addClass('response mb-3');
                     responseDiv.append(`<h6>回答 ${responseIndex + 1}</h6>`);
                     responseDiv.append(`<div class="mb-2"><label class="form-label">回答テキスト:</label><input type="text" class="form-control responseText" value="${response}" /></div>`);
                     qaCardBody.append(responseDiv);
                 });
+
+                // Add Regenerate and Delete buttons
+                const buttonGroup = $('<div class="position-absolute"></div>').addClass('button-group mt-3');
+
+                const regenerateButton = $(`<button type="button" data-toggle="tooltip" title="再生成" data-original-title="Regenerate"></button>`).addClass('btn btn-outline-warning me-2 gen-question').html('<i class="fas fa-sync"></i>').click(() => {
+                    Swal.fire({
+                        title: '再生成',
+                        text: `質問 ${index + 1} を再生成しますか？`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'はい',
+                        cancelButtonText: 'いいえ'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            const questionIndex = index + 1
+                            const cleanedContent = saveJson();
+                            generateQuestion(cleanedContent, chatId, function(response){
+                                const cleanResponse = JSON.parse(response)
+                                updateQuestion(cleanResponse, index)
+                                saveJson();
+                                Swal.fire(
+                                    '再生成しました!',
+                                    `質問 ${index + 1} が再生成されました。`,
+                                    'success'
+                                );
+                            })
+                        }
+                    });
+                });
+
+                const deleteButton = $('<button type="button" data-toggle="tooltip" title="削除" data-original-title="Delete"></button>').addClass('btn btn-outline-danger').html('<i class="fas fa-trash"></i>').click(() => {
+                    Swal.fire({
+                        title: '削除',
+                        text: `質問 ${index + 1} を削除しますか？`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'はい',
+                        cancelButtonText: 'いいえ'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            qaDiv.remove();
+                            const cleanJSON = saveJson();
+                            const parsedJson = JSON.parse(cleanJSON)
+                            createEditor(parsedJson)
+                            Swal.fire(
+                                '削除しました!',
+                                `質問 ${index + 1} が削除されました。`,
+                                'success'
+                            );
+                        }
+                    });
+                });
+                buttonGroup.append(regenerateButton, deleteButton);
+                qaCardBody.append(buttonGroup);
 
                 qaDiv.append(qaCardBody);
                 $('#chatContentEdition').append(qaDiv);
             });
         }
 
+
+        function addNewQuestion() {
+            const newIndex = $('#chatContentEdition .qa').length + 1;
+            if(newIndex>10){
+                Swal.fire({
+                    title: '警告',
+                    text: '質問は最大10件までです。',
+                    icon: 'warning',
+                    confirmButtonText: '了解'
+                });
+                return
+            }
+            const newQaDiv = $('<div></div>').addClass('qa card mb-3 bg-light');
+            const newQaCardBody = $('<div></div>').addClass('card-body');
+
+            // New Question
+            newQaCardBody.append(`<h5 class="card-title">質問 ${newIndex}</h5>`);
+            newQaCardBody.append(`<div class="mb-3"><label class="form-label">質問:</label><input type="text" class="form-control question" value="" /></div>`);
+
+            // Add empty response sections
+            for (let i = 1; i <= 3; i++) {
+                const newResponseDiv = $('<div class="ps-5"></div>').addClass('response mb-3');
+                newResponseDiv.append(`<h6>回答 ${i}</h6>`);
+                newResponseDiv.append(`<div class="mb-2"><label class="form-label">回答テキスト:</label><input type="text" class="form-control responseText" value="" /></div>`);
+                newQaCardBody.append(newResponseDiv);
+            }
+
+            // Add Regenerate and Delete buttons
+            const buttonGroup = $('<div class="position-absolute"></div>').addClass('button-group mt-3');
+
+            const regenerateButton = $(`<button type="button" data-toggle="tooltip" title="再生成" data-original-title="Regenerate" data-index="${newIndex}"></button>`).addClass('btn btn-outline-warning me-2 gen-question').html('<i class="fas fa-sync"></i>').click(() => {
+                Swal.fire({
+                    title: '再生成',
+                    text: `質問 ${newIndex} を再生成しますか？`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'はい',
+                    cancelButtonText: 'いいえ'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const cleanedContent = saveJson();
+                        generateQuestion(cleanedContent, chatId, function(response){
+                            const cleanResponse = JSON.parse(response)
+                            updateQuestion(cleanResponse, newIndex-1)
+                            saveJson();
+                            // Handle regenerate logic here
+                            Swal.fire(
+                                '再生成しました!',
+                                `質問 ${newIndex} が再生成されました。`,
+                                'success'
+                            );
+                        })
+                    }
+                });
+            });
+
+            const deleteButton = $('<button type="button" data-toggle="tooltip" title="削除" data-original-title="Delete"></button>').addClass('btn btn-outline-danger').html('<i class="fas fa-trash"></i>').click(() => {
+                Swal.fire({
+                    title: '削除',
+                    text: `質問 ${newIndex} を削除しますか？`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'はい',
+                    cancelButtonText: 'いいえ'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        newQaDiv.remove();
+                        const cleanJSON = saveJson();
+                        const parsedJson = JSON.parse(cleanJSON)
+                        createEditor(parsedJson)
+                        Swal.fire(
+                            '削除しました!',
+                            `質問 ${newIndex} が削除されました。`,
+                            'success'
+                        );
+                    }
+                });
+            });
+
+            buttonGroup.append(regenerateButton, deleteButton);
+            newQaCardBody.append(buttonGroup);
+
+            newQaDiv.append(newQaCardBody);
+            $('#chatContentEdition').append(newQaDiv);
+        }
+
+        $('#addQuestionBtn').on('click', addNewQuestion);
+        
+        function updateQuestion(obj, index) {
+            // Find the corresponding question card based on the index
+            const qaCard = $('#chatContentEdition .qa').eq(index);
+
+            if (qaCard.length > 0) {
+                // Update the question text
+                const questionInput = qaCard.find('.question');
+                questionInput.val(obj.question);
+
+                // Update the responses
+                const responseDivs = qaCard.find('.response');
+                responseDivs.each((responseIndex, responseDiv) => {
+                    const responseInput = $(responseDiv).find('.responseText');
+                    if (obj.responses[responseIndex] !== undefined) {
+                        responseInput.val(obj.responses[responseIndex]);
+                    } else {
+                        responseInput.val('');
+                    }
+                });
+
+                // Handle additional responses if there are more in the object than in the current card
+                if (obj.responses.length > responseDivs.length) {
+                    const qaCardBody = qaCard.find('.card-body');
+                    for (let i = responseDivs.length; i < obj.responses.length; i++) {
+                        const newResponseDiv = $('<div class="ps-5"></div>').addClass('response mb-3');
+                        newResponseDiv.append(`<h6>回答 ${i + 1}</h6>`);
+                        newResponseDiv.append(`<div class="mb-2"><label class="form-label">回答テキスト:</label><input type="text" class="form-control responseText" value="${obj.responses[i]}" /></div>`);
+                        qaCardBody.append(newResponseDiv);
+                    }
+                }
+            } else {
+                console.error(`No question found at index ${index}`);
+            }
+        }
         function saveJson() {
             const updatedJson = [];
             $('.qa').each(function(index, qaDiv) {
@@ -489,7 +724,8 @@
                 updatedJson.push(qaData);
             });
 
-            console.log(JSON.stringify(updatedJson, null, 2));
+            //console.log(JSON.stringify(updatedJson, null, 2));
+            $('#chatContent').val(JSON.stringify(updatedJson, null, 2));
             return JSON.stringify(updatedJson, null, 2);
         }
 

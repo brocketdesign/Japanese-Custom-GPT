@@ -90,7 +90,7 @@ async function routes(fastify, options) {
         const options = { timeZone: 'Asia/Tokyo', year: 'numeric', month: 'long', day: 'numeric', weekday: 'long', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false };
 
         // Format the date string in Japanese
-        const dateStrJP = dateObj.toLocaleDateString('ja-JP', options) + ' ' + dateObj.toLocaleTimeString('ja-JP', options);
+        const dateStrJP = new Date(dateObj).toLocaleDateString('ja-JP', options) + ' ' + new Date(dateObj).toLocaleTimeString('ja-JP', options);
 
         // Create a document to insert or update
         const storyDocument = {

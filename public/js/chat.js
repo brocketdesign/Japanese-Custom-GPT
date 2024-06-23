@@ -68,11 +68,15 @@ $(document).ready(function() {
                     url: API_URL+'/api/chat-data', // Backend endpoint to handle the message
                     type: 'POST',
                     contentType: 'application/json',
-                    data: JSON.stringify({ currentStep:currentStep, message, userId, chatId, isNew }),
+                    data: JSON.stringify({ currentStep:currentStep-1, message, userId, chatId, isNew }),
                     success: function(response) {
                         const {userId, chatId } = response
-                        generateCompletion(userId, chatId)
-                        isNew = false
+                        if(currentStep < totalSteps){
+                            displayStep(chatData, currentStep);
+                        }else{
+                            generateCompletion(userId, chatId)
+                            isNew = false
+                        }
                     },
                     error: function(error) {
                         console.error('Error:', error);
@@ -142,12 +146,12 @@ $(document).ready(function() {
                 if (userChat[i].role === "assistant") {
                     let assistantMessage = userChat[i];
                     let userMessage = userChat[i + 1];
-        
+                    let designStep = currentStep - 1 
                     messageHtml += `
-                        <div id="container-${currentStep}">
+                        <div id="container-${designStep}">
                             <div class="d-flex flex-row justify-content-start mb-4 message-container">
                                 <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;">
-                                <div id="message-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px; background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);">
+                                <div id="message-${designStep}" class="p-3 ms-3 text-start" style="border-radius: 15px; background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);">
                                     ${assistantMessage.content}
                                 </div>
                             </div>
@@ -156,7 +160,7 @@ $(document).ready(function() {
                     if (userMessage && userMessage.role === "user") {
                         messageHtml += `
                             <div class="d-flex flex-row justify-content-end mb-4 message-container">
-                                <div id="response-${currentStep}" class="p-3 me-3 border" style="border-radius: 15px; background-color: #fbfbfb;">
+                                <div id="response-${designStep}" class="p-3 me-3 border" style="border-radius: 15px; background-color: #fbfbfb;">
                                     ${userMessage.content}
                                 </div>
                             </div>
@@ -164,7 +168,7 @@ $(document).ready(function() {
                         `;
                     } else {
                         messageHtml += `
-                            <div id="response-${currentStep}" class="choice-container"></div>
+                            <div id="response-${designStep}" class="choice-container"></div>
                         </div>
                         `;
                     }
@@ -175,7 +179,11 @@ $(document).ready(function() {
             }
         
             if (userChat[userChat.length - 1].role === "user" && userChat[userChat.length - 1].content) {
-                generateCompletion();
+                if(currentStep <= totalSteps){
+                    displayStep(chatData, currentStep);
+                }else{
+                    generateCompletion(userId, chatId)
+                }
             } else {
                 generateChoice();
             }
@@ -194,9 +202,11 @@ $(document).ready(function() {
                 <div id="response-${currentStep}" class="choice-container" ></div>
             </div>`)
             step.responses.forEach((response, index) => {
-                const button = $(`<button class="btn btn-flat-border my-2" onclick="choosePath('${response}')">${response}</button>`);
-                button.css('opacity',0)
-                $(`#response-${currentStep}`).append(button);
+                if(response != '' ){
+                    const button = $(`<button class="btn btn-flat-border my-2" onclick="choosePath('${response}')">${response}</button>`);
+                    button.css('opacity',0)
+                    $(`#response-${currentStep}`).append(button);
+                }
             });
             appendHeadlineCharacterByCharacter($(`#message-${currentStep}`), step.question,function(){
                 $(`#response-${currentStep} button`).each(function(){

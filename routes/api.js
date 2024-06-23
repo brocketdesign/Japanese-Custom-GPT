@@ -25,6 +25,8 @@ async function routes(fastify, options) {
                 name = part.value;
             } else if (part.fieldname === 'content') {
                 content = JSON.parse(part.value);
+            } else if (part.fieldname === 'category') {
+                category = part.value;
             } else if (part.fieldname === 'description') {
                 description = part.value;
             } else if (part.fieldname === 'thumbnail') {
@@ -85,15 +87,21 @@ async function routes(fastify, options) {
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
     
         const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-    
+        const options = { timeZone: 'Asia/Tokyo', year: 'numeric', month: 'long', day: 'numeric', weekday: 'long', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false };
+
+        // Format the date string in Japanese
+        const dateStrJP = dateObj.toLocaleDateString('ja-JP', options) + ' ' + dateObj.toLocaleTimeString('ja-JP', options);
+
         // Create a document to insert or update
         const storyDocument = {
-            name: name,
-            description: description,
-            content: content,
-            thumbnailUrl: thumbnailUrl,
-            userId: userId,
-            updatedAt: dateObj
+            name,
+            category,
+            description,
+            content,
+            thumbnailUrl,
+            userId,
+            updatedAt: new Date(dateObj),
+            dateStrJP
         };
     
         try {
@@ -122,7 +130,7 @@ async function routes(fastify, options) {
                     return reply.status(409).send({ error: 'A story with this name already exists' });
                 }
     
-                storyDocument.createdAt = dateObj;
+                storyDocument.createdAt = new Date(dateObj);
     
                 // Insert the new story into the MongoDB collection
                 await collection.insertOne(storyDocument);

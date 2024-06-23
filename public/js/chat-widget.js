@@ -121,7 +121,7 @@
                     </div>
                 </div>
                 <div id="chatInput" class="input-group rounded-0 rounded-bottom bg-white" style="position: absolute;bottom: 0;left: 0;right: 0;padding: 0px 15px 25px 15px;">
-                    <input type="text" id="userMessage" class="form-control py-3 border" placeholder="メッセージを入力してください">
+                    <input type="text" id="userMessage" class="form-control py-3 border" style="font-size: 14px;padding-left: 30px;" placeholder="メッセージを入力してください">
                     <button id="sendMessage" class="btn btn-light px-4 border"><i class="fas fa-paper-plane"></i></button>
                 </div>
                 <div class="card-footer text-muted text-center d-none">

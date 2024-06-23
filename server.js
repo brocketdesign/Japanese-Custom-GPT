@@ -158,8 +158,12 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     }, async (request, reply) => {
       try {
         const userId = new fastify.mongo.ObjectId(request.user._id)
-        const chats = await db.collection('chats').find({userId}).sort({"updatedAt":-1}).toArray();
-        return reply.view('chat-list', { title: 'LAMIX | Powered by Hato,Ltd', chats: chats, user: request.user  });      
+        const chatsCollection = db.collection('chats');
+
+        // Query and sort chats
+        const sortedChats = await chatsCollection.find({ userId }).sort({ "updatedAt": -1 }).toArray();
+        
+        return reply.view('chat-list', { title: 'LAMIX | Powered by Hato,Ltd', chats: sortedChats, user: request.user  });      
       } catch (err) {
         console.log(err)
         return reply.status(500).send({ error: 'Failed to retrieve stories' });

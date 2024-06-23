@@ -77,7 +77,7 @@
 </style>
 
 <div class="container mt-4">
-    <h2>チャットボット一覧</h2>
+    <h2 class="d-none">チャットボット一覧</h2>
     <div class="chat-list-container py-5">
         <div class="chat-list item d-flex align-items-center" style="cursor: pointer;" onclick="window.location.href='/chat/edit/'">
             <div class="thumb align-items-center text-center justify-content-center d-flex flex-column" >
@@ -117,6 +117,7 @@
                             </div>
                             <div class="chat-list-option" style="max-width: 40vw;">
                                 <span style="font-size: 14px;color: #6c6c6c;" class="truncate-text py-1">{{this.description}}</span>
+                                <p class="text-muted" style="font-size:12px">{{this.dateStrJP}}</p>
                             </div>
                         </div>
                     </div>

@@ -14,18 +14,23 @@
 </head>
 <body>
     <nav class="navbar navbar-light bg-transparent py-1 sticky-top" style="border-bottom: 1px solid rgba(210, 184, 255, 0.2);">
-    <div class="container-fluid justify-content-between">
-        <a class="navbar-brand d-flex flex-row align-items-center bg-white px-5 py-2" href="/chat-index">
-        <img src="/img/logo.webp" alt="" class="logo">
-        <span class="brand-name ms-3">LAMIX</span>
-        </a>
-        <a href="/authenticate" class="btn px-4 py-2 border" style="border-radius:40px;background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"><i class="fas fa-plus me-2"></i>作成する</a>
-    </div>
+    
+        <div class="container-fluid justify-content-between">
+            <a class="navbar-brand d-flex flex-row align-items-center bg-white px-5 py-2" href="/chat-index">
+            <img src="/img/logo.webp" alt="" class="logo">
+            <span class="brand-name ms-3">LAMIX</span>
+            </a>
+            <a href="/authenticate" class="btn px-4 py-2 border" style="border-radius:40px;background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"><i class="fas fa-plus me-2"></i>作成する</a>
+        </div>
     </nav>
-
+    <div class="image-container">
+        <img src="/img/bg-B.png" alt="Background Image">
+        <div class="content">
+        </div>
+    </div>
     <section class="hero bg-light py-5 p-fv" style="background-position:bottom!important">
         <div class="container text-center d-flex flex-column align-items-center py-5">
-            <img src="/img/logo.webp" alt="LAMIXボット ロゴ" class="mb-4" style="width: 150px;border-radius:50%;">
+            <img src="/img/logo.webp" alt="LAMIXボット ロゴ" class="mb-4" style="width: 75px;border-radius:50%;">
             <div>
                 <h1>LAMIXチャットボットであなたのウェブサイトを革新。</h1>
                 <p id="chat-hero" class="text-center" style="min-height: 50px;"></p>
@@ -34,7 +39,7 @@
         </div>
     </section>
     <section>
-        <div class="d-flex py-5 justify-content-center align-items-center">
+        <div class="d-flex py-5 px-3 justify-content-center align-items-center">
             <div id="lamix-chat-widget" data-id="667771e469055b40a22b9c20"></div><script src="https://lamix.hatoltd.com/js/chat-widget.js"></script>
         </div>
     </section>

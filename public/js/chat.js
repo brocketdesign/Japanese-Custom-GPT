@@ -102,7 +102,7 @@ $(document).ready(function() {
                     totalSteps = chatData.length;
                     chatName = data.chat.name
                     thumbnail = data.chat.thumbnailUrl
-                    $('h1').text(chatName)
+                    //$('h1').text(chatName)
                     if(!isNew){
                         displayChat(data.userChat.messages)
                     }else{

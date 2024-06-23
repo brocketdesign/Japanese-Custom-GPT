@@ -27,15 +27,25 @@
         <div class="container text-center d-flex flex-column align-items-center py-5">
             <img src="/img/logo.webp" alt="LAMIXボット ロゴ" class="mb-4" style="width: 150px;border-radius:50%;">
             <div>
-                <h1 id="chat-hero" class="display-4 text-center" style="min-height: 150px;"></h1>
-                <p class="lead">LAMIXボットでチャットボットの可能性を最大限に引き出しましょう。</p>
+                <h1>LAMIXチャットボットであなたのウェブサイトを革新。</h1>
+                <p id="chat-hero" class="display-4 text-center" style="min-height: 150px;"></p>
                 <a href="/authenticate" class="btn btn-dark btn-lg px-5 py-3 m-5">無料ではじめる<i class="mx-2 fas fa-arrow-circle-right"></i></a>
             </div>
         </div>
     </section>
-
-    <div id="lamix-chat-widget" data-id="66713b454c8efb3949eecb5b"></div>
-    <script src="https://lamix.hatoltd.com/js/chat-widget.js"></script>
+    <section>
+        <div class="container">
+            <div class="row">
+                <div class="col-6 py-5">
+                    <h3>Hello</h3>
+                </div>
+                <div class="col-6 py-5">
+                    <div id="lamix-chat-widget" data-id="66713b454c8efb3949eecb5b"></div>
+                    <script src="https://lamix.hatoltd.com/js/chat-widget.js"></script>
+                </div>
+            </div>
+        </div>
+    </section>
 
 <script>
 $(document).ready(function() {
@@ -96,7 +106,7 @@ $(document).ready(function() {
         });
     }
 
-    displayNextCatchphrase();
+    //displayNextCatchphrase();
     
 });
 

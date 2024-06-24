@@ -115,7 +115,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     });
     // Routes
     fastify.get('/', async (request, reply) => {
-      return reply.view('chat-index.hbs', { title: 'LAMIX | Powered by Hato,Ltd' });
+      return reply.view('chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd' });
     });
 
     fastify.get('/authenticate',async (request, reply) => {

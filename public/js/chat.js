@@ -36,7 +36,7 @@ $(document).ready(function() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                data: JSON.stringify({ currentStep, message:response, userId, chatId, isNew }),
+                data: JSON.stringify({ currentStep:currentStep-1, message:response, userId, chatId, isNew }),
                 success: function(response) {
                     isNew = false
                 },

@@ -241,6 +241,18 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         reply.status(500).send({ error: 'Unable to render the dashboard' });
       }
     });
+    fastify.get('/settings', {
+      preHandler: [fastify.authenticate]
+    }, async (request, reply) => {
+      try {
+        const userId = request.user._id
+        const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+        const userData = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
+        return reply.view('/settings', { title: 'LAMIX | Powered by Hato,Ltd', user:userData})
+      } catch (err) {
+        return reply.status(500).send({ error: 'Unable to render the settings' });
+      }
+    });
     
     
 

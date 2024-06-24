@@ -51,13 +51,13 @@
         <label for="chatContent" class="form-label d-none">チャットコンテンツ (JSON形式)</label>
         <textarea class="form-control" id="chatContent" name="content" rows="10" required></textarea>
     </div>
-    <form id="chatForm" class="mb-5 pb-5 mx-3 d-none">
+    <form id="chatForm" class="mb-5 pb-5 mx-3">
         <div class="mb-3 mx-3" id="thumbnailInputContainer" style="display: none;">
             <label for="chatThumbnail" class="form-label">チャットのサムネイルをアップロード</label>
             <input type="file" class="form-control" id="chatThumbnail" name="thumbnail" accept="image/*">
         </div>
         <div class="mb-3 mx-3">
-            <label for="chatName" class="form-label">チャット名</label>
+            <label for="chatName" class="form-label">名前</label>
             <input type="text" class="form-control" id="chatName" name="name" required>
         </div>
         <div class="mb-3 mx-3">
@@ -65,8 +65,16 @@
             <input type="text" class="form-control" id="chatCategory" name="name" required>
         </div>
         <div class="mb-3 mx-3">
-            <label for="chatDescription" class="form-label">チャット</label>
-            <textarea class="form-control" id="chatDescription" name="content" rows="3" required></textarea>
+            <label for="chatDescription" class="form-label">説明</label>
+            <textarea class="form-control" id="chatDescription" name="content" rows="5" required></textarea>
+        </div>
+        <div class="mb-3 mx-3">
+            <label for="chatUrl" class="form-label">URL</label>
+            <input type="url" class="form-control" id="chatUrl" name="url">
+        </div>
+        <div class="mb-3 mx-3">
+            <label for="chatRule" class="form-label">指示</label>
+            <textarea class="form-control" id="chatRule" name="content" rows="5"></textarea>
         </div>
         <div class="container mt-1">
             <label for="chatContentEdition" class="form-label">チャットの構造</label>
@@ -110,6 +118,8 @@
                     $('#chatName').val(chatData.name);
                     $('#chatCategory').val(chatData.category);
                     $('#chatDescription').val(chatData.description);
+                    $('#chatRule').val(chatData.rule);
+                    $('#chatUrl').val(chatData.url);
                     if(chatData.content){
                         $('#chatContent').val(JSON.stringify(chatData.content, null, 2));
                         createEditor(chatData.content)
@@ -143,6 +153,8 @@
             const name = $('#chatName').val();
             const category = $('#chatCategory').val();
             const description = $('#chatDescription').val();
+            const rule = $('#chatRule').val();
+            const url = $('#chatUrl').val();
             const content = saveJson();
             const thumbnail = $('#chatThumbnail')[0].files[0];
 
@@ -150,6 +162,8 @@
             formData.append('category', category);
             formData.append('description', description);
             formData.append('content', content);
+            formData.append('rule', rule);
+            formData.append('url', url);
             
             if(thumbnail){
                 formData.append('thumbnail', thumbnail);

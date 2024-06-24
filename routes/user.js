@@ -66,6 +66,74 @@ async function routes(fastify, options) {
       .send({ status: 'ログアウトに成功しました' });
   });
 
+
+  fastify.post('/user/update-info', async (request, reply) => {
+    try {
+      const { email, firstname, lastname, address, company, state, zip } = request.body;
+      const { token } = request.cookies;
+
+      if (!token) {
+        return reply.status(401).send({ error: '認証トークンがありません' });
+      }
+
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const userId = decoded._id;
+
+      const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+
+      const updateResult = await usersCollection.updateOne(
+        { _id: new fastify.mongo.ObjectId(userId) },
+        { $set: { email, firstname, lastname, address, company, state, zip } }
+      );
+
+      if (updateResult.modifiedCount === 0) {
+        return reply.status(500).send({ error: 'ユーザー情報の更新に失敗しました' });
+      }
+
+      return reply.send({ status: 'ユーザー情報が正常に更新されました' });
+    } catch (err) {
+      fastify.log.error(err);
+      return reply.status(500).send({ error: 'サーバーエラーが発生しました' });
+    }
+  });
+
+  fastify.post('/user/update-password', async (request, reply) => {
+    try {
+      const { oldPassword, newPassword } = request.body;
+      const { token } = request.cookies;
+
+      if (!token) {
+        return reply.status(401).send({ error: '認証トークンがありません' });
+      }
+
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const userId = decoded._id;
+
+      const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+
+      const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+
+      if (!user || !(await bcrypt.compare(oldPassword, user.password))) {
+        return reply.status(401).send({ error: '無効な古いパスワード' });
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      const updateResult = await usersCollection.updateOne(
+        { _id: new fastify.mongo.ObjectId(userId) },
+        { $set: { password: hashedPassword } }
+      );
+
+      if (updateResult.modifiedCount === 0) {
+        return reply.status(500).send({ error: 'パスワードの更新に失敗しました' });
+      }
+
+      return reply.send({ status: 'パスワードが正常に更新されました' });
+    } catch (err) {
+      fastify.log.error(err);
+      return reply.status(500).send({ error: 'サーバーエラーが発生しました' });
+    }
+  });
 }
 
 module.exports = routes;

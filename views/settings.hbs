@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ja">
+       {{> dashboard-header}}
+<body>
+{{> dashboard-nav}}
+<style>
+label{
+    font-size: 12px;
+    color: #8d8b8b;
+}
+.avatar-xl img {
+    width: 110px;
+}
+.rounded-circle {
+    border-radius: 50% !important;
+}
+img {
+    vertical-align: middle;
+    border-style: none;
+}
+.text-muted {
+    color: #aeb0b4 !important;
+}
+.text-muted {
+    font-weight: 300;
+}
+.form-control {
+    display: block;
+    width: 100%;
+    height: calc(1.5em + 0.75rem + 2px);
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #4d5154;
+    background-color: #ffffff;
+    background-clip: padding-box;
+    border: 1px solid #eef0f3;
+    border-radius: 0.25rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+</style>
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-10 col-xl-8 mx-auto">
+      <h2 class="h3 mb-4 page-title d-none">設定</h2>
+      <div class="my-4">
+        <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+          <li class="nav-item">
+            <a class="nav-link active" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="false">プロフィール</a>
+          </li>
+        </ul>
+        
+        <!-- User Info Form -->
+        <form id="user-info-form">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label for="lastname" class="form-label">姓</label>
+              <input type="text" id="lastname" class="form-control" placeholder="" />
+            </div>
+            <div class="col-md-6">
+              <label for="firstname" class="form-label">名</label>
+              <input type="text" id="firstname" class="form-control" placeholder="" />
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="inputEmail4" class="form-label">メールアドレス</label>
+            <input type="email" class="form-control" id="inputEmail4" placeholder="" />
+          </div>
+          <div class="mb-3">
+            <label for="inputAddress5" class="form-label">住所</label>
+            <input type="text" class="form-control" id="inputAddress5" placeholder="" />
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-2">
+              <label for="inputZip5" class="form-label">郵便番号</label>
+              <input type="text" class="form-control" id="inputZip5" placeholder="" />
+            </div>
+            <div class="col-md-6">
+              <label for="inputCompany5" class="form-label">会社</label>
+              <input type="text" class="form-control" id="inputCompany5" placeholder="" />
+            </div>
+          </div>
+          <button type="submit" class="btn btn-secondary">ユーザー情報を保存</button>
+        </form>
+
+        <hr class="my-4" />
+
+        <!-- Password Form -->
+        <form id="user-password-form">
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="inputPassword4">古いパスワード</label>
+                <input type="password" class="form-control" id="inputPassword4" />
+              </div>
+              <div class="form-group">
+                <label for="inputPassword5">新しいパスワード</label>
+                <input type="password" class="form-control" id="inputPassword5" />
+              </div>
+              <div class="form-group">
+                <label for="inputPassword6">パスワードの確認</label>
+                <input type="password" class="form-control" id="inputPassword6" />
+              </div>
+            </div>
+            <div class="col-md-6">
+              <p class="mb-2">パスワードの要件</p>
+              <p class="small text-muted mb-2">新しいパスワードを作成するには、以下のすべての要件を満たす必要があります:</p>
+              <ul class="small text-muted pl-4 mb-0">
+                <li>最低8文字</li>
+                <li>少なくとも1つの特殊文字</li>
+                <li>少なくとも1つの数字</li>
+                <li>以前のパスワードと同じであってはならない</li>
+              </ul>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-secondary">パスワードを変更</button>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+{{> dashboard-footer}}
+
+<script>
+  $(document).ready(function() {
+    // Initialize user info from the Handlebars variable
+    const user = {
+        _id: "{{user._id}}",
+        email: "{{user.email}}",
+        firstname: "{{user.firstname}}",
+        lastname: "{{user.lastname}}",
+        address: "{{user.address}}",
+        company: "{{user.company}}",
+        zip: "{{user.zip}}"
+    };
+
+    $('#inputEmail4').val(user.email);
+    $('#firstname').val(user.firstname);
+    $('#lastname').val(user.lastname);
+    $('#inputAddress5').val(user.address);
+    $('#inputCompany5').val(user.company);
+    $('#inputZip5').val(user.zip);
+
+    // User Info Form Submission
+    $('#user-info-form').submit(function(event) {
+      event.preventDefault();
+
+      const userInfo = {
+        email: $('#inputEmail4').val(),
+        firstname: $('#firstname').val(),
+        lastname: $('#lastname').val(),
+        address: $('#inputAddress5').val(),
+        company: $('#inputCompany5').val(),
+        zip: $('#inputZip5').val()
+      };
+
+      $.ajax({
+        url: '/user/update-info',
+        method: 'POST',
+        data: userInfo,
+        success: function(response) {
+          Swal.fire({
+            icon: 'success',
+            title: '成功',
+            text: response.status,
+          });
+        },
+        error: function(jqXHR) {
+          Swal.fire({
+            icon: 'error',
+            title: 'エラー',
+            text: jqXHR.responseJSON.error,
+          });
+        }
+      });
+    });
+
+    // User Password Form Submission
+    $('#user-password-form').submit(function(event) {
+      event.preventDefault();
+
+      const passwordInfo = {
+        oldPassword: $('#inputPassword4').val(),
+        newPassword: $('#inputPassword5').val()
+      };
+
+      $.ajax({
+        url: '/user/update-password',
+        method: 'POST',
+        data: passwordInfo,
+        success: function(response) {
+          Swal.fire({
+            icon: 'success',
+            title: '成功',
+            text: response.status,
+          });
+        },
+        error: function(jqXHR) {
+          Swal.fire({
+            icon: 'error',
+            title: 'エラー',
+            text: jqXHR.responseJSON.error,
+          });
+        }
+      });
+    });
+  });
+</script>

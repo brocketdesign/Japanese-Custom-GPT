@@ -27,6 +27,10 @@ async function routes(fastify, options) {
                 content = JSON.parse(part.value);
             } else if (part.fieldname === 'category') {
                 category = part.value;
+            } else if (part.fieldname === 'rule') {
+                rule = part.value;
+            } else if (part.fieldname === 'url') {
+                url = part.value;
             } else if (part.fieldname === 'description') {
                 description = part.value;
             } else if (part.fieldname === 'thumbnail') {
@@ -90,13 +94,15 @@ async function routes(fastify, options) {
         const options = { timeZone: 'Asia/Tokyo', year: 'numeric', month: 'long', day: 'numeric', weekday: 'long', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false };
 
         // Format the date string in Japanese
-        const dateStrJP = new Date(dateObj).toLocaleDateString('ja-JP', options) + ' ' + new Date(dateObj).toLocaleTimeString('ja-JP', options);
+        const dateStrJP = new Date(dateObj).toLocaleDateString('ja-JP', options);
 
         // Create a document to insert or update
         const storyDocument = {
             name,
             category,
             description,
+            rule,
+            url,
             content,
             thumbnailUrl,
             userId,
@@ -365,7 +371,7 @@ async function routes(fastify, options) {
                     userId,
                     chatId,
                     messages: [
-                        { "role": "system", "content": 'You are a japanese assistant about : ' + chatDocument.description  +'You provide short and friendly answers. You never answer with lists. You always prompt the user to help continue the conversation smoothly.'},
+                        { "role": "system", "content": `${chatDocument.rule ? 'You are a japanese assistant about : ' + chatDocument.description  + chatDocument.rule :'You are a japanese assistant about : ' + chatDocument.description  +'You provide short and friendly answers. You never answer with lists. You always prompt the user to help continue the conversation smoothly.'}`},
                         { "role": "assistant", "content": chatDocument.content[currentStep].question }
                     ],
                     createdAt: dateObj,

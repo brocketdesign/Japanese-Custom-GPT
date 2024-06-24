@@ -352,7 +352,7 @@ $(document).ready(function() {
                         console.log('EventSource failed.');
                         eventSource.close();
                         if(!$element){
-                            generateChoice();
+                            //generateChoice();
                         }
                     };
                 },

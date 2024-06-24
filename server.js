@@ -115,16 +115,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     });
     // Routes
     fastify.get('/', async (request, reply) => {
-      try {
-        const activeStory = await db.collection('activeStory').findOne({});
-        if (activeStory && activeStory.storyId) {
-          reply.redirect(`/story/${activeStory.storyId}`);
-        } else {
-          reply.status(404).send({ error: 'No active story found' });
-        }
-      } catch (error) {
-        reply.status(500).send({ error: 'Failed to retrieve the active story' });
-      }
+      return reply.view('chat-index.hbs', { title: 'LAMIX | Powered by Hato,Ltd' });
     });
 
     fastify.get('/authenticate',async (request, reply) => {

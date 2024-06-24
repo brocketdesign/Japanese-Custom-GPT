@@ -179,13 +179,13 @@ $(document).ready(function() {
             }
         
             if (userChat[userChat.length - 1].role === "user" && userChat[userChat.length - 1].content) {
-                if(currentStep <= totalSteps){
+                if(currentStep < totalSteps){
                     displayStep(chatData, currentStep);
                 }else{
                     generateCompletion(userId, chatId)
                 }
             } else {
-                generateChoice();
+                //generateChoice();
             }
         }
         
@@ -202,6 +202,7 @@ $(document).ready(function() {
                 <div id="response-${currentStep}" class="choice-container" ></div>
             </div>`)
             step.responses.forEach((response, index) => {
+                console.log(response.trim())
                 if(response.trim() != '' ){
                     const button = $(`<button class="btn btn-flat-border my-2" onclick="choosePath('${response}')">${response}</button>`);
                     button.css('opacity',0)
@@ -230,9 +231,11 @@ $(document).ready(function() {
                 </div>`)
                 const nextStep = chatData[currentStep];
                 nextStep.responses.forEach(response => {
-                    const button = $(`<button class="btn btn-flat-border my-2" onclick="choosePath('${response}')">${response}</button>`)
-                    button.css('opacity',0)
-                    $(`#response-${currentStep}`).append(button);
+                    if(response.trim() != ''){
+                        const button = $(`<button class="btn btn-flat-border my-2" onclick="choosePath('${response}')">${response}</button>`)
+                        button.css('opacity',0)
+                        $(`#response-${currentStep}`).append(button);
+                    }
                 });
 
                 const choice = previousStep.responses.find(c => c === response);

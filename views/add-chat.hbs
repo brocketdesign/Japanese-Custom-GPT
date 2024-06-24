@@ -26,6 +26,15 @@
         top:0;
         right: 15px;
     }
+    .scroll-container {
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+    }
+    .scroll-container > * {
+      flex: 0 0 auto;
+      width: auto;
+    }
     </style>
 <div class="container mt-4">
     <h2 class="d-none">{{#if chatId}}チャットを編集{{else}}新しいチャットを追加{{/if}}</h2>
@@ -33,11 +42,8 @@
         <div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center">
             <img id="chatImage" src="/img/logo.webp" alt="chat Thumbnail" class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover;cursor: pointer;">
         </div>
-    </div>
-    <div class="d-flex justify-content-between">
-            <button class="btn btn-light chat-template">お問い合わせフォームのサポート</button>
-            <button class="btn btn-light chat-template">製品をプロモーション</button>
-            <button class="btn btn-light chat-template">ブログ内容を質問する</button>
+    </div>  
+    <div class="scroll-container d-flex justify-content-between" id="button-container">
     </div>
     <div id="chatInput" class="input-group rounded-0 rounded-bottom mt-3 mb-4" style="bottom: 0px;right: 0;left: 0;width: auto;margin: auto;">
         <input type="text" id="userMessage" class="form-control py-3" style="font-size: 14px;padding-left: 30px;" placeholder="チャットについて教えてください">
@@ -208,10 +214,31 @@
                 generateCompletion();
             }
         });
-        $('.chat-template').click(function(){
-            const message = $(this).text();
-            $('#userMessage').val(message).trigger('change');
+
+        const buttonsData = [
+            { title: 'お問い合わせフォームのサポート', message: `お問合せフォームになってください。聞きたいことは名前、メールアドレス、お問合せ内容です。お問合せ内容は詳しく内容を聞いてください。そして、最後は内容を担当者に伝えてメールに返信します。と伝えてください。` },
+            { title: '営業チャット', message: 'あなたは企業のウェブサイトのチャットボットです。ユーザーに対して、提供されたURLから得られる情報に基づいて質問に答えます。また、営業マンとしての役割を担い、商品やサービスをおすすめし、問い合わせを促進します。個人的な意見や未確認の情報は提供しないようにしてください。丁寧でプロフェッショナルな態度を保ちつつ、簡潔でわかりやすい回答を心がけてください。必要に応じて、ユーザーに詳細を尋ねたり、クエリをさらに指定するよう依頼してください。企業のブランドイメージや価値観を反映するトーンを維持してください。「詳しくは公式サイトをご確認ください」というフレーズは使用しないでください。' },
+            { title: '技術サポートチャット', message: 'あなたは技術サポートのチャットボットです。ユーザーからの技術的な問題に対して解決策を提供します。問題を正確に把握するために、詳細な質問を行い、段階的に解決方法を説明してください。必要に応じて、さらにサポートが必要な場合は、担当者に引き継ぐことをお伝えください。' },
+            { title: '顧客フィードバックの収集', message: 'あなたは顧客フィードバックを収集するチャットボットです。ユーザーに製品やサービスに関する意見や感想を尋ね、それを記録してください。ユーザーが具体的な点について詳しく説明できるように、適切な質問を投げかけてください。フィードバックは今後の改善に役立てることをお伝えください。' },
+            { title: 'イベント登録サポート', message: 'あなたはイベントの登録サポートを行うチャットボットです。ユーザーがイベントに登録する際の手順を案内し、必要な情報（名前、連絡先、参加希望のセッションなど）を収集します。登録が完了したことを確認し、イベントに関する追加情報を提供してください。' },
+            { title: 'ブログ著者アシスタント', message: 'ブログ記事の著者になりきってユーザーと会話してください。ユーザーが提供したURLの記事を読み、その内容に基づいて質問に答えます。元の著者のトーンやスタイルを反映し、会話を楽しめるように答えてください。一つ一つの文章はあまり長文になりすぎないようにしてください。「詳細はこちらの記事を参照してください。」は言わないようにしてください。'}
+        ];
+
+
+        const buttonContainer = $('#button-container');
+
+        buttonsData.forEach(button => {
+            const btn = $('<button>', {
+                class: 'btn btn-light chat-template me-2',
+                text: button.title,
+                click: function() {
+                    $('#userMessage').val(button.title).trigger('change');
+                    $('#chatRule').val(button.message);
+                }
+            });
+            buttonContainer.append(btn);
         });
+
 
         function generateCompletion(callback) {
 

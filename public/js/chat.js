@@ -202,7 +202,7 @@ $(document).ready(function() {
                 <div id="response-${currentStep}" class="choice-container" ></div>
             </div>`)
             step.responses.forEach((response, index) => {
-                if(response != '' ){
+                if(response.trim() != '' ){
                     const button = $(`<button class="btn btn-flat-border my-2" onclick="choosePath('${response}')">${response}</button>`);
                     button.css('opacity',0)
                     $(`#response-${currentStep}`).append(button);

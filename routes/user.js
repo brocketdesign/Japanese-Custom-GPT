@@ -54,7 +54,7 @@ async function routes(fastify, options) {
       return reply.status(401).send({ error: '無効なユーザー名またはパスワード' });
     }
     
-    const token = jwt.sign({ _id: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ _id: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '24h' });
     return reply
       .setCookie('token', token, { path: '/', httpOnly: true })
       .send({ redirect: '/dashboard' });

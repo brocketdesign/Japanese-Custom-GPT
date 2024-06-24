@@ -79,6 +79,9 @@
     text-align: center;
     background-color: #8080800f;
 }
+.top-logo{
+  width: 150px;
+}
 .gradient-text {
   font-weight: bold;
   background: linear-gradient(45deg, #FFC107 0%, #f76a35 100%);
@@ -146,6 +149,9 @@ body {
 
 /* Responsive styles for small screens */
 @media (max-width: 600px) {
+  .top-logo{
+    width: 75px;
+  }
   .brand-name {
     font-size: 0.75em; /* Adjust the size as needed */
   }

@@ -60,7 +60,23 @@
             <div class="spinner-grow spinner-grow-sm text-dark" role="status"><span class="visually-hidden">Loading...</span></div>
         </div>
     </div>
-    <button type="button" id="displayProcess" class="badge btn-ligh text-muted border mb-2 mx-3" style="font-size: 12px;border-radius:40px">プロセスを表示する</button>
+    <button type="button" id="displayProcess" class="badge btn-ligh text-muted border mb-2 mx-3 d-none" style="font-size: 12px;border-radius:40px">プロセスを表示する</button>
+    <div class="mb-3 mx-3">
+        <label for="myUrl" class="form-label">URL</label>
+        <div class="input-group">
+            <input type="url" class="form-control" id="myUrl" name="url" placeholder="URLを入力してください">
+            <button class="btn btn-outline-secondary" type="button" id="urlButton">
+                <i class="fas fa-search"></i>
+            </button>
+            <div class="load bg-light px-4 d-flex justify-content-center align-items-center border d-none url-load">
+                <div class="spinner-grow spinner-grow-sm text-dark" role="status"><span class="visually-hidden">Loading...</span></div>
+            </div>
+        </div>
+    </div>
+    <div id="resultContainer" class="mt-3 mx-3" style="display: none;">
+        <h4>URLの概要</h4>
+        <p id="resultText"></p>
+    </div>
     <div id="displayProcessToggle" class="mb-3 mx-3 d-none">
         <label for="chatContent" class="form-label d-none">チャットコンテンツ (JSON形式)</label>
         <textarea class="form-control" id="chatContent" name="content" rows="10" required></textarea>
@@ -83,8 +99,8 @@
             <textarea class="form-control" id="chatDescription" name="content" rows="5" required></textarea>
         </div>
         <div class="mb-3 mx-3">
-            <label for="chatUrl" class="form-label">URL</label>
-            <input type="url" class="form-control" id="chatUrl" name="url">
+            <label for="chatUrl" class="form-label d-none">URL</label>
+            <input type="hidden" class="form-control" id="chatUrl" name="url">
         </div>
         <div class="mb-3 mx-3">
             <label for="chatRule" class="form-label">指示</label>
@@ -110,6 +126,33 @@
         if (chatId) {
             fetchchatData(chatId);
         }
+        function fetchUrlSummary(url) {
+            $.ajax({
+                url: '/api/urlsummary',
+                type: 'GET',
+                data: { url: url },
+                success: function(response) {
+                    $('#resultText').html(marked.parse(response.analysis));
+                    $('#resultContainer').show();
+                    $('.url-load').addClass('d-none');
+                    $('#urlButton').removeClass('d-none');
+                },
+                error: function(xhr, status, error) {
+                    $('#resultText').text('Error: ' + xhr.responseText);
+                    $('#resultContainer').show();
+                    $('.url-load').addClass('d-none');
+                    $('#urlButton').removeClass('d-none');
+                }
+            });
+        }
+
+        $('#urlButton').on('click', function() {
+            const url = $('#myUrl').val();
+            $('#chatUrl').val(url);
+            $('.url-load').removeClass('d-none');
+            $('#urlButton').addClass('d-none');
+            fetchUrlSummary(url);
+        });
 
         $('#chatImage').click(function() {
             $('#chatThumbnail').click();
@@ -134,6 +177,8 @@
                     $('#chatDescription').val(chatData.description);
                     $('#chatRule').val(chatData.rule);
                     $('#chatUrl').val(chatData.url);
+                    $('#myUrl').val(chatData.url);
+                    fetchUrlSummary(chatData.url);
                     if(chatData.content){
                         $('#chatContent').val(JSON.stringify(chatData.content, null, 2));
                         createEditor(chatData.content)
@@ -277,8 +322,15 @@
         function generateCompletion(callback) {
 
             const apiUrl = '/api/openai-chat-creation';
-            const message = $('#userMessage').val();
             const chatId = 'chat_' + Date.now();
+
+            let message = $('#userMessage').val();
+            const urlSummary = $(`#resultText`).text()
+            const myUrl = $('#myUrl').val()
+
+            if(urlSummary.trim() != ''){
+                message = `URL : ${myUrl} \n Content Summary : ${urlSummary}. \n\n Considering the above informations, ${message}`
+            }
             
             // Clear the chatContent area only if it's not empty
             if ($('#chatContent').val().trim() !== '') {
@@ -554,7 +606,7 @@
                     system = `
                     Your are a JSON array generator. 
                     Use the user instruction to generate a JSON following the structure below. 
-                    Prompt the user responses.The responses must be short and related to the question.\n
+                    Prompt the user responses. The responses must be short and related to the question.\n
                     If the question requiere the user to input personal, provide an empty array of responses.
                     Provide polite questions.
                     Your answer must be in japanese. \n\n
@@ -586,7 +638,6 @@
             return system
         }
         function createEditor(json) {
-            console.log(json)
             $('#chatContentEdition').empty(); // Clear previous content
             json.forEach((qa, index) => {
                 const qaDiv = $('<div></div>').addClass('qa card mb-3 bg-light');

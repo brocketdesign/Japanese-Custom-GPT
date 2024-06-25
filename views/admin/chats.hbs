@@ -17,7 +17,7 @@
         <tbody>
             {{#each chats}}
             <tr>
-                <td>{{this._id}}</td>
+                <td><a href="/chat/{{this._id}}">{{this._id}}</a></td>
                 <td>{{this.name}}</td>
                 <td>{{this.updatedAt}}</td>
             </tr>

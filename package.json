@@ -26,6 +26,7 @@
     "aws-sdk": "^2.1642.0",
     "axios": "^1.7.2",
     "bcrypt": "^5.1.1",
+    "cheerio": "^1.0.0-rc.12",
     "dotenv": "^16.4.5",
     "eventsource-parser": "^1.1.2",
     "fastify": "^4.28.0",
@@ -43,7 +44,8 @@
     "node-fetch": "^3.3.2",
     "npm": "^10.8.1",
     "openai": "^4.49.1",
-    "point-of-view": "^6.3.0"
+    "point-of-view": "^6.3.0",
+    "puppeteer": "^22.12.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.19"

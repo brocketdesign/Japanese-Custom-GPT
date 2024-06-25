@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const aws = require('aws-sdk');
 const fastifyMultipart = require('fastify-multipart');
 const sessions = new Map(); // Define sessions map
+const { analyzeScreenshot, processURL } = require('../models/scrap');
 
 async function routes(fastify, options) {
     fastify.register(fastifyMultipart);
@@ -14,6 +15,40 @@ async function routes(fastify, options) {
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
         region: process.env.AWS_REGION
     });
+
+    fastify.get('/api/urlsummary', async (request, reply) => {
+        const url = request.query.url;
+        
+        if (!url) {
+            return reply.status(400).send({ error: 'URL parameter is required' });
+        }
+    
+        try {
+            const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+            const collection = db.collection('urlSummaries');
+    
+            // Check if the result for the URL already exists in the database
+            let result = await collection.findOne({ url: url });
+    
+            if (!result || !result.analysis) {
+                // If not found or analysis is falsy, analyze the screenshot
+                const analysisResult = await processURL(url);
+                // Save the result in the database
+                result = {
+                    url: url,
+                    analysis: analysisResult,
+                    timestamp: new Date()
+                };
+                await collection.insertOne(result);
+            }
+    
+            // Return the result
+            reply.send(result);
+        } catch (error) {
+            reply.status(500).send({ error: 'Internal Server Error', details: error.message });
+        }
+    });
+    
     fastify.post('/api/add-chat', async (request, reply) => {
         const parts = request.parts();
         let name, description, content, thumbnailUrl, chatId, thumbnailHash;

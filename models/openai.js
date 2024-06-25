@@ -71,7 +71,6 @@ const moduleCompletion = async (messages) => {
     apiKey: process.env.OPENAI_API_KEY,
   });
 
-
   const response = await getChatResponse(messages)
   return response.choices[0].message.content
 

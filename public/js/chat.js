@@ -157,7 +157,7 @@ $(document).ready(function() {
                             <div class="d-flex flex-row justify-content-start mb-4 message-container">
                                 <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;">
                                 <div id="message-${designStep}" class="p-3 ms-3 text-start" style="border-radius: 15px; background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);">
-                                    ${assistantMessage.content}
+                                    ${marked.parse(assistantMessage.content)}
                                 </div>
                             </div>
                     `;
@@ -166,7 +166,7 @@ $(document).ready(function() {
                         messageHtml += `
                             <div class="d-flex flex-row justify-content-end mb-4 message-container">
                                 <div id="response-${designStep}" class="p-3 me-3 border" style="border-radius: 15px; background-color: #fbfbfb;">
-                                    ${userMessage.content}
+                                    ${marked.parse(userMessage.content)}
                                 </div>
                             </div>
                         </div>

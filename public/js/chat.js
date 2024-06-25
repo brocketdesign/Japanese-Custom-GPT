@@ -26,7 +26,7 @@ $(document).ready(function() {
 
         $('.user-chat').click(function(){
             const selectUser = $(this).data('user')
-            fetchchatData(chatId, selectUser, true)
+            fetchchatData(chatId, selectUser)
         })
 
         window.choosePath = function(response) {

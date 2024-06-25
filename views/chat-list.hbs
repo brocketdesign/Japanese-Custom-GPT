@@ -65,7 +65,7 @@
         text-overflow: ellipsis;
     }
     .thumb{
-        width: 10vw;
+        width: 20vw;
     }
     @media (max-width: 600px) {
     /* Styles for small screens */
@@ -112,7 +112,7 @@
         {{#each chats}}
             <div class="chat-list item user-chat d-flex align-items-center justify-content-between px-0" style="cursor: pointer;" data-id="{{this._id}}" onclick="window.location.href='/chat/{{this._id}}'">
                 <div class="d-flex align-items-center w-100">
-                    <div class="thumb align-items-center text-center justify-content-center d-flex flex-column" >
+                    <div class="thumb align-items-center text-center justify-content-center d-flex flex-column col-1" >
                         <img class="img-fluid" src="{{#if this.thumbnailUrl}}{{this.thumbnailUrl}}{{else}}/img/logo.webp{{/if}}" alt="">
                     </div>
                     <div class="chat-list-details">

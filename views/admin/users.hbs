@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ja">
+    {{> dashboard-header}}
+<body>
+    {{> dashboard-nav}}
+<!-- Template to List Users -->
+<div class="container mt-5">
+    <h2 class="mb-4">Users</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each users}}
+            <tr>
+                <td>{{this._id}}</td>
+                <td>{{this.name}}</td>
+                <td>{{this.email}}</td>
+                <td>
+                    <a href="/admin/chat/{{this._id}}" class="btn btn-primary view-chats" data-user-id="{{this._id}}">View Chats</a>
+                </td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+</div>
+    {{> dashboard-footer}}

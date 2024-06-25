@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ja">
+    {{> dashboard-header}}
+<body>
+    {{> dashboard-nav}}
+<!-- Template to List User Chats -->
+<div class="container mt-5">
+    <h2 class="mb-4">Chats for User {{userId}}</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each chats}}
+            <tr>
+                <td>{{this._id}}</td>
+                <td>{{this.name}}</td>
+                <td>{{this.updatedAt}}</td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+    <a href="/admin/users" class="btn btn-secondary mt-3" id="back-to-users">Back to Users</a>
+</div>
+    {{> dashboard-footer}}

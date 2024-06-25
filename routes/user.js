@@ -25,7 +25,7 @@ async function routes(fastify, options) {
       const hashedPassword = await bcrypt.hash(password, 10);
   
       // Insert new user into the database
-      const result = await usersCollection.insertOne({ email, password: hashedPassword });
+      const result = await usersCollection.insertOne({ email, password: hashedPassword, createdAt:new Date() });
   
       if (!result.insertedId) {
         return reply.status(500).send({ error: 'ユーザーの登録に失敗しました' });
@@ -34,7 +34,7 @@ async function routes(fastify, options) {
       const newUser = { _id: result.insertedId, email };
   
       // Generate a token for the new user
-      const token = jwt.sign(newUser, process.env.JWT_SECRET, { expiresIn: '1h' });
+      const token = jwt.sign(newUser, process.env.JWT_SECRET, { expiresIn: '24h' });
   
       return reply
         .setCookie('token', token, { path: '/', httpOnly: true })

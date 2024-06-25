@@ -128,7 +128,7 @@ async function routes(fastify, options) {
     
                 await collection.updateOne({ _id: new fastify.mongo.ObjectId(chatId) }, { $set: storyDocument });
                 console.log('Chat updated', chatId);
-                return reply.send({ message: 'Chat updated successfully', name: name });
+                return reply.send({ message: 'Chat updated successfully', chatId});
             } else {
                 // Check if a story with the same name already exists
                 const existingStory = await collection.findOne({ name: name });
@@ -139,9 +139,11 @@ async function routes(fastify, options) {
                 storyDocument.createdAt = new Date(dateObj);
     
                 // Insert the new story into the MongoDB collection
-                await collection.insertOne(storyDocument);
-                console.log('New Chat added');
-                return reply.send({ message: 'Chat added successfully', name: name });
+                const result = await collection.insertOne(storyDocument);
+                const chatId = result.insertedId;
+                console.log('New Chat added:', chatId);
+                return reply.send({ message: 'Chat added successfully', chatId: chatId });
+
             }
         } catch (error) {
             // Handle potential errors

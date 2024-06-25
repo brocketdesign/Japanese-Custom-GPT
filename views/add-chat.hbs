@@ -43,6 +43,14 @@
             <img id="chatImage" src="/img/logo.webp" alt="chat Thumbnail" class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover;cursor: pointer;">
         </div>
     </div>  
+    <div>
+        <p class="text-small text-muted text-center" style="font-size:12px">
+            Lamixでは、あなたのウェブサイトに設置するためのカスタムチャットを作成できます。<br>
+            まずは、用途に合わせたチャットをAIで作成いたしますので、<br>
+            作成したいチャットの詳細を教えてください。<br>
+            下のテンプレートから選んで始めることもできます。
+        </p>
+    </div>
     <div class="scroll-container d-flex justify-content-between" id="button-container">
     </div>
     <div id="chatInput" class="input-group rounded-0 rounded-bottom mt-3 mb-4" style="bottom: 0px;right: 0;left: 0;width: auto;margin: auto;">
@@ -57,7 +65,7 @@
         <label for="chatContent" class="form-label d-none">チャットコンテンツ (JSON形式)</label>
         <textarea class="form-control" id="chatContent" name="content" rows="10" required></textarea>
     </div>
-    <form id="chatForm" class="mb-5 pb-5 mx-3">
+    <form id="chatForm" class="mb-5 pb-5 mx-3 d-none">
         <div class="mb-3 mx-3" id="thumbnailInputContainer" style="display: none;">
             <label for="chatThumbnail" class="form-label">チャットのサムネイルをアップロード</label>
             <input type="file" class="form-control" id="chatThumbnail" name="thumbnail" accept="image/*">
@@ -88,7 +96,7 @@
             <button type="button" id="addQuestionBtn" class="btn btn-light float-end" data-toggle="tooltip" title="追加" data-original-title="Share"><i class="fas fa-plus"></i> </button>
             <button type="button" id="saveButton" class="btn btn-primary mt-3 d-none">Save</button>
         </div>
-        <button type="submit" class="btn btn-secondary btn-large w-100 my-5">保存する</button>
+        <button type="submit" class="btn btn-dark btn-large w-100 my-5" style="border-radius:50px">保存して試す</button>
     </form>
 </div>
 
@@ -184,12 +192,13 @@
                 contentType: false,
                 data: formData,
                 success: function(response) {
+                    const {chatId}=response
                     Swal.fire(
                         '成功!',
                         'チャットが正常に追加されました!',
                         'success'
                     ).then(()=>{
-                        window.location = '/chat-list'
+                        window.location = '/chat/'+chatId
                     });
                 },
                 error: function(error) {

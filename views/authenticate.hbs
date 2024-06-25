@@ -137,14 +137,8 @@ $(document).ready(function() {
             contentType: 'application/json',
             data: JSON.stringify({ email, password }),
             success: function(response) {
-                Swal.fire({
-                  icon: 'success',
-                  title: '成功',
-                  text: 'ユーザーが正常に登録されました',
-                  }).then(() => {
-                  localStorage.setItem('token', response.token);
-                  window.location.href = response.redirect;
-                });
+                localStorage.setItem('token', response.token);
+                window.location.href = response.redirect;
             },
             error: function(xhr) {
                 const res = xhr.responseJSON;
@@ -168,14 +162,8 @@ $(document).ready(function() {
         contentType: 'application/json',
         data: JSON.stringify({ email, password }),
         success: function(response) {
-            Swal.fire({
-            icon: 'success',
-            title: '成功',
-            text: 'ログインに成功しました',
-            }).then(() => {
-            localStorage.setItem('token', response.token);
-            window.location.href = response.redirect;
-            });
+          localStorage.setItem('token', response.token);
+          window.location.href = response.redirect;
         },
         error: function(xhr) {
             const res = xhr.responseJSON;

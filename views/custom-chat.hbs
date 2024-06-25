@@ -69,8 +69,15 @@
             outline: none;
             box-shadow: none; /* If there is a box shadow applied on focus */
         }
+        .user-chat{
+            cursor: pointer;
+        }
+        .user-chat:hover{
+            background-color: #f8f9fa;
+        }
     </style>
     <div class="container mt-4">
+        
         <div class="chat-list-actions col-sm-3">
             <div class="d-flex align-items-center">
                 <ul class="list-unstyled mb-0 d-flex justify-content-center align-items-center flex-wrap bg-light">
@@ -97,6 +104,23 @@
                 </ul>
             </div>
         </div>
+
+        <div class="card my-3">
+            <div class="cacccrd-header">
+                総要素数: {{userChat.length}}
+            </div>
+            <ul class="list-group list-group-flush">
+                {{#each userChat}}
+                {{#if this.updatedAt}}
+                    <li class="list-group-item user-chat" data-user="{{this.userId}}">
+                    <span class="w-100 d-inline-block">{{this._id}}</span>
+                    <small class="text-muted"><i class="fas fa-clock me-1"></i>{{this.updatedAt}}</small>
+                {{/if}}
+                </li>
+                {{/each}}
+            </ul>
+        </div>
+
         <div id="chat-container" class="card mt-3 mb-5">
             <div class="d-flex justify-content-between card-header text-center bg-dark text-white">
                 <div>LAMIXチャット</div>

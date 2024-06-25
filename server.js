@@ -133,13 +133,15 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     });
     fastify.get('/chat/:chatId', {
       preHandler: [fastify.authenticate]
-    }, (request, reply) => {
+    }, async (request, reply) => {
       const chatId = request.params.chatId
       if(chatId){
         const userId = request.user._id
-        reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd', userId, chatId });
+        const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+        let userChat = await collectionUserChat.find({ chatId }).toArray();
+        return reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd', userId, chatId, userChat });
       }else{
-        reply.view('chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd' });
+        return reply.view('chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd' });
       }
     });
     fastify.get('/chat-index', (request, reply) => {

@@ -24,6 +24,11 @@ $(document).ready(function() {
             fetchchatData(chatId, userId, true) ;
         })
 
+        $('.user-chat').click(function(){
+            const selectUser = $(this).data('user')
+            fetchchatData(chatId, selectUser, true)
+        })
+
         window.choosePath = function(response) {
             currentStep++;
             hideOtherChoice(response,currentStep,function(){

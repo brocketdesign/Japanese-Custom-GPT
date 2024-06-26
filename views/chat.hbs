@@ -24,7 +24,7 @@
     
     </style>
 <body>
-    <nav class="navbar navbar-light bg-transparent py-1 fixed-top" style="border-bottom: 1px solid rgba(210, 184, 255, 0.2);">
+    <nav class="navbar navbar-light py-1 fixed-top" style="background-color: #c7b4ec4f;border-bottom: 1px solid rgba(210, 184, 255, 0.2);">
         <div class="container-fluid justify-content-between">
             <a class="navbar-brand d-flex flex-row align-items-center bg-white px-4 py-2" href="/chat-index">
                 <img src="/img/logo.webp" alt="" class="logo">
@@ -33,22 +33,13 @@
 
             <ul class="nav d-none d-lg-flex">
                 <li class="nav-item">
-                    <a href="/top" class="nav-link text-white fw-bold">トップ</a>
+                    <a href="/" class="nav-link text-white fw-bold">トップ</a>
                 </li>
                 <li class="nav-item">
-                    <a href="/product" class="nav-link text-white fw-bold">プロダクト</a>
+                    <a href="#lamix-chat-widget" class="nav-link text-white fw-bold">LAMIXとは</a>
                 </li>
                 <li class="nav-item">
-                    <a href="/case-study" class="nav-link text-white fw-bold">導入事例</a>
-                </li>
-                <li class="nav-item">
-                    <a href="/event" class="nav-link text-white fw-bold">イベント</a>
-                </li>
-                <li class="nav-item">
-                    <a href="/media" class="nav-link text-white fw-bold">メディア掲載</a>
-                </li>
-                <li class="nav-item">
-                    <a href="/news" class="nav-link text-white fw-bold">ニュース</a>
+                    <a href="#nagare" class="nav-link text-white fw-bold">導入手順</a>
                 </li>
             </ul>
             <a href="/authenticate" class="btn px-4 py-2 border" style="border-radius:40px;background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);">
@@ -83,7 +74,7 @@
             <div id="lamix-chat-widget" data-id="667b8effe5957477354a94ab"></div><script src="https://lamix.hatoltd.com/js/chat-widget.js"></script>        
         </div>
     </section>
-    <section class="p-best mb-5">
+    <section id="nagare" class="p-best mb-5">
       <div class="c-section-inner">
         <h2 class="c-section-title u-tal">
           未来への一歩は、<br>
@@ -125,9 +116,6 @@
                 </div>
             </li>
         </ul>
-        <div class="text-center mt-4">
-          <a href="/authenticate" class="btn btn-gradient-radius btn-large px-5 py-3 m-auto w-100" style="font-size: 21px;"><span>無料で作成する<i class="mx-2 fas fa-arrow-circle-right"></i></span></a>
-        </div>
       </div>
     </section>
  {{> dashboard-footer}}

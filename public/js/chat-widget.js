@@ -110,7 +110,7 @@
             </style>
             <div id="chat-widget-container" class="card">
                 <div class="d-flex justify-content-between card-header text-center bg-dark text-white">
-                    <div>LAMIXチャット</div>
+                    <div id="chat-title">LAMIXチャット</div>
                     <div class="d-flex align-items-center">
                         <div id="reset-chat" style="cursor: pointer;"><i class="fas fa-comment-medical"></i></div>
                     </div>

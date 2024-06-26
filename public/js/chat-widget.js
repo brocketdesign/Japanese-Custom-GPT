@@ -151,8 +151,10 @@
         loadScript('https://lamix.hatoltd.com/js/chat.js');
         // Load marked.min.js script
         loadScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js');
-        // Load marked.min.js script
+        // Load sweetalert2.js script
         loadScript('https://cdn.jsdelivr.net/npm/sweetalert2@11');
+        // Load FontAwesome.js script
+        loadScript('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css');
 
     }
 })();

@@ -91,7 +91,7 @@ $(document).ready(function() {
                         if(currentStep < totalSteps){
                             displayStep(chatData, currentStep);
                         }else{
-                            generateCompletion(userId, chatId)
+                            generateCompletion()
                             isNew = false
                         }
                     },
@@ -124,10 +124,32 @@ $(document).ready(function() {
                     chatName = data.chat.name
                     thumbnail = data.chat.thumbnailUrl
                     $('#chat-title').text(chatName)
+
                     if(!isNew){
                         displayChat(data.userChat.messages)
-                    }else{
+                    }
+
+                    if(isNew && chatData.length > 0){
                         displayStep(chatData, currentStep);
+                    }
+
+                    if(isNew && chatData.length == 0 ){
+                        $.ajax({
+                            url: API_URL+'/api/chat-data',
+                            type: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            data: JSON.stringify({ currentStep:0, message:'Start the conversation', userId, chatId, isNew }),
+                            success: function(response) {
+                                isNew = false
+                                generateCompletion()
+                            },
+                            error: function(error) {
+                                console.log(error.statusText);
+                            }
+                        });
+                        
                     }
 
                 },
@@ -199,7 +221,7 @@ $(document).ready(function() {
                 if(currentStep < totalSteps){
                     displayStep(chatData, currentStep);
                 }else{
-                    generateCompletion(userId, chatId)
+                    generateCompletion()
                 }
             } else {
                 //generateChoice();
@@ -324,7 +346,7 @@ $(document).ready(function() {
             return JSON.parse(jsonString);
         }
         
-        function generateCompletion($element){
+        function generateCompletion(){
             
             const apiUrl = API_URL+'/api/openai-chat-completion';
   
@@ -339,40 +361,29 @@ $(document).ready(function() {
                     const eventSource = new EventSource(streamUrl);
                     let markdownContent = "";
 
-                    if(!$element){
-                        hideOtherChoice(false, currentStep)
-                        // Initialize the bot response container
-                        const botResponseContainer = $(`
-                            <div id="container-${currentStep}">
-                                <div class="d-flex flex-row justify-content-start mb-4 message-container">
-                                    <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;">
-                                    <div id="completion-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
-                                </div>
-                                <div id="response-${currentStep}" class="choice-container" ></div>
-                            </div>`);
-                        $('#chatContainer').append(botResponseContainer);
-                        $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
-                    }
+                    hideOtherChoice(false, currentStep)
+                    // Initialize the bot response container
+                    const botResponseContainer = $(`
+                        <div id="container-${currentStep}">
+                            <div class="d-flex flex-row justify-content-start mb-4 message-container">
+                                <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;">
+                                <div id="completion-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
+                            </div>
+                            <div id="response-${currentStep}" class="choice-container" ></div>
+                        </div>`);
+                    $('#chatContainer').append(botResponseContainer);
+                    $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
+                    
 
                     eventSource.onmessage = function(event) {
                         const data = JSON.parse(event.data);
                         markdownContent += data.content;
-
-                        if($element){
-                            $element.removeClass('blur-text')
-                            $element.html(marked.parse(markdownContent));
-                        }else{
-                            $(`#completion-${currentStep}`).html(marked.parse(markdownContent));
-                        }
-
+                        $(`#completion-${currentStep}`).html(marked.parse(markdownContent));
                     };
 
                     eventSource.onerror = function(error) {
                         console.log('EventSource failed.');
                         eventSource.close();
-                        if(!$element){
-                            //generateChoice();
-                        }
                     };
                 },
                 error: function(error) {

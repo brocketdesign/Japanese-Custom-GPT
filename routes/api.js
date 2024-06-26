@@ -409,11 +409,13 @@ async function routes(fastify, options) {
                     chatId,
                     messages: [
                         { "role": "system", "content": `${chatDocument.rule ? 'You are a japanese assistant about : ' + chatDocument.description  + chatDocument.rule :'You are a japanese assistant about : ' + chatDocument.description  +'You provide short and friendly answers. You never answer with lists. You always prompt the user to help continue the conversation smoothly.'}`},
-                        { "role": "assistant", "content": chatDocument.content[currentStep].question }
                     ],
                     createdAt: dateObj,
                     updatedAt: dateObj
                 };
+                if(chatDocument.content && chatDocument.content[currentStep]){
+                    userChatDocument.messages.push({ "role": "assistant", "content": chatDocument.content[currentStep].question })
+                }
             }else{
                 if(chatDocument.content[currentStep]){
                     userChatDocument.messages.push({ "role": "assistant", "content": chatDocument.content[currentStep].question });

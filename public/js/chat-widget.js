@@ -24,6 +24,10 @@
                     overflow: auto;
                     padding: 15px 0px;
                 }
+                #chatContainer {
+                    height: 75vh;
+                    overflow-y: scroll;
+                }
                 #chat-container {
                     flex: 1;
                     display: flex;
@@ -35,7 +39,7 @@
                 }
                 .card-body {
                     flex-grow: 1;
-                    overflow-y: auto;
+                    overflow-y: hidden;
                     position: relative;
                 }
                 #messages {
@@ -112,24 +116,24 @@
                     box-shadow: none; /* If there is a box shadow applied on focus */
                 }
             </style>
-            <div id="chat-widget-container" class="card">
+            <div id="chat-widget-container" class="card shadow">
                 <div class="d-flex justify-content-between card-header text-center bg-dark text-white">
                     <div id="chat-title">LAMIXチャット</div>
                     <div class="d-flex align-items-center">
                         <div id="reset-chat" style="cursor: pointer;"><i class="fas fa-comment-medical"></i></div>
                     </div>
                 </div>
-                <div class="card-body text-center py-5 shadow" style="min-height:250px;height: 300px;overflow-y: auto;position: initial;">
+                <div class="card-body text-center py-0" style="min-height:250px;height: 300px;overflow-y:hidden;">
                     <h5 class="card-title d-none">Card Title</h5>
-                    <div id="chatContainer" class="pb-5">
+                    <div id="chatContainer" class="pb-5 pt-2">
                     </div>
                 </div>
                 <div id="chatInput" class="input-group rounded-0 rounded-bottom bg-white" style="position: absolute;bottom: 0;left: 0;right: 0;padding: 0px 15px 25px 15px;">
                     <textarea id="userMessage" class="form-control py-3 border" style="font-size: 14px;padding-left: 30px;" placeholder="メッセージを入力してください"></textarea>
                     <button id="sendMessage" class="btn btn-light px-4 border"><i class="fas fa-paper-plane"></i></button>
                 </div>
-                <div class="card-footer text-muted text-center d-none">
-                    フッターコンテンツ
+                <div class="card-footer text-muted text-center" style="font-size: 12px;">
+                        このチャットボットはLAMIXで作成しました。興味のある方は<a href="http://lamix.hatoltd.com/" target="_blank">こちら</a>をクリックしてね。
                 </div>
             </div>
         `;

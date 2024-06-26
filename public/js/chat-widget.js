@@ -71,6 +71,9 @@
                     z-index: 1000;
                     padding: 10px;
                 }
+                #lamix-chat-widget {
+                    width: 100%;
+                }
                 #chat-widget-container.fixed {
                     position: fixed;
                     bottom: 0;

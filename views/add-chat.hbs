@@ -396,15 +396,54 @@
                         $('#chatContent').val(cleanedContent)
 
                         // Generate title and description based on the cleaned content
-                        generateName(cleanedContent, chatId);
-                        generateCategory(cleanedContent, chatId);
-                        generateDescription(cleanedContent, chatId);
+                        generateName(message+'\n'+cleanedContent, chatId);
+                        generateCategory(message+'\n'+cleanedContent, chatId);
+                        generateDescription(message+'\n'+cleanedContent, chatId);
+                        generateRule(message+'\n'+cleanedContent, chatId);
 
                         $('#chatInput .load').toggleClass('d-none')
                         $('#sendMessage').toggleClass('d-none')
 
                         createEditor(JSON.parse(cleanedContent))
                         $('#chatForm').removeClass('d-none')
+                    };
+                },
+                error: function(error) {
+                    console.error('Error:', error);
+                }
+            });
+        }
+        function generateRule(cleanedContent, chatId, callback) {
+            const apiUrl = '/api/openai-chat-creation';
+            if ($('#chatRule').val().trim() !== '') {
+                return
+            }   
+            $('#chatRule').val('')
+            $.ajax({
+                url: apiUrl,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ chatId, message: cleanedContent, system : getSystem('chatRule') }),
+                success: function(response) {
+
+                    const sessionId = response.sessionId;
+                    const streamUrl = `/api/openai-chat-creation-stream/${sessionId}`;
+                    const eventSource = new EventSource(streamUrl);
+                    let markdownContent = "";
+
+                    eventSource.onmessage = function(event) {
+                        const data = JSON.parse(event.data);
+                        markdownContent += data.content;
+
+                        // Update the bot response container with the new content
+                        $('#chatRule').val(markdownContent);
+
+                    };
+
+                    eventSource.onerror = function(error) {
+                        console.log('EventSource failed.');
+                        eventSource.close();
+                        resizeTextarea($('#chatRule')[0])
                     };
                 },
                 error: function(error) {
@@ -482,6 +521,7 @@
                     eventSource.onerror = function(error) {
                         console.log('EventSource failed.');
                         eventSource.close();
+                        resizeTextarea($('#chatDescription')[0])
                     };
                 },
                 error: function(error) {
@@ -489,6 +529,7 @@
                 }
             });
         }
+
         function generateCategory(cleanedContent, chatId) {
 
             const apiUrl = '/api/openai-chat-creation';
@@ -595,6 +636,12 @@
             var system;
 
             switch (systemType) {
+                case 'chatRule':
+                    system = `
+                        You are a japanese chatbot tone explanator. \n
+                        You take the provided content by the user and you explain the chatbot character, how it aswwer, which tone. ONLY THE TONE EXPLANATION IN JAPANESE.NO COMMENTS.
+                    `;
+                    break;
                 case 'chatQuestion':
                     system = `
                         You are a JSON generator. 

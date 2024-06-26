@@ -64,6 +64,7 @@
         #userMessage {
             border-radius: 30px 0px 0px 30px !important;
             background-color: #f8f9fa;
+            height: 60px;
         }
         #userMessage:focus {
             outline: none;
@@ -78,8 +79,8 @@
     </style>
     <div class="container mt-4">
         
-        <div class="chat-list-actions col-sm-3">
-            <div class="d-flex align-items-center">
+        <div class="chat-list-actions col-sm-3 text-end  w-100">
+            <div class="d-inline-block align-items-center">
                 <ul class="list-unstyled mb-0 d-flex justify-content-center align-items-center flex-wrap bg-light">
                     <li>
                         <button class="text-dark m-1 btn action-button chart-button" data-id="{{chatId}}" data-toggle="tooltip" title="分析" data-original-title="Analyze">
@@ -135,7 +136,7 @@
                         <div id="chatContainer" class="pb-5">
                         </div>
                         <div id="chatInput" class="input-group rounded-0 rounded-bottom bg-white" style="position: absolute;bottom: 0;left: 0;right: 0;padding: 0px 15px 25px 15px;">
-                            <input type="text" id="userMessage" class="form-control py-3 border" placeholder="メッセージを入力してください">
+                            <textarea id="userMessage" class="form-control py-3 border" placeholder="メッセージを入力してください"></textarea>
                             <button id="sendMessage" class="btn btn-light px-4 border"><i class="fas fa-paper-plane"></i></button>
                         </div>
                     </div>

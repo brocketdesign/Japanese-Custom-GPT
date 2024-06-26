@@ -8,7 +8,6 @@ $(document).ready(function() {
         // Now you can use the userID variable or id parameter here
         const chatId = getIdFromUrl(window.location.href) || $(`#lamix-chat-widget`).data('id');
         const userId = user._id
-        console.log({userId,chatId})
         let messagesCount = 0 
         let currentStep = 0;
         let totalSteps = 0;
@@ -19,7 +18,20 @@ $(document).ready(function() {
 
         sendCustomData({action: 'viewpage'});
         fetchchatData(chatId, userId); // Fetch the initial chat data when the page loads
+
         
+        $('textarea').each(function() {
+            resizeTextarea(this);
+            $(this).on('input change', function() {
+                resizeTextarea(this);
+            });
+        });
+
+        function resizeTextarea(element){
+            element.style.height = 'auto';
+            element.style.height = (element.scrollHeight - 20 ) + 'px';  
+        }
+
         $('#reset-chat').click(function(){
             fetchchatData(chatId, userId, true) ;
         })
@@ -376,7 +388,7 @@ $(document).ready(function() {
 
         // Event handler for the Enter key
         $('#userMessage').on('keypress', function(event) {
-            if (event.which == 13) { // Enter key is pressed
+            if (event.which == 13 && !event.shiftKey) { // Enter key is pressed without Shift
                 sendMessage();
             }
         });     

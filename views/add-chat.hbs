@@ -54,7 +54,7 @@
     <div class="scroll-container d-flex justify-content-between" id="button-container">
     </div>
     <div id="chatInput" class="input-group rounded-0 rounded-bottom mt-3 mb-4" style="bottom: 0px;right: 0;left: 0;width: auto;margin: auto;">
-        <input type="text" id="userMessage" class="form-control py-3" style="font-size: 14px;padding-left: 30px;" placeholder="チャットについて教えてください">
+        <textarea rows="1" id="userMessage" class="form-control py-3" style="font-size: 14px;padding-left: 30px;" placeholder="チャットについて教えてください"></textarea>
         <button id="sendMessage" class="btn btn-light px-4 border"><i class="fas fa-paper-plane"></i></button>
         <div class="load bg-light px-4 d-flex justify-content-center align-items-center border d-none">
             <div class="spinner-grow spinner-grow-sm text-dark" role="status"><span class="visually-hidden">Loading...</span></div>
@@ -126,6 +126,26 @@
         if (chatId) {
             fetchchatData(chatId);
         }
+        
+        $('textarea').each(function() {
+            resizeTextarea(this);
+            $(this).on('input change', function() {
+                resizeTextarea(this);
+            });
+        });
+
+        function resizeTextarea(element){
+            if($(element).val().trim()!=''){
+                element.style.height = 'auto';
+                element.style.height = (element.scrollHeight) + 'px';  
+            }else{
+                element.style.height = '60px'; 
+            }
+        }
+
+        $('#myUrl').on('input change',function(){
+             $('#chatUrl').val($(this).val());
+        });
         function fetchUrlSummary(url) {
             $.ajax({
                 url: '/api/urlsummary',
@@ -174,11 +194,20 @@
                 success: function(chatData) {
                     $('#chatName').val(chatData.name);
                     $('#chatCategory').val(chatData.category);
-                    $('#chatDescription').val(chatData.description);
-                    $('#chatRule').val(chatData.rule);
+                    var chatDescriptionTextare = $('#chatDescription')
+                    chatDescriptionTextare.val(chatData.description);
+                    setTimeout(function(){
+                        resizeTextarea(chatDescriptionTextare[0]);
+                    },500)
+                    var chatRuleTextarea = $('#chatRule');
+                    chatRuleTextarea.val(chatData.rule);
+                    setTimeout(function(){
+                        resizeTextarea(chatRuleTextarea[0]);
+                    },500)
+                    
                     $('#chatUrl').val(chatData.url);
                     $('#myUrl').val(chatData.url);
-                    fetchUrlSummary(chatData.url);
+                    fetchUrlSummary(chatData.url);            
                     if(chatData.content){
                         $('#chatContent').val(JSON.stringify(chatData.content, null, 2));
                         createEditor(chatData.content)
@@ -238,13 +267,7 @@
                 data: formData,
                 success: function(response) {
                     const {chatId}=response
-                    Swal.fire(
-                        '成功!',
-                        'チャットが正常に追加されました!',
-                        'success'
-                    ).then(()=>{
-                        window.location = '/chat/'+chatId
-                    });
+                    window.location = '/chat/'+chatId
                 },
                 error: function(error) {
                     Swal.fire(
@@ -264,10 +287,11 @@
 
         // Event handler for the Enter key
         $('#userMessage').on('keypress', function(event) {
-            if (event.which == 13) { // Enter key is pressed
+            if (event.which == 13 && !event.shiftKey) { // Enter key is pressed without Shift
                 generateCompletion();
             }
         });
+
 
     const buttonsData = [
         {

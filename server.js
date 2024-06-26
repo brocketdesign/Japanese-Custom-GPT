@@ -105,15 +105,6 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     return tempUser;
   });
     
-    // Example route using the getUser decorator
-    fastify.get('/some-api', async (request, reply) => {
-      const user = await fastify.getUser(request, reply);
-      if (user.isTemporary) {
-        reply.send({ message: 'Hello, guest!', user });
-      } else {
-        reply.send({ message: 'Hello, user!', user });
-      }
-    });
     // Routes
     fastify.get('/', async (request, reply) => {
       return reply.view('chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd' });
@@ -153,8 +144,6 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       try {
         const userId = new fastify.mongo.ObjectId(request.user._id)
         const chatsCollection = db.collection('chats');
-
-        // Query and sort chats
         const sortedChats = await chatsCollection.find({ userId }).sort({ "updatedAt": -1 }).toArray();
         
         return reply.view('chat-list', { title: 'LAMIX | Powered by Hato,Ltd', chats: sortedChats, user: request.user  });      
@@ -178,7 +167,6 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         return reply.status(500).send({ error: 'Failed to retrieve chatId' });
       }
     });
-
     fastify.get('/users', (request, reply) => {
       if (process.env.MODE == 'local') {
         reply.view('user-list.hbs', { title: 'LAMIX | Powered by Hato,Ltd' });
@@ -186,7 +174,6 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         reply.redirect('/');
       }
     });
-
     fastify.get('/story/:id', (request, reply) => {
       const storyId = request.params.id;
       let variant = request.cookies.variant;
@@ -236,12 +223,19 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     });
     fastify.get('/dashboard', {
       preHandler: [fastify.authenticate]
-    }, (request, reply) => {
+    }, async (request, reply) => {
       try {
-        reply.redirect('/chat-list')
-        //reply.view('dashboard.hbs', { title: 'LAMIX | Powered by Hato,Ltd', user: request.user });
+
+        const userId = new fastify.mongo.ObjectId(request.user._id)
+        const chatsCollection = db.collection('chats');
+        const chats = await chatsCollection.find({ userId }).toArray();
+        if(chats.length == 0){
+          return reply.redirect('/chat/edit/')
+        }else{
+          return reply.redirect('/chat-list')
+        }
       } catch (err) {
-        reply.status(500).send({ error: 'Unable to render the dashboard' });
+        return reply.status(500).send({ error: 'Unable to render the dashboard' });
       }
     });
     fastify.get('/settings', {

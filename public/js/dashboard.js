@@ -5,13 +5,7 @@ $(document).ready(function() {
             url: '/user/logout',
             type: 'POST',
             success: function(response) {
-                Swal.fire({
-                    title: '成功',
-                    text: response.status,
-                    icon: 'success'
-                }).then(() => {
-                    window.location.href = '/authenticate';
-                });
+                window.location.href = '/authenticate';
             },
             error: function() {
                 Swal.fire({

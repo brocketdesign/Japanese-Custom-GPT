@@ -50,23 +50,60 @@
     </nav>
     <section class="hero bg-light pt-5 p-fv" style="background-position:bottom!important;">
         <div class="container text-center d-flex flex-column align-items-center pt-5">
-            <div class="pt-5">
-                <h1 class="fw-bold">あなたのウェブサイトに<br>スマートなチャットを</h1>
-                <p class="fw-bold mt-4">サイトのエンゲージメントを高め、ユーザー満足度を向上。<br>訪問者が迅速に情報を得て、ストレスなく率直な質問ができます。 </p>
-                <p id="chat-hero" class="text-center fw-bold" style="min-height: 50px;font-size:21px;position: absolute;bottom:100px;left:0;right:0;"></p>
-                <a href="/authenticate" class="btn btn-dark btn-lg px-5 py-3 m-5 d-none">無料で試す<i class="mx-2 fas fa-arrow-circle-right"></i></a>
-            </div>
             <div class="text-center my-5">
-                <img src="/img/top1.png" alt="LAMIXボット ロゴ" class="mb-4 top-logo m-auto top-img" style="border-radius: 10px;background-color: #8375b3;">
+                <img src="/img/logo.webp" alt="LAMIXボット ロゴ" class="mb-4 top-logo m-auto top-img" style="border-radius: 100%;background-color: #8375b3;">
+            </div>
+            <div class="container text-center text-dark d-flex flex-column align-items-center pb-5">
+                <h2 class="c-section-title u-tal ">
+                    <span class="u-font-manrope u-color-grad">Lamix</span>とは、
+                </h2>
+                <h4>簡単にカスタムチャットを作成し、ウェブサイトに埋め込むことができるツールです。ブログの内容や商品情報を元に、ユーザーに必要な情報をすぐに提供できます。</h4>
+            </div>
+        </div>
+    </section>
+    <section class="container mt-5">
+        <div>
+            <img src="/img/top-bg2.png" class="m-auto">
+        </div>
+    </section>
+    <section class="p-5" style="background-color:#88888812">
+         <div class="row row-cols-1 row-cols-sm-3 text-center" style="justify-content: center;align-items: center;">
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <img src="/img/point1.png" class="card-img-top" alt="チャットボット作成" style="width: 50px;margin: auto;margin-top: 20px;">
+                    <div class="card-body">
+                        <h5 class="card-title">チャットボットを任意のテーマで作成</h5>
+                        <p class="card-text"><i class="fas fa-robot"></i> LAMIXを使えば、どんなテーマでも簡単にチャットボットを作成できます。あなたのビジネスに合ったカスタマイズが可能です。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <img src="/img/point2.png" class="card-img-top" alt="ウェブサイト統合" style="width: 50px;margin: auto;margin-top: 20px;">
+                    <div class="card-body">
+                        <h5 class="card-title">簡単にウェブサイトに統合</h5>
+                        <p class="card-text"><i class="fas fa-code"></i> 簡単な統合手順で、チャットボットを任意のウェブサイトに追加できます。専門知識がなくても安心です。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <img src="/img/point3.png" class="card-img-top" alt="SEOとユーザーエンゲージメント" style="width: 50px;margin: auto;margin-top: 20px;">
+                    <div class="card-body">
+                        <h5 class="card-title">SEOとユーザーエンゲージメントの向上</h5>
+                        <p class="card-text"><i class="fas fa-chart-line"></i> LAMIXのチャットボットは、SEOの向上とユーザーエンゲージメントの強化に役立ちます。より多くの訪問者を引きつけ、維持します。</p>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
     <section>
         <div class="container text-center d-flex flex-column align-items-center py-5">
-            <h2 class="c-section-title u-tal">
-                <span class="u-font-manrope u-color-grad">Lamix</span>とは、
-            </h2>
-            <h5>簡単にカスタムチャットを作成し、ウェブサイトに埋め込むことができるツールです。ブログの内容や商品情報を元に、ユーザーに必要な情報をすぐに提供できます。</h5>
+            <h1 class="fw-bold">あなたのウェブサイトに<br>スマートなチャットを</h1>
+            <p class="fw-bold mt-4">サイトのエンゲージメントを高め、ユーザー満足度を向上。<br>訪問者が迅速に情報を得て、ストレスなく率直な質問ができます。 </p>
+        </div>
+        <div class="d-flex flex-row">
+            <img src="/img/arrow-down.gif" class="m-auto" style="width:75px">
         </div>
     </section>
     <section>
@@ -80,7 +117,7 @@
           未来への一歩は、<br>
           <span class="u-font-manrope u-color-grad">Lamix</span>から始まる！
           <div class="p-best-illust">
-            <span><img src="/img/robot.png" alt="" class="u-rocketman" style="max-width: 30vw;"></span>
+            <span><img src="/img/logo.webp" alt="" class="u-rocketman" style="max-width: 30vw;"></span>
           </div>
         </h2>
         <ul class="p-best__lists" style="list-style: none;padding: 0;">
@@ -178,8 +215,6 @@ let catchphrases = [
             }, 3000);
         });
     }
-
-    displayNextCatchphrase();
     
 });
 

@@ -19,10 +19,18 @@
     .chat-container {
         display: flex;
         overflow-x: auto;
+        padding-bottom: 10px;
     }
     .chat-card {
-        min-width: 250px;
+        flex: 0 0 auto;
+        width: 50vw;
         margin-right: 15px;
+    }
+    .online-text {
+        width: 95%; /* Adjust the width as needed */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     @media (max-width: 600px) {
         .top-img{
@@ -64,26 +72,29 @@
                 <h2 class="c-section-title u-tal ">
                     <span class="u-font-manrope u-color-grad">Lamix</span>とは、
                 </h2>
-                <h4 class="text-center">URLを入力するだけで、内容の要約とチャットボットを作成します。このチャットボットはどこでも共有でき、話題に関する会話が可能です</h4>
-                <div class="input-group my-5">
+                <h4>簡単にカスタムチャットを作成し、ウェブサイトに埋め込むことができるツールです。ブログの内容や商品情報を元に、ユーザーに必要な情報をすぐに提供できます。</h4>
+                <h4 class="text-center d-none">URLを入力するだけで、内容の要約とチャットボットを作成します。このチャットボットはどこでも共有でき、話題に関する会話が可能です</h4>
+                <div class="input-group my-5 d-none">
                     <input type="text" id="url-input" class="form-control" placeholder="URLを入力してください" aria-label="URLを入力してください" aria-describedby="button-addon2">
                     <button class="btn btn-large btn-primary" type="button" id="save-url">チャットボットを作成する</button>
                 </div>
-                <h4 class="d-none">簡単にカスタムチャットを作成し、ウェブサイトに埋め込むことができるツールです。ブログの内容や商品情報を元に、ユーザーに必要な情報をすぐに提供できます。</h4>
             </div>
         </div>
     </section>
     <section>
         <div class="container mt-5">
+            <h4 class="mb-4">Try these</h4>
             <div class="chat-container">
                 <!-- Chat Card Example -->
                 {{#each chats}}
-                <div class="card chat-card" onclick="redirectToChat('{{this._id}}')">
-                    <img src="{{this.thumbnailUrl}}" class="card-img-top" alt="Thumbnail" onerror="this.src='default-thumbnail.png';">
+                <div class="card chat-card flex-row bg-light border-0" style="border-radius: 20px; cursor:pointer" onclick="redirectToChat('{{this._id}}')">
+                    <div style="min-width:100px;width: 300px; height: auto; display: flex; justify-content: center; align-items: center;">
+                        <img src="{{this.thumbnailUrl}}" class="img-fluid m-3" alt="Thumbnail" onerror="this.src='/img/logo.webp';" style="width: 50px; height: 50px; object-fit: cover;border-radius: 50px;">
+                    </div>
                     <div class="card-body">
-                        <h5 class="card-title">{{this.name}}</h5>
-                        <p class="card-text">{{this.description}}</p>
-                        <p class="text-muted"><i class="fas fa-clock"></i> 更新: {{this.updatedAt}}</p>
+                        <h6 class="card-title fw-bold">{{this.name}}</h6>
+                        <p class="card-text online-text">{{this.description}}</p>
+                        <p class="text-muted d-none"><i class="fas fa-clock"></i> 更新: {{this.dateStrJP}}</p>
                     </div>
                 </div>
                 {{/each}}
@@ -186,7 +197,13 @@
     </section>
  {{> dashboard-footer}}
 <script>
+    
+    function redirectToChat(chatId) {
+        localStorage.setItem('selectedChatId', chatId);
+        window.location.href = '/chat/' + chatId;
+    }
 $(document).ready(function() {
+
 
     $('#save-url').click(function() {
         var urlInput = $('#url-input').val();

@@ -16,4 +16,20 @@ $(document).ready(function() {
             }
         });
     });
+
+    function checkAndRedirect() {
+        var selectedChatId = localStorage.getItem('selectedChatId');
+        
+        if (selectedChatId) {
+            localStorage.removeItem('selectedChatId');
+            var currentUrl = window.location.href;
+            var redirectUrl = '/chat/' + selectedChatId;
+            
+            if (currentUrl !== redirectUrl) {
+                window.location.href = redirectUrl;
+            }
+        }
+    }
+
+    checkAndRedirect();
 });

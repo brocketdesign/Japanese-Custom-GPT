@@ -32,6 +32,9 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
+    .chat-container .card:hover {
+        background: #fffafad4 !important;
+    }
     @media (max-width: 600px) {
         .top-img{
             width: 70%;
@@ -63,10 +66,10 @@
         </div>
 
     </nav>
-    <section class="hero bg-light pt-5 p-fv" style="background-position:bottom!important;">
+    <section class="hero bg-light pt-5" style="background-position:bottom!important;background-color:#88888812" >
         <div class="container text-center d-flex flex-column align-items-center pt-5">
-            <div class="text-center my-5">
-                <img src="/img/logo.webp" alt="LAMIXボット ロゴ" class="mb-4 top-logo m-auto top-img" style="border-radius: 100%;background-color: #8375b3;">
+            <div class="text-center mt-5 mb-3">
+                <img src="/img/logo.webp" alt="LAMIXボット ロゴ" class="top-logo m-auto top-img" style="border-radius: 100%;background-color: #8375b3;width: 100px;">
             </div>
             <div class="container text-center text-dark d-flex flex-column align-items-center pb-5">
                 <h2 class="c-section-title u-tal ">
@@ -80,19 +83,17 @@
                 </div>
             </div>
         </div>
-    </section>
-    <section>
-        <div class="container mt-5">
-            <h4 class="mb-4">Try these</h4>
-            <div class="chat-container">
+        <div class="mt-2">
+            <h4 class="mb-4 d-none">Try these</h4>
+            <div class="chat-container px-3">
                 <!-- Chat Card Example -->
                 {{#each chats}}
-                <div class="card chat-card flex-row bg-light border-0" style="border-radius: 20px; cursor:pointer" onclick="redirectToChat('{{this._id}}')">
+                <div class="card chat-card flex-row bg-white border-0" style="border-radius: 20px; cursor:pointer" onclick="redirectToChat('{{this._id}}')">
                     <div style="min-width:100px;width: 300px; height: auto; display: flex; justify-content: center; align-items: center;">
                         <img src="{{this.thumbnailUrl}}" class="img-fluid m-3" alt="Thumbnail" onerror="this.src='/img/logo.webp';" style="width: 50px; height: 50px; object-fit: cover;border-radius: 50px;">
                     </div>
                     <div class="card-body">
-                        <h6 class="card-title fw-bold">{{this.name}}</h6>
+                        <h6 class="card-title fw-bold text-start">{{this.name}}</h6>
                         <p class="card-text online-text">{{this.description}}</p>
                         <p class="text-muted d-none"><i class="fas fa-clock"></i> 更新: {{this.dateStrJP}}</p>
                     </div>

@@ -127,6 +127,12 @@
             fetchchatData(chatId);
         }
         
+         var savedURL = localStorage.getItem('savedURL');
+        if (savedURL) {
+            $('#myUrl').val(savedURL);
+            localStorage.removeItem('savedURL');
+        }
+
         $('textarea').each(function() {
             resizeTextarea(this);
             $(this).on('input change', function() {

@@ -57,10 +57,16 @@
                 <h2 class="c-section-title u-tal ">
                     <span class="u-font-manrope u-color-grad">Lamix</span>とは、
                 </h2>
-                <h4>簡単にカスタムチャットを作成し、ウェブサイトに埋め込むことができるツールです。ブログの内容や商品情報を元に、ユーザーに必要な情報をすぐに提供できます。</h4>
+                <h4 class="text-center">URLを入力するだけで、内容の要約とチャットボットを作成します。このチャットボットはどこでも共有でき、話題に関する会話が可能です</h4>
+                <div class="input-group my-5">
+                    <input type="text" id="url-input" class="form-control" placeholder="URLを入力してください" aria-label="URLを入力してください" aria-describedby="button-addon2">
+                    <button class="btn btn-large btn-primary" type="button" id="save-url">チャットボットを作成する</button>
+                </div>
+                <h4 class="d-none">簡単にカスタムチャットを作成し、ウェブサイトに埋め込むことができるツールです。ブログの内容や商品情報を元に、ユーザーに必要な情報をすぐに提供できます。</h4>
             </div>
         </div>
     </section>
+    
     <section class="container mt-5">
         <div>
             <img src="/img/top-bg2.png" class="m-auto">
@@ -159,6 +165,11 @@
 <script>
 $(document).ready(function() {
 
+    $('#save-url').click(function() {
+        var urlInput = $('#url-input').val();
+        localStorage.setItem('savedURL', urlInput);
+        window.location.href = '/authenticate';
+    });
 
     function appendHeadlineCharacterByCharacter($element, headline, callback) {
         let index = 0;

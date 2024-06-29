@@ -122,7 +122,12 @@
                             </div>
                             <div class="chat-list-option" style="max-width: 95%;">
                                 <span style="font-size: 14px;" class="truncate-text py-1">{{this.description}}</span>
-                                <p class="text-muted" style="font-size:12px"><i class="fas fa-clock me-1"></i>{{this.dateStrJP}}</p>
+                                <p class="text-muted" style="font-size:12px"><i class="fas fa-clock me-1"></i>{{this.dateStrJP}}{{#if this.visibility}}
+                                    <span class="fas fa-eye"></span>
+                                {{else}}
+                                    <span class="fas fa-eye-slash"></span>
+                                {{/if}}
+                                </p>
                             </div>
                         </div>
                     </div>

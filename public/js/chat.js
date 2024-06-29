@@ -154,18 +154,7 @@ $(document).ready(function() {
 
                 },
                 error: function(xhr, status, error) {
-                    Swal.fire({
-                        title: 'エラー!',
-                        text: 'チャットの読み込みに失敗しました: ' + error,
-                        icon: 'error',
-                        confirmButtonText: 'Ok',
-                        showCancelButton: true,
-                        cancelButtonText: '一覧を見る'
-                    }).then((result) => {
-                        if (result.dismiss === Swal.DismissReason.cancel) {
-                            window.location.href = '/chat-list';
-                        }
-                    });
+                    console.log(error)
 
                 }
             });

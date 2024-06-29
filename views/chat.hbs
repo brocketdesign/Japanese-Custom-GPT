@@ -16,12 +16,19 @@
     .top-img{
         width: 30%;
     }
+    .chat-container {
+        display: flex;
+        overflow-x: auto;
+    }
+    .chat-card {
+        min-width: 250px;
+        margin-right: 15px;
+    }
     @media (max-width: 600px) {
         .top-img{
             width: 70%;
         }
     }
-    
     </style>
 <body>
     <nav class="navbar navbar-light py-1 fixed-top" style="background-color: #c7b4ec4f;border-bottom: 1px solid rgba(210, 184, 255, 0.2);">
@@ -66,7 +73,23 @@
             </div>
         </div>
     </section>
-    
+    <section>
+        <div class="container mt-5">
+            <div class="chat-container">
+                <!-- Chat Card Example -->
+                {{#each chats}}
+                <div class="card chat-card" onclick="redirectToChat('{{this._id}}')">
+                    <img src="{{this.thumbnailUrl}}" class="card-img-top" alt="Thumbnail" onerror="this.src='default-thumbnail.png';">
+                    <div class="card-body">
+                        <h5 class="card-title">{{this.name}}</h5>
+                        <p class="card-text">{{this.description}}</p>
+                        <p class="text-muted"><i class="fas fa-clock"></i> 更新: {{this.updatedAt}}</p>
+                    </div>
+                </div>
+                {{/each}}
+            </div>
+        </div>
+    </section>
     <section class="container mt-5">
         <div>
             <img src="/img/top-bg2.png" class="m-auto">

@@ -60,8 +60,15 @@
             <div class="spinner-grow spinner-grow-sm text-dark" role="status"><span class="visually-hidden">Loading...</span></div>
         </div>
     </div>
+    <div class="mb-3">
+        <label for="visibility" class="form-label"><i class="fas fa-eye"></i> 公開設定を選択してください:</label>
+        <select class="form-select" id="visibility" name="visibility">
+            <option value="public"><i class="fas fa-globe"></i> 公開</option>
+            <option value="private"><i class="fas fa-lock"></i> 非公開</option>
+        </select>
+    </div>
     <button type="button" id="displayProcess" class="badge btn-ligh text-muted border mb-2 mx-3 d-none" style="font-size: 12px;border-radius:40px">プロセスを表示する</button>
-    <div class="mb-3 mx-3">
+    <div class="mb-3">
         <label for="myUrl" class="form-label">URL</label>
         <div class="input-group">
             <input type="url" class="form-control" id="myUrl" name="url" placeholder="URLを入力してください">
@@ -253,6 +260,7 @@
             const url = $('#chatUrl').val();
             const content = saveJson();
             const thumbnail = $('#chatThumbnail')[0].files[0];
+            const visibility = $('#visibility').val()
 
             formData.append('name', name);
             formData.append('category', category);
@@ -260,6 +268,7 @@
             formData.append('content', content);
             formData.append('rule', rule);
             formData.append('url', url);
+            formData.append('visibility', visibility);
             
             if(thumbnail){
                 formData.append('thumbnail', thumbnail);

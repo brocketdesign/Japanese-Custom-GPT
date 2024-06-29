@@ -60,6 +60,8 @@ async function routes(fastify, options) {
                 name = part.value;
             } else if (part.fieldname === 'content') {
                 content = JSON.parse(part.value);
+            } else if (part.fieldname === 'visibility') {
+                visibility = part.value;
             } else if (part.fieldname === 'category') {
                 category = part.value;
             } else if (part.fieldname === 'rule') {
@@ -139,6 +141,7 @@ async function routes(fastify, options) {
             rule,
             url,
             content,
+            visibility,
             thumbnailUrl,
             userId,
             updatedAt: new Date(dateObj),

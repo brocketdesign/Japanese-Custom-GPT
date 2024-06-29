@@ -5,7 +5,7 @@ $(document).ready(function() {
             url: '/user/logout',
             type: 'POST',
             success: function(response) {
-                window.location.href = '/authenticate';
+                window.location.href = '/';
             },
             error: function() {
                 Swal.fire({

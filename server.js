@@ -139,8 +139,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       const collectionChats = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
       const chats = await collectionChats.find({
         visibility: { $exists: true, $eq: "public" }
-      }).toArray();
-      console.log(chats)
+      }).sort({_id:-1}).toArray();
       return reply.view('chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd',chats });
     });
     fastify.get('/chat-list', {

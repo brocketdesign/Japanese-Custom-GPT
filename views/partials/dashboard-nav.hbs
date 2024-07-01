@@ -10,16 +10,21 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                 <li class="nav-item">
-                    <a class="nav-link" href="/chat-list">チャットボット一覧</a>
+                    <a href="/chat/edit/" class="btn px-4 py-2 border shadow-0 btn-dark" style="border-radius:40px;">
+                        <i class="fas fa-plus me-2"></i>作成する
+                    </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/chat/edit/">新規作成</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/settings">設定</a>
-                </li>
-                <li class="nav-item">
-                    <a id="logout" class="nav-link" href="#"><i class="fas fa-sign-out-alt"></i> </a>
+                <!-- Avatar -->
+                <li class="nav-item dropdown">
+                    <a data-mdb-dropdown-init class="nav-link dropdown-toggle hidden-arrow d-flex align-items-center" href="#"
+                        id="navbarDropdownMenuLink" role="button" aria-expanded="false">
+                        <img src="https://mdbootstrap.com/img/new/avatars/2.jpg" class="rounded-circle" height="22" alt="Avatar"
+                        loading="lazy" />
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLink">
+                        <li><a class="dropdown-item" href="/settings">設定</a></li>
+                        <li><a id="logout" class="dropdown-item" href="#">ログアウト</a></li>
+                    </ul>
                 </li>
             </ul>
         </div>

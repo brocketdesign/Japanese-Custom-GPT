@@ -111,7 +111,7 @@
         <hr class="separator">
 
         {{#each chats}}
-            <div class="chat-list item user-chat d-flex align-items-center justify-content-between px-0" style="cursor: pointer;" data-id="{{this._id}}" onclick="window.location.href='/chat/{{this._id}}'">
+            <div class="chat-list item user-chat d-flex align-items-center justify-content-between px-0" style="cursor: pointer;" data-id="{{this._id}}" >
                 <div class="d-flex align-items-center w-100">
                     <div class="thumb align-items-center text-center justify-content-center d-flex flex-column col-1" >
                         <img class="img-fluid" src="{{#if this.thumbnailUrl}}{{this.thumbnailUrl}}{{else}}/img/logo.webp{{/if}}" alt="">
@@ -122,7 +122,7 @@
                                 <h6 class="mb-0 online-text"><a href="/chat/{{this._id}}" target="_blank">{{this.name}}</a></h6>
                             </div>
                             <div class="chat-list-option" style="max-width: 95%;">
-                                <span style="font-size: 14px;" class="truncate-text py-1">{{this.description}}</span>
+                                <span style="font-size: 12px;" class="truncate-text py-1">{{this.description}}</span>
                                 <p class="text-muted" style="font-size:12px"><i class="fas fa-clock me-1"></i>{{this.dateStrJP}}{{#if this.visibility}}
                                     <span class="fas fa-eye"></span>
                                 {{else}}
@@ -134,33 +134,36 @@
                     </div>
                 </div>
                 <div class="chat-list-actions col-sm-3">
-                    <button class="copyButton btn btn-dark mx-2 d-none" data-chatid="{{this._id}}">コピー</button>
                     <div class="d-flex align-items-center">
-                        <ul class="list-unstyled mb-0 d-flex justify-content-center align-items-center flex-wrap">
-                            <li class="form-check form-switch mx-1 d-none">
-                                <input class="form-check-input chat-switch" type="checkbox" data-chatid="{{this._id}}" {{#if this.isActive}}checked{{/if}}>
-                            </li>
-                            <li>
-                                <button class="text-dark m-1 btn action-button chart-button" data-id="{{this._id}}" data-toggle="tooltip" title="分析" data-original-title="Analyze">
-                                    <i class="fas fa-chart-line"></i>
-                                </button>
+                        <!-- Dropdown -->
+                        <div class="dropdown">
+                            <button class="btn btn-link dropdown-toggle" type="button" id="dropdownMenuButton_{{this._id}}" data-mdb-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton_{{this._id}}">
+                                <li>
+                                    <button class="dropdown-item chart-button" data-id="{{this._id}}">
+                                        <i class="fas fa-chart-line"></i> 分析
+                                    </button>
                                 </li>
                                 <li>
-                                <button class="text-dark m-1 btn action-button share-button" data-id="{{this._id}}" data-toggle="tooltip" title="共有" data-original-title="Share">
-                                    <i class="fas fa-share"></i>
-                                </button>
+                                    <button class="dropdown-item share-button" data-id="{{this._id}}">
+                                        <i class="fas fa-share"></i> 共有
+                                    </button>
                                 </li>
                                 <li>
-                                <a href="/chat/edit/{{this._id}}" class="text-info m-1 btn action-button" data-toggle="tooltip" title="編集" data-original-title="Edit">
-                                    <i class="far fa-edit"></i>
-                                </a>
+                                    <a href="/chat/edit/{{this._id}}" class="dropdown-item text-info">
+                                        <i class="far fa-edit"></i> 編集
+                                    </a>
                                 </li>
                                 <li>
-                                <span data-chatid="{{this._id}}" class="text-danger delete-chat m-1 btn action-button" style="cursor:pointer" data-toggle="tooltip" title="削除" data-original-title="Delete">
-                                    <i class="fas fa-trash"></i>
-                                </span>
-                            </li>
-                        </ul>
+                                    <span data-chatid="{{this._id}}" class="dropdown-item text-danger delete-chat" style="cursor:pointer">
+                                        <i class="fas fa-trash"></i> 削除
+                                    </span>
+                                </li>
+                            </ul>
+                        </div>
+                        <!-- End of Dropdown -->
                     </div>
                 </div>
             </div>
@@ -175,6 +178,10 @@
 </style>
 <script>
 $(document).ready(function() {
+// Initialize MDB dropdown
+    $('.dropdown-toggle').each(function() {
+        new mdb.Dropdown($(this)[0]);
+    });
     $('.chart-button').on('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -191,7 +198,7 @@ $(document).ready(function() {
                 // SweetAlert2でアラートを表示
                 Swal.fire({
                     html: `
-                        <div class="card border-0">
+                        <div class="card border-0 shadow-0">
                             <div class="card-body">
                                 <h5 class="card-title">${response.chat.name}</h5>
                                 <p class="card-text text-muted" style="font-size: 16px;">${response.chat.description}</p>

@@ -1,4 +1,8 @@
 $(document).ready(function() {
+    $('input, textarea').each(function() {
+        new mdb.Input(this);
+    });
+    
     $('#logout.nav-link').on('click', function(event) {
         event.preventDefault();
         $.ajax({

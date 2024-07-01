@@ -12,8 +12,8 @@
         }
 
         // Load Bootstrap CSS
-        loadCSS('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css');
-        loadCSS('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css')
+        loadCSS('https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/7.3.2/mdb.min.css');
+        loadCSS('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css')
 
         // Create the chat widget container
         var chatContainer = document.createElement('div');
@@ -105,6 +105,7 @@
                 #chatInput .load {
                     border-left: 0 !important;
                     border-radius: 0px 30px 30px 0px !important;
+                    box-shadow: none;
                 }
                 #userMessage {
                     border-radius: 30px 0px 0px 30px !important;
@@ -153,8 +154,8 @@
         loadScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js');
         // Load sweetalert2.js script
         loadScript('https://cdn.jsdelivr.net/npm/sweetalert2@11');
-        // Load FontAwesome.js script
-        loadScript('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css');
+        // MDB
+        loadScript('https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/7.3.2/mdb.umd.min.js')
 
     }
 })();

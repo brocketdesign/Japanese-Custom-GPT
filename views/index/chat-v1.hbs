@@ -45,7 +45,7 @@
     }
     </style>
 <body>
-    <nav class="navbar navbar-light py-1 fixed-top bg-white" style="border-bottom: 1px solid rgba(210, 184, 255, 0.2);">
+    <nav class="navbar navbar-light py-1 fixed-top" style="border-bottom: 1px solid rgba(210, 184, 255, 0.2);">
         <div class="container-fluid justify-content-between">
             <a class="navbar-brand d-flex flex-row align-items-center bg-white px-4 py-2" href="/chat-index">
                 <img src="/img/logo.webp" alt="" class="logo">
@@ -69,7 +69,7 @@
         </div>
 
     </nav>
-    <section class="hero bg-light pt-5" style="background-position:bottom!important;background-color:#88888812;background-image:url(/img/ct-1.png)" >
+    <section class="hero bg-light pt-5" style="background-position:bottom!important;background-color:#88888812" >
         <div class="container text-center d-flex flex-column align-items-center pt-5">
             <div class="text-center mt-5 mb-3">
                 <img src="/img/logo.webp" alt="LAMIXボット ロゴ" class="top-logo m-auto top-img" style="border-radius: 100%;background-color: #8375b3;width: 100px;">
@@ -105,10 +105,46 @@
             </div>
         </div>
     </section>
+    <section class="container mt-5">
+        <div>
+            <img src="/img/top-bg2.png" class="m-auto">
+        </div>
+    </section>
+    <section class="p-5" style="background-color:#88888812">
+         <div class="row row-cols-1 row-cols-sm-3 text-center" style="justify-content: center;align-items: center;">
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <img src="/img/point1.png" class="card-img-top" alt="チャットボット作成" style="width: 50px;margin: auto;margin-top: 20px;">
+                    <div class="card-body">
+                        <h5 class="card-title">チャットボットを任意のテーマで作成</h5>
+                        <p class="card-text"><i class="fas fa-robot"></i> LAMIXを使えば、どんなテーマでも簡単にチャットボットを作成できます。あなたのビジネスに合ったカスタマイズが可能です。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <img src="/img/point2.png" class="card-img-top" alt="ウェブサイト統合" style="width: 50px;margin: auto;margin-top: 20px;">
+                    <div class="card-body">
+                        <h5 class="card-title">簡単にウェブサイトに統合</h5>
+                        <p class="card-text"><i class="fas fa-code"></i> 簡単な統合手順で、チャットボットを任意のウェブサイトに追加できます。専門知識がなくても安心です。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <img src="/img/point3.png" class="card-img-top" alt="SEOとユーザーエンゲージメント" style="width: 50px;margin: auto;margin-top: 20px;">
+                    <div class="card-body">
+                        <h5 class="card-title">SEOとユーザーエンゲージメントの向上</h5>
+                        <p class="card-text"><i class="fas fa-chart-line"></i> LAMIXのチャットボットは、SEOの向上とユーザーエンゲージメントの強化に役立ちます。より多くの訪問者を引きつけ、維持します。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
     <section>
         <div class="container text-center d-flex flex-column align-items-center py-5">
-            <h1 class="fw-bold">理想の仲間を作成して、<br>チャットを楽しもう！</h1>
-            <p class="fw-bold mt-4">AIがあなたの好みに合わせて、理想の仲間を作り出します。<br>いつでもどこでも楽しくチャット！ </p>
+            <h1 class="fw-bold">あなたのウェブサイトに<br>スマートなチャットを</h1>
+            <p class="fw-bold mt-4">サイトのエンゲージメントを高め、ユーザー満足度を向上。<br>訪問者が迅速に情報を得て、ストレスなく率直な質問ができます。 </p>
         </div>
         <div class="d-flex flex-row">
             <img src="/img/arrow-down.gif" class="m-auto" style="width:75px">
@@ -116,9 +152,7 @@
     </section>
     <section>
         <div class="container d-flex py-5 px-3 justify-content-center align-items-center">
-            <a href="/authenticate">
-                <img src="/img/bg-2.png" class="rounded shadow">
-            </a>
+            <div id="lamix-chat-widget" data-id="667b8effe5957477354a94ab"></div><script src="https://lamix.hatoltd.com/js/chat-widget.js"></script>        
         </div>
     </section>
     <section id="nagare" class="p-best mb-5">
@@ -134,10 +168,10 @@
             <li class="p-best__list u-border-grad">
                 <div class="p-best__listInner u-border-grad--bg">
                     <div class="p-best__title--flex">
-                        <h3 class="p-best__title"><span class="u-color-grad">STEP1</span><span class="p-best__title--sub">AIを使って理想のキャラクターを作成</span></h3>
+                        <h3 class="p-best__title"><span class="u-color-grad">STEP1</span><span class="p-best__title--sub">チャット作成</span></h3>
                     </div>
                     <p class="p-best__text">
-                        まずはAIの魔法を使って、あなたの理想のキャラクターを作りましょう！好みの外見や性格を選ぶだけで、まるで魔法のように完璧な仲間が誕生します。驚きの連続ですよ！
+                        用途に合わせてチャットを作成します。ブログの内容に特化したチャットや、商品情報を提供するチャットなど、あなたのニーズに合わせたカスタムチャットを簡単に設定できます。チャットの質問内容や回答方法を自由にカスタマイズして、ユーザーの求める情報を的確に提供します。
                     </p>
                 </div>
             </li>
@@ -145,19 +179,20 @@
             <li class="p-best__list u-border-grad">
                 <div class="p-best__listInner u-border-grad--bg">
                     <div class="p-best__title--flex">
-                        <h3 class="p-best__title"><span class="u-color-grad">STEP2</span><span class="p-best__title--sub">チャットを楽しもう</span></h3>
+                        <h3 class="p-best__title"><span class="u-color-grad">STEP2</span><span class="p-best__title--sub">タグ貼り付け</span></h3>
                     </div>
                     <p class="p-best__text">
-                        キャラクターが完成したら、さあチャットを始めましょう！どんな話題でもOK。おしゃべり好きな友達と一緒に、笑いが絶えない楽しい時間を過ごせますよ。暇な時も退屈しません！                    </p>
+                        作成したチャットのタグをあなたのウェブサイトに貼り付けるだけで、チャットが即座に稼働します。コピー＆ペーストするだけのシンプルな操作で、専門的な知識は一切不要。誰でも簡単に設置することができます。
+                    </p>
                 </div>
             </li>
             <li class="p-best__list u-border-grad">
                 <div class="p-best__listInner u-border-grad--bg">
                     <div class="p-best__title--flex">
-                        <h3 class="p-best__title"><span class="u-color-grad">STEP3</span><span class="p-best__title--sub">キャラクターを世界中と共有しよう</span></h3>
+                        <h3 class="p-best__title"><span class="u-color-grad">STEP3</span><span class="p-best__title--sub">回答確認</span></h3>
                     </div>
                     <p class="p-best__text">
-                        最後に、自分だけの素敵なキャラクターを友達や世界中の人たちとシェアしましょう！みんなに見せびらかして、感動を共有するのも楽しみの一つ。あなたのキャラクターが世界を笑顔にします！
+                        ユーザーからの質問や回答は、アカウント内で一目で確認できます。これにより、どの質問が多く寄せられているか、どの情報がユーザーにとって重要かを把握することができます。データを活用して、さらに充実したコンテンツやサービスを提供しましょう。
                     </p>
                 </div>
             </li>

@@ -142,6 +142,9 @@
     </style>
     
     <div class="sidebar hidden">
+        <a href="/chat/edit/" class="m-2 btn px-4 py-2 border shadow-0 btn-dark" style="border-radius:40px;">
+            <i class="fas fa-plus me-2"></i>作成する
+        </a>
         {{#if userChat}}
             <div class="card rounded-0 shadow-0">
                 <div class="card-header">
@@ -180,11 +183,11 @@
             <div class="container-fluid">
                 <div class="d-flex align-items-center justify-content-between w-100">
                     <div>
-                        <button id="menu-chat" class="btn btn-outline-secondary"><i class="fa-solid fa-bars"></i></button>
-                        <button id="reset-chat" class="btn btn-outline-secondary" data-toggle="tooltip" title="新しいチャット" data-original-title="New"><i class="fa-solid fa-message"></i></button>
+                        <button id="menu-chat" class="btn btn-outline-dark"><i class="fa-solid fa-bars"></i></button>
+                        <button id="reset-chat" class="btn btn-outline-dark" data-toggle="tooltip" title="新しいチャット" data-original-title="New"><i class="fa-solid fa-message"></i></button>
                         <!-- Dropdown -->
                         <div class="dropdown d-inline-block">
-                            <button class=" btn btn-outline-secondary btn-link dropdown-toggle" type="button" id="dropdownMenuButton_{{chatId}}" data-mdb-toggle="dropdown" aria-expanded="false">
+                            <button class=" btn btn-outline-dark btn-link dropdown-toggle" type="button" id="dropdownMenuButton_{{chatId}}" data-mdb-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-ellipsis-v"></i>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton_{{chatId}}">
@@ -241,7 +244,7 @@
             <div id="chat-container" class="card shadow-0 rounded-0"></div>
                 <div class="card-body text-center py-0 container" style="min-height:250px;height: 97vh;overflow-y:hidden;">
                     <div id="chatContainer" class="pt-2" style="padding-top: 100px !important;;padding-bottom: 100px !important;"></div>
-                    <div id="chatInput" class="input-group rounded-0 rounded-bottom bg-white" style="position: absolute;bottom: 0;left: 0;right: 0;padding: 0px 15px 25px 15px;">
+                    <div id="chatInput" class="input-group rounded-0 rounded-bottom bg-white" style="position: absolute;bottom: 0;left: 0;right: 0;padding: 0px 15px 5px 15px;">
                         <textarea id="userMessage" class="form-control py-3 border-0" placeholder="メッセージを入力してください"></textarea>
                         <button id="sendMessage" class="btn btn-light px-4 border-0"><i class="fas fa-paper-plane"></i></button>
                     </div>

@@ -25,7 +25,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     handlebars.registerPartial('dashboard-nav', dashboardNav);
     const dashboardFooter = fs.readFileSync('views/partials/dashboard-footer.hbs', 'utf8');
     handlebars.registerPartial('dashboard-footer', dashboardFooter);
-
+    
     fastify.register(require('@fastify/view'), {
       engine: { handlebars: require('handlebars') },
       root: path.join(__dirname, 'views'),
@@ -128,9 +128,17 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       const chatId = request.params.chatId
       if(chatId){
         const userId = request.user._id
-        const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-        let userChat = await collectionUserChat.find({ chatId }).toArray();
-        return reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd', userId, chatId, userChat });
+
+        const chatsCollection = db.collection('chats');
+        const isUserChat = await chatsCollection.findOne({ userId: new fastify.mongo.ObjectId(userId), _id:new fastify.mongo.ObjectId(chatId) });
+        let userChat = false
+        if(isUserChat){
+          const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+          userChat = await collectionUserChat.find({ chatId }).toArray();
+        }
+        const sortedChats = await chatsCollection.find({ userId: new fastify.mongo.ObjectId(userId) }).sort({ "updatedAt": -1 }).toArray();
+
+        return reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd', userId, chatId, userChat, chats:sortedChats });
       }else{
         return reply.view('chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd' });
       }

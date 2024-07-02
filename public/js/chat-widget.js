@@ -109,8 +109,9 @@
                 }
                 #userMessage {
                     border-radius: 30px 0px 0px 30px !important;
-                    background-color: #f8f9fa;
                     height:60px;
+                    background-color: #f5f5f5;
+                    font-size: 14px;
                 }
                 #userMessage:focus {
                     outline: none;
@@ -128,8 +129,8 @@
                     <h5 class="card-title d-none">Card Title</h5>
                     <div id="chatContainer" class="pt-2" style="padding-bottom: 100px !important;"></div>
                     <div id="chatInput" class="input-group rounded-0 rounded-bottom bg-white" style="position: absolute;bottom: 0;left: 0;right: 0;padding: 0px 15px 25px 15px;">
-                        <textarea id="userMessage" class="form-control py-3 border" style="font-size: 14px;padding-left: 30px;" placeholder="メッセージを入力してください"></textarea>
-                        <button id="sendMessage" class="btn btn-light px-4 border"><i class="fas fa-paper-plane"></i></button>
+                        <textarea id="userMessage" class="form-control py-3 border-0" style="font-size: 14px;padding-left: 30px;" placeholder="メッセージを入力してください"></textarea>
+                        <button id="sendMessage" class="btn btn-light px-4 border-0"><i class="fas fa-paper-plane"></i></button>
                     </div>
                 </div>
                 <div class="card-footer text-muted text-center" style="font-size: 12px;">

@@ -2,8 +2,44 @@
 <html lang="ja">
     {{> dashboard-header}}
 <body>
-    {{> dashboard-nav}}
+
     <style>
+        .sidebar {
+            height: 100vh;
+            width: 250px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            background-color: #f5f5f5;
+            transition: transform 0.3s ease;
+            transform: translateX(0);
+            overflow: scroll;
+        }
+
+        .sidebar.hidden {
+            transform: translateX(-250px);
+        }
+
+        .content {
+            margin-left: 250px;
+            padding: 1rem;
+            transition: margin-left 0.3s ease;
+        }
+
+        .content.collapsed {
+            margin-left: 0;
+        }
+        nav.navbar {
+            margin-left: 0;
+            transition: margin-left 0.3s ease;
+        }
+        nav.navbar.move {
+            margin-left: 250px;
+        }
+
+
+        footer{display: none;}
         .choice-container {
             text-wrap: nowrap;
             overflow: auto;
@@ -68,8 +104,9 @@
         }
         #userMessage {
             border-radius: 30px 0px 0px 30px !important;
-            background-color: #f8f9fa;
+            background-color: #f5f5f5;
             height: 60px;
+            font-size: 14px;
         }
         #userMessage:focus {
             outline: none;
@@ -81,49 +118,146 @@
         .user-chat:hover{
             background-color: #f8f9fa;
         }
+
+        .chat-list .thumb {
+            margin-right: 0px;
+        }
+        .chat-list .thumb img {
+            width: 40px;
+            height: 40px;
+            -o-object-fit: cover;
+            object-fit: cover;
+            overflow: hidden;
+            border-radius: 50%;
+        }
+        .chat-list.item:hover {
+            background-color: #f8f9fa !important;
+        }
+        .online-text {
+        width: 150px; 
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
     </style>
-    <div class="container mt-4">
-        
+    
+    <div class="sidebar hidden">
+        {{#if userChat}}
+            <div class="card rounded-0 shadow-0">
+                <div class="card-header">
+                    総要素数: {{userChat.length}}
+                </div>
+                <ul class="list-group list-group-flush">
+                    {{#each userChat}}
+                    {{#if this.updatedAt}}
+                        <li class="list-group-item user-chat" data-user="{{this.userId}}">
+                        <small class="text-muted"><i class="fas fa-clock me-1"></i>{{this.updatedAt}}</small>
+                    {{/if}}
+                    </li>
+                    {{/each}}
+                </ul>
+            </div>
+        {{/if}}
+        {{#each chats}}
+            <div class="chat-list item user-chat d-flex align-items-center justify-content-between p-0 bg-transparent" style="cursor: pointer;" data-id="{{this._id}}" onclick=(window.location="/chat/{{this._id}}")>
+                <div class="d-flex align-items-center w-100">
+                    <div class="thumb align-items-center text-center justify-content-center d-flex flex-column col-3 p-1" >
+                        <img class="img-fluid" src="{{#if this.thumbnailUrl}}{{this.thumbnailUrl}}{{else}}/img/logo.webp{{/if}}" alt="">
+                    </div>
+                    <div class="chat-list-details">
+                        <div class="chat-list-info">
+                            <div class="chat-list-title">
+                                <h6 class="mb-0 online-text" style="font-size: 14px;"><a href="/chat/{{this._id}}" class="text-dark" >{{this.name}}</a></h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {{/each}}
+    </div>
+    <div class="content collapsed">
+        <nav class="navbar navbar-expand-lg navbar-white bg-white fixed-top shadow-0">
+            <div class="container-fluid">
+                <div class="d-flex align-items-center justify-content-between w-100">
+                    <div>
+                        <button id="menu-chat" class="btn btn-outline-secondary"><i class="fa-solid fa-bars"></i></button>
+                        <button id="reset-chat" class="btn btn-outline-secondary" data-toggle="tooltip" title="新しいチャット" data-original-title="New"><i class="fa-solid fa-message"></i></button>
+                        <!-- Dropdown -->
+                        <div class="dropdown d-inline-block">
+                            <button class=" btn btn-outline-secondary btn-link dropdown-toggle" type="button" id="dropdownMenuButton_{{chatId}}" data-mdb-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton_{{chatId}}">
+                                <li>
+                                    <button class="dropdown-item chart-button" data-id="{{chatId}}">
+                                        <i class="fas fa-chart-line"></i> 分析
+                                    </button>
+                                </li>
+                                <li>
+                                    <button class="dropdown-item share-button" data-id="{{chatId}}">
+                                        <i class="fas fa-share"></i> 共有
+                                    </button>
+                                </li>
+                                <li>
+                                    <a href="/chat/edit/{{chatId}}" class="dropdown-item">
+                                        <i class="far fa-edit"></i> 編集
+                                    </a>
+                                </li>
+                                <li>
+                                    <span data-chatid="{{chatId}}" class="dropdown-item delete-chat" style="cursor:pointer">
+                                        <i class="fas fa-trash"></i> 削除
+                                    </span>
+                                </li>
+                            </ul>
+                        </div>
+                        <!-- End of Dropdown -->
+                    </div>
+                    <a class="navbar-brand d-flex flex-row" href="/dashboard">
+                        <img src="/img/logo.webp" alt="" class="mx-3" width="40px">
+                        <span class="d-none">LAMIXボット</span>
+                    </a>       
+                    <div>
+                        <div class="navbar-collapse" id="navbarNav">
+                            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                                <!-- Avatar -->
+                                <li class="nav-item dropdown">
+                                    <a data-mdb-dropdown-init class="nav-link dropdown-toggle hidden-arrow d-flex align-items-center" href="#"
+                                        id="navbarDropdownMenuLink" role="button" aria-expanded="false">
+                                        <img src="https://mdbootstrap.com/img/new/avatars/2.jpg" class="rounded-circle" height="32" alt="Avatar"
+                                        loading="lazy" />
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLink">
+                                        <li><a class="dropdown-item" href="/settings">設定</a></li>
+                                        <li><a id="logout" class="dropdown-item" href="#">ログアウト</a></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <div class="container px-5">
+            <div id="chat-container" class="card shadow-0 rounded-0"></div>
+                <div class="card-body text-center py-0 container" style="min-height:250px;height: 97vh;overflow-y:hidden;">
+                    <div id="chatContainer" class="pt-2" style="padding-top: 100px !important;;padding-bottom: 100px !important;"></div>
+                    <div id="chatInput" class="input-group rounded-0 rounded-bottom bg-white" style="position: absolute;bottom: 0;left: 0;right: 0;padding: 0px 15px 25px 15px;">
+                        <textarea id="userMessage" class="form-control py-3 border-0" placeholder="メッセージを入力してください"></textarea>
+                        <button id="sendMessage" class="btn btn-light px-4 border-0"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>  
+    </div>
+
+
+
+    <div class="container mt-4 d-none">
         <div class="row">
             <div class="col-12 col-sm-4 d-none">
-                <div class="card my-3">
-                    <div class="card-header">
-                        総要素数: {{userChat.length}}
-                    </div>
-                    <ul class="list-group list-group-flush">
-                        {{#each userChat}}
-                        {{#if this.updatedAt}}
-                            <li class="list-group-item user-chat" data-user="{{this.userId}}">
-                            <span class="w-100 d-inline-block">{{this._id}}</span>
-                            <small class="text-muted"><i class="fas fa-clock me-1"></i>{{this.updatedAt}}</small>
-                        {{/if}}
-                        </li>
-                        {{/each}}
-                    </ul>
-                </div>
             </div>
-            <div class="col">
-                <div id="chat-container" class="card mt-3 mb-5 shadow">
-                    <div class="d-flex justify-content-between card-header text-center bg-dark text-white">
-                        <div id="chat-title">LAMIXチャット</div>
-                        <div class="d-flex align-items-center">
-                            <div id="reset-chat" style="cursor: pointer;"><i class="fas fa-comment-medical"></i></div>
-                        </div>
-                    </div>
-                    <div class="card-body text-center py-0" style="min-height:250px;height: 75vh;overflow-y:hidden;">
-                        <h5 class="card-title d-none">Card Title</h5>
-                        <div id="chatContainer" class="pt-2" style="padding-bottom: 100px !important;"></div>
-                        <div id="chatInput" class="input-group rounded-0 rounded-bottom bg-white" style="position: absolute;bottom: 0;left: 0;right: 0;padding: 0px 15px 25px 15px;">
-                            <textarea id="userMessage" class="form-control py-3 border" placeholder="メッセージを入力してください"></textarea>
-                            <button id="sendMessage" class="btn btn-light px-4 border"><i class="fas fa-paper-plane"></i></button>
-                        </div>
-                    </div>
-                    <div class="card-footer text-muted text-center" style="font-size: 12px;">
-                        このチャットボットはLAMIXで作成しました。興味のある方は<a href="http://lamix.hatoltd.com/" target="_blank">こちら</a>をクリックしてね。
-                    </div>
-                </div>
-            </div>
-        <div class="chat-list-actions col-sm-3 text-end  w-100">
+        </div>
+        <div class="chat-list-actions col-sm-3 text-end w-100 d-none">
             <div class="d-inline-block align-items-center">
                 <ul class="list-unstyled mb-0 d-flex justify-content-center align-items-center flex-wrap bg-light">
                     <li>
@@ -149,15 +283,20 @@
                 </ul>
             </div>
         </div>
-        </div>
-        
-
-
     </div>
+
  {{> dashboard-footer}}
 <script src="/js/chat.js"></script>
 <script>
 $(document).ready(function() {
+    $('.dropdown-toggle').each(function(e) {
+        new mdb.Dropdown($(this)[0]);
+    });
+    $('#menu-chat').on('click', function(){
+        $('.sidebar').toggleClass('hidden');
+        $('.content').toggleClass('collapsed');
+        $('nav.navbar').toggleClass('move')
+    });
     $('.chart-button').on('click', function(e) {
         e.preventDefault();
         e.stopPropagation();

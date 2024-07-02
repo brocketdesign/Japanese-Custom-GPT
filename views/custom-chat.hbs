@@ -134,11 +134,11 @@
             background-color: #f8f9fa !important;
         }
         .online-text {
-        width: 150px; 
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
+            width: 150px; 
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
     </style>
     
     <div class="sidebar hidden shadow">
@@ -206,12 +206,12 @@
                                     </button>
                                 </li>
                                 <li>
-                                    <a href="/chat/edit/{{chatId}}" class="dropdown-item">
+                                    <a href="/chat/edit/{{chatId}}" class="dropdown-item edit-chat">
                                         <i class="far fa-edit"></i> 編集
                                     </a>
                                 </li>
                                 <li>
-                                    <span data-chatid="{{chatId}}" class="dropdown-item delete-chat" style="cursor:pointer">
+                                    <span data-id="{{chatId}}" class="dropdown-item delete-chat" style="cursor:pointer">
                                         <i class="fas fa-trash"></i> 削除
                                     </span>
                                 </li>
@@ -250,47 +250,12 @@
                 <div class="card-body text-center py-0 container" style="min-height:250px;height: 97vh;overflow-y:hidden;">
                     <div id="chatContainer" class="pt-2" style="padding-top: 100px !important;;padding-bottom: 100px !important;"></div>
                     <div id="chatInput" class="input-group rounded-0 rounded-bottom bg-white" style="position: absolute;bottom: 0;left: 0;right: 0;padding: 0px 15px 5px 15px;">
-                        <textarea id="userMessage" class="form-control py-3 border-0" placeholder="メッセージを入力してください"></textarea>
+                        <textarea id="userMessage" class="form-control py-3 border-0" placeholder="チャットしよう"></textarea>
                         <button id="sendMessage" class="btn btn-light px-4 border-0"><i class="fas fa-paper-plane"></i></button>
                     </div>
                 </div>
             </div>
         </div>  
-    </div>
-
-
-
-    <div class="container mt-4 d-none">
-        <div class="row">
-            <div class="col-12 col-sm-4 d-none">
-            </div>
-        </div>
-        <div class="chat-list-actions col-sm-3 text-end w-100 d-none">
-            <div class="d-inline-block align-items-center">
-                <ul class="list-unstyled mb-0 d-flex justify-content-center align-items-center flex-wrap bg-light">
-                    <li>
-                        <button class="text-dark m-1 btn action-button chart-button" data-id="{{chatId}}" data-toggle="tooltip" title="分析" data-original-title="Analyze">
-                            <i class="fas fa-chart-line"></i>
-                        </button>
-                    </li>
-                    <li>
-                        <button class="text-dark m-1 btn action-button share-button" data-id="{{chatId}}" data-toggle="tooltip" title="共有" data-original-title="Share">
-                            <i class="fas fa-share"></i>
-                        </button>
-                    </li>
-                    <li>
-                        <a href="/chat/edit/{{chatId}}" class="text-info m-1 btn action-button" data-toggle="tooltip" title="編集" data-original-title="Edit">
-                            <i class="far fa-edit"></i>
-                        </a>
-                    </li>
-                    <li>
-                        <span data-chatid="{{chatId}}" class="text-danger delete-chat m-1 btn action-button" style="cursor:pointer" data-toggle="tooltip" title="削除" data-original-title="Delete">
-                            <i class="fas fa-trash"></i>
-                        </span>
-                    </li>
-                </ul>
-            </div>
-        </div>
     </div>
 
  {{> dashboard-footer}}
@@ -395,36 +360,10 @@ $(document).ready(function() {
             confirmButtonText: 'OK'
         });
     });
-    $('.copyButton').click(function(e) {
-        e.preventDefault()
-        e.stopPropagation();
-        var chatId = $(this).data('chatid');
-        
-        $.ajax({
-            url: '/api/chat/' + chatId,
-            method: 'GET',
-            success: function(chat) {
-                var tempInput = $('<input>');
-                $('body').append(tempInput);
-                tempInput.val(JSON.stringify(chat.content)).select();
-                var successful = document.execCommand('copy');
-                tempInput.remove();
-
-                if (successful) {
-                    Swal.fire('Success', 'コンテンツがクリップボードにコピーされました。', 'success');
-                } else {
-                    Swal.fire('Error', 'コンテンツのコピーに失敗しました。', 'error');
-                }
-            },
-            error: function() {
-                Swal.fire('Error', 'コンテンツの取得に失敗しました。', 'error');
-            }
-        });
-    });
     $('.delete-chat').on('click', function(e) {
         e.preventDefault()
         e.stopPropagation();
-        const chatId = $(this).data('chatid');
+        const chatId = $(this).data('id');
 
         Swal.fire({
             title: '本当に削除しますか？',

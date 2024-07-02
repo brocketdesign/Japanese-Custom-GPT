@@ -6,7 +6,7 @@ $(document).ready(function() {
         }
         fetchUser(function(error, user){
         // Now you can use the userID variable or id parameter here
-        const chatId = getIdFromUrl(window.location.href) || $(`#lamix-chat-widget`).data('id');
+        let chatId = getIdFromUrl(window.location.href) || $(`#lamix-chat-widget`).data('id');
         const userId = user._id
         let messagesCount = 0 
         let currentStep = 0;
@@ -33,7 +33,6 @@ $(document).ready(function() {
         }
 
         $('#reset-chat').click(function(){
-            console.log('reset')
             fetchchatData(chatId, userId, true) ;
         })
 
@@ -44,7 +43,28 @@ $(document).ready(function() {
         $('.chat-list.item.user-chat').click(function(){
             const selectChatId = $(this).data('id')
             fetchchatData(selectChatId, userId)
+            updateParameters(selectChatId,userId)
         })
+
+        function updateParameters(newchatId, newuserId){
+            chatId = newchatId
+            var currentUrl = window.location.href;
+            var urlParts = currentUrl.split('/');
+            urlParts[urlParts.length - 1] = newchatId;
+            var newUrl = urlParts.join('/');
+            window.history.pushState({ path: newUrl }, '', newUrl);
+
+            const elementsToUpdate = ['.chart-button', '.share-button', '.delete-chat'];
+            elementsToUpdate.forEach(selector => {
+                $(selector).each(function() {
+                    $(this).attr('data-id', chatId);
+                });
+            });
+            $('.edit-chat').each(function(){
+                $(this).attr('href','/chat/'+newchatId)
+            })
+        }
+        
         window.choosePath = function(response) {
             currentStep++;
             hideOtherChoice(response,currentStep,function(){

@@ -157,7 +157,7 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <span data-chatid="{{this._id}}" class="dropdown-item text-danger delete-chat" style="cursor:pointer">
+                                    <span data-id="{{this._id}}" class="dropdown-item text-danger delete-chat" style="cursor:pointer">
                                         <i class="fas fa-trash"></i> 削除
                                     </span>
                                 </li>
@@ -287,7 +287,7 @@ $(document).ready(function() {
     $('.delete-chat').on('click', function(e) {
         e.preventDefault()
         e.stopPropagation();
-        const chatId = $(this).data('chatid');
+        const chatId = $(this).data('id');
 
         Swal.fire({
             title: '本当に削除しますか？',

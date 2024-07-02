@@ -156,7 +156,7 @@
                 <ul class="list-group list-group-flush">
                     {{#each userChat}}
                     {{#if this.updatedAt}}
-                        <li class="list-group-item user-chat" data-user="{{this.userId}}">
+                        <li class="list-group-item user-chat-history" data-user="{{this.userId}}" style="cursor: pointer;">
                         <small class="text-muted"><i class="fas fa-clock me-1"></i>{{this.updatedAt}}</small>
                     {{/if}}
                     </li>
@@ -165,7 +165,7 @@
             </div>
         {{/if}}
         {{#each chats}}
-            <div class="chat-list item user-chat d-flex align-items-center justify-content-between p-0 bg-transparent" style="cursor: pointer;" data-id="{{this._id}}" onclick=(window.location="/chat/{{this._id}}")>
+            <div class="chat-list item user-chat d-flex align-items-center justify-content-between p-0 bg-transparent" style="cursor: pointer;" data-id="{{this._id}}">
                 <div class="d-flex align-items-center w-100">
                     <div class="thumb align-items-center text-center justify-content-center d-flex flex-column col-3 p-1" >
                         <img class="img-fluid" src="{{#if this.thumbnailUrl}}{{this.thumbnailUrl}}{{else}}/img/logo.webp{{/if}}" alt="">
@@ -173,7 +173,7 @@
                     <div class="chat-list-details">
                         <div class="chat-list-info">
                             <div class="chat-list-title">
-                                <h6 class="mb-0 online-text" style="font-size: 14px;"><a href="/chat/{{this._id}}" class="text-dark" >{{this.name}}</a></h6>
+                                <h6 class="mb-0 online-text" style="font-size: 14px;">{{this.name}}</h6>
                             </div>
                         </div>
                     </div>

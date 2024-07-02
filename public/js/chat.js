@@ -33,14 +33,18 @@ $(document).ready(function() {
         }
 
         $('#reset-chat').click(function(){
+            console.log('reset')
             fetchchatData(chatId, userId, true) ;
         })
 
-        $('.user-chat').click(function(){
+        $('.user-chat-history').click(function(){
             const selectUser = $(this).data('user')
             fetchchatData(chatId, selectUser)
         })
-
+        $('.chat-list.item.user-chat').click(function(){
+            const selectChatId = $(this).data('id')
+            fetchchatData(selectChatId, userId)
+        })
         window.choosePath = function(response) {
             currentStep++;
             hideOtherChoice(response,currentStep,function(){

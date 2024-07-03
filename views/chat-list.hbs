@@ -87,7 +87,7 @@
 
 </style>
 
-<div class="container mb-4">
+<div class="container my-5">
     <h2 class="d-none">チャットボット一覧</h2>
     <div class="chat-list-container pb-5">
         <div class="chat-list item d-flex align-items-center" style="cursor: pointer;" onclick="window.location.href='/chat/edit/'">
@@ -149,12 +149,12 @@
                                     </button>
                                 </li>
                                 <li>
-                                    <a href="/chat/edit/{{this._id}}" class="dropdown-item text-info">
+                                    <a href="/chat/edit/{{this._id}}" class="dropdown-item">
                                         <i class="far fa-edit"></i> 編集
                                     </a>
                                 </li>
                                 <li>
-                                    <span data-id="{{this._id}}" class="dropdown-item text-danger delete-chat" style="cursor:pointer">
+                                    <span data-id="{{this._id}}" class="dropdown-item delete-chat" style="cursor:pointer">
                                         <i class="fas fa-trash"></i> 削除
                                     </span>
                                 </li>

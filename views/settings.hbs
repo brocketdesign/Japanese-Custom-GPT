@@ -54,6 +54,16 @@ img {
         <!-- User Info Form -->
         <form id="user-info-form">
           <div class="row mb-3">
+                <div id="profileSection" class="text-center mb-4" ><div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative">
+                  <img id="profileImage" src="/img/logo.webp" alt="chat Thumbnail" class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover; cursor: pointer;">
+                  <i class="fas fa-edit position-absolute" style="bottom: 5px; font-size: 1em; color: white; background-color: rgba(0, 0, 0, 0.5); border-radius: 50%; padding: 5px;"></i>
+              </div>
+          </div>
+          <div class="mb-3 mx-3" id="thumbnailInputContainer" style="display: none;">
+              <label for="profileImageInput" class="form-label">チャットのサムネイルをアップロード</label>
+              <input type="file" class="form-control" id="profileImageInput" name="profileImageInput" accept="image/*">
+          </div>
+          <div class="row mb-3">
             <div class="col-md-6">
               <label for="lastname" class="form-label">姓</label>
               <input type="text" id="lastname" class="form-control" placeholder="" />
@@ -81,7 +91,9 @@ img {
               <input type="text" class="form-control" id="inputCompany5" placeholder="" />
             </div>
           </div>
-          <button type="submit" class="btn btn-secondary">ユーザー情報を保存</button>
+          <div class="col">
+            <button type="submit" class="btn btn-secondary">ユーザー情報を保存</button>
+          </div>
         </form>
 
         <hr class="my-4" />
@@ -134,7 +146,8 @@ img {
         lastname: "{{user.lastname}}",
         address: "{{user.address}}",
         company: "{{user.company}}",
-        zip: "{{user.zip}}"
+        zip: "{{user.zip}}",
+        profileUrl: "{{user.profileUrl}}"
     };
 
     $('#inputEmail4').val(user.email);
@@ -143,24 +156,45 @@ img {
     $('#inputAddress5').val(user.address);
     $('#inputCompany5').val(user.company);
     $('#inputZip5').val(user.zip);
+    if(user.profileUrl){
+      $('#profileImage').attr('src', user.profileUrl).show();
+    }
+
+    $('#profileImage').click(function() {
+        $('#profileImageInput').click();
+    });
+
+    $('#profileImageInput').change(function(event) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            $('#profileImage').attr('src', e.target.result).show();
+        }
+        reader.readAsDataURL(event.target.files[0]);
+    });
 
     // User Info Form Submission
     $('#user-info-form').submit(function(event) {
       event.preventDefault();
 
-      const userInfo = {
-        email: $('#inputEmail4').val(),
-        firstname: $('#firstname').val(),
-        lastname: $('#lastname').val(),
-        address: $('#inputAddress5').val(),
-        company: $('#inputCompany5').val(),
-        zip: $('#inputZip5').val()
-      };
+      const formData = new FormData();
+      formData.append('email', $('#inputEmail4').val());
+      formData.append('firstname', $('#firstname').val());
+      formData.append('lastname', $('#lastname').val());
+      formData.append('address', $('#inputAddress5').val());
+      formData.append('company', $('#inputCompany5').val());
+      formData.append('zip', $('#inputZip5').val());
+
+      const profileImage = $('#profileImageInput')[0].files[0];
+      if (profileImage) {
+        formData.append('profile', profileImage);
+      }
 
       $.ajax({
         url: '/user/update-info',
         method: 'POST',
-        data: userInfo,
+        data: formData,
+        processData: false,
+        contentType: false,
         success: function(response) {
           Swal.fire({
             icon: 'success',
@@ -177,6 +211,7 @@ img {
         }
       });
     });
+
 
     // User Password Form Submission
     $('#user-password-form').submit(function(event) {

@@ -2,12 +2,10 @@ const { ObjectId } = require('mongodb');
 const {moduleCompletion,fetchOpenAICompletion} = require('../models/openai')
 const crypto = require('crypto');
 const aws = require('aws-sdk');
-const fastifyMultipart = require('fastify-multipart');
 const sessions = new Map(); // Define sessions map
 const { analyzeScreenshot, processURL } = require('../models/scrap');
 
 async function routes(fastify, options) {
-    fastify.register(fastifyMultipart);
 
     // Configure AWS S3
     const s3 = new aws.S3({

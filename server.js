@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const handlebars = require('handlebars');
 const { v4: uuidv4 } = require('uuid');
+const fastifyMultipart = require('fastify-multipart');
 
 mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then((client) => {
@@ -41,6 +42,8 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       allowedHeaders: ['Content-Type', 'Authorization'],
       credentials: true
     });
+    fastify.register(fastifyMultipart);
+
     fastify.register(require('@fastify/mongodb'), { client: client });
     fastify.register(require('fastify-sse'));
     fastify.register(require('@fastify/formbody'));
@@ -155,10 +158,10 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     }, async (request, reply) => {
       try {
         const userId = new fastify.mongo.ObjectId(request.user._id)
+        const user = await db.collection('users').findOne({_id: userId})
         const chatsCollection = db.collection('chats');
         const sortedChats = await chatsCollection.find({ userId }).sort({ "updatedAt": -1 }).toArray();
-        
-        return reply.view('chat-list', { title: 'LAMIX | Powered by Hato,Ltd', chats: sortedChats, user: request.user  });      
+        return reply.view('chat-list', { title: 'LAMIX | Powered by Hato,Ltd', chats: sortedChats, user  });      
       } catch (err) {
         console.log(err)
         return reply.status(500).send({ error: 'Failed to retrieve stories' });
@@ -169,10 +172,12 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     }, async (request, reply) => {
       try {
         const chatId = request.params.chatId
+        const userId = new fastify.mongo.ObjectId(request.user._id)
+        const user = await db.collection('users').findOne({_id: userId})
         if(chatId){
-          return reply.view('add-chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd', chatId:chatId, user: request.user  });
+          return reply.view('add-chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd', chatId:chatId, user  });
         }else{
-          return reply.view('add-chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd', user: request.user  });
+          return reply.view('add-chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd', user  });
         }
       } catch (error) {
         console.log(error)

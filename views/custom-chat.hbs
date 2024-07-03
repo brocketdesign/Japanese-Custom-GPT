@@ -107,6 +107,7 @@
             background-color: #f5f5f5;
             height: 60px;
             font-size: 14px;
+            resize: none;
         }
         #userMessage:focus {
             outline: none;
@@ -142,7 +143,7 @@
     </style>
     
     <div class="sidebar hidden shadow">
-        <div class="d-inline-block d-sm-none w-100 m-2">
+        <div class="d-none w-100 m-2">
             <button class="menu-chat-sm d-sm-none btn bg-white shadow-0"><i class="fa-solid fa-bars"></i></button>
         </div>
         <a href="/chat/edit/" class="m-2 btn px-4 py-2 border shadow-0 btn-dark" style="border-radius:40px;">
@@ -164,7 +165,8 @@
                 </ul>
             </div>
         {{/if}}
-        {{#each chats}}
+        <div class="mt-3">
+            {{#each chats}}
             <div class="chat-list item user-chat d-flex align-items-center justify-content-between p-0 bg-transparent" style="cursor: pointer;" data-id="{{this._id}}">
                 <div class="d-flex align-items-center w-100">
                     <div class="thumb align-items-center text-center justify-content-center d-flex flex-column col-3 p-1" >
@@ -179,8 +181,11 @@
                     </div>
                 </div>
             </div>
-        {{/each}}
+            {{/each}}
+        </div>
+
     </div>
+    <div id="overlay" class="bg-dark position-absolute" style="inset:0;z-index:1033;display:none;opacity: 0.4;overflow:hidden"></div>
     <div class="content collapsed">
         <nav class="navbar navbar-expand-lg navbar-white bg-white fixed-top shadow-0">
             <div class="container-fluid">
@@ -247,7 +252,7 @@
         </nav>
         <div class="container px-0">
             <div id="chat-container" class="card shadow-0 rounded-0"></div>
-                <div class="card-body text-center py-0 container" style="min-height:250px;height: 97vh;overflow-y:hidden;">
+                <div class="card-body text-center py-0 container" style="min-height:250px;height: 80vh;overflow-y:hidden;">
                     <div id="chatContainer" class="pt-2" style="padding-top: 100px !important;;padding-bottom: 100px !important;"></div>
                     <div id="chatInput" class="input-group rounded-0 rounded-bottom bg-white" style="position: absolute;bottom: 0;left: 0;right: 0;padding: 0px 15px 5px 15px;">
                         <textarea id="userMessage" class="form-control py-3 border-0" placeholder="チャットしよう"></textarea>
@@ -263,6 +268,13 @@
 <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
 <script>
 $(document).ready(function() {
+    $('html,body').animate({
+        scrollTop: $('#chatInput').offset().top
+    }, 0);
+    $('#chatContainer').animate({
+        scrollTop: $('#chatInput').offset().top
+    }, 1000); 
+    
     $('.dropdown-toggle').each(function(e) {
         new mdb.Dropdown($(this)[0]);
     });
@@ -271,12 +283,14 @@ $(document).ready(function() {
         $('.sidebar').removeClass('hidden');
         $('.content').removeClass('collapsed');
         $('nav.navbar').addClass('move');
+        $('#overlay').show()
     }
 
     $('#menu-chat').on('click', function(){
         $('.sidebar').toggleClass('hidden');
         $('.content').toggleClass('collapsed');
         $('nav.navbar').toggleClass('move');
+        $('#overlay').toogle()
         
         // Update the cookie based on the new state
         if ($('.sidebar').hasClass('hidden')) {
@@ -286,6 +300,11 @@ $(document).ready(function() {
         }
     });
     $('.menu-chat-sm').on('click', function(){
+        $('.sidebar').toggleClass('hidden');
+        $('#overlay').toggle()
+    });
+    $('#overlay').on('click', function(){
+        $('#overlay').toggle()
         $('.sidebar').toggleClass('hidden');
     });
     $('.chart-button').on('click', function(e) {

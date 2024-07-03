@@ -122,7 +122,9 @@
                 <div class="d-flex justify-content-between card-header text-center bg-dark text-white">
                     <div id="chat-title">LAMIXチャット</div>
                     <div class="d-flex align-items-center">
-                        <div id="reset-chat" style="cursor: pointer;"><i class="fa-solid fa-message"></i></div>
+                        <div id="reset-chat" style="cursor: pointer;">
+                            <i class="fas fa-plus-circle"></i>
+                        </div>
                     </div>
                 </div>
                 <div class="card-body text-center py-0" style="min-height:250px;height: 300px;overflow-y:hidden;">

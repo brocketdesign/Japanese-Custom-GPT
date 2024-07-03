@@ -141,7 +141,8 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         }
         const sortedChats = await chatsCollection.find({ userId: new fastify.mongo.ObjectId(userId) }).sort({ "updatedAt": -1 }).toArray();
 
-        return reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd', userId, chatId, userChat, chats:sortedChats });
+        const user = await db.collection('users').findOne({_id: new fastify.mongo.ObjectId(userId)})
+        return reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd', user, userId, chatId, userChat, chats:sortedChats });
       }else{
         return reply.view('chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd' });
       }

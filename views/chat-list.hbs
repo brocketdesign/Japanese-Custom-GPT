@@ -77,9 +77,6 @@
             width: 15vw !important;
             height: 15vw !important;
         }
-        .chat-list.item.user-chat{
-            flex-direction: column !important;
-        }
         .chat-list-details{
             width: 100%;
         }
@@ -119,7 +116,7 @@
                     <div class="chat-list-details">
                         <div class="chat-list-info">
                             <div class="chat-list-title mb-1 pt-3">
-                                <h6 class="mb-0 online-text"><a href="/chat/{{this._id}}" target="_blank">{{this.name}}</a></h6>
+                                <h6 class="mb-0"><a href="/chat/{{this._id}}" target="_blank">{{this.name}}</a></h6>
                             </div>
                             <div class="chat-list-option" style="max-width: 95%;">
                                 <span style="font-size: 12px;" class="truncate-text py-1">{{this.description}}</span>

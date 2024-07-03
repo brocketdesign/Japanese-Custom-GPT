@@ -255,7 +255,7 @@ $(document).ready(function() {
             </div>`)
             step.responses.forEach((response, index) => {
                 if(response.trim() != '' ){
-                    const button = $(`<button class="btn btn-outline-secondary my-2" onclick="choosePath('${response}')">${response}</button>`);
+                    const button = $(`<button class="btn btn-outline-secondary m-1" onclick="choosePath('${response}')">${response}</button>`);
                     button.css('opacity',0)
                     $(`#response-${currentStep}`).append(button);
                 }
@@ -283,7 +283,7 @@ $(document).ready(function() {
                 const nextStep = chatData[currentStep];
                 nextStep.responses.forEach(response => {
                     if(response.trim() != ''){
-                        const button = $(`<button class="btn btn-outline-secondary my-2" onclick="choosePath('${response}')">${response}</button>`)
+                        const button = $(`<button class="btn btn-outline-secondary m-1" onclick="choosePath('${response}')">${response}</button>`)
                         button.css('opacity',0)
                         $(`#response-${currentStep}`).append(button);
                     }
@@ -334,7 +334,7 @@ $(document).ready(function() {
                     const cleanResponse = cleanJsonArray(response)
 
                     cleanResponse.forEach(choice => {
-                        const button = $(`<button class="btn btn-outline-secondary my-2" onclick="sendMessage('${choice}')">${choice}</button>`)
+                        const button = $(`<button class="btn btn-outline-secondary m-1" onclick="sendMessage('${choice}')">${choice}</button>`)
                         $(`#response-${currentStep}`).append(button);
                     });
                 },

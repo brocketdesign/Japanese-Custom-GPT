@@ -122,7 +122,7 @@
                 <div class="d-flex justify-content-between card-header text-center bg-dark text-white">
                     <div id="chat-title">LAMIXチャット</div>
                     <div class="d-flex align-items-center">
-                        <div id="reset-chat" style="cursor: pointer;"><i class="fas fa-comment-medical"></i></div>
+                        <div id="reset-chat" style="cursor: pointer;"><i class="fa-solid fa-message"></i></div>
                     </div>
                 </div>
                 <div class="card-body text-center py-0" style="min-height:250px;height: 300px;overflow-y:hidden;">
@@ -148,7 +148,8 @@
             script.onload = callback;
             document.head.appendChild(script);
         }
-    
+        // jQuery
+        loadScript('https://code.jquery.com/jquery-3.6.0.min.js')
         // Load chat.js script
         loadScript('https://lamix.hatoltd.com/js/chat.js');
         // Load marked.min.js script

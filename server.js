@@ -168,6 +168,18 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         return reply.status(500).send({ error: 'Failed to retrieve stories' });
       }
     });
+    fastify.get('/chat-discover', {
+      preHandler: [fastify.authenticate]
+    }, async (request, reply) => {
+      try {
+        const userId = new fastify.mongo.ObjectId(request.user._id)
+        const user = await db.collection('users').findOne({_id: userId})
+        return reply.view('chat-discover', { title: 'LAMIX | Powered by Hato,Ltd', user  });      
+      } catch (err) {
+        console.log(err)
+        return reply.status(500).send({ error: 'Failed to retrieve stories' });
+      }
+    });
     fastify.get('/chat/edit/:chatId', {
       preHandler: [fastify.authenticate]
     }, async (request, reply) => {

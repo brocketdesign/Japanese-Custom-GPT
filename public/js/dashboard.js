@@ -3,7 +3,7 @@ $(document).ready(function() {
         new mdb.Input(this);
     });
     
-    $('#logout.nav-link').on('click', function(event) {
+    $('#logout').on('click', function(event) {
         event.preventDefault();
         $.ajax({
             url: '/user/logout',

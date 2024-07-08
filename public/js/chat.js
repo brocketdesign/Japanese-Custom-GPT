@@ -116,6 +116,7 @@ $(document).ready(function() {
                         const {userId, chatId } = response
                         if(currentStep < totalSteps){
                             displayStep(chatData, currentStep);
+                            isNew = false
                         }else{
                             generateCompletion()
                             isNew = false
@@ -157,6 +158,7 @@ $(document).ready(function() {
 
                     if(isNew && chatData.length > 0){
                         displayStep(chatData, currentStep);
+                        getUserChatHistory(chatId, userId);
                     }
 
                     if(isNew && chatData.length == 0 ){
@@ -177,7 +179,6 @@ $(document).ready(function() {
                         });
                         
                     }
-                    getUserChatHistory(chatId, userId);
                 },
                 error: function(xhr, status, error) {
                     console.log(error)
@@ -588,7 +589,7 @@ $(document).ready(function() {
 
             const listGroup = $('<ul class="list-group list-group-flush"></ul>');
             userChat.forEach(chat => {
-            const listItem = $(`<li class="list-group-item user-chat-history bg-transparent" data-chat="${chat._id}" data-user="${chat.userId}"></li>`);
+            const listItem = $(`<li class="list-group-item user-chat-history bg-transparent" data-id="${chat.chatId}" data-chat="${chat._id}" data-user="${chat.userId}"></li>`);
             listItem.css('cursor', 'pointer');
 
             const small = $('<small class="text-muted"></small>');

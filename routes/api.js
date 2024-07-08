@@ -228,18 +228,21 @@ async function routes(fastify, options) {
         }
     });
     fastify.post('/api/chat/', async (request, reply) => {
-        const {userId, chatId} = request.body;
+        let {userId, chatId} = request.body;
+
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
         const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-    
+
         let response = {
             isNew :true,
         }
         try {
-            let userChatDocument = await collectionUserChat.findOne({ userId, chatId });
+            let userChatDocument = await collectionUserChat.findOne({ userId, _id: new fastify.mongo.ObjectId(chatId) });
+            console.log(userChatDocument)
             if(userChatDocument){
                 response.userChat = userChatDocument
                 response.isNew = false
+                chatId = userChatDocument.chatId
             }
         } catch (error) {
         }

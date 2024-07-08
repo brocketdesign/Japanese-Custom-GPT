@@ -291,6 +291,53 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to retrieve chat' });
         }
     });
+    fastify.post('/api/chat-history/:chatId', async (request, reply) => {
+        const chatId = request.params.chatId;
+        const userId = isNewObjectId(request.body.userId) ? new fastify.mongo.ObjectId(request.body.userId) : request.body.userId;
+      
+        if (!chatId || !userId) {
+          throw new Error('Chat ID and User ID are required');
+        }
+      
+        const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+        const isUserChat = await chatsCollection.findOne({ userId: userId, _id: new fastify.mongo.ObjectId(chatId) });
+      
+        if (!isUserChat) {
+          throw new Error('Chat not found or user is not part of the chat');
+        }
+      
+        const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+        const userChat = await collectionUserChat.find({ chatId }).toArray();
+
+        if (!userChat) {
+          throw new Error('User chat data not found');
+        }
+      
+        return reply.send(userChat);
+    });
+    fastify.delete('/api/delete-chat-history/:chatId', async (request, reply) => {
+        const chatId = request.params.chatId;
+    
+        console.log({ chatId })
+        if (!chatId) {
+          throw new Error('Chat ID is required');
+        }
+    
+        if (!isNewObjectId(chatId)) {
+          throw new Error('Invalid Chat ID');
+        }
+    
+        const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+        const userChat = await collectionUserChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
+    
+        if (!userChat) {
+          throw new Error('User chat data not found');
+        }
+    
+        await collectionUserChat.deleteOne({ _id: new fastify.mongo.ObjectId(chatId) });
+    
+        reply.send({ message: 'Chat history deleted successfully' });
+    });
     fastify.get('/api/story/:id', async (request, reply) => {
         const storyId = request.params.id;
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('stories');

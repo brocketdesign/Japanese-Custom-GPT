@@ -658,6 +658,9 @@ select {
     width: 100%;
   }
 }
+.dropdown-toggle::after {
+  display:none !important;
+}
 
 
 

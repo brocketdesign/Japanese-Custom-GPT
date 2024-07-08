@@ -19,6 +19,7 @@ $(document).ready(function() {
         sendCustomData({action: 'viewpage'});
         fetchchatData(chatId, userId); // Fetch the initial chat data when the page loads
 
+        enableToggleDropdown()
         
         $('textarea').each(function() {
             resizeTextarea(this);
@@ -36,12 +37,13 @@ $(document).ready(function() {
             fetchchatData(chatId, userId, true) ;
         })
 
-        $('.user-chat-history').click(function(){
+        $(document).on('click','.user-chat-history', function(){
             const selectUser = $(this).data('user')
-            fetchchatData(chatId, selectUser)
+            let newChatId = $(this).data('chat') || chatId
+            fetchchatData(newChatId, selectUser)
         })
-        $('.chat-list.item.user-chat').click(function(){
-            const selectChatId = $(this).data('id')
+        $('.chat-list.item.user-chat .user-chat-content').click(function(e){
+            const selectChatId = $(this).closest('.user-chat').data('id')
             fetchchatData(selectChatId, userId)
             updateParameters(selectChatId,userId)
         })
@@ -54,14 +56,14 @@ $(document).ready(function() {
             var newUrl = urlParts.join('/');
             window.history.pushState({ path: newUrl }, '', newUrl);
 
-            const elementsToUpdate = ['.chart-button', '.share-button', '.delete-chat'];
+            const elementsToUpdate = ['.content .chart-button', '.content .share-button', '.content .delete-chat'];
             elementsToUpdate.forEach(selector => {
                 $(selector).each(function() {
                     $(this).attr('data-id', chatId);
                 });
             });
             $('.edit-chat').each(function(){
-                $(this).attr('href','/chat/'+newchatId)
+                $(this).attr('href','/chat/edit/'+newchatId)
             })
         }
         
@@ -175,7 +177,7 @@ $(document).ready(function() {
                         });
                         
                     }
-
+                    getUserChatHistory(chatId, userId);
                 },
                 error: function(xhr, status, error) {
                     console.log(error)
@@ -556,6 +558,107 @@ $(document).ready(function() {
         });
 
 
+    }
+
+    function getUserChatHistory(chatId, userId) {
+        $.ajax({
+          url: `/api/chat-history/${chatId}`,
+          type: 'POST',
+          data: JSON.stringify({ userId: userId }),
+          contentType: 'application/json',
+          dataType: 'json',
+          success: function(data) {
+            displayUserChatHistory(data);
+          },
+          error: function(jqXHR, textStatus, errorThrown) {
+            console.error('Error fetching user chat history:', errorThrown);
+          }
+        });
+    }
+
+    function displayUserChatHistory(userChat) {
+        if (userChat && userChat.length > 0) {
+            const chatHistoryContainer = $('#chat-history');
+            chatHistoryContainer.empty();
+
+            const card = $('<div class="card rounded-0 shadow-0 bg-transparent"></div>');
+            const cardHeader = $('<div class="card-header"></div>');
+            cardHeader.text(`総要素数: ${userChat.length}`);
+            card.append(cardHeader);
+
+            const listGroup = $('<ul class="list-group list-group-flush"></ul>');
+            userChat.forEach(chat => {
+            const listItem = $(`<li class="list-group-item user-chat-history bg-transparent" data-chat="${chat._id}" data-user="${chat.userId}"></li>`);
+            listItem.css('cursor', 'pointer');
+
+            const small = $('<small class="text-muted"></small>');
+            small.append($('<i class="fas fa-clock me-1"></i>'));
+            small.append(chat.updatedAt);
+
+            const dropdown = renderChatDropdown(chat)
+            
+            listItem.append(small);
+            listItem.append(dropdown);
+            listGroup.append(listItem);
+            });
+
+            card.append(listGroup);
+            chatHistoryContainer.append(card);
+            enableToggleDropdown()
+        }
+    }
+    function enableToggleDropdown() {
+        // Check if the event listener is already attached to the element
+        if (!$(document).find('.dropdown-toggle').data('hasEventListener')) {
+            // Attach the event listener and set the flag
+            $(document).on('click', '.dropdown-toggle', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }).data('hasEventListener', true);
+    
+            // Initialize the dropdown
+            $(document).find('.dropdown-toggle').each(function(e) {
+                new mdb.Dropdown($(this)[0]);
+            });
+        }
+    }
+    function renderChatDropdown(chat) {
+        const chatId = chat._id;
+        const dropdownHtml = `
+            <div class="d-inline-block align-items-center">
+                <!-- Dropdown -->
+                <div class="dropdown">
+                    <button class="btn border-0 shadow-0 dropdown-toggle ms-2" type="button" id="dropdownMenuButton_${chatId}" data-mdb-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton_${chatId}">
+                        <li>
+                            <button class="dropdown-item chart-button" data-id="${chatId}">
+                                <i class="fas fa-chart-line"></i> 分析
+                            </button>
+                        </li>
+                        <li>
+                            <button class="dropdown-item share-button" data-id="${chatId}">
+                                <i class="fas fa-share"></i> 共有
+                            </button>
+                        </li>
+                        <li>
+                            <a href="/chat/edit/${chatId}" class="dropdown-item">
+                                <i class="far fa-edit"></i> 編集
+                            </a>
+                        </li>
+                        <li>
+                            <span data-id="${chatId}" class="dropdown-item delete-chat-history" style="cursor:pointer">
+                                <i class="fas fa-trash"></i> 削除
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+                <!-- End of Dropdown -->
+            </div>
+        `;
+
+        return dropdownHtml 
     }
 
     function clearContentFromEnd($element, callback) {

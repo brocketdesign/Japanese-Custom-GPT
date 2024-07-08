@@ -666,6 +666,9 @@ select {
   }
 }
 
+.dropdown-toggle::after {
+  display:none !important;
+}
 
 
 .p-best {

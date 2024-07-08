@@ -4,7 +4,7 @@
 <body>
 
     <style>
-        .sidebar {
+        .sidebar, .sidebar-history {
             height: 100vh;
             width: 250px;
             position: fixed;
@@ -17,11 +17,13 @@
             overflow: scroll;
             padding-top: 0.75em;
         }
-
-        .sidebar.hidden {
+        
+        .sidebar.hidden ,.sidebar-history.hidden {
             transform: translateX(-250px);
         }
-
+        .sidebar-history.shadow {
+            z-index: 1100;
+        }
         .content {
             margin-left: 250px;
             transition: margin-left 0.3s ease;
@@ -75,7 +77,10 @@
             margin-left: 5px;
             font-size: 18px;;
         }
-        
+        .dropdown-toggle::after {
+            display:none !important;
+        }
+
         .btn-flat-border:hover {
             background: #742af4;
             color: white;
@@ -131,24 +136,36 @@
             overflow: hidden;
             border-radius: 50%;
         }
-        .chat-list.item:hover {
-            background-color: #f8f9fa !important;
+        .chat-list.item:hover, .user-chat-history:hover {
+            background-color: #c6c9cc99 !important;
         }
         .online-text {
             width: 150px; 
             white-space: nowrap;
             overflow: hidden;
         }
-        .card-body{
+        .chat-contain .card-body{
             height: 97vh !important;
         }
+        .swal-image{
+            border-radius: 50px;
+            object-fit: cover;
+        }
         @media (max-width: 600px) {
-            .card-body{
+            .chat-contain .card-body{
                 height: 97vh;
+            }
+            .content,
+            nav.navbar.move {
+                margin-left: 0px;
             }
         }
     </style>
     
+    <div class="sidebar-history hidden shadow">
+        <h5 class="my-2 mx-3">チャット履歴</h5>
+        <div id="chat-history"></div>
+    </div>
     <div class="sidebar hidden shadow">
         <div class="d-none w-100 m-2">
             <button class="menu-chat-sm d-sm-none btn bg-white shadow-0"><i class="fa-solid fa-bars"></i></button>
@@ -156,41 +173,57 @@
         <a href="/chat/edit/" class="m-2 btn px-4 py-2 border shadow-0 btn-dark" style="border-radius:40px;">
             <i class="fas fa-plus me-2"></i>作成する
         </a>
-        {{#if userChat}}
-            <div class="card rounded-0 shadow-0">
-                <div class="card-header">
-                    総要素数: {{userChat.length}}
-                </div>
-                <ul class="list-group list-group-flush">
-                    {{#each userChat}}
-                    {{#if this.updatedAt}}
-                        <li class="list-group-item user-chat-history" data-user="{{this.userId}}" style="cursor: pointer;">
-                        <small class="text-muted"><i class="fas fa-clock me-1"></i>{{this.updatedAt}}</small>
-                    {{/if}}
-                    </li>
-                    {{/each}}
-                </ul>
-            </div>
-        {{/if}}
         <div class="mt-3">
             {{#each chats}}
             <div class="chat-list item user-chat d-flex align-items-center justify-content-between p-0 bg-transparent" style="cursor: pointer;" data-id="{{this._id}}">
                 <div class="d-flex align-items-center w-100">
-                    <div class="thumb align-items-center text-center justify-content-center d-flex flex-column col-3 p-1" >
-                        <img class="img-fluid" src="{{#if this.thumbnailUrl}}{{this.thumbnailUrl}}{{else}}/img/logo.webp{{/if}}" alt="">
-                    </div>
-                    <div class="chat-list-details">
-                        <div class="chat-list-info">
-                            <div class="chat-list-title">
-                                <h6 class="mb-0 online-text" style="font-size: 14px;">{{this.name}}</h6>
+                    <div class="user-chat-content" style="flex: 1;display: flex;justify-content: center;align-items: center;">
+                        <div class="thumb align-items-center text-center justify-content-center d-flex flex-column col-3 p-1" >
+                            <img class="img-fluid" src="{{#if this.thumbnailUrl}}{{this.thumbnailUrl}}{{else}}/img/logo.webp{{/if}}" alt="">
+                        </div>
+                        <div class="chat-list-details">
+                            <div class="chat-list-info">
+                                <div class="chat-list-title">
+                                    <h6 class="mb-0 online-text" style="font-size: 14px;">{{this.name}}</h6>
+                                </div>
                             </div>
                         </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <!-- Dropdown -->
+                        <div class="dropdown">
+                            <button class="btn border-0 shadow-0 dropdown-toggle ms-2" type="button" id="dropdownMenuButton_{{this._id}}" data-mdb-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton_{{this._id}}">
+                                <li>
+                                    <button class="dropdown-item chart-button" data-id="{{this._id}}">
+                                        <i class="fas fa-chart-line"></i> 分析
+                                    </button>
+                                </li>
+                                <li>
+                                    <button class="dropdown-item share-button" data-id="{{this._id}}">
+                                        <i class="fas fa-share"></i> 共有
+                                    </button>
+                                </li>
+                                <li>
+                                    <a href="/chat/edit/{{this._id}}" class="dropdown-item">
+                                        <i class="far fa-edit"></i> 編集
+                                    </a>
+                                </li>
+                                <li>
+                                    <span data-id="{{this._id}}" class="dropdown-item delete-chat" style="cursor:pointer">
+                                        <i class="fas fa-trash"></i> 削除
+                                    </span>
+                                </li>
+                            </ul>
+                        </div>
+                        <!-- End of Dropdown -->
                     </div>
                 </div>
             </div>
             {{/each}}
         </div>
-
     </div>
     <div id="overlay" class="d-sm-none bg-dark position-absolute" style="inset:0;z-index:1033;display:none;opacity: 0.4;overflow:hidden"></div>
     <div class="content collapsed">
@@ -198,8 +231,12 @@
             <div class="container-fluid">
                 <div class="d-flex align-items-center justify-content-center m-auto">
                     <div style="position: absolute;left: 20px;">
+
                         <button class="menu-chat-sm d-sm-none btn btn-light"><i class="fa-solid fa-bars"></i></button>
                         <button id="menu-chat" class="d-none d-sm-inline-block btn btn-light"><i class="fa-solid fa-bars"></i></button>
+
+                        <button id="history-chat" class="btn btn-light"><i class="fas fa-history"></i></button>
+
                         <button id="reset-chat" class="d-none d-sm-inline-block btn btn-light" data-toggle="tooltip" title="新しいチャット" data-original-title="New">
                             <i class="fas fa-plus-circle"></i>
                         </button>
@@ -250,6 +287,8 @@
                                     loading="lazy" />
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLink">
+                                    <li><a href="/chat/discover/" class="dropdown-item"> チャット検索 </a> </li>
+                                    <li><a href="/chat/list/" class="dropdown-item"> チャットリスト </a> </li>
                                     <li><a class="dropdown-item" href="/settings">設定</a></li>
                                     <li><a id="logout" class="dropdown-item" href="#">ログアウト</a></li>
                                 </ul>
@@ -259,7 +298,7 @@
                 </div>
             </div>
         </nav>
-        <div class="container px-0">
+        <div class="container chat-contain px-0">
             <div id="chat-container" class="card shadow-0 rounded-0"></div>
                 <div class="card-body text-center py-0 container" style="min-height:250px;overflow-y:hidden;">
                     <div id="chatContainer" class="pt-2" style="padding-top: 100px !important;;padding-bottom: 100px !important;"></div>
@@ -283,10 +322,6 @@ $(document).ready(function() {
     $('#chatContainer').animate({
         scrollTop: $('#chatInput').offset().top
     }, 1000); 
-    
-    $('.dropdown-toggle').each(function(e) {
-        new mdb.Dropdown($(this)[0]);
-    });
     // Initialize user preference from cookie
     if (Cookies.get('sidebarState') === 'expanded') {
         $('.sidebar').removeClass('hidden');
@@ -294,12 +329,24 @@ $(document).ready(function() {
         $('nav.navbar').addClass('move');
         $('#overlay').show()
     }
-
     $('#menu-chat').on('click', function(){
-        $('.sidebar').toggleClass('hidden');
-        $('.content').toggleClass('collapsed');
-        $('nav.navbar').toggleClass('move');
-        $('#overlay').toggle()
+
+        $('.sidebar-history').addClass('hidden');
+        const sidebar = $('.sidebar');
+        const content = $('.content');
+        const navbar = $('nav.navbar');
+        
+        if (sidebar.hasClass('hidden')) {
+            sidebar.removeClass('hidden');
+            content.removeClass('collapsed');
+            navbar.addClass('move');
+            $('#overlay').show()
+        } else {
+            sidebar.addClass('hidden');
+            content.addClass('collapsed');
+            navbar.removeClass('move');
+            $('#overlay').hide()
+        }
         
         // Update the cookie based on the new state
         if ($('.sidebar').hasClass('hidden')) {
@@ -308,6 +355,13 @@ $(document).ready(function() {
             Cookies.set('sidebarState', 'expanded', { expires: 7 });
         }
     });
+    $('#history-chat').on('click', function(){
+        $('.sidebar-history').toggleClass('hidden');
+        $('.sidebar').removeClass('hidden');
+        $('.content').removeClass('collapsed');
+        $('nav.navbar').addClass('move');
+        $('#overlay').toggle()
+    })
     $('.menu-chat-sm').on('click', function(){
         $('.sidebar').toggleClass('hidden');
         $('#overlay').toggle()
@@ -315,7 +369,9 @@ $(document).ready(function() {
     $('#overlay').on('click', function(){
         $('#overlay').toggle()
         $('.sidebar').toggleClass('hidden');
+        $('.sidebar-history').addClass('hidden');
     });
+    
     $('.chart-button').on('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -325,7 +381,6 @@ $(document).ready(function() {
         // POSTリクエストを送信
         $.post('/api/chat-analyze/', { chatId: chatId })
             .done(function(response) {
-                console.log(response.chat)
                 // 受け取ったデータの長さを取得
                 var dataLength = response.total;
 
@@ -408,13 +463,40 @@ $(document).ready(function() {
                     url: `/api/delete-chat/${chatId}`,
                     type: 'DELETE',
                     success: function(response) {
+                        $(`.chat-list[data-id="${chatId}"]`).fadeOut().remove()
+                    },
+                    error: function(xhr, status, error) {
                         Swal.fire(
-                            '削除されました！',
-                            'チャットが削除されました。',
-                            'success'
-                        ).then(() => {
-                            $(`.chat-list[data-id="${chatId}"]`).fadeOut().remove()
-                        });
+                            'エラー',
+                            'チャットの削除に失敗しました。',
+                            'error'
+                        );
+                    }
+                });
+            }
+        });
+    });
+    $(document).on('click', '.delete-chat-history', function(e) {
+        e.preventDefault()
+        e.stopPropagation();
+        const selectedChatId = $(this).data('id');
+        Swal.fire({
+            title: '本当に削除しますか？',
+            text: "この操作は元に戻せません！",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'はい、削除します！',
+            cancelButtonText: 'キャンセル'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `/api/delete-chat-history/${selectedChatId}`,
+                    type: 'DELETE',
+                    success: function(response) {
+                        console.log({selectedChatId})
+                        $(document).find(`.user-chat-history[data-chat="${selectedChatId}"]`).fadeOut().remove()
                     },
                     error: function(xhr, status, error) {
                         Swal.fire(

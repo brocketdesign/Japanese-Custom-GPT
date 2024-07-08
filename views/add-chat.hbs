@@ -56,8 +56,6 @@
             下のテンプレートから選んで始めることもできます。
         </p>
     </div>
-    <div class="scroll-container d-flex justify-content-between  py-4" id="button-container">
-    </div>
     <div id="chatInput" class="input-group rounded-0 rounded-bottom mt-3 mb-4" style="bottom: 0px;right: 0;left: 0;width: auto;margin: auto;">
         <textarea rows="1" id="userMessage" class="form-control py-3" style="font-size: 14px;padding-left: 30px;" placeholder="チャットについて教えてください"></textarea>
         <button id="sendMessage" class="btn btn-light px-4 border"><i class="fas fa-paper-plane"></i></button>
@@ -143,7 +141,7 @@
             fetchchatData(chatId);
         }
         
-         var savedURL = localStorage.getItem('savedURL');
+        var savedURL = localStorage.getItem('savedURL');
         if (savedURL) {
             $('#myUrl').val(savedURL);
             localStorage.removeItem('savedURL');
@@ -258,6 +256,7 @@
                 }
             });
         }
+
         $('#chatForm').on('submit', function(e) {
             e.preventDefault();
 
@@ -318,108 +317,16 @@
             }
         });
 
-
-  const buttonsData = [
-        {
-            title: "お問い合わせフォーム",
-            role: "このチャットボットは、ユーザーの問い合わせに対応し、必要な情報を収集する役割を果たします。",
-            tone: "丁寧で親切な対応",
-            thumbnailUrl: "/img/avatar1.jpg"
-        },
-        {
-            title: "クイズ",
-            role: "このチャットボットは、ユーザーにクイズを出題し、楽しませる役割を果たします。",
-            tone: "明るく、楽しいトーン",
-            thumbnailUrl: "/img/avatar2.jpg"
-        },
-        {
-            title: "AIガールフレンド",
-            role: "このチャットボットは、ユーザーと対話し、仮想のガールフレンドのような役割を果たします。",
-            tone: "優しく、思いやりのあるトーン",
-            thumbnailUrl: "/img/avatar3.jpg"
-        },
-        {
-            title: "健康アドバイザー",
-            role: "このチャットボットは、ユーザーに健康に関するアドバイスを提供し、健康管理をサポートします。",
-            tone: "専門的で信頼できるトーン",
-            thumbnailUrl: "/img/avatar4.jpg"
-        },
-        {
-            title: "旅行ガイド",
-            role: "このチャットボットは、ユーザーに旅行のおすすめスポットやプランを提案する役割を果たします。",
-            tone: "親しみやすく、エキサイティングなトーン",
-            thumbnailUrl: "/img/avatar5.jpg"
-        },
-        {
-            title: "精神的なサポート",
-            role: "このチャットボットは、ユーザーに心のケアや精神的なサポートを提供する役割を果たします。",
-            tone: "落ち着いていて、慰めるようなトーン",
-            thumbnailUrl: "/img/avatar6.jpg"
+        const urlParams = new URLSearchParams(window.location.search);
+        const chatCategory= urlParams.get('chatCategory');
+        if (chatCategory) {
+            $('#chatCategory').val(chatCategory);
         }
-    ];
-
-    const buttonContainer = $('#button-container');
-
-    buttonsData.forEach(button => {
-        const card = $('<div>', {
-            class: 'card chat-card flex-row bg-light border-0 me-3 py-2',
-            css: {
-                borderRadius: '20px',
-                cursor: 'pointer'
-            },
-            click: function() {
-                $('#userMessage').val(button.role).trigger('change');
-                $('#chatRule').val(button.tone);
-            }
-        });
-
-        const thumbnailDiv = $('<div>', {
-            css: {
-                minWidth: '100px',
-                width: '100px',
-                height: 'auto',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center'
-            }
-        });
-
-        const thumbnailImg = $('<img>', {
-            src: button.thumbnailUrl,
-            class: 'img-fluid m-3',
-            alt: 'Thumbnail',
-            onerror: "this.src='/img/logo.webp';",
-            css: {
-                width: '50px',
-                height: '50px',
-                objectFit: 'cover',
-                borderRadius: '50px'
-            }
-        });
-
-        const cardBody = $('<div style="width:300px;">', { class: 'card-body' });
-
-        const cardTitle = $('<h6>', {
-            class: 'card-title fw-bold',
-            text: button.title
-        });
-
-        const cardText = $('<p>', {
-            class: 'card-text template',
-            text: button.role
-        });
-
-        const textMuted = $('<p>', {
-            class: 'text-muted d-none',
-            html: '<i class="fas fa-clock"></i> 更新:'
-        });
-
-        thumbnailDiv.append(thumbnailImg);
-        cardBody.append(cardTitle, cardText, textMuted);
-        card.append(thumbnailDiv, cardBody);
-        buttonContainer.append(card);
-    });
-
+        const userMessage = urlParams.get('userMessage');
+        if (userMessage) {
+            $('#userMessage').val(userMessage);
+            //generateCompletion();
+        }
 
 
         function generateCompletion(callback) {
@@ -512,7 +419,7 @@
                         markdownContent += data.content;
 
                         // Update the bot response container with the new content
-                        $('#chatRule').val(markdownContent);
+                        $('#chatRule').val(marked.parse(markdownContent));
 
                     };
 

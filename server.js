@@ -154,7 +154,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       }).sort({_id:-1}).toArray();
       return reply.view('chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd',chats });
     });
-    fastify.get('/chat-list', {
+    fastify.get('/chat/list/', {
       preHandler: [fastify.authenticate]
     }, async (request, reply) => {
       try {
@@ -168,7 +168,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         return reply.status(500).send({ error: 'Failed to retrieve stories' });
       }
     });
-    fastify.get('/chat-discover', {
+    fastify.get('/chat/discover/', {
       preHandler: [fastify.authenticate]
     }, async (request, reply) => {
       try {
@@ -260,9 +260,9 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         const chatsCollection = db.collection('chats');
         const chats = await chatsCollection.find({ userId }).toArray();
         if(chats.length == 0){
-          return reply.redirect('/chat/edit/')
+          return reply.redirect('/chat/discover/')
         }else{
-          return reply.redirect('/chat-list')
+          return reply.redirect('/chat/list/')
         }
       } catch (err) {
         return reply.status(500).send({ error: 'Unable to render the dashboard' });

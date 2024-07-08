@@ -58,6 +58,9 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
+    .dropdown-toggle::after {
+        display:none !important;
+    }
 
     .online-text {
         width: 95%; /* Adjust the width as needed */
@@ -169,20 +172,14 @@
 </div>
  {{> dashboard-footer}}
 <style>
-    .swal-image {
-        border-radius: 50%;
-    }
+        .swal-image{
+            border-radius: 50px;
+            object-fit: cover;
+        }
 </style>
 <script>
 $(document).ready(function() {
-// Initialize MDB dropdown
-    $('.dropdown-toggle').each(function(e) {
-        new mdb.Dropdown($(this)[0]);
-    });
-    $('.dropdown-toggle').on('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    });
+    enableToggleDropdown()
     $('.chart-button').on('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -301,13 +298,7 @@ $(document).ready(function() {
                     url: `/api/delete-chat/${chatId}`,
                     type: 'DELETE',
                     success: function(response) {
-                        Swal.fire(
-                            '削除されました！',
-                            'チャットが削除されました。',
-                            'success'
-                        ).then(() => {
-                            $(`.chat-list[data-id="${chatId}"]`).fadeOut().remove()
-                        });
+                        $(`.chat-list[data-id="${chatId}"]`).fadeOut().remove()
                     },
                     error: function(xhr, status, error) {
                         Swal.fire(
@@ -350,6 +341,21 @@ $(document).ready(function() {
                 });
         }
     });
+    function enableToggleDropdown() {
+        // Check if the event listener is already attached to the element
+        if (!$(document).find('.dropdown-toggle').data('hasEventListener')) {
+            // Attach the event listener and set the flag
+            $(document).on('click', '.dropdown-toggle', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }).data('hasEventListener', true);
+
+            // Initialize the dropdown
+            $(document).find('.dropdown-toggle').each(function(e) {
+                new mdb.Dropdown($(this)[0]);
+            });
+        }
+    }
 });
 </script>
 

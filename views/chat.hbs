@@ -116,9 +116,7 @@
     </section>
     <section>
         <div class="container d-flex py-5 px-3 justify-content-center align-items-center">
-            <a href="/authenticate">
-                <img src="/img/bg-2.png" class="rounded shadow">
-            </a>
+            <div id="cardGrid" class="row"></div>
         </div>
     </section>
     <section id="nagare" class="p-best mb-5">
@@ -173,7 +171,50 @@
     }
 $(document).ready(function() {
 
+$(function() {
+    // Sample data array
+    var cardData = [
+        {
+            image: "image1.jpg",
+            title: "Title 1",
+            description: "This is the description for card 1."
+        },
+        {
+            image: "image2.jpg",
+            title: "Title 2",
+            description: "This is the description for card 2."
+        },
+        // Add more objects as needed
+    ];
 
+    // Function to create a card
+    function createCard(data) {
+        var card = `
+            <div class="col mb-4">
+                <div class="card">
+                    <img src="images/${data.image}" class="card-img-top" alt="${data.title}">
+                    <div class="card-body">
+                        <h5 class="card-title">${data.title}</h5>
+                        <p class="card-text">${data.description}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        return card;
+    }
+
+    // Function to render the grid of cards
+    function renderCardGrid(dataArray) {
+        var cardGrid = "";
+        for (var i = 0; i < dataArray.length; i++) {
+            cardGrid += createCard(dataArray[i]);
+        }
+        $("#cardGrid").html(cardGrid);
+    }
+
+    // Call the render function with the sample data
+    renderCardGrid(cardData);
+});
     $('#save-url').click(function() {
         var urlInput = $('#url-input').val();
         localStorage.setItem('savedURL', urlInput);

@@ -201,16 +201,11 @@ $(document).ready(function() {
                                             <p class="small text-muted mb-1">カテゴリー</p>
                                             <p class="mb-0">${chatbot.category}</p>
                                         </div>
-                                        <div>
-                                            <p class="small text-muted mb-1">プレミアム</p>
-                                            <p class="mb-0">${chatbot.premium ? '<i class="fas fa-star"></i>' : 'いいえ'}</p>
-                                        </div>
                                     </div>
                                     <div class="d-flex pt-1">
-                                        <button type="button" class="btn btn-outline-primary me-1 flex-grow-1">チャット</button>
                                         <button type="button" class="btn btn-primary flex-grow-1" 
                                             onclick="window.location.href='/chat/edit/?userMessage=${encodeURIComponent(`${chatbot.name}は${chatbot.title}.${chatbot.role}`)}&chatCategory=${chatbot.category}&chatImage=${chatbot.thumbnailUrl}'">
-                                            編集
+                                            チャット
                                         </button>
                                     </div>
                                 </div>
@@ -226,7 +221,7 @@ $(document).ready(function() {
 
     $(document).ready(function() {
         categories.forEach(category => {
-            const categoryButton = `<button type="button" class="btn btn-light category-button">${category}</button>`;
+            const categoryButton = `<button type="button" class="btn btn-light category-button" onclick="window.location.href='/chat/edit/?userMessage=${category}'">${category}</button>`;
             $('#category-container').append(categoryButton);
         });
     });

@@ -634,21 +634,6 @@ $(document).ready(function() {
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton_${chatId}">
                         <li>
-                            <button class="dropdown-item chart-button" data-id="${chatId}">
-                                <i class="fas fa-chart-line"></i> 分析
-                            </button>
-                        </li>
-                        <li>
-                            <button class="dropdown-item share-button" data-id="${chatId}">
-                                <i class="fas fa-share"></i> 共有
-                            </button>
-                        </li>
-                        <li>
-                            <a href="/chat/edit/${chatId}" class="dropdown-item">
-                                <i class="far fa-edit"></i> 編集
-                            </a>
-                        </li>
-                        <li>
                             <span data-id="${chatId}" class="dropdown-item delete-chat-history" style="cursor:pointer">
                                 <i class="fas fa-trash"></i> 削除
                             </span>

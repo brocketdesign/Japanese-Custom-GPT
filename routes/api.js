@@ -86,7 +86,6 @@ async function routes(fastify, options) {
         for await (const part of parts) {
             switch (part.fieldname) {
                 case 'name':
-                case 'content':
                 case 'visibility':
                 case 'category':
                 case 'rule':
@@ -94,6 +93,9 @@ async function routes(fastify, options) {
                 case 'description':
                 case 'chatId':
                     chatData[part.fieldname] = part.value;
+                    break;
+                case 'content':
+                    chatData.content = JSON.parse(part.value);
                     break;
                 case 'thumbnail':
                     chatData.thumbnailUrl = await handleFileUpload(part);
@@ -189,8 +191,13 @@ async function routes(fastify, options) {
             isNew :true,
         }
         try {
-            let userChatDocument = await collectionUserChat.findOne({ userId, _id: new fastify.mongo.ObjectId(chatId) });
-            console.log(userChatDocument)
+            let userChatDocument = await collectionUserChat.findOne({ 
+                userId, 
+                $or: [
+                  { _id: new fastify.mongo.ObjectId(chatId) }, 
+                  { chatId }
+                ] 
+            });              
             if(userChatDocument){
                 response.userChat = userChatDocument
                 response.isNew = false
@@ -262,6 +269,7 @@ async function routes(fastify, options) {
         }
       
         const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+        console.log({chatId})
         const userChat = await collectionUserChat.find({ chatId }).toArray();
 
         if (!userChat) {

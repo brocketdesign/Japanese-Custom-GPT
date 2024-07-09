@@ -97,7 +97,7 @@
                 </div>
             </div>
         </div>
-        <div class="mb-3 mx-3">
+        <div class="mb-3 mx-3 d-none">
             <label for="chatPdf" class="form-label">PDFファイルを選択</label>
             <input type="file" id="chatPdf" class="form-control" accept="pdf" lang="ja" title="PDFファイルを選択">
         </div>
@@ -124,6 +124,11 @@
         <div class="container mt-1">
             <label for="chatContentEdition" class="form-label">チャットの構造</label>
             <div id="chatContentEdition"></div>
+            <button type="button" id="genStructure" class="btn btn-primary" data-toggle="tooltip" title="チャット構造の生成">
+                <i class="fa fa-cog fa-fw"></i>
+                <i class="fa fa-spinner fa-spin fa-fw fa-hidden d-none"></i>
+                チャット構造を生成する
+            </button>
             <button type="button" id="addQuestionBtn" class="btn btn-light float-end" data-toggle="tooltip" title="追加" data-original-title="Share"><i class="fas fa-plus"></i> </button>
             <button type="button" id="saveButton" class="btn btn-primary mt-3 d-none">Save</button>
         </div>
@@ -314,16 +319,29 @@
    
         // Event handler for the send button
         $('#sendMessage').on('click', function() {
-            generateCompletion();
+            
+            // Generate title and description based on the cleaned content
+            generateName();
+            generateCategory();
+            generateDescription();
+            generateRule();
         });
 
         // Event handler for the Enter key
         $('#userMessage').on('keypress', function(event) {
             if (event.which == 13 && !event.shiftKey) { // Enter key is pressed without Shift
-                generateCompletion();
+                // Generate title and description based on the cleaned content
+                generateName();
+                generateCategory();
+                generateDescription();
+                generateRule();
             }
         });
 
+        $('#genStructure').click(function(){
+            generateCompletion()
+        })
+        
         const urlParams = new URLSearchParams(window.location.search);
         const chatCategory= urlParams.get('chatCategory');
         if (chatCategory) {
@@ -353,8 +371,8 @@
             if ($('#chatContent').val().trim() !== '') {
                 $('#chatContent').val('');
             }        
-            $('#chatInput .load').toggleClass('d-none')
-            $('#sendMessage').toggleClass('d-none')
+            $('#genStructure .fa-spinner').toggleClass('d-none')
+            
             $.ajax({
                 url: apiUrl,
                 method: 'POST',
@@ -385,17 +403,9 @@
                         $('#chatContent').html(cleanedContent);
                         $('#chatContent').val(cleanedContent)
 
-                        // Generate title and description based on the cleaned content
-                        generateName(message+'\n'+cleanedContent, chatId);
-                        generateCategory(message+'\n'+cleanedContent, chatId);
-                        generateDescription(message+'\n'+cleanedContent, chatId);
-                        generateRule(message+'\n'+cleanedContent, chatId);
-
-                        $('#chatInput .load').toggleClass('d-none')
-                        $('#sendMessage').toggleClass('d-none')
+                        $('#genStructure .fa-spinner').toggleClass('d-none')
 
                         createEditor(JSON.parse(cleanedContent))
-                        $('#chatForm').removeClass('d-none')
                     };
                 },
                 error: function(error) {
@@ -403,7 +413,15 @@
                 }
             });
         }
-        function generateRule(cleanedContent, chatId, callback) {
+        function generateRule(callback) {
+
+            let message = $('#userMessage').val();
+            const urlSummary = $(`#resultText`).text()
+            const myUrl = $('#myUrl').val()
+
+            if(urlSummary.trim() != ''){
+                message = `URL : ${myUrl} \n Content Summary : ${urlSummary}. \n\n Considering the above informations, ${message}`
+            }
             const apiUrl = '/api/openai-chat-creation';
             if ($('#chatRule').val().trim() !== '') {
                 return
@@ -413,7 +431,7 @@
                 url: apiUrl,
                 method: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({ chatId, message: cleanedContent, system : getSystem('chatRule') }),
+                data: JSON.stringify({ chatId, message, system : getSystem('chatRule') }),
                 success: function(response) {
 
                     const sessionId = response.sessionId;
@@ -478,8 +496,15 @@
                 }
             });
         }
-        function generateDescription(cleanedContent, chatId) {
+        function generateDescription() {
 
+            let message = $('#userMessage').val();
+            const urlSummary = $(`#resultText`).text()
+            const myUrl = $('#myUrl').val()
+
+            if(urlSummary.trim() != ''){
+                message = `URL : ${myUrl} \n Content Summary : ${urlSummary}. \n\n Considering the above informations, ${message}`
+            }
             const apiUrl = '/api/openai-chat-creation';
             // Clear the chatContent area only if it's not empty
             if ($('#chatDescription').val().trim() !== '') {
@@ -490,7 +515,7 @@
                 url: apiUrl,
                 method: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({ chatId, message: cleanedContent, system : getSystem('chatDescription') }),
+                data: JSON.stringify({ chatId, message, system : getSystem('chatDescription') }),
                 success: function(response) {
 
                     $('#chatDescription').html('')
@@ -519,8 +544,15 @@
                 }
             });
         }
+        function generateCategory() {
 
-        function generateCategory(cleanedContent, chatId) {
+            let message = $('#userMessage').val();
+            const urlSummary = $(`#resultText`).text()
+            const myUrl = $('#myUrl').val()
+
+            if(urlSummary.trim() != ''){
+                message = `URL : ${myUrl} \n Content Summary : ${urlSummary}. \n\n Considering the above informations, ${message}`
+            }
 
             const apiUrl = '/api/openai-chat-creation';
             
@@ -529,7 +561,7 @@
                 url: apiUrl,
                 method: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({ chatId, message: cleanedContent, system : getSystem('chatCategory') }),
+                data: JSON.stringify({ chatId, message, system : getSystem('chatCategory') }),
                 success: function(response) {
 
                     const sessionId = response.sessionId;
@@ -556,7 +588,15 @@
                 }
             });
         }
-        function generateName(cleanedContent, chatId) {
+        function generateName() {
+
+            let message = $('#userMessage').val();
+            const urlSummary = $(`#resultText`).text()
+            const myUrl = $('#myUrl').val()
+
+            if(urlSummary.trim() != ''){
+                message = `URL : ${myUrl} \n Content Summary : ${urlSummary}. \n\n Considering the above informations, ${message}`
+            }
 
             const apiUrl = '/api/openai-chat-creation';
             
@@ -565,7 +605,7 @@
                 url: apiUrl,
                 method: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({ chatId, message: cleanedContent, system : getSystem('chatName') }),
+                data: JSON.stringify({ chatId, message, system : getSystem('chatName') }),
                 success: function(response) {
 
                     const sessionId = response.sessionId;
@@ -629,7 +669,7 @@
                 case 'chatRule':
                     system = `
                         You are a japanese chatbot tone explanator. \n
-                        You take the provided content by the user and you explain the chatbot character, how it aswwer, which tone. ONLY THE TONE EXPLANATION IN JAPANESE.NO COMMENTS.
+                        You take the provided content by the user and you explain the chatbot character, how it aswwer, which tone.Respond in plain text. ONLY THE TONE EXPLANATION IN JAPANESE.NO COMMENTS.
                     `;
                     break;
                 case 'chatQuestion':

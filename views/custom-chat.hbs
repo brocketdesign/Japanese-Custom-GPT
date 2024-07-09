@@ -145,7 +145,7 @@
             overflow: hidden;
         }
         .chat-contain .card-body{
-            height: 97vh !important;
+                width: 100%;
         }
         .swal-image{
             border-radius: 50px;
@@ -153,7 +153,7 @@
         }
         @media (max-width: 600px) {
             .chat-contain .card-body{
-                height: 97vh;
+                width: 100%;
             }
             .content,
             nav.navbar.move {
@@ -316,12 +316,23 @@
 <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
 <script>
 $(document).ready(function() {
+    function adjustHeight() {
+        const newHeight = $(window).height() * 0.97;
+        $('.chat-contain .card-body').height(newHeight);
+    }
+
+    // Adjust height on document ready
+    $(document).ready(adjustHeight);
+
+    // Adjust height on window resize
+    $(window).resize(adjustHeight);
     $('html,body').animate({
         scrollTop: $('#chatInput').offset().top
     }, 0);
     $('#chatContainer').animate({
         scrollTop: $('#chatInput').offset().top
-    }, 1000); 
+    }, 500); 
+
     // Initialize user preference from cookie
     if (Cookies.get('sidebarState') === 'expanded') {
         $('.sidebar').removeClass('hidden');
@@ -370,6 +381,12 @@ $(document).ready(function() {
         $('#overlay').toggle()
         $('.sidebar').toggleClass('hidden');
         $('.sidebar-history').addClass('hidden');
+        // Update the cookie based on the new state
+        if ($('.sidebar').hasClass('hidden')) {
+            Cookies.set('sidebarState', 'collapsed', { expires: 7 }); // Cookie expires in 7 days
+        } else {
+            Cookies.set('sidebarState', 'expanded', { expires: 7 });
+        }
     });
     
     $('.chart-button').on('click', function(e) {

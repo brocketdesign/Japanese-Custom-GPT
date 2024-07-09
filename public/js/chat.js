@@ -158,31 +158,68 @@ $(document).ready(function() {
 
                     if(isNew && chatData.length > 0){
                         displayStep(chatData, currentStep);
-                        getUserChatHistory(chatId, userId);
                     }
 
                     if(isNew && chatData.length == 0 ){
-                        $.ajax({
-                            url: API_URL+'/api/chat-data',
-                            type: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            data: JSON.stringify({ currentStep:0, message:'Start the conversation', userId, chatId, isNew }),
-                            success: function(response) {
-                                isNew = false
-                                generateCompletion()
-                            },
-                            error: function(error) {
-                                console.log(error.statusText);
-                            }
-                        });
+                        createButton()
                         
                     }
+                    getUserChatHistory(chatId, userId);
+                    $('#chatContainer').animate({
+                        scrollTop: $('#chatContainer').prop("scrollHeight")
+                    }, 500); 
                 },
                 error: function(xhr, status, error) {
                     console.log(error)
 
+                }
+            });
+        }
+        function createButton() {
+            console.log('createButton')
+            // Create the container div
+            let container = $('<div></div>').addClass('container my-3');
+            
+            // Create the button
+            let button = $('<button></button>')
+                .addClass('btn btn-outline-secondary')
+                .attr('id', 'startButton')
+                .text('会話を開始する');
+            
+            // Append the button to the container
+            container.append(button);
+            
+            // Append the container to the body (or any specific element)
+            $('#chatInput').prepend(container);
+            
+            // Add click event listener to the button
+            button.on('click', function() {
+                displayStarter();
+            });
+        }
+        
+        function displayStarter() {
+            $.ajax({
+                url: API_URL+'/api/chat-data',
+                type: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify({ 
+                    currentStep: 0, 
+                    message: '会話を開始する', 
+                    userId: userId, 
+                    chatId: chatId, 
+                    isNew: true 
+                }),
+                success: function(response) {
+                    isNew = false;
+                    generateCompletion(function() {
+                        $('#startButton').hide();
+                    });
+                },
+                error: function(error) {
+                    console.log(error.statusText);
                 }
             });
         }
@@ -246,7 +283,6 @@ $(document).ready(function() {
         
            
         function displayStep(chatData, currentStep) {
-            chatData = JSON.parse(chatData)
             const step = chatData[currentStep];
             $('#chatContainer').append(`
             <div id="container-${currentStep}">
@@ -362,7 +398,7 @@ $(document).ready(function() {
             return JSON.parse(jsonString);
         }
         
-        function generateCompletion(){
+        function generateCompletion(callback){
             
             const apiUrl = API_URL+'/api/openai-chat-completion';
   
@@ -400,6 +436,9 @@ $(document).ready(function() {
                     eventSource.onerror = function(error) {
                         console.log('EventSource failed.');
                         eventSource.close();
+                        if (typeof callback === "function") {
+                            callback();
+                        }
                     };
                 },
                 error: function(error) {
@@ -578,9 +617,9 @@ $(document).ready(function() {
     }
 
     function displayUserChatHistory(userChat) {
-        if (userChat && userChat.length > 0) {
             const chatHistoryContainer = $('#chat-history');
             chatHistoryContainer.empty();
+        if (userChat && userChat.length > 0) {
 
             const card = $('<div class="card rounded-0 shadow-0 bg-transparent"></div>');
             const cardHeader = $('<div class="card-header"></div>');

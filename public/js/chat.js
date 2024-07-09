@@ -246,7 +246,7 @@ $(document).ready(function() {
         
            
         function displayStep(chatData, currentStep) {
-
+            chatData = JSON.parse(chatData)
             const step = chatData[currentStep];
             $('#chatContainer').append(`
             <div id="container-${currentStep}">

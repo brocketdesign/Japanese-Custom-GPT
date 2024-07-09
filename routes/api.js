@@ -46,147 +46,99 @@ async function routes(fastify, options) {
             reply.status(500).send({ error: 'Internal Server Error', details: error.message });
         }
     });
-    
+
+
     fastify.post('/api/add-chat', async (request, reply) => {
         const parts = request.parts();
-        let name, description, content, thumbnailUrl, chatId, thumbnailHash;
+        let chatData = {};
         const user = await fastify.getUser(request, reply);
         const userId = new fastify.mongo.ObjectId(user._id);
-    
+        chatData.userId = userId;
+
+        const uploadToS3 = async (buffer, hash, filename) => {
+            const params = {
+                Bucket: process.env.AWS_S3_BUCKET_NAME,
+                Key: `${hash}_${filename}`,
+                Body: buffer,
+            };
+            const uploadResult = await s3.upload(params).promise();
+            return uploadResult.Location;
+        };
+
+        const handleFileUpload = async (part) => {
+            const chunks = [];
+            for await (const chunk of part.file) {
+                chunks.push(chunk);
+            }
+            const buffer = Buffer.concat(chunks);
+            const hash = createHash('md5').update(buffer).digest('hex');
+            const existingFiles = await s3.listObjectsV2({
+                Bucket: process.env.AWS_S3_BUCKET_NAME,
+                Prefix: hash,
+            }).promise();
+            if (existingFiles.Contents.length > 0) {
+                return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFiles.Contents[0].Key}`;
+            } else {
+                return uploadToS3(buffer, hash, part.filename);
+            }
+        };
+
         for await (const part of parts) {
-            if (part.fieldname === 'name') {
-                name = part.value;
-            } else if (part.fieldname === 'content') {
-                content = JSON.parse(part.value);
-            } else if (part.fieldname === 'visibility') {
-                visibility = part.value;
-            } else if (part.fieldname === 'category') {
-                category = part.value;
-            } else if (part.fieldname === 'rule') {
-                rule = part.value;
-            } else if (part.fieldname === 'url') {
-                url = part.value;
-            } else if (part.fieldname === 'description') {
-                description = part.value;
-            } else if (part.fieldname === 'thumbnail') {
-                // Read the file stream into a buffer
-                const chunks = [];
-                for await (const chunk of part.file) {
-                    chunks.push(chunk);
-                }
-                const buffer = Buffer.concat(chunks);
-    
-                // Calculate the hash of the thumbnail
-                const hash = crypto.createHash('md5');
-                hash.update(buffer);
-                thumbnailHash = hash.digest('hex');
-    
-                // Check if a file with this hash already exists in S3
-                let existingFiles;
-                try {
-                    existingFiles = await s3.listObjectsV2({
-                        Bucket: process.env.AWS_S3_BUCKET_NAME,
-                        Prefix: thumbnailHash,
-                    }).promise();
-                } catch (error) {
-                    console.error('Failed to list objects in S3:', error);
-                    return reply.status(500).send({ error: 'Failed to check existing thumbnails' });
-                }
-    
-                if (existingFiles.Contents.length > 0) {
-                    // File already exists, use its URL
-                    thumbnailUrl = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFiles.Contents[0].Key}`;
-                } else {
-                    // Upload the thumbnail to S3
-                    const params = {
-                        Bucket: process.env.AWS_S3_BUCKET_NAME,
-                        Key: `${thumbnailHash}_${part.filename}`,
-                        Body: buffer,
-                    };
-    
-                    try {
-                        const uploadResult = await s3.upload(params).promise();
-                        thumbnailUrl = uploadResult.Location;
-                    } catch (error) {
-                        console.error('Failed to upload thumbnail:', error);
-                        return reply.status(500).send({ error: 'Failed to upload thumbnail' });
-                    }
-                }
-            } else if (part.fieldname === 'chatId') {
-                chatId = part.value;
+            switch (part.fieldname) {
+                case 'name':
+                case 'content':
+                case 'visibility':
+                case 'category':
+                case 'rule':
+                case 'url':
+                case 'description':
+                case 'chatId':
+                    chatData[part.fieldname] = part.value;
+                    break;
+                case 'thumbnail':
+                    chatData.thumbnailUrl = await handleFileUpload(part);
+                    break;
+                case 'pdf':
+                    chatData.pdfUrl = await handleFileUpload(part);
+                    break;
             }
         }
-    
-        // Check if the name and content are provided
-        if (!name || !content) {
-            return reply.status(400).send({ error: 'Missing name or content for the story' });
+
+        if (!chatData.name || !chatData.content) {
+            return reply.status(400).send({ error: 'Missing name or content for the chat' });
         }
-    
-        // Access the MongoDB collection
+
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-    
         const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
         const options = { timeZone: 'Asia/Tokyo', year: 'numeric', month: 'long', day: 'numeric', weekday: 'long', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false };
+        chatData.updatedAt = new Date(dateObj);
+        chatData.dateStrJP = new Date(dateObj).toLocaleDateString('ja-JP', options);
 
-        // Format the date string in Japanese
-        const dateStrJP = new Date(dateObj).toLocaleDateString('ja-JP', options);
-
-        // Create a document to insert or update
-        const storyDocument = {
-            name,
-            category,
-            description,
-            rule,
-            url,
-            content,
-            visibility,
-            thumbnailUrl,
-            userId,
-            updatedAt: new Date(dateObj),
-            dateStrJP
-        };
-    
         try {
-            if (chatId) {
-                // Update the existing story
-                const existingStory = await collection.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
-    
-                if (!existingStory) {
-                    return reply.status(404).send({ error: 'Story not found' });
+            if (chatData.chatId) {
+                const existingChat = await collection.findOne({ _id: new fastify.mongo.ObjectId(chatData.chatId) });
+                if (!existingChat) {
+                    return reply.status(404).send({ error: 'Chat not found' });
                 }
-    
-                // Update only the provided fields
-                if (thumbnailUrl) {
-                    storyDocument.thumbnailUrl = thumbnailUrl;
-                } else {
-                    delete storyDocument.thumbnailUrl;
-                }
-    
-                await collection.updateOne({ _id: new fastify.mongo.ObjectId(chatId) }, { $set: storyDocument });
-                console.log('Chat updated', chatId);
-                return reply.send({ message: 'Chat updated successfully', chatId});
+                await collection.updateOne({ _id: new fastify.mongo.ObjectId(chatData.chatId) }, { $set: chatData });
+                console.log('Chat updated', chatData.chatId);
+                return reply.send({ message: 'Chat updated successfully', chatId: chatData.chatId });
             } else {
-                // Check if a story with the same name already exists
-                const existingStory = await collection.findOne({ name: name });
-                if (existingStory) {
-                    return reply.status(409).send({ error: 'A story with this name already exists' });
+                const existingChat = await collection.findOne({ name: chatData.name });
+                if (existingChat) {
+                    return reply.status(409).send({ error: 'A chat with this name already exists' });
                 }
-    
-                storyDocument.createdAt = new Date(dateObj);
-    
-                // Insert the new story into the MongoDB collection
-                const result = await collection.insertOne(storyDocument);
-                const chatId = result.insertedId;
-                console.log('New Chat added:', chatId);
-                return reply.send({ message: 'Chat added successfully', chatId: chatId });
-
+                chatData.createdAt = new Date(dateObj);
+                const result = await collection.insertOne(chatData);
+                console.log('New Chat added:', result.insertedId);
+                return reply.send({ message: 'Chat added successfully', chatId: result.insertedId });
             }
         } catch (error) {
-            // Handle potential errors
             console.error('Failed to add or update the Chat:', error);
             return reply.status(500).send({ error: 'Failed to add or update the Chat' });
         }
     });
+
     fastify.delete('/api/delete-chat/:id', async (request, reply) => {
         const chatId = request.params.id;
     

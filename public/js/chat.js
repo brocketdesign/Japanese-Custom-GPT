@@ -167,7 +167,7 @@ $(document).ready(function() {
                     }
 
                     if(isNew && chatData.length == 0 ){
-                        createButton()
+                        createButtonAndIntro(data.chat)
                     }
                     getUserChatHistory(chatId, userId);
                     $('#chatContainer').animate({
@@ -180,13 +180,21 @@ $(document).ready(function() {
                 }
             });
         }
-        function createButton() {
+        function createButtonAndIntro(chatData) {
             
+            // Extracting data from chatData
+            let name = chatData.name;
+            let description = chatData.description;
+            let thumbnailUrl = chatData.thumbnailUrl;
+            let chatImageUrl = chatData.chatImageUrl;
+        
+            // Remove existing container if it exists
             $('#startButtonContained').remove();
+            $('#introChat').remove();
 
             // Create the container div
-            let container = $('<div></div>').addClass('container my-3').attr('id','startButtonContained');
-            
+            let container = $('<div></div>').addClass('container my-3').attr('id', 'startButtonContained');
+        
             // Create the button
             let button = $('<button></button>')
                 .addClass('btn btn-outline-secondary')
@@ -195,17 +203,40 @@ $(document).ready(function() {
             
             // Append the button to the container
             container.append(button);
-            
-            // Append the container to the body (or any specific element)
+        
+            // Append the container to the chat input area
             $('#chatInput').prepend(container);
-            
+        
             // Add click event listener to the button
             button.on('click', function() {
                 displayStarter();
             });
+        
+            // Create the intro elements
+            let introContainer = $('<div></div>').addClass('intro-container my-3').attr('id','introChat');
+        
+            let title = $('<h2></h2>').text(name);
+            let desc = $('<p></p>').text(description);
+            let thumbnail = $('<img>').attr('src', thumbnailUrl).addClass('intro-thumbnail');
+            let chatImage = $('<img>').attr('src', chatImageUrl).addClass('intro-thumbnail');
+        
+            // Append intro elements to the intro container
+            if(thumbnailUrl){
+                introContainer.append(thumbnail);
+            }
+            if(chatImageUrl){
+                introContainer.append(chatImage);
+            }
+            introContainer.append(title, desc);
+        
+            // Display intro container inside #chatContainer
+            $('#chatContainer').append(introContainer);
         }
         
+        
         function displayStarter() {
+            $('#startButton').remove();
+            $('#introChat').remove();
             $.ajax({
                 url: API_URL+'/api/chat-data',
                 type: 'POST',
@@ -224,7 +255,6 @@ $(document).ready(function() {
                     chatId = response.chatId
                     isNew = false;
                     generateCompletion(function() {
-                        $('#startButton').hide();
                     });
                 },
                 error: function(error) {

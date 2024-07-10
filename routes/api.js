@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const aws = require('aws-sdk');
 const sessions = new Map(); // Define sessions map
 const { analyzeScreenshot, processURL } = require('../models/scrap');
+const { createHash } = require('crypto');
 
 async function routes(fastify, options) {
 
@@ -269,7 +270,7 @@ async function routes(fastify, options) {
         }
       
         const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-        console.log({chatId})
+
         const userChat = await collectionUserChat.find({ chatId }).toArray();
 
         if (!userChat) {

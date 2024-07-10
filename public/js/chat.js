@@ -33,7 +33,7 @@ $(document).ready(function() {
             element.style.height = (element.scrollHeight - 20 ) + 'px';  
         }
 
-        $('#reset-chat').click(function(){
+        $('.reset-chat').click(function(){
             fetchchatData(chatId, userId, true) ;
         })
 
@@ -56,7 +56,7 @@ $(document).ready(function() {
             var newUrl = urlParts.join('/');
             window.history.pushState({ path: newUrl }, '', newUrl);
 
-            const elementsToUpdate = ['.content .chart-button', '.content .share-button', '.content .delete-chat'];
+            const elementsToUpdate = ['.content .chart-button', '.content .tag-button', '.content .delete-chat'];
             elementsToUpdate.forEach(selector => {
                 $(selector).each(function() {
                     $(this).attr('data-id', chatId);
@@ -648,20 +648,22 @@ $(document).ready(function() {
         }
     }
     function enableToggleDropdown() {
-        // Check if the event listener is already attached to the element
-        if (!$(document).find('.dropdown-toggle').data('hasEventListener')) {
-            // Attach the event listener and set the flag
-            $(document).on('click', '.dropdown-toggle', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }).data('hasEventListener', true);
+        $(document).find('.dropdown-toggle').each(function() {
+            if (!$(this).hasClass('event-attached')) {
+                $(this).addClass('event-attached');
     
-            // Initialize the dropdown
-            $(document).find('.dropdown-toggle').each(function(e) {
+                // Attach the event listener
+                $(this).on('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+    
+                // Initialize the dropdown
                 new mdb.Dropdown($(this)[0]);
-            });
-        }
+            }
+        });
     }
+    
     function renderChatDropdown(chat) {
         const chatId = chat._id;
         const dropdownHtml = `

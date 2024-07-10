@@ -167,13 +167,29 @@
         <div id="chat-history"></div>
     </div>
     <div class="sidebar hidden shadow">
-        <div class="d-none w-100 m-2">
-            <button class="menu-chat-sm d-sm-none btn bg-white shadow-0"><i class="fa-solid fa-bars"></i></button>
+        <div class="tools">
+            <div class="d-none w-100 m-2">
+                <button class="menu-chat-sm d-sm-none btn bg-white shadow-0"><i class="fa-solid fa-bars"></i></button>
+            </div>
+            <!-- Avatar -->
+            <div class="nav-item dropdown d-inline-block d-sm-none">
+                <a data-mdb-dropdown-init class="nav-link dropdown-toggle hidden-arrow d-flex align-items-center" href="#"
+                    id="navbarDropdownMenuLink" role="button" aria-expanded="false">
+                    <img src="{{#if user.profileUrl}}{{user.profileUrl}}{{else}}https://mdbootstrap.com/img/new/avatars/1.jpg{{/if}}" class="rounded-circle" height="32" alt="Avatar"
+                    loading="lazy" />
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLink">
+                    <li><a href="/chat/discover/" class="dropdown-item"> チャット検索 </a> </li>
+                    <li><a href="/chat/list/" class="dropdown-item"> チャットリスト </a> </li>
+                    <li><a class="dropdown-item" href="/settings">設定</a></li>
+                    <li><a id="logout" class="dropdown-item" href="#">ログアウト</a></li>
+                </ul>
+            </div>
+            <a href="/chat/edit/" class="m-2 btn px-4 py-2 border shadow-0 btn-dark" style="border-radius:40px;">
+                <i class="fas fa-plus me-2"></i>作成する
+            </a>
         </div>
-        <a href="/chat/edit/" class="m-2 btn px-4 py-2 border shadow-0 btn-dark" style="border-radius:40px;">
-            <i class="fas fa-plus me-2"></i>作成する
-        </a>
-        <div class="mt-3">
+        <div class="mt-5">
             {{#each chats}}
             <div class="chat-list item user-chat d-flex align-items-center justify-content-between p-0 bg-transparent" style="cursor: pointer;" data-id="{{this._id}}">
                 <div class="d-flex align-items-center w-100">
@@ -202,7 +218,7 @@
                                     </button>
                                 </li>
                                 <li>
-                                    <button class="dropdown-item share-button" data-id="{{this._id}}">
+                                    <button class="dropdown-item tag-button" data-id="{{this._id}}">
                                         <i class="fas fa-share"></i> 共有
                                     </button>
                                 </li>
@@ -224,6 +240,7 @@
             </div>
             {{/each}}
         </div>
+
     </div>
     <div id="overlay" class="d-sm-none bg-dark position-absolute" style="inset:0;z-index:1033;display:none;opacity: 0.4;overflow:hidden"></div>
     <div class="content collapsed">
@@ -237,7 +254,7 @@
 
                         <button id="history-chat" class="btn btn-light"><i class="fas fa-history"></i></button>
 
-                        <button id="reset-chat" class="d-none d-sm-inline-block btn btn-light" data-toggle="tooltip" title="新しいチャット" data-original-title="New">
+                        <button class="d-none d-sm-inline-block btn btn-light reset-chat" data-toggle="tooltip" title="新しいチャット" data-original-title="New">
                             <i class="fas fa-plus-circle"></i>
                         </button>
                         <!-- Dropdown -->
@@ -252,7 +269,7 @@
                                     </button>
                                 </li>
                                 <li>
-                                    <button class="dropdown-item share-button" data-id="{{chatId}}">
+                                    <button class="dropdown-item tag-button" data-id="{{chatId}}">
                                         <i class="fas fa-share"></i> 共有
                                     </button>
                                 </li>
@@ -279,8 +296,13 @@
                 <div>
                     <div class="navbar-collapse" id="navbarNav">
                         <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                            <li class="nav-item">
+                                <button class="d-inline-block d-sm-none btn btn-light reset-chat" data-toggle="tooltip" title="新しいチャット" data-original-title="New">
+                                    <i class="fas fa-plus-circle"></i>
+                                </button>
+                            </li>
                             <!-- Avatar -->
-                            <li class="nav-item dropdown">
+                            <li class="nav-item dropdown d-none d-sm-inline-block ">
                                 <a data-mdb-dropdown-init class="nav-link dropdown-toggle hidden-arrow d-flex align-items-center" href="#"
                                     id="navbarDropdownMenuLink" role="button" aria-expanded="false">
                                     <img src="{{#if user.profileUrl}}{{user.profileUrl}}{{else}}https://mdbootstrap.com/img/new/avatars/1.jpg{{/if}}" class="rounded-circle" height="32" alt="Avatar"
@@ -438,7 +460,7 @@ $(document).ready(function() {
                 });
             });
     });
-    $('.share-button').click(function(e) {
+    $('.tag-button').click(function(e) {
         e.preventDefault();
         e.stopPropagation();
         

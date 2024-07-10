@@ -147,7 +147,7 @@
                                     </button>
                                 </li>
                                 <li>
-                                    <button class="dropdown-item share-button" data-id="{{this._id}}">
+                                    <button class="dropdown-item tag-button" data-id="{{this._id}}">
                                         <i class="fas fa-share"></i> 共有
                                     </button>
                                 </li>
@@ -230,7 +230,7 @@ $(document).ready(function() {
                 });
             });
     });
-    $('.share-button').click(function(e) {
+    $('.tag-button').click(function(e) {
         e.preventDefault();
         e.stopPropagation();
         

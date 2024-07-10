@@ -281,7 +281,7 @@ $(document).ready(function() {
                     messageHtml += `
                         <div id="container-${designStep}">
                             <div class="d-flex flex-row justify-content-start mb-4 message-container">
-                                <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;">
+                                <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
                                 <div id="message-${designStep}" class="p-3 ms-3 text-start" style="border-radius: 15px; ">
                                     ${marked.parse(assistantMessage.content)}
                                 </div>
@@ -326,7 +326,7 @@ $(document).ready(function() {
             $('#chatContainer').append(`
             <div id="container-${currentStep}">
                 <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
-                    <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;">
+                    <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
                     <div id="message-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;   "></div>
                 </div>
                 <div id="response-${currentStep}" class="choice-container" ></div>
@@ -353,7 +353,7 @@ $(document).ready(function() {
                 $('#chatContainer').append(`
                 <div id="container-${currentStep}">
                     <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
-                        <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;">
+                        <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
                         <div id="message-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;   "></div>
                     </div>
                     <div id="response-${currentStep}" class="choice-container" ></div>
@@ -457,7 +457,7 @@ $(document).ready(function() {
                     const botResponseContainer = $(`
                         <div id="container-${currentStep}">
                             <div class="d-flex flex-row justify-content-start mb-4 message-container">
-                                <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;">
+                                <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
                                 <div id="completion-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;"></div>
                             </div>
                             <div id="response-${currentStep}" class="choice-container" ></div>

@@ -82,6 +82,7 @@ $(document).ready(function() {
                 },
                 data: JSON.stringify({ currentStep:currentStep-1, message:response, userId, chatId, userChatId, isNew }),
                 success: function(response) {
+                    userChatId = response.userChatId
                     isNew = false
                 },
                 error: function(error) {
@@ -114,7 +115,7 @@ $(document).ready(function() {
                     contentType: 'application/json',
                     data: JSON.stringify({ currentStep:currentStep-1, message, userId, chatId, userChatId, isNew }),
                     success: function(response) {
-                        const {userId, chatId } = response
+                        userChatId = response.userChatId
                         if(currentStep < totalSteps){
                             displayStep(chatData, currentStep);
                             isNew = false

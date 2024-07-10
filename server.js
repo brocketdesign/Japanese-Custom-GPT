@@ -128,25 +128,40 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     fastify.get('/chat/:chatId', {
       preHandler: [fastify.authenticate]
     }, async (request, reply) => {
-      const chatId = request.params.chatId
-      if(chatId){
-        const userId = request.user._id
+      const chatId = request.params.chatId;
+      const userId = request.user._id;
+    
+      const chatsCollection = db.collection('chats');
+      const collectionUserChat = db.collection('userChat');
+    
+      // Fetch all chats for the given userId from the chats collection
+      const userCreatedChats = await chatsCollection.find({ userId, deletedByOwner: { $ne: true } }).sort({ updatedAt: -1 }).toArray();
+    
+      // Fetch all chatIds from the userChat collection for the given userId
+      const userChatEntries = await collectionUserChat.find({ userId }).toArray();
+      const uniqueChatIds = [...new Set(userChatEntries.filter(chat => chat.chatId).map(chat => chat.chatId.toString()))];
 
-        const chatsCollection = db.collection('chats');
-        const isUserChat = await chatsCollection.findOne({ userId: new fastify.mongo.ObjectId(userId), _id:new fastify.mongo.ObjectId(chatId) });
-        let userChat = false
-        if(isUserChat){
-          const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-          userChat = await collectionUserChat.find({ chatId }).toArray();
-        }
-        const sortedChats = await chatsCollection.find({ userId: new fastify.mongo.ObjectId(userId) }).sort({ "updatedAt": -1 }).toArray();
-
-        const user = await db.collection('users').findOne({_id: new fastify.mongo.ObjectId(userId)})
-        return reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd', user, userId, chatId, userChat, chats:sortedChats });
-      }else{
-        return reply.view('chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd' });
+      // Fetch all chats associated with these unique chat IDs from the chats collection
+      let userChatsFromUserChat = [];
+      if (uniqueChatIds.length > 0) {
+        userChatsFromUserChat = await chatsCollection.find({ _id: { $in: uniqueChatIds.map(id => new fastify.mongo.ObjectId(id)) } }).toArray();
+      }
+    
+      // Combine and remove duplicates
+      let combinedChats = [...userCreatedChats, ...userChatsFromUserChat];
+      combinedChats = [...new Map(combinedChats.filter(chat => chat).map(chat => [chat._id.toString(), chat])).values()];
+    
+      // Fetch user data
+      const user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+    
+      if (chatId) {
+        return reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato, Ltd', user, userId, chatId, chats: combinedChats });
+      } else {
+        return reply.view('chat.hbs', { title: 'LAMIX | Powered by Hato, Ltd' });
       }
     });
+    
+    
     fastify.get('/chat-index', async(request, reply) => {
       const collectionChats = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
       const chats = await collectionChats.find({
@@ -158,16 +173,20 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       preHandler: [fastify.authenticate]
     }, async (request, reply) => {
       try {
-        const userId = new fastify.mongo.ObjectId(request.user._id)
-        const user = await db.collection('users').findOne({_id: userId})
+        const userId = new fastify.mongo.ObjectId(request.user._id);
+        const user = await db.collection('users').findOne({ _id: userId });
         const chatsCollection = db.collection('chats');
-        const sortedChats = await chatsCollection.find({ userId }).sort({ "updatedAt": -1 }).toArray();
-        return reply.view('chat-list', { title: 'LAMIX | Powered by Hato,Ltd', chats: sortedChats, user  });      
+    
+        // Fetch chats that are not marked as deleted by the owner
+        const sortedChats = await chatsCollection.find({ userId, deletedByOwner: { $ne: true } }).sort({ "updatedAt": -1 }).toArray();
+    
+        return reply.view('chat-list', { title: 'LAMIX | Powered by Hato, Ltd', chats: sortedChats, user });
       } catch (err) {
-        console.log(err)
+        console.log(err);
         return reply.status(500).send({ error: 'Failed to retrieve stories' });
       }
     });
+    
     fastify.get('/chat/discover/', {
       preHandler: [fastify.authenticate]
     }, async (request, reply) => {

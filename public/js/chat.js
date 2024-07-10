@@ -640,7 +640,7 @@ $(document).ready(function() {
             const small = $('<small class="text-muted"></small>');
             small.append($('<i class="fas fa-clock me-1"></i>'));
             small.append(chat.updatedAt);
-            small.append(chat._id);
+            //small.append(chat._id);
 
             const dropdown = renderChatDropdown(chat)
             

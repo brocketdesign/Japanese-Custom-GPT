@@ -7,6 +7,7 @@ $(document).ready(function() {
         fetchUser(function(error, user){
         // Now you can use the userID variable or id parameter here
         let chatId = getIdFromUrl(window.location.href) || $(`#lamix-chat-widget`).data('id');
+        let userChatId
         const userId = user._id
         let messagesCount = 0 
         let currentStep = 0;
@@ -39,8 +40,8 @@ $(document).ready(function() {
 
         $(document).on('click','.user-chat-history', function(){
             const selectUser = $(this).data('user')
-            let newChatId = $(this).data('chat') || chatId
-            fetchchatData(newChatId, selectUser)
+            userChatId = $(this).data('chat')
+            fetchchatData(chatId, selectUser)
         })
         $('.chat-list.item.user-chat .user-chat-content').click(function(e){
             const selectChatId = $(this).closest('.user-chat').data('id')
@@ -79,7 +80,7 @@ $(document).ready(function() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                data: JSON.stringify({ currentStep:currentStep-1, message:response, userId, chatId, isNew }),
+                data: JSON.stringify({ currentStep:currentStep-1, message:response, userId, chatId, userChatId, isNew }),
                 success: function(response) {
                     isNew = false
                 },
@@ -111,7 +112,7 @@ $(document).ready(function() {
                     url: API_URL+'/api/chat-data', // Backend endpoint to handle the message
                     type: 'POST',
                     contentType: 'application/json',
-                    data: JSON.stringify({ currentStep:currentStep-1, message, userId, chatId, isNew }),
+                    data: JSON.stringify({ currentStep:currentStep-1, message, userId, chatId, userChatId, isNew }),
                     success: function(response) {
                         const {userId, chatId } = response
                         if(currentStep < totalSteps){
@@ -144,8 +145,9 @@ $(document).ready(function() {
                 type: 'POST',
                 dataType: 'json',
                 contentType: 'application/json',
-                data: JSON.stringify({ userId, chatId }),
+                data: JSON.stringify({ userId, chatId, userChatId }),
                 success: function(data) {
+
                     isNew = reset || data.isNew
                     chatData = data.chat.content;
                     totalSteps = chatData.length;
@@ -164,7 +166,6 @@ $(document).ready(function() {
 
                     if(isNew && chatData.length == 0 ){
                         createButton()
-                        
                     }
                     getUserChatHistory(chatId, userId);
                     $('#chatContainer').animate({
@@ -217,6 +218,7 @@ $(document).ready(function() {
                     isNew: true 
                 }),
                 success: function(response) {
+                    userChatId = response.userChatId
                     isNew = false;
                     generateCompletion(function() {
                         $('#startButton').hide();
@@ -410,7 +412,7 @@ $(document).ready(function() {
                 url: apiUrl,
                 method: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({ userId, chatId }),
+                data: JSON.stringify({ userId, chatId, userChatId }),
                 success: function(response) {
                     const sessionId = response.sessionId;
                     const streamUrl = API_URL+`/api/openai-chat-completion-stream/${sessionId}`;
@@ -638,6 +640,7 @@ $(document).ready(function() {
             const small = $('<small class="text-muted"></small>');
             small.append($('<i class="fas fa-clock me-1"></i>'));
             small.append(chat.updatedAt);
+            small.append(chat._id);
 
             const dropdown = renderChatDropdown(chat)
             

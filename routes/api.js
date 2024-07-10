@@ -185,8 +185,9 @@ async function routes(fastify, options) {
         }
     });
     fastify.post('/api/chat/', async (request, reply) => {
-        let {userId, chatId} = request.body;
+        let {userId, chatId, userChatId} = request.body;
 
+        //console.log(`Data for chat : ${chatId}`)
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
         const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
 
@@ -196,21 +197,17 @@ async function routes(fastify, options) {
         try {
             let userChatDocument = await collectionUserChat.findOne({ 
                 userId, 
-                $or: [
-                  { _id: new fastify.mongo.ObjectId(chatId) }, 
-                  { chatId }
-                ] 
+                _id: new fastify.mongo.ObjectId(userChatId),
+                chatId
             });              
             if(userChatDocument){
                 response.userChat = userChatDocument
                 response.isNew = false
-                chatId = userChatDocument.chatId
             }
         } catch (error) {
         }
         try {
             const chat = await collection.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
-
             if (!chat) {
                 return reply.status(404).send({ error: 'chat not found' });
             }
@@ -260,6 +257,7 @@ async function routes(fastify, options) {
         const chatId = request.params.chatId;
         const userId = isNewObjectId(request.body.userId) ? new fastify.mongo.ObjectId(request.body.userId) : request.body.userId;
       
+        //console.log(`History for : ${chatId}`)
         if (!chatId || !userId) {
           throw new Error('Chat ID and User ID are required');
         }
@@ -398,66 +396,83 @@ async function routes(fastify, options) {
             console.log(error)
         }
     });
-    fastify.post('/api/chat-data',async (request, reply) => {
+    fastify.post('/api/chat-data', async (request, reply) => {
         const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
         const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-        
-        const { currentStep, message, chatId, isNew } = request.body;    
+    
+        let { currentStep, message, chatId, userChatId, isNew } = request.body;
         let userId = request.body.userId
-
-        if(!userId){ 
+        if (!userId) {
             const user = await fastify.getUser(request, reply);
-            userId = user._id
+            userId = user._id;
         }
-
+    
         try {
             // Find or create the chat document
-            let userChatDocument = await collectionUserChat.findOne({ userId, chatId });
+            let userChatDocument = await collectionUserChat.findOne({ userId, _id: new fastify.mongo.ObjectId(userChatId) });
             let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
             const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-
+    
             if (!userChatDocument || isNew) {
-                // Initialize chat document if it doesn't exist
+                console.log(`Initialize chat: ${chatId}`);
                 userChatDocument = {
                     userId,
                     chatId,
                     messages: [
-                        { "role": "system", "content": `${chatDocument.rule ? 'You are a japanese assistant about : ' + chatDocument.description  + chatDocument.rule :'You are a japanese assistant about : ' + chatDocument.description  +'You provide short and friendly answers. You never answer with lists. You always prompt the user to help continue the conversation smoothly.'}`},
+                        { "role": "system", "content": `${chatDocument.rule ? 'You are a Japanese assistant about: ' + chatDocument.description + chatDocument.rule : 'You are a Japanese assistant about: ' + chatDocument.description + 'You provide short and friendly answers. You never answer with lists. You always prompt the user to help continue the conversation smoothly.'}` },
                     ],
                     createdAt: dateObj,
                     updatedAt: dateObj
                 };
-                if(chatDocument.content && chatDocument.content[currentStep]){
-                    userChatDocument.messages.push({ "role": "assistant", "content": chatDocument.content[currentStep].question })
+                if (chatDocument.content && chatDocument.content[currentStep]) {
+                    userChatDocument.messages.push({ "role": "assistant", "content": chatDocument.content[currentStep].question });
                 }
-            }else{
-                if(chatDocument.content[currentStep]){
+            } else {
+                if (chatDocument.content[currentStep]) {
                     userChatDocument.messages.push({ "role": "assistant", "content": chatDocument.content[currentStep].question });
                 }
             }
-
+    
             // Add the new user message to the chat document
             userChatDocument.messages.push({ "role": "user", "content": message });
             userChatDocument.updatedAt = dateObj;
-
-            const query = { userId, chatId }
-            // Update or insert the chat document
-            await collectionUserChat.updateOne(
-                query,
-                { $set: userChatDocument },
-                { upsert: true }
-            );
-
-            const userData = await collectionUserChat.findOne(query);
-            console.log(userData);
-
-            return reply.send({ nextStoryPart: "You chose the path and...", endOfStory: true });
+    
+            const query = { userId, _id: new fastify.mongo.ObjectId(userChatId) };
+            let result;
+            let documentId;
+            console.log(userChatDocument)
+            // Remove the _id field from the userChatDocument to avoid attempting to update it
+            const { _id, ...updateFields } = userChatDocument;
+    
+            if (!isNew) {
+                console.log(`Update chat data : ${chatId} ;  current :${userChatId}`);
+                result = await collectionUserChat.updateOne(
+                    query,
+                    { $set: updateFields },
+                    { upsert: true }
+                );
+    
+                if (result.matchedCount > 0) {
+                    documentId = userChatId; // Since we are querying by _id, we can directly use userChatId
+                } else {
+                    documentId = result.upsertedId._id;
+                }
+            } else {
+                console.log(`Create new chat data`);
+                result = await collectionUserChat.insertOne(userChatDocument);
+                documentId = result.insertedId;
+            }
+    
+            console.log("Document _id:", documentId);
+    
+            return reply.send({ nextStoryPart: "You chose the path and...", endOfStory: true, userChatId: documentId });
         } catch (error) {
-            console.log(error)
+            console.log(error);
             console.error('Failed to save user choice:', error);
             return reply.status(500).send({ error: 'Failed to save user choice' });
         }
     });
+    
     fastify.post('/api/custom-data', async (request, reply) => {
         const { userId, customData } = request.body;
     
@@ -709,14 +724,14 @@ async function routes(fastify, options) {
         }
     });
     fastify.post('/api/openai-chat-completion', async (request, reply) => {
-        const { chatId } = request.body;
+        const { chatId, userChatId } = request.body;
         let userId = request.body.userId
         if(!userId){ 
             const user = await fastify.getUser(request, reply);
             userId = user._id
         }
         const sessionId = Math.random().toString(36).substring(2, 15); // Generate a unique session ID
-        sessions.set(sessionId, { userId, chatId });
+        sessions.set(sessionId, { userId, chatId, userChatId });
         return reply.send({ sessionId });
     });
     fastify.get('/api/openai-chat-completion-stream/:sessionId', async (request, reply) => {
@@ -740,9 +755,10 @@ async function routes(fastify, options) {
         try {
             const userId = session.userId;
             const chatId = session.chatId;
-            console.log({userId,chatId})
+            const userChatId = session.userChatId;
+            console.log(`Generate for chat : ${chatId} ;  current chat : ${userChatId}`)
             const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-            let userData = await collectionUserChat.findOne({ userId, chatId })
+            let userData = await collectionUserChat.findOne({ userId, _id: new fastify.mongo.ObjectId(userChatId) })
 
             if (!userData) {
                 reply.raw.end(); // End the stream before sending the response
@@ -761,7 +777,7 @@ async function routes(fastify, options) {
     
             // Update the chat document in the database
             await collectionUserChat.updateOne(
-                { userId , chatId },
+                { userId , _id: new fastify.mongo.ObjectId(userChatId) },
                 { $set: { messages: userMessages, updatedAt: userData.updatedAt } }
             );
     

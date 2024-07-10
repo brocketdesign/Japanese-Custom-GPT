@@ -135,27 +135,12 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       const collectionUserChat = db.collection('userChat');
     
       // Fetch all chats for the given userId from the chats collection
-      const userCreatedChats = await chatsCollection.find({ userId, deletedByOwner: { $ne: true } }).sort({ updatedAt: -1 }).toArray();
-    
-      // Fetch all chatIds from the userChat collection for the given userId
-      const userChatEntries = await collectionUserChat.find({ userId }).toArray();
-      const uniqueChatIds = [...new Set(userChatEntries.filter(chat => chat.chatId).map(chat => chat.chatId.toString()))];
-
-      // Fetch all chats associated with these unique chat IDs from the chats collection
-      let userChatsFromUserChat = [];
-      if (uniqueChatIds.length > 0) {
-        userChatsFromUserChat = await chatsCollection.find({ _id: { $in: uniqueChatIds.map(id => new fastify.mongo.ObjectId(id)) } }).toArray();
-      }
-    
-      // Combine and remove duplicates
-      let combinedChats = [...userCreatedChats, ...userChatsFromUserChat];
-      combinedChats = [...new Map(combinedChats.filter(chat => chat).map(chat => [chat._id.toString(), chat])).values()];
-    
+      const userCreatedChats = await chatsCollection.find({ userId: new fastify.mongo.ObjectId(userId) }).sort({ updatedAt: -1 }).toArray();
       // Fetch user data
       const user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
     
       if (chatId) {
-        return reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato, Ltd', user, userId, chatId, chats: combinedChats });
+        return reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato, Ltd', user, userId, chatId, chats: userCreatedChats });
       } else {
         return reply.view('chat.hbs', { title: 'LAMIX | Powered by Hato, Ltd' });
       }
@@ -178,7 +163,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         const chatsCollection = db.collection('chats');
     
         // Fetch chats that are not marked as deleted by the owner
-        const sortedChats = await chatsCollection.find({ userId, deletedByOwner: { $ne: true } }).sort({ "updatedAt": -1 }).toArray();
+        const sortedChats = await chatsCollection.find({ userId }).sort({ "updatedAt": -1 }).toArray();
     
         return reply.view('chat-list', { title: 'LAMIX | Powered by Hato, Ltd', chats: sortedChats, user });
       } catch (err) {

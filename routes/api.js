@@ -143,47 +143,47 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to add or update the Chat' });
         }
     });
+
     fastify.delete('/api/delete-chat/:id', async (request, reply) => {
         const chatId = request.params.id;
-        const userId = isNewObjectId(request.body.userId) ? new fastify.mongo.ObjectId(request.body.userId) : request.body.userId;
-      
+    
         try {
-          // Access the MongoDB collections
-          const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-          const userChatCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-      
-          // Convert chatId to ObjectId
-          const chatObjectId = new fastify.mongo.ObjectId(chatId);
-      
-          // Find the chat by ID
-          const chat = await chatsCollection.findOne({ _id: chatObjectId });
-      
-          if (!chat) {
-            return reply.status(404).send({ error: 'Chat not found' });
-          }
-      
-          // Check if the user owns the chat
-          if (chat.userId.toString() === userId.toString()) {
-            // Mark the chat as deleted for the owner
-            await chatsCollection.updateOne(
-              { _id: chatObjectId },
-              { $set: { deletedByOwner: true } }
-            );
-            console.log('Chat marked as deleted by owner');
-            return reply.send({ message: 'Chat marked as deleted by owner' });
-          } else {
-            // Delete all instances of userId, chatId in the userChat collection
-            await userChatCollection.deleteMany({ chatId: chatId, userId: userId });
-            console.log('User-specific chat instances deleted');
-            return reply.send({ message: 'User-specific chat instances deleted successfully' });
-          }
+            // Access the MongoDB collection
+            const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+    
+            // Find the story by ID
+            const story = await collection.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
+    
+            if (!story) {
+                return reply.status(404).send({ error: 'Story not found' });
+            }
+    
+            // Delete the thumbnail from S3 if it exists
+            if (story.thumbnailUrl) {
+                const thumbnailKey = story.thumbnailUrl.split('/').pop();
+    
+                try {
+                    await s3.deleteObject({
+                        Bucket: process.env.AWS_S3_BUCKET_NAME,
+                        Key: thumbnailKey,
+                    }).promise();
+                } catch (error) {
+                    console.error('Failed to delete thumbnail from S3:', error);
+                    return reply.status(500).send({ error: 'Failed to delete thumbnail from S3' });
+                }
+            }
+    
+            // Delete the story from MongoDB
+            await collection.deleteOne({ _id: new fastify.mongo.ObjectId(chatId) });
+    
+            console.log('Story deleted');
+            return reply.send({ message: 'Story deleted successfully' });
         } catch (error) {
-          // Handle potential errors
-          console.error('Failed to delete chat:', error);
-          return reply.status(500).send({ error: 'Failed to delete chat' });
+            // Handle potential errors
+            console.error('Failed to delete story:', error);
+            return reply.status(500).send({ error: 'Failed to delete story' });
         }
-      });
-      
+    });
     fastify.post('/api/chat/', async (request, reply) => {
         let {userId, chatId, userChatId} = request.body;
 

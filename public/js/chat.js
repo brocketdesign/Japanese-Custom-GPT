@@ -135,6 +135,7 @@ $(document).ready(function() {
         })
         function fetchchatData(chatId,userId,reset) {
             $('#chatContainer').empty()
+            $('#startButtonContained').remove();
             if(reset){
                 currentStep = 0
             }
@@ -176,9 +177,11 @@ $(document).ready(function() {
             });
         }
         function createButton() {
-            console.log('createButton')
+            
+            $('#startButtonContained').remove();
+
             // Create the container div
-            let container = $('<div></div>').addClass('container my-3');
+            let container = $('<div></div>').addClass('container my-3').attr('id','startButtonContained');
             
             // Create the button
             let button = $('<button></button>')

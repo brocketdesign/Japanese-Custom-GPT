@@ -271,7 +271,13 @@ async function routes(fastify, options) {
         } else {
             console.log('Find user chat data')
             console.log({ chatId, userId })
-          userChat = await collectionUserChat.find({ chatId, userId }).toArray();
+            userChat = await collectionUserChat.find({ 
+                chatId, 
+                $or: [
+                    { userId },
+                    { userId: new fastify.mongo.ObjectId(userId) }
+                ] 
+            }).toArray();            
         }
 
         if (!userChat || userChat.length === 0) {
@@ -414,7 +420,17 @@ async function routes(fastify, options) {
             let userChatDocument = await collectionUserChat.findOne({ userId, _id: new fastify.mongo.ObjectId(userChatId) });
             let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
             const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-    
+            const isUserChat = await collectionChat.findOne({ userId: new fastify.mongo.ObjectId(userId) , _id: new fastify.mongo.ObjectId(chatId) });
+            if(!isUserChat){
+                console.log(`Create a copy : ${chatId}`)
+                const newChatDocument = { ...chatDocument, userId: new fastify.mongo.ObjectId(userId), visibility: 'private' };
+                delete newChatDocument._id; // Remove the _id field to let MongoDB create a new one
+                const newChatResult = await collectionChat.insertOne(newChatDocument);
+                chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(newChatResult.insertedId) });
+                
+                chatId = chatDocument._id
+                console.log(`New chat : ${chatId}`)
+            }
             if (!userChatDocument || isNew) {
                 console.log(`Initialize chat: ${chatId}`);
                 userChatDocument = {
@@ -442,7 +458,6 @@ async function routes(fastify, options) {
             const query = { userId, _id: new fastify.mongo.ObjectId(userChatId) };
             let result;
             let documentId;
-            console.log(userChatDocument)
             // Remove the _id field from the userChatDocument to avoid attempting to update it
             const { _id, ...updateFields } = userChatDocument;
     
@@ -465,9 +480,9 @@ async function routes(fastify, options) {
                 documentId = result.insertedId;
             }
     
-            console.log("Document _id:", documentId);
+            console.log({userChatId: documentId, chatId});
     
-            return reply.send({ nextStoryPart: "You chose the path and...", endOfStory: true, userChatId: documentId });
+            return reply.send({ nextStoryPart: "You chose the path and...", endOfStory: true, userChatId: documentId, chatId });
         } catch (error) {
             console.log(error);
             console.error('Failed to save user choice:', error);

@@ -116,6 +116,7 @@ $(document).ready(function() {
                     data: JSON.stringify({ currentStep:currentStep-1, message, userId, chatId, userChatId, isNew }),
                     success: function(response) {
                         userChatId = response.userChatId
+                        chatId = response.chatId
                         if(currentStep < totalSteps){
                             displayStep(chatData, currentStep);
                             isNew = false
@@ -220,6 +221,7 @@ $(document).ready(function() {
                 }),
                 success: function(response) {
                     userChatId = response.userChatId
+                    chatId = response.chatId
                     isNew = false;
                     generateCompletion(function() {
                         $('#startButton').hide();

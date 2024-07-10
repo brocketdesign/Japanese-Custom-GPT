@@ -88,6 +88,7 @@ async function routes(fastify, options) {
             switch (part.fieldname) {
                 case 'name':
                 case 'purpose':
+                case 'chatImageUrl':
                 case 'visibility':
                 case 'category':
                 case 'rule':

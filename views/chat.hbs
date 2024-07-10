@@ -302,7 +302,7 @@ let catchphrases = [
 
         // Redirect with URL parameters
         var encodedMessage = encodeURIComponent(`${data.title}は${data.description}`);
-        window.location.href = `/chat/edit/?userMessage=${encodedMessage}&chatImage=${chatbotImage}`;
+        window.location.href = `/chat/edit/?userMessage=${encodedMessage}&chatImage=/img/${chatbotImage}`;
     }
 </script>
 </body>

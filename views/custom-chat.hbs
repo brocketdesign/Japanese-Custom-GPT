@@ -195,7 +195,7 @@
                 <div class="d-flex align-items-center w-100">
                     <div class="user-chat-content" style="flex: 1;display: flex;justify-content: center;align-items: center;">
                         <div class="thumb align-items-center text-center justify-content-center d-flex flex-column col-3 p-1" >
-                            <img class="img-fluid" src="{{#if this.thumbnailUrl}}{{this.thumbnailUrl}}{{else}}/img/logo.webp{{/if}}" alt="">
+                            <img class="img-fluid" src="{{#if this.thumbnailUrl}}{{this.thumbnailUrl}}{{else if this.chatImageUrl}}{{this.chatImageUrl}}{{else}}/img/logo.webp{{/if}}" alt="">
                         </div>
                         <div class="chat-list-details">
                             <div class="chat-list-info">

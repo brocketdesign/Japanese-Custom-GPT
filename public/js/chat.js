@@ -150,7 +150,8 @@ $(document).ready(function() {
                     chatData = data.chat.content;
                     totalSteps = chatData.length;
                     chatName = data.chat.name
-                    thumbnail = data.chat.thumbnailUrl
+                    thumbnail = data.chat.thumbnailUrl || data.chat.chatImageUrl
+
                     $('#chat-title').text(chatName)
 
                     if(!isNew){

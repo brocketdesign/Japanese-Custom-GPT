@@ -99,6 +99,10 @@
                 </div>
             </div>
         </div>
+        <div class="mb-3 mx-3">
+            <label for="chatImageUrl" class="form-label">chatImage</label>
+            <input type="text" class="form-control" id="chatImageUrl" name="url" placeholder="URLを入力してください">
+        </div>
         <div class="mb-3 mx-3 d-none">
             <label for="chatPdf" class="form-label">PDFファイルを選択</label>
             <input type="file" id="chatPdf" class="form-control" accept="pdf" lang="ja" title="PDFファイルを選択">
@@ -225,6 +229,8 @@
                     $('#chatPurpose').val(chatData.purpose)
                     $('#chatName').val(chatData.name);
                     $('#chatCategory').val(chatData.category);
+                    $('#chatImageUrl').val(chatData.chatImageUrl);
+                    $('#chatImage').attr('src', chatData.chatImageUrl).show();
                     var chatDescriptionTextare = $('#chatDescription')
                     chatDescriptionTextare.val(chatData.description);
                     setTimeout(function(){
@@ -281,10 +287,12 @@
             const pdf = $('#chatPdf')[0].files[0];
             const content = saveJson();
             const thumbnail = $('#chatThumbnail')[0].files[0];
+            const chatImageUrl = $('#chatImageUrl').val()
             const visibility = $('#visibility').val()
 
             formData.append('name', name);
             formData.append('purpose',purpose)
+            formData.append('chatImageUrl',chatImageUrl)
             formData.append('category', category);
             formData.append('description', description);
             formData.append('content', content);
@@ -342,10 +350,12 @@
         const userMessage = urlParams.get('userMessage');
         if (userMessage) {
             $('#chatPurpose').val(userMessage);
-            //generateCompletion();
         }
-
-
+        const chatImageUrl = urlParams.get('chatImage');
+        if (chatImageUrl) {
+            $('#chatImageUrl').val(chatImageUrl);
+            $('#chatImage').attr('src', chatImageUrl).show();
+        }
         function generateCompletion(callback) {
 
             const apiUrl = '/api/openai-chat-creation';

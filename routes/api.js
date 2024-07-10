@@ -87,6 +87,7 @@ async function routes(fastify, options) {
         for await (const part of parts) {
             switch (part.fieldname) {
                 case 'name':
+                case 'purpose':
                 case 'visibility':
                 case 'category':
                 case 'rule':

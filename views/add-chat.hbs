@@ -56,20 +56,22 @@
             下のテンプレートから選んで始めることもできます。
         </p>
     </div>
-    <div id="chatInput" class="input-group rounded-0 rounded-bottom mt-3 mb-4" style="bottom: 0px;right: 0;left: 0;width: auto;margin: auto;">
-        <textarea rows="1" id="userMessage" class="form-control py-3" style="font-size: 14px;padding-left: 30px;" placeholder="チャットについて教えてください"></textarea>
-        <button id="sendMessage" class="btn btn-light px-4 border"><i class="fas fa-paper-plane"></i></button>
-        <div class="load bg-light px-4 d-flex justify-content-center align-items-center border d-none">
-            <div class="spinner-grow spinner-grow-sm text-dark" role="status"><span class="visually-hidden">Loading...</span></div>
-        </div>
-    </div>
     <button type="button" id="displayProcess" class="badge btn-ligh text-muted border mb-2 mx-3 d-none" style="font-size: 12px;border-radius:40px">プロセスを表示する</button>
-
     <div id="displayProcessToggle" class="mb-3 mx-3 d-none">
         <label for="chatContent" class="form-label d-none">チャットコンテンツ (JSON形式)</label>
         <textarea class="form-control" id="chatContent" name="content" rows="10" required></textarea>
     </div>
+    
     <form id="chatForm" class="mb-5 pb-5 mx-3">
+        <div class="mb-3 mx-3">
+            <label for="chatPurpose" class="form-label">チャット内容</label>
+            <textarea class="form-control" id="chatPurpose" name="content" rows="5" placeholder="チャットボットの大まかな内容をここに記入してください。"></textarea>
+            <button type="button" id="genChat" class="btn btn-dark my-3 shadow-0" data-toggle="tooltip" title="チャット構造の生成">
+                <i class="fa fa-cog fa-fw"></i>
+                <i class="fa fa-spinner fa-spin fa-fw fa-hidden d-none"></i>
+                チャットの詳細を生成する
+            </button>
+        </div>
         <div class="mb-3 mx-3">
             <label for="visibility" class="form-label"><i class="fas fa-eye"></i> 公開設定を選択してください:</label>
             <select class="form-select" id="visibility" name="visibility">
@@ -111,7 +113,7 @@
         </div>
         <div class="mb-3 mx-3">
             <label for="chatDescription" class="form-label">説明</label>
-            <textarea class="form-control" id="chatDescription" name="content" rows="5" required></textarea>
+            <textarea class="form-control" id="chatDescription" name="content" rows="5" placeholder="チャットボットの詳細な説明をここに記入してください。どのような機能を持たせたいのか、どのようなユーザーに向けたものなのか、具体的なシナリオや対話の流れなど、できるだけ詳しく記載してください。ユーザーがどのようにチャットボットとやり取りするかの例も含めてください。" required></textarea>
         </div>
         <div class="mb-3 mx-3">
             <label for="chatUrl" class="form-label d-none">URL</label>
@@ -119,12 +121,12 @@
         </div>
         <div class="mb-3 mx-3">
             <label for="chatRule" class="form-label">指示</label>
-            <textarea class="form-control" id="chatRule" name="content" rows="5"></textarea>
+            <textarea class="form-control" id="chatRule" name="content" rows="5" placeholder="チャットボットの動作についての指示をここに記入してください。ユーザーに対する返答のトーン、応答のスタイル、特定の状況に対する反応、使用する言葉遣いなど、チャットボットがどのように振る舞うべきかをできるだけ詳しく記載してください。"></textarea>
         </div>
         <div class="container mt-1">
             <label for="chatContentEdition" class="form-label">チャットの構造</label>
             <div id="chatContentEdition"></div>
-            <button type="button" id="genStructure" class="btn btn-primary" data-toggle="tooltip" title="チャット構造の生成">
+            <button type="button" id="genStructure" class="btn btn-outline-secondary" data-toggle="tooltip" title="チャット構造の生成">
                 <i class="fa fa-cog fa-fw"></i>
                 <i class="fa fa-spinner fa-spin fa-fw fa-hidden d-none"></i>
                 チャット構造を生成する
@@ -220,6 +222,7 @@
                 type: 'GET',
                 dataType: 'json',
                 success: function(chatData) {
+                    $('#chatPurpose').val(chatData.purpose)
                     $('#chatName').val(chatData.name);
                     $('#chatCategory').val(chatData.category);
                     var chatDescriptionTextare = $('#chatDescription')
@@ -270,6 +273,7 @@
 
             const formData = new FormData();
             const name = $('#chatName').val();
+            const purpose = $('#chatPurpose').val()
             const category = $('#chatCategory').val();
             const description = $('#chatDescription').val();
             const rule = $('#chatRule').val();
@@ -280,6 +284,7 @@
             const visibility = $('#visibility').val()
 
             formData.append('name', name);
+            formData.append('purpose',purpose)
             formData.append('category', category);
             formData.append('description', description);
             formData.append('content', content);
@@ -318,24 +323,11 @@
 
    
         // Event handler for the send button
-        $('#sendMessage').on('click', function() {
-            
-            // Generate title and description based on the cleaned content
+        $('#genChat').on('click', function() {
             generateName();
             generateCategory();
             generateDescription();
             generateRule();
-        });
-
-        // Event handler for the Enter key
-        $('#userMessage').on('keypress', function(event) {
-            if (event.which == 13 && !event.shiftKey) { // Enter key is pressed without Shift
-                // Generate title and description based on the cleaned content
-                generateName();
-                generateCategory();
-                generateDescription();
-                generateRule();
-            }
         });
 
         $('#genStructure').click(function(){
@@ -349,7 +341,7 @@
         }
         const userMessage = urlParams.get('userMessage');
         if (userMessage) {
-            $('#userMessage').val(userMessage);
+            $('#chatPurpose').val(userMessage);
             //generateCompletion();
         }
 
@@ -359,7 +351,7 @@
             const apiUrl = '/api/openai-chat-creation';
             const chatId = 'chat_' + Date.now();
 
-            let message = $('#userMessage').val();
+            let message = $('#chatPurpose').val();
             const urlSummary = $(`#resultText`).text()
             const myUrl = $('#myUrl').val()
 
@@ -415,7 +407,7 @@
         }
         function generateRule(callback) {
 
-            let message = $('#userMessage').val();
+            let message = $('#chatPurpose').val();
             const urlSummary = $(`#resultText`).text()
             const myUrl = $('#myUrl').val()
 
@@ -498,7 +490,7 @@
         }
         function generateDescription() {
 
-            let message = $('#userMessage').val();
+            let message = $('#chatPurpose').val();
             const urlSummary = $(`#resultText`).text()
             const myUrl = $('#myUrl').val()
 
@@ -546,7 +538,7 @@
         }
         function generateCategory() {
 
-            let message = $('#userMessage').val();
+            let message = $('#chatPurpose').val();
             const urlSummary = $(`#resultText`).text()
             const myUrl = $('#myUrl').val()
 
@@ -590,7 +582,7 @@
         }
         function generateName() {
 
-            let message = $('#userMessage').val();
+            let message = $('#chatPurpose').val();
             const urlSummary = $(`#resultText`).text()
             const myUrl = $('#myUrl').val()
 

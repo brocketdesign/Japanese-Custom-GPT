@@ -23,15 +23,20 @@
     }
 </style>
 <div class="container my-5">
-    <section class="w-100 px-4 py-2" >
+    <section class="w-100 px-4 py-2">
         <h4>トップチャット</h4>
         <div class="scroll-container d-flex justify-content-between  py-4" id="button-container"></div>
     </section>
-    <section class="w-100 px-4 py-2" >
+    <section class="w-100 px-4 py-2">
         <h4>カテゴリー</h4>
         <div id="category-container" class="category-container"></div>
     </section>
-    <section class="w-100 px-4 py-2" >
+    <section class="w-100 px-4 py-2">
+        <div class="container d-flex py-5 px-3 justify-content-center align-items-center">
+            <div id="cardGrid" class="row"></div>
+        </div>
+    </section>
+    <section class="w-100 px-4 py-2">
         <h4>人気チャット</h4>
         <div class="row d-flex justify-content-start">
             <div id="chatbot-container" class="container my-4 row"></div>
@@ -182,17 +187,17 @@ $(document).ready(function() {
 
     chatbotInfos.forEach(chatbot => {
             const chatbotCard = `
-                <div class="col col-md-9 col-lg-7 col-xl-6 mb-4">
+                <div class="col-12 col-md-9 col-lg-7 col-xl-6 mb-4">
                     <div class="card shadow-0" style="border-radius: 15px;" >
                         <div class="card-body bg-light p-4">
-                            <div class="d-flex">
-                                <div class="flex-shrink-0">
+                            <div class="row">
+                                <div class="col-12 col-sm-6">
                                     <img src="${chatbot.thumbnailUrl}" alt="Generic placeholder image" class="img-fluid" style="width: 180px; border-radius: 10px;">
                                 </div>
-                                <div class="flex-grow-1 ms-3">
-                                    <h5 class="mb-1">${chatbot.title}</h5>
-                                    <p class="mb-2 pb-1">${chatbot.role}</p>
-                                    <div class="d-flex justify-content-start rounded-3 p-2 mb-2 bg-body-tertiary">
+                                <div class="col-12 col-sm-6">
+                                    <h5 class="my-1">${chatbot.title}</h5>
+                                    <p class="mb-1 pb-1">${chatbot.role}</p>
+                                    <div class="d-flex justify-content-start rounded-3 p-1 mb-2 bg-body-tertiary">
                                         <div>
                                             <p class="small text-muted mb-1">名前</p>
                                             <p class="mb-0">${chatbot.name}</p>
@@ -203,7 +208,7 @@ $(document).ready(function() {
                                         </div>
                                     </div>
                                     <div class="d-flex pt-1">
-                                        <button type="button" class="btn btn-primary flex-grow-1" 
+                                        <button type="button" class="btn btn-outline-dark shadow-0 flex-grow-1" 
                                             onclick="window.location.href='/chat/edit/?userMessage=${encodeURIComponent(`${chatbot.name}は${chatbot.title}.${chatbot.role}`)}&chatCategory=${chatbot.category}&chatImage=${chatbot.thumbnailUrl}'">
                                             チャット
                                         </button>
@@ -225,7 +230,76 @@ $(document).ready(function() {
             $('#category-container').append(categoryButton);
         });
     });
+
+    // Sample data array
+    var cardData = [
+        {
+            image: "avatar_img1.jpeg",
+            title: "さくら",
+            description: "さくらは、勉強熱心な高校生で、いつも明るく前向きです。彼女は友達と一緒に過ごすことが大好きで、将来は教師になることを夢見ています。"
+        },
+        {
+            image: "avatar_img2.jpeg",
+            title: "木村樹夫",
+            description: "木村樹夫は、環境保護に熱心な弁護士で、自然を愛する心を持っています。彼は木々と対話できる能力を持ち、その知識を使って環境保護のために戦っています。"
+        },
+        {
+            image: "avatar_img3.jpeg",
+            title: "ルシファー",
+            description: "ルシファーは、人間界と魔界の両方で活躍する魔界のプリンセスです。彼女は知識と魔法の力を使って、どちらの世界にも平和をもたらそうと努力しています。"
+        },
+        {
+            image: "avatar_img4.jpeg",
+            title: "ミミ",
+            description: "ミミは、冒険好きな発明家のネズミです。彼女は新しい発明を作り出すのが得意で、仲間と一緒に楽しい冒険に出かけるのが好きです。"
+        },
+        // Add more objects as needed
+    ];
+
+    // Function to create a card
+    function createCard(data) {
+        var card = `
+            <div class="col-12 col-sm-3 mb-4">
+                <div class="card shadow-0 bg-light">
+                    <img src="/img/${data.image}" class="card-img-top" alt="${data.title}">
+                    <div class="card-body">
+                        <h5 class="card-title">${data.title}</h5>
+                        <p class="card-text">${data.description}</p>
+                        <button class="btn btn-outline-dark w-100" onclick='handleClick(${JSON.stringify(data)}, "${data.image}")'>
+                            チャット
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        return card;
+    }
+
+    // Function to render the grid of cards
+    function renderCardGrid(dataArray) {
+        var cardGrid = "";
+        for (var i = 0; i < dataArray.length; i++) {
+            cardGrid += createCard(dataArray[i]);
+        }
+        $("#cardGrid").html(cardGrid);
+    }
+
+    // Call the render function with the sample data
+    renderCardGrid(cardData);
 });
+  // Function to save data to local storage
+    function saveData(data) {
+        localStorage.setItem('savedData', JSON.stringify(data));
+    }
+    // Function to handle the onclick event
+    function handleClick(data, chatbotImage) {
+        // Save data to local storage
+        saveData(data);
+
+        // Redirect with URL parameters
+        var encodedMessage = encodeURIComponent(`${data.title}は${data.description}`);
+        window.location.href = `/chat/edit/?userMessage=${encodedMessage}&chatImage=${chatbotImage}`;
+    }
 </script>
 
 </body>

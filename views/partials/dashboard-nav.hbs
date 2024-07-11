@@ -23,7 +23,8 @@
                 <li class="nav-item dropdown mx-2">
                     <a data-mdb-dropdown-init class="nav-link dropdown-toggle hidden-arrow d-flex align-items-center" href="#"
                         id="navbarDropdownMenuLink" role="button" aria-expanded="false">
-                        <img src="{{#if user.profileUrl}}{{user.profileUrl}}{{else}}https://mdbootstrap.com/img/new/avatars/1.jpg{{/if}}" class="rounded-circle" height="32" alt="Avatar"
+                        <img src="{{#if user.profileUrl}}{{user.profileUrl}}{{else}}https://mdbootstrap.com/img/new/avatars/1.jpg{{/if}}" 
+                        class="rounded-circle" height="32" alt="Avatar" style="object-fit: cover;object-position: top;width: 32px;"
                         loading="lazy" />
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLink">
@@ -36,7 +37,14 @@
     </div>
 </nav>
 <style>
+
+        .avatar{
+            object-fit: cover;
+            object-position: top;
+            width: 32px;
+        }
     @media (max-width: 600px) {
+        
         #navbarNav .navbar-nav{
             display: flex;
             flex-direction: revert;

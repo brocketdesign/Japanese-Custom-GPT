@@ -1,9 +1,6 @@
 $(document).ready(function() {
-    $('input, textarea').each(function() {
-        new mdb.Input(this);
-    });
     
-    $('#logout').on('click', function(event) {
+    $(document).on('click', '.logout', function(event) {
         event.preventDefault();
         $.ajax({
             url: '/user/logout',
@@ -20,7 +17,12 @@ $(document).ready(function() {
             }
         });
     });
-
+    
+/*
+    $(document).find('input, textarea').each(function() {
+        new mdb.Input(this);
+    });
+*/
     function checkAndRedirect() {
         var selectedChatId = localStorage.getItem('selectedChatId');
         

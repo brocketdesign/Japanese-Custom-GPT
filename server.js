@@ -138,14 +138,8 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       const userCreatedChats = await chatsCollection.find({ userId: new fastify.mongo.ObjectId(userId) }).sort({ updatedAt: -1 }).toArray();
       // Fetch user data
       const user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-    
-      if (chatId) {
-        return reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato, Ltd', user, userId, chatId, chats: userCreatedChats });
-      } else {
-        return reply.view('chat.hbs', { title: 'LAMIX | Powered by Hato, Ltd' });
-      }
+      return reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato, Ltd', user, userId, chatId, chats: userCreatedChats });
     });
-    
     
     fastify.get('/chat-index', async(request, reply) => {
       const collectionChats = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
@@ -164,26 +158,13 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     
         // Fetch chats that are not marked as deleted by the owner
         const sortedChats = await chatsCollection.find({ userId }).sort({ "updatedAt": -1 }).toArray();
-    
         return reply.view('chat-list', { title: 'LAMIX | Powered by Hato, Ltd', chats: sortedChats, user });
       } catch (err) {
         console.log(err);
         return reply.status(500).send({ error: 'Failed to retrieve stories' });
       }
     });
-    
-    fastify.get('/chat/discover/', {
-      preHandler: [fastify.authenticate]
-    }, async (request, reply) => {
-      try {
-        const userId = new fastify.mongo.ObjectId(request.user._id)
-        const user = await db.collection('users').findOne({_id: userId})
-        return reply.view('chat-discover', { title: 'LAMIX | Powered by Hato,Ltd', user  });      
-      } catch (err) {
-        console.log(err)
-        return reply.status(500).send({ error: 'Failed to retrieve stories' });
-      }
-    });
+
     fastify.get('/chat/edit/:chatId', {
       preHandler: [fastify.authenticate]
     }, async (request, reply) => {
@@ -264,9 +245,9 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         const chatsCollection = db.collection('chats');
         const chats = await chatsCollection.find({ userId }).toArray();
         if(chats.length == 0){
-          return reply.redirect('/chat/discover/')
+          return reply.redirect('/chat/')
         }else{
-          return reply.redirect('/chat/list/')
+          return reply.redirect('/chat/')
         }
       } catch (err) {
         return reply.status(500).send({ error: 'Unable to render the dashboard' });

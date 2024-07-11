@@ -150,6 +150,17 @@ $(document).ready(function() {
                 data: JSON.stringify({ userId, chatId, userChatId }),
                 success: function(data) {
 
+                    $('.onchat-on').removeClass('d-none').css({
+                        'opacity': '',
+                        'pointer-events': '',
+                        'visibility': ''
+                      });
+                    $('.onchat-off').addClass('d-none').css({
+                        'opacity': 0,
+                        'pointer-events': 'none',
+                        'visibility': 'hidden'
+                    });                      
+
                     isNew = reset || data.isNew
                     chatData = data.chat.content;
                     totalSteps = chatData.length;
@@ -170,12 +181,29 @@ $(document).ready(function() {
                         createButtonAndIntro(data.chat)
                     }
                     getUserChatHistory(chatId, userId);
+                    // Scroll to the end of the chat
                     $('#chatContainer').animate({
                         scrollTop: $('#chatContainer').prop("scrollHeight")
                     }, 500); 
+                    $('html,body').animate({
+                        scrollTop: $('#chatInput').offset().top
+                    }, 0);
+                    $('#chatContainer').animate({
+                        scrollTop: $('#chatInput').offset().top
+                    }, 500); 
                 },
                 error: function(xhr, status, error) {
-                    console.log(error)
+                    //console.log(error)
+                    $('.onchat-on').addClass('d-none').css({
+                        'opacity': 0,
+                        'pointer-events': 'none',
+                        'visibility': 'hidden'
+                    });    
+                    $('.onchat-off').removeClass('d-none').css({
+                        'opacity': '',
+                        'pointer-events': '',
+                        'visibility': ''
+                    }); 
 
                 }
             });
@@ -217,16 +245,19 @@ $(document).ready(function() {
         
             let title = $('<h2></h2>').text(name);
             let desc = $('<p></p>').text(description);
-            let thumbnail = $('<img>').attr('src', thumbnailUrl).addClass('intro-thumbnail');
-            let chatImage = $('<img>').attr('src', chatImageUrl).addClass('intro-thumbnail');
+            let image = $('<img>').addClass('intro-thumbnail');
         
             // Append intro elements to the intro container
             if(thumbnailUrl){
-                introContainer.append(thumbnail);
+                image.attr('src', thumbnailUrl)
             }
             if(chatImageUrl){
-                introContainer.append(chatImage);
+                image.attr('src', chatImageUrl)
             }
+            if(!thumbnailUrl && !chatImageUrl){
+                image.attr('src', '/img/logo.webp')
+            }
+            introContainer.append(image);
             introContainer.append(title, desc);
         
             // Display intro container inside #chatContainer

@@ -229,16 +229,17 @@ $(document).ready(function() {
     }
 
     // Function to render the grid of cards
-    function renderCardGrid(dataArray) {
+    function renderCardGrid(dataArray,container) {
         var cardGrid = "";
         for (var i = 0; i < dataArray.length; i++) {
             cardGrid += createCard(dataArray[i]);
         }
-        $("#cardGrid").html(cardGrid);
+        container.html(cardGrid);
     }
 
     // Call the render function with the sample data
-    renderCardGrid(cardData);
+    renderCardGrid(cardData,$("#cardGrid"));
+    renderCardGrid(cardData,$("#cardGrid-2"));
 });
   // Function to save data to local storage
     function saveData(data) {

@@ -4,11 +4,14 @@
 <body>
 
     <style>
-        .avatar{
-            object-fit: cover;
-            object-position: top;
-            width: 32px;
-        }
+    .onchat-off{
+        display: none;
+    }
+    .avatar{
+        object-fit: cover;
+        object-position: top;
+        width: 32px;
+    }
     .noscroll {
         overflow: hidden;
         height: 80vh !important;
@@ -29,6 +32,24 @@
     }
     .category-button {
         margin: 5px;
+    }
+    .card-round-design .col-12{
+        margin-top: 50px;
+    }
+    .card-round-design .col-12 .card .card-img-top{
+        position: absolute;
+        top: -30px;
+        width: 70px;
+        height: 70px;
+        left: 0;
+        right: 0;
+        margin: auto;
+        border-radius: 150px;
+        object-fit: cover;
+        object-position: top;
+    }
+    .card-round-design .col-12 .card .card-body{
+        padding-top: 70px;
     }
         .intro-thumbnail{
             border-radius: 150px;
@@ -384,8 +405,13 @@
                     <div id="category-container" class="category-container"></div>
                 </section>
                 <section class="w-100 px-4 py-2">
-                    <div class="container d-flex py-5 px-3 justify-content-center align-items-center">
+                    <div class="container d-flex pt-5 px-3 justify-content-center align-items-center">
                         <div id="cardGrid" class="row"></div>
+                    </div>
+                </section>
+                <section class="w-100 px-4 py-2">
+                    <div class="container d-flex px-3 justify-content-center align-items-center">
+                        <div id="cardGrid-2" class="row card-round-design"></div>
                     </div>
                 </section>
                 <section class="w-100 px-4 py-2">
@@ -624,12 +650,28 @@ $(document).ready(function() {
     });
 });
 function showDiscovery(){
+    $('.onchat-on').hide()
     $('.onchat-on').addClass('d-none').css({
         'opacity': 0,
         'pointer-events': 'none',
         'visibility': 'hidden'
     });    
+    $('.onchat-off').show()
     $('.onchat-off').removeClass('d-none').css({
+        'opacity': '',
+        'pointer-events': '',
+        'visibility': ''
+    }); 
+}
+function showChat(){
+    $('.onchat-off').hide()
+    $('.onchat-off').addClass('d-none').css({
+        'opacity': 0,
+        'pointer-events': 'none',
+        'visibility': 'hidden'
+    });    
+    $('.onchat-on').show()
+    $('.onchat-on').removeClass('d-none').css({
         'opacity': '',
         'pointer-events': '',
         'visibility': ''

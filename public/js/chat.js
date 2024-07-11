@@ -150,16 +150,7 @@ $(document).ready(function() {
                 data: JSON.stringify({ userId, chatId, userChatId }),
                 success: function(data) {
 
-                    $('.onchat-on').removeClass('d-none').css({
-                        'opacity': '',
-                        'pointer-events': '',
-                        'visibility': ''
-                      });
-                    $('.onchat-off').addClass('d-none').css({
-                        'opacity': 0,
-                        'pointer-events': 'none',
-                        'visibility': 'hidden'
-                    });                      
+                    showChat();                 
 
                     isNew = reset || data.isNew
                     chatData = data.chat.content;
@@ -194,17 +185,7 @@ $(document).ready(function() {
                 },
                 error: function(xhr, status, error) {
                     //console.log(error)
-                    $('.onchat-on').addClass('d-none').css({
-                        'opacity': 0,
-                        'pointer-events': 'none',
-                        'visibility': 'hidden'
-                    });    
-                    $('.onchat-off').removeClass('d-none').css({
-                        'opacity': '',
-                        'pointer-events': '',
-                        'visibility': ''
-                    }); 
-
+                    showDiscovery();
                 }
             });
         }

@@ -208,7 +208,34 @@ $(document).ready(function() {
         },
         // Add more objects as needed
     ];
-
+    var cardData2 = [
+        {
+            "image": "avatar2_img1.jpeg",
+            "title": "さくら",
+            "description": "さくらは、勉強熱心な高校生で、いつも明るく前向きです。彼女は友達と一緒に過ごすことが大好きで、将来は教師になることを夢見ています。"
+        },
+        {
+            "image": "avatar2_img2.jpeg",
+            "title": "ナナ",
+            "description": "ナナは勇敢な女戦士で、正義を守るために戦います。彼女は強い意志と優れた戦闘能力を持ち、仲間を守るために全力を尽くします。"
+        },
+        {
+            "image": "avatar2_img3.jpeg",
+            "title": "アリス",
+            "description": "アリスは美しい赤毛の少女で、自然と動物を愛しています。彼女は優しい心を持ち、困っている人を助けることに喜びを感じます。"
+        },
+        {
+            "image": "avatar2_img4.jpeg",
+            "title": "ミカ",
+            "description": "ミカはエネルギッシュな若者で、冒険心が旺盛です。彼女は新しいことに挑戦するのが大好きで、常にポジティブなエネルギーに満ちています。"
+        },
+        {
+            "image": "avatar2_img5.jpeg",
+            "title": "ウィズ",
+            "description": "ウィズは魔法使いで、様々な魔法を使って人々を助けます。彼は親切で知識豊富な人物で、誰にでも助けの手を差し伸べます。"
+        }
+    ]
+    
     // Function to create a card
     function createCard(data) {
         var card = `
@@ -239,7 +266,7 @@ $(document).ready(function() {
 
     // Call the render function with the sample data
     renderCardGrid(cardData,$("#cardGrid"));
-    renderCardGrid(cardData,$("#cardGrid-2"));
+    renderCardGrid(cardData2,$("#cardGrid-2"));
 });
   // Function to save data to local storage
     function saveData(data) {

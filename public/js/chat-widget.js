@@ -112,6 +112,7 @@
                     height:60px;
                     background-color: #f5f5f5;
                     font-size: 14px;
+                    padding-left: 20px;
                 }
                 #userMessage:focus {
                     outline: none;

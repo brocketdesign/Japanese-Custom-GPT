@@ -136,16 +136,20 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     
       // Fetch all chats for the given userId from the chats collection
       const userCreatedChats = await chatsCollection.find({ userId: new fastify.mongo.ObjectId(userId) }).sort({ updatedAt: -1 }).toArray();
+      //People chats
+      const peopleChats = await chatsCollection.find({
+        visibility: { $exists: true, $eq: "public" }
+      }).sort({_id:-1}).limit(10).toArray();
       // Fetch user data
       const user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-      return reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato, Ltd', user, userId, chatId, chats: userCreatedChats });
+      return reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato, Ltd', user, userId, chatId, chats: userCreatedChats, peopleChats });
     });
     
     fastify.get('/chat-index', async(request, reply) => {
       const collectionChats = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
       const chats = await collectionChats.find({
         visibility: { $exists: true, $eq: "public" }
-      }).sort({_id:-1}).toArray();
+      }).sort({_id:-1}).limit(10).toArray();
       return reply.view('chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd',chats });
     });
     fastify.get('/chat/list/', {

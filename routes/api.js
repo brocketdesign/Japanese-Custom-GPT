@@ -61,6 +61,7 @@ async function routes(fastify, options) {
                 Bucket: process.env.AWS_S3_BUCKET_NAME,
                 Key: `${hash}_${filename}`,
                 Body: buffer,
+                ACL: 'public-read'
             };
             const uploadResult = await s3.upload(params).promise();
             return uploadResult.Location;

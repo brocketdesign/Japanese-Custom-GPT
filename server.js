@@ -88,7 +88,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     let tempUser = request.cookies.tempUser;
     if (!tempUser) {
       tempUser = {
-        _id: uuidv4(),
+        _id: new fastify.mongo.ObjectId(), // Use fastify.mongo.ObjectId for tempUser ID
         isTemporary: true,
         role: 'guest',
         // Add any other temporary user properties if needed

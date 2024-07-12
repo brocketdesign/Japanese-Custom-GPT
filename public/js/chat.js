@@ -800,3 +800,31 @@ $(document).ready(function() {
         */
     }
 });
+function showDiscovery(){
+    $('.onchat-on').hide()
+    $('.onchat-on').addClass('d-none').css({
+        'opacity': 0,
+        'pointer-events': 'none',
+        'visibility': 'hidden'
+    });    
+    $('.onchat-off').show()
+    $('.onchat-off').removeClass('d-none').css({
+        'opacity': '',
+        'pointer-events': '',
+        'visibility': ''
+    }); 
+}
+function showChat(){
+    $('.onchat-off').hide()
+    $('.onchat-off').addClass('d-none').css({
+        'opacity': 0,
+        'pointer-events': 'none',
+        'visibility': 'hidden'
+    });    
+    $('.onchat-on').show()
+    $('.onchat-on').removeClass('d-none').css({
+        'opacity': '',
+        'pointer-events': '',
+        'visibility': ''
+    }); 
+}

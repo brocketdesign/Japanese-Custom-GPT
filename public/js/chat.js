@@ -72,11 +72,8 @@ $(document).ready(function() {
             })
         }
         
-        window.choosePath = function(response) {
+        window.choosePath = function(userResponse) {
             currentStep++;
-            hideOtherChoice(response,currentStep,function(){
-                updatechatContent(response);
-            })
 
             $.ajax({
                 url: API_URL+'/api/chat-data',
@@ -84,10 +81,13 @@ $(document).ready(function() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                data: JSON.stringify({ currentStep:currentStep-1, message:response, userId, chatId, userChatId, isNew }),
+                data: JSON.stringify({ currentStep:currentStep-1, message:userResponse, userId, chatId, userChatId, isNew }),
                 success: function(response) {
                     userChatId = response.userChatId
                     isNew = false
+                    hideOtherChoice(userResponse,currentStep,function(){
+                        updatechatContent(userResponse);
+                    })
                 },
                 error: function(error) {
                     console.log(error.statusText);
@@ -465,7 +465,6 @@ $(document).ready(function() {
         function generateCompletion(callback){
             
             const apiUrl = API_URL+'/api/openai-chat-completion';
-  
             $.ajax({
                 url: apiUrl,
                 method: 'POST',

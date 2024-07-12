@@ -58,15 +58,17 @@ async function routes(fastify, options) {
     
     const token = jwt.sign({ _id: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '24h' });
     return reply
+      .clearCookie('tempUser', { path: '/' }) // Clear the tempUser cookie
       .setCookie('token', token, { path: '/', httpOnly: true })
       .send({ redirect: '/dashboard' });
-  });
+  });  
 
   fastify.post('/user/logout', async (request, reply) => {
     return reply
       .clearCookie('token', { path: '/' })
+      .clearCookie('tempUser', { path: '/' }) // Add this line to clear the tempUser cookie
       .send({ status: 'ログアウトに成功しました' });
-  });
+  });  
 
   // Configure AWS S3
   const s3 = new aws.S3({

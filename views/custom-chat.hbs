@@ -38,9 +38,9 @@
         }
         .card-round-design .col-12 .card .card-img-top{
             position: absolute;
-            top: -30px;
-            width: 70px;
-            height: 70px;
+            top: -50px;
+            width: 100px;
+            height: 100px;
             left: 0;
             right: 0;
             margin: auto;
@@ -49,7 +49,7 @@
             object-position: top;
         }
         .card-round-design .col-12 .card .card-body{
-            padding-top: 70px;
+            padding-top: 100px;
         }
 
         .chat-container {
@@ -453,26 +453,24 @@
                 </section>
                 <section class="w-100 px-4 py-2">
                     <h4>トップチャット</h4>
+                    <div id="category-container" class="category-container"></div>
                     <div class="scroll-container d-flex justify-content-between  py-4" id="button-container"></div>
                 </section>
                 <section class="w-100 px-4 py-2">
-                    <h4>カテゴリー</h4>
-                    <div id="category-container" class="category-container"></div>
-                </section>
-                <section class="w-100 px-4 py-2">
-                    <div class="d-flex pt-5 px-3 justify-content-center align-items-center">
+                    <div class="d-flex px-3 justify-content-center align-items-center container">
                         <div id="cardGrid" class="row"></div>
                     </div>
                 </section>
                 <section class="w-100 px-4 py-2">
-                    <div class="d-flex px-3 justify-content-center align-items-center">
-                        <div id="cardGrid-2" class="row card-round-design"></div>
+                    <h4>専門家</h4>
+                    <div class="row d-flex justify-content-start">
+                        <div id="chatbot-container" class="container mt-4 row"></div>
                     </div>
                 </section>
                 <section class="w-100 px-4 py-2">
                     <h4>人気チャット</h4>
-                    <div class="row d-flex justify-content-start">
-                        <div id="chatbot-container" class="container my-4 row"></div>
+                    <div class="d-flex px-3 pt-4 justify-content-center align-items-center">
+                        <div id="cardGrid-2" class="row card-round-design"></div>
                     </div>
                 </section>
             </div>

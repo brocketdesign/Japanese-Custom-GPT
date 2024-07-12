@@ -435,8 +435,9 @@
         <section id="chat-discovery" class="onchat-off py-5">
             <div class="my-5">
                 <section class="w-100 px-4 py-2">
+                    <div id="category-container" class="category-container mb-3"></div>
                     <h4 class="mb-4">みんなのチャット</h4>
-                    <div class="chat-container px-3">
+                    <div class="chat-container">
                         {{#each peopleChats}}
                         <div class="card chat-card flex-row bg-light border border-secondary shadow-0" style="border-radius: 20px; cursor:pointer" onclick="redirectToChat('{{this._id}}')">
                             <div style="min-width:100px;width: 300px; height: auto; display: flex; justify-content: center; align-items: center;">
@@ -452,12 +453,12 @@
                     </div>
                 </section>
                 <section class="w-100 px-4 py-2">
-                    <h4>トップチャット</h4>
-                    <div id="category-container" class="category-container"></div>
+                    <h4>便利な チャット</h4>
                     <div class="scroll-container d-flex justify-content-between  py-4" id="button-container"></div>
                 </section>
-                <section class="w-100 px-4 py-2">
-                    <div class="d-flex px-3 justify-content-center align-items-center container">
+                <section class="w-100 px-4 py-2 py-4 my-3">
+                    <h4 class="text-center">メイン キャラ</h4>
+                    <div class="d-flex p-3 justify-content-center align-items-center container">
                         <div id="cardGrid" class="row"></div>
                     </div>
                 </section>
@@ -471,6 +472,15 @@
                     <h4>人気チャット</h4>
                     <div class="d-flex px-3 pt-4 justify-content-center align-items-center">
                         <div id="cardGrid-2" class="row card-round-design"></div>
+                    </div>
+                </section>
+                <section>
+                    <div class="text-center m-5">
+                        <h3>キャラクターを作成する</h3>
+                        <p>どのキャラクターとも相性がよくありませんか? 自分だけのキャラクターを作成しましょう! 会話の構成や口調などをカスタマイズできます!</p>
+                        <a href="/chat/edit/" class="m-2 px-5 py-2 btn btn-large border shadow-0 btn-dark" style="border-radius:40px;font-size: 21px;">
+                            <i class="fas fa-plus me-2"></i>作成する
+                        </a>
                     </div>
                 </section>
             </div>

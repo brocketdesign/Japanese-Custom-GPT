@@ -4,7 +4,7 @@
 <body>
 
     <style>
-        .onchat-off{
+        .onchat-off, .onchat-on{
             display: none;
         }
         .avatar{
@@ -100,7 +100,6 @@
             overflow: scroll;
             padding-top: 0.75em;
         }
-        
         .sidebar.hidden ,.sidebar-history.hidden {
             transform: translateX(-260px);
         }
@@ -111,7 +110,6 @@
             margin-left: 260px;
             transition: margin-left 0.3s ease;
         }
-
         .content.collapsed {
             margin-left: 0;
         }
@@ -122,13 +120,14 @@
         nav.navbar.move {
             margin-left: 260px;
         }
-
-
-        footer{display: none;}
         .choice-container {
             text-wrap: nowrap;
             overflow: auto;
             padding: 15px 0px;
+        }
+        #startButton {
+            border-radius: 50px;
+            font-weight: bold;
         }
         #chatContainer {
             height: 100%;
@@ -231,10 +230,6 @@
             opacity: 0;
             pointer-events: 'none';
         }
-        .chat-list:hover .dropdown .dropdown-toggle{
-            opacity: 1;
-            pointer-events: '';
-        }
         .online-text {
             width: 150px; 
             white-space: nowrap;
@@ -279,9 +274,13 @@
                 class="rounded-circle avatar" height="32" alt="Avatar"
                 loading="lazy" />
             </a>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLink">
-                <li><a class="dropdown-item" href="/settings">設定</a></li>
-                <li><a  class="dropdown-item logout" href="#">ログアウト</a></li>
+            <ul class="dropdown-menu dropdown-menu-end mx-3" aria-labelledby="navbarDropdownMenuLink">
+                {{#if user}}
+                    <li><a class="dropdown-item" href="/settings">設定</a></li>
+                    <li><a class="dropdown-item logout" href="#">ログアウト</a></li>
+                {{else}}
+                    <li><a class="dropdown-item" href="/authenticate">ログイン</a></li>
+                {{/if}}
             </ul>
         </div>
         <div class="tools d-flex align-items-center">
@@ -315,7 +314,7 @@
                     </div>
                     <div class="d-flex align-items-center">
                         <!-- Dropdown -->
-                        <div class="dropdown">
+                        <div class="dropdown pe-3">
                             <button class="btn border-0 shadow-0 dropdown-toggle ms-2 " type="button" id="dropdownMenuButton_{{this._id}}" data-mdb-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-ellipsis-v"></i>
                             </button>
@@ -420,8 +419,12 @@
                                     loading="lazy" />
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLink">
-                                    <li><a class="dropdown-item" href="/settings">設定</a></li>
-                                    <li><a  class="dropdown-item logout" href="#">ログアウト</a></li>
+                                    {{#if user}}
+                                        <li><a class="dropdown-item" href="/settings">設定</a></li>
+                                        <li><a class="dropdown-item logout" href="#">ログアウト</a></li>
+                                    {{else}}
+                                        <li><a class="dropdown-item" href="/authenticate">ログイン</a></li>
+                                    {{/if}}
                                 </ul>
                             </li>
                         </ul>
@@ -435,7 +438,7 @@
                     <h4 class="mb-4">みんなのチャット</h4>
                     <div class="chat-container px-3">
                         {{#each peopleChats}}
-                        <div class="card chat-card flex-row bg-white border border-secondary" style="border-radius: 20px; cursor:pointer" onclick="redirectToChat('{{this._id}}')">
+                        <div class="card chat-card flex-row bg-light border border-secondary shadow-0" style="border-radius: 20px; cursor:pointer" onclick="redirectToChat('{{this._id}}')">
                             <div style="min-width:100px;width: 300px; height: auto; display: flex; justify-content: center; align-items: center;">
                                 <img src="{{this.thumbnailUrl}}" class="img-fluid m-3" alt="Thumbnail" onerror="this.src='/img/logo.webp';" style="width: 50px; height: 50px; object-fit: cover;border-radius: 50px;">
                             </div>

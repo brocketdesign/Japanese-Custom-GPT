@@ -147,6 +147,14 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     
     fastify.get('/chat-index', async(request, reply) => {
       const collectionChats = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+      const peopleChats = await collectionChats.find({
+        visibility: { $exists: true, $eq: "public" }
+      }).sort({_id:-1}).limit(10).toArray();
+      return reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato, Ltd', peopleChats });
+      //return reply.view('chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd',chats });
+    });
+    fastify.get('/about', async(request, reply) => {
+      const collectionChats = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
       const chats = await collectionChats.find({
         visibility: { $exists: true, $eq: "public" }
       }).sort({_id:-1}).limit(10).toArray();

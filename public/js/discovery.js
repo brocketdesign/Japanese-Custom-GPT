@@ -6,37 +6,37 @@ $(document).ready(function() {
             title: "お問い合わせフォーム",
             role: "このチャットボットは、ユーザーの問い合わせに対応し、必要な情報を収集する役割を果たします。",
             tone: "丁寧で親切な対応",
-            thumbnailUrl: "https://mdbootstrap.com/img/new/avatars/1.jpg"
+            thumbnailUrl: "/img/logo.webp"
         },
         {
             title: "クイズ",
             role: "このチャットボットは、ユーザーにクイズを出題し、楽しませる役割を果たします。",
             tone: "明るく、楽しいトーン",
-            thumbnailUrl: "https://mdbootstrap.com/img/new/avatars/2.jpg"
+            thumbnailUrl: "/img/logo.webp"
         },
         {
             title: "AIガールフレンド",
             role: "このチャットボットは、ユーザーと対話し、仮想のガールフレンドのような役割を果たします。",
             tone: "優しく、思いやりのあるトーン",
-            thumbnailUrl: "https://mdbootstrap.com/img/new/avatars/3.jpg"
+            thumbnailUrl: "/img/logo.webp"
         },
         {
             title: "健康アドバイザー",
             role: "このチャットボットは、ユーザーに健康に関するアドバイスを提供し、健康管理をサポートします。",
             tone: "専門的で信頼できるトーン",
-            thumbnailUrl: "https://mdbootstrap.com/img/new/avatars/4.jpg"
+            thumbnailUrl: "/img/logo.webp"
         },
         {
             title: "旅行ガイド",
             role: "このチャットボットは、ユーザーに旅行のおすすめスポットやプランを提案する役割を果たします。",
             tone: "親しみやすく、エキサイティングなトーン",
-            thumbnailUrl: "https://mdbootstrap.com/img/new/avatars/5.jpg"
+            thumbnailUrl: "/img/logo.webp"
         },
         {
             title: "精神的なサポート",
             role: "このチャットボットは、ユーザーに心のケアや精神的なサポートを提供する役割を果たします。",
             tone: "落ち着いていて、慰めるようなトーン",
-            thumbnailUrl: "https://mdbootstrap.com/img/new/avatars/6.jpg"
+            thumbnailUrl: "/img/logo.webp"
         }
     ];
 

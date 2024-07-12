@@ -1,3 +1,4 @@
+let loadLatest = false
 $(document).ready(function() {
     let API_URL = ""
     fetchMode(function(error,mode){
@@ -18,7 +19,7 @@ $(document).ready(function() {
         let thumbnail = false
 
         sendCustomData({action: 'viewpage'});
-        fetchchatData(chatId, userId); // Fetch the initial chat data when the page loads
+        fetchchatData(chatId, userId);
 
         enableToggleDropdown()
         
@@ -35,15 +36,17 @@ $(document).ready(function() {
         }
 
         $('.reset-chat').click(function(){
+            loadLatest = false
             fetchchatData(chatId, userId, true) ;
         })
-
         $(document).on('click','.user-chat-history', function(){
+            loadLatest = false
             const selectUser = $(this).data('user')
             userChatId = $(this).data('chat')
             fetchchatData(chatId, selectUser)
         })
         $('.chat-list.item.user-chat .user-chat-content').click(function(e){
+            loadLatest = true
             const selectChatId = $(this).closest('.user-chat').data('id')
             fetchchatData(selectChatId, userId)
             updateParameters(selectChatId,userId)
@@ -171,7 +174,13 @@ $(document).ready(function() {
                     if(isNew && chatData.length == 0 ){
                         createButtonAndIntro(data.chat)
                     }
-                    getUserChatHistory(chatId, userId);
+                    getUserChatHistory(chatId, userId,function(lastChat){
+                        if(loadLatest){
+                            loadLatest = false
+                            userChatId = lastChat._id
+                            fetchchatData(chatId, userId)
+                        }
+                    });
                     // Scroll to the end of the chat
                     $('#chatContainer').animate({
                         scrollTop: $('#chatContainer').prop("scrollHeight")
@@ -651,7 +660,7 @@ $(document).ready(function() {
 
     }
 
-    function getUserChatHistory(chatId, userId) {
+    function getUserChatHistory(chatId, userId, callback) {
         $.ajax({
           url: `/api/chat-history/${chatId}`,
           type: 'POST',
@@ -659,6 +668,9 @@ $(document).ready(function() {
           contentType: 'application/json',
           dataType: 'json',
           success: function(data) {
+            const lastChat = data[0]
+            if(callback){callback(lastChat)}
+
             displayUserChatHistory(data);
           },
           error: function(jqXHR, textStatus, errorThrown) {
@@ -711,7 +723,30 @@ $(document).ready(function() {
                 });
     
                 // Initialize the dropdown
-                new mdb.Dropdown($(this)[0]);
+                const dropdown = new mdb.Dropdown($(this)[0]);
+    
+                // Find the parent element that has the hover effect
+                const parent = $(this).closest('.chat-list');
+    
+                // Add hover event listeners to the parent element
+                parent.hover(
+                    function() {
+                        // When the parent element is hovered
+                        $(this).find('.dropdown-toggle').css({
+                            'opacity': 1,
+                            'pointer-events': ''
+                        });
+                    },
+                    function() {
+                        // When the parent element is no longer hovered
+                        $(this).find('.dropdown-toggle').css({
+                            'opacity': 0,
+                            'pointer-events': 'none'
+                        });
+                        // Close the dropdown
+                        dropdown.hide();
+                    }
+                );
             }
         });
     }
@@ -745,7 +780,7 @@ $(document).ready(function() {
         if (typeof callback === 'function') {
             callback();
         }
-        return
+        /*
         let currentContent = $element.text();
 
         let clearIntervalID = setInterval(function() {
@@ -759,5 +794,6 @@ $(document).ready(function() {
                 }
             }
         }, 25); // This duration can be adjusted as per your requirement
+        */
     }
 });

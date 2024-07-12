@@ -255,37 +255,39 @@ async function routes(fastify, options) {
     });
     fastify.post('/api/chat-history/:chatId', async (request, reply) => {
         const chatId = request.params.chatId;
-        const userId = request.body.userId 
-      
+        const userId = request.body.userId;
+    
         if (!chatId || !userId) {
-          throw new Error('Chat ID and User ID are required');
+            return reply.status(400).send({ error: 'Chat ID and User ID are required' });
         }
+    
         const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
         const isUserChat = await chatsCollection.findOne({ userId: userId, _id: new fastify.mongo.ObjectId(chatId) });
-      
+    
         const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-      
+    
         let userChat;
         if (isUserChat) {
-          userChat = await collectionUserChat.find({ chatId }).toArray();
+            userChat = await collectionUserChat.find({ chatId }).sort({ _id: -1 }).toArray();
         } else {
-            console.log('Find user chat data')
-            console.log({ chatId, userId })
-            userChat = await collectionUserChat.find({ 
-                chatId, 
+            console.log('Find user chat data');
+            console.log({ chatId, userId });
+            userChat = await collectionUserChat.find({
+                chatId,
                 $or: [
                     { userId },
                     { userId: new fastify.mongo.ObjectId(userId) }
-                ] 
-            }).toArray();            
+                ]
+            }).sort({ _id: -1 }).toArray();
         }
-
+    
         if (!userChat || userChat.length === 0) {
-          throw new Error('User chat data not found');
+            return reply.send([]);
         }
-      
+    
         return reply.send(userChat);
-      });
+    });
+    
       
     fastify.delete('/api/delete-chat-history/:chatId', async (request, reply) => {
         const chatId = request.params.chatId;

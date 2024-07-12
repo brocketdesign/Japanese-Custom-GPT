@@ -96,7 +96,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       reply.setCookie('tempUser', JSON.stringify(tempUser), {
         path: '/',
         httpOnly: true,
-        maxAge: 60 * 60 * 24 * 7, // 1 week
+        maxAge: 60 * 60 * 1, // 1 Hour
         sameSite: 'None', // Allows cross-domain cookies
         secure: true // Ensures the cookie is only sent over HTTPS
       });

@@ -177,8 +177,10 @@ $(document).ready(function() {
                     getUserChatHistory(chatId, userId,function(lastChat){
                         if(loadLatest){
                             loadLatest = false
-                            userChatId = lastChat._id
-                            fetchchatData(chatId, userId)
+                            if(lastChat){
+                                userChatId = lastChat._id
+                                fetchchatData(chatId, userId)
+                            }
                         }
                     });
                     // Scroll to the end of the chat

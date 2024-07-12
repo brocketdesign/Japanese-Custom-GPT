@@ -8,6 +8,7 @@ $(document).ready(function() {
         fetchUser(function(error, user){
         // Now you can use the userID variable or id parameter here
         let chatId = getIdFromUrl(window.location.href) || $(`#lamix-chat-widget`).data('id');
+        console.log({chatId})
         let userChatId
         const userId = user._id
         let messagesCount = 0 

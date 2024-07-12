@@ -156,6 +156,10 @@ $(document).ready(function() {
                     showChat();                 
 
                     isNew = reset || data.isNew
+                    if(!data.chat){
+                        showDiscovery();
+                        return
+                    }
                     chatData = data.chat.content;
                     totalSteps = chatData.length;
                     chatName = data.chat.name

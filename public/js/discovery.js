@@ -106,7 +106,7 @@ $(document).ready(function() {
             "premium": false,
             "role": "数学の問題を解いたり、概念を説明することができます。",
             "tone": "フレンドリーで親切",
-            "thumbnailUrl": "https://mdbootstrap.com/img/new/avatars/7.jpg"
+            "thumbnailUrl": "/img/avatar_math.webp"
         },
         {
             "title": "歴史探検家",
@@ -115,7 +115,7 @@ $(document).ready(function() {
             "premium": true,
             "role": "歴史の出来事や人物について教えます。",
             "tone": "情熱的で詳しい",
-            "thumbnailUrl": "https://mdbootstrap.com/img/new/avatars/6.jpg"
+            "thumbnailUrl": "/img/avatar_history.webp"
         },
         {
             "title": "英語のガイド",
@@ -124,7 +124,7 @@ $(document).ready(function() {
             "premium": false,
             "role": "英語の文法や会話を練習するのを手助けします。",
             "tone": "励ましとサポート",
-            "thumbnailUrl": "https://mdbootstrap.com/img/new/avatars/5.jpg"
+            "thumbnailUrl": "/img/avatar_english.webp"
         },
         {
             "title": "科学の探求者",
@@ -133,7 +133,7 @@ $(document).ready(function() {
             "premium": true,
             "role": "科学の原理や最新の科学研究について解説します。",
             "tone": "知的で興味深い",
-            "thumbnailUrl": "https://mdbootstrap.com/img/new/avatars/8.jpg"
+            "thumbnailUrl": "/img/avatar_science.webp"
         }
 
     ];
@@ -144,13 +144,13 @@ $(document).ready(function() {
                     <div class="card shadow-0" style="border-radius: 15px;" >
                         <div class="card-body bg-light p-4">
                             <div class="row">
-                                <div class="col-12 col-sm-6">
+                                <div class="col-12 col-sm-6 text-center">
                                     <img src="${chatbot.thumbnailUrl}" alt="Generic placeholder image" class="img-fluid" style="width: 180px; border-radius: 10px;">
                                 </div>
                                 <div class="col-12 col-sm-6">
                                     <h5 class="my-1">${chatbot.title}</h5>
                                     <p class="mb-1 pb-1">${chatbot.role}</p>
-                                    <div class="d-flex justify-content-start rounded-3 p-1 mb-2 bg-body-tertiary">
+                                    <div class="d-flex justify-content-around rounded-3 p-1 mb-2 bg-body-tertiary">
                                         <div>
                                             <p class="small text-muted mb-1">名前</p>
                                             <p class="mb-0">${chatbot.name}</p>

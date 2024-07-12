@@ -185,39 +185,43 @@ async function routes(fastify, options) {
         }
     });
     fastify.post('/api/chat/', async (request, reply) => {
-        let {userId, chatId, userChatId} = request.body;
-
-        //console.log(`Data for chat : ${chatId}`)
+        let { userId, chatId, userChatId } = request.body;
+    
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
         const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-
+    
         let response = {
-            isNew :true,
-        }
+            isNew: true,
+        };
+    
         try {
-            let userChatDocument = await collectionUserChat.findOne({ 
-                userId, 
+            let userChatDocument = await collectionUserChat.findOne({
+                userId,
                 _id: new fastify.mongo.ObjectId(userChatId),
                 chatId
-            });              
-            if(userChatDocument){
-                response.userChat = userChatDocument
-                response.isNew = false
+            });
+            if (userChatDocument) {
+                response.userChat = userChatDocument;
+                response.isNew = false;
             }
         } catch (error) {
+            // Log error if necessary, or handle it silently
         }
+    
         try {
             const chat = await collection.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
             if (!chat) {
-                return reply.status(404).send({ error: 'chat not found' });
+                response.chat = false
+                return reply.send(response);  // Chat not found, but no error is thrown or logged
             }
-            response.chat = chat
+            response.chat = chat;
             return reply.send(response);
         } catch (error) {
             console.error('Failed to retrieve chat:', error);
             return reply.status(500).send({ error: 'Failed to retrieve chat' });
         }
     });
+    
     fastify.post('/api/chat-analyze/', async (request, reply) => {
         const {chatId} = request.body;
         const collectionUser = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');

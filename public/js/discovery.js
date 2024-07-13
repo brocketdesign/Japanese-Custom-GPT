@@ -6,31 +6,31 @@ $(document).ready(function() {
         "title": "お問い合わせフォーム",
         "role": "ユーザーの質問や要望を受け付け、適切な部署に転送する機能を持つチャットボットです。迅速な対応を促進し、顧客満足度を向上させます。",
         "tone": "丁寧で迅速な対応を行い、ユーザーの質問に対して正確な情報を提供します。",
-        "thumbnailUrl": "/img/contact-form.webp"
+        "thumbnailUrl": "/img/logo.webp"
     },
     {
         "title": "カスタマーサポート",
         "role": "製品やサービスに関するサポートを提供するチャットボットです。よくある質問に自動で回答し、複雑な問題についてはサポート担当者に引き継ぎます。",
         "tone": "親切かつプロフェッショナルなトーンで対応し、ユーザーの問題を解決します。",
-        "thumbnailUrl": "/img/customer-support.webp"
+        "thumbnailUrl": "/img/logo.webp"
     },
     {
         "title": "予約システム",
         "role": "ホテルやレストラン、イベントの予約を自動で管理するチャットボットです。空き状況の確認や予約の変更・キャンセルも簡単に行えます。",
         "tone": "スムーズで分かりやすい対応を行い、ユーザーがストレスなく予約を完了できるようサポートします。",
-        "thumbnailUrl": "/img/booking-system.webp"
+        "thumbnailUrl": "/img/logo.webp"
     },
     {
         "title": "フィードバック収集",
         "role": "顧客からのフィードバックや意見を収集し、企業の改善に役立てるチャットボットです。アンケート形式で回答を求め、結果を分析します。",
         "tone": "感謝の意を込めたトーンで対応し、ユーザーが率直な意見を述べやすい環境を提供します。",
-        "thumbnailUrl": "/img/feedback-collection.webp"
+        "thumbnailUrl": "/img/logo.webp"
     },
     {
         "title": "商品レコメンド",
         "role": "ユーザーの嗜好や過去の購入履歴に基づいて、最適な商品を推薦するチャットボットです。パーソナライズされた提案で購入を促進します。",
         "tone": "フレンドリーかつ親しみやすいトーンで対応し、ユーザーにとって魅力的な商品を紹介します。",
-        "thumbnailUrl": "/img/product-recommendation.webp"
+        "thumbnailUrl": "/img/logo.webp"
     }
 ];
 

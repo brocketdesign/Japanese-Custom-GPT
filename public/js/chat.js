@@ -8,7 +8,6 @@ $(document).ready(function() {
         fetchUser(function(error, user){
         // Now you can use the userID variable or id parameter here
         let chatId = getIdFromUrl(window.location.href) || $(`#lamix-chat-widget`).data('id');
-        console.log({chatId})
         let userChatId
         const userId = user._id
         let messagesCount = 0 
@@ -209,7 +208,7 @@ $(document).ready(function() {
             let description = chatData.description;
             let thumbnailUrl = chatData.thumbnailUrl;
             let chatImageUrl = chatData.chatImageUrl;
-        
+
             // Remove existing container if it exists
             $('#startButtonContained').remove();
             $('#introChat').remove();
@@ -243,7 +242,16 @@ $(document).ready(function() {
         
             // Append intro elements to the intro container
             if(thumbnailUrl){
-                image.attr('src', thumbnailUrl)
+                $.ajax({
+                    url: thumbnailUrl,
+                    type: 'GET',
+                    success: function() {
+                        image.attr('src', thumbnailUrl);
+                    },
+                    error: function(xhr) {
+                        console.error('Error fetching image: ' + xhr.status + ' ' + xhr.statusText);
+                    }
+                });
             }
             if(chatImageUrl){
                 image.attr('src', chatImageUrl)

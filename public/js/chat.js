@@ -245,6 +245,8 @@ $(document).ready(function() {
                 $.ajax({
                     url: thumbnailUrl,
                     type: 'GET',
+                    mode: 'cors',
+                    cache: 'no-store',
                     success: function() {
                         image.attr('src', thumbnailUrl);
                     },

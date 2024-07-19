@@ -24,12 +24,18 @@ $(document).ready(function() {
         enableToggleDropdown()
         
         $('textarea').each(function() {
-            resizeTextarea(this);
-            $(this).on('input change', function() {
+            //resizeTextarea(this);
+            $(this).on('input change keypress', function(e) {
+                if (e.type === 'keypress' && e.which !== 13) {
+                    return;
+                }
                 resizeTextarea(this);
             });
         });
-
+        
+        $('#sendMessage').on('click',function(){
+            resizeTextarea($('#userMessage')[0]);
+        })
         function resizeTextarea(element){
             element.style.height = 'auto';
             element.style.height = (element.scrollHeight - 20 ) + 'px';  

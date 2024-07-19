@@ -12,10 +12,6 @@
             object-position: top;
             width: 32px;
         }
-        .noscroll {
-            overflow: hidden;
-            height: 80vh !important;
-        }
         .scroll-container {
         display: flex;
         flex-wrap: nowrap;
@@ -72,6 +68,11 @@
             background: #eee !important;
         }
         @media (max-width: 600px) {
+            .noscroll{
+                display: block;
+                overflow: hidden;
+                height: 80vh !important;
+            }
             .top-img{
                 width: 70%;
             }

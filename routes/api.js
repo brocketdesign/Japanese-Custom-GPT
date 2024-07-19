@@ -443,7 +443,7 @@ async function routes(fastify, options) {
                     userId,
                     chatId,
                     messages: [
-                        { "role": "system", "content": `${chatDocument.rule ? 'You are a Japanese assistant about: ' + chatDocument.description + chatDocument.rule : 'You are a Japanese assistant about: ' + chatDocument.description + 'You provide short and friendly answers. You never answer with lists. You always prompt the user to help continue the conversation smoothly.'}` },
+                        { "role": "system", "content": `${chatDocument.rule ? 'You are a Japanese assistant about: ' + chatDocument.description + chatDocument.rule : 'You are a Japanese assistant about: ' + chatDocument.description + 'You provide short and friendly answers. DO NOT EVER answer with list unless specifically askedfor one. You always prompt the user to help continue the conversation smoothly.'}` },
                     ],
                     createdAt: dateObj,
                     updatedAt: dateObj

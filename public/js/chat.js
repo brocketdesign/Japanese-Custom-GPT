@@ -191,9 +191,6 @@ $(document).ready(function() {
                     $('#chatContainer').animate({
                         scrollTop: $('#chatContainer').prop("scrollHeight")
                     }, 500); 
-                    $('html,body').animate({
-                        scrollTop: $('#chatInput').offset().top
-                    }, 0);
                 },
                 error: function(xhr, status, error) {
                     //console.log(error)

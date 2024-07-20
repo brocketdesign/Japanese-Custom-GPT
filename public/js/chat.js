@@ -167,7 +167,8 @@ $(document).ready(function() {
                         return
                     }
                     chatData = data.chat.content;
-                    totalSteps = chatData.length;
+                    totalSteps = chatData.length || 0;
+
                     chatName = data.chat.name
                     thumbnail = data.chat.thumbnailUrl || data.chat.chatImageUrl
 

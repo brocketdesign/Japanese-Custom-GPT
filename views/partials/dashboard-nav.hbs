@@ -23,13 +23,17 @@
                 <li class="nav-item dropdown mx-2">
                     <a data-mdb-dropdown-init class="nav-link dropdown-toggle hidden-arrow d-flex align-items-center" href="#"
                         id="navbarDropdownMenuLink" role="button" aria-expanded="false">
-                        <img src="{{#if user.profileUrl}}{{user.profileUrl}}{{else}}https://mdbootstrap.com/img/new/avatars/1.jpg{{/if}}" 
+                        <img src="{{#if user.profileUrl}}{{user.profileUrl}}{{else}}/img/avatar.png{{/if}}" 
                         class="rounded-circle" height="32" alt="Avatar" style="object-fit: cover;object-position: top;width: 32px;"
                         loading="lazy" />
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLink">
-                        <li><a class="dropdown-item" href="/settings">設定</a></li>
-                        <li><a class="dropdown-item logout" href="#">ログアウト</a></li>
+                        {{#if user.isTemporary}}
+                            <li><a class="dropdown-item" href="/authenticate">ログイン</a></li>
+                        {{else}}
+                            <li><a class="dropdown-item" href="/settings">設定</a></li>
+                            <li><a class="dropdown-item logout" href="#">ログアウト</a></li>
+                        {{/if}}
                     </ul>
                 </li>
             </ul>

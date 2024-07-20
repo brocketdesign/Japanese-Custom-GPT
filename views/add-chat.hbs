@@ -211,8 +211,8 @@
         var count = 0
         let chatId = '{{chatId}}';
         const isTemporaryChat = '{{isTemporaryChat}}'
-console.log({chatId,isTemporaryChat})
-        if (chatId && !isTemporaryChat) {
+
+        if (chatId || !isTemporaryChat) {
             fetchchatData(chatId);
         }
         
@@ -287,7 +287,9 @@ console.log({chatId,isTemporaryChat})
                 type: 'GET',
                 dataType: 'json',
                 success: function(chatData) {
-                    $('#chatPurpose').val(chatData.purpose)
+                    if(chatData.purpose){
+                        $('#chatPurpose').val(chatData.purpose)
+                    }
                     $('#chatName').val(chatData.name);
                     $('#chatCategory').val(chatData.category);
                     $('#chatImageUrl').val(chatData.chatImageUrl);

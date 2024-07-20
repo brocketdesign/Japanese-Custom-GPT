@@ -101,7 +101,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         httpOnly: true,
         maxAge: 60 * 60 * 1, // 1 Hour
         sameSite: 'None', // Allows cross-domain cookies
-        secure: true // Ensures the cookie is only sent over HTTPS
+        //secure: true // Ensures the cookie is only sent over HTTPS
       });
     } else {
       tempUser = JSON.parse(tempUser);
@@ -183,11 +183,11 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         const user = await fastify.getUser(request, reply);
         const chatId = request.params.chatId || new fastify.mongo.ObjectId()
         const isTemporaryChat = request.params.chatId ? false : true
-        if(isTemporaryChat){
-          const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-          collection.insertOne({_id : chatId})
-        }
         const userId = new fastify.mongo.ObjectId(user._id)
+        if(isTemporaryChat){
+          const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+          await chatsCollection.insertOne({userId, _id : chatId})
+        }
         return reply.view('add-chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd', chatId:chatId, isTemporaryChat, user  });
       } catch (error) {
         console.log(error)

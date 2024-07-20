@@ -267,16 +267,19 @@ async function routes(fastify, options) {
         }
     
         const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-        const isUserChat = await chatsCollection.findOne({ userId: userId, _id: new fastify.mongo.ObjectId(chatId) });
-    
+        const isUserChat = await chatsCollection.findOne({ 
+            $or: [
+                { userId },
+                { userId: new fastify.mongo.ObjectId(userId) }
+            ],
+             _id: new fastify.mongo.ObjectId(chatId) 
+        });    
         const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
     
         let userChat;
         if (isUserChat) {
             userChat = await collectionUserChat.find({ chatId }).sort({ _id: -1 }).toArray();
         } else {
-            console.log('Find user chat data');
-            console.log({ chatId, userId });
             userChat = await collectionUserChat.find({
                 chatId,
                 $or: [
@@ -403,6 +406,7 @@ async function routes(fastify, options) {
 
         try{
             const chat = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
+
             if (!chat) {
                 return reply.status(404).send({ error: 'chat not found' });
             }
@@ -932,8 +936,6 @@ async function routes(fastify, options) {
             const chatId = session.chatId;
             const message = session.message;
             const system = session.system;
-
-            console.log({ userId, chatId });
     
             const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
             let userData = await userDataCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) }) 
@@ -956,9 +958,10 @@ async function routes(fastify, options) {
 
             messages.push({ role: "system", content: completion })
             // Update the chat document in the database
-            await chatCollection.insertOne(
+            await chatCollection.updateOne(
                 { userId: userObjectId, chatId },
-                { $set: { messages: messages, updatedAt: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) } }
+                { $set: { messages: messages, updatedAt: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) } },
+                {upsert:true}
             );
     
             // End the stream only after the completion has been sent and stored

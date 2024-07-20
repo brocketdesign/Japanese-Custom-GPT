@@ -276,11 +276,11 @@
                 loading="lazy" />
             </a>
             <ul class="dropdown-menu dropdown-menu-end mx-3" aria-labelledby="navbarDropdownMenuLink">
-                {{#if user}}
+                {{#if user.isTemporary}}
+                    <li><a class="dropdown-item" href="/authenticate">ログイン</a></li>
+                {{else}}
                     <li><a class="dropdown-item" href="/settings">設定</a></li>
                     <li><a class="dropdown-item logout" href="#">ログアウト</a></li>
-                {{else}}
-                    <li><a class="dropdown-item" href="/authenticate">ログイン</a></li>
                 {{/if}}
             </ul>
         </div>
@@ -420,11 +420,11 @@
                                     loading="lazy" />
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLink">
-                                    {{#if user}}
+                                    {{#if user.isTemporary}}
+                                        <li><a class="dropdown-item" href="/authenticate">ログイン</a></li>
+                                    {{else}}
                                         <li><a class="dropdown-item" href="/settings">設定</a></li>
                                         <li><a class="dropdown-item logout" href="#">ログアウト</a></li>
-                                    {{else}}
-                                        <li><a class="dropdown-item" href="/authenticate">ログイン</a></li>
                                     {{/if}}
                                 </ul>
                             </li>

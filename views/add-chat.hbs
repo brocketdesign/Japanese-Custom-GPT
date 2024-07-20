@@ -98,10 +98,8 @@
     </div>  
     <div>
         <p class="text-small text-muted text-center" style="font-size:12px">
-            Lamixでは、あなたのウェブサイトに設置するためのカスタムチャットを作成できます。<br>
-            まずは、用途に合わせたチャットをAIで作成いたしますので、<br>
-            作成したいチャットの詳細を教えてください。<br>
-            下のテンプレートから選んで始めることもできます。
+            AIキャラクター作成ページでは、以下の項目をカスタマイズすることで、ユーザーが望む最適なAIキャラクターを作成できます。<br>
+            また、AIを使用して新しいキャラクターを生成することも可能です。<br>
         </p>
     </div>
     <button type="button" id="displayProcess" class="badge btn-ligh text-muted border mb-2 mx-3 d-none" style="font-size: 12px;border-radius:40px">プロセスを表示する</button>
@@ -212,8 +210,9 @@
         });
         var count = 0
         let chatId = '{{chatId}}';
-
-        if (chatId) {
+        const isTemporaryChat = '{{isTemporaryChat}}'
+console.log({chatId,isTemporaryChat})
+        if (chatId && !isTemporaryChat) {
             fetchchatData(chatId);
         }
         
@@ -322,18 +321,7 @@
                         $('#genStructure').removeClass('btn-outline-secondary').addClass('btn-dark')
                 },
                 error: function(xhr, status, error) {
-                    Swal.fire({
-                        title: 'エラー!',
-                        text: 'チャットの読み込みに失敗しました: ' + error,
-                        icon: 'error',
-                        confirmButtonText: 'Ok',
-                        showCancelButton: true,
-                        cancelButtonText: '一覧を見る'
-                    }).then((result) => {
-                        if (result.dismiss === Swal.DismissReason.cancel) {
-                            window.location.href = '/chats';
-                        }
-                    });
+                   console.log(`New tempry chat`)
                 }
             });
         }
@@ -441,7 +429,7 @@
                 $('#chatContent').val('');
             }        
             $('#genStructure .fa-spinner').toggleClass('d-none')
-            
+
             $.ajax({
                 url: apiUrl,
                 method: 'POST',
@@ -1089,7 +1077,6 @@
         function updateTextarea() {
             var containerHtml = $('#markdownContainer').html();
             $('#chatRule').val(containerHtml);
-            console.log(containerHtml)
         }
 
         // Detect changes in the container content

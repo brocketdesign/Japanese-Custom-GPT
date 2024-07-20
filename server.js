@@ -86,6 +86,8 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     }
     // Handle temporary user
     let tempUser = request.cookies.tempUser;
+    const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+
     if (!tempUser) {
       tempUser = {
         _id: new fastify.mongo.ObjectId(), // Use fastify.mongo.ObjectId for tempUser ID
@@ -93,6 +95,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         role: 'guest',
         // Add any other temporary user properties if needed
       };
+      await userDataCollection.insertOne(tempUser); // Insert tempUser into the users collection
       reply.setCookie('tempUser', JSON.stringify(tempUser), {
         path: '/',
         httpOnly: true,
@@ -125,12 +128,10 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     fastify.get('/chat', (request, reply) => {
       reply.redirect('chat/');
     });
-    fastify.get('/chat/:chatId', {
-      preHandler: [fastify.authenticate]
-    }, async (request, reply) => {
+    fastify.get('/chat/:chatId', async (request, reply) => {
+      let user = await fastify.getUser(request, reply);
       const chatId = request.params.chatId;
-      const userId = request.user._id;
-    
+      const userId = user._id;
       const chatsCollection = db.collection('chats');
       const collectionUserChat = db.collection('userChat');
     
@@ -141,7 +142,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         visibility: { $exists: true, $eq: "public" }
       }).sort({_id:-1}).limit(10).toArray();
       // Fetch user data
-      const user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+      user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
       return reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato, Ltd', user, userId, chatId, chats: userCreatedChats, peopleChats });
     });
     
@@ -177,18 +178,17 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       }
     });
 
-    fastify.get('/chat/edit/:chatId', {
-      preHandler: [fastify.authenticate]
-    }, async (request, reply) => {
+    fastify.get('/chat/edit/:chatId', async (request, reply) => {
       try {
-        const chatId = request.params.chatId
-        const userId = new fastify.mongo.ObjectId(request.user._id)
-        const user = await db.collection('users').findOne({_id: userId})
-        if(chatId){
-          return reply.view('add-chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd', chatId:chatId, user  });
-        }else{
-          return reply.view('add-chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd', user  });
+        const user = await fastify.getUser(request, reply);
+        const chatId = request.params.chatId || new fastify.mongo.ObjectId()
+        const isTemporaryChat = request.params.chatId ? false : true
+        if(isTemporaryChat){
+          const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+          collection.insertOne({_id : chatId})
         }
+        const userId = new fastify.mongo.ObjectId(user._id)
+        return reply.view('add-chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd', chatId:chatId, isTemporaryChat, user  });
       } catch (error) {
         console.log(error)
         return reply.status(500).send({ error: 'Failed to retrieve chatId' });

@@ -933,7 +933,7 @@ async function routes(fastify, options) {
             const message = session.message;
             const system = session.system;
 
-            console.log({ userId, chatId, system, message });
+            console.log({ userId, chatId });
     
             const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
             let userData = await userDataCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) }) 

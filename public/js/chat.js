@@ -283,7 +283,7 @@ $(document).ready(function() {
                 },
                 data: JSON.stringify({ 
                     currentStep: 0, 
-                    message: '会話を開始する', 
+                    message: '最初のメッセージを送信したかのように会話を開始します。', 
                     userId: userId, 
                     chatId: chatId, 
                     isNew: true 

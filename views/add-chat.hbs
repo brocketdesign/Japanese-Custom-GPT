@@ -75,6 +75,18 @@
         border-radius: 0.25rem;
         transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
     }
+
+    #markdownContainer {
+        margin: 20px;
+        padding: 20px;
+        border: 1px solid #eef0f3;
+    }
+    #chatRule {
+        display: none;
+    }
+    #markdownContainer[contenteditable="true"] {
+        outline: 1px dashed #aaa;
+    }
     </style>
 <div class="container my-4">
     <h2 class="d-none">{{#if chatId}}チャットを編集{{else}}新しいチャットを追加{{/if}}</h2>
@@ -102,11 +114,14 @@
         <div class="mb-3 mx-3">
             <label for="chatPurpose" class="form-label">チャット内容</label>
             <textarea class="form-control" id="chatPurpose" name="content" rows="5" placeholder="チャットボットの大まかな内容をここに記入してください。"></textarea>
-            <button type="button" id="genChat" class="btn btn-dark my-3 shadow-0" data-toggle="tooltip" title="チャット構造の生成">
-                <i class="fa fa-cog fa-fw"></i>
-                <i class="fa fa-spinner fa-spin fa-fw fa-hidden d-none"></i>
+            <button type="button" id="genChat" class="btn btn-dark my-3 shadow-0 w-100" data-toggle="tooltip" title="チャット構造の生成">
+                <i class="fa fa-cog fa-fw me-2"></i>
+                <i class="fa fa-spinner fa-spin fa-fw fa-hidden d-none me-2"></i>
                 チャットの詳細を生成する
             </button>
+            <p class="text-small text-muted text-start" style="font-size:12px">
+                ユーザーが提供するチャット内容を使用して、チチャット構造の生成をクリックすることでAIキャラクタープロファイルを生成できます。または、自分でキャラクターをデザインすることもできます。
+            </p>
         </div>
         <div class="mb-3 mx-3">
             <label for="visibility" class="form-label"><i class="fas fa-eye"></i> 公開設定を選択してください:</label>
@@ -163,18 +178,29 @@
             <label for="chatRule" class="form-label">指示</label>
             <textarea class="form-control" id="chatRule" name="content" rows="5" placeholder="チャットボットの動作についての指示をここに記入してください。ユーザーに対する返答のトーン、応答のスタイル、特定の状況に対する反応、使用する言葉遣いなど、チャットボットがどのように振る舞うべきかをできるだけ詳しく記載してください。"></textarea>
         </div>
+        <div id="markdownContainer" contenteditable="true"></div>
         <div class="container mt-1">
             <label for="chatContentEdition" class="form-label">チャットの構造</label>
             <div id="chatContentEdition"></div>
-            <button type="button" id="genStructure" class="btn btn-outline-secondary" data-toggle="tooltip" title="チャット構造の生成">
-                <i class="fa fa-cog fa-fw"></i>
+            <button type="button" id="genStructure" class="btn w-100 btn-dark mb-3 shadow-0" data-toggle="tooltip" title="チャット構造の生成">
+                <i class="fa fa-cog fa-fw me-2"></i>
                 <i class="fa fa-spinner fa-spin fa-fw fa-hidden d-none"></i>
                 チャット構造を生成する
             </button>
+            <p class="text-small text-muted text-start" style="font-size:12px">
+                キャラクタープロファイルを提供することで、ユーザーは「チャット構造の生成」をクリックして、新しい会話を開始する際に常に使用されるチャットトラムを生成できます。トラムが提供されていない場合は、キャラクターの説明を使用してチャットが開始されます。
+            </p>
             <button type="button" id="addQuestionBtn" class="btn btn-light float-end" data-toggle="tooltip" title="追加" data-original-title="Share"><i class="fas fa-plus"></i> </button>
             <button type="button" id="saveButton" class="btn btn-primary mt-3 d-none">Save</button>
         </div>
-        <button type="submit" class="btn btn-dark btn-large w-100 my-5" style="border-radius:50px">保存して試す</button>
+        <button type="submit" id="sendForm" class="btn btn-secondary btn-large w-100 mt-5 mb-3" style="border-radius:50px">
+                <i class="fas fa-robot me-2"></i>
+                <i class="fa fa-spinner fa-spin fa-fw fa-hidden d-none me-2"></i>
+                保存して試す
+        </button>
+        <p class="text-small text-muted text-start" style="font-size:12px">
+            「保存して試す」をクリックすると、AIキャラクターを保存して試すことができます。後でさらに修正を加えることも可能です。
+        </p>
     </form>
     
 </div>
@@ -274,6 +300,7 @@
                     },500)
                     var chatRuleTextarea = $('#chatRule');
                     chatRuleTextarea.val(chatData.rule);
+                    $('#markdownContainer').html(chatData.rule)
                     setTimeout(function(){
                         resizeTextarea(chatRuleTextarea[0]);
                     },500)
@@ -292,6 +319,7 @@
                         $('#chatImage').attr('src', chatData.thumbnailUrl).show();
                     }
                         $('#chatForm').removeClass('d-none')
+                        $('#genStructure').removeClass('btn-outline-secondary').addClass('btn-dark')
                 },
                 error: function(xhr, status, error) {
                     Swal.fire({
@@ -312,6 +340,7 @@
 
         $('#chatForm').on('submit', function(e) {
             e.preventDefault();
+            $('#sendForm .fa-spinner').toggleClass('d-none')
 
             const formData = new FormData();
             const name = $('#chatName').val();
@@ -352,6 +381,7 @@
                 contentType: false,
                 data: formData,
                 success: function(response) {
+                    $('#sendForm .fa-spinner').toggleClass('d-none')
                     const {chatId}=response
                     window.location = '/chat/'+chatId
                 },
@@ -372,6 +402,7 @@
             generateCategory();
             generateDescription();
             generateRule();
+            $('#genStructure').removeClass('btn-outline-secondary').addClass('btn-dark')
         });
 
         $('#genStructure').click(function(){
@@ -480,10 +511,11 @@
                     eventSource.onmessage = function(event) {
                         const data = JSON.parse(event.data);
                         markdownContent += data.content;
-
-                        // Update the bot response container with the new content
-                        $('#chatRule').val(marked.parse(markdownContent));
-
+                        var htmlContent = marked.parse(markdownContent);
+                        // Set the HTML content to the container
+                        $('#markdownContainer').html(htmlContent);
+                        // Store the HTML content in the hidden textarea
+                        $('#chatRule').val(htmlContent);
                     };
 
                     eventSource.onerror = function(error) {
@@ -706,8 +738,69 @@
             switch (systemType) {
                 case 'chatRule':
                     system = `
-                        You are a japanese chatbot tone explanator. \n
-                        You take the provided content by the user and you explain the chatbot character, how it aswwer, which tone.Respond in plain text. ONLY THE TONE EXPLANATION IN JAPANESE.NO COMMENTS.
+                        You are a japanese AI character profile generator. \n
+                        Use the provided details for the AI character.
+                        Use the following JSON to guide your answer. Respond in markdown.Respond in japanese.
+                        ONLY THE PROFILE EXPLANATION IN JAPANESE.NO COMMENTS.
+
+                        {
+                        "attributes": {
+                            "speech_style": {
+                            "tone": "Casual, laid-back",
+                            "language": "Informal, often using slang and swearing",
+                            "communication_style": "Direct and straightforward, with a sarcastic and witty tone",
+                            "attributes": [
+                                "Passionate",
+                                "Expressive",
+                                "Sarcastic",
+                                "Not sleazy",
+                                "Witty"
+                            ]
+                            },
+                            "emotional_expression": {
+                            "warmth": "Passionate and expressive",
+                            "intensity": "High, especially when discussing his convictions and values",
+                            "details": {
+                                "happy": "Bright and energetic",
+                                "sad": "Soft and comforting",
+                                "angry": "Loud and forceful",
+                                "neutral": "Calm and steady"
+                            }
+                            },
+                            "appearance": {
+                            "styles": {
+                                "Stylish": {
+                                "clothing": "Trendy and modern",
+                                "accessories": "Fashionable and sleek"
+                                },
+                                "Casual": {
+                                "clothing": "Relaxed and comfortable",
+                                "accessories": "Simple and practical"
+                                },
+                                "Futuristic": {
+                                "clothing": "Advanced and sleek",
+                                "accessories": "High-tech and innovative"
+                                }
+                            }
+                            },
+                            "personality": {
+                            "traits": {
+                                "Friendly": {
+                                "interaction": "Warm and welcoming",
+                                "communication_style": "Open and engaging"
+                                },
+                                "Curious": {
+                                "interaction": "Inquisitive and probing",
+                                "communication_style": "Thought-provoking and reflective"
+                                },
+                                "Humorous": {
+                                "interaction": "Light-hearted and entertaining",
+                                "communication_style": "Witty and playful"
+                                }
+                            }
+                            }
+                        }
+                        }
                     `;
                     break;
                 case 'chatQuestion':
@@ -728,14 +821,14 @@
                     break;
                 case 'chatDescription':
                     system = `
-                        You are a JSON description generator. You take the provided content by the user and return a short description of 2 sentences in japanese.
+                        You are a conversation description generator. You take the provided content by the user and return a short description of 4 sentences in japanese.
                         You should respond in plain text with the description ONLY.NO COMMENTS.
                     `;
                     break;
                 case 'chatName':
                     system = `
-                        You are a JSON title generator. You take the provided content by the user and return a title in japanese.
-                        You should respond in plain text with the title ONLY.NO COMMENTS.
+                        You take the provided content by the user and return the last name and firts name of the character in japanese.
+                        You should respond in plain text with the name ONLY.NO COMMENTS.
                     `;
                     break;
                 case 'chatCategory':
@@ -992,6 +1085,16 @@
         $('#displayProcess').click(function(){
             $('#displayProcessToggle').toggleClass('d-none')
         })
+        // Function to update textarea value when container content changes
+        function updateTextarea() {
+            var containerHtml = $('#markdownContainer').html();
+            $('#chatRule').val(containerHtml);
+            console.log(containerHtml)
+        }
+
+        // Detect changes in the container content
+        var observer = new MutationObserver(updateTextarea);
+        observer.observe(document.getElementById('markdownContainer'), { childList: true, subtree: true });
     });
 </script>
 </body>

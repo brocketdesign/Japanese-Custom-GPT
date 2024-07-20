@@ -132,7 +132,7 @@ async function routes(fastify, options) {
             } else {
                 const existingChat = await collection.findOne({ name: chatData.name });
                 if (existingChat) {
-                    return reply.status(409).send({ error: 'A chat with this name already exists' });
+                    //return reply.status(409).send({ error: 'A chat with this name already exists' });
                 }
                 chatData.createdAt = new Date(dateObj);
                 const result = await collection.insertOne(chatData);

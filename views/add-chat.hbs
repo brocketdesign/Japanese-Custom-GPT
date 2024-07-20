@@ -118,7 +118,7 @@
                 チャットの詳細を生成する
             </button>
             <p class="text-small text-muted text-start" style="font-size:12px">
-                ユーザーが提供するチャット内容を使用して、チチャット構造の生成をクリックすることでAIキャラクタープロファイルを生成できます。または、自分でキャラクターをデザインすることもできます。
+                ユーザーが提供するチャット内容を使用して、チャットの詳細を生成をクリックすることでAIキャラクタープロファイルを生成できます。または、自分でキャラクターをデザインすることもできます。
             </p>
         </div>
         <div class="mb-3 mx-3">
@@ -136,7 +136,7 @@
             <label for="chatName" class="form-label">名前</label>
             <input type="text" class="form-control" id="chatName" name="name" required>
         </div>
-        <div class="mb-3 mx-3">
+        <div class="mb-3 mx-3 d-none">
             <label for="myUrl" class="form-label">URL</label>
             <div class="input-group ">
                 <input type="url" class="form-control" id="myUrl" name="url" placeholder="URLを入力してください">
@@ -166,7 +166,7 @@
         </div>
         <div class="mb-3 mx-3">
             <label for="chatDescription" class="form-label">説明</label>
-            <textarea class="form-control" id="chatDescription" name="content" rows="5" placeholder="チャットボットの詳細な説明をここに記入してください。どのような機能を持たせたいのか、どのようなユーザーに向けたものなのか、具体的なシナリオや対話の流れなど、できるだけ詳しく記載してください。ユーザーがどのようにチャットボットとやり取りするかの例も含めてください。" required></textarea>
+            <textarea class="form-control" id="chatDescription" name="content" rows="5" placeholder="" ifplaceholder="チャットボットの詳細な説明をここに記入してください。どのような機能を持たせたいのか、どのようなユーザーに向けたものなのか、具体的なシナリオや対話の流れなど、できるだけ詳しく記載してください。ユーザーがどのようにチャットボットとやり取りするかの例も含めてください。" required></textarea>
         </div>
         <div class="mb-3 mx-3">
             <label for="chatUrl" class="form-label d-none">URL</label>
@@ -418,9 +418,8 @@
         function generateCompletion(callback) {
 
             const apiUrl = '/api/openai-chat-creation';
-            const chatId = 'chat_' + Date.now();
 
-            let message = $('#chatPurpose').val();
+            let message = $('#chatPurpose').val().trim();
             const urlSummary = $(`#resultText`).text()
             const myUrl = $('#myUrl').val()
 
@@ -431,7 +430,10 @@
             // Clear the chatContent area only if it's not empty
             if ($('#chatContent').val().trim() !== '') {
                 $('#chatContent').val('');
-            }        
+            }       
+            if(message.length == 0){
+                return
+            } 
             $('#genStructure .fa-spinner').toggleClass('d-none')
 
             $.ajax({

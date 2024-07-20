@@ -140,7 +140,6 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         userId: new fastify.mongo.ObjectId(userId) ,
         name:{$exists:true}
       }).sort({ updatedAt: -1 }).toArray();
-      console.log(userCreatedChats)
       //People chats
       const peopleChats = await chatsCollection.find({
         visibility: { $exists: true, $eq: "public" }

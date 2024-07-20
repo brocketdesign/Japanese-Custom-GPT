@@ -12,7 +12,25 @@ async function routes(fastify, options) {
                 return reply.status(403).send({ error: 'Access denied' });
             }
             const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
-            const users = await usersCollection.find({}).toArray()
+            const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+            
+            const getUniqueUsers = async () => {
+                try {
+                    // Get the unique userId's from the chats collection
+                    const userIds = await chatsCollection.distinct('userId');
+            
+                    // Query the users collection to get the user details for the unique userIds
+                    const users = await usersCollection.find({ _id: { $in: userIds } }).toArray();
+            
+                    return users;
+                } catch (error) {
+                    console.error('Error fetching unique users:', error);
+                    throw error;
+                }
+            };
+            
+            const users = await getUniqueUsers()
+            
             return reply.view('/admin/users',{users})
         } catch (error) {
             return reply.status(500).send({ error: error.message });

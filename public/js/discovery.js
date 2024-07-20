@@ -306,6 +306,57 @@ $(document).ready(function() {
     // Call the render function with the sample data
     renderCardGrid(cardData,$("#cardGrid"));
     renderCardGrid(cardData2,$("#cardGrid-2"));
+
+    const girls_avatar = [
+        {
+            "image": "avatar_girl_1.png",
+            "name": "さくら",
+            "description": "さくらは自然とアートについて話すのが好きです。趣味は絵を描くこととハイキングで、明るくて元気な性格です。"
+        },
+        {
+            "image": "avatar_girl_2.webp",
+            "name": "りん",
+            "description": "りんは歴史と文学に興味があります。読書が趣味で、静かで落ち着いた性格です。"
+        },
+        {
+            "image": "avatar_girl_3.png",
+            "name": "みどり",
+            "description": "みどりはビジネスとファッションについて話すのが得意です。趣味はショッピングとヨガで、自信に満ちた性格です。"
+        },
+        {
+            "image": "avatar_girl_4.jpeg",
+            "name": "ゆき",
+            "description": "ゆきは音楽と料理が好きです。趣味はピアノ演奏と新しいレシピの試作で、優しくて思いやりのある性格です。"
+        },
+        {
+            "image": "avatar_girl_5.webp",
+            "name": "あかり",
+            "description": "あかりは映画と旅行について話すのが好きです。趣味は映画鑑賞と冒険旅行で、好奇心旺盛な性格です。"
+        },
+        {
+            "image": "avatar_girl_6.jpg",
+            "name": "まな",
+            "description": "まなは科学とテクノロジーに興味があります。趣味はガジェットのレビューとプログラミングで、知的で探求心の強い性格です。"
+        },
+        {
+            "image": "avatar_girl_7.jpg",
+            "name": "ほのか",
+            "description": "ほのかはスポーツとダンスが好きです。趣味はランニングとダンスレッスンで、エネルギッシュで活発な性格です。"
+        }
+    ]
+    girls_avatar.forEach(function(item) {
+        var card = `
+            <div class="card custom-card bg-transparent shadow-0 border-0 m-3" style="width: 18rem;cursor:pointer;" onclick='handleClick(${JSON.stringify(item)}, "${item.image}")'>
+                <img src="/img/${item.image}" class="card-img-top girls_avatar" alt="${item.name}">
+                <div class="card-body bg-transparent border-0 text-center">
+                    <h5 class="card-title">${item.name}</h5>
+                    <p class="card-text">${item.description}</p>
+                </div>
+            </div>
+        `;
+        $('#custom-card-container').append(card);
+    });
+    
 });
   // Function to save data to local storage
     function saveData(data) {
@@ -315,8 +366,8 @@ $(document).ready(function() {
     function handleClick(data, chatbotImage) {
         // Save data to local storage
         saveData(data);
-
+        const name = data.title || data.name
         // Redirect with URL parameters
-        var encodedMessage = encodeURIComponent(`${data.title}は${data.description}`);
+        var encodedMessage = encodeURIComponent(`${name}は${data.description}`);
         window.location.href = `/chat/edit/?userMessage=${encodedMessage}&chatImage=/img/${chatbotImage}`;
     }

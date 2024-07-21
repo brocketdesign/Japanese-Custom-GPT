@@ -119,7 +119,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     fastify.get('/authenticate',async (request, reply) => {
       const user = await fastify.getUser(request, reply);
       if (user.isTemporary) {
-        return reply.view('authenticate.hbs', { title: 'LAMIX | Powered by Hato,Ltd' });
+        return reply.view('authenticate.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' });
       } else {
         return reply.redirect('/dashboard')
       }
@@ -156,14 +156,14 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         visibility: { $exists: true, $eq: "public" }
       }).sort({_id:-1}).limit(10).toArray();
       return reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato, Ltd', peopleChats });
-      //return reply.view('chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd',chats });
+      //return reply.view('chat.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd',chats });
     });
     fastify.get('/about', async(request, reply) => {
       const collectionChats = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
       const chats = await collectionChats.find({
         visibility: { $exists: true, $eq: "public" }
       }).sort({_id:-1}).limit(10).toArray();
-      return reply.view('chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd',chats });
+      return reply.view('chat.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd',chats });
     });
     fastify.get('/chat/list/', {
       preHandler: [fastify.authenticate]
@@ -192,7 +192,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
           const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
           await chatsCollection.insertOne({userId, _id : chatId})
         }
-        return reply.view('add-chat.hbs', { title: 'LAMIX | Powered by Hato,Ltd', chatId:chatId, isTemporaryChat, user  });
+        return reply.view('add-chat.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd', chatId:chatId, isTemporaryChat, user  });
       } catch (error) {
         console.log(error)
         return reply.status(500).send({ error: 'Failed to retrieve chatId' });
@@ -200,7 +200,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     });
     fastify.get('/users', (request, reply) => {
       if (process.env.MODE == 'local') {
-        reply.view('user-list.hbs', { title: 'LAMIX | Powered by Hato,Ltd' });
+        reply.view('user-list.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' });
       } else {
         reply.redirect('/');
       }
@@ -220,7 +220,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
                 httpOnly: true,
                 maxAge: 60 * 60 * 24,
               })
-              .view('index.hbs', { title: 'LAMIX | Powered by Hato,Ltd', storyId: storyId, variant: variant });
+              .view('index.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd', storyId: storyId, variant: variant });
           }).catch(err => {
             reply.send(err);
           });
@@ -228,7 +228,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
           reply.send(err);
         });
       } else {
-        reply.view('index.hbs', { title: 'LAMIX | Powered by Hato,Ltd', storyId: storyId, variant: variant });
+        reply.view('index.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd', storyId: storyId, variant: variant });
       }
     });
 
@@ -242,7 +242,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     });
     fastify.get('/generate/:userid', (request, reply) => {
       const userId = request.params.userid;
-      reply.view('generate.hbs', { title: 'LAMIX | Powered by Hato,Ltd', userId: userId });
+      reply.view('generate.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd', userId: userId });
     });
     fastify.get('/test-db', async (request, reply) => {
       try {
@@ -276,7 +276,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         const userId = request.user._id
         const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
         const userData = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
-        return reply.view('/settings', { title: 'LAMIX | Powered by Hato,Ltd', user:userData})
+        return reply.view('/settings', { title: 'AIフレンズ  | Powered by Hato,Ltd', user:userData})
       } catch (err) {
         return reply.status(500).send({ error: 'Unable to render the settings' });
       }

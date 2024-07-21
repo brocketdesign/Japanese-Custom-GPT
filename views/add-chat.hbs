@@ -128,6 +128,13 @@
                 <option value="public"><i class="fas fa-globe"></i> 公開</option>
             </select>
         </div>
+        <div class="mb-3 mx-3">
+            <label for="language" class="form-label"><i class="fas fa-language"></i> 言語を選択してください:</label>
+            <select class="form-select" id="language" name="language">
+                <option value="japanese" selected><i class="fas fa-flag"></i> 日本語</option>
+                <option value="english"><i class="fas fa-flag"></i> 英語</option>
+            </select>
+        </div>
         <div class="mb-3 mx-3" id="thumbnailInputContainer" style="display: none;">
             <label for="chatThumbnail" class="form-label">チャットのサムネイルをアップロード</label>
             <input type="file" class="form-control" id="chatThumbnail" name="thumbnail" accept="image/*">
@@ -180,7 +187,7 @@
         <div class="container mt-1">
             <label for="chatContentEdition" class="form-label">チャットの構造</label>
             <div id="chatContentEdition"></div>
-            <button type="button" id="genStructure" class="btn w-100 btn-dark mb-3 shadow-0" data-toggle="tooltip" title="チャット構造の生成">
+            <button type="button" id="genStructure" class="btn w-100 btn-outline-secondary mb-3 shadow-0" data-toggle="tooltip" title="チャット構造の生成">
                 <i class="fa fa-cog fa-fw me-2"></i>
                 <i class="fa fa-spinner fa-spin fa-fw fa-hidden d-none"></i>
                 チャット構造を生成する
@@ -191,7 +198,7 @@
             <button type="button" id="addQuestionBtn" class="btn btn-light float-end" data-toggle="tooltip" title="追加" data-original-title="Share"><i class="fas fa-plus"></i> </button>
             <button type="button" id="saveButton" class="btn btn-primary mt-3 d-none">Save</button>
         </div>
-        <button type="submit" id="sendForm" class="btn btn-secondary btn-large w-100 mt-5 mb-3" style="border-radius:50px">
+        <button type="submit" id="sendForm" class="btn btn-primary btn-large w-100 mt-5 mb-3" style="border-radius:50px">
                 <i class="fas fa-robot me-2"></i>
                 <i class="fa fa-spinner fa-spin fa-fw fa-hidden d-none me-2"></i>
                 保存して試す
@@ -320,7 +327,7 @@
                         $('#chatImage').attr('src', chatData.thumbnailUrl).show();
                     }
                         $('#chatForm').removeClass('d-none')
-                        $('#genStructure').removeClass('btn-outline-secondary').addClass('btn-dark')
+                        //$('#genStructure').removeClass('btn-outline-secondary').addClass('btn-secondary')
                 },
                 error: function(xhr, status, error) {
                    console.log(`New tempry chat`)
@@ -335,6 +342,7 @@
             const formData = new FormData();
             const name = $('#chatName').val();
             const purpose = $('#chatPurpose').val()
+            const language = $('#language').val()
             const category = $('#chatCategory').val();
             const description = $('#chatDescription').val();
             const rule = $('#chatRule').val();
@@ -347,6 +355,7 @@
 
             formData.append('name', name);
             formData.append('purpose',purpose)
+            formData.append('language',language)
             formData.append('chatImageUrl',chatImageUrl)
             formData.append('category', category);
             formData.append('description', description);
@@ -392,7 +401,7 @@
             generateCategory();
             generateDescription();
             generateRule();
-            $('#genStructure').removeClass('btn-outline-secondary').addClass('btn-dark')
+            $('#genStructure').removeClass('btn-outline-secondary').addClass('btn-secondary')
         });
 
         $('#genStructure').click(function(){
@@ -420,6 +429,8 @@
             const apiUrl = '/api/openai-chat-creation';
 
             let message = $('#chatPurpose').val().trim();
+            let language =$('#language').val()
+            message = message + 'YOU MUST respond in '+language
             const urlSummary = $(`#resultText`).text()
             const myUrl = $('#myUrl').val()
 
@@ -479,6 +490,8 @@
         function generateRule(callback) {
 
             let message = $('#chatPurpose').val();
+            let language =$('#language').val()
+            message = message + 'YOU MUST respond in '+language
             const urlSummary = $(`#resultText`).text()
             const myUrl = $('#myUrl').val()
 
@@ -486,10 +499,9 @@
                 message = `URL : ${myUrl} \n Content Summary : ${urlSummary}. \n\n Considering the above informations, ${message}`
             }
             const apiUrl = '/api/openai-chat-creation';
-            if ($('#chatRule').val().trim() !== '') {
-                return
-            }   
+            
             $('#chatRule').val('')
+            $('#markdownContainer').html('');
             $.ajax({
                 url: apiUrl,
                 method: 'POST',
@@ -531,6 +543,8 @@
             const category = $('#chatCategory').val()
             const name = $('#chatName').val()
             const message = `Name : ${name} \n Category: ${category} \n Description: ${description} \n JSON : ${cleanedContent}`
+            let language =$('#language').val()
+            message = message + 'YOU MUST respond in '+language
 
             $.ajax({
                 url: apiUrl,
@@ -563,6 +577,8 @@
         function generateDescription() {
 
             let message = $('#chatPurpose').val();
+            let language =$('#language').val()
+            message = message + 'YOU MUST respond in '+language
             const urlSummary = $(`#resultText`).text()
             const myUrl = $('#myUrl').val()
 
@@ -611,6 +627,8 @@
         function generateCategory() {
 
             let message = $('#chatPurpose').val();
+            let language =$('#language').val()
+            message = message + 'YOU MUST respond in '+language
             const urlSummary = $(`#resultText`).text()
             const myUrl = $('#myUrl').val()
 
@@ -655,6 +673,8 @@
         function generateName() {
 
             let message = $('#chatPurpose').val();
+            let language =$('#language').val()
+            message = message + 'YOU MUST respond in '+language
             const urlSummary = $(`#resultText`).text()
             const myUrl = $('#myUrl').val()
 
@@ -732,10 +752,10 @@
             switch (systemType) {
                 case 'chatRule':
                     system = `
-                        You are a japanese AI character profile generator. \n
+                        You are an AI character profile generator. \n
                         Use the provided details for the AI character.
-                        Use the following JSON to guide your answer. Respond in markdown.Respond in japanese.
-                        ONLY THE PROFILE EXPLANATION IN JAPANESE.NO COMMENTS.
+                        Use the following JSON to guide your answer. Respond in markdown.
+                        ONLY THE PROFILE EXPLANATION.NO COMMENTS.
 
                         {
                         "attributes": {
@@ -801,7 +821,7 @@
                     system = `
                         You are a JSON generator. 
                         You take the information and the JSON provided by the user and return a new question on the same subject.\n
-                        Your answer must be in japanese. Be creative to provide interesting questions.\n
+                        Be creative to provide interesting questions.\n
                         You respond MUST MATCH THE JSON BELOW.\n\n
                         {
                             "question": "string",
@@ -815,19 +835,20 @@
                     break;
                 case 'chatDescription':
                     system = `
-                        You are a conversation description generator. You take the provided content by the user and return a short description of 4 sentences in japanese.
+                        You are a conversation description generator. 
+                        You take the provided content by the user and return a short description of 4 sentences.
                         You should respond in plain text with the description ONLY.NO COMMENTS.
                     `;
                     break;
                 case 'chatName':
                     system = `
-                        You take the provided content by the user and return the last name and firts name of the character in japanese.
+                        You take the provided content by the user and return the last name and firts name of the character.
                         You should respond in plain text with the name ONLY.NO COMMENTS.
                     `;
                     break;
                 case 'chatCategory':
                     system = `
-                        You are a JSON category generator. You take the provided content by the user and return a category in japanese.
+                        You are a JSON category generator. You take the provided content by the user and return a category.
                         You should respond in plain text with the category ONLY. NO COMMENTS.
                     `;
                     break;
@@ -835,7 +856,7 @@
                     system = `
                     Provide conversation starters. It must sound like we are chatting, stay in your role.\n
                     responses is used help me respond to you. If I should instead write something, keep responses empty.\n
-                    You respond IN JAPANESE AND MUST MATCH THE JSON BELOW.\n\n
+                    You respond MUST MATCH THE JSON BELOW.\n\n
                     [
                         {
                             "question": "string",

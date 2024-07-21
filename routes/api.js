@@ -89,6 +89,7 @@ async function routes(fastify, options) {
             switch (part.fieldname) {
                 case 'name':
                 case 'purpose':
+                case 'language':
                 case 'chatImageUrl':
                 case 'visibility':
                 case 'category':
@@ -447,7 +448,7 @@ async function routes(fastify, options) {
                     userId,
                     chatId,
                     messages: [
-                        { "role": "system", "content": `${chatDocument.rule ? chatDocument.description + chatDocument.rule + 'Taking in account the character description above, You DO NOT KNOW EVERYTHING. You only know what your character may knows. Do no hesitate to say that you do not know something. You speak and write japanese' : 'You are a Japanese assistant about: ' + chatDocument.description + 'You provide short and friendly answers. DO NOT EVER answer with list unless specifically askedfor one. You always prompt the user to help continue the conversation smoothly.'}` },
+                        { "role": "system", "content": `${chatDocument.rule ? chatDocument.description + chatDocument.rule + 'Taking in account the character description above, You DO NOT KNOW EVERYTHING. You only know what your character may knows. Do no hesitate to say that you do not know something.DO NOT EVER answer with a list unless specifically asked for one. You speak and write ' + chatDocument.language : 'You are a '+chatDocument.language+' assistant about: ' + chatDocument.description + 'You provide short and friendly answers. DO NOT EVER answer with list unless specifically asked for one. You always prompt the user to help continue the conversation smoothly.'}` },
                     ],
                     createdAt: dateObj,
                     updatedAt: dateObj

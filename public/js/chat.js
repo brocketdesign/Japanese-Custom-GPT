@@ -158,9 +158,7 @@ $(document).ready(function() {
                 contentType: 'application/json',
                 data: JSON.stringify({ userId, chatId, userChatId }),
                 success: function(data) {
-                    console.log(`Base chat is : ${chatId}`)
                     updateParameters(data.chat._id,userId)
-                    console.log(`new chat is : ${data.chat._id}`)
                     showChat();                 
 
                     isNew = reset || data.isNew

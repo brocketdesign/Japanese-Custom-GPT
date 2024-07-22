@@ -205,19 +205,27 @@ async function routes(fastify, options) {
         } catch (error) {
             // Log error if necessary, or handle it silently
         }
-    
         try {
             const chat = await collection.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
             if (!chat) {
-                response.chat = false
+                response.chat = false;
                 return reply.send(response);  // Chat not found, but no error is thrown or logged
             }
-            response.chat = chat;
+        
+            if (String(chat.userId) !== String(userId)) {
+                const newChat = { ...chat, userId: String(userId), _id: new fastify.mongo.ObjectId() };
+                await collection.insertOne(newChat);
+                response.chat = newChat;
+            } else {
+                response.chat = chat;
+            }
+            
             return reply.send(response);
         } catch (error) {
             console.error('Failed to retrieve chat:', error);
             return reply.status(500).send({ error: 'Failed to retrieve chat' });
         }
+        
     });
     
     fastify.post('/api/chat-analyze/', async (request, reply) => {

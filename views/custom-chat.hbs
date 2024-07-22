@@ -113,7 +113,7 @@
             transform: translateX(-260px);
         }
         .sidebar-history.shadow {
-            z-index: 1010;
+            z-index: 1035;
         }
         .content {
             margin-left: 260px;
@@ -455,21 +455,17 @@
                             <div class="card-body">
                                 <h6 class="card-title fw-bold text-start">{{this.name}}</h6>
                                 <p class="card-text lines-paragraph">{{this.description}}</p>
-                                <p class="text-muted"><i class="fas fa-clock"></i> 更新: <span class="date-time">{{this.dateStrJP}}</span></p>
+                                <p class="text-muted d-none"><i class="fas fa-clock"></i> 更新: <span class="date-time">{{this.dateStrJP}}</span></p>
                             </div>
                         </div>
                         {{/each}}
                     </div>
                 </section>
                 <section class="w-100 px-4 py-2">
-                    <h4>便利な チャット</h4>
-                    <div class="scroll-container d-flex justify-content-between  py-4" id="button-container"></div>
-                </section>
-                <section class="w-100 px-4 py-2">
                     <h4>理想の彼女</h4>
                     <div id="custom-card-container" class="d-flex justify-content-start flex-wrap p-3"></div>
                 </section>
-                <section class="w-100 px-4 py-2 py-4 my-3">
+                <section class="w-100 px-4 py-2 py-4 my-3 d-none">
                     <h4>ファンタジーキャラ</h4>
                     <div class="d-flex p-3 justify-content-center align-items-center container">
                         <div id="cardGrid" class="row"></div>
@@ -486,6 +482,10 @@
                     <div class="d-flex px-3 pt-4 justify-content-center align-items-center">
                         <div id="cardGrid-2" class="row card-round-design"></div>
                     </div>
+                </section>
+                <section class="w-100 px-4 py-2">
+                    <h4>ニーズに合ったチャットを作成する</h4>
+                    <div class="scroll-container d-flex justify-content-between  py-4" id="button-container"></div>
                 </section>
                 <section>
                     <div class="text-center m-5">
@@ -677,8 +677,9 @@ $(document).ready(function() {
                 $.ajax({
                     url: `/api/delete-chat/${chatId}`,
                     type: 'DELETE',
+                    data: { userId: userId },
                     success: function(response) {
-                        $(`.chat-list[data-id="${chatId}"]`).fadeOut().remove()
+                        $(`.chat-list[data-id="${chatId}"]`).fadeOut().remove();
                     },
                     error: function(xhr, status, error) {
                         Swal.fire(

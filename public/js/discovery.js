@@ -100,7 +100,8 @@ $(document).ready(function() {
             "premium": false,
             "role": "数学の問題を解いたり、概念を説明することができます。",
             "tone": "フレンドリーで親切",
-            "thumbnailUrl": "/img/avatar_math.webp"
+            "thumbnailUrl": "/img/avatar_math.webp",
+            "chat_url": "/chat/669e2378660fa71cde114a14"
         },
         {
             "title": "歴史探検家",
@@ -109,7 +110,8 @@ $(document).ready(function() {
             "premium": true,
             "role": "歴史の出来事や人物について教えます。",
             "tone": "情熱的で詳しい",
-            "thumbnailUrl": "/img/avatar_history.webp"
+            "thumbnailUrl": "/img/avatar_history.webp",
+            "chat_url": "/chat/669e23be3844c44f64de2d60"
         },
         {
             "title": "英語のガイド",
@@ -118,7 +120,8 @@ $(document).ready(function() {
             "premium": false,
             "role": "英語の文法や会話を練習するのを手助けします。",
             "tone": "励ましとサポート",
-            "thumbnailUrl": "/img/avatar_english.webp"
+            "thumbnailUrl": "/img/avatar_english.webp",
+            "chat_url": "/chat/669e23d8e4bb01d26191c1fe"
         },
         {
             "title": "科学の探求者",
@@ -127,7 +130,8 @@ $(document).ready(function() {
             "premium": true,
             "role": "科学の原理や最新の科学研究について解説します。",
             "tone": "知的で興味深い",
-            "thumbnailUrl": "/img/avatar_science.webp"
+            "thumbnailUrl": "/img/avatar_science.webp",
+            "chat_url": "/chat/669e2572e4bb01d26191c200"
         }
 
     ];
@@ -156,7 +160,7 @@ $(document).ready(function() {
                                     </div>
                                     <div class="d-flex pt-1">
                                         <button type="button" class="btn btn-outline-dark shadow-0 flex-grow-1" 
-                                            onclick="window.location.href='/chat/edit/?userMessage=${encodeURIComponent(`${chatbot.name}は${chatbot.title}.${chatbot.role}`)}&chatCategory=${chatbot.category}&chatImage=${chatbot.thumbnailUrl}'">
+                                            onclick="window.location.href='${chatbot.chat_url}'">
                                             チャット
                                         </button>
                                     </div>
@@ -172,6 +176,7 @@ $(document).ready(function() {
     const categories = ["教育", "エンターテインメント", "テクノロジー", "健康", "ライフスタイル", "旅行", "ビジネス", "スポーツ", "音楽", "アート","VTuber", "ゲームキャラクター", "アニメキャラクター", "声優", "漫画キャラクター", "映画キャラクター", "ファンタジーキャラクター", "スーパーヒーロー", "ロボット", "妖精", "神話キャラクター", "忍者", "海賊", "冒険者", "ドラゴン"];
 
     $(document).ready(function() {
+        return
         categories.forEach(category => {
             const categoryButton = `<button type="button" class="btn btn-light category-button" onclick="window.location.href='/chat/edit/?userMessage=${category}'">${category}</button>`;
             $('#category-container').append(categoryButton);
@@ -183,22 +188,26 @@ $(document).ready(function() {
         {
             image: "avatar_img1.jpeg",
             title: "さくら",
-            description: "さくらは、勉強熱心な高校生で、いつも明るく前向きです。彼女は友達と一緒に過ごすことが大好きで、将来は教師になることを夢見ています。"
+            description: "さくらは、勉強熱心な高校生で、いつも明るく前向きです。彼女は友達と一緒に過ごすことが大好きで、将来は教師になることを夢見ています。",
+            chat_url:"/chat/669e230c4432593effe8195f"
         },
         {
             image: "avatar_img2.jpeg",
             title: "木村樹夫",
-            description: "木村樹夫は、環境保護に熱心な弁護士で、自然を愛する心を持っています。彼は木々と対話できる能力を持ち、その知識を使って環境保護のために戦っています。"
+            description: "木村樹夫は、環境保護に熱心な弁護士で、自然を愛する心を持っています。彼は木々と対話できる能力を持ち、その知識を使って環境保護のために戦っています。",
+            chat_url:"/chat/669e1f9be3d7cd2f0b46d5fb"
         },
         {
             image: "avatar_img3.jpeg",
             title: "ルシファー",
-            description: "ルシファーは、人間界と魔界の両方で活躍する魔界のプリンセスです。彼女は知識と魔法の力を使って、どちらの世界にも平和をもたらそうと努力しています。"
+            description: "ルシファーは、人間界と魔界の両方で活躍する魔界のプリンセスです。彼女は知識と魔法の力を使って、どちらの世界にも平和をもたらそうと努力しています。",
+            chat_url:"/chat/669e1fb6e3d7cd2f0b46d5fd"
         },
         {
             image: "avatar_img4.jpeg",
             title: "ミミ",
-            description: "ミミは、冒険好きな発明家のネズミです。彼女は新しい発明を作り出すのが得意で、仲間と一緒に楽しい冒険に出かけるのが好きです。"
+            description: "ミミは、冒険好きな発明家のネズミです。彼女は新しい発明を作り出すのが得意で、仲間と一緒に楽しい冒険に出かけるのが好きです。",
+            chat_url:"/chat/669e1fd4e3d7cd2f0b46d5ff"
         },
         // Add more objects as needed
     ];
@@ -277,86 +286,102 @@ $(document).ready(function() {
     
     // Function to create a card
     function createCard(data) {
-        var card = `
+        var card = $(`
             <div class="col-12 col-sm-3 mb-4">
-                <div class="card shadow-0 bg-light">
+                <div class="card shadow-0 bg-light" style="cursor: pointer;">
                     <img src="/img/${data.image}" class="card-img-top" alt="${data.title}">
                     <div class="card-body">
                         <h5 class="card-title">${data.title}</h5>
                         <p class="card-text">${data.description}</p>
-                        <button class="btn btn-outline-dark w-100" onclick='handleClick(${JSON.stringify(data)}, "${data.image}")'>
+                        <button class="btn btn-outline-dark w-100">
                             チャット
                         </button>
                     </div>
                 </div>
             </div>
-        `;
+        `);
+    
+        card.find('button').on('click', function(event) {
+            event.stopPropagation(); // Prevent the card click event from triggering
+            window.location = data.chat_url;
+        });
+    
         return card;
     }
 
     // Function to render the grid of cards
-    function renderCardGrid(dataArray,container) {
-        var cardGrid = "";
+    function renderCardGrid(dataArray, container) {
         for (var i = 0; i < dataArray.length; i++) {
-            cardGrid += createCard(dataArray[i]);
+            var card = createCard(dataArray[i]);
+            container.append(card);
         }
-        container.html(cardGrid);
     }
 
     // Call the render function with the sample data
-    renderCardGrid(cardData,$("#cardGrid"));
-    renderCardGrid(cardData2,$("#cardGrid-2"));
+    renderCardGrid(cardData,$("#cardGrid-2"));
+    //renderCardGrid(cardData2,$("#cardGrid-2"));
 
     const girls_avatar = [
         {
             "image": "avatar_girl_1.png",
             "name": "さくら",
-            "description": "さくらは自然とアートについて話すのが好きです。趣味は絵を描くこととハイキングで、明るくて元気な性格です。"
+            "description": "さくらは自然とアートについて話すのが好きです。趣味は絵を描くこととハイキングで、明るくて元気な性格です。",
+            "chat_url": '/chat/669e1caea67062d868b41c4b'
         },
         {
             "image": "avatar_girl_2.webp",
             "name": "りん",
-            "description": "りんは歴史と文学に興味があります。読書が趣味で、静かで落ち着いた性格です。"
+            "description": "りんは歴史と文学に興味があります。読書が趣味で、静かで落ち着いた性格です。",
+            "chat_url": '/chat/669e1d16a67062d868b41c4d'
         },
         {
             "image": "avatar_girl_3.png",
             "name": "みどり",
-            "description": "みどりはビジネスとファッションについて話すのが得意です。趣味はショッピングとヨガで、自信に満ちた性格です。"
+            "description": "みどりはビジネスとファッションについて話すのが得意です。趣味はショッピングとヨガで、自信に満ちた性格です。",
+            "chat_url": '/chat/669e1d2ea67062d868b41c4f'
         },
         {
             "image": "avatar_girl_4.jpeg",
             "name": "ゆき",
-            "description": "ゆきは音楽と料理が好きです。趣味はピアノ演奏と新しいレシピの試作で、優しくて思いやりのある性格です。"
+            "description": "ゆきは音楽と料理が好きです。趣味はピアノ演奏と新しいレシピの試作で、優しくて思いやりのある性格です。",
+            "chat_url": '/chat/669e1d7aa67062d868b41c51'
         },
         {
             "image": "avatar_girl_5.webp",
             "name": "あかり",
-            "description": "あかりは映画と旅行について話すのが好きです。趣味は映画鑑賞と冒険旅行で、好奇心旺盛な性格です。"
+            "description": "あかりは映画と旅行について話すのが好きです。趣味は映画鑑賞と冒険旅行で、好奇心旺盛な性格です。",
+            "chat_url": '/chat/669e1d9ea67062d868b41c53'
         },
         {
             "image": "avatar_girl_6.jpg",
             "name": "まな",
-            "description": "まなは科学とテクノロジーに興味があります。趣味はガジェットのレビューとプログラミングで、知的で探求心の強い性格です。"
+            "description": "まなは科学とテクノロジーに興味があります。趣味はガジェットのレビューとプログラミングで、知的で探求心の強い性格です。",
+            "chat_url": '/chat/669e1db3a67062d868b41c55'
         },
         {
             "image": "avatar_girl_7.jpg",
             "name": "ほのか",
-            "description": "ほのかはスポーツとダンスが好きです。趣味はランニングとダンスレッスンで、エネルギッシュで活発な性格です。"
+            "description": "ほのかはスポーツとダンスが好きです。趣味はランニングとダンスレッスンで、エネルギッシュで活発な性格です。",
+            "chat_url": '/chat/669e1dcca67062d868b41c57'
         }
     ]
     girls_avatar.forEach(function(item) {
-        var card = `
-            <div class="card custom-card bg-transparent shadow-0 border-0 m-3" style="width: 18rem;cursor:pointer;" onclick='handleClick(${JSON.stringify(item)}, "${item.image}")'>
+        var card = $(`
+            <div class="card custom-card bg-transparent shadow-0 border-0 m-3" style="width: 18rem;cursor:pointer;">
                 <img src="/img/${item.image}" class="card-img-top girls_avatar" alt="${item.name}">
                 <div class="card-body bg-transparent border-0 text-center">
                     <h5 class="card-title">${item.name}</h5>
                     <p class="card-text">${item.description}</p>
                 </div>
             </div>
-        `;
-        $('#custom-card-container').append(card);
-    });
+        `);
     
+        card.on('click', function() {
+            window.location = item.chat_url;
+        });
+    
+        $('#custom-card-container').append(card);
+    });    
 });
   // Function to save data to local storage
     function saveData(data) {

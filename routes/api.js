@@ -54,7 +54,6 @@ async function routes(fastify, options) {
         let chatData = {};
         const user = await fastify.getUser(request, reply);
         const userId = new fastify.mongo.ObjectId(user._id);
-        chatData.userId = userId;
 
         const uploadToS3 = async (buffer, hash, filename) => {
             const params = {
@@ -122,19 +121,16 @@ async function routes(fastify, options) {
         chatData.dateStrJP = new Date(dateObj).toLocaleDateString('ja-JP', options);
 
         try {
-            if (chatData.chatId) {
-                const existingChat = await collection.findOne({ _id: new fastify.mongo.ObjectId(chatData.chatId) });
-                if (!existingChat) {
-                    return reply.status(404).send({ error: 'Chat not found' });
-                }
+            const existingChat = await collection.findOne({ _id: new fastify.mongo.ObjectId(chatData.chatId) });
+            if (!existingChat) {
+                return reply.status(404).send({ error: 'Chat not found' });
+            }
+            if (existingChat.userId.toString() == userId.toString()) {
                 await collection.updateOne({ _id: new fastify.mongo.ObjectId(chatData.chatId) }, { $set: chatData });
                 console.log('Chat updated', chatData.chatId);
                 return reply.send({ message: 'Chat updated successfully', chatId: chatData.chatId });
             } else {
-                const existingChat = await collection.findOne({ name: chatData.name });
-                if (existingChat) {
-                    //return reply.status(409).send({ error: 'A chat with this name already exists' });
-                }
+                chatData.userId = userId;
                 chatData.createdAt = new Date(dateObj);
                 const result = await collection.insertOne(chatData);
                 console.log('New Chat added:', result.insertedId);
@@ -148,7 +144,7 @@ async function routes(fastify, options) {
 
     fastify.delete('/api/delete-chat/:id', async (request, reply) => {
         const chatId = request.params.id;
-    
+        const userId = request.params.userId
         try {
             // Access the MongoDB collection
             const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');

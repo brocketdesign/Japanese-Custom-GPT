@@ -4,6 +4,16 @@
 <body>
 
     <style>
+        .u-color-grad {
+            background: linear-gradient(90.9deg, rgba(110, 32, 244, 0.5) 2.74%, #6E20F4 102.92%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-right: 6px;
+            letter-spacing: 0;
+            font-size: 54px;
+            line-height: 1;
+            }
         .onchat-off, .onchat-on{
             display: none;
         }
@@ -444,9 +454,13 @@
         <section id="chat-discovery" class="onchat-off py-5">
             <div class="my-5">
                     <section class="w-100 px-4 py-2">
-                        <h3>好きなキャラクターとおしゃべりしよう！</br>AIで生き生きとした会話を楽しめるよ！</h3>
-                        <p>私たちのチャットボットアプリでは、お気に入りのキャラクターを選んで楽しい会話を楽しめます。最新のAI技術でキャラクターが生き生きとし、まるで本物の友達と話しているかのような体験ができます。さらに、キャラクターを自分好みにカスタマイズしたり、ゼロから新しいキャラクターを作成することも可能です。新しい友達を作って、自由におしゃべりを楽しんでください！</p>
+                        <img src="/img/logo.webp" alt="" class="mx-3 mb-3" width="75px">
+                        <span class="u-font-manrope u-color-grad">Lamix</span>は、
+                        <h3 class="fw-bold mb-3">AIキャラクターと友達になって楽しくおしゃべりができるAIチャットアプリです。</h3>
+                        <h5>好きなキャラクターとおしゃべりしよう！</h5>
+                        <p>お気に入りのキャラクターを選んで楽しい会話を楽しめます。最新のAI技術でキャラクターが生き生きとし、まるで本物の友達と話しているかのような体験ができます。さらに、キャラクターを自分好みにカスタマイズしたり、ゼロから新しいキャラクターを作成することも可能です。新しい友達を作って、自由におしゃべりを楽しんでください！</p>
                     </section>
+                    <div class="border border-light mt-4 mb-5"></div>
                 {{#if peopleChats}}
                     <section class="w-100 px-4 py-2">
                         <div id="category-container" class="category-container mb-3"></div>
@@ -468,15 +482,15 @@
                     </section>
                 {{/if}}
                 <section class="w-100 px-4 py-2">
-                    <h4>専門家</h4>
-                    <div class="row d-flex justify-content-start">
-                        <div id="chatbot-container" class="container mt-4 row"></div>
-                    </div>
-                </section>
-                <section class="w-100 px-4 py-2">
                     <h4>人気チャット</h4>
                     <div class="d-flex px-3 pt-4 justify-content-center align-items-center">
                         <div id="cardGrid-2" class="row card-round-design"></div>
+                    </div>
+                </section>
+                <section class="w-100 px-4 py-2">
+                    <h4>専門家</h4>
+                    <div class="row d-flex justify-content-start">
+                        <div id="chatbot-container" class="container mt-4 row"></div>
                     </div>
                 </section>
                 <section class="w-100 px-4 py-2">

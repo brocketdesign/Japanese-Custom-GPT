@@ -213,7 +213,7 @@ async function routes(fastify, options) {
             }
         
             if (String(chat.userId) !== String(userId)) {
-                const newChat = { ...chat, userId: String(userId), _id: new fastify.mongo.ObjectId() };
+                const newChat = { ...chat, userId: String(userId), baseId:chatId, _id: new fastify.mongo.ObjectId() };
                 await collection.insertOne(newChat);
                 response.chat = newChat;
             } else {
@@ -283,7 +283,7 @@ async function routes(fastify, options) {
     
         let userChat;
         if (isUserChat) {
-            userChat = await collectionUserChat.find({ chatId }).sort({ _id: -1 }).toArray();
+            userChat = await collectionUserChat.find({ $or: [{ chatId }, { name: isUserChat.name }] }).sort({ _id: -1 }).toArray();
         } else {
             userChat = await collectionUserChat.find({
                 chatId,

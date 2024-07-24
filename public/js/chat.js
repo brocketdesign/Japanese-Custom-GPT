@@ -33,14 +33,31 @@ $(document).ready(function() {
             });
         });
         
-        $('#sendMessage').on('click',function(){
+        $('#sendMessage').on('click', function() {
+            sendMessage();
+            $('#userMessage').val('');  
+            $('#userMessage').attr('placeholder', 'チャットしよう'); 
             setTimeout(() => {
                 resizeTextarea($('#userMessage')[0]);
             }, 500);
-        })
+        });
+
+
+        // Event handler for the Enter key
+        $('#userMessage').on('keypress', function(event) {
+            if (event.which == 13 && !event.shiftKey) { 
+                sendMessage();
+                setTimeout(() => {
+                    $('#userMessage').val('');  
+                    $('#userMessage').attr('placeholder', 'チャットしよう'); 
+                    resizeTextarea($('#userMessage')[0]);
+                }, 500);
+            }
+        });     
+
         function resizeTextarea(element){
             element.style.height = 'auto';
-            element.style.height = (element.scrollHeight - 16 ) + 'px';  
+            element.style.height = (element.scrollHeight - 20 ) + 'px';  
         }
 
         $('.reset-chat').click(function(){
@@ -525,18 +542,6 @@ $(document).ready(function() {
                 }
             });
         }
-
-        // Event handler for the send button
-        $('#sendMessage').on('click', function() {
-            sendMessage();
-        });
-
-        // Event handler for the Enter key
-        $('#userMessage').on('keypress', function(event) {
-            if (event.which == 13 && !event.shiftKey) { // Enter key is pressed without Shift
-                sendMessage();
-            }
-        });     
 
         // Function to display a message in the chat
         function displayMessage(sender, message) {

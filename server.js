@@ -141,12 +141,14 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         name:{$exists:true}
       }).sort({ updatedAt: -1 }).toArray();
       //People chats
+      /*
       const peopleChats = await chatsCollection.find({
         visibility: { $exists: true, $eq: "public" }
       }).sort({_id:-1}).limit(10).toArray();
+      */
       // Fetch user data
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-      return reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato, Ltd', user, userId, chatId, chats: userCreatedChats, peopleChats });
+      return reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato, Ltd', user, userId, chatId, chats: userCreatedChats });
     });
     
     fastify.get('/chat-index', async(request, reply) => {

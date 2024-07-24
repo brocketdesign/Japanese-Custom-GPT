@@ -298,9 +298,9 @@
                         $('#chatPurpose').val(chatData.purpose)
                     }
                     $('#chatName').val(chatData.name);
+                    $('#visibility').val(chatData.visibility)
+                    $('#language').val(chatData.language)
                     $('#chatCategory').val(chatData.category);
-                    $('#chatImageUrl').val(chatData.chatImageUrl);
-                    $('#chatImage').attr('src', chatData.chatImageUrl).show();
                     var chatDescriptionTextare = $('#chatDescription')
                     chatDescriptionTextare.val(chatData.description);
                     setTimeout(function(){
@@ -324,7 +324,14 @@
                     }
 
                     if (chatData.thumbnailUrl && chatData.thumbnailUrl != undefined) {
+                        $('#chatImageUrl').val(chatData.thumbnailUrl);
+                        console.log({thumb:chatData.thumbnailUrl})
                         $('#chatImage').attr('src', chatData.thumbnailUrl).show();
+                    }
+                    if (chatData.chatImageUrl && chatData.chatImageUrl != undefined) {
+                        $('#chatImageUrl').val(chatData.chatImageUrl);
+                        console.log({chatImageUrl:chatData.chatImageUrl})
+                        $('#chatImage').attr('src', chatData.chatImageUrl).show();
                     }
                         $('#chatForm').removeClass('d-none')
                         //$('#genStructure').removeClass('btn-outline-secondary').addClass('btn-secondary')
@@ -397,10 +404,11 @@
    
         // Event handler for the send button
         $('#genChat').on('click', function() {
-            generateName();
+            generateName(function(){
+                generateDescription();
+                generateRule();
+            });
             generateCategory();
-            generateDescription();
-            generateRule();
             $('#genStructure').removeClass('btn-outline-secondary').addClass('btn-secondary')
         });
 
@@ -491,7 +499,8 @@
 
             let message = $('#chatPurpose').val();
             let language =$('#language').val()
-            message = message + 'YOU MUST respond in '+language
+            const name = $('#chatName').val();
+            message = message + 'The character name is : '+ name + '\n\n YOU MUST respond in '+ language
             const urlSummary = $(`#resultText`).text()
             const myUrl = $('#myUrl').val()
 
@@ -577,11 +586,11 @@
         function generateDescription() {
 
             let message = $('#chatPurpose').val();
-            let language =$('#language').val()
-            message = message + 'YOU MUST respond in '+language
+            let language =$('#language').val();
+            const name = $('#chatName').val();
+            message = message + 'The character name is : '+ name + '\n\n YOU MUST respond in '+ language
             const urlSummary = $(`#resultText`).text()
             const myUrl = $('#myUrl').val()
-
             if(urlSummary.trim() != ''){
                 message = `URL : ${myUrl} \n Content Summary : ${urlSummary}. \n\n Considering the above informations, ${message}`
             }
@@ -670,7 +679,7 @@
                 }
             });
         }
-        function generateName() {
+        function generateName(callback) {
 
             let message = $('#chatPurpose').val();
             let language =$('#language').val()
@@ -709,6 +718,7 @@
                     eventSource.onerror = function(error) {
                         console.log('EventSource failed.');
                         eventSource.close();
+                        if(callback){callback()}
                     };
                 },
                 error: function(error) {
@@ -843,6 +853,7 @@
                 case 'chatName':
                     system = `
                         You take the provided content by the user and return the last name and firts name of the character.
+                        If no name is provided, create a new one.
                         You should respond in plain text with the name ONLY.NO COMMENTS.
                     `;
                     break;

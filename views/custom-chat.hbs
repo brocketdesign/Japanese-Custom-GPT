@@ -443,24 +443,26 @@
         </nav>
         <section id="chat-discovery" class="onchat-off py-5">
             <div class="my-5">
-                <section class="w-100 px-4 py-2">
-                    <div id="category-container" class="category-container mb-3"></div>
-                    <h4 class="mb-4">みんなのチャット</h4>
-                    <div class="chat-container">
-                        {{#each peopleChats}}
-                        <div class="card chat-card flex-row bg-light border border-secondary shadow-0" style="border-radius: 20px; cursor:pointer" onclick="redirectToChat('{{this._id}}')">
-                            <div style="min-width:100px;width: 300px; height: auto; display: flex; justify-content: center; align-items: center;">
-                                <img src="{{this.thumbnailUrl}}" class="img-fluid m-3" alt="Thumbnail" onerror="this.src='/img/logo.webp';" style="width: 50px; height: 50px; object-fit: cover;border-radius: 50px;">
+                {{#if peopleChats}}
+                    <section class="w-100 px-4 py-2">
+                        <div id="category-container" class="category-container mb-3"></div>
+                        <h4 class="mb-4">みんなのチャット</h4>
+                        <div class="chat-container">
+                            {{#each peopleChats}}
+                            <div class="card chat-card flex-row bg-light border border-secondary shadow-0" style="border-radius: 20px; cursor:pointer" onclick="redirectToChat('{{this._id}}')">
+                                <div style="min-width:100px;width: 300px; height: auto; display: flex; justify-content: center; align-items: center;">
+                                    <img src="{{this.thumbnailUrl}}" class="img-fluid m-3" alt="Thumbnail" onerror="this.src='/img/logo.webp';" style="width: 50px; height: 50px; object-fit: cover;border-radius: 50px;">
+                                </div>
+                                <div class="card-body">
+                                    <h6 class="card-title fw-bold text-start">{{this.name}}</h6>
+                                    <p class="card-text lines-paragraph">{{this.description}}</p>
+                                    <p class="text-muted d-none"><i class="fas fa-clock"></i> 更新: <span class="date-time">{{this.dateStrJP}}</span></p>
+                                </div>
                             </div>
-                            <div class="card-body">
-                                <h6 class="card-title fw-bold text-start">{{this.name}}</h6>
-                                <p class="card-text lines-paragraph">{{this.description}}</p>
-                                <p class="text-muted d-none"><i class="fas fa-clock"></i> 更新: <span class="date-time">{{this.dateStrJP}}</span></p>
-                            </div>
-                        </div>
-                        {{/each}}
+                            {{/each}}
                     </div>
-                </section>
+                    </section>
+                {{/if}}
                 <section class="w-100 px-4 py-2">
                     <h4>理想の彼女</h4>
                     <div id="custom-card-container" class="d-flex justify-content-start flex-wrap p-3"></div>

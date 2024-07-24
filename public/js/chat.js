@@ -34,11 +34,13 @@ $(document).ready(function() {
         });
         
         $('#sendMessage').on('click',function(){
-            resizeTextarea($('#userMessage')[0]);
+            setTimeout(() => {
+                resizeTextarea($('#userMessage')[0]);
+            }, 500);
         })
         function resizeTextarea(element){
             element.style.height = 'auto';
-            element.style.height = (element.scrollHeight - 20 ) + 'px';  
+            element.style.height = (element.scrollHeight - 16 ) + 'px';  
         }
 
         $('.reset-chat').click(function(){

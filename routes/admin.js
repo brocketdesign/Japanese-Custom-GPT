@@ -19,8 +19,17 @@ async function routes(fastify, options) {
                     // Get the unique userId's from the chats collection
                     const userIds = await chatsCollection.distinct('userId');
             
+                    // Get today's and yesterday's dates
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0); // Set to start of today
+                    const yesterday = new Date(today);
+                    yesterday.setDate(today.getDate() - 1); // Set to start of yesterday
+            
                     // Query the users collection to get the user details for the unique userIds
-                    const users = await usersCollection.find({ _id: { $in: userIds } }).toArray();
+                    const users = await usersCollection.find({
+                        _id: { $in: userIds },
+                        createdAt: { $gte: yesterday, $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000) }
+                    }).toArray();
             
                     return users;
                 } catch (error) {
@@ -28,6 +37,7 @@ async function routes(fastify, options) {
                     throw error;
                 }
             };
+            
             
             const users = await getUniqueUsers()
             

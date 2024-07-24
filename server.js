@@ -93,6 +93,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         _id: new fastify.mongo.ObjectId(), // Use fastify.mongo.ObjectId for tempUser ID
         isTemporary: true,
         role: 'guest',
+        createdAt: new Date()
         // Add any other temporary user properties if needed
       };
       await userDataCollection.insertOne(tempUser); // Insert tempUser into the users collection

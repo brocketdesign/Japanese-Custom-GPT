@@ -1,7 +1,8 @@
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 const { createParser } = require('eventsource-parser');
 
-const fetchOpenAICompletion = async (messages, res) => {
+const fetchOpenAICompletion = async (messages, res, maxToken = 1000) => {
+    console.log(`Answer maxToken : ${maxToken}`)
     try {
         let response = await fetch(
             "https://api.openai.com/v1/chat/completions",
@@ -18,7 +19,7 @@ const fetchOpenAICompletion = async (messages, res) => {
                     top_p: 0.95,
                     frequency_penalty: 0,
                     presence_penalty: 0,
-                    max_tokens: 1500,
+                    max_tokens: maxToken,
                     stream: true,
                     n: 1,
                 }),

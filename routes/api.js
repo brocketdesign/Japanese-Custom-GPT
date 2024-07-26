@@ -467,6 +467,7 @@ async function routes(fastify, options) {
             }
     
             // Add the new user message to the chat document
+            message = message + '(Stay in character and respond naturally as a human would, avoiding robotic responses or lists.)'
             userChatDocument.messages.push({ "role": "user", "content": message });
             userChatDocument.updatedAt = dateObj;
     
@@ -788,7 +789,7 @@ async function routes(fastify, options) {
             const userId = session.userId;
             const chatId = session.chatId;
             const userChatId = session.userChatId;
-            console.log(`Generate for chat : ${chatId} ;  current chat : ${userChatId}`)
+
             const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
             let userData = await collectionUserChat.findOne({ userId, _id: new fastify.mongo.ObjectId(userChatId) })
 
@@ -800,7 +801,7 @@ async function routes(fastify, options) {
             const userMessages = userData.messages;
             //console.log({ message:userMessages })
 
-            const completion = await fetchOpenAICompletion(userMessages, reply.raw);
+            const completion = await fetchOpenAICompletion(userMessages, reply.raw,200);
 
             // Append the assistant's response to the messages array in the chat document
             const assistantMessage = { "role": "assistant", "content": completion };

@@ -185,12 +185,14 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       }
     });
 
-    fastify.get('/chat/edit/:chatId', async (request, reply) => {
+    fastify.get('/chat/edit/:chatId', {
+      preHandler: [fastify.authenticate]
+    }, async (request, reply) => {
       try {
-        const user = await fastify.getUser(request, reply);
+        const userId = new fastify.mongo.ObjectId(request.user._id);
+        const user = await db.collection('users').findOne({ _id: userId });
         const chatId = request.params.chatId || new fastify.mongo.ObjectId()
         const isTemporaryChat = request.params.chatId ? false : true
-        const userId = new fastify.mongo.ObjectId(user._id)
         if(isTemporaryChat){
           const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
           await chatsCollection.insertOne({userId, _id : chatId})

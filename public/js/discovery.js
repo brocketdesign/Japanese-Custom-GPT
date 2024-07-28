@@ -35,7 +35,7 @@ $(document).ready(function() {
 ];
 
     const buttonContainer = $('#button-container');
-
+/*
     buttonsData.forEach(button => {
         const card = $('<div>', {
             class: 'card chat-card flex-row bg-light border-0 me-3 py-2 shadow-0',
@@ -91,51 +91,51 @@ $(document).ready(function() {
         card.append(thumbnailDiv, cardBody);
         buttonContainer.append(card);
     });
-
+    */
     const chatbotInfos = [
         {
-            "title": "数学の達人",
-            "name": "佐藤一郎",
+            "name": "数学の達人",
+            "title": "佐藤一郎",
             "category": "教育",
             "premium": false,
-            "role": "数学の問題を解いたり、概念を説明することができます。",
+            "description": "数学の問題を解いたり、概念を説明することができます。",
             "tone": "フレンドリーで親切",
-            "thumbnailUrl": "/img/avatar_math.webp",
+            "image": "avatar_math.webp",
             "chat_url": "/chat/669e2378660fa71cde114a14"
         },
         {
-            "title": "歴史探検家",
-            "name": "田中花子",
+            "name": "歴史探検家",
+            "title": "田中花子",
             "category": "教育",
             "premium": true,
-            "role": "歴史の出来事や人物について教えます。",
+            "description": "歴史の出来事や人物について教えます。",
             "tone": "情熱的で詳しい",
-            "thumbnailUrl": "/img/avatar_history.webp",
+            "image": "avatar_history.webp",
             "chat_url": "/chat/669e23be3844c44f64de2d60"
         },
         {
-            "title": "英語のガイド",
-            "name": "山本太郎",
+            "name": "英語のガイド",
+            "title": "山本太郎",
             "category": "教育",
             "premium": false,
-            "role": "英語の文法や会話を練習するのを手助けします。",
+            "description": "英語の文法や会話を練習するのを手助けします。",
             "tone": "励ましとサポート",
-            "thumbnailUrl": "/img/avatar_english.webp",
+            "image": "avatar_english.webp",
             "chat_url": "/chat/669e23d8e4bb01d26191c1fe"
         },
         {
-            "title": "科学の探求者",
-            "name": "鈴木美咲",
+            "name": "科学の探求者",
+            "title": "鈴木美咲",
             "category": "教育",
             "premium": true,
-            "role": "科学の原理や最新の科学研究について解説します。",
+            "description": "科学の原理や最新の科学研究について解説します。",
             "tone": "知的で興味深い",
-            "thumbnailUrl": "/img/avatar_science.webp",
+            "image": "avatar_science.webp",
             "chat_url": "/chat/669e2572e4bb01d26191c200"
         }
 
     ];
-
+    /*
     chatbotInfos.forEach(chatbot => {
             const chatbotCard = `
                 <div class="col-12 col-md-9 col-lg-7 col-xl-6 mb-4">
@@ -172,7 +172,7 @@ $(document).ready(function() {
             `;
             $('#chatbot-container').append(chatbotCard);
         });
-
+    */
     const categories = ["教育", "エンターテインメント", "テクノロジー", "健康", "ライフスタイル", "旅行", "ビジネス", "スポーツ", "音楽", "アート","VTuber", "ゲームキャラクター", "アニメキャラクター", "声優", "漫画キャラクター", "映画キャラクター", "ファンタジーキャラクター", "スーパーヒーロー", "ロボット", "妖精", "神話キャラクター", "忍者", "海賊", "冒険者", "ドラゴン"];
 
     $(document).ready(function() {
@@ -215,7 +215,8 @@ $(document).ready(function() {
         {
             "image": "avatar2_img1.jpeg",
             "title": "さくら",
-            "description": "さくらは、勉強熱心な高校生で、いつも明るく前向きです。彼女は友達と一緒に過ごすことが大好きで、将来は教師になることを夢見ています。"
+            "description": "さくらは、勉強熱心な高校生で、いつも明るく前向きです。彼女は友達と一緒に過ごすことが大好きで、将来は教師になることを夢見ています。",
+            "chat_url":"/chat/"
         },
         {
             "image": "avatar2_img2.jpeg",
@@ -243,16 +244,6 @@ $(document).ready(function() {
             "description": "桜井 花は優れた学力とスポーツセンスを兼ね備えた高校生です。彼女はクラスのリーダーであり、みんなに尊敬されています。"
         },
         {
-            "image": "ai_avatar_2.webp",
-            "title": "高橋 美咲",
-            "description": "高橋 美咲は穏やかで自然を愛する大学生です。彼女はいつも笑顔で、周りの人々を癒しています。"
-        },
-        {
-            "image": "ai_avatar_3.webp",
-            "title": "青山 絵里",
-            "description": "青山 絵里は明るく元気なメイドカフェで働く女の子です。彼女の笑顔はお客さんに元気を与えます。"
-        },
-        {
             "image": "ai_avatar_4.jpeg",
             "title": "樹の精霊",
             "description": "樹の精霊は森の守護者であり、自然と調和した生活を送っています。彼は森の中で困っている生き物たちを助けます。"
@@ -273,11 +264,6 @@ $(document).ready(function() {
             "description": "宮本 さくらは空手の達人で、常に冷静沈着です。彼女は自分の信念を貫き、強く生きることを目指しています。"
         },
         {
-            "image": "ai_avatar_8.webp",
-            "title": "笑顔の天使",
-            "description": "笑顔の天使はいつも周りの人々を笑顔にする力を持っています。彼女の存在はみんなに幸せをもたらします。"
-        },
-        {
             "image": "ai_avatar_9.jpeg",
             "title": "エルダーウィス",
             "description": "エルダーウィスは古代の知恵を持つ賢者です。彼は人々に知識と知恵を分け与え、導いています。"
@@ -287,7 +273,7 @@ $(document).ready(function() {
     // Function to create a card
     function createCard(data) {
         var card = $(`
-            <div class="col-12 col-sm-3 mb-4">
+            <div class="col-10 col-sm-3 mb-4">
                 <div class="card shadow-0 bg-light" style="cursor: pointer;">
                     <img src="/img/${data.image}" class="card-img-top" alt="${data.title}">
                     <div class="card-body">
@@ -316,72 +302,94 @@ $(document).ready(function() {
             container.append(card);
         }
     }
-
-    // Call the render function with the sample data
-    renderCardGrid(cardData,$("#cardGrid-2"));
-    //renderCardGrid(cardData2,$("#cardGrid-2"));
-
     const girls_avatar = [
         {
+            "image": "ai_avatar_3.webp",
+            "title": "青山 絵里",
+            "description": "青山 絵里は明るく元気なメイドカフェで働く女の子です。彼女の笑顔はお客さんに元気を与えます。",
+            "chat_url": '/chat/66a5be2d712375ae2fad2523'
+        },
+        {
+            "image": "ai_avatar_2.webp",
+            "title": "高橋 美咲",
+            "description": "高橋 美咲は穏やかで自然を愛する大学生です。彼女はいつも笑顔で、周りの人々を癒しています。",
+            "chat_url": '/chat/66a5befd72ad9f1f12b4266f'
+        },
+        {
+            "image": "ai_avatar_8.webp",
+            "title": "笑顔の天使",
+            "description": "笑顔の天使はいつも周りの人々を笑顔にする力を持っています。彼女の存在はみんなに幸せをもたらします。",
+            "chat_url": '/chat/66a5bf2740aacb265253a35d'
+        },
+        {
             "image": "avatar_girl_1.png",
-            "name": "さくら",
+            "title": "さくら",
             "description": "さくらは自然とアートについて話すのが好きです。趣味は絵を描くこととハイキングで、明るくて元気な性格です。",
             "chat_url": '/chat/669e1caea67062d868b41c4b'
         },
         {
             "image": "avatar_girl_2.webp",
-            "name": "りん",
+            "title": "りん",
             "description": "りんは歴史と文学に興味があります。読書が趣味で、静かで落ち着いた性格です。",
             "chat_url": '/chat/669e1d16a67062d868b41c4d'
         },
         {
             "image": "avatar_girl_3.png",
-            "name": "みどり",
+            "title": "みどり",
             "description": "みどりはビジネスとファッションについて話すのが得意です。趣味はショッピングとヨガで、自信に満ちた性格です。",
             "chat_url": '/chat/669e1d2ea67062d868b41c4f'
         },
         {
             "image": "avatar_girl_4.jpeg",
-            "name": "ゆき",
+            "title": "ゆき",
             "description": "ゆきは音楽と料理が好きです。趣味はピアノ演奏と新しいレシピの試作で、優しくて思いやりのある性格です。",
             "chat_url": '/chat/669e1d7aa67062d868b41c51'
         },
         {
             "image": "avatar_girl_5.webp",
-            "name": "あかり",
+            "title": "あかり",
             "description": "あかりは映画と旅行について話すのが好きです。趣味は映画鑑賞と冒険旅行で、好奇心旺盛な性格です。",
             "chat_url": '/chat/669e1d9ea67062d868b41c53'
         },
         {
             "image": "avatar_girl_6.jpg",
-            "name": "まな",
+            "title": "まな",
             "description": "まなは科学とテクノロジーに興味があります。趣味はガジェットのレビューとプログラミングで、知的で探求心の強い性格です。",
             "chat_url": '/chat/669e1db3a67062d868b41c55'
         },
         {
             "image": "avatar_girl_7.jpg",
-            "name": "ほのか",
+            "title": "ほのか",
             "description": "ほのかはスポーツとダンスが好きです。趣味はランニングとダンスレッスンで、エネルギッシュで活発な性格です。",
             "chat_url": '/chat/669e1dcca67062d868b41c57'
         }
     ]
-    girls_avatar.forEach(function(item) {
-        var card = $(`
-            <div class="card custom-card bg-transparent shadow-0 border-0 m-3" style="width: 18rem;cursor:pointer;">
-                <img src="/img/${item.image}" class="card-img-top girls_avatar" alt="${item.name}">
-                <div class="card-body bg-transparent border-0 text-center">
-                    <h5 class="card-title">${item.name}</h5>
-                    <p class="card-text">${item.description}</p>
+    
+    function renderCircleGrid(cardInfos,container){
+        cardInfos.forEach(function(item) {
+            var card = $(`
+                <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 col-7 col-sm-4 col-lg-2" style="cursor:pointer;">
+                    <div style="background-image:url(/img/${item.image})" class="card-img-top girls_avatar" alt="${item.title}"></div>
+                    <div class="card-body bg-transparent border-0 pb-0 text-start">
+                        <h5 class="card-title">${item.title}</h5>
+                        <p class="card-text">${item.description}</p>
+                    </div>
                 </div>
-            </div>
-        `);
+            `);
+        
+            card.on('click', function() {
+                window.location = item.chat_url;
+            });
+        
+            container.append(card);
+        });   
+    }
+
+    renderCircleGrid(girls_avatar,$('#custom-card-container'))
+    renderCircleGrid(cardData,$("#cardGrid-2"))
+    renderCircleGrid(cardData2,$('#cardGrid'))
+    renderCircleGrid(chatbotInfos,$("#chatbot-container"));
     
-        card.on('click', function() {
-            window.location = item.chat_url;
-        });
-    
-        $('#custom-card-container').append(card);
-    });    
 });
   // Function to save data to local storage
     function saveData(data) {

@@ -4,6 +4,12 @@
 <body>
 
     <style>
+        .scroll-horizontal {
+            flex-wrap: nowrap;
+            width: 100%;
+            flex-direction: row;
+            overflow-x: scroll;
+        }
         .u-color-grad {
             background: linear-gradient(90.9deg, rgba(110, 32, 244, 0.5) 2.74%, #6E20F4 102.92%);
             -webkit-background-clip: text;
@@ -22,13 +28,16 @@
             object-position: top;
             width: 32px;
         }
-        .card-img-top.girls_avatar{
+        .card-img-top.girls_avatar {
             object-fit: cover;
             object-position: top;
-            width: 120px;
+            width: 100%;  
             margin: auto;
-            border-radius: 50pc;
-            height: 120px;
+            border-radius: 15px;
+            height: 300px;
+            padding: 0 5px;  
+            background-position: top;
+            background-size: cover;
         }
         .scroll-container {
         display: flex;
@@ -65,6 +74,12 @@
         .card-round-design .col-12 .card .card-body{
             padding-top: 100px;
         }
+        .card-round-design .col-10 .card .card-img-top{
+            height: 270px;
+            margin: auto;
+            object-fit: cover;
+            object-position: top;
+        }
 
         .chat-container {
             display: flex;
@@ -86,6 +101,9 @@
             background: #eee !important;
         }
         @media (max-width: 600px) {
+            .card-img-top.girls_avatar {
+                height: 200px;
+            }
             .noscroll{
                 display: block;
                 overflow: hidden;
@@ -454,7 +472,7 @@
         </nav>
         <section id="chat-discovery" class="onchat-off py-5">
             <div class="my-5">
-                    <section class="w-100 px-4 py-2">
+                    <section class="w-100 px-3 py-2">
                         <img src="/img/logo.webp" alt="" class="mx-3 mb-3" width="75px">
                         <span class="u-font-manrope u-color-grad">Lamix</span>は、
                         <h3 class="fw-bold mb-3">AIキャラクターと友達になって楽しくおしゃべりができるAIチャットアプリです。</h3>
@@ -463,7 +481,7 @@
                     </section>
                     <div class="border border-light mt-4 mb-5"></div>
                 {{#if peopleChats}}
-                    <section class="w-100 px-4 py-2">
+                    <section class="w-100 px-0 py-2">
                         <div id="category-container" class="category-container mb-3"></div>
                         <h4 class="mb-4">みんなのチャット</h4>
                         <div class="chat-container">
@@ -482,30 +500,24 @@
                     </div>
                     </section>
                 {{/if}}
-                <section class="w-100 px-4 py-2">
-                    <h4>人気チャット</h4>
-                    <div class="d-flex px-3 pt-4 justify-content-center align-items-center">
-                        <div id="cardGrid-2" class="row card-round-design"></div>
-                    </div>
+                <section class="w-100 p-0">
+                    <h4 class="px-4">人気チャット</h4>
+                    <div id="cardGrid-2" class="row py-3 px-3 scroll-horizontal"></div>
                 </section>
-                <section class="w-100 px-4 py-2">
-                    <h4>専門家</h4>
-                    <div class="row d-flex justify-content-start">
-                        <div id="chatbot-container" class="container mt-4 row"></div>
-                    </div>
+                <section class="w-100 p-0">
+                    <h4 class="px-4">理想の彼女</h4>
+                    <div id="custom-card-container" class="row py-3 px-3 scroll-horizontal"></div>
                 </section>
-                <section class="w-100 px-4 py-2">
-                    <h4>理想の彼女</h4>
-                    <div id="custom-card-container" class="d-flex justify-content-start flex-wrap p-3"></div>
+                <section class="w-100 p-0">
+                    <h4 class="px-4">専門家</h4>
+                    <div id="chatbot-container" class="row py-3 px-3 scroll-horizontal"></div>
                 </section>
-                <section class="w-100 px-4 py-2 py-4 my-3 d-none">
-                    <h4>ファンタジーキャラ</h4>
-                    <div class="d-flex p-3 justify-content-center align-items-center container">
-                        <div id="cardGrid" class="row"></div>
-                    </div>
+                <section class="w-100 p-0">
+                    <h4 class="px-4">ファンタジーキャラ</h4>
+                    <div id="cardGrid" class="row py-3 px-3 scroll-horizontal"></div>
                 </section>
-                <section class="w-100 px-4 py-2">
-                    <h4>ニーズに合ったチャットを作成する</h4>
+                <section class="w-100 p-0 d-none">
+                    <h4 class="px-4">ニーズに合ったチャットを作成する</h4>
                     <div class="scroll-container d-flex justify-content-between  py-4" id="button-container"></div>
                 </section>
                 <section>

@@ -92,7 +92,7 @@
     <h2 class="d-none">{{#if chatId}}チャットを編集{{else}}新しいチャットを追加{{/if}}</h2>
     <div id="imageSection" class="text-center mb-4" ><div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative">
         <img id="chatImage" src="/img/logo.webp" alt="chat Thumbnail" class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover;object-position:top; cursor: pointer;">
-        <i class="fas fa-edit position-absolute" style="bottom: 5px; font-size: 1em; color: white; background-color: rgba(0, 0, 0, 0.5); border-radius: 50%; padding: 5px;"></i>
+        <i class="fas fa-edit position-absolute" style="bottom: 5px; font-size: 1em; color: white; background-color: rgba(0, 0, 0, 0.5); border-radius: 50%; padding: 5px;cursor: pointer;"></i>
     </div>
 
     </div>  
@@ -124,7 +124,7 @@
         <div class="mb-3 mx-3">
             <label for="visibility" class="form-label"><i class="fas fa-eye"></i> 公開設定を選択してください:</label>
             <select class="form-select" id="visibility" name="visibility">
-                <option value="private"><i class="fas fa-lock"></i> 非公開</option>
+                <option value="private" selected><i class="fas fa-lock"></i> 非公開</option>
                 <option value="public"><i class="fas fa-globe"></i> 公開</option>
             </select>
         </div>
@@ -276,7 +276,7 @@
             fetchUrlSummary(url);
         });
 
-        $('#chatImage').click(function() {
+        $('#chatImage').parent().click(function() {
             $('#chatThumbnail').click();
         });
 
@@ -298,8 +298,12 @@
                         $('#chatPurpose').val(chatData.purpose)
                     }
                     $('#chatName').val(chatData.name);
-                    $('#visibility').val(chatData.visibility)
-                    $('#language').val(chatData.language)
+                    if(chatData.visibility){
+                        $('#visibility').val(chatData.visibility)
+                    }
+                    if(chatData.language){
+                        $('#language').val(chatData.language)
+                    }
                     $('#chatCategory').val(chatData.category);
                     var chatDescriptionTextare = $('#chatDescription')
                     chatDescriptionTextare.val(chatData.description);

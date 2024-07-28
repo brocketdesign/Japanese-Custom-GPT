@@ -256,8 +256,10 @@ $(document).ready(function() {
             // Append the container to the chat input area
             $('#chatInput').prepend(container);
         
+            $('#input-container').hide().removeClass('d-flex');
             // Add click event listener to the button
             button.on('click', function() {
+                $('#input-container').show().addClass('d-flex');
                 displayStarter();
             });
         
@@ -294,6 +296,8 @@ $(document).ready(function() {
         
             // Display intro container inside #chatContainer
             $('#chatContainer').append(introContainer);
+
+
         }
         
         

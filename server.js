@@ -119,9 +119,8 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
 
     fastify.get('/authenticate',async (request, reply) => {
       const user = await fastify.getUser(request, reply);
-      if (user.isTemporary) {
-        const register = request.query.register
-        return reply.view('authenticate.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' , register:!!register});
+      if (user.isTemporary || request.query.register ) {
+        return reply.view('authenticate.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' , register:true});
       } else {
         return reply.redirect('/dashboard')
       }

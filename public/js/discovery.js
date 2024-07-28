@@ -246,37 +246,37 @@ $(document).ready(function() {
             "image": "ai_avatar_1.jpeg",
             "title": "桜井 花",
             "description": "桜井 花は優れた学力とスポーツセンスを兼ね備えた高校生です。彼女はクラスのリーダーであり、みんなに尊敬されています。",
-            "chat_url":"/chat/"
+            "chat_url":"/chat/66a5ea1549364af453743534"
         },
         {
             "image": "ai_avatar_4.jpeg",
             "title": "樹の精霊",
             "description": "樹の精霊は森の守護者であり、自然と調和した生活を送っています。彼は森の中で困っている生き物たちを助けます。",
-            "chat_url":"/chat/"
+            "chat_url":"/chat/66a5ea2a9563771b1fef582b"
         },
         {
             "image": "ai_avatar_5.jpeg",
             "title": "フェザー",
             "description": "フェザーは勇敢な戦士で、仲間を守るために戦います。彼は強い正義感を持ち、どんな困難にも立ち向かいます。",
-            "chat_url":"/chat/"
+            "chat_url":"/chat/66a5ea3f9563771b1fef582d"
         },
         {
             "image": "ai_avatar_6.jpeg",
             "title": "紅蓮",
             "description": "紅蓮は強力な炎の魔法を操る魔法使いです。彼女は自分の力をコントロールするために日々修行を重ねています。",
-            "chat_url":"/chat/"
+            "chat_url":"/chat/66a5ea5c9563771b1fef582f"
         },
         {
             "image": "ai_avatar_7.jpeg",
             "title": "宮本 さくら",
             "description": "宮本 さくらは空手の達人で、常に冷静沈着です。彼女は自分の信念を貫き、強く生きることを目指しています。",
-            "chat_url":"/chat/"
+            "chat_url":"/chat/66a5ea749563771b1fef5831"
         },
         {
             "image": "ai_avatar_9.jpeg",
             "title": "エルダーウィス",
             "description": "エルダーウィスは古代の知恵を持つ賢者です。彼は人々に知識と知恵を分け与え、導いています。",
-            "chat_url":"/chat/"
+            "chat_url":"/chat/66a5ea8d9563771b1fef5833"
         }
     ]
     

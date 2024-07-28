@@ -467,7 +467,6 @@ async function routes(fastify, options) {
             }
     
             // Add the new user message to the chat document
-            message = message + ' (Stay in character and respond naturally as a human would, avoiding robotic responses or lists.)'
             userChatDocument.messages.push({ "role": "user", "content": message });
             userChatDocument.updatedAt = dateObj;
     

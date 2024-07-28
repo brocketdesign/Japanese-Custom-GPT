@@ -17,6 +17,7 @@ $(document).ready(function() {
         let isNew = true;
         let feedback = false
         let thumbnail = false
+        let isTemporary = user.isTemporary
 
         sendCustomData({action: 'viewpage'});
         fetchchatData(chatId, userId);
@@ -121,7 +122,11 @@ $(document).ready(function() {
         window.sendMessage = function(customMessage,displayStatus = true) {
             currentStep ++
             messagesCount ++
-            if(messagesCount >= 10){
+            if($('#chat-widget-container').length == 0 && isTemporary){
+                showRegistrationForm()
+                return
+            }
+            if(messagesCount >= 5){
                 Swal.fire({
                     title: '注意',
                     text: '無料ユーザーのメッセージの最大数は1日10件です。',
@@ -821,6 +826,9 @@ $(document).ready(function() {
         */
     }
 });
+function showRegistrationForm(){
+    window.location = "/authenticate?register=true"
+}
 function showDiscovery(){
     $('.onchat-on').hide()
     $('.onchat-on').addClass('d-none').css({

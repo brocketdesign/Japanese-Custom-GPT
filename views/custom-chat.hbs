@@ -317,7 +317,8 @@
         </div>
         <div class="mt-3" style="height: 70vh;overflow-y: scroll;overflow-x: hidden;padding-bottom:100px">
             {{#each chats}}
-            <div class="chat-list item user-chat d-flex align-items-center justify-content-between px-0 py-1 bg-transparent" style="cursor: pointer;" data-id="{{this._id}}">
+            <div class="chat-list item user-chat d-flex align-items-center justify-content-between px-0 py-1 bg-transparent" style="cursor: pointer;" 
+            data-id="{{this._id}}" data-userid="{{this.userId}}" >
                 <div class="d-flex align-items-center w-100">
                     <div class="user-chat-content" style="flex: 1;display: flex;align-items: center;">
                         <div class="thumb align-items-center text-center justify-content-center d-flex flex-column col-3 p-1" >
@@ -682,7 +683,7 @@ $(document).ready(function() {
         e.preventDefault()
         e.stopPropagation();
         const chatId = $(this).data('id');
-
+        const userId = $(this).data('userid');
         Swal.fire({
             title: '本当に削除しますか？',
             text: "この操作は元に戻せません！",
@@ -697,7 +698,7 @@ $(document).ready(function() {
                 $.ajax({
                     url: `/api/delete-chat/${chatId}`,
                     type: 'DELETE',
-                    data: { userId: userId },
+                    data: { userId },
                     success: function(response) {
                         $(`.chat-list[data-id="${chatId}"]`).fadeOut().remove();
                     },

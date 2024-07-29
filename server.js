@@ -13,7 +13,7 @@ const fastifyMultipart = require('fastify-multipart');
 mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then((client) => {
     const db = client.db(process.env.MONGODB_NAME);
-
+    
     // Register plugins
     fastify.register(require('@fastify/static'), {
       root: path.join(__dirname, 'public'),
@@ -120,7 +120,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     fastify.get('/authenticate',async (request, reply) => {
       const user = await fastify.getUser(request, reply);
       if (user.isTemporary || request.query.register ) {
-        return reply.view('authenticate.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' , register:true});
+        return reply.view('authenticate.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' , register:!!request.query.register });
       } else {
         return reply.redirect('/dashboard')
       }

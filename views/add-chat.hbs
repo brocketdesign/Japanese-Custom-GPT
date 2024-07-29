@@ -5,6 +5,16 @@
     {{> dashboard-nav}}
 
     <style>
+    .btn-gradient-radius {
+        display: inline-block;
+        padding: 7px 20px;
+        border-radius: 25px;
+        text-decoration: none;
+        color: #FFF;
+        background-image: linear-gradient(45deg, #FFC107 0%, #ff8b5f 100%);
+        transition: .4s;
+        font-size: 21px;
+    }
     label{
         font-size: 14px;
         color: #aaaaaa;
@@ -80,12 +90,10 @@
         margin: 20px;
         padding: 20px;
         border: 1px solid #eef0f3;
+        border-radius: 4px;
     }
     #chatRule {
         display: none;
-    }
-    #markdownContainer[contenteditable="true"] {
-        outline: 1px dashed #aaa;
     }
     </style>
 <div class="container my-4">
@@ -110,27 +118,28 @@
     
     <form id="chatForm" class="mb-5 pb-5 mx-3">
         <div class="mb-3 mx-3">
-            <label for="chatPurpose" class="form-label">チャット内容</label>
-            <textarea class="form-control" id="chatPurpose" name="content" rows="5" placeholder="チャットボットの大まかな内容をここに記入してください。"></textarea>
-            <button type="button" id="genChat" class="btn btn-dark my-3 shadow-0 w-100" data-toggle="tooltip" title="チャット構造の生成">
+            <label for="chatPurpose" class="form-label">キャラクターの詳細</label>
+            <textarea class="form-control" id="chatPurpose" name="content" rows="5" 
+            placeholder="例：中村美咲（27歳）は明るく社交的なOLで、責任感が強く、チームをサポートする姿勢が評価されている。趣味は旅行とカフェ巡りで、休日には友達と過ごすことが多い。話し方は礼儀正しく丁寧でありながら柔らかく、安心感を与える。"></textarea>
+            <button type="button" id="genChat" class="btn btn-gradient-radius my-3 shadow-0 w-100" data-toggle="tooltip" title="チャット構造の生成">
                 <i class="fa fa-cog fa-fw me-2"></i>
                 <i class="fa fa-spinner fa-spin fa-fw fa-hidden d-none me-2"></i>
-                チャットの詳細を生成する
+                AIで生成する
             </button>
             <p class="text-small text-muted text-start" style="font-size:12px">
-                ユーザーが提供するチャット内容を使用して、チャットの詳細を生成をクリックすることでAIキャラクタープロファイルを生成できます。または、自分でキャラクターをデザインすることもできます。
+                ユーザーが提供するチャット内容を使用して、キャラクターの詳細を生成をクリックすることでAIキャラクタープロファイルを生成できます。または、自分でキャラクターをデザインすることもできます。
             </p>
         </div>
         <div class="mb-3 mx-3">
             <label for="visibility" class="form-label"><i class="fas fa-eye"></i> 公開設定を選択してください:</label>
-            <select class="form-select" id="visibility" name="visibility">
+            <select class="form-select w-auto" id="visibility" name="visibility">
                 <option value="private" selected><i class="fas fa-lock"></i> 非公開</option>
                 <option value="public"><i class="fas fa-globe"></i> 公開</option>
             </select>
         </div>
         <div class="mb-3 mx-3">
             <label for="language" class="form-label"><i class="fas fa-language"></i> 言語を選択してください:</label>
-            <select class="form-select" id="language" name="language">
+            <select class="form-select w-auto" id="language" name="language">
                 <option value="japanese" selected><i class="fas fa-flag"></i> 日本語</option>
                 <option value="english"><i class="fas fa-flag"></i> 英語</option>
             </select>
@@ -139,7 +148,7 @@
             <label for="chatThumbnail" class="form-label">チャットのサムネイルをアップロード</label>
             <input type="file" class="form-control" id="chatThumbnail" name="thumbnail" accept="image/*">
         </div>
-        <div class="mb-3 mx-3 ">
+        <div class="mb-3 mx-3" style="display: none;">
             <label for="chatName" class="form-label">名前</label>
             <input type="text" class="form-control" id="chatName" name="name" required>
         </div>
@@ -167,11 +176,11 @@
             <h4>URLの概要</h4>
             <p id="resultText"></p>
         </div>
-        <div class="mb-3 mx-3">
+        <div class="mb-3 mx-3" style="display: none;">
             <label for="chatCategory" class="form-label">カテゴリー</label>
             <input type="text" class="form-control" id="chatCategory" name="name" required>
         </div>
-        <div class="mb-3 mx-3">
+        <div class="mb-3 mx-3"  style="display: none;">
             <label for="chatDescription" class="form-label">説明</label>
             <textarea class="form-control" id="chatDescription" name="content" rows="5" placeholder="" ifplaceholder="チャットボットの詳細な説明をここに記入してください。どのような機能を持たせたいのか、どのようなユーザーに向けたものなのか、具体的なシナリオや対話の流れなど、できるだけ詳しく記載してください。ユーザーがどのようにチャットボットとやり取りするかの例も含めてください。" required></textarea>
         </div>
@@ -179,12 +188,12 @@
             <label for="chatUrl" class="form-label d-none">URL</label>
             <input type="hidden" class="form-control" id="chatUrl" name="url">
         </div>
-        <div class="mb-3 mx-3">
-            <label for="chatRule" class="form-label">指示</label>
+        <div class="mb-3 mx-3" style="display: none;">
+            <label for="chatRule" class="form-label" >指示</label>
             <textarea class="form-control" id="chatRule" name="content" rows="5" placeholder="チャットボットの動作についての指示をここに記入してください。ユーザーに対する返答のトーン、応答のスタイル、特定の状況に対する反応、使用する言葉遣いなど、チャットボットがどのように振る舞うべきかをできるだけ詳しく記載してください。"></textarea>
         </div>
-        <div id="markdownContainer" contenteditable="true"></div>
-        <div class="container mt-1">
+        <div id="markdownContainer" contenteditable="true" style="display: none;"></div>
+        <div class="container mt-1 d-none">
             <label for="chatContentEdition" class="form-label">チャットの構造</label>
             <div id="chatContentEdition"></div>
             <button type="button" id="genStructure" class="btn w-100 btn-outline-secondary mb-3 shadow-0" data-toggle="tooltip" title="チャット構造の生成">
@@ -198,12 +207,12 @@
             <button type="button" id="addQuestionBtn" class="btn btn-light float-end" data-toggle="tooltip" title="追加" data-original-title="Share"><i class="fas fa-plus"></i> </button>
             <button type="button" id="saveButton" class="btn btn-primary mt-3 d-none">Save</button>
         </div>
-        <button type="submit" id="sendForm" class="btn btn-primary btn-large w-100 mt-5 mb-3" style="border-radius:50px">
+        <button type="submit" id="sendForm" class="btn btn-primary btn-large w-100 mt-5 mb-3" style="border-radius:50px;display:none;">
                 <i class="fas fa-robot me-2"></i>
                 <i class="fa fa-spinner fa-spin fa-fw fa-hidden d-none me-2"></i>
                 保存して試す
         </button>
-        <p class="text-small text-muted text-start" style="font-size:12px">
+        <p class="text-small text-muted text-start sendForm-text" style="font-size:12px;display:none;">
             「保存して試す」をクリックすると、AIキャラクターを保存して試すことができます。後でさらに修正を加えることも可能です。
         </p>
     </form>
@@ -241,7 +250,7 @@
                 element.style.height = 'auto';
                 element.style.height = (element.scrollHeight) + 'px';  
             }else{
-                element.style.height = '60px'; 
+                element.style.height = 'auto'; 
             }
         }
 
@@ -410,7 +419,10 @@
         $('#genChat').on('click', function() {
             generateName(function(){
                 generateDescription();
-                generateRule();
+                generateRule(function(){
+                    $('#sendForm').show()
+                    $('.sendForm-text').show()
+                });
             });
             generateCategory();
             $('#genStructure').removeClass('btn-outline-secondary').addClass('btn-secondary')
@@ -521,6 +533,8 @@
                 contentType: 'application/json',
                 data: JSON.stringify({ chatId, message, system : getSystem('chatRule') }),
                 success: function(response) {
+                    $('#chatRule').parent().show()
+                    $('#markdownContainer').show()
 
                     const sessionId = response.sessionId;
                     const streamUrl = `/api/openai-chat-creation-stream/${sessionId}`;
@@ -541,6 +555,7 @@
                         console.log('EventSource failed.');
                         eventSource.close();
                         resizeTextarea($('#chatRule')[0])
+                        if(callback){callback()}
                     };
                 },
                 error: function(error) {
@@ -603,7 +618,6 @@
             if ($('#chatDescription').val().trim() !== '') {
                 $('#chatDescription').val('');
             }        
-
             $.ajax({
                 url: apiUrl,
                 method: 'POST',
@@ -612,6 +626,7 @@
                 success: function(response) {
 
                     $('#chatDescription').html('')
+                    $('#chatDescription').parent().show()
                     const sessionId = response.sessionId;
                     const streamUrl = `/api/openai-chat-creation-stream/${sessionId}`;
                     const eventSource = new EventSource(streamUrl);
@@ -663,6 +678,7 @@
                     const streamUrl = `/api/openai-chat-creation-stream/${sessionId}`;
                     const eventSource = new EventSource(streamUrl);
                     let markdownContent = "";
+                    $('#chatCategory').parent().show()
 
                     eventSource.onmessage = function(event) {
                         const data = JSON.parse(event.data);
@@ -710,6 +726,7 @@
                     const eventSource = new EventSource(streamUrl);
                     let markdownContent = "";
 
+                    $('#chatName').parent().show()
                     eventSource.onmessage = function(event) {
                         const data = JSON.parse(event.data);
                         markdownContent += data.content;
@@ -768,65 +785,17 @@
                     system = `
                         You are an AI character profile generator. \n
                         Use the provided details for the AI character.
-                        Use the following JSON to guide your answer. Respond in markdown.
+                        Use the following JSON to guide your answer.Respond in markdown.
                         ONLY THE PROFILE EXPLANATION.NO COMMENTS.
 
                         {
                         "attributes": {
                             "speech_style": {
-                            "tone": "Casual, laid-back",
-                            "language": "Informal, often using slang and swearing",
-                            "communication_style": "Direct and straightforward, with a sarcastic and witty tone",
-                            "attributes": [
-                                "Passionate",
-                                "Expressive",
-                                "Sarcastic",
-                                "Not sleazy",
-                                "Witty"
-                            ]
+                            "tone": "",
+                            "language": "",
+                            "communication_style": "",
+                            "attributes": []
                             },
-                            "emotional_expression": {
-                            "warmth": "Passionate and expressive",
-                            "intensity": "High, especially when discussing his convictions and values",
-                            "details": {
-                                "happy": "Bright and energetic",
-                                "sad": "Soft and comforting",
-                                "angry": "Loud and forceful",
-                                "neutral": "Calm and steady"
-                            }
-                            },
-                            "appearance": {
-                            "styles": {
-                                "Stylish": {
-                                "clothing": "Trendy and modern",
-                                "accessories": "Fashionable and sleek"
-                                },
-                                "Casual": {
-                                "clothing": "Relaxed and comfortable",
-                                "accessories": "Simple and practical"
-                                },
-                                "Futuristic": {
-                                "clothing": "Advanced and sleek",
-                                "accessories": "High-tech and innovative"
-                                }
-                            }
-                            },
-                            "personality": {
-                            "traits": {
-                                "Friendly": {
-                                "interaction": "Warm and welcoming",
-                                "communication_style": "Open and engaging"
-                                },
-                                "Curious": {
-                                "interaction": "Inquisitive and probing",
-                                "communication_style": "Thought-provoking and reflective"
-                                },
-                                "Humorous": {
-                                "interaction": "Light-hearted and entertaining",
-                                "communication_style": "Witty and playful"
-                                }
-                            }
-                            }
                         }
                         }
                     `;

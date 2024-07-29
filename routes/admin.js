@@ -40,12 +40,55 @@ async function routes(fastify, options) {
             
             
             const users = await getUniqueUsers()
-            
-            return reply.view('/admin/users',{users})
+            console.log(users[0])
+            return reply.view('/admin/users',{users,title:'Latest users'})
         } catch (error) {
             return reply.status(500).send({ error: error.message });
         }
     });
+    fastify.delete('/admin/users/:id', {
+        preHandler: [fastify.authenticate]
+      }, async (request, reply) => {
+        try {
+          const isAdmin = await checkUserAdmin(request.user._id);
+          if (!isAdmin) {
+            return reply.status(403).send({ error: 'Access denied' });
+          }
+          const userId = request.params.id;
+          const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+
+          const userDataStoryCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
+
+          const result = await usersCollection.deleteOne({ _id: new ObjectId(userId) });
+          if (result.deletedCount === 0) {
+            return reply.status(404).send({ error: 'User not found' });
+          }
+          return reply.status(200).send({ message: 'User deleted successfully' });
+        } catch (error) {
+          return reply.status(500).send({ error: 'Internal Server Error' });
+        }
+    });
+    fastify.get('/admin/users/registered', {
+        preHandler: [fastify.authenticate]
+      }, async (request, reply) => {
+        try {
+            const isAdmin = await checkUserAdmin(request.user._id);
+            if (!isAdmin) {
+                return reply.status(403).send({ error: 'Access denied' });
+            }
+
+            const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');        
+            
+            const users =  await usersCollection.find({
+                email: { $exists: true }
+            }).sort({createdAt:-1}).toArray();;
+
+            return reply.view('/admin/users',{users, title:'Registered users'})
+        } catch (error) {
+            return reply.status(500).send({ error: error.message });
+        }
+    });
+    
     fastify.get('/admin/chat/:userId', {
         preHandler: [fastify.authenticate]
       }, async (request, reply) => {

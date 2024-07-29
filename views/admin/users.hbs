@@ -5,28 +5,126 @@
     {{> dashboard-nav}}
 <!-- Template to List Users -->
 <div class="container mt-5">
-    <h2 class="mb-4">Users</h2>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {{#each users}}
-            <tr>
-                <td>{{this._id}}</td>
-                <td>{{this.name}}</td>
-                <td>{{this.email}}</td>
-                <td>
-                    <a href="/admin/chat/{{this._id}}" class="btn btn-primary view-chats" data-user-id="{{this._id}}">View Chats</a>
-                </td>
-            </tr>
-            {{/each}}
-        </tbody>
-    </table>
+    <h2 class="mb-4">{{title}}</h2>
+    <a href="/admin/users" class="btn btn-outline-dark mb-3">Latest users</a>
+    <a href="/admin/users/registered" class="btn btn-outline-dark mb-3">Registered users</a>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Email</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each users}}
+                <tr data-user-id="{{this._id}}">
+                    <td class="jp-date">{{this.createdAt}}</td>
+                    <td>{{this.email}}</td><td>
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle shadow-0" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                        <a class="dropdown-item" href="/admin/chat/{{this._id}}">
+                            <i class="fas fa-comments me-2"></i> View Chats
+                        </a>
+                        <button class="dropdown-item delete-user" data-user-id="{{this._id}}">
+                            <i class="fas fa-trash-alt me-2"></i> Delete User
+                        </button>
+                        </div>
+                    </div>
+                    </td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
 </div>
     {{> dashboard-footer}}
+</body>
+    <script>
+        $(document).ready(function() {
+            enableToggleDropdown() 
+            function enableToggleDropdown() {
+                $(document).find('.dropdown-toggle').each(function() {
+                    if (!$(this).hasClass('event-attached')) {
+                        $(this).addClass('event-attached');
+            
+                        // Attach the event listener
+                        $(this).on('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        });
+            
+                        // Initialize the dropdown
+                        const dropdown = new mdb.Dropdown($(this)[0]);
+            
+                        // Find the parent element that has the hover effect
+                        const parent = $(this).closest('.chat-list');
+            
+                        // Add hover event listeners to the parent element
+                        parent.hover(
+                            function() {
+                                // When the parent element is hovered
+                                $(this).find('.dropdown-toggle').css({
+                                    'opacity': 1,
+                                    'pointer-events': ''
+                                });
+                            },
+                            function() {
+                                // When the parent element is no longer hovered
+                                $(this).find('.dropdown-toggle').css({
+                                    'opacity': 0,
+                                    'pointer-events': 'none'
+                                });
+                                // Close the dropdown
+                                dropdown.hide();
+                            }
+                        );
+                    }
+                });
+            }
+            function convertToJapaneseDate(dateString) {
+                var options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+                var date = new Date(dateString);
+                return date.toLocaleDateString('ja-JP', options);
+            }
+
+            $('.jp-date').each(function() {
+                var originalDate = $(this).text();
+                var japaneseDate = convertToJapaneseDate(originalDate);
+                $(this).text(japaneseDate);
+            });
+            $('.delete-user').on('click', function() {
+                var userId = $(this).data('user-id');
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: 'You are about to delete a user. This action is irreversible.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, delete user',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.value) {
+                    $.ajax({
+                        type: 'DELETE',
+                        url: '/admin/users/' + userId,
+                        success: function() {
+                        console.log('User deleted successfully!');
+                        $(`tr[data-user-id="${userId}"]`).hide()
+                        // You can also add code to remove the user from the table here
+                        //Swal.fire('Deleted!', 'User has been deleted.','success');
+                        },
+                        error: function(xhr, status, error) {
+                        console.log('Error deleting user:', error);
+                        Swal.fire('Error!', 'Failed to delete user.', 'error');
+                        }
+                    });
+                    }
+                });
+            });
+        });
+    </script>
+</html>

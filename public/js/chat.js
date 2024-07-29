@@ -197,7 +197,7 @@ $(document).ready(function() {
                     thumbnail = data.chat.thumbnailUrl || data.chat.chatImageUrl
 
                     $('#chat-title').text(chatName)
-
+                    $('#input-container').show().addClass('d-flex');
                     if(!isNew){
                         displayChat(data.userChat.messages)
                     }

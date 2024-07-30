@@ -120,10 +120,6 @@ $(document).ready(function() {
         };
         window.sendMessage = function(customMessage,displayStatus = true) {
             currentStep ++
-            if($('#chat-widget-container').length == 0 && isTemporary){
-                showRegistrationForm()
-                return
-            }
             const message = customMessage || $('#userMessage').val();
             if (message.trim() !== '') {
                 if(displayStatus){
@@ -148,12 +144,15 @@ $(document).ready(function() {
                         }
                     },
                     error: function(error) {
-                        console.log(error)
                         if (error.status === 403) {
+                            if($('#chat-widget-container').length == 0 && isTemporary){
+                                showRegistrationForm()
+                                return
+                            }
                             if($('#chat-widget-container').length == 0 ){
                                 Swal.fire({
                                     title: '注意',
-                                    text: '無料ユーザーのメッセージの最大数は1日5件です。',
+                                    text: '無料ユーザーのメッセージの最大数は1日50件です。',
                                     icon: 'warning',
                                     confirmButtonText: 'OK',
                                     allowEnterKey: false

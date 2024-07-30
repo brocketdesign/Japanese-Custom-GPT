@@ -429,6 +429,12 @@ async function routes(fastify, options) {
             request.body.userId = userId; // Ensure userId is set in the request body for later use
         }
     
+        const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+        const user = await userDataCollection.findOne({_id:new ObjectId(userId)})
+
+        const isTemporary = user.isTemporary
+        const limit = isTemporary ? 11 : 51
+
         const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
     
         // Get the MessageCount collection
@@ -438,7 +444,7 @@ async function routes(fastify, options) {
         const messageCountDoc = await collectionMessageCount.findOne({ userId: new fastify.mongo.ObjectId(userId), date: today });
         console.log({today,messageCountDoc})
         // Check if the user has reached the message limit
-        if (messageCountDoc && messageCountDoc.count >= 6) {
+        if (messageCountDoc && messageCountDoc.count >= limit) {
             return reply.status(403).send({ error: 'Message limit reached for today.' });
         }
     

@@ -122,13 +122,9 @@
             <textarea class="form-control" id="chatPurpose" name="content" rows="5" 
             placeholder="例：中村美咲（27歳）は明るく社交的なOLで、責任感が強く、チームをサポートする姿勢が評価されている。趣味は旅行とカフェ巡りで、休日には友達と過ごすことが多い。話し方は礼儀正しく丁寧でありながら柔らかく、安心感を与える。"></textarea>
             <button type="button" id="genChat" class="btn btn-gradient-radius my-3 shadow-0 w-100" data-toggle="tooltip" title="チャット構造の生成">
-                <i class="fa fa-cog fa-fw me-2"></i>
+                AIでキャラクターを生成する
                 <i class="fa fa-spinner fa-spin fa-fw fa-hidden d-none me-2"></i>
-                AIで生成する
             </button>
-            <p class="text-small text-muted text-start" style="font-size:12px">
-                ユーザーが提供するチャット内容を使用して、キャラクターの詳細を生成をクリックすることでAIキャラクタープロファイルを生成できます。または、自分でキャラクターをデザインすることもできます。
-            </p>
         </div>
         <div class="mb-3 mx-3">
             <label for="visibility" class="form-label"><i class="fas fa-eye"></i> 公開設定を選択してください:</label>
@@ -306,25 +302,43 @@
                     if(chatData.purpose){
                         $('#chatPurpose').val(chatData.purpose)
                     }
-                    $('#chatName').val(chatData.name);
+                    if(chatData.name){
+                        $('#chatName').val(chatData.name);
+                        $('#chatName').parent().show()
+                    }
                     if(chatData.visibility){
                         $('#visibility').val(chatData.visibility)
                     }
                     if(chatData.language){
                         $('#language').val(chatData.language)
                     }
-                    $('#chatCategory').val(chatData.category);
+                    if(chatData.category){
+                        $('#chatCategory').val(chatData.category);
+                        $('#chatCategory').parent().show()
+                    }
+                    
                     var chatDescriptionTextare = $('#chatDescription')
-                    chatDescriptionTextare.val(chatData.description);
-                    setTimeout(function(){
-                        resizeTextarea(chatDescriptionTextare[0]);
-                    },500)
+                    if(chatData.description){
+                        chatDescriptionTextare.val(chatData.description);
+                        setTimeout(function(){
+                            resizeTextarea(chatDescriptionTextare[0]);
+                        },500)
+                        chatDescriptionTextare.parent().show()
+                    }
+                    
                     var chatRuleTextarea = $('#chatRule');
-                    chatRuleTextarea.val(chatData.rule);
-                    $('#markdownContainer').html(chatData.rule)
-                    setTimeout(function(){
-                        resizeTextarea(chatRuleTextarea[0]);
-                    },500)
+                    if(chatData.rule){
+                        chatRuleTextarea.val(chatData.rule);
+                        $('#markdownContainer').html(chatData.rule)
+                        setTimeout(function(){
+                            resizeTextarea(chatRuleTextarea[0]);
+                        },500)
+                        chatRuleTextarea.parent().show();
+                        $('#markdownContainer').show();
+
+                        $('#sendForm').show()
+                        $('.sendForm-text').show()
+                    }
                     
                     $('#chatUrl').val(chatData.url);
                     $('#myUrl').val(chatData.url);
@@ -417,6 +431,15 @@
    
         // Event handler for the send button
         $('#genChat').on('click', function() {
+            if ($('#chatPurpose').val().trim() == '') {
+                Swal.fire({
+                    title: '警告',
+                    text: 'キャラクターの詳細は必須項目です。入力してください。',
+                    icon: 'warning',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
             generateName(function(){
                 generateDescription();
                 generateRule(function(){

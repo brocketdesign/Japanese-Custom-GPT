@@ -5,6 +5,7 @@ const aws = require('aws-sdk');
 const sessions = new Map(); // Define sessions map
 const { analyzeScreenshot, processURL } = require('../models/scrap');
 const { createHash } = require('crypto');
+const { convert } = require('html-to-text');
 
 async function routes(fastify, options) {
 
@@ -420,21 +421,48 @@ async function routes(fastify, options) {
             console.log(error)
         }
     });
-    fastify.post('/api/chat-data', async (request, reply) => {
+    async function checkMessageLimit(request, reply) {
+        let userId = request.body.userId;
+        if (!userId) {
+            const user = await fastify.getUser(request, reply);
+            userId = user._id;
+            request.body.userId = userId; // Ensure userId is set in the request body for later use
+        }
+    
+        const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
+    
+        // Get the MessageCount collection
+        const collectionMessageCount = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageCount');
+    
+        // Query the MessageCount collection to get the user's message count for today
+        const messageCountDoc = await collectionMessageCount.findOne({ userId: new fastify.mongo.ObjectId(userId), date: today });
+        console.log({today,messageCountDoc})
+        // Check if the user has reached the message limit
+        if (messageCountDoc && messageCountDoc.count >= 6) {
+            return reply.status(403).send({ error: 'Message limit reached for today.' });
+        }
+    
+        // Pass the message count document to the route handler
+        request.messageCountDoc = messageCountDoc;
+    }
+    fastify.post('/api/chat-data', {
+        preHandler: [checkMessageLimit]
+      }, async (request, reply) => {
         const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
         const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-    
+        const collectionMessageCount = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageCount');
+
         let { currentStep, message, chatId, userChatId, isNew } = request.body;
         let userId = request.body.userId
         if (!userId) {
             const user = await fastify.getUser(request, reply);
             userId = user._id;
         }
+        const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
         try {
             // Find or create the chat document
             let userChatDocument = await collectionUserChat.findOne({ userId, _id: new fastify.mongo.ObjectId(userChatId) });
             let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
-            const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
             const isUserChat = await collectionChat.findOne({ userId: new fastify.mongo.ObjectId(userId) , _id: new fastify.mongo.ObjectId(chatId) });
             if(!isUserChat){
                 console.log(`Create a copy : ${chatId}`)
@@ -448,14 +476,19 @@ async function routes(fastify, options) {
             }
             if (!userChatDocument || isNew) {
                 console.log(`Initialize chat: ${chatId}`);
+                const chatDescription = convert(chatDocument.description)
+                const chatRule = convert(chatDocument.rule)
                 userChatDocument = {
                     userId,
                     chatId,
                     messages: [
-                        { "role": "system", "content": `${chatDocument.rule ? chatDocument.description + chatDocument.rule + 'Taking in account the character description above, You DO NOT KNOW EVERYTHING. You only know what your character may knows. Do no hesitate to say that you do not know something.DO NOT EVER answer with a list unless specifically asked for one. You speak and write ' + chatDocument.language : 'You are a '+chatDocument.language+' assistant about: ' + chatDocument.description + 'You provide short and friendly answers. DO NOT EVER answer with list unless specifically asked for one. You always prompt the user to help continue the conversation smoothly.'}` },
+                        { "role": "system", "content": 
+                            `${chatDocument.rule ? 
+                            `You are an AI character named ${chatDocument.name}.\n\n${chatDescription}\n${chatRule}\n\nKeep in mind that you are not omniscient. Respond only with what your character would know, and feel free to admit when you do not know something. Avoid lists unless specifically requested. This is a casual chat, so use short messages and emojis only when necessary. Communicate naturally in ${chatDocument.language}.` : 
+                            'You are a '+chatDocument.language+' assistant about: ' + chatDocument.description + 'You provide short and friendly answers. DO NOT EVER answer with list unless specifically asked for one. You always prompt the user to help continue the conversation smoothly.'}` },
                     ],
-                    createdAt: dateObj,
-                    updatedAt: dateObj
+                    createdAt: today,
+                    updatedAt: today
                 };
                 if (chatDocument.content && chatDocument.content[currentStep]) {
                     userChatDocument.messages.push({ "role": "assistant", "content": chatDocument.content[currentStep].question });
@@ -468,7 +501,7 @@ async function routes(fastify, options) {
     
             // Add the new user message to the chat document
             userChatDocument.messages.push({ "role": "user", "content": message });
-            userChatDocument.updatedAt = dateObj;
+            userChatDocument.updatedAt = today;
     
             const query = { userId, _id: new fastify.mongo.ObjectId(userChatId) };
             let result;
@@ -495,8 +528,20 @@ async function routes(fastify, options) {
                 documentId = result.insertedId;
             }
     
-            console.log({userChatId: documentId, chatId});
-    
+            // Update the message count
+            if (request.messageCountDoc) {
+                await collectionMessageCount.updateOne(
+                    { userId: new fastify.mongo.ObjectId(userId), date: today },
+                    { $inc: { count: 1 } }
+                );
+            } else {
+                await collectionMessageCount.insertOne({
+                    userId: new fastify.mongo.ObjectId(userId),
+                    date: today,
+                    count: 1
+                });
+            }
+
             return reply.send({ nextStoryPart: "You chose the path and...", endOfStory: true, userChatId: documentId, chatId });
         } catch (error) {
             console.log(error);
@@ -798,9 +843,8 @@ async function routes(fastify, options) {
             }
 
             const userMessages = userData.messages;
-            //console.log({ message:userMessages })
 
-            const completion = await fetchOpenAICompletion(userMessages, reply.raw,200);
+            const completion = await fetchOpenAICompletion(userMessages, reply.raw, 100);
 
             // Append the assistant's response to the messages array in the chat document
             const assistantMessage = { "role": "assistant", "content": completion };
@@ -812,6 +856,8 @@ async function routes(fastify, options) {
                 { userId , _id: new fastify.mongo.ObjectId(userChatId) },
                 { $set: { messages: userMessages, updatedAt: userData.updatedAt } }
             );
+
+            //console.log({ message:userMessages })
     
             reply.raw.end();
         } catch (error) {

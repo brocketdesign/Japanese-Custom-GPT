@@ -10,7 +10,6 @@ $(document).ready(function() {
         let chatId = getIdFromUrl(window.location.href) || $(`#lamix-chat-widget`).data('id');
         let userChatId
         const userId = user._id
-        let messagesCount = 0 
         let currentStep = 0;
         let totalSteps = 0;
         let chatData = {};
@@ -121,18 +120,8 @@ $(document).ready(function() {
         };
         window.sendMessage = function(customMessage,displayStatus = true) {
             currentStep ++
-            messagesCount ++
             if($('#chat-widget-container').length == 0 && isTemporary){
                 showRegistrationForm()
-                return
-            }
-            if(messagesCount >= 5){
-                Swal.fire({
-                    title: '注意',
-                    text: '無料ユーザーのメッセージの最大数は1日10件です。',
-                    icon: 'warning',
-                    confirmButtonText: 'OK'
-                });
                 return
             }
             const message = customMessage || $('#userMessage').val();
@@ -159,8 +148,22 @@ $(document).ready(function() {
                         }
                     },
                     error: function(error) {
-                        console.error('Error:', error);
-                        displayMessage('bot', 'An error occurred while sending the message.');
+                        console.log(error)
+                        if (error.status === 403) {
+                            if($('#chat-widget-container').length == 0 ){
+                                Swal.fire({
+                                    title: '注意',
+                                    text: '無料ユーザーのメッセージの最大数は1日5件です。',
+                                    icon: 'warning',
+                                    confirmButtonText: 'OK',
+                                    allowEnterKey: false
+                                });
+                                return
+                            }
+                        } else {
+                            console.error('Error:', error);
+                            displayMessage('bot', 'An error occurred while sending the message.');
+                        }
                     }
                 });
             }
@@ -325,6 +328,7 @@ $(document).ready(function() {
                     });
                 },
                 error: function(error) {
+                    console.log(error)
                     console.log(error.statusText);
                 }
             });
@@ -539,7 +543,6 @@ $(document).ready(function() {
                     };
 
                     eventSource.onerror = function(error) {
-                        console.log('EventSource failed.');
                         eventSource.close();
                         if (typeof callback === "function") {
                             callback();

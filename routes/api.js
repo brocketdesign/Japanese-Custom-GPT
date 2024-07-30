@@ -289,7 +289,13 @@ async function routes(fastify, options) {
     
         let userChat;
         if (isUserChat) {
-            userChat = await collectionUserChat.find({ $or: [{ chatId }, { name: isUserChat.name }] }).sort({ _id: -1 }).toArray();
+            userChat = await collectionUserChat.find({ 
+                $or: [{ 
+                    $or: [
+                        { chatId },
+                        { chatId: new fastify.mongo.ObjectId(chatId) }
+                    ] }
+                    , { name: isUserChat.name }] }).sort({ _id: -1 }).toArray();
         } else {
             userChat = await collectionUserChat.find({
                 $or: [
@@ -475,7 +481,7 @@ async function routes(fastify, options) {
         const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
         try {
             // Find or create the chat document
-            let userChatDocument = await collectionUserChat.findOne({ userId, _id: new fastify.mongo.ObjectId(userChatId) });
+            let userChatDocument = await collectionUserChat.findOne({ userId : new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
             let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
             const isUserChat = await collectionChat.findOne({ userId: new fastify.mongo.ObjectId(userId) , _id: new fastify.mongo.ObjectId(chatId) });
             if(!isUserChat){
@@ -516,7 +522,10 @@ async function routes(fastify, options) {
             userChatDocument.messages.push({ "role": "user", "content": message });
             userChatDocument.updatedAt = today;
     
-            const query = { userId, _id: new fastify.mongo.ObjectId(userChatId) };
+            const query = { 
+                userId: new fastify.mongo.ObjectId(userId), 
+                _id: new fastify.mongo.ObjectId(userChatId) 
+            };
             let result;
             let documentId;
             // Remove the _id field from the userChatDocument to avoid attempting to update it
@@ -524,14 +533,15 @@ async function routes(fastify, options) {
     
             if (!isNew) {
                 console.log(`Update chat data : ${chatId} ;  current :${userChatId}`);
+                console.log(userChatDocument)
                 result = await collectionUserChat.updateOne(
                     query,
                     { $set: updateFields },
-                    { upsert: true }
+                    { upsert: false }
                 );
     
                 if (result.matchedCount > 0) {
-                    documentId = userChatId; // Since we are querying by _id, we can directly use userChatId
+                    documentId = userChatId; 
                 } else {
                     documentId = result.upsertedId._id;
                 }
@@ -558,7 +568,6 @@ async function routes(fastify, options) {
 
             return reply.send({ nextStoryPart: "You chose the path and...", endOfStory: true, userChatId: documentId, chatId });
         } catch (error) {
-            console.log(error);
             console.error('Failed to save user choice:', error);
             return reply.status(500).send({ error: 'Failed to save user choice' });
         }
@@ -847,7 +856,7 @@ async function routes(fastify, options) {
             const userId = session.userId;
             const chatId = session.chatId;
             const userChatId = session.userChatId;
-
+            
             const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
             let userData = await collectionUserChat.findOne({ userId:new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) })
 
@@ -872,7 +881,7 @@ async function routes(fastify, options) {
               );
               
               if (result.modifiedCount === 1) {
-                //console.log('Update successful');
+                console.log('Update successful');
               } else {
                 console.log('Update failed or no documents matched');
               }

@@ -322,13 +322,32 @@ $(document).ready(function() {
                 success: function(response) {
                     userChatId = response.userChatId
                     chatId = response.chatId
+                    console.log({userChatId,chatId})
                     isNew = false;
                     generateCompletion(function() {
                     });
                 },
                 error: function(error) {
-                    console.log(error)
-                    console.log(error.statusText);
+                    
+                    if (error.status === 403) {
+                        if($('#chat-widget-container').length == 0 && isTemporary){
+                            showRegistrationForm()
+                            return
+                        }
+                        if($('#chat-widget-container').length == 0 ){
+                            Swal.fire({
+                                title: '注意',
+                                text: '無料ユーザーのメッセージの最大数は1日50件です。',
+                                icon: 'warning',
+                                confirmButtonText: 'OK',
+                                allowEnterKey: false
+                            });
+                            return
+                        }
+                    } else {
+                        console.error('Error:', error);
+                        displayMessage('bot', 'An error occurred while sending the message.');
+                    }
                 }
             });
         }
@@ -361,7 +380,7 @@ $(document).ready(function() {
                     if (userMessage && userMessage.role === "user") {
                         messageHtml += `
                             <div class="d-flex flex-row justify-content-end mb-4 message-container">
-                                <div id="response-${designStep}" class="p-3 me-3 border-0" style="border-radius: 15px; background-color: #fbfbfb;">
+                                <div id="response-${designStep}" class="p-3 me-3 border-0 text-end" style="border-radius: 15px; background-color: #fbfbfb;">
                                     ${marked.parse(userMessage.content)}
                                 </div>
                             </div>
@@ -561,7 +580,7 @@ $(document).ready(function() {
             if(messageClass == 'user-message'){
                 $('#chatContainer').append(`
                     <div class="d-flex flex-row justify-content-end mb-4 message-container ${messageClass}">
-                        <div  class="p-3 me-3 border-0" style="border-radius: 15px; background-color: #fbfbfb;">
+                        <div  class="p-3 me-3 border-0 text-end" style="border-radius: 15px; background-color: #fbfbfb;">
                             <span>${message}</span>
                         </div>
                     </div>
@@ -832,9 +851,82 @@ $(document).ready(function() {
         */
     }
 });
-function showRegistrationForm(){
-    window.location = "/authenticate?register=true"
-}
+
+function showRegistrationForm() {
+    //window.location = "/authenticate?register=true"
+    Swal.fire({
+      title: '',
+      text: '',
+      imageUrl: '/img/login-bg-862c043f.png', // replace with your image URL
+      imageWidth: 'auto',
+      imageHeight: 'auto',
+      position: 'bottom',
+      html: `
+        <h2>無料アカウントを作成してチャットを続けましょう</h2>
+        <p>続けるために、今すぐ無料で登録してください。</p>
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card shadow-0 border-0">
+                        <div class="card-body">
+                            <form id="register-form">
+                                <div class="mb-3">
+                                    <label for="register-email" class="form-label text-muted small d-none">メールアドレス</label>
+                                    <input type="email" id="register-email" class="form-control" placeholder="メールアドレスを入力してください">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="register-password" class="form-label text-muted small d-none">パスワード</label>
+                                    <input type="password" id="register-password" class="form-control" placeholder="パスワードを入力してください">
+                                </div>
+                                <button type="submit" class="btn btn-dark w-100">登録</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    `,
+      showCancelButton: false,
+      showConfirmButton: false,
+      showCloseButton: true,
+      allowOutsideClick: false,
+      showClass: {
+          popup: 'swal2-bottom-slide-in'
+      },
+      hideClass: {
+          popup: 'swal2-bottom-slide-out'
+      },
+      customClass: {
+        popup: 'animated fadeInDown'
+      }
+    });
+
+    $(document).find('#register-form').on('submit', function(event) {
+        event.preventDefault();
+        const email = $('#register-email').val();
+        const password = $('#register-password').val();
+
+        $.ajax({
+            url: '/user/register',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ email, password }),
+            success: function(response) {
+                localStorage.setItem('token', response.token);
+                window.location.href = response.redirect;
+            },
+            error: function(xhr) {
+                const res = xhr.responseJSON;
+                Swal.fire({
+                icon: 'error',
+                title: 'エラー',
+                text: res.error || '登録に失敗しました',
+                });
+            }
+        });
+    });
+  }
 function showDiscovery(){
     $('.onchat-on').hide()
     $('.onchat-on').addClass('d-none').css({

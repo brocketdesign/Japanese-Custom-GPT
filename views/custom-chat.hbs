@@ -4,6 +4,43 @@
 <body>
 
     <style>
+        .animated.fadeInDown .swal2-image{
+            margin:0;
+        }
+        .animated.fadeInDown .swal2-close{
+            border:0;
+        }
+        /* Custom animation for sliding in from the bottom */
+        .swal2-bottom-slide-in {
+            animation: bottom-slide-in 0.5s;
+        }
+
+        .swal2-bottom-slide-out {
+            animation: bottom-slide-out 0.5s;
+        }
+
+        @keyframes bottom-slide-in {
+            0% {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes bottom-slide-out {
+            0% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+        }
+
         .scroll-horizontal {
             flex-wrap: nowrap;
             width: 100%;

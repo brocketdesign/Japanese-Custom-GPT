@@ -13,7 +13,7 @@ const fastifyMultipart = require('fastify-multipart');
 mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then((client) => {
     const db = client.db(process.env.MONGODB_NAME);
-    
+
     // Register plugins
     fastify.register(require('@fastify/static'), {
       root: path.join(__dirname, 'public'),
@@ -135,7 +135,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       const userId = user._id;
       const chatsCollection = db.collection('chats');
       const collectionUserChat = db.collection('userChat');
-    
+
       // Fetch all chats for the given userId from the chats collection
       const userCreatedChats = await chatsCollection.find({ 
         userId: new fastify.mongo.ObjectId(userId) ,

@@ -195,9 +195,15 @@ async function routes(fastify, options) {
     
         try {
             let userChatDocument = await collectionUserChat.findOne({
-                userId,
+                $or: [
+                    { userId },
+                    { userId: new fastify.mongo.ObjectId(userId) }
+                ],
                 _id: new fastify.mongo.ObjectId(userChatId),
-                chatId
+                $or: [
+                    { chatId },
+                    { chatId: new fastify.mongo.ObjectId(chatId) }
+                ]
             });
             if (userChatDocument) {
                 response.userChat = userChatDocument;
@@ -267,7 +273,6 @@ async function routes(fastify, options) {
     fastify.post('/api/chat-history/:chatId', async (request, reply) => {
         const chatId = request.params.chatId;
         const userId = request.body.userId;
-    
         if (!chatId || !userId) {
             return reply.status(400).send({ error: 'Chat ID and User ID are required' });
         }
@@ -287,7 +292,10 @@ async function routes(fastify, options) {
             userChat = await collectionUserChat.find({ $or: [{ chatId }, { name: isUserChat.name }] }).sort({ _id: -1 }).toArray();
         } else {
             userChat = await collectionUserChat.find({
-                chatId,
+                $or: [
+                    { chatId },
+                    { chatId: new fastify.mongo.ObjectId(chatId) }
+                ],
                 $or: [
                     { userId },
                     { userId: new fastify.mongo.ObjectId(userId) }
@@ -442,7 +450,7 @@ async function routes(fastify, options) {
     
         // Query the MessageCount collection to get the user's message count for today
         const messageCountDoc = await collectionMessageCount.findOne({ userId: new fastify.mongo.ObjectId(userId), date: today });
-        console.log({today,messageCountDoc})
+
         // Check if the user has reached the message limit
         if (messageCountDoc && messageCountDoc.count >= limit) {
             return reply.status(403).send({ error: 'Message limit reached for today.' });
@@ -471,12 +479,11 @@ async function routes(fastify, options) {
             let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
             const isUserChat = await collectionChat.findOne({ userId: new fastify.mongo.ObjectId(userId) , _id: new fastify.mongo.ObjectId(chatId) });
             if(!isUserChat){
-                console.log(`Create a copy : ${chatId}`)
+                console.log(`Create a copy`)
                 const newChatDocument = { ...chatDocument, userId: new fastify.mongo.ObjectId(userId), visibility: 'private' };
                 delete newChatDocument._id; // Remove the _id field to let MongoDB create a new one
                 const newChatResult = await collectionChat.insertOne(newChatDocument);
-                chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(newChatResult.insertedId) });
-                
+                chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(newChatResult.insertedId), userId: new fastify.mongo.ObjectId(userId) });
                 chatId = chatDocument._id
                 console.log(`New chat : ${chatId}`)
             }
@@ -485,7 +492,7 @@ async function routes(fastify, options) {
                 const chatDescription = convert(chatDocument.description)
                 const chatRule = convert(chatDocument.rule)
                 userChatDocument = {
-                    userId,
+                    userId:new fastify.mongo.ObjectId(userId),
                     chatId,
                     messages: [
                         { "role": "system", "content": 
@@ -532,6 +539,7 @@ async function routes(fastify, options) {
                 console.log(`Create new chat data`);
                 result = await collectionUserChat.insertOne(userChatDocument);
                 documentId = result.insertedId;
+                console.log(`New user chat : ${documentId}`)
             }
     
             // Update the message count
@@ -841,7 +849,7 @@ async function routes(fastify, options) {
             const userChatId = session.userChatId;
 
             const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-            let userData = await collectionUserChat.findOne({ userId, _id: new fastify.mongo.ObjectId(userChatId) })
+            let userData = await collectionUserChat.findOne({ userId:new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) })
 
             if (!userData) {
                 reply.raw.end(); // End the stream before sending the response
@@ -858,10 +866,16 @@ async function routes(fastify, options) {
             userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
     
             // Update the chat document in the database
-            await collectionUserChat.updateOne(
-                { userId , _id: new fastify.mongo.ObjectId(userChatId) },
+            const result = await collectionUserChat.updateOne(
+                { userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) },
                 { $set: { messages: userMessages, updatedAt: userData.updatedAt } }
-            );
+              );
+              
+              if (result.modifiedCount === 1) {
+                //console.log('Update successful');
+              } else {
+                console.log('Update failed or no documents matched');
+              }
 
             //console.log({ message:userMessages })
     

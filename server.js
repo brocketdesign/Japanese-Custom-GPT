@@ -118,12 +118,6 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     });
 
     fastify.get('/authenticate',async (request, reply) => {
-      const protocol = request.protocol;
-      const host = request.headers.host.replace('192.168.10.115', 'localhost');
-      const lineConfig = {
-        redirectUri: `${protocol}://${host}/user/line-auth/callback`,
-      };
-      console.log(lineConfig)
       const user = await fastify.getUser(request, reply);
       if (user.isTemporary || request.query.register ) {
         return reply.view('authenticate.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' , register:!!request.query.register });

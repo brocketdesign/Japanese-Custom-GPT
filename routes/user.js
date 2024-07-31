@@ -82,6 +82,87 @@ fastify.get('/user/google-auth/callback', async (request, reply) => {
     return reply.status(500).send({ error: 'サーバーエラーが発生しました' });
   }
 });
+
+
+
+fastify.get('/user/line-auth', async (request, reply) => {
+  const protocol = request.protocol;
+  const host = request.headers.host.replace('192.168.10.115', 'localhost');
+  const lineConfig = {
+    channelId: process.env.LINE_CHANNEL_ID,
+    channelSecret: process.env.LINE_CHANNEL_SECRET,
+    redirectUri: `${protocol}://${host}/user/line-auth/callback`,
+  };
+  const state = crypto.randomBytes(16).toString('hex');
+  const nonce = crypto.randomBytes(16).toString('hex');
+  const scope = 'profile openid';
+  const response_type = 'code';
+
+  const url = `https://access.line.me/oauth2/v2.1/authorize?` +
+    `response_type=${response_type}&` +
+    `client_id=${lineConfig.channelId}&` +
+    `redirect_uri=${encodeURIComponent(lineConfig.redirectUri)}&` +
+    `scope=${scope}&` +
+    `state=${state}&` +
+    `nonce=${nonce}`;
+
+  return reply.redirect(url);
+});
+fastify.get('/user/line-auth/callback', async (request, reply) => {
+  try {
+    const protocol = request.protocol;
+    const host = request.headers.host.replace('192.168.10.115', 'localhost');
+    const lineConfig = {
+      channelId: process.env.LINE_CHANNEL_ID,
+      channelSecret: process.env.LINE_CHANNEL_SECRET,
+      redirectUri: `${protocol}://${host}/user/line-auth/callback`,
+    };
+    const code = request.query.code;
+    const state = request.query.state;
+    const nonce = request.query.nonce;
+
+    const tokenResponse = await axios.post(`https://api.line.me/oauth2/v2.1/token`, {
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: lineConfig.redirectUri,
+      client_id: lineConfig.channelId,
+      client_secret: lineConfig.channelSecret,
+    });
+
+    const token = tokenResponse.data.access_token;
+    const idToken = tokenResponse.data.id_token;
+
+    const decodedIdToken = jwt.verify(idToken, lineConfig.channelSecret, {
+      algorithms: ['HS256'],
+    });
+
+    const userId = decodedIdToken.sub;
+    const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+
+    // Check if the user already exists
+    const user = await usersCollection.findOne({ userId });
+    if (!user) {
+      // Create a new user if they don't exist
+      const hashedPassword = await bcrypt.hash(Math.random().toString(36).substr(2, 10), 10);
+      const result = await usersCollection.insertOne({ userId, password: hashedPassword, createdAt: new Date() });
+      const userId = result.insertedId;
+      const token = jwt.sign({ _id: userId, userId }, process.env.JWT_SECRET, { expiresIn: '24h' });
+      return reply
+      .setCookie('token', token, { path: '/', httpOnly: true })
+      .redirect('/dashboard')
+      .send({ status: 'ユーザーが正常に登録されました' });
+    } else {
+      // Login the user if they already exist
+      const token = jwt.sign({ _id: user._id, userId: user.userId }, process.env.JWT_SECRET, { expiresIn: '24h' });
+      return reply
+      .setCookie('token', token, { path: '/', httpOnly: true })
+      .redirect('/dashboard');
+    }
+  } catch (err) {
+    fastify.log.error(err);
+    return reply.status(500).send({ error: 'サーバーエラーが発生しました' });
+  }
+});
   // Keep the old logout route
   fastify.post('/user/logout', async (request, reply) => {
     return reply

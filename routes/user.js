@@ -3,75 +3,95 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const aws = require('aws-sdk');
 const crypto = require('crypto');
+const axios = require('axios');
 
 async function routes(fastify, options) {
-  
-  fastify.post('/user/register', async (request, reply) => {
-    try {
-      const { email, password } = request.body;
-      
-      // Validate request data
-      if (!email || !password) {
-        return reply.status(400).send({ error: 'ユーザー名とパスワードは必須です' });
-      }
-  
-      const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
-      
-      // Check if the user already exists
-      const user = await usersCollection.findOne({ email });
-      if (user) {
-        return reply.status(400).send({ error: 'ユーザーはすでに存在します' });
-      }
-      
-      // Hash the password
-      const hashedPassword = await bcrypt.hash(password, 10);
-  
-      // Insert new user into the database
-      const result = await usersCollection.insertOne({ email, password: hashedPassword, createdAt:new Date() });
-  
-      if (!result.insertedId) {
-        return reply.status(500).send({ error: 'ユーザーの登録に失敗しました' });
-      }
-  
-      const newUser = { _id: result.insertedId, email };
-  
-      // Generate a token for the new user
-      const token = jwt.sign(newUser, process.env.JWT_SECRET, { expiresIn: '24h' });
-  
-      return reply
-        .setCookie('token', token, { path: '/', httpOnly: true })
-        .send({ status: 'ユーザーが正常に登録されました', redirect: '/dashboard' });
-    } catch (err) {
-      fastify.log.error(err);
-      return reply.status(500).send({ error: 'サーバーエラーが発生しました' });
-    }
-  });
+  // Google authentication configuration
+  const googleClientId = process.env.GOOGLE_CLIENT_ID;
+  const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 
-  fastify.post('/user/login', async (request, reply) => {
-    const { email, password } = request.body;
+
+// Google authentication route
+fastify.get('/user/google-auth', async (request, reply) => {
+  const protocol = request.protocol;
+  const host = request.headers.host.replace('192.168.10.115', 'localhost');
+  const googleRedirectUri = `${protocol}://${host}/user/google-auth/callback`;
+  
+  const url = `https://accounts.google.com/o/oauth2/v2/auth?` +
+    `client_id=${googleClientId}&` +
+    `redirect_uri=${encodeURIComponent(googleRedirectUri)}&` +
+    `response_type=code&` +
+    `scope=openid%20email%20profile`;
+
+  return reply.redirect(url);
+});
+
+// Google authentication callback route
+fastify.get('/user/google-auth/callback', async (request, reply) => {
+  try {
+    const protocol = request.protocol;
+    const host = request.headers.host.replace('192.168.10.115', 'localhost');
+    const googleRedirectUri = `${protocol}://${host}/user/google-auth/callback`;
+    
+    const code = request.query.code;
+    const tokenResponse = await axios.post(`https://oauth2.googleapis.com/token`, {
+      code,
+      client_id: googleClientId,
+      client_secret: googleClientSecret,
+      redirect_uri: googleRedirectUri,
+      grant_type: 'authorization_code',
+    });
+
+    const token = tokenResponse.data.access_token;
+    const userInfoResponse = await axios.get('https://openidconnect.googleapis.com/v1/userinfo', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const userInfo = userInfoResponse.data;
+    const email = userInfo.email;
+    const googleId = userInfo.sub; // Get the Google ID from the user info response
     const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
-    
-    const user = await usersCollection.findOne({ email });
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      return reply.status(401).send({ error: '無効なユーザー名またはパスワード' });
-    }
-    
-    const token = jwt.sign({ _id: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '24h' });
-    return reply
-      .clearCookie('tempUser', { path: '/' }) // Clear the tempUser cookie
-      .setCookie('token', token, { path: '/', httpOnly: true })
-      .send({ redirect: '/dashboard' });
-  });  
 
+    // Check if the user already exists
+    const user = await usersCollection.findOne({ email });
+    if (!user) {
+      // Create a new user if they don't exist
+      const hashedPassword = await bcrypt.hash(Math.random().toString(36).substr(2, 10), 10);
+      const result = await usersCollection.insertOne({ email, password: hashedPassword, googleId, createdAt: new Date() });
+      const userId = result.insertedId;
+      const token = jwt.sign({ _id: userId, email }, process.env.JWT_SECRET, { expiresIn: '24h' });
+      return reply
+      .setCookie('token', token, { path: '/', httpOnly: true })
+      .redirect('/dashboard')
+      .send({ status: 'ユーザーが正常に登録されました' });
+    } else {
+      // Update the user's Google ID if it's not already set
+      if (!user.googleId) {
+        await usersCollection.updateOne({ _id: user._id }, { $set: { googleId } });
+      }
+      // Login the user if they already exist
+      const token = jwt.sign({ _id: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '24h' });
+      return reply
+      .setCookie('token', token, { path: '/', httpOnly: true })
+      .redirect('/dashboard')
+    }
+  } catch (err) {
+    fastify.log.error(err);
+    return reply.status(500).send({ error: 'サーバーエラーが発生しました' });
+  }
+});
+  // Keep the old logout route
   fastify.post('/user/logout', async (request, reply) => {
     return reply
-      .clearCookie('token', { path: '/' })
-      .clearCookie('tempUser', { path: '/' }) // Add this line to clear the tempUser cookie
-      .send({ status: 'ログアウトに成功しました' });
-  });  
+     .clearCookie('token', { path: '/' })
+     .send({ status: 'ログアウトに成功しました' });
+  });
 
-  // Configure AWS S3
-  const s3 = new aws.S3({
+  // Keep the old update-info route
+   // Configure AWS S3
+   const s3 = new aws.S3({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     region: process.env.AWS_REGION
@@ -169,6 +189,7 @@ async function routes(fastify, options) {
     }
   });
 
+  // Keep the old update-password route
   fastify.post('/user/update-password', async (request, reply) => {
     try {
       const { oldPassword, newPassword } = request.body;

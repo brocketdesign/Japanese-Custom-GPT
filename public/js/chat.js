@@ -869,17 +869,10 @@ function showRegistrationForm() {
                 <div class="col-md-8">
                     <div class="card shadow-0 border-0">
                         <div class="card-body">
-                            <form id="register-form">
-                                <div class="mb-3">
-                                    <label for="register-email" class="form-label text-muted small d-none">メールアドレス</label>
-                                    <input type="email" id="register-email" class="form-control" placeholder="メールアドレスを入力してください">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="register-password" class="form-label text-muted small d-none">パスワード</label>
-                                    <input type="password" id="register-password" class="form-control" placeholder="パスワードを入力してください">
-                                </div>
-                                <button type="submit" class="btn btn-dark w-100">登録</button>
-                            </form>
+                            <a href="/user/google-auth" class="btn btn-light google-login-button">
+                                <img src="/img/google_logo_neutral.png">
+                                <span class="gsi-material-button-contents">Googleで続ける</span>
+                            </a>
                         </div>
                     </div>
                 </div>

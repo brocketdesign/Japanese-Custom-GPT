@@ -62,7 +62,7 @@ async function routes(fastify, options) {
       .setCookie('token', token, { path: '/', httpOnly: true })
       .send({ redirect: '/dashboard' });
   });  
-  
+
   // Google authentication configuration
   const googleClientId = process.env.GOOGLE_CLIENT_ID;
   const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -70,7 +70,7 @@ async function routes(fastify, options) {
 
 // Google authentication route
 fastify.get('/user/google-auth', async (request, reply) => {
-  const protocol = request.protocol;
+  const protocol = 'https';
   const host = request.headers.host.replace('192.168.10.115', 'localhost');
   const googleRedirectUri = `${protocol}://${host}/user/google-auth/callback`;
   
@@ -86,7 +86,7 @@ fastify.get('/user/google-auth', async (request, reply) => {
 // Google authentication callback route
 fastify.get('/user/google-auth/callback', async (request, reply) => {
   try {
-    const protocol = request.protocol;
+    const protocol = 'https';
     const host = request.headers.host.replace('192.168.10.115', 'localhost');
     const googleRedirectUri = `${protocol}://${host}/user/google-auth/callback`;
     

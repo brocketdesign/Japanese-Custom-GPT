@@ -64,13 +64,6 @@
         <div class="card bg-dark text-white" style="border-radius: 1rem;">
           <div class="card-body p-5 text-center">
             <div class="mb-md-5 mt-md-4 pb-5">
-              <div class="container">
-                <a href="/user/google-auth" class="btn google-login-button">
-                  <img src="/img/google_logo_neutral.png">
-                    <span class="gsi-material-button-contents">Googleで続ける</span>
-                </a>
-                </a>
-              </div>
               <h5 class="fw-bold mb-2 text-uppercase authenticate">{{#if register}}会員登録{{else}}ログイン{{/if}}</h5>
               <h2 class="text-white-50 mb-5 header">{{#if register}}無料アカウント登録で、AIキャラとの会話をもっと楽しもう!{{else}}ログインして多様なAIキャラと楽しく会話しましょう!{{/if}}</h2>
               <ul class="nav nav-tabs" id="authTab" role="tablist">
@@ -92,7 +85,7 @@
                       <input type="password" id="login-password" name="password" class="form-control form-control-lg" required />
                       <label class="form-label" for="login-password">パスワード</label>
                     </div>
-                    <button type="submit" class="btn btn-outline-light btn-lg px-5">ログイン</button>
+                    <button type="submit" class="btn btn-light btn-lg px-5 w-100">ログイン</button>
                   </form>
                 </div>
                 <div class="tab-pane fade {{#if register}}show active{{/if}}" id="register" role="tabpanel" aria-labelledby="register-tab">

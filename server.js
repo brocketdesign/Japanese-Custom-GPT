@@ -125,6 +125,14 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         return reply.redirect('/dashboard')
       }
     });
+    fastify.get('/authenticate/mail',async (request, reply) => {
+      const user = await fastify.getUser(request, reply);
+      if (user.isTemporary || request.query.register ) {
+        return reply.view('authenticate-v1.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' , register:!!request.query.register });
+      } else {
+        return reply.redirect('/dashboard')
+      }
+    });
 
     fastify.get('/chat', (request, reply) => {
       reply.redirect('chat/');

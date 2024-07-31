@@ -83,8 +83,6 @@ fastify.get('/user/google-auth/callback', async (request, reply) => {
   }
 });
 
-
-
 fastify.get('/user/line-auth', async (request, reply) => {
   const protocol = request.protocol;
   const host = request.headers.host.replace('192.168.10.115', 'localhost');

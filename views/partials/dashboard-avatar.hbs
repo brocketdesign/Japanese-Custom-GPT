@@ -1,5 +1,5 @@
 {{#if user.isTemporary}}
-        <a class="btn btn-secondary shadow-0" style="border-radius: 50px;" href="/authenticate"><i class="fas fa-sign-in-alt me-3"></i> ログイン/会員登録</a>
+        <a class="btn btn-secondary shadow-0 m-2" style="border-radius: 50px;" href="/authenticate"><i class="fas fa-sign-in-alt me-3"></i> ログイン/会員登録</a>
     {{else}}
         <a data-mdb-dropdown-init class="nav-link dropdown-toggle hidden-arrow d-flex align-items-center" href="#"
             id="navbarDropdownMenuLink" role="button" aria-expanded="false">
@@ -8,12 +8,12 @@
             loading="lazy" />
         </a>
         <ul class="avatar-menu dropdown-menu dropdown-menu-end mx-3" aria-labelledby="navbarDropdownMenuLink">
-                <li><a class="dropdown-item" href="/my-plan"><i class="fas fa-layer-group me-3"></i> 私のプラン</a></li>
-                <li><a class="dropdown-item" href="/chat/list/"><i class="fas fa-user-cog me-3"></i> チャット一覧</a></li>
-                <li><a class="dropdown-item" href="/chat/edit/"><i class="fas fa-wrench me-3"></i> チャット作成</a></li>
-                <li><a class="dropdown-item" href="/settings"><i class="fas fa-cogs me-3"></i> 設定</a></li>
+                <li><a class="dropdown-item text-secondary" href="/my-plan"><i class="fas fa-layer-group me-3"></i> 私のプラン</a></li>
+                <li><a class="dropdown-item text-secondary" href="/chat/list/"><i class="fas fa-user-cog me-3"></i> チャット一覧</a></li>
+                <li><a class="dropdown-item text-secondary" href="/chat/edit/"><i class="fas fa-wrench me-3"></i> チャット作成</a></li>
+                <li><a class="dropdown-item text-secondary" href="/settings"><i class="fas fa-cogs me-3"></i> 設定</a></li>
                 <hr>
-                <li><a class="dropdown-item logout" href="#"><i class="fas fa-sign-out-alt me-3"></i> ログアウト</a></li>
+                <li><a class="dropdown-item text-secondary logout" href="#"><i class="fas fa-sign-out-alt me-3"></i> ログアウト</a></li>
         </ul>
 {{/if}}
 <style>

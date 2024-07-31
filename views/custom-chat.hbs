@@ -128,7 +128,10 @@
             object-fit: cover;
             object-position: top;
         }
-
+        .swal-image.analyze{
+            object-fit: cover;
+            object-position: top;
+        }
         .chat-container {
             display: flex;
             overflow-x: auto;
@@ -312,7 +315,7 @@
             transform: rotate(90deg);
         }
         .chat-list .dropdown .dropdown-toggle{
-            opacity: 0;
+            opacity: 1;
             pointer-events: 'none';
         }
         .online-text {
@@ -389,7 +392,7 @@
                         <!-- Dropdown -->
                         <div class="dropdown pe-3">
                             <button class="btn border-0 shadow-0 dropdown-toggle ms-2 " type="button" id="dropdownMenuButton_{{this._id}}" data-mdb-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-ellipsis-v"></i>
+                                <i class="fas fa-ellipsis-v text-secondary"></i>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end shadow rounded" aria-labelledby="dropdownMenuButton_{{this._id}}">
                                 <li>
@@ -659,7 +662,7 @@ $(document).ready(function() {
                 // SweetAlert2でアラートを表示
                 Swal.fire({
                     html: `
-                        <div class="card border-0">
+                        <div class="card border-0 shadow-0">
                             <div class="card-body">
                                 <h5 class="card-title">${response.chat.name}</h5>
                                 <p class="card-text text-muted" style="font-size: 16px;">${response.chat.description}</p>
@@ -680,7 +683,7 @@ $(document).ready(function() {
                     showCloseButton: true,
                     showConfirmButton: false,
                     customClass: {
-                        image: 'swal-image'
+                        image: 'swal-image analyze'
                     }
                 });
             })

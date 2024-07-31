@@ -794,7 +794,7 @@ $(document).ready(function() {
                     function() {
                         // When the parent element is no longer hovered
                         $(this).find('.dropdown-toggle').css({
-                            'opacity': 0,
+                            'opacity': 1,
                             'pointer-events': 'none'
                         });
                         // Close the dropdown

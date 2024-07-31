@@ -72,6 +72,15 @@
     .thumb{
         width: 20vw;
     }
+    .chat-visibility{
+        display: none;
+    }
+    .chat-visibility.public-public{
+        display: inline-block;
+    }
+    .chat-visibility.private-private{
+        display: inline-block;
+    }
     @media (max-width: 600px) {
     /* Styles for small screens */
         .thumb{
@@ -124,10 +133,12 @@
                             </div>
                             <div class="chat-list-option" style="max-width: 95%;">
                                 <span style="font-size: 12px;" class="truncate-text py-1">{{this.description}}</span>
-                                <p class="text-muted" style="font-size:12px"><i class="fas fa-clock me-1"></i>{{this.dateStrJP}}{{#if this.visibility}}
-                                    <span class="fas fa-eye"></span>
+                                <p class="text-muted" style="font-size:12px"><i class="fas fa-clock me-1"></i>{{this.dateStrJP}}
+                                {{#if this.visibility}}
+                                    <span class="fas fa-eye mx-3 chat-visibility public-{{this.visibility}}"></span>
+                                    <span class="fas fa-eye-slash mx-3 chat-visibility private-{{this.visibility}}"></span>
                                 {{else}}
-                                    <span class="fas fa-eye-slash"></span>
+                                    <span class="fas fa-eye-slash mx-3"></span>
                                 {{/if}}
                                 </p>
                             </div>

@@ -181,20 +181,30 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       }).sort({_id:-1}).limit(10).toArray();
       return reply.view('chat.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd',chats });
     });
-    fastify.get('/chat/list/', {
-      preHandler: [fastify.authenticate]
-    }, async (request, reply) => {
+    fastify.get('/chat/list/:id', async (request, reply) => {
       try {
-        const userId = new fastify.mongo.ObjectId(request.user._id);
+        const userId = new fastify.mongo.ObjectId(request.params.id);
         const user = await db.collection('users').findOne({ _id: userId });
+
+        let query = {
+          userId,
+          visibility: 'public'
+        }
+
+        const currentUser = await fastify.getUser(request, reply);
+
+        if(currentUser._id.toString() == request.params.id.toString()){
+          query = {userId}
+        }
+        
         const chatsCollection = db.collection('chats');
-    
         // Fetch chats that are not marked as deleted by the owner
-        const sortedChats = await chatsCollection.find({ userId }).sort({ "updatedAt": -1 }).toArray();
+        const sortedChats = await chatsCollection.find(query).sort({ "updatedAt": -1 }).toArray();
+
         return reply.view('chat-list', { title: 'LAMIX | Powered by Hato, Ltd', chats: sortedChats, user });
       } catch (err) {
         console.log(err);
-        return reply.status(500).send({ error: 'Failed to retrieve stories' });
+        return reply.status(500).send({ error: 'Failed to retrieve chat list' });
       }
     });
 

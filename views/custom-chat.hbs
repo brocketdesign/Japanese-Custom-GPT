@@ -353,20 +353,7 @@
     <div class="sidebar hidden bg-light shadow-0">
         <!-- Avatar -->
         <div class="nav-item dropdown d-inline-block d-sm-none">
-            <a data-mdb-dropdown-init class="nav-link dropdown-toggle hidden-arrow d-flex align-items-center" href="#"
-                id="navbarDropdownMenuLink" role="button" aria-expanded="false">
-                <img src="{{#if user.profileUrl}}{{user.profileUrl}}{{else}}/img/avatar.png{{/if}}" 
-                class="rounded-circle avatar" height="32" alt="Avatar"
-                loading="lazy" />
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end mx-3" aria-labelledby="navbarDropdownMenuLink">
-                {{#if user.isTemporary}}
-                    <li><a class="dropdown-item" href="/authenticate">ログイン</a></li>
-                {{else}}
-                    <li><a class="dropdown-item" href="/settings">設定</a></li>
-                    <li><a class="dropdown-item logout" href="#">ログアウト</a></li>
-                {{/if}}
-            </ul>
+            {{> dashboard-avatar}}
         </div>
         <div class="tools d-flex align-items-center">
             <div class="d-none w-100 m-2">
@@ -497,22 +484,9 @@
                                 </button>
                             </li>
                             <!-- Avatar -->
-                            <li class="nav-item dropdown d-none d-sm-inline-block ">
-                                <a data-mdb-dropdown-init class="nav-link dropdown-toggle hidden-arrow d-flex align-items-center" href="#"
-                                    id="navbarDropdownMenuLink" role="button" aria-expanded="false">
-                                    <img src="{{#if user.profileUrl}}{{user.profileUrl}}{{else}}/img/avatar.png{{/if}}" 
-                                    class="rounded-circle avatar" height="32" alt="Avatar"
-                                    loading="lazy" />
-                                </a>
-                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLink">
-                                    {{#if user.isTemporary}}
-                                        <li><a class="dropdown-item" href="/authenticate">ログイン</a></li>
-                                    {{else}}
-                                        <li><a class="dropdown-item" href="/settings">設定</a></li>
-                                        <li><a class="dropdown-item logout" href="#">ログアウト</a></li>
-                                    {{/if}}
-                                </ul>
-                            </li>
+                            <div class="nav-item dropdown d-none d-sm-inline-block ">
+                                {{> dashboard-avatar}}
+                            </div>
                         </ul>
                     </div>
                 </div>

@@ -9,32 +9,9 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a href="/chat/list/" class="btn mt-1 px-4 py-2 border-0 shadow-0 bg-transparent" style="border-radius:40px;">
-                        チャットリスト
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="/chat/edit/" class="btn mt-1 px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius:40px;">
-                        <i class="fas fa-plus me-2"></i>作成する
-                    </a>
-                </li>
                 <!-- Avatar -->
                 <li class="nav-item dropdown mx-2">
-                    <a data-mdb-dropdown-init class="nav-link dropdown-toggle hidden-arrow d-flex align-items-center" href="#"
-                        id="navbarDropdownMenuLink" role="button" aria-expanded="false">
-                        <img src="{{#if user.profileUrl}}{{user.profileUrl}}{{else}}/img/avatar.png{{/if}}" 
-                        class="rounded-circle" height="32" alt="Avatar" style="object-fit: cover;object-position: top;width: 32px;"
-                        loading="lazy" />
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLink">
-                        {{#if user.isTemporary}}
-                            <li><a class="dropdown-item" href="/authenticate">ログイン</a></li>
-                        {{else}}
-                            <li><a class="dropdown-item" href="/settings">設定</a></li>
-                            <li><a class="dropdown-item logout" href="#">ログアウト</a></li>
-                        {{/if}}
-                    </ul>
+                   {{> dashboard-avatar}}
                 </li>
             </ul>
         </div>

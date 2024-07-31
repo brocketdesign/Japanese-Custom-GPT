@@ -26,6 +26,8 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     handlebars.registerPartial('dashboard-nav', dashboardNav);
     const dashboardFooter = fs.readFileSync('views/partials/dashboard-footer.hbs', 'utf8');
     handlebars.registerPartial('dashboard-footer', dashboardFooter);
+    const dashboardAvatar = fs.readFileSync('views/partials/dashboard-avatar.hbs', 'utf8');
+    handlebars.registerPartial('dashboard-avatar', dashboardAvatar);
     
     fastify.register(require('@fastify/view'), {
       engine: { handlebars: require('handlebars') },
@@ -134,6 +136,9 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       }
     });
 
+    fastify.get('/my-plan', (request, reply) => {
+      reply.redirect('chat/');
+    });
     fastify.get('/chat', (request, reply) => {
       reply.redirect('chat/');
     });

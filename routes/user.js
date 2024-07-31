@@ -93,7 +93,7 @@ fastify.get('/user/line-auth', async (request, reply) => {
   };
   const state = crypto.randomBytes(16).toString('hex');
   const nonce = crypto.randomBytes(16).toString('hex');
-  const scope = 'profile openid';
+  const scope = 'profile openid email';
   const response_type = 'code';
 
   const url = `https://access.line.me/oauth2/v2.1/authorize?` +
@@ -106,6 +106,7 @@ fastify.get('/user/line-auth', async (request, reply) => {
 
   return reply.redirect(url);
 });
+
 fastify.get('/user/line-auth/callback', async (request, reply) => {
   try {
     const protocol = request.protocol;
@@ -115,16 +116,14 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       channelSecret: process.env.LINE_CHANNEL_SECRET,
       redirectUri: `${protocol}://${host}/user/line-auth/callback`,
     };
-    const code = request.query.code;
-    const state = request.query.state;
-    const nonce = request.query.nonce;
+    const { code, state, nonce } = request.query;
 
-    const tokenResponse = await axios.post(`https://api.line.me/oauth2/v2.1/token`, {
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: lineConfig.redirectUri,
-      client_id: lineConfig.channelId,
-      client_secret: lineConfig.channelSecret,
+    const tokenResponse = await axios.post(`https://api.line.me/oauth2/v2.1/token`, 
+    `grant_type=authorization_code&code=${code}&redirect_uri=${encodeURIComponent(lineConfig.redirectUri)}&client_id=${lineConfig.channelId}&client_secret=${lineConfig.channelSecret}`, 
+    {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
     });
 
     const token = tokenResponse.data.access_token;
@@ -135,6 +134,8 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     });
 
     const userId = decodedIdToken.sub;
+    const email = decodedIdToken.email;  // Get the email from the decoded ID token
+
     const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
 
     // Check if the user already exists
@@ -142,25 +143,30 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     if (!user) {
       // Create a new user if they don't exist
       const hashedPassword = await bcrypt.hash(Math.random().toString(36).substr(2, 10), 10);
-      const result = await usersCollection.insertOne({ userId, password: hashedPassword, createdAt: new Date() });
-      const userId = result.insertedId;
-      const token = jwt.sign({ _id: userId, userId }, process.env.JWT_SECRET, { expiresIn: '24h' });
+      const result = await usersCollection.insertOne({ userId, email, password: hashedPassword, createdAt: new Date() });
+      const newUserId = result.insertedId;
+      const token = jwt.sign({ _id: newUserId, userId }, process.env.JWT_SECRET, { expiresIn: '24h' });
       return reply
-      .setCookie('token', token, { path: '/', httpOnly: true })
-      .redirect('/dashboard')
-      .send({ status: 'ユーザーが正常に登録されました' });
+        .setCookie('token', token, { path: '/', httpOnly: true })
+        .redirect('/dashboard')
+        .send({ status: 'ユーザーが正常に登録されました' });
     } else {
       // Login the user if they already exist
       const token = jwt.sign({ _id: user._id, userId: user.userId }, process.env.JWT_SECRET, { expiresIn: '24h' });
       return reply
-      .setCookie('token', token, { path: '/', httpOnly: true })
-      .redirect('/dashboard');
+        .setCookie('token', token, { path: '/', httpOnly: true })
+        .redirect('/dashboard');
     }
   } catch (err) {
-    fastify.log.error(err);
+    fastify.log.error(err.response ? err.response.data : err.message);
     return reply.status(500).send({ error: 'サーバーエラーが発生しました' });
   }
 });
+
+
+
+
+
   // Keep the old logout route
   fastify.post('/user/logout', async (request, reply) => {
     return reply

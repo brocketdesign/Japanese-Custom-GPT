@@ -215,15 +215,15 @@ $(document).ready(function() {
                     if(isNew && chatData.length == 0 ){
                         createButtonAndIntro(data.chat)
                     }
-                    getUserChatHistory(chatId, userId,function(lastChat){
-                        if(loadLatest){
+                    if(loadLatest){
+                        getUserChatHistory(chatId, userId,function(lastChat){
                             loadLatest = false
                             if(lastChat){
                                 userChatId = lastChat._id
                                 fetchchatData(chatId, userId)
                             }
-                        }
-                    });
+                        });
+                    }
                     // Scroll to the end of the chat
                     $('#chatContainer').animate({
                         scrollTop: $('#chatContainer').prop("scrollHeight")

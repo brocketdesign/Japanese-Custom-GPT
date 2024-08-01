@@ -220,7 +220,6 @@ async function routes(fastify, options) {
             }
         
             if (String(chat.userId) !== String(userId)) {
-                console.log('Create a copy with base ???')
                 const newChat = { ...chat, userId: new fastify.mongo.ObjectId(userId), baseId:new fastify.mongo.ObjectId(chatId), _id: new fastify.mongo.ObjectId() };
                 await collection.insertOne(newChat);
                 response.chat = newChat;
@@ -286,17 +285,19 @@ async function routes(fastify, options) {
             ],
              _id: new fastify.mongo.ObjectId(chatId) 
         });    
+        
         const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
     
         let userChat;
         if (isUserChat) {
+            //console.log(isUserChat)
             userChat = await collectionUserChat.find({ 
-                $or: [{ 
-                    $or: [
-                        { chatId },
-                        { chatId: new fastify.mongo.ObjectId(chatId) }
-                    ] }
-                    , { name: isUserChat.name }] }).sort({ _id: -1 }).toArray();
+                $or: [
+                    { chatId },
+                    { chatId: new fastify.mongo.ObjectId(chatId) },
+                    { purpose: isUserChat.purpose}
+                ]
+            }).sort({ _id: -1 }).toArray();
         } else {
             userChat = await collectionUserChat.find({
                 $or: [

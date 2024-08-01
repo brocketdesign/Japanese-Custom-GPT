@@ -316,7 +316,7 @@ $(document).ready(function() {
                 },
                 data: JSON.stringify({ 
                     currentStep: 0, 
-                    message: '最初のメッセージを送信したかのように会話を開始します。', 
+                    message: '最初のメッセージを送信したかのように会話を開始します。最近の面白い出来事について聞かせて。私の注意を引くための一言から初めて。', 
                     userId: userId, 
                     chatId: chatId, 
                     isNew: true 

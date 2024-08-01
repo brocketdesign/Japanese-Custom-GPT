@@ -65,7 +65,7 @@ async function routes(fastify, options) {
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
     
         async function scrapeGohiai() {
-          const response = await axios.get('https://www.gohiai.com/ja-jp/ai-explore/pt_HEYXw0PF2PVU7Uz8fkzY');
+          const response = await axios.get('https://www.gohiai.com/ja-jp/ai-explore/pt_IUSHFsqXiT3lZhaFvJT7');
           const $ = cheerio.load(response.data);
     
           const charactersData = [];
@@ -73,10 +73,11 @@ async function routes(fastify, options) {
             const chatImageUrl = $(element).find('img.poster').attr('src');
             const name = $(element).find('a.nick').text();
             const description = $(element).find('.intro').text();
+            const num_message = $(element).find('.participation').text();
             const profileLink = 'https://www.gohiai.com' + $(element).find('a.nick').attr('href');
     
             charactersData.push({
-                category: '彼氏',
+                category: '彼女',
                 chatImageUrl,
                 name,
                 description,
@@ -84,6 +85,7 @@ async function routes(fastify, options) {
                 visibility: 'public',
                 scrap: true,
                 ext: 'gohiai',
+                num_message,
                 profileLink,
             });
           });

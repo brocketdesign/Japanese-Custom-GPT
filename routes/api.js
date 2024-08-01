@@ -897,7 +897,6 @@ async function routes(fastify, options) {
             }
 
             const userMessages = userData.messages;
-            console.log(userMessages)
             const completion = await fetchOpenAICompletion(userMessages, reply.raw, 100);
 
             // Append the assistant's response to the messages array in the chat document

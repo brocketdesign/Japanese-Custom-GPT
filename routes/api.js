@@ -184,7 +184,7 @@ async function routes(fastify, options) {
         }
     });
     fastify.post('/api/chat/', async (request, reply) => {
-        let { userId, chatId, userChatId } = request.body;
+        let { userId, chatId, userChatId, isWidget } = request.body;
     
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
         const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
@@ -219,7 +219,7 @@ async function routes(fastify, options) {
                 return reply.send(response);  // Chat not found, but no error is thrown or logged
             }
         
-            if (String(chat.userId) !== String(userId)) {
+            if (String(chat.userId) !== String(userId) && !isWidget) {
                 const newChat = { ...chat, userId: new fastify.mongo.ObjectId(userId), baseId:new fastify.mongo.ObjectId(chatId), _id: new fastify.mongo.ObjectId() };
                 await collection.insertOne(newChat);
                 response.chat = newChat;
@@ -295,7 +295,6 @@ async function routes(fastify, options) {
                 $or: [
                     { chatId },
                     { chatId: new fastify.mongo.ObjectId(chatId) },
-                    { purpose: isUserChat.purpose}
                 ]
             }).sort({ _id: -1 }).toArray();
         } else {
@@ -487,6 +486,7 @@ async function routes(fastify, options) {
             let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
             const isUserChat = await collectionChat.findOne({ userId: new fastify.mongo.ObjectId(userId) , _id: new fastify.mongo.ObjectId(chatId) });
             if(!isUserChat){
+                /*
                 console.log(`Create a copy`)
                 const newChatDocument = { ...chatDocument, userId: new fastify.mongo.ObjectId(userId), visibility: 'private' };
                 delete newChatDocument._id; // Remove the _id field to let MongoDB create a new one
@@ -494,6 +494,7 @@ async function routes(fastify, options) {
                 chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(newChatResult.insertedId), userId: new fastify.mongo.ObjectId(userId) });
                 chatId = chatDocument._id
                 console.log(`New chat : ${chatId}`)
+                */
             }
             if (!userChatDocument || isNew) {
                 console.log(`Initialize chat: ${chatId}`);

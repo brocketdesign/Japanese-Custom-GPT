@@ -186,7 +186,7 @@ $(document).ready(function() {
                 type: 'POST',
                 dataType: 'json',
                 contentType: 'application/json',
-                data: JSON.stringify({ userId, chatId, userChatId }),
+                data: JSON.stringify({ userId, chatId, userChatId , isWidget : $('#chat-widget-container').length > 0}),
                 success: function(data) {
                     updateParameters(data.chat._id,userId)
                     showChat();                 

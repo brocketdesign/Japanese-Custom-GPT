@@ -66,9 +66,9 @@ $(document).ready(function() {
         })
         $(document).on('click','.user-chat-history', function(){
             loadLatest = false
-            const selectUser = $(this).data('user')
+            //const selectUser = $(this).data('user')
             userChatId = $(this).data('chat')
-            fetchchatData(chatId, selectUser)
+            fetchchatData(chatId, userId)
         })
         $('.chat-list.item.user-chat .user-chat-content').click(function(e){
             loadLatest = true
@@ -107,7 +107,15 @@ $(document).ready(function() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                data: JSON.stringify({ currentStep:currentStep-1, message:userResponse, userId, chatId, userChatId, isNew }),
+                data: JSON.stringify({ 
+                    currentStep:currentStep-1, 
+                    message:userResponse, 
+                    userId, 
+                    chatId, 
+                    userChatId, 
+                    isNew ,
+                    isWidget : $('#chat-widget-container').length > 0
+                }),
                 success: function(response) {
                     userChatId = response.userChatId
                     isNew = false
@@ -133,7 +141,15 @@ $(document).ready(function() {
                     url: API_URL+'/api/chat-data', // Backend endpoint to handle the message
                     type: 'POST',
                     contentType: 'application/json',
-                    data: JSON.stringify({ currentStep:currentStep-1, message, userId, chatId, userChatId, isNew }),
+                    data: JSON.stringify({ 
+                        currentStep:currentStep-1, 
+                        message, 
+                        userId, 
+                        chatId, 
+                        userChatId, 
+                        isNew ,
+                        isWidget : $('#chat-widget-container').length > 0
+                    }),
                     success: function(response) {
                         const messageCountDoc = response.messageCountDoc
                         $('#message-number').html(`使用回数：${parseInt(messageCountDoc.count)}/${messageCountDoc.limit}`)
@@ -186,7 +202,7 @@ $(document).ready(function() {
                 type: 'POST',
                 dataType: 'json',
                 contentType: 'application/json',
-                data: JSON.stringify({ userId, chatId, userChatId , isWidget : $('#chat-widget-container').length > 0}),
+                data: JSON.stringify({ userId, chatId, userChatId}),
                 success: function(data) {
                     updateParameters(data.chat._id,userId)
                     showChat();                 
@@ -323,7 +339,8 @@ $(document).ready(function() {
                     message: '最初のメッセージを送信したかのように会話を開始します。最近の面白い出来事について聞かせて。私の注意を引くための一言から初めて。', 
                     userId: userId, 
                     chatId: chatId, 
-                    isNew: true 
+                    isNew: true ,
+                    isWidget : $('#chat-widget-container').length > 0
                 }),
                 success: function(response) {
                     userChatId = response.userChatId

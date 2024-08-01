@@ -747,8 +747,8 @@ $(document).ready(function() {
           contentType: 'application/json',
           dataType: 'json',
           success: function(data) {
-            const lastChat = data[0]
-            if(callback){callback(lastChat)}
+            const lastChat = data.find(chat =>!chat.isWidget);
+            if (callback) { callback(lastChat) }
             displayUserChatHistory(data);
           },
           error: function(jqXHR, textStatus, errorThrown) {
@@ -758,37 +758,67 @@ $(document).ready(function() {
     }
 
     function displayUserChatHistory(userChat) {
-            const chatHistoryContainer = $('#chat-history');
-            chatHistoryContainer.empty();
+        const chatHistoryContainer = $('#chat-history');
+        chatHistoryContainer.empty();
+    
         if (userChat && userChat.length > 0) {
-
-            const card = $('<div class="card rounded-0 shadow-0 bg-transparent"></div>');
-            const cardHeader = $('<div class="card-header"></div>');
-            cardHeader.text(`総要素数: ${userChat.length}`);
-            card.append(cardHeader);
-
-            const listGroup = $('<ul class="list-group list-group-flush"></ul>');
-            userChat.forEach(chat => {
+            // Create two separate cards for user and widget chat history
+            const userChatCard = $('<div class="card rounded-0 shadow-0 bg-transparent"></div>');
+            const widgetChatCard = $('<div class="card rounded-0 shadow-0 bg-transparent"></div>');
+    
+            // User chat history
+            const userChatHeader = $('<div class="card-header"></div>');
+            userChatHeader.text('チャット履歴');
+            userChatCard.append(userChatHeader);
+    
+            const userChatListGroup = $('<ul class="list-group list-group-flush"></ul>');
+            const userChats = userChat.filter(chat =>!chat.isWidget);
+            userChats.forEach(chat => {
                 const listItem = $(`<li class="list-group-item user-chat-history bg-transparent d-flex align-items-center justify-content-between" data-id="${chat.chatId}" data-chat="${chat._id}" data-user="${chat.userId}"></li>`);
                 listItem.css('cursor', 'pointer');
-
+    
                 const small = $('<small class="text-secondary"></small>');
                 small.append($('<i class="fas fa-clock me-1"></i>'));
                 small.append(chat.updatedAt);
-                if(chat.isWidget){
-                    small.append($('<i class="fas fa-robot me-1"></i>'));
-                }
-                //small.append(chat._id);
-
+    
                 const dropdown = renderChatDropdown(chat)
                 
                 listItem.append(small);
                 listItem.append(dropdown);
-                listGroup.append(listItem);
+                userChatListGroup.append(listItem);
             });
-
-            card.append(listGroup);
-            chatHistoryContainer.append(card);
+    
+            userChatCard.append(userChatListGroup);
+    
+            // Widget chat history
+            const widgetChatHeader = $('<div class="card-header"></div>');
+            widgetChatHeader.text('ウィジェットチャット履歴');
+            widgetChatCard.append(widgetChatHeader);
+    
+            const widgetChatListGroup = $('<ul class="list-group list-group-flush"></ul>');
+            const widgetChats = userChat.filter(chat => chat.isWidget);
+            widgetChats.forEach(chat => {
+                const listItem = $(`<li class="list-group-item user-chat-history bg-transparent d-flex align-items-center justify-content-between" data-id="${chat.chatId}" data-chat="${chat._id}" data-user="${chat.userId}"></li>`);
+                listItem.css('cursor', 'pointer');
+    
+                const small = $('<small class="text-secondary"></small>');
+                small.append($('<i class="fas fa-clock me-1"></i>'));
+                small.append(chat.updatedAt);
+                small.append($('<i class="fas fa-robot me-1"></i>'));
+    
+                const dropdown = renderChatDropdown(chat)
+                
+                listItem.append(small);
+                listItem.append(dropdown);
+                widgetChatListGroup.append(listItem);
+            });
+    
+            widgetChatCard.append(widgetChatListGroup);
+    
+            // Append both cards to the container
+            chatHistoryContainer.append(userChatCard);
+            chatHistoryContainer.append(widgetChatCard);
+    
             enableToggleDropdown()
         }
     }

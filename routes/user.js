@@ -141,7 +141,7 @@ fastify.get('/user/google-auth/callback', async (request, reply) => {
 });
 
 fastify.get('/user/line-auth', async (request, reply) => {
-  const protocol = request.protocol;
+  const protocol = 'https';
   const host = request.headers.host.replace('192.168.10.115', 'localhost');
   const lineConfig = {
     channelId: process.env.LINE_CHANNEL_ID,
@@ -166,7 +166,7 @@ fastify.get('/user/line-auth', async (request, reply) => {
 
 fastify.get('/user/line-auth/callback', async (request, reply) => {
   try {
-    const protocol = request.protocol;
+    const protocol = 'https';
     const host = request.headers.host.replace('192.168.10.115', 'localhost');
     const lineConfig = {
       channelId: process.env.LINE_CHANNEL_ID,

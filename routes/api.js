@@ -284,7 +284,6 @@ async function routes(fastify, options) {
     
         let userChat;
         if (isUserChat) {
-            //console.log(isUserChat)
             userChat = await collectionUserChat.find({ 
                 $or: [
                     { chatId },
@@ -480,19 +479,16 @@ async function routes(fastify, options) {
             let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
             const isUserChat = await collectionChat.findOne({ userId: new fastify.mongo.ObjectId(userId) , _id: new fastify.mongo.ObjectId(chatId) });
             if(!isUserChat){
-                
-                console.log(`Create a copy`)
-                const newChatDocument = { ...chatDocument, userId: new fastify.mongo.ObjectId(userId), visibility: 'private' };
-                delete newChatDocument._id; // Remove the _id field to let MongoDB create a new one
-                if(isWidget){
-                    console.log(`From widget`)
-                    newChatDocument.isWidget = true
+                if(!isWidget){
+                    console.log(`Create a copy`)
+                    const newChatDocument = { ...chatDocument, userId: new fastify.mongo.ObjectId(userId), baseId:new fastify.mongo.ObjectId(chatId), visibility: 'private' };
+                    delete newChatDocument._id; // Remove the _id field to let MongoDB create a new one
+                    
+                    const newChatResult = await collectionChat.insertOne(newChatDocument);
+                    chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(newChatResult.insertedId), userId: new fastify.mongo.ObjectId(userId) });
+                    chatId = chatDocument._id
+                    console.log(`New chat : ${chatId}`)
                 }
-                const newChatResult = await collectionChat.insertOne(newChatDocument);
-                chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(newChatResult.insertedId), userId: new fastify.mongo.ObjectId(userId) });
-                chatId = chatDocument._id
-                console.log(`New chat : ${chatId}`)
-                
             }
             if (!userChatDocument || isNew) {
                 console.log(`Initialize chat: ${chatId}`);
@@ -510,6 +506,10 @@ async function routes(fastify, options) {
                     createdAt: today,
                     updatedAt: today
                 };
+                if(isWidget){
+                    console.log(`From widget`)
+                    userChatDocument.isWidget = true
+                }
                 if (chatDocument.content && chatDocument.content[currentStep]) {
                     userChatDocument.messages.push({ "role": "assistant", "content": chatDocument.content[currentStep].question });
                 }

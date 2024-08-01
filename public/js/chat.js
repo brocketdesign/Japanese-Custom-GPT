@@ -775,6 +775,9 @@ $(document).ready(function() {
                 const small = $('<small class="text-secondary"></small>');
                 small.append($('<i class="fas fa-clock me-1"></i>'));
                 small.append(chat.updatedAt);
+                if(chat.isWidget){
+                    small.append($('<i class="fas fa-robot me-1"></i>'));
+                }
                 //small.append(chat._id);
 
                 const dropdown = renderChatDropdown(chat)

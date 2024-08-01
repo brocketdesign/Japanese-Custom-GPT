@@ -346,7 +346,7 @@ $(document).ready(function() {
                     },
                     data: JSON.stringify({ 
                         currentStep: 0, 
-                        message: 'あなたのキャラクターの性格を表現した一言でチャットを始めてください。', 
+                        message: '最初のメッセージを送信したかのように会話を開始します。あなたのキャラクターの性格を表現した一言でチャットを始めてください。。', 
                         userId: userId, 
                         chatId: chatId, 
                         isNew: true ,

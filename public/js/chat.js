@@ -529,6 +529,21 @@ $(document).ready(function() {
         function generateCompletion(callback){
             
             const apiUrl = API_URL+'/api/openai-chat-completion';
+
+            hideOtherChoice(false, currentStep)
+            // Initialize the bot response container
+            const botResponseContainer = $(`
+                <div id="container-${currentStep}">
+                    <div class="d-flex flex-row justify-content-start mb-4 message-container">
+                        <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+                        <div id="completion-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;">
+                            <img src="/img/load-dot.gif" width="50px">
+                        </div>
+                    </div>
+                    <div id="response-${currentStep}" class="choice-container" ></div>
+                </div>`);
+            $('#chatContainer').append(botResponseContainer);
+            $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
             $.ajax({
                 url: apiUrl,
                 method: 'POST',
@@ -540,18 +555,6 @@ $(document).ready(function() {
                     const eventSource = new EventSource(streamUrl);
                     let markdownContent = "";
 
-                    hideOtherChoice(false, currentStep)
-                    // Initialize the bot response container
-                    const botResponseContainer = $(`
-                        <div id="container-${currentStep}">
-                            <div class="d-flex flex-row justify-content-start mb-4 message-container">
-                                <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
-                                <div id="completion-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;"></div>
-                            </div>
-                            <div id="response-${currentStep}" class="choice-container" ></div>
-                        </div>`);
-                    $('#chatContainer').append(botResponseContainer);
-                    $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
                     
 
                     eventSource.onmessage = function(event) {

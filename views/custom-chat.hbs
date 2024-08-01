@@ -52,6 +52,12 @@
             }
         }
 
+        .text-muted {
+            color: #aeb0b4 !important;
+        }
+        .text-muted {
+            font-weight: 300;
+        }
         .scroll-horizontal {
             flex-wrap: nowrap;
             width: 100%;
@@ -561,6 +567,7 @@
                 <div class="card-body text-center py-0 container" style="min-height:250px;overflow-y:hidden;">
                     <div id="chatContainer" class="pt-2" style="padding-top: 100px !important;;padding-bottom: 100px !important;"></div>
                     <div id="chatInput" class="input-group rounded-0 rounded-bottom bg-white" style="position: absolute;bottom: 0;left: 0;right: 0;padding: 0px 15px 5px 15px;">
+                        <span id="message-number" class="text-muted px-3 py-1" style="font-size: 12px;"></span>
                         <div id="input-container" class="d-flex w-100">
                             <textarea id="userMessage" class="form-control py-3 border-0" placeholder="チャットしよう"></textarea>
                             <button id="sendMessage" class="btn btn-light px-4 border-0"><i class="fas fa-paper-plane"></i></button>

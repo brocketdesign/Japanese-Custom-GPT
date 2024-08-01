@@ -533,7 +533,6 @@ async function routes(fastify, options) {
     
             if (!isNew) {
                 console.log(`Update chat data : ${chatId} ;  current :${userChatId}`);
-                console.log(userChatDocument)
                 result = await collectionUserChat.updateOne(
                     query,
                     { $set: updateFields },
@@ -553,20 +552,28 @@ async function routes(fastify, options) {
             }
     
             // Update the message count
+            const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+            const user = await userDataCollection.findOne({_id:new ObjectId(userId)})
+            const isTemporary = user.isTemporary
+            const limit = isTemporary ? 10 : 50
+            let newMessageCount;
+
             if (request.messageCountDoc) {
-                await collectionMessageCount.updateOne(
+                newMessageCount = await collectionMessageCount.findOneAndUpdate(
                     { userId: new fastify.mongo.ObjectId(userId), date: today },
-                    { $inc: { count: 1 } }
+                    { $inc: { count: 1 }, $set: { limit: limit } },
+                    { returnOriginal: false } // Return the updated document
                 );
             } else {
-                await collectionMessageCount.insertOne({
+                newMessageCount = await collectionMessageCount.insertOne({
                     userId: new fastify.mongo.ObjectId(userId),
                     date: today,
-                    count: 1
+                    count: 1,
+                    limit: limit
                 });
             }
 
-            return reply.send({ nextStoryPart: "You chose the path and...", endOfStory: true, userChatId: documentId, chatId });
+            return reply.send({ nextStoryPart: "You chose the path and...", endOfStory: true, userChatId: documentId, chatId, messageCountDoc:newMessageCount});
         } catch (error) {
             console.error('Failed to save user choice:', error);
             return reply.status(500).send({ error: 'Failed to save user choice' });

@@ -133,6 +133,8 @@ $(document).ready(function() {
                     contentType: 'application/json',
                     data: JSON.stringify({ currentStep:currentStep-1, message, userId, chatId, userChatId, isNew }),
                     success: function(response) {
+                        const messageCountDoc = response.messageCountDoc
+                        $('#message-number').html(`${messageCountDoc.count}/${messageCountDoc.limit}`)
                         userChatId = response.userChatId
                         chatId = response.chatId
                         if(currentStep < totalSteps){
@@ -322,7 +324,6 @@ $(document).ready(function() {
                 success: function(response) {
                     userChatId = response.userChatId
                     chatId = response.chatId
-                    console.log({userChatId,chatId})
                     isNew = false;
                     generateCompletion(function() {
                     });
@@ -727,7 +728,6 @@ $(document).ready(function() {
           success: function(data) {
             const lastChat = data[0]
             if(callback){callback(lastChat)}
-
             displayUserChatHistory(data);
           },
           error: function(jqXHR, textStatus, errorThrown) {
@@ -751,7 +751,7 @@ $(document).ready(function() {
                 const listItem = $(`<li class="list-group-item user-chat-history bg-transparent d-flex align-items-center justify-content-between" data-id="${chat.chatId}" data-chat="${chat._id}" data-user="${chat.userId}"></li>`);
                 listItem.css('cursor', 'pointer');
 
-                const small = $('<small class="text-muted"></small>');
+                const small = $('<small class="text-secondary"></small>');
                 small.append($('<i class="fas fa-clock me-1"></i>'));
                 small.append(chat.updatedAt);
                 //small.append(chat._id);

@@ -935,9 +935,18 @@ function showRegistrationForm() {
                 <div class="col-md-8">
                     <div class="card shadow-0 border-0">
                         <div class="card-body">
-                            <a href="/user/google-auth" class="btn btn-light google-login-button">
-                                <img src="/img/google_logo_neutral.png">
+                            <a href="/user/google-auth" class="btn btn-light google-login-button mb-3">
+                                <img src="/img/google_logo_neutral.png"/>
                                 <span class="gsi-material-button-contents">Googleで続ける</span>
+                            </a>
+                            <a href="/user/line-auth" class="btn btn-light google-login-button mb-3">
+                                <img src="/img/line_btn_base.png"/>
+                                <span class="gsi-material-button-contents">LINEで続ける</span>
+                            </a>
+                            <p>または</p>
+                            <a href="/authenticate/mail" class="btn btn-light google-login-button mb-3 py-2">
+                                <i class="fas fa-envelope me-3"></i>
+                                <span>メールで続ける</span>
                             </a>
                         </div>
                     </div>

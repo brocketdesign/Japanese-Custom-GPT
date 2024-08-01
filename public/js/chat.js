@@ -83,7 +83,9 @@ $(document).ready(function() {
             var urlParts = currentUrl.split('/');
             urlParts[urlParts.length - 1] = newchatId;
             var newUrl = urlParts.join('/');
-            window.history.pushState({ path: newUrl }, '', newUrl);
+            if($('#chat-widget-container').length == 0){
+                window.history.pushState({ path: newUrl }, '', newUrl);
+            }
 
             const elementsToUpdate = ['.content .chart-button', '.content .tag-button', '.content .delete-chat'];
             elementsToUpdate.forEach(selector => {

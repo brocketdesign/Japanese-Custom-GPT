@@ -748,19 +748,19 @@ $(document).ready(function() {
 
             const listGroup = $('<ul class="list-group list-group-flush"></ul>');
             userChat.forEach(chat => {
-            const listItem = $(`<li class="list-group-item user-chat-history bg-transparent" data-id="${chat.chatId}" data-chat="${chat._id}" data-user="${chat.userId}"></li>`);
-            listItem.css('cursor', 'pointer');
+                const listItem = $(`<li class="list-group-item user-chat-history bg-transparent d-flex align-items-center justify-content-between" data-id="${chat.chatId}" data-chat="${chat._id}" data-user="${chat.userId}"></li>`);
+                listItem.css('cursor', 'pointer');
 
-            const small = $('<small class="text-muted"></small>');
-            small.append($('<i class="fas fa-clock me-1"></i>'));
-            small.append(chat.updatedAt);
-            //small.append(chat._id);
+                const small = $('<small class="text-muted"></small>');
+                small.append($('<i class="fas fa-clock me-1"></i>'));
+                small.append(chat.updatedAt);
+                //small.append(chat._id);
 
-            const dropdown = renderChatDropdown(chat)
-            
-            listItem.append(small);
-            listItem.append(dropdown);
-            listGroup.append(listItem);
+                const dropdown = renderChatDropdown(chat)
+                
+                listItem.append(small);
+                listItem.append(dropdown);
+                listGroup.append(listItem);
             });
 
             card.append(listGroup);
@@ -815,7 +815,7 @@ $(document).ready(function() {
                 <!-- Dropdown -->
                 <div class="dropdown">
                     <button class="btn border-0 shadow-0 dropdown-toggle ms-2" type="button" id="dropdownMenuButton_${chatId}" data-mdb-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-ellipsis-v"></i>
+                        <i class="fas fa-ellipsis-v text-secondary"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton_${chatId}">
                         <li>

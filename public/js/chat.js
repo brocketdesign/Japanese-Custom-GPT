@@ -266,6 +266,8 @@ $(document).ready(function() {
             // Add click event listener to the button
             button.on('click', function() {
                 $('#input-container').show().addClass('d-flex');
+                $('#startButtonContained').remove();
+                $('#introChat').remove();
                 displayStarter();
             });
         

@@ -185,7 +185,6 @@ async function routes(fastify, options) {
     });
     fastify.post('/api/chat/', async (request, reply) => {
         let { userId, chatId, userChatId } = request.body;
-    
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
         const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
     
@@ -220,7 +219,6 @@ async function routes(fastify, options) {
             }
         
             response.chat = chat;
-            
             return reply.send(response);
         } catch (error) {
             console.error('Failed to retrieve chat:', error);
@@ -310,15 +308,21 @@ async function routes(fastify, options) {
             */
         } else {
             userChat = await collectionUserChat.find({
-                $or: [
-                    { chatId },
-                    { chatId: new fastify.mongo.ObjectId(chatId) }
-                ],
-                $or: [
-                    { userId },
-                    { userId: new fastify.mongo.ObjectId(userId) }
+                $and: [
+                  { 
+                    $or: [
+                      { chatId },
+                      { chatId: new fastify.mongo.ObjectId(chatId) }
+                    ]
+                  },
+                  { 
+                    $or: [
+                      { userId },
+                      { userId: new fastify.mongo.ObjectId(userId) }
+                    ]
+                  }
                 ]
-            }).sort({ _id: -1 }).toArray();
+              }).sort({ _id: -1 }).toArray();
         }
     
         if (!userChat || userChat.length === 0) {
@@ -485,6 +489,7 @@ async function routes(fastify, options) {
         const collectionMessageCount = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageCount');
 
         let { currentStep, message, chatId, userChatId, isNew, isWidget } = request.body;
+        console.log(`data for chat : ${chatId} userchat : ${userChatId}`)
         let userId = request.body.userId
         if (!userId) {
             const user = await fastify.getUser(request, reply);

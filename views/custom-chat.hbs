@@ -517,14 +517,13 @@
                         <h4 class="mb-4">みんなのチャット</h4>
                         <div class="chat-container">
                             {{#each peopleChats}}
-                            <div class="card chat-card flex-row bg-light border border-secondary shadow-0" style="border-radius: 20px; cursor:pointer" onclick="redirectToChat('{{this._id}}')">
-                                <div style="min-width:100px;width: 300px; height: auto; display: flex; justify-content: center; align-items: center;">
-                                    <img src="{{this.thumbnailUrl}}" class="img-fluid m-3" alt="Thumbnail" onerror="this.src='/img/logo.webp';" style="width: 50px; height: 50px; object-fit: cover;border-radius: 50px;">
+                            <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 col-7 col-sm-4 col-lg-2" style="cursor:pointer;" onclick="redirectToChat('{{this._id}}')">
+                                <div style="background-image:url('{{this.chatImageUrl}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
+                                    <span class="badge bg-dark position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px"><i class="fas fa-comment me-2"></i>{{this.num_message}}</span>
                                 </div>
-                                <div class="card-body">
-                                    <h6 class="card-title fw-bold text-start">{{this.name}}</h6>
-                                    <p class="card-text lines-paragraph">{{this.description}}</p>
-                                    <p class="text-muted d-none"><i class="fas fa-clock"></i> 更新: <span class="date-time">{{this.dateStrJP}}</span></p>
+                                <div class="card-body bg-transparent border-0 pb-0 text-start">
+                                    <h5 class="card-title">{{this.name}}</h5>
+                                    <p class="card-text">{{this.description}}</p>
                                 </div>
                             </div>
                             {{/each}}
@@ -795,13 +794,25 @@ $(document).ready(function() {
 });
 function redirectToChat(chatId) {
     localStorage.setItem('selectedChatId', chatId);
-    window.location.href = '/chat/' + chatId;
+    const userId = localStorage.getItem('userId');
+    fetchchatData(chatId,userId)
+    showChat()
+    //window.location.href = '/chat/' + chatId;
 }
 $('.date-time').each(function() {
     var dateText = $(this).text();
     var trimmedDate = dateText.split(' ')[0]; // Get the date part only
     $(this).text(trimmedDate); // Update the element's content
 });
+function resetChatUrl(){
+    var currentUrl = window.location.href;
+    var urlParts = currentUrl.split('/');
+    urlParts[urlParts.length - 1] = '';
+    var newUrl = urlParts.join('/');
+    if($('#chat-widget-container').length == 0){
+        window.history.pushState({ path: newUrl }, '', newUrl);
+    }
+}
 function showDiscovery(){
     $('.onchat-on').hide()
     $('.onchat-on').addClass('d-none').css({
@@ -815,6 +826,7 @@ function showDiscovery(){
         'pointer-events': '',
         'visibility': ''
     }); 
+    resetChatUrl();
 }
 function showChat(){
     $('.onchat-off').hide()

@@ -1,4 +1,3 @@
-let loadLatest = false
 $(document).ready(function() {
     let API_URL = ""
     fetchMode(function(error,mode){
@@ -6,142 +5,120 @@ $(document).ready(function() {
             API_URL = "https://lamix.hatoltd.com"
         }
         fetchUser(function(error, user){
-        // Now you can use the userID variable or id parameter here
-        let chatId = getIdFromUrl(window.location.href) || $(`#lamix-chat-widget`).data('id');
-        let userChatId
-        const userId = user._id
-        let currentStep = 0;
-        let totalSteps = 0;
-        let chatData = {};
-        let isNew = true;
-        let feedback = false
-        let thumbnail = false
-        let isTemporary = user.isTemporary
+            let chatId = getIdFromUrl(window.location.href) || $(`#lamix-chat-widget`).data('id');
+            let userChatId
+            const userId = user._id
+            localStorage.setItem('userId', userId);
+            let currentStep = 0;
+            let totalSteps = 0;
+            let chatData = {};
+            let isNew = true;
+            let feedback = false
+            let thumbnail = false
+            let isTemporary = user.isTemporary
 
-        sendCustomData({action: 'viewpage'});
-        fetchchatData(chatId, userId);
-
-        enableToggleDropdown()
-        
-        $('textarea').each(function() {
-            //resizeTextarea(this);
-            $(this).on('input change keypress', function(e) {
-                if (e.type === 'keypress' && e.which !== 13) {
-                    return;
-                }
-                resizeTextarea(this);
-            });
-        });
-        
-        $('#sendMessage').on('click', function() {
-            sendMessage();
-            $('#userMessage').val('');  
-            $('#userMessage').attr('placeholder', 'チャットしよう'); 
-            setTimeout(() => {
-                resizeTextarea($('#userMessage')[0]);
-            }, 500);
-        });
-
-
-        // Event handler for the Enter key
-        $('#userMessage').on('keypress', function(event) {
-            if (event.which == 13 && !event.shiftKey) { 
-                sendMessage();
-                setTimeout(() => {
-                    $('#userMessage').val('');  
-                    $('#userMessage').attr('placeholder', 'チャットしよう'); 
-                    resizeTextarea($('#userMessage')[0]);
-                }, 500);
-            }
-        });     
-
-        function resizeTextarea(element){
-            element.style.height = 'auto';
-            element.style.height = (element.scrollHeight - 20 ) + 'px';  
-        }
-
-        $('.reset-chat').click(function(){
-            loadLatest = false
-            fetchchatData(chatId, userId, true) ;
-        })
-        $(document).on('click','.user-chat-history', function(){
-            loadLatest = false
-            //const selectUser = $(this).data('user')
-            userChatId = $(this).data('chat')
-            fetchchatData(chatId, userId)
-        })
-        $('.chat-list.item.user-chat .user-chat-content').click(function(e){
-            loadLatest = true
-            const selectChatId = $(this).closest('.user-chat').data('id')
-            fetchchatData(selectChatId, userId)
-            updateParameters(selectChatId,userId)
-        })
-
-        function updateParameters(newchatId, newuserId){
-            chatId = newchatId
-            var currentUrl = window.location.href;
-            var urlParts = currentUrl.split('/');
-            urlParts[urlParts.length - 1] = newchatId;
-            var newUrl = urlParts.join('/');
-            if($('#chat-widget-container').length == 0){
-                window.history.pushState({ path: newUrl }, '', newUrl);
+            sendCustomData({action: 'viewpage'});
+            if(chatId){
+                getUserChatHistory(chatId, userId,function(lastChat){
+                    if(lastChat){
+                        userChatId = lastChat._id
+                    }
+                    fetchchatData(chatId, userId)
+                });
+            }else{
+                showDiscovery()
             }
 
-            const elementsToUpdate = ['.content .chart-button', '.content .tag-button', '.content .delete-chat'];
-            elementsToUpdate.forEach(selector => {
-                $(selector).each(function() {
-                    $(this).attr('data-id', chatId);
+            enableToggleDropdown()
+            
+            $('textarea').each(function() {
+                //resizeTextarea(this);
+                $(this).on('input change keypress', function(e) {
+                    if (e.type === 'keypress' && e.which !== 13) {
+                        return;
+                    }
+                    resizeTextarea(this);
                 });
             });
-            $('.edit-chat').each(function(){
-                $(this).attr('href','/chat/edit/'+newchatId)
-            })
-        }
-        
-        window.choosePath = function(userResponse) {
-            currentStep++;
-            hideOtherChoice(userResponse,currentStep)
-            $.ajax({
-                url: API_URL+'/api/chat-data',
-                type: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                data: JSON.stringify({ 
-                    currentStep:currentStep-1, 
-                    message:userResponse, 
-                    userId, 
-                    chatId, 
-                    userChatId, 
-                    isNew ,
-                    isWidget : $('#chat-widget-container').length > 0
-                }),
-                success: function(response) {
-                    userChatId = response.userChatId
-                    isNew = false
-                    updatechatContent(userResponse);
-                },
-                error: function(error) {
-                    console.log(error.statusText);
-                }
+            
+            $('#sendMessage').on('click', function() {
+                sendMessage();
+                $('#userMessage').val('');  
+                $('#userMessage').attr('placeholder', 'チャットしよう'); 
+                setTimeout(() => {
+                    resizeTextarea($('#userMessage')[0]);
+                }, 500);
             });
-        };
-        window.sendMessage = function(customMessage,displayStatus = true) {
-            currentStep ++
-            const message = customMessage || $('#userMessage').val();
-            if (message.trim() !== '') {
-                if(displayStatus){
-                    displayMessage('user', message);
+
+
+            // Event handler for the Enter key
+            $('#userMessage').on('keypress', function(event) {
+                if (event.which == 13 && !event.shiftKey) { 
+                    sendMessage();
+                    setTimeout(() => {
+                        $('#userMessage').val('');  
+                        $('#userMessage').attr('placeholder', 'チャットしよう'); 
+                        resizeTextarea($('#userMessage')[0]);
+                    }, 500);
                 }
-                $('#userMessage').val(''); // Clear the input field
-                // Send the message to the backend (to be implemented)
+            });     
+
+            function resizeTextarea(element){
+                element.style.height = 'auto';
+                element.style.height = (element.scrollHeight - 20 ) + 'px';  
+            }
+
+            $('.reset-chat').click(function(){
+                fetchchatData(chatId, userId, true) ;
+            })
+            $(document).on('click','.user-chat-history', function(){
+                //const selectUser = $(this).data('user')
+                userChatId = $(this).data('chat')
+                fetchchatData(chatId, userId)
+            })
+            $('.chat-list.item.user-chat .user-chat-content').click(function(e){
+                const selectChatId = $(this).closest('.user-chat').data('id')
+                getUserChatHistory(selectChatId, userId,function(lastChat){
+                    if(lastChat){
+                        userChatId = lastChat._id
+                        fetchchatData(selectChatId, userId)
+                    }
+                });
+                updateParameters(selectChatId,userId)
+            })
+
+            function updateParameters(newchatId, newuserId){
+                chatId = newchatId
+                var currentUrl = window.location.href;
+                var urlParts = currentUrl.split('/');
+                urlParts[urlParts.length - 1] = newchatId;
+                var newUrl = urlParts.join('/');
+                if($('#chat-widget-container').length == 0){
+                    window.history.pushState({ path: newUrl }, '', newUrl);
+                }
+
+                const elementsToUpdate = ['.content .chart-button', '.content .tag-button', '.content .delete-chat'];
+                elementsToUpdate.forEach(selector => {
+                    $(selector).each(function() {
+                        $(this).attr('data-id', chatId);
+                    });
+                });
+                $('.edit-chat').each(function(){
+                    $(this).attr('href','/chat/edit/'+newchatId)
+                })
+            }
+            window.choosePath = function(userResponse) {
+                currentStep++;
+                hideOtherChoice(userResponse,currentStep)
                 $.ajax({
-                    url: API_URL+'/api/chat-data', // Backend endpoint to handle the message
+                    url: API_URL+'/api/chat-data',
                     type: 'POST',
-                    contentType: 'application/json',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     data: JSON.stringify({ 
                         currentStep:currentStep-1, 
-                        message, 
+                        message:userResponse, 
                         userId, 
                         chatId, 
                         userChatId, 
@@ -149,19 +126,229 @@ $(document).ready(function() {
                         isWidget : $('#chat-widget-container').length > 0
                     }),
                     success: function(response) {
-                        const messageCountDoc = response.messageCountDoc
-                        $('#message-number').html(`使用回数：${parseInt(messageCountDoc.count)}/${messageCountDoc.limit}`)
                         userChatId = response.userChatId
-                        chatId = response.chatId
-                        if(currentStep < totalSteps){
-                            displayStep(chatData, currentStep);
-                            isNew = false
-                        }else{
-                            generateCompletion()
-                            isNew = false
-                        }
+                        isNew = false
+                        updatechatContent(userResponse);
                     },
                     error: function(error) {
+                        console.log(error.statusText);
+                    }
+                });
+            };
+            window.sendMessage = function(customMessage,displayStatus = true) {
+                currentStep ++
+                const message = customMessage || $('#userMessage').val();
+                if (message.trim() !== '') {
+                    if(displayStatus){
+                        displayMessage('user', message);
+                    }
+                    $('#userMessage').val(''); // Clear the input field
+                    // Send the message to the backend (to be implemented)
+                    $.ajax({
+                        url: API_URL+'/api/chat-data', // Backend endpoint to handle the message
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ 
+                            currentStep:currentStep-1, 
+                            message, 
+                            userId, 
+                            chatId, 
+                            userChatId, 
+                            isNew ,
+                            isWidget : $('#chat-widget-container').length > 0
+                        }),
+                        success: function(response) {
+                            const messageCountDoc = response.messageCountDoc
+                            $('#message-number').html(`使用回数：${parseInt(messageCountDoc.count)}/${messageCountDoc.limit}`)
+                            userChatId = response.userChatId
+                            chatId = response.chatId
+                            if(currentStep < totalSteps){
+                                displayStep(chatData, currentStep);
+                                isNew = false
+                            }else{
+                                generateCompletion()
+                                isNew = false
+                            }
+                        },
+                        error: function(error) {
+                            if (error.status === 403) {
+                                if($('#chat-widget-container').length == 0 && isTemporary){
+                                    showRegistrationForm()
+                                    return
+                                }
+                                if($('#chat-widget-container').length == 0 ){
+                                    Swal.fire({
+                                        title: '注意',
+                                        text: '無料ユーザーのメッセージの最大数は1日50件です。',
+                                        icon: 'warning',
+                                        confirmButtonText: 'OK',
+                                        allowEnterKey: false
+                                    });
+                                    return
+                                }
+                            } else {
+                                console.error('Error:', error);
+                                displayMessage('bot', 'An error occurred while sending the message.');
+                            }
+                        }
+                    });
+                }
+            }
+            $(document).on('click','#unlock-result',function(){
+                sendCustomData({action:'unlock-result'})
+                promptForEmail()
+            })
+            window.fetchchatData = function(chatId,userId,reset) {
+                $('#chatContainer').empty()
+                $('#startButtonContained').remove();
+                if(reset){
+                    currentStep = 0
+                }
+                $.ajax({
+                    url: API_URL+`/api/chat/`,
+                    type: 'POST',
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ userId, chatId, userChatId}),
+                    success: function(data) {
+                        updateParameters(data.chat._id,userId)
+                        showChat();                 
+
+                        isNew = reset || data.isNew
+                        if(!data.chat){
+                            showDiscovery();
+                            return
+                        }
+                        chatData = data.chat.content || [];
+                        totalSteps = chatData ? chatData.length : 0;
+
+                        chatName = data.chat.name
+                        thumbnail = data.chat.thumbnailUrl || data.chat.chatImageUrl
+
+                        $('#chat-title').text(chatName)
+                        $('#input-container').show().addClass('d-flex');
+                        if(!isNew){
+                            displayChat(data.userChat.messages)
+                        }
+
+                        if(isNew && chatData && chatData.length > 0){
+                            displayStep(chatData, currentStep);
+                        }
+
+                        if(isNew && chatData && chatData.length == 0 ){
+                            createButtonAndIntro(data.chat)
+                        }
+                        // Scroll to the end of the chat
+                        $('#chatContainer').animate({
+                            scrollTop: $('#chatContainer').prop("scrollHeight")
+                        }, 500); 
+                    },
+                    error: function(xhr, status, error) {
+                        //console.log(error)
+                        showDiscovery();
+                    }
+                });
+            }
+            function createButtonAndIntro(chatData) {
+                
+                // Extracting data from chatData
+                let name = chatData.name;
+                let description = chatData.description;
+                let thumbnailUrl = chatData.thumbnailUrl;
+                let chatImageUrl = chatData.chatImageUrl;
+
+                // Remove existing container if it exists
+                $('#startButtonContained').remove();
+                $('#introChat').remove();
+
+                // Create the container div
+                let container = $('<div></div>').addClass('container my-3').attr('id', 'startButtonContained');
+            
+                // Create the button
+                let button = $('<button></button>')
+                    .addClass('btn btn-outline-secondary')
+                    .attr('id', 'startButton')
+                    .text('会話を開始する');
+                
+                // Append the button to the container
+                container.append(button);
+            
+                // Append the container to the chat input area
+                $('#chatInput').prepend(container);
+            
+                $('#input-container').hide().removeClass('d-flex');
+                // Add click event listener to the button
+                button.on('click', function() {
+                    $('#input-container').show().addClass('d-flex');
+                    $('#startButtonContained').remove();
+                    $('#introChat').remove();
+                    displayStarter();
+                });
+            
+                // Create the intro elements
+                let introContainer = $('<div></div>').addClass('intro-container my-3').attr('id','introChat');
+            
+                let title = $('<h2></h2>').text(name);
+                let desc = $('<p></p>').text(description);
+                let image = $('<img>').addClass('intro-thumbnail');
+            
+                // Append intro elements to the intro container
+                if(thumbnailUrl){
+                    $.ajax({
+                        url: thumbnailUrl,
+                        type: 'GET',
+                        mode: 'cors',
+                        cache: 'no-store',
+                        success: function() {
+                            image.attr('src', thumbnailUrl);
+                        },
+                        error: function(xhr) {
+                            console.error('Error fetching image: ' + xhr.status + ' ' + xhr.statusText);
+                        }
+                    });
+                }
+                if(chatImageUrl){
+                    image.attr('src', chatImageUrl)
+                }
+                if(!thumbnailUrl && !chatImageUrl){
+                    image.attr('src', '/img/logo.webp')
+                }
+                introContainer.append(image);
+                introContainer.append(title, desc);
+            
+                // Display intro container inside #chatContainer
+                $('#chatContainer').append(introContainer);
+
+
+            }
+            
+            
+            function displayStarter() {
+                $('#startButton').remove();
+                $('#introChat').remove();
+                $.ajax({
+                    url: API_URL+'/api/chat-data',
+                    type: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    data: JSON.stringify({ 
+                        currentStep: 0, 
+                        message: '最初のメッセージを送信したかのように会話を開始します。最近の面白い出来事について聞かせて。私の注意を引くための一言から初めて。', 
+                        userId: userId, 
+                        chatId: chatId, 
+                        isNew: true ,
+                        isWidget : $('#chat-widget-container').length > 0
+                    }),
+                    success: function(response) {
+                        userChatId = response.userChatId
+                        chatId = response.chatId
+                        isNew = false;
+                        generateCompletion(function() {
+                        });
+                    },
+                    error: function(error) {
+                        
                         if (error.status === 403) {
                             if($('#chat-widget-container').length == 0 && isTemporary){
                                 showRegistrationForm()
@@ -184,281 +371,67 @@ $(document).ready(function() {
                     }
                 });
             }
-        }
-        $(document).on('click','#unlock-result',function(){
-            sendCustomData({action:'unlock-result'})
-            promptForEmail()
-        })
-        function fetchchatData(chatId,userId,reset) {
-            $('#chatContainer').empty()
-            $('#startButtonContained').remove();
-            if(reset){
-                currentStep = 0
-            }
-            $.ajax({
-                url: API_URL+`/api/chat/`,
-                type: 'POST',
-                dataType: 'json',
-                contentType: 'application/json',
-                data: JSON.stringify({ userId, chatId, userChatId}),
-                success: function(data) {
-                    updateParameters(data.chat._id,userId)
-                    showChat();                 
-
-                    isNew = reset || data.isNew
-                    if(!data.chat){
-                        showDiscovery();
-                        return
-                    }
-                    chatData = data.chat.content;
-                    totalSteps = chatData.length || 0;
-
-                    chatName = data.chat.name
-                    thumbnail = data.chat.thumbnailUrl || data.chat.chatImageUrl
-
-                    $('#chat-title').text(chatName)
-                    $('#input-container').show().addClass('d-flex');
-                    if(!isNew){
-                        displayChat(data.userChat.messages)
-                    }
-
-                    if(isNew && chatData.length > 0){
-                        displayStep(chatData, currentStep);
-                    }
-
-                    if(isNew && chatData.length == 0 ){
-                        createButtonAndIntro(data.chat)
-                    }
-                    if(loadLatest){
-                        getUserChatHistory(chatId, userId,function(lastChat){
-                            loadLatest = false
-                            if(lastChat){
-                                userChatId = lastChat._id
-                                fetchchatData(chatId, userId)
-                            }
-                        });
-                    }
-                    // Scroll to the end of the chat
-                    $('#chatContainer').animate({
-                        scrollTop: $('#chatContainer').prop("scrollHeight")
-                    }, 500); 
-                },
-                error: function(xhr, status, error) {
-                    //console.log(error)
-                    showDiscovery();
-                }
-            });
-        }
-        function createButtonAndIntro(chatData) {
+            function displayChat(userChat) {
+                let chatContainer = $('#chatContainer');
+                chatContainer.empty();
             
-            // Extracting data from chatData
-            let name = chatData.name;
-            let description = chatData.description;
-            let thumbnailUrl = chatData.thumbnailUrl;
-            let chatImageUrl = chatData.chatImageUrl;
-
-            // Remove existing container if it exists
-            $('#startButtonContained').remove();
-            $('#introChat').remove();
-
-            // Create the container div
-            let container = $('<div></div>').addClass('container my-3').attr('id', 'startButtonContained');
-        
-            // Create the button
-            let button = $('<button></button>')
-                .addClass('btn btn-outline-secondary')
-                .attr('id', 'startButton')
-                .text('会話を開始する');
-            
-            // Append the button to the container
-            container.append(button);
-        
-            // Append the container to the chat input area
-            $('#chatInput').prepend(container);
-        
-            $('#input-container').hide().removeClass('d-flex');
-            // Add click event listener to the button
-            button.on('click', function() {
-                $('#input-container').show().addClass('d-flex');
-                $('#startButtonContained').remove();
-                $('#introChat').remove();
-                displayStarter();
-            });
-        
-            // Create the intro elements
-            let introContainer = $('<div></div>').addClass('intro-container my-3').attr('id','introChat');
-        
-            let title = $('<h2></h2>').text(name);
-            let desc = $('<p></p>').text(description);
-            let image = $('<img>').addClass('intro-thumbnail');
-        
-            // Append intro elements to the intro container
-            if(thumbnailUrl){
-                $.ajax({
-                    url: thumbnailUrl,
-                    type: 'GET',
-                    mode: 'cors',
-                    cache: 'no-store',
-                    success: function() {
-                        image.attr('src', thumbnailUrl);
-                    },
-                    error: function(xhr) {
-                        console.error('Error fetching image: ' + xhr.status + ' ' + xhr.statusText);
+                for (let i = 0; i < userChat.length; i++) {
+                    if (userChat[i].role === "system") {
+                        continue;
                     }
-                });
-            }
-            if(chatImageUrl){
-                image.attr('src', chatImageUrl)
-            }
-            if(!thumbnailUrl && !chatImageUrl){
-                image.attr('src', '/img/logo.webp')
-            }
-            introContainer.append(image);
-            introContainer.append(title, desc);
-        
-            // Display intro container inside #chatContainer
-            $('#chatContainer').append(introContainer);
-
-
-        }
-        
-        
-        function displayStarter() {
-            $('#startButton').remove();
-            $('#introChat').remove();
-            $.ajax({
-                url: API_URL+'/api/chat-data',
-                type: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                data: JSON.stringify({ 
-                    currentStep: 0, 
-                    message: '最初のメッセージを送信したかのように会話を開始します。最近の面白い出来事について聞かせて。私の注意を引くための一言から初めて。', 
-                    userId: userId, 
-                    chatId: chatId, 
-                    isNew: true ,
-                    isWidget : $('#chat-widget-container').length > 0
-                }),
-                success: function(response) {
-                    userChatId = response.userChatId
-                    chatId = response.chatId
-                    isNew = false;
-                    generateCompletion(function() {
-                    });
-                },
-                error: function(error) {
                     
-                    if (error.status === 403) {
-                        if($('#chat-widget-container').length == 0 && isTemporary){
-                            showRegistrationForm()
-                            return
-                        }
-                        if($('#chat-widget-container').length == 0 ){
-                            Swal.fire({
-                                title: '注意',
-                                text: '無料ユーザーのメッセージの最大数は1日50件です。',
-                                icon: 'warning',
-                                confirmButtonText: 'OK',
-                                allowEnterKey: false
-                            });
-                            return
-                        }
-                    } else {
-                        console.error('Error:', error);
-                        displayMessage('bot', 'An error occurred while sending the message.');
-                    }
-                }
-            });
-        }
-        function displayChat(userChat) {
-            let chatContainer = $('#chatContainer');
-            chatContainer.empty();
-        
-            for (let i = 0; i < userChat.length; i++) {
-                if (userChat[i].role === "system") {
-                    continue;
-                }
-                
-                currentStep = Math.floor(i / 2) + 1;
-                let messageHtml = '';
-        
-                if (userChat[i].role === "assistant") {
-                    let assistantMessage = userChat[i];
-                    let userMessage = userChat[i + 1];
-                    let designStep = currentStep - 1 
-                    messageHtml += `
-                        <div id="container-${designStep}">
-                            <div class="d-flex flex-row justify-content-start mb-4 message-container">
-                                <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
-                                <div id="message-${designStep}" class="p-3 ms-3 text-start" style="border-radius: 15px; ">
-                                    ${marked.parse(assistantMessage.content)}
+                    currentStep = Math.floor(i / 2) + 1;
+                    let messageHtml = '';
+            
+                    if (userChat[i].role === "assistant") {
+                        let assistantMessage = userChat[i];
+                        let userMessage = userChat[i + 1];
+                        let designStep = currentStep - 1 
+                        messageHtml += `
+                            <div id="container-${designStep}">
+                                <div class="d-flex flex-row justify-content-start mb-4 message-container">
+                                    <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+                                    <div id="message-${designStep}" class="p-3 ms-3 text-start" style="border-radius: 15px; ">
+                                        ${marked.parse(assistantMessage.content)}
+                                    </div>
+                                </div>
+                        `;
+            
+                        if (userMessage && userMessage.role === "user") {
+                            messageHtml += `
+                                <div class="d-flex flex-row justify-content-end mb-4 message-container">
+                                    <div id="response-${designStep}" class="p-3 me-3 border-0 text-end" style="border-radius: 15px; background-color: #fbfbfb;">
+                                        ${marked.parse(userMessage.content)}
+                                    </div>
                                 </div>
                             </div>
-                    `;
-        
-                    if (userMessage && userMessage.role === "user") {
-                        messageHtml += `
-                            <div class="d-flex flex-row justify-content-end mb-4 message-container">
-                                <div id="response-${designStep}" class="p-3 me-3 border-0 text-end" style="border-radius: 15px; background-color: #fbfbfb;">
-                                    ${marked.parse(userMessage.content)}
-                                </div>
+                            `;
+                        } else {
+                            messageHtml += `
+                                <div id="response-${designStep}" class="choice-container"></div>
                             </div>
-                        </div>
-                        `;
-                    } else {
-                        messageHtml += `
-                            <div id="response-${designStep}" class="choice-container"></div>
-                        </div>
-                        `;
+                            `;
+                        }
+            
+                        chatContainer.append(messageHtml);
+                        i++; // Skip the next iteration as we've already handled the user message
                     }
-        
-                    chatContainer.append(messageHtml);
-                    i++; // Skip the next iteration as we've already handled the user message
+                }
+            
+                if (userChat[userChat.length - 1].role === "user" && userChat[userChat.length - 1].content) {
+                    if(currentStep < totalSteps){
+                        displayStep(chatData, currentStep);
+                    }else{
+                        generateCompletion()
+                    }
+                } else {
+                    //generateChoice();
                 }
             }
-        
-            if (userChat[userChat.length - 1].role === "user" && userChat[userChat.length - 1].content) {
-                if(currentStep < totalSteps){
-                    displayStep(chatData, currentStep);
-                }else{
-                    generateCompletion()
-                }
-            } else {
-                //generateChoice();
-            }
-        }
-        
-           
-        function displayStep(chatData, currentStep) {
-            const step = chatData[currentStep];
-            $('#chatContainer').append(`
-            <div id="container-${currentStep}">
-                <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
-                    <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
-                    <div id="message-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;   "></div>
-                </div>
-                <div id="response-${currentStep}" class="choice-container" ></div>
-            </div>`)
-            step.responses.forEach((response, index) => {
-                if(response.trim() != '' ){
-                    const button = $(`<button class="btn btn-outline-secondary m-1" onclick="choosePath('${response}')">${response}</button>`);
-                    button.css('opacity',0)
-                    $(`#response-${currentStep}`).append(button);
-                }
-            });
-            appendHeadlineCharacterByCharacter($(`#message-${currentStep}`), step.question,function(){
-                $(`#response-${currentStep} button`).each(function(){
-                    $(this).css('opacity',1)
-                })
-            })
-        }
-
-        function updatechatContent(response) {
-            const previousStep = chatData[currentStep-1]; // Previous step where the choice was made
-
-
-            if (currentStep < totalSteps) {
+            
+            
+            function displayStep(chatData, currentStep) {
+                const step = chatData[currentStep];
                 $('#chatContainer').append(`
                 <div id="container-${currentStep}">
                     <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
@@ -467,198 +440,225 @@ $(document).ready(function() {
                     </div>
                     <div id="response-${currentStep}" class="choice-container" ></div>
                 </div>`)
-                const nextStep = chatData[currentStep];
-                nextStep.responses.forEach(response => {
-                    if(response.trim() != ''){
-                        const button = $(`<button class="btn btn-outline-secondary m-1" onclick="choosePath('${response}')">${response}</button>`)
+                step.responses.forEach((response, index) => {
+                    if(response.trim() != '' ){
+                        const button = $(`<button class="btn btn-outline-secondary m-1" onclick="choosePath('${response}')">${response}</button>`);
                         button.css('opacity',0)
                         $(`#response-${currentStep}`).append(button);
                     }
                 });
-
-                const choice = previousStep.responses.find(c => c === response);
-                $(`#message-${currentStep}`).closest('.message-container').animate({ opacity: 1 }, 500, function() { 
-                    appendHeadlineCharacterByCharacter($(`#message-${currentStep}`), nextStep.question,function(){
-                        $(`#response-${currentStep} button`).each(function(){
-                            $(this).css('opacity',1)
-                        })
-                    });
+                appendHeadlineCharacterByCharacter($(`#message-${currentStep}`), step.question,function(){
+                    $(`#response-${currentStep} button`).each(function(){
+                        $(this).css('opacity',1)
+                    })
                 })
-            }else{
-                generateCompletion()
             }
-        }
 
-        function hideOtherChoice(response, currentStep, callback) {
+            function updatechatContent(response) {
+                const previousStep = chatData[currentStep-1]; // Previous step where the choice was made
 
-            $(`#response-${currentStep - 1} button`).each(function() {
-                const currentChoice = $(this).text()
-                if(response == currentChoice){
-                    const response = $(this).text()
-                    $(`#response-${currentStep - 1}`).remove()
-                    $(`#container-${currentStep - 1}`).append(`
-                        <div class="d-flex flex-row justify-content-end mb-4 message-container" style="opacity:0;">
-                            <div id="response-${currentStep - 1}" class="p-3 me-3 border-0" style="border-radius: 15px; background-color: #fbfbfb;">${response}</div>
+
+                if (currentStep < totalSteps) {
+                    $('#chatContainer').append(`
+                    <div id="container-${currentStep}">
+                        <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
+                            <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+                            <div id="message-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;   "></div>
                         </div>
-                    `)
-                }
-                $(this).remove()
-            });
-            $(`#response-${currentStep - 1}`).closest('.message-container').animate({ opacity: 1 }, 1000,function(){
-                if (callback) {callback()}
-            })
-        }
-
-        function generateChoice(){
-            const apiUrl = API_URL+'/api/openai-chat-choice/'
-
-            $.ajax({
-                url: apiUrl,
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ userId, chatId }),
-                success: function(response) {
-                    const cleanResponse = cleanJsonArray(response)
-
-                    cleanResponse.forEach(choice => {
-                        const button = $(`<button class="btn btn-outline-secondary m-1" onclick="sendMessage('${choice}')">${choice}</button>`)
-                        $(`#response-${currentStep}`).append(button);
-                    });
-                },
-                error: function(error) {
-                    console.error('Error:', error);
-                }
-            });
-        }
-        function cleanJsonArray(jsonString) {
-            // Remove all characters before the first '{'
-            let start = jsonString.indexOf('[');
-            if (start !== -1) {
-                jsonString = jsonString.substring(start);
-            }
-
-            // Remove all characters after the last '}'
-            let end = jsonString.lastIndexOf(']');
-            if (end !== -1) {
-                jsonString = jsonString.substring(0, end + 1);
-            }
-
-            return JSON.parse(jsonString);
-        }
-        
-        function generateCompletion(callback){
-            
-            const apiUrl = API_URL+'/api/openai-chat-completion';
-
-            hideOtherChoice(false, currentStep)
-            // Initialize the bot response container
-            const botResponseContainer = $(`
-                <div id="container-${currentStep}">
-                    <div class="d-flex flex-row justify-content-start mb-4 message-container">
-                        <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
-                        <div id="completion-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;">
-                            <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
-                        </div>
-                    </div>
-                    <div id="response-${currentStep}" class="choice-container" ></div>
-                </div>`);
-            $('#chatContainer').append(botResponseContainer);
-            $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
-            $.ajax({
-                url: apiUrl,
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ userId, chatId, userChatId }),
-                success: function(response) {
-                    const sessionId = response.sessionId;
-                    const streamUrl = API_URL+`/api/openai-chat-completion-stream/${sessionId}`;
-                    const eventSource = new EventSource(streamUrl);
-                    let markdownContent = "";
-
-                    
-
-                    eventSource.onmessage = function(event) {
-                        const data = JSON.parse(event.data);
-                        markdownContent += data.content;
-                        $(`#completion-${currentStep}`).html(marked.parse(markdownContent));
-                    };
-
-                    eventSource.onerror = function(error) {
-                        eventSource.close();
-                        if (typeof callback === "function") {
-                            callback();
+                        <div id="response-${currentStep}" class="choice-container" ></div>
+                    </div>`)
+                    const nextStep = chatData[currentStep];
+                    nextStep.responses.forEach(response => {
+                        if(response.trim() != ''){
+                            const button = $(`<button class="btn btn-outline-secondary m-1" onclick="choosePath('${response}')">${response}</button>`)
+                            button.css('opacity',0)
+                            $(`#response-${currentStep}`).append(button);
                         }
-                    };
-                },
-                error: function(error) {
-                    console.error('Error:', error);
-                }
-            });
-        }
-
-        // Function to display a message in the chat
-        function displayMessage(sender, message) {
-            const messageClass = sender === 'user' ? 'user-message' : 'bot-message';
-
-            if(messageClass == 'user-message'){
-                $('#chatContainer').append(`
-                    <div class="d-flex flex-row justify-content-end mb-4 message-container ${messageClass}">
-                        <div  class="p-3 me-3 border-0 text-end" style="border-radius: 15px; background-color: #fbfbfb;">
-                            <span>${message}</span>
-                        </div>
-                    </div>
-                `);
-            }
-            $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight); // Scroll to the bottom
-        }
-        
-        function sendCustomData(customData){
-            $.ajax({
-                url: API_URL+'/api/custom-data',
-                type: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                data: JSON.stringify({ userId, customData: customData }),
-                success: function(response) {
-                    
-                },
-                error: function(error) {
-                    console.log(error.statusText);
-                }
-            });
-        }
-        
-        let maxScrollHeight = 0;
-        let lastTriggeredHeight = 0;
-        const viewportHeight = $(window).height();
-        const updateInterval = viewportHeight * 0.05; // 5% of the viewport height
-
-        function maxScroll() {
-            const currentScrollHeight = $(window).scrollTop();
-            const documentHeight = $(document).height();
-            const windowHeight = $(window).height();
-            const scrollPercentage = (currentScrollHeight / (documentHeight - windowHeight)) * 100;
-
-            if (currentScrollHeight > maxScrollHeight) {
-                maxScrollHeight = currentScrollHeight;
-                if (Math.abs(currentScrollHeight - lastTriggeredHeight) >= updateInterval) {
-                    sendCustomData({
-                        action: 'scroll',
-                        value: maxScrollHeight,
-                        scrollPercentage: scrollPercentage.toFixed(2)
                     });
-                    lastTriggeredHeight = currentScrollHeight;
+
+                    const choice = previousStep.responses.find(c => c === response);
+                    $(`#message-${currentStep}`).closest('.message-container').animate({ opacity: 1 }, 500, function() { 
+                        appendHeadlineCharacterByCharacter($(`#message-${currentStep}`), nextStep.question,function(){
+                            $(`#response-${currentStep} button`).each(function(){
+                                $(this).css('opacity',1)
+                            })
+                        });
+                    })
+                }else{
+                    generateCompletion()
                 }
             }
 
- 
-        }
+            function hideOtherChoice(response, currentStep, callback) {
 
-        $(window).on('scroll', function() {
-            maxScroll();
+                $(`#response-${currentStep - 1} button`).each(function() {
+                    const currentChoice = $(this).text()
+                    if(response == currentChoice){
+                        const response = $(this).text()
+                        $(`#response-${currentStep - 1}`).remove()
+                        $(`#container-${currentStep - 1}`).append(`
+                            <div class="d-flex flex-row justify-content-end mb-4 message-container" style="opacity:0;">
+                                <div id="response-${currentStep - 1}" class="p-3 me-3 border-0" style="border-radius: 15px; background-color: #fbfbfb;">${response}</div>
+                            </div>
+                        `)
+                    }
+                    $(this).remove()
+                });
+                $(`#response-${currentStep - 1}`).closest('.message-container').animate({ opacity: 1 }, 1000,function(){
+                    if (callback) {callback()}
+                })
+            }
+
+            function generateChoice(){
+                const apiUrl = API_URL+'/api/openai-chat-choice/'
+
+                $.ajax({
+                    url: apiUrl,
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ userId, chatId }),
+                    success: function(response) {
+                        const cleanResponse = cleanJsonArray(response)
+
+                        cleanResponse.forEach(choice => {
+                            const button = $(`<button class="btn btn-outline-secondary m-1" onclick="sendMessage('${choice}')">${choice}</button>`)
+                            $(`#response-${currentStep}`).append(button);
+                        });
+                    },
+                    error: function(error) {
+                        console.error('Error:', error);
+                    }
+                });
+            }
+            function cleanJsonArray(jsonString) {
+                // Remove all characters before the first '{'
+                let start = jsonString.indexOf('[');
+                if (start !== -1) {
+                    jsonString = jsonString.substring(start);
+                }
+
+                // Remove all characters after the last '}'
+                let end = jsonString.lastIndexOf(']');
+                if (end !== -1) {
+                    jsonString = jsonString.substring(0, end + 1);
+                }
+
+                return JSON.parse(jsonString);
+            }
+            
+            function generateCompletion(callback){
+                
+                const apiUrl = API_URL+'/api/openai-chat-completion';
+
+                hideOtherChoice(false, currentStep)
+                // Initialize the bot response container
+                const botResponseContainer = $(`
+                    <div id="container-${currentStep}">
+                        <div class="d-flex flex-row justify-content-start mb-4 message-container">
+                            <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+                            <div id="completion-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;">
+                                <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
+                            </div>
+                        </div>
+                        <div id="response-${currentStep}" class="choice-container" ></div>
+                    </div>`);
+                $('#chatContainer').append(botResponseContainer);
+                $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
+                $.ajax({
+                    url: apiUrl,
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ userId, chatId, userChatId }),
+                    success: function(response) {
+                        const sessionId = response.sessionId;
+                        const streamUrl = API_URL+`/api/openai-chat-completion-stream/${sessionId}`;
+                        const eventSource = new EventSource(streamUrl);
+                        let markdownContent = "";
+
+                        
+
+                        eventSource.onmessage = function(event) {
+                            const data = JSON.parse(event.data);
+                            markdownContent += data.content;
+                            $(`#completion-${currentStep}`).html(marked.parse(markdownContent));
+                        };
+
+                        eventSource.onerror = function(error) {
+                            eventSource.close();
+                            if (typeof callback === "function") {
+                                callback();
+                            }
+                        };
+                    },
+                    error: function(error) {
+                        console.error('Error:', error);
+                    }
+                });
+            }
+
+            // Function to display a message in the chat
+            function displayMessage(sender, message) {
+                const messageClass = sender === 'user' ? 'user-message' : 'bot-message';
+
+                if(messageClass == 'user-message'){
+                    $('#chatContainer').append(`
+                        <div class="d-flex flex-row justify-content-end mb-4 message-container ${messageClass}">
+                            <div  class="p-3 me-3 border-0 text-end" style="border-radius: 15px; background-color: #fbfbfb;">
+                                <span>${message}</span>
+                            </div>
+                        </div>
+                    `);
+                }
+                $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight); // Scroll to the bottom
+            }
+            
+            function sendCustomData(customData){
+                $.ajax({
+                    url: API_URL+'/api/custom-data',
+                    type: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    data: JSON.stringify({ userId, customData: customData }),
+                    success: function(response) {
+                        
+                    },
+                    error: function(error) {
+                        console.log(error.statusText);
+                    }
+                });
+            }
+            
+            let maxScrollHeight = 0;
+            let lastTriggeredHeight = 0;
+            const viewportHeight = $(window).height();
+            const updateInterval = viewportHeight * 0.05; // 5% of the viewport height
+
+            function maxScroll() {
+                const currentScrollHeight = $(window).scrollTop();
+                const documentHeight = $(document).height();
+                const windowHeight = $(window).height();
+                const scrollPercentage = (currentScrollHeight / (documentHeight - windowHeight)) * 100;
+
+                if (currentScrollHeight > maxScrollHeight) {
+                    maxScrollHeight = currentScrollHeight;
+                    if (Math.abs(currentScrollHeight - lastTriggeredHeight) >= updateInterval) {
+                        sendCustomData({
+                            action: 'scroll',
+                            value: maxScrollHeight,
+                            scrollPercentage: scrollPercentage.toFixed(2)
+                        });
+                        lastTriggeredHeight = currentScrollHeight;
+                    }
+                }
+
+    
+            }
+
+            $(window).on('scroll', function() {
+                maxScroll();
+            });
         });
-    });
     })
 
     // Fetch the user's IP address and generate a unique ID
@@ -974,6 +974,15 @@ function showRegistrationForm() {
         });
     });
   }
+function resetChatUrl(){
+    var currentUrl = window.location.href;
+    var urlParts = currentUrl.split('/');
+    urlParts[urlParts.length - 1] = '';
+    var newUrl = urlParts.join('/');
+    if($('#chat-widget-container').length == 0){
+        window.history.pushState({ path: newUrl }, '', newUrl);
+    }
+}
 function showDiscovery(){
     $('.onchat-on').hide()
     $('.onchat-on').addClass('d-none').css({
@@ -987,6 +996,7 @@ function showDiscovery(){
         'pointer-events': '',
         'visibility': ''
     }); 
+    resetChatUrl();
 }
 function showChat(){
     $('.onchat-off').hide()

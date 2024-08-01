@@ -220,7 +220,8 @@ async function routes(fastify, options) {
             }
         
             if (String(chat.userId) !== String(userId)) {
-                const newChat = { ...chat, userId: String(userId), baseId:chatId, _id: new fastify.mongo.ObjectId() };
+                console.log('Create a copy with base ???')
+                const newChat = { ...chat, userId: new fastify.mongo.ObjectId(userId), baseId:new fastify.mongo.ObjectId(chatId), _id: new fastify.mongo.ObjectId() };
                 await collection.insertOne(newChat);
                 response.chat = newChat;
             } else {

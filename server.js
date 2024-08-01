@@ -156,12 +156,21 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       }).sort({ updatedAt: -1 }).toArray();
       //People chats
       
-      const peopleChats = await chatsCollection.find({
+      const gohiai_girl = await chatsCollection.find({
         visibility: { $exists: true, $eq: "public" },
         scrap : true,
-        ext: 'gohiai'
+        ext: 'gohiai',
+        category: '彼女'
       }).sort({_id:-1}).limit(100).toArray();
       
+      const gohiai_man = await chatsCollection.find({
+        visibility: { $exists: true, $eq: "public" },
+        scrap : true,
+        ext: 'gohiai',
+        category: '彼氏'
+      }).sort({_id:-1}).limit(100).toArray();
+      
+      peopleChats = {gohiai_girl, gohiai_man}
       // Fetch user data
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
       return reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato, Ltd', user, userId, chatId, chats: userCreatedChats, peopleChats });

@@ -522,29 +522,13 @@
                     <h4 class="px-4">まずはこの子達から始めよう🌟</h4>
                     <div id="cardGrid-2" class="row py-3 px-3 scroll-horizontal"></div>
                 </section>
-                <section class="w-100 p-0">
-                    <h4 class="px-4">今一人? シゲキテキな世界へようこそ‼︎</h4>
-                    <div id="custom-card-container" class="row py-3 px-3 scroll-horizontal"></div>
-                </section>
-                <section class="w-100 p-0">
-                    <h4 class="px-4">知識を探る冒険へ！専門家とチャットしよう！</h4>
-                    <div id="chatbot-container" class="row py-3 px-3 scroll-horizontal"></div>
-                </section>
-                <section class="w-100 p-0">
-                    <h4 class="px-4">Lamixが厳選したキャラクター</h4>
-                    <div id="cardGrid" class="row py-3 px-3 scroll-horizontal"></div>
-                </section>
-                <section class="w-100 p-0 d-none">
-                    <h4 class="px-4">ニーズに合ったチャットを作成する</h4>
-                    <div class="scroll-container d-flex justify-content-between  py-4" id="button-container"></div>
-                </section>
                 {{#if peopleChats}}
                     <section class="w-100 px-0 py-2">
                         <div id="category-container" class="category-container mb-3"></div>
-                        <h4 class="px-4">みんなのチャット</h4>
-                        <div class="chat-container-none row px-3 mx-0">
-                            {{#each peopleChats}}
-                            <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 col-6 col-sm-4 col-lg-2" style="cursor:pointer;" onclick="redirectToChat('{{this._id}}')">
+                        <h4 class="px-4">乙女心をくすぐるロマンチックキャラ</h4>
+                        <div class="chat-container">
+                            {{#each peopleChats.gohiai_man}}
+                            <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 col-7 col-sm-4 col-lg-2" style="cursor:pointer;" onclick="redirectToChat('{{this._id}}')">
                                 <div style="background-image:url('{{this.chatImageUrl}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
                                     <span class="badge bg-dark position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px"><i class="fas fa-comment me-2"></i>{{this.num_message}}</span>
                                 </div>
@@ -557,6 +541,41 @@
                     </div>
                     </section>
                 {{/if}}
+                <section class="w-100 p-0">
+                    <h4 class="px-4">今一人? シゲキテキな世界へようこそ‼︎</h4>
+                    <div id="custom-card-container" class="row py-3 px-3 scroll-horizontal"></div>
+                </section>
+                {{#if peopleChats}}
+                    <section class="w-100 px-0 py-2">
+                        <div id="category-container" class="category-container mb-3"></div>
+                        <h4 class="px-4">魅力爆発！セクシーヒロイン</h4>
+                        <div class="chat-container">
+                            {{#each peopleChats.gohiai_girl}}
+                            <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 col-7 col-sm-4 col-lg-2" style="cursor:pointer;" onclick="redirectToChat('{{this._id}}')">
+                                <div style="background-image:url('{{this.chatImageUrl}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
+                                    <span class="badge bg-dark position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px"><i class="fas fa-comment me-2"></i>{{this.num_message}}</span>
+                                </div>
+                                <div class="card-body bg-transparent border-0 pb-0 text-start">
+                                    <h5 class="card-title">{{this.name}}</h5>
+                                    <p class="card-text character-short-description">{{this.description}}</p>
+                                </div>
+                            </div>
+                            {{/each}}
+                    </div>
+                    </section>
+                {{/if}}
+                <section class="w-100 p-0">
+                    <h4 class="px-4">知識を探る冒険へ！専門家とチャットしよう！</h4>
+                    <div id="chatbot-container" class="row py-3 px-3 scroll-horizontal"></div>
+                </section>
+                <section class="w-100 p-0">
+                    <h4 class="px-4">Lamixが厳選したキャラクター</h4>
+                    <div id="cardGrid" class="row py-3 px-3 scroll-horizontal"></div>
+                </section>
+                <section class="w-100 p-0 d-none">
+                    <h4 class="px-4">ニーズに合ったチャットを作成する</h4>
+                    <div class="scroll-container d-flex justify-content-between  py-4" id="button-container"></div>
+                </section>
                 <section>
                     <div class="text-center m-5">
                         <h3>キャラクターを作成する</h3>

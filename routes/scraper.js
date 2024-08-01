@@ -65,7 +65,7 @@ async function routes(fastify, options) {
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
     
         async function scrapeGohiai() {
-          const response = await axios.get('https://www.gohiai.com/ja-jp');
+          const response = await axios.get('https://www.gohiai.com/ja-jp/ai-explore/pt_HEYXw0PF2PVU7Uz8fkzY');
           const $ = cheerio.load(response.data);
     
           const charactersData = [];
@@ -76,24 +76,21 @@ async function routes(fastify, options) {
             const profileLink = 'https://www.gohiai.com' + $(element).find('a.nick').attr('href');
     
             charactersData.push({
-              chatImageUrl,
-              name,
-              description,
-              language: 'japanese',
-              visibility: 'public',
-              scrap: true,
-              ext: 'gohiai',
-              profileLink,
+                category: '彼氏',
+                chatImageUrl,
+                name,
+                description,
+                language: 'japanese',
+                visibility: 'public',
+                scrap: true,
+                ext: 'gohiai',
+                profileLink,
             });
           });
           let  i = 1
           for (const character of charactersData) {
             console.log(`${i}/${charactersData.length}`)
             const existingChat = await collection.findOne({ name: character.name });
-            if(existingChat && existingChat.rule){
-                i++
-                return
-            }
             if (existingChat) {
               await collection.updateOne({ name: character.name }, { $set: character });
             } else {
@@ -101,11 +98,15 @@ async function routes(fastify, options) {
             }
     
             // Loop through each character and update the rule
-            const profileResponse = await axios.get(character.profileLink);
-            const profile$ = cheerio.load(profileResponse.data);
-            const rule = profile$('.profile-inner .character-info p:nth-child(4)').text();
-            console.log({rule})
-            await collection.updateOne({ name: character.name }, { $set: { rule } });
+            try {
+                const profileResponse = await axios.get(character.profileLink);
+                const profile$ = cheerio.load(profileResponse.data);
+                const rule = profile$('.character-info p').not('.character-info-author').text();
+                await collection.updateOne({ name: character.name }, { $set: { rule } });
+            } catch (error) {
+                console.error(`Error updating rule for character ${character.name}:`, error);
+                // You can also add additional error handling here, such as retrying the request or sending an alert
+            }
 
             i++
           }

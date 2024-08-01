@@ -806,21 +806,9 @@
             switch (systemType) {
                 case 'chatRule':
                     system = `
-                        You are an AI character profile generator. \n
-                        Use the provided details for the AI character.
-                        Use the following JSON to guide your answer.Respond in markdown.
-                        ONLY THE PROFILE EXPLANATION.NO COMMENTS.
-
-                        {
-                        "attributes": {
-                            "speech_style": {
-                            "tone": "",
-                            "language": "",
-                            "communication_style": "",
-                            "attributes": []
-                            },
-                        }
-                        }
+                        You are an AI character tone generator. \n
+                        Use the provided details of the AI character.
+                        Explain how to character speak, tone, emotional state.
                     `;
                     break;
                 case 'chatQuestion':

@@ -802,7 +802,6 @@ $(document).ready(function() {
                 const small = $('<small class="text-secondary"></small>');
                 small.append($('<i class="fas fa-clock me-1"></i>'));
                 small.append(chat.updatedAt);
-                small.append($('<i class="fas fa-robot me-1"></i>'));
     
                 const dropdown = renderChatDropdown(chat)
                 

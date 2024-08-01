@@ -50,6 +50,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     fastify.register(require('fastify-sse'));
     fastify.register(require('@fastify/formbody'));
     fastify.register(require('./routes/api'));
+    fastify.register(require('./routes/scraper'));
     fastify.register(require('./routes/user'));
     fastify.register(require('./routes/admin'));
  
@@ -135,61 +136,6 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         return reply.redirect('/dashboard')
       }
     });
-    fastify.get('/scraper', (request, reply) => {
-      const puppeteer = require('puppeteer');
-    
-      const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-    
-      async function scrapeZetaAi() {
-        const browser = await puppeteer.launch({
-          args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        });
-        const page = await browser.newPage();
-    
-        // Navigate to the first URL
-        await page.goto('https://zeta-ai.io/ja?tab=category');
-    
-        // Open a new tab for the API URL
-        const apiPage = await browser.newPage();
-        await apiPage.goto('https://api.zeta-ai.io/v1/characters?limit=50');
-    
-        // Get the data from the API page
-        const charactersData = await apiPage.evaluate(() => {
-          return JSON.parse(document.body.textContent);
-        });
-    
-        // Loop through the characters data and extract the desired fields
-        const chatsData = charactersData.characters.map((character) => {
-          return {
-            name: character.name || '',
-            chatImageUrl: character.profileImageUrl,
-            description: character.shortDescription,
-            rule: character.longDescription,
-            category: character.categories[0]? character.categories[0].name : '',
-            language: 'japanese',
-            visibility: 'public',
-            scrap: true
-          };
-        });
-    
-        // Insert or update the data into the MongoDB collection
-        for (const chat of chatsData) {
-          const existingChat = await collection.findOne({ name: chat.name });
-          if (existingChat) {
-            await collection.updateOne({ name: chat.name }, { $set: chat });
-          } else {
-            await collection.insertOne(chat);
-          }
-        }
-        console.log(chatsData.length)
-        // Close the browser
-        await browser.close();
-      }
-    
-      //scrapeZetaAi();
-    
-      reply.send({ status: 'Done' })
-    });
     fastify.get('/my-plan', (request, reply) => {
       reply.redirect('chat/');
     });
@@ -209,15 +155,16 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         name:{$exists:true}
       }).sort({ updatedAt: -1 }).toArray();
       //People chats
-      /*
+      
       const peopleChats = await chatsCollection.find({
         visibility: { $exists: true, $eq: "public" },
-        scrap :true
-      }).sort({_id:-1}).limit(50).toArray();
-      */
+        scrap : true,
+        ext: 'gohiai'
+      }).sort({_id:-1}).limit(100).toArray();
+      
       // Fetch user data
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-      return reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato, Ltd', user, userId, chatId, chats: userCreatedChats });
+      return reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato, Ltd', user, userId, chatId, chats: userCreatedChats, peopleChats });
     });
     
     fastify.get('/chat-index', async(request, reply) => {

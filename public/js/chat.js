@@ -227,6 +227,7 @@ $(document).ready(function() {
 
                         $('#chat-title').text(chatName)
                         $('#input-container').show().addClass('d-flex');
+                        
                         if(!isNew){
                             displayChat(data.userChat.messages)
                         }
@@ -236,7 +237,8 @@ $(document).ready(function() {
                         }
 
                         if(isNew && chatData && chatData.length == 0 ){
-                            createButtonAndIntro(data.chat)
+                            createIntro(data.chat)
+                            createButton(data.chat)
                         }
                         // Scroll to the end of the chat
                         $('#chatContainer').animate({
@@ -249,7 +251,7 @@ $(document).ready(function() {
                     }
                 });
             }
-            function createButtonAndIntro(chatData) {
+            function createButton(chatData) {
                 
                 // Extracting data from chatData
                 let name = chatData.name;
@@ -259,7 +261,6 @@ $(document).ready(function() {
 
                 // Remove existing container if it exists
                 $('#startButtonContained').remove();
-                $('#introChat').remove();
 
                 // Create the container div
                 let container = $('<div></div>').addClass('container my-3').attr('id', 'startButtonContained');
@@ -285,6 +286,20 @@ $(document).ready(function() {
                     displayStarter();
                 });
             
+
+
+            }
+            function createIntro(chatData){
+
+                // Extracting data from chatData
+                let name = chatData.name;
+                let description = chatData.description;
+                let thumbnailUrl = chatData.thumbnailUrl;
+                let chatImageUrl = chatData.chatImageUrl;
+
+                // Remove existing container if it exists
+                $('#introChat').remove();
+
                 // Create the intro elements
                 let introContainer = $('<div></div>').addClass('intro-container my-3').attr('id','introChat');
             
@@ -318,10 +333,7 @@ $(document).ready(function() {
             
                 // Display intro container inside #chatContainer
                 $('#chatContainer').append(introContainer);
-
-
             }
-            
             
             function displayStarter() {
                 $('#startButton').remove();

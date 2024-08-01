@@ -242,7 +242,7 @@ $(document).ready(function() {
                     </div>
                     <div class="card-body bg-transparent border-0 pb-0 text-start">
                         <h5 class="card-title">${item.title}</h5>
-                        <p class="card-text">${item.description}</p>
+                        <p class="card-text character-short-description">${item.description}</p>
                     </div>
                 </div>
             `);

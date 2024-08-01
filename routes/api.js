@@ -537,7 +537,7 @@ async function routes(fastify, options) {
                     userChatDocument.messages.push({ "role": "assistant", "content": chatDocument.content[currentStep].question });
                 }
             } else {
-                if (chatDocument.content[currentStep]) {
+                if (chatDocument.content && chatDocument.content[currentStep]) {
                     userChatDocument.messages.push({ "role": "assistant", "content": chatDocument.content[currentStep].question });
                 }
             }
@@ -897,7 +897,7 @@ async function routes(fastify, options) {
             }
 
             const userMessages = userData.messages;
-
+            console.log(userMessages)
             const completion = await fetchOpenAICompletion(userMessages, reply.raw, 100);
 
             // Append the assistant's response to the messages array in the chat document

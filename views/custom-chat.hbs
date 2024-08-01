@@ -149,10 +149,17 @@
             margin-right: 15px;
         }
         .online-text {
-            width: 95%; /* Adjust the width as needed */
+            width: 95%;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+        }
+        .character-short-description {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
         }
         .chat-container .card:hover {
             background: #eee !important;
@@ -511,25 +518,6 @@
                         <p>お気に入りのキャラクターを選んで楽しい会話を楽しめます。最新のAI技術でキャラクターが生き生きとし、まるで本物の友達と話しているかのような体験ができます。さらに、キャラクターを自分好みにカスタマイズしたり、ゼロから新しいキャラクターを作成することも可能です。新しい友達を作って、自由におしゃべりを楽しんでください！</p>
                     </section>
                     <div class="border border-light mt-4 mb-5"></div>
-                {{#if peopleChats}}
-                    <section class="w-100 px-0 py-2">
-                        <div id="category-container" class="category-container mb-3"></div>
-                        <h4 class="mb-4">みんなのチャット</h4>
-                        <div class="chat-container">
-                            {{#each peopleChats}}
-                            <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 col-7 col-sm-4 col-lg-2" style="cursor:pointer;" onclick="redirectToChat('{{this._id}}')">
-                                <div style="background-image:url('{{this.chatImageUrl}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
-                                    <span class="badge bg-dark position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px"><i class="fas fa-comment me-2"></i>{{this.num_message}}</span>
-                                </div>
-                                <div class="card-body bg-transparent border-0 pb-0 text-start">
-                                    <h5 class="card-title">{{this.name}}</h5>
-                                    <p class="card-text">{{this.description}}</p>
-                                </div>
-                            </div>
-                            {{/each}}
-                    </div>
-                    </section>
-                {{/if}}
                 <section class="w-100 p-0">
                     <h4 class="px-4">まずはこの子達から始めよう🌟</h4>
                     <div id="cardGrid-2" class="row py-3 px-3 scroll-horizontal"></div>
@@ -550,6 +538,25 @@
                     <h4 class="px-4">ニーズに合ったチャットを作成する</h4>
                     <div class="scroll-container d-flex justify-content-between  py-4" id="button-container"></div>
                 </section>
+                {{#if peopleChats}}
+                    <section class="w-100 px-0 py-2">
+                        <div id="category-container" class="category-container mb-3"></div>
+                        <h4 class="px-4">みんなのチャット</h4>
+                        <div class="chat-container-none row px-3 mx-0">
+                            {{#each peopleChats}}
+                            <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 col-6 col-sm-4 col-lg-2" style="cursor:pointer;" onclick="redirectToChat('{{this._id}}')">
+                                <div style="background-image:url('{{this.chatImageUrl}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
+                                    <span class="badge bg-dark position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px"><i class="fas fa-comment me-2"></i>{{this.num_message}}</span>
+                                </div>
+                                <div class="card-body bg-transparent border-0 pb-0 text-start">
+                                    <h5 class="card-title">{{this.name}}</h5>
+                                    <p class="card-text character-short-description">{{this.description}}</p>
+                                </div>
+                            </div>
+                            {{/each}}
+                    </div>
+                    </section>
+                {{/if}}
                 <section>
                     <div class="text-center m-5">
                         <h3>キャラクターを作成する</h3>

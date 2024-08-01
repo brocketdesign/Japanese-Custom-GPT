@@ -100,7 +100,7 @@ $(document).ready(function() {
         
         window.choosePath = function(userResponse) {
             currentStep++;
-
+            hideOtherChoice(userResponse,currentStep)
             $.ajax({
                 url: API_URL+'/api/chat-data',
                 type: 'POST',
@@ -119,9 +119,7 @@ $(document).ready(function() {
                 success: function(response) {
                     userChatId = response.userChatId
                     isNew = false
-                    hideOtherChoice(userResponse,currentStep,function(){
-                        updatechatContent(userResponse);
-                    })
+                    updatechatContent(userResponse);
                 },
                 error: function(error) {
                     console.log(error.statusText);

@@ -101,6 +101,16 @@
                 #chat-widget-container{
                     margin-bottom:50px;
                 }
+                #chatInput {
+                    position: absolute;
+                    bottom: 0;
+                    width: 100%;
+                    right: 0;
+                    left: 0;
+                    background: white;
+                    z-index: 1000;
+                    padding: 10px;
+                }
                 #sendMessage,
                 #chatInput .load {
                     border-left: 0 !important;

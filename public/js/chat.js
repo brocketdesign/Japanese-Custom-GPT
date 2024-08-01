@@ -134,7 +134,7 @@ $(document).ready(function() {
                     data: JSON.stringify({ currentStep:currentStep-1, message, userId, chatId, userChatId, isNew }),
                     success: function(response) {
                         const messageCountDoc = response.messageCountDoc
-                        $('#message-number').html(`${messageCountDoc.count}/${messageCountDoc.limit}`)
+                        $('#message-number').html(`使用回数：${parseInt(messageCountDoc.count) - 1 }/${messageCountDoc.limit}`)
                         userChatId = response.userChatId
                         chatId = response.chatId
                         if(currentStep < totalSteps){

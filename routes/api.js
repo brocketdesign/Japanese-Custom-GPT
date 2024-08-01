@@ -292,6 +292,7 @@ async function routes(fastify, options) {
             }).sort({ _id: -1 }).toArray();
 
             //Check for other derivate
+            /*
             const collectionUser = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
             const derivedChats = await collectionUser.find({
                 $or: [
@@ -306,6 +307,7 @@ async function routes(fastify, options) {
             const chatIds = derivedChats.map(chat => chat._id);
             const userChats = await collectionUserChat.find({ chatId: { $in: chatIds } }).toArray();
             console.log(userChats)
+            */
         } else {
             userChat = await collectionUserChat.find({
                 $or: [

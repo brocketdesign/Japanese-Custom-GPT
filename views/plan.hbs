@@ -4,6 +4,14 @@
 <body>
     {{> dashboard-nav}}
     <style>
+        .p-fv-copy__middle {
+            background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
+                background-clip: border-box;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-top: 15px;
+        }
         /* Hero Image */
         .hero img {
             object-fit: cover;
@@ -271,7 +279,8 @@
         </div>
     </div>
 
-    <div class="contact-sns text-center py-5">
+    <div class="contact-sns text-start py-5">
+        <span class="contact-title p-fv-copy__middle fw-bold " style="font-size: 16px;">Contact</span>
         <h2 class="contact-title">連絡方法</h2>
         <p class="contact-description">
             お問い合わせは、メールにて受け付けております。<br>

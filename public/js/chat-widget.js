@@ -119,7 +119,7 @@
                 }
                 #userMessage {
                     border-radius: 30px 0px 0px 30px !important;
-                    height:60px;
+                    height:50px;
                     background-color: #f5f5f5;
                     font-size: 14px;
                     padding-left: 20px;

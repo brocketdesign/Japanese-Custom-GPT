@@ -253,7 +253,6 @@ async function routes(fastify, options) {
             if (!user) {
                 return reply.status(404).send({ error: 'user not found' });
             }
-            console.log(user)
             response.author = user.username
 
             return reply.send(response);

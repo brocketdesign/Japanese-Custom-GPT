@@ -293,7 +293,7 @@
         #userMessage {
             border-radius: 30px 0px 0px 30px !important;
             background-color: #f5f5f5;
-            height: 60px;
+            height: 50px;
             font-size: 14px;
             padding-left: 20px;
             resize: none;
@@ -410,7 +410,7 @@
                             <ul class="dropdown-menu dropdown-menu-end shadow rounded" aria-labelledby="dropdownMenuButton_{{this._id}}">
                                 <li>
                                     <button class="dropdown-item chart-button" data-id="{{this._id}}">
-                                        <i class="fas fa-chart-line"></i> 分析
+                                        <i class="fas fa-info-circle"></i>情報
                                     </button>
                                 </li>
                                 <li>
@@ -462,7 +462,7 @@
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton_{{chatId}}">
                                     <li>
                                         <button class="dropdown-item chart-button" data-id="{{chatId}}">
-                                            <i class="fas fa-chart-line"></i> 分析
+                                            <i class="fas fa-info-circle"></i>情報
                                         </button>
                                     </li>
                                     <li>
@@ -679,7 +679,7 @@ $(document).ready(function() {
         }
     });
     
-    $('.chart-button').on('click', function(e) {
+    $(document).on('click', '.chart-button', function(e) {
         e.preventDefault();
         e.stopPropagation();
         // data-id属性からチャットIDを取得
@@ -690,7 +690,6 @@ $(document).ready(function() {
             .done(function(response) {
                 // 受け取ったデータの長さを取得
                 var dataLength = response.total;
-
                 // SweetAlert2でアラートを表示
                 Swal.fire({
                     html: `
@@ -708,7 +707,7 @@ $(document).ready(function() {
                             </div>
                         </div>
                     `,
-                    imageUrl: response.chat.thumbnailUrl || '/img/logo.webp',
+                    imageUrl: response.chat.chatImageUrl || response.chat.thumbnailUrl ||'/img/logo.webp',
                     imageWidth: 100,
                     imageHeight: 100,
                     imageAlt: 'Thumbnail',
@@ -728,7 +727,7 @@ $(document).ready(function() {
                 });
             });
     });
-    $('.tag-button').click(function(e) {
+    $(document).on('click', '.tag-button', function(e) {
         e.preventDefault();
         e.stopPropagation();
         
@@ -746,11 +745,11 @@ $(document).ready(function() {
         Swal.fire({
             title: 'コピー完了',
             text: 'タグをコピーしました。チャットボットを設置したい場所にタグを貼り付けてください。',
-            icon: 'success',
+            icon:'success',
             confirmButtonText: 'OK'
         });
     });
-    $('.delete-chat').on('click', function(e) {
+    $(document).on('click', '.delete-chat', function(e) {
         e.preventDefault()
         e.stopPropagation();
         const chatId = $(this).data('id');

@@ -314,7 +314,7 @@
         plans.forEach(plan => {
             const planCard = `
                 <div class="plan-card card mb-3 px-1 ${plan.name == 'プレミアムプラン' ? 'col-12 col-lg-5':'col-10 col-lg-4'} ${plan.name == 'プレミアムプラン' ? 'best':''}  m-2">
-                    <div class="card-header plan-header">
+                    <div class="card-header plan-header bg-white">
                     <h2>${plan.name}</h2>
                     </div>
                     <div class="card-body px-1">
@@ -323,7 +323,7 @@
                     </div>
                     <div class="plan-details px-0 pb-0">
                         <ul class="list-group list-group-flush">
-                        ${plan.features.map(feature => `<li class="list-group-item"></i>${feature}</li>`).join('')}
+                        ${plan.features.map(feature => `<li class="list-group-item"><span class="me-2">😉</span>${feature}</li>`).join('')}
                         </ul>
                     </div>
                     </div>

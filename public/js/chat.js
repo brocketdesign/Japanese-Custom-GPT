@@ -267,9 +267,9 @@ $(document).ready(function() {
             
                 // Create the button
                 let button = $('<button></button>')
-                    .addClass('btn btn-outline-secondary')
-                    .attr('id', 'startButton')
-                    .text('会話を開始する');
+                .addClass('btn btn-outline-secondary')
+                .attr('id','startButton')
+                .html('<i class="fas fa-comment me-2"></i>会話を開始する');
                 
                 // Append the button to the container
                 container.append(button);
@@ -290,8 +290,8 @@ $(document).ready(function() {
 
             }
             function createIntro(chatData){
-
                 // Extracting data from chatData
+                const thisChatId = chatData._id
                 let name = chatData.name;
                 let description = chatData.description;
                 let thumbnailUrl = chatData.thumbnailUrl;
@@ -331,6 +331,35 @@ $(document).ready(function() {
                 introContainer.append(image);
                 introContainer.append(title, desc);
             
+                const toolbox = `
+                            <ul class="intro-toolbox d-flex flex-row list-group justify-content-center">
+                                <li class="list-group-item p-0 border-0 mx-1">
+                                    <button class="btn btn-outline-light text-secondary chart-button" data-id="${thisChatId}">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        <span class="text-muted" style="font-size:12px">情報</span>
+                                    </button>
+                                </li>
+                                <li class="list-group-item p-0 border-0 mx-1">
+                                    <button class="btn btn-outline-light text-secondary tag-button" data-id="${thisChatId}">
+                                        <i class="fas fa-share me-1"></i> 
+                                        <span class="text-muted" style="font-size:12px">共有</span>
+                                    </button>
+                                </li>
+                                <li class="list-group-item p-0 border-0 mx-1">
+                                    <a href="/chat/edit/${thisChatId}" class="btn btn-outline-light text-secondary">
+                                        <i class="far fa-edit me-1"></i> 
+                                        <span class="text-muted" style="font-size:12px">編集</span>
+                                    </a>
+                                </li>
+                                <li class="list-group-item p-0 border-0 mx-1">
+                                    <span data-id="${thisChatId}" class="btn btn-outline-light text-secondary delete-chat" style="cursor:pointer">
+                                        <i class="fas fa-trash me-1"></i> 
+                                        <span class="text-muted" style="font-size:12px">削除</span>
+                                    </span>
+                                </li>
+                            </ul>
+                            `
+                introContainer.append(toolbox);
                 // Display intro container inside #chatContainer
                 $('#chatContainer').append(introContainer);
             }

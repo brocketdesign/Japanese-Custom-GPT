@@ -50,6 +50,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     fastify.register(require('fastify-sse'));
     fastify.register(require('@fastify/formbody'));
     fastify.register(require('./routes/api'));
+    fastify.register(require('./routes/plan'));
     fastify.register(require('./routes/scraper'));
     fastify.register(require('./routes/user'));
     fastify.register(require('./routes/admin'));
@@ -136,8 +137,9 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         return reply.redirect('/dashboard')
       }
     });
-    fastify.get('/my-plan', (request, reply) => {
-      reply.redirect('chat/');
+    fastify.get('/my-plan', async (request, reply) => {
+      const user = await fastify.getUser(request, reply);
+      return reply.view('plan.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' , user });
     });
     fastify.get('/chat', (request, reply) => {
       reply.redirect('chat/');

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ja">
+   {{> dashboard-header}}
+<body>
+    {{> dashboard-nav}}
+    <style>
+        /* Hero Image */
+        .hero img {
+            object-fit: cover;
+            width: 100%;
+        }
+        /* Main Container */
+        .pricing-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            text-align: center;
+            background-color: #f9f9f9;
+        }
+
+        /* Title Section */
+        .pricing-title {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        .pricing-description {
+            font-size: 1em;
+            margin-bottom: 40px;
+            color: #555;
+        }
+        /* Plan Switcher */
+        .switch-button-container {
+            margin-bottom: 20px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 120px;
+            height: 54px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            -webkit-transition:.4s;
+            transition:.4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 46px;
+            width: 60px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            -webkit-transition:.4s;
+            transition:.4s;
+        }
+
+        input:checked +.slider {
+            background-color: #f7f7f7;
+        }
+
+        input:focus +.slider {
+            box-shadow: 0 0 1px #ccc;
+        }
+
+        input:checked +.slider:before {
+            -webkit-transform: translateX(50px);
+            -ms-transform: translateX(50px);
+            transform: translateX(50px);
+        }
+
+        .slider.round {
+            border-radius: 34px;
+        }
+
+        .slider.round:before {
+            border-radius: 50px;
+            background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
+        }
+
+        .label {
+            position: absolute;
+            top: 15px;
+            font-size: 16px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .label.monthly {
+            left: 16px;
+        }
+
+        .label.yearly {
+            right: 16px;
+        }
+
+        input:checked ~.label.yearly {
+            color: #fff;
+        }
+
+        input:checked ~.label.monthly  {
+            color: #666;
+        }
+
+        input:not(:checked) ~.label.yearly {
+            color: #666;
+        }
+
+        input:not(:checked) ~.label.monthly  {
+            color: #fff;
+        }
+        /* Plan Cards */
+        .card-header.plan-header {
+            border: 1px solid #8437f9;
+            margin: 10px;
+            border-radius: 5px;
+            padding: 5px 10px;
+            color: #8437f9;
+        }
+        .card-header.plan-header h2 {
+            font-size: 21px;
+            line-height: initial;
+            font-weight: bold;
+            margin: 0;
+        }
+        .plan-cards {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .plan-card.best{
+            border: 2px solid #9d68ff;
+        }
+        .plan-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .plan-card:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .plan-header {
+            background-color: #f7f7f7;
+            padding: 20px;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .plan-price h3 {
+            font-weight: 700;
+            font-size: 1.8em;
+            margin: 20px 0;
+        }
+
+        .plan-details {
+            padding: 20px;
+            text-align: left;
+            font-size: 1.2em;
+            line-height: 1.1;
+            font-weight: 500;
+        }
+        .plan-details ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .plan-details li {
+            margin-bottom: 10px;
+        }
+        .plan-button.btn.btn-lamix {
+            background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
+        }
+        .plan-button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 30px;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        .plan-button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Contact & SNS Section */
+        .contact-sns {
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .contact-title {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+        }
+
+        .contact-description {
+            font-size: 1em;
+            margin-bottom: 20px;
+            color: #555;
+        }
+
+        .social-media {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .social-media img {
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            transition: transform 0.3s ease;
+        }
+
+        .social-media img:hover {
+            transform: scale(1.05);
+        }
+        
+        @media (max-width: 600px) {
+            .plan-details{
+                font-size: 0.9em;
+            }
+        }
+    </style>
+    <div class="hero">
+        <img src="https://lamix.hatoltd.com/img/login-bg-862c043f.png">
+    </div>
+    <div class="pricing-container">
+        <h1 class="pricing-title fw-bold">あなたにぴったりのプランを選ぼう</h1>
+        <p class="pricing-description">
+            当サービスでは、お客様のニーズに合わせて3つの異なる料金プランをご用意しています。<br>
+            無料で始めてみたい方には無料プラン、基本的な機能をお求めの方にはベーシックプラン、たっぷり楽しみたい方にはプレミアムプラン、そしてすべての機能をフルに活用したい方には特別なプロプランをご用意しています。<br>
+            それぞれのプラン内容を確認し、最適なプランをお選びください。
+        </p>
+        <div class="switch-button-container">
+            <label class="switch">
+                <input type="checkbox" id="plan-switch" checked>
+                <span class="slider round"></span>
+                <span class="label monthly">月額</span>
+                <span class="label yearly">年額</span>
+            </label>
+        </div>
+        <p>年間プランでさらにお得に！</p>
+        <div class="plan-cards-none d-flex m-0 px-1" style="overflow-x:scroll" id="planCards">
+            <!-- Plan cards will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <div class="contact-sns text-center py-5">
+        <h2 class="contact-title">連絡方法</h2>
+        <p class="contact-description">
+            お問い合わせは、メールにて受け付けております。<br>
+            メールでのお問い合わせは、contact @bhatoltd.comまでどうぞ。
+        </p>
+    </div>
+  {{> dashboard-footer}}
+    <script>
+   $(document).ready(function() {
+    let plans = []
+    // Function to fetch plans from the server
+    function fetchPlans() {
+        $.ajax({
+            type: 'GET',
+            url: '/plan/list',
+            dataType: 'json',
+            success: function(response) {
+                plans = response.plans
+                renderPlans(plans);
+            },
+            error: function(xhr, status, error) {
+                console.error('Failed to fetch plans:', error);
+                // Handle error, for example, display an error message
+            }
+        });
+    }
+
+    // Function to render plans
+    function renderPlans(plans) {
+        const planCardsContainer = $('#planCards');
+        plans.forEach(plan => {
+            const planCard = `
+                <div class="plan-card card mb-3 px-1 ${plan.name == 'プレミアムプラン' ? 'col-12 col-lg-5':'col-10 col-lg-4'} ${plan.name == 'プレミアムプラン' ? 'best':''}  m-2">
+                    <div class="card-header plan-header">
+                    <h2>${plan.name}</h2>
+                    </div>
+                    <div class="card-body px-1">
+                    <div class="plan-price">
+                        <h3>${plan.price}</h3>
+                    </div>
+                    <div class="plan-details px-0 pb-0">
+                        <ul class="list-group list-group-flush">
+                        ${plan.features.map(feature => `<li class="list-group-item"></i>${feature}</li>`).join('')}
+                        </ul>
+                    </div>
+                    </div>
+                    <div class="card-footer bg-transparent ${plan.price == '無料' ? 'd-none':''}">
+                    <a href="#" class="plan-button btn btn-lamix border-0">
+                        このプランで始める
+                    </a>
+                    </div>
+                </div>
+                `;
+            planCardsContainer.append(planCard);
+        });
+    }
+
+    // Fetch and render the plans
+    fetchPlans();
+
+    $('#plan-switch').on('change', function() {
+        const planCardsContainer = $('#planCards');
+        planCardsContainer.empty();
+        
+        // Update the plans based on the switch button state
+        const isYearly = $(this).is(':checked');
+        const newPlans = plans.map(plan => {
+            if (isYearly) {
+                plan.price = plan.yearly;
+            } else {
+                plan.price = plan.monthly;
+            }
+            return plan;
+        });
+        renderPlans(newPlans);
+    });
+});
+</script>
+
+
+  
+</body>
+</html>

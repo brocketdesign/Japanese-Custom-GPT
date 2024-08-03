@@ -77,7 +77,7 @@ $(document).ready(function() {
                 userChatId = $(this).data('chat')
                 fetchchatData(chatId, userId)
             })
-            $('.chat-list.item.user-chat .user-chat-content').click(function(e){
+            $(document).on('click','.chat-list.item.user-chat .user-chat-content', function(e){
                 const selectChatId = $(this).closest('.user-chat').data('id')
                 getUserChatHistory(selectChatId, userId,function(lastChat){
                     if(lastChat){
@@ -200,7 +200,6 @@ $(document).ready(function() {
                 promptForEmail()
             })
             window.fetchchatData = function(chatId,userId,reset) {
-                console.log({userId, chatId, userChatId})
                 $('#chatContainer').empty()
                 $('#startButtonContained').remove();
                 if(reset){
@@ -217,7 +216,6 @@ $(document).ready(function() {
                         showChat();                 
 
                         isNew = reset || data.isNew
-                        console.log({isNew})
                         if(!data.chat){
                             showDiscovery();
                             return
@@ -388,8 +386,8 @@ $(document).ready(function() {
                         userChatId = response.userChatId
                         chatId = response.chatId
                         isNew = false;
-                        generateCompletion(function() {
-                        });
+                        renderChatList();
+                        generateCompletion();
                     },
                     error: function(error) {
                         if (error.status === 403) {
@@ -423,6 +421,72 @@ $(document).ready(function() {
                             console.error('Error:', error);
                             displayMessage('bot', 'An error occurred while sending the message.');
                         }
+                    }
+                });
+            }
+            function renderChatList() {
+                if($('#chat-list').length == 0 || $('#chat-widget-container').length > 0){
+                    return
+                }
+                console.log(`renderChatList userId: ${userId}`)
+                $.ajax({
+                    type: 'GET',
+                    url: '/api/chat-list/'+userId, // replace with your API endpoint
+                    success: function(data) {
+                    var chatListHtml = '';
+                    $.each(data, function(index, chat) {
+                        chatListHtml += `
+                        <div class="chat-list item user-chat d-flex align-items-center justify-content-between px-0 py-1 bg-transparent" style="cursor: pointer;" 
+                            data-id="${chat._id}" data-userid="${chat.userId}" >
+                            <div class="d-flex align-items-center w-100">
+                            <div class="user-chat-content" style="flex: 1;display: flex;align-items: center;">
+                                <div class="thumb align-items-center text-center justify-content-center d-flex flex-column col-3 p-1" >
+                                <img class="img-fluid" src="${chat.thumbnailUrl || chat.chatImageUrl || '/img/logo.webp'}" alt="">
+                                </div>
+                                <div class="chat-list-details">
+                                <div class="chat-list-info">
+                                    <div class="chat-list-title">
+                                    <h6 class="mb-0 online-text" style="font-size: 14px;">${chat.name}</h6>
+                                    </div>
+                                </div>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <!-- Dropdown -->
+                                <div class="dropdown pe-3">
+                                <button class="btn border-0 shadow-0 dropdown-toggle ms-2 " type="button" id="dropdownMenuButton_${chat._id}" data-mdb-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-ellipsis-v text-secondary"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow rounded" aria-labelledby="dropdownMenuButton_${chat._id}">
+                                    <li>
+                                    <button class="dropdown-item chart-button" data-id="${chat._id}">
+                                        <i class="fas fa-info-circle"></i>情報
+                                    </button>
+                                    </li>
+                                    <li>
+                                    <button class="dropdown-item tag-button" data-id="${chat._id}">
+                                        <i class="fas fa-share"></i> 共有
+                                    </button>
+                                    </li>
+                                    <li>
+                                    <a href="/chat/edit/${chat._id}" class="dropdown-item">
+                                        <i class="far fa-edit"></i> 編集
+                                    </a>
+                                    </li>
+                                    <li>
+                                    <span data-id="${chat._id}" class="dropdown-item delete-chat" style="cursor:pointer">
+                                        <i class="fas fa-trash"></i> 削除
+                                    </span>
+                                    </li>
+                                </ul>
+                                </div>
+                                <!-- End of Dropdown -->
+                            </div>
+                            </div>
+                        </div>
+                        `;
+                    });
+                    $('#chat-list').html(chatListHtml);
                     }
                 });
             }

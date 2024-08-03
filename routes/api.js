@@ -458,6 +458,26 @@ async function routes(fastify, options) {
             console.log(error)
         }
     });
+    fastify.get('/api/chat-list/:id',async (request, reply) => {
+
+        try{
+            let userId = request.params.id
+            if (!userId) {
+                const user = await fastify.getUser(request, reply);
+                userId = user._id;
+            }
+
+            const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+            const chats = await chatsCollection.find({ 
+                userId: new fastify.mongo.ObjectId(userId) ,
+                name:{$exists:true}
+              }).sort({ _id: -1 }).toArray();
+
+            return reply.send(chats);
+        }catch(error){
+            console.log(error)
+        }
+    });
     async function checkLimits(userId) {
         // Get the user's data
         const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');

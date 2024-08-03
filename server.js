@@ -157,7 +157,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       const userCreatedChats = await chatsCollection.find({ 
         userId: new fastify.mongo.ObjectId(userId) ,
         name:{$exists:true}
-      }).sort({ updatedAt: -1 }).toArray();
+      }).sort({ _id: -1 }).toArray();
       //People chats
       
       const gohiai_girl = await chatsCollection.find({

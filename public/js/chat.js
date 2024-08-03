@@ -23,7 +23,6 @@ $(document).ready(function() {
                     if(lastChat){
                         userChatId = lastChat._id
                     }
-                    console.log(`init chat data`)
                     fetchchatData(chatId, userId)
                 });
             }else{
@@ -281,9 +280,6 @@ $(document).ready(function() {
                 $('#input-container').hide().removeClass('d-flex');
                 // Add click event listener to the button
                 button.on('click', function() {
-                    $('#input-container').show().addClass('d-flex');
-                    $('#startButtonContained').remove();
-                    $('#introChat').remove();
                     displayStarter();
                 });
             
@@ -366,8 +362,8 @@ $(document).ready(function() {
             }
             
             function displayStarter() {
-                $('#startButton').remove();
-                $('#introChat').remove();
+                $('#startButtonContained').hide();
+                $('#introChat').hide();
                 $.ajax({
                     url: API_URL+'/api/chat-data',
                     type: 'POST',
@@ -387,37 +383,46 @@ $(document).ready(function() {
                         chatId = response.chatId
                         isNew = false;
                         renderChatList();
-                        generateCompletion();
+                        generateCompletion(function(){
+                            $('#input-container').show().addClass('d-flex');
+                        });
                     },
-                    error: function(error) {
-                        if (error.status === 403) {
-                            if($('#chat-widget-container').length == 0 && isTemporary){
-                                showRegistrationForm(error.response.data.id)
-                                return
-                            }
-                            if (error.response.data.id === 1) {
-                                // Message limit reached
-                                if($('#chat-widget-container').length == 0 ){
+                    error: function(xhr, status, error)  {
+                        $('#startButtonContained').show();
+                        $('#introChat').show();
+                        if (xhr.responseJSON) {
+                            var errorStatus = xhr.status
+                            if (errorStatus === 403) {
+                                var errorId = xhr.responseJSON.id;
+
+                                if($('#chat-widget-container').length == 0 && isTemporary){
+                                    showRegistrationForm(errorId)
+                                    return
+                                }
+                                if (errorId === 1) {
+                                  // Handle message limit reached error
+                                    if($('#chat-widget-container').length == 0 ){
+                                        Swal.fire({
+                                            title: '注意',
+                                            text: '無料ユーザーのメッセージの最大数は1日50件です。',
+                                            icon: 'warning',
+                                            confirmButtonText: 'OK',
+                                            allowEnterKey: false
+                                        });
+                                        return
+                                    }
+                                } else if (errorId === 2) {
+                                    // Handle chat limit reached error
                                     Swal.fire({
                                         title: '注意',
-                                        text: '無料ユーザーのメッセージの最大数は1日50件です。',
+                                        text: 'チャットの最大数に達しました。',
                                         icon: 'warning',
                                         confirmButtonText: 'OK',
                                         allowEnterKey: false
                                     });
-                                    return
                                 }
-                            } else if (error.response.data.id === 2) {
-                                // Chat limit reached
-                                Swal.fire({
-                                    title: '注意',
-                                    text: 'チャットの最大数に達しました。',
-                                    icon: 'warning',
-                                    confirmButtonText: 'OK',
-                                    allowEnterKey: false
-                                });
                             }
-                        } else {
+                          } else {
                             console.error('Error:', error);
                             displayMessage('bot', 'An error occurred while sending the message.');
                         }

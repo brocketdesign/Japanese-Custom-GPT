@@ -330,7 +330,7 @@ $(document).ready(function() {
             
                 const toolbox = `
                             <ul class="intro-toolbox d-flex flex-row list-group justify-content-center">
-                                <li class="list-group-item p-0 border-0 mx-1">
+                                <li class="d-none list-group-item p-0 border-0 mx-1">
                                     <button class="btn btn-outline-light text-secondary chart-button" data-id="${thisChatId}">
                                         <i class="fas fa-info-circle me-1"></i>
                                         <span class="text-muted" style="font-size:12px">情報</span>

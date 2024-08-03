@@ -262,74 +262,81 @@ async function routes(fastify, options) {
         }
     });
     fastify.post('/api/chat-history/:chatId', async (request, reply) => {
-        const chatId = request.params.chatId;
-        const userId = request.body.userId;
-        if (!chatId || !userId) {
-            return reply.status(400).send({ error: 'Chat ID and User ID are required' });
-        }
-    
-        const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-        const isUserChat = await chatsCollection.findOne({ 
-            $or: [
-                { userId },
-                { userId: new fastify.mongo.ObjectId(userId) }
-            ],
-             _id: new fastify.mongo.ObjectId(chatId) 
-        });    
+        try {
+            const chatId = request.params.chatId;
+            const userId = request.body.userId;
+            if (!chatId || !userId) {
+                return reply.status(400).send({ error: 'Chat ID and User ID are required' });
+            }
         
-        const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-    
-        let userChat;
-        if (isUserChat) {
-            userChat = await collectionUserChat.find({ 
+            const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+            const isUserChat = await chatsCollection.findOne({ 
                 $or: [
-                  { chatId },
-                  { chatId: new fastify.mongo.ObjectId(chatId) },
+                    { userId },
+                    { userId: new fastify.mongo.ObjectId(userId) }
                 ],
-                messages: { $size: { $gte: 2 } }
-              }).sort({ _id: -1 }).toArray();
-            //Check for other derivate
-            /*
-            const collectionUser = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-            const derivedChats = await collectionUser.find({
-                $or: [
-                    { baseId : chatId },
-                    { baseId: new fastify.mongo.ObjectId(chatId) },
-                    { name: isUserChat.name}
-                ]
-            })
-            .project({ _id: 1 }) // extract only the _id field
-            .sort({ _id: -1 })
-            .toArray();
-            const chatIds = derivedChats.map(chat => chat._id);
-            const userChats = await collectionUserChat.find({ chatId: { $in: chatIds } }).toArray();
-            console.log(userChats)
-            */
-        } else {
-            userChat = await collectionUserChat.find({
-                $and: [
-                  { 
-                    $or: [
-                      { chatId },
-                      { chatId: new fastify.mongo.ObjectId(chatId) }
+                 _id: new fastify.mongo.ObjectId(chatId) 
+            });    
+            
+            const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+        
+            let userChat;
+            if (isUserChat) {
+                userChat = await collectionUserChat.find({ 
+                    $and: [
+                      { $or: [
+                        { chatId },
+                        { chatId: new fastify.mongo.ObjectId(chatId) },
+                      ]},
+                      { $expr: { $gte: [ { $size: "$messages" }, 2 ] } }
                     ]
-                  },
-                  { 
+                  }).sort({ _id: -1 }).toArray();
+                //Check for other derivate
+                /*
+                const collectionUser = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+                const derivedChats = await collectionUser.find({
                     $or: [
-                      { userId },
-                      { userId: new fastify.mongo.ObjectId(userId) }
+                        { baseId : chatId },
+                        { baseId: new fastify.mongo.ObjectId(chatId) },
+                        { name: isUserChat.name}
                     ]
-                  }
-                ],
-                messages: { $size: { $gte: 2 } }
-              }).sort({ _id: -1 }).toArray();
+                })
+                .project({ _id: 1 }) // extract only the _id field
+                .sort({ _id: -1 })
+                .toArray();
+                const chatIds = derivedChats.map(chat => chat._id);
+                const userChats = await collectionUserChat.find({ chatId: { $in: chatIds } }).toArray();
+                console.log(userChats)
+                */
+            } else {
+                userChat = await collectionUserChat.find({
+                    $and: [
+                      { 
+                        $or: [
+                          { chatId },
+                          { chatId: new fastify.mongo.ObjectId(chatId) }
+                        ]
+                      },
+                      { 
+                        $or: [
+                          { userId },
+                          { userId: new fastify.mongo.ObjectId(userId) }
+                        ]
+                      },
+                      { $expr: { $gte: [ { $size: "$messages" }, 2 ] } }
+                    ]
+                    
+                  }).sort({ _id: -1 }).toArray();
+            }
+        
+            if (!userChat || userChat.length === 0) {
+                return reply.send([]);
+            }
+        
+            return reply.send(userChat);
+        } catch (error) {
+            console.log(error)
         }
-    
-        if (!userChat || userChat.length === 0) {
-            return reply.send([]);
-        }
-    
-        return reply.send(userChat);
     });
     
       

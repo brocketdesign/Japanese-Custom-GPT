@@ -248,7 +248,12 @@ $(document).ready(function() {
             `);
         
             card.on('click', function() {
-                window.location = item.chat_url;
+                const chatId = item.chat_url.replace('/chat/','')
+                //localStorage.setItem('selectedChatId', chatId);
+                const userId = localStorage.getItem('userId');
+                fetchchatData(chatId,userId)
+                showChat()
+               // window.location = item.chat_url;
             });
         
             container.append(card);

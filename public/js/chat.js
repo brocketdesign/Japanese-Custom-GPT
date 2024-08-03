@@ -23,6 +23,7 @@ $(document).ready(function() {
                     if(lastChat){
                         userChatId = lastChat._id
                     }
+                    console.log(`init chat data`)
                     fetchchatData(chatId, userId)
                 });
             }else{
@@ -199,6 +200,7 @@ $(document).ready(function() {
                 promptForEmail()
             })
             window.fetchchatData = function(chatId,userId,reset) {
+                console.log({userId, chatId, userChatId})
                 $('#chatContainer').empty()
                 $('#startButtonContained').remove();
                 if(reset){
@@ -215,6 +217,7 @@ $(document).ready(function() {
                         showChat();                 
 
                         isNew = reset || data.isNew
+                        console.log({isNew})
                         if(!data.chat){
                             showDiscovery();
                             return
@@ -798,8 +801,8 @@ $(document).ready(function() {
           dataType: 'json',
           success: function(data) {
             const lastChat = data.find(chat =>!chat.isWidget);
-            if (callback) { callback(lastChat) }
             displayUserChatHistory(data);
+            if (callback) { callback(lastChat) }
           },
           error: function(jqXHR, textStatus, errorThrown) {
             console.error('Error fetching user chat history:', errorThrown);
@@ -1035,16 +1038,16 @@ function showRegistrationForm(messageId) {
         });
     });
   }
-function resetChatUrl(){
+  window.resetChatUrl = function() {
     var currentUrl = window.location.href;
     var urlParts = currentUrl.split('/');
     urlParts[urlParts.length - 1] = '';
     var newUrl = urlParts.join('/');
     if($('#chat-widget-container').length == 0){
-        window.history.pushState({ path: newUrl }, '', newUrl);
+        window.history.replaceState({ path: newUrl }, '', newUrl);
     }
 }
-function showDiscovery(){
+window.showDiscovery = function() {
     $('.onchat-on').hide()
     $('.onchat-on').addClass('d-none').css({
         'opacity': 0,
@@ -1059,7 +1062,7 @@ function showDiscovery(){
     }); 
     resetChatUrl();
 }
-function showChat(){
+window.showChat = function() {
     $('.onchat-off').hide()
     $('.onchat-off').addClass('d-none').css({
         'opacity': 0,

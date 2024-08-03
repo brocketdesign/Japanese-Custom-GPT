@@ -802,7 +802,6 @@ $(document).ready(function() {
                     url: `/api/delete-chat-history/${selectedChatId}`,
                     type: 'DELETE',
                     success: function(response) {
-                        console.log({selectedChatId})
                         $(document).find(`.user-chat-history[data-chat="${selectedChatId}"]`).fadeOut().remove()
                     },
                     error: function(xhr, status, error) {
@@ -818,7 +817,7 @@ $(document).ready(function() {
     });
 });
 function redirectToChat(chatId) {
-    localStorage.setItem('selectedChatId', chatId);
+    //localStorage.setItem('selectedChatId', chatId);
     const userId = localStorage.getItem('userId');
     fetchchatData(chatId,userId)
     showChat()
@@ -829,44 +828,6 @@ $('.date-time').each(function() {
     var trimmedDate = dateText.split(' ')[0]; // Get the date part only
     $(this).text(trimmedDate); // Update the element's content
 });
-function resetChatUrl(){
-    var currentUrl = window.location.href;
-    var urlParts = currentUrl.split('/');
-    urlParts[urlParts.length - 1] = '';
-    var newUrl = urlParts.join('/');
-    if($('#chat-widget-container').length == 0){
-        window.history.pushState({ path: newUrl }, '', newUrl);
-    }
-}
-function showDiscovery(){
-    $('.onchat-on').hide()
-    $('.onchat-on').addClass('d-none').css({
-        'opacity': 0,
-        'pointer-events': 'none',
-        'visibility': 'hidden'
-    });    
-    $('.onchat-off').show()
-    $('.onchat-off').removeClass('d-none').css({
-        'opacity': '',
-        'pointer-events': '',
-        'visibility': ''
-    }); 
-    resetChatUrl();
-}
-function showChat(){
-    $('.onchat-off').hide()
-    $('.onchat-off').addClass('d-none').css({
-        'opacity': 0,
-        'pointer-events': 'none',
-        'visibility': 'hidden'
-    });    
-    $('.onchat-on').show()
-    $('.onchat-on').removeClass('d-none').css({
-        'opacity': '',
-        'pointer-events': '',
-        'visibility': ''
-    }); 
-}
 </script>
 </body>
 </html>

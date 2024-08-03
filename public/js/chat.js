@@ -389,21 +389,32 @@ $(document).ready(function() {
                         });
                     },
                     error: function(error) {
-                        
                         if (error.status === 403) {
                             if($('#chat-widget-container').length == 0 && isTemporary){
-                                showRegistrationForm()
+                                showRegistrationForm(error.response.data.id)
                                 return
                             }
-                            if($('#chat-widget-container').length == 0 ){
+                            if (error.response.data.id === 1) {
+                                // Message limit reached
+                                if($('#chat-widget-container').length == 0 ){
+                                    Swal.fire({
+                                        title: '注意',
+                                        text: '無料ユーザーのメッセージの最大数は1日50件です。',
+                                        icon: 'warning',
+                                        confirmButtonText: 'OK',
+                                        allowEnterKey: false
+                                    });
+                                    return
+                                }
+                            } else if (error.response.data.id === 2) {
+                                // Chat limit reached
                                 Swal.fire({
                                     title: '注意',
-                                    text: '無料ユーザーのメッセージの最大数は1日50件です。',
+                                    text: 'チャットの最大数に達しました。',
                                     icon: 'warning',
                                     confirmButtonText: 'OK',
                                     allowEnterKey: false
                                 });
-                                return
                             }
                         } else {
                             console.error('Error:', error);
@@ -947,7 +958,7 @@ $(document).ready(function() {
     }
 });
 
-function showRegistrationForm() {
+function showRegistrationForm(messageId) {
     //window.location = "/authenticate?register=true"
     Swal.fire({
       title: '',

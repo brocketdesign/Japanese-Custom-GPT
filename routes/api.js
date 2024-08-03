@@ -461,33 +461,42 @@ async function routes(fastify, options) {
     async function checkMessageLimit(request, reply) {
         let userId = request.body.userId;
         if (!userId) {
-            const user = await fastify.getUser(request, reply);
-            userId = user._id;
-            request.body.userId = userId; // Ensure userId is set in the request body for later use
+          const user = await fastify.getUser(request, reply);
+          userId = user._id;
+          request.body.userId = userId; // Ensure userId is set in the request body for later use
         }
-    
+      
         const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
         const user = await userDataCollection.findOne({_id:new ObjectId(userId)})
-
-        const isTemporary = user.isTemporary
-        const limit = isTemporary ? 11 : 51
-
+      
+        const isTemporary = user.isTemporary;
+        const messageLimit = isTemporary? 11 : 51;
+        const chatLimit = isTemporary? 1 : 3;
+      
         const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
-    
+      
         // Get the MessageCount collection
         const collectionMessageCount = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageCount');
-    
+      
         // Query the MessageCount collection to get the user's message count for today
         const messageCountDoc = await collectionMessageCount.findOne({ userId: new fastify.mongo.ObjectId(userId), date: today });
-
-        // Check if the user has reached the message limit
-        if (messageCountDoc && messageCountDoc.count >= limit) {
-            return reply.status(403).send({ error: 'Message limit reached for today.' });
+      
+        // Get the Chat collection
+        const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('Chat');
+      
+        // Query the Chat collection to get the number of chats the user has
+        const chatCount = await collectionChat.countDocuments({ userId: new fastify.mongo.ObjectId(userId) });
+      
+        // Check if the user has reached the message limit or chat limit
+        if (messageCountDoc && messageCountDoc.count >= messageLimit) {
+          return reply.status(403).send({ error: 'Message limit reached for today.' , id : 1});
+        } else if (chatCount >= chatLimit) {
+          return reply.status(403).send({ error: 'Chat limit reached.' , id : 2 });
         }
-    
+      
         // Pass the message count document to the route handler
         request.messageCountDoc = messageCountDoc;
-    }
+      }
     fastify.post('/api/chat-data', {
         preHandler: [checkMessageLimit]
       }, async (request, reply) => {

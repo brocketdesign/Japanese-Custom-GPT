@@ -343,7 +343,6 @@ async function routes(fastify, options) {
     fastify.delete('/api/delete-chat-history/:chatId', async (request, reply) => {
         const chatId = request.params.chatId;
     
-        console.log({ chatId })
         if (!chatId) {
           throw new Error('Chat ID is required');
         }
@@ -645,7 +644,6 @@ async function routes(fastify, options) {
                     }
                     await collectionMessageCount.insertOne(newMessageCount);
                 }
-                console.log(newMessageCount)
                 return reply.send({ nextStoryPart: "You chose the path and...", endOfStory: true, userChatId: documentId, chatId, messageCountDoc:newMessageCount});
             } catch (error) {
                 console.error('Failed to save user choice:', error);
@@ -962,13 +960,7 @@ async function routes(fastify, options) {
                 { userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) },
                 { $set: { messages: userMessages, updatedAt: userData.updatedAt } }
               );
-              
-              if (result.modifiedCount === 1) {
-                console.log('Update successful');
-              } else {
-                console.log('Update failed or no documents matched');
-              }
-
+            
             //console.log({ message:userMessages })
     
             reply.raw.end();

@@ -25,8 +25,8 @@ const fetchOpenAICompletion = async (messages, res, maxToken = 1000) => {
             }
         );
 
-        console.log("Response status:", response.status);
-        console.log("Response status text:", response.statusText);
+        //console.log("Response status:", response.status);
+        //console.log("Response status text:", response.statusText);
 
         if (!response.ok) {
             console.error("Response body:", await response.text());

@@ -283,11 +283,11 @@ async function routes(fastify, options) {
         if (isUserChat) {
             userChat = await collectionUserChat.find({ 
                 $or: [
-                    { chatId },
-                    { chatId: new fastify.mongo.ObjectId(chatId) },
-                ]
-            }).sort({ _id: -1 }).toArray();
-
+                  { chatId },
+                  { chatId: new fastify.mongo.ObjectId(chatId) },
+                ],
+                messages: { $size: { $gte: 2 } }
+              }).sort({ _id: -1 }).toArray();
             //Check for other derivate
             /*
             const collectionUser = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
@@ -320,7 +320,8 @@ async function routes(fastify, options) {
                       { userId: new fastify.mongo.ObjectId(userId) }
                     ]
                   }
-                ]
+                ],
+                messages: { $size: { $gte: 2 } }
               }).sort({ _id: -1 }).toArray();
         }
     
@@ -503,7 +504,12 @@ async function routes(fastify, options) {
             if(!isUserChat){
                 if(!isWidget){
                     console.log(`Create a copy`)
-                    const newChatDocument = { ...chatDocument, userId: new fastify.mongo.ObjectId(userId), baseId:new fastify.mongo.ObjectId(chatId), visibility: 'private' };
+                    const newChatDocument = { 
+                        ...chatDocument, 
+                        userId: new fastify.mongo.ObjectId(userId), 
+                        baseId:new fastify.mongo.ObjectId(chatId), 
+                        visibility: 'private' 
+                    };
                     delete newChatDocument._id; // Remove the _id field to let MongoDB create a new one
                     
                     const newChatResult = await collectionChat.insertOne(newChatDocument);
@@ -529,7 +535,6 @@ async function routes(fastify, options) {
                     updatedAt: today
                 };
                 if(isWidget){
-                    console.log(`From widget`)
                     userChatDocument.isWidget = true
                 }
                 if (chatDocument.content && chatDocument.content[currentStep]) {

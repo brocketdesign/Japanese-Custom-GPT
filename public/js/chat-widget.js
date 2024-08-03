@@ -19,6 +19,9 @@
         var chatContainer = document.createElement('div');
         chatContainer.innerHTML = `
             <style>
+                .message-container p {
+                    margin-bottom: 0;
+                }
                 .choice-container {
                     text-wrap: nowrap;
                     overflow: auto;

@@ -1,5 +1,6 @@
 {{#if user.isTemporary}}
-        <a class="btn btn-secondary shadow-0 m-2" style="border-radius: 50px;" href="/authenticate"><i class="fas fa-sign-in-alt me-3"></i> ログイン/会員登録</a>
+        <a class="btn btn-secondary shadow-0 m-2 px-4 py-2" style="border-radius: 50px;" href="/authenticate">
+        <i class="fas fa-sign-in-alt me-2"></i> ログイン/会員登録</a>
     {{else}}
         <a data-mdb-dropdown-init class="nav-link dropdown-toggle hidden-arrow d-flex align-items-center" href="#"
             id="navbarDropdownMenuLink" role="button" aria-expanded="false">
@@ -13,7 +14,7 @@
                 <li><a class="dropdown-item text-secondary" href="/chat/edit/"><i class="fas fa-wrench me-3"></i> キャラクター作成</a></li>
                 <li><a class="dropdown-item text-secondary" href="/settings"><i class="fas fa-cogs me-3"></i> 設定</a></li>
                 <hr>
-                <li><a class="dropdown-item text-secondary logout" href="#"><i class="fas fa-sign-out-alt me-3"></i> ログアウト</a></li>
+                <li><a class="dropdown-item text-danger logout" href="#"><i class="fas fa-sign-out-alt me-3"></i> ログアウト</a></li>
         </ul>
 {{/if}}
 <style>

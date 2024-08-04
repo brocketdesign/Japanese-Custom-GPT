@@ -267,12 +267,23 @@ $(document).ready(function() {
             
                 // Create the button
                 let button = $('<button></button>')
-                .addClass('btn btn-outline-secondary')
+                .addClass('btn btn-outline-dark w-100')
                 .attr('id','startButton')
                 .html('<i class="fas fa-comment me-2"></i>会話を開始する');
                 
                 // Append the button to the container
                 container.append(button);
+
+                // Append temp chat alert if isTemporary
+                if(isTemporary){
+                    let alert = `
+                    <div class="alert alert-danger d-flex align-items-center mt-3 justify-content-center py-2" role="alert">
+                        <i class="fas fa-info-circle text-light me-2"></i>
+                        <span style="font-size:11px">この会話を保存するためには、アカウントが必要です</span>
+                    </div>
+                    `;
+                    container.append(alert);
+                }
             
                 // Append the container to the chat input area
                 $('#chatInput').prepend(container);
@@ -433,7 +444,6 @@ $(document).ready(function() {
                 if($('#chat-list').length == 0 || $('#chat-widget-container').length > 0){
                     return
                 }
-                console.log(`renderChatList userId: ${userId}`)
                 $.ajax({
                     type: 'GET',
                     url: '/api/chat-list/'+userId, // replace with your API endpoint
@@ -462,25 +472,29 @@ $(document).ready(function() {
                                 <button class="btn border-0 shadow-0 dropdown-toggle ms-2 " type="button" id="dropdownMenuButton_${chat._id}" data-mdb-toggle="dropdown" aria-expanded="false">
                                     <i class="fas fa-ellipsis-v text-secondary"></i>
                                 </button>
-                                <ul class="dropdown-menu dropdown-menu-end shadow rounded" aria-labelledby="dropdownMenuButton_${chat._id}">
+                                <ul class="dropdown-menu dropdown-menu-end chat-option-menu bg-light shadow rounded mx-3" aria-labelledby="dropdownMenuButton_${chat._id}">
                                     <li>
-                                    <button class="dropdown-item chart-button" data-id="${chat._id}">
-                                        <i class="fas fa-info-circle"></i>情報
+                                    <button class="dropdown-item text-secondary chart-button" data-id="${chat._id}">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <span class="text-muted" style="font-size:12px"></span>情報</span>
                                     </button>
                                     </li>
                                     <li>
-                                    <button class="dropdown-item tag-button" data-id="${chat._id}">
-                                        <i class="fas fa-share"></i> 共有
+                                    <button class="dropdown-item text-secondary tag-button" data-id="${chat._id}">
+                                        <i class="fas fa-share me-2"></i> 
+                                        <span class="text-muted" style="font-size:12px"></span>共有する</span>
                                     </button>
                                     </li>
                                     <li>
-                                    <a href="/chat/edit/${chat._id}" class="dropdown-item">
-                                        <i class="far fa-edit"></i> 編集
+                                    <a href="/chat/edit/${chat._id}" class="dropdown-item text-secondary">
+                                        <i class="far fa-edit me-2"></i> 
+                                        <span class="text-muted" style="font-size:12px"></span>編集する</span>
                                     </a>
                                     </li>
                                     <li>
-                                    <span data-id="${chat._id}" class="dropdown-item delete-chat" style="cursor:pointer">
-                                        <i class="fas fa-trash"></i> 削除
+                                    <span data-id="${chat._id}" class="dropdown-item text-danger delete-chat" style="cursor:pointer">
+                                        <i class="fas fa-trash me-2"></i> 
+                                        <span class="text-muted" style="font-size:12px"></span>削除する</span>
                                     </span>
                                     </li>
                                 </ul>

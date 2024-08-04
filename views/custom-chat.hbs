@@ -4,6 +4,13 @@
 <body>
 
     <style>
+
+        .chat-option-menu .dropdown-item{
+            padding: 5px 15px;
+        }
+        .chat-option-menu li {
+            padding: 3px 10px;
+        }
         #chat-discovery h4{
             margin-bottom: 0px !important;
         }
@@ -240,8 +247,9 @@
             padding: 15px 0px;
         }
         #startButton {
-            border-radius: 50px;
-            font-weight: bold;
+            border-radius: 10px;
+            font-weight: 600;
+            padding: 15px 0px;
         }
         #chatContainer {
             height: 100%;
@@ -332,7 +340,7 @@
             object-fit: cover;
             overflow: hidden;
             object-position: top;
-            border-radius: 50%;
+            border-radius: 13px;
         }
         .chat-list.item:hover, .user-chat-history:hover {
             background-color: #c6c9cc99 !important;
@@ -390,7 +398,7 @@
             </div>
             <div>
                 <a href="/chat/edit/" class="m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius:40px;">
-                    <i class="fas fa-plus me-2"></i>作成する
+                    <i class="fas fa-plus me-2"></i>キャラクター作成
                 </a>
                 <span onclick="showDiscovery()" class="m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary " style="border-radius:40px;">
                     <i class="fas fa-compass me-2"></i>ライブラリー
@@ -399,14 +407,14 @@
         </div>
         <div id="chat-list" class="mt-3" style="height: 70vh;overflow-y: scroll;overflow-x: hidden;padding-bottom:100px">
             {{#each chats}}
-            <div class="chat-list item user-chat d-flex align-items-center justify-content-between px-0 py-1 bg-transparent" style="cursor: pointer;" 
+            <div class="chat-list item user-chat d-flex align-items-center justify-content-between p-1 mx-2 rounded bg-transparent" style="cursor: pointer;" 
             data-id="{{this._id}}" data-userid="{{this.userId}}" >
                 <div class="d-flex align-items-center w-100">
                     <div class="user-chat-content" style="flex: 1;display: flex;align-items: center;">
                         <div class="thumb align-items-center text-center justify-content-center d-flex flex-column col-3 p-1" >
                             <img class="img-fluid" src="{{#if this.thumbnailUrl}}{{this.thumbnailUrl}}{{else if this.chatImageUrl}}{{this.chatImageUrl}}{{else}}/img/logo.webp{{/if}}" alt="">
                         </div>
-                        <div class="chat-list-details">
+                        <div class="chat-list-details ps-2">
                             <div class="chat-list-info">
                                 <div class="chat-list-title">
                                     <h6 class="mb-0 online-text" style="font-size: 14px;">{{this.name}}</h6>
@@ -420,25 +428,29 @@
                             <button class="btn border-0 shadow-0 dropdown-toggle ms-2 " type="button" id="dropdownMenuButton_{{this._id}}" data-mdb-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-ellipsis-v text-secondary"></i>
                             </button>
-                            <ul class="dropdown-menu dropdown-menu-end shadow rounded" aria-labelledby="dropdownMenuButton_{{this._id}}">
+                            <ul class="dropdown-menu dropdown-menu-end chat-option-menu bg-light shadow rounded mx-3" aria-labelledby="dropdownMenuButton_{{this._id}}">
                                 <li>
-                                    <button class="dropdown-item chart-button" data-id="{{this._id}}">
-                                        <i class="fas fa-info-circle"></i>情報
+                                    <button class="dropdown-item text-secondary chart-button" data-id="{{this._id}}">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <span class="text-muted" style="font-size:12px"></span>情報</span>
                                     </button>
                                 </li>
                                 <li>
-                                    <button class="dropdown-item tag-button" data-id="{{this._id}}">
-                                        <i class="fas fa-share"></i> 共有
+                                    <button class="dropdown-item text-secondary tag-button" data-id="{{this._id}}">
+                                        <i class="fas fa-share me-2"></i> 
+                                        <span class="text-muted" style="font-size:12px"></span>共有する</span>
                                     </button>
                                 </li>
                                 <li>
-                                    <a href="/chat/edit/{{this._id}}" class="dropdown-item">
-                                        <i class="far fa-edit"></i> 編集
+                                    <a href="/chat/edit/{{this._id}}" class="dropdown-item text-secondary ">
+                                        <i class="far fa-edit me-2"></i> 
+                                        <span class="text-muted" style="font-size:12px"></span>編集する</span>
                                     </a>
                                 </li>
                                 <li>
-                                    <span data-id="{{this._id}}" class="dropdown-item delete-chat" style="cursor:pointer">
-                                        <i class="fas fa-trash"></i> 削除
+                                    <span data-id="{{this._id}}" class="dropdown-item text-danger  delete-chat" style="cursor:pointer">
+                                        <i class="fas fa-trash me-2"></i> 
+                                        <span class="text-muted" style="font-size:12px"></span>削除する</span>
                                     </span>
                                 </li>
                             </ul>
@@ -588,14 +600,16 @@
                     <div class="chat-container scroll-container d-flex justify-content-between" id="button-container"></div>
                 </section>
                 <section>
-                    <div class="text-center m-5">
+                    <div class="text-center mt-5 container">
                         <h3>キャラクターを作成する</h3>
                         <p>どのキャラクターとも相性がよくありませんか? 自分だけのキャラクターを作成しましょう! 会話の構成や口調などをカスタマイズできます!</p>
-                        <a href="/chat/edit/" class="m-2 px-5 py-2 btn btn-large border shadow-0 btn-dark" style="border-radius:40px;font-size: 21px;">
-                            <i class="fas fa-plus me-2"></i>作成する
-                        </a>
                     </div>
-                </section>
+                </section>         
+                <div class="onchat-off sticky-bottom w-100 text-center">
+                    <a href="/chat/edit/" class="m-2 btn border shadow-0 btn-secondary px-5 py-2" style="border-radius:40px;background: linear-gradient(90.9deg, rgba(110, 32, 244, 0.5) 2.74%, #6E20F4 102.92%);">
+                        <i class="fas fa-plus me-2"></i>キャラクター作成
+                    </a>
+                </div>
             </div>
         </section>
         <div class="container chat-contain px-0 onchat-on">

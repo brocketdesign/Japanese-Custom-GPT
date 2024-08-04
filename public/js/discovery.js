@@ -265,7 +265,6 @@ $(document).ready(function() {
     renderCircleGrid(cardData2,$('#cardGrid'))
     renderCircleGrid(chatbotInfos,$("#chatbot-container"));
     
-
     const categories = ["彼氏","彼女","ドミナント","服従的","ヤンデレ","ツンデレ","マフィア","ルームメイト","CEO","敵","いじめる"];
 
     categories.forEach(category => {

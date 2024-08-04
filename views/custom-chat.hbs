@@ -526,9 +526,9 @@
                 </section>
                 {{#if peopleChats}}
                     <section class="w-100 px-0 py-2">
-                        <div id="category-container" class="category-container mb-3"></div>
-                        <h4 class="px-4">乙女心をくすぐるロマンチックキャラ</h4>
-                        <div class="chat-container">
+                        <h4 class="px-4 d-none">乙女心をくすぐるロマンチックキャラ</h4>
+                        <div id="category-container" class="category-container m-3"></div>
+                        <div id="custom-category-chat" class="chat-container">
                             {{#each peopleChats.gohiai_man}}
                             <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 col-7 col-sm-4 col-lg-2" style="cursor:pointer;" onclick="redirectToChat('{{this._id}}')">
                                 <div style="background-image:url('{{this.chatImageUrl}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
@@ -549,7 +549,6 @@
                 </section>
                 {{#if peopleChats}}
                     <section class="w-100 px-0 py-2">
-                        <div id="category-container" class="category-container mb-3"></div>
                         <h4 class="px-4">魅力爆発！セクシーヒロイン</h4>
                         <div class="chat-container">
                             {{#each peopleChats.gohiai_girl}}

@@ -19,7 +19,6 @@
         }
         /* Main Container */
         .pricing-container {
-            max-width: 1200px;
             margin: 0 auto;
             padding: 40px 20px;
             text-align: center;
@@ -267,14 +266,14 @@
         </p>
         <div class="switch-button-container">
             <label class="switch">
-                <input type="checkbox" id="plan-switch" checked>
+                <input type="checkbox" id="plan-switch">
                 <span class="slider round"></span>
                 <span class="label monthly">月額</span>
                 <span class="label yearly">年額</span>
             </label>
         </div>
         <p>年間プランでさらにお得に！</p>
-        <div class="plan-cards-none d-flex m-0 px-1" style="overflow-x:scroll" id="planCards">
+        <div class="plan-cards-none d-flex m-0 px-1 container m-auto" style="overflow-x:scroll" id="planCards">
             <!-- Plan cards will be dynamically inserted here -->
         </div>
     </div>
@@ -288,76 +287,109 @@
         </p>
     </div>
   {{> dashboard-footer}}
-    <script>
-   $(document).ready(function() {
-    let plans = []
-    // Function to fetch plans from the server
-    function fetchPlans() {
-        $.ajax({
-            type: 'GET',
-            url: '/plan/list',
-            dataType: 'json',
-            success: function(response) {
-                plans = response.plans
-                renderPlans(plans);
-            },
-            error: function(xhr, status, error) {
-                console.error('Failed to fetch plans:', error);
-                // Handle error, for example, display an error message
-            }
-        });
-    }
-
-    // Function to render plans
-    function renderPlans(plans) {
-        const planCardsContainer = $('#planCards');
-        plans.forEach(plan => {
-            const planCard = `
-                <div class="plan-card card mb-3 px-1 ${plan.name == 'プレミアムプラン' ? 'col-12 col-lg-5':'col-10 col-lg-4'} ${plan.name == 'プレミアムプラン' ? 'best':''}  m-2">
-                    <div class="card-header plan-header bg-white">
-                    <h2>${plan.name}</h2>
-                    </div>
-                    <div class="card-body px-1">
-                    <div class="plan-price">
-                        <h3>${plan.price}</h3>
-                    </div>
-                    <div class="plan-details px-0 pb-0">
-                        <ul class="list-group list-group-flush">
-                        ${plan.features.map(feature => `<li class="list-group-item"><span class="me-2">😉</span>${feature}</li>`).join('')}
-                        </ul>
-                    </div>
-                    </div>
-                    <div class="card-footer bg-transparent ${plan.price == '無料' ? 'd-none':''}">
-                    <a href="#" class="plan-button btn btn-lamix border-0">
-                        このプランで始める
-                    </a>
-                    </div>
-                </div>
-                `;
-            planCardsContainer.append(planCard);
-        });
-    }
-
-    // Fetch and render the plans
-    fetchPlans();
-
-    $('#plan-switch').on('change', function() {
-        const planCardsContainer = $('#planCards');
-        planCardsContainer.empty();
-        
-        // Update the plans based on the switch button state
-        const isYearly = $(this).is(':checked');
-        const newPlans = plans.map(plan => {
-            if (isYearly) {
-                plan.price = plan.yearly;
-            } else {
-                plan.price = plan.monthly;
-            }
-            return plan;
-        });
-        renderPlans(newPlans);
-    });
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    document.getElementById("plan-switch").checked = false; // or true, depending on your desired default state
 });
+$(document).ready(function() {
+  let plans = [];
+  const stripe = Stripe('pk_test_51PjtRbE5sP7DA1XvD68v7X7Qj7pG6ZJpQmvuNodJjxc7MbH1ss2Te2gahFAS9nms4pbmEdMYdfCPxFDWHBbu9CxR003ikTnRES'); // Use your publishable key here
+
+  // Function to fetch plans from the server
+  function fetchPlans() {
+    $.ajax({
+      type: 'GET',
+      url: '/plan/list',
+      dataType: 'json',
+      success: function(response) {
+        plans = response.plans;
+        renderPlans(plans);
+      },
+      error: function(xhr, status, error) {
+        console.error('Failed to fetch plans:', error);
+      }
+    });
+  }
+
+  // Function to render plans
+  function renderPlans(plans) {
+    const planCardsContainer = $('#planCards');
+    plans.forEach(plan => {
+      const planCard = `
+        <div class="plan-card card mb-3 px-1 ${plan.name == 'プレミアムプラン'? 'col-12 col-lg-4':'col-10 col-lg-auto'} ${plan.name == 'プレミアムプラン'? 'best':''}  m-2">
+          <div class="card-header plan-header bg-white">
+            <h2>${plan.name}</h2>
+          </div>
+          <div class="card-body px-1">
+            <div class="plan-price">
+              <h3>${plan.price}</h3>
+            </div>
+            <div class="plan-details px-0 pb-0">
+              <ul class="list-group list-group-flush">
+                ${plan.features.map(feature => `<li class="list-group-item"><span class="me-2">😉</span>${feature}</li>`).join('')}
+              </ul>
+            </div>
+          </div>
+          <div class="card-footer bg-transparent ${plan.price == '無料'? 'd-none':''}">
+            <button class="plan-button btn btn-lamix border-0 subscribe-button" data-plan-id="${plan.id}" data-billing-cycle="${plan.price.includes('年')? 'yearly' :'monthly'}">
+              このプランで始める
+            </button>
+          </div>
+        </div>
+      `;
+      planCardsContainer.append(planCard);
+    });
+
+    // Add event listener to subscribe buttons
+    $('.subscribe-button').on('click', function() {
+      const planId = $(this).data('plan-id');
+      const billingCycle = $(this).data('billing-cycle');
+      createCheckoutSession(planId, billingCycle);
+    });
+  }
+
+  // Function to create a checkout session
+  function createCheckoutSession(planId, billingCycle) {
+    $.ajax({
+      type: 'POST',
+      url: '/plan/subscribe',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      data: JSON.stringify({ planId, billingCycle }),
+      success: function(response) {
+        // Redirect the user to the Stripe Checkout page
+        window.location.href = response.url;
+      },
+      error: function(xhr, status, error) {
+        console.error('Failed to create subscription:', error);
+        // Handle error, for example, display an error message
+      }
+    });
+  }
+
+  // Fetch and render the plans
+  fetchPlans();
+
+  $('#plan-switch').on('change', function() {
+    const planCardsContainer = $('#planCards');
+    planCardsContainer.empty();
+    
+    // Update the plans based on the switch button state
+    const isYearly = $(this).is(':checked');
+    const newPlans = plans.map(plan => {
+      if (isYearly) {
+        plan.price = plan.yearly;
+      } else {
+        plan.price = plan.monthly;
+      }
+      return plan;
+    });
+    renderPlans(newPlans);
+  });
+});
+
 </script>
 
 

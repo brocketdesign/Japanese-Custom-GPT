@@ -339,6 +339,26 @@ async function routes(fastify, options) {
         }
     });
     
+    fastify.post('/api/chat-category/:category', async (request, reply) => {
+        try {
+          const category = request.params.category;
+          const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+      
+          const chatByCategory = await chatsCollection.find({
+            visibility: { $exists: true, $eq: "public" },
+            scrap: true,
+            category: category
+          })
+           .sort({ _id: -1 })
+           .limit(50)
+           .toArray();
+      
+          return reply.send(chatByCategory);
+        } catch (error) {
+          console.error(error); // Use console.error for errors
+          reply.code(500).send({ error: 'Internal Server Error' }); // Return a meaningful error response
+        }
+      });
       
     fastify.delete('/api/delete-chat-history/:chatId', async (request, reply) => {
         const chatId = request.params.chatId;

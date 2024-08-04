@@ -1028,6 +1028,20 @@ $(document).ready(function() {
         }, 25); // This duration can be adjusted as per your requirement
         */
     }
+
+    // Parse the URL and get query parameters
+    const urlParams = new URLSearchParams(window.location.search);
+
+    // Check if 'subscribe' parameter is true
+    if (urlParams.get('subscribe') === 'true') {
+        // Display SweetAlert2 in Japanese
+        Swal.fire({
+            title: 'サブスクリプション成功',
+            text: 'ご登録ありがとうございます！プレミアム機能をお楽しみください。',
+            icon: 'success',
+            confirmButtonText: '閉じる'
+        });
+    }
 });
 
 function showRegistrationForm(messageId) {
@@ -1107,7 +1121,7 @@ function showRegistrationForm(messageId) {
         });
     });
   }
-  window.resetChatUrl = function() {
+window.resetChatUrl = function() {
     var currentUrl = window.location.href;
     var urlParts = currentUrl.split('/');
     urlParts[urlParts.length - 1] = '';

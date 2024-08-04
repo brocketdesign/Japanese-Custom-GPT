@@ -237,7 +237,7 @@ $(document).ready(function() {
         cardInfos.forEach(function(item) {
             var card = $(`
                 <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 col-7 col-sm-4 col-lg-2" style="cursor:pointer;">
-                    <div style="background-image:url(/img/${item.image})" class="card-img-top girls_avatar position-relative" alt="${item.title}">
+                    <div style="background-image:url(${item.image.indexOf('http')>=0 ? item.image : `/img/${item.image}`})" class="card-img-top girls_avatar position-relative" alt="${item.title}">
                         <span class="badge bg-dark position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px"><i class="fas fa-comment me-2"></i>${item.num_message}</span>
                     </div>
                     <div class="card-body bg-transparent border-0 pb-0 text-start">
@@ -265,4 +265,45 @@ $(document).ready(function() {
     renderCircleGrid(cardData2,$('#cardGrid'))
     renderCircleGrid(chatbotInfos,$("#chatbot-container"));
     
+
+    const categories = ["彼氏","彼女","ドミナント","服従的","ヤンデレ","ツンデレ","マフィア","ルームメイト","CEO","敵","いじめる"];
+
+    categories.forEach(category => {
+        const categoryButton = `<button type="button" class="btn btn-light category-button" data-category="${category}">${category}</button>`;
+        $('#category-container').append(categoryButton);
+      });
+      
+      $('.category-button').on('click', function() {
+        if($(this).hasClass('btn-dark')){
+            return
+        }
+        $('.category-button').each(function(){
+            $(this).removeClass('btn-dark').addClass('btn-light')
+        })
+        $(this).removeClass('btn-light').addClass('btn-dark')
+        const category = $(this).data('category');
+        $.ajax({
+          type: 'POST',
+          url: '/api/chat-category/' + category,
+          dataType: 'json',
+          success: function(data) {
+            $('#custom-category-chat').empty()
+            const transformedData = data.map(transformChatObject);
+            renderCircleGrid(transformedData, $('#custom-category-chat'));
+          },
+          error: function(xhr, status, error) {
+            console.error('Error getting category chat:', error);
+          }
+        });
+        console.log('Button clicked:', $(this).text());
+      });
+      function transformChatObject(obj) {
+        return {
+          image: obj.chatImageUrl,
+          title: obj.name,
+          description: obj.description,
+          chat_url: obj.profileLink,
+          num_message: obj.num_message
+        };
+      }
 });

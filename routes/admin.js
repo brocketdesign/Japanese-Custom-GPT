@@ -105,7 +105,7 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: error.message });
         }
     });
-    const adminEmails = ['japanclassicstore@gmail.com','didier@line.com']; // Add your admin emails here
+    const adminEmails = ['japanclassicstore@gmail.com','didier@line.com','e2@gmail.com']; // Add your admin emails here
 
     async function checkUserAdmin(userId) {
         const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');

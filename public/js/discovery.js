@@ -302,7 +302,7 @@ $(document).ready(function() {
           image: obj.chatImageUrl,
           title: obj.name,
           description: obj.description,
-          chat_url: obj.profileLink,
+          chat_url: '/chat/'+obj._id,
           num_message: obj.num_message
         };
       }

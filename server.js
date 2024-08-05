@@ -227,17 +227,6 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       preHandler: [fastify.authenticate]
     }, async (request, reply) => {
       try {
-        const userId = new fastify.mongo.ObjectId(request.user._id);
-        const user = await db.collection('users').findOne({ _id: userId });
-        console.log(user)
-
-        const existingSubscription = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').findOne({
-          _id: new fastify.mongo.ObjectId(userId),
-          subscriptionStatus: 'active',
-        });
-        if(!existingSubscription){
-          return reply.redirect('/my-plan')
-        }
         const chatId = request.params.chatId || new fastify.mongo.ObjectId()
         const isTemporaryChat = request.params.chatId ? false : true
         if(isTemporaryChat){

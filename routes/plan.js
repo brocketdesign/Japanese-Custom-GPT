@@ -15,7 +15,6 @@ async function routes(fastify, options) {
       features: [
         "1日10件までチャットできる",
         "フレンドを1人まで作成できる",
-        "無料プロンプトを使用できる",
         "簡単なサポート対応"
       ],
     },
@@ -30,7 +29,7 @@ async function routes(fastify, options) {
       features: [
         "1日200件までチャットできる",
         "フレンドを10人まで作成できる",
-        "無料プロンプトを使用できる",
+        "新しいキャラクターを作成する",
         "新規機能のアクセス"
       ],
       messageLimit:200,
@@ -47,7 +46,7 @@ async function routes(fastify, options) {
       features: [
         "毎日無制限でチャットできる",
         "フレンドを無制限で作成できる",
-        "無料プロンプトを使用できる",
+        "新しいキャラクターを作成する",
         "新機能への早期アクセス",
         "優先的なサポート対応"
       ],

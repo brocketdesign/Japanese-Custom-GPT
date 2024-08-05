@@ -304,7 +304,7 @@ $(document).ready(function() {
   function fetchPlans() {
     $.ajax({
       type: 'GET',
-      url: '/plan/list',
+      url: '/plan/list',//?update=true
       dataType: 'json',
       success: function(response) {
         plans = response.plans;

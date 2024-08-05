@@ -528,7 +528,7 @@ async function routes(fastify, options) {
 
         // Check the limits
         const isTemporary = user.isTemporary;
-        let messageLimit = isTemporary? 11 : 51;
+        let messageLimit = isTemporary? 10 : 50;
         let chatLimit = isTemporary? 1 : 3;
         if(!isTemporary){
             existingSubscription = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').findOne({

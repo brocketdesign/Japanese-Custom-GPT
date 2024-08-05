@@ -59,11 +59,9 @@ async function routes(fastify, options) {
   fastify.get('/plan/list', async (request, reply) => {
     const user = await fastify.getUser(request, reply);
   
-    if (request.query.update === 'true') {
-      await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('plans').deleteMany({});
-      await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('plans').insertOne({ plans });
-    }
-  
+    await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('plans').deleteMany({});
+    await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('plans').insertOne({ plans });
+    
     const plansFromDb = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('plans').findOne();
     return reply.send(plansFromDb);
   });

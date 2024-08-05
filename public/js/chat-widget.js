@@ -19,6 +19,16 @@
         var chatContainer = document.createElement('div');
         chatContainer.innerHTML = `
             <style>
+                .assistant-chat-box{
+                    border-radius: 0px 15px 15px 15px;
+                    background-color: white;
+                    border: 1px solid #ccc;
+                    color: #646363;
+                }
+                .narration-container{
+                    font-size: 13px;
+                    color: #606060;
+                }
                 .message-container p {
                     margin-bottom: 0;
                 }

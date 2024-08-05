@@ -1,5 +1,5 @@
 const { ObjectId } = require('mongodb');
-const {moduleCompletion,fetchOpenAICompletion} = require('../models/openai')
+const {moduleCompletion,fetchOpenAICompletion, fetchOpenAINarration} = require('../models/openai')
 const crypto = require('crypto');
 const aws = require('aws-sdk');
 const sessions = new Map(); // Define sessions map
@@ -525,7 +525,8 @@ async function routes(fastify, options) {
 
         const chatCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
         const chatCount = await chatCollection.countDocuments({ userId: new fastify.mongo.ObjectId(userId) });
-
+        const userchats = await chatCollection.find({ userId: new fastify.mongo.ObjectId(userId) }).toArray();
+        
         // Check the limits
         const isTemporary = user.isTemporary;
         let messageLimit = isTemporary? 10 : 50;
@@ -1016,6 +1017,79 @@ async function routes(fastify, options) {
             reply.status(500).send({ error: 'Error fetching OpenAI completion' });
         }
     });
+    fastify.post('/api/openai-chat-narration', async (request, reply) => {
+        const { chatId, userChatId } = request.body;
+        let userId = request.body.userId;
+        if (!userId) { 
+            const user = await fastify.getUser(request, reply);
+            userId = user._id;
+        }
+        const sessionId = Math.random().toString(36).substring(2, 15); // Generate a unique session ID
+        sessions.set(sessionId, { userId, chatId, userChatId, isNarration: true }); // Indicate this is a narration session
+        return reply.send({ sessionId });
+    });
+    fastify.get('/api/openai-chat-narration-stream/:sessionId', async (request, reply) => {
+        const { sessionId } = request.params;
+        const session = sessions.get(sessionId);
+    
+        if (!session) {
+            reply.status(404).send({ error: 'Session not found' });
+            return;
+        }
+    
+        // Set CORS headers
+        reply.raw.setHeader('Access-Control-Allow-Origin', '*'); // Allow any origin or specify your origin
+        reply.raw.setHeader('Access-Control-Allow-Methods', 'GET');
+        reply.raw.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    
+        reply.raw.setHeader('Content-Type', 'text/event-stream');
+        reply.raw.setHeader('Cache-Control', 'no-cache');
+        reply.raw.setHeader('Connection', 'keep-alive');
+        reply.raw.flushHeaders();
+    
+        try {
+            const userId = session.userId;
+            const chatId = session.chatId;
+            const userChatId = session.userChatId;
+            
+            const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+            let userData = await collectionUserChat.findOne({ userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
+    
+            if (!userData) {
+                reply.raw.end(); // End the stream before sending the response
+                return reply.status(404).send({ error: 'User data not found' });
+            }
+            const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+            let chatData = await collectionUserChat.findOne({ _id: new fastify.mongo.ObjectId(chatId)});
+            let language = 'japanese'
+            if(chatData){
+                language = chatData.language
+                console.log(`Update language`)
+            }
+            const userMessages = userData.messages;
+    
+            // Generate the narration context
+            const narrationCompletion = await fetchOpenAINarration(userMessages, reply.raw, 50, language);
+    
+            // Append the narrator's response to the messages array in the chat document
+            const narratorMessage = { "role": "assistant", "content": `[Narrator] ${narrationCompletion}` };
+            userMessages.push(narratorMessage);
+            userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
+    
+            // Update the chat document in the database
+            const result = await collectionUserChat.updateOne(
+                { userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) },
+                { $set: { messages: userMessages, updatedAt: userData.updatedAt } }
+            );
+    
+            reply.raw.end();
+        } catch (error) {
+            console.log(error);
+            reply.raw.end(); // End the stream before sending the response
+            reply.status(500).send({ error: 'Error fetching OpenAI narration' });
+        }
+    });
+    
     fastify.post('/api/openai-chat-choice/', async (request, reply) => {
         let userId = request.body.userId
         if(!userId){ 

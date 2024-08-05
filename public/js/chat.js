@@ -170,7 +170,12 @@ $(document).ready(function() {
                                 displayStep(chatData, currentStep);
                                 isNew = false
                             }else{
-                                generateCompletion()
+                                generateNarration(function(){
+                                    console.log(`Narration 1`)
+                                    generateCompletion(function(){
+                                        console.log(`Completion 1`)
+                                    })
+                                })
                                 isNew = false
                             }
                         },
@@ -381,7 +386,7 @@ $(document).ready(function() {
                     },
                     data: JSON.stringify({ 
                         currentStep: 0, 
-                        message: '最初のメッセージを送信したかのように会話を開始します。あなたのキャラクターの性格を表現した一言でチャットを始めてください。。', 
+                        message: `Explain the situation we are in together.Respond as if you started the conversation. DO not start by aknowledge, start with the answer.`, 
                         userId: userId, 
                         chatId: chatId, 
                         isNew: true ,
@@ -394,7 +399,8 @@ $(document).ready(function() {
                         renderChatList();
                         generateCompletion(function(){
                             $('#input-container').show().addClass('d-flex');
-                        });
+                            console.log("Completion stream completed.");
+                        })
                     },
                     error: function(xhr, status, error)  {
                         $('#startButtonContained').show();
@@ -500,29 +506,49 @@ $(document).ready(function() {
                 let chatContainer = $('#chatContainer');
                 chatContainer.empty();
             
-                for (let i = 0; i < userChat.length; i++) {
+                for (let i = 1; i < userChat.length; i++) {
+                    // Skip system messages
                     if (userChat[i].role === "system") {
                         continue;
                     }
-                    
+            
                     currentStep = Math.floor(i / 2) + 1;
                     let messageHtml = '';
             
                     if (userChat[i].role === "assistant") {
                         let assistantMessage = userChat[i];
-                        let userMessage = userChat[i + 1];
-                        let designStep = currentStep - 1 
-                        messageHtml += `
-                            <div id="container-${designStep}">
-                                <div class="d-flex flex-row justify-content-start mb-4 message-container">
-                                    <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
-                                    <div id="message-${designStep}" class="p-3 ms-3 text-start" style="border-radius: 15px; ">
-                                        ${marked.parse(assistantMessage.content)}
+                        let designStep = currentStep - 1;
+            
+                        // Check if the message is a narrator message
+                        const isNarratorMessage = assistantMessage.content.startsWith("[Narrator]");
+                        if (isNarratorMessage) {
+                            // Remove the [Narrator] tag for display
+                            const narrationContent = assistantMessage.content.replace("[Narrator]", "").trim();
+            
+                            // Create a narrator message box
+                            messageHtml += `
+                                <div id="narrator-container-${designStep}" class="d-flex flex-row justify-content-start mb-4 message-container">
+                                    <div id="narration-${designStep}" class="p-3 ms-3 text-start narration-container" style="border-radius: 15px;">
+                                        ${marked.parse(narrationContent)}
                                     </div>
                                 </div>
-                        `;
+                            `;
+                        } else {
+                            // Regular assistant message
+                            messageHtml += `
+                                <div id="container-${designStep}">
+                                    <div class="d-flex flex-row justify-content-start mb-4 message-container">
+                                        <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+                                        <div id="message-${designStep}" class="p-3 ms-3 text-start assistant-chat-box">
+                                            ${marked.parse(assistantMessage.content)}
+                                        </div>
+                                    </div>
+                            `;
+                        }
             
-                        if (userMessage && userMessage.role === "user") {
+                        // Check if the next message is a user message and display it
+                        if (i + 1 < userChat.length && userChat[i + 1].role === "user") {
+                            let userMessage = userChat[i + 1];
                             messageHtml += `
                                 <div class="d-flex flex-row justify-content-end mb-4 message-container">
                                     <div id="response-${designStep}" class="p-3 me-3 border-0 text-end" style="border-radius: 15px; background-color: #fbfbfb;">
@@ -531,6 +557,7 @@ $(document).ready(function() {
                                 </div>
                             </div>
                             `;
+                            i++; // Skip the next user message as it's been processed
                         } else {
                             messageHtml += `
                                 <div id="response-${designStep}" class="choice-container"></div>
@@ -539,20 +566,21 @@ $(document).ready(function() {
                         }
             
                         chatContainer.append(messageHtml);
-                        i++; // Skip the next iteration as we've already handled the user message
                     }
                 }
             
                 if (userChat[userChat.length - 1].role === "user" && userChat[userChat.length - 1].content) {
-                    if(currentStep < totalSteps){
+                    if (currentStep < totalSteps) {
                         displayStep(chatData, currentStep);
-                    }else{
-                        generateCompletion()
+                    } else {
+                        generateCompletion();
                     }
                 } else {
                     //generateChoice();
                 }
             }
+            
+            
             
             
             function displayStep(chatData, currentStep) {
@@ -561,7 +589,7 @@ $(document).ready(function() {
                 <div id="container-${currentStep}">
                     <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
                         <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
-                        <div id="message-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;   "></div>
+                        <div id="message-${currentStep}" class="p-3 ms-3 text-start assistant-chat-box"></div>
                     </div>
                     <div id="response-${currentStep}" class="choice-container" ></div>
                 </div>`)
@@ -588,7 +616,7 @@ $(document).ready(function() {
                     <div id="container-${currentStep}">
                         <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
                             <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
-                            <div id="message-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;   "></div>
+                            <div id="message-${currentStep}" class="p-3 ms-3 text-start assistant-chat-box"></div>
                         </div>
                         <div id="response-${currentStep}" class="choice-container" ></div>
                     </div>`)
@@ -681,7 +709,7 @@ $(document).ready(function() {
                     <div id="container-${currentStep}">
                         <div class="d-flex flex-row justify-content-start mb-4 message-container">
                             <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
-                            <div id="completion-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;">
+                            <div id="completion-${currentStep}" class="p-3 ms-3 text-start assistant-chat-box">
                                 <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
                             </div>
                         </div>
@@ -720,7 +748,51 @@ $(document).ready(function() {
                     }
                 });
             }
-
+            function generateNarration(callback) {
+                const apiUrl = API_URL + '/api/openai-chat-narration';
+                        
+                // Initialize the narrator response container
+                const narratorResponseContainer = $(`
+                    <div id="narrator-container-${currentStep}" class="d-flex flex-row justify-content-start mb-4 message-container">
+                        <div id="narration-${currentStep}" class="p-3 ms-3 text-start narration-container" style="border-radius: 15px;">
+                            <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
+                        </div>
+                    </div>
+                `);
+            
+                $('#chatContainer').append(narratorResponseContainer);
+                $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
+            
+                $.ajax({
+                    url: apiUrl,
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ userId, chatId, userChatId }),
+                    success: function(response) {
+                        const sessionId = response.sessionId;
+                        const streamUrl = API_URL + `/api/openai-chat-narration-stream/${sessionId}`;
+                        const eventSource = new EventSource(streamUrl);
+                        let narrationContent = "";
+            
+                        eventSource.onmessage = function(event) {
+                            const data = JSON.parse(event.data);
+                            narrationContent += data.content;
+                            $(`#narration-${currentStep}`).html(marked.parse(narrationContent));
+                        };
+            
+                        eventSource.onerror = function(error) {
+                            eventSource.close();
+                            if (typeof callback === "function") {
+                                callback();
+                            }
+                        };
+                    },
+                    error: function(error) {
+                        console.error('Error:', error);
+                    }
+                });
+            }
+            
             // Function to display a message in the chat
             function displayMessage(sender, message) {
                 const messageClass = sender === 'user' ? 'user-message' : 'bot-message';
@@ -897,7 +969,6 @@ $(document).ready(function() {
             const userChatListGroup = $('<ul class="list-group list-group-flush"></ul>');
             const userChats = userChat.filter(chat =>!chat.isWidget);
             userChats.forEach(chat => {
-                console.log(chat)
                 const listItem = $(`<li class="list-group-item user-chat-history bg-transparent d-flex align-items-center justify-content-between" data-id="${chat.chatId}" data-chat="${chat._id}" data-user="${chat.userId}"></li>`);
                 listItem.css('cursor', 'pointer');
     

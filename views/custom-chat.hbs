@@ -709,9 +709,9 @@ $(document).ready(function() {
         e.stopPropagation();
         // data-id属性からチャットIDを取得
         var chatId = $(this).data('id');
-
+        const userId = localStorage.getItem('userId');
         // POSTリクエストを送信
-        $.post('/api/chat-analyze/', { chatId: chatId })
+        $.post('/api/chat-analyze/', { chatId: chatId, userId })
             .done(function(response) {
                 // 受け取ったデータの長さを取得
                 var dataLength = response.total;
@@ -724,9 +724,9 @@ $(document).ready(function() {
                                 <p class="card-text text-muted" style="font-size: 16px;">${response.chat.description}</p>
                                 <p class="card-text text-muted d-none" style="font-size: 14px;">作成者: ${response.author}</p>
                                 <div class="d-flex justify-content-between mb-3">
-                                    <div class="card-text text-center d-flex w-100 d-none" style="flex-direction: column;"><span class="w-100">${response.chat.rating ? response.chat.rating : '...'}</span><span class="text-muted" style="font-size: 12px;">評価</span></div>
-                                    <div class="card-text text-center d-none w-100" style="flex-direction: column;" ><span class="w-100">${response.chat.category ? response.chat.category : '...'}</span><span class="text-muted" style="font-size: 12px;">カテゴリー</span></div>
-                                    <div class="card-text text-center d-none w-100" style="flex-direction: column;" ><span class="w-100">${response.total ? response.total : '0'}</span><span class="text-muted" style="font-size: 12px;">会話の合計</span></div>
+                                    <div class="card-text text-center w-100 d-none" style="flex-direction: column;"><span class="w-100">${response.chat.rating ? response.chat.rating : '...'}</span><span class="text-muted" style="font-size: 12px;">評価</span></div>
+                                    <div class="card-text text-center d-flex w-100" style="flex-direction: column;" ><span class="w-100">${response.chat.category ? response.chat.category : '...'}</span><span class="text-muted" style="font-size: 12px;">カテゴリー</span></div>
+                                    <div class="card-text text-center d-flex w-100" style="flex-direction: column;" ><span class="w-100">${response.total ? response.total : '0'}</span><span class="text-muted" style="font-size: 12px;">会話の合計</span></div>
                                 </div>
                                 <a href="/chat/${response.chat._id}" class="btn btn-dark w-100 my-4" style="border-radius:50px;">チャットを始める</a>
                             </div>

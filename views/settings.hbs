@@ -45,55 +45,79 @@ img {
     <div class="col-12 col-lg-10 col-xl-8 mx-auto">
       <h2 class="h3 mb-4 page-title d-none">設定</h2>
       <div class="my-4">
-        
         <!-- User Info Form -->
         <form id="user-info-form">
           <div class="row mb-3">
-                <div id="profileSection" class="text-center mb-4" ><div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative">
-                  <img id="profileImage" src="/img/logo.webp" alt="chat Thumbnail" class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover; cursor: pointer;">
-                  <i class="fas fa-edit position-absolute" style="bottom: 5px; font-size: 1em; color: white; background-color: rgba(0, 0, 0, 0.5); border-radius: 50%; padding: 5px;"></i>
+            <div id="profileSection" class="text-center mb-4">
+              <div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative">
+                <img id="profileImage" src="/img/logo.webp" alt="chat Thumbnail" class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover; cursor: pointer;">
+                <i class="fas fa-edit position-absolute" style="bottom: 5px; font-size: 1em; color: white; background-color: rgba(0, 0, 0, 0.5); border-radius: 50%; padding: 5px;"></i>
               </div>
+            </div>
           </div>
+
           <div class="mb-3 mx-3" id="thumbnailInputContainer" style="display: none;">
-              <label for="profileImageInput" class="form-label">チャットのサムネイルをアップロード</label>
-              <input type="file" class="form-control" id="profileImageInput" name="profileImageInput" accept="image/*">
+            <label for="profileImageInput" class="form-label">チャットのサムネイルをアップロード</label>
+            <input type="file" class="form-control" id="profileImageInput" name="profileImageInput" accept="image/*">
           </div>
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label for="lastname" class="form-label">姓</label>
-              <input type="text" id="lastname" class="form-control" placeholder="" />
-            </div>
-            <div class="col-md-6">
-              <label for="firstname" class="form-label">名</label>
-              <input type="text" id="firstname" class="form-control" placeholder="" />
-            </div>
+
+        <h6>ユーザー情報</h6>
+          <div class=" mb-3">
+            <label for="nickname" class="form-label">ID</label>
+            <input type="text" id="nickname" class="form-control" placeholder="" />
           </div>
+
           <div class="mb-3">
             <label for="inputEmail4" class="form-label">メールアドレス</label>
             <input type="email" class="form-control" id="inputEmail4" placeholder="" />
           </div>
-          <div class="mb-3">
-            <label for="inputAddress5" class="form-label">住所</label>
-            <input type="text" class="form-control" id="inputAddress5" placeholder="" />
-          </div>
+
+        <div class="row mb-3">
+            <label for="birthdate" class="form-label">生年月日</label>
+            <div class="d-flex">
+                <select class="form-control me-2" id="birthYear" name="birthYear">
+                    <option value="" selected>年</option>
+                </select>
+
+                <select class="form-control me-2" id="birthMonth" name="birthMonth">
+                    <option value="" selected>月</option>
+                </select>
+
+                <select class="form-control" id="birthDay" name="birthDay">
+                    <option value="" selected>日</option>
+                </select>
+            </div>
+        </div>
+
+
           <div class="row mb-3">
-            <div class="col-md-2">
-              <label for="inputZip5" class="form-label">郵便番号</label>
-              <input type="text" class="form-control" id="inputZip5" placeholder="" />
-            </div>
-            <div class="col-md-6">
-              <label for="inputCompany5" class="form-label">会社</label>
-              <input type="text" class="form-control" id="inputCompany5" placeholder="" />
+            <label class="form-label">性別</label>
+            <div class="d-flex">
+              <div class="form-check me-3">
+                <input class="form-check-input" type="radio" name="gender" id="female" value="female">
+                <label class="form-check-label" for="female">女性</label>
+              </div>
+              <div class="form-check me-3">
+                <input class="form-check-input" type="radio" name="gender" id="male" value="male">
+                <label class="form-check-label" for="male">男性</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="gender" id="other" value="other">
+                <label class="form-check-label" for="other">その他</label>
+              </div>
             </div>
           </div>
+
           <div class="col">
             <button type="submit" class="btn btn-secondary">ユーザー情報を保存</button>
           </div>
         </form>
 
-        <hr class="my-4" />
+
 
         <!-- Password Form -->
+        <hr class="my-4" />
+        <h6>パスワード</h6>
         <form id="user-password-form">
           <div class="row mb-4">
             <div class="col-md-6">
@@ -111,7 +135,7 @@ img {
               </div>
             </div>
             <div class="col-md-6">
-              <p class="mb-2">パスワードの要件</p>
+              <p class="mb-2">の要件</p>
               <p class="small text-muted mb-2">新しいパスワードを作成するには、以下のすべての要件を満たす必要があります:</p>
               <ul class="small text-muted pl-4 mb-0">
                 <li>最低8文字</li>
@@ -124,6 +148,10 @@ img {
           <button type="submit" class="btn btn-secondary">パスワードを変更</button>
         </form>
 
+        <hr class="my-4" />
+        <h6>サブスクリプションを管理する</h6>
+        <p id="user-plan" style="display: none;"></p>
+        <button id="cancel-plan" class="btn btn-danger" style="display: none;" data-user-id="{{user._id}}">サブスクリプションをキャンセルする</button>
       </div>
     </div>
   </div>
@@ -133,24 +161,82 @@ img {
 
 <script>
   $(document).ready(function() {
+    // Populate years
+    var currentYear = new Date().getFullYear();
+    var startYear = 1900; // Adjust this to your preferred start year
+
+    for (var year = currentYear; year >= startYear; year--) {
+        $('#birthYear').append($('<option>', {
+            value: year,
+            text: year + '年'
+        }));
+    }
+
+    // Populate months
+    for (var month = 1; month <= 12; month++) {
+        $('#birthMonth').append($('<option>', {
+            value: month,
+            text: month + '月'
+        }));
+    }
+
+    // Populate days
+    function populateDays(month, year) {
+        $('#birthDay').empty().append($('<option>', {
+            value: '',
+            text: '日'
+        }));
+
+        var daysInMonth = new Date(year, month, 0).getDate();
+        for (var day = 1; day <= daysInMonth; day++) {
+            $('#birthDay').append($('<option>', {
+                value: day,
+                text: day + '日'
+            }));
+        }
+    }
+
+    // Populate days based on current month and year
+    populateDays($('#birthMonth').val(), $('#birthYear').val());
+
+    // Update days when month or year changes
+    $('#birthMonth, #birthYear').change(function() {
+        populateDays($('#birthMonth').val(), $('#birthYear').val());
+    });
     // Initialize user info from the Handlebars variable
     const user = {
         _id: "{{user._id}}",
         email: "{{user.email}}",
-        firstname: "{{user.firstname}}",
-        lastname: "{{user.lastname}}",
-        address: "{{user.address}}",
-        company: "{{user.company}}",
-        zip: "{{user.zip}}",
+        nickname: "{{user.nickname}}", // Changed from firstname and lastname to nickname
+        birthDate: {
+            year: "{{user.birthDate.year}}", // Access nested birthdate fields
+            month: "{{user.birthDate.month}}",
+            day: "{{user.birthDate.day}}"
+        },
+        gender: "{{user.gender}}",
         profileUrl: "{{user.profileUrl}}"
     };
 
+    // Set user email
     $('#inputEmail4').val(user.email);
-    $('#firstname').val(user.firstname);
-    $('#lastname').val(user.lastname);
-    $('#inputAddress5').val(user.address);
-    $('#inputCompany5').val(user.company);
-    $('#inputZip5').val(user.zip);
+
+    // Set user nickname
+    $('#nickname').val(user.nickname);
+
+    // Set user birthdate fields
+    $('#birthYear').val(user.birthDate.year);
+    $('#birthMonth').val(user.birthDate.month);
+    $('#birthDay').val(user.birthDate.day);
+
+    // Set user gender
+    if (user.gender === 'female') {
+        $('#female').prop('checked', true);
+    } else if (user.gender === 'male') {
+        $('#male').prop('checked', true);
+    } else {
+        $('#other').prop('checked', true);
+    }
+
     if(user.profileUrl){
       $('#profileImage').attr('src', user.profileUrl).show();
     }
@@ -173,11 +259,11 @@ img {
 
       const formData = new FormData();
       formData.append('email', $('#inputEmail4').val());
-      formData.append('firstname', $('#firstname').val());
-      formData.append('lastname', $('#lastname').val());
-      formData.append('address', $('#inputAddress5').val());
-      formData.append('company', $('#inputCompany5').val());
-      formData.append('zip', $('#inputZip5').val());
+      formData.append('nickname', $('#nickname').val()); // Updated to match the form
+      formData.append('birthYear', $('#birthYear').val());
+      formData.append('birthMonth', $('#birthMonth').val());
+      formData.append('birthDay', $('#birthDay').val());
+      formData.append('gender', $('input[name="gender"]:checked').val());
 
       const profileImage = $('#profileImageInput')[0].files[0];
       if (profileImage) {
@@ -206,7 +292,6 @@ img {
         }
       });
     });
-
 
     // User Password Form Submission
     $('#user-password-form').submit(function(event) {
@@ -237,5 +322,49 @@ img {
         }
       });
     });
+
+  $('#cancel-plan').click(function(){
+    const userId = $(this).data('user-id');    
+    $.post('/plan/cancel', { userId }, function(response) {
+      Swal.fire({
+        icon: 'success',
+        title: 'キャンセル完了',
+        text: response.message,
+        confirmButtonText: 'OK'
+      });
+      let message = `まだサブスクリプションがありません。<a href="/my-plan">ここでプランを選択してください</a>`
+      $('#cancel-plan').hide()
+      $('#user-plan').html(message).show()
+      updatePlanStatus(user)
+    }).fail(function(xhr) {
+      let errorMessage = xhr.responseJSON.error || 'サーバーエラーが発生しました';
+      Swal.fire({
+        icon: 'error',
+        title: 'エラー',
+        text: errorMessage,
+        confirmButtonText: 'OK'
+      });
+    });
   });
+
+  // Display user plan
+  $.get('/user/plan/'+user._id,function(data){
+    let message = `まだサブスクリプションがありません。<a href="/my-plan">ここでプランを選択してください</a>`
+    if(!data.plan){
+      $('#user-plan').html(message).show()
+      return
+    }
+    const billingCycle = data.plan.billingCycle
+    const currentPlanId = data.plan.currentPlanId
+    $.get('/plan/list',function(data){
+      const plans = data.plans
+      const plan = plans.find((plan) => plan[`${billingCycle}ly_id`] === currentPlanId);
+      if(plan){
+        message = `現在のプランは : <span class="fw-bold">${plan.name}</span>`
+        $('#cancel-plan').show()
+      }
+      $('#user-plan').html(message).show()
+    })
+  })
+});
 </script>

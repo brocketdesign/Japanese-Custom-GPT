@@ -8,7 +8,54 @@
   src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/7.3.2/mdb.umd.min.js"
 ></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+<script>
+$(document).ready(function(){
+    // Initialize user info from the Handlebars variable
+    const user = {
+        _id: "{{user._id}}",
+        isTemporary: "{{user.isTemporary}}",
+    };
+    if(user.isTemporary == true){
 
+    }else{
+        updatePlanStatus(user)
+    }
+})
+
+window.updatePlanStatus = function(user){
+  $.get('/user/plan/'+user._id,function(data){
+      let message = `<a href="/my-plan" class="fw-bold plan-text" style="font-size: 12px;text-decoration: navajowhite;">無料プラン <span class="ms-1">&#x1F381;</span></a>`;
+      if(!data.plan){
+        $('.user-current-plan').each(function(){
+          $(this).html(message).show()
+        })
+        return
+      }
+      const billingCycle = data.plan.billingCycle
+      const currentPlanId = data.plan.currentPlanId
+      $.get('/plan/list',function(data){
+          const plans = data.plans
+          const plan = plans.find((plan) => plan[`${billingCycle}ly_id`] === currentPlanId);
+          switch (plan.id) {
+            case 'free':
+              message = `<a href="/my-plan" class="fw-bold me-1 plan-text" style="font-size: 12px;text-decoration: navajowhite;">${plan.name} <span class="ms-1">&#x1F381;</span></a>`;
+              break;
+            case 'premium':
+              message = `<a href="/my-plan"  class="fw-bold me-1 plan-text" style="font-size: 12px;text-decoration: navajowhite;">${plan.name}<span class="ms-1"> &#x1F48E;</span></a>`;
+              break;
+            case 'special':
+              message = `<a href="/my-plan"  class="fw-bold me-1 plan-text" style="font-size: 12px;text-decoration: navajowhite;">${plan.name} <span class="ms-1">&#x1F525;</span></a>`;
+              break;
+            default:
+              message = `<a href="/my-plan"  class="fw-bold me-1 plan-text" style="font-size: 12px;text-decoration: navajowhite;">${plan.name}</a>`;
+          }
+          $('.user-current-plan').each(function(){
+            $(this).html(message).show()
+          })
+      })
+  })
+}
+</script>
 <footer class="l-footer p-footer bg-white shadow-0 text-center py-3 onchat-off">
   <div class="container">
     <div class="row">

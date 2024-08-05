@@ -159,7 +159,11 @@ $(document).ready(function() {
                         }),
                         success: function(response) {
                             const messageCountDoc = response.messageCountDoc
-                            $('#message-number').html(`使用回数：${parseInt(messageCountDoc.count)}/${messageCountDoc.limit}`)
+                            if(messageCountDoc.limit){
+                                $('#message-number')
+                                .html(`使用回数：${parseInt(messageCountDoc.count)}/${messageCountDoc.limit}`)
+                                .show()
+                            }
                             userChatId = response.userChatId
                             chatId = response.chatId
                             if(currentStep < totalSteps){
@@ -177,13 +181,7 @@ $(document).ready(function() {
                                     return
                                 }
                                 if($('#chat-widget-container').length == 0 ){
-                                    Swal.fire({
-                                        title: '注意',
-                                        text: '無料ユーザーのメッセージの最大数は1日50件です。',
-                                        icon: 'warning',
-                                        confirmButtonText: 'OK',
-                                        allowEnterKey: false
-                                    });
+                                    showUpgradePopup('chat-message')
                                     return
                                 }
                             } else {
@@ -307,7 +305,7 @@ $(document).ready(function() {
 
                 // Remove existing container if it exists
                 $('#introChat').remove();
-
+                $('#message-number').hide();
                 // Create the intro elements
                 let introContainer = $('<div></div>').addClass('intro-container my-3').attr('id','introChat');
             
@@ -413,24 +411,12 @@ $(document).ready(function() {
                                 if (errorId === 1) {
                                   // Handle message limit reached error
                                     if($('#chat-widget-container').length == 0 ){
-                                        Swal.fire({
-                                            title: '注意',
-                                            text: '無料ユーザーのメッセージの最大数は1日50件です。',
-                                            icon: 'warning',
-                                            confirmButtonText: 'OK',
-                                            allowEnterKey: false
-                                        });
+                                        showUpgradePopup('chat-message')
                                         return
                                     }
                                 } else if (errorId === 2) {
                                     // Handle chat limit reached error
-                                    Swal.fire({
-                                        title: '注意',
-                                        text: 'チャットの最大数に達しました。',
-                                        icon: 'warning',
-                                        confirmButtonText: 'OK',
-                                        allowEnterKey: false
-                                    });
+                                  showUpgradePopup('chat-character')
                                 }
                             }
                           } else {
@@ -448,64 +434,65 @@ $(document).ready(function() {
                     type: 'GET',
                     url: '/api/chat-list/'+userId, // replace with your API endpoint
                     success: function(data) {
-                    var chatListHtml = '';
-                    $.each(data, function(index, chat) {
-                        chatListHtml += `
-                        <div class="chat-list item user-chat d-flex align-items-center justify-content-between px-0 py-1 bg-transparent" style="cursor: pointer;" 
-                            data-id="${chat._id}" data-userid="${chat.userId}" >
-                            <div class="d-flex align-items-center w-100">
-                            <div class="user-chat-content" style="flex: 1;display: flex;align-items: center;">
-                                <div class="thumb align-items-center text-center justify-content-center d-flex flex-column col-3 p-1" >
-                                <img class="img-fluid" src="${chat.thumbnailUrl || chat.chatImageUrl || '/img/logo.webp'}" alt="">
-                                </div>
-                                <div class="chat-list-details">
-                                <div class="chat-list-info">
-                                    <div class="chat-list-title">
-                                    <h6 class="mb-0 online-text" style="font-size: 14px;">${chat.name}</h6>
+                        var chatListHtml = '';
+                        $.each(data, function(index, chat) {
+                            chatListHtml += `
+                            <div class="chat-list item user-chat d-flex align-items-center justify-content-between px-0 py-1 bg-transparent" style="cursor: pointer;" 
+                                data-id="${chat._id}" data-userid="${chat.userId}" >
+                                <div class="d-flex align-items-center w-100">
+                                <div class="user-chat-content" style="flex: 1;display: flex;align-items: center;">
+                                    <div class="thumb align-items-center text-center justify-content-center d-flex flex-column col-3 p-1" >
+                                    <img class="img-fluid" src="${chat.thumbnailUrl || chat.chatImageUrl || '/img/logo.webp'}" alt="">
+                                    </div>
+                                    <div class="chat-list-details">
+                                    <div class="chat-list-info">
+                                        <div class="chat-list-title">
+                                        <h6 class="mb-0 online-text" style="font-size: 14px;">${chat.name}</h6>
+                                        </div>
+                                    </div>
                                     </div>
                                 </div>
+                                <div class="d-flex align-items-center">
+                                    <!-- Dropdown -->
+                                    <div class="dropdown pe-2">
+                                    <button class="btn border-0 shadow-0 dropdown-toggle ms-2 " type="button" id="dropdownMenuButton_${chat._id}" data-mdb-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-ellipsis-v text-secondary"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end chat-option-menu bg-light shadow rounded mx-3" aria-labelledby="dropdownMenuButton_${chat._id}">
+                                        <li>
+                                        <button class="dropdown-item text-secondary chart-button" data-id="${chat._id}">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            <span class="text-muted" style="font-size:12px"></span>情報</span>
+                                        </button>
+                                        </li>
+                                        <li>
+                                        <button class="dropdown-item text-secondary tag-button" data-id="${chat._id}">
+                                            <i class="fas fa-share me-2"></i> 
+                                            <span class="text-muted" style="font-size:12px"></span>共有する</span>
+                                        </button>
+                                        </li>
+                                        <li>
+                                        <a href="/chat/edit/${chat._id}" class="dropdown-item text-secondary">
+                                            <i class="far fa-edit me-2"></i> 
+                                            <span class="text-muted" style="font-size:12px"></span>編集する</span>
+                                        </a>
+                                        </li>
+                                        <li>
+                                        <span data-id="${chat._id}" class="dropdown-item text-danger delete-chat" style="cursor:pointer">
+                                            <i class="fas fa-trash me-2"></i> 
+                                            <span class="text-muted" style="font-size:12px"></span>削除する</span>
+                                        </span>
+                                        </li>
+                                    </ul>
+                                    </div>
+                                    <!-- End of Dropdown -->
+                                </div>
                                 </div>
                             </div>
-                            <div class="d-flex align-items-center">
-                                <!-- Dropdown -->
-                                <div class="dropdown pe-3">
-                                <button class="btn border-0 shadow-0 dropdown-toggle ms-2 " type="button" id="dropdownMenuButton_${chat._id}" data-mdb-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-ellipsis-v text-secondary"></i>
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end chat-option-menu bg-light shadow rounded mx-3" aria-labelledby="dropdownMenuButton_${chat._id}">
-                                    <li>
-                                    <button class="dropdown-item text-secondary chart-button" data-id="${chat._id}">
-                                        <i class="fas fa-info-circle me-2"></i>
-                                        <span class="text-muted" style="font-size:12px"></span>情報</span>
-                                    </button>
-                                    </li>
-                                    <li>
-                                    <button class="dropdown-item text-secondary tag-button" data-id="${chat._id}">
-                                        <i class="fas fa-share me-2"></i> 
-                                        <span class="text-muted" style="font-size:12px"></span>共有する</span>
-                                    </button>
-                                    </li>
-                                    <li>
-                                    <a href="/chat/edit/${chat._id}" class="dropdown-item text-secondary">
-                                        <i class="far fa-edit me-2"></i> 
-                                        <span class="text-muted" style="font-size:12px"></span>編集する</span>
-                                    </a>
-                                    </li>
-                                    <li>
-                                    <span data-id="${chat._id}" class="dropdown-item text-danger delete-chat" style="cursor:pointer">
-                                        <i class="fas fa-trash me-2"></i> 
-                                        <span class="text-muted" style="font-size:12px"></span>削除する</span>
-                                    </span>
-                                    </li>
-                                </ul>
-                                </div>
-                                <!-- End of Dropdown -->
-                            </div>
-                            </div>
-                        </div>
-                        `;
-                    });
-                    $('#chat-list').html(chatListHtml);
+                            `;
+                        });
+                        $('#chat-list').html(chatListHtml);
+                        enableToggleDropdown();
                     }
                 });
             }
@@ -910,12 +897,21 @@ $(document).ready(function() {
             const userChatListGroup = $('<ul class="list-group list-group-flush"></ul>');
             const userChats = userChat.filter(chat =>!chat.isWidget);
             userChats.forEach(chat => {
+                console.log(chat)
                 const listItem = $(`<li class="list-group-item user-chat-history bg-transparent d-flex align-items-center justify-content-between" data-id="${chat.chatId}" data-chat="${chat._id}" data-user="${chat.userId}"></li>`);
                 listItem.css('cursor', 'pointer');
     
                 const small = $('<small class="text-secondary"></small>');
                 small.append($('<i class="fas fa-clock me-1"></i>'));
-                small.append(chat.updatedAt);
+                var chatUpdatedAt = new Date(chat.updatedAt);
+                // Convert to Japanese localized date string
+                var japaneseDateString = chatUpdatedAt.toLocaleDateString('ja-JP', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                weekday: 'long'
+                });
+                small.append(japaneseDateString);
     
                 const dropdown = renderChatDropdown(chat)
                 
@@ -1002,14 +998,15 @@ $(document).ready(function() {
         const dropdownHtml = `
             <div class="d-inline-block align-items-center">
                 <!-- Dropdown -->
-                <div class="dropdown">
+                <div class="dropdown pe-2">
                     <button class="btn border-0 shadow-0 dropdown-toggle ms-2" type="button" id="dropdownMenuButton_${chatId}" data-mdb-toggle="dropdown" aria-expanded="false">
                         <i class="fas fa-ellipsis-v text-secondary"></i>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton_${chatId}">
+                    <ul class="chat-option-menu dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton_${chatId}">
                         <li>
-                            <span data-id="${chatId}" class="dropdown-item delete-chat-history" style="cursor:pointer">
-                                <i class="fas fa-trash"></i> 削除
+                            <span data-id="${chatId}" class="dropdown-item text-danger delete-chat-history" style="cursor:pointer">
+                                <i class="fas fa-trash me-2"></i>
+                                <span class="text-muted" style="font-size:12px"></span>削除する</span>
                             </span>
                         </li>
                     </ul>
@@ -1056,6 +1053,7 @@ $(document).ready(function() {
             confirmButtonText: '閉じる'
         });
     }
+
 });
 
 function showRegistrationForm(messageId) {
@@ -1109,6 +1107,60 @@ function showRegistrationForm(messageId) {
         popup: 'animated fadeInDown'
       }
     });
+}
+function showUpgradePopup(limitType) {
+    // Define messages based on limit type
+    let messageTitle = '';
+    let messageText = '';
+    let imageUrl = '/img/login-bg-862c043f.png'; // replace with your image URL
+
+    // Use switch-case to handle different types of limits
+    switch (limitType) {
+        case 'chat-message':
+            messageTitle = 'メッセージ制限に達しました';
+            messageText = '無料プランで送信可能なメッセージの上限に達しました。無制限のメッセージをお楽しみいただくには、有料プランにご登録ください。';
+            break;
+        case 'chat-character':
+            messageTitle = 'キャラクター制限に達しました';
+            messageText = '無料プランで利用可能なキャラクターの上限に達しました。より多くのキャラクターと会話を楽しむには、有料プランにご登録ください。新たなキャラクターたちとの素晴らしい体験が待っています！';
+            break;
+        default:
+            messageTitle = '制限に達しました';
+            messageText = 'ご利用中のプランの制限に達しました。有料プランにアップグレードして、より多くの機能をお楽しみください。';
+    }
+
+    // Display the popup using Swal.fire
+    Swal.fire({
+        imageUrl: imageUrl,
+        imageWidth: '100%',
+        imageHeight: 'auto',
+        position: 'center',
+        html: `
+            <div class="container p-3">
+                <div class="row justify-content-center">
+                    <div class="text-center">
+                        <h5 class="fw-bold">${messageTitle}</h5>
+                        <p>${messageText}</p>
+                        <a href="/my-plan" class="btn btn-primary mt-3">有料プランを確認する</a>
+                    </div>
+                </div>
+            </div>
+        `,
+        showCancelButton: false,
+        showConfirmButton: false,
+        showCloseButton: true,
+        allowOutsideClick: false,
+        showClass: {
+            popup: 'swal2-bottom-slide-in'
+        },
+        hideClass: {
+            popup: 'swal2-bottom-slide-out'
+        },
+        customClass: {
+            popup: 'animated fadeInDown'
+        }
+    });
+}
 
     $(document).find('#register-form').on('submit', function(event) {
         event.preventDefault();
@@ -1134,7 +1186,7 @@ function showRegistrationForm(messageId) {
             }
         });
     });
-  }
+
 window.resetChatUrl = function() {
     var currentUrl = window.location.href;
     var urlParts = currentUrl.split('/');

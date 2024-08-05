@@ -220,10 +220,6 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
   }
 });
 
-
-
-
-
   // Keep the old logout route
   fastify.post('/user/logout', async (request, reply) => {
     return reply
@@ -237,22 +233,23 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     region: process.env.AWS_REGION
-  });
-  fastify.post('/user/update-info', async (request, reply) => {
+  });fastify.post('/user/update-info', async (request, reply) => {
     const parts = request.parts();
   
-    let email, firstname, lastname, address, company, state, zip, profileUrl;
+    // Initialize variables for the incoming form data
+    let email, nickname, birthYear, birthMonth, birthDay, gender, profileUrl;
   
     for await (const part of parts) {
+      // Check each part of the multipart form data and assign it to the appropriate variable
       if (part.fieldname === 'email') email = part.value;
-      if (part.fieldname === 'firstname') firstname = part.value;
-      if (part.fieldname === 'lastname') lastname = part.value;
-      if (part.fieldname === 'address') address = part.value;
-      if (part.fieldname === 'company') company = part.value;
-      if (part.fieldname === 'state') state = part.value;
-      if (part.fieldname === 'zip') zip = part.value;
+      if (part.fieldname === 'nickname') nickname = part.value; // Updated field for nickname
+      if (part.fieldname === 'birthYear') birthYear = part.value;
+      if (part.fieldname === 'birthMonth') birthMonth = part.value;
+      if (part.fieldname === 'birthDay') birthDay = part.value;
+      if (part.fieldname === 'gender') gender = part.value;
+  
       if (part.fieldname === 'profile' && part.file) {
-        // Read the file stream into a buffer
+        // Process file input for the profile image
         const chunks = [];
         for await (const chunk of part.file) {
           chunks.push(chunk);
@@ -308,13 +305,26 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const userId = decoded._id;
   
+      // Access the MongoDB collection
       const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
   
-      const updateData = { email, firstname, lastname, address, company, state, zip };
+      // Construct the data object to update in the database
+      const updateData = {
+        email,
+        nickname,
+        birthDate: {
+          year: birthYear,
+          month: birthMonth,
+          day: birthDay,
+        },
+        gender,
+      };
+
       if (profileUrl) {
         updateData.profileUrl = profileUrl;
       }
   
+      // Perform the update operation
       const updateResult = await usersCollection.updateOne(
         { _id: new fastify.mongo.ObjectId(userId) },
         { $set: updateData }
@@ -330,7 +340,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       return reply.status(500).send({ error: 'サーバーエラーが発生しました' });
     }
   });
-
+  
   // Keep the old update-password route
   fastify.post('/user/update-password', async (request, reply) => {
     try {
@@ -367,6 +377,22 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     } catch (err) {
       fastify.log.error(err);
       return reply.status(500).send({ error: 'サーバーエラーが発生しました' });
+    }
+  });
+
+  fastify.get('/user/plan/:id', async (request, reply) => {
+    try {
+      const userId = request.params.id;
+  
+      // Fetch the user from the database using their ObjectId
+      existingSubscription = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').findOne({
+        _id: new fastify.mongo.ObjectId(userId),
+        subscriptionStatus: 'active'
+      });
+      reply.send({plan:existingSubscription})
+    } catch (error) {
+      reply.send({error:`Plan not founded`})
+      console.log(error)
     }
   });
 }

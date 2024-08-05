@@ -228,14 +228,29 @@ async function routes(fastify, options) {
     });
     
     fastify.post('/api/chat-analyze/', async (request, reply) => {
-        const {chatId} = request.body;
+        const {chatId,userId} = request.body;
         const collectionUser = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
         const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
         const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
 
         let response = {}
         try {
-            let userChatDocument = await collectionUserChat.find({chatId}).toArray();
+            let userChatDocument = await collectionUserChat.find({
+                $and: [
+                    { 
+                      $or: [
+                        { chatId },
+                        { chatId: new fastify.mongo.ObjectId(chatId) }
+                      ]
+                    },
+                    { 
+                      $or: [
+                        { userId },
+                        { userId: new fastify.mongo.ObjectId(userId) }
+                      ]
+                    },
+                    { $expr: { $gte: [ { $size: "$messages" }, 2 ] } }
+                  ]}).toArray();
             if(userChatDocument){
                 response.total = userChatDocument.length
             }
@@ -513,22 +528,37 @@ async function routes(fastify, options) {
 
         // Check the limits
         const isTemporary = user.isTemporary;
-        const messageLimit = isTemporary? 11 : 51;
-        const chatLimit = isTemporary? 1 : 3;
+        let messageLimit = isTemporary? 11 : 51;
+        let chatLimit = isTemporary? 1 : 3;
+        if(!isTemporary){
+            existingSubscription = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').findOne({
+                _id: new fastify.mongo.ObjectId(userId),
+                subscriptionStatus: 'active',
+            });
+            
+            if(existingSubscription){
+                const billingCycle = existingSubscription.billingCycle+'ly'
+                const currentPlanId = existingSubscription.currentPlanId
+                const plansFromDb = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('plans').findOne();
+                const plans = plansFromDb.plans
+                const plan = plans.find((plan) => plan[`${billingCycle}_id`] === currentPlanId);
+                messageLimit = plan.messageLimit || null
+                chatLimit = plan.chatLimit || null
+            }
+        }
       
         if (messageCountDoc && messageCountDoc.count >= messageLimit) {
-            return { error: 'Message limit reached for today.', id: 1, messageCountDoc, chatCount };
-          } 
+            return { error: 'Message limit reached for today.', id: 1, messageCountDoc, chatCount, messageLimit, chatLimit };
+        } 
         if (chatCount >= chatLimit) {
-            return { error: 'Chat limit reached.', id: 2, messageCountDoc, chatCount };
-          }
+            return { error: 'Chat limit reached.', id: 2, messageCountDoc, chatCount, messageLimit, chatLimit };
+        }
         
-          return {messageCountDoc, chatCount};
+        return {messageCountDoc, chatCount, messageLimit, chatLimit};
       }
     fastify.post('/api/chat-data', async (request, reply) => {
         try {
             const userLimitCheck = await checkLimits(request.body.userId);
-
             const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
             const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
             const collectionMessageCount = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageCount');
@@ -644,23 +674,19 @@ async function routes(fastify, options) {
                     return reply.status(403).send(userLimitCheck);
                 }
                 // Update the message count
-                const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
-                const user = await userDataCollection.findOne({_id:new fastify.mongo.ObjectId(userId)})
-                const isTemporary = user.isTemporary
-                const limit = isTemporary ? 10 : 50
                 let newMessageCount;
                 if (userLimitCheck.messageCountDoc) {
                     newMessageCount = await collectionMessageCount.findOneAndUpdate(
                         { userId: new fastify.mongo.ObjectId(userId), date: today },
-                        { $inc: { count: 1 }, $set: { limit: limit } },
-                        { returnOriginal: false } // Return the updated document
+                        { $inc: { count: 1 }, $set: { limit: userLimitCheck.messageLimit } },
+                        { returnOriginal: false }
                     );
                 } else {
                     newMessageCount = {
                         userId: new fastify.mongo.ObjectId(userId),
                         date: today,
                         count: 1,
-                        limit: limit
+                        limit: userLimitCheck.messageLimit
                     }
                     await collectionMessageCount.insertOne(newMessageCount);
                 }

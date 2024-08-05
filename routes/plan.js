@@ -1,23 +1,23 @@
 
 const { ObjectId } = require('mongodb');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const qs = require('qs');
+const frontEnd = process.env.MODE == 'local'? 'http://localhost:3000' : 'https://lamix.hatoltd.com'
+const stripe = process.env.MODE == 'local'? require('stripe')(process.env.STRIPE_SECRET_KEY_TEST) : require('stripe')(process.env.STRIPE_SECRET_KEY)
 
 async function routes(fastify, options) {
   const plans = [
     {
-      id: 'free-trial',
+      id: 'free',
       name: "お試しプラン",
       price: "無料",
       monthly: "無料",
       yearly: "無料",
       features: [
-        "7日間無料",
         "1日10件までチャットできる",
         "フレンドを1人まで作成できる",
         "無料プロンプトを使用できる",
         "簡単なサポート対応"
-      ]
+      ],
     },
     {
       id: 'premium',
@@ -29,10 +29,12 @@ async function routes(fastify, options) {
       yearly_id :'price_1PjuEvE5sP7DA1XvNPrP7Jgi',
       features: [
         "1日200件までチャットできる",
-        "フレンドを3人まで作成できる",
+        "フレンドを10人まで作成できる",
         "無料プロンプトを使用できる",
         "新規機能のアクセス"
-      ]
+      ],
+      messageLimit:200,
+      chatLimit:10,
     },
     {
       id:'special',
@@ -40,23 +42,31 @@ async function routes(fastify, options) {
       price: "￥3,000円/月",
       monthly: "￥3,000円/月",
       yearly: "￥30,000円/年",
+      monthly_id :'price_1PkCB5E5sP7DA1Xvy7K3aHHd',
+      yearly_id :'price_1PkCBXE5sP7DA1Xvxxbhmw4y',
       features: [
         "毎日無制限でチャットできる",
         "フレンドを無制限で作成できる",
         "無料プロンプトを使用できる",
         "新機能への早期アクセス",
         "優先的なサポート対応"
-      ]
+      ],
+      messageLimit:false,
+      chatLimit:false,
     }
   ];
 
-  const frontEnd = process.env.MODE == 'local'? 'http://localhost:3000' : 'https://lamix.hatoltd.com'
-
   fastify.get('/plan/list', async (request, reply) => {
     const user = await fastify.getUser(request, reply);
-    return reply.send( {plans} );
+  
+    if (request.query.update === 'true') {
+      await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('plans').deleteMany({});
+      await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('plans').insertOne({ plans });
+    }
+  
+    const plansFromDb = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('plans').findOne();
+    return reply.send(plansFromDb);
   });
-
   fastify.post('/plan/subscribe', async (request, reply) => {
     try {
       // Retrieve user information
@@ -85,6 +95,30 @@ async function routes(fastify, options) {
       // Determine the correct price ID based on the billing cycle
       const planPriceId = plan[`${billingCycle}_id`];
   
+      // Check if the user already has an active subscription for this plan
+      let existingSubscription = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').findOne({
+        _id: new fastify.mongo.ObjectId(userId),
+        currentPlanId: planPriceId,
+        subscriptionStatus: 'active', // Consider what 'active' means in your context
+      });
+      if (existingSubscription) {
+        return reply.status(400).send({ error: 'You already have an active subscription for this plan.' });
+      }
+      existingSubscription = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').findOne({
+        _id: new fastify.mongo.ObjectId(userId),
+        subscriptionStatus: 'active', // Consider what 'active' means in your context
+      });
+      if(existingSubscription && existingSubscription.currentPlanId != planPriceId ){
+        console.log(`change plan to ${planId}`)
+        return reply.send({
+          action: 'upgrade',
+          newPlanId: planId,
+          billingCycle,
+          method: 'POST',
+          url: '/plan/upgrade',
+        });
+      }
+  
       // Create a Stripe Checkout session
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'], // Accept card payments
@@ -97,10 +131,11 @@ async function routes(fastify, options) {
           },
         ],
         success_url: `${frontEnd}/plan/success?session_id={CHECKOUT_SESSION_ID}`, // Redirect here on success
-        cancel_url: `${frontEnd}/plam/cancel-payment`, // Redirect here on cancellation
+        cancel_url: `${frontEnd}/plan/cancel-payment`, // Redirect here on cancellation
         metadata: {
           userId: user._id.toString(), // Optionally store user ID in metadata for future reference
         },
+        locale: 'ja',
       });
   
       // Return the session URL to redirect the user
@@ -110,15 +145,23 @@ async function routes(fastify, options) {
       return reply.status(500).send({ error: 'Internal Server Error' });
     }
   });
-
+  
   fastify.get('/plan/success', async (request, reply) => {
     try {
       // Extract the session ID from the query parameters
-      const query = qs.parse(request.url.split('?')[1]);
+      const query = request.query; // Fastify automatically parses query strings
       const sessionId = query.session_id;
+  
+      if (!sessionId) {
+        return reply.status(400).send({ error: 'Invalid session ID' });
+      }
   
       // Retrieve the session from Stripe
       const session = await stripe.checkout.sessions.retrieve(sessionId);
+  
+      if (!session) {
+        return reply.status(404).send({ error: 'Session not found' });
+      }
   
       // Find the user in your database
       const user = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({
@@ -129,16 +172,28 @@ async function routes(fastify, options) {
         return reply.status(404).send({ error: 'User not found' });
       }
   
-      // Update the user's subscription status in your database
-      await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
+      // Retrieve subscription details
+      const subscription = await stripe.subscriptions.retrieve(session.subscription);
+  
+      if (!subscription) {
+        return reply.status(404).send({ error: 'Subscription not found' });
+      }
+  
+      // Update the user's subscription status and details in your database
+      await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').updateOne(
         { _id: new fastify.mongo.ObjectId(user._id) },
         {
           $set: {
             stripeCustomerId: session.customer, // Store Stripe customer ID
             stripeSubscriptionId: session.subscription, // Store Stripe subscription ID
             subscriptionStatus: 'active', // Update subscription status
+            currentPlanId: subscription.items.data[0].price.id, // Store current plan ID
+            billingCycle: subscription.items.data[0].price.recurring.interval, // Store billing cycle
+            subscriptionStartDate: new Date(subscription.start_date * 1000), // Convert Unix timestamp to Date
+            subscriptionEndDate: new Date(subscription.current_period_end * 1000), // Convert Unix timestamp to Date
           },
-        }
+        },
+        { upsert: true } // Add this option to insert a new document if no match is found
       );
   
       // Redirect the user to a success page or dashboard
@@ -148,6 +203,7 @@ async function routes(fastify, options) {
       return reply.status(500).send({ error: 'Internal Server Error' });
     }
   });
+  
 
   fastify.get('/plan/cancel-payment', async (request, reply) => {
     try {
@@ -155,7 +211,7 @@ async function routes(fastify, options) {
       console.log('User canceled the payment process.');
 
       // Redirect the user to a cancellation page or inform them about the cancellation
-      return reply.redirect(`${frontEnd}/cancel-payment?message=Subscription process canceled`);
+      return reply.redirect(`${frontEnd}/my-plan?cancel-payment=true`);
     } catch (error) {
       console.error('Error handling cancellation:', error);
       return reply.status(500).send({ error: 'Internal Server Error' });
@@ -163,53 +219,114 @@ async function routes(fastify, options) {
   });
 
   fastify.post('/plan/cancel', async (request, reply) => {
-    let user = await fastify.getUser(request, reply);
-    const userId = user._id;
-    user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-
-    const stripeSubscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
-
-    if (!stripeSubscription) {
-      return reply.status(404).send({ error: 'Subscription not found' });
-    }
-
-    await stripe.subscriptions.cancel(stripeSubscription.id);
-
-    await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
-      { _id: new fastify.mongo.ObjectId(user._id) },
-      { $unset: { stripeSubscriptionId: '' } }
-    );
-
-    return reply.send({ message: 'Subscription canceled' });
-  });
-
-  fastify.post('/plan/upgrade', async (request, reply) => {
-    let user = await fastify.getUser(request, reply);
-    const userId = user._id;
-    user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-    const newPlanId = request.body.newPlanId;
-    const newPlan = plans.find((plan) => plan.id === newPlanId);
-
-    if (!newPlan) {
-      return reply.status(400).send({ error: 'Invalid plan' });
-    }
-
-    const stripeSubscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
-
-    if (!stripeSubscription) {
-      return reply.status(404).send({ error: 'Subscription not found' });
-    }
-
-    await stripe.subscriptions.update(stripeSubscription.id, {
-      items: [
+    try {
+      const db = fastify.mongo.client.db(process.env.MONGODB_NAME)
+      // Retrieve user
+      let user = await fastify.getUser(request, reply);
+      if (!user) {
+        return reply.status(404).send({ error: 'ユーザーが見つかりません' }); // User not found
+      }
+      
+      const userId = user._id;
+      userSubscription = await db.collection('subscriptions').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+      
+      if (!userSubscription) {
+        return reply.status(404).send({ error: 'ユーザーが見つかりません' }); // User not found
+      }
+      if(!userSubscription.stripeSubscriptionId){
+        return reply.status(404).send({ error: 'サブスクリプションが見つかりません' }); // Subscription not found
+      }
+      // Retrieve Stripe subscription
+      const stripeSubscription = await stripe.subscriptions.retrieve(userSubscription.stripeSubscriptionId);
+      
+      if (!stripeSubscription) {
+        return reply.status(404).send({ error: 'サブスクリプションが見つかりません' }); // Subscription not found
+      }
+  
+      // Cancel Stripe subscription
+      await stripe.subscriptions.cancel(stripeSubscription.id);
+  
+      // Update MongoDB subscription status
+      const updateResult = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').updateOne(
+        { _id: new fastify.mongo.ObjectId(user._id) },
         {
-          id: stripeSubscription.items.data[0].id,
-          price: newPlanId,
-        },
-      ],
-    });
+          $set: {
+            subscriptionStatus: 'canceled',
+            subscriptionEndDate: new Date(),
+          },
+          $unset: {
+            stripeSubscriptionId: '',
+          },
+        }
+      );
+  
+      if (updateResult.modifiedCount === 0) {
+        return reply.status(500).send({ error: 'サブスクリプションの更新に失敗しました' }); // Failed to update subscription
+      }
+  
+      return reply.send({ message: 'サブスクリプションがキャンセルされました' }); // Subscription canceled
+    } catch (error) {
+      console.error('Error canceling subscription:', error);
+      return reply.status(500).send({ error: 'サーバーエラーが発生しました' }); // Internal server error
+    }
+  });
+  
+  fastify.post('/plan/upgrade', async (request, reply) => {
+    try {
+      const db = fastify.mongo.client.db(process.env.MONGODB_NAME)
+      let user = await fastify.getUser(request, reply);
+      const userId = user._id;
+      userSubscription = await db.collection('subscriptions').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+  
+      if (!userSubscription) {
+        return reply.status(404).send({ error: 'User not found' });
+      }
+  
+      const {newPlanId,billingCycle} = request.body;
+      if (!newPlanId) {
+        return reply.status(400).send({ error: 'Missing new plan ID' });
+      }
+  
+      const newPlan = plans.find((plan) => plan.id === newPlanId);
+      if (!newPlan) {
+        return reply.status(400).send({ error: 'Invalid plan' });
+      }
+    // Determine the correct price ID based on the billing cycle
+    const planPriceId = newPlan[`${billingCycle}_id`];
 
-    return reply.send({ message: 'Plan upgraded successfully' });
+      const stripeSubscription = await stripe.subscriptions.retrieve(userSubscription.stripeSubscriptionId);
+      if (!stripeSubscription) {
+        return reply.status(404).send({ error: 'Subscription not found' });
+      }
+  
+      try {
+        await stripe.subscriptions.update(stripeSubscription.id, {
+          items: [
+            {
+              id: stripeSubscription.items.data[0].id,
+              price: planPriceId,
+            },
+          ],
+        });
+              // Update the user's subscription status and details in your database
+      await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').updateOne(
+        { _id: new fastify.mongo.ObjectId(userId) },
+        {
+          $set: {
+            currentPlanId: planPriceId, 
+          },
+        },
+        { upsert: true } // Add this option to insert a new document if no match is found
+      );
+      } catch (stripeError) {
+        return reply.status(500).send({ error: 'Error updating subscription', details: stripeError.message });
+      }
+  
+      return reply.send({ message: 'Plan upgraded successfully', newPlan });
+    } catch (error) {
+      console.error('Error upgrading plan:', error);
+      return reply.status(500).send({ error: 'Internal Server Error' });
+    }
   });
 }
 

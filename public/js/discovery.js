@@ -294,7 +294,6 @@ $(document).ready(function() {
             console.error('Error getting category chat:', error);
           }
         });
-        console.log('Button clicked:', $(this).text());
       });
       function transformChatObject(obj) {
         return {

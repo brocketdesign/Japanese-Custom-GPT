@@ -5,6 +5,7 @@ const frontEnd = process.env.MODE == 'local'? 'http://localhost:3000' : 'https:/
 const stripe = process.env.MODE == 'local'? require('stripe')(process.env.STRIPE_SECRET_KEY_TEST) : require('stripe')(process.env.STRIPE_SECRET_KEY)
 
 async function routes(fastify, options) {
+
   const plans = [
     {
       id: 'free',
@@ -24,8 +25,8 @@ async function routes(fastify, options) {
       price: "￥1,200円/月",
       monthly: "￥1,200円/月",
       yearly: "￥10,000円/年",
-      monthly_id :'price_1Pju2iE5sP7DA1XvuCzNOMD9',
-      yearly_id :'price_1PjuEvE5sP7DA1XvNPrP7Jgi',
+      monthly_id : process.env.MODE == 'local'? process.env.STRIPE_PREMIUM_MONTLY_TEST: process.env.STRIPE_PREMIUM_MONTLY,
+      yearly_id : process.env.MODE == 'local'? process.env.STRIPE_PREMIUM_YEARLY_TEST: process.env.STRIPE_PREMIUM_YEARLY,
       features: [
         "1日200件までチャットできる",
         "フレンドを10人まで作成できる",
@@ -41,8 +42,8 @@ async function routes(fastify, options) {
       price: "￥3,000円/月",
       monthly: "￥3,000円/月",
       yearly: "￥30,000円/年",
-      monthly_id :'price_1PkCB5E5sP7DA1Xvy7K3aHHd',
-      yearly_id :'price_1PkCBXE5sP7DA1Xvxxbhmw4y',
+      monthly_id : process.env.MODE == 'local'? process.env.STRIPE_SPECIAL_MONTLY_TEST: process.env.STRIPE_SPECIAL_MONTLY,
+      yearly_id : process.env.MODE == 'local'? process.env.STRIPE_SPECIAL_YEARLY_TEST: process.env.STRIPE_SPECIAL_YEARLY,
       features: [
         "毎日無制限でチャットできる",
         "フレンドを無制限で作成できる",

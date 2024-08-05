@@ -437,51 +437,51 @@ $(document).ready(function() {
                         var chatListHtml = '';
                         $.each(data, function(index, chat) {
                             chatListHtml += `
-                            <div class="chat-list item user-chat d-flex align-items-center justify-content-between px-0 py-1 bg-transparent" style="cursor: pointer;" 
+                            <div class="chat-list item user-chat d-flex align-items-center justify-content-between p-1 mx-2 rounded bg-transparent" style="cursor: pointer;" 
                                 data-id="${chat._id}" data-userid="${chat.userId}" >
                                 <div class="d-flex align-items-center w-100">
-                                <div class="user-chat-content" style="flex: 1;display: flex;align-items: center;">
-                                    <div class="thumb align-items-center text-center justify-content-center d-flex flex-column col-3 p-1" >
-                                    <img class="img-fluid" src="${chat.thumbnailUrl || chat.chatImageUrl || '/img/logo.webp'}" alt="">
-                                    </div>
-                                    <div class="chat-list-details">
-                                    <div class="chat-list-info">
-                                        <div class="chat-list-title">
-                                        <h6 class="mb-0 online-text" style="font-size: 14px;">${chat.name}</h6>
+                                    <div class="user-chat-content" style="flex: 1;display: flex;align-items: center;">
+                                        <div class="thumb align-items-center text-center justify-content-center d-flex flex-column col-3 p-1" >
+                                            <img class="img-fluid" src="${chat.thumbnailUrl || chat.chatImageUrl || '/img/logo.webp'}" alt="">
                                         </div>
-                                    </div>
+                                        <div class="chat-list-details ps-2">
+                                        <div class="chat-list-info">
+                                            <div class="chat-list-title">
+                                            <h6 class="mb-0 online-text" style="font-size: 14px;">${chat.name}</h6>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="d-flex align-items-center">
                                     <!-- Dropdown -->
                                     <div class="dropdown pe-2">
-                                    <button class="btn border-0 shadow-0 dropdown-toggle ms-2 " type="button" id="dropdownMenuButton_${chat._id}" data-mdb-toggle="dropdown" aria-expanded="false">
-                                        <i class="fas fa-ellipsis-v text-secondary"></i>
-                                    </button>
+                                        <button class="btn border-0 shadow-0 dropdown-toggle ms-2 " type="button" id="dropdownMenuButton_${chat._id}" data-mdb-toggle="dropdown" aria-expanded="false">
+                                            <i class="fas fa-ellipsis-v text-secondary"></i>
+                                        </button>
                                     <ul class="dropdown-menu dropdown-menu-end chat-option-menu bg-light shadow rounded mx-3" aria-labelledby="dropdownMenuButton_${chat._id}">
                                         <li>
-                                        <button class="dropdown-item text-secondary chart-button" data-id="${chat._id}">
-                                            <i class="fas fa-info-circle me-2"></i>
-                                            <span class="text-muted" style="font-size:12px"></span>情報</span>
-                                        </button>
+                                            <button class="dropdown-item text-secondary chart-button" data-id="${chat._id}">
+                                                <i class="fas fa-info-circle me-2"></i>
+                                                <span class="text-muted" style="font-size:12px"></span>情報</span>
+                                            </button>
                                         </li>
                                         <li>
-                                        <button class="dropdown-item text-secondary tag-button" data-id="${chat._id}">
-                                            <i class="fas fa-share me-2"></i> 
-                                            <span class="text-muted" style="font-size:12px"></span>共有する</span>
-                                        </button>
+                                            <button class="dropdown-item text-secondary tag-button" data-id="${chat._id}">
+                                                <i class="fas fa-share me-2"></i> 
+                                                <span class="text-muted" style="font-size:12px"></span>共有する</span>
+                                            </button>
                                         </li>
                                         <li>
-                                        <a href="/chat/edit/${chat._id}" class="dropdown-item text-secondary">
-                                            <i class="far fa-edit me-2"></i> 
-                                            <span class="text-muted" style="font-size:12px"></span>編集する</span>
-                                        </a>
+                                            <a href="/chat/edit/${chat._id}" class="dropdown-item text-secondary">
+                                                <i class="far fa-edit me-2"></i> 
+                                                <span class="text-muted" style="font-size:12px"></span>編集する</span>
+                                            </a>
                                         </li>
                                         <li>
-                                        <span data-id="${chat._id}" class="dropdown-item text-danger delete-chat" style="cursor:pointer">
-                                            <i class="fas fa-trash me-2"></i> 
-                                            <span class="text-muted" style="font-size:12px"></span>削除する</span>
-                                        </span>
+                                            <span data-id="${chat._id}" class="dropdown-item text-danger delete-chat" style="cursor:pointer">
+                                                <i class="fas fa-trash me-2"></i> 
+                                                <span class="text-muted" style="font-size:12px"></span>削除する</span>
+                                            </span>
                                         </li>
                                     </ul>
                                     </div>

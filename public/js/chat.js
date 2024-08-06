@@ -395,6 +395,12 @@ $(document).ready(function() {
                         isWidget : $('#chat-widget-container').length > 0
                     }),
                     success: function(response) {
+                        const messageCountDoc = response.messageCountDoc
+                        if(messageCountDoc.limit){
+                            $('#message-number')
+                            .html(`使用回数：${parseInt(messageCountDoc.count)}/${messageCountDoc.limit}`)
+                            .show()
+                        }
                         userChatId = response.userChatId
                         chatId = response.chatId
                         isNew = false;
@@ -1126,10 +1132,13 @@ $(document).ready(function() {
             confirmButtonText: '閉じる'
         });
     }
-
 });
 
 function showRegistrationForm(messageId) {
+
+    const redirectUrl = window.location.pathname
+    $.cookie('redirect_url', redirectUrl);
+
     //window.location = "/authenticate?register=true"
     Swal.fire({
       title: '',
@@ -1139,23 +1148,23 @@ function showRegistrationForm(messageId) {
       imageHeight: 'auto',
       position: 'bottom',
       html: `
-        <h2>無料アカウントを作成してチャットを続けましょう</h2>
-        <p>続けるために、今すぐ無料で登録してください。</p>
+        <h2>無料アカウントを作成して<br>チャットを続けましょう</h2>
+        <p class="text-muted mb-2 header" style="font-size: 16px;">続けるために、今すぐ無料で登録してください。</p>
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-md-8">
                     <div class="card shadow-0 border-0">
                         <div class="card-body">
-                            <a href="/user/google-auth" class="btn btn-light google-login-button mb-3">
-                                <img src="/img/google_logo_neutral.png"/>
-                                <span class="gsi-material-button-contents">Googleで続ける</span>
+                            <a href="/user/google-auth" class="btn btn-light ico-login-button mb-3">
+                                <img src="/img/google_logo_neutral.png" alt="Google"/>
+                                <span class="gsi-material-button-contents">で続ける</span>
                             </a>
-                            <a href="/user/line-auth" class="btn btn-light google-login-button mb-3">
-                                <img src="/img/line_btn_base.png"/>
-                                <span class="gsi-material-button-contents">LINEで続ける</span>
+                            <a href="/user/line-auth" class="btn btn-light ico-login-button mb-3">
+                                <img src="/img/line_btn_base.png" alt="LINE"/>
+                                <span class="gsi-material-button-contents">で続ける</span>
                             </a>
                             <p>または</p>
-                            <a href="/authenticate/mail" class="btn btn-light google-login-button mb-3 py-2">
+                            <a href="/authenticate/mail" class="btn btn-light ico-login-button mb-3 py-2">
                                 <i class="fas fa-envelope me-3"></i>
                                 <span>メールで続ける</span>
                             </a>
@@ -1182,6 +1191,9 @@ function showRegistrationForm(messageId) {
     });
 }
 function showUpgradePopup(limitType) {
+    const redirectUrl = window.location.pathname
+    $.cookie('redirect_url', redirectUrl);
+    
     // Define messages based on limit type
     let messageTitle = '';
     let messageText = '';
@@ -1190,18 +1202,24 @@ function showUpgradePopup(limitType) {
     // Use switch-case to handle different types of limits
     switch (limitType) {
         case 'chat-message':
-            messageTitle = 'メッセージ制限に達しました';
-            messageText = '無料プランで送信可能なメッセージの上限に達しました。無制限のメッセージをお楽しみいただくには、有料プランにご登録ください。';
+            messageTitle = '💬メッセージ制限に達しました';
+            messageText = '無制限のメッセージをお楽しみいただくには、有料プランにご登録ください。';
             break;
         case 'chat-character':
-            messageTitle = 'キャラクター制限に達しました';
-            messageText = '無料プランで利用可能なキャラクターの上限に達しました。より多くのキャラクターと会話を楽しむには、有料プランにご登録ください。新たなキャラクターたちとの素晴らしい体験が待っています！';
+            messageTitle = '🤗キャラクター制限に達しました';
+            messageText = 'より多くのキャラクターと会話を楽しむには、有料プランにご登録ください。';
             break;
         default:
             messageTitle = '制限に達しました';
             messageText = 'ご利用中のプランの制限に達しました。有料プランにアップグレードして、より多くの機能をお楽しみください。';
     }
-
+    const features = [
+        "毎日無制限でチャットできる",
+        "フレンドを無制限で作成できる",
+        "新しいキャラクターを作成する",
+        "新機能への早期アクセス",
+        "優先的なサポート対応"
+      ]
     // Display the popup using Swal.fire
     Swal.fire({
         imageUrl: imageUrl,
@@ -1209,12 +1227,15 @@ function showUpgradePopup(limitType) {
         imageHeight: 'auto',
         position: 'center',
         html: `
-            <div class="container p-3">
+            <div class="container">
                 <div class="row justify-content-center">
-                    <div class="text-center">
+                    <div class="text-start">
                         <h5 class="fw-bold">${messageTitle}</h5>
-                        <p>${messageText}</p>
-                        <a href="/my-plan" class="btn btn-primary mt-3">有料プランを確認する</a>
+                        <p class="text-muted mb-2 header" style="font-size: 16px;">${messageText}</p>
+                        <ul class="list-group list-group-flush">
+                            ${features.map(feature => `<li class="list-group-item px-0"><span class="me-2">🔥</span>${feature}</li>`).join('')}
+                        </ul>
+                        <a href="/my-plan" class="btn btn-dark border-0 w-100 custom-gradient-bg mt-3">有料プランを確認する</a>
                     </div>
                 </div>
             </div>

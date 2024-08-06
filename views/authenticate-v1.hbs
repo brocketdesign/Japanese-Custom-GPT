@@ -14,17 +14,12 @@
 </head>
 <body>
     <style>
-    .btn.google-login-button {
-      background-color: #f2f2f2;
-      display: flex;
-      align-items: center;
-      border-radius: 50px;
-      justify-content: center;
-    }
-    .btn.google-login-button img {
-      max-width: 40px;
-      margin-right: 10px;
-    }
+        .text-muted {
+            color: #aeb0b4 !important;
+        }
+        .text-muted {
+            font-weight: 300;
+        }
       #authTabContent input{
           background: #212529;
           color: #fff !important;
@@ -40,32 +35,31 @@
         a.nav-link {
           color:#fff;
         }
-        .btn.google-login-button {
-          background-color: #f2f2f2;
-          display: flex;
-          align-items: center;
-          border-radius: 50px;
-          justify-content: center;
+        .btn.ico-login-button {
+            background-color: #f2f2f2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .btn.google-login-button img {
-          max-width: 40px;
-          margin-right: 10px;
+        .btn.ico-login-button img {
+            width: 30px;
+            margin-right: 10px;
         }
     </style>
-<section class="gradient-custom" style="min-height:100vh">
+<section class="gradient-custom bg-dark" style="min-height:100vh">
   <div class="container py-5 h-100">
     <div class="row d-flex justify-content-center align-items-center h-100">
       <div class="col-12 mb-4">
         <a href="/chat-index">
-          <img src="/img/logo.webp" alt="LAMIXボット ロゴ" class="m-auto" style="width: 75px;border-radius:50%;">
+          <img src="/img/logo.webp" alt="LAMIXボット ロゴ" class="m-auto  bg-white p-2" style="width: 75px;border-radius:50%;">
         </a>
       </div>
       <div class="col-12 col-md-8 col-lg-6 col-xl-5">
-        <div class="card bg-dark text-white" style="border-radius: 1rem;">
-          <div class="card-body p-5 text-center">
+        <div class="card bg-dark text-white border-0" style="border-radius: 1rem;">
+          <div class="card-body pb-5 text-center">
             <div class="mb-md-5 mt-md-4 pb-5">
               <h5 class="fw-bold mb-2 text-uppercase authenticate">{{#if register}}会員登録{{else}}ログイン{{/if}}</h5>
-              <h2 class="text-white-50 mb-5 header">{{#if register}}無料アカウント登録で、AIキャラとの会話をもっと楽しもう!{{else}}ログインして多様なAIキャラと楽しく会話しましょう!{{/if}}</h2>
+              <h3 class="text-muted mb-5 header" style="font-size: 16px;">{{#if register}}無料アカウント登録で、<br>AIキャラとの会話をもっと楽しもう!{{else}}ログインして多様なAIキャラと<br>楽しく会話しましょう!{{/if}}</h3>
               <ul class="nav nav-tabs" id="authTab" role="tablist">
                 <li class="nav-item" role="presentation">
                   <a class="nav-link {{#unless register}}active{{/unless}}" id="login-tab" data-bs-toggle="tab" href="#login" role="tab" aria-controls="login" aria-selected="true">ログイン</a>
@@ -129,7 +123,6 @@
               </div>
             </div>
             <div>
-              <p class="mb-0">アカウントを持っていませんか？ <a href="#!" class="text-white-50 fw-bold" id="register-link">サインアップ</a></p>
             </div>
           </div>
         </div>
@@ -149,11 +142,11 @@ $(document).ready(function() {
 
     $('#login-tab').on('click', function() {
         $('.authenticate').text('ログイン');
-        $('.header').text('ログインして多様なAIキャラと楽しく会話しましょう!')
+        $('.header').html('ログインして多様なAIキャラと<br>楽しく会話しましょう!')
     });
     $('#register-tab').on('click', function() {
         $('.authenticate').text('会員登録');
-        $('.header').text('無料アカウント登録で、AIキャラとの会話をもっと楽しもう!')
+        $('.header').html('無料アカウント登録で、<br>AIキャラとの会話をもっと楽しもう!')
     });
 
     $('input').on('focus', function() {

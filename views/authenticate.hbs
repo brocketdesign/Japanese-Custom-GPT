@@ -14,6 +14,12 @@
 </head>
 <body>
     <style>
+        .text-muted {
+            color: #aeb0b4 !important;
+        }
+        .text-muted {
+            font-weight: 300;
+        }
       #authTabContent input{
           background: #212529;
           color: #fff !important;
@@ -29,40 +35,39 @@
         a.nav-link {
           color:#fff;
         }
-        .btn.google-login-button {
+        .btn.ico-login-button {
             background-color: #f2f2f2;
             display: flex;
             align-items: center;
-            border-radius: 50px;
             justify-content: center;
         }
-        .btn.google-login-button img {
-            max-width: 40px;
+        .btn.ico-login-button img {
+            width: 30px;
             margin-right: 10px;
         }
     </style>
-<section class="gradient-custom" style="min-height:100vh">
+<section class="gradient-custom bg-dark" style="min-height:100vh">
   <div class="container py-5 h-100">
     <div class="row d-flex justify-content-center align-items-center h-100">
       <div class="col-12 mb-4">
         <a href="/chat-index">
-          <img src="/img/logo.webp" alt="LAMIXボット ロゴ" class="m-auto" style="width: 75px;border-radius:50%;">
+          <img src="/img/logo.webp" alt="LAMIXボット ロゴ" class="m-auto bg-white p-2" style="width: 75px;border-radius:50%;">
         </a>
       </div>
       <div class="col-12 col-md-8 col-lg-6 col-xl-5">
-        <div class="card bg-dark text-white" style="border-radius: 1rem;">
-          <div class="card-body p-5 text-center">
+        <div class="card bg-dark text-white border-0" style="border-radius: 1rem;">
+          <div class="card-body pb-5 text-center">
             <div class="mb-md-5 mt-md-4 pb-5">
-              <h5 class="fw-bold mb-3 text-uppercase authenticate">ログイン/会員登録</h5>
-              <h3 class="text-white-50 mb-5 header">無料アカウントで、<br>AIキャラとの会話をもっと楽しもう!</h3>
+              <h5 class="fw-bold mb-3 text-uppercase authenticate">ログイン/会員登録✨</h5>
+              <h3 class="text-muted mb-5 header" style="font-size: 16px;">無料アカウントで、<br>AIキャラとの会話をもっと楽しもう!</h3>
               <div class="container">
-                <a href="/user/google-auth" class="btn btn-light google-login-button mb-3">
-                  <img src="/img/google_logo_neutral.png"/>
-                  <span class="gsi-material-button-contents">Googleで続ける</span>
+                <a href="/user/google-auth" class="btn btn-light ico-login-button mb-3 d-flex justify-content-center">
+                  <img src="/img/google_logo_neutral.png" alt="Google"/>
+                  <span class="gsi-material-button-contents">で続ける</span>
                 </a>
-                <a href="/user/line-auth" class="btn btn-light google-login-button mb-3">
-                  <img src="/img/line_btn_base.png"/>
-                  <span class="gsi-material-button-contents">LINEで続ける</span>
+                <a href="/user/line-auth" class="btn btn-light ico-login-button mb-3 d-flex justify-content-center">
+                  <img src="/img/line_btn_base.png" alt="LINE"/>
+                  <span class="gsi-material-button-contents">で続ける</span>
                 </a>
                 <p>または</p>
                 <a href="/authenticate/mail" class="btn btn-light google-login-button mb-3 py-2">

@@ -227,11 +227,13 @@
             <button type="button" id="addQuestionBtn" class="btn btn-light float-end" data-toggle="tooltip" title="追加" data-original-title="Share"><i class="fas fa-plus"></i> </button>
             <button type="button" id="saveButton" class="btn btn-primary mt-3 d-none">Save</button>
         </div>
-        <button type="submit" id="sendForm" class="btn btn-primary btn-large w-100 mt-5 mb-3" style="border-radius:50px;display:none;">
-                <i class="fas fa-robot me-2"></i>
-                <i class="fa fa-spinner fa-spin fa-fw fa-hidden d-none me-2"></i>
-                保存して試す
-        </button>
+        <div class="sticky-bottom">
+            <button type="submit" id="sendForm" class="btn btn-primary btn-large w-100 mt-5 mb-3" style="border-radius:50px;display:none;">
+                    <i class="fas fa-robot me-2"></i>
+                    <i class="fa fa-spinner fa-spin fa-fw fa-hidden d-none me-2"></i>
+                    保存して試す
+            </button>
+        </div>
         <p class="text-small text-muted text-start sendForm-text" style="font-size:12px;display:none;">
             「保存して試す」をクリックすると、AIキャラクターを保存して試すことができます。後でさらに修正を加えることも可能です。
         </p>
@@ -557,7 +559,6 @@
                     };
 
                     eventSource.onerror = function(error) {
-                        console.log('EventSource failed.');
                         eventSource.close();
 
                         // Clean the JSON string when the stream ends
@@ -616,7 +617,6 @@
                     };
 
                     eventSource.onerror = function(error) {
-                        console.log('EventSource failed.');
                         eventSource.close();
                         resizeTextarea($('#chatRule')[0])
                         if(callback){callback()}
@@ -706,7 +706,6 @@
                     };
 
                     eventSource.onerror = function(error) {
-                        console.log('EventSource failed.');
                         eventSource.close();
                         resizeTextarea($('#chatDescription')[0])
                     };
@@ -754,7 +753,6 @@
                     };
 
                     eventSource.onerror = function(error) {
-                        console.log('EventSource failed.');
                         eventSource.close();
                     };
                 },
@@ -851,7 +849,6 @@
             };
 
             eventSource.onerror = function(error) {
-                console.log('EventSource failed.');
                 eventSource.close();
                 if (callback) { callback(); }
             };
@@ -913,7 +910,6 @@
                     };
 
                     eventSource.onerror = function(error) {
-                        console.log('EventSource failed.');
                         eventSource.close();
                         if(callback){callback()}
                     };

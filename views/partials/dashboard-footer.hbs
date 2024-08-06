@@ -32,6 +32,7 @@ window.updatePlanStatus = function(user){
       }
       const billingCycle = data.plan.billingCycle
       const currentPlanId = data.plan.currentPlanId
+
       $.get('/plan/list',function(data){
           const plans = data.plans
           const plan = plans.find((plan) => plan[`${billingCycle}ly_id`] === currentPlanId);

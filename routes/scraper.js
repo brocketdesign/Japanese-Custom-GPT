@@ -117,6 +117,17 @@ async function routes(fastify, options) {
     
         scrapeGohiai();
       });
+      fastify.get('/scraper/civitai', async (request, reply) => {
+        try {
+          const page = request.query.page
+          console.log({page})
+          return reply.send({page})
+        } catch (error) {
+          console.log(error)
+        }
+
+      });
+
   }
 
   module.exports = routes;

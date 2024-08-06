@@ -227,13 +227,15 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       preHandler: [fastify.authenticate]
     }, async (request, reply) => {
       try {
+        let user = await fastify.getUser(request, reply);
+        const userId = user._id;
         const chatId = request.params.chatId || new fastify.mongo.ObjectId()
         const isTemporaryChat = request.params.chatId ? false : true
         if(isTemporaryChat){
           const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
           await chatsCollection.insertOne({userId, _id : chatId})
         }
-        return reply.view('add-chat.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd', chatId:chatId, isTemporaryChat, user  });
+        return reply.view('add-chat.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd', chatId:chatId, isTemporaryChat, user });
       } catch (error) {
         console.log(error)
         return reply.status(500).send({ error: 'Failed to retrieve chatId' });

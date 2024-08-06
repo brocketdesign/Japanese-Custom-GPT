@@ -117,16 +117,127 @@ async function routes(fastify, options) {
     
         scrapeGohiai();
       });
+      
       fastify.get('/scraper/civitai', async (request, reply) => {
+        const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('characters');
         try {
-          const page = request.query.page
-          console.log({page})
-          return reply.send({page})
+          const page = parseInt(request.query.page, 10) || 0; // Convert the page to an integer and default to 0 if not provided
+          const civit_category = request.query.category
+          const civit_model = request.query.modelId
+
+          // Determine the number of elements to skip based on the page
+          const elementsPerPage = 10;
+          const skipElements = (page-1) * elementsPerPage;
+          // Query the database to find existing records
+          const existingCharacters = await collection
+          .find({ category: civit_category, ext: 'civitai' })
+          .skip(skipElements)
+          .limit(elementsPerPage)
+          .toArray();
+
+            // If there are already 10 elements, return them
+          if (existingCharacters.length === elementsPerPage) {
+            return reply.send({ status: 'Success', characters: existingCharacters });
+          }
+      
+          // If there are less than 10 elements, scrape additional data
+          async function scrapeCivitai() {
+            const response = await axios.get(`https://civitai.com/api/v1/images?limit=10&modelId=${civit_model}&page=${page}&nsfw=Soft`);
+            const responseData = response.data; // No need to parse if already in JSON format
+
+            const charactersData = [];
+            responseData.items.forEach((element) => {
+              const image = element.url;
+      
+              charactersData.push({
+                category: civit_category,
+                image,
+                visibility: 'public',
+                scrap: true,
+                ext: 'civitai',
+              });
+            });
+
+            let i = 1;
+            for (const character of charactersData) {
+              const existingChat = await collection.findOne({ image: character.image });
+              if (existingChat) {
+                await collection.updateOne({ image: character.image }, { $set: character });
+              } else {
+                await collection.insertOne(character);
+              }
+              i++;
+            }
+      
+            // After scraping, fetch the updated list of characters to return
+            const updatedCharacters = await collection
+              .find({ category: civit_category, ext: 'civitai' })
+              .skip(skipElements)
+              .limit(elementsPerPage)
+              .toArray();
+      
+            reply.send({ status: 'Scraped and Retrieved', characters: updatedCharacters });
+          }
+      
+          // Only call scrapeCivitai if less than 10 elements are found
+          if (existingCharacters.length < elementsPerPage) {
+            await scrapeCivitai();
+          } else {
+            // If there are already enough characters, just return them
+            return reply.send({ status: 'Success', characters: existingCharacters });
+          }
         } catch (error) {
-          console.log(error)
+          console.log(error);
+          return reply.status(500).send({ status: 'Error', message: 'An error occurred while processing the request.' });
+        }
+      });
+
+      // Define the route with MongoDB integration
+fastify.get('/scraper/civitai/categories', async (request, reply) => {
+    const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('categories');
+    const categories = await collection.aggregate([
+      { $match: { image: { $exists: true, $ne: null } } }, // Filter for documents where the image field exists and is not null
+      { $sample: { size: 20 } } // Randomly select 20 documents
+    ]).toArray();
+    return reply.send({ status: 'Success', categories });
+    try {
+        const limit = parseInt(request.query.limit, 10) || 100;
+        const types = request.query.types || 'Checkpoint';
+        const query = request.query.query|| 'japanese anime'
+        const page = request.query.page || Math.floor(Math.random() * 10) + 1;
+        // Construct the API URL
+        const apiUrl = new URL(`https://civitai.com/api/v1/models?limit=${limit}&types=${types}&nsfw=false&page=${page}`).href;
+
+        console.log({query,page,apiUrl})
+        // Fetch data from the API
+        const response = await axios.get(apiUrl);
+        const responseData = response.data;
+
+        // Prepare categories
+        const categories = responseData.items.map(item => ({
+            id: item.id,
+            name: item.name,
+            image: item.modelVersions[0]?.images[0]?.url || ''
+        }));
+
+        // Upsert categories in the MongoDB collection
+        for (const category of categories) {
+            const existingCategory = await collection.findOne({ id: category.id });
+            if (existingCategory) {
+                await collection.updateOne({ id: category.id }, { $set: category });
+            } else {
+                await collection.insertOne(category);
+            }
         }
 
-      });
+        // Send the categories as response
+        reply.send({ status: 'Success', categories });
+    } catch (error) {
+        console.log(error);
+        reply.status(500).send({ status: 'Error', message: 'An error occurred while processing the request.' });
+    }
+});
+
 
   }
 

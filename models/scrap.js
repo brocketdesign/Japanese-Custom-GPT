@@ -99,7 +99,7 @@ async function captureScreenshot(url) {
     // Save the screenshot to a file for debugging
     const screenshotPath = path.join(__dirname, 'screenshot.png');
     fs.writeFileSync(screenshotPath, screenshotBuffer);
-    
+     
     // Convert screenshot buffer to base64
     const base64Image = screenshotBuffer.toString('base64');
     

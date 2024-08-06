@@ -5,6 +5,20 @@
     {{> dashboard-nav}}
 
     <style>
+    #chatPurpose {
+        background-color: #cccccc4d;
+        border: 2px solid;
+    }
+    #chatImage{
+        width: 100px;
+        height: 100px; 
+        object-fit:cover;
+        object-position:top;
+    }
+    #chatImage.on{
+        width: auto !important;
+        height: 270px !important;
+    }
     .btn-gradient-radius {
         display: inline-block;
         padding: 7px 20px;
@@ -58,7 +72,10 @@
         width: 110px;
     }
     .rounded-circle {
-        border-radius: 50% !important;
+        border-radius: 50%;
+    }
+    .rounded-circle.on {
+        border-radius: 15px !important;
     }
     img {
         vertical-align: middle;
@@ -99,7 +116,7 @@
 <div class="container my-4">
     <h2 class="d-none">{{#if chatId}}チャットを編集{{else}}新しいチャットを追加{{/if}}</h2>
     <div id="imageSection" class="text-center mb-4" ><div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative">
-        <img id="chatImage" src="/img/logo.webp" alt="chat Thumbnail" class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover;object-position:top; cursor: pointer;">
+        <img id="chatImage" src="/img/logo.webp" alt="chat Thumbnail" class="rounded-circle" style="cursor: pointer;">
         <i class="fas fa-edit position-absolute" style="bottom: 5px; font-size: 1em; color: white; background-color: rgba(0, 0, 0, 0.5); border-radius: 50%; padding: 5px;cursor: pointer;"></i>
     </div>
 
@@ -118,27 +135,34 @@
     
     <form id="chatForm" class="mb-5 pb-5 mx-3">
         <div class="mb-3 mx-3">
+            <button type="button" id="genChat" class="btn btn-dark btn-gradient-radius my-3 shadow-0 w-100" data-toggle="tooltip" title="チャット構造の生成">
+                AIでキャラクターを生成する
+                <i class="fa fa-spinner fa-spin fa-fw fa-hidden d-none me-2"></i>
+                <div class="spinner-border spinner-border-sm text-white" role="status" style="display: none;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </button>
+        </div>
+        <div class="mb-3 mx-3 row">
+            <div class="col-auto">
+                <label for="visibility" class="form-label"><i class="fas fa-eye"></i> 公開設定を選択してください:</label>
+                <select class="form-select w-auto" id="visibility" name="visibility">
+                    <option value="private" selected><i class="fas fa-lock"></i> 非公開</option>
+                    <option value="public"><i class="fas fa-globe"></i> 公開</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <label for="language" class="form-label"><i class="fas fa-language"></i> 言語を選択してください:</label>
+                <select class="form-select w-auto" id="language" name="language">
+                    <option value="japanese" selected><i class="fas fa-flag"></i> 日本語</option>
+                    <option value="english"><i class="fas fa-flag"></i> 英語</option>
+                </select>
+            </div>
+        </div>
+        <div class="mb-3 mx-3">
             <label for="chatPurpose" class="form-label">キャラクターの詳細</label>
             <textarea class="form-control" id="chatPurpose" name="content" rows="5" 
             placeholder="例：中村美咲（27歳）は明るく社交的なOLで、責任感が強く、チームをサポートする姿勢が評価されている。趣味は旅行とカフェ巡りで、休日には友達と過ごすことが多い。話し方は礼儀正しく丁寧でありながら柔らかく、安心感を与える。"></textarea>
-            <button type="button" id="genChat" class="btn btn-gradient-radius my-3 shadow-0 w-100" data-toggle="tooltip" title="チャット構造の生成">
-                AIでキャラクターを生成する
-                <i class="fa fa-spinner fa-spin fa-fw fa-hidden d-none me-2"></i>
-            </button>
-        </div>
-        <div class="mb-3 mx-3">
-            <label for="visibility" class="form-label"><i class="fas fa-eye"></i> 公開設定を選択してください:</label>
-            <select class="form-select w-auto" id="visibility" name="visibility">
-                <option value="private" selected><i class="fas fa-lock"></i> 非公開</option>
-                <option value="public"><i class="fas fa-globe"></i> 公開</option>
-            </select>
-        </div>
-        <div class="mb-3 mx-3">
-            <label for="language" class="form-label"><i class="fas fa-language"></i> 言語を選択してください:</label>
-            <select class="form-select w-auto" id="language" name="language">
-                <option value="japanese" selected><i class="fas fa-flag"></i> 日本語</option>
-                <option value="english"><i class="fas fa-flag"></i> 英語</option>
-            </select>
         </div>
         <div class="mb-3 mx-3" id="thumbnailInputContainer" style="display: none;">
             <label for="chatThumbnail" class="form-label">チャットのサムネイルをアップロード</label>
@@ -288,7 +312,7 @@
         $('#chatThumbnail').change(function(event) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                $('#chatImage').attr('src', e.target.result).show();
+                $('#chatImage').attr('src', e.target.result).show().addClass('on');
             }
             reader.readAsDataURL(event.target.files[0]);
         });
@@ -353,12 +377,12 @@
                     if (chatData.thumbnailUrl && chatData.thumbnailUrl != undefined) {
                         $('#chatImageUrl').val(chatData.thumbnailUrl);
                         console.log({thumb:chatData.thumbnailUrl})
-                        $('#chatImage').attr('src', chatData.thumbnailUrl).show();
+                        $('#chatImage').attr('src', chatData.thumbnailUrl).show().addClass('on');
                     }
                     if (chatData.chatImageUrl && chatData.chatImageUrl != undefined) {
                         $('#chatImageUrl').val(chatData.chatImageUrl);
                         console.log({chatImageUrl:chatData.chatImageUrl})
-                        $('#chatImage').attr('src', chatData.chatImageUrl).show();
+                        $('#chatImage').attr('src', chatData.chatImageUrl).show().addClass('on');
                     }
                         $('#chatForm').removeClass('d-none')
                         //$('#genStructure').removeClass('btn-outline-secondary').addClass('btn-secondary')
@@ -431,6 +455,22 @@
    
         // Event handler for the send button
         $('#genChat').on('click', function() {
+            $('#genChat .spinner-border ').show()
+            if($('#chatImageUrl').val().trim().length > 0 && $('#chatPurpose').val().trim() == ''){
+                generateImageDescription(function() {
+                    generateName(function(){
+                        generateDescription();
+                        generateRule(function(){
+                            $('#sendForm').show()
+                            $('.sendForm-text').show()
+                            $('#genChat .spinner-border ').hide()
+                        });
+                    });
+                    generateCategory();
+                    $('#genStructure').removeClass('btn-outline-secondary').addClass('btn-secondary')
+                });
+                return
+            }
             if ($('#chatPurpose').val().trim() == '') {
                 Swal.fire({
                     title: '警告',
@@ -445,6 +485,7 @@
                 generateRule(function(){
                     $('#sendForm').show()
                     $('.sendForm-text').show()
+                    $('#genChat .spinner-border ').hide()
                 });
             });
             generateCategory();
@@ -469,7 +510,7 @@
             setTimeout(function(){
                 $('#chatImageUrl').val(chatImageUrl).change();
             },500)
-            $('#chatImage').attr('src', chatImageUrl).show();
+            $('#chatImage').attr('src', chatImageUrl).show().addClass('on');
         }
         function generateCompletion(callback) {
 
@@ -722,6 +763,118 @@
                 }
             });
         }
+
+        function generateImageDescription(callback) {
+            const imageUrl = $('#chatImageUrl').val();
+            const language = $('#language').val();
+
+            // Convert the image URL to a Base64 string
+            convertImageUrlToBase64(imageUrl, function(base64Image) {
+                if (!base64Image) {
+                    console.log('Failed to convert image to Base64.');
+                    return;
+                }
+
+                // Create system and message payloads
+                const system = createSystemPayload(language);
+                const message = createMessagePayload(base64Image);
+
+                // API endpoint for generating image description
+                const apiUrl = '/api/openai-chat-creation';
+
+                // Clear previous description
+                $('#chatPurpose').val('');
+
+                // Send a POST request to the API
+                sendPostRequest(apiUrl, { message, system }, function(sessionId) {
+                    const streamUrl = `/api/openai-chat-creation-stream/${sessionId}`;
+                    listenToEventSource(streamUrl, callback);
+                });
+            });
+        }
+
+        // Helper function to create the system payload
+        function createSystemPayload(language) {
+            return [
+                {
+                    "type": "text",
+                    "text": 
+                    `You are a useful assistant. 
+                    You generate a creative character description and setting for the image I will provide. 
+                    Here is an example : 例：中村美咲（27歳）は明るく社交的なOLで、責任感が強く、チームをサポートする姿勢が評価されている。趣味は旅行とカフェ巡りで、休日には友達と過ごすことが多い。話し方は礼儀正しく丁寧でありながら柔らかく、安心感を与える。
+                    YOU MUST respond in ${language}. 
+                    Start by providing a name or nickname for the character`
+                }
+            ];
+        }
+
+        // Helper function to create the message payload
+        function createMessagePayload(base64Image) {
+            return [
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": `data:image/png;base64,${base64Image}`
+                    }
+                }
+            ];
+        }
+
+        // Helper function to send a POST request
+        function sendPostRequest(apiUrl, data, successCallback) {
+            $.ajax({
+                url: apiUrl,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function(response) {
+                    const sessionId = response.sessionId;
+                    successCallback(sessionId);
+                },
+                error: function(error) {
+                    console.error('Error:', error);
+                }
+            });
+        }
+
+        // Helper function to listen to the EventSource
+        function listenToEventSource(streamUrl, callback) {
+            const eventSource = new EventSource(streamUrl);
+            let markdownContent = "";
+
+            eventSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                markdownContent += data.content;
+
+                // Update the chat purpose input with the new content
+                $('#chatPurpose').val(markdownContent);
+            };
+
+            eventSource.onerror = function(error) {
+                console.log('EventSource failed.');
+                eventSource.close();
+                if (callback) { callback(); }
+            };
+        }
+
+        // Function to convert image URL to Base64 (as explained earlier)
+        function convertImageUrlToBase64(url, callback) {
+            fetch(url)
+                .then(response => response.blob())
+                .then(blob => {
+                    const reader = new FileReader();
+                    reader.onloadend = function() {
+                        callback(reader.result.split(',')[1]); // Extract Base64 string from Data URL
+                    }
+                    reader.readAsDataURL(blob);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    callback(null);
+                });
+        }
+
+
         function generateName(callback) {
 
             let message = $('#chatPurpose').val();

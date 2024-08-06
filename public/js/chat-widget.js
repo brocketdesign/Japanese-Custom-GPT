@@ -19,6 +19,9 @@
         var chatContainer = document.createElement('div');
         chatContainer.innerHTML = `
             <style>
+                .chatbot-image-chat{
+                    cursor: pointer;
+                }
                 .assistant-chat-box{
                     border-radius: 0px 15px 15px 15px;
                     background-color: white;

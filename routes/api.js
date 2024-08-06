@@ -620,10 +620,10 @@ async function routes(fastify, options) {
                         userId:new fastify.mongo.ObjectId(userId),
                         chatId,
                         messages: [
-                            { "role": "system", "content": 
-                                `${chatDocument.rule ? 
-                                `You are an AI character named ${chatDocument.name}.\n\n${chatDescription}\n${chatRule}\n\nKeep in mind that you are not omniscient. Respond only with what your character would know, and feel free to admit when you do not know something. Avoid lists unless specifically requested. This is a casual chat, so use short messages and emojis only when necessary. Communicate naturally in ${chatDocument.language}.` : 
-                                'You are a '+chatDocument.language+' assistant about: ' + chatDocument.description + 'You provide short and friendly answers. DO NOT EVER answer with list unless specifically asked for one. You always prompt the user to help continue the conversation smoothly.'}` },
+                            { "role": "system", "content": `You are a real character, your name is ${chatDocument.name}. You act as the character description I will provide. Keep in mind that you are not omniscient. Respond only with what your character would know, and feel free to admit when you do not know something. Avoid lists unless specifically requested. This is a casual chat, so use short messages and emojis. Communicate naturally in ${chatDocument.language}.` 
+                            },
+                            { "role": "user", "content": `Here is your character description : \n\n${chatDescription}\n${chatRule}\n\n`
+                            },
                         ],
                         createdAt: today,
                         updatedAt: today
@@ -995,7 +995,7 @@ async function routes(fastify, options) {
             }
 
             const userMessages = userData.messages;
-            const completion = await fetchOpenAICompletion(userMessages, reply.raw, 100);
+            const completion = await fetchOpenAICompletion(userMessages, reply.raw, 300);
 
             // Append the assistant's response to the messages array in the chat document
             const assistantMessage = { "role": "assistant", "content": completion };
@@ -1069,7 +1069,7 @@ async function routes(fastify, options) {
             const userMessages = userData.messages;
     
             // Generate the narration context
-            const narrationCompletion = await fetchOpenAINarration(userMessages, reply.raw, 50, language);
+            const narrationCompletion = await fetchOpenAINarration(userMessages, reply.raw, 300, language);
     
             // Append the narrator's response to the messages array in the chat document
             const narratorMessage = { "role": "assistant", "content": `[Narrator] ${narrationCompletion}` };
@@ -1233,11 +1233,13 @@ async function routes(fastify, options) {
 
             messages.push({ role: "system", content: completion })
             // Update the chat document in the database
-            await chatCollection.updateOne(
-                { userId: userObjectId, chatId },
-                { $set: { messages: messages, updatedAt: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) } },
-                {upsert:true}
-            );
+            /*
+                await chatCollection.updateOne(
+                    { userId: userObjectId, chatId },
+                    { $set: { messages: messages, updatedAt: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) } },
+                    {upsert:true}
+                );
+            */
     
             // End the stream only after the completion has been sent and stored
             reply.raw.end();

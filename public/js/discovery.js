@@ -236,7 +236,7 @@ $(document).ready(function() {
     function renderCircleGrid(cardInfos,container){
         cardInfos.forEach(function(item) {
             var card = $(`
-                <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 ${container.attr('id') == 'chatbot-library' ? 'col-6' : 'col-7'} col-sm-4 col-lg-2 pb-3" style="cursor:pointer;">
+                <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 col-7 col-sm-4 col-lg-2 pb-3" style="cursor:pointer;">
                     <div style="background-image:url(${item.image.indexOf('http')>=0 ? item.image : `/img/${item.image}`})" class="card-img-top girls_avatar position-relative" alt="${item.title}">
                         <span class="badge bg-dark position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px"><i class="fas fa-comment me-2"></i>${item.num_message}</span>
                     </div>
@@ -246,7 +246,6 @@ $(document).ready(function() {
                     </div>
                 </div>
             `);
-        if(container.attr('id') !== 'chatbot-library'){
             card.on('click', function() {
                 const chatId = item.chat_url.replace('/chat/','')
                 //localStorage.setItem('selectedChatId', chatId);
@@ -255,7 +254,6 @@ $(document).ready(function() {
                 showChat()
                // window.location = item.chat_url;
             });
-        }
             container.append(card);
         });   
     }
@@ -264,32 +262,109 @@ $(document).ready(function() {
     renderCircleGrid(cardData,$("#cardGrid-2"))
     renderCircleGrid(cardData2,$('#cardGrid'))
     renderCircleGrid(chatbotInfos,$("#chatbot-container"));
+
+
     //Infinite scroll
-    var currentPage = 1;
+    function renderInfiniteGrid(cardInfos,container){
+        cardInfos.forEach(function(item) {
+            var card = $(`
+                <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 col-6 col-sm-4 col-lg-2 pb-3" style="cursor:pointer;">
+                    <div style="background-image:url(${item.image.indexOf('http')>=0 ? item.image : `/img/${item.image}`})" class="card-img-top girls_avatar position-relative" alt="${item.title}">
+                    </div>
+                </div>
+            `);
+            card.on('click', function() {
+                window.open(`/chat/edit/?chatImage=${encodeURIComponent(item.image)}`)
+            });
+            container.append(card);
+        });   
+    }
+    var  currentPage  = 1;
     var isLoading = false;
     function loadNextPage() {
         if (isLoading) return;
         isLoading = true;
+        const libraryInfo = JSON.parse(localStorage.getItem('chatbot-library'))
+        if(!libraryInfo){
+            return
+        }
+        const { category, modelId, name } = libraryInfo
+        console.log({ category, modelId, currentPage } )
+        $('#chatbot-category-name').text(name)
+        $('#chatbot-loading').show()
         $.ajax({
             type: 'GET',
-            url: '/api/scraper/civitai?page=' + currentPage,
+            url: `/scraper/civitai?page=${currentPage}&category=${category}&modelId=${modelId}`,
             success: function(data) {
-                console.log(data)
-                renderCircleGrid(cardData2, $('#chatbot-library'));
+                $('#chatbot-loading').hide()
+                renderInfiniteGrid(data.characters, $('#chatbot-library'));
                 currentPage++;
-                isLoading = false;
+                setTimeout(() => {
+                    isLoading = false;
+                }, 3000);
+            },
+            error: function(error) {
+                console.log(error);
             }
         });
     }
-    function checkScrollPosition() {
-        var container = $('#chatbot-library');
-        console.log(container.scrollTop() + container.innerHeight(),container[0].scrollHeight)
-        if (container.scrollTop() + container.innerHeight() >= container[0].scrollHeight) {
-            console.log({isLoading,currentPage})
+    $(document).on('scroll',function(){
+        $('#chatbot-library').waypoint(function() {
             loadNextPage();
-        }
+          }, {
+            offset: 'bottom-in-view'
+          });    
+    })
+    // Dynamic Content Category
+    
+    function fetchAndRenderCategories() {
+        // Make an API request to the '/scraper/civitai/categories' endpoint
+        $.ajax({
+            url: '/scraper/civitai/categories', // The endpoint URL
+            method: 'GET', // HTTP method
+            success: function(response) {
+                // Clear the existing categories (if any)
+                $('#chatbot-category').empty();
+
+                // Check if the response contains categories
+                if (response.status === 'Success' && response.categories) {
+                    // Iterate over the categories and render each one
+                    response.categories.forEach(category => {
+                        // Construct the HTML for each category button
+                        const categoryButton = `
+                            <div type="button" class="chatbot-category-button col" data-name="${category.name}" data-id="${category.id}" data-category="${category.name}" onclick="libraryInfoUpdate(this)">
+                                <img src="${category.image}" alt="${category.name}" class="border border-light">
+                            </div>`;
+                        // Append the category button to the container
+                        $('#chatbot-category').append(categoryButton);
+                    });
+                } else {
+                    // Handle the case when no categories are found
+                    $('#chatbot-category').append('<p>No categories found.</p>');
+                }
+            },
+            error: function(error) {
+                // Handle errors
+                console.error('An error occurred:', error);
+                $('#chatbot-category').append('<p>Error fetching categories. Please try again later.</p>');
+            }
+        });
     }
-    $('#chatbot-library').on('scroll', checkScrollPosition);
+
+    // Call the function to fetch and render categories
+    fetchAndRenderCategories();
+    
+    window.libraryInfoUpdate = function(el) {
+        const name = $(el).data('name')
+        const category = $(el).data('category')
+        const modelId = $(el).data('id')
+        $('#chatbot-category-name').text(name)
+        $('#chatbot-library').empty()
+        currentPage = 1
+        localStorage.setItem('chatbot-library',JSON.stringify({ category, modelId, name }))
+        isLoading = false
+        loadNextPage();
+    };
     //Category Handle
     const categories = ["彼氏","彼女","ドミナント","服従的","ヤンデレ","ツンデレ","マフィア","ルームメイト","CEO","敵","いじめる"];
 

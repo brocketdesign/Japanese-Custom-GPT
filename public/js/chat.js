@@ -214,6 +214,7 @@ $(document).ready(function() {
                     contentType: 'application/json',
                     data: JSON.stringify({ userId, chatId, userChatId}),
                     success: function(data) {
+
                         updateParameters(data.chat._id,userId)
                         showChat();                 
 
@@ -386,7 +387,7 @@ $(document).ready(function() {
                     },
                     data: JSON.stringify({ 
                         currentStep: 0, 
-                        message: `Explain the situation we are in together.Respond as if you started the conversation. DO not start by aknowledge, start with the answer.`, 
+                        message: `Invent a situation and explain what is going on. Respond as if you started the conversation. DO not start by aknowledge, start with the answer.`, 
                         userId: userId, 
                         chatId: chatId, 
                         isNew: true ,
@@ -399,7 +400,6 @@ $(document).ready(function() {
                         renderChatList();
                         generateCompletion(function(){
                             $('#input-container').show().addClass('d-flex');
-                            console.log("Completion stream completed.");
                         })
                     },
                     error: function(xhr, status, error)  {
@@ -505,7 +505,7 @@ $(document).ready(function() {
             function displayChat(userChat) {
                 let chatContainer = $('#chatContainer');
                 chatContainer.empty();
-            
+
                 for (let i = 1; i < userChat.length; i++) {
                     // Skip system messages
                     if (userChat[i].role === "system") {
@@ -538,7 +538,7 @@ $(document).ready(function() {
                             messageHtml += `
                                 <div id="container-${designStep}">
                                     <div class="d-flex flex-row justify-content-start mb-4 message-container">
-                                        <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+                                        <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
                                         <div id="message-${designStep}" class="p-3 ms-3 text-start assistant-chat-box">
                                             ${marked.parse(assistantMessage.content)}
                                         </div>
@@ -708,7 +708,7 @@ $(document).ready(function() {
                 const botResponseContainer = $(`
                     <div id="container-${currentStep}">
                         <div class="d-flex flex-row justify-content-start mb-4 message-container">
-                            <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+                            <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
                             <div id="completion-${currentStep}" class="p-3 ms-3 text-start assistant-chat-box">
                                 <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
                             </div>

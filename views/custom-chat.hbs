@@ -4,6 +4,24 @@
 <body>
 
     <style>
+        .chatbot-info-card {
+            max-height: 80vh;
+            overflow-y: scroll;
+        }
+        .chatbot-info-card .swal-image.analyze {
+            margin-left: auto !important;
+            margin-right: auto !important;
+            margin-top: 25px !important;
+        }
+        .chatbot-image-chat{
+            cursor: pointer;
+        }
+        .chatbot-category-button img {
+            object-fit: cover;
+            width: 70px !important;
+            height: 70px;
+            border-radius: 50%;
+        }
         .assistant-chat-box{
             border-radius: 0px 15px 15px 15px;
             background-color: white;
@@ -160,6 +178,9 @@
         .swal-image.analyze{
             object-fit: cover;
             object-position: top;
+            width: auto !important;
+            height: 270px !important;
+            border-radius: 6px !important;
         }
         .chat-container {
             display: flex;
@@ -192,7 +213,7 @@
             color: black;
         }
         .chat-container .card:hover {
-            background: #eee !important;
+            background: none !important;
         }
         @media (max-width: 600px) {
             .card-img-top.girls_avatar {
@@ -622,9 +643,16 @@
                 </div>
             </div>
         </section>
-        <section class="w-100 p-0">
+        <section class="w-100 p-0 onchat-off">
             <h4 class="px-4">キャラクターライブラリー</h4>
+            <div id="chatbot-category" class="row px-3 mx-0 scroll-horizontal"></div>
+            <h5 id="chatbot-category-name" class="p-3 pb-1 mb-0 d-none" style="font-size: 12px;"></h5>
             <div id="chatbot-library" class="chat-container row px-3 mx-0" style="min-height:10px"></div>
+            <div id="chatbot-loading" class="text-center p-5" style="display: none;">
+                <div class="spinner-border spinner-border-md" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
         </section>
         <div class="container chat-contain px-0 onchat-on">
             <div id="chat-container" class="card shadow-0 rounded-0"></div>
@@ -643,6 +671,7 @@
     </div>
 
  {{> dashboard-footer}}
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.1/jquery.waypoints.js" integrity="sha512-ZKNVEa7gi0Dz4Rq9jXcySgcPiK+5f01CqW+ZoKLLKr9VMXuCsw3RjWiv8ZpIOa0hxO79np7Ec8DDWALM0bDOaQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="/js/discovery.js"></script>
 <script src="/js/chat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
@@ -718,7 +747,7 @@ $(document).ready(function() {
         }
     });
     
-    $(document).on('click', '.chart-button', function(e) {
+    $(document).on('click', '.chart-button, .chatbot-image-chat', function(e) {
         e.preventDefault();
         e.stopPropagation();
         // data-id属性からチャットIDを取得
@@ -752,7 +781,14 @@ $(document).ready(function() {
                     imageAlt: 'Thumbnail',
                     showCloseButton: true,
                     showConfirmButton: false,
+                    showClass: {
+                        popup: 'swal2-bottom-slide-in'
+                    },
+                    hideClass: {
+                        popup: 'swal2-bottom-slide-out'
+                    },
                     customClass: {
+                        popup: 'animated fadeInDown chatbot-info-card',
                         image: 'swal-image analyze'
                     }
                 });

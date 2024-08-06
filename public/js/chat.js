@@ -398,7 +398,7 @@ $(document).ready(function() {
                         userChatId = response.userChatId
                         chatId = response.chatId
                         isNew = false;
-                        renderChatList();
+                        renderChatList(userId);
                         generateCompletion(function(){
                             $('#input-container').show().addClass('d-flex');
                         })
@@ -433,7 +433,7 @@ $(document).ready(function() {
                     }
                 });
             }
-            function renderChatList() {
+            window.renderChatList = function(userId) {
                 if($('#chat-list').length == 0 || $('#chat-widget-container').length > 0){
                     return
                 }
@@ -442,6 +442,7 @@ $(document).ready(function() {
                     url: '/api/chat-list/'+userId, // replace with your API endpoint
                     success: function(data) {
                         var chatListHtml = '';
+                        $('#user-chat-count').html(data.length)
                         $.each(data, function(index, chat) {
                             chatListHtml += `
                             <div class="chat-list item user-chat d-flex align-items-center justify-content-between p-1 mx-2 rounded bg-transparent" style="cursor: pointer;" 

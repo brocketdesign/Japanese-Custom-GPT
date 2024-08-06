@@ -144,20 +144,21 @@ async function routes(fastify, options) {
     });
 
     fastify.delete('/api/delete-chat/:id', async (request, reply) => {
-        const chatId = request.params.id;
-        const userId = request.params.userId
         try {
+            const chatId = request.params.id;
+            const user = await fastify.getUser(request, reply);
+            const userId = new fastify.mongo.ObjectId(user._id);
+
             // Access the MongoDB collection
-            const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-    
-            // Find the story by ID
-            const story = await collection.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
+            const chatCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+            const story = await chatCollection.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
     
             if (!story) {
                 return reply.status(404).send({ error: 'Story not found' });
             }
     
             // Delete the thumbnail from S3 if it exists
+            /*
             if (story.thumbnailUrl) {
                 const thumbnailKey = story.thumbnailUrl.split('/').pop();
     
@@ -171,11 +172,11 @@ async function routes(fastify, options) {
                     return reply.status(500).send({ error: 'Failed to delete thumbnail from S3' });
                 }
             }
+            */
     
             // Delete the story from MongoDB
-            await collection.deleteOne({ _id: new fastify.mongo.ObjectId(chatId) });
-    
-            console.log('Story deleted');
+            await chatCollection.deleteOne({ _id: new fastify.mongo.ObjectId(chatId) });
+
             return reply.send({ message: 'Story deleted successfully' });
         } catch (error) {
             // Handle potential errors
@@ -524,9 +525,14 @@ async function routes(fastify, options) {
         const messageCountDoc = await messageCountCollection.findOne({ userId: new fastify.mongo.ObjectId(userId), date: today });
 
         const chatCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+        // Define the query to match documents where the 'name' field does not exist
+        //const query = { name: { $exists: false } };
+        // Delete the documents that match the query
+        //await chatCollection.deleteMany(query)
+
         const chatCount = await chatCollection.countDocuments({ userId: new fastify.mongo.ObjectId(userId) });
         const userchats = await chatCollection.find({ userId: new fastify.mongo.ObjectId(userId) }).toArray();
-        
+
         // Check the limits
         const isTemporary = user.isTemporary;
         let messageLimit = isTemporary? 10 : 50;

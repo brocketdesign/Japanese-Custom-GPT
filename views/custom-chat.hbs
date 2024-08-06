@@ -250,7 +250,6 @@
             transition: transform 0.3s ease;
             transform: translateX(0);
             overflow: scroll;
-            padding-top: 0.75em;
         }
         .sidebar.hidden ,.sidebar-history.hidden {
             transform: translateX(-260px);
@@ -423,7 +422,7 @@
         <div class="nav-item dropdown d-inline-block d-sm-none">
             {{> dashboard-avatar}}
         </div>
-        <div class="tools d-flex align-items-center">
+        <div class="tools d-flex align-items-center sticky-top bg-light pt-2">
             <div class="d-none w-100 m-2">
                 <button class="menu-chat-sm d-sm-none btn bg-white shadow-0"><i class="fa-solid fa-bars"></i></button>
             </div>
@@ -437,7 +436,7 @@
             </div>
         </div>
         <span class="text-dark ps-4 fw-bold" style="font-size: 12px;">チャット一覧 (<span id="user-chat-count" >{{chats.length}}</span>)</span>
-        <div id="chat-list" class="mt-1" style="height: 70vh;overflow-y: scroll;overflow-x: hidden;padding-bottom:100px">
+        <div id="chat-list" class="mt-1 pb-3" style="overflow-y: scroll;overflow-x: hidden;">
             {{#each chats}}
             <div class="chat-list item user-chat d-flex align-items-center justify-content-between p-1 mx-2 rounded bg-transparent" style="cursor: pointer;" 
             data-id="{{this._id}}" data-userid="{{this.userId}}" >

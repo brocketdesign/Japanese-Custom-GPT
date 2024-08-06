@@ -274,7 +274,13 @@ $(document).ready(function() {
                 </div>
             `);
             card.on('click', function() {
-                window.open(`/chat/edit/?chatImage=${encodeURIComponent(item.image)}`)
+                const redirectUrl = `/chat/edit/?chatImage=${encodeURIComponent(item.image)}`
+                if($('body').data('temporary-user')){
+                    $.cookie('redirect_url', redirectUrl);
+                    window.open('/authenticate')
+                    return
+                }
+                window.location = redirectUrl 
             });
             container.append(card);
         });   
@@ -289,7 +295,6 @@ $(document).ready(function() {
             return
         }
         const { category, modelId, name } = libraryInfo
-        console.log({ category, modelId, currentPage } )
         $('#chatbot-category-name').text(name)
         $('#chatbot-loading').show()
         $.ajax({

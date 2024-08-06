@@ -16,6 +16,7 @@ $(document).ready(function() {
             let feedback = false
             let thumbnail = false
             let isTemporary = user.isTemporary
+            $('body').data('temporary-user',isTemporary)
 
             sendCustomData({action: 'viewpage'});
             if(chatId){

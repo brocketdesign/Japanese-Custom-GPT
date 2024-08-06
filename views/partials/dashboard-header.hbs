@@ -3,6 +3,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <title>{{title}}</title>
     <link rel="icon" href="/img/logo.webp" type="image/webp">
+    <script>
+        // Function to get the value of a specific cookie
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                let c = cookies[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        // Function to delete a specific cookie
+        function deleteCookie(name) {
+            document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/chat;";
+        }
+
+        // Immediately retrieve the 'redirect_url' cookie, delete it, and redirect
+        (function() {
+            const redirectUrl = getCookie('redirect_url');
+            if (redirectUrl) {
+                // Delete the cookie to prevent redirection loops
+                deleteCookie('redirect_url');
+
+                // Redirect to the URL stored in the cookie
+                window.location.replace(window.location.origin + decodeURIComponent(redirectUrl) );
+            }
+        })();
+    </script>
     <lin href="/css/style.css" rel="stylesheet" />
     <!-- Font Awesome -->
     <link

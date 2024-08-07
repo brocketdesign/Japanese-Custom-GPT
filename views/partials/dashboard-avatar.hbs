@@ -2,16 +2,20 @@
         <a class="btn btn-secondary shadow-0 m-2 px-4 py-2" style="border-radius: 50px;" href="/authenticate">
         <i class="fas fa-sign-in-alt me-2"></i> ログイン/会員登録</a>
     {{else}}
-        <div class="d-none d-sm-inline-block  user-current-plan"></div>
         <a data-mdb-dropdown-init class="nav-link dropdown-toggle hidden-arrow d-inline align-items-center" href="#"
             id="navbarDropdownMenuLink" role="button" aria-expanded="false">
             <img src="{{#if user.profileUrl}}{{user.profileUrl}}{{else}}/img/avatar.png{{/if}}" 
             class="rounded-circle avatar" height="32" alt="Avatar"
             loading="lazy" />
         </a>
-        <div class="d-inline-block  d-sm-none user-current-plan"></div>
         <ul class="avatar-menu dropdown-menu dropdown-menu-end mx-3" aria-labelledby="navbarDropdownMenuLink">
-                <li><a class="dropdown-item text-secondary" href="/my-plan"><i class="fas fa-layer-group me-3"></i> 私のプラン</a></li>
+                <li>
+                    <a class="dropdown-item text-secondary d-flex" href="/my-plan">
+                        <i class="fas fa-layer-group me-3"></i> 
+                        <span>私のプラン<span class="user-current-plan"></span></span>
+                        
+                    </a>
+                </li>
                 <li><a class="dropdown-item text-secondary" href="/chat/list/{{user._id}}"><i class="fas fa-user-cog me-3"></i>キャラクター</a></li>
                 <li><a class="dropdown-item text-secondary" href="/chat/edit/"><i class="fas fa-wrench me-3"></i> キャラクター作成</a></li>
                 <li><a class="dropdown-item text-secondary" href="/settings"><i class="fas fa-cogs me-3"></i> 設定</a></li>

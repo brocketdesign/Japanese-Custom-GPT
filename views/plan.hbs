@@ -320,10 +320,24 @@ $(document).ready(function() {
   function renderPlans(plans) {
     const planCardsContainer = $('#planCards');
     plans.forEach(plan => {
+      let plan_icon
+        switch (plan.id) {
+          case 'free':
+            plan_icon = `<span class="m-1">&#x1F381;</span>`;
+            break;
+          case 'premium':
+            plan_icon = `<span class="m-1"> &#x1F48E;</span>`;
+            break;
+          case 'special':
+            plan_icon = ` <span class="m-1">&#x1F525;</span>`;
+            break;
+          default:
+            plan_icon = ``;
+        }
       const planCard = `
         <div class="plan-card card mb-3 px-1 ${plan.name == 'プレミアムプラン'? 'col-12 col-lg-4':'col-10 col-lg-auto'} ${plan.name == 'プレミアムプラン'? 'best':''}  m-2">
           <div class="card-header plan-header bg-white">
-            <h2>${plan.name}</h2>
+            <h2>${plan_icon}${plan.name}${plan_icon}</h2>
           </div>
           <div class="card-body px-1">
             <div class="plan-price">

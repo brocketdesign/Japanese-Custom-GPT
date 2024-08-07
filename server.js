@@ -269,6 +269,9 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       try {
         let user = await fastify.getUser(request, reply);
         const userId = user._id;
+        const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+        user = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
+       
         const chatId = request.params.chatId || new fastify.mongo.ObjectId()
         const isTemporaryChat = request.params.chatId ? false : true
         if(isTemporaryChat){

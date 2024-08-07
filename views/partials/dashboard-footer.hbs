@@ -24,7 +24,7 @@ $(document).ready(function(){
 
 window.updatePlanStatus = function(user){
   $.get('/user/plan/'+user._id,function(data){
-      let message = `<a href="/my-plan" class="fw-bold plan-text" style="font-size: 12px;text-decoration: navajowhite;">無料プラン <span class="ms-1">&#x1F381;</span></a>`;
+      let message = `<span class="ms-1">&#x1F381;</span>`;
       if(!data.plan){
         $('.user-current-plan').each(function(){
           $(this).html(message).show()
@@ -39,16 +39,16 @@ window.updatePlanStatus = function(user){
           const plan = plans.find((plan) => plan[`${billingCycle}ly_id`] === currentPlanId);
           switch (plan.id) {
             case 'free':
-              message = `<a href="/my-plan" class="fw-bold me-1 plan-text" style="font-size: 12px;text-decoration: navajowhite;">${plan.name} <span class="ms-1">&#x1F381;</span></a>`;
+              message = `<span class="ms-1">&#x1F381;</span>`;
               break;
             case 'premium':
-              message = `<a href="/my-plan"  class="fw-bold me-1 plan-text" style="font-size: 12px;text-decoration: navajowhite;">${plan.name}<span class="ms-1"> &#x1F48E;</span></a>`;
+              message = `<span class="ms-1"> &#x1F48E;</span>`;
               break;
             case 'special':
-              message = `<a href="/my-plan"  class="fw-bold me-1 plan-text" style="font-size: 12px;text-decoration: navajowhite;">${plan.name} <span class="ms-1">&#x1F525;</span></a>`;
+              message = ` <span class="ms-1">&#x1F525;</span>`;
               break;
             default:
-              message = `<a href="/my-plan"  class="fw-bold me-1 plan-text" style="font-size: 12px;text-decoration: navajowhite;">${plan.name}</a>`;
+              message = ``;
           }
           $('.user-current-plan').each(function(){
             $(this).html(message).show()

@@ -268,7 +268,7 @@ $(document).ready(function() {
     function renderInfiniteGrid(cardInfos,container){
         cardInfos.forEach(function(item) {
             var card = $(`
-                <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 col-6 col-sm-4 col-lg-2 pb-3" style="cursor:pointer;">
+                <div class="card custom-card bg-transparent shadow-0 border-0 my-0 p-1 col-6 col-sm-4 col-lg-2" style="cursor:pointer;">
                     <div style="background-image:url(${item.image.indexOf('http')>=0 ? item.image : `/img/${item.image}`})" class="card-img-top girls_avatar position-relative" alt="${item.title}">
                     </div>
                 </div>
@@ -364,7 +364,8 @@ $(document).ready(function() {
         const category = $(el).data('category')
         const modelId = $(el).data('id')
         $('#chatbot-category-name').text(name)
-        $('#chatbot-library').empty()
+        //$('#chatbot-library').empty()
+        $("html, body").animate({ scrollTop: $(document).height() }, "slow");
         currentPage = 1
         localStorage.setItem('chatbot-library',JSON.stringify({ category, modelId, name }))
         isLoading = false

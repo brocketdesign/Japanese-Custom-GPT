@@ -160,21 +160,61 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       }).sort({ _id: -1 }).toArray();
       //People chats
       
-      const gohiai_girl = await chatsCollection.find({
-        visibility: { $exists: true, $eq: "public" },
-        scrap : true,
-        ext: 'gohiai',
-        category: '彼女'
-      }).sort({_id:-1}).limit(100).toArray();
+      const gohiai_girl = await chatsCollection.aggregate([
+        {
+          $match: {
+            visibility: { $exists: true, $eq: "public" },
+            scrap: true,
+            ext: 'gohiai',
+            category: '彼女'
+          }
+        },
+        {
+          $sample: { size: 50 } // Randomly select 50 documents
+        }
+      ]).toArray();
       
-      const gohiai_man = await chatsCollection.find({
-        visibility: { $exists: true, $eq: "public" },
-        scrap : true,
-        ext: 'gohiai',
-        category: '彼氏'
-      }).sort({_id:-1}).limit(100).toArray();
+      const gohiai_man = await chatsCollection.aggregate([
+        {
+          $match: {
+            visibility: { $exists: true, $eq: "public" },
+            scrap: true,
+            ext: 'gohiai',
+            category: '彼氏'
+          }
+        },
+        {
+          $sample: { size: 50 } // Randomly select 50 documents
+        }
+      ]).toArray();      
+      // Find recent characters
+      const currentDateObj = new Date();
+      const tokyoOffset = 9 * 60; // Offset in minutes for Tokyo (UTC+9)
+      const tokyoTime = new Date(currentDateObj.getTime() + tokyoOffset * 60000);
+      const sevenDaysAgo = new Date(tokyoTime);
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      sevenDaysAgo.setHours(0, 0, 0, 0); // Ensure the start of the day
       
-      peopleChats = {gohiai_girl, gohiai_man}
+      // Assuming you have defined `sevenDaysAgo` as a Date object representing 7 days ago
+      const recent = await chatsCollection.aggregate([
+        {
+          $match: {
+            visibility: { $exists: true, $eq: "public" },
+            chatImageUrl: { $exists: true },
+            updatedAt: { $gt: sevenDaysAgo }, // Filter for documents created within the last 7 days
+          },
+        },
+        {
+          $group: {
+            _id: "$name",
+            doc: { $first: "$$ROOT" },
+          },
+        },
+        { $replaceRoot: { newRoot: "$doc" } },
+        { $sample: { size: 20 } },
+      ]).toArray();
+
+      peopleChats = {gohiai_girl, gohiai_man, recent}
       // Fetch user data
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
       return reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato, Ltd', user, userId, chatId, chats: userCreatedChats, peopleChats });

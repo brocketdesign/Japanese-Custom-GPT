@@ -5,6 +5,42 @@
     {{> dashboard-nav}}
 
     <style>
+    .animated.fadeInDown .swal2-image{
+        margin:0;
+    }
+    .animated.fadeInDown .swal2-close{
+        border:0;
+    }
+    /* Custom animation for sliding in from the bottom */
+    .swal2-bottom-slide-in {
+        animation: bottom-slide-in 0.5s;
+    }
+
+    .swal2-bottom-slide-out {
+        animation: bottom-slide-out 0.5s;
+    }
+
+    @keyframes bottom-slide-in {
+        0% {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        100% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes bottom-slide-out {
+        0% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+    }
     .custom-gradient-bg{
         background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
     }
@@ -148,8 +184,8 @@
             <div class="col-auto">
                 <label for="visibility" class="form-label"><i class="fas fa-eye"></i> 公開設定:</label>
                 <select class="form-select w-auto" id="visibility" name="visibility">
-                    <option value="private" selected><i class="fas fa-lock"></i> 非公開</option>
-                    <option value="public"><i class="fas fa-globe"></i> 公開</option>
+                    <option value="public" selected><i class="fas fa-globe"></i> 公開</option>
+                    <option value="private"><i class="fas fa-lock"></i> 非公開</option>
                 </select>
             </div>
             <div class="col-auto">
@@ -265,6 +301,13 @@
             $(this).on('input change', function() {
                 resizeTextarea(this);
             });
+        });
+
+        $('#visibility').change(function() {
+            if ($(this).val() === 'private') {
+                showUpgradePopup('chat-private');
+                $(this).val('public');
+            }
         });
 
         function resizeTextarea(element){
@@ -853,6 +896,7 @@
             };
 
             eventSource.onerror = function(error) {
+                resizeTextarea($('#chatPurpose')[0]);
                 eventSource.close();
                 if (callback) { callback(); }
             };

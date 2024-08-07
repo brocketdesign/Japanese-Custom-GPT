@@ -119,8 +119,9 @@ async function routes(fastify, options) {
       });
       
       fastify.get('/scraper/civitai', async (request, reply) => {
-        const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('characters');
         try {
+          const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('characters');
+          const nsfw = request.query.nsfw || 'Soft' //(None, Soft, Mature, X)
           const page = parseInt(request.query.page, 10) || 0; // Convert the page to an integer and default to 0 if not provided
           const civit_category = request.query.category
           const civit_model = request.query.modelId
@@ -128,6 +129,7 @@ async function routes(fastify, options) {
           // Determine the number of elements to skip based on the page
           const elementsPerPage = 10;
           const skipElements = (page-1) * elementsPerPage;
+
           // Query the database to find existing records
           const existingCharacters = await collection
           .find({ category: civit_category, ext: 'civitai' })
@@ -142,9 +144,8 @@ async function routes(fastify, options) {
       
           // If there are less than 10 elements, scrape additional data
           async function scrapeCivitai() {
-            const response = await axios.get(`https://civitai.com/api/v1/images?limit=10&modelId=${civit_model}&page=${page}&nsfw=Soft`);
+            const response = await axios.get(`https://civitai.com/api/v1/images?limit=10&modelId=${civit_model}&page=${page}&nsfw=${nsfw}`);
             const responseData = response.data; // No need to parse if already in JSON format
-
             const charactersData = [];
             responseData.items.forEach((element) => {
               const image = element.url;
@@ -154,6 +155,7 @@ async function routes(fastify, options) {
                 image,
                 visibility: 'public',
                 scrap: true,
+                nsfw,
                 ext: 'civitai',
               });
             });
@@ -195,10 +197,18 @@ async function routes(fastify, options) {
       // Define the route with MongoDB integration
 fastify.get('/scraper/civitai/categories', async (request, reply) => {
     const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('categories');
+    const nsfw = request.query.nsfw || false
     const categories = await collection.aggregate([
-      { $match: { image: { $exists: true, $ne: null } } }, // Filter for documents where the image field exists and is not null
-      { $sample: { size: 20 } } // Randomly select 20 documents
-    ]).toArray();
+      { 
+        $match: { 
+          image: { $exists: true, $ne: null }, 
+          nsfw: nsfw 
+        } 
+      },
+      { 
+        $sample: { size: 20 } // Randomly select 20 documents
+      }
+    ]).toArray();    
     return reply.send({ status: 'Success', categories });
     try {
         const limit = parseInt(request.query.limit, 10) || 100;
@@ -206,7 +216,7 @@ fastify.get('/scraper/civitai/categories', async (request, reply) => {
         const query = request.query.query|| 'japanese anime'
         const page = request.query.page || Math.floor(Math.random() * 10) + 1;
         // Construct the API URL
-        const apiUrl = new URL(`https://civitai.com/api/v1/models?limit=${limit}&types=${types}&nsfw=false&page=${page}`).href;
+        const apiUrl = new URL(`https://civitai.com/api/v1/models?limit=${limit}&types=${types}&nsfw=${nsfw}&page=${page}`).href;
 
         console.log({query,page,apiUrl})
         // Fetch data from the API
@@ -217,7 +227,8 @@ fastify.get('/scraper/civitai/categories', async (request, reply) => {
         const categories = responseData.items.map(item => ({
             id: item.id,
             name: item.name,
-            image: item.modelVersions[0]?.images[0]?.url || ''
+            image: item.modelVersions[0]?.images[0]?.url || '',
+            nsfw
         }));
 
         // Upsert categories in the MongoDB collection

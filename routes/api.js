@@ -128,7 +128,6 @@ async function routes(fastify, options) {
             }
             if (existingChat.userId.toString() == userId.toString()) {
                 await collection.updateOne({ _id: new fastify.mongo.ObjectId(chatData.chatId) }, { $set: chatData });
-                console.log('Chat updated', chatData.chatId);
                 return reply.send({ message: 'Chat updated successfully', chatId: chatData.chatId });
             } else {
                 chatData.userId = userId;

@@ -224,7 +224,6 @@
             .noscroll{
                 display: block;
                 overflow: hidden;
-                height: 80vh !important;
             }
             .top-img{
                 width: 70%;
@@ -495,7 +494,7 @@
             {{/each}}
         </div>
     </div>
-    <div id="overlay" class="d-sm-none bg-dark position-absolute" style="inset:0;z-index:1033;display:none;opacity: 0.4;overflow:hidden"></div>
+    <div id="overlay" class="d-sm-none bg-dark" style="position: fixed; inset: 0; z-index: 1033; display: none; opacity: 0.4; overflow: hidden;"></div>
     <div class="content collapsed">
         <nav class="navbar navbar-expand-lg navbar-white bg-white fixed-top shadow-0">
             <div class="container-fluid">
@@ -565,7 +564,7 @@
                 </div>
             </div>
         </nav>
-        <section id="chat-discovery" class="onchat-off mt-5" style="display: block;margin-bottom: -40px;">
+        <section id="chat-discovery" class="onchat-off mt-5" style="display: block;margin-bottom: -60px;">
             <div class="mb-5 mt-1">
                     <section class="w-100 px-3 py-2">
                         <img src="/img/logo.webp" alt="" class="mx-3 mb-3" width="75px">
@@ -573,10 +572,24 @@
                         <h3 class="fw-bold mb-3 px-3">AIキャラクターと<br>楽しくおしゃべりができる。</h3>
                         <p class="text-muted px-3 mb-1" style="font-size: 12px;">お気に入りのキャラクターを選んで楽しい会話を楽しめます。最新のAI技術でキャラクターが生き生きとし、まるで本物の友達と話しているかのような体験ができます。さらに、キャラクターを自分好みにカスタマイズしたり、ゼロから新しいキャラクターを作成することも可能です。新しい友達を作って、自由におしゃべりを楽しんでください！</p>
                     </section>
-                <section class="w-100 p-0">
-                    <h4 class="px-4">キャラクターを選択してチャットを開始!🌟</h4>
-                    <div id="cardGrid-2" class="chat-container row py-0 px-3 scroll-horizontal"></div>
-                </section>
+                {{#if peopleChats}}
+                    <section class="w-100 px-0 py-0">
+                        <h4 class="px-4">コミュニティからの最新のキャラクター</h4>
+                        <div id="custom-category-chat" class="chat-container pb-0">
+                            {{#each peopleChats.recent}}
+                            <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 col-7 col-sm-4 col-lg-2" style="cursor:pointer;" onclick="redirectToChat('{{this._id}}')">
+                                <div style="background-image:url('{{this.chatImageUrl}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
+                                    <span class="badge bg-dark position-absolute d-none" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px"><i class="fas fa-comment me-2"></i>{{this.num_message}}</span>
+                                </div>
+                                <div class="card-body bg-transparent border-0 pb-0 text-start">
+                                    <h5 class="card-title character-title">{{this.name}}</h5>
+                                    <p class="card-text character-short-description">{{this.description}}</p>
+                                </div>
+                            </div>
+                            {{/each}}
+                    </div>
+                    </section>
+                {{/if}}
                 {{#if peopleChats}}
                     <section class="w-100 px-0 py-0">
                         <h4 class="px-4 d-none">乙女心をくすぐるロマンチックキャラ</h4>
@@ -596,6 +609,10 @@
                     </div>
                     </section>
                 {{/if}}
+                <section class="w-100 p-0">
+                    <h4 class="px-4">キャラクターを選択してチャットを開始!🌟</h4>
+                    <div id="cardGrid-2" class="chat-container row py-0 px-3 scroll-horizontal"></div>
+                </section>
                 <section class="w-100 p-0">
                     <h4 class="px-4">今一人? シゲキテキな世界へようこそ‼︎</h4>
                     <div id="custom-card-container" class="chat-container row px-3 scroll-horizontal"></div>
@@ -631,7 +648,7 @@
                     <div class="chat-container scroll-container d-flex justify-content-between" id="button-container"></div>
                 </section>
                 <section>
-                    <div class="text-center mt-5 container">
+                    <div class="text-center mt-3 container">
                         <h3>キャラクターを作成する</h3>
                         <p>どのキャラクターとも相性がよくありませんか? 自分だけのキャラクターを作成しましょう! 会話の構成や口調などをカスタマイズできます!</p>
                     </div>
@@ -675,7 +692,6 @@
 
  {{> dashboard-footer}}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.1/jquery.waypoints.js" integrity="sha512-ZKNVEa7gi0Dz4Rq9jXcySgcPiK+5f01CqW+ZoKLLKr9VMXuCsw3RjWiv8ZpIOa0hxO79np7Ec8DDWALM0bDOaQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
 <script src="/js/discovery.js"></script>
 <script src="/js/chat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>

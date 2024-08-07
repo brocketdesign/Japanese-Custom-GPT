@@ -347,6 +347,19 @@ $(document).ready(function() {
                     // Handle the case when no categories are found
                     $('#chatbot-category').append('<p>No categories found.</p>');
                 }
+
+                const libraryInfo = JSON.parse(localStorage.getItem('chatbot-library'))
+                if(!libraryInfo){
+                    const dataInit = { 
+                        category: response.categories[0].name, 
+                        modelId: response.categories[0].id, 
+                        name:response.categories[0].name 
+                    }
+                    localStorage.setItem('chatbot-library',JSON.stringify(dataInit))
+                    loadNextPage()
+                }else{
+                    loadNextPage()
+                }
             },
             error: function(error) {
                 // Handle errors

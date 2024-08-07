@@ -585,7 +585,7 @@ async function routes(fastify, options) {
                 if(!isUserChat){
 
                     if (userLimitCheck.id === 2) {
-                        return reply.status(403).send(userLimitCheck);
+                        //return reply.status(403).send(userLimitCheck);
                     }
                     if (!isWidget) {
                         const existingChatDocument = await collectionChat.findOne({
@@ -619,7 +619,7 @@ async function routes(fastify, options) {
                 }
                 if (!userChatDocument || isNew) {
                     //console.log(`Initialize chat: ${chatId}`);
-                    const chatPurpose = onvert(chatDocument.purpose)
+                    const chatPurpose = convert(chatDocument.purpose)
                     const chatDescription = convert(chatDocument.description)
                     const chatRule = convert(chatDocument.rule)
                     userChatDocument = {

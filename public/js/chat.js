@@ -272,7 +272,7 @@ $(document).ready(function() {
             
                 // Create the button
                 let button = $('<button></button>')
-                .addClass('btn btn-outline-dark w-100')
+                .addClass('btn btn-dark border-white custom-gradient-bg w-100')
                 .attr('id','startButton')
                 .html('<i class="fas fa-comment me-2"></i>会話を開始する');
                 
@@ -1188,12 +1188,16 @@ function showRegistrationForm(messageId) {
       customClass: {
         popup: 'animated fadeInDown'
       }
-    });
+    }).then((result) => {
+        if (result.dismiss) {
+          $.removeCookie('redirect_url');
+        }
+      });
 }
 function showUpgradePopup(limitType) {
     const redirectUrl = window.location.pathname
     $.cookie('redirect_url', redirectUrl);
-    
+
     // Define messages based on limit type
     let messageTitle = '';
     let messageText = '';
@@ -1253,7 +1257,11 @@ function showUpgradePopup(limitType) {
         customClass: {
             popup: 'animated fadeInDown'
         }
-    });
+    }).then((result) => {
+        if (result.dismiss) {
+          $.removeCookie('redirect_url');
+        }
+      });
 }
 
     $(document).find('#register-form').on('submit', function(event) {

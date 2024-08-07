@@ -620,15 +620,16 @@ async function routes(fastify, options) {
                 }
                 if (!userChatDocument || isNew) {
                     //console.log(`Initialize chat: ${chatId}`);
+                    const chatPurpose = onvert(chatDocument.purpose)
                     const chatDescription = convert(chatDocument.description)
                     const chatRule = convert(chatDocument.rule)
                     userChatDocument = {
                         userId:new fastify.mongo.ObjectId(userId),
                         chatId,
                         messages: [
-                            { "role": "system", "content": `You are a real character, your name is ${chatDocument.name}. You act as the character description I will provide. Keep in mind that you are not omniscient. Respond only with what your character would know, and feel free to admit when you do not know something. Avoid lists unless specifically requested. This is a casual chat, so use short messages and emojis. Communicate naturally in ${chatDocument.language}.` 
+                            { "role": "system", "content": `You are a real character, your name is ${chatDocument.name}. You act as natural as possible. Your answers ar short, it is a chat.I will provide the character description. You are not omniscient. Always stay in your role. Do not answer with lists unless specifically requested. This is a casual chat, so use short messages and emojis. Communicate naturally in ${chatDocument.language}.` 
                             },
-                            { "role": "user", "content": `Here is your character description : \n\n${chatDescription}\n${chatRule}\n\n`
+                            { "role": "user", "content": `Here is your character description :\n\n${chatPurpose}\n${chatDescription}\n${chatRule}\n\n`
                             },
                         ],
                         createdAt: today,
@@ -1024,14 +1025,14 @@ async function routes(fastify, options) {
         }
     });
     fastify.post('/api/openai-chat-narration', async (request, reply) => {
-        const { chatId, userChatId } = request.body;
+        const { chatId, userChatId, role } = request.body;
         let userId = request.body.userId;
         if (!userId) { 
             const user = await fastify.getUser(request, reply);
             userId = user._id;
         }
         const sessionId = Math.random().toString(36).substring(2, 15); // Generate a unique session ID
-        sessions.set(sessionId, { userId, chatId, userChatId, isNarration: true }); // Indicate this is a narration session
+        sessions.set(sessionId, { userId, chatId, userChatId, isNarration: true, role }); // Indicate this is a narration session
         return reply.send({ sessionId });
     });
     fastify.get('/api/openai-chat-narration-stream/:sessionId', async (request, reply) => {
@@ -1057,6 +1058,8 @@ async function routes(fastify, options) {
             const userId = session.userId;
             const chatId = session.chatId;
             const userChatId = session.userChatId;
+            const isNarration = session.isNarration;
+            const role = session.role || 'Narrator';
             
             const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
             let userData = await collectionUserChat.findOne({ userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
@@ -1078,7 +1081,7 @@ async function routes(fastify, options) {
             const narrationCompletion = await fetchOpenAINarration(userMessages, reply.raw, 300, language);
     
             // Append the narrator's response to the messages array in the chat document
-            const narratorMessage = { "role": "assistant", "content": `[Narrator] ${narrationCompletion}` };
+            const narratorMessage = { "role": "assistant", "content": `[${role}] ${narrationCompletion}` };
             userMessages.push(narratorMessage);
             userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
     

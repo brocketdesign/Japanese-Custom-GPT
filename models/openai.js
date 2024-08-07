@@ -14,7 +14,7 @@ const fetchOpenAICompletion = async (messages, res, maxToken = 1000) => {
                 body: JSON.stringify({
                     model: 'gpt-4o',
                     messages,
-                    temperature: 0.75,
+                    temperature: 0.85,
                     top_p: 0.95,
                     frequency_penalty: 0,
                     presence_penalty: 0,

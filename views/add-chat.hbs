@@ -5,6 +5,9 @@
     {{> dashboard-nav}}
 
     <style>
+    .custom-gradient-bg{
+        background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
+    }
     #chatPurpose {
         background-color: #cccccc4d;
         border: 2px solid;
@@ -135,24 +138,22 @@
     
     <form id="chatForm" class="mb-5 pb-5 mx-3">
         <div class="mb-3 mx-3">
-            <button type="button" id="genChat" class="btn btn-dark btn-gradient-radius my-3 shadow-0 w-100" data-toggle="tooltip" title="チャット構造の生成">
+            <button type="button" id="genChat" class="btn btn-dark custom-gradient-bg my-3 shadow-0 w-100" data-toggle="tooltip" title="チャット構造の生成">
+                <i class="fa fa-spinner fa-spin fa-fw fa-hidden me-2" style="display: none;"></i>
+                <i class="fa fa-magic me-2"></i>
                 AIでキャラクターを生成する
-                <i class="fa fa-spinner fa-spin fa-fw fa-hidden d-none me-2"></i>
-                <div class="spinner-border spinner-border-sm text-white" role="status" style="display: none;">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
             </button>
         </div>
         <div class="mb-3 mx-3 row">
             <div class="col-auto">
-                <label for="visibility" class="form-label"><i class="fas fa-eye"></i> 公開設定を選択してください:</label>
+                <label for="visibility" class="form-label"><i class="fas fa-eye"></i> 公開設定:</label>
                 <select class="form-select w-auto" id="visibility" name="visibility">
                     <option value="private" selected><i class="fas fa-lock"></i> 非公開</option>
                     <option value="public"><i class="fas fa-globe"></i> 公開</option>
                 </select>
             </div>
             <div class="col-auto">
-                <label for="language" class="form-label"><i class="fas fa-language"></i> 言語を選択してください:</label>
+                <label for="language" class="form-label"><i class="fas fa-language"></i> 言語:</label>
                 <select class="form-select w-auto" id="language" name="language">
                     <option value="japanese" selected><i class="fas fa-flag"></i> 日本語</option>
                     <option value="english"><i class="fas fa-flag"></i> 英語</option>
@@ -229,7 +230,6 @@
         </div>
         <div class="sticky-bottom">
             <button type="submit" id="sendForm" class="btn btn-primary btn-large w-100 mt-5 mb-3" style="border-radius:50px;display:none;">
-                    <i class="fas fa-robot me-2"></i>
                     <i class="fa fa-spinner fa-spin fa-fw fa-hidden d-none me-2"></i>
                     保存して試す
             </button>
@@ -457,7 +457,8 @@
    
         // Event handler for the send button
         $('#genChat').on('click', function() {
-            $('#genChat .spinner-border ').show()
+            $('#genChat .fa-spinner ').show()
+            $('#genChat .fa-magic').hide()
             if($('#chatImageUrl').val().trim().length > 0 && $('#chatPurpose').val().trim() == ''){
                 generateImageDescription(function() {
                     generateName(function(){
@@ -465,7 +466,8 @@
                         generateRule(function(){
                             $('#sendForm').show()
                             $('.sendForm-text').show()
-                            $('#genChat .spinner-border ').hide()
+                            $('#genChat .fa-spinner').hide()
+                            $('#genChat .fa-magic').show()
                         });
                     });
                     generateCategory();
@@ -480,6 +482,8 @@
                     icon: 'warning',
                     confirmButtonText: 'OK'
                 });
+                $('#genChat .fa-spinner').hide()
+                $('#genChat .fa-magic').show()
                 return;
             }
             generateName(function(){
@@ -955,9 +959,9 @@
             switch (systemType) {
                 case 'chatRule':
                     system = `
-                        You are an AI character tone generator. \n
-                        Use the provided details of the AI character.
-                        Explain how to character speak, tone, emotional state.
+                        You are an character tone generator. \n
+                        Use the provided details of the character.
+                        Explain how the character speaks and his emotional state. Be concice and use keywords.
                     `;
                     break;
                 case 'chatQuestion':
@@ -985,8 +989,8 @@
                     break;
                 case 'chatName':
                     system = `
-                        You take the provided content by the user and return the last name and firts name of the character.
-                        If no name is provided, create a new realistic name that fit the character description.
+                        You take the provided content by the user and return the name of the character.
+                        If no name is provided, create a new inventive name that fit the character description.
                         You should respond in plain text with the name ONLY.NO COMMENTS.
                     `;
                     break;

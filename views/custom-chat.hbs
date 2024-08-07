@@ -575,7 +575,7 @@
                 {{#if peopleChats}}
                     <section class="w-100 px-0 py-0">
                         <h4 class="px-4">コミュニティからの最新のキャラクター</h4>
-                        <div id="custom-category-chat" class="chat-container pb-0">
+                        <div id="latest-chat" class="chat-container pb-0">
                             {{#each peopleChats.recent}}
                             <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 col-7 col-sm-4 col-lg-2" style="cursor:pointer;" onclick="redirectToChat('{{this._id}}')">
                                 <div style="background-image:url('{{this.chatImageUrl}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">

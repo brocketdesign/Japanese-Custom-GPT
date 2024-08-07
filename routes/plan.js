@@ -14,7 +14,7 @@ async function routes(fastify, options) {
       monthly: "無料",
       yearly: "無料",
       features: [
-        "1日10件までチャットできる",
+        "1日50件までチャットできる",
         "フレンドを1人まで作成できる",
         "簡単なサポート対応"
       ],
@@ -29,7 +29,7 @@ async function routes(fastify, options) {
       yearly_id : process.env.MODE == 'local'? process.env.STRIPE_PREMIUM_YEARLY_TEST: process.env.STRIPE_PREMIUM_YEARLY,
       features: [
         "1日200件までチャットできる",
-        "フレンドを10人まで作成できる",
+        "フレンドを無制限で作成できる",
         "新しいキャラクターを作成する",
         "新規機能のアクセス"
       ],

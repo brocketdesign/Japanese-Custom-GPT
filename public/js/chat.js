@@ -340,7 +340,18 @@ $(document).ready(function() {
                     });
                 }
                 if(chatImageUrl){
-                    image.attr('src', chatImageUrl)
+                    $.ajax({
+                        url: chatImageUrl,
+                        type: 'GET',
+                        mode: 'cors',
+                        cache: 'no-store',
+                        success: function() {
+                            image.attr('src', chatImageUrl)
+                        },
+                        error: function(xhr) {
+                            console.error('Error fetching image: ' + xhr.status + ' ' + xhr.statusText);
+                        }
+                    });
                 }
                 if(!thumbnailUrl && !chatImageUrl){
                     image.attr('src', '/img/logo.webp')

@@ -78,7 +78,7 @@ $(document).ready(function() {
             imageUrl: imageUrl,
             imageWidth: '100%',
             imageHeight: 'auto',
-            position: 'center',
+            position: 'bottom',
             html: `
                 <div class="container">
                     <div class="row justify-content-center">

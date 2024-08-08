@@ -141,6 +141,10 @@ $(document).ready(function() {
                     showRegistrationForm()
                     return
                 }
+
+                $('#startButtonContained').hide();
+                $('#introChat').hide();
+
                 currentStep ++
                 const message = customMessage || $('#userMessage').val();
                 if (message.trim() !== '') {
@@ -176,9 +180,7 @@ $(document).ready(function() {
                                 isNew = false
                             }else{
                                 generateNarration(function(){
-                                    console.log(`Narration 1`)
                                     generateCompletion(function(){
-                                        console.log(`Completion 1`)
                                     })
                                 })
                                 isNew = false
@@ -272,38 +274,28 @@ $(document).ready(function() {
                 $('#startButtonContained').remove();
 
                 // Create the container div
-                let container = $('<div></div>').addClass('container my-3').attr('id', 'startButtonContained');
+                let container = $('<div></div>')
+                .addClass('container text-start my-3')
+                .attr('id', 'startButtonContained');
             
                 // Create the button
                 let button = $('<button></button>')
-                .addClass('btn btn-dark border-white custom-gradient-bg w-100')
+                .addClass('btn btn-dark border-white shadow-0 custom-gradient-bg px-4')
                 .attr('id','startButton')
                 .html('<i class="fas fa-comment me-2"></i>会話を開始する');
                 
                 // Append the button to the container
                 container.append(button);
 
-                // Append temp chat alert if isTemporary
-                if(false && isTemporary){
-                    let alert = `
-                    <div class="alert alert-danger d-flex align-items-center mt-3 justify-content-center py-2" role="alert">
-                        <i class="fas fa-info-circle text-danger me-2"></i>
-                        <span style="font-size:11px">この会話を保存するためには、アカウントが必要です</span>
-                    </div>
-                    `;
-                    container.append(alert);
-                }
-            
                 // Append the container to the chat input area
                 $('#chatInput').prepend(container);
             
-                $('#input-container').hide().removeClass('d-flex');
+                //$('#input-container').hide().removeClass('d-flex');
+                
                 // Add click event listener to the button
                 button.on('click', function() {
                     displayStarter();
                 });
-            
-
 
             }
             function createIntro(chatData){
@@ -317,8 +309,12 @@ $(document).ready(function() {
                 // Remove existing container if it exists
                 $('#introChat').remove();
                 $('#message-number').hide();
+
                 // Create the intro elements
-                let introContainer = $('<div></div>').addClass('intro-container my-3').attr('id','introChat');
+                let introContainer = $('<div></div>')
+                .addClass('intro-container my-3 pb-3')
+                .css({'overflow-y':'scroll','height':'50vh'})
+                .attr('id','introChat');
             
                 let title = $('<h2></h2>').text(name);
                 let desc = $('<p></p>').text(description);
@@ -400,9 +396,10 @@ $(document).ready(function() {
             function displayStarter() {
                 $('#startButtonContained').hide();
                 $('#introChat').hide();
-                let message = `Invent a situation and explain what is going on. Respond as if you started the conversation. DO not start by aknowledge, start with the answer.` 
+
+                let message = `[Starter] Invent a situation and explain what is going on. Respond as if you started the conversation. DO not start by aknowledge, start with the answer.` 
                 if($('#chat-widget-container').length == 0 && isTemporary){
-                    message = `Ask me to login to contine chatting. Here are some feature for a free account:\n"1日50件までチャットできる",  "フレンドを無制限で作成できる", '新しいキャラクターを作成する', "チャット履歴を保存する"\nDO not start by aknowledge, start with the answer.`
+                    message = `[Starter] Ask me to login to contine chatting. Here are some feature for a free account:\n"1日50件までチャットできる",  "フレンドを無制限で作成できる", '新しいキャラクターを作成する', "チャット履歴を保存する"\nDO not start by aknowledge, start with the answer.`
                      
                 } 
                 $.ajax({
@@ -414,7 +411,7 @@ $(document).ready(function() {
                     data: JSON.stringify({ 
                         currentStep: 0, 
                         message,
-                        userId: userId, 
+                        userId: userId,
                         chatId: chatId, 
                         isNew: true ,
                         isWidget : $('#chat-widget-container').length > 0
@@ -539,6 +536,22 @@ $(document).ready(function() {
                 let chatContainer = $('#chatContainer');
                 chatContainer.empty();
 
+                if(userChat[1].role === "user"){
+                    let userMessage = userChat[2];
+                    const isStarter = userMessage.content.startsWith("[Starter]") || userMessage.content.startsWith("Invent a situation");
+                    if(!isStarter){
+                        let messageHtml = `
+                            <div class="d-flex flex-row justify-content-end mb-4 message-container">
+                                <div id="response-1" class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfb;">
+                                    ${marked.parse(userMessage.content)}
+                                </div>
+                            </div>
+                        </div>
+                        `;
+                        chatContainer.append(messageHtml);
+                    }
+                }
+
                 for (let i = 1; i < userChat.length; i++) {
                     // Skip system messages
                     if (userChat[i].role === "system") {
@@ -547,7 +560,6 @@ $(document).ready(function() {
             
                     currentStep = Math.floor(i / 2) + 1;
                     let messageHtml = '';
-            
                     if (userChat[i].role === "assistant") {
                         let assistantMessage = userChat[i];
                         let designStep = currentStep - 1;
@@ -560,7 +572,7 @@ $(document).ready(function() {
             
                             // Create a narrator message box
                             messageHtml += `
-                                <div id="narrator-container-${designStep}" class="d-flex flex-row justify-content-start mb-4 message-container">
+                                <div id="narrator-container-${designStep}" class="d-flex flex-row justify-content-start message-container">
                                     <div id="narration-${designStep}" class="p-3 ms-3 text-start narration-container" style="border-radius: 15px;">
                                         ${marked.parse(narrationContent)}
                                     </div>
@@ -593,7 +605,7 @@ $(document).ready(function() {
                             i++; // Skip the next user message as it's been processed
                         } else {
                             messageHtml += `
-                                <div id="response-${designStep}" class="choice-container"></div>
+                                <div id="response-${designStep}" class="choice-container d-none"></div>
                             </div>
                             `;
                         }
@@ -786,7 +798,7 @@ $(document).ready(function() {
                         
                 // Initialize the narrator response container
                 const narratorResponseContainer = $(`
-                    <div id="narrator-container-${currentStep}" class="d-flex flex-row justify-content-start mb-4 message-container">
+                    <div id="narrator-container-${currentStep}" class="d-flex flex-row justify-content-start message-container">
                         <div id="narration-${currentStep}" class="p-3 ms-3 text-start narration-container" style="border-radius: 15px;">
                             <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
                         </div>

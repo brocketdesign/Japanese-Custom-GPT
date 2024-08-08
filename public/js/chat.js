@@ -584,7 +584,7 @@ $(document).ready(function() {
                             let userMessage = userChat[i + 1];
                             messageHtml += `
                                 <div class="d-flex flex-row justify-content-end mb-4 message-container">
-                                    <div id="response-${designStep}" class="p-3 me-3 border-0 text-end" style="border-radius: 15px; background-color: #fbfbfb;">
+                                    <div id="response-${designStep}" class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfb;">
                                         ${marked.parse(userMessage.content)}
                                     </div>
                                 </div>
@@ -833,7 +833,7 @@ $(document).ready(function() {
                 if(messageClass == 'user-message'){
                     $('#chatContainer').append(`
                         <div class="d-flex flex-row justify-content-end mb-4 message-container ${messageClass}">
-                            <div  class="p-3 me-3 border-0 text-end" style="border-radius: 15px; background-color: #fbfbfb;">
+                            <div  class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfb;">
                                 <span>${message}</span>
                             </div>
                         </div>

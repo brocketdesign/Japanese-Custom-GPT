@@ -505,7 +505,7 @@ async function routes(fastify, options) {
             const chats = await chatsCollection.find({ 
                 userId: new fastify.mongo.ObjectId(userId) ,
                 name:{$exists:true}
-              }).sort({ _id: -1 }).toArray();
+              }).sort({ latestChatDate: -1 }).toArray();
 
             return reply.send(chats);
         }catch(error){
@@ -582,8 +582,8 @@ async function routes(fastify, options) {
                 let userChatDocument = await collectionUserChat.findOne({ userId : new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
                 let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
                 const isUserChat = await collectionChat.findOne({ userId: new fastify.mongo.ObjectId(userId) , _id: new fastify.mongo.ObjectId(chatId) });
+                
                 if(!isUserChat){
-
                     if (userLimitCheck.id === 2) {
                         //return reply.status(403).send(userLimitCheck);
                     }
@@ -594,7 +594,14 @@ async function routes(fastify, options) {
                         });
                       
                         if (existingChatDocument) {
-                          //console.log(`Existing chat found: ${existingChatDocument._id}`);
+                            //console.log(`Existing chat found: ${existingChatDocument._id}`);
+                            await collectionChat.updateOne(
+                                {
+                                    userId: new fastify.mongo.ObjectId(userId),
+                                    baseId: new fastify.mongo.ObjectId(chatId),
+                                },
+                                { $set : {latestChatDate: today} }
+                            );
                           chatDocument = existingChatDocument;
                           chatId = chatDocument._id;
                         } else {
@@ -603,6 +610,7 @@ async function routes(fastify, options) {
                            ...chatDocument,
                             userId: new fastify.mongo.ObjectId(userId),
                             baseId: new fastify.mongo.ObjectId(chatId),
+                            latestChatDate: today,
                             visibility: 'private',
                           };
                           delete newChatDocument._id; // Remove the _id field to let MongoDB create a new one

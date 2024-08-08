@@ -221,7 +221,7 @@ $(document).ready(function() {
                     contentType: 'application/json',
                     data: JSON.stringify({ userId, chatId, userChatId}),
                     success: function(data) {
-
+                        //console.log(data.chat)
                         updateParameters(data.chat._id,userId)
                         showChat();                 
 

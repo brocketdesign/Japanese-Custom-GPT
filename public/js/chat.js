@@ -137,6 +137,10 @@ $(document).ready(function() {
                 });
             };
             window.sendMessage = function(customMessage,displayStatus = true) {
+                if($('#chat-widget-container').length == 0 && isTemporary){
+                    showRegistrationForm()
+                    return
+                }
                 currentStep ++
                 const message = customMessage || $('#userMessage').val();
                 if (message.trim() !== '') {
@@ -280,7 +284,7 @@ $(document).ready(function() {
                 container.append(button);
 
                 // Append temp chat alert if isTemporary
-                if(isTemporary){
+                if(false && isTemporary){
                     let alert = `
                     <div class="alert alert-danger d-flex align-items-center mt-3 justify-content-center py-2" role="alert">
                         <i class="fas fa-info-circle text-danger me-2"></i>
@@ -375,11 +379,21 @@ $(document).ready(function() {
                 introContainer.append(toolbox);
                 // Display intro container inside #chatContainer
                 $('#chatContainer').append(introContainer);
+
+                if($('#chat-widget-container').length == 0 && isTemporary){
+                    showRegistrationForm()
+                    return
+                }
             }
             
             function displayStarter() {
                 $('#startButtonContained').hide();
                 $('#introChat').hide();
+                let message = `Invent a situation and explain what is going on. Respond as if you started the conversation. DO not start by aknowledge, start with the answer.` 
+                if($('#chat-widget-container').length == 0 && isTemporary){
+                    message = `Ask me to login to contine chatting. Here are some feature for a free account:\n"1日50件までチャットできる",  "フレンドを無制限で作成できる", '新しいキャラクターを作成する', "チャット履歴を保存する"\nDO not start by aknowledge, start with the answer.`
+                     
+                } 
                 $.ajax({
                     url: API_URL+'/api/chat-data',
                     type: 'POST',
@@ -388,7 +402,7 @@ $(document).ready(function() {
                     },
                     data: JSON.stringify({ 
                         currentStep: 0, 
-                        message: `Invent a situation and explain what is going on. Respond as if you started the conversation. DO not start by aknowledge, start with the answer.`, 
+                        message,
                         userId: userId, 
                         chatId: chatId, 
                         isNew: true ,

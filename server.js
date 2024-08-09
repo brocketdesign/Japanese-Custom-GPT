@@ -50,7 +50,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     fastify.register(require('fastify-sse'));
     fastify.register(require('@fastify/formbody'));
     fastify.register(require('./routes/api'));
-    fastify.register(require('./routes/stability'));
+    //fastify.register(require('./routes/stability'));
     fastify.register(require('./routes/plan'));
     fastify.register(require('./routes/scraper'));
     fastify.register(require('./routes/user'));

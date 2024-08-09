@@ -1,14 +1,19 @@
+// fetch the completion for the image prompt
+// Save the image _id in the chat 
+// Find a way to display the image when loading the chat
+// Save the image to AWS S3 and save the URL to the database
 
 var isLoading = false;
-
+$(document).ready(function(){
+  $('#stability-gen-button').click(generateDiffusedImage)
+})
 function generateDiffusedImage(option = {}) {
-  if($('#generate-button').hasClass('isLoading')){
+  if($('#stability-gen-button').hasClass('isLoading')){
     return;
   }
   const {
-    tags = $('#tag-input').val(),
     negativePrompt = $('#negativePrompt-input').val(),
-    prompt = $('#prompt-input').val(),
+    prompt = 'Little cute cracked wood alien void creature, charred, long wooden petals and mud, sitting on top of a log, lush garden, roses, lurking behind tree, ultra large black dot eyes, night scene, backlit' || $('#prompt-input').val(),
     imagePath = null,
     aspectRatio = '1:1',
     isRoop = false,
@@ -17,15 +22,15 @@ function generateDiffusedImage(option = {}) {
   } = option;
 
   let API_ENDPOINT = {
-    img2img : '/api/img2img' ,
-    txt2img : '/api/txt2img' 
+    img2img : '/stability/img2img' ,
+    txt2img : '/stability/txt2img' 
   };
 
   $('.loader').show();
   $('.isgenerating').addClass('rotate');
-  $('#generate-button').hide().addClass('isLoading');
+  $('#stability-gen-button').addClass('isLoading');
 
-  console.log({tags,negativePrompt,prompt,imagePath,aspectRatio});
+  console.log({negativePrompt,prompt,imagePath,aspectRatio});
 
   let query = imagePath ? API_ENDPOINT.img2img : API_ENDPOINT.txt2img;
   fetch(query, {
@@ -34,7 +39,7 @@ function generateDiffusedImage(option = {}) {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({ 
-      prompt: prompt + ',(' + tags + ')', 
+      prompt: prompt, 
       negative_prompt: '', 
       aspectRatio,
       imagePath: imagePath ? imagePath : null,
@@ -55,11 +60,8 @@ function generateDiffusedImage(option = {}) {
       console.error('Error generating diffused image:', error);
     })
     .finally(() => {
-      $(`.handle-roop[data-id=${itemId}]`).removeClass('loading')
-      $('.loader').hide();
-      $('.isgenerating').removeClass('rotate isgenerating');
-      $('#generate-button').show()
-      $('#generate-button').removeClass('isLoading')
+      $('#stability-gen-button').show()
+      $('#stability-gen-button').removeClass('isLoading')
     });
 }
 
@@ -72,18 +74,7 @@ function generateImage(data){
   img.setAttribute('src', `data:image/png;base64, ${base64Image}`);
   img.setAttribute('class', 'm-auto');
   img.setAttribute('data-id',imageId)
-  // Create a div element
-  const div = document.createElement('div');
-  div.setAttribute('class', 'gallery-item');
+
+  displayMessage('bot-image',img)
   
-  // Wrap the img in the div
-  div.appendChild(img);
-
-  addImageToChat($(div).clone())
-  
-}
-
-
-function addImageToChat(imageElement){
-    console.log(`Add Image`)
 }

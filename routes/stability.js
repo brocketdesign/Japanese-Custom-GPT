@@ -1,5 +1,7 @@
 const { ObjectId } = require('mongodb');
 const axios = require('axios');
+const fs = require('fs');
+const FormData = require('form-data');
 
 async function routes(fastify, options) {
     
@@ -99,9 +101,66 @@ async function routes(fastify, options) {
     return formData;
   }
 
+  async function saveImageToDB(userId, chatId, prompt, imageBuffer, aspectRatio) {
+    try {
+      const chatsGalleryCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('gallery');
+      await chatsGalleryCollection.updateOne(
+        { 
+          userId: new fastify.mongo.ObjectId(userId),
+          chatId: new fastify.mongo.ObjectId(chatId), // Corrected here
+        },
+        { $push: { images: { prompt, imageBuffer, aspectRatio } } },
+        { upsert: true }
+      );
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
-  router.post('/stablediffusion/txt2img', async (req, res) => {
-    const { prompt, aspectRatio } = req.body;
+  function getClosestAllowedDimension(height, ratio) {
+    const [widthRatio, heightRatio] = ratio.split(':').map(Number);
+    const targetAspectRatio = widthRatio / heightRatio;
+  
+    // Define allowed dimensions
+    const allowedDimensions = [
+      { width: 1024, height: 1024 }, { width: 1152, height: 896 },
+      { width: 1216, height: 832 }, { width: 1344, height: 768 },
+      { width: 1536, height: 640 }, { width: 640, height: 1536 },
+      { width: 768, height: 1344 }, { width: 832, height: 1216 },
+      { width: 896, height: 1152 }
+    ];
+  
+    // Sort dimensions by closeness to the target aspect ratio
+    const sortedDimensions = allowedDimensions.sort((a, b) => {
+      const ratioA = a.width / a.height;
+      const ratioB = b.width / b.height;
+      return Math.abs(ratioA - targetAspectRatio) - Math.abs(ratioB - targetAspectRatio);
+    });
+  
+    // Return the first (closest) dimension
+    return sortedDimensions[0];
+  }
+  async function convertImageToBase64(imagePath) {
+    const imageBuffer = await fs.promises.readFile(imagePath);
+    const base64Image = imageBuffer.toString('base64');
+    return base64Image;
+  }
+  async function ensureFolderExists(folderPath) {
+    try {
+      // Check if the folder exists
+      await fs.promises.access(folderPath, fs.constants.F_OK);
+    } catch (error) {
+      // Folder does not exist, create it
+      await fs.promises.mkdir(folderPath, { recursive: true });
+    }
+  }
+
+  fastify.post('/stability/txt2img', async (request, reply) => {
+    const { prompt, aspectRatio, chatId } = request.body;
+    const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+    const user = await fastify.getUser(request, reply);
+    userId = new fastify.mongo.ObjectId(user._id);
+
     const closestDimension = getClosestAllowedDimension(1024, aspectRatio);
     const stableDiffusionPayload = {
       prompt: prompt,
@@ -122,22 +181,22 @@ async function routes(fastify, options) {
       await ensureFolderExists('./public/output');
 
       const imageBuffer = await fetchStabilityMagic(stableDiffusionPayload);
-      const imageID = await saveImageToDB(global.db, req.user._id, prompt, imageBuffer, aspectRatio);
+      const imageID = await saveImageToDB(userId, chatId, prompt, imageBuffer, aspectRatio);
 
       const imagePath = `./public/output/${imageID}.png`;
       await fs.promises.writeFile(imagePath, imageBuffer);
 
       const base64Image = await convertImageToBase64(imagePath);
-      res.json({ image_id: imageID, image: base64Image });
+      reply.send({ image_id: imageID, image: base64Image });
     } catch (err) {
       console.error(err);
-      res.status(500).send('Error generating image');
+      reply.status(500).send('Error generating image');
     }
   });
 
 
-  router.post('/stablediffusion/img2img', async (req, res) => {
-    const { prompt, negative_prompt, aspectRatio, imagePath } = req.body;
+  fastify.post('/stability/img2img', async (request, res) => {
+    const { prompt, negative_prompt, aspectRatio, imagePath } = request.body;
 
     if (!imagePath) {
       return res.status(400).send('An image path must be provided for img2img.');
@@ -148,17 +207,17 @@ async function routes(fastify, options) {
       console.log(`img2img`)
       const stabilityPayload = createStabilityPayload(imagePath, prompt);
       const resultImageBuffer = await transmogrifyImage(stabilityPayload);
-      const imageID = await saveImageToDB(global.db, req.user._id, prompt, resultImageBuffer, aspectRatio);
+      const imageID = await saveImageToDB(global.db, request.user._id, prompt, resultImageBuffer, aspectRatio);
 
       await ensureFolderExists('./public/output');
       const outputImagePath = `./public/output/${imageID}.png`;
       await fs.promises.writeFile(outputImagePath, resultImageBuffer);
 
       const base64ResultImage = await convertImageToBase64(outputImagePath);
-      res.json({ image_id: imageID, image: base64ResultImage });
+      reply.send({ image_id: imageID, image: base64ResultImage });
     } catch (err) {
       console.error(err);
-      res.status(500).send('Error generating image');
+      reply.status(500).send('Error generating image');
     }
   });
 

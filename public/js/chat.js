@@ -1,6 +1,8 @@
 $(document).ready(function() {
     let API_URL = ""
+    let MODE = "" 
     fetchMode(function(error,mode){
+        MODE = mode
         if(mode != 'local'){
             API_URL = "https://lamix.hatoltd.com"
         }
@@ -238,7 +240,10 @@ $(document).ready(function() {
 
                         $('#chat-title').text(chatName)
                         $('#input-container').show().addClass('d-flex');
-                        
+                        if(MODE == 'local'){
+                            $('#stability-gen-button').show();
+                        }
+
                         if(!isNew){
                             displayChat(data.userChat.messages)
                         }
@@ -396,6 +401,9 @@ $(document).ready(function() {
             function displayStarter() {
                 $('#startButtonContained').hide();
                 $('#introChat').hide();
+                if(MODE == 'local'){
+                    $('#stability-gen-button').show();
+                }
 
                 let message = `[Starter] Invent a situation and explain what is going on. Respond as if you started the conversation. DO not start by aknowledge, start with the answer.` 
                 if($('#chat-widget-container').length == 0 && isTemporary){
@@ -838,19 +846,35 @@ $(document).ready(function() {
                 });
             }
             
+            
             // Function to display a message in the chat
-            function displayMessage(sender, message) {
-                const messageClass = sender === 'user' ? 'user-message' : 'bot-message';
+            window.displayMessage = function(sender, message) {
+                const messageClass = sender === 'user' ? 'user-message' : sender;
 
-                if(messageClass == 'user-message'){
+                if(messageClass === 'user-message'){
                     $('#chatContainer').append(`
                         <div class="d-flex flex-row justify-content-end mb-4 message-container ${messageClass}">
-                            <div  class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfb;">
+                            <div class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfb;">
                                 <span>${message}</span>
                             </div>
                         </div>
                     `);
+                } else if(messageClass === 'bot-image'){
+                    const imageId = message.data('id');
+                    $('#chatContainer').append(`
+                        <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass}">
+                            <div class="rounded-circle chatbot-image-chat" data-id="${imageId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
+                                <i class="far fa-image"></i>
+                            </div>
+                            <div id="image-${imageId}" class="p-3 ms-3 text-start assistant-image-box">
+                            </div>
+                        </div>      
+                    `);
+                    
+                    // Now append the image to the chat box after it's been appended
+                    $(`#image-${imageId}`).append(message.outerHTML);
                 }
+                
                 $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight); // Scroll to the bottom
             }
             

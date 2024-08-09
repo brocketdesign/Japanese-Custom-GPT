@@ -2,9 +2,16 @@ const { ObjectId } = require('mongodb');
 const axios = require('axios');
 const fs = require('fs');
 const FormData = require('form-data');
+const aws = require('aws-sdk');
+const { createHash } = require('crypto');
 
 async function routes(fastify, options) {
-    
+  // Configure AWS S3
+  const s3 = new aws.S3({
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      region: process.env.AWS_REGION
+  });
   const STABILITY_API_URL = 'https://api.stability.ai/v2beta/stable-image/generate/sd3';
   const diffusionHeaders = {
     'Authorization': `Bearer ${process.env.STABLE_DIFFUSION_API_KEY}`,
@@ -100,22 +107,81 @@ async function routes(fastify, options) {
 
     return formData;
   }
+  const uploadToS3 = async (buffer, hash, filename) => {
+      const params = {
+          Bucket: process.env.AWS_S3_BUCKET_NAME,
+          Key: `${hash}_${filename}`,
+          Body: buffer,
+          ACL: 'public-read'
+      };
+      const uploadResult = await s3.upload(params).promise();
+      return uploadResult.Location;
+  };
 
-  async function saveImageToDB(userId, chatId, prompt, imageBuffer, aspectRatio) {
+  const handleFileUpload = async (part) => {
+      const chunks = [];
+      for await (const chunk of part.file) {
+          chunks.push(chunk);
+      }
+      const buffer = Buffer.concat(chunks);
+      const hash = createHash('md5').update(buffer).digest('hex');
+      const existingFiles = await s3.listObjectsV2({
+          Bucket: process.env.AWS_S3_BUCKET_NAME,
+          Prefix: hash,
+      }).promise();
+      if (existingFiles.Contents.length > 0) {
+          return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFiles.Contents[0].Key}`;
+      } else {
+          return uploadToS3(buffer, hash, part.filename);
+      }
+  };
+  async function saveImageToDB(userId, chatId, userChatId, prompt, imageUrl, aspectRatio, reply) {
     try {
       const chatsGalleryCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('gallery');
+  
+      const imageId = new fastify.mongo.ObjectId(); // Generate a new ObjectId for the image
+  
       await chatsGalleryCollection.updateOne(
         { 
           userId: new fastify.mongo.ObjectId(userId),
-          chatId: new fastify.mongo.ObjectId(chatId), // Corrected here
+          chatId: new fastify.mongo.ObjectId(chatId),
         },
-        { $push: { images: { prompt, imageBuffer, aspectRatio } } },
+        { 
+          $push: { 
+            images: { _id: imageId, prompt, imageUrl, aspectRatio } 
+          } 
+        },
         { upsert: true }
       );
+  
+      const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+      let userData = await userDataCollection.findOne({ userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
+  
+      if (!userData) {
+        console.log(`User data not found`);
+        return reply.status(404).send({ error: 'User data not found' });
+      }
+  
+      let userMessages = userData.messages || [];
+      const imageMessage = { "role": "assistant", "content": `[Image] ${imageId}` };
+      userMessages.push(imageMessage);
+      userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
+  
+      // Update the chat document in the database
+      await userDataCollection.updateOne(
+        { userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) },
+        { $set: { messages: userMessages, updatedAt: userData.updatedAt } }
+      );
+  
+      return { imageId, imageUrl }; // Return both the imageId and imageUrl
+  
     } catch (error) {
-      console.log(error)
+      console.log(error);
+      return reply.status(500).send({ error: 'An error occurred while saving the image' });
     }
   }
+  
+  
 
   function getClosestAllowedDimension(height, ratio) {
     const [widthRatio, heightRatio] = ratio.split(':').map(Number);
@@ -156,11 +222,9 @@ async function routes(fastify, options) {
   }
 
   fastify.post('/stability/txt2img', async (request, reply) => {
-    const { prompt, aspectRatio, chatId } = request.body;
+    const { prompt, aspectRatio, userId, chatId, userChatId } = request.body;
     const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
-    const user = await fastify.getUser(request, reply);
-    userId = new fastify.mongo.ObjectId(user._id);
-
+  
     const closestDimension = getClosestAllowedDimension(1024, aspectRatio);
     const stableDiffusionPayload = {
       prompt: prompt,
@@ -175,24 +239,28 @@ async function routes(fastify, options) {
         { text: 'bad,blurry', weight: -1 }
       ]
     };
-    console.log(stableDiffusionPayload)
-    console.log(`txt2img`)
+  
+    console.log(stableDiffusionPayload);
+    console.log(`txt2img`);
+  
     try {
-      await ensureFolderExists('./public/output');
-
+  
       const imageBuffer = await fetchStabilityMagic(stableDiffusionPayload);
-      const imageID = await saveImageToDB(userId, chatId, prompt, imageBuffer, aspectRatio);
-
-      const imagePath = `./public/output/${imageID}.png`;
-      await fs.promises.writeFile(imagePath, imageBuffer);
-
-      const base64Image = await convertImageToBase64(imagePath);
-      reply.send({ image_id: imageID, image: base64Image });
+      const imageUrl = await handleFileUpload({
+        file: [imageBuffer], // Convert buffer to an iterable for handleFileUpload
+        filename: `${Date.now()}.png`
+      });
+  
+      const { imageId } = await saveImageToDB(userId, chatId, userChatId, prompt, imageUrl, aspectRatio);
+      console.log({ imageId, imageUrl });
+  
+      reply.send({ image_id: imageId, image: imageUrl });
     } catch (err) {
       console.error(err);
       reply.status(500).send('Error generating image');
     }
   });
+  
 
 
   fastify.post('/stability/img2img', async (request, res) => {
@@ -221,6 +289,34 @@ async function routes(fastify, options) {
     }
   });
 
+  fastify.get('/image/:imageId', async (request, reply) => {
+    try {
+      const { imageId } = request.params;
+      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const galleryCollection = db.collection('gallery');
+  
+      // Convert the imageId string to a MongoDB ObjectId
+      const objectId = new fastify.mongo.ObjectId(imageId);
+  
+      // Find the image document containing this imageId in the gallery
+      const imageDocument = await galleryCollection.findOne({
+        "images._id": objectId
+      }, {
+        projection: { "images.$": 1 } // Only return the matching image
+      });
+  
+      if (!imageDocument || !imageDocument.images || imageDocument.images.length === 0) {
+        return reply.status(404).send({ error: 'Image not found' });
+      }
+  
+      const imageUrl = imageDocument.images[0].imageUrl;
+      return reply.status(200).send({ imageUrl });
+    } catch (error) {
+      console.error('Error fetching image URL:', error);
+      return reply.status(500).send({ error: 'An error occurred while fetching the image URL' });
+    }
+  });
+  
 }
 
 module.exports = routes;

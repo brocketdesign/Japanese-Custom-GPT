@@ -6,6 +6,8 @@ $(document).ready(function() {
         if(mode != 'local'){
             API_URL = "https://lamix.hatoltd.com"
         }
+        localStorage.setItem('MODE',mode)
+        localStorage.setItem('API_URL',API_URL)
         fetchUser(function(error, user){
             let chatId = getIdFromUrl(window.location.href) || $(`#lamix-chat-widget`).data('id');
             let userChatId
@@ -23,9 +25,6 @@ $(document).ready(function() {
             sendCustomData({action: 'viewpage'});
             if(chatId){
                 getUserChatHistory(chatId, userId,function(lastChat){
-                    if(lastChat){
-                        userChatId = lastChat._id
-                    }
                     fetchchatData(chatId, userId)
                 });
             }else{
@@ -92,6 +91,7 @@ $(document).ready(function() {
 
             function updateParameters(newchatId, newuserId){
                 chatId = newchatId
+                localStorage.setItem('chatId', chatId);
                 var currentUrl = window.location.href;
                 var urlParts = currentUrl.split('/');
                 urlParts[urlParts.length - 1] = newchatId;
@@ -224,6 +224,7 @@ $(document).ready(function() {
                     data: JSON.stringify({ userId, chatId, userChatId}),
                     success: function(data) {
                         //console.log(data.chat)
+                        
                         updateParameters(data.chat._id,userId)
                         showChat();                 
 
@@ -241,7 +242,11 @@ $(document).ready(function() {
                         $('#chat-title').text(chatName)
                         $('#input-container').show().addClass('d-flex');
                         if(MODE == 'local'){
-                            $('#stability-gen-button').show();
+                            $('#stability-gen-button')
+                            .attr('data-chat-id',chatId)
+                            .attr('data-user-id',userId)
+                            .attr('data-user-chat-id',userChatId)
+                            .show();
                         }
 
                         if(!isNew){
@@ -314,6 +319,7 @@ $(document).ready(function() {
                 // Remove existing container if it exists
                 $('#introChat').remove();
                 $('#message-number').hide();
+                $('#stability-gen-button').hide();
 
                 // Create the intro elements
                 let introContainer = $('<div></div>')
@@ -402,7 +408,11 @@ $(document).ready(function() {
                 $('#startButtonContained').hide();
                 $('#introChat').hide();
                 if(MODE == 'local'){
-                    $('#stability-gen-button').show();
+                    $('#stability-gen-button')
+                    .attr('data-chat-id',chatId)
+                    .attr('data-user-id',userId)
+                    .attr('data-user-chat-id',userChatId)
+                    .show();
                 }
 
                 let message = `[Starter] Invent a situation and explain what is going on. Respond as if you started the conversation. DO not start by aknowledge, start with the answer.` 
@@ -574,6 +584,7 @@ $(document).ready(function() {
             
                         // Check if the message is a narrator message
                         const isNarratorMessage = assistantMessage.content.startsWith("[Narrator]");
+                        const isImage = assistantMessage.content.startsWith("[Image]");
                         if (isNarratorMessage) {
                             // Remove the [Narrator] tag for display
                             const narrationContent = assistantMessage.content.replace("[Narrator]", "").trim();
@@ -586,6 +597,19 @@ $(document).ready(function() {
                                     </div>
                                 </div>
                             `;
+                        } else if (isImage) {
+                            // Regular assistant message
+                            messageHtml += `
+                                <div id="container-${designStep}">
+                                    <div class="d-flex flex-row justify-content-start mb-4 message-container">
+                                        <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+                                        <div class="p-3 ms-3 text-start assistant-image-box">
+                                            <img id="image-${designStep}">
+                                        </div>
+                                    </div>
+                            `;
+                            const imageId = assistantMessage.content.replace("[Image]", "").trim();
+                            getImageUrlById(imageId,`image-${designStep}`)
                         } else {
                             // Regular assistant message
                             messageHtml += `
@@ -621,7 +645,25 @@ $(document).ready(function() {
                         chatContainer.append(messageHtml);
                     }
                 }
-            
+                function getImageUrlById(imageId,containerId) {
+                    $.ajax({
+                      url: `/image/${imageId}`, // The Fastify route to get the image URL
+                      method: 'GET',
+                      success: function(response) {
+                        if (response.imageUrl) {
+                            console.log(response.imageUrl)
+                          // Assuming you have an <img> element with an id of "target-image"
+                          $(`#${containerId}`).attr('src', response.imageUrl);
+                        } else {
+                          console.error('No image URL returned');
+                        }
+                      },
+                      error: function(xhr, status, error) {
+                        console.error('Error fetching image URL:', error);
+                      }
+                    });
+                  }
+                  
                 if (userChat[userChat.length - 1].role === "user" && userChat[userChat.length - 1].content) {
                     if (currentStep < totalSteps) {
                         displayStep(chatData, currentStep);
@@ -860,7 +902,12 @@ $(document).ready(function() {
                         </div>
                     `);
                 } else if(messageClass === 'bot-image'){
-                    const imageId = message.data('id');
+                    var randomString = '';
+                    for (var i = 0; i < 8; i++) {
+                        randomString += Math.floor(Math.random() * 10).toString();
+                    }
+                    const imageId = message.getAttribute('data-id');
+                    console.log({imageId,randomString})
                     $('#chatContainer').append(`
                         <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass}">
                             <div class="rounded-circle chatbot-image-chat" data-id="${imageId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
@@ -1012,6 +1059,10 @@ $(document).ready(function() {
           dataType: 'json',
           success: function(data) {
             const lastChat = data.find(chat =>!chat.isWidget);
+            if(lastChat){
+                userChatId = lastChat._id
+                localStorage.setItem('userChatId', userChatId);
+            }
             displayUserChatHistory(data);
             if (callback) { callback(lastChat) }
           },

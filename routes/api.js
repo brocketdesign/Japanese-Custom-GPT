@@ -1080,7 +1080,6 @@ async function routes(fastify, options) {
             let language = 'japanese'
             if(chatData){
                 language = chatData.language
-                console.log(`Update language`)
             }
             const userMessages = userData.messages;
     
@@ -1105,7 +1104,45 @@ async function routes(fastify, options) {
             reply.status(500).send({ error: 'Error fetching OpenAI narration' });
         }
     });
-    
+    fastify.post('/api/openai-chat-image-completion/', async (request, reply) => {
+        let userId = request.body.userId
+        if(!userId){ 
+            const user = await fastify.getUser(request, reply);
+            userId = user._id
+        }
+        const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+        const { chatId, userChatId } = request.body;    
+        console.log({userId, chatId, userChatId})
+        try {
+
+            let userData = await userDataCollection.findOne({ userId : new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) })
+
+            if (!userData) {
+                console.log(`User data not found`)
+                return reply.status(404).send({ error: 'User data not found' });
+            }
+
+            let userMessages = userData.messages;
+            const imagePrompt = [
+                { 
+                    role: "system", 
+                    content: `You are an image prompt. You take a conversation and respond with an image description of less than 300 characters.You respond in english.
+                    ` 
+                },
+                { 
+                    role: "user", 
+                    content: `Use the conversation below to generate an image desciption of the current situation in english:
+                    ` + userMessages.map(msg => msg.role != 'system' ? `${msg.content.replace('[Narrator]','')}`: '').join("\n") 
+                }
+            ];
+            completion = await moduleCompletion(imagePrompt, reply.raw);
+            return reply.send(completion)
+
+        } catch (error) {
+            console.log(error)
+            return reply.status(500).send({ error: 'Error fetching OpenAI completion' });
+        }
+    });
     fastify.post('/api/openai-chat-choice/', async (request, reply) => {
         let userId = request.body.userId
         if(!userId){ 

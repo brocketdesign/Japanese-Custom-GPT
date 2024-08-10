@@ -100,7 +100,7 @@ $(document).ready(function() {
                     window.history.pushState({ path: newUrl }, '', newUrl);
                 }
 
-                if(MODE == 'local' && $('#chat-widget-container').length == 0){
+                if($('#chat-widget-container').length == 0){
                     $('#stability-gen-button')
                     .attr('data-chat-id',chatId)
                     .attr('data-user-id',userId)

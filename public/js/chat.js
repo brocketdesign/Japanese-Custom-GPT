@@ -418,7 +418,7 @@ $(document).ready(function() {
 
                 let message = `[Starter] Invent a situation and explain what is going on. Respond as if you started the conversation. DO not start by aknowledge, start with the answer.` 
                 if($('#chat-widget-container').length == 0 && isTemporary){
-                    message = `[Starter] Ask me to login to contine chatting. Here are some feature for a free account:\n"1日50件までチャットできる",  "フレンドを無制限で作成できる", '新しいキャラクターを作成する', "チャット履歴を保存する"\nDO not start by aknowledge, start with the answer.`
+                    message = `[Starter] After greeting me like you character would do, ask me to login to contine chatting. Here are some feature for a free account:\n"1日50件までチャットできる",  "フレンドを無制限で作成できる", '新しいキャラクターを作成する', "チャット履歴を保存する"\nDO not start by aknowledge, start with the answer.`
                      
                 } 
                 $.ajax({

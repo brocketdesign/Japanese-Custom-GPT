@@ -514,7 +514,7 @@ async function routes(fastify, options) {
     });
     async function checkLimits(userId) {
         const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
-
+    
         // Get the user's data
         const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
         const user = await userDataCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
@@ -522,46 +522,53 @@ async function routes(fastify, options) {
         // Get the message count and chat count
         const messageCountCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageCount');
         const messageCountDoc = await messageCountCollection.findOne({ userId: new fastify.mongo.ObjectId(userId), date: today });
-
+    
         const chatCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-        // Define the query to match documents where the 'name' field does not exist
-        //const query = { name: { $exists: false } };
-        // Delete the documents that match the query
-        //await chatCollection.deleteMany(query)
-
         const chatCount = await chatCollection.countDocuments({ userId: new fastify.mongo.ObjectId(userId) });
-        const userchats = await chatCollection.find({ userId: new fastify.mongo.ObjectId(userId) }).toArray();
-
+      
+        // Get the image count
+        const imageCountCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('ImageCount');
+        const imageCountDoc = await imageCountCollection.findOne({ userId: new fastify.mongo.ObjectId(userId), date: today });
+    
         // Check the limits
         const isTemporary = user.isTemporary;
-        let messageLimit = isTemporary? 10 : 50;
-        let chatLimit = isTemporary? 1 : 3;
-        if(!isTemporary){
+        let messageLimit = isTemporary ? 10 : 50;
+        let chatLimit = isTemporary ? 1 : 3;
+        let imageLimit = isTemporary ? 1 : 3;
+    
+        if (!isTemporary) {
             existingSubscription = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').findOne({
                 _id: new fastify.mongo.ObjectId(userId),
                 subscriptionStatus: 'active',
             });
             
-            if(existingSubscription){
-                const billingCycle = existingSubscription.billingCycle+'ly'
-                const currentPlanId = existingSubscription.currentPlanId
+            if (existingSubscription) {
+                const billingCycle = existingSubscription.billingCycle + 'ly';
+                const currentPlanId = existingSubscription.currentPlanId;
                 const plansFromDb = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('plans').findOne();
-                const plans = plansFromDb.plans
+                const plans = plansFromDb.plans;
                 const plan = plans.find((plan) => plan[`${billingCycle}_id`] === currentPlanId);
-                messageLimit = plan.messageLimit || null
-                chatLimit = plan.chatLimit || null
+                messageLimit = plan.messageLimit || messageLimit;
+                chatLimit = plan.chatLimit || chatLimit;
+                imageLimit = plan.imageLimit || imageLimit;
             }
         }
       
         if (messageCountDoc && messageCountDoc.count >= messageLimit) {
-            return { error: 'Message limit reached for today.', id: 1, messageCountDoc, chatCount, messageLimit, chatLimit };
+            return { error: 'Message limit reached for today.', id: 1, messageCountDoc, chatCount, imageCountDoc, messageLimit, chatLimit, imageLimit };
         } 
+        /*
         if (chatCount >= chatLimit) {
-            return { error: 'Chat limit reached.', id: 2, messageCountDoc, chatCount, messageLimit, chatLimit };
+            return { error: 'Chat limit reached.', id: 2, messageCountDoc, chatCount, imageCountDoc, messageLimit, chatLimit, imageLimit };
+        }
+        */
+        if (imageCountDoc && imageCountDoc.count >= imageLimit) {
+            return { error: 'Image generation limit reached for today.', id: 3, messageCountDoc, chatCount, imageCountDoc, messageLimit, chatLimit, imageLimit };
         }
         
-        return {messageCountDoc, chatCount, messageLimit, chatLimit};
-      }
+        return { messageCountDoc, chatCount, imageCountDoc, messageLimit, chatLimit, imageLimit };
+    }
+    
     fastify.post('/api/chat-data', async (request, reply) => {
         try {
             const userLimitCheck = await checkLimits(request.body.userId);
@@ -1110,9 +1117,16 @@ async function routes(fastify, options) {
             const user = await fastify.getUser(request, reply);
             userId = user._id
         }
+        const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
+        const userLimitCheck = await checkLimits(request.body.userId);
+        console.log(userLimitCheck)
+        if (userLimitCheck.id === 3) {
+            return reply.status(403).send(userLimitCheck);
+        }
         const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+        const collectionImageCount = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('ImageCount');
         const { chatId, userChatId } = request.body;    
-        console.log({userId, chatId, userChatId})
+        
         try {
 
             let userData = await userDataCollection.findOne({ userId : new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) })
@@ -1136,6 +1150,19 @@ async function routes(fastify, options) {
                 }
             ];
             completion = await moduleCompletion(imagePrompt, reply.raw);
+
+            newImageCount = await collectionImageCount.findOneAndUpdate(
+                { userId: new fastify.mongo.ObjectId(userId), date: today },
+                { 
+                    $inc: { count: 1 }, 
+                    $setOnInsert: { limit: userLimitCheck.imageLimit } 
+                },
+                { 
+                    returnOriginal: false,
+                    upsert: true  // Create a new document if no match is found
+                }
+            );
+            
             return reply.send(completion)
 
         } catch (error) {

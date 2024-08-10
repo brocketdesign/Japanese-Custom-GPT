@@ -2,30 +2,14 @@
 // Implement a limit
 // Image generation is for premium users
 
-var isLoading = false;
-$(document).ready(function(){
-  $('#stability-gen-button').click(function() {
-    const API_URL = localStorage.getItem('API_URL');
-    const userId = $(this).data('user-id');
-    const chatId = $(this).data('chat-id');
-    const userChatId = $(this).data('user-chat-id');
+window.generateImagePromt = function(API_URL, userId, chatId, userChatId, thumbnail,  callback) {
 
-    generateImagePromt(API_URL, userId, chatId, userChatId, function(prompt){
-      generateDiffusedImage(API_URL,userId, chatId, userChatId,{prompt});
-    });
-  });
-});
-
-function generateImagePromt(API_URL, userId, chatId, userChatId, callback) {
-
-  const apiUrl = API_URL + '/api/openai-chat-image-completion/';
-  console.log({API_URL,userId,chatId,userChatId,apiUrl})
-          
+  const apiUrl = API_URL + '/api/openai-chat-image-completion/';          
   // Initialize the narrator response container
   const imageResponseContainer = $(`
       <div id="load-image-container" class="d-flex flex-row justify-content-start">
           <div class="d-flex flex-row justify-content-start mb-4 message-container" style="border-radius: 15px;">
-              <img src="https://lamix.hatoltd.com/img/logo.webp" alt="avatar 1" class="rounded-circle chatbot-image-chat" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+              <img src="${thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
               <div class="d-flex justify-content-center align-items-center p-3">
                 <i class="fa fa-spinner fa-spin fa-fw fa-hidden"></i>
               </div>
@@ -42,25 +26,38 @@ function generateImagePromt(API_URL, userId, chatId, userChatId, callback) {
       contentType: 'application/json',
       data: JSON.stringify({ userId, chatId, userChatId }),
       success: function(response) {
-        console.log(response)
         if (typeof callback === "function") {
           callback(response);
         }
       },
-      error: function(error) {
-          console.error('Error:', error);
-      }
+      error: function(xhr, status, error) {
+        if (xhr.responseJSON) {
+          var errorStatus = xhr.status
+          if (errorStatus === 403) {
+            var errorId = xhr.responseJSON.id;
+            if (errorId === 3) {
+              $('#load-image-container').remove()
+              showUpgradePopup('image-generation');
+              return;
+            }
+          }
+        }
+    }
+    
   });
 }
-function generateDiffusedImage(API_URL,userId, chatId, userChatId,option = {}) {
+window.generateDiffusedImage = function(API_URL, userId, chatId, userChatId, option = {}) {
   if($('#stability-gen-button').hasClass('isLoading')){
     return;
   }
-  
+  if(!option.prompt){
+    console.log(`Provide a prompt`)
+    return
+  }
   $('#stability-gen-button').addClass('isLoading');
   const {
     negativePrompt = $('#negativePrompt-input').val(),
-    prompt = 'Little cute cracked wood alien void creature, charred, long wooden petals and mud, sitting on top of a log, lush garden, roses, lurking behind tree, ultra large black dot eyes, night scene, backlit' || $('#prompt-input').val(),
+    prompt = $('#prompt-input').val(),
     imagePath = null,
     aspectRatio = '1:1',
     isRoop = false,
@@ -72,9 +69,6 @@ function generateDiffusedImage(API_URL,userId, chatId, userChatId,option = {}) {
     img2img : API_URL + '/stability/img2img' ,
     txt2img : API_URL + '/stability/txt2img' 
   };
-
-  
-  console.log({negativePrompt,prompt,imagePath,aspectRatio});
 
   let query = imagePath ? API_ENDPOINT.img2img : API_ENDPOINT.txt2img;
   fetch(query, {
@@ -99,7 +93,7 @@ function generateDiffusedImage(API_URL,userId, chatId, userChatId,option = {}) {
       return response.json(); // Use response.json() to parse the JSON response
     })
     .then(data => {
-      generateImage(data)
+      generateImage(data,prompt)
     })
     .catch(error => {
       console.error('Error generating diffused image:', error);
@@ -110,14 +104,14 @@ function generateDiffusedImage(API_URL,userId, chatId, userChatId,option = {}) {
       $('#stability-gen-button').removeClass('isLoading')
     });
 }
-
-function generateImage(data){
+window.generateImage = function(data,prompt){
 
   const imageUrl = data.image;
   const imageId = data.image_id
   // Create an <img> element
   const img = document.createElement('img');
-  img.setAttribute('src', `${imageUrl}`);
+  img.setAttribute('src', imageUrl);
+  img.setAttribute('alt', prompt);
   img.setAttribute('class', 'm-auto');
   img.setAttribute('data-id',imageId)
 

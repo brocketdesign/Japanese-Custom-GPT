@@ -83,10 +83,10 @@ $(document).ready(function() {
                 getUserChatHistory(selectChatId, userId,function(lastChat){
                     if(lastChat){
                         userChatId = lastChat._id
-                        fetchchatData(selectChatId, userId)
                     }
+                    fetchchatData(selectChatId, userId)
                 });
-                updateParameters(selectChatId,userId)
+                //updateParameters(selectChatId,userId)
             })
 
             function updateParameters(newchatId, newuserId){
@@ -98,6 +98,14 @@ $(document).ready(function() {
                 var newUrl = urlParts.join('/');
                 if($('#chat-widget-container').length == 0){
                     window.history.pushState({ path: newUrl }, '', newUrl);
+                }
+
+                if(MODE == 'local' && $('#chat-widget-container').length == 0){
+                    $('#stability-gen-button')
+                    .attr('data-chat-id',chatId)
+                    .attr('data-user-id',userId)
+                    .attr('data-user-chat-id',userChatId)
+                    .attr('data-thumbnail',thumbnail)
                 }
 
                 const elementsToUpdate = ['.content .chart-button', '.content .tag-button', '.content .delete-chat'];
@@ -223,11 +231,6 @@ $(document).ready(function() {
                     contentType: 'application/json',
                     data: JSON.stringify({ userId, chatId, userChatId}),
                     success: function(data) {
-                        //console.log(data.chat)
-                        
-                        updateParameters(data.chat._id,userId)
-                        showChat();                 
-
                         isNew = reset || data.isNew
                         if(!data.chat){
                             showDiscovery();
@@ -241,13 +244,6 @@ $(document).ready(function() {
 
                         $('#chat-title').text(chatName)
                         $('#input-container').show().addClass('d-flex');
-                        if(MODE == 'local'){
-                            $('#stability-gen-button')
-                            .attr('data-chat-id',chatId)
-                            .attr('data-user-id',userId)
-                            .attr('data-user-chat-id',userChatId)
-                            .show();
-                        }
 
                         if(!isNew){
                             displayChat(data.userChat.messages)
@@ -261,6 +257,10 @@ $(document).ready(function() {
                             createIntro(data.chat)
                             createButton(data.chat)
                         }
+
+                        updateParameters(data.chat._id,userId)
+                        showChat();    
+
                         // Scroll to the end of the chat
                         $('#chatContainer').animate({
                             scrollTop: $('#chatContainer').prop("scrollHeight")
@@ -331,7 +331,6 @@ $(document).ready(function() {
                 let desc = $('<p></p>').text(description);
                 let image = $('<img>').addClass('intro-thumbnail');
             
-                // Append intro elements to the intro container
                 if(thumbnailUrl){
                     $.ajax({
                         url: thumbnailUrl,
@@ -407,13 +406,6 @@ $(document).ready(function() {
             function displayStarter() {
                 $('#startButtonContained').hide();
                 $('#introChat').hide();
-                if(MODE == 'local'){
-                    $('#stability-gen-button')
-                    .attr('data-chat-id',chatId)
-                    .attr('data-user-id',userId)
-                    .attr('data-user-chat-id',userChatId)
-                    .show();
-                }
 
                 let message = `[Starter] Invent a situation and explain what is going on. Respond as if you started the conversation. DO not start by aknowledge, start with the answer.` 
                 if($('#chat-widget-container').length == 0 && isTemporary){
@@ -446,6 +438,7 @@ $(document).ready(function() {
                         isNew = false;
                         renderChatList(userId);
                         generateCompletion(function(){
+                            $('#stability-gen-button').show();
                             $('#input-container').show().addClass('d-flex');
                         })
                     },
@@ -551,6 +544,8 @@ $(document).ready(function() {
                 });
             }
             function displayChat(userChat) {
+
+                $('#stability-gen-button').show();
                 let chatContainer = $('#chatContainer');
                 chatContainer.empty();
 
@@ -598,18 +593,17 @@ $(document).ready(function() {
                                 </div>
                             `;
                         } else if (isImage) {
-                            // Regular assistant message
+                            const imageId = assistantMessage.content.replace("[Image]", "").trim();
                             messageHtml += `
                                 <div id="container-${designStep}">
                                     <div class="d-flex flex-row justify-content-start mb-4 message-container">
                                         <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
                                         <div class="p-3 ms-3 text-start assistant-image-box">
-                                            <img id="image-${designStep}">
+                                            <img id="image-${imageId}">
                                         </div>
                                     </div>
                             `;
-                            const imageId = assistantMessage.content.replace("[Image]", "").trim();
-                            getImageUrlById(imageId,`image-${designStep}`)
+                            getImageUrlById(imageId)
                         } else {
                             // Regular assistant message
                             messageHtml += `
@@ -645,15 +639,15 @@ $(document).ready(function() {
                         chatContainer.append(messageHtml);
                     }
                 }
-                function getImageUrlById(imageId,containerId) {
+                function getImageUrlById(imageId) {
                     $.ajax({
-                      url: `/image/${imageId}`, // The Fastify route to get the image URL
+                      url: `/image/${imageId}`,
                       method: 'GET',
                       success: function(response) {
                         if (response.imageUrl) {
-                            console.log(response.imageUrl)
-                          // Assuming you have an <img> element with an id of "target-image"
-                          $(`#${containerId}`).attr('src', response.imageUrl);
+                          $(`#image-${imageId}`)
+                          .attr('src', response.imageUrl)
+                          .attr('alt', response.imagePrompt);
                         } else {
                           console.error('No image URL returned');
                         }
@@ -902,17 +896,10 @@ $(document).ready(function() {
                         </div>
                     `);
                 } else if(messageClass === 'bot-image'){
-                    var randomString = '';
-                    for (var i = 0; i < 8; i++) {
-                        randomString += Math.floor(Math.random() * 10).toString();
-                    }
                     const imageId = message.getAttribute('data-id');
-                    console.log({imageId,randomString})
                     $('#chatContainer').append(`
                         <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass}">
-                            <div class="rounded-circle chatbot-image-chat" data-id="${imageId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
-                                <i class="far fa-image"></i>
-                            </div>
+                            <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
                             <div id="image-${imageId}" class="p-3 ms-3 text-start assistant-image-box">
                             </div>
                         </div>      
@@ -970,6 +957,21 @@ $(document).ready(function() {
 
             $(window).on('scroll', function() {
                 maxScroll();
+            });
+
+            $(document).on('click','#stability-gen-button',function() {
+                const API_URL = localStorage.getItem('API_URL');
+                const userId = $(this).attr('data-user-id');
+                const chatId = $(this).attr('data-chat-id');
+                const userChatId = $(this).attr('data-user-chat-id');
+                const thumbnail = $(this).attr('data-thumbnail');
+                if($('#chat-widget-container').length == 0 && isTemporary){
+                    showRegistrationForm()
+                    return
+                }
+                generateImagePromt(API_URL, userId, chatId, userChatId,thumbnail, function(prompt){
+                    generateDiffusedImage(API_URL,userId, chatId, userChatId, {prompt});
+                });
             });
         });
     })

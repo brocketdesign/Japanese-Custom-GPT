@@ -310,7 +310,8 @@ async function routes(fastify, options) {
       }
   
       const imageUrl = imageDocument.images[0].imageUrl;
-      return reply.status(200).send({ imageUrl });
+      const imagePrompt = imageDocument.images[0].prompt
+      return reply.status(200).send({ imageUrl, imagePrompt});
     } catch (error) {
       console.error('Error fetching image URL:', error);
       return reply.status(500).send({ error: 'An error occurred while fetching the image URL' });

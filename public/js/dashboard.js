@@ -62,6 +62,11 @@ $(document).ready(function() {
                 messageTitle = '🔒 非公開設定にはアップグレードが必要です';
                 messageText = 'プライベートチャット機能を利用するには、有料プランにアップグレードしてください。';
                 break;
+            case 'image-generation':
+                messageTitle = '⚠️ 画像生成機能にはアップグレードが必要です';
+                messageText = '画像生成機能を利用するには、有料プランにアップグレードしてください。';
+                break;
+            
             default:
                 messageTitle = '制限に達しました';
                 messageText = 'ご利用中のプランの制限に達しました。有料プランにアップグレードして、より多くの機能をお楽しみください。';

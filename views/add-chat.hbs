@@ -41,9 +41,38 @@
             opacity: 0;
         }
     }
-    .custom-gradient-bg{
+    .custom-gradient-bg {
         background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        transition: color 0.3s ease-in-out;
     }
+
+    .custom-gradient-bg::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 300%;
+        height: 300%;
+        background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 80%);
+        transform: translate(-50%, -50%) scale(0);
+        transition: transform 0.5s ease-in-out;
+        z-index: 0;
+    }
+
+    .custom-gradient-bg:hover::before {
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    .custom-gradient-bg:hover {
+        color: #fff;
+    }
+
     #chatPurpose {
         background-color: #cccccc12;
         border: 1px solid;
@@ -143,13 +172,17 @@
     }
 
     #markdownContainer {
-        margin: 20px;
+        margin-bottom: 20px;
         padding: 20px;
         border: 1px solid #eef0f3;
         border-radius: 4px;
     }
     #chatRule {
         display: none;
+    }
+    .auto-gen{
+        font-size: 10px;
+        border-radius: 50px;
     }
     </style>
 <div class="container my-4">
@@ -168,7 +201,7 @@
     
     <form id="chatForm" class="mb-5 pb-5 mx-3">
         <div class="mb-3 mx-3">
-            <button type="button" id="genChat" class="btn btn-dark custom-gradient-bg my-3 shadow-0 w-100" data-toggle="tooltip" title="チャット構造の生成">
+            <button type="button" id="genChat" class="btn custom-gradient-bg my-3 shadow-0 w-100" data-toggle="tooltip" title="チャット構造の生成">
                 <i class="fa fa-spinner fa-spin fa-fw fa-hidden me-2" style="display: none;"></i>
                 <i class="fa fa-magic me-2"></i>
                 AIでキャラクターを生成する
@@ -203,7 +236,14 @@
             <input type="file" class="form-control" id="chatThumbnail" name="thumbnail" accept="image/*">
         </div>
         <div class="mb-3 mx-3" style="display: none;">
-            <label for="chatName" class="form-label">名前</label>
+            <div class="d-flex justify-content-between align-items-end">
+                <label for="chatName" class="form-label">名前</label>
+                <button type="button" id="gen-chatName" class="d-none btn btn-sm custom-gradient-bg shadow-0 border-0 mb-1 auto-gen">
+                    <i class="fa fa-spinner fa-spin fa-fw fa-hidden me-2" style="display: none;"></i>
+                    <i class="fa fa-magic me-2"></i>
+                    AI生成
+                </button>
+            </div>
             <input type="text" class="form-control" id="chatName" name="name" required>
         </div>
         <div class="mb-3 mx-3 d-none">
@@ -243,7 +283,14 @@
             <input type="hidden" class="form-control" id="chatUrl" name="url">
         </div>
         <div class="mb-3 mx-3" style="display: none;">
-            <label for="chatRule" class="form-label" >指示</label>
+            <div class="d-flex justify-content-between align-items-end">
+                <label for="chatRule" class="form-label" >指示</label>
+                <button type="button" id="gen-chatRule" class="btn btn-sm custom-gradient-bg shadow-0  border-0 mb-1 auto-gen">
+                    <i class="fa fa-spinner fa-spin fa-fw fa-hidden me-2" style="display: none;"></i>
+                    <i class="fa fa-magic me-2"></i>
+                    AI生成
+                </button>
+            </div>
             <textarea class="form-control" id="chatRule" name="content" rows="5" placeholder="チャットボットの動作についての指示をここに記入してください。ユーザーに対する返答のトーン、応答のスタイル、特定の状況に対する反応、使用する言葉遣いなど、チャットボットがどのように振る舞うべきかをできるだけ詳しく記載してください。"></textarea>
         </div>
         <div id="markdownContainer" contenteditable="true" style="display: none;"></div>
@@ -494,7 +541,7 @@
             });
         });
 
-   
+        $('#gen-chatRule').click(generateRule)
         // Event handler for the send button
         $('#genChat').on('click', function() {
             $('#genChat .fa-spinner ').show()
@@ -663,7 +710,10 @@
                     eventSource.onerror = function(error) {
                         eventSource.close();
                         resizeTextarea($('#chatRule')[0])
-                        if(callback){callback()}
+                        if (typeof callback === 'function') {
+                            callback();
+                        }
+
                     };
                 },
                 error: function(error) {
@@ -702,7 +752,9 @@
 
                     eventSource.onerror = function(error) {
                         eventSource.close();
-                        if(callback){callback(markdownContent)}
+                        if (typeof callback === 'function') {
+                            callback(markdownContent);
+                        }
                     };
                 },
                 error: function(error) {
@@ -895,7 +947,10 @@
             eventSource.onerror = function(error) {
                 resizeTextarea($('#chatPurpose')[0]);
                 eventSource.close();
-                if (callback) { callback(); }
+                if (typeof callback === 'function') {
+                    callback();
+                }
+
             };
         }
 
@@ -956,7 +1011,10 @@
 
                     eventSource.onerror = function(error) {
                         eventSource.close();
-                        if(callback){callback()}
+                        if (typeof callback === 'function') {
+                            callback();
+                        }
+
                     };
                 },
                 error: function(error) {

@@ -2,12 +2,13 @@
 <html lang="ja">
     {{> dashboard-header}}
 <body>
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
     <style>
         .assistant-image-box img{
             width: 100%;
             border-radius: 5px;
             max-width: 200px;
+            cursor: pointer;
         }
         .isLoading .fa-image{
             display: none;
@@ -837,6 +838,32 @@ $(document).ready(function() {
                 });
             });
     });
+    $(document).on('click', '.assistant-image-box', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const imageUrl = $(this).find('img').attr('src');
+
+        Swal.fire({
+            imageUrl: imageUrl,
+            imageWidth: '100%',
+            imageHeight: 'auto',
+            showCloseButton: false,
+            showConfirmButton: false,
+            background: 'rgba(0,0,0,0.85)',
+            customClass: {
+                popup: 'animated-popup'  // Custom class for animation
+            },
+            showClass: {
+                popup: 'animate__animated animate__fadeInDown'  // Use animate.css classes for smooth entry
+            },
+            hideClass: {
+                popup: 'animate__animated animate__fadeOutUp'  // Use animate.css classes for smooth exit
+            }
+        });
+    });
+
+
     $(document).on('click', '.tag-button', function(e) {
         e.preventDefault();
         e.stopPropagation();

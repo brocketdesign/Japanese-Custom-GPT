@@ -595,7 +595,7 @@ $(document).ready(function() {
             
                             // Create a narrator message box
                             messageHtml += `
-                                <div id="narrator-container-${designStep}" class="d-flex flex-row justify-content-start message-container">
+                                <div id="narrator-container-${designStep}" class="d-flex flex-row justify-content-start message-container bg-transparent">
                                     <div id="narration-${designStep}" class="p-3 ms-3 text-start narration-container" style="border-radius: 15px;">
                                         ${marked.parse(narrationContent)}
                                     </div>
@@ -851,7 +851,7 @@ $(document).ready(function() {
                         
                 // Initialize the narrator response container
                 const narratorResponseContainer = $(`
-                    <div id="narrator-container-${currentStep}" class="d-flex flex-row justify-content-start message-container">
+                    <div id="narrator-container-${currentStep}" class="d-flex flex-row justify-content-start message-container bg-transparent">
                         <div id="narration-${currentStep}" class="p-3 ms-3 text-start narration-container" style="border-radius: 15px;">
                             <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
                         </div>

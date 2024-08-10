@@ -249,7 +249,7 @@ $(document).ready(function() {
 
                         chatName = data.chat.name
                         thumbnail = data.chat.thumbnailUrl || data.chat.chatImageUrl
-
+                        $('#chat-container').css(`background-image`,`url(${thumbnail})`)
                         $('#chat-title').text(chatName)
                         $('#input-container').show().addClass('d-flex');
 

@@ -49,7 +49,7 @@
             color: #fff;
         }
         .chatbot-info-card {
-            max-height: 80vh;
+            height: 80vh;
             overflow-y: scroll;
         }
         .chatbot-info-card .swal-image.analyze {
@@ -222,7 +222,7 @@
             object-fit: cover;
             object-position: top;
             width: auto !important;
-            height: 270px !important;
+            height: 200px !important;
             border-radius: 6px !important;
         }
         .chat-container {
@@ -373,7 +373,7 @@
             width: 100%;
             right: 0;
             left: 0;
-            background: white;
+            background: linear-gradient(to top, white 40%, transparent 100%);
             z-index: 1000;
             padding: 10px;
         }
@@ -734,19 +734,21 @@
             </div>
         </section>
         <div class="container chat-contain px-0 onchat-on">
-            <div id="chat-container" class="card shadow-0 rounded-0"></div>
-                <div class="card-body text-center py-0 container" style="min-height:250px;overflow-y:hidden;">
+            <div id="chat-container" class="card shadow-0 border-0 rounded-0" style="background-size: cover;background-repeat: no-repeat;">
+                <div class="card-body text-center py-0 container" style="min-height:250px;overflow-y:hidden;background: #fff9;">
                     <div id="chatContainer" class="pt-2" style="padding-top: 100px !important;;padding-bottom: 100px !important;"></div>
-                    <div id="chatInput" class="input-group rounded-0 rounded-bottom bg-white" style="position: absolute;bottom: 0;left: 0;right: 0;padding: 0px 15px 5px 15px;">
+                    <div id="chatInput" class="input-group rounded-0 rounded-bottom" style="position: absolute;bottom: 0;left: 0;right: 0;padding: 0px 15px 5px 15px;">
                         <div class="d-flex justify-content-between align-items-center w-100">
                             <div><span id="message-number" class="text-muted px-3 py-1" style="font-size: 12px;"></span></div>
-                            <div class="d-flex">
+                            <div class="d-flex pe-2">
                                 <button class="d-none btn btn-dark border-light shadow-0 mx-1 my-1 img-gen-button" id="stability-gen-button-none" style="display:none;background-image:url('/img/sd.jpg')"><i class="fa fa-spinner fa-spin fa-fw fa-hidden" style="display: none;"></i><i class="far fa-image"></i></button>
                                 <button class="d-none btn btn-dark border-light shadow-0 mx-1 my-1 img-gen-button" id="novita-gen-button-none" style="display:none;background-image:url('/img/novita.jpg')"><i class="fa fa-spinner fa-spin fa-fw fa-hidden" style="display: none;"></i><i class="far fa-image"></i></button>
-                                <button type="button" class="d-flex btn btn-md custom-gradient-bg shadow-0 border-0 mb-1 mx-1 auto-gen" id="novita-gen-button">
-                                    <i class="fa fa-spinner fa-spin fa-fw fa-hidden" style="display: none;"></i>
-                                    <i class="fa fa-image me-2"></i>
-                                    AI画像
+                                <button type="button" class="btn btn-md custom-gradient-bg shadow-0 border-0 mb-2 mx-1 auto-gen" id="novita-gen-button" style="display: none;">
+                                    <div class="d-flex">
+                                        <i class="fa fa-spinner fa-spin fa-fw fa-hidden" style="display: none;"></i>
+                                        <i class="fa fa-image me-2"></i>
+                                        AI画像
+                                    </div>
                                 </button>
                             </div>
                         </div>
@@ -867,8 +869,8 @@ $(document).ready(function() {
                         </div>
                     `,
                     imageUrl: response.chat.chatImageUrl || response.chat.thumbnailUrl ||'/img/logo.webp',
-                    imageWidth: 100,
-                    imageHeight: 100,
+                    imageWidth: 'auto',
+                    imageHeight: 75,
                     imageAlt: 'Thumbnail',
                     showCloseButton: true,
                     showConfirmButton: false,

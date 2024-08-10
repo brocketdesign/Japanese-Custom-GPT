@@ -36,7 +36,7 @@ async function routes(fastify, options) {
       ],
       messageLimit:200,
       chatLimit:false,
-      imageLimit:10,
+      imageLimit:100,
     },
     {
       id:'special',
@@ -55,7 +55,7 @@ async function routes(fastify, options) {
       ],
       messageLimit:false,
       chatLimit:false,
-      imageLimit:50,
+      imageLimit:500,
     }
   ];
 

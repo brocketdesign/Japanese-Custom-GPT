@@ -46,15 +46,14 @@ window.generateImagePromt = function(API_URL, userId, chatId, userChatId, thumbn
     
   });
 }
-window.generateDiffusedImage = function(API_URL, userId, chatId, userChatId, option = {}) {
-  if($('#stability-gen-button').hasClass('isLoading')){
-    return;
-  }
+// STABLE DIFFUSION
+window.generateImageStableDiffusion = function(API_URL, userId, chatId, userChatId, option = {}) {
+
   if(!option.prompt){
     console.log(`Provide a prompt`)
     return
   }
-  $('#stability-gen-button').addClass('isLoading');
+
   const {
     negativePrompt = $('#negativePrompt-input').val(),
     prompt = $('#prompt-input').val(),
@@ -103,6 +102,57 @@ window.generateDiffusedImage = function(API_URL, userId, chatId, userChatId, opt
       $('#stability-gen-button').show()
       $('#stability-gen-button').removeClass('isLoading')
     });
+}
+// NOVITA
+window.generateImageNovita = function(API_URL, userId, chatId, userChatId, option = {}) {
+
+  if (!option.prompt) {
+    console.log(`Provide a prompt`);
+    return;
+  }
+  
+  
+  const {
+    negativePrompt = $('#negativePrompt-input').val(),
+    prompt = $('#prompt-input').val(),
+    aspectRatio = '2:3',
+    isRoop = false,
+    baseFace = null,
+    itemId = null
+  } = option;
+
+  const API_ENDPOINT = API_URL + '/novita/txt2img';
+
+  fetch(API_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ 
+      prompt: prompt, 
+      negative_prompt: negativePrompt, 
+      aspectRatio,
+      baseFace,
+      userId, chatId, userChatId
+    })
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`Network response was not ok (${response.status} ${response.statusText})`);
+    }
+    return response.json();
+  })
+  .then(data => {
+    generateImage(data, prompt); // Directly use the data returned from your API
+  })
+  .catch(error => {
+    console.error('Error generating diffused image:', error);
+  })
+  .finally(() => {
+    $('#load-image-container').remove();
+    $('#novita-gen-button').show();
+    $('#novita-gen-button').removeClass('isLoading');
+  });
 }
 window.generateImage = function(data,prompt){
 

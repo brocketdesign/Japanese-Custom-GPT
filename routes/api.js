@@ -1140,17 +1140,17 @@ async function routes(fastify, options) {
             const imagePrompt = [
                 { 
                     role: "system", 
-                    content: `You are an image prompt. You take a conversation and respond with an image description of less than 300 characters.You respond in english.
+                    content: `You are an image prompt. You take a conversation and respond with an image prompt of less than 300 characters. Here is an example : \n1girl,face,curly hair,red hair,white background,\n
+                    You respond in english.
                     ` 
                 },
                 { 
                     role: "user", 
-                    content: `Use the conversation below to generate an image desciption of the current situation in english:
+                    content: `Use the conversation below to generate an image prompt of the current situation in english:
                     ` + userMessages.map(msg => msg.role != 'system' ? `${msg.content.replace('[Narrator]','')}`: '').join("\n") 
                 }
             ];
             completion = await moduleCompletion(imagePrompt, reply.raw);
-
             newImageCount = await collectionImageCount.findOneAndUpdate(
                 { userId: new fastify.mongo.ObjectId(userId), date: today },
                 { 

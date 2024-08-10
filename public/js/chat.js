@@ -106,6 +106,12 @@ $(document).ready(function() {
                     .attr('data-user-id',userId)
                     .attr('data-user-chat-id',userChatId)
                     .attr('data-thumbnail',thumbnail)
+
+                    $('#novita-gen-button')
+                    .attr('data-chat-id',chatId)
+                    .attr('data-user-id',userId)
+                    .attr('data-user-chat-id',userChatId)
+                    .attr('data-thumbnail',thumbnail)
                 }
 
                 const elementsToUpdate = ['.content .chart-button', '.content .tag-button', '.content .delete-chat'];
@@ -320,6 +326,7 @@ $(document).ready(function() {
                 $('#introChat').remove();
                 $('#message-number').hide();
                 $('#stability-gen-button').hide();
+                $('#novita-gen-button').hide();
 
                 // Create the intro elements
                 let introContainer = $('<div></div>')
@@ -439,6 +446,7 @@ $(document).ready(function() {
                         renderChatList(userId);
                         generateCompletion(function(){
                             $('#stability-gen-button').show();
+                            $('#novita-gen-button').show();
                             $('#input-container').show().addClass('d-flex');
                         })
                     },
@@ -546,6 +554,7 @@ $(document).ready(function() {
             function displayChat(userChat) {
 
                 $('#stability-gen-button').show();
+                $('#novita-gen-button').show();
                 let chatContainer = $('#chatContainer');
                 chatContainer.empty();
 
@@ -959,20 +968,33 @@ $(document).ready(function() {
                 maxScroll();
             });
 
-            $(document).on('click','#stability-gen-button',function() {
-                const API_URL = localStorage.getItem('API_URL');
-                const userId = $(this).attr('data-user-id');
-                const chatId = $(this).attr('data-chat-id');
-                const userChatId = $(this).attr('data-user-chat-id');
-                const thumbnail = $(this).attr('data-thumbnail');
-                if($('#chat-widget-container').length == 0 && isTemporary){
-                    showRegistrationForm()
-                    return
-                }
-                generateImagePromt(API_URL, userId, chatId, userChatId,thumbnail, function(prompt){
-                    generateDiffusedImage(API_URL,userId, chatId, userChatId, {prompt});
+            function handleImageGeneration(buttonSelector, generateImageFunction) {
+                $(document).on('click', buttonSelector, function() {
+                    if($(buttonSelector).hasClass('isLoading')){
+                        return;
+                    }
+                    $(buttonSelector).addClass('isLoading');
+                    const API_URL = localStorage.getItem('API_URL');
+                    const userId = $(this).attr('data-user-id');
+                    const chatId = $(this).attr('data-chat-id');
+                    const userChatId = $(this).attr('data-user-chat-id');
+                    const thumbnail = $(this).attr('data-thumbnail');
+                    
+                    if ($('#chat-widget-container').length == 0 && isTemporary) {
+                        showRegistrationForm();
+                        return;
+                    }
+                    
+                    generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, function(prompt) {
+                        generateImageFunction(API_URL, userId, chatId, userChatId, { prompt });
+                    });
                 });
-            });
+            }
+            
+            handleImageGeneration('#stability-gen-button', generateImageStableDiffusion);
+            handleImageGeneration('#novita-gen-button', generateImageNovita);
+            
+
         });
     })
 

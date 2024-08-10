@@ -239,10 +239,7 @@ async function routes(fastify, options) {
         { text: 'bad,blurry', weight: -1 }
       ]
     };
-  
-    console.log(stableDiffusionPayload);
-    console.log(`txt2img`);
-  
+
     try {
   
       const imageBuffer = await fetchStabilityMagic(stableDiffusionPayload);
@@ -260,9 +257,7 @@ async function routes(fastify, options) {
       reply.status(500).send('Error generating image');
     }
   });
-  
-
-
+  // STABLE DIFFUSION
   fastify.post('/stability/img2img', async (request, res) => {
     const { prompt, negative_prompt, aspectRatio, imagePath } = request.body;
 
@@ -317,6 +312,126 @@ async function routes(fastify, options) {
       return reply.status(500).send({ error: 'An error occurred while fetching the image URL' });
     }
   });
+  // NOVITA
+  
+    // Function to trigger the Novita API for text-to-image generation
+    async function fetchNovitaMagic(data) {
+      try {
+        const response = await axios.post('https://api.novita.ai/v3/async/txt2img', {
+          extra: {
+            response_image_type: 'jpeg',
+            enable_nsfw_detection: false,
+            nsfw_detection_level: 0,
+          },
+          request: {
+            model_name: "majicmixRealistic_v7_134792.safetensors",
+            prompt: data.prompt,
+            negative_prompt: "(worst quality:2),(low quality:2),(normal quality:2),lowres,watermark",
+            width: data.width,
+            height: data.height,
+            image_num: 1,
+            steps: 30,
+            seed: -1,
+            clip_skip: 0,
+            guidance_scale: 7.5,
+            sampler_name: "DPM++ 2S a Karras",
+          },
+        }, {
+          headers: {
+            Authorization: `Bearer ${process.env.NOVITA_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+        });
+  
+        if (response.status !== 200) {
+          throw new Error(`Error: ${response.status} - ${response.data}`);
+        }
+  
+        return response.data.task_id;
+      } catch (error) {
+        console.error('Error fetching Novita image:', error.message);
+        throw error;
+      }
+    }
+  
+   // Function to retrieve the result from Novita API using task_id with polling
+  async function fetchNovitaResult(task_id) {
+    const pollInterval = 1000; // Poll every 1 second
+    const maxAttempts = 60; // Set a maximum number of attempts to avoid infinite loops
+
+    let attempts = 0;
+
+    return new Promise((resolve, reject) => {
+      const timer = setInterval(async () => {
+        attempts++;
+
+        try {
+          const response = await axios.get(`https://api.novita.ai/v3/async/task-result?task_id=${task_id}`, {
+            headers: {
+              Authorization: `Bearer ${process.env.NOVITA_API_KEY}`,
+            },
+          });
+
+          if (response.status !== 200) {
+            throw new Error(`Error fetching result: ${response.status} - ${response.data}`);
+          }
+
+          const taskStatus = response.data.task.status;
+
+          if (taskStatus === 'TASK_STATUS_SUCCEED') {
+            clearInterval(timer);
+            const images = response.data.images;
+            if (images.length === 0) {
+              throw new Error('No images returned from Novita API');
+            }
+            resolve(images[0].image_url);
+          } else if (taskStatus === 'TASK_STATUS_FAILED') {
+            clearInterval(timer);
+            reject(`Task failed with reason: ${response.data.task.reason}`);
+          } else if (attempts >= maxAttempts) {
+            clearInterval(timer);
+            reject('Task timed out.');
+          }
+
+          // Optionally, you can log the progress or queue status
+          if (taskStatus === 'TASK_STATUS_QUEUED') {
+            console.log("Queueing...");
+          } else if (taskStatus === 'TASK_STATUS_RUNNING') {
+            console.log(`Progress: ${response.data.task.progress_percent}%`);
+          }
+
+        } catch (error) {
+          clearInterval(timer);
+          console.error('Error fetching Novita result:', error.message);
+          reject(error);
+        }
+      }, pollInterval);
+    });
+  }
+
+  
+    fastify.post('/novita/txt2img', async (request, reply) => {
+      const { prompt, aspectRatio, userId, chatId, userChatId } = request.body;
+  
+      try {
+        const closestDimension = getClosestAllowedDimension(768, aspectRatio);
+        const taskId = await fetchNovitaMagic({
+          prompt,
+          width: closestDimension.width,
+          height: closestDimension.height,
+        });
+        
+        // Polling or wait for the task to complete (you might want to add a delay or retry logic here)
+        const imageUrl = await fetchNovitaResult(taskId);
+  
+        const { imageId } = await saveImageToDB(userId, chatId, userChatId, prompt, imageUrl, aspectRatio);
+  
+        reply.send({ image_id: imageId, image: imageUrl });
+      } catch (err) {
+        console.error(err);
+        reply.status(500).send('Error generating image');
+      }
+    });
   
 }
 

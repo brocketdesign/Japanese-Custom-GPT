@@ -224,10 +224,11 @@ $(document).ready(function() {
                 sendCustomData({action:'unlock-result'})
                 promptForEmail()
             })
-            window.fetchchatData = function(chatId,userId,reset) {
+            window.fetchchatData = function(fetch_chatId,fetch_userId,fetch_reset) {
+
                 $('#chatContainer').empty()
                 $('#startButtonContained').remove();
-                if(reset){
+                if(fetch_reset){
                     currentStep = 0
                 }
                 $.ajax({
@@ -235,9 +236,10 @@ $(document).ready(function() {
                     type: 'POST',
                     dataType: 'json',
                     contentType: 'application/json',
-                    data: JSON.stringify({ userId, chatId, userChatId}),
+                    data: JSON.stringify({ userId: fetch_userId, chatId: fetch_chatId, userChatId}),
                     success: function(data) {
-                        isNew = reset || data.isNew
+                        chatId = data.chat._id
+                        isNew = fetch_reset || data.isNew
                         if(!data.chat){
                             showDiscovery();
                             return
@@ -264,7 +266,7 @@ $(document).ready(function() {
                             createButton(data.chat)
                         }
 
-                        updateParameters(data.chat._id,userId)
+                        updateParameters(data.chat._id,fetch_userId)
                         showChat();    
 
                         // Scroll to the end of the chat
@@ -552,7 +554,6 @@ $(document).ready(function() {
                 });
             }
             function displayChat(userChat) {
-
                 $('#stability-gen-button').show();
                 $('#novita-gen-button').show();
                 let chatContainer = $('#chatContainer');

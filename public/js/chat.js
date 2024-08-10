@@ -269,7 +269,6 @@ $(document).ready(function() {
                         updateParameters(data.chat._id,fetch_userId)
                         showChat();    
 
-                        // Scroll to the end of the chat
                         $('#chatContainer').animate({
                             scrollTop: $('#chatContainer').prop("scrollHeight")
                         }, 500); 
@@ -437,7 +436,7 @@ $(document).ready(function() {
                     }),
                     success: function(response) {
                         const messageCountDoc = response.messageCountDoc
-                        if(messageCountDoc.limit){
+                        if(messageCountDoc.limit && !isTemporary){
                             $('#message-number')
                             .html(`使用回数：${parseInt(messageCountDoc.count)}/${messageCountDoc.limit}`)
                             .show()
@@ -919,7 +918,9 @@ $(document).ready(function() {
                     $(`#image-${imageId}`).append(message.outerHTML);
                 }
                 
-                $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight); // Scroll to the bottom
+                $('#chatContainer').animate({
+                    scrollTop: $('#chatContainer').prop("scrollHeight")
+                }, 500); 
             }
             
             function sendCustomData(customData){
@@ -974,17 +975,18 @@ $(document).ready(function() {
                     if($(buttonSelector).hasClass('isLoading')){
                         return;
                     }
+                    
+                    if ($('#chat-widget-container').length == 0 && isTemporary) {
+                        showRegistrationForm();
+                        return;
+                    }
+
                     $(buttonSelector).addClass('isLoading');
                     const API_URL = localStorage.getItem('API_URL');
                     const userId = $(this).attr('data-user-id');
                     const chatId = $(this).attr('data-chat-id');
                     const userChatId = $(this).attr('data-user-chat-id');
                     const thumbnail = $(this).attr('data-thumbnail');
-                    
-                    if ($('#chat-widget-container').length == 0 && isTemporary) {
-                        showRegistrationForm();
-                        return;
-                    }
                     
                     generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, function(prompt) {
                         generateImageFunction(API_URL, userId, chatId, userChatId, { prompt });
@@ -1285,8 +1287,8 @@ function showRegistrationForm(messageId) {
       imageHeight: 'auto',
       position: 'bottom',
       html: `
-        <h2>無料アカウントを作成して<br>チャットを続けましょう</h2>
-        <p class="text-muted mb-2 header" style="font-size: 16px;">続けるために、今すぐ無料で登録してください。</p>
+        <h2><span class="u-color-grad">無料で</span><br>チャットを続けましょう</h2>
+        <p class="text-muted mb-2 header" style="font-size: 16px;">今すぐ体験を始めよう！</p>
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-md-8">

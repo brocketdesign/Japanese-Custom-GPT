@@ -25,6 +25,9 @@ $(document).ready(function() {
             sendCustomData({action: 'viewpage'});
             if(chatId){
                 getUserChatHistory(chatId, userId,function(lastChat){
+                    if(lastChat){
+                        userChatId = lastChat._id
+                    }
                     fetchchatData(chatId, userId)
                 });
             }else{

@@ -407,8 +407,8 @@ $(document).ready(function() {
                 $('#chatContainer').append(introContainer);
 
                 if($('#chat-widget-container').length == 0 && isTemporary){
-                    showRegistrationForm()
-                    return
+                    //showRegistrationForm()
+                    //return
                 }
             }
             

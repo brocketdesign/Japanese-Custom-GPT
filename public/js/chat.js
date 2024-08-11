@@ -470,15 +470,13 @@ $(document).ready(function() {
                                     return
                                 }
                                 if (errorId === 1) {
-                                  // Handle message limit reached error
                                     if($('#chat-widget-container').length == 0 ){
                                         showUpgradePopup('chat-message')
                                         return
                                     }
                                 } else if (errorId === 2) {
-                                    // Handle chat limit reached error
                                   showUpgradePopup('chat-character')
-                                }
+                                } 
                             }
                           } else {
                             console.error('Error:', error);

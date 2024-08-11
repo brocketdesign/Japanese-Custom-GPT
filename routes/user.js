@@ -433,6 +433,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
             const plansFromDb = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('plans').findOne();
             const plans = plansFromDb.plans;
             const plan = plans.find((plan) => plan[`${billingCycle}_id`] === currentPlanId);
+            console.log(plan)
             messageLimit = plan.messageLimit || messageLimit;
             chatLimit = plan.chatLimit || chatLimit;
             imageLimit = plan.imageLimit || imageLimit;

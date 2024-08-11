@@ -318,25 +318,27 @@ async function routes(fastify, options) {
     // Function to trigger the Novita API for text-to-image generation
     async function fetchNovitaMagic(data) {
       try {
+        const image_request = {
+          model_name: data.checkpoint || "majicmixRealistic_v7_134792.safetensors",
+          prompt: data.prompt,
+          negative_prompt: data.negativePrompt || "(worst quality:2),(low quality:2),(normal quality:2),lowres,watermark",
+          width: data.width,
+          height: data.height,
+          image_num: 1,
+          steps: 30,
+          seed: -1,
+          clip_skip: 0,
+          guidance_scale: 7.5,
+          sampler_name: "DPM++ 2S a Karras",
+        }
+        console.log(image_request)
         const response = await axios.post('https://api.novita.ai/v3/async/txt2img', {
           extra: {
             response_image_type: 'jpeg',
             enable_nsfw_detection: false,
             nsfw_detection_level: 0,
           },
-          request: {
-            model_name: data.checkpoint || "majicmixRealistic_v7_134792.safetensors",
-            prompt: data.prompt,
-            negative_prompt: data.negativePrompt || "(worst quality:2),(low quality:2),(normal quality:2),lowres,watermark",
-            width: data.width,
-            height: data.height,
-            image_num: 1,
-            steps: 30,
-            seed: -1,
-            clip_skip: 0,
-            guidance_scale: 7.5,
-            sampler_name: "DPM++ 2S a Karras",
-          },
+          request: image_request,
         }, {
           headers: {
             Authorization: `Bearer ${process.env.NOVITA_API_KEY}`,

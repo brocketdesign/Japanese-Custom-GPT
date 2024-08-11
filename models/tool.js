@@ -8,5 +8,4 @@ async function getCounter(db) {
   async function updateCounter(db, value) {
     await db.collection('counters').updateOne({ _id: 'storyCounter' }, { $set: { value: value } }, { upsert: true });
   }
-
-  module.exports = { getCounter, updateCounter }
+  module.exports = { getCounter, updateCounter, }

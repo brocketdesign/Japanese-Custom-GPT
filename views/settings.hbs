@@ -152,6 +152,10 @@ img {
         <h6>サブスクリプションを管理する</h6>
         <p id="user-plan" style="display: none;"></p>
         <button id="cancel-plan" class="btn btn-danger" style="display: none;" data-user-id="{{user._id}}">サブスクリプションをキャンセルする</button>
+        
+        <hr class="my-4" />
+        <h6>使用回数</h6>
+        <div id="user-limit"></div>
       </div>
     </div>
   </div>
@@ -365,6 +369,23 @@ img {
       }
       $('#user-plan').html(message).show()
     })
+  })
+
+  // Display user limits
+  $.get('/user/limit/'+user._id,function(data){
+    data = data.limits
+    $('#user-limit').html(`
+    <ul class="list-group">
+      <li class="list-group-item">
+        <i class="fa fa-comment me-2"></i>
+        ${data.messageCountDoc.count}/${data.messageCountDoc.limit}
+      </li>
+      <li class="list-group-item">
+        <i class="fa fa-image me-2"></i>
+        ${data.imageCountDoc.count}/${data.imageCountDoc.limit}
+      </li>
+    </ul>
+    `)
   })
 });
 </script>

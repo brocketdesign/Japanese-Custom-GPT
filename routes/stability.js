@@ -358,7 +358,7 @@ async function routes(fastify, options) {
    // Function to retrieve the result from Novita API using task_id with polling
   async function fetchNovitaResult(task_id) {
     const pollInterval = 1000; // Poll every 1 second
-    const maxAttempts = 60; // Set a maximum number of attempts to avoid infinite loops
+    const maxAttempts = 120; // Set a maximum number of attempts to avoid infinite loops
 
     let attempts = 0;
 
@@ -426,14 +426,12 @@ async function routes(fastify, options) {
         const data = response.data;
         
         if (data.models && data.models.length > 0) {
-          console.log({ query });
           const normalizedQuery = query.toLowerCase().replace(/[^a-z0-9]/g, '');
           const modelNames = data.models.map(model => model.sd_name.toLowerCase().replace(/[^a-z0-9]/g, ''));
           let bestMatch = stringSimilarity.findBestMatch(normalizedQuery, modelNames);
           const similarityThreshold = 0.5;
           if (bestMatch.bestMatch.rating >= similarityThreshold) {
             closestCheckpoint = data.models[bestMatch.bestMatchIndex].sd_name;
-            console.log(`Found this model: ${closestCheckpoint}`);
           }
         }
       }

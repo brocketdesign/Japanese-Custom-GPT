@@ -115,7 +115,7 @@ window.generateImageNovita = function(API_URL, userId, chatId, userChatId, chara
   const {
     negativePrompt = $('#negativePrompt-input').val(),
     prompt = $('#prompt-input').val(),
-    aspectRatio = '2:3',
+    aspectRatio = '1:1',
     isRoop = false,
     baseFace = null,
     itemId = null

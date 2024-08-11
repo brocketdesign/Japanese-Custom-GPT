@@ -192,7 +192,7 @@ $(document).ready(function() {
                             const messageCountDoc = response.messageCountDoc
                             if(messageCountDoc.limit){
                                 $('#message-number')
-                                .html(`使用回数：${parseInt(messageCountDoc.count)}/${messageCountDoc.limit}`)
+                                .html(`<i class="fa fa-comment me-1"></i>${parseInt(messageCountDoc.count)}/${messageCountDoc.limit}`)
                                 .show()
                             }
                             userChatId = response.userChatId
@@ -443,7 +443,7 @@ $(document).ready(function() {
                         const messageCountDoc = response.messageCountDoc
                         if(messageCountDoc.limit && !isTemporary){
                             $('#message-number')
-                            .html(`使用回数：${parseInt(messageCountDoc.count)}/${messageCountDoc.limit}`)
+                            .html(`<i class="fa fa-comment me-1"></i>${parseInt(messageCountDoc.count)}/${messageCountDoc.limit}`)
                             .show()
                         }
                         userChatId = response.userChatId

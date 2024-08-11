@@ -201,10 +201,8 @@ $(document).ready(function() {
                                 displayStep(chatData, currentStep);
                                 isNew = false
                             }else{
-                                generateNarration(function(){
-                                    generateCompletion(function(){
-                                    })
-                                })
+                                //generateNarration()
+                                generateCompletion()
                                 isNew = false
                             }
                         },

@@ -19,6 +19,10 @@
         var chatContainer = document.createElement('div');
         chatContainer.innerHTML = `
             <style>
+                em {
+                    font-size: 13px;
+                    color: #979393;
+                }
                 .chatbot-image-chat{
                     cursor: pointer;
                 }

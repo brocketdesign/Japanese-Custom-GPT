@@ -2,7 +2,7 @@
 // Implement a limit
 // Image generation is for premium users
 
-window.generateImagePromt = function(API_URL, userId, chatId, userChatId, thumbnail,  callback) {
+window.generateImagePromt = function(API_URL, userId, chatId, userChatId, thumbnail, character, callback) {
 
   const apiUrl = API_URL + '/api/openai-chat-image-completion/';          
   // Initialize the narrator response container
@@ -24,7 +24,7 @@ window.generateImagePromt = function(API_URL, userId, chatId, userChatId, thumbn
       url: apiUrl,
       method: 'POST',
       contentType: 'application/json',
-      data: JSON.stringify({ userId, chatId, userChatId }),
+      data: JSON.stringify({ userId, chatId, userChatId , character}),
       success: function(response) {
         if (typeof callback === "function") {
           callback(response);
@@ -47,7 +47,7 @@ window.generateImagePromt = function(API_URL, userId, chatId, userChatId, thumbn
   });
 }
 // STABLE DIFFUSION
-window.generateImageStableDiffusion = function(API_URL, userId, chatId, userChatId, option = {}) {
+window.generateImageStableDiffusion = function(API_URL, userId, chatId, userChatId, character, option = {}) {
 
   if(!option.prompt){
     console.log(`Provide a prompt`)
@@ -81,7 +81,7 @@ window.generateImageStableDiffusion = function(API_URL, userId, chatId, userChat
       aspectRatio,
       imagePath: imagePath ? imagePath : null,
       baseFace,
-      userId, chatId, userChatId
+      userId, chatId, userChatId , character
     })
   })
     .then(response => {
@@ -104,7 +104,7 @@ window.generateImageStableDiffusion = function(API_URL, userId, chatId, userChat
     });
 }
 // NOVITA
-window.generateImageNovita = function(API_URL, userId, chatId, userChatId, option = {}) {
+window.generateImageNovita = function(API_URL, userId, chatId, userChatId, character, option = {}) {
 
   if (!option.prompt) {
     console.log(`Provide a prompt`);
@@ -133,7 +133,7 @@ window.generateImageNovita = function(API_URL, userId, chatId, userChatId, optio
       negative_prompt: negativePrompt, 
       aspectRatio,
       baseFace,
-      userId, chatId, userChatId
+      userId, chatId, userChatId, character
     })
   })
   .then(response => {

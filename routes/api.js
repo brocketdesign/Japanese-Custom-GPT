@@ -187,6 +187,7 @@ async function routes(fastify, options) {
         let { userId, chatId, userChatId } = request.body;
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
         const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+        const collectionCharacters = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('characters'); // Assuming this is the collection for characters
     
         let response = {
             isNew: true,
@@ -211,22 +212,30 @@ async function routes(fastify, options) {
         } catch (error) {
             // Log error if necessary, or handle it silently
         }
+    
         try {
             const chat = await collection.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
             if (!chat) {
                 response.chat = false;
                 return reply.send(response);  // Chat not found, but no error is thrown or logged
             }
-        
+    
             response.chat = chat;
+    
+            // Find the corresponding character based on chat.chatImageUrl
+            const character = await collectionCharacters.findOne({ image: chat.chatImageUrl });
+            if (character) {
+                response.character = character;
+            } else {
+                response.character = null;  // If no character is found, return null or handle accordingly
+            }
+    
             return reply.send(response);
         } catch (error) {
-            console.error('Failed to retrieve chat:', error);
-            return reply.status(500).send({ error: 'Failed to retrieve chat' });
+            console.error('Failed to retrieve chat or character:', error);
+            return reply.status(500).send({ error: 'Failed to retrieve chat or character' });
         }
-        
     });
-    
     fastify.post('/api/chat-analyze/', async (request, reply) => {
         const {chatId,userId} = request.body;
         const collectionUser = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
@@ -577,7 +586,6 @@ async function routes(fastify, options) {
             const collectionMessageCount = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageCount');
 
             let { currentStep, message, chatId, userChatId, isNew, isWidget } = request.body;
-            //console.log(`data for chat : ${chatId} userchat : ${userChatId}`)
             let userId = request.body.userId
             if (!userId) {
                 const user = await fastify.getUser(request, reply);
@@ -1119,14 +1127,12 @@ async function routes(fastify, options) {
         }
         const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
         const userLimitCheck = await checkLimits(request.body.userId);
-        console.log(userLimitCheck)
         if (userLimitCheck.id === 3) {
             return reply.status(403).send(userLimitCheck);
         }
         const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
         const collectionImageCount = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('ImageCount');
-        const { chatId, userChatId } = request.body;    
-        
+        const { chatId, userChatId, character } = request.body;    
         try {
 
             let userData = await userDataCollection.findOne({ userId : new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) })
@@ -1140,7 +1146,8 @@ async function routes(fastify, options) {
             const imagePrompt = [
                 { 
                     role: "system", 
-                    content: `You are an image prompt. You take a conversation and respond with an image prompt of less than 300 characters. Here is an example : \n1girl,face,curly hair,red hair,white background,\n
+                    content: `You are an image prompt. You take a conversation and respond with an image prompt of less than 300 characters. 
+                    Here is an example of response : ${character.prompt ? character.prompt : '\n1girl,face,curly hair,red hair,white background,'}\n
                     You respond in english.
                     ` 
                 },

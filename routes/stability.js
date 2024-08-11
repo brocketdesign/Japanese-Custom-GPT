@@ -4,6 +4,7 @@ const fs = require('fs');
 const FormData = require('form-data');
 const aws = require('aws-sdk');
 const { createHash } = require('crypto');
+const stringSimilarity = require('string-similarity'); 
 
 async function routes(fastify, options) {
   // Configure AWS S3
@@ -324,9 +325,9 @@ async function routes(fastify, options) {
             nsfw_detection_level: 0,
           },
           request: {
-            model_name: "majicmixRealistic_v7_134792.safetensors",
+            model_name: data.checkpoint || "majicmixRealistic_v7_134792.safetensors",
             prompt: data.prompt,
-            negative_prompt: "(worst quality:2),(low quality:2),(normal quality:2),lowres,watermark",
+            negative_prompt: data.negativePrompt || "(worst quality:2),(low quality:2),(normal quality:2),lowres,watermark",
             width: data.width,
             height: data.height,
             image_num: 1,
@@ -409,29 +410,55 @@ async function routes(fastify, options) {
     });
   }
 
-  
-    fastify.post('/novita/txt2img', async (request, reply) => {
-      const { prompt, aspectRatio, userId, chatId, userChatId } = request.body;
-  
-      try {
-        const closestDimension = getClosestAllowedDimension(768, aspectRatio);
-        const taskId = await fetchNovitaMagic({
-          prompt,
-          width: closestDimension.width,
-          height: closestDimension.height,
+  fastify.post('/novita/txt2img', async (request, reply) => {
+    const { prompt, aspectRatio, userId, chatId, userChatId, character } = request.body;
+    try {
+      const apiKey = process.env.NOVITA_API_KEY;
+      let closestCheckpoint = null
+      const query = character.checkpoint || null;
+      if(query){
+        const novitaApiUrl = `https://api.novita.ai/v3/model?pagination.limit=60&pagination.cursor=c_0&filter.source=civitai&filter.query=${encodeURIComponent(query)}&filter.types=checkpoint&filter.is_nsfw=false&filter.is_inpainting=0`;
+        const response = await axios.get(novitaApiUrl, {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`
+          }
         });
+        const data = response.data;
         
-        // Polling or wait for the task to complete (you might want to add a delay or retry logic here)
-        const imageUrl = await fetchNovitaResult(taskId);
-  
-        const { imageId } = await saveImageToDB(userId, chatId, userChatId, prompt, imageUrl, aspectRatio);
-  
-        reply.send({ image_id: imageId, image: imageUrl });
-      } catch (err) {
-        console.error(err);
-        reply.status(500).send('Error generating image');
+        if (data.models && data.models.length > 0) {
+          console.log({ query });
+          const normalizedQuery = query.toLowerCase().replace(/[^a-z0-9]/g, '');
+          const modelNames = data.models.map(model => model.sd_name.toLowerCase().replace(/[^a-z0-9]/g, ''));
+          let bestMatch = stringSimilarity.findBestMatch(normalizedQuery, modelNames);
+          const similarityThreshold = 0.5;
+          if (bestMatch.bestMatch.rating >= similarityThreshold) {
+            closestCheckpoint = data.models[bestMatch.bestMatchIndex].sd_name;
+            console.log(`Found this model: ${closestCheckpoint}`);
+          }
+        }
       }
-    });
+      const closestDimension = getClosestAllowedDimension(768, aspectRatio);
+      const taskId = await fetchNovitaMagic({
+        prompt,
+        negativePrompt: character.negativePrompt || null,
+        sampler: character.sampler || null,
+        checkpoint: closestCheckpoint,
+        width: closestDimension.width,
+        height: closestDimension.height,
+      });
+  
+      // Polling or wait for the task to complete (you might want to add a delay or retry logic here)
+      const imageUrl = await fetchNovitaResult(taskId);
+  
+      const { imageId } = await saveImageToDB(userId, chatId, userChatId, prompt, imageUrl, aspectRatio);
+  
+      reply.send({ image_id: imageId, image: imageUrl });
+    } catch (err) {
+      console.error(err);
+      reply.status(500).send('Error generating image');
+    }
+  });
+  
   
 }
 

@@ -16,6 +16,7 @@ $(document).ready(function() {
             let currentStep = 0;
             let totalSteps = 0;
             let chatData = {};
+            let character = {}
             let isNew = true;
             let feedback = false
             let thumbnail = false
@@ -109,12 +110,14 @@ $(document).ready(function() {
                     .attr('data-user-id',userId)
                     .attr('data-user-chat-id',userChatId)
                     .attr('data-thumbnail',thumbnail)
+                    .attr('data-character',JSON.stringify(character))
 
                     $('#novita-gen-button')
                     .attr('data-chat-id',chatId)
                     .attr('data-user-id',userId)
                     .attr('data-user-chat-id',userChatId)
                     .attr('data-thumbnail',thumbnail)
+                    .attr('data-character',JSON.stringify(character))
                 }
 
                 const elementsToUpdate = ['.content .chart-button', '.content .tag-button', '.content .delete-chat'];
@@ -252,6 +255,7 @@ $(document).ready(function() {
 
                         chatName = data.chat.name
                         thumbnail = data.chat.thumbnailUrl || data.chat.chatImageUrl
+                        character = data.character
                         $('#chat-container').css(`background-image`,`url(${thumbnail})`)
                         $('#chat-title').text(chatName)
                         $('#input-container').show().addClass('d-flex');
@@ -453,6 +457,7 @@ $(document).ready(function() {
                             $('#novita-gen-button').show();
                             $('#input-container').show().addClass('d-flex');
                         })
+                        updateParameters(chatId,userId)
                     },
                     error: function(xhr, status, error)  {
                         $('#startButtonContained').show();
@@ -990,9 +995,9 @@ $(document).ready(function() {
                     const chatId = $(this).attr('data-chat-id');
                     const userChatId = $(this).attr('data-user-chat-id');
                     const thumbnail = $(this).attr('data-thumbnail');
-                    
-                    generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, function(prompt) {
-                        generateImageFunction(API_URL, userId, chatId, userChatId, { prompt });
+                    const character = JSON.parse($(this).attr('data-character'));
+                    generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
+                        generateImageFunction(API_URL, userId, chatId, userChatId, character, { prompt });
                     });
                 });
             }

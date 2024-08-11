@@ -294,12 +294,12 @@ $(document).ready(function() {
         if(!libraryInfo){
             return
         }
-        const { category, modelId, name } = libraryInfo
-        $('#chatbot-category-name').text(name)
+        const { checkpoint, modelId } = libraryInfo
+        $('#chatbot-checkpoint-name').text(checkpoint)
         $('#chatbot-loading').show()
         $.ajax({
             type: 'GET',
-            url: `/scraper/civitai?page=${currentPage}&category=${category}&modelId=${modelId}`,
+            url: `/scraper/civitai?page=${currentPage}&checkpoint=${checkpoint}&modelId=${modelId}`,
             success: function(data) {
                 $('#chatbot-loading').hide()
                 renderInfiniteGrid(data.characters, $('#chatbot-library'));
@@ -337,7 +337,7 @@ $(document).ready(function() {
                     response.categories.forEach(category => {
                         // Construct the HTML for each category button
                         const categoryButton = `
-                            <div type="button" class="chatbot-category-button col" data-name="${category.name}" data-id="${category.id}" data-category="${category.name}" onclick="libraryInfoUpdate(this)">
+                            <div type="button" class="chatbot-category-button col" data-id="${category.id}" data-checkpoint="${category.name}" onclick="libraryInfoUpdate(this)">
                                 <img src="${category.image}" alt="${category.name}" class="border border-light">
                             </div>`;
                         // Append the category button to the container
@@ -351,9 +351,8 @@ $(document).ready(function() {
                 const libraryInfo = JSON.parse(localStorage.getItem('chatbot-library'))
                 if(!libraryInfo){
                     const dataInit = { 
-                        category: response.categories[0].name, 
-                        modelId: response.categories[0].id, 
-                        name:response.categories[0].name 
+                        checkpoint: response.categories[0].name, 
+                        modelId: response.categories[0].id
                     }
                     localStorage.setItem('chatbot-library',JSON.stringify(dataInit))
                     loadNextPage()
@@ -373,14 +372,13 @@ $(document).ready(function() {
     fetchAndRenderCategories();
     
     window.libraryInfoUpdate = function(el) {
-        const name = $(el).data('name')
-        const category = $(el).data('category')
+        const checkpoint = $(el).data('checkpoint')
         const modelId = $(el).data('id')
-        $('#chatbot-category-name').text(name)
+        $('#chatbot-checkpoint-name').text(name)
         //$('#chatbot-library').empty()
         $("html, body").animate({ scrollTop: $(document).height() }, "slow");
         currentPage = 1
-        localStorage.setItem('chatbot-library',JSON.stringify({ category, modelId, name }))
+        localStorage.setItem('chatbot-library',JSON.stringify({ checkpoint, modelId, name }))
         isLoading = false
         loadNextPage();
     };

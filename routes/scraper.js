@@ -123,7 +123,7 @@ async function routes(fastify, options) {
           const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('characters');
           const nsfw = request.query.nsfw || 'Soft' //(None, Soft, Mature, X)
           const page = parseInt(request.query.page, 10) || 0; // Convert the page to an integer and default to 0 if not provided
-          const civit_category = request.query.category
+          const civit_checkpoint = request.query.checkpoint
           const civit_model = request.query.modelId
 
           // Determine the number of elements to skip based on the page
@@ -132,11 +132,11 @@ async function routes(fastify, options) {
 
           // Query the database to find existing records
           const existingCharacters = await collection
-          .find({ category: civit_category, ext: 'civitai' })
+          .find({ checkpointId: civit_model, ext: 'civitai'})
           .skip(skipElements)
           .limit(elementsPerPage)
           .toArray();
-
+          
             // If there are already 10 elements, return them
           if (existingCharacters.length === elementsPerPage) {
             return reply.send({ status: 'Success', characters: existingCharacters });
@@ -147,18 +147,24 @@ async function routes(fastify, options) {
             const response = await axios.get(`https://civitai.com/api/v1/images?limit=10&modelId=${civit_model}&page=${page}&nsfw=${nsfw}`);
             const responseData = response.data; // No need to parse if already in JSON format
             const charactersData = [];
-            responseData.items.forEach((element) => {
-              const image = element.url;
-      
+            responseData.items.forEach(({ url: image, meta: elMeta, nsfwLevel }, index) => {
+              if (!elMeta) return;
+                        
               charactersData.push({
-                category: civit_category,
+                checkpoint: civit_checkpoint,
                 image,
+                checkpointId: civit_model,
+                nsfwLevel,
+                prompt: elMeta.prompt,
+                negativePrompt: elMeta.negativePrompt,
+                sampler: elMeta.sampler,
                 visibility: 'public',
                 scrap: true,
                 nsfw,
                 ext: 'civitai',
               });
             });
+            
 
             let i = 1;
             for (const character of charactersData) {
@@ -173,11 +179,11 @@ async function routes(fastify, options) {
       
             // After scraping, fetch the updated list of characters to return
             const updatedCharacters = await collection
-              .find({ category: civit_category, ext: 'civitai' })
+              .find({ checkpointId: civit_model, ext: 'civitai'})
               .skip(skipElements)
               .limit(elementsPerPage)
               .toArray();
-      
+              
             reply.send({ status: 'Scraped and Retrieved', characters: updatedCharacters });
           }
       

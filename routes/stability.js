@@ -415,7 +415,7 @@ async function routes(fastify, options) {
     try {
       const apiKey = process.env.NOVITA_API_KEY;
       let closestCheckpoint = null
-      const query = character.checkpoint || null;
+      const query = character ? character.checkpoint : null;
       if(query){
         const novitaApiUrl = `https://api.novita.ai/v3/model?pagination.limit=60&pagination.cursor=c_0&filter.source=civitai&filter.query=${encodeURIComponent(query)}&filter.types=checkpoint&filter.is_nsfw=false&filter.is_inpainting=0`;
         const response = await axios.get(novitaApiUrl, {
@@ -438,8 +438,8 @@ async function routes(fastify, options) {
       const closestDimension = getClosestAllowedDimension(768, aspectRatio);
       const taskId = await fetchNovitaMagic({
         prompt,
-        negativePrompt: character.negativePrompt || null,
-        sampler: character.sampler || null,
+        negativePrompt: character ? character.negativePrompt : null,
+        sampler: character ? character.sampler : null,
         checkpoint: closestCheckpoint,
         width: closestDimension.width,
         height: closestDimension.height,

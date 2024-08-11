@@ -1148,7 +1148,7 @@ async function routes(fastify, options) {
                 { 
                     role: "system", 
                     content: `You are an image prompt. You take a conversation and respond with an image prompt of less than 300 characters. 
-                    Here is an example of response : ${character.prompt ? character.prompt : '\n1girl,face,curly hair,red hair,white background,'}\n
+                    Here is an example of response : ${character && character.prompt ? character.prompt : '\n1girl,face,curly hair,red hair,white background,'}\n
                     You respond in english.
                     ` 
                 },

@@ -19,7 +19,7 @@ window.generateImagePromt = function(API_URL, userId, chatId, userChatId, thumbn
 
   $('#chatContainer').append(imageResponseContainer);
   $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
-return
+
   $.ajax({
       url: apiUrl,
       method: 'POST',

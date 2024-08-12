@@ -187,7 +187,21 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         {
           $sample: { size: 50 } // Randomly select 50 documents
         }
+      ]).toArray();   
+      
+      const synclubaichat = await chatsCollection.aggregate([
+        {
+          $match: {
+            visibility: { $exists: true, $eq: "public" },
+            scrap: true,
+            ext: 'synclubaichat',
+          }
+        },
+        {
+          $sample: { size: 60 } // Randomly select 50 documents
+        }
       ]).toArray();      
+      
       // Find recent characters
       const currentDateObj = new Date();
       const tokyoOffset = 9 * 60; // Offset in minutes for Tokyo (UTC+9)
@@ -215,7 +229,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         { $sample: { size: 20 } },
       ]).toArray();
 
-      peopleChats = {gohiai_girl, gohiai_man, recent}
+      peopleChats = {gohiai_girl, gohiai_man, synclubaichat, recent}
       // Fetch user data
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
       return reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato, Ltd', user, userId, chatId, chats: userCreatedChats, peopleChats });

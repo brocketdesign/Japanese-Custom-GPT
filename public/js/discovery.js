@@ -236,7 +236,7 @@ $(document).ready(function() {
     function renderCircleGrid(cardInfos,container){
         cardInfos.forEach(function(item) {
             var card = $(`
-                <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 col-7 col-sm-4 col-lg-2 pb-3" style="cursor:pointer;">
+                <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 col-6 col-sm-4 col-lg-2 pb-3" style="cursor:pointer;">
                     <div style="background-image:url(${item.image.indexOf('http')>=0 ? item.image : `/img/${item.image}`})" class="card-img-top girls_avatar position-relative" alt="${item.title}">
                         <span class="badge bg-dark position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px"><i class="fas fa-comment me-2"></i>${item.num_message}</span>
                     </div>

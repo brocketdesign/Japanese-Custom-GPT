@@ -117,7 +117,62 @@ async function routes(fastify, options) {
     
         scrapeGohiai();
       });
-      
+      fastify.get('/scraper/synclubaichat', async (request, reply) => {
+        const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+    
+        async function scrapesynclubaichat() {
+          const response = await axios.get('https://api.synclubaichat.com/aichat/h5/merror/commonlist?is_guest=1&language=ja&device=web_desktop&product=aichat&sys_lang=en-US&country=&referrer=&zone=9&languageV2=en&uuid=&app_version=1.5.1&ts=1723428680&sign=e8d93192deb4c7d4ff9f604ce96c121f');
+          const characters = Array.from(response.data.data)
+          const charactersData = [];
+          characters.forEach((character, index) => {
+            const chatImageUrl = character.thumbnail;
+            const name = character.name;
+            const description = character.self_introduction + '\n' + character.prologue;
+            const category = character.category;
+            const tags = character.personality_tag_array;
+            const checkpoint = character.sd_prompt ? character.sd_prompt.model : null;
+        
+            // Map the sd_prompt object into a string prompt
+            const prompt = character.sd_prompt ? 
+                Object.entries(character.sd_prompt)
+                    .filter(([key]) => key !== "seed" && key !== "model")
+                    .map(([key, value]) => value.toString().replace('_', ' ') + (key === "age" ? "" : ","))
+                    .join(" ").trim()
+                : "";
+        
+            const finalPrompt = prompt != '' ? prompt : null;
+        
+            charactersData.push({
+                category,
+                chatImageUrl,
+                name,
+                tags,
+                description,
+                checkpoint,
+                prompt: finalPrompt,
+                language: 'japanese',
+                visibility: 'public',
+                scrap: true,
+                ext: 'synclubaichat',
+            });
+        });
+          let  i = 1
+          for (const character of charactersData) {
+            console.log(`${i}/${charactersData.length}`)
+            const existingChat = await collection.findOne({ name: character.name });
+            if (existingChat) {
+              await collection.updateOne({ name: character.name }, { $set: character });
+            } else {
+              await collection.insertOne(character);
+            }
+
+            i++
+          }
+          reply.send({ status: 'Done' });
+        }
+    
+        scrapesynclubaichat();
+      });
       fastify.get('/scraper/civitai', async (request, reply) => {
         try {
           const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('characters');

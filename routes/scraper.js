@@ -148,21 +148,19 @@ async function routes(fastify, options) {
             const charactersData = [];
             responseData.items.forEach(({ url: image, meta: elMeta, nsfwLevel }, index) => {
               if (!elMeta) return;
-                        
-              console.log(index+1,responseData.items.length)
-              charactersData.push({
-                checkpoint: civit_checkpoint,
-                image,
-                checkpointId: civit_model,
-                nsfwLevel,
-                prompt: elMeta.prompt,
-                negativePrompt: elMeta.negativePrompt,
-                sampler: elMeta.sampler,
-                visibility: 'public',
-                scrap: true,
-                nsfw,
-                ext: 'civitai',
-              });
+                charactersData.push({
+                  checkpoint: civit_checkpoint,
+                  image,
+                  checkpointId: civit_model,
+                  nsfwLevel,
+                  prompt: elMeta.prompt,
+                  negativePrompt: elMeta.negativePrompt,
+                  sampler: elMeta.sampler,
+                  visibility: 'public',
+                  scrap: true,
+                  nsfw,
+                  ext: 'civitai',
+                });
             });
             let i = 1;
             for (const character of charactersData) {

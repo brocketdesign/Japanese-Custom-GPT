@@ -357,60 +357,74 @@ async function routes(fastify, options) {
       }
     }
   
-   // Function to retrieve the result from Novita API using task_id with polling
-  async function fetchNovitaResult(task_id) {
-    const pollInterval = 1000; // Poll every 1 second
-    const maxAttempts = 120; // Set a maximum number of attempts to avoid infinite loops
+// Function to retrieve the result from Novita API using task_id with polling and upload it to S3
+async function fetchNovitaResult(task_id) {
+  const pollInterval = 1000; // Poll every 1 second
+  const maxAttempts = 120; // Set a maximum number of attempts to avoid infinite loops
 
-    let attempts = 0;
+  let attempts = 0;
 
-    return new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
       const timer = setInterval(async () => {
-        attempts++;
+          attempts++;
 
-        try {
-          const response = await axios.get(`https://api.novita.ai/v3/async/task-result?task_id=${task_id}`, {
-            headers: {
-              Authorization: `Bearer ${process.env.NOVITA_API_KEY}`,
-            },
-          });
+          try {
+              const response = await axios.get(`https://api.novita.ai/v3/async/task-result?task_id=${task_id}`, {
+                  headers: {
+                      Authorization: `Bearer ${process.env.NOVITA_API_KEY}`,
+                  },
+              });
 
-          if (response.status !== 200) {
-            throw new Error(`Error fetching result: ${response.status} - ${response.data}`);
+              if (response.status !== 200) {
+                  throw new Error(`Error fetching result: ${response.status} - ${response.data}`);
+              }
+
+              const taskStatus = response.data.task.status;
+
+              if (taskStatus === 'TASK_STATUS_SUCCEED') {
+                  clearInterval(timer);
+                  const images = response.data.images;
+                  if (images.length === 0) {
+                      throw new Error('No images returned from Novita API');
+                  }
+
+                  // Download the image from Novita
+                  const imageUrl = images[0].image_url;
+                  const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+                  const buffer = Buffer.from(imageResponse.data, 'binary');
+
+                  // Generate a hash from the buffer
+                  const hash = createHash('md5').update(buffer).digest('hex');
+
+                  // Upload the image to S3
+                  const s3Url = await uploadToS3(buffer, hash, 'novita_result_image.png');
+                  
+                  // Resolve the promise with the S3 URL
+                  resolve(s3Url);
+
+              } else if (taskStatus === 'TASK_STATUS_FAILED') {
+                  clearInterval(timer);
+                  reject(`Task failed with reason: ${response.data.task.reason}`);
+              } else if (attempts >= maxAttempts) {
+                  clearInterval(timer);
+                  reject('Task timed out.');
+              }
+
+              // Optionally, you can log the progress or queue status
+              if (taskStatus === 'TASK_STATUS_QUEUED') {
+                  console.log("Queueing...");
+              } else if (taskStatus === 'TASK_STATUS_RUNNING') {
+                  console.log(`Progress: ${response.data.task.progress_percent}%`);
+              }
+
+          } catch (error) {
+              clearInterval(timer);
+              console.error('Error fetching Novita result:', error.message);
+              reject(error);
           }
-
-          const taskStatus = response.data.task.status;
-
-          if (taskStatus === 'TASK_STATUS_SUCCEED') {
-            clearInterval(timer);
-            const images = response.data.images;
-            if (images.length === 0) {
-              throw new Error('No images returned from Novita API');
-            }
-            resolve(images[0].image_url);
-          } else if (taskStatus === 'TASK_STATUS_FAILED') {
-            clearInterval(timer);
-            reject(`Task failed with reason: ${response.data.task.reason}`);
-          } else if (attempts >= maxAttempts) {
-            clearInterval(timer);
-            reject('Task timed out.');
-          }
-
-          // Optionally, you can log the progress or queue status
-          if (taskStatus === 'TASK_STATUS_QUEUED') {
-            console.log("Queueing...");
-          } else if (taskStatus === 'TASK_STATUS_RUNNING') {
-            console.log(`Progress: ${response.data.task.progress_percent}%`);
-          }
-
-        } catch (error) {
-          clearInterval(timer);
-          console.error('Error fetching Novita result:', error.message);
-          reject(error);
-        }
       }, pollInterval);
-    });
-  }
+  });
+}
 
   fastify.post('/novita/txt2img', async (request, reply) => {
     const { prompt, aspectRatio, userId, chatId, userChatId, character } = request.body;

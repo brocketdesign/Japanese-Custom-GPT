@@ -461,7 +461,6 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     try {
       const userId = request.params.id;
       const limits = await checkLimits(userId)
-      console.log(limits)
       return reply.send({limits})
     } catch (error) {
       reply.send({error:`Limit not founded`})

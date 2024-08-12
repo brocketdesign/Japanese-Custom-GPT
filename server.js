@@ -368,9 +368,6 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         return reply.status(500).send({ error: 'Unable to render the settings' });
       }
     });
-    
-    
-
     const start = async () => {
       try {
         const port = process.env.PORT || 3000;

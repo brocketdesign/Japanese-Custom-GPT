@@ -568,7 +568,7 @@ $(document).ready(function() {
                     if(!isStarter){
                         let messageHtml = `
                             <div class="d-flex flex-row justify-content-end mb-4 message-container">
-                                <div id="response-1" class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfb;">
+                                <div id="response-1" class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
                                     ${marked.parse(userMessage.content)}
                                 </div>
                             </div>
@@ -635,7 +635,7 @@ $(document).ready(function() {
                             let userMessage = userChat[i + 1];
                             messageHtml += `
                                 <div class="d-flex flex-row justify-content-end mb-4 message-container">
-                                    <div id="response-${designStep}" class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfb;">
+                                    <div id="response-${designStep}" class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
                                         ${marked.parse(userMessage.content)}
                                     </div>
                                 </div>
@@ -753,7 +753,7 @@ $(document).ready(function() {
                         $(`#response-${currentStep - 1}`).remove()
                         $(`#container-${currentStep - 1}`).append(`
                             <div class="d-flex flex-row justify-content-end mb-4 message-container" style="opacity:0;">
-                                <div id="response-${currentStep - 1}" class="p-3 me-3 border-0" style="border-radius: 15px; background-color: #fbfbfb;">${response}</div>
+                                <div id="response-${currentStep - 1}" class="p-3 me-3 border-0" style="border-radius: 15px; background-color: #fbfbfbdb;">${response}</div>
                             </div>
                         `)
                     }
@@ -903,7 +903,7 @@ $(document).ready(function() {
                 if(messageClass === 'user-message'){
                     $('#chatContainer').append(`
                         <div class="d-flex flex-row justify-content-end mb-4 message-container ${messageClass}">
-                            <div class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfb;">
+                            <div class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
                                 <span>${message}</span>
                             </div>
                         </div>

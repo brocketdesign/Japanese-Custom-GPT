@@ -125,14 +125,13 @@ async function routes(fastify, options) {
           const page = parseInt(request.query.page, 10) || 0; // Convert the page to an integer and default to 0 if not provided
           const civit_checkpoint = request.query.checkpoint
           const civit_model = request.query.modelId
-
           // Determine the number of elements to skip based on the page
           const elementsPerPage = 10;
           const skipElements = (page-1) * elementsPerPage;
 
           // Query the database to find existing records
           const existingCharacters = await collection
-          .find({ checkpointId: civit_model, ext: 'civitai'})
+          .find({ checkpointId: civit_model, nsfw, ext: 'civitai'})
           .skip(skipElements)
           .limit(elementsPerPage)
           .toArray();
@@ -150,6 +149,7 @@ async function routes(fastify, options) {
             responseData.items.forEach(({ url: image, meta: elMeta, nsfwLevel }, index) => {
               if (!elMeta) return;
                         
+              console.log(index+1,responseData.items.length)
               charactersData.push({
                 checkpoint: civit_checkpoint,
                 image,
@@ -164,8 +164,6 @@ async function routes(fastify, options) {
                 ext: 'civitai',
               });
             });
-            
-
             let i = 1;
             for (const character of charactersData) {
               const existingChat = await collection.findOne({ image: character.image });
@@ -179,7 +177,7 @@ async function routes(fastify, options) {
       
             // After scraping, fetch the updated list of characters to return
             const updatedCharacters = await collection
-              .find({ checkpointId: civit_model, ext: 'civitai'})
+              .find({ checkpointId: civit_model, nsfw, ext: 'civitai'})
               .skip(skipElements)
               .limit(elementsPerPage)
               .toArray();

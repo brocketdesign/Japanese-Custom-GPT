@@ -259,7 +259,7 @@ $(document).ready(function() {
     }
 
     renderCircleGrid(girls_avatar,$('#custom-card-container'))
-    renderCircleGrid(cardData,$("#cardGrid-2"))
+    renderCircleGrid(cardData,$("#cardGrid"))
     renderCircleGrid(cardData2,$('#cardGrid'))
     renderCircleGrid(chatbotInfos,$("#chatbot-container"));
 

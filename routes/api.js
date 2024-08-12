@@ -551,6 +551,7 @@ async function routes(fastify, options) {
         existingSubscription = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').findOne({
             _id: new fastify.mongo.ObjectId(userId),
             subscriptionStatus: 'active',
+            subscriptionType: process.env.MODE
         });
         
         if (existingSubscription) {

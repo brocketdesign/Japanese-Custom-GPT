@@ -388,7 +388,8 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       // Fetch the user from the database using their ObjectId
       existingSubscription = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').findOne({
         _id: new fastify.mongo.ObjectId(userId),
-        subscriptionStatus: 'active'
+        subscriptionStatus: 'active',
+        subscriptionType: process.env.MODE
       });
       reply.send({plan:existingSubscription})
     } catch (error) {
@@ -425,6 +426,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
         existingSubscription = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').findOne({
             _id: new fastify.mongo.ObjectId(userId),
             subscriptionStatus: 'active',
+            subscriptionType: process.env.MODE
         });
         
         if (existingSubscription) {
@@ -459,6 +461,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     try {
       const userId = request.params.id;
       const limits = await checkLimits(userId)
+      console.log(limits)
       return reply.send({limits})
     } catch (error) {
       reply.send({error:`Limit not founded`})

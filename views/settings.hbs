@@ -378,11 +378,11 @@ img {
     <ul class="list-group">
       <li class="list-group-item">
         <i class="fa fa-comment me-2"></i>
-        ${data.messageCountDoc.count}/${data.messageCountDoc.limit}
+        ${data.messageCountDoc ? data.messageCountDoc.count : 0}/${data.messageLimit}
       </li>
       <li class="list-group-item">
         <i class="fa fa-image me-2"></i>
-        ${data.imageCountDoc.count}/${data.imageCountDoc.limit}
+        ${data.imageCountDoc? data.imageCountDoc.count : 0}/${data.chatLimit}
       </li>
     </ul>
     `)

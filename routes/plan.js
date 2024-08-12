@@ -100,14 +100,16 @@ async function routes(fastify, options) {
       let existingSubscription = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').findOne({
         _id: new fastify.mongo.ObjectId(userId),
         currentPlanId: planPriceId,
-        subscriptionStatus: 'active', // Consider what 'active' means in your context
+        subscriptionStatus: 'active',
+        subscriptionType: process.env.MODE
       });
       if (existingSubscription) {
         return reply.status(400).send({ error: 'You already have an active subscription for this plan.' });
       }
       existingSubscription = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').findOne({
         _id: new fastify.mongo.ObjectId(userId),
-        subscriptionStatus: 'active', // Consider what 'active' means in your context
+        subscriptionStatus: 'active', 
+        subscriptionType: process.env.MODE
       });
       if(existingSubscription && existingSubscription.currentPlanId != planPriceId ){
         console.log(`change plan to ${planId}`)
@@ -188,6 +190,7 @@ async function routes(fastify, options) {
             stripeCustomerId: session.customer, // Store Stripe customer ID
             stripeSubscriptionId: session.subscription, // Store Stripe subscription ID
             subscriptionStatus: 'active', // Update subscription status
+            subscriptionType: process.env.MODE,
             currentPlanId: subscription.items.data[0].price.id, // Store current plan ID
             billingCycle: subscription.items.data[0].price.recurring.interval, // Store billing cycle
             subscriptionStartDate: new Date(subscription.start_date * 1000), // Convert Unix timestamp to Date
@@ -249,7 +252,10 @@ async function routes(fastify, options) {
   
       // Update MongoDB subscription status
       const updateResult = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').updateOne(
-        { _id: new fastify.mongo.ObjectId(user._id) },
+        { 
+          _id: new fastify.mongo.ObjectId(user._id),
+          subscriptionType: process.env.MODE 
+        },
         {
           $set: {
             subscriptionStatus: 'canceled',

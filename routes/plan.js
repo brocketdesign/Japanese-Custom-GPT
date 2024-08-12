@@ -35,7 +35,7 @@ async function routes(fastify, options) {
         "新規機能のアクセス"
       ],
       messageLimit:200,
-      chatLimit:false,
+      chatLimit:'無制限',
       imageLimit:100,
     },
     {
@@ -53,8 +53,8 @@ async function routes(fastify, options) {
         "新機能への早期アクセス",
         "優先的なサポート対応"
       ],
-      messageLimit:false,
-      chatLimit:false,
+      messageLimit:'無制限',
+      chatLimit:'無制限',
       imageLimit:500,
     }
   ];

@@ -442,7 +442,6 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
             }
         }
     }
-  
     if (messageCountDoc && messageCountDoc.count >= messageLimit) {
         return { error: 'Message limit reached for today.', id: 1, messageCountDoc, chatCount, imageCountDoc, messageLimit, chatLimit, imageLimit };
     } 

@@ -319,7 +319,7 @@ async function routes(fastify, options) {
     async function fetchNovitaMagic(data) {
       try {
         const image_request = {
-          model_name: data.checkpoint || "majicmixRealistic_v7_134792.safetensors",
+          model_name: data.checkpoint || "hassakuHentaiModel_v13_75289.safetensors",
           prompt: data.prompt,
           negative_prompt: data.negativePrompt || "(worst quality:2),(low quality:2),(normal quality:2),lowres,watermark",
           width: data.width,
@@ -447,6 +447,7 @@ async function fetchNovitaResult(task_id) {
           let bestMatch = stringSimilarity.findBestMatch(normalizedQuery, modelNames);
           const similarityThreshold = 0.5;
           if (bestMatch.bestMatch.rating >= similarityThreshold) {
+            console.log({closestCheckpoint})
             closestCheckpoint = data.models[bestMatch.bestMatchIndex].sd_name;
           }
         }

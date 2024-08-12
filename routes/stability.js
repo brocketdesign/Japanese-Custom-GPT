@@ -452,14 +452,13 @@ async function fetchNovitaResult(task_id) {
           }
         }
       }
-      const closestDimension = getClosestAllowedDimension(768, aspectRatio);
       const taskId = await fetchNovitaMagic({
         prompt,
         negativePrompt: character ? character.negativePrompt : null,
         sampler: character ? character.sampler : null,
         checkpoint: closestCheckpoint,
-        width: closestDimension.width,
-        height: closestDimension.height,
+        width: 512,
+        height: 704,
       });
   
       // Polling or wait for the task to complete (you might want to add a delay or retry logic here)

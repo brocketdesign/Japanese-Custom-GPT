@@ -3,8 +3,43 @@
 const { ObjectId } = require('mongodb');
 const axios = require('axios');
 const cheerio = require('cheerio');
+const aws = require('aws-sdk');
+const { createHash } = require('crypto');
 
 async function routes(fastify, options) {
+  // Configure AWS S3
+  const s3 = new aws.S3({
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      region: process.env.AWS_REGION
+  });
+  const uploadToS3 = async (buffer, hash, filename) => {
+      const params = {
+          Bucket: process.env.AWS_S3_BUCKET_NAME,
+          Key: `${hash}_${filename}`,
+          Body: buffer,
+          ACL: 'public-read'
+      };
+      const uploadResult = await s3.upload(params).promise();
+      return uploadResult.Location;
+  };
+    const handleFileUpload = async (part) => {
+      const chunks = [];
+      for await (const chunk of part.file) {
+          chunks.push(chunk);
+      }
+      const buffer = Buffer.concat(chunks);
+      const hash = createHash('md5').update(buffer).digest('hex');
+      const existingFiles = await s3.listObjectsV2({
+          Bucket: process.env.AWS_S3_BUCKET_NAME,
+          Prefix: hash,
+      }).promise();
+      if (existingFiles.Contents.length > 0) {
+          return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFiles.Contents[0].Key}`;
+      } else {
+          return uploadToS3(buffer, hash, part.filename);
+      }
+  };
   fastify.get('/scraper/zeta', (request, reply) => {
       const puppeteer = require('puppeteer');
     
@@ -61,11 +96,46 @@ async function routes(fastify, options) {
     
       reply.send({ status: 'Done' })
     });
+    fastify.get('/scraper/gohiai/update-images', async (request, reply) => {
+      const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+    
+      async function updateImages() {
+        const characters = await collection.find({ scrap: true, ext: 'gohiai' }).toArray();
+    
+        let i = 1;
+        for (const character of characters) {
+          console.log(`${i}/${characters.length}`);
+    
+          if (!character.chatImageUrl.includes('lamix')) {
+            try {
+              console.log(`Uploading image for: ${character.name}, ${character.chatImageUrl}`);
+              const imageBuffer = await axios.get(character.chatImageUrl, { responseType: 'arraybuffer' });
+              const hash = createHash('md5').update(imageBuffer.data).digest('hex');
+              const imageUrl = await handleFileUpload({ file: [imageBuffer.data], filename: `${hash}.jpg` });
+              await collection.updateOne({ _id: character._id }, { $set: { chatImageUrl: imageUrl } });
+            } catch (error) {
+              console.error(`Error uploading image for ${character.name}:`, error);
+              // You can add additional error handling here, such as logging the error or retrying the upload
+            }
+          } else {
+            console.log(`Image already exists for: ${character.name} ${character.chatImageUrl}`);
+          }
+    
+          i++;
+        }
+        
+        reply.send({ status: 'Done' });
+      }
+    
+      updateImages();
+    });
+    
+    
     fastify.get('/scraper/gohiai', async (request, reply) => {
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
     
         async function scrapeGohiai() {
-          const response = await axios.get('https://www.gohiai.com/ja-jp/ai-explore/pt_odj3G4fxzlNDa7uKf2K3');
+          const response = await axios.get('https://www.gohiai.com/ja-jp/ai-explore/pt_HEYXw0PF2PVU7Uz8fkzY');
           const $ = cheerio.load(response.data);
     
           const charactersData = [];
@@ -77,7 +147,7 @@ async function routes(fastify, options) {
             const profileLink = 'https://www.gohiai.com' + $(element).find('a.nick').attr('href');
     
             charactersData.push({
-                category: 'いじめる',
+                category: '彼氏',
                 chatImageUrl,
                 name,
                 description,
@@ -93,6 +163,17 @@ async function routes(fastify, options) {
           for (const character of charactersData) {
             console.log(`${i}/${charactersData.length}`)
             const existingChat = await collection.findOne({ name: character.name });
+
+            if (existingChat.chatImageUrl.indexOf('lamix') == -1 ) {
+              console.log(`Uploading image for: ${character.name}, ${character.chatImageUrl}`);
+              const imageBuffer = await axios.get(character.chatImageUrl, { responseType: 'arraybuffer' });
+              const hash = createHash('md5').update(imageBuffer.data).digest('hex');
+              const imageUrl = await handleFileUpload({ file: [imageBuffer.data], filename: `${hash}.jpg` });
+              character.chatImageUrl = imageUrl;
+            } else {
+              console.log(`Image already exists for: ${character.name} ${character.chatImageUrl}`);
+            }
+        
             if (existingChat) {
               await collection.updateOne({ name: character.name }, { $set: character });
             } else {
@@ -156,18 +237,35 @@ async function routes(fastify, options) {
                 ext: 'synclubaichat',
             });
         });
-          let  i = 1
-          for (const character of charactersData) {
-            console.log(`${i}/${charactersData.length}`)
-            const existingChat = await collection.findOne({ name: character.name });
-            if (existingChat) {
-              await collection.updateOne({ name: character.name }, { $set: character });
-            } else {
-              await collection.insertOne(character);
-            }
+        let i = 1;
+        for (const character of charactersData) {
+          console.log(`Processing ${i}/${charactersData.length}: ${character.name}`);
+          
+          const existingChat = await collection.findOne({ name: character.name });
 
-            i++
+          if (!existingChat) {
+            console.log(`Uploading image for: ${character.name}, ${character.chatImageUrl}`);
+            const imageBuffer = await axios.get(character.chatImageUrl, { responseType: 'arraybuffer' });
+            const hash = createHash('md5').update(imageBuffer.data).digest('hex');
+            const imageUrl = await handleFileUpload({ file: [imageBuffer.data], filename: `${hash}.jpg` });
+            character.chatImageUrl = imageUrl;
+          } else {
+            console.log(`Image already exists for: ${character.name} ${character.chatImageUrl}`);
           }
+        
+          if (existingChat) {
+            console.log(`Updating existing entry for: ${character.name}`);
+            await collection.updateOne({ name: character.name }, { $set: character });
+          } else {
+            console.log(`Inserting new entry for: ${character.name}`);
+            await collection.insertOne(character);
+          }
+        
+          i++;
+        }
+        console.log('Processing complete.');
+        
+          
           reply.send({ status: 'Done' });
         }
     

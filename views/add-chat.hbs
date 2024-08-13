@@ -956,21 +956,49 @@
 
         // Function to convert image URL to Base64 (as explained earlier)
         function convertImageUrlToBase64(url, callback) {
-            fetch(url)
-                .then(response => response.blob())
-                .then(blob => {
-                    const reader = new FileReader();
-                    reader.onloadend = function() {
-                        callback(reader.result.split(',')[1]); // Extract Base64 string from Data URL
-                    }
-                    reader.readAsDataURL(blob);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    callback(null);
-                });
-        }
+            const img = new Image();
+            img.crossOrigin = 'Anonymous'; // Handle CORS if the image is from a different origin
 
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const maxWidth = 800; // Default max width
+                const maxHeight = 800; // Default max height
+                const quality = 0.7; // Default quality for compression (0.7 = 70%)
+
+                let width = img.width;
+                let height = img.height;
+
+                // Calculate new dimensions based on the maximum width/height while maintaining aspect ratio
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height *= maxWidth / width;
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width *= maxHeight / height;
+                        height = maxHeight;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Convert the canvas to a Base64 string with specified quality (JPEG)
+                const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+                callback(compressedBase64.split(',')[1]); // Extract Base64 string from Data URL
+            };
+
+            img.onerror = function() {
+                console.error('Image load error');
+                callback(null);
+            };
+
+            img.src = url;
+        }
 
         function generateName(callback) {
 

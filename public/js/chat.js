@@ -202,7 +202,7 @@ $(document).ready(function() {
                                 let limitMess = messageCountDoc.limit == '無制限' ? messageCountDoc.limit : `${parseInt(messageCountDoc.count)}/${messageCountDoc.limit}`
                                 $('#message-number')
                                 .html(`
-                                    <span class="badge bg-dark" style="color: rgb(165 164 164);opacity:0.8;">
+                                    <span class="badge bg-dark" style="color: rgb(165 164 164);opacity:0.8;font-size: 12px;">
                                         <i class="fa fa-comment me-1"></i>${limitMess}
                                     </span>
                                 `)
@@ -460,7 +460,7 @@ $(document).ready(function() {
                             let limitMess = messageCountDoc.limit == '無制限' ? messageCountDoc.limit : `${parseInt(messageCountDoc.count)}/${messageCountDoc.limit}`
                             $('#message-number')
                             .html(`
-                                <span class="badge bg-dark" style="color: rgb(165 164 164);opacity:0.8;">
+                                <span class="badge bg-dark" style="color: rgb(165 164 164);opacity:0.8;font-size: 12px;">
                                     <i class="fa fa-comment me-1"></i>${limitMess}
                                 </span>
                             `)

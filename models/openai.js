@@ -1,7 +1,7 @@
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 const { createParser } = require('eventsource-parser');
 
-const fetchOpenAICompletion = async (messages, res, maxToken = 1000) => {
+const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'gpt-4o-mini' ) => {
     try {
         let response = await fetch(
             "https://api.openai.com/v1/chat/completions",
@@ -12,7 +12,7 @@ const fetchOpenAICompletion = async (messages, res, maxToken = 1000) => {
                 },
                 method: "POST",
                 body: JSON.stringify({
-                    model: 'gpt-4o-mini',
+                    model,
                     messages,
                     temperature: 0.85,
                     top_p: 0.95,

@@ -893,7 +893,7 @@ $(document).ready(function() {
             html: `
                 <div id="ideas-container" class="text-white pt-2 px-3 w-100" style="min-height:200px;">
                     <h5 class="mb-0">スマートリプライ</h5>
-                    <span id="messageIdeasLimit" class="text-muted" style="font-size:12px"></span>
+                    <span id="messageIdeasLimit" class="text-muted" style="font-size:12px;opacity:0">毎日の無料使用回数</span>
                     <hr class="my-1">
                     <ul class="list-unstyled list-group mb-0">
                         <li class="loading-placeholder list-group-item idea-item text-white text-start rounded my-1 py-2" style="cursor:pointer;background:#bfbfbf47;font-size:14px;">
@@ -948,7 +948,7 @@ $(document).ready(function() {
             if(data.messageIdeasCountDoc){
                 limitMess = data.messageIdeasCountDoc.limit == '無制限' ? data.messageIdeasCountDoc.limit : `毎日の無料使用回数: ${parseInt(data.messageIdeasCountDoc.count)}/${data.messageIdeasCountDoc.limit}`
             }
-            $('#messageIdeasLimit').html(limitMess)
+            $('#messageIdeasLimit').html(limitMess).css('opacity',1)
         })
     });
 

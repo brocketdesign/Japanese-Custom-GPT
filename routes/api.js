@@ -659,7 +659,7 @@ async function routes(fastify, options) {
                         userId:new fastify.mongo.ObjectId(userId),
                         chatId,
                         messages: [
-                            { "role": "system", "content": `You are a character named ${chatDocument.name}. Stay in character, acting naturally and casually. Your responses are short, fitting a chat, and use emojis where appropriate. Do not end the chat in one answer, keep chatting.Always describe actions or emotions using **. Respond in ${chatDocument.language}. Example:  *{{character name}} leans back in her chair, a soft sigh escaping her lips as she gazes out the window. Her fingers absentmindedly trace the rim of her cup, the warmth seeping into her skin.* It's been a long day, *she murmurs, her voice carrying a note of exhaustion mixed with a hint of vulnerability. Her eyes meet yours, a fleeting smile playing on her lips, inviting you to share a moment of quiet understanding.*` 
+                            { "role": "system", "content": `You are a character named ${chatDocument.name}. Stay in character. Your goal is to entertain the user. Your responses are short, fitting a chat, and use emojis where appropriate. Do not end the chat in one answer, keep chatting. Always describe actions or emotions using **. Respond in ${chatDocument.language}. Example:  *{{character name}} leans back in her chair, a soft sigh escaping her lips as she gazes out the window. Her fingers absentmindedly trace the rim of her cup, the warmth seeping into her skin.* It's been a long day, *she murmurs, her voice carrying a note of exhaustion mixed with a hint of vulnerability. Her eyes meet yours, a fleeting smile playing on her lips, inviting you to share a moment of quiet understanding.*` 
                             },
                             { "role": "user", "content": `Here is your character description :\n\n${chatPurpose}\n${chatDescription}\n${chatRule}\n\n`
                             },
@@ -1232,7 +1232,8 @@ async function routes(fastify, options) {
                 },
                 { 
                     role: "user", 
-                    content: `Based on the following conversation transcript, provide 3 possible short answers in ${language} for the user to continue the chat:
+                    content: `Based on the following conversation transcript, provide 3 possible short answers in ${language} for the user to continue the chat.
+                    The provided answers must be entertaining. Here is the conversation :
                     ` + userMessages.map(msg => msg.role !== 'system' ? `${msg.content.replace('[Narrator]', '')}` : '').join("\n")
                 }
             ];

@@ -248,6 +248,7 @@ async function routes(fastify, options) {
             const hash = createHash('md5').update(imageBuffer.data).digest('hex');
             const imageUrl = await handleFileUpload({ file: [imageBuffer.data], filename: `${hash}.jpg` });
             character.chatImageUrl = imageUrl;
+            console.log(`New image URL : ${imageUrl}`)
           } else {
             console.log(`Image already exists for: ${character.name} ${character.chatImageUrl}`);
           }

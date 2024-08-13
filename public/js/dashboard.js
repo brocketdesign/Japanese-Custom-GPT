@@ -80,7 +80,7 @@ $(document).ready(function() {
           ]
         // Display the popup using Swal.fire
         Swal.fire({
-            imageUrl: imageUrl,
+            //imageUrl: imageUrl,
             imageWidth: '100%',
             imageHeight: 'auto',
             position: 'bottom',

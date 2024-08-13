@@ -4,6 +4,27 @@
 <body>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
     <style>
+        .gen-idea-container #swal2-html-container{
+            border-radius: 40px 40px 0 0;
+            padding: 0;
+            width: 100%;
+        }
+        .gen-idea-container{
+            border-radius: 40px 40px 0 0;
+            background-color: #313030;
+            width: 100%;
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+        .gen-idea-container .swal2-close{
+            right: 15px;
+            background: #9796963d;
+            border-radius: 50%;
+            font-size: 31px;
+            top: 10px;
+        }
         em {
             font-size: 13px;
             color: #979393;
@@ -382,8 +403,13 @@
             border-radius: 0px 30px 30px 0px !important;
             box-shadow: none;
         }
-        #userMessage {
+        #gen-ideas{
+            border-right: 0 !important;
             border-radius: 30px 0px 0px 30px !important;
+            box-shadow: none;
+        }
+        #userMessage {
+            border-radius: 0 !important;
             background-color: #f5f5f5;
             height: 50px;
             font-size: 14px;
@@ -777,6 +803,7 @@
                             </div>
                         </div>
                         <div id="input-container" class="d-flex w-100">
+                            <button id="gen-ideas" class="btn btn-light px-4 border-0">💡</button>
                             <textarea id="userMessage" class="form-control py-3 border-0" placeholder="チャットしよう"></textarea>
                             <button id="sendMessage" class="btn btn-light px-4 border-0"><i class="fas fa-paper-plane"></i></button>
                         </div>
@@ -863,7 +890,80 @@ $(document).ready(function() {
             Cookies.set('sidebarState', 'expanded', { expires: 7 });
         }
     });
-    
+    $(document).on('click', '#gen-ideas', function() {
+        const isTemporary = $('body').attr('data-temporary-user') === 'true';
+        if($('#chat-widget-container').length == 0 && isTemporary){
+            showRegistrationForm(); return;
+        }
+
+        const is_chatId = $(this).attr('data-chat-id');
+        const is_userId = $(this).attr('data-user-id');
+        const is_userChatId = $(this).attr('data-user-chat-id');
+        if(!is_userChatId){
+            return
+        }
+        Swal.fire({
+            html: `
+                <div id="ideas-container" class="text-white pt-2 px-3 w-100" style="min-height:200px;">
+                    <h5 class="mb-0">スマートリプライ</h5>
+                    <span id="messageIdeasLimit" class="text-muted" style="font-size:12px"></span>
+                    <hr class="my-1">
+                    <ul class="list-unstyled list-group mb-0">
+                        <li class="loading-placeholder list-group-item idea-item text-white text-start rounded my-1 py-2" style="cursor:pointer;background:#bfbfbf47;font-size:14px;">
+                            <img src="/img/load-dot.gif" style="width:30px">
+                        </li>
+                        <li class="loading-placeholder list-group-item idea-item text-white text-start rounded my-1 py-2" style="cursor:pointer;background:#bfbfbf47;font-size:14px;">
+                            <img src="/img/load-dot.gif" style="width:30px">
+                        </li>
+                        <li class="loading-placeholder list-group-item idea-item text-white text-start rounded my-1 py-2" style="cursor:pointer;background:#bfbfbf47;font-size:14px;">
+                            <img src="/img/load-dot.gif" style="width:30px">
+                        </li>
+                    </ul>
+                </div>
+            `,
+            showClass: { popup: 'animate__fadeInUp animate__faster' },
+            hideClass: { popup: 'animate__fadeOutDown animate__faster' },
+            position: 'bottom', backdrop: 'rgba(43, 43, 43, 0.2)',
+            showCloseButton: true, showConfirmButton: false,
+            customClass: { container: 'p-0', popup: 'gen-idea-container shadow', closeButton: 'position-absolute' }
+        });
+
+        if ($('#gen-ideas').hasClass('done')) {
+            $('#ideas-container ul').html($('#gen-ideas').data('savedContent'));
+        } else {
+            $('#gen-ideas').addClass('done');
+            $.ajax({
+                url: `${localStorage.getItem('API_URL')}/api/openai-chat-choice/`,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ userId: is_userId, userChatId: is_userChatId, chatId: is_chatId }),
+                success: function(response) {
+                    let ideasList = response.map(content => `
+                        <li class="list-group-item idea-item text-white rounded my-1" style="cursor:pointer;background:#bfbfbf47;font-size:14px;" onclick="sendMessage('${content}')">
+                            ${content}
+                        </li>`).join('');
+                    $('.loading-placeholder').remove();
+                    $('#ideas-container ul').append(ideasList);
+                    $('#gen-ideas').data('savedContent', ideasList);
+                },
+                error: function(xhr, status, error) {
+                    if (xhr.responseJSON && xhr.responseJSON.error.id === 4) {
+                        showUpgradePopup('chat-message-ideas');
+                    }
+                }
+            });
+        }
+          // Display user limits
+        $.get('/user/limit/'+is_userId,function(data){
+            data = data.limits
+            let limitMess = '毎日の無料使用回数: '
+            if(data.messageIdeasCountDoc){
+                limitMess = data.messageIdeasCountDoc.limit == '無制限' ? data.messageIdeasCountDoc.limit : `毎日の無料使用回数: ${parseInt(data.messageIdeasCountDoc.count)}/${data.messageIdeasCountDoc.limit}`
+            }
+            $('#messageIdeasLimit').html(limitMess)
+        })
+    });
+
     $(document).on('click', '.chart-button, .chatbot-image-chat', function(e) {
         e.preventDefault();
         e.stopPropagation();

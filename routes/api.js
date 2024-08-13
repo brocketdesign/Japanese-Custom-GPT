@@ -523,63 +523,66 @@ async function routes(fastify, options) {
     });
     
 
-  async function checkLimits(userId) {
-    const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
-
-    // Get the user's data
-    const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
-    const user = await userDataCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
-  
-    // Get the message count and chat count
-    const messageCountCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageCount');
-    const messageCountDoc = await messageCountCollection.findOne({ userId: new fastify.mongo.ObjectId(userId), date: today });
-
-    const chatCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-    const chatCount = await chatCollection.countDocuments({ userId: new fastify.mongo.ObjectId(userId) });
-  
-    // Get the image count
-    const imageCountCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('ImageCount');
-    const imageCountDoc = await imageCountCollection.findOne({ userId: new fastify.mongo.ObjectId(userId), date: today });
-
-    // Check the limits
-    const isTemporary = user.isTemporary;
-    let messageLimit = isTemporary ? 10 : 50;
-    let chatLimit = isTemporary ? 1 : 3;
-    let imageLimit = isTemporary ? 1 : 3;
-
-    if (!isTemporary) {
-        existingSubscription = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').findOne({
-            _id: new fastify.mongo.ObjectId(userId),
-            subscriptionStatus: 'active',
-            subscriptionType: process.env.MODE
-        });
-        
-        if (existingSubscription) {
-            const billingCycle = existingSubscription.billingCycle + 'ly';
-            const currentPlanId = existingSubscription.currentPlanId;
-            const plansFromDb = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('plans').findOne();
-            const plans = plansFromDb.plans;
-            const plan = plans.find((plan) => plan[`${billingCycle}_id`] === currentPlanId);
-            messageLimit = plan.messageLimit || messageLimit;
-            chatLimit = plan.chatLimit || chatLimit;
-            imageLimit = plan.imageLimit || imageLimit;
+    async function checkLimits(userId) {
+        const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
+    
+        const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+        const user = await userDataCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
+    
+        const messageCountCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageCount');
+        const messageCountDoc = await messageCountCollection.findOne({ userId: new fastify.mongo.ObjectId(userId), date: today });
+    
+        const chatCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+        const chatCount = await chatCollection.countDocuments({ userId: new fastify.mongo.ObjectId(userId) });
+    
+        const imageCountCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('ImageCount');
+        const imageCountDoc = await imageCountCollection.findOne({ userId: new fastify.mongo.ObjectId(userId), date: today });
+    
+        // Fetch message ideas count
+        const messageIdeasCountCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageIdeasCount');
+        const messageIdeasCountDoc = await messageIdeasCountCollection.findOne({ userId: new fastify.mongo.ObjectId(userId), date: today });
+    
+        const isTemporary = user.isTemporary;
+        let messageLimit = isTemporary ? 10 : 50;
+        let chatLimit = isTemporary ? 1 : 3;
+        let imageLimit = isTemporary ? 1 : 3;
+        let messageIdeasLimit = isTemporary ? 3 : 10;
+    
+        if (!isTemporary) {
+            const existingSubscription = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').findOne({
+                _id: new fastify.mongo.ObjectId(userId),
+                subscriptionStatus: 'active',
+                subscriptionType: process.env.MODE
+            });
+    
+            if (existingSubscription) {
+                const billingCycle = existingSubscription.billingCycle + 'ly';
+                const currentPlanId = existingSubscription.currentPlanId;
+                const plansFromDb = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('plans').findOne();
+                const plans = plansFromDb.plans;
+                const plan = plans.find((plan) => plan[`${billingCycle}_id`] === currentPlanId);
+                messageLimit = plan.messageLimit || messageLimit;
+                chatLimit = plan.chatLimit || chatLimit;
+                imageLimit = plan.imageLimit || imageLimit;
+                messageIdeasLimit = plan.messageIdeasLimit || messageIdeasLimit;
+            }
         }
-    }
-  
-    if (messageCountDoc && messageCountDoc.count >= messageLimit) {
-        return { error: 'Message limit reached for today.', id: 1, messageCountDoc, chatCount, imageCountDoc, messageLimit, chatLimit, imageLimit };
-    } 
-    /*
-    if (chatCount >= chatLimit) {
-        return { error: 'Chat limit reached.', id: 2, messageCountDoc, chatCount, imageCountDoc, messageLimit, chatLimit, imageLimit };
-    }
-    */
-    if (imageCountDoc && imageCountDoc.count >= imageLimit) {
-        return { error: 'Image generation limit reached for today.', id: 3, messageCountDoc, chatCount, imageCountDoc, messageLimit, chatLimit, imageLimit };
+    
+        if (messageCountDoc && messageCountDoc.count >= messageLimit) {
+            return { error: 'Message limit reached for today.', id: 1, messageCountDoc, chatCount, imageCountDoc, messageIdeasCountDoc, messageLimit, chatLimit, imageLimit, messageIdeasLimit };
+        } 
+    
+        if (imageCountDoc && imageCountDoc.count >= imageLimit) {
+            return { error: 'Image generation limit reached for today.', id: 3, messageCountDoc, chatCount, imageCountDoc, messageIdeasCountDoc, messageLimit, chatLimit, imageLimit, messageIdeasLimit };
+        }
+    
+        if (messageIdeasCountDoc && messageIdeasCountDoc.count >= messageIdeasLimit) {
+            return { error: 'Message ideas limit reached for today.', id: 4, messageCountDoc, chatCount, imageCountDoc, messageIdeasCountDoc, messageLimit, chatLimit, imageLimit, messageIdeasLimit };
+        }
+        
+        return { messageCountDoc, chatCount, imageCountDoc, messageIdeasCountDoc, messageLimit, chatLimit, imageLimit, messageIdeasLimit };
     }
     
-    return { messageCountDoc, chatCount, imageCountDoc, messageLimit, chatLimit, imageLimit };
-}
     fastify.post('/api/chat-data', async (request, reply) => {
         try {
             const userLimitCheck = await checkLimits(request.body.userId);
@@ -1180,34 +1183,104 @@ async function routes(fastify, options) {
         }
     });
     fastify.post('/api/openai-chat-choice/', async (request, reply) => {
-        let userId = request.body.userId
-        if(!userId){ 
+        let userId = request.body.userId;
+        if (!userId) { 
             const user = await fastify.getUser(request, reply);
-            userId = user._id
+            userId = user._id;
         }
         const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-        const { chatId } = request.body;    
-        console.log({userId,chatId})
+        const { userChatId, chatId } = request.body;
+    
         try {
-
-            let userData = await userDataCollection.findOne({ userId, chatId })
-
+            let userData = await userDataCollection.findOne({ 
+                userId: new fastify.mongo.ObjectId(userId), 
+                _id: new fastify.mongo.ObjectId(userChatId) 
+            });
+    
             if (!userData) {
-                console.log(`User data not found`)
+                console.log(`User data not found`);
                 return reply.status(404).send({ error: 'User data not found' });
             }
-
+    
+            // Check user limits before proceeding
+            const userLimitCheck = await checkLimits(userId);
+            if (userLimitCheck.error && userLimitCheck.id === 4) {
+                return reply.status(429).send({ error: userLimitCheck });
+            }
+    
+            const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+            let chatData = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
+            let language = 'japanese';
+            if (chatData) {
+                language = chatData.language;
+            }
+    
             let userMessages = userData.messages;
-            userMessages.push({role:'user',content:'Provide a JSON array containing 3 choices to prompt the user answer. The array contain keywords.Use the following structure : ["string1","string2","string3"]'})
-            const completion = await moduleCompletion(userMessages, reply.raw);
-            console.log(completion)
-            return reply.send(completion)
-
+    
+            // Create the system and user prompts
+            const narrationPrompt = [
+                { 
+                    role: "system", 
+                    content: `You are an AI assistant.
+                    Respond only with a JSON array containing 3 possible short answers.
+                    Your response should be in ${language}.` 
+                },
+                { 
+                    role: "user", 
+                    content: `Based on the following conversation transcript, provide 3 possible short answers in ${language} for the user to continue the chat:
+                    ` + userMessages.map(msg => msg.role !== 'system' ? `${msg.content.replace('[Narrator]', '')}` : '').join("\n")
+                }
+            ];
+    
+            let completion = await moduleCompletion(narrationPrompt, reply.raw);
+            let cleanedCompletion = completion
+                .replace(/```json\n|```/g, '') 
+                .replace(/\\n/g, '') 
+                .trim();
+    
+            try {
+                let parsedCompletion = JSON.parse(cleanedCompletion);
+    
+                if (Array.isArray(parsedCompletion)) {
+                    // Increment the message ideas count after successful completion
+                    const collectionMessageIdeasCount = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageIdeasCount');
+                    const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
+    
+                    let newMessageIdeasCount;
+    
+                    if (userLimitCheck.messageIdeasCountDoc) {
+                        newMessageIdeasCount = await collectionMessageIdeasCount.findOneAndUpdate(
+                            { userId: new fastify.mongo.ObjectId(userId), date: today },
+                            { $inc: { count: 1 }, $set: { limit: userLimitCheck.messageIdeasLimit } },
+                            { returnOriginal: false }
+                        );
+                    } else {
+                        newMessageIdeasCount = {
+                            userId: new fastify.mongo.ObjectId(userId),
+                            date: today,
+                            count: 1,
+                            limit: userLimitCheck.messageIdeasLimit
+                        };
+                        await collectionMessageIdeasCount.insertOne(newMessageIdeasCount);
+                    }
+    
+                    return reply.send(parsedCompletion);
+                } else {
+                    console.log('Response is not a valid JSON array, resending request...');
+                    return reply.send(false);
+                }
+            } catch (parseError) {
+                console.log('Error parsing completion:', parseError);
+                return reply.status(500).send({ error: 'Invalid response format from OpenAI' });
+            }
+    
         } catch (error) {
-            console.log(error)
+            console.log(error);
             return reply.status(500).send({ error: 'Error fetching OpenAI completion' });
         }
     });
+    
+    
     fastify.post('/api/openai-chat', (request, reply) => {
         const { userId, chatId } = request.body;
         const sessionId = Math.random().toString(36).substring(2, 15); // Generate a unique session ID

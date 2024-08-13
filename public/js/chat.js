@@ -20,8 +20,8 @@ $(document).ready(function() {
             let isNew = true;
             let feedback = false
             let thumbnail = false
-            let isTemporary = user.isTemporary
-            $('body').data('temporary-user',isTemporary)
+            let isTemporary = !!user.isTemporary
+            $('body').attr('data-temporary-user',isTemporary)
 
             sendCustomData({action: 'viewpage'});
             if(chatId){
@@ -50,7 +50,7 @@ $(document).ready(function() {
             $('#sendMessage').on('click', function() {
                 sendMessage();
                 $('#userMessage').val('');  
-                $('#userMessage').attr('placeholder', 'チャットしよう'); 
+                //$('#userMessage').attr('placeholder', 'チャットしよう'); 
                 setTimeout(() => {
                     resizeTextarea($('#userMessage')[0]);
                 }, 500);
@@ -118,6 +118,12 @@ $(document).ready(function() {
                     .attr('data-user-chat-id',userChatId)
                     .attr('data-thumbnail',thumbnail)
                     .attr('data-character',JSON.stringify(character))
+
+                    $('#gen-ideas')
+                    .attr('data-chat-id',chatId)
+                    .attr('data-user-id',userId)
+                    .attr('data-user-chat-id',userChatId)
+                    .removeClass('done')
                 }
 
                 const elementsToUpdate = ['.content .chart-button', '.content .tag-button', '.content .delete-chat'];
@@ -166,6 +172,8 @@ $(document).ready(function() {
 
                 $('#startButtonContained').hide();
                 $('#introChat').hide();
+                $('#gen-ideas').removeClass('done')
+                Swal.close();
 
                 currentStep ++
                 const message = customMessage || $('#userMessage').val();
@@ -191,8 +199,13 @@ $(document).ready(function() {
                         success: function(response) {
                             const messageCountDoc = response.messageCountDoc
                             if(messageCountDoc.limit){
+                                let limitMess = messageCountDoc.limit == '無制限' ? messageCountDoc.limit : `${parseInt(messageCountDoc.count)}/${messageCountDoc.limit}`
                                 $('#message-number')
-                                .html(`<i class="fa fa-comment me-1"></i>${parseInt(messageCountDoc.count)}/${messageCountDoc.limit}`)
+                                .html(`
+                                    <span class="badge bg-dark" style="color: rgb(165 164 164);opacity:0.8;">
+                                        <i class="fa fa-comment me-1"></i>${limitMess}
+                                    </span>
+                                `)
                                 .show()
                             }
                             userChatId = response.userChatId
@@ -257,6 +270,7 @@ $(document).ready(function() {
                         $('#chat-container').css(`background-image`,`url(${thumbnail})`)
                         $('#chat-title').text(chatName)
                         $('#input-container').show().addClass('d-flex');
+                        $('#userMessage').attr('placeholder',chatName+'にメッセージを送る')
 
                         if(!isNew){
                             displayChat(data.userChat.messages)
@@ -442,8 +456,13 @@ $(document).ready(function() {
                     success: function(response) {
                         const messageCountDoc = response.messageCountDoc
                         if(messageCountDoc.limit && !isTemporary){
+                            let limitMess = messageCountDoc.limit == '無制限' ? messageCountDoc.limit : `${parseInt(messageCountDoc.count)}/${messageCountDoc.limit}`
                             $('#message-number')
-                            .html(`<i class="fa fa-comment me-1"></i>${parseInt(messageCountDoc.count)}/${messageCountDoc.limit}`)
+                            .html(`
+                                <span class="badge bg-dark" style="color: rgb(165 164 164);opacity:0.8;">
+                                    <i class="fa fa-comment me-1"></i>${limitMess}
+                                </span>
+                            `)
                             .show()
                         }
                         userChatId = response.userChatId
@@ -1286,7 +1305,7 @@ function showRegistrationForm(messageId) {
     Swal.fire({
       title: '',
       text: '',
-      imageUrl: '/img/login-bg-862c043f.png', // replace with your image URL
+      //imageUrl: '/img/login-bg-862c043f.png', // replace with your image URL
       imageWidth: 'auto',
       imageHeight: 'auto',
       position: 'bottom',

@@ -37,6 +37,7 @@ async function routes(fastify, options) {
       messageLimit:200,
       chatLimit:'無制限',
       imageLimit:100,
+      messageIdeasLimit:50,
     },
     {
       id:'special',
@@ -56,6 +57,7 @@ async function routes(fastify, options) {
       messageLimit:'無制限',
       chatLimit:'無制限',
       imageLimit:500,
+      messageIdeasLimit:'無制限',
     }
   ];
 

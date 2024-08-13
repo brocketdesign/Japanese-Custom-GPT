@@ -242,7 +242,7 @@ async function routes(fastify, options) {
           
           const existingChat = await collection.findOne({ name: character.name });
 
-          if (!existingChat) {
+          if (true) {
             console.log(`Uploading image for: ${character.name}, ${character.chatImageUrl}`);
             const imageBuffer = await axios.get(character.chatImageUrl, { responseType: 'arraybuffer' });
             const hash = createHash('md5').update(imageBuffer.data).digest('hex');

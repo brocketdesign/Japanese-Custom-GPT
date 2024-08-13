@@ -152,7 +152,7 @@ async function routes(fastify, options) {
             const chatCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
             const story = await chatCollection.findOne(
                 { 
-                    _id: new fastify.mongo.ObjectId(chatId)
+                    _id: new fastify.mongo.ObjectId(chatId),
                     userId : new fastify.mongo.ObjectId(userId)
                  }
             );

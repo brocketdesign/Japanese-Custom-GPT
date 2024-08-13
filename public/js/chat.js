@@ -421,7 +421,7 @@ $(document).ready(function() {
                                 </li>
                             </ul>
                             `
-                introContainer.append(toolbox);
+                //introContainer.append(toolbox);
                 // Display intro container inside #chatContainer
                 $('#chatContainer').append(introContainer);
 

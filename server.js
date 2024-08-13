@@ -232,7 +232,18 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       peopleChats = {gohiai_girl, gohiai_man, synclubaichat, recent}
       // Fetch user data
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-      return reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato, Ltd', user, userId, chatId, chats: userCreatedChats, peopleChats });
+      return reply.view('custom-chat.hbs', { title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd', user, userId, chatId, chats: userCreatedChats, peopleChats });
+    });
+    
+    fastify.get('/character/:id', async (request, reply) => {
+      const chatId = request.params.id;
+      const chatsCollection = db.collection('chats');
+      let data 
+      try{
+        data = await chatsCollection.findOne({ _id: new fastify.mongo.ObjectId(chatId) }); 
+      }catch{}
+      const allData = await chatsCollection.find({}).toArray(); 
+      return reply.view('chat-detail.hbs', { title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd', data, allData}); 
     });
     
     fastify.get('/chat-index', async(request, reply) => {
@@ -241,7 +252,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       const peopleChats = await collectionChats.find({
         visibility: { $exists: true, $eq: "public" }
       }).sort({_id:-1}).limit(10).toArray();
-      return reply.view('custom-chat.hbs', { title: 'LAMIX | Powered by Hato, Ltd', peopleChats });
+      return reply.view('custom-chat.hbs', { title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd', peopleChats });
       //return reply.view('chat.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd',chats });
     });
     fastify.get('/about', async(request, reply) => {
@@ -271,7 +282,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         // Fetch chats that are not marked as deleted by the owner
         const sortedChats = await chatsCollection.find(query).sort({ "updatedAt": -1 }).toArray();
 
-        return reply.view('chat-list', { title: 'LAMIX | Powered by Hato, Ltd', chats: sortedChats, user });
+        return reply.view('chat-list', { title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd', chats: sortedChats, user });
       } catch (err) {
         console.log(err);
         return reply.status(500).send({ error: 'Failed to retrieve chat list' });

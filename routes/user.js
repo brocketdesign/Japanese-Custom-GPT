@@ -384,16 +384,18 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
   fastify.get('/user/plan/:id', async (request, reply) => {
     try {
       const userId = request.params.id;
-  
+      if(!userId){
+        return reply.send({error:`Plan not founded`})
+      }
       // Fetch the user from the database using their ObjectId
       existingSubscription = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').findOne({
         _id: new fastify.mongo.ObjectId(userId),
         subscriptionStatus: 'active',
         subscriptionType: process.env.MODE
       });
-      reply.send({plan:existingSubscription})
+      return reply.send({plan:existingSubscription})
     } catch (error) {
-      reply.send({error:`Plan not founded`})
+      return reply.send({error:`Plan not founded`})
       console.log(error)
     }
   });

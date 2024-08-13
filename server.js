@@ -288,6 +288,12 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         return reply.status(500).send({ error: 'Failed to retrieve chat list' });
       }
     });
+    fastify.get('/discover', async (request, reply) => {
+      let user = await fastify.getUser(request, reply);
+      const userId = user._id;
+      user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+      return reply.view('chat-discover.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' , user });
+    });
 
     fastify.get('/chat/edit/:chatId', {
       preHandler: [fastify.authenticate]

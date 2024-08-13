@@ -335,6 +335,7 @@ $(document).ready(function() {
 
             }
             function createIntro(chatData){
+                userChatId = false
                 // Extracting data from chatData
                 const thisChatId = chatData._id
                 let name = chatData.name;

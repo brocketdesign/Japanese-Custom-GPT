@@ -899,7 +899,11 @@ $(document).ready(function() {
         const is_chatId = $(this).attr('data-chat-id');
         const is_userId = $(this).attr('data-user-id');
         const is_userChatId = $(this).attr('data-user-chat-id');
-        if(!is_userChatId){
+        if(is_userChatId == "false"){
+            return
+        }
+        if($(this).hasClass('limit')){
+            showUpgradePopup('chat-message-ideas');
             return
         }
         Swal.fire({
@@ -948,6 +952,7 @@ $(document).ready(function() {
                 },
                 error: function(xhr, status, error) {
                     if (xhr.responseJSON && xhr.responseJSON.error.id === 4) {
+                        $('#gen-ideas').addClass('limit')
                         showUpgradePopup('chat-message-ideas');
                     }
                 }

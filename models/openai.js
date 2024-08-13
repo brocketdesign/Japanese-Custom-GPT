@@ -12,7 +12,7 @@ const fetchOpenAICompletion = async (messages, res, maxToken = 1000) => {
                 },
                 method: "POST",
                 body: JSON.stringify({
-                    model: 'gpt-4o',
+                    model: 'gpt-4o-mini',
                     messages,
                     temperature: 0.85,
                     top_p: 0.95,
@@ -90,7 +90,7 @@ const fetchOpenAINarration = async (messages, res, maxToken = 1000, language) =>
                 },
                 method: "POST",
                 body: JSON.stringify({
-                    model: 'gpt-4o',
+                    model: 'gpt-4o-mini',
                     messages: narrationPrompt, // Use the narration prompt
                     temperature: 0.75,
                     top_p: 0.95,
@@ -153,7 +153,7 @@ const moduleCompletion = async (messages) => {
       let response
 
       const options = {
-        model:'gpt-4o',
+        model:'gpt-4o-mini',
         messages,
         max_tokens: 600,
         temperature: 1,

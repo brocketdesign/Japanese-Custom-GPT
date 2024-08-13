@@ -150,7 +150,12 @@ async function routes(fastify, options) {
 
             // Access the MongoDB collection
             const chatCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-            const story = await chatCollection.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
+            const story = await chatCollection.findOne(
+                { 
+                    _id: new fastify.mongo.ObjectId(chatId)
+                    userId : new fastify.mongo.ObjectId(userId)
+                 }
+            );
     
             if (!story) {
                 return reply.status(404).send({ error: 'Story not found' });

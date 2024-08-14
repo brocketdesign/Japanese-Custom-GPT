@@ -215,7 +215,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         {
           $match: {
             visibility: { $exists: true, $eq: "public" },
-            chatImageUrl: { $exists: true },
+            chatImageUrl: { $exists: true, $ne: '' },
             updatedAt: { $gt: sevenDaysAgo }, // Filter for documents created within the last 7 days
           },
         },
@@ -228,7 +228,6 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         { $replaceRoot: { newRoot: "$doc" } },
         { $sample: { size: 20 } },
       ]).toArray();
-
       peopleChats = {gohiai_girl, gohiai_man, synclubaichat, recent}
       // Fetch user data
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });

@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const aws = require('aws-sdk');
 const sessions = new Map(); // Define sessions map
 const { analyzeScreenshot, processURL } = require('../models/scrap');
+const { handleFileUpload, uploadToS3 } = require('../models/tool');
 const { createHash } = require('crypto');
 const { convert } = require('html-to-text');
 const axios = require('axios');
@@ -57,55 +58,6 @@ async function routes(fastify, options) {
         const user = await fastify.getUser(request, reply);
         const userId = new fastify.mongo.ObjectId(user._id);
 
-        const uploadToS3 = async (buffer, hash, filename) => {
-            const params = {
-                Bucket: process.env.AWS_S3_BUCKET_NAME,
-                Key: `${hash}_${filename}`,
-                Body: buffer,
-                ACL: 'public-read'
-            };
-            const uploadResult = await s3.upload(params).promise();
-            return uploadResult.Location;
-        };
-        const handleFileUpload = async (part) => {
-            let buffer;
-            
-            if (part.file) {
-                // Handling uploaded file
-                const chunks = [];
-                for await (const chunk of part.file) {
-                    chunks.push(chunk);
-                }
-                buffer = Buffer.concat(chunks);
-            } else if (part.value && isValidUrl(part.value)) {
-                // Handling file from URL
-                const response = await axios.get(part.value, { responseType: 'arraybuffer' });
-                buffer = Buffer.from(response.data, 'binary');
-            } else {
-                throw new Error('No valid file or URL provided');
-            }
-        
-            const hash = createHash('md5').update(buffer).digest('hex');
-            const existingFiles = await s3.listObjectsV2({
-                Bucket: process.env.AWS_S3_BUCKET_NAME,
-                Prefix: hash,
-            }).promise();
-            
-            if (existingFiles.Contents.length > 0) {
-                return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFiles.Contents[0].Key}`;
-            } else {
-                return uploadToS3(buffer, hash, part.filename || 'uploaded_file');
-            }
-        };
-        
-        const isValidUrl = (string) => {
-            try {
-                new URL(string);
-                return true;
-            } catch (_) {
-                return false;
-            }
-        };
 
         for await (const part of parts) {
             switch (part.fieldname) {

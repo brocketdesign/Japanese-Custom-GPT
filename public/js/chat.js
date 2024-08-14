@@ -351,8 +351,7 @@ $(document).ready(function() {
 
                 // Create the intro elements
                 let introContainer = $('<div></div>')
-                .addClass('intro-container my-3 pb-3')
-                .css({'overflow-y':'scroll','height':'50vh'})
+                .addClass('intro-container my-3 p-3')
                 .attr('id','introChat');
             
                 let title = $('<h2></h2>').text(name);
@@ -638,11 +637,16 @@ $(document).ready(function() {
                             `;
                             getImageUrlById(imageId)
                         } else {
+                            let mode = localStorage.getItem('MODE',mode) == 'local'
+                            let message = removeContentBetweenStars(assistantMessage.content)
                             // Regular assistant message
                             messageHtml += `
                                 <div id="container-${designStep}">
-                                    <div class="d-flex flex-row justify-content-start mb-4 message-container">
+                                    <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
                                         <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+                                        <div class="audio-controller ${!mode ? 'd-none' : ''}" >
+                                            <button id="play-${designStep}" class="audio-content badge bg-dark" data-content="${message}">►</button>
+                                        </div>
                                         <div id="message-${designStep}" class="p-3 ms-3 text-start assistant-chat-box">
                                             ${marked.parse(assistantMessage.content)}
                                         </div>
@@ -820,7 +824,52 @@ $(document).ready(function() {
 
                 return JSON.parse(jsonString);
             }
+            function playAudio(message, $el) {
+                if ($el.hasClass('audio-loaded')) return;
             
+                $el.html('<div class="spinner-grow spinner-grow-sm" role="status"><span class="visually-hidden">Loading...</span></div>');
+            
+                const url = `https://api.synclubaichat.com/aichat/h5/tts/msg2Audio?device=web_desktop&product=aichat&sys_lang=en-US&country=&referrer=&zone=9&languageV2=ja&uuid=&app_version=1.5.1&message=${encodeURIComponent(message)}&voice_actor=default_voice&robot_id=1533008500&ts=1723608264&t_secret=637555&sign=c92a842ab6bdcf34778e905c5e231edc`;
+            
+                $.post(url, function(response) {
+                    if (response.errno === 0) {
+                        const audio = new Audio(response.data.audio_url);
+                        const playPauseButton = $el;
+            
+                        playPauseButton.addClass('audio-loaded');
+            
+                        audio.addEventListener('loadedmetadata', function() {
+                            audio.play();
+                            playPauseButton.html('❚❚ ' + Math.round(audio.duration) + '"');
+                            let isPlaying = true;
+            
+                            playPauseButton.on('click', function() {
+                                isPlaying ? audio.pause() : audio.play();
+                                playPauseButton.text(isPlaying ? '► ' + Math.round(audio.duration) + '"' : '❚❚ ' + Math.round(audio.duration) + '"');
+                                isPlaying = !isPlaying;
+                            });
+            
+                            audio.onended = function() {
+                                isPlaying = false;
+                                playPauseButton.text('► ' + Math.round(audio.duration) + '"');
+                            };
+                        });
+                    } else {
+                        playPauseButton.html('Error loading audio');
+                    }
+                });
+            }
+            
+            
+            
+            $(document).on('click','.audio-controller .audio-content',function(){
+                let message = $(this).attr('data-content')
+                message = removeContentBetweenStars(message)
+                playAudio(message,$(this));
+            })
+            function removeContentBetweenStars(str) {
+                return str.replace(/\*.*?\*/g, '');
+            }            
             function generateCompletion(callback){
                 
                 const apiUrl = API_URL+'/api/openai-chat-completion';
@@ -829,8 +878,11 @@ $(document).ready(function() {
                 // Initialize the bot response container
                 const botResponseContainer = $(`
                     <div id="container-${currentStep}">
-                        <div class="d-flex flex-row justify-content-start mb-4 message-container">
+                        <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
                             <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
+                            <div class="audio-controller" style="display:none">
+                                <button id="play-${currentStep}" class="audio-content badge bg-dark">►</button>
+                            </div>
                             <div id="completion-${currentStep}" class="p-3 ms-3 text-start assistant-chat-box">
                                 <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
                             </div>
@@ -850,8 +902,6 @@ $(document).ready(function() {
                         const eventSource = new EventSource(streamUrl);
                         let markdownContent = "";
 
-                        
-
                         eventSource.onmessage = function(event) {
                             const data = JSON.parse(event.data);
                             markdownContent += data.content;
@@ -860,6 +910,13 @@ $(document).ready(function() {
 
                         eventSource.onerror = function(error) {
                             eventSource.close();
+                            let mode = localStorage.getItem('MODE',mode) == 'local'
+                            if(mode){
+                                $(`#play-${currentStep}`).attr('data-content',markdownContent)
+                                $(`#play-${currentStep}`).closest('.audio-controller').show()
+                                let message = removeContentBetweenStars(markdownContent)
+                                playAudio(message,$(`#play-${currentStep}`));
+                            }
                             if (typeof callback === "function") {
                                 callback();
                             }
@@ -1382,7 +1439,6 @@ function showRegistrationForm(messageId) {
             }
         });
     });
-
 window.resetChatUrl = function() {
     var currentUrl = window.location.href;
     var urlParts = currentUrl.split('/');

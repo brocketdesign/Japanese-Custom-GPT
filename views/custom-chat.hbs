@@ -4,6 +4,33 @@
 <body>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
     <style>
+        #introChat{
+            overflow-y: scroll;
+            background-color: rgba(255, 255, 255, 0.6);
+            justify-content: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .audio-controller {
+            display: flex;
+            align-items: center;
+            color: white;
+            border-radius: 20px;
+            width: auto;
+            justify-content: center;
+            position: absolute;
+            top: -11px;
+            left: 60px;
+            font-size: 12px;
+        }
+        .audio-controller button {
+            border: none;
+            cursor: pointer;
+            color: rgb(165 164 164);
+            font-size: 12px;
+            width: 50px;
+        }
         .gen-idea-container #swal2-html-container{
             border-radius: 40px 40px 0 0;
             padding: 0;
@@ -768,8 +795,8 @@
         </section>
         <div class="container chat-contain px-0 onchat-on">
             <div id="chat-container" class="card shadow-0 border-0 rounded-0" style="background-size: cover;background-position: top center;background-repeat: no-repeat;">
-                <div class="card-body text-center py-0 container" style="min-height:250px;overflow-y:hidden;background: #fff9;">
-                    <div id="chatContainer" class="pt-2" style="padding-top: 100px !important;;padding-bottom: 100px !important;"></div>
+                <div class="card-body text-center py-0 container" style="min-height:250px;overflow-y:hidden;">
+                    <div id="chatContainer" class="pt-2" style="padding-top: 80px !important;;padding-bottom: 100px !important;"></div>
                     <div id="chatInput" class="input-group rounded-0 rounded-bottom" style="position: absolute;bottom: 0;left: 0;right: 0;padding: 0px 15px 5px 15px;">
                         <div class="d-flex justify-content-between align-items-center w-100">
                             <div><span id="message-number" class="text-muted px-3 py-1" style="font-size: 12px;"></span></div>

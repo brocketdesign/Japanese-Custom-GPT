@@ -266,7 +266,17 @@ $(document).ready(function() {
 
                         chatName = data.chat.name
                         thumbnail = data.chat.thumbnailUrl || data.chat.chatImageUrl
-                        character = data.character //|| data.chat.character
+                        character = data.character
+                        
+                        if(data.chat.character && data.chat.character.prompt){
+                            let genre = data.chat.character.prompt.toLowerCase();
+                            if (genre.includes("male")) {
+                                genre = "male";
+                            } else if (genre.includes("female")) {
+                                genre = "female";
+                            }
+                            $('#chat-container').attr('data-genre',genre)
+                        }
                         $('#chat-container').css(`background-image`,`url(${thumbnail})`)
                         $('#chat-title').text(chatName)
                         $('#input-container').show().addClass('d-flex');
@@ -830,8 +840,14 @@ $(document).ready(function() {
             
                 $el.html('<div class="spinner-grow spinner-grow-sm" role="status"><span class="visually-hidden">Loading...</span></div>');
             
-                const url = `https://api.synclubaichat.com/aichat/h5/tts/msg2Audio?device=web_desktop&product=aichat&sys_lang=en-US&country=&referrer=&zone=9&languageV2=ja&uuid=&app_version=1.5.1&message=${encodeURIComponent(message)}&voice_actor=default_voice&robot_id=1533008500&ts=1723608264&t_secret=637555&sign=c92a842ab6bdcf34778e905c5e231edc`;
-            
+                const female_voice = `https://api.synclubaichat.com/aichat/h5/tts/msg2Audio?device=web_desktop&product=aichat&sys_lang=en-US&country=&referrer=&zone=9&languageV2=ja&uuid=&app_version=1.5.1&message=${encodeURIComponent(message)}&voice_actor=default_voice&robot_id=1533008500&ts=1723608264&t_secret=637555&sign=c92a842ab6bdcf34778e905c5e231edc`;
+                const male_voice = `https://api.synclubaichat.com/aichat/h5/tts/msg2Audio?device=web_desktop&product=aichat&sys_lang=en-US&country=&referrer=&zone=9&languageV2=ja&uuid=&app_version=1.5.1&message=${encodeURIComponent(message)}&voice_actor=default_voice&robot_id=1533008538&ts=1723632421&t_secret=661712&sign=9e2bfc4903b8c1176f7e2c973538908b`
+                if( $('#chat-container').attr('data-genre') == 'male'){
+                    url = male_voice
+                }else{
+                    url = female_voice
+                }
+
                 $.post(url, function(response) {
                     if (response.errno === 0) {
                         const audio = new Audio(response.data.audio_url);

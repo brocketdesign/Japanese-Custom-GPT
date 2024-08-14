@@ -348,7 +348,7 @@ $(document).ready(function() {
                 $('#message-number').hide();
                 $('#stability-gen-button').hide();
                 $('#novita-gen-button').hide();
-
+                /*
                 // Create the intro elements
                 let introContainer = $('<div></div>')
                 .addClass('intro-container my-3 p-3')
@@ -422,12 +422,13 @@ $(document).ready(function() {
                             `
                 //introContainer.append(toolbox);
                 // Display intro container inside #chatContainer
-                $('#chatContainer').append(introContainer);
+                //$('#chatContainer').append(introContainer);
 
                 if($('#chat-widget-container').length == 0 && isTemporary){
                     //showRegistrationForm()
                     //return
                 }
+                */
             }
             
             function displayStarter() {
@@ -637,7 +638,7 @@ $(document).ready(function() {
                             `;
                             getImageUrlById(imageId)
                         } else {
-                            let mode = localStorage.getItem('MODE',mode) == 'local'
+                            let mode = localStorage.getItem('MODE') == 'local'
                             let message = removeContentBetweenStars(assistantMessage.content)
                             // Regular assistant message
                             messageHtml += `
@@ -910,7 +911,7 @@ $(document).ready(function() {
 
                         eventSource.onerror = function(error) {
                             eventSource.close();
-                            let mode = localStorage.getItem('MODE',mode) == 'local'
+                            let mode = localStorage.getItem('MODE') == 'local'
                             if(mode){
                                 $(`#play-${currentStep}`).attr('data-content',markdownContent)
                                 $(`#play-${currentStep}`).closest('.audio-controller').show()

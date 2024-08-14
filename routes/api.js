@@ -1,5 +1,5 @@
 const { ObjectId } = require('mongodb');
-const {moduleCompletion,fetchOpenAICompletion, fetchOpenAINarration} = require('../models/openai')
+const {moduleCompletion,fetchOpenAICompletion, fetchOpenAINarration, fetchNewAPICompletion} = require('../models/openai')
 const crypto = require('crypto');
 const aws = require('aws-sdk');
 const sessions = new Map(); // Define sessions map
@@ -1004,8 +1004,13 @@ async function routes(fastify, options) {
                 return reply.status(404).send({ error: 'User data not found' });
             }
 
+            const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');                
+            let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
+            const chatname = chatDocument.name
+
             const userMessages = userData.messages;
-            const completion = await fetchOpenAICompletion(userMessages, reply.raw, 300);
+            let completion = ``
+            completion = await fetchOpenAICompletion(userMessages, reply.raw, 300);
 
             // Append the assistant's response to the messages array in the chat document
             const assistantMessage = { "role": "assistant", "content": completion };

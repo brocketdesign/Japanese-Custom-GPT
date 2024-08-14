@@ -1,5 +1,6 @@
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 const { createParser } = require('eventsource-parser');
+const axios = require('axios');
 
 const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'gpt-4o-mini' ) => {
     try {
@@ -176,5 +177,64 @@ const moduleCompletion = async (messages) => {
 
 }
 
+async function fetchNewAPICompletion(userMessages, rawReply, chatname, timeout = 30000) {
+    // Convert userMessages to the required format
+    const context = userMessages
+    .filter(msg => msg.role !== 'system')
+    .map(msg => {
+        let role_type = msg.role === 'user' ? 1 : 0;
+        return {
+            role_type: role_type,
+            text: msg.content,
+            source: role_type === 1 ? 'user' : 'model'
+        };
+    });
 
-  module.exports = {fetchOpenAICompletion,moduleCompletion,fetchOpenAINarration}
+    // Construct the body of the POST request
+    const requestBody = {
+        state: "start",
+        language: "ja",
+        ext_info: {
+            conversation_cnt: context.length,
+            language: "ja",
+            bot_name: chatname
+        },
+        context: context,
+        device: "web_desktop",
+        product: "aichat",
+        sys_lang: "en-US",
+        country: "",
+        referrer: "",
+        zone: 9,
+        languageV2: "ja",
+        uuid: "",
+        app_version: "1.5.1",
+        sign: "21d079a0628298c27948aa2262c8057b"
+    };
+
+    try {
+        const response = await axios.post('https://api.synclubaichat.com/aichat/h5/drainage/conversation', requestBody, {
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            timeout: timeout
+        });
+        console.log(response)
+        if (response.data) {
+            const content = response.data.data.text;
+            console.log(content)
+            // Simulate streaming by sending chunks of the content
+            const chunkSize = 50; // Adjust the chunk size as needed
+            for (let i = 0; i < content.length; i += chunkSize) {
+                const chunk = content.slice(i, i + chunkSize);
+                rawReply.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
+            }
+        }
+
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+
+  module.exports = {fetchOpenAICompletion,moduleCompletion,fetchOpenAINarration, fetchNewAPICompletion}

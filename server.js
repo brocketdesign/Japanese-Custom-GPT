@@ -298,20 +298,25 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     fastify.get('/chat/edit/:chatId', {
       preHandler: [fastify.authenticate]
     }, async (request, reply) => {
+
+      let chatId = request.params.chatId 
+      if(!chatId){
+        return reply.redirect('/discover')
+      }
       try {
         let user = await fastify.getUser(request, reply);
         const userId = user._id;
         const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
         user = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
        
-        const chatId = request.params.chatId || new fastify.mongo.ObjectId()
         const isTemporaryChat = request.params.chatId ? false : true
         if(isTemporaryChat){
+          chatId = new fastify.mongo.ObjectId()
           const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
           await chatsCollection.insertOne({userId, _id : chatId})
         }
         const prompts = await fs.readFileSync('./models/girl_char.md', 'utf8');
-        return reply.view('add-chat.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd', chatId:chatId, isTemporaryChat, user, prompts});
+        return reply.view('add-chat.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd', chatId, isTemporaryChat, user, prompts});
       } catch (error) {
         console.log(error)
         return reply.status(500).send({ error: 'Failed to retrieve chatId' });

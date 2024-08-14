@@ -457,8 +457,8 @@ async function fetchNovitaResult(task_id) {
         negativePrompt: character ? character.negativePrompt : null,
         sampler: character ? character.sampler : null,
         checkpoint: closestCheckpoint,
-        width: 512,
-        height: 704,
+        width: 1024,
+        height: 1260,
       });
   
       // Polling or wait for the task to complete (you might want to add a delay or retry logic here)

@@ -206,9 +206,6 @@
                 <i class="fa fa-magic me-2"></i>
                 AIでキャラクターを生成する
             </button>
-            <p class="text-small text-muted text-start" style="font-size:12px">
-                AIを使用して新しいキャラクターを生成する。<br>
-            </p>
         </div>
         <div class="mb-3 mx-3 row">
             <div class="col-auto">
@@ -226,11 +223,11 @@
                 </select>
             </div>
         </div>
-        <div class="mb-3 mx-3">
+        <div id="chatPurpose-container" class="mb-3 mx-3" style="display: none;">
             <label for="chatPurpose" class="form-label">キャラクターの詳細</label>
             <textarea class="d-none form-control" id="chatPurpose" name="content" rows="5" 
             placeholder="例：中村美咲（27歳）は明るく社交的なOLで、責任感が強く、チームをサポートする姿勢が評価されている。趣味は旅行とカフェ巡りで、休日には友達と過ごすことが多い。話し方は礼儀正しく丁寧でありながら柔らかく、安心感を与える。"></textarea>
-            <div id="chatPurpose-markdownContainer" class="rounded border border-secondary bg-light px-3 py-2" contenteditable="true" style="min-height:50px"></div>
+            <div id="chatPurpose-markdownContainer" class="rounded border border-secondary bg-light px-3 py-2" contenteditable="true" style="min-height:50px;"></div>
         </div>
         <div class="mb-3 mx-3" id="thumbnailInputContainer" style="display: none;">
             <label for="chatThumbnail" class="form-label">チャットのサムネイルをアップロード</label>
@@ -312,12 +309,9 @@
         <div class="sticky-bottom">
             <button type="submit" id="sendForm" class="btn btn-primary btn-large w-100 mt-5 mb-3" style="border-radius:50px;display:none;">
                     <i class="fa fa-spinner fa-spin fa-fw fa-hidden d-none me-2"></i>
-                    保存して試す
+                    <span>チャット</span>
             </button>
         </div>
-        <p class="text-small text-muted text-start sendForm-text" style="font-size:12px;display:none;">
-            「保存して試す」をクリックすると、AIキャラクターを保存して試すことができます。後でさらに修正を加えることも可能です。
-        </p>
     </form>
     
 </div>
@@ -333,7 +327,6 @@
 
         $('#chatPurpose').val('')
         if (isTemporaryChat == 'false') {
-            $('#sendForm').show()
             fetchchatData(chatId);
         }
         
@@ -417,12 +410,14 @@
                 success: function(chatData) {
                     if(chatData.purpose){
                         var htmlContent = marked.parse(chatData.purpose);
+                        $('#chatPurpose-container').show()
                         $('#chatPurpose-markdownContainer').html(htmlContent)
                         $('#chatPurpose').val(chatData.purpose)
                     }
                     if(chatData.name){
                         $('#chatName').val(chatData.name);
                         $('#chatName').parent().show()
+                        $('#sendForm span').html(`${chatData.name}とチャットする`)
                     }
                     if(chatData.visibility){
                         $('#visibility').val(chatData.visibility)
@@ -478,8 +473,10 @@
                         console.log({chatImageUrl:chatData.chatImageUrl})
                         $('#chatImage').attr('src', chatData.chatImageUrl).show().addClass('on');
                     }
-                        $('#chatForm').removeClass('d-none')
-                        //$('#genStructure').removeClass('btn-outline-secondary').addClass('btn-secondary')
+
+                    $('#sendForm').show()
+                    $('#chatForm').removeClass('d-none')
+                    //$('#genStructure').removeClass('btn-outline-secondary').addClass('btn-secondary')
                 },
                 error: function(xhr, status, error) {
                    console.log(`New tempry chat`)
@@ -561,7 +558,6 @@
                             $('#genChat .fa-magic').show()
                         });
                     });
-                    generateCategory();
                     $('#genStructure').removeClass('btn-outline-secondary').addClass('btn-secondary')
                 });
                 return
@@ -585,7 +581,6 @@
                     $('#genChat .fa-magic').show()
                 });
             });
-            generateCategory();
             $('#genStructure').removeClass('btn-outline-secondary').addClass('btn-secondary')
         });
 
@@ -601,6 +596,7 @@
         const userMessage = urlParams.get('userMessage');
         if (userMessage) {
             var htmlContent = marked.parse(userMessage);
+            $('#chatPurpose-container').show()
             $('#chatPurpose-markdownContainer').html(htmlContent)
             $('#chatPurpose').val(userMessage);
         }
@@ -942,7 +938,7 @@
         function listenToEventSource(streamUrl, callback) {
             const eventSource = new EventSource(streamUrl);
             let markdownContent = "";
-
+            $('#chatPurpose-container').show()
             eventSource.onmessage = function(event) {
                 const data = JSON.parse(event.data);
                 markdownContent += data.content;
@@ -1038,14 +1034,13 @@
                     eventSource.onmessage = function(event) {
                         const data = JSON.parse(event.data);
                         markdownContent += data.content;
-
-                        // Update the bot response container with the new content
                         $('#chatName').val(markdownContent);
-
+                        $('#sendForm span').html(`${markdownContent}とチャットする`)
                     };
 
                     eventSource.onerror = function(error) {
                         eventSource.close();
+                        
                         if (typeof callback === 'function') {
                             callback();
                         }

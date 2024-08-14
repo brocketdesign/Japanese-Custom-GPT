@@ -300,7 +300,8 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     }, async (request, reply) => {
 
       let chatId = request.params.chatId 
-      if(!chatId){
+      const chatImage = request.query.chatImage
+      if(!chatId && !chatImage){
         return reply.redirect('/discover')
       }
       try {

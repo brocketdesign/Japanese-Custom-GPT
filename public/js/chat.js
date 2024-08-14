@@ -268,14 +268,15 @@ $(document).ready(function() {
                         thumbnail = data.chat.thumbnailUrl || data.chat.chatImageUrl
                         character = data.character
                         
-                        let gender = data.chat.gender
+                        let gender = data.chat.gender || 'female'
                         if(data.chat.character && data.chat.character.prompt){
                             gender = data.chat.character.prompt.toLowerCase();
-                            if (gender.includes("male")) {
+                            if (/\bmale\b/.test(gender)) {
                                 gender = "male";
-                            } else if (genre.includes("female")) {
+                            } else if (/\bfemale\b/.test(gender)) {
                                 gender = "female";
                             }
+                            
                         }
                         $('#chat-container').attr('data-genre',gender)
                         
@@ -837,44 +838,84 @@ $(document).ready(function() {
 
                 return JSON.parse(jsonString);
             }
+            let audioPermissionGranted = true;
+
+            function requestAudioPermission() {
+                if (audioPermissionGranted) {
+                    return Promise.resolve(true);
+                }
+            
+                return Swal.fire({
+                    title: 'オーディオ再生の許可',
+                    text: '次回から自動再生されます。',
+                    icon: 'info',
+                    toast: true,
+                    position: 'top-end',
+                    showCancelButton: true,
+                    confirmButtonText: 'はい',
+                    cancelButtonText: 'いいえ',
+                    customClass: {
+                        popup: 'animate__animated animate__fadeIn animate__faster',
+                        backdrop: 'swal2-backdrop-show animate__animated animate__fadeIn animate__faster',
+                        container: 'swal2-container swal2-top-end',
+                        title: 'swal2-title',
+                        content: 'swal2-content',
+                        actions: 'swal2-actions',
+                        confirmButton: 'swal2-confirm swal2-styled',
+                        cancelButton: 'swal2-cancel swal2-styled',
+                    },
+                    didClose: () => {
+                        Swal.getPopup().classList.add('animate__animated', 'animate__fadeOut', 'animate__faster');
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        audioPermissionGranted = true;
+                    }
+                    return result.isConfirmed;
+                });
+            }       
+    
             function playAudio(message, $el) {
                 if ($el.hasClass('audio-loaded')) return;
-            
-                $el.html('<div class="spinner-grow spinner-grow-sm" role="status"><span class="visually-hidden">Loading...</span></div>');
-            
-                const female_voice = `https://api.synclubaichat.com/aichat/h5/tts/msg2Audio?device=web_desktop&product=aichat&sys_lang=en-US&country=&referrer=&zone=9&languageV2=ja&uuid=&app_version=1.5.1&message=${encodeURIComponent(message)}&voice_actor=default_voice&robot_id=1533008500&ts=1723608264&t_secret=637555&sign=c92a842ab6bdcf34778e905c5e231edc`;
-                const male_voice = `https://api.synclubaichat.com/aichat/h5/tts/msg2Audio?device=web_desktop&product=aichat&sys_lang=en-US&country=&referrer=&zone=9&languageV2=ja&uuid=&app_version=1.5.1&message=${encodeURIComponent(message)}&voice_actor=default_voice&robot_id=1533008538&ts=1723632421&t_secret=661712&sign=9e2bfc4903b8c1176f7e2c973538908b`
-                if( $('#chat-container').attr('data-genre') == 'male'){
-                    url = male_voice
-                }else{
-                    url = female_voice
-                }
-
-                $.post(url, function(response) {
-                    if (response.errno === 0) {
-                        const audio = new Audio(response.data.audio_url);
-                        const playPauseButton = $el;
-            
-                        playPauseButton.addClass('audio-loaded');
-            
-                        audio.addEventListener('loadedmetadata', function() {
-                            audio.play();
-                            playPauseButton.html('❚❚ ' + Math.round(audio.duration) + '"');
-                            let isPlaying = true;
-            
-                            playPauseButton.on('click', function() {
-                                isPlaying ? audio.pause() : audio.play();
-                                playPauseButton.text(isPlaying ? '► ' + Math.round(audio.duration) + '"' : '❚❚ ' + Math.round(audio.duration) + '"');
-                                isPlaying = !isPlaying;
-                            });
-            
-                            audio.onended = function() {
-                                isPlaying = false;
-                                playPauseButton.text('► ' + Math.round(audio.duration) + '"');
-                            };
+    
+                requestAudioPermission().then((isAllowed) => {
+                    if (isAllowed) {
+                        $el.html('<div class="spinner-grow spinner-grow-sm" role="status"><span class="visually-hidden">Loading...</span></div>');
+    
+                        const female_voice = `https://api.synclubaichat.com/aichat/h5/tts/msg2Audio?device=web_desktop&product=aichat&sys_lang=en-US&country=&referrer=&zone=9&languageV2=ja&uuid=&app_version=1.5.1&message=${encodeURIComponent(message)}&voice_actor=default_voice&robot_id=1533008500&ts=1723608264&t_secret=637555&sign=c92a842ab6bdcf34778e905c5e231edc`;
+                        const male_voice = `https://api.synclubaichat.com/aichat/h5/tts/msg2Audio?device=web_desktop&product=aichat&sys_lang=en-US&country=&referrer=&zone=9&languageV2=ja&uuid=&app_version=1.5.1&message=${encodeURIComponent(message)}&voice_actor=default_voice&robot_id=1533008538&ts=1723632421&t_secret=661712&sign=9e2bfc4903b8c1176f7e2c973538908b`;
+    
+                        const url = $('#chat-container').attr('data-genre') == 'male' ? male_voice : female_voice;
+    
+                        $.post(url, function(response) {
+                            if (response.errno === 0) {
+                                const audio = new Audio(response.data.audio_url);
+                                const playPauseButton = $el;
+    
+                                playPauseButton.addClass('audio-loaded');
+    
+                                audio.addEventListener('loadedmetadata', function() {
+                                    audio.play();
+                                    playPauseButton.html('❚❚ ' + Math.round(audio.duration) + '"');
+                                    let isPlaying = true;
+    
+                                    playPauseButton.on('click', function() {
+                                        isPlaying ? audio.pause() : audio.play();
+                                        playPauseButton.text(isPlaying ? '► ' + Math.round(audio.duration) + '"' : '❚❚ ' + Math.round(audio.duration) + '"');
+                                        isPlaying = !isPlaying;
+                                    });
+    
+                                    audio.onended = function() {
+                                        isPlaying = false;
+                                        playPauseButton.text('► ' + Math.round(audio.duration) + '"');
+                                    };
+                                });
+                            } else {
+                                playPauseButton.html('エラーが発生しました');
+                            }
                         });
                     } else {
-                        playPauseButton.html('Error loading audio');
+                        $el.html('再生がキャンセルされました');
                     }
                 });
             }

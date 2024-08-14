@@ -944,7 +944,7 @@ $(document).ready(function() {
           // Display user limits
         $.get('/user/limit/'+is_userId,function(data){
             data = data.limits
-            let limitMess = '毎日の無料使用回数: '
+            let limitMess = `毎日の無料使用回数: 0/${data.messageIdeasLimit}`
             if(data.messageIdeasCountDoc){
                 limitMess = data.messageIdeasCountDoc.limit == '無制限' ? data.messageIdeasCountDoc.limit : `毎日の無料使用回数: ${parseInt(data.messageIdeasCountDoc.count)}/${data.messageIdeasCountDoc.limit}`
             }

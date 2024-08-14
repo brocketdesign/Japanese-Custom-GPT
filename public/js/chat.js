@@ -268,15 +268,17 @@ $(document).ready(function() {
                         thumbnail = data.chat.thumbnailUrl || data.chat.chatImageUrl
                         character = data.character
                         
+                        let gender = data.chat.gender
                         if(data.chat.character && data.chat.character.prompt){
-                            let genre = data.chat.character.prompt.toLowerCase();
-                            if (genre.includes("male")) {
-                                genre = "male";
+                            gender = data.chat.character.prompt.toLowerCase();
+                            if (gender.includes("male")) {
+                                gender = "male";
                             } else if (genre.includes("female")) {
-                                genre = "female";
+                                gender = "female";
                             }
-                            $('#chat-container').attr('data-genre',genre)
                         }
+                        $('#chat-container').attr('data-genre',gender)
+                        
                         $('#chat-container').css(`background-image`,`url(${thumbnail})`)
                         $('#chat-title').text(chatName)
                         $('#input-container').show().addClass('d-flex');

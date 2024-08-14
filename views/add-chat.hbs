@@ -222,6 +222,13 @@
                     <option value="english"><i class="fas fa-flag"></i> 英語</option>
                 </select>
             </div>
+            <div class="col-auto">
+                <label for="gender" class="form-label"><i class="fas fa-user"></i> 性別:</label>
+                <select class="form-select w-auto" id="gender" name="gender">
+                    <option value="female" selected><i class="fas fa-female"></i> 女性</option>
+                    <option value="male"><i class="fas fa-male"></i> 男性</option>
+                </select>
+            </div>
         </div>
         <div id="chatPurpose-container" class="mb-3 mx-3" style="display: none;">
             <label for="chatPurpose" class="form-label">キャラクターの詳細</label>
@@ -425,6 +432,9 @@
                     if(chatData.language){
                         $('#language').val(chatData.language)
                     }
+                    if(chatData.language){
+                        $('#gender').val(chatData.gender)
+                    }
                     if(chatData.category){
                         $('#chatCategory').val(chatData.category);
                         $('#chatCategory').parent().show()
@@ -492,6 +502,7 @@
             const name = $('#chatName').val();
             const purpose = $('#chatPurpose').val()
             const language = $('#language').val()
+            const gender = $('#gender').val()
             const category = $('#chatCategory').val();
             const description = $('#chatDescription').val();
             const rule = $('#chatRule').val();
@@ -505,6 +516,7 @@
             formData.append('name', name);
             formData.append('purpose',purpose)
             formData.append('language',language)
+            formData.append('gender',gender)
             formData.append('chatImageUrl',chatImageUrl)
             formData.append('category', category);
             formData.append('description', description);

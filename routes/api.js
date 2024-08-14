@@ -58,6 +58,7 @@ async function routes(fastify, options) {
                 case 'name':
                 case 'purpose':
                 case 'language':
+                case 'gender':
                 case 'visibility':
                 case 'category':
                 case 'rule':

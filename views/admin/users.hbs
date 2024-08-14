@@ -6,8 +6,15 @@
 <!-- Template to List Users -->
 <div class="container mt-5">
     <h2 class="mb-4">{{title}}</h2>
-    <a href="/admin/users" class="btn btn-outline-dark mb-3">Latest users</a>
-    <a href="/admin/users/registered" class="btn btn-outline-dark mb-3">Registered users</a>
+    <div class="d-flex justify-content-between">
+        <div>
+            <a href="/admin/users" class="btn btn-outline-dark mb-3">Latest users</a>
+            <a href="/admin/users/registered" class="btn btn-outline-dark mb-3">Registered users</a>
+        </div>
+        <div>
+            <span class="badge bg-dark"><i class="fas fa-users me-2"></i>{{users.length}}</span>
+        </div>
+    </div>
     <div class="table-responsive">
         <table class="table table-striped">
             <thead>

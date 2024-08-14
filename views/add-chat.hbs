@@ -228,8 +228,9 @@
         </div>
         <div class="mb-3 mx-3">
             <label for="chatPurpose" class="form-label">キャラクターの詳細</label>
-            <textarea class="form-control" id="chatPurpose" name="content" rows="5" 
+            <textarea class="d-none form-control" id="chatPurpose" name="content" rows="5" 
             placeholder="例：中村美咲（27歳）は明るく社交的なOLで、責任感が強く、チームをサポートする姿勢が評価されている。趣味は旅行とカフェ巡りで、休日には友達と過ごすことが多い。話し方は礼儀正しく丁寧でありながら柔らかく、安心感を与える。"></textarea>
+            <div id="chatPurpose-markdownContainer" class="rounded border border-secondary bg-light px-3 py-2" contenteditable="true" style="min-height:50px"></div>
         </div>
         <div class="mb-3 mx-3" id="thumbnailInputContainer" style="display: none;">
             <label for="chatThumbnail" class="form-label">チャットのサムネイルをアップロード</label>
@@ -330,7 +331,9 @@
         let chatId = '{{chatId}}';
         const isTemporaryChat = '{{isTemporaryChat}}'
 
-        if (chatId || !isTemporaryChat) {
+        $('#chatPurpose').val('')
+        if (isTemporaryChat == 'false') {
+            $('#sendForm').show()
             fetchchatData(chatId);
         }
         
@@ -413,6 +416,8 @@
                 dataType: 'json',
                 success: function(chatData) {
                     if(chatData.purpose){
+                        var htmlContent = marked.parse(chatData.purpose);
+                        $('#chatPurpose-markdownContainer').html(htmlContent)
                         $('#chatPurpose').val(chatData.purpose)
                     }
                     if(chatData.name){
@@ -549,8 +554,7 @@
             if($('#chatImageUrl').val().trim().length > 0 && $('#chatPurpose').val().trim() == ''){
                 generateImageDescription(function() {
                     generateName(function(){
-                        generateDescription();
-                        generateRule(function(){
+                        generateDescription(function(){
                             $('#sendForm').show()
                             $('.sendForm-text').show()
                             $('#genChat .fa-spinner').hide()
@@ -574,11 +578,11 @@
                 return;
             }
             generateName(function(){
-                generateDescription();
-                generateRule(function(){
+                generateDescription(function(){
                     $('#sendForm').show()
                     $('.sendForm-text').show()
-                    $('#genChat .spinner-border ').hide()
+                    $('#genChat .fa-spinner').hide()
+                    $('#genChat .fa-magic').show()
                 });
             });
             generateCategory();
@@ -596,6 +600,8 @@
         }
         const userMessage = urlParams.get('userMessage');
         if (userMessage) {
+            var htmlContent = marked.parse(userMessage);
+            $('#chatPurpose-markdownContainer').html(htmlContent)
             $('#chatPurpose').val(userMessage);
         }
         const chatImageUrl = urlParams.get('chatImage');
@@ -762,7 +768,7 @@
                 }
             });
         }
-        function generateDescription() {
+        function generateDescription(callback) {
 
             let message = $('#chatPurpose').val();
             let language =$('#language').val();
@@ -795,15 +801,16 @@
                     eventSource.onmessage = function(event) {
                         const data = JSON.parse(event.data);
                         markdownContent += data.content;
-
-                        // Update the bot response container with the new content
                         $('#chatDescription').val($('#chatDescription').val() + data.content);
-
+                        resizeTextarea($('#chatDescription')[0])
                     };
 
                     eventSource.onerror = function(error) {
                         eventSource.close();
                         resizeTextarea($('#chatDescription')[0])
+                        if (typeof callback === 'function') {
+                            callback();
+                        }
                     };
                 },
                 error: function(error) {
@@ -895,7 +902,7 @@
                     "text": 
                     `You are a useful assistant. 
                     You generate a creative character description and setting for the image I will provide. 
-                    Here is an example : 例：中村美咲（27歳）は明るく社交的なOLで、責任感が強く、チームをサポートする姿勢が評価されている。趣味は旅行とカフェ巡りで、休日には友達と過ごすことが多い。話し方は礼儀正しく丁寧でありながら柔らかく、安心感を与える。
+                    Here is some example : {{prompts}}
                     YOU MUST respond in ${language}. 
                     Start by providing a name or nickname for the character`
                 }
@@ -939,8 +946,8 @@
             eventSource.onmessage = function(event) {
                 const data = JSON.parse(event.data);
                 markdownContent += data.content;
-
-                // Update the chat purpose input with the new content
+                var htmlContent = marked.parse(markdownContent);
+                $('#chatPurpose-markdownContainer').html(htmlContent);
                 $('#chatPurpose').val(markdownContent);
             };
 
@@ -1082,13 +1089,12 @@
         }
         function getSystem(systemType){
             var system;
-
             switch (systemType) {
                 case 'chatRule':
                     system = `
                         You are an character tone generator. \n
                         Use the provided details of the character.
-                        Explain how the character speaks and his emotional state. Be concice and use keywords.
+                        Explain how the character speaks and his emotional state. Be concice.
                     `;
                     break;
                 case 'chatQuestion':
@@ -1375,15 +1381,12 @@
         $('#displayProcess').click(function(){
             $('#displayProcessToggle').toggleClass('d-none')
         })
-        // Function to update textarea value when container content changes
         function updateTextarea() {
-            var containerHtml = $('#markdownContainer').html();
-            $('#chatRule').val(containerHtml);
+            var containerHtml = $('#chatPurpose-markdownContainer').html();
+            $('#chatPurpose').val(containerHtml);
         }
-
-        // Detect changes in the container content
         var observer = new MutationObserver(updateTextarea);
-        observer.observe(document.getElementById('markdownContainer'), { childList: true, subtree: true });
+        observer.observe(document.getElementById('chatPurpose-markdownContainer'), { childList: true, subtree: true });
     });
 </script>
 </body>

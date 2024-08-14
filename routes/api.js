@@ -6,6 +6,7 @@ const sessions = new Map(); // Define sessions map
 const { analyzeScreenshot, processURL } = require('../models/scrap');
 const { createHash } = require('crypto');
 const { convert } = require('html-to-text');
+const axios = require('axios');
 
 async function routes(fastify, options) {
 
@@ -66,22 +67,43 @@ async function routes(fastify, options) {
             const uploadResult = await s3.upload(params).promise();
             return uploadResult.Location;
         };
-
         const handleFileUpload = async (part) => {
-            const chunks = [];
-            for await (const chunk of part.file) {
-                chunks.push(chunk);
+            let buffer;
+            
+            if (part.file) {
+                // Handling uploaded file
+                const chunks = [];
+                for await (const chunk of part.file) {
+                    chunks.push(chunk);
+                }
+                buffer = Buffer.concat(chunks);
+            } else if (part.value && isValidUrl(part.value)) {
+                // Handling file from URL
+                const response = await axios.get(part.value, { responseType: 'arraybuffer' });
+                buffer = Buffer.from(response.data, 'binary');
+            } else {
+                throw new Error('No valid file or URL provided');
             }
-            const buffer = Buffer.concat(chunks);
+        
             const hash = createHash('md5').update(buffer).digest('hex');
             const existingFiles = await s3.listObjectsV2({
                 Bucket: process.env.AWS_S3_BUCKET_NAME,
                 Prefix: hash,
             }).promise();
+            
             if (existingFiles.Contents.length > 0) {
                 return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFiles.Contents[0].Key}`;
             } else {
-                return uploadToS3(buffer, hash, part.filename);
+                return uploadToS3(buffer, hash, part.filename || 'uploaded_file');
+            }
+        };
+        
+        const isValidUrl = (string) => {
+            try {
+                new URL(string);
+                return true;
+            } catch (_) {
+                return false;
             }
         };
 
@@ -90,7 +112,6 @@ async function routes(fastify, options) {
                 case 'name':
                 case 'purpose':
                 case 'language':
-                case 'chatImageUrl':
                 case 'visibility':
                 case 'category':
                 case 'rule':
@@ -101,6 +122,9 @@ async function routes(fastify, options) {
                     break;
                 case 'content':
                     chatData.content = JSON.parse(part.value);
+                    break;
+                case 'chatImageUrl':
+                    chatData.chatImageUrl = await handleFileUpload(part);
                     break;
                 case 'thumbnail':
                     chatData.thumbnailUrl = await handleFileUpload(part);

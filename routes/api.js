@@ -1451,8 +1451,15 @@ async function routes(fastify, options) {
         }
     });
     fastify.get('/api/user', async (request,reply) => {
-        const user = await fastify.getUser(request, reply);
-        return reply.send({user})
+        try {
+            let user = await fastify.getUser(request, reply);
+            const userId = user._id;
+            const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+            user = await collection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
+            return reply.send({user})
+        } catch (error) {
+            console.log(error)
+        }
     })
     fastify.get('/api/mode', async (request,reply) => {
         return process.env.MODE

@@ -229,7 +229,6 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         { $sample: { size: 20 } },
       ]).toArray();
       peopleChats = {gohiai_girl, gohiai_man, synclubaichat, recent}
-      // Fetch user data
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
       return reply.view('custom-chat.hbs', { title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd', user, userId, chatId, chats: userCreatedChats, peopleChats });
     });
@@ -400,6 +399,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         const userId = request.user._id
         const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
         const userData = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
+        console.log(userData)
         return reply.view('/settings', { title: 'AIフレンズ  | Powered by Hato,Ltd', user:userData})
       } catch (err) {
         return reply.status(500).send({ error: 'Unable to render the settings' });

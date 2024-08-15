@@ -13,6 +13,7 @@ $(document).ready(function() {
             let userChatId
             const userId = user._id
             localStorage.setItem('userId', userId);
+            localStorage.setItem('user', JSON.stringify(user));
             let currentStep = 0;
             let totalSteps = 0;
             let chatData = {};
@@ -1138,7 +1139,213 @@ $(document).ready(function() {
             handleImageGeneration('#stability-gen-button', generateImageStableDiffusion);
             handleImageGeneration('#novita-gen-button', generateImageNovita);
             
+            // User info popup
+                
+            function generateRandomNickname() {
+                const adjectives = ["すばやい", "静かな", "強力な", "勇敢な", "明るい", "高貴な"];
+                const nouns = ["ライオン", "トラ", "ファルコン", "フェニックス", "オオカミ", "イーグル"];
+                return adjectives[Math.floor(Math.random() * adjectives.length)] + nouns[Math.floor(Math.random() * nouns.length)];
+            }
+        
+            function showPopupUserInfo(callback) {
+                Swal.fire({
+                    html: `
+                        <div class="row mb-3">    
+                            <div class="col-9">
+                                <div class="form-group mb-3 text-start">
+                                    <label for="nickname" class="form-label">
+                                        <span class="small text-white" style="font-size:12px">ニックネーム</span>
+                                        <span class="small text-muted" style="font-size:10px">キャラクターに呼んでほしい名前</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <input id="nickname" type="text" class="form-control form-control-sm" placeholder="ニックネームを入力">
+                                        <button id="generate-nickname" type="button" class="btn btn-light btn-sm shadow-0 border-0 input-group-tex">生成</button>
+                                    </div>
+                                </div>                        
+                            </div>        
+                            <div class="col-3 text-start">
+                                <label for="gender" class="form-label text-white" style="font-size:12px"><i class="fas fa-user"></i> 性別</label>
+                                <select class="form-select w-auto" id="gender" name="gender">
+                                    <option value="female" selected><i class="fas fa-female"></i> 女性</option>
+                                    <option value="male"><i class="fas fa-male"></i> 男性</option>
+                                </select>
+                            </div>
+                        </div>
 
+                        <div class="row text-start">
+                            <label for="birthdate" class="form-label text-white" style="font-size:12px">生年月日</label>
+                            <div class="d-flex">
+                                <select class="form-control me-2" id="birthYear" name="birthYear" style="cursor:pointer;">
+                                    <option value="" selected>年</option>
+                                </select>
+                
+                                <select class="form-control me-2" id="birthMonth" name="birthMonth" style="cursor:pointer;">
+                                    <option value="" selected>月</option>
+                                </select>
+                
+                                <select class="form-control" id="birthDay" name="birthDay" style="cursor:pointer;">
+                                    <option value="" selected>日</option>
+                                </select>
+                            </div>
+                        </div>
+                    `,
+                    focusConfirm: false,
+                    confirmButtonText: '送信',
+                    allowOutsideClick: false,
+                    showCancelButton: false,
+                    customClass: {
+                      confirmButton: 'bg-secondary px-5'
+                    },
+                    showClass: {
+                        popup: 'bg-dark animate__animated animate__fadeInDown'
+                    },
+                    hideClass: {
+                        popup: 'animate__animated animate__fadeOutUp'
+                    },
+                    didOpen: () => {
+                        if (callback) callback();
+                    },
+                    preConfirm: () => {
+                        const nickname = $('#nickname').val();
+                        const birthYear = $('#birthYear').val();
+                        const birthMonth = $('#birthMonth').val();
+                        const birthDay = $('#birthDay').val();
+                        const gender = $('#gender').val()
+        
+                        if (!nickname || !birthYear || !birthMonth || !birthDay || !gender)  {
+                            Swal.showValidationMessage('すべてのフィールドを入力してください');
+                            return false;
+                        }
+        
+                        return { nickname, birthYear, birthMonth, birthDay, gender };
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const { nickname, birthYear, birthMonth, birthDay, gender } = result.value;
+                    
+                        const formData = new FormData();
+                        formData.append('nickname', nickname);
+                        formData.append('birthYear', birthYear);
+                        formData.append('birthMonth', birthMonth);
+                        formData.append('birthDay', birthDay);
+                        formData.append('gender', gender);
+                    
+                        $.ajax({
+                            url: '/user/update-info',
+                            type: 'POST',
+                            processData: false,
+                            contentType: false,
+                            data: formData,
+                            success: function(response) {
+                                Swal.fire({
+                                    position: 'top-end',
+                                    icon: 'success',
+                                    title: '情報が更新されました。',
+                                    showConfirmButton: false,
+                                    timer: 3000,
+                                    toast: true,
+                                    animation: false,
+                                    customClass: {
+                                        container: 'animate__animated animate__fadeOutUp animate__delay-3s',
+                                        title: 'swal2-custom-title',
+                                        popup: 'swal2-custom-popup'
+                                    },
+                                    didOpen: (popup) => {
+                                        popup.classList.add('animate__animated', 'animate__slideInRight');
+                                    },
+                                    willClose: (popup) => {
+                                        popup.classList.add('animate__animated', 'animate__slideOutRight');
+                                    }
+                                });
+                            },
+                            error: function() {
+                                Swal.fire({
+                                    position: 'top-end',
+                                    icon: 'error',
+                                    title: '情報の更新中に問題が発生しました。',
+                                    showConfirmButton: false,
+                                    timer: 3000,
+                                    toast: true,
+                                    animation: false,
+                                    customClass: {
+                                        container: 'animate__animated animate__fadeOutUp animate__delay-3s',
+                                        title: 'swal2-custom-title',
+                                        popup: 'swal2-custom-popup'
+                                    },
+                                    didOpen: (popup) => {
+                                        popup.classList.add('animate__animated', 'animate__slideInRight');
+                                    },
+                                    willClose: (popup) => {
+                                        popup.classList.add('animate__animated', 'animate__slideOutRight');
+                                    }
+                                });
+                            }
+                        });
+                    }
+                    
+                });
+        
+                $('#generate-nickname').on('click', function() {
+                    $('#nickname').val(generateRandomNickname());
+                });
+            }
+
+            if($('body').attr('data-temporary-user') == 'false' && $('#chat-widget-container').length == 0){
+                let user = JSON.parse(localStorage.getItem('user'))
+
+                const userNickname = user?.nickname ?? '';
+                const userGender = user?.gender ?? '';
+                const userBirthYear = user?.birthDate?.year ?? '';
+                const userBirthMonth = user?.birthDate?.month ?? '';
+                const userBirthDay = user?.birthDate?.day ?? '';
+                
+                if (!userNickname || !userBirthYear || !userBirthMonth || !userBirthDay || !userGender) {
+                    showPopupUserInfo(function(callback){
+                        // Populate years
+                        var currentYear = new Date().getFullYear() - 15;
+                        var startYear = 1900; // Adjust this to your preferred start year
+
+                        for (var year = currentYear; year >= startYear; year--) {
+                            $('#birthYear').append($('<option>', {
+                                value: year,
+                                text: year + '年'
+                            }));
+                        }
+
+                        // Populate months
+                        for (var month = 1; month <= 12; month++) {
+                            $('#birthMonth').append($('<option>', {
+                                value: month,
+                                text: month + '月'
+                            }));
+                        }
+
+                        // Populate days
+                        function populateDays(month, year) {
+                            $('#birthDay').empty().append($('<option>', {
+                                value: '',
+                                text: '日'
+                            }));
+
+                            var daysInMonth = new Date(year, month, 0).getDate();
+                            for (var day = 1; day <= daysInMonth; day++) {
+                                $('#birthDay').append($('<option>', {
+                                    value: day,
+                                    text: day + '日'
+                                }));
+                            }
+                        }
+
+                        // Populate days based on current month and year
+                        populateDays($('#birthMonth').val(), $('#birthYear').val());
+
+                        // Update days when month or year changes
+                        $('#birthMonth, #birthYear').change(function() {
+                            populateDays($('#birthMonth').val(), $('#birthYear').val());
+                        });
+                    });
+                }
+            }
         });
     })
 

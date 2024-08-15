@@ -234,20 +234,20 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     region: process.env.AWS_REGION
-  });fastify.post('/user/update-info', async (request, reply) => {
+  });
+  fastify.post('/user/update-info', async (request, reply) => {
     const parts = request.parts();
   
     // Initialize variables for the incoming form data
     let email, nickname, birthYear, birthMonth, birthDay, gender, profileUrl;
   
     for await (const part of parts) {
-      // Check each part of the multipart form data and assign it to the appropriate variable
-      if (part.fieldname === 'email') email = part.value;
-      if (part.fieldname === 'nickname') nickname = part.value; // Updated field for nickname
-      if (part.fieldname === 'birthYear') birthYear = part.value;
-      if (part.fieldname === 'birthMonth') birthMonth = part.value;
-      if (part.fieldname === 'birthDay') birthDay = part.value;
-      if (part.fieldname === 'gender') gender = part.value;
+      if (part.fieldname === 'email' && part.value) email = part.value;
+      if (part.fieldname === 'nickname' && part.value) nickname = part.value;
+      if (part.fieldname === 'birthYear' && part.value) birthYear = part.value;
+      if (part.fieldname === 'birthMonth' && part.value) birthMonth = part.value;
+      if (part.fieldname === 'birthDay' && part.value) birthDay = part.value;
+      if (part.fieldname === 'gender' && part.value) gender = part.value;
   
       if (part.fieldname === 'profile' && part.file) {
         // Process file input for the profile image
@@ -310,21 +310,19 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
   
       // Construct the data object to update in the database
-      const updateData = {
-        email,
-        nickname,
-        birthDate: {
-          year: birthYear,
-          month: birthMonth,
-          day: birthDay,
-        },
-        gender,
-      };
+      const updateData = {};
 
-      if (profileUrl) {
-        updateData.profileUrl = profileUrl;
+      if (email) updateData.email = email;
+      if (nickname) updateData.nickname = nickname;
+      if (birthYear && birthMonth && birthDay) {
+        updateData.birthDate = { year: birthYear, month: birthMonth, day: birthDay };
       }
-  
+      if (gender) updateData.gender = gender;
+      if (profileUrl) updateData.profileUrl = profileUrl;
+      
+      if (Object.keys(updateData).length === 0) {
+        return reply.status(400).send({ error: '更新するデータがありません' });
+      }
       // Perform the update operation
       const updateResult = await usersCollection.updateOne(
         { _id: new fastify.mongo.ObjectId(userId) },

@@ -50,7 +50,7 @@ img {
           <div class="row mb-3">
             <div id="profileSection" class="text-center mb-4">
               <div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative">
-                <img id="profileImage" src="/img/logo.webp" alt="chat Thumbnail" class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover; cursor: pointer;">
+                <img id="profileImage" src="/img/logo.webp" alt="chat Thumbnail" class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover; object-position: top; cursor: pointer;">
                 <i class="fas fa-edit position-absolute" style="bottom: 5px; font-size: 1em; color: white; background-color: rgba(0, 0, 0, 0.5); border-radius: 50%; padding: 5px;"></i>
               </div>
             </div>
@@ -91,22 +91,16 @@ img {
 
 
           <div class="row mb-3">
-            <label class="form-label">性別</label>
-            <div class="d-flex">
-              <div class="form-check me-3">
-                <input class="form-check-input" type="radio" name="gender" id="female" value="female">
-                <label class="form-check-label" for="female">女性</label>
-              </div>
-              <div class="form-check me-3">
-                <input class="form-check-input" type="radio" name="gender" id="male" value="male">
-                <label class="form-check-label" for="male">男性</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="gender" id="other" value="other">
-                <label class="form-check-label" for="other">その他</label>
-              </div>
+            <div class="col-auto">
+                <label for="gender" class="form-label"><i class="fas fa-user"></i> 性別:</label>
+                <select class="form-select w-auto" id="gender" name="gender">
+                    <option value="female" selected><i class="fas fa-female"></i> 女性</option>
+                    <option value="male"><i class="fas fa-male"></i> 男性</option>
+                </select>
             </div>
           </div>
+
+
 
           <div class="col">
             <button type="submit" class="btn btn-secondary">ユーザー情報を保存</button>
@@ -233,13 +227,10 @@ img {
     $('#birthDay').val(user.birthDate.day);
 
     // Set user gender
-    if (user.gender === 'female') {
-        $('#female').prop('checked', true);
-    } else if (user.gender === 'male') {
-        $('#male').prop('checked', true);
-    } else {
-        $('#other').prop('checked', true);
-    }
+    if (user.gender) {
+        console.log(user.gender)
+        $('#gender').val(user.gender);
+    } 
 
     if(user.profileUrl){
       $('#profileImage').attr('src', user.profileUrl).show();
@@ -267,7 +258,7 @@ img {
       formData.append('birthYear', $('#birthYear').val());
       formData.append('birthMonth', $('#birthMonth').val());
       formData.append('birthDay', $('#birthDay').val());
-      formData.append('gender', $('input[name="gender"]:checked').val());
+      formData.append('gender', $('#gender').val());
 
       const profileImage = $('#profileImageInput')[0].files[0];
       if (profileImage) {

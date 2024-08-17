@@ -236,5 +236,69 @@ async function fetchNewAPICompletion(userMessages, rawReply, chatname, timeout =
     }
 }
 
+// Function to fetch custom OpenAI response
+const fetchOpenAICustomResponse = async (customPrompt, messages, res, maxToken = 1000) => {
+    try {
+        const fullPrompt = [
+            { role: "system", content: customPrompt.systemContent },
+            { role: "user", content: customPrompt.userContent + messages.map(msg => msg.role != 'system' ? `${msg.content}` : '').join("\n") }
+        ];
 
-  module.exports = {fetchOpenAICompletion,moduleCompletion,fetchOpenAINarration, fetchNewAPICompletion}
+        let response = await fetch(
+            "https://api.openai.com/v1/chat/completions",
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+                },
+                method: "POST",
+                body: JSON.stringify({
+                    model: 'gpt-4o-mini',
+                    messages: fullPrompt,
+                    temperature: customPrompt.temperature || 0.75,
+                    top_p: customPrompt.top_p || 0.95,
+                    frequency_penalty: customPrompt.frequency_penalty || 0,
+                    presence_penalty: customPrompt.presence_penalty || 0,
+                    max_tokens: maxToken,
+                    stream: true,
+                    n: 1,
+                }),
+            }
+        );
+
+        if (!response.ok) {
+            console.error("Response body:", await response.text());
+            throw new Error("Failed to fetch custom OpenAI response");
+        }
+
+        let fullResponse = "";
+        const parser = createParser((event) => {
+            try {
+                if (event.type === 'event') {
+                    if (event.data !== "[DONE]") {
+                        const content = JSON.parse(event.data).choices[0].delta?.content || "";
+                        fullResponse += content;
+                        res.write(`data: ${JSON.stringify({ content: `${content}` })}\n\n`);
+                    }
+                }
+            } catch (error) {
+                console.log(error);
+                console.error("Error in parser:", error);
+                console.error("Event causing error:", event);
+            }
+        });
+
+        for await (const chunk of response.body) {
+            parser.feed(new TextDecoder('utf-8').decode(chunk));
+        }
+
+        return fullResponse;
+
+    } catch (error) {
+        console.error("Error fetching custom OpenAI response:", error);
+        throw error;
+    }
+};
+
+
+  module.exports = {fetchOpenAICompletion,moduleCompletion,fetchOpenAINarration, fetchNewAPICompletion, fetchOpenAICustomResponse}

@@ -1,5 +1,5 @@
 const { ObjectId } = require('mongodb');
-const {moduleCompletion,fetchOpenAICompletion, fetchOpenAINarration, fetchNewAPICompletion} = require('../models/openai')
+const {moduleCompletion,fetchOpenAICompletion, fetchOpenAINarration, fetchNewAPICompletion, fetchOpenAICustomResponse} = require('../models/openai')
 const crypto = require('crypto');
 const aws = require('aws-sdk');
 const sessions = new Map(); // Define sessions map
@@ -547,7 +547,12 @@ async function routes(fastify, options) {
         if (messageCountDoc && messageCountDoc.count >= messageLimit) {
             return { error: 'Message limit reached for today.', id: 1, messageCountDoc, chatCount, imageCountDoc, messageIdeasCountDoc, messageLimit, chatLimit, imageLimit, messageIdeasLimit };
         } 
-    
+        if(isTemporary){
+            if (chatCount >= chatLimit) {
+                return { error: 'Chat limit reached for today.', id: 2, messageCountDoc, chatCount, imageCountDoc, messageIdeasCountDoc, messageLimit, chatLimit, imageLimit, messageIdeasLimit };
+            } 
+        }
+
         if (imageCountDoc && imageCountDoc.count >= imageLimit) {
             return { error: 'Image generation limit reached for today.', id: 3, messageCountDoc, chatCount, imageCountDoc, messageIdeasCountDoc, messageLimit, chatLimit, imageLimit, messageIdeasLimit };
         }
@@ -581,7 +586,7 @@ async function routes(fastify, options) {
                 
                 if(!isUserChat){
                     if (userLimitCheck.id === 2) {
-                        //return reply.status(403).send(userLimitCheck);
+                        return reply.status(403).send(userLimitCheck);
                     }
                     if (!isWidget) {
                         const existingChatDocument = await collectionChat.findOne({
@@ -1307,7 +1312,6 @@ async function routes(fastify, options) {
                 return reply.status(404).send({ error: 'Chat data not found' });
             }
     
-            console.log(chatData.messages)
             const completion = await fetchOpenAICompletion(chatData.messages, reply.raw);
     
             // Append the assistant's response to the messages array in the chat document
@@ -1392,6 +1396,103 @@ async function routes(fastify, options) {
             reply.status(500).send({ error: 'Error fetching OpenAI completion' });
         }
     });
+    // POST Route to create a session with a custom prompt
+    fastify.post('/api/openai-custom-chat', async (request, reply) => {
+        const { chatId, userChatId, role, customPrompt } = request.body;
+        let userId = request.body.userId;
+        if (!userId) { 
+            const user = await fastify.getUser(request, reply);
+            userId = user._id;
+        }
+        const sessionId = Math.random().toString(36).substring(2, 15); // Generate a unique session ID
+        sessions.set(sessionId, { userId, chatId, userChatId, role, customPrompt }); // Save custom prompt
+        return reply.send({ sessionId });
+    });
+
+    // GET Route to fetch the response for the custom prompt
+    fastify.get('/api/openai-custom-chat-stream/:sessionId', async (request, reply) => {
+        const { sessionId } = request.params;
+        const session = sessions.get(sessionId);
+        
+        if (!session) {
+            reply.status(404).send({ error: 'Session not found' });
+            return;
+        }
+
+        // Set CORS headers
+        reply.raw.setHeader('Access-Control-Allow-Origin', '*');
+        reply.raw.setHeader('Access-Control-Allow-Methods', 'GET');
+        reply.raw.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+        reply.raw.setHeader('Content-Type', 'text/event-stream');
+        reply.raw.setHeader('Cache-Control', 'no-cache');
+        reply.raw.setHeader('Connection', 'keep-alive');
+        reply.raw.flushHeaders();
+
+        try {
+            const { userId, chatId, userChatId, customPrompt } = session;
+            
+            const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+            let userData = await collectionUserChat.findOne({ userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
+
+            if (!userData) {
+                reply.raw.end(); // End the stream before sending the response
+                return reply.status(404).send({ error: 'User data not found' });
+            }
+            
+            const userMessages = userData.messages;
+
+            const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+            let chatData = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
+            let language = 'japanese';
+            if (chatData) {
+                language = chatData.language;
+            }
+            let chatName = chatData.name
+
+            customPrompt.systemContent = `あなたは[${chatName}]というキャラクターです。${customPrompt.systemContent} ${language}で送ってください。`
+            // Generate the custom prompt completion
+            const customCompletion = await fetchOpenAICustomResponse(customPrompt, userMessages, reply.raw);
+
+            // Append the custom response to the messages array in the chat document
+            const customMessage = { "role": "assistant", "content": `${session.role ? `[${session.role}]` : ''} ${customCompletion}` };
+            userMessages.push(customMessage);
+            userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
+
+            // Update the chat document in the database
+            const result = await collectionUserChat.updateOne(
+                { userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) },
+                { $set: { messages: userMessages, updatedAt: userData.updatedAt } }
+            );
+
+            reply.raw.end();
+        } catch (error) {
+            console.log(error);
+            reply.raw.end(); // End the stream before sending the response
+            reply.status(500).send({ error: 'Error fetching custom OpenAI response' });
+        }
+    });
+    fastify.post('/api/update-log-success', async (request, reply) => {
+        try {
+            const { userId, userChatId } = request.body;
+            const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+    
+            const result = await collectionUserChat.updateOne(
+                { userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) },
+                { $set: { log_success: false } }
+            );      
+
+            if (result.modifiedCount === 1) {
+                reply.send({ success: true });
+            } else {
+                reply.status(404).send({ success: false, message: "Document not found or already updated" });
+            }
+        } catch (error) {
+            console.error(error);
+            reply.status(500).send({ success: false, message: "An error occurred while updating log_success" });
+        }
+    });
+    
     fastify.get('/api/user-data', async (request, reply) => {
         if (process.env.MODE != 'local') {
             return reply.send([]);

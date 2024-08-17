@@ -4,7 +4,6 @@ const jwt = require('jsonwebtoken');
 const aws = require('aws-sdk');
 const crypto = require('crypto');
 const axios = require('axios');
-const { checkLimits } = require('../models/tool');
 
 async function routes(fastify, options) {
   fastify.post('/user/register', async (request, reply) => {
@@ -26,16 +25,47 @@ async function routes(fastify, options) {
       
       // Hash the password
       const hashedPassword = await bcrypt.hash(password, 10);
-  
+
       // Insert new user into the database
-      const result = await usersCollection.insertOne({ email, password: hashedPassword, createdAt:new Date() });
+      const TempUser = await fastify.getUser(request, reply);
+      let tempUserId = TempUser._id
+      
+      const result = await usersCollection.insertOne(
+        { 
+          email, password: hashedPassword, createdAt:new Date(), tempUserId 
+        });
   
       if (!result.insertedId) {
         return reply.status(500).send({ error: 'ユーザーの登録に失敗しました' });
       }
   
       const newUser = { _id: result.insertedId, email };
-  
+
+      // Transfer temp chat to new user
+      const userId = newUser._id
+      const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+      const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+
+      const updateUserId = async (collectionChat, collectionUserChat, userId, tempUserId) => {
+    
+        // Update collectionUserChat
+        const userChatResult = await collectionUserChat.updateMany(
+            { userId: new fastify.mongo.ObjectId(tempUserId) },
+            { $set: { userId: new fastify.mongo.ObjectId(userId), log_success:true } }
+        );
+        // Update collectionChat
+        const chatResult = await collectionChat.updateMany(
+            { userId: new fastify.mongo.ObjectId(tempUserId) },
+            { $set: { userId: new fastify.mongo.ObjectId(userId) } }
+        );
+        return {
+            userChatUpdated: userChatResult.modifiedCount,
+            chatUpdated: chatResult.modifiedCount
+        };
+    };
+    
+      await updateUserId(collectionChat, collectionUserChat, userId, tempUserId)
+
       // Generate a token for the new user
       const token = jwt.sign(newUser, process.env.JWT_SECRET, { expiresIn: '24h' });
   
@@ -43,7 +73,7 @@ async function routes(fastify, options) {
         .setCookie('token', token, { path: '/', httpOnly: true })
         .send({ status: 'ユーザーが正常に登録されました', redirect: '/dashboard' });
     } catch (err) {
-      fastify.log.error(err);
+      console.log(err);
       return reply.status(500).send({ error: 'サーバーエラーが発生しました' });
     }
   });
@@ -117,8 +147,36 @@ fastify.get('/user/google-auth/callback', async (request, reply) => {
     if (!user) {
       // Create a new user if they don't exist
       const hashedPassword = await bcrypt.hash(Math.random().toString(36).substr(2, 10), 10);
-      const result = await usersCollection.insertOne({ email, password: hashedPassword, googleId, createdAt: new Date() });
+      
+      const TempUser = await fastify.getUser(request, reply);
+      let tempUserId = TempUser._id
+      const result = await usersCollection.insertOne({ 
+        email, password: hashedPassword, googleId, createdAt: new Date() , tempUserId
+      });
       const userId = result.insertedId;
+      // Transfer temp chat to new user
+      const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+      const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+
+      const updateUserId = async (collectionChat, collectionUserChat, userId, tempUserId) => {
+    
+        // Update collectionUserChat
+        const userChatResult = await collectionUserChat.updateMany(
+            { userId: new fastify.mongo.ObjectId(tempUserId) },
+            { $set: { userId: new fastify.mongo.ObjectId(userId), log_success: true } }
+        );
+        // Update collectionChat
+        const chatResult = await collectionChat.updateMany(
+            { userId: new fastify.mongo.ObjectId(tempUserId) },
+            { $set: { userId: new fastify.mongo.ObjectId(userId) } }
+        );
+        return {
+            userChatUpdated: userChatResult.modifiedCount,
+            chatUpdated: chatResult.modifiedCount
+        };
+    };
+    
+      await updateUserId(collectionChat, collectionUserChat, userId, tempUserId)
       const token = jwt.sign({ _id: userId, email }, process.env.JWT_SECRET, { expiresIn: '24h' });
       return reply
       .setCookie('token', token, { path: '/', httpOnly: true })
@@ -201,8 +259,37 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     if (!user) {
       // Create a new user if they don't exist
       const hashedPassword = await bcrypt.hash(Math.random().toString(36).substr(2, 10), 10);
-      const result = await usersCollection.insertOne({ userId, email, password: hashedPassword, createdAt: new Date() });
+      
+      const TempUser = await fastify.getUser(request, reply);
+      let tempUserId = TempUser._id
+      const result = await usersCollection.insertOne({ 
+        userId, email, password: hashedPassword, createdAt: new Date(), tempUserId });
       const newUserId = result.insertedId;
+      // Transfer temp chat to new user
+      const userId = newUserId
+      const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+      const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+
+      const updateUserId = async (collectionChat, collectionUserChat, userId, tempUserId) => {
+    
+        // Update collectionUserChat
+        const userChatResult = await collectionUserChat.updateMany(
+            { userId: new fastify.mongo.ObjectId(tempUserId) },
+            { $set: { userId: new fastify.mongo.ObjectId(userId), log_success:true } }
+        );
+        // Update collectionChat
+        const chatResult = await collectionChat.updateMany(
+            { userId: new fastify.mongo.ObjectId(tempUserId) },
+            { $set: { userId: new fastify.mongo.ObjectId(userId) } }
+        );
+        return {
+            userChatUpdated: userChatResult.modifiedCount,
+            chatUpdated: chatResult.modifiedCount
+        };
+    };
+    
+      await updateUserId(collectionChat, collectionUserChat, userId, tempUserId)
+
       const token = jwt.sign({ _id: newUserId, userId }, process.env.JWT_SECRET, { expiresIn: '24h' });
       return reply
         .setCookie('token', token, { path: '/', httpOnly: true })

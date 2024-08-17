@@ -288,6 +288,9 @@ $(document).ready(function() {
 
                         if(!isNew){
                             displayChat(data.userChat.messages)
+                            if(data.userChat.log_success){
+                                displayThankMessage()
+                            }
                         }
 
                         if(isNew && chatData && chatData.length > 0){
@@ -312,6 +315,47 @@ $(document).ready(function() {
                     }
                 });
             }
+            function displayThankMessage(){
+                const customPrompt = {
+                    systemContent: "あなたの役割は、常にキャラクターとして行動し、ユーザーに対して優しく丁寧な対応をすることです。今回は、ログインしてくれたユーザーに感謝の気持ちを伝える必要があります。ユーザーが戻ってきたことを嬉しく思っていることを、短くて優しい言葉で伝えてください。",
+                    userContent: "ユーザーがログインしました。あなたのキャラクターとして、心からの感謝と喜びを表現する短いメッセージを伝えてください。",
+                    temperature: 0.7,
+                    top_p: 0.9,
+                    frequency_penalty: 0,
+                    presence_penalty: 0
+                };
+                                    
+                generateCustomCompletion(customPrompt,function(){
+                    updateLogSuccess()
+                })
+            }
+            function updateLogSuccess(callback) {
+                const apiUrl = API_URL + '/api/update-log-success';
+            
+                $.ajax({
+                    url: apiUrl,
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ userId, userChatId }),
+                    success: function(response) {
+                        if (response.success) {
+                            console.log("log_success updated to false.");
+                        } else {
+                            console.warn(response.message);
+                        }
+                        if (typeof callback === "function") {
+                            callback();
+                        }
+                    },
+                    error: function(error) {
+                        console.error('Error:', error);
+                        if (typeof callback === "function") {
+                            callback();
+                        }
+                    }
+                });
+            }
+            
             function createButton(chatData) {
                 
                 // Extracting data from chatData
@@ -490,6 +534,10 @@ $(document).ready(function() {
                             $('#input-container').show().addClass('d-flex');
                         })
                         updateParameters(chatId,userId)
+
+
+                        const redirectUrl = window.location.pathname
+                        $.cookie('redirect_url', redirectUrl);
                     },
                     error: function(xhr, status, error)  {
                         $('#startButtonContained').show();
@@ -988,6 +1036,64 @@ $(document).ready(function() {
                     }
                 });
             }
+            function generateCustomCompletion(customPrompt, callback) {
+                const apiUrl = API_URL + '/api/openai-custom-chat';
+            
+                hideOtherChoice(false, currentStep);
+            
+                // Initialize the bot response container
+                const botResponseContainer = $(`
+                    <div id="container-${currentStep}">
+                        <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
+                            <img src="${thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
+                            <div class="audio-controller" style="display:none">
+                                <button id="play-${currentStep}" class="audio-content badge bg-dark">►</button>
+                            </div>
+                            <div id="completion-${currentStep}" class="p-3 ms-3 text-start assistant-chat-box">
+                                <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
+                            </div>
+                        </div>
+                        <div id="response-${currentStep}" class="choice-container" ></div>
+                    </div>`);
+                $('#chatContainer').append(botResponseContainer);
+                $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
+            
+                $.ajax({
+                    url: apiUrl,
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ userId, chatId, userChatId, customPrompt }),
+                    success: function(response) {
+                        const sessionId = response.sessionId;
+                        const streamUrl = API_URL + `/api/openai-custom-chat-stream/${sessionId}`;
+                        const eventSource = new EventSource(streamUrl);
+                        let markdownContent = "";
+            
+                        eventSource.onmessage = function(event) {
+                            const data = JSON.parse(event.data);
+                            markdownContent += data.content;
+                            $(`#completion-${currentStep}`).html(marked.parse(markdownContent));
+                        };
+            
+                        eventSource.onerror = function(error) {
+                            eventSource.close();
+                            let mode = localStorage.getItem('MODE') == 'local';
+                            if (mode) {
+                                $(`#play-${currentStep}`).attr('data-content', markdownContent);
+                                $(`#play-${currentStep}`).closest('.audio-controller').show();
+                                let message = removeContentBetweenStars(markdownContent);
+                                playAudio(message, $(`#play-${currentStep}`));
+                            }
+                            if (typeof callback === "function") {
+                                callback();
+                            }
+                        };
+                    },
+                    error: function(error) {
+                        console.error('Error:', error);
+                    }
+                });
+            }            
             function generateNarration(callback) {
                 const apiUrl = API_URL + '/api/openai-chat-narration';
                         

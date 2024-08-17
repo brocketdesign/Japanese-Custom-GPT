@@ -14,7 +14,7 @@ $(document).ready(function() {
             const userId = user._id
             localStorage.setItem('userId', userId);
             localStorage.setItem('user', JSON.stringify(user));
-            let userCoins = user.coins || 100
+            let userCoins = user.coins || 300
             updateCoins(userCoins)
             let currentStep = 0;
             let totalSteps = 0;
@@ -1203,7 +1203,6 @@ $(document).ready(function() {
                 }
             }
             window.buyItem = function(itemId, itemName, itemPrice, status, userId, chatId, userChatId) {
-                console.log(`Purchasing item: ${itemName} for ¥${itemPrice}`);
             
                 if (status) {
                     initiatePurchase(itemId, itemName, itemPrice, userId, function(response) {
@@ -1217,7 +1216,6 @@ $(document).ready(function() {
                                     if (error) {
                                         console.error('Error adding message:', error);
                                     } else {
-                                        console.log('Message added successfully:', res);
                                         generateCompletion();
                                     }
                                 });
@@ -1953,7 +1951,8 @@ window.updateCoins = function(userCoins) {
             url: API_URL+'/api/user',
             method: 'GET',
             success: function(response) {
-                $('.user-coins').each(function(){$(this).html(response.user.coins)})
+                const userCoins = response.user.coins || 300
+                $('.user-coins').each(function(){$(this).html(userCoins)})
             }
         });
         return

@@ -185,7 +185,13 @@ $(document).ready(function() {
     }
 });
 
-window.showCoinShop = function(){
+window.showCoinShop = function(el){
+    if(el && $(el).hasClass('open')){
+       return
+    }
+    if(el && !$(el).hasClass('open')){
+        $(el).addClass('open')
+    }
     Swal.fire({
         position: 'center',
         html: `
@@ -196,7 +202,7 @@ window.showCoinShop = function(){
                             <span class="fw-bold text-white">保有コイン</span>
                             <div>
                                 <span>🪙</span>
-                                <span class="fw-bold text-white float-end user-coins">0</span>
+                                <span class="fw-bold text-white float-end user-coins ms-2">0</span>
                             </div>
                         </div>
                     </div>
@@ -264,6 +270,12 @@ window.showCoinShop = function(){
                 const buttonId = this.id;
                 initiateCheckout(buttonId);
             });
+        },
+        willClose: () => {
+
+                if(el){
+                    $(el).removeClass('open')
+                }
         }
     });
     

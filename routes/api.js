@@ -743,7 +743,7 @@ async function routes(fastify, options) {
                 return reply.code(404).send({ error: 'User not found' });
             }
     
-            let userCoins = user.coins || 100; 
+            let userCoins = user.coins || 300; 
             
             if (userCoins < itemPrice) {
                 return reply.code(400).send({ error: 'Insufficient coins', id: 1 });
@@ -1610,7 +1610,7 @@ async function routes(fastify, options) {
             });
 
             const proposal = completion.choices[0].message.parsed;
-console.log(proposal)
+
             return reply.send(proposal);
             
         } catch (error) {

@@ -14,7 +14,7 @@ $(document).ready(function() {
             const userId = user._id
             localStorage.setItem('userId', userId);
             localStorage.setItem('user', JSON.stringify(user));
-            let userCoins = user.coins
+            let userCoins = user.coins || 100
             updateCoins(userCoins)
             let currentStep = 0;
             let totalSteps = 0;

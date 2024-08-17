@@ -212,7 +212,7 @@ window.showCoinShop = function(el){
                                 <img src="/img/coins-1.png" alt="Coin" class="mb-2 m-auto" style="width: 100px;">
                                 <h6>100コイン</h6>
                                 <p class="text-muted small mb-2" style="font-size:12px;">手頃なコインパッケージ</p>
-                                <button id="coins-set1" class="buycoin btn custom-gradient-bg w-100">¥200.0</button>
+                                <button id="coins-set1" class="buycoin btn custom-gradient-bg w-100">¥200</button>
                             </div>
                         </div>
                     </div>
@@ -222,7 +222,7 @@ window.showCoinShop = function(el){
                                 <img src="/img/coins-2.png" alt="Coin" class="mb-2 m-auto" style="width: 100px;">
                                 <h6>550コイン</h6>
                                 <p class="text-muted small mb-2" style="font-size:12px;">無料コイン150枚付き</p>
-                                <button id="coins-set2"  class="buycoin btn custom-gradient-bg w-100">¥800.0</button>
+                                <button id="coins-set2"  class="buycoin btn custom-gradient-bg w-100">¥800</button>
                             </div>
                         </div>
                     </div>
@@ -232,7 +232,7 @@ window.showCoinShop = function(el){
                                 <img src="/img/coins-3.png" alt="Coin" class="mb-2 m-auto" style="width: 100px;">
                                 <h6>1200コイン</h6>
                                 <p class="text-muted small mb-2" style="font-size:12px;">無料コイン450枚付き</p>
-                                <button id="coins-set3"  class="buycoin btn custom-gradient-bg w-100">¥1500.0</button>
+                                <button id="coins-set3"  class="buycoin btn custom-gradient-bg w-100">¥1500</button>
                             </div>
                         </div>
                     </div>
@@ -242,7 +242,7 @@ window.showCoinShop = function(el){
                                 <img src="/img/coins-4.png" alt="Coin" class="mb-2 m-auto" style="width: 100px;">
                                 <h6>2500コイン</h6>
                                 <p class="text-muted small mb-2" style="font-size:12px;">無料コイン1000枚付き</p>
-                                <button id="coins-set4"  class="buycoin btn custom-gradient-bg w-100">¥3000.0</button>
+                                <button id="coins-set4"  class="buycoin btn custom-gradient-bg w-100">¥3000</button>
                             </div>
                         </div>
                     </div>

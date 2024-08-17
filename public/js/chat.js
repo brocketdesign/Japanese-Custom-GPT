@@ -1510,7 +1510,7 @@ $(document).ready(function() {
                             const item = response.items[0]
                             const itemId = `item-${currentStep}-${Date.now()}`;
                             const message = `
-                            <div id="${itemId}" class="card bg-transparent text-white border-0" style="width: 18rem;">
+                            <div id="${itemId}" class="card bg-transparent text-white border-0">
                             <div class="card-body">
                                 <h5 class="card-title" style="font-size: 14px;">${item.name}</h5>
                                 <p class="card-text mb-2 fw-bold">価格: ${item.price}コイン</p>

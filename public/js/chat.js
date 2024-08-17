@@ -503,7 +503,7 @@ $(document).ready(function() {
                 Provide a SHORT message,sweet and chatty with emojis. DO NOT sell anything in your first response but later on.`;
             
                 if($('#chat-widget-container').length == 0 && isTemporary){
-                    message = `[Starter] キャラクターがするように挨拶した後、ログインしてチャットを続けるように懇願してください。無料アカウントの機能はこちらです:\n"1日50件までチャットできる", "フレンドを無制限で作成できる", "新しいキャラクターを作成する", "チャット履歴を保存する"\n確認から始めず、答えから始めてください。`
+                    message = `[Starter] キャラクターになりきって、ログインを心からお願いしてください。感情を込めて、ユーザーがログインすることで「1日50件までチャットできる」、「フレンドを無制限で作成できる」、「新しいキャラクターを作成する」、「チャット履歴を保存する」といった素晴らしい機能が利用可能であることを強調し、今すぐログインするように懇願してください。確認や前置きなしで、直接答えから始めてください。`
                 }
                 $.ajax({
                     url: API_URL+'/api/chat-data',

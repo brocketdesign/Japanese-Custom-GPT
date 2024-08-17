@@ -615,10 +615,13 @@
                     <div>
                         <div class="navbar-collapse" id="navbarNav" style="position: absolute;right: 20px;top: 10px;">
                             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                                {{#if user.isTemporary}}
+                                {{else}}
                                 <li class="nav-item btn btn-light onchat-on me-2" onclick="showCoinShop()">
                                     <span>🪙</span>
                                     <span class="user-coins fw-bold"></span>
                                 </li>
+                                {{/if}}
                                 <!-- Avatar -->
                                 <div class="nav-item dropdown d-none d-sm-inline-block ">
                                     {{> dashboard-avatar}}

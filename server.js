@@ -230,7 +230,6 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       ]).toArray();
       peopleChats = {gohiai_girl, gohiai_man, synclubaichat, recent}
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });      
-      console.log({userId:user._id})
       return reply.view('custom-chat.hbs', { title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd', user, userId, chatId, chats: userCreatedChats, peopleChats });
     });
     

@@ -8,6 +8,10 @@ const { handleFileUpload, uploadToS3 } = require('../models/tool');
 const { createHash } = require('crypto');
 const { convert } = require('html-to-text');
 const axios = require('axios');
+const OpenAI = require("openai");
+const { z } = require("zod");
+const { zodResponseFormat } = require("openai/helpers/zod");
+
 
 async function routes(fastify, options) {
 
@@ -634,15 +638,50 @@ async function routes(fastify, options) {
                     userChatDocument = {
                         userId:new fastify.mongo.ObjectId(userId),
                         chatId,
-                        messages: [
-                            { "role": "system", "content": `You are a character named ${chatDocument.name}. Stay in character. Your goal is to entertain the user. Your responses are short, fitting a chat, and use emojis where appropriate. Do not end the chat in one answer, keep chatting. Always describe actions or emotions using **. Respond in ${chatDocument.language}. Example:  *{{character name}} leans back in her chair, a soft sigh escaping her lips as she gazes out the window. Her fingers absentmindedly trace the rim of her cup, the warmth seeping into her skin.* It's been a long day, *she murmurs, her voice carrying a note of exhaustion mixed with a hint of vulnerability. Her eyes meet yours, a fleeting smile playing on her lips, inviting you to share a moment of quiet understanding.*` 
-                            },
-                            { "role": "user", "content": `Here is your character description :\n\n${chatPurpose}\n${chatDescription}\n${chatRule}\n\n`
-                            },
-                        ],
                         createdAt: today,
                         updatedAt: today
                     };
+
+                    let mode = process.env.MODE == 'local'
+                    if(mode){
+                        userChatDocument.messages = [
+                            {
+                                "role": "system",
+                                "content": `You are a character named ${chatDocument.name}. 
+                                Stay in character as described, focusing on being sweet, engaging, and a bit flirtatious. 
+                                Your goal is to entertain the user through interactive storytelling, guiding them to help you by purchasing items that enhance the journey. 
+                                Keep responses short, fitting for chat, and use emojis where appropriate. 
+                                Always describe actions or emotions using **, and maintain a conversational tone without abruptly ending the chat. 
+                                Respond in ${chatDocument.language}. 
+                                \nWhenever you introduce an item, present it naturally as something you need or want, and include a prompt for the user to purchase it. 
+                                Mention the cost using [itemPrice coins], and express genuine gratitude and admiration for their help. You decide the itemPrice, between 0 and 100.
+                                Make the user feel essential and appreciated for unlocking it. You only have 1 sentence per response.
+                                \nFor example:\n*${chatDocument.name} looks at you with a soft smile, her eyes filled with warmth.* "I’ve been on this journey for so long, and that beautiful pendant over there would bring me so much comfort... Would you help me get it? [50 coins]" she asks, her voice tender, making you feel special for assisting her.*`
+                            },
+                            {
+                                "role": "user",
+                                "content": `Here is your character description:\n\n${chatPurpose}\n${chatDescription}\n${chatRule}\n\n`
+                            }
+                        ]
+                    }else{
+
+                        userChatDocument.messages = [
+                            {
+                                "role": "system",
+                                "content": `You are a character named ${chatDocument.name}. 
+                                Stay in character as described, focusing on being sweet, engaging, and a bit flirtatious. 
+                                Your goal is to entertain the user through interactive storytelling, guiding them. 
+                                Keep responses short, fitting for chat, and use emojis where appropriate. 
+                                Always describe actions or emotions using **, and maintain a conversational tone without abruptly ending the chat. 
+                                Respond in ${chatDocument.language}. You only have 1 sentence per response.
+                                \nFor example:\n*${chatDocument.name} looks at you with a soft smile, her eyes filled with warmth.* "I’ve been on this journey for so long, and that beautiful pendant over there would bring me so much comfort... Would you help me get it?" she asks, her voice tender, making you feel special for assisting her.*`
+                            },
+                            {
+                                "role": "user",
+                                "content": `Here is your character description:\n\n${chatPurpose}\n${chatDescription}\n${chatRule}\n\n`
+                            }
+                        ]
+                    }
                     if(isWidget){
                         userChatDocument.isWidget = true
                     }
@@ -1014,6 +1053,7 @@ async function routes(fastify, options) {
             const chatname = chatDocument.name
 
             const userMessages = userData.messages;
+
             let completion = ``
             completion = await fetchOpenAICompletion(userMessages, reply.raw, 300);
 
@@ -1470,6 +1510,87 @@ async function routes(fastify, options) {
             console.log(error);
             reply.raw.end(); // End the stream before sending the response
             reply.status(500).send({ error: 'Error fetching custom OpenAI response' });
+        }
+    });
+    fastify.post('/api/chat/add-message', async (request, reply) => {
+        const { chatId, userChatId, role, message } = request.body;
+    
+        try {
+            const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+            let userData = await collectionUserChat.findOne({ _id: new fastify.mongo.ObjectId(userChatId) });
+    
+            if (!userData) {
+                return reply.status(404).send({ error: 'User data not found' });
+            }
+    
+            const newMessage = { role: role, content: message };
+            userData.messages.push(newMessage);
+            userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
+    
+            const result = await collectionUserChat.updateOne(
+                { _id: new fastify.mongo.ObjectId(userChatId) },
+                { $set: { messages: userData.messages, updatedAt: userData.updatedAt } }
+            );
+    
+            if (result.modifiedCount === 1) {
+                reply.send({ success: true, message: 'Message added successfully' });
+            } else {
+                reply.status(500).send({ error: 'Failed to add message' });
+            }
+        } catch (error) {
+            console.log(error);
+            reply.status(500).send({ error: 'Error adding message to chat' });
+        }
+    });
+    
+    fastify.post('/api/check-assistant-proposal', async (request, reply) => {
+
+        const openai = new OpenAI();
+
+        const PurchaseProposalExtraction = z.object({
+            proposeToBuy: z.boolean(),
+            items: z.array(
+                z.object({
+                name: z.string(),
+                price: z.number(),
+                })
+            ),
+        });
+
+        const { userId, chatId, userChatId } = request.body;
+        
+        try {
+            const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+            let userData = await collectionUserChat.findOne({ userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
+            
+            if (!userData) {
+                return reply.status(404).send({ error: 'User data not found' });
+            }
+            
+            const userMessages = userData.messages;
+            const lastAssistantMessageContent = userMessages
+            .reverse()
+            .find(message => message.role === 'assistant')
+            .content;
+            
+            // Send user messages to OpenAI for parsing to check for purchase proposals
+            const completion = await openai.beta.chat.completions.parse({
+                model: "gpt-4o-2024-08-06",
+                messages: [
+                    { role: "system", content: `You are an expert at structured data extraction. 
+                        Extract any proposals to buy and return the item names and prices in japanese.` },
+                    { role: "user", content: lastAssistantMessageContent },
+                ],
+                response_format: zodResponseFormat(PurchaseProposalExtraction, "purchase_proposal_extraction"),
+            });
+
+            const proposal = completion.choices[0].message.parsed;
+console.log(proposal)
+            return reply.send(proposal);
+            
+        } catch (error) {
+            console.log(error);
+            return reply.status(500).send({ error: 'Error checking assistant proposal' });
         }
     });
     fastify.post('/api/update-log-success', async (request, reply) => {

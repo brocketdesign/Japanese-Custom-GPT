@@ -207,7 +207,7 @@ $(document).ready(function() {
                                         <i class="fa fa-comment me-1"></i>${limitMess}
                                     </span>
                                 `)
-                                .show()
+                                .hide()
                             }
                             userChatId = response.userChatId
                             chatId = response.chatId
@@ -216,7 +216,13 @@ $(document).ready(function() {
                                 isNew = false
                             }else{
                                 //generateNarration()
-                                generateCompletion()
+                                generateCompletion(function(){
+                                    let mode = localStorage.getItem('MODE') == 'local'
+                                    if(mode){
+                                        checkForPurchaseProposal()
+                                    }
+                                    
+                                })
                                 isNew = false
                             }
                         },
@@ -492,12 +498,15 @@ $(document).ready(function() {
             function displayStarter() {
                 $('#startButtonContained').hide();
                 $('#introChat').hide();
-
-                let message = `[Starter] Invent a situation and explain what is going on. Respond as if you started the conversation. DO not start by aknowledge, start with the answer.` 
+                
+         
+                let message = `[Starter] 状況を発明し、何が起こっているかを説明してください。会話を開始したかのように応答してください。確認から始めず、答えから始めてください。
+                Provide a SHORT message,sweet and chatty with emojis. DO NOT sell anything in your first response but later on.`;
+            
                 if($('#chat-widget-container').length == 0 && isTemporary){
-                    message = `[Starter] After greeting me like you character would do, beg me to login to contine chatting. Here are some feature for a free account:\n"1日50件までチャットできる",  "フレンドを無制限で作成できる", '新しいキャラクターを作成する', "チャット履歴を保存する"\nDO not start by aknowledge, start with the answer.`
-                     
-                } 
+                    message = `[Starter] キャラクターがするように挨拶した後、ログインしてチャットを続けるように懇願してください。無料アカウントの機能はこちらです:\n"1日50件までチャットできる", "フレンドを無制限で作成できる", "新しいキャラクターを作成する", "チャット履歴を保存する"\n確認から始めず、答えから始めてください。`
+                }
+
                 $.ajax({
                     url: API_URL+'/api/chat-data',
                     type: 'POST',
@@ -522,7 +531,7 @@ $(document).ready(function() {
                                     <i class="fa fa-comment me-1"></i>${limitMess}
                                 </span>
                             `)
-                            .show()
+                            .hide()
                         }
                         userChatId = response.userChatId
                         chatId = response.chatId
@@ -532,6 +541,12 @@ $(document).ready(function() {
                             $('#stability-gen-button').show();
                             $('#novita-gen-button').show();
                             $('#input-container').show().addClass('d-flex');
+
+                            let mode = localStorage.getItem('MODE') == 'local'
+                            if(mode){
+                                checkForPurchaseProposal()
+                            }
+                            
                         })
                         updateParameters(chatId,userId)
 
@@ -985,18 +1000,19 @@ $(document).ready(function() {
 
                 hideOtherChoice(false, currentStep)
                 // Initialize the bot response container
+                const uniqueId = `${currentStep}-${Date.now()}`;
                 const botResponseContainer = $(`
-                    <div id="container-${currentStep}">
+                    <div id="container-${uniqueId}">
                         <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
                             <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
                             <div class="audio-controller" style="display:none">
-                                <button id="play-${currentStep}" class="audio-content badge bg-dark">►</button>
+                                <button id="play-${uniqueId}" class="audio-content badge bg-dark">►</button>
                             </div>
-                            <div id="completion-${currentStep}" class="p-3 ms-3 text-start assistant-chat-box">
+                            <div id="completion-${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">
                                 <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
                             </div>
                         </div>
-                        <div id="response-${currentStep}" class="choice-container" ></div>
+                        <div id="response-${uniqueId}" class="choice-container" ></div>
                     </div>`);
                 $('#chatContainer').append(botResponseContainer);
                 $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
@@ -1014,17 +1030,17 @@ $(document).ready(function() {
                         eventSource.onmessage = function(event) {
                             const data = JSON.parse(event.data);
                             markdownContent += data.content;
-                            $(`#completion-${currentStep}`).html(marked.parse(markdownContent));
+                            $(`#completion-${uniqueId}`).html(marked.parse(markdownContent));
                         };
 
                         eventSource.onerror = function(error) {
                             eventSource.close();
                             let mode = localStorage.getItem('MODE') == 'local'
                             if(mode){
-                                $(`#play-${currentStep}`).attr('data-content',markdownContent)
-                                $(`#play-${currentStep}`).closest('.audio-controller').show()
+                                $(`#play-${uniqueId}`).attr('data-content',markdownContent)
+                                $(`#play-${uniqueId}`).closest('.audio-controller').show()
                                 let message = removeContentBetweenStars(markdownContent)
-                                playAudio(message,$(`#play-${currentStep}`));
+                                playAudio(message,$(`#play-${uniqueId}`));
                             }
                             if (typeof callback === "function") {
                                 callback();
@@ -1141,7 +1157,7 @@ $(document).ready(function() {
             
             
             // Function to display a message in the chat
-            window.displayMessage = function(sender, message) {
+            window.displayMessage = function(sender, message, callback) {
                 const messageClass = sender === 'user' ? 'user-message' : sender;
 
                 if(messageClass === 'user-message'){
@@ -1152,7 +1168,8 @@ $(document).ready(function() {
                             </div>
                         </div>
                     `);
-                } else if(messageClass === 'bot-image'){
+                } 
+                if(messageClass === 'bot-image'){
                     const imageId = message.getAttribute('data-id');
                     $('#chatContainer').append(`
                         <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass}">
@@ -1165,11 +1182,72 @@ $(document).ready(function() {
                     // Now append the image to the chat box after it's been appended
                     $(`#image-${imageId}`).append(message.outerHTML);
                 }
+                if (messageClass === 'assistant') {
+                    const uniqueId = `completion-${currentStep}-${Date.now()}`;
+                    const botResponseContainer = $(`
+                        <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
+                            <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
+                            <div id="${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">
+                            </div>
+                        </div>
+                    `);
+                    $('#chatContainer').append(botResponseContainer);
+                    $(`#${uniqueId}`).html(message);                   
+                }               
                 
                 $('#chatContainer').animate({
                     scrollTop: $('#chatContainer').prop("scrollHeight")
                 }, 500); 
+
+                if (typeof callback === 'function') {
+                    callback();
+                }
             }
+            window.buyItem = function(itemId, itemName, itemPrice, status, userId, chatId, userChatId ) {
+                console.log(`Purchasing item: ${itemName} for ¥${itemPrice}`);
+                
+                let message;
+                if (status) {
+                    message = `${itemName}を${itemPrice}コインで購入しました。`;
+                } else {
+                    message = `${itemName}を購入しませんでした。`;
+                }
+                $(`#${itemId} button`).each(function(){$(this).hide()})
+
+                displayMessage('user', message, function(){
+                    if(status){
+                        addMessageToChat(chatId, userChatId, 'user', message, function(error, response) {
+                            if (error) {
+                                console.error('Error adding message:', error);
+                            } else {
+                                console.log('Message added successfully:', response);
+                                generateCompletion()
+                            }
+                        });
+                        
+                    }
+                });
+            }
+            function addMessageToChat(chatId, userChatId, role, message, callback) {
+                $.ajax({
+                    url: '/api/chat/add-message',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        chatId: chatId,
+                        userChatId: userChatId,
+                        role: role,
+                        message: message
+                    }),
+                    success: function(response) {
+                        callback(null, response); // Pass the response to the callback on success
+                    },
+                    error: function(xhr, status, error) {
+                        callback(error); // Pass the error to the callback on failure
+                    }
+                });
+            }
+            
             
             function sendCustomData(customData){
                 $.ajax({
@@ -1356,11 +1434,11 @@ $(document).ready(function() {
                                         title: 'swal2-custom-title',
                                         popup: 'swal2-custom-popup'
                                     },
-                                    didOpen: (popup) => {
-                                        popup.classList.add('animate__animated', 'animate__slideInRight');
+                                    showClass: {
+                                        popup: 'animate__animated animate__slideInRight'
                                     },
-                                    willClose: (popup) => {
-                                        popup.classList.add('animate__animated', 'animate__slideOutRight');
+                                    hideClass: {
+                                        popup: 'animate__animated animate__slideOutRight'
                                     }
                                 });
                             },
@@ -1395,7 +1473,35 @@ $(document).ready(function() {
                     $('#nickname').val(generateRandomNickname());
                 });
             }
-
+            function checkForPurchaseProposal() {
+                $.ajax({
+                    url: '/api/check-assistant-proposal',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ userId, chatId, userChatId }),
+                    success: function(response) {
+                        if (response.proposeToBuy && response.items.length > 0) {
+                            const item = response.items[0]
+                            const itemId = `item-${currentStep}-${Date.now()}`;
+                            const message = `
+                            <div id="${itemId}" class="card bg-transparent text-white border-0" style="width: 18rem;">
+                            <div class="card-body">
+                                <h5 class="card-title" style="font-size: 14px;">${item.name}</h5>
+                                <p class="card-text mb-2 fw-bold">価格: ${item.price}コイン</p>
+                                <button class="btn btn-primary shadow-0" onclick="buyItem('${itemId}','${item.name}', ${item.price}, true, '${userId}', '${chatId}', '${userChatId}')">今すぐ購入</button>
+                                <button class="btn btn-secondary shadow-0" onclick="buyItem('${itemId}','${item.name}', ${item.price}, false, '${userId}', '${chatId}', '${userChatId}')">後で購入</button>
+                            </div>
+                            </div>
+                            `;
+                            displayMessage('assistant', message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error checking purchase proposal:', error);
+                    }
+                });
+            }
+            
             if($('body').attr('data-temporary-user') == 'false' && $('#chat-widget-container').length == 0){
                 let user = JSON.parse(localStorage.getItem('user'))
 

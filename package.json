@@ -44,12 +44,13 @@
     "node-cron": "^3.0.3",
     "node-fetch": "^3.3.2",
     "npm": "^10.8.1",
-    "openai": "^4.49.1",
+    "openai": "^4.56.0",
     "point-of-view": "^6.3.0",
     "puppeteer": "^22.15.0",
     "qs": "^6.13.0",
     "string-similarity": "^4.0.4",
-    "stripe": "^16.6.0"
+    "stripe": "^16.6.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "nodemon": "^2.0.19"

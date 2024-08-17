@@ -577,6 +577,12 @@
                                     </a>
                                 </li>
                                 <li>
+                                    <button class="dropdown-item text-secondary reset-chat" data-id="{{this._id}}">
+                                       <i class="fas fa-plus-square me-2"></i>
+                                        <span class="text-muted" style="font-size:12px"></span>新しいチャット</span>
+                                    </button>
+                                </li>
+                                <li>
                                     <span data-id="{{this._id}}" class="dropdown-item text-danger delete-chat" style="cursor:pointer">
                                         <i class="fas fa-trash me-2"></i> 
                                         <span class="text-muted" style="font-size:12px"></span>削除する</span>
@@ -600,44 +606,7 @@
 
                         <button class="menu-chat-sm d-sm-none btn btn-light"><i class="fa-solid fa-bars"></i></button>
                         <button id="menu-chat" class="d-none d-sm-inline-block btn btn-light"><i class="fa-solid fa-bars"></i></button>
-
                         <button id="history-chat" class="btn btn-light onchat-on"><i class="fas fa-history"></i></button>
-                        <div class="d-none d-sm-inline-block">
-                            <button class="btn btn-light reset-chat onchat-on" data-toggle="tooltip" title="新しいチャット" data-original-title="New">
-                                <i class="fas fa-plus-circle"></i>
-                            </button>
-                        </div>
-                        <!-- Dropdown -->
-                        <div class="d-none d-sm-inline-block">
-                            <div class="dropdown onchat-on">
-                                <button class=" btn btn-light dropdown-toggle" type="button" id="dropdownMenuButton_{{chatId}}" data-mdb-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton_{{chatId}}">
-                                    <li>
-                                        <button class="dropdown-item chart-button" data-id="{{chatId}}">
-                                            <i class="fas fa-info-circle"></i>情報
-                                        </button>
-                                    </li>
-                                    <li>
-                                        <button class="dropdown-item tag-button" data-id="{{chatId}}">
-                                            <i class="fas fa-share"></i> 共有
-                                        </button>
-                                    </li>
-                                    <li>
-                                        <a href="/chat/edit/{{chatId}}" class="dropdown-item edit-chat">
-                                            <i class="far fa-edit"></i> 編集
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <span data-id="{{chatId}}" class="dropdown-item delete-chat" style="cursor:pointer">
-                                            <i class="fas fa-trash"></i> 削除
-                                        </span>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                        <!-- End of Dropdown -->
                     </div>
                     <div class="d-flex flex-row" style="cursor:pointer" onclick="showDiscovery()">
                         <img src="/img/logo.webp" alt="" class="mx-3" width="40px">
@@ -646,10 +615,9 @@
                     <div>
                         <div class="navbar-collapse" id="navbarNav" style="position: absolute;right: 20px;top: 10px;">
                             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                                <li class="nav-item d-inline-block d-sm-none">
-                                    <button class="btn btn-light reset-chat onchat-on" data-toggle="tooltip" title="新しいチャット" data-original-title="New">
-                                        <i class="fas fa-plus-circle"></i>
-                                    </button>
+                                <li class="nav-item btn btn-light onchat-on me-2" onclick="showCoinShop()">
+                                    <span>🪙</span>
+                                    <span class="user-coins fw-bold"></span>
                                 </li>
                                 <!-- Avatar -->
                                 <div class="nav-item dropdown d-none d-sm-inline-block ">
@@ -829,6 +797,7 @@
 <script src="/js/chat.js"></script>
 <script src="/js/stability.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
+<script src="https://js.stripe.com/v3/"></script>
 <script>
 $(document).ready(function() {
     function adjustHeight() {
@@ -1162,7 +1131,26 @@ $('.date-time').each(function() {
     var trimmedDate = dateText.split(' ')[0]; // Get the date part only
     $(this).text(trimmedDate); // Update the element's content
 });
-
+function initiateCheckout(buttonId) {
+    const userId = localStorage.getItem('userId');
+    let stripe
+    if(window.location.href.indexOf('https://') >= 0){
+        stripe = Stripe('pk_live_51PjtRbE5sP7DA1XvCkdmezori9qPGoO21y7yKSVvgkQVyrhWZfHAUkNsjPMnbwpPlp4zzoYsRjn79Ad7XN7HTHcc00UjBA9adF'); // Use your publishable key here
+    }else{
+        stripe = Stripe('pk_test_51PjtRbE5sP7DA1XvD68v7X7Qj7pG6ZJpQmvuNodJjxc7MbH1ss2Te2gahFAS9nms4pbmEdMYdfCPxFDWHBbu9CxR003ikTnRES'); // Use your publishable key here
+    }
+    $.ajax({
+        url: '/plan/create-checkout-session',
+        method: 'POST',
+        data: { buttonId, userId },
+        success: function(session) {
+            return stripe.redirectToCheckout({ sessionId: session.id });
+        },
+        error: function(xhr, status, error) {
+            console.error('Error creating Stripe checkout session:', error);
+        }
+    });
+}
 </script>
 </body>
 </html>

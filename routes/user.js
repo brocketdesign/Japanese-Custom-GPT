@@ -32,7 +32,11 @@ async function routes(fastify, options) {
       
       const result = await usersCollection.insertOne(
         { 
-          email, password: hashedPassword, createdAt:new Date(), tempUserId 
+          email, 
+          password: hashedPassword, 
+          createdAt:new Date(), 
+          tempUserId,
+          coins: 100
         });
   
       if (!result.insertedId) {
@@ -151,7 +155,12 @@ fastify.get('/user/google-auth/callback', async (request, reply) => {
       const TempUser = await fastify.getUser(request, reply);
       let tempUserId = TempUser._id
       const result = await usersCollection.insertOne({ 
-        email, password: hashedPassword, googleId, createdAt: new Date() , tempUserId
+        email, 
+        password: hashedPassword, 
+        googleId, 
+        createdAt: new Date() , 
+        tempUserId,
+        coins: 100
       });
       const userId = result.insertedId;
       // Transfer temp chat to new user
@@ -263,7 +272,13 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       const TempUser = await fastify.getUser(request, reply);
       let tempUserId = TempUser._id
       const result = await usersCollection.insertOne({ 
-        userId, email, password: hashedPassword, createdAt: new Date(), tempUserId });
+        userId, 
+        email, 
+        password: hashedPassword, 
+        createdAt: new Date(), 
+        tempUserId ,
+        coins: 100
+      });
       const newUserId = result.insertedId;
       // Transfer temp chat to new user
       const userId = newUserId

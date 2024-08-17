@@ -337,6 +337,126 @@ async function routes(fastify, options) {
       return reply.status(500).send({ error: 'Internal Server Error' });
     }
   });
+
+  fastify.post('/plan/update-coins', async (request, reply) => {
+    const { sessionId, priceId } = request.body;
+
+    try {
+        // Verify the session with Stripe
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+        if (session.payment_status === 'paid') {
+            const userId = session.metadata.userId;
+
+            
+            // Check if the session has already been processed
+            const user = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+
+            if (user.processedSessions && user.processedSessions.includes(sessionId)) {
+                return reply.code(400).send({ error: 'Session already processed' });
+            }
+
+            const coinsToAdd = getCoinsFromPriceId(priceId);
+
+            if (coinsToAdd > 0) {
+                // Update the user's coins
+                await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
+                    { _id: new fastify.mongo.ObjectId(userId) },
+                    {
+                        $inc: { coins: coinsToAdd },
+                        $push: { processedSessions: sessionId }
+                    }
+                );
+
+                reply.send({ success: true });
+            } else {
+                reply.code(400).send({ error: 'Invalid priceId' });
+            }
+        } else {
+            reply.code(400).send({ error: 'Payment not completed' });
+        }
+    } catch (error) {
+        console.error('Error updating coins:', error);
+        reply.code(500).send({ error: 'Internal Server Error' });
+    }
+  });
+
+    function getCoinsFromPriceId(priceId) {
+      let priceMapping
+      if(process.env.MODE == 'local'){
+        priceMapping = {
+            [process.env.STRIPE_SET1_TEST]: 100,
+            [process.env.STRIPE_SET2_TEST]: 550,
+            [process.env.STRIPE_SET3_TEST]: 1200,
+            [process.env.STRIPE_SET4_TEST]: 2500
+        };
+      }else{
+        priceMapping = {
+          [process.env.STRIPE_SET1]: 100,
+          [process.env.STRIPE_SET2]: 550,
+          [process.env.STRIPE_SET3]: 1200,
+          [process.env.STRIPE_SET4]: 2500
+        };
+      }
+      return priceMapping[priceId] || 0;
+  }
+  fastify.post('/plan/create-checkout-session', async (request, reply) => {
+      const { buttonId, userId} = request.body;
+
+      const user = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({
+        _id: new fastify.mongo.ObjectId(userId),
+      });
+  
+      if (!user) {
+        return reply.status(404).send({ error: 'User not found' });
+      }
+  
+      let envMapping = {}
+      if(process.env.MODE == 'local'){
+        envMapping = {
+            'coins-set1': process.env.STRIPE_SET1_TEST,
+            'coins-set2': process.env.STRIPE_SET2_TEST,
+            'coins-set3': process.env.STRIPE_SET3_TEST,
+            'coins-set4': process.env.STRIPE_SET4_TEST
+        };
+      }else{
+        envMapping = {
+          'coins-set1': process.env.STRIPE_SET1,
+          'coins-set2': process.env.STRIPE_SET2,
+          'coins-set3': process.env.STRIPE_SET3,
+          'coins-set4': process.env.STRIPE_SET4
+        };
+      }
+      const priceId = envMapping[buttonId];
+
+      if (!priceId) {
+          return reply.code(400).send({ error: 'Invalid button ID' });
+      }
+
+      try {
+          const session = await stripe.checkout.sessions.create({
+              payment_method_types: ['card'],
+              customer_email: user.email,
+              line_items: [{
+                  price: priceId,
+                  quantity: 1,
+              }],
+              mode: 'payment',
+              success_url: `${frontEnd}/chat/?success=true&priceId=${priceId}&session_id={CHECKOUT_SESSION_ID}`,
+              cancel_url: `${frontEnd}/chat/?payment=false`,
+              metadata: {
+                  userId: userId 
+              },
+              locale: 'ja',
+          });
+
+          reply.send({ id: session.id });
+      } catch (error) {
+          console.error('Error creating Stripe checkout session:', error);
+          reply.code(500).send({ error: 'Internal Server Error' });
+      }
+  });
+
 }
 
   module.exports = routes;

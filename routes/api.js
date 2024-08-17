@@ -755,6 +755,53 @@ async function routes(fastify, options) {
           }
         
     });
+    fastify.post('/api/purchaseItem', async (request, reply) => {
+        const { itemId, itemName, itemPrice, userId } = request.body;
+    
+        try {
+            const user = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+    
+            if (!user) {
+                return reply.code(404).send({ error: 'User not found' });
+            }
+    
+            let userCoins = user.coins || 100; 
+            
+            if (userCoins < itemPrice) {
+                return reply.code(400).send({ error: 'Insufficient coins', id: 1 });
+            }
+    
+            userCoins -= itemPrice;
+    
+            const newItem = {
+                itemName: itemName,
+                itemPrice: itemPrice,
+                purchaseDate: new Date(),
+                userId: userId
+            };
+    
+            const itemResult = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('items').insertOne(newItem);
+    
+            // Update user data
+            await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
+                { _id: new fastify.mongo.ObjectId(userId) },
+                {
+                    $set: { coins: userCoins },
+                    $push: {
+                        purchasedItems: {
+                            itemId: itemResult.insertedId,
+                            purchaseDate: new Date()
+                        }
+                    }
+                }
+            );
+    
+            reply.send({ success: true, coins: userCoins });
+        } catch (error) {
+            console.error('Error during purchase:', error);
+            reply.code(500).send({ error: 'Internal server error' });
+        }
+    });
     
     fastify.post('/api/custom-data', async (request, reply) => {
         const { userId, customData } = request.body;
@@ -1578,7 +1625,7 @@ async function routes(fastify, options) {
                 model: "gpt-4o-2024-08-06",
                 messages: [
                     { role: "system", content: `You are an expert at structured data extraction. 
-                        Extract any proposals to buy and return the item names and prices in japanese.` },
+                        Extract any proposals to buy and return the item names and prices in japanese. A proposal will be inside [].` },
                     { role: "user", content: lastAssistantMessageContent },
                 ],
                 response_format: zodResponseFormat(PurchaseProposalExtraction, "purchase_proposal_extraction"),

@@ -1,5 +1,71 @@
 $(document).ready(function() {
     
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    const sessionId = urlParams.get('session_id');
+    const priceId = urlParams.get('priceId');
+    const paymentFalse = urlParams.get('payment') == 'false';
+
+    if (success === 'true' && sessionId) {
+        $.ajax({
+            url: '/plan/update-coins',
+            method: 'POST',
+            data: { sessionId, priceId },
+            success: function(response) {
+                if (response.success) {
+                    Swal.fire({
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'コインが無事に追加されました！',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        toast: true,
+                        animation: false,
+                        customClass: {
+                            container: 'animate__animated animate__fadeOutUp animate__delay-3s',
+                            title: 'swal2-custom-title',
+                            popup: 'swal2-custom-popup'
+                        },
+                        showClass: {
+                            popup: 'animate__animated animate__slideInRight'
+                        },
+                        hideClass: {
+                            popup: 'animate__animated animate__slideOutRight'
+                        }
+                    });
+                    updateCoins()
+                } else {
+                    console.error('Failed to update coins:', response.error);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error updating coins:', error);
+            }
+        });
+    }
+    if(paymentFalse){
+        Swal.fire({
+            position: 'top-end',
+            icon: 'error',
+            title: 'お支払いは行われませんでした。',
+            showConfirmButton: false,
+            timer: 3000,
+            toast: true,
+            animation: false,
+            customClass: {
+                container: 'animate__animated animate__fadeOutUp animate__delay-3s',
+                title: 'swal2-custom-title',
+                popup: 'swal2-custom-popup'
+            },
+            showClass: {
+                popup: 'animate__animated animate__slideInRight'
+            },
+            hideClass: {
+                popup: 'animate__animated animate__slideOutRight'
+            }
+        });
+    }
+        
     $(document).on('click', '.logout', function(event) {
         event.preventDefault();
         $.ajax({
@@ -118,3 +184,87 @@ $(document).ready(function() {
           });
     }
 });
+
+window.showCoinShop = function(){
+    Swal.fire({
+        position: 'center',
+        html: `
+            <div class="container text-center">
+                <div class="row justify-content-center">
+                    <div class="col-12 mb-3">
+                        <div class="p-3 rounded d-flex justify-content-between custom-gradient-bg">
+                            <span class="fw-bold text-white">保有コイン</span>
+                            <div>
+                                <span>🪙</span>
+                                <span class="fw-bold text-white float-end user-coins">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 my-3">
+                        <div class="card bg-dark text-white">
+                            <div class="card-body p-2">
+                                <img src="/img/coins-1.png" alt="Coin" class="mb-2" style="height: 150px;width: auto !important;">
+                                <h6>100コイン</h6>
+                                <p class="text-muted small mb-2" style="font-size:12px;">手頃なコインパッケージ</p>
+                                <button id="coins-set1" class="buycoin btn custom-gradient-bg w-100">¥200.0</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 my-3">
+                        <div class="card bg-dark text-white">
+                            <div class="card-body p-2">
+                                <img src="/img/coins-2.png" alt="Coin" class="mb-2" style="height: 150px;width: auto !important;">
+                                <h6>550コイン</h6>
+                                <p class="text-muted small mb-2" style="font-size:12px;">無料コイン150枚付き</p>
+                                <button id="coins-set2"  class="buycoin btn custom-gradient-bg w-100">¥800.0</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="card bg-dark text-white">
+                            <div class="card-body p-2">
+                                <img src="/img/coins-3.png" alt="Coin" class="mb-2" style="height: 150px;width: auto !important;">
+                                <h6>1200コイン</h6>
+                                <p class="text-muted small mb-2" style="font-size:12px;">無料コイン450枚付き</p>
+                                <button id="coins-set3"  class="buycoin btn custom-gradient-bg w-100">¥1500.0</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="card bg-dark text-white">
+                            <div class="card-body p-2">
+                                <img src="/img/coins-4.png" alt="Coin" class="mb-2" style="height: 150px;width: auto !important;">
+                                <h6>2500コイン</h6>
+                                <p class="text-muted small mb-2" style="font-size:12px;">無料コイン1000枚付き</p>
+                                <button id="coins-set4"  class="buycoin btn custom-gradient-bg w-100">¥3000.0</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `,
+        showCancelButton: false,
+        showConfirmButton: false,
+        showCloseButton: true,
+        allowOutsideClick: false,
+        backdrop:false,
+        customClass: {
+            popup: 'swal2-card',
+            content: 'p-0'
+        },
+        showClass: {
+            popup: 'bg-light animate__animated animate__fadeInDown'
+        },
+        hideClass: {
+            popup: 'bg-light animate__animated animate__fadeOutUp'
+        },
+        didOpen: () => {
+            updateCoins();
+            $(document).on('click','.buycoin', function() {
+                const buttonId = this.id;
+                initiateCheckout(buttonId);
+            });
+        }
+    });
+    
+}

@@ -14,6 +14,8 @@ $(document).ready(function() {
             const userId = user._id
             localStorage.setItem('userId', userId);
             localStorage.setItem('user', JSON.stringify(user));
+            let userCoins = user.coins
+            updateCoins(userCoins)
             let currentStep = 0;
             let totalSteps = 0;
             let chatData = {};
@@ -75,7 +77,9 @@ $(document).ready(function() {
                 element.style.height = (element.scrollHeight - 20 ) + 'px';  
             }
 
-            $('.reset-chat').click(function(){
+            $(document).on('click','.reset-chat', function(){
+                chatId = $(this).data('id')
+                console.log({chatId})
                 fetchchatData(chatId, userId, true) ;
             })
             $(document).on('click','.user-chat-history', function(){
@@ -216,13 +220,7 @@ $(document).ready(function() {
                                 isNew = false
                             }else{
                                 //generateNarration()
-                                generateCompletion(function(){
-                                    let mode = localStorage.getItem('MODE') == 'local'
-                                    if(mode){
-                                        checkForPurchaseProposal()
-                                    }
-                                    
-                                })
+                                generateCompletion()
                                 isNew = false
                             }
                         },
@@ -297,6 +295,7 @@ $(document).ready(function() {
                             if(data.userChat.log_success){
                                 displayThankMessage()
                             }
+                            checkForPurchaseProposal();
                         }
 
                         if(isNew && chatData && chatData.length > 0){
@@ -506,7 +505,6 @@ $(document).ready(function() {
                 if($('#chat-widget-container').length == 0 && isTemporary){
                     message = `[Starter] キャラクターがするように挨拶した後、ログインしてチャットを続けるように懇願してください。無料アカウントの機能はこちらです:\n"1日50件までチャットできる", "フレンドを無制限で作成できる", "新しいキャラクターを作成する", "チャット履歴を保存する"\n確認から始めず、答えから始めてください。`
                 }
-
                 $.ajax({
                     url: API_URL+'/api/chat-data',
                     type: 'POST',
@@ -541,12 +539,6 @@ $(document).ready(function() {
                             $('#stability-gen-button').show();
                             $('#novita-gen-button').show();
                             $('#input-container').show().addClass('d-flex');
-
-                            let mode = localStorage.getItem('MODE') == 'local'
-                            if(mode){
-                                checkForPurchaseProposal()
-                            }
-                            
                         })
                         updateParameters(chatId,userId)
 
@@ -633,6 +625,12 @@ $(document).ready(function() {
                                                 <i class="far fa-edit me-2"></i> 
                                                 <span class="text-muted" style="font-size:12px"></span>編集する</span>
                                             </a>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item text-secondary reset-chat" data-id="${chat._id}">
+                                            <i class="fas fa-plus-square me-2"></i>
+                                                <span class="text-muted" style="font-size:12px"></span>新しいチャット</span>
+                                            </button>
                                         </li>
                                         <li>
                                             <span data-id="${chat._id}" class="dropdown-item text-danger delete-chat" style="cursor:pointer">
@@ -1042,6 +1040,7 @@ $(document).ready(function() {
                                 let message = removeContentBetweenStars(markdownContent)
                                 playAudio(message,$(`#play-${uniqueId}`));
                             }
+                            checkForPurchaseProposal()
                             if (typeof callback === "function") {
                                 callback();
                             }
@@ -1203,31 +1202,60 @@ $(document).ready(function() {
                     callback();
                 }
             }
-            window.buyItem = function(itemId, itemName, itemPrice, status, userId, chatId, userChatId ) {
+            window.buyItem = function(itemId, itemName, itemPrice, status, userId, chatId, userChatId) {
                 console.log(`Purchasing item: ${itemName} for ¥${itemPrice}`);
-                
-                let message;
+            
                 if (status) {
-                    message = `${itemName}を${itemPrice}コインで購入しました。`;
+                    initiatePurchase(itemId, itemName, itemPrice, userId, function(response) {
+                        let message;
+                        if (response.success) {
+                            message = `${itemName}を${itemPrice}コインで購入しました。`;
+                            $(`#${itemId} button`).each(function() { $(this).hide() });
+                            updateCoins(response.coins)
+                            displayMessage('user', message, function() {
+                                addMessageToChat(chatId, userChatId, 'user', message, function(error, res) {
+                                    if (error) {
+                                        console.error('Error adding message:', error);
+                                    } else {
+                                        console.log('Message added successfully:', res);
+                                        generateCompletion();
+                                    }
+                                });
+                            });
+                        } else {
+                            showCoinShop()
+                        }
+                    });
                 } else {
-                    message = `${itemName}を購入しませんでした。`;
-                }
-                $(`#${itemId} button`).each(function(){$(this).hide()})
-
-                displayMessage('user', message, function(){
-                    if(status){
-                        addMessageToChat(chatId, userChatId, 'user', message, function(error, response) {
+                    let message = `${itemName}を購入しませんでした。`;
+                    displayMessage('user', message, function() {
+                        addMessageToChat(chatId, userChatId, 'user', message, function(error, res) {
                             if (error) {
                                 console.error('Error adding message:', error);
                             } else {
-                                console.log('Message added successfully:', response);
-                                generateCompletion()
+                                console.log('Message added successfully:', res);
+                                generateCompletion();
                             }
                         });
-                        
+                    });
+                }
+            }
+            
+            function initiatePurchase(itemId, itemName, itemPrice, userId, callback) {
+                $.ajax({
+                    url: '/api/purchaseItem',
+                    method: 'POST',
+                    data: { itemId, itemName, itemPrice, userId },
+                    success: function(response) {
+                        callback(response);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error during purchase request:', error);
+                        callback({ success: false, error: error });
                     }
                 });
             }
+            
             function addMessageToChat(chatId, userChatId, role, message, callback) {
                 $.ajax({
                     url: '/api/chat/add-message',
@@ -1894,30 +1922,46 @@ function showRegistrationForm(messageId) {
       });
 }
 
-    $(document).find('#register-form').on('submit', function(event) {
-        event.preventDefault();
-        const email = $('#register-email').val();
-        const password = $('#register-password').val();
+$(document).find('#register-form').on('submit', function(event) {
+    event.preventDefault();
+    const email = $('#register-email').val();
+    const password = $('#register-password').val();
 
+    $.ajax({
+        url: '/user/register',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ email, password }),
+        success: function(response) {
+            localStorage.setItem('token', response.token);
+            window.location.href = response.redirect;
+        },
+        error: function(xhr) {
+            const res = xhr.responseJSON;
+            Swal.fire({
+            icon: 'error',
+            title: 'エラー',
+            text: res.error || '登録に失敗しました',
+            });
+        }
+    });
+});
+
+
+window.updateCoins = function(userCoins) {
+    if(!userCoins){
+        let API_URL = localStorage.getItem('API_URL')
         $.ajax({
-            url: '/user/register',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ email, password }),
+            url: API_URL+'/api/user',
+            method: 'GET',
             success: function(response) {
-                localStorage.setItem('token', response.token);
-                window.location.href = response.redirect;
-            },
-            error: function(xhr) {
-                const res = xhr.responseJSON;
-                Swal.fire({
-                icon: 'error',
-                title: 'エラー',
-                text: res.error || '登録に失敗しました',
-                });
+                $('.user-coins').each(function(){$(this).html(response.user.coins)})
             }
         });
-    });
+        return
+    }
+    $('.user-coins').each(function(){$(this).html(userCoins)})
+}
 window.resetChatUrl = function() {
     var currentUrl = window.location.href;
     var urlParts = currentUrl.split('/');

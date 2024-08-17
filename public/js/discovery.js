@@ -261,7 +261,7 @@ $(document).ready(function() {
     renderCircleGrid(girls_avatar,$('#custom-card-container'))
     renderCircleGrid(cardData,$("#cardGrid"))
     renderCircleGrid(cardData2,$('#cardGrid'))
-    renderCircleGrid(chatbotInfos,$("#chatbot-container"));
+    renderCircleGrid(chatbotInfos,$('#cardGrid'));
 
 
     //Infinite scroll
@@ -306,7 +306,7 @@ $(document).ready(function() {
                 currentPage++;
                 setTimeout(() => {
                     isLoading = false;
-                }, 3000);
+                }, 1000);
             },
             error: function(error) {
                 console.log(error);

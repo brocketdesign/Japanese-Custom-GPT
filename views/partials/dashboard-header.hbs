@@ -25,11 +25,11 @@
         (function() {
             const redirectUrl = getCookie('redirect_url');
             if (redirectUrl) {
-                // Delete the cookie to prevent redirection loops
                 deleteCookie('redirect_url');
 
-                // Redirect to the URL stored in the cookie
-                window.location.replace(window.location.origin + decodeURIComponent(redirectUrl) );
+                if(!redirectUrl.includes('/chat')){
+                    window.location.replace(window.location.origin + decodeURIComponent(redirectUrl) );
+                }
             }
         })();
     </script>

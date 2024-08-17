@@ -9,7 +9,7 @@ $(document).ready(function() {
         localStorage.setItem('MODE',mode)
         localStorage.setItem('API_URL',API_URL)
         fetchUser(function(error, user){
-            let chatId = getIdFromUrl(window.location.href) || $(`#lamix-chat-widget`).data('id');
+            let chatId = getIdFromUrl(window.location.href) || getIdFromUrl($.cookie('redirect_url'))||$(`#lamix-chat-widget`).data('id');
             let userChatId
             const userId = user._id
             localStorage.setItem('userId', userId);
@@ -1593,11 +1593,9 @@ $(document).ready(function() {
    
 
     function getIdFromUrl(url) {
-        // Use a regular expression to capture the ID part from the URL
+        if(!url){return null}
         var regex = /\/chat\/([a-zA-Z0-9]+)/;
         var match = url.match(regex);
-        
-        // If a match is found, return the ID, otherwise return null
         if (match && match[1]) {
             return match[1];
         } else {

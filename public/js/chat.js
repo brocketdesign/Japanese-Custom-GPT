@@ -91,6 +91,7 @@ $(document).ready(function() {
                 const selectChatId = $(this).closest('.user-chat').data('id')
                 const chatImageUrl = $(this).find('img').attr('src')
                 $('#chat-container').css(`background-image`,`url(${chatImageUrl})`)
+                $('#chatContainer').empty();
                 getUserChatHistory(selectChatId, userId,function(lastChat){
                     if(lastChat){
                         userChatId = lastChat._id

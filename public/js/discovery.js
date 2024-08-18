@@ -258,11 +258,12 @@ $(document).ready(function() {
         });   
     }
 
-    renderCircleGrid(girls_avatar,$('#custom-card-container'))
-    renderCircleGrid(cardData,$("#cardGrid"))
-    renderCircleGrid(cardData2,$('#cardGrid'))
-    renderCircleGrid(chatbotInfos,$('#cardGrid'));
-
+    setTimeout(() => {
+        renderCircleGrid(girls_avatar,$('#custom-card-container'))
+        renderCircleGrid(cardData,$("#cardGrid"))
+        renderCircleGrid(cardData2,$('#cardGrid'))
+        renderCircleGrid(chatbotInfos,$('#cardGrid'));
+    }, 3000);
 
     //Infinite scroll
     function renderInfiniteGrid(cardInfos,container){

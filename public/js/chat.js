@@ -513,8 +513,8 @@ $(document).ready(function() {
             function displayStarter() {
                 $('#startButtonContained').hide();
                 $('#introChat').hide();
+                const uniqueId = `${currentStep}-${Date.now()}`;
                 if($(document).find('.starter-on').length == 0){
-                    const uniqueId = `${currentStep}-${Date.now()}`;
                     const botResponseContainer = $(`
                         <div id="starter-${uniqueId}" class="starter-on">
                             <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">

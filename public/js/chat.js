@@ -87,20 +87,25 @@ $(document).ready(function() {
                 userChatId = $(this).data('chat')
                 fetchchatData(chatId, userId)
             })
-            $(document).on('click','.chat-list.item.user-chat .user-chat-content', function(e){
-                const selectChatId = $(this).closest('.user-chat').data('id')
-                const chatImageUrl = $(this).find('img').attr('src')
-                $(this).closest('.chat-list.item').addClass('active').siblings().removeClass('active');
-                $('#chat-container').css(`background-image`,`url(${chatImageUrl})`)
+            $(document).on('click', '.chat-list.item.user-chat .user-chat-content', function(e) {
+                const $this = $(this);
+                if ($this.hasClass('loading')) return;
+                $this.addClass('loading');
+                const selectChatId = $this.closest('.user-chat').data('id');
+                const chatImageUrl = $this.find('img').attr('src');
+                $this.closest('.chat-list.item').addClass('active').siblings().removeClass('active');
+                $('#chat-container').css('background-image', `url(${chatImageUrl})`);
                 $('#chatContainer').empty();
-                getUserChatHistory(selectChatId, userId,function(lastChat){
-                    if(lastChat){
-                        userChatId = lastChat._id
+                getUserChatHistory(selectChatId, userId, function(lastChat) {
+                    if (lastChat) {
+                        userChatId = lastChat._id;
                     }
-                    fetchchatData(selectChatId, userId)
+                    fetchchatData(selectChatId, userId, null, function() {
+                        $this.removeClass('loading');
+                    });
                 });
-                //updateParameters(selectChatId,userId)
-            })
+            });
+             
 
             function updateParameters(newchatId, newuserId){
                 chatId = newchatId

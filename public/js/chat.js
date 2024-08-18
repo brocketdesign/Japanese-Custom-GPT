@@ -90,6 +90,7 @@ $(document).ready(function() {
             $(document).on('click','.chat-list.item.user-chat .user-chat-content', function(e){
                 const selectChatId = $(this).closest('.user-chat').data('id')
                 const chatImageUrl = $(this).find('img').attr('src')
+                $(this).closest('.chat-list.item').addClass('active').siblings().removeClass('active');
                 $('#chat-container').css(`background-image`,`url(${chatImageUrl})`)
                 $('#chatContainer').empty();
                 getUserChatHistory(selectChatId, userId,function(lastChat){
@@ -698,7 +699,7 @@ $(document).ready(function() {
                             </div>
                         </div>
                         `;
-                        chatContainer.append(messageHtml);
+                        chatContainer.append($(messageHtml).hide().fadeIn());
                     }
                 }
 
@@ -715,8 +716,8 @@ $(document).ready(function() {
                         let designStep = currentStep - 1;
             
                         // Check if the message is a narrator message
-                        const isNarratorMessage = assistantMessage.content.startsWith("[Narrator]");
-                        const isImage = assistantMessage.content.startsWith("[Image]");
+                        const isNarratorMessage = assistantMessage?.content?.startsWith("[Narrator]") || false;
+                        const isImage = assistantMessage?.content?.startsWith("[Image]") || false;
                         if (isNarratorMessage) {
                             // Remove the [Narrator] tag for display
                             const narrationContent = assistantMessage.content.replace("[Narrator]", "").trim();
@@ -743,20 +744,23 @@ $(document).ready(function() {
                             getImageUrlById(imageId)
                         } else {
                             let mode = localStorage.getItem('MODE') == 'local'
-                            let message = removeContentBetweenStars(assistantMessage.content)
-                            // Regular assistant message
-                            messageHtml += `
-                                <div id="container-${designStep}">
-                                    <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
-                                        <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
-                                        <div class="audio-controller ${!mode ? 'd-none' : ''}" >
-                                            <button id="play-${designStep}" class="audio-content badge bg-dark" data-content="${message}">►</button>
+                            if(assistantMessage.content){
+                                let message = removeContentBetweenStars(assistantMessage.content)
+                                // Regular assistant message
+                                messageHtml += `
+                                    <div id="container-${designStep}">
+                                        <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
+                                            <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+                                            <div class="audio-controller ${!mode ? 'd-none' : ''}" >
+                                                <button id="play-${designStep}" class="audio-content badge bg-dark" data-content="${message}">►</button>
+                                            </div>
+                                            <div id="message-${designStep}" class="p-3 ms-3 text-start assistant-chat-box">
+                                                ${marked.parse(assistantMessage.content)}
+                                            </div>
                                         </div>
-                                        <div id="message-${designStep}" class="p-3 ms-3 text-start assistant-chat-box">
-                                            ${marked.parse(assistantMessage.content)}
-                                        </div>
-                                    </div>
-                            `;
+                                `;
+                            }
+
                         }
             
                         // Check if the next message is a user message and display it
@@ -778,7 +782,7 @@ $(document).ready(function() {
                             `;
                         }
             
-                        chatContainer.append(messageHtml);
+                        chatContainer.append($(messageHtml).hide().fadeIn());
                     }
                 }
                 function getImageUrlById(imageId) {
@@ -1019,6 +1023,7 @@ $(document).ready(function() {
                 playAudio(message,$(this));
             })
             function removeContentBetweenStars(str) {
+                if(!str){return str}
                 return str.replace(/\*.*?\*/g, '');
             }            
             function generateCompletion(callback){

@@ -659,7 +659,7 @@
                         <h4 class="px-4">コミュニティからの最新のキャラクター</h4>
                         <div id="latest-chat" class="chat-container pb-0">
                             {{#each peopleChats.recent}}
-                            <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 col-7 col-sm-4 col-lg-2" style="cursor:pointer;" onclick="redirectToChat('{{this._id}}')">
+                            <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 col-7 col-sm-4 col-lg-2" style="cursor:pointer;" onclick="redirectToChat('{{this._id}}','{{this.chatImageUrl}}')">
                                 <div style="background-image:url('{{#if this.chatImageUrl}}{{this.chatImageUrl}}{{else}}/img/logo.webp{{/if}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
                                     <span class="badge bg-dark position-absolute d-none" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px"><i class="fas fa-comment me-2"></i>{{this.num_message}}</span>
                                 </div>
@@ -677,7 +677,7 @@
                         <h4 class="px-4">キャラクターライブラリー</h4>
                         <div class="row m-0 px-1">
                             {{#each peopleChats.synclubaichat}}
-                            <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2" style="cursor:pointer;" onclick="redirectToChat('{{this._id}}')">
+                            <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2" style="cursor:pointer;" onclick="redirectToChat('{{this._id}}','{{this.chatImageUrl}}')">
                                 <div style="background-image:url('{{this.chatImageUrl}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
                                     <div class="tags position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px">
                                         {{#each this.tags}}
@@ -706,7 +706,7 @@
                         <h4 class="px-4">魅力爆発！セクシーヒロイン</h4>
                         <div class="row m-0 px-1">
                             {{#each peopleChats.gohiai_girl}}
-                            <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2" style="cursor:pointer;" onclick="redirectToChat('{{this._id}}')">
+                            <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2" style="cursor:pointer;" onclick="redirectToChat('{{this._id}}','{{this.chatImageUrl}}')">
                                 <div style="background-image:url('{{this.chatImageUrl}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
                                     <span class="badge bg-dark position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px"><i class="fas fa-comment me-2"></i>{{this.num_message}}</span>
                                 </div>
@@ -1098,12 +1098,10 @@ $(document).ready(function() {
     });
 
 });
-function redirectToChat(chatId) {
-    //localStorage.setItem('selectedChatId', chatId);
+function redirectToChat(chatId,chatImage) {
+    $('#chat-container').css('background-image', chatImage);
     const userId = localStorage.getItem('userId');
     fetchchatData(chatId,userId)
-    showChat()
-    //window.location.href = '/chat/' + chatId;
 }
 $('.date-time').each(function() {
     var dateText = $(this).text();

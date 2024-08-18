@@ -89,6 +89,8 @@ $(document).ready(function() {
             })
             $(document).on('click','.chat-list.item.user-chat .user-chat-content', function(e){
                 const selectChatId = $(this).closest('.user-chat').data('id')
+                const chatImageUrl = $(this).find('img').attr('src')
+                $('#chat-container').css(`background-image`,`url(${chatImageUrl})`)
                 getUserChatHistory(selectChatId, userId,function(lastChat){
                     if(lastChat){
                         userChatId = lastChat._id
@@ -250,7 +252,6 @@ $(document).ready(function() {
 
                 $('#chatContainer').empty()
                 $('#startButtonContained').remove();
-                $('#chat-container').css('background-image', 'none');
                 if(fetch_reset){
                     currentStep = 0
                 }
@@ -271,9 +272,9 @@ $(document).ready(function() {
                         totalSteps = chatData ? chatData.length : 0;
 
                         chatName = data.chat.name
-                        thumbnail = data.chat.thumbnailUrl || data.chat.chatImageUrl
+                        thumbnail = data.chat.chatImageUrl
                         character = data.character
-                        
+                
                         let gender = data.chat.gender || 'female'
                         if(data.chat.character && data.chat.character.prompt){
                             gender = data.chat.character.prompt.toLowerCase();
@@ -285,7 +286,10 @@ $(document).ready(function() {
                             
                         }
                         $('#chat-container').attr('data-genre',gender)
-                        $('#chat-container').css(`background-image`,`url(${thumbnail})`)
+                        var currentImageUrl = $('#chat-container').css('background-image').replace(/url\(["']?|["']?\)$/g, '');
+                        if(currentImageUrl != thumbnail){
+                            $('#chat-container').css(`background-image`,`url(${thumbnail})`)
+                        }
                         $('#chat-title').text(chatName)
                         $('#input-container').show().addClass('d-flex');
                         $('#userMessage').attr('placeholder',chatName+'にメッセージを送る')

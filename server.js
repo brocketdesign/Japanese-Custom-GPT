@@ -33,7 +33,11 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       engine: { handlebars: require('handlebars') },
       root: path.join(__dirname, 'views'),
     });
-
+    fastify.after(() => {
+      handlebars.registerHelper('default', function(value, fallback) {
+        return value || fallback;
+      });
+    });
     fastify.register(require('fastify-cookie'), {
       secret: "my-secret",
       parseOptions: {},

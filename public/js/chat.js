@@ -250,6 +250,7 @@ $(document).ready(function() {
 
                 $('#chatContainer').empty()
                 $('#startButtonContained').remove();
+                $('#chat-container').css('background-image', 'none');
                 if(fetch_reset){
                     currentStep = 0
                 }
@@ -284,7 +285,6 @@ $(document).ready(function() {
                             
                         }
                         $('#chat-container').attr('data-genre',gender)
-                        
                         $('#chat-container').css(`background-image`,`url(${thumbnail})`)
                         $('#chat-title').text(chatName)
                         $('#input-container').show().addClass('d-flex');

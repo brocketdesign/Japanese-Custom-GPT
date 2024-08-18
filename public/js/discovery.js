@@ -314,6 +314,9 @@ $(document).ready(function() {
         });
     }
     $(document).on('scroll',function(){
+        if($('#chatbot-library').length == 0){
+            return
+        }
         $('#chatbot-library').waypoint(function() {
             loadNextPage();
           }, {

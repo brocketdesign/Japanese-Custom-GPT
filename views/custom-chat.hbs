@@ -662,7 +662,7 @@
                             <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 col-7 col-sm-4 col-lg-2" style="cursor:pointer;" onclick="redirectToChat('{{this._id}}','{{this.chatImageUrl}}')">
                                 <div style="background-image:url('{{#if this.chatImageUrl}}{{this.chatImageUrl}}{{else}}/img/logo.webp{{/if}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
                                     <span class="badge bg-dark position-absolute d-none" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px"><i class="fas fa-comment me-2"></i>{{this.num_message}}</span>
-                                    <div id="spinner-{{this._id}}" class="position-absolute spinner-grow text-light animate__animated animate__fadeIn" role="status" style="top:45%;left: 40%;display:none;"></div>
+                                    <div id="spinner-{{this._id}}" class="position-absolute spinner-grow  spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
                                 </div>
                                 <div class="card-body bg-transparent border-0 pb-0 text-start">
                                     <h5 class="card-title character-title">{{this.name}}</h5>
@@ -680,7 +680,7 @@
                             {{#each peopleChats.synclubaichat}}
                             <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2" style="cursor:pointer;" onclick="redirectToChat('{{this._id}}','{{this.chatImageUrl}}')">
                                 <div style="background-image:url('{{this.chatImageUrl}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
-                                    <div id="spinner-{{this._id}}" class="position-absolute spinner-grow text-light animate__animated animate__fadeIn" role="status" style="top:45%;left: 40%;display:none;"></div>
+                                    <div id="spinner-{{this._id}}" class="position-absolute spinner-grow  spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
                                     <div class="tags position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px">
                                         {{#each this.tags}}
                                             <span class="badge bg-dark" >
@@ -711,7 +711,7 @@
                             <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2" style="cursor:pointer;" onclick="redirectToChat('{{this._id}}','{{this.chatImageUrl}}')">
                                 <div style="background-image:url('{{this.chatImageUrl}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
                                     <span class="badge bg-dark position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px"><i class="fas fa-comment me-2"></i>{{this.num_message}}</span>
-                                    <div id="spinner-{{this._id}}" class="position-absolute spinner-grow text-light animate__animated animate__fadeIn" role="status" style="top:45%;left: 40%;display:none;"></div>
+                                    <div id="spinner-{{this._id}}" class="position-absolute spinner-grow  spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
                                 </div>
                                 <div class="card-body bg-transparent border-0 pb-0 text-start">
                                     <h5 class="card-title character-title">{{this.name}}</h5>

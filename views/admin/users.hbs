@@ -13,35 +13,44 @@
         </div>
         <div>
             <span class="badge bg-dark"><i class="fas fa-users me-2"></i>{{users.length}}</span>
+            <span class="badge bg-danger"><i class="fas fa-female me-2"></i></i>{{femaleCount}}人 ({{femalePercentage}}%)</span>
+            <span class="badge bg-primary"><i class="fas fa-male me-2"></i></i>{{maleCount}}人 ({{malePercentage}}%)</span>
         </div>
     </div>
     <div class="table-responsive">
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>Date</th>
-                    <th>Email</th>
-                    <th>Action</th>
+                    <th>日付</th>
+                    <th>メール</th>
+                    <th>名前</th>
+                    <th>性別</th>
+                    <th>年齢</th>
+                    <th>アクション</th>
                 </tr>
             </thead>
             <tbody>
                 {{#each users}}
                 <tr data-user-id="{{this._id}}">
                     <td class="jp-date">{{this.createdAt}}</td>
-                    <td>{{this.email}}</td><td>
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle shadow-0" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="fas fa-ellipsis-v"></i>
-                        </button>
-                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                        <a class="dropdown-item" href="/admin/chat/{{this._id}}">
-                            <i class="fas fa-comments me-2"></i> View Chats
-                        </a>
-                        <button class="dropdown-item delete-user" data-user-id="{{this._id}}">
-                            <i class="fas fa-trash-alt me-2"></i> Delete User
-                        </button>
+                    <td>{{this.email}}</td>
+                    <td>{{this.nickname}}</td>
+                    <td>{{this.gender}}</td>
+                    <td>{{this.birthDate.year}}年{{this.birthDate.month}}月{{this.birthDate.day}}日</td>
+                    <td>
+                        <div class="dropdown">
+                            <button class="btn btn-secondary dropdown-toggle shadow-0" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            <a class="dropdown-item" href="/admin/chat/{{this._id}}">
+                                <i class="fas fa-comments me-2"></i> View Chats
+                            </a>
+                            <button class="dropdown-item delete-user" data-user-id="{{this._id}}">
+                                <i class="fas fa-trash-alt me-2"></i> Delete User
+                            </button>
+                            </div>
                         </div>
-                    </div>
                     </td>
                 </tr>
                 {{/each}}

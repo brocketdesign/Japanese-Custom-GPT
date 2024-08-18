@@ -82,8 +82,21 @@ async function routes(fastify, options) {
             const users =  await usersCollection.find({
                 email: { $exists: true }
             }).sort({createdAt:-1}).toArray();;
-
-            return reply.view('/admin/users',{users, title:'Registered users'})
+            const totalUsers = users.length;
+            const femaleCount = users.filter(user => user.gender === 'female').length;
+            const maleCount = users.filter(user => user.gender === 'male').length;
+            
+            const femalePercentage = parseInt((femaleCount / totalUsers) * 100);
+            const malePercentage = parseInt((maleCount / totalUsers) * 100);
+            
+            
+            return reply.view('/admin/users',{
+                users,
+                femaleCount, 
+                femalePercentage, 
+                maleCount,
+                malePercentage,
+                title:'Registered users'})
         } catch (error) {
             return reply.status(500).send({ error: error.message });
         }

@@ -586,8 +586,8 @@ async function routes(fastify, options) {
                 // Find or create the chat document
                 let userChatDocument = await collectionUserChat.findOne({ userId : new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
                 let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
+                const user = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
                 const isUserChat = await collectionChat.findOne({ userId: new fastify.mongo.ObjectId(userId) , _id: new fastify.mongo.ObjectId(chatId) });
-                
                 if(!isUserChat){
                     if (userLimitCheck.id === 2) {
                         return reply.status(403).send(userLimitCheck);
@@ -657,8 +657,10 @@ async function routes(fastify, options) {
                         },
                         {
                             "role": "user",
-                            "content": `Here is your character description:\n\n${chatPurpose}\n${chatDescription}\n${chatRule}\n\n`
+                            "content": `Here is your character description:\n\n${chatPurpose}\n${chatDescription}\n${chatRule}\n\n
+                            ${!user.isTemporary ? `My name is ${user.nickname}, I am a ${user.gender}, I was born on ${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日.\nCall me by my ${user.nickname}, I love it!` : ''}`
                         }
+                        
                     ]
                     if(isWidget){
                         userChatDocument.isWidget = true

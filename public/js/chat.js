@@ -3,9 +3,9 @@ $(document).ready(function() {
     let MODE = "" 
     fetchMode(function(error,mode){
         MODE = mode
-        if(mode != 'local'){
-            API_URL = "https://lamix.hatoltd.com"
-        }
+        if (mode !== 'local') {
+            API_URL = window.location.origin;
+        }        
         localStorage.setItem('MODE',mode)
         localStorage.setItem('API_URL',API_URL)
         fetchUser(function(error, user){

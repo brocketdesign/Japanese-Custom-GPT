@@ -75,7 +75,7 @@ async function routes(fastify, options) {
   
       return reply
         .setCookie('token', token, { path: '/', httpOnly: true })
-        .send({ status: 'ユーザーが正常に登録されました', redirect: '/chat/' });
+        .send({ status: 'ユーザーが正常に登録されました', redirect: '/dashboard' });
     } catch (err) {
       console.log(err);
       return reply.status(500).send({ error: 'サーバーエラーが発生しました' });
@@ -95,7 +95,7 @@ async function routes(fastify, options) {
     return reply
       .clearCookie('tempUser', { path: '/' }) // Clear the tempUser cookie
       .setCookie('token', token, { path: '/', httpOnly: true })
-      .send({ redirect: '/chat/' });
+      .send({ redirect: '/dashboard' });
   });  
 
   // Google authentication configuration

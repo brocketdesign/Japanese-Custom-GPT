@@ -1,7 +1,6 @@
 
 const { ObjectId } = require('mongodb');
 const qs = require('qs');
-const frontEnd = process.env.MODE == 'local'? 'http://localhost:3000' : 'https://lamix.hatoltd.com'
 const stripe = process.env.MODE == 'local'? require('stripe')(process.env.STRIPE_SECRET_KEY_TEST) : require('stripe')(process.env.STRIPE_SECRET_KEY)
 
 async function routes(fastify, options) {
@@ -72,6 +71,10 @@ async function routes(fastify, options) {
   });
   fastify.post('/plan/subscribe', async (request, reply) => {
     try {
+      const frontEnd = process.env.MODE === 'local' 
+      ? 'http://localhost:3000' 
+      : `https://${request.headers.host}`;
+
       // Retrieve user information
       let user = await fastify.getUser(request, reply);
       const userId = user._id;
@@ -153,6 +156,9 @@ async function routes(fastify, options) {
   
   fastify.get('/plan/success', async (request, reply) => {
     try {
+      const frontEnd = process.env.MODE === 'local' 
+      ? 'http://localhost:3000' 
+      : `https://${request.headers.host}`;
       // Extract the session ID from the query parameters
       const query = request.query; // Fastify automatically parses query strings
       const sessionId = query.session_id;
@@ -213,6 +219,9 @@ async function routes(fastify, options) {
 
   fastify.get('/plan/cancel-payment', async (request, reply) => {
     try {
+      const frontEnd = process.env.MODE === 'local' 
+      ? 'http://localhost:3000' 
+      : `https://${request.headers.host}`;
       // You can log this event or notify the user if needed
       console.log('User canceled the payment process.');
 
@@ -402,6 +411,9 @@ async function routes(fastify, options) {
   }
   fastify.post('/plan/create-checkout-session', async (request, reply) => {
       const { buttonId, userId} = request.body;
+      const frontEnd = process.env.MODE === 'local' 
+      ? 'http://localhost:3000' 
+      : `https://${request.headers.host}`;
 
       const user = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({
         _id: new fastify.mongo.ObjectId(userId),

@@ -1105,11 +1105,14 @@ $(document).ready(function() {
 
 });
 function redirectToChat(chatId,chatImage) {
+    if($(`#spinner-${chatId}`).hasClass('on')){
+        return
+    }
     $('#chat-container').css('background-image', chatImage);
-    $(`#spinner-${chatId}`).show()
+    $(`#spinner-${chatId}`).addClass('on').show()
     const userId = localStorage.getItem('userId');
     fetchchatData(chatId,userId,null,function(){
-        $(`#spinner-${chatId}`).hide()
+        $(`#spinner-${chatId}`).removeClass('on').hide()
     })
 }
 $('.date-time').each(function() {

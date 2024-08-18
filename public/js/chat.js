@@ -508,26 +508,24 @@ $(document).ready(function() {
             function displayStarter() {
                 $('#startButtonContained').hide();
                 $('#introChat').hide();
-
-                const uniqueId = `${currentStep}-${Date.now()}`;
-                const botResponseContainer = $(`
-                    <div id="starter-${uniqueId}">
-                        <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
-                            <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
-                            <div class="audio-controller" style="display:none">
-                                <button id="play-${uniqueId}" class="audio-content badge bg-dark">►</button>
+                if($(document).find('.starter-on').length == 0){
+                    const uniqueId = `${currentStep}-${Date.now()}`;
+                    const botResponseContainer = $(`
+                        <div id="starter-${uniqueId}" class="starter-on">
+                            <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
+                                <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
+                                <div class="audio-controller" style="display:none">
+                                    <button id="play-${uniqueId}" class="audio-content badge bg-dark">►</button>
+                                </div>
+                                <div id="completion-${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">
+                                    <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
+                                </div>
                             </div>
-                            <div id="completion-${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">
-                                <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
-                            </div>
-                        </div>
-                        <div id="response-${uniqueId}" class="choice-container" ></div>
-                    </div>`);
-                $('#chatContainer').append(botResponseContainer);
-                $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
-               
-                
-         
+                            <div id="response-${uniqueId}" class="choice-container" ></div>
+                        </div>`);
+                    $('#chatContainer').append(botResponseContainer);
+                    $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
+                }
                 let message = `[Starter] 状況を発明し、何が起こっているかを説明してください。会話を開始したかのように応答してください。確認から始めず、答えから始めてください。
                 Provide a SHORT message,sweet and chatty with emojis. DO NOT sell anything in your first response but later on.`;
             

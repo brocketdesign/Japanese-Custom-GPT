@@ -248,7 +248,7 @@ $(document).ready(function() {
                 sendCustomData({action:'unlock-result'})
                 promptForEmail()
             })
-            window.fetchchatData = function(fetch_chatId,fetch_userId,fetch_reset) {
+            window.fetchchatData = function(fetch_chatId,fetch_userId,fetch_reset,callback) {
 
                 $('#chatContainer').empty()
                 $('#startButtonContained').remove();
@@ -321,6 +321,11 @@ $(document).ready(function() {
                     error: function(xhr, status, error) {
                         //console.log(error)
                         showDiscovery();
+                    },
+                    complete: function(xhr, status) {
+                      if(typeof callback == 'function'){
+                        callback()
+                      }
                     }
                 });
             }

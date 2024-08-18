@@ -147,7 +147,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       const userId = user._id;
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
       return reply.view('plan.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' , user });
-    });
+    }); 
     fastify.get('/chat', (request, reply) => {
       reply.redirect('chat/');
     });

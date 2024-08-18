@@ -1990,7 +1990,7 @@ window.updateCoins = function(userCoins) {
             url: API_URL+'/api/user',
             method: 'GET',
             success: function(response) {
-                const userCoins = (typeof response.user.coins === 'number') ? response.user.coins : 300;
+                const userCoins = response.user.coins;
 
                 $('.user-coins').each(function(){$(this).html(userCoins)})
             }

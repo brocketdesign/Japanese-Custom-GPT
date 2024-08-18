@@ -745,7 +745,7 @@ async function routes(fastify, options) {
                 return reply.code(404).send({ error: 'User not found' });
             }
     
-            let userCoins = (typeof user.coins === 'number') ? user.coins : 300;
+            let userCoins =  user.coins;
             
             if (userCoins < itemPrice) {
                 return reply.code(400).send({ error: 'Insufficient coins', id: 1 });

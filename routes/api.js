@@ -1599,7 +1599,15 @@ async function routes(fastify, options) {
             .reverse()
             .find(message => message.role === 'assistant')
             .content;
-            
+            const containsSubstring = (str) => {
+                const regex = /\[\$\{\d+\}(coins|コイン)\]|\[|\]|coins|コイン/;
+                return regex.test(str);
+            };
+            const result = containsSubstring(lastAssistantMessageContent);
+            console.log(result);
+            if(!result){
+                return reply.send({proposeToBuy:false})
+            }
             // Send user messages to OpenAI for parsing to check for purchase proposals
             const completion = await openai.beta.chat.completions.parse({
                 model: "gpt-4o-2024-08-06",

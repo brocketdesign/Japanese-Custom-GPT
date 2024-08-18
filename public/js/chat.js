@@ -1247,7 +1247,17 @@ $(document).ready(function() {
                     initiatePurchase(itemId, itemName, itemPrice, userId, function(response) {
                         let message;
                         if (response.success) {
-                            message = `${itemName}を${itemPrice}コインで購入しました。`;
+                            const successMessages = [
+                                `${itemName}を購入しました！`,
+                                `${itemName}を手に入れました！`,
+                                `${itemName}があなたのものになりました！`,
+                                `${itemName}をゲットしました！`,
+                                `${itemName}を${itemPrice}コインで購入しました。`,
+                                `${itemName}を無事に${itemPrice}コインでゲットしました！`,
+                                `${itemName}を${itemPrice}コインで手に入れました。`
+                            ];
+                            
+                            let message = successMessages[Math.floor(Math.random() * successMessages.length)];                            
                             $(`#${itemId} button`).each(function() { $(this).hide() });
                             updateCoins(response.coins)
                             displayMessage('user', message, function() {
@@ -1264,7 +1274,14 @@ $(document).ready(function() {
                         }
                     });
                 } else {
-                    let message = `${itemName}を購入しませんでした。`;
+                    const messages = [
+                        `${itemName}を見送りました。`,
+                        `${itemName}は今のところ購入されていません。`,
+                        `${itemName}をスキップしました。`,
+                        `${itemName}を今は手に入れませんでした。`,
+                        `${itemName}を今は選択しませんでした。`
+                    ];
+                    let message = messages[Math.floor(Math.random() * messages.length)];
                     displayMessage('user', message, function() {
                         addMessageToChat(chatId, userChatId, 'user', message, function(error, res) {
                             if (error) {
@@ -1550,11 +1567,11 @@ $(document).ready(function() {
                             const itemId = `item-${currentStep}-${Date.now()}`;
                             const message = `
                                 <div id="${itemId}" class="card bg-transparent text-white border-0">
-                                    <div class="card-body">
+                                    <div class="card-body" style="height:auto !important;">
                                         <h5 class="card-title" style="font-size: 14px;">${item.name}</h5>
                                         <p class="card-text mb-2 fw-bold">必要コイン: ${item.price}コイン</p>
-                                        <button class="btn btn-primary shadow-0" onclick="buyItem('${itemId}','${item.name}', ${item.price}, true, '${userId}', '${chatId}', '${userChatId}')">今すぐゲット</button>
-                                        <button class="btn btn-secondary shadow-0" onclick="buyItem('${itemId}','${item.name}', ${item.price}, false, '${userId}', '${chatId}', '${userChatId}')">あとでゲット</button>
+                                        <button class="btn custom-gradient-bg  shadow-0 w-100" onclick="buyItem('${itemId}','${item.name}', ${item.price}, true, '${userId}', '${chatId}', '${userChatId}')">今すぐゲット</button>
+                                        <button class="btn btn-outline-danger border-0 shadow-0 rounded-0 position-absolute px-2 py-1" style="font-size: 12px;position: absolute;top: 0;right: 0;" onclick="buyItem('${itemId}','${item.name}', ${item.price}, false, '${userId}', '${chatId}', '${userChatId}')">見送る</button>
                                     </div>
                                 </div>
                             `;

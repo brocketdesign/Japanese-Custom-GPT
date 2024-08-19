@@ -525,7 +525,7 @@ async function routes(fastify, options) {
         const isTemporary = user.isTemporary;
         let messageLimit = isTemporary ? 10 : 50;
         let chatLimit = isTemporary ? 1 : 3;
-        let imageLimit = isTemporary ? 1 : 10;
+        let imageLimit = isTemporary ? 1 : 3;
         let messageIdeasLimit = isTemporary ? 3 : 10;
     
         if (!isTemporary) {

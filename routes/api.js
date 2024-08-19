@@ -1268,7 +1268,6 @@ async function routes(fastify, options) {
     
             // Check user limits before proceeding
             const userLimitCheck = await checkLimits(userId);
-            console.log(userLimitCheck)
             if (userLimitCheck.error && userLimitCheck.id === 4) {
                 return reply.status(429).send({ error: userLimitCheck });
             }

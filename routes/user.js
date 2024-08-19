@@ -546,7 +546,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       }
       
   
-      const userChats = await collectionChat.find(chatQuery).toArray();
+      const userChats = await collectionChat.find(chatQuery).sort({_id:-1}).toArray();
 
       return reply.view('/user-profile.hbs', {
         isAdmin,

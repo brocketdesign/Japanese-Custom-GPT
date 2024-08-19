@@ -917,7 +917,7 @@ $(document).ready(function() {
                     $('#gen-ideas').data('savedContent', ideasList);
                 },
                 error: function(xhr, status, error) {
-                    if (xhr.responseJSON && xhr.responseJSON.error.id === 4) {
+                    if (xhr.responseJSON && xhr.responseJSON.error.id === 4 || xhr.responseJSON.error) {
                         $('#gen-ideas').addClass('limit')
                         showUpgradePopup('chat-message-ideas');
                     }

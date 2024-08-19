@@ -521,7 +521,7 @@ async function routes(fastify, options) {
         // Fetch message ideas count
         const messageIdeasCountCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageIdeasCount');
         const messageIdeasCountDoc = await messageIdeasCountCollection.findOne({ userId: new fastify.mongo.ObjectId(userId), date: today });
-    
+
         const isTemporary = user.isTemporary;
         let messageLimit = isTemporary ? 10 : 50;
         let chatLimit = isTemporary ? 1 : 3;
@@ -1268,8 +1268,12 @@ async function routes(fastify, options) {
     
             // Check user limits before proceeding
             const userLimitCheck = await checkLimits(userId);
+            console.log(userLimitCheck)
             if (userLimitCheck.error && userLimitCheck.id === 4) {
                 return reply.status(429).send({ error: userLimitCheck });
+            }
+            if (userLimitCheck.messageIdeasCountDoc && userLimitCheck.messageIdeasCountDoc.count >= userLimitCheck.messageIdeasCountDoc.limit) {
+                return reply.status(429).send({ error: true });
             }
     
             const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');

@@ -241,19 +241,25 @@ $(document).ready(function() {
                         },
                         error: function(error) {
                             if (error.status === 403) {
-                                if($('#chat-widget-container').length == 0 && isTemporary){
-                                    showRegistrationForm()
-                                    return
+                                var limitIds = error.responseJSON?.limitIds || [];
+                        
+                                if ($('#chat-widget-container').length == 0 && isTemporary) {
+                                    showRegistrationForm();
+                                    return;
                                 }
-                                if($('#chat-widget-container').length == 0 ){
-                                    showUpgradePopup('chat-message')
-                                    return
+                                if (limitIds.includes(1) && $('#chat-widget-container').length == 0) {
+                                    showUpgradePopup('chat-message');
+                                    return;
+                                }
+                                if (limitIds.includes(2)) {
+                                    showUpgradePopup('chat-character');
+                                    return;
                                 }
                             } else {
                                 console.error('Error:', error);
                                 displayMessage('bot', 'An error occurred while sending the message.');
                             }
-                        }
+                        }                        
                     });
                 }
             }
@@ -434,14 +440,18 @@ $(document).ready(function() {
                 $('#stability-gen-button').hide();
                 $('.auto-gen').each(function(){$(this).hide()})
                 $('#audio-play').hide();
-                /*
+                
                 // Create the intro elements
                 let introContainer = $('<div></div>')
                 .addClass('intro-container my-3 p-3')
                 .attr('id','introChat');
             
                 let title = $('<h2></h2>').text(name);
-                let desc = $('<p></p>').text(description);
+                let desc = $('<span></span>').text(description);
+
+                introContainer.append(desc);
+                $('#chatContainer').append(introContainer);
+                /*
                 let image = $('<img>').addClass('intro-thumbnail');
             
                 if(thumbnailUrl){
@@ -476,7 +486,6 @@ $(document).ready(function() {
                     image.attr('src', '/img/logo.webp')
                 }
                 introContainer.append(image);
-                introContainer.append(title, desc);
             
                 const toolbox = `
                             <ul class="intro-toolbox d-flex flex-row list-group justify-content-center">
@@ -508,7 +517,7 @@ $(document).ready(function() {
                             `
                 //introContainer.append(toolbox);
                 // Display intro container inside #chatContainer
-                //$('#chatContainer').append(introContainer);
+                
 
                 if($('#chat-widget-container').length == 0 && isTemporary){
                     //showRegistrationForm()
@@ -593,28 +602,28 @@ $(document).ready(function() {
                         $('#startButtonContained').show();
                         $('#introChat').show();
                         if (xhr.responseJSON) {
-                            var errorStatus = xhr.status
+                            var errorStatus = xhr.status;
                             if (errorStatus === 403) {
-                                var errorId = xhr.responseJSON.id;
-
-                                if($('#chat-widget-container').length == 0 && isTemporary){
-                                    showRegistrationForm(errorId)
-                                    return
+                                var limitIds = xhr.responseJSON.limitIds || [];
+                    
+                                if ($('#chat-widget-container').length == 0 && isTemporary) {
+                                    showRegistrationForm(limitIds);
+                                    return;
                                 }
-                                if (errorId === 1) {
-                                    if($('#chat-widget-container').length == 0 ){
-                                        showUpgradePopup('chat-message')
-                                        return
-                                    }
-                                } else if (errorId === 2) {
-                                  showUpgradePopup('chat-character')
+                                if (limitIds.includes(1) && $('#chat-widget-container').length == 0) {
+                                    showUpgradePopup('chat-message');
+                                    return;
                                 } 
+                                if (limitIds.includes(2)) {
+                                    showUpgradePopup('chat-character');
+                                    return;
+                                }
                             }
-                          } else {
+                        } else {
                             console.error('Error:', error);
                             displayMessage('bot', 'An error occurred while sending the message.');
                         }
-                    }
+                    }                    
                 });
             }
             window.renderChatList = function(userId) {

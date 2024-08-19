@@ -32,18 +32,17 @@ window.generateImagePromt = function(API_URL, userId, chatId, userChatId, thumbn
       },
       error: function(xhr, status, error) {
         if (xhr.responseJSON) {
-          var errorStatus = xhr.status
-          if (errorStatus === 403) {
-            var errorId = xhr.responseJSON.id;
-            if (errorId === 3) {
-              $('#load-image-container').remove()
-              showUpgradePopup('image-generation');
-              return;
+            var errorStatus = xhr.status;
+            if (errorStatus === 403) {
+                var limitIds = xhr.responseJSON.limitIds || [];
+                if (limitIds.includes(3)) {
+                    $('#load-image-container').remove();
+                    showUpgradePopup('image-generation');
+                    return;
+                }
             }
-          }
         }
-    }
-    
+    }    
   });
 }
 // STABLE DIFFUSION

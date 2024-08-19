@@ -69,6 +69,74 @@ const isValidUrl = (string) => {
         return false;
     }
 };
+async function checkLimits(fastify,userId) {
+    const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
+
+    const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+    const user = await userDataCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
+
+    const messageCountCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageCount');
+    const messageCountDoc = await messageCountCollection.findOne({ userId: new fastify.mongo.ObjectId(userId), date: today });
+
+    const chatCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+    const chatCount = await chatCollection.countDocuments({ userId: new fastify.mongo.ObjectId(userId) });
+
+    const imageCountCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('ImageCount');
+    const imageCountDoc = await imageCountCollection.findOne({ userId: new fastify.mongo.ObjectId(userId), date: today });
+
+    const messageIdeasCountCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageIdeasCount');
+    const messageIdeasCountDoc = await messageIdeasCountCollection.findOne({ userId: new fastify.mongo.ObjectId(userId), date: today });
+
+    const isTemporary = user.isTemporary;
+    let messageLimit = isTemporary ? 10 : 50;
+    let chatLimit = isTemporary ? 1 : 3;
+    let imageLimit = isTemporary ? 1 : 3;
+    let messageIdeasLimit = isTemporary ? 3 : 10;
+
+    if (!isTemporary) {
+        const existingSubscription = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').findOne({
+            _id: new fastify.mongo.ObjectId(userId),
+            subscriptionStatus: 'active',
+            subscriptionType: process.env.MODE
+        });
+
+        if (existingSubscription) {
+            const billingCycle = existingSubscription.billingCycle + 'ly';
+            const currentPlanId = existingSubscription.currentPlanId;
+            const plansFromDb = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('plans').findOne();
+            const plans = plansFromDb.plans;
+            const plan = plans.find((plan) => plan[`${billingCycle}_id`] === currentPlanId);
+            messageLimit = plan.messageLimit || messageLimit;
+            chatLimit = plan.chatLimit || chatLimit;
+            imageLimit = plan.imageLimit || imageLimit;
+            messageIdeasLimit = plan.messageIdeasLimit || messageIdeasLimit;
+        }
+    }
+
+    const limitIds = [];
+
+    if (messageCountDoc && messageCountDoc.count >= messageLimit) {
+        limitIds.push(1);
+    }
+
+    if (isTemporary && chatCount >= chatLimit) {
+        limitIds.push(2);
+    }
+
+    if (imageCountDoc && imageCountDoc.count >= imageLimit) {
+        limitIds.push(3);
+    }
+
+    if (messageIdeasCountDoc && messageIdeasCountDoc.count >= messageIdeasLimit) {
+        limitIds.push(4);
+    }
+
+    if (limitIds.length > 0) {
+        return { limitIds, messageCountDoc, chatCount, imageCountDoc, messageIdeasCountDoc, messageLimit, chatLimit, imageLimit, messageIdeasLimit };
+    }
+
+    return { messageCountDoc, chatCount, imageCountDoc, messageIdeasCountDoc, messageLimit, chatLimit, imageLimit, messageIdeasLimit };
+}
 
 
-  module.exports = { getCounter, updateCounter, handleFileUpload, uploadToS3}
+  module.exports = { getCounter, updateCounter, handleFileUpload, uploadToS3, checkLimits}

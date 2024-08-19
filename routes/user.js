@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const aws = require('aws-sdk');
 const crypto = require('crypto');
 const axios = require('axios');
+const { checkLimits } = require('../models/tool');
 
 async function routes(fastify, options) {
   fastify.post('/user/register', async (request, reply) => {
@@ -500,70 +501,10 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     }
   });
 
-  async function checkLimits(userId) {
-    const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
-
-    const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
-    const user = await userDataCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
-
-    const messageCountCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageCount');
-    const messageCountDoc = await messageCountCollection.findOne({ userId: new fastify.mongo.ObjectId(userId), date: today });
-
-    const chatCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-    const chatCount = await chatCollection.countDocuments({ userId: new fastify.mongo.ObjectId(userId) });
-
-    const imageCountCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('ImageCount');
-    const imageCountDoc = await imageCountCollection.findOne({ userId: new fastify.mongo.ObjectId(userId), date: today });
-
-    // Fetch message ideas count
-    const messageIdeasCountCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageIdeasCount');
-    const messageIdeasCountDoc = await messageIdeasCountCollection.findOne({ userId: new fastify.mongo.ObjectId(userId), date: today });
-
-    const isTemporary = user.isTemporary;
-    let messageLimit = isTemporary ? 10 : 50;
-    let chatLimit = isTemporary ? 1 : 3;
-    let imageLimit = isTemporary ? 1 : 3;
-    let messageIdeasLimit = isTemporary ? 3 : 10;
-
-    if (!isTemporary) {
-        const existingSubscription = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').findOne({
-            _id: new fastify.mongo.ObjectId(userId),
-            subscriptionStatus: 'active',
-            subscriptionType: process.env.MODE
-        });
-
-        if (existingSubscription) {
-            const billingCycle = existingSubscription.billingCycle + 'ly';
-            const currentPlanId = existingSubscription.currentPlanId;
-            const plansFromDb = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('plans').findOne();
-            const plans = plansFromDb.plans;
-            const plan = plans.find((plan) => plan[`${billingCycle}_id`] === currentPlanId);
-            messageLimit = plan.messageLimit || messageLimit;
-            chatLimit = plan.chatLimit || chatLimit;
-            imageLimit = plan.imageLimit || imageLimit;
-            messageIdeasLimit = plan.messageIdeasLimit || messageIdeasLimit;
-        }
-    }
-
-    if (messageCountDoc && messageCountDoc.count >= messageLimit) {
-        return { error: 'Message limit reached for today.', id: 1, messageCountDoc, chatCount, imageCountDoc, messageIdeasCountDoc, messageLimit, chatLimit, imageLimit, messageIdeasLimit };
-    } 
-
-    if (imageCountDoc && imageCountDoc.count >= imageLimit) {
-        return { error: 'Image generation limit reached for today.', id: 3, messageCountDoc, chatCount, imageCountDoc, messageIdeasCountDoc, messageLimit, chatLimit, imageLimit, messageIdeasLimit };
-    }
-
-    if (messageIdeasCountDoc && messageIdeasCountDoc.count >= messageIdeasLimit) {
-        return { error: 'Message ideas limit reached for today.', id: 4, messageCountDoc, chatCount, imageCountDoc, messageIdeasCountDoc, messageLimit, chatLimit, imageLimit, messageIdeasLimit };
-    }
-    
-    return { messageCountDoc, chatCount, imageCountDoc, messageIdeasCountDoc, messageLimit, chatLimit, imageLimit, messageIdeasLimit };
-}
-
   fastify.get('/user/limit/:id', async (request, reply) => {
     try {
       const userId = request.params.id;
-      const limits = await checkLimits(userId)
+      const limits = await checkLimits(fastify, userId)
       return reply.send({limits})
     } catch (error) {
       reply.send({error:`Limit not founded`})

@@ -72,11 +72,6 @@
     .custom-gradient-bg:hover {
         color: #fff;
     }
-
-    #chatPurpose {
-        background-color: #cccccc12;
-        border: 1px solid;
-    }
     #chatImage{
         width: 100px;
         height: 100px; 
@@ -177,21 +172,26 @@
         border: 1px solid #eef0f3;
         border-radius: 4px;
     }
-    #chatRule {
-        display: none;
-    }
     .auto-gen{
         font-size: 10px;
         border-radius: 50px;
     }
     </style>
-<div class="container my-4">
+<div class="container my-4 px-0">
     <h2 class="d-none">{{#if chatId}}チャットを編集{{else}}新しいチャットを追加{{/if}}</h2>
     <div id="imageSection" class="text-center mb-4" ><div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative">
         <img id="chatImage" src="/img/logo.webp" alt="chat Thumbnail" class="rounded-circle" style="cursor: pointer;">
         <i class="fas fa-edit position-absolute" style="bottom: 5px; font-size: 1em; color: white; background-color: rgba(0, 0, 0, 0.5); border-radius: 50%; padding: 5px;cursor: pointer;"></i>
     </div>
-
+    <div class="mt-3">
+        <button type="button" id="resetForm" class="btn btn-sm btn-light border-0 shadow-0"><i class="fas fa-eraser"></i></button>
+        <button type="button" id="genChat" class="btn btn-sm custom-gradient-bg shadow-0"
+        data-toggle="tooltip" title="チャット構造の生成">
+            <i class="fa fa-spinner fa-spin fa-fw fa-hidden me-2" style="display: none;"></i>
+            <i class="fa fa-magic me-2"></i>
+            AIに任せよう
+        </button>
+    </div>
     </div>  
     <button type="button" id="displayProcess" class="badge btn-ligh text-muted border mb-2 mx-3 d-none" style="font-size: 12px;border-radius:40px">プロセスを表示する</button>
     <div id="displayProcessToggle" class="mb-3 mx-3 d-none">
@@ -199,16 +199,9 @@
         <textarea class="form-control" id="chatContent" name="content" rows="10"></textarea>
     </div>
     
-    <form id="chatForm" class="mb-5 pb-5 mx-3">
-        <div class="mb-3 mx-3">
-            <button type="button" id="genChat" class="btn custom-gradient-bg my-3 shadow-0 w-100" data-toggle="tooltip" title="チャット構造の生成">
-                <i class="fa fa-spinner fa-spin fa-fw fa-hidden me-2" style="display: none;"></i>
-                <i class="fa fa-magic me-2"></i>
-                AIでキャラクターを生成する
-            </button>
-        </div>
-        <div class="mb-3 mx-3 row">
-            <div class="col-auto">
+    <form id="chatForm" class="mb-5 pb-5 mx-0">
+        <div class="mb-3 mx-3 row justify-content-between">
+            <div class="col-auto ps-0">
                 <label for="visibility" class="form-label"><i class="fas fa-eye"></i> 公開設定:</label>
                 <select class="form-select w-auto" id="visibility" name="visibility">
                     <option value="public" selected><i class="fas fa-globe"></i> 公開</option>
@@ -222,7 +215,7 @@
                     <option value="english"><i class="fas fa-flag"></i> 英語</option>
                 </select>
             </div>
-            <div class="col-auto">
+            <div class="col-auto pe-0">
                 <label for="gender" class="form-label"><i class="fas fa-user"></i> 性別:</label>
                 <select class="form-select w-auto" id="gender" name="gender">
                     <option value="female" selected><i class="fas fa-female"></i> 女性</option>
@@ -230,26 +223,43 @@
                 </select>
             </div>
         </div>
-        <div id="chatPurpose-container" class="mb-3 mx-3" style="display: none;">
-            <label for="chatPurpose" class="form-label">キャラクターの詳細</label>
-            <textarea class="d-none form-control" id="chatPurpose" name="content" rows="5" 
-            placeholder="例：中村美咲（27歳）は明るく社交的なOLで、責任感が強く、チームをサポートする姿勢が評価されている。趣味は旅行とカフェ巡りで、休日には友達と過ごすことが多い。話し方は礼儀正しく丁寧でありながら柔らかく、安心感を与える。"></textarea>
-            <div id="chatPurpose-markdownContainer" class="rounded border border-secondary bg-light px-3 py-2" contenteditable="true" style="min-height:50px;"></div>
-        </div>
-        <div class="mb-3 mx-3" id="thumbnailInputContainer" style="display: none;">
-            <label for="chatThumbnail" class="form-label">チャットのサムネイルをアップロード</label>
-            <input type="file" class="form-control" id="chatThumbnail" name="thumbnail" accept="image/*">
-        </div>
-        <div class="mb-3 mx-3" style="display: none;">
+        <div class="mb-3 mx-3">
             <div class="d-flex justify-content-between align-items-end">
-                <label for="chatName" class="form-label">名前</label>
+                <label for="chatName" class="d-none form-label">名前</label>
                 <button type="button" id="gen-chatName" class="d-none btn btn-sm custom-gradient-bg shadow-0 border-0 mb-1 auto-gen">
                     <i class="fa fa-spinner fa-spin fa-fw fa-hidden me-2" style="display: none;"></i>
                     <i class="fa fa-magic me-2"></i>
                     AI生成
                 </button>
             </div>
-            <input type="text" class="form-control" id="chatName" name="name" required>
+            <input type="text" class="form-control" id="chatName" name="name" placeholder="名前" required>
+        </div>
+        <div class="mb-3 mx-3">
+            <label for="chatDescription" class="d-none form-label">簡単な説明</label>
+            <textarea class="form-control" id="chatDescription" name="content" rows="3" placeholder="簡単な説明" ifplaceholder="チャットボットの詳細な説明をここに記入してください。どのような機能を持たせたいのか、どのようなユーザーに向けたものなのか、具体的なシナリオや対話の流れなど、できるだけ詳しく記載してください。ユーザーがどのようにチャットボットとやり取りするかの例も含めてください。" required></textarea>
+        </div>
+        <div class="mb-3 mx-3">
+            <div class="d-flex-none d-none justify-content-between align-items-end">
+                <label for="chatRule" class="d-none form-label" >話し方</label>
+                <button type="button" id="gen-chatRule" class="d-none btn btn-sm custom-gradient-bg shadow-0  border-0 mb-1 auto-gen">
+                    <i class="fa fa-spinner fa-spin fa-fw fa-hidden me-2" style="display: none;"></i>
+                    <i class="fa fa-magic me-2"></i>
+                    AI生成
+                </button>
+            </div>
+            <textarea class="d-none form-control" id="chatRule" name="content" rows="5" placeholder="話し方" ifplaceholder="チャットボットの動作についての指示をここに記入してください。ユーザーに対する返答のトーン、応答のスタイル、特定の状況に対する反応、使用する言葉遣いなど、チャットボットがどのように振る舞うべきかをできるだけ詳しく記載してください。"></textarea>
+        </div>
+        <div id="chatPurpose-container" class="mb-3 mx-3">
+            <div class="d-flex justify-content-start align-items-end">
+                <label for="chatPurpose" class="d-none form-label">キャラクターの詳細</label>
+            </div>
+            <textarea class="form-control" id="chatPurpose" name="content" rows="5" 
+            placeholder="キャラクターの詳細" ifplaceholder="例：中村美咲（27歳）は明るく社交的なOLで、責任感が強く、チームをサポートする姿勢が評価されている。趣味は旅行とカフェ巡りで、休日には友達と過ごすことが多い。話し方は礼儀正しく丁寧でありながら柔らかく、安心感を与える。"></textarea>
+            <div id="chatPurpose-markdownContainer" class="rounded form-control px-3 py-2" contenteditable="false" style="min-height:50px;height: auto;display:none;" ></div>
+        </div>
+        <div class="mb-3 mx-3" id="thumbnailInputContainer" style="display: none;">
+            <label for="chatThumbnail" class="form-label">チャットのサムネイルをアップロード</label>
+            <input type="file" class="form-control" id="chatThumbnail" name="thumbnail" accept="image/*">
         </div>
         <div class="mb-3 mx-3 d-none">
             <label for="myUrl" class="form-label">URL</label>
@@ -279,24 +289,9 @@
             <label for="chatCategory" class="form-label">カテゴリー</label>
             <input type="text" class="form-control" id="chatCategory" name="chatCategory">
         </div>
-        <div class="mb-3 mx-3"  style="display: none;">
-            <label for="chatDescription" class="form-label">説明</label>
-            <textarea class="form-control" id="chatDescription" name="content" rows="5" placeholder="" ifplaceholder="チャットボットの詳細な説明をここに記入してください。どのような機能を持たせたいのか、どのようなユーザーに向けたものなのか、具体的なシナリオや対話の流れなど、できるだけ詳しく記載してください。ユーザーがどのようにチャットボットとやり取りするかの例も含めてください。" required></textarea>
-        </div>
         <div class="mb-3 mx-3">
             <label for="chatUrl" class="form-label d-none">URL</label>
             <input type="hidden" class="form-control" id="chatUrl" name="url">
-        </div>
-        <div class="mb-3 mx-3" style="display: none;">
-            <div class="d-flex justify-content-between align-items-end">
-                <label for="chatRule" class="form-label" >指示</label>
-                <button type="button" id="gen-chatRule" class="btn btn-sm custom-gradient-bg shadow-0  border-0 mb-1 auto-gen">
-                    <i class="fa fa-spinner fa-spin fa-fw fa-hidden me-2" style="display: none;"></i>
-                    <i class="fa fa-magic me-2"></i>
-                    AI生成
-                </button>
-            </div>
-            <textarea class="form-control" id="chatRule" name="content" rows="5" placeholder="チャットボットの動作についての指示をここに記入してください。ユーザーに対する返答のトーン、応答のスタイル、特定の状況に対する反応、使用する言葉遣いなど、チャットボットがどのように振る舞うべきかをできるだけ詳しく記載してください。"></textarea>
         </div>
         <div id="markdownContainer" contenteditable="true" style="display: none;"></div>
         <div class="container mt-1 d-none">
@@ -313,8 +308,8 @@
             <button type="button" id="addQuestionBtn" class="btn btn-light float-end" data-toggle="tooltip" title="追加" data-original-title="Share"><i class="fas fa-plus"></i> </button>
             <button type="button" id="saveButton" class="btn btn-primary mt-3 d-none">Save</button>
         </div>
-        <div class="sticky-bottom">
-            <button type="submit" id="sendForm" class="btn btn-primary btn-large w-100 mt-5 mb-3" style="border-radius:50px;display:none;">
+        <div class="sticky-bottom px-3 pb-3">
+            <button type="submit" id="sendForm" class="btn custom-gradient-bg btn-large w-100" style="border-radius:50px;display:none;">
                     <i class="fa fa-spinner fa-spin fa-fw fa-hidden d-none me-2"></i>
                     <span>チャット</span>
             </button>
@@ -331,7 +326,28 @@
         var count = 0
         let chatId = '{{chatId}}';
         const isTemporaryChat = '{{isTemporaryChat}}'
+        let isAutoGen = false
 
+        $('input, textarea').val('');
+        $('#resetForm').on('click',function(){
+            $('input, textarea').val('');
+            $('input, textarea').prop('disabled', false);
+            $('#chatPurpose').show()
+            $('#chatPurpose-markdownContainer').hide()
+            $('#sendForm').hide()
+            $('#sendForm span').html('チャット')
+        })
+    function checkFieldsAndShowForm() {
+        if ($('#chatName').val().trim() !== '' && 
+            $('#chatDescription').val().trim() !== '' && 
+            $('#chatPurpose').val().trim() !== '') {
+            $('#sendForm').show();
+        } else {
+            $('#sendForm').hide();
+        }
+    }
+
+    $('#chatName, #chatDescription, #chatPurpose').on('input', checkFieldsAndShowForm);
         $('#chatPurpose').val('')
         if (isTemporaryChat == 'false') {
             fetchchatData(chatId);
@@ -449,6 +465,11 @@
                 type: 'GET',
                 dataType: 'json',
                 success: function(chatData) {
+                    if(chatData.isAutoGen){
+                        $('input, textarea').prop('disabled', true);
+                        $('#chatPurpose').hide();
+                        $('#chatPurpose-markdownContainer').show()
+                    }
                     if(chatData.purpose){
                         var htmlContent = marked.parse(chatData.purpose);
                         $('#chatPurpose-container').show()
@@ -558,6 +579,7 @@
             formData.append('rule', rule);
             formData.append('url', url);
             formData.append('visibility', visibility);
+            formData.append('isAutoGen', isAutoGen);
             
             if(thumbnail){
                 formData.append('thumbnail', thumbnail);
@@ -592,8 +614,10 @@
         $('#gen-chatRule').click(generateRule)
         // Event handler for the send button
         $('#genChat').on('click', function() {
+            isAutoGen = true
             $('#genChat .fa-spinner ').show()
             $('#genChat .fa-magic').hide()
+            $('input, textarea').prop('disabled', true);
             if($('#chatImageUrl').val().trim().length > 0 && $('#chatPurpose').val().trim() == ''){
                 generateImageDescription(function() {
                     generateName(function(){
@@ -984,13 +1008,15 @@
         function listenToEventSource(streamUrl, callback) {
             const eventSource = new EventSource(streamUrl);
             let markdownContent = "";
-            $('#chatPurpose-container').show()
             eventSource.onmessage = function(event) {
                 const data = JSON.parse(event.data);
                 markdownContent += data.content;
                 var htmlContent = marked.parse(markdownContent);
                 $('#chatPurpose-markdownContainer').html(htmlContent);
                 $('#chatPurpose').val(markdownContent);
+                $('#chatPurpose').hide()
+                $('#chatPurpose-markdownContainer').show()
+                $('#chatPurpose-container').show()
             };
 
             eventSource.onerror = function(error) {
@@ -1156,8 +1182,8 @@
                     break;
                 case 'chatDescription':
                     system = `
-                        You are a conversation description generator. 
-                        You take the provided content by the user and return a short description of 4 sentences.
+                        You are a description generator. 
+                        You take the provided content by the user and return a short description of 2 sentences.
                         You should respond in plain text with the description ONLY.NO COMMENTS.
                     `;
                     break;
@@ -1426,6 +1452,14 @@
             var containerHtml = $('#chatPurpose-markdownContainer').html();
             $('#chatPurpose').val(containerHtml);
         }
+        function updateButtonText() {
+            let chatName = $('#chatName').val().trim();
+            $('#sendForm span').html(`${chatName}とチャットする`);
+        }
+        var observer = new MutationObserver(updateButtonText);
+        observer.observe(document.getElementById('chatName'), { childList: true, subtree: true, characterData: true });
+        $('#chatName').on('input', updateButtonText);
+        
         var observer = new MutationObserver(updateTextarea);
         observer.observe(document.getElementById('chatPurpose-markdownContainer'), { childList: true, subtree: true });
     });

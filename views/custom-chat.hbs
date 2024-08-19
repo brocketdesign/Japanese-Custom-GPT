@@ -11,6 +11,11 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            max-height: 200px;
+            position: absolute;
+            bottom: 120px;
+            right: 10px;
+            left: 10px;
         }
         .audio-controller {
             display: flex;
@@ -38,7 +43,7 @@
         }
         .gen-idea-container{
             border-radius: 40px 40px 0 0;
-            background-color: #313030;
+            background: linear-gradient(135deg, #1e1946, #6f4cb0, #24243e);
             width: 100%;
             position: absolute;
             left: 0;
@@ -917,8 +922,8 @@ $(document).ready(function() {
                     $('#gen-ideas').data('savedContent', ideasList);
                 },
                 error: function(xhr, status, error) {
-                    if (xhr.responseJSON && xhr.responseJSON.error.id === 4 || xhr.responseJSON.error) {
-                        $('#gen-ideas').addClass('limit')
+                    if (xhr.responseJSON && xhr.responseJSON.limitIds?.includes(4)) {
+                        $('#gen-ideas').addClass('limit');
                         showUpgradePopup('chat-message-ideas');
                     }
                 }

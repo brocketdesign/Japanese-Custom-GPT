@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const aws = require('aws-sdk');
 const sessions = new Map(); // Define sessions map
 const { analyzeScreenshot, processURL } = require('../models/scrap');
-const { handleFileUpload, uploadToS3 } = require('../models/tool');
+const { handleFileUpload, uploadToS3, checkLimits } = require('../models/tool');
 const { createHash } = require('crypto');
 const { convert } = require('html-to-text');
 const axios = require('axios');
@@ -64,6 +64,7 @@ async function routes(fastify, options) {
                 case 'language':
                 case 'gender':
                 case 'visibility':
+                case 'isAutoGen':
                 case 'category':
                 case 'rule':
                 case 'url':
@@ -502,75 +503,10 @@ async function routes(fastify, options) {
         }
     });
     
-
-    async function checkLimits(userId) {
-        const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
-    
-        const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
-        const user = await userDataCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
-    
-        const messageCountCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageCount');
-        const messageCountDoc = await messageCountCollection.findOne({ userId: new fastify.mongo.ObjectId(userId), date: today });
-    
-        const chatCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-        const chatCount = await chatCollection.countDocuments({ userId: new fastify.mongo.ObjectId(userId) });
-    
-        const imageCountCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('ImageCount');
-        const imageCountDoc = await imageCountCollection.findOne({ userId: new fastify.mongo.ObjectId(userId), date: today });
-    
-        // Fetch message ideas count
-        const messageIdeasCountCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageIdeasCount');
-        const messageIdeasCountDoc = await messageIdeasCountCollection.findOne({ userId: new fastify.mongo.ObjectId(userId), date: today });
-
-        const isTemporary = user.isTemporary;
-        let messageLimit = isTemporary ? 10 : 50;
-        let chatLimit = isTemporary ? 1 : 3;
-        let imageLimit = isTemporary ? 1 : 3;
-        let messageIdeasLimit = isTemporary ? 3 : 10;
-    
-        if (!isTemporary) {
-            const existingSubscription = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').findOne({
-                _id: new fastify.mongo.ObjectId(userId),
-                subscriptionStatus: 'active',
-                subscriptionType: process.env.MODE
-            });
-    
-            if (existingSubscription) {
-                const billingCycle = existingSubscription.billingCycle + 'ly';
-                const currentPlanId = existingSubscription.currentPlanId;
-                const plansFromDb = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('plans').findOne();
-                const plans = plansFromDb.plans;
-                const plan = plans.find((plan) => plan[`${billingCycle}_id`] === currentPlanId);
-                messageLimit = plan.messageLimit || messageLimit;
-                chatLimit = plan.chatLimit || chatLimit;
-                imageLimit = plan.imageLimit || imageLimit;
-                messageIdeasLimit = plan.messageIdeasLimit || messageIdeasLimit;
-            }
-        }
-    
-        if (messageCountDoc && messageCountDoc.count >= messageLimit) {
-            return { error: 'Message limit reached for today.', id: 1, messageCountDoc, chatCount, imageCountDoc, messageIdeasCountDoc, messageLimit, chatLimit, imageLimit, messageIdeasLimit };
-        } 
-        if(isTemporary){
-            if (chatCount >= chatLimit) {
-                return { error: 'Chat limit reached for today.', id: 2, messageCountDoc, chatCount, imageCountDoc, messageIdeasCountDoc, messageLimit, chatLimit, imageLimit, messageIdeasLimit };
-            } 
-        }
-
-        if (imageCountDoc && imageCountDoc.count >= imageLimit) {
-            return { error: 'Image generation limit reached for today.', id: 3, messageCountDoc, chatCount, imageCountDoc, messageIdeasCountDoc, messageLimit, chatLimit, imageLimit, messageIdeasLimit };
-        }
-    
-        if (messageIdeasCountDoc && messageIdeasCountDoc.count >= messageIdeasLimit) {
-            return { error: 'Message ideas limit reached for today.', id: 4, messageCountDoc, chatCount, imageCountDoc, messageIdeasCountDoc, messageLimit, chatLimit, imageLimit, messageIdeasLimit };
-        }
-        
-        return { messageCountDoc, chatCount, imageCountDoc, messageIdeasCountDoc, messageLimit, chatLimit, imageLimit, messageIdeasLimit };
-    }
-    
     fastify.post('/api/chat-data', async (request, reply) => {
         try {
-            const userLimitCheck = await checkLimits(request.body.userId);
+            const userLimitCheck = await checkLimits(fastify, request.body.userId);
+            console.log(userLimitCheck)
             const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
             const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
             const collectionMessageCount = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageCount');
@@ -589,7 +525,7 @@ async function routes(fastify, options) {
                 const user = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
                 const isUserChat = await collectionChat.findOne({ userId: new fastify.mongo.ObjectId(userId) , _id: new fastify.mongo.ObjectId(chatId) });
                 if(!isUserChat){
-                    if (userLimitCheck.id === 2) {
+                    if (userLimitCheck.limitIds?.includes(2)) {
                         return reply.status(403).send(userLimitCheck);
                     }
                     if (!isWidget) {
@@ -708,7 +644,7 @@ async function routes(fastify, options) {
                     result = await collectionUserChat.insertOne(userChatDocument);
                     documentId = result.insertedId;
                 }
-                if (userLimitCheck.id === 1) {
+                if (userLimitCheck.limitIds?.includes(1)) {
                     return reply.status(403).send(userLimitCheck);
                 }
                 // Update the message count
@@ -1187,8 +1123,9 @@ async function routes(fastify, options) {
             userId = user._id
         }
         const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
-        const userLimitCheck = await checkLimits(request.body.userId);
-        if (userLimitCheck.id === 3) {
+        const userLimitCheck = await checkLimits(fastify, request.body.userId);
+
+        if (userLimitCheck.limitIds?.includes(3)) {
             return reply.status(403).send(userLimitCheck);
         }
         const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
@@ -1267,12 +1204,10 @@ async function routes(fastify, options) {
             }
     
             // Check user limits before proceeding
-            const userLimitCheck = await checkLimits(userId);
-            if (userLimitCheck.error && userLimitCheck.id === 4) {
-                return reply.status(429).send({ error: userLimitCheck });
-            }
-            if (userLimitCheck.messageIdeasCountDoc && userLimitCheck.messageIdeasCountDoc.count >= userLimitCheck.messageIdeasCountDoc.limit) {
-                return reply.status(429).send({ error: true });
+            const userLimitCheck = await checkLimits(fastify, userId);
+
+            if (userLimitCheck.limitIds?.includes(4)) {
+                return reply.status(403).send(userLimitCheck);
             }
     
             const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');

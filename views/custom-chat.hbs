@@ -701,30 +701,11 @@
                     </div>
                     </section>
                 {{/if}}
-                <section class="w-100 p-0">
+                <section class="w-100 p-0 d-none">
                     <h4 class="px-4">今一人? シゲキテキな世界へようこそ‼︎</h4>
                     <div id="custom-card-container-none" class="d-none chat-container row px-3 scroll-horizontal"></div>
                     <div id="custom-card-container" class="row m-0 px-1">
                 </section>
-                {{#if peopleChats}}
-                    <section class="w-100 px-0 py-0">
-                        <h4 class="px-4">魅力爆発！セクシーヒロイン</h4>
-                        <div class="row m-0 px-1">
-                            {{#each peopleChats.gohiai_girl}}
-                            <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2" style="cursor:pointer;" onclick="redirectToChat('{{this._id}}','{{this.chatImageUrl}}')">
-                                <div style="background-image:url('{{this.chatImageUrl}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
-                                    <span class="badge bg-dark position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px"><i class="fas fa-comment me-2"></i>{{this.num_message}}</span>
-                                    <div id="spinner-{{this._id}}" class="position-absolute spinner-grow  spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
-                                </div>
-                                <div class="card-body bg-transparent border-0 pb-0 text-start">
-                                    <h5 class="card-title character-title">{{this.name}}</h5>
-                                    <p class="card-text character-short-description">{{this.description}}</p>
-                                </div>
-                            </div>
-                            {{/each}}
-                    </div>
-                    </section>
-                {{/if}}
                 <section class="w-100 p-0">
                     <h4 class="px-4">キャラクターを選択してチャットを開始!🌟</h4>
                     <div id="cardGrid-none" class="d-none chat-container row px-3 scroll-horizontal"></div>

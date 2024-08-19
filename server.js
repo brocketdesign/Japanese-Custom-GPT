@@ -163,36 +163,6 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         userId: new fastify.mongo.ObjectId(userId) ,
         name:{$exists:true}
       }).sort({ _id: -1 }).toArray();
-      //People chats
-      
-      const gohiai_girl = await chatsCollection.aggregate([
-        {
-          $match: {
-            visibility: { $exists: true, $eq: "public" },
-            scrap: true,
-            ext: 'gohiai',
-            category: '彼女'
-          }
-        },
-        {
-          $sample: { size: 50 } // Randomly select 50 documents
-        }
-      ]).toArray();
-      /*
-      const gohiai_man = await chatsCollection.aggregate([
-        {
-          $match: {
-            visibility: { $exists: true, $eq: "public" },
-            scrap: true,
-            ext: 'gohiai',
-            category: '彼氏'
-          }
-        },
-        {
-          $sample: { size: 50 } // Randomly select 50 documents
-        }
-      ]).toArray();   
-      */
       
       const synclubaichat = await chatsCollection.aggregate([
         {
@@ -233,7 +203,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         { $replaceRoot: { newRoot: "$doc" } },
         { $sample: { size: 20 } },
       ]).toArray();
-      peopleChats = {gohiai_girl, synclubaichat, recent}
+      peopleChats = {synclubaichat, recent}
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });      
       return reply.view('custom-chat.hbs', { title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd', user, userId, chatId, chats: userCreatedChats, peopleChats });
     });

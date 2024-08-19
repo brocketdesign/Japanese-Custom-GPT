@@ -259,7 +259,7 @@ $(document).ready(function() {
     }
 
     setTimeout(() => {
-        renderCircleGrid(girls_avatar,$('#custom-card-container'))
+        //renderCircleGrid(girls_avatar,$('#custom-card-container'))
         renderCircleGrid(cardData,$("#cardGrid"))
         renderCircleGrid(cardData2,$('#cardGrid'))
         renderCircleGrid(chatbotInfos,$('#cardGrid'));

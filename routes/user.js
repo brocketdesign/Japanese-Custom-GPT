@@ -570,6 +570,65 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       console.log(error)
     }
   });
+  fastify.get('/user/:userId', async (request, reply) => {
+
+    const { userId } = request.params;
+  
+    const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+    const collectionChat = db.collection('chats');
+    const collectionUser = db.collection('users');
+  
+    try {
+  
+      let currentUser = await fastify.getUser(request, reply);
+      const currentUserId = currentUser._id;
+      currentUser = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(currentUserId) });
+  
+      const user = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(userId) });
+      
+      if (!user) {
+        return reply.status(404).send({ error: 'User not found' });
+      }
+  
+      const chatQuery = {
+        $or: [
+          { userId },
+          { userId: new fastify.mongo.ObjectId(userId) }
+        ],
+        visibility: "public"
+      };
+  
+      let isAdmin = false
+      if (currentUserId.toString() === userId) {
+        isAdmin = true
+        chatQuery.visibility = { $in: ["public", "private"] };
+      }
+      
+  
+      const userChats = await collectionChat.find(chatQuery).toArray();
+
+      return reply.view('/user-profile.hbs', {
+        isAdmin,
+        user: currentUser,
+        userData: {
+          profileUrl: user.profileUrl,
+          nickname: user.nickname,
+        },
+        userChats: userChats.map(chat => ({
+          _id: chat._id,
+          name: chat.name,
+          description: chat.description,
+          chatImageUrl: chat.chatImageUrl != undefined && chat.chatImageUrl != '' ? chat.chatImageUrl : chat.thumbnailUrl,
+          tags: chat.tags || [],
+          visibility: chat.visibility
+        }))
+      });
+    } catch (error) {
+      return reply.status(500).send({ error: 'An error occurred' });
+    }
+  });
+  
+  
 }
 
 module.exports = routes;

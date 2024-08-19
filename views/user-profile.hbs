@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ja">
+       {{> dashboard-header}}
+<body>
+{{> dashboard-nav}}
+    <style>
+      
+        .isLoading .fa-image{
+            display: none;
+        }
+        .isLoading .fa-spin{
+            display: inherit !important;
+        }
+        
+        .custom-gradient-bg {
+            background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: color 0.3s ease-in-out;
+        }
+
+        .custom-gradient-bg::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 300%;
+            height: 300%;
+            background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 80%);
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.5s ease-in-out;
+            z-index: 0;
+        }
+
+        .custom-gradient-bg:hover::before {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .custom-gradient-bg:hover {
+            color: #fff;
+        }
+
+        .text-muted {
+            color: #aeb0b4 !important;
+            font-weight: 300;
+        }
+        .u-color-grad {
+          background: linear-gradient(90.9deg, rgba(110, 32, 244, 0.5) 2.74%, #6E20F4 102.92%);
+            background-clip: border-box;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          margin-right: 6px;
+          letter-spacing: 0;
+          font-size: 26px;
+          line-height: 1;
+        }
+        .avatar{
+            object-fit: cover;
+            object-position: top;
+            width: 32px;
+        }
+        .card-img-top.girls_avatar {
+            object-fit: cover;
+            object-position: top;
+            width: 100%;  
+            margin: auto;
+            border-radius: 15px;
+            height: 350px;
+            padding: 0 5px;  
+            background-position: top;
+            background-size: cover;
+        }
+        .swal-image.analyze{
+            object-fit: cover;
+            object-position: top;
+            width: auto !important;
+            height: 200px !important;
+            border-radius: 6px !important;
+        }
+        .card-header, .card-footer {
+            flex-shrink: 0;
+        }
+        .card-body {
+            flex-grow: 1;
+            overflow-y: auto;
+            position: relative;
+        }
+        .chat-contain .card-body{
+                width: 100%;
+        }
+        .character-title{
+            font-weight: 600;
+            font-size: 16px;
+            color: black;
+        }
+        .character-short-description {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            font-size: 13px;
+        }
+        @media (max-width: 600px) {
+            .chat-contain .card-body{
+                width: 100%;
+            }
+        }
+    </style>
+<section class="container">
+  <div class="row justify-content-center">
+    <div class="col-12">
+      <div class="user-profile my-5">
+        <div class="row mb-3">
+          <div id="profileSection" class="text-center mb-4">
+            <div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative mb-2">
+              <img id="profileImage" src="{{default userData.profileUrl '/img/logo.webp'}}" alt="chat Thumbnail" class="rounded-circle" 
+              style="width: 100px; height: 100px; object-fit: cover; object-position: top;">
+            </div>
+            <h2>{{userData.nickname}}</h2>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="bg-light p-3">
+  <div class="container">
+    {{#if userChats}}
+      <section class="w-100 px-0 py-0">
+        <h4 class="px-4">{{userData.nickname}}さんが作ったキャラクターたち</h4>
+        <hr>
+      {{#if isAdmin}}
+        <!-- Nav tabs -->
+        <ul class="nav nav-tabs" id="chatTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="public-tab" data-bs-toggle="tab" data-bs-target="#public" type="button" role="tab" aria-controls="public" aria-selected="true">公開</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="private-tab" data-bs-toggle="tab" data-bs-target="#private" type="button" role="tab" aria-controls="private" aria-selected="false">非公開</button>
+          </li>
+        </ul>
+      {{/if}}
+        <!-- Tab panes -->
+        <div class="tab-content" id="chatTabContent">
+          <!-- Public Chats Tab -->
+          <div class="tab-pane fade show active" id="public" role="tabpanel" aria-labelledby="public-tab">
+            <div class="row m-0 px-1">
+              {{#each userChats}}
+                {{#if (eq this.visibility "public")}}
+                  <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-3" 
+                      style="cursor:pointer;" 
+                      onclick="window.location.href='/chat/{{this._id}}'">
+                    <div style="background-image:url('{{this.chatImageUrl}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
+                      <div id="spinner-{{this._id}}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
+                      <div class="tags position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px">
+                        {{#each this.tags}}
+                        <span class="badge bg-dark">{{this}}</span>
+                        {{/each}}
+                      </div>
+                    </div>
+                    <div class="card-body bg-transparent border-0 pb-0 text-start">
+                      <h5 class="card-title character-title">{{this.name}}</h5>
+                      <p class="card-text character-short-description">{{this.description}}</p>
+                    </div>
+                  </div>
+                {{/if}}
+              {{/each}}
+            </div>
+          </div>
+
+      {{#if isAdmin}}
+          <!-- Private Chats Tab -->
+          <div class="tab-pane fade" id="private" role="tabpanel" aria-labelledby="private-tab">
+            <div class="row m-0 px-1">
+              {{#each userChats}}
+                {{#if (eq this.visibility "private")}}
+                  <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-3" 
+                      style="cursor:pointer;" 
+                      onclick="window.location.href='/chat/{{this._id}}'">
+                    <div style="background-image:url('{{this.chatImageUrl}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
+                      <div id="spinner-{{this._id}}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
+                      <div class="tags position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px">
+                        {{#each this.tags}}
+                        <span class="badge bg-dark">{{this}}</span>
+                        {{/each}}
+                      </div>
+                    </div>
+                    <div class="card-body bg-transparent border-0 pb-0 text-start">
+                      <h5 class="card-title character-title">{{this.name}}</h5>
+                      <p class="card-text character-short-description">{{this.description}}</p>
+                    </div>
+                  </div>
+                {{/if}}
+              {{/each}}
+            </div>
+          </div>
+
+      {{/if}}
+        </div>
+      </section>
+    {{else}}
+      <p>このユーザーが作成した公開チャットはありません。</p>
+    {{/if}}
+
+  </div>
+</section>
+
+{{> dashboard-footer}}

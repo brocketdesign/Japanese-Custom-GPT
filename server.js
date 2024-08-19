@@ -37,6 +37,9 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       handlebars.registerHelper('default', function(value, fallback) {
         return value || fallback;
       });
+      handlebars.registerHelper('eq', function (a, b) {
+        return a === b;
+      });
     });
     fastify.register(require('fastify-cookie'), {
       secret: "my-secret",
@@ -191,7 +194,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
           $match: {
             visibility: { $exists: true, $eq: "public" },
             chatImageUrl: { $exists: true, $ne: '' },
-            updatedAt: { $gt: sevenDaysAgo }, // Filter for documents created within the last 7 days
+            updatedAt: { $gt: sevenDaysAgo },
           },
         },
         {
@@ -201,11 +204,23 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
           },
         },
         { $replaceRoot: { newRoot: "$doc" } },
-        { $sample: { size: 20 } },
+        { $sort: { updatedAt: -1 } }, // Sort by the latest updated chat
+        { $limit: 10 }, // Get the latest added chat
       ]).toArray();
-      peopleChats = {synclubaichat, recent}
-      user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });      
-      return reply.view('custom-chat.hbs', { title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd', user, userId, chatId, chats: userCreatedChats, peopleChats });
+      
+      const recentWithUser = await Promise.all(recent.map(async chat => {
+        const user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(chat.userId) });
+        return {
+          ...chat,
+          nickname: user ? user.nickname : null, // Add the user's nickname
+        };
+      }));
+      
+      peopleChats = { synclubaichat, recent: recentWithUser };
+      user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+      const totalUsers = await db.collection('users').countDocuments({ email: { $exists: true } });
+
+      return reply.view('custom-chat.hbs', { title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd', user, userId, chatId, chats: userCreatedChats, peopleChats, totalUsers });
     });
     
     fastify.get('/character/:id', async (request, reply) => {

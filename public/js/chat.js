@@ -35,7 +35,8 @@ $(document).ready(function() {
             let thumbnail = false
             let isTemporary = !!user.isTemporary
             $('body').attr('data-temporary-user',isTemporary)
-
+            const subscriptionStatus = user.subscriptionStatus
+            $('.is-free-user').each(function(){if(!subscriptionStatus && !isTemporary)$(this).show()})
             sendCustomData({action: 'viewpage'});
             if(chatId){
                 getUserChatHistory(chatId, userId,function(lastChat){

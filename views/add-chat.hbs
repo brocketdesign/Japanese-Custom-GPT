@@ -349,7 +349,7 @@
                 resizeTextarea(this);
             });
         });
-
+        $('#visibility').val('public')
         $('#visibility').change(function() {
             if ($(this).val() === 'private') {
                 showUpgradePopup('chat-private');

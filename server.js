@@ -123,7 +123,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     
     // Routes
     fastify.get('/', async (request, reply) => {
-      return reply.redirect('/chat-index')
+      return reply.redirect('/chat/')
     });
 
     fastify.get('/authenticate',async (request, reply) => {

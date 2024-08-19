@@ -211,7 +211,7 @@ window.showCoinShop = function(el){
                             <div class="card-body p-2 d-flex flex-column">
                                 <img src="/img/coins-1.png" alt="Coin" class="mb-2 m-auto" style="width: 100px;">
                                 <h6>100コイン</h6>
-                                <p class="text-muted small mb-2" style="font-size:12px;">手頃なコインパッケージ</p>
+                                <p class="text-muted small mb-2" style="font-size:12px;">手頃なパッケージ</p>
                                 <button id="coins-set1" class="buycoin btn custom-gradient-bg w-100">¥200</button>
                             </div>
                         </div>
@@ -221,7 +221,7 @@ window.showCoinShop = function(el){
                             <div class="card-body p-2 d-flex flex-column">
                                 <img src="/img/coins-2.png" alt="Coin" class="mb-2 m-auto" style="width: 100px;">
                                 <h6>550コイン</h6>
-                                <p class="text-muted small mb-2" style="font-size:12px;">無料コイン150枚付き</p>
+                                <p class="text-muted small mb-2" style="font-size:12px;">無料150枚付き</p>
                                 <button id="coins-set2"  class="buycoin btn custom-gradient-bg w-100">¥800</button>
                             </div>
                         </div>
@@ -231,7 +231,7 @@ window.showCoinShop = function(el){
                             <div class="card-body p-2 d-flex flex-column">
                                 <img src="/img/coins-3.png" alt="Coin" class="mb-2 m-auto" style="width: 100px;">
                                 <h6>1200コイン</h6>
-                                <p class="text-muted small mb-2" style="font-size:12px;">無料コイン450枚付き</p>
+                                <p class="text-muted small mb-2" style="font-size:12px;">無料450枚付き</p>
                                 <button id="coins-set3"  class="buycoin btn custom-gradient-bg w-100">¥1500</button>
                             </div>
                         </div>
@@ -241,12 +241,13 @@ window.showCoinShop = function(el){
                             <div class="card-body p-2 d-flex flex-column">
                                 <img src="/img/coins-4.png" alt="Coin" class="mb-2 m-auto" style="width: 100px;">
                                 <h6>2500コイン</h6>
-                                <p class="text-muted small mb-2" style="font-size:12px;">無料コイン1000枚付き</p>
+                                <p class="text-muted small mb-2" style="font-size:12px;">無料1000枚付き</p>
                                 <button id="coins-set4"  class="buycoin btn custom-gradient-bg w-100">¥3000</button>
                             </div>
                         </div>
                     </div>
                 </div>
+                <span style="font-size: 12px;">安心・安全な決済方法: <a href="https://stripe.com/jp/resources/more/secure-payment-systems-explained" target="_blank"><img src="/img/stripe-logo.png" style="height: 30px;width: auto;"></a>を使用しています</span>
             </div>
         `,
         showCancelButton: false,

@@ -753,7 +753,12 @@
                     <div id="chatContainer" class="pt-2" style="padding-top: 80px !important;;padding-bottom: 100px !important;"></div>
                     <div id="chatInput" class="input-group rounded-0 rounded-bottom" style="position: absolute;bottom: 0;left: 0;right: 0;padding: 0px 15px 5px 15px;">
                         <div class="d-flex justify-content-between align-items-center w-100">
-                            <div><span id="message-number" class="text-muted px-3 py-1" style="font-size: 12px;"></span></div>
+                            <div>
+                                <span id="message-number" class="d-none text-muted px-3 py-1" style="font-size: 12px;"></span>
+                                <button type="button" class="btn btn-md bg-light shadow-0 border-0 mb-2 mx-1" id="audio-play" style="display: none;">
+                                    <i class="fa" id="audio-icon"></i>
+                                </button>
+                            </div>
                             <div class="d-flex pe-2">
                                 <button class="d-none btn btn-dark border-light shadow-0 mx-1 my-1 img-gen-button" id="stability-gen-button-none" style="display:none;background-image:url('/img/sd.jpg')"><i class="fa fa-spinner fa-spin fa-fw fa-hidden" style="display: none;"></i><i class="far fa-image"></i></button>
                                 <button class="d-none btn btn-dark border-light shadow-0 mx-1 my-1 img-gen-button" id="novita-gen-button-none" style="display:none;background-image:url('/img/novita.jpg')"><i class="fa fa-spinner fa-spin fa-fw fa-hidden" style="display: none;"></i><i class="far fa-image"></i></button>

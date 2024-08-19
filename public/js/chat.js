@@ -1,4 +1,14 @@
+const audioCache = new Map();
+const audioPool = [];
 $(document).ready(function() {
+    let autoPlay = localStorage.getItem('audioAutoPlay') === 'true';
+    $('#audio-icon').addClass(autoPlay ? 'fa-volume-up' : 'fa-volume-mute');
+    $('#audio-play').click(function() {
+        autoPlay = !autoPlay;
+        localStorage.setItem('audioAutoPlay', autoPlay);
+        $('#audio-icon').toggleClass('fa-volume-up fa-volume-mute');
+    });
+    
     let API_URL = ""
     let MODE = "" 
     fetchMode(function(error,mode){
@@ -14,7 +24,7 @@ $(document).ready(function() {
             const userId = user._id
             localStorage.setItem('userId', userId);
             localStorage.setItem('user', JSON.stringify(user));
-            let userCoins = user.coins || 300
+            let userCoins = user.coins
             updateCoins(userCoins)
             let currentStep = 0;
             let totalSteps = 0;
@@ -427,6 +437,7 @@ $(document).ready(function() {
                 $('#message-number').hide();
                 $('#stability-gen-button').hide();
                 $('#novita-gen-button').hide();
+                $('#audio-play').hide();
                 /*
                 // Create the intro elements
                 let introContainer = $('<div></div>')
@@ -571,6 +582,7 @@ $(document).ready(function() {
                         generateCompletion(function(){
                             $('#stability-gen-button').show();
                             $('#novita-gen-button').show();
+                            $('#audio-play').show();
                             $('#input-container').show().addClass('d-flex');
                         })
                         updateParameters(chatId,userId)
@@ -689,6 +701,8 @@ $(document).ready(function() {
             function displayChat(userChat) {
                 $('#stability-gen-button').show();
                 $('#novita-gen-button').show();
+                $('#audio-play').show();
+
                 let chatContainer = $('#chatContainer');
                 chatContainer.empty();
 
@@ -751,7 +765,6 @@ $(document).ready(function() {
                             let mode = localStorage.getItem('MODE') == 'local'
                             if(assistantMessage.content){
                                 let message = removeContentBetweenStars(assistantMessage.content)
-                                // Regular assistant message
                                 messageHtml += `
                                     <div id="container-${designStep}">
                                         <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
@@ -974,63 +987,112 @@ $(document).ready(function() {
                     return result.isConfirmed;
                 });
             }       
-    
-            function playAudio(message, $el) {
-                if ($el.hasClass('audio-loaded')) return;
-    
-                requestAudioPermission().then((isAllowed) => {
-                    if (isAllowed) {
-                        $el.html('<div class="spinner-grow spinner-grow-sm" role="status"><span class="visually-hidden">Loading...</span></div>');
-    
-                        const female_voice = `https://api.synclubaichat.com/aichat/h5/tts/msg2Audio?device=web_desktop&product=aichat&sys_lang=en-US&country=&referrer=&zone=9&languageV2=ja&uuid=&app_version=1.5.1&message=${encodeURIComponent(message)}&voice_actor=default_voice&robot_id=1533008500&ts=1723608264&t_secret=637555&sign=c92a842ab6bdcf34778e905c5e231edc`;
-                        const male_voice = `https://api.synclubaichat.com/aichat/h5/tts/msg2Audio?device=web_desktop&product=aichat&sys_lang=en-US&country=&referrer=&zone=9&languageV2=ja&uuid=&app_version=1.5.1&message=${encodeURIComponent(message)}&voice_actor=default_voice&robot_id=1533008538&ts=1723632421&t_secret=661712&sign=9e2bfc4903b8c1176f7e2c973538908b`;
-    
-                        const url = $('#chat-container').attr('data-genre') == 'male' ? male_voice : female_voice;
-    
-                        $.post(url, function(response) {
-                            if (response.errno === 0) {
-                                const audio = new Audio(response.data.audio_url);
-                                const playPauseButton = $el;
-    
-                                playPauseButton.addClass('audio-loaded');
-    
-                                audio.addEventListener('loadedmetadata', function() {
-                                    audio.play();
-                                    playPauseButton.html('❚❚ ' + Math.round(audio.duration) + '"');
-                                    let isPlaying = true;
-    
-                                    playPauseButton.on('click', function() {
-                                        isPlaying ? audio.pause() : audio.play();
-                                        playPauseButton.text(isPlaying ? '► ' + Math.round(audio.duration) + '"' : '❚❚ ' + Math.round(audio.duration) + '"');
-                                        isPlaying = !isPlaying;
-                                    });
-    
-                                    audio.onended = function() {
-                                        isPlaying = false;
-                                        playPauseButton.text('► ' + Math.round(audio.duration) + '"');
-                                    };
-                                });
-                            } else {
-                                playPauseButton.html('エラーが発生しました');
-                            }
-                        });
+            function stopAllAudios() {
+                audioPool.forEach(audio => {
+                    audio.pause();
+                    audio.currentTime = 0;
+                });
+            }
+            
+            function getAvailableAudio() {
+                const idleAudio = audioPool.find(a => a.paused && a.currentTime === 0);
+                if (idleAudio) {
+                    return idleAudio;
+                } else {
+                    const newAudio = new Audio();
+                    audioPool.push(newAudio);
+                    return newAudio;
+                }
+            }
+            
+            $(document).on('click', function() {
+                getAvailableAudio();
+            });
+            
+            $(document).on('click', '.audio-controller .audio-content', function(event) {
+                event.stopPropagation();
+                const $el = $(this);
+                const message = $el.attr('data-content');
+                stopAllAudios();
+            
+                (function() {
+                    const duration = $el.attr('data-audio-duration');
+                    if (duration) $el.html('► ' + Math.round(duration) + '"');
+                })();
+            
+                initAudio($el, message);
+            });
+            
+            function initAudio($el, message) {
+                requestAudioPermission().then(isAllowed => {
+                    if (!isAllowed) {
+                        return $el.html('再生がキャンセルされました');
+                    }
+            
+                    $el.html('<div class="spinner-grow spinner-grow-sm" role="status"><span class="visually-hidden">Loading...</span></div>');
+                    const voiceUrl = getVoiceUrl(message);
+            
+                    $.post(voiceUrl, response => {
+                        if (response.errno !== 0) {
+                            return $el.html('エラーが発生しました');
+                        }
+            
+                        const audioUrl = response.data.audio_url;
+                        audioCache.set(message, audioUrl);
+                        const audio = getAvailableAudio();
+                        playAudio($el, audio, audioUrl);
+                    });
+                });
+            }
+            
+            function getVoiceUrl(message) {
+                const baseUrl = 'https://api.synclubaichat.com/aichat/h5/tts/msg2Audio';
+                const params = `?device=web_desktop&product=aichat&sys_lang=en-US&country=&referrer=&zone=9&languageV2=ja&uuid=&app_version=1.6.4&message=${encodeURIComponent(message)}&voice_actor=default_voice`;
+                return $('#chat-container').attr('data-genre') == 'male' 
+                    ? `${baseUrl}${params}&robot_id=1533008538&ts=1723632421&t_secret=661712&sign=9e2bfc4903b8c1176f7e2c973538908b` 
+                    : `${baseUrl}${params}&robot_id=1533008511&ts=1724029265&t_secret=58573&sign=3beb590d1261bc75d6687176f50470eb`;
+            }
+            function playAudio($el, audio, audioUrl) {
+                if (audio.src !== audioUrl) audio.src = audioUrl;
+            
+                audio.play();
+            
+                audio.onloadedmetadata = () => 
+                    $el.attr('data-audio-duration', audio.duration).html(`❚❚ ${Math.round(audio.duration)}"`);
+            
+                audio.onended = () => 
+                    $el.html(`► ${Math.round(audio.duration)}"`);
+            
+                $el.off('click').on('click', (event) => {
+                    event.stopPropagation();
+                
+                    const message = $el.attr('data-content');
+                    const audioDuration = $el.attr('data-audio-duration')
+                    const cachedUrl = audioCache.get(message);
+                    let audio = audioPool.find(a => a.src === cachedUrl) || getAvailableAudio();
+                
+                    if (audio.src !== cachedUrl) {
+                        audio.src = cachedUrl;
+                    }
+                
+                    if (audio.paused) {
+                        audio.play();
+                        $el.html(`❚❚ ${Math.round(audioDuration)}"`);
                     } else {
-                        $el.html('再生がキャンセルされました');
+                        audio.pause();
+                        audio.currentTime = 0;
+                        $el.html(`► ${Math.round(audioDuration)}"`);
                     }
                 });
+                
             }
             
             
             
-            $(document).on('click','.audio-controller .audio-content',function(){
-                let message = $(this).attr('data-content')
-                message = removeContentBetweenStars(message)
-                playAudio(message,$(this));
-            })
             function removeContentBetweenStars(str) {
-                if(!str){return str}
-                return str.replace(/\*.*?\*/g, '');
-            }            
+                if (!str) { return str; }
+                return str.replace(/\*.*?\*/g, '').replace(/"/g, '');
+            }                    
             function generateCompletion(callback){
                 
                 const apiUrl = API_URL+'/api/openai-chat-completion';
@@ -1072,12 +1134,11 @@ $(document).ready(function() {
 
                         eventSource.onerror = function(error) {
                             eventSource.close();
-                            let mode = localStorage.getItem('MODE') == 'local'
-                            if(mode){
-                                $(`#play-${uniqueId}`).attr('data-content',markdownContent)
-                                $(`#play-${uniqueId}`).closest('.audio-controller').show()
-                                let message = removeContentBetweenStars(markdownContent)
-                                playAudio(message,$(`#play-${uniqueId}`));
+                            let message = removeContentBetweenStars(markdownContent)
+                            $(`#play-${uniqueId}`).attr('data-content',message)
+                            $(`#play-${uniqueId}`).closest('.audio-controller').show()
+                            if(autoPlay){
+                                initAudio($(`#play-${uniqueId}`), message);
                             }
                             checkForPurchaseProposal()
                             if (typeof callback === "function") {
@@ -1131,12 +1192,11 @@ $(document).ready(function() {
             
                         eventSource.onerror = function(error) {
                             eventSource.close();
-                            let mode = localStorage.getItem('MODE') == 'local';
-                            if (mode) {
-                                $(`#play-${currentStep}`).attr('data-content', markdownContent);
-                                $(`#play-${currentStep}`).closest('.audio-controller').show();
-                                let message = removeContentBetweenStars(markdownContent);
-                                playAudio(message, $(`#play-${currentStep}`));
+                            let message = removeContentBetweenStars(markdownContent);
+                            $(`#play-${currentStep}`).attr('data-content', message);
+                            $(`#play-${currentStep}`).closest('.audio-controller').show();
+                            if(autoPlay){
+                                initAudio($(`#play-${currentStep}`), message);
                             }
                             if (typeof callback === "function") {
                                 callback();
@@ -2008,7 +2068,6 @@ window.updateCoins = function(userCoins) {
             method: 'GET',
             success: function(response) {
                 const userCoins = response.user.coins;
-
                 $('.user-coins').each(function(){$(this).html(userCoins)})
             }
         });

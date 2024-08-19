@@ -1235,7 +1235,15 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Error fetching OpenAI completion' });
         }
     });
+
+    
     fastify.post('/api/openai-chat-choice/', async (request, reply) => {
+        const openai = new OpenAI();
+
+        const PossibleAnswersExtraction = z.object({
+            answers: z.array(z.string())
+        });
+        
         let userId = request.body.userId;
         if (!userId) { 
             const user = await fastify.getUser(request, reply);
@@ -1272,68 +1280,56 @@ async function routes(fastify, options) {
     
             // Create the system and user prompts
             const narrationPrompt = [
-                { 
-                    role: "system", 
-                    content: `You are an AI assistant.
-                    Respond only with a JSON array containing 3 possible short answers.
-                    Your response should be in ${language}.` 
+                {
+                    role: "system",
+                    content: `You are an AI assistant. Provide 3 short, engaging responses in ${language} based on the conversation below. Each response should be 1 sentence and formatted as a JSON array.`
                 },
-                { 
-                    role: "user", 
-                    content: `Based on the following conversation transcript, provide 3 possible short answers in ${language} for the user to continue the chat.
-                    The provided answers must be entertaining. Here is the conversation :
-                    ` + userMessages.map(msg => msg.role !== 'system' ? `${msg.content.replace('[Narrator]', '')}` : '').join("\n")
+                {
+                    role: "user",
+                    content: `Here is the conversation transcript: ` + userMessages
+                        .map(msg => msg.role !== 'system' ? `${msg.content.replace('[Narrator]', '')}` : '')
+                        .join("\n")
                 }
-            ];
+            ];            
     
-            let completion = await moduleCompletion(narrationPrompt, reply.raw);
-            let cleanedCompletion = completion
-                .replace(/```json\n|```/g, '') 
-                .replace(/\\n/g, '') 
-                .trim();
+            // Send the prompt to OpenAI and use response_format for parsing
+            const completion = await openai.beta.chat.completions.parse({
+                model: "gpt-4o-mini",
+                messages: narrationPrompt,
+                response_format: zodResponseFormat(PossibleAnswersExtraction, "possible_answers_extraction"),
+            });
     
-            try {
-                let parsedCompletion = JSON.parse(cleanedCompletion);
+            const parsedCompletion = completion.choices[0].message.parsed.answers;
+
+            // Increment the message ideas count after successful completion
+            const collectionMessageIdeasCount = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageIdeasCount');
+            const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
     
-                if (Array.isArray(parsedCompletion)) {
-                    // Increment the message ideas count after successful completion
-                    const collectionMessageIdeasCount = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageIdeasCount');
-                    const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
+            let newMessageIdeasCount;
     
-                    let newMessageIdeasCount;
-    
-                    if (userLimitCheck.messageIdeasCountDoc) {
-                        newMessageIdeasCount = await collectionMessageIdeasCount.findOneAndUpdate(
-                            { userId: new fastify.mongo.ObjectId(userId), date: today },
-                            { $inc: { count: 1 }, $set: { limit: userLimitCheck.messageIdeasLimit } },
-                            { returnOriginal: false }
-                        );
-                    } else {
-                        newMessageIdeasCount = {
-                            userId: new fastify.mongo.ObjectId(userId),
-                            date: today,
-                            count: 1,
-                            limit: userLimitCheck.messageIdeasLimit
-                        };
-                        await collectionMessageIdeasCount.insertOne(newMessageIdeasCount);
-                    }
-    
-                    return reply.send(parsedCompletion);
-                } else {
-                    console.log('Response is not a valid JSON array, resending request...');
-                    return reply.send(false);
-                }
-            } catch (parseError) {
-                console.log('Error parsing completion:', parseError);
-                return reply.status(500).send({ error: 'Invalid response format from OpenAI' });
+            if (userLimitCheck.messageIdeasCountDoc) {
+                newMessageIdeasCount = await collectionMessageIdeasCount.findOneAndUpdate(
+                    { userId: new fastify.mongo.ObjectId(userId), date: today },
+                    { $inc: { count: 1 }, $set: { limit: userLimitCheck.messageIdeasLimit } },
+                    { returnOriginal: false }
+                );
+            } else {
+                newMessageIdeasCount = {
+                    userId: new fastify.mongo.ObjectId(userId),
+                    date: today,
+                    count: 1,
+                    limit: userLimitCheck.messageIdeasLimit
+                };
+                await collectionMessageIdeasCount.insertOne(newMessageIdeasCount);
             }
     
+            return reply.send(parsedCompletion);
+            
         } catch (error) {
             console.log(error);
             return reply.status(500).send({ error: 'Error fetching OpenAI completion' });
         }
     });
-    
     
     fastify.post('/api/openai-chat', (request, reply) => {
         const { userId, chatId } = request.body;
@@ -1604,13 +1600,12 @@ async function routes(fastify, options) {
                 return regex.test(str);
             };
             const result = containsSubstring(lastAssistantMessageContent);
-            console.log(result);
             if(!result){
                 return reply.send({proposeToBuy:false})
             }
             // Send user messages to OpenAI for parsing to check for purchase proposals
             const completion = await openai.beta.chat.completions.parse({
-                model: "gpt-4o-2024-08-06",
+                model: "gpt-4o-mini",
                 messages: [
                     { role: "system", content: `You are an expert at structured data extraction. 
                         Extract any proposals to buy and return the item names and prices in japanese. A proposal will be inside [].` },

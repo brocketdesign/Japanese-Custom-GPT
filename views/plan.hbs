@@ -269,13 +269,14 @@
                 <input type="checkbox" id="plan-switch">
                 <span class="slider round"></span>
                 <span class="label monthly">月額</span>
-                <span class="label yearly">年額</span>
+                <span class="label yearly" select>年額</span>
             </label>
         </div>
         <p>年間プランでさらにお得に！</p>
         <div class="plan-cards-none d-flex m-0 px-1 container m-auto" style="overflow-x:scroll" id="planCards">
             <!-- Plan cards will be dynamically inserted here -->
         </div>
+        <span style="font-size: 12px;">安心・安全な決済方法: <a href="https://stripe.com/jp/resources/more/secure-payment-systems-explained" target="_blank"><img src="/img/stripe-logo.png" style="height: 30px;width: auto;"></a>を使用しています</span>
     </div>
 
     <div class="contact-sns text-start py-5">
@@ -290,7 +291,7 @@
 <script src="https://js.stripe.com/v3/"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    document.getElementById("plan-switch").checked = false; // or true, depending on your desired default state
+    document.getElementById("plan-switch").checked = true; 
 });
 $(document).ready(function() {
   let plans = [];
@@ -308,7 +309,16 @@ $(document).ready(function() {
       dataType: 'json',
       success: function(response) {
         plans = response.plans;
-        renderPlans(plans);
+        const isYearly = $('#plan-switch').is(':checked');
+        const newPlans = plans.map(plan => {
+          if (isYearly) {
+            plan.price = plan.yearly;
+          } else {
+            plan.price = plan.monthly;
+          }
+          return plan;
+        });
+        renderPlans(newPlans);
       },
       error: function(xhr, status, error) {
         console.error('Failed to fetch plans:', error);
@@ -334,6 +344,8 @@ $(document).ready(function() {
           default:
             plan_icon = ``;
         }
+      
+    const isYearly =  $('#plan-switch').is(':checked') ? `yearly` : 'monthly';
       const planCard = `
         <div class="plan-card card mb-3 px-1 ${plan.name == 'プレミアムプラン'? 'col-12 col-lg-4':'col-10 col-lg-auto'} ${plan.name == 'プレミアムプラン'? 'best':''}  m-2">
           <div class="card-header plan-header bg-white">
@@ -345,12 +357,12 @@ $(document).ready(function() {
             </div>
             <div class="plan-details px-0 pb-0">
               <ul class="list-group list-group-flush">
-                ${plan.features.map(feature => `<li class="list-group-item"><span class="me-2">😉</span>${feature}</li>`).join('')}
+                ${plan.features.map(feature => `<li class="list-group-item" style="font-size: 16px;">${feature}</li>`).join('')}
               </ul>
             </div>
           </div>
           <div class="card-footer bg-transparent ${plan.price == '無料'? 'd-none':''}">
-            <button class="plan-button btn btn-lamix border-0 subscribe-button" data-plan-id="${plan.id}" data-billing-cycle="${plan.price.includes('年')? 'yearly' :'monthly'}">
+            <button class="plan-button btn btn-lamix border-0 subscribe-button" data-plan-id="${plan.id}" data-billing-cycle="${isYearly}">
               このプランで始める
             </button>
           </div>
@@ -447,8 +459,6 @@ function createCheckoutSession(planId, billingCycle) {
   $('#plan-switch').on('change', function() {
     const planCardsContainer = $('#planCards');
     planCardsContainer.empty();
-    
-    // Update the plans based on the switch button state
     const isYearly = $(this).is(':checked');
     const newPlans = plans.map(plan => {
       if (isYearly) {

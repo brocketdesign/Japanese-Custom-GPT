@@ -349,11 +349,45 @@
                 resizeTextarea(this);
             });
         });
+        function fetchUser(callback) {
+            $.ajax({
+                url: API_URL+'/api/user',
+                method: 'GET',
+                success: function(response) {
+                    if (callback && typeof callback === 'function') {
+                        callback(null, response.user);
+                    }
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.error('Error fetching user:', textStatus, errorThrown);
+                    if (callback && typeof callback === 'function') {
+                        callback(new Error(textStatus + ': ' + errorThrown), null);
+                    }
+                }
+            });
+        }
         $('#visibility').val('public')
         $('#visibility').change(function() {
-            if ($(this).val() === 'private') {
-                showUpgradePopup('chat-private');
-                $(this).val('public');
+            const user = JSON.parse(localStorage.getItem('user'))
+            if(!user){
+                fetchUser(function(error, user){
+                    if(user.subscriptionStatus == 'active'){
+                        return
+                    }else{
+                        if ($(this).val() === 'private') {
+                            showUpgradePopup('chat-private');
+                            $(this).val('public');
+                        }
+                    }
+                })
+            }
+            if(user.subscriptionStatus == 'active'){
+                return
+            }else{
+                if ($(this).val() === 'private') {
+                    showUpgradePopup('chat-private');
+                    $(this).val('public');
+                }
             }
         });
 

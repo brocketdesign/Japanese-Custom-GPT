@@ -1282,7 +1282,7 @@ async function routes(fastify, options) {
             const narrationPrompt = [
                 {
                     role: "system",
-                    content: `You are an AI assistant. Provide 3 short, engaging responses in ${language} based on the conversation below. Each response should be 1 sentence and formatted as a JSON array.`
+                    content: `You are an AI assistant helping a user formulate responses. Provide 3 short, engaging suggestions in ${language} for the user to choose from. Each suggestion should be a single sentence from the user's perspective, and should not include any content that implies it is from an assistant. Format the suggestions as a JSON array.`
                 },
                 {
                     role: "user",
@@ -1291,7 +1291,7 @@ async function routes(fastify, options) {
                         .join("\n")
                 }
             ];            
-    
+
             // Send the prompt to OpenAI and use response_format for parsing
             const completion = await openai.beta.chat.completions.parse({
                 model: "gpt-4o-mini",

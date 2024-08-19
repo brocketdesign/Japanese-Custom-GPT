@@ -26,10 +26,7 @@
             const redirectUrl = getCookie('redirect_url');
             if (redirectUrl) {
                 deleteCookie('redirect_url');
-
-                if(!redirectUrl.includes('/chat')){
-                    window.location.replace(window.location.origin + decodeURIComponent(redirectUrl) );
-                }
+                window.location.replace(window.location.origin + decodeURIComponent(redirectUrl) );
             }
         })();
     </script>

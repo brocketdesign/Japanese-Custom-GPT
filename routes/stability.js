@@ -181,8 +181,6 @@ async function routes(fastify, options) {
       return reply.status(500).send({ error: 'An error occurred while saving the image' });
     }
   }
-  
-  
 
   function getClosestAllowedDimension(height, ratio) {
     const [widthRatio, heightRatio] = ratio.split(':').map(Number);
@@ -222,6 +220,64 @@ async function routes(fastify, options) {
     }
   }
 
+  // Hugging Face API Configuration
+const API_URL_HUGGINGFACE = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev";
+const HuggingFaceHeaders = {
+  Authorization: "Bearer "+process.env.HUGGINGFACE_API_KEY
+};
+
+async function queryHuggingFaceAPI(data) {
+  try {
+    const response = await fetch(API_URL_HUGGINGFACE, {
+      HuggingFaceHeaders,
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+
+    // Check if the response is successful
+    if (!response.ok) {
+      //throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`Non-200 response: ${await response.text()}`)
+
+    }
+
+    const imageBytes = await response.arrayBuffer();
+
+    return Buffer.from(imageBytes);
+  } catch (error) {
+    console.error("Oops! Ran into an issue: ", error.message);
+    throw error; // or return something else
+  }
+}
+fastify.post('/huggingface/txt2img', async (request, reply) => {
+  const { prompt, aspectRatio, userId, chatId, userChatId } = request.body;
+  
+  const huggingFacePayload = {
+    inputs: prompt,
+    parameters: {
+        "num_inference_steps": 20, 
+        "width": 768,              
+        "height": 1280,            
+        "negative_prompt": "(worst quality:2),(low quality:2),(normal quality:2),lowres,watermark",
+    }
+  };
+  try {
+    const imageBuffer = await queryHuggingFaceAPI(huggingFacePayload);
+    const imageUrl = await handleFileUpload({
+      file: [imageBuffer],
+      filename: `${Date.now()}.png`
+    });
+
+    const { imageId } = await saveImageToDB(userId, chatId, userChatId, prompt, imageUrl, aspectRatio);
+
+    console.log({ imageId, imageUrl });
+  
+    reply.send({ image_id: imageId, image: imageUrl });
+  } catch (err) {
+    console.error(err);
+    reply.status(500).send('Error generating image');
+  }
+});
   fastify.post('/stability/txt2img', async (request, reply) => {
     const { prompt, aspectRatio, userId, chatId, userChatId } = request.body;
     const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
@@ -319,15 +375,15 @@ async function routes(fastify, options) {
     async function fetchNovitaMagic(data) {
       try {
         const image_request = {
-          model_name: data.checkpoint || "hassakuHentaiModel_v13_75289.safetensors",
+          model_name: data.checkpoint || "sudachi_v10_62914.safetensors",
           prompt: data.prompt,
-          negative_prompt: data.negativePrompt || "(worst quality:2),(low quality:2),(normal quality:2),lowres,watermark",
-          width: data.width,
+          negative_prompt: "(worst quality, low quality:1.4), boring_e621, bad anatomy, (human, smooth skin:1.3), (mutated body:1.3), blurry, text, error, missing fingers, , extra digit, fewer digits, cropped, jpeg artifacts, signature, watermark, username, blurry, pregnant,",          width: data.width,
+          width: data.width,          
           height: data.height,
           image_num: 1,
           steps: 30,
           seed: -1,
-          clip_skip: 0,
+          clip_skip: 1,
           guidance_scale: 7.5,
           sampler_name: "DPM++ 2S a Karras",
         }
@@ -457,8 +513,8 @@ async function fetchNovitaResult(task_id) {
         negativePrompt: character ? character.negativePrompt : null,
         sampler: character ? character.sampler : null,
         checkpoint: closestCheckpoint,
-        width: 1024,
-        height: 1260,
+        width: 512,
+        height: 712,
       });
   
       // Polling or wait for the task to complete (you might want to add a delay or retry logic here)

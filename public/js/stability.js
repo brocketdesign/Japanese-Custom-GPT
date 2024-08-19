@@ -103,6 +103,57 @@ window.generateImageStableDiffusion = function(API_URL, userId, chatId, userChat
       $('#stability-gen-button').removeClass('isLoading')
     });
 }
+// HUGGINGFACE
+window.generateImageHuggingFace = function(API_URL, userId, chatId, userChatId, character, option = {}) {
+
+  if (!option.prompt) {
+    console.log(`Provide a prompt`);
+    return;
+  }
+  
+  
+  const {
+    negativePrompt = $('#negativePrompt-input').val(),
+    prompt = $('#prompt-input').val(),
+    aspectRatio = '9:16',
+    isRoop = false,
+    baseFace = null,
+    itemId = null
+  } = option;
+
+  const API_ENDPOINT = API_URL + '/huggingface/txt2img';
+
+  fetch(API_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ 
+      prompt: prompt, 
+      negative_prompt: negativePrompt, 
+      aspectRatio,
+      baseFace,
+      userId, chatId, userChatId, character
+    })
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`Network response was not ok (${response.status} ${response.statusText})`);
+    }
+    return response.json();
+  })
+  .then(data => {
+    generateImage(data, prompt); // Directly use the data returned from your API
+  })
+  .catch(error => {
+    console.error('Error generating diffused image:', error);
+  })
+  .finally(() => {
+    $('#load-image-container').remove();
+    $('#huggingface-gen-button').show();
+    $('#huggingface-gen-button').removeClass('isLoading');
+  });
+}
 // NOVITA
 window.generateImageNovita = function(API_URL, userId, chatId, userChatId, character, option = {}) {
 

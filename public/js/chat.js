@@ -129,19 +129,14 @@ $(document).ready(function() {
                 }
 
                 if($('#chat-widget-container').length == 0){
-                    $('#stability-gen-button')
-                    .attr('data-chat-id',chatId)
-                    .attr('data-user-id',userId)
-                    .attr('data-user-chat-id',userChatId)
-                    .attr('data-thumbnail',thumbnail)
-                    .attr('data-character',JSON.stringify(character))
-
-                    $('#novita-gen-button')
-                    .attr('data-chat-id',chatId)
-                    .attr('data-user-id',userId)
-                    .attr('data-user-chat-id',userChatId)
-                    .attr('data-thumbnail',thumbnail)
-                    .attr('data-character',JSON.stringify(character))
+                    $('.auto-gen').each(function(){
+                        $(this)
+                        .attr('data-chat-id',chatId)
+                        .attr('data-user-id',userId)
+                        .attr('data-user-chat-id',userChatId)
+                        .attr('data-thumbnail',thumbnail)
+                        .attr('data-character',JSON.stringify(character))
+                    })
 
                     $('#gen-ideas')
                     .attr('data-chat-id',chatId)
@@ -436,7 +431,7 @@ $(document).ready(function() {
                 $('#introChat').remove();
                 $('#message-number').hide();
                 $('#stability-gen-button').hide();
-                $('#novita-gen-button').hide();
+                $('.auto-gen').each(function(){$(this).hide()})
                 $('#audio-play').hide();
                 /*
                 // Create the intro elements
@@ -581,7 +576,7 @@ $(document).ready(function() {
                         $(`#starter-${uniqueId}`).remove()
                         generateCompletion(function(){
                             $('#stability-gen-button').show();
-                            $('#novita-gen-button').show();
+                            $('.auto-gen').each(function(){$(this).show()})
                             $('#audio-play').show();
                             $('#input-container').show().addClass('d-flex');
                         })
@@ -700,7 +695,7 @@ $(document).ready(function() {
             }
             function displayChat(userChat) {
                 $('#stability-gen-button').show();
-                $('#novita-gen-button').show();
+                $('.auto-gen').each(function(){$(this).show()})
                 $('#audio-play').show();
 
                 let chatContainer = $('#chatContainer');
@@ -1464,6 +1459,7 @@ $(document).ready(function() {
             
             handleImageGeneration('#stability-gen-button', generateImageStableDiffusion);
             handleImageGeneration('#novita-gen-button', generateImageNovita);
+            handleImageGeneration('#huggingface-gen-button', generateImageHuggingFace);
             
             // User info popup
                 

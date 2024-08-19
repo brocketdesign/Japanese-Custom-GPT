@@ -763,7 +763,7 @@ $(document).ready(function() {
                                     <div id="container-${designStep}">
                                         <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
                                             <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
-                                            <div class="audio-controller>
+                                            <div class="audio-controller">
                                                 <button id="play-${designStep}" class="audio-content badge bg-dark" data-content="${message}">►</button>
                                             </div>
                                             <div id="message-${designStep}" class="p-3 ms-3 text-start assistant-chat-box">

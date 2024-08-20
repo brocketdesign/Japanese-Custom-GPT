@@ -5,6 +5,8 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const aws = require('aws-sdk');
 const { createHash } = require('crypto');
+const fs = require('fs');
+const path = require('path');
 
 async function routes(fastify, options) {
   // Configure AWS S3
@@ -403,6 +405,93 @@ fastify.get('/scraper/civitai/categories', async (request, reply) => {
         reply.status(500).send({ status: 'Error', message: 'An error occurred while processing the request.' });
     }
 });
+
+fastify.get('/scraper/download-images', async (request, reply) => {
+  try {
+      const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+      const characters = await collection.find({ ext: 'synclubaichat' }).toArray();
+
+      const baseDownloadDirectory = path.join(__dirname, '../public/download');
+
+      for (const character of characters) {
+          let gender = character.prompt?.toLowerCase();
+
+          if (gender) {
+              if (/\bmale\b/.test(gender)) {
+                  gender = "male";
+              } else if (/\bfemale\b/.test(gender)) {
+                  gender = "female";
+              } else {
+                  continue; // Skip if gender is not male or female
+              }
+
+              const downloadDirectory = path.join(baseDownloadDirectory, gender);
+              if (!fs.existsSync(downloadDirectory)) {
+                  fs.mkdirSync(downloadDirectory, { recursive: true });
+              }
+
+              const filePath = path.join(downloadDirectory, `${character._id}.jpg`);
+              if (!fs.existsSync(filePath)) {
+                  const imageBuffer = await axios.get(character.chatImageUrl, { responseType: 'arraybuffer' });
+                  fs.writeFileSync(filePath, imageBuffer.data);
+                  console.log(`Downloaded image for ${character.name} as ${character._id}.jpg into ${gender} folder`);
+              } else {
+                  console.log(`Image for ${character.name} as ${character._id}.jpg already exists in ${gender} folder`);
+              }
+          } else {
+              console.log(`Skipped ${character.name} as gender is not present or recognizable`);
+          }
+      }
+
+      reply.send({ status: 'Image download complete' });
+  } catch (error) {
+      console.error('Error during image download:', error);
+      reply.status(500).send({ status: 'Error during image download', error: error.message });
+  }
+});
+
+
+fastify.get('/scraper/upload-images', async (request, reply) => {
+  try {
+      const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+      const uploadDirectory = path.join(__dirname, '../public/upload/male'); // Same as download directory
+
+      const files = fs.readdirSync(uploadDirectory);
+
+      for (const file of files) {
+          const _id = file.replace('.png', '');
+          const filePath = path.join(uploadDirectory, file);
+          const imageBuffer = fs.readFileSync(filePath);
+
+          // Verify that the document exists in the database
+          const character = await collection.findOne({ _id: new fastify.mongo.ObjectId(_id) });
+
+          if (character) {
+              const hash = createHash('md5').update(imageBuffer).digest('hex');
+              const imageUrl = await handleFileUpload({ file: [imageBuffer], filename: `${hash}.jpg` });
+
+              const updatedChat = await collection.updateOne(
+                  { _id: new fastify.mongo.ObjectId(_id) },
+                  { $set: { chatImageUrl: imageUrl } }
+              );
+
+              if (updatedChat.matchedCount > 0) {
+                  console.log(`Updated image URL for _id: ${_id}`);
+              } else {
+                  console.log(`Failed to update image URL for _id: ${_id}`);
+              }
+          } else {
+              console.log(`No character found with _id: ${_id}, skipping upload.`);
+          }
+      }
+
+      reply.send({ status: 'Image upload and update complete' });
+  } catch (error) {
+      console.error('Error during image upload:', error);
+      reply.status(500).send({ status: 'Error during image upload', error: error.message });
+  }
+});
+
 
 
   }

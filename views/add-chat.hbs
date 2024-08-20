@@ -387,6 +387,7 @@
             const user = JSON.parse(localStorage.getItem('user'))
             if(!user){
                 fetchUser(function(error, user){
+                    const user = localStorage.setItem('user',JSON.stringify(user))
                     if(user.subscriptionStatus == 'active'){
                         return
                     }else{
@@ -482,7 +483,10 @@
                         $('#sendForm span').html(`${chatData.name}とチャットする`)
                     }
                     if(chatData.visibility){
-                        $('#visibility').val(chatData.visibility)
+                        const user = JSON.parse(localStorage.getItem('user'))
+                        if(user.subscriptionStatus == 'active'){
+                            $('#visibility').val(chatData.visibility)
+                        }
                     }
                     if(chatData.language){
                         $('#language').val(chatData.language)

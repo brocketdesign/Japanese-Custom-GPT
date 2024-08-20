@@ -183,9 +183,8 @@
         <img id="chatImage" src="/img/logo.webp" alt="chat Thumbnail" class="rounded-circle" style="cursor: pointer;">
         <i class="fas fa-edit position-absolute" style="bottom: 5px; font-size: 1em; color: white; background-color: rgba(0, 0, 0, 0.5); border-radius: 50%; padding: 5px;cursor: pointer;"></i>
     </div>
-    <div class="mt-3">
-        <button type="button" id="resetForm" class="btn btn-sm btn-light border-0 shadow-0"><i class="fas fa-eraser"></i></button>
-        <button type="button" id="genChat" class="btn btn-sm custom-gradient-bg shadow-0"
+    <div class="mt-3 d-none">
+        <button type="button" id="genChat" class="d-none btn btn-sm custom-gradient-bg shadow-0"
         data-toggle="tooltip" title="チャット構造の生成">
             <i class="fa fa-spinner fa-spin fa-fw fa-hidden me-2" style="display: none;"></i>
             <i class="fa fa-magic me-2"></i>
@@ -223,20 +222,29 @@
                 </select>
             </div>
         </div>
-        <div class="mb-3 mx-3">
-            <div class="d-flex justify-content-between align-items-end">
-                <label for="chatName" class="d-none form-label">名前</label>
-                <button type="button" id="gen-chatName" class="d-none btn btn-sm custom-gradient-bg shadow-0 border-0 mb-1 auto-gen">
+        <div id="chatPurpose-container" class="mb-3 mx-3">
+            <div class="d-flex justify-content-start align-items-end mb-1">
+                <label for="chatPurpose" class="d-none form-label">キャラクターの詳細</label>
+                <button type="button" id="resetForm" class="btn btn-sm btn-light border-0 shadow-0"><i class="fas fa-eraser"></i></button>
+                <button type="button" id="ai-assist" class="btn btn-sm custom-gradient-bg shadow-0">
                     <i class="fa fa-spinner fa-spin fa-fw fa-hidden me-2" style="display: none;"></i>
                     <i class="fa fa-magic me-2"></i>
                     AI生成
                 </button>
             </div>
-            <input type="text" class="form-control" id="chatName" name="name" placeholder="名前" required>
+            <textarea class="form-control" id="chatPurpose" name="content" rows="3" 
+            placeholder="キャラクターの詳細：中村美咲（27歳）は明るく社交的なOLで、責任感が強く、チームをサポートする姿勢が評価されている。趣味は旅行とカフェ巡りで、休日には友達と過ごすことが多い。話し方は礼儀正しく丁寧でありながら柔らかく、安心感を与える。"></textarea>
+            <div id="chatPurpose-markdownContainer" class="rounded form-control px-3 py-2" contenteditable="false" style="min-height:50px;height: auto;display:none;" ></div>
+        </div>
+        <div class="mb-3 mx-3">
+            <div class="d-flex justify-content-between align-items-end">
+                <label for="chatName" class="d-none form-label">名前</label>
+            </div>
+            <input type="text" class="form-control" id="chatName" name="name" placeholder="名前" contenteditable="false" required style="display:none;">
         </div>
         <div class="mb-3 mx-3">
             <label for="chatDescription" class="d-none form-label">簡単な説明</label>
-            <textarea class="form-control" id="chatDescription" name="content" rows="3" placeholder="簡単な説明" ifplaceholder="チャットボットの詳細な説明をここに記入してください。どのような機能を持たせたいのか、どのようなユーザーに向けたものなのか、具体的なシナリオや対話の流れなど、できるだけ詳しく記載してください。ユーザーがどのようにチャットボットとやり取りするかの例も含めてください。" required></textarea>
+            <textarea class="form-control" id="chatDescription"  style="display:none;" name="content" rows="3" placeholder="簡単な説明" ifplaceholder="チャットボットの詳細な説明をここに記入してください。どのような機能を持たせたいのか、どのようなユーザーに向けたものなのか、具体的なシナリオや対話の流れなど、できるだけ詳しく記載してください。ユーザーがどのようにチャットボットとやり取りするかの例も含めてください。" required></textarea>
         </div>
         <div class="mb-3 mx-3">
             <div class="d-flex-none d-none justify-content-between align-items-end">
@@ -248,14 +256,7 @@
                 </button>
             </div>
             <textarea class="d-none form-control" id="chatRule" name="content" rows="5" placeholder="話し方" ifplaceholder="チャットボットの動作についての指示をここに記入してください。ユーザーに対する返答のトーン、応答のスタイル、特定の状況に対する反応、使用する言葉遣いなど、チャットボットがどのように振る舞うべきかをできるだけ詳しく記載してください。"></textarea>
-        </div>
-        <div id="chatPurpose-container" class="mb-3 mx-3">
-            <div class="d-flex justify-content-start align-items-end">
-                <label for="chatPurpose" class="d-none form-label">キャラクターの詳細</label>
-            </div>
-            <textarea class="form-control" id="chatPurpose" name="content" rows="5" 
-            placeholder="キャラクターの詳細" ifplaceholder="例：中村美咲（27歳）は明るく社交的なOLで、責任感が強く、チームをサポートする姿勢が評価されている。趣味は旅行とカフェ巡りで、休日には友達と過ごすことが多い。話し方は礼儀正しく丁寧でありながら柔らかく、安心感を与える。"></textarea>
-            <div id="chatPurpose-markdownContainer" class="rounded form-control px-3 py-2" contenteditable="false" style="min-height:50px;height: auto;display:none;" ></div>
+            <div id="markdownContainer" class="border-0" contenteditable="false" style="display: none;"></div>
         </div>
         <div class="mb-3 mx-3" id="thumbnailInputContainer" style="display: none;">
             <label for="chatThumbnail" class="form-label">チャットのサムネイルをアップロード</label>
@@ -293,7 +294,6 @@
             <label for="chatUrl" class="form-label d-none">URL</label>
             <input type="hidden" class="form-control" id="chatUrl" name="url">
         </div>
-        <div id="markdownContainer" contenteditable="true" style="display: none;"></div>
         <div class="container mt-1 d-none">
             <label for="chatContentEdition" class="form-label">チャットの構造</label>
             <div id="chatContentEdition"></div>
@@ -332,8 +332,13 @@
         $('#resetForm').on('click',function(){
             $('input, textarea').val('');
             $('input, textarea').prop('disabled', false);
+            $('#chatName').show()
+            $('#chatDescription').show()
             $('#chatPurpose').show()
             $('#chatPurpose-markdownContainer').hide()
+            $('#markdownContainer').hide()
+            $('#chatPurpose-markdownContainer').html('')
+            $('#markdownContainer').html('')
             $('#sendForm').hide()
             $('#sendForm span').html('チャット')
         })
@@ -384,10 +389,10 @@
         }
         $('#visibility').val('public')
         $('#visibility').change(function() {
-            const user = JSON.parse(localStorage.getItem('user'))
+            let user = JSON.parse(localStorage.getItem('user'))
             if(!user){
                 fetchUser(function(error, user){
-                    const user = localStorage.setItem('user',JSON.stringify(user))
+                    user = localStorage.setItem('user',JSON.stringify(user))
                     if(user.subscriptionStatus == 'active'){
                         return
                     }else{
@@ -657,6 +662,50 @@
             });
             $('#genStructure').removeClass('btn-outline-secondary').addClass('btn-secondary')
         });
+        $('#ai-assist').on('click', function() {
+            $('#ai-assist .fa-spinner').show();
+            $('#ai-assist .fa-magic').hide();
+
+            if ($('#chatPurpose').val().trim() == '') {
+                Swal.fire({
+                    title: '警告',
+                    text: 'キャラクターの説明は必須項目です。入力してください。',
+                    icon: 'warning',
+                    confirmButtonText: 'OK'
+                });
+                $('#ai-assist .fa-spinner').hide();
+                $('#ai-assist .fa-magic').show();
+                return;
+            }
+
+            $('#chatName').prop('disabled', true);
+            $('#chatPurpose').prop('disabled', false);
+            $('#chatDescription').prop('disabled', true);
+            $('#chatDescription').prop('disabled', true);
+            $('#chatName').val('')
+            $('#chatDescription').val('')
+            if ($('#chatName').val().trim() == '') {
+                generateDescription(function() {
+                    generateName(function(){
+                        generateRule(function(){
+                            $('#sendForm').show();
+                            $('.sendForm-text').show();
+                            $('#ai-assist .fa-spinner').hide();
+                            $('#ai-assist .fa-magic').show();
+                        })
+                    });
+                });
+            } else {
+                generateDescription(function() {
+                    generateRule(function (){
+                        $('#sendForm').show();
+                        $('.sendForm-text').show();
+                        $('#ai-assist .fa-spinner').hide();
+                        $('#ai-assist .fa-magic').show();
+                    })
+                });
+            }
+        });
 
         $('#genStructure').click(function(){
             generateCompletion()
@@ -763,9 +812,10 @@
                 url: apiUrl,
                 method: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({ chatId, message, system : getSystem('chatRule') }),
+                data: JSON.stringify({ chatId, message, system : createSystemPayload(language) }), //getSystem('chatRule')
                 success: function(response) {
                     $('#chatRule').parent().show()
+                    $('#chatRule').show()
                     $('#markdownContainer').show()
 
                     const sessionId = response.sessionId;
@@ -777,9 +827,7 @@
                         const data = JSON.parse(event.data);
                         markdownContent += data.content;
                         var htmlContent = marked.parse(markdownContent);
-                        // Set the HTML content to the container
                         $('#markdownContainer').html(htmlContent);
-                        // Store the HTML content in the hidden textarea
                         $('#chatRule').val(htmlContent);
                     };
 
@@ -843,7 +891,12 @@
             let message = $('#chatPurpose').val();
             let language =$('#language').val();
             const name = $('#chatName').val();
-            message = message + 'The character name is : '+ name + '\n\n YOU MUST respond in '+ language
+            if (typeof name === 'undefined' || name.trim() === '') {
+                message = message + '\n\n YOU MUST respond in ' + language;
+            } else {
+                message = message + 'The character name is: ' + name + '\n\n YOU MUST respond in ' + language;
+            }
+
             const urlSummary = $(`#resultText`).text()
             const myUrl = $('#myUrl').val()
             if(urlSummary.trim() != ''){
@@ -862,7 +915,8 @@
                 success: function(response) {
 
                     $('#chatDescription').html('')
-                    $('#chatDescription').parent().show()
+                    //$('#chatDescription').parent().show()
+                    //$('#chatDescription').show()
                     const sessionId = response.sessionId;
                     const streamUrl = `/api/openai-chat-creation-stream/${sessionId}`;
                     const eventSource = new EventSource(streamUrl);
@@ -1106,7 +1160,8 @@
                     const eventSource = new EventSource(streamUrl);
                     let markdownContent = "";
 
-                    $('#chatName').parent().show()
+                    //$('#chatName').parent().show()
+                    //$('#chatName').show()
                     eventSource.onmessage = function(event) {
                         const data = JSON.parse(event.data);
                         markdownContent += data.content;

@@ -539,21 +539,38 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
         visibility: "public"
       };
   
-      let isAdmin = false
+      let isAdmin = false;
+      
       if (currentUserId.toString() === userId) {
-        isAdmin = true
+        isAdmin = true;
         chatQuery.visibility = { $in: ["public", "private"] };
       }
-      
   
       const userChats = await collectionChat.find(chatQuery).sort({_id:-1}).toArray();
-
+  
+      const publicChatCount = await collectionChat.countDocuments({
+        $or: [
+          { userId },
+          { userId: new fastify.mongo.ObjectId(userId) }
+        ],
+        visibility: "public"
+      });
+  
+      const privateChatCount = await collectionChat.countDocuments({
+        $or: [
+          { userId },
+          { userId: new fastify.mongo.ObjectId(userId) }
+        ],
+        visibility: "private"
+      });
+  
       return reply.view('/user-profile.hbs', {
         isAdmin,
         user: currentUser,
         userData: {
           profileUrl: user.profileUrl,
           nickname: user.nickname,
+          coins: user.coins,
         },
         userChats: userChats.map(chat => ({
           _id: chat._id,
@@ -562,13 +579,14 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
           chatImageUrl: chat.chatImageUrl != undefined && chat.chatImageUrl != '' ? chat.chatImageUrl : chat.thumbnailUrl,
           tags: chat.tags || [],
           visibility: chat.visibility
-        }))
+        })),
+        publicChatCount,
+        privateChatCount
       });
     } catch (error) {
       return reply.status(500).send({ error: 'An error occurred' });
     }
   });
-  
   
 }
 

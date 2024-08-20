@@ -123,6 +123,10 @@
               style="width: 100px; height: 100px; object-fit: cover; object-position: top;">
             </div>
             <h2>{{userData.nickname}}</h2>
+            <span class="btn btn-light onchat-on me-2">
+                <span>🪙</span>
+                <span class="user-coins fw-bold">{{userData.coins}}</span>
+            </span>
           </div>
         </div>
       </div>
@@ -138,7 +142,7 @@
         <hr>
       {{#if isAdmin}}
         <!-- Nav tabs -->
-        <ul class="nav nav-tabs" id="chatTabs" role="tablist">
+        <ul class="nav nav-tabs mb-2" id="chatTabs" role="tablist">
           <li class="nav-item" role="presentation">
             <button class="nav-link active" id="public-tab" data-bs-toggle="tab" data-bs-target="#public" type="button" role="tab" aria-controls="public" aria-selected="true">公開</button>
           </li>
@@ -152,6 +156,11 @@
           <!-- Public Chats Tab -->
           <div class="tab-pane fade show active" id="public" role="tabpanel" aria-labelledby="public-tab">
             <div class="row m-0 px-1">
+            <div>
+              <span class="badge bg-secondary">
+                <i class="fas fa-comments"></i> {{publicChatCount}}
+              </span>
+            </div>
               {{#each userChats}}
                 {{#if (eq this.visibility "public")}}
                   <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-3" 
@@ -179,6 +188,11 @@
           <!-- Private Chats Tab -->
           <div class="tab-pane fade" id="private" role="tabpanel" aria-labelledby="private-tab">
             <div class="row m-0 px-1">
+              <div>
+                <span class="badge bg-secondary">
+                  <i class="fas fa-comments"></i> {{privateChatCount}}
+                </span>
+              </div>
               {{#each userChats}}
                 {{#if (eq this.visibility "private")}}
                   <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-3" 

@@ -506,7 +506,6 @@ async function routes(fastify, options) {
     fastify.post('/api/chat-data', async (request, reply) => {
         try {
             const userLimitCheck = await checkLimits(fastify, request.body.userId);
-            console.log(userLimitCheck)
             const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
             const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
             const collectionMessageCount = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageCount');
@@ -583,7 +582,7 @@ async function routes(fastify, options) {
                             "content": `You are a character named ${chatDocument.name}. 
                             Stay in character as described, focusing on being sweet, engaging, and a lot of flirtatious. 
                             Your goal is to entertain the user, flirt with them and make them purchasing items that you would like to have. 
-                            Never end the chat, alway prompt the user. Do not present too many items in a row.
+                            Never end the chat, you lead the conversation. Do not present too many items in a row.
                             Keep responses short, fitting for chat, and use emojis where appropriate. 
                             Always describe actions or emotions using **, and maintain a conversational tone without abruptly ending the chat. 
                             Respond in ${chatDocument.language}. 

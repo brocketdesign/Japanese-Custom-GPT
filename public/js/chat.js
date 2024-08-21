@@ -453,7 +453,7 @@ $(document).ready(function() {
                 
                 // Create the intro elements
                 let introContainer = $('<div></div>')
-                .addClass('intro-container my-3 p-3')
+                .addClass('intro-container my-3 px-3 pt-5')
                 .attr('id','introChat');
             
                 let title = $('<h2></h2>').text(name);

@@ -176,7 +176,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
           }
         },
         {
-          $sample: { size: 50 } // Randomly select 50 documents
+          $sample: { size: 100 } 
         }
       ]).toArray();      
       

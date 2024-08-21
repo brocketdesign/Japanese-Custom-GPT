@@ -15,6 +15,9 @@ $(document).ready(function() {
         MODE = mode
         if (mode !== 'local') {
             API_URL = window.location.origin;
+            if (!API_URL.includes('lamix')) {
+                API_URL = 'https://www.lamix.jp';
+            }
         }        
         localStorage.setItem('MODE',mode)
         localStorage.setItem('API_URL',API_URL)

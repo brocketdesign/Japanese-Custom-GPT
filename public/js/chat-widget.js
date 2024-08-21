@@ -193,6 +193,8 @@
         }
         // jQuery
         loadScript('https://code.jquery.com/jquery-3.6.0.min.js')
+        // Cookie
+        loadScript('https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js')
         // Load chat.js script
         loadScript('https://lamix.hatoltd.com/js/chat.js');
         // Load marked.min.js script

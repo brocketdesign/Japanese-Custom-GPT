@@ -361,10 +361,11 @@ window.showPremiumPopup = function() {
                     title: 'swal2-custom-title',
                     popup: 'swal2-custom-popup bg-light border border-dark',
                     content: 'swal2-custom-content',
-                    closeButton: 'swal2-top-left-close-button'
+                    closeButton: 'swal2-top-left-close-button',
+                    popup: 'swal2-custom-popup animate__animated animate__fadeIn',
                 },
                 showClass: {
-                    popup: 'animate__animated animate__slideInRight'
+                    popup: 'animate__animated animate__fadeIn'
                 },
                 hideClass: {
                     popup: 'animate__animated animate__slideOutRight'

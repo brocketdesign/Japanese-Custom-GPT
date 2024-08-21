@@ -35,11 +35,16 @@ $(document).ready(function() {
             let thumbnail = false
             let isTemporary = !!user.isTemporary
             $('body').attr('data-temporary-user',isTemporary)
-            
+
             const subscriptionStatus = user.subscriptionStatus == 'active'
             $('.is-free-user').each(function(){if(!subscriptionStatus && !isTemporary)$(this).show()})
             if(!isTemporary && !subscriptionStatus){
                 showPremiumPopup()
+            }
+            if(isTemporary){
+                setTimeout(() => {
+                    showRegistrationForm()
+                }, 5000);
             }
 
             sendCustomData({action: 'viewpage'});

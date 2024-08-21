@@ -38,8 +38,9 @@ $(document).ready(function() {
 
             const subscriptionStatus = user.subscriptionStatus == 'active'
             $('.is-free-user').each(function(){if(!subscriptionStatus && !isTemporary)$(this).show()})
-            if(!isTemporary && !subscriptionStatus){
+            if(!isTemporary && !subscriptionStatus && !localStorage.getItem('showPremiumPopup')){
                 showPremiumPopup()
+                localStorage.setItem('showPremiumPopup',true)
             }
             if(isTemporary){
                 setTimeout(() => {

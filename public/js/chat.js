@@ -35,11 +35,13 @@ $(document).ready(function() {
             let thumbnail = false
             let isTemporary = !!user.isTemporary
             $('body').attr('data-temporary-user',isTemporary)
-            if(!isTemporary &&  !localStorage.getItem('premiumplan')){
+            
+            const subscriptionStatus = user.subscriptionStatus == 'active'
+            $('.is-free-user').each(function(){if(!subscriptionStatus && !isTemporary)$(this).show()})
+            if(!isTemporary && !subscriptionStatus){
                 showPremiumPopup()
             }
-            const subscriptionStatus = user.subscriptionStatus
-            $('.is-free-user').each(function(){if(!subscriptionStatus && !isTemporary)$(this).show()})
+
             sendCustomData({action: 'viewpage'});
             if(chatId){
                 getUserChatHistory(chatId, userId,function(lastChat){

@@ -41,10 +41,7 @@ $(document).ready(function() {
 
             const subscriptionStatus = user.subscriptionStatus == 'active'
             $('.is-free-user').each(function(){if(!subscriptionStatus && !isTemporary)$(this).show()})
-            if(!isTemporary && !subscriptionStatus && !localStorage.getItem('showPremiumPopup')){
-                showPremiumPopup()
-                localStorage.setItem('showPremiumPopup',true)
-            }
+
             if(isTemporary){
                 setTimeout(() => {
                     showRegistrationForm()
@@ -1663,7 +1660,7 @@ $(document).ready(function() {
                 });
             }
             
-            if($('body').attr('data-temporary-user') == 'false' && $('#chat-widget-container').length == 0){
+            if(!isTemporary && $('#chat-widget-container').length == 0){
                 let user = JSON.parse(localStorage.getItem('user'))
 
                 const userNickname = user?.nickname ?? '';
@@ -1674,26 +1671,20 @@ $(document).ready(function() {
                 
                 if (!userNickname || !userBirthYear || !userBirthMonth || !userBirthDay || !userGender) {
                     showPopupUserInfo(function(callback){
-                        // Populate years
                         var currentYear = new Date().getFullYear() - 15;
-                        var startYear = 1900; // Adjust this to your preferred start year
-
+                        var startYear = 1900; 
                         for (var year = currentYear; year >= startYear; year--) {
                             $('#birthYear').append($('<option>', {
                                 value: year,
                                 text: year + '年'
                             }));
                         }
-
-                        // Populate months
                         for (var month = 1; month <= 12; month++) {
                             $('#birthMonth').append($('<option>', {
                                 value: month,
                                 text: month + '月'
                             }));
                         }
-
-                        // Populate days
                         function populateDays(month, year) {
                             $('#birthDay').empty().append($('<option>', {
                                 value: '',
@@ -1708,15 +1699,16 @@ $(document).ready(function() {
                                 }));
                             }
                         }
-
-                        // Populate days based on current month and year
                         populateDays($('#birthMonth').val(), $('#birthYear').val());
-
-                        // Update days when month or year changes
                         $('#birthMonth, #birthYear').change(function() {
                             populateDays($('#birthMonth').val(), $('#birthYear').val());
                         });
                     });
+                }else{
+                    if(!isTemporary && !subscriptionStatus && !localStorage.getItem('showPremiumPopup')){
+                        showPremiumPopup()
+                        localStorage.setItem('showPremiumPopup',true)
+                    }
                 }
             }
         });

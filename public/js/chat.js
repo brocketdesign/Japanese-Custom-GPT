@@ -35,6 +35,9 @@ $(document).ready(function() {
             let thumbnail = false
             let isTemporary = !!user.isTemporary
             $('body').attr('data-temporary-user',isTemporary)
+            if(!isTemporary &&  !localStorage.getItem('premiumplan')){
+                showPremiumPopup()
+            }
             const subscriptionStatus = user.subscriptionStatus
             $('.is-free-user').each(function(){if(!subscriptionStatus && !isTemporary)$(this).show()})
             sendCustomData({action: 'viewpage'});

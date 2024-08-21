@@ -19,6 +19,7 @@ async function routes(fastify, options) {
         "📝   チャット履歴を保存する",
         "🤖   基本的なAIキャラクターとの対話"
       ],
+      chatLimit:3,
     },
     {
       id: 'premium',
@@ -203,19 +204,27 @@ async function routes(fastify, options) {
         { _id: new fastify.mongo.ObjectId(user._id) },
         {
           $set: {
-            stripeCustomerId: session.customer, // Store Stripe customer ID
-            stripeSubscriptionId: session.subscription, // Store Stripe subscription ID
-            subscriptionStatus: 'active', // Update subscription status
+            stripeCustomerId: session.customer, 
+            stripeSubscriptionId: session.subscription, 
+            subscriptionStatus: 'active',
             subscriptionType: process.env.MODE,
-            currentPlanId: subscription.items.data[0].price.id, // Store current plan ID
-            billingCycle: subscription.items.data[0].price.recurring.interval, // Store billing cycle
-            subscriptionStartDate: new Date(subscription.start_date * 1000), // Convert Unix timestamp to Date
-            subscriptionEndDate: new Date(subscription.current_period_end * 1000), // Convert Unix timestamp to Date
+            currentPlanId: subscription.items.data[0].price.id, 
+            billingCycle: subscription.items.data[0].price.recurring.interval, 
+            subscriptionStartDate: new Date(subscription.start_date * 1000), 
+            subscriptionEndDate: new Date(subscription.current_period_end * 1000), 
           },
         },
-        { upsert: true } // Add this option to insert a new document if no match is found
+        { upsert: true } 
       );
-  
+
+      // Add 1000 coins to the user's account
+      await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
+        { _id: new fastify.mongo.ObjectId(user._id) },
+        {
+          $inc: { coins: 1000 }
+        }
+      );
+
       // Redirect the user to a success page or dashboard
       return reply.redirect(`${frontEnd}/chat/?subscribe=true`);
     } catch (error) {

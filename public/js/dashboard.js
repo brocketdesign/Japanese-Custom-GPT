@@ -281,3 +281,98 @@ window.showCoinShop = function(el){
     });
     
 }
+window.showPremiumPopup = function() {
+    const features = [
+        "毎日無制限でチャットできる",
+        "フレンドを無制限で作成できる",
+        "新しいキャラクターを作成する",
+        "新機能への早期アクセス",
+        "優先的なサポート対応"
+    ];
+    const messageTitle = '🚀 プレミアムプランで<br>体験をアップグレードしよう！';
+    const messageText = `
+        <div class="premium-offer" style="background-color: #fff3cd; border-radius: 10px; padding: 10px; margin-bottom: 15px;">
+            <h6 style="color: #856404; font-weight: bold; text-align: center;">今なら登録するだけで<br><strong>1,000コイン</strong>をプレゼント！</h6>
+        </div>
+        <p style="font-size: 12px; text-align: center;">無制限の機能とエクスクルーシブな特典をお楽しみいただけます。<br>今すぐプレミアムプランに登録して、すべての機能を最大限に活用しましょう。</p>
+        <ul class="premium-features" style="list-style-type: none; padding-left: 0; margin-bottom: 15px;">
+            ${features.map(feature => `<li style="font-size: 14px; margin-bottom: 5px;"><span style="color: #f39c12;">🔥</span> ${feature}</li>`).join('')}
+        </ul>
+        <p style="font-size: 12px; text-align: center;">いつでもキャンセル可能、質問なしで対応いたします。<br>また、お支払いは <strong>最も安全なStripe</strong> で行われます。</p>
+    `;
+
+    // Display the first premium promotion popup using Swal.fire
+    Swal.fire({
+        //imageUrl: '/img/premium-promo.png', // Replace with your image URL
+        imageWidth: '80%',
+        imageHeight: 'auto',
+        position: 'center',
+        html: `
+            <div class="container-0">
+                <div class="row justify-content-center">
+                    <div class="text-start">
+                        <h5 class="fw-bold text-center">${messageTitle}</h5>
+                        <div class="premium-content" style="background-color: #f8f9fa; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);">
+                            ${messageText}
+                            <a href="/my-plan" class="btn btn-dark border-0 shadow-0 w-100 custom-gradient-bg mt-3" style="font-size: 16px; padding: 10px;">プレミアムプランを確認する</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `,
+        showCancelButton: false,
+        showConfirmButton: false,
+        showCloseButton: true,
+        animation: false,
+        showClass: {
+            popup: 'animate__animated animate__fadeIn'
+        },
+        hideClass: {
+            popup: 'animate__animated animate__slideOutRight'
+        },
+        customClass: {
+            popup: 'swal2-custom-popup animate__animated animate__fadeIn',
+            closeButton: 'swal2-custom-close-button' 
+        },
+        didOpen: () => {
+            // Initially hide the close button
+            document.querySelector('.swal2-custom-close-button').style.display = 'none';
+
+            // Show the close button after 5 seconds
+            setTimeout(() => {
+                $('.swal2-custom-close-button').fadeIn('slow')
+            }, 3000);
+        }
+    }).then((result) => {
+        if (result.dismiss) {
+            // Display a secondary popup after the first one is closed
+            Swal.fire({
+                position: 'top-end',
+                title: '<strong>プレミアムプランでさらに楽しもう！</strong>',
+                html: `
+                    <p style="font-size: 14px; margin-bottom: 10px;">今なら1,000コインをプレゼント中！</p>
+                    <a href="/my-plan" class="btn btn-dark border-0 shadow-0 w-100 custom-gradient-bg" style="font-size: 14px; padding: 8px;">今すぐプレゼントを受け取る</a>
+                `,
+                showConfirmButton: false,
+                showCloseButton: true,
+                backdrop: false,
+                allowOutsideClick: false,
+                customClass: {
+                    title: 'swal2-custom-title',
+                    popup: 'swal2-custom-popup bg-light border border-dark',
+                    content: 'swal2-custom-content',
+                    closeButton: 'swal2-top-left-close-button'
+                },
+                showClass: {
+                    popup: 'animate__animated animate__slideInRight'
+                },
+                hideClass: {
+                    popup: 'animate__animated animate__slideOutRight'
+                },
+            });
+            
+        }
+        
+        
+    });
+}

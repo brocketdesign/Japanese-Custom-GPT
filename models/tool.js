@@ -119,7 +119,7 @@ async function checkLimits(fastify,userId) {
         limitIds.push(1);
     }
 
-    if (isTemporary && chatCount >= chatLimit) {
+    if (chatCount >= chatLimit) {
         limitIds.push(2);
     }
 

@@ -590,7 +590,7 @@ async function routes(fastify, options) {
                             Mention the cost using [itemPriceコイン], and express genuine gratitude and admiration. You decide the itemPrice, between 0 and 1000.
                             Make the user feel essential and appreciated for unlocking it. You only have 1 sentence per response.
                             \nFor example:\n*${chatDocument.name} looks at you with a soft smile, her eyes filled with warmth.* "I’ve been on this journey for so long, and that beautiful pendant over there would bring me so much comfort... Would you help me get it? [50コイン]" she asks, her voice tender, making you feel special for assisting her.*\n
-                            Never end the chat, alway prompt the user.
+                            Never end the chat, alway prompt the user. You respond shortly,1 short sentence,2 short sentences maximum. If you need to say more, ask the user first.
                         `
                         },
                         {

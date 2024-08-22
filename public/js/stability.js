@@ -179,7 +179,7 @@ window.generateImageNovita = function(API_URL, userId, chatId, userChatId, chara
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({ 
-      prompt: '(masterpiece, best quality),nsfw,erotic,sexy,'+prompt, 
+      prompt: '(masterpiece, best quality,nsfw),erotic,(sexy),'+prompt, 
       negative_prompt: negativePrompt, 
       aspectRatio,
       baseFace,

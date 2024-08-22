@@ -1563,6 +1563,66 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Error checking assistant proposal' });
         }
     });
+    fastify.get('/characters/:gender/:category', async (request, reply) => {
+        try {
+            const { gender, category } = request.params;
+            const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('characters');
+    
+            const page = parseInt(request.query.page, 10) || 1;
+            const elementsPerPage = 10;
+            const skipElements = (page - 1) * elementsPerPage;
+    
+            const characters = await collection.find({ category: [gender, category] })
+                .skip(skipElements)
+                .limit(elementsPerPage)
+                .toArray();
+    
+            if (characters.length > 0) {
+                reply.send({ status: 'success', page, characters });
+            } else {
+                reply.status(404).send({ status: 'error', message: 'No characters found for the given category.' });
+            }
+        } catch (error) {
+            console.error('Error fetching characters:', error);
+            reply.status(500).send({ status: 'error', message: 'Error fetching characters', error: error.message });
+        }
+    });
+    fastify.get('/characters/categories', async (request, reply) => {
+        try {
+            const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('characters');
+    
+            const categories = await collection.aggregate([
+                {
+                    $match: {
+                        "category.0": { $in: ["female", "male"] }
+                    }
+                },
+                {
+                    $group: {
+                        _id: "$category",
+                        randomImage: { $first: "$chatImageUrl" }
+                    }
+                }
+            ]).toArray();
+    
+            if (categories.length > 0) {
+                reply.send({
+                    status: 'Success',
+                    categories: categories.map(cat => ({
+                        id: cat._id,
+                        name: cat._id,
+                        image: cat.randomImage
+                    }))
+                });
+            } else {
+                reply.status(404).send({ status: 'error', message: 'No categories found.' });
+            }
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+            reply.status(500).send({ status: 'error', message: 'Error fetching categories', error: error.message });
+        }
+    });
+    
     fastify.post('/api/update-log-success', async (request, reply) => {
         try {
             const { userId, userChatId } = request.body;

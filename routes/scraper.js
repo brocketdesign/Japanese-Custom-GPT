@@ -492,6 +492,53 @@ fastify.get('/scraper/upload-images', async (request, reply) => {
   }
 });
 
+fastify.get('/scraper/create-characters', async (request, reply) => {
+  try {
+      const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('characters');
+      const baseDirectory = path.join(__dirname, '../public/upload');
+
+      const categories = fs.readdirSync(baseDirectory);
+
+      for (const gender of categories) {
+          if (!fs.statSync(path.join(baseDirectory, gender)).isDirectory()) continue;
+          const genderDir = path.join(baseDirectory, gender);
+          const subCategories = fs.readdirSync(genderDir);
+
+          for (const category of subCategories) {
+              if (!fs.statSync(path.join(genderDir, category)).isDirectory()) continue;
+              const categoryDir = path.join(genderDir, category);
+              const files = fs.readdirSync(categoryDir);
+
+              for (const file of files) {
+                  const filePath = path.join(categoryDir, file);
+                  const imageBuffer = fs.readFileSync(filePath);
+
+                  const hash = createHash('md5').update(imageBuffer).digest('hex');
+                  const imageUrl = await handleFileUpload({ file: [imageBuffer], filename: `${hash}.png` });
+
+                  const newCharacter = {
+                      chatImageUrl: imageUrl,
+                      category: [gender, category]
+                  };
+
+                  const result = await collection.insertOne(newCharacter);
+
+                  if (result.insertedId) {
+                      console.log(`Created new character with _id: ${result.insertedId}`);
+                  } else {
+                      console.log(`Failed to create new character for file: ${file}`);
+                  }
+              }
+          }
+      }
+
+      reply.send({ status: 'Character creation complete' });
+  } catch (error) {
+      console.error('Error during character creation:', error);
+      reply.status(500).send({ status: 'Error during character creation', error: error.message });
+  }
+});
+
 
 
   }

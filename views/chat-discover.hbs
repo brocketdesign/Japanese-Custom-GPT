@@ -486,12 +486,11 @@
     </style>
 <div class="container my-5">
     <h4 class="px-4">キャラクターライブラリー</h4>
-    <section id="chat-discovery" class="sticky-top mb-2" style="display: block;">
+    <p class="text-muted px-4" style="font-size: 12px;">好きなキャラクターを選び、最新の生成AI技術でカスタマイズしましょう。私たちのライブラリーにはたくさんのキャラクターが揃っており、あなたのファンタジーに合わせたストーリーを作成して、自由にチャットを楽しむことができます。自分だけの世界を創り上げ、キャラクターとの対話を通じて新たな物語を体験してください。</p>
+    <section id="chat-discovery" class="sticky-top mb-2" style="display: block;background-color: #ffffffd9;">
         <div id="chatbot-category" class="row px-3 mx-0 scroll-horizontal"></div>
     </section>
     <section class="w-100 p-0">
-        <p class="text-muted px-4" style="font-size: 12px;">好きなキャラクターを選び、最新の生成AI技術でカスタマイズしましょう。私たちのライブラリーにはたくさんのキャラクターが揃っており、あなたのファンタジーに合わせたストーリーを作成して、自由にチャットを楽しむことができます。自分だけの世界を創り上げ、キャラクターとの対話を通じて新たな物語を体験してください。</p>
-        <h5 id="chatbot-checkpoint-name" class="p-3 pb-1 mb-0 d-none" style="font-size: 12px;"></h5>
         <div id="chatbot-library" class="chat-container row px-3 mx-0 mt-3" style="min-height:10px"></div>
         <div id="chatbot-loading" class="text-center p-5" style="display: none;">
             <div class="spinner-border spinner-border-md" role="status">
@@ -502,7 +501,118 @@
 </div>
  {{> dashboard-footer}}
  <script src="https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.1/jquery.waypoints.js" integrity="sha512-ZKNVEa7gi0Dz4Rq9jXcySgcPiK+5f01CqW+ZoKLLKr9VMXuCsw3RjWiv8ZpIOa0hxO79np7Ec8DDWALM0bDOaQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="/js/discovery.js"></script>
+<script>
+
+    //Infinite scroll
+    function renderInfiniteGrid(cardInfos,container){
+        cardInfos.forEach(function(item) {
+            var card = $(`
+                <div class="card custom-card bg-transparent shadow-0 border-0 my-0 p-1 col-6 col-sm-4 col-lg-2" style="cursor:pointer;">
+                    <div style="background-image:url(${item.chatImageUrl.indexOf('http')>=0 ? item.chatImageUrl : `/img/${item.chatImageUrl}`})" class="card-img-top girls_avatar position-relative" alt="${item.title}">
+                    </div>
+                </div>
+            `);
+            card.on('click', function() {
+                const redirectUrl = `/chat/edit/?chatImage=${encodeURIComponent(item.chatImageUrl)}`
+                if($('body').data('temporary-user')){
+                    $.cookie('redirect_url', redirectUrl);
+                    window.open('/authenticate')
+                    return
+                }
+                window.location = redirectUrl 
+            });
+            container.append(card);
+        });   
+    }
+    var  currentPage  = 1;
+    var isLoading = false;
+    function loadNextPage() {
+        if (isLoading) return;
+        isLoading = true;
+        const libraryInfo = JSON.parse(localStorage.getItem('chatbot-library'))
+        if(!libraryInfo){
+            return
+        }
+        const { gender, category } = libraryInfo
+        $('#chatbot-loading').show()
+        $.ajax({
+            type: 'GET',
+            url: `/characters/${gender}/${category}?page=${currentPage}`,
+            success: function(data) {
+                $('#chatbot-loading').hide()
+                renderInfiniteGrid(data.characters, $('#chatbot-library'));
+                currentPage++;
+                setTimeout(() => {
+                    isLoading = false;
+                }, 1000);
+            },
+            error: function(error) {
+                $('#chatbot-loading').hide()
+            }
+        });
+    }
+    $(document).on('scroll',function(){
+        if($('#chatbot-library').length == 0){
+            return
+        }
+        $('#chatbot-library').waypoint(function() {
+            loadNextPage();
+          }, {
+            offset: 'bottom-in-view'
+          });    
+    })
+    function fetchAndRenderCategories() {
+        $.ajax({
+            url: '/characters/categories', // The updated endpoint URL
+            method: 'GET',
+            success: function(response) {
+                $('#chatbot-category').empty();
+
+                if (response.status === 'Success' && response.categories) {
+                    response.categories.forEach(category => {
+                        const categoryButton = `
+                            <div type="button" class="chatbot-category-button col text-center" data-gender="${category.name[0]}" data-category="${category.name[1]}" onclick="libraryInfoUpdate(this)">
+                                <img src="${category.image}" alt="${category.name.join(' ')}" class="border border-light">
+                                <span class="small">${category.name[1]}</span>
+                            </div>`;
+                        $('#chatbot-category').append(categoryButton);
+                    });
+                } else {
+                    $('#chatbot-category').append('<p>No categories found.</p>');
+                }
+
+                const libraryInfo = JSON.parse(localStorage.getItem('chatbot-library'));
+                if (!libraryInfo) {
+                    const dataInit = { 
+                        gender: response.categories[0].name[0], 
+                        category: response.categories[0].name[1]
+                    };
+                    localStorage.setItem('chatbot-library', JSON.stringify(dataInit));
+                    loadNextPage();
+                } else {
+                    loadNextPage();
+                }
+            },
+            error: function(error) {
+                console.error('An error occurred:', error);
+                $('#chatbot-category').append('<p>Error fetching categories. Please try again later.</p>');
+            }
+        });
+    }
+
+    // Call the function to fetch and render categories
+    fetchAndRenderCategories();
+    window.libraryInfoUpdate = function(el) {
+        const gender = $(el).data('gender')
+        const category = $(el).data('category')
+        //$('#chatbot-library').empty()
+        $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+        currentPage = 1
+        localStorage.setItem('chatbot-library',JSON.stringify({ gender, category }))
+        isLoading = false
+        loadNextPage();
+    };
+</script>
 
 </body>
 </html>

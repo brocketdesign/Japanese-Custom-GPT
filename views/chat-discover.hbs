@@ -603,6 +603,8 @@
     // Call the function to fetch and render categories
     fetchAndRenderCategories();
     window.libraryInfoUpdate = function(el) {
+        if($(el).hasClass('done')){return}
+        $(el).addClass('done')
         const gender = $(el).data('gender')
         const category = $(el).data('category')
         //$('#chatbot-library').empty()

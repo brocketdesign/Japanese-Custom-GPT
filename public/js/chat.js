@@ -1340,7 +1340,11 @@ $(document).ready(function() {
                                     if (error) {
                                         console.error('Error adding message:', error);
                                     } else {
-                                        generateCompletion();
+                                        generateCompletion(function(){
+                                            generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
+                                                generateImageNovita(API_URL, userId, chatId, userChatId, character, { prompt });
+                                            });
+                                        });
                                     }
                                 });
                             });
@@ -1350,7 +1354,6 @@ $(document).ready(function() {
                     });
                 } else {
                     const messages = [
-                        `${itemName}を見送りました。`,
                         `${itemName}は今のところ購入されていません。`,
                         `${itemName}をスキップしました。`,
                         `${itemName}を今は手に入れませんでした。`,

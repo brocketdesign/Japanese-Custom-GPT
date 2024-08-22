@@ -373,7 +373,7 @@ $(document).ready(function() {
     }
 
     // Call the function to fetch and render categories
-    fetchAndRenderCategories();
+    //fetchAndRenderCategories();
     
     window.libraryInfoUpdate = function(el) {
         const checkpoint = $(el).data('checkpoint')

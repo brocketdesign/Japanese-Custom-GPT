@@ -1222,13 +1222,13 @@ async function routes(fastify, options) {
             const narrationPrompt = [
                 {
                     role: "system",
-                    content: `You are an AI assistant helping a user formulate responses. Provide 3 short, engaging suggestions in ${language} for the user to choose from. Each suggestion should be a single sentence from the user's perspective, and should not include any content that implies it is from an assistant. Format the suggestions as a JSON array.`
+                    content: `You are an AI assistant helping formulate responses. Provide 3 short, engaging suggestions in ${language} for the user to choose from. Each suggestion should be a single sentence from the user's perspective, and should not include any content that implies it is from an assistant. Format the suggestions as a JSON array.`
                 },
                 {
                     role: "user",
                     content: `Here is the conversation transcript: ` + userMessages
                         .map(msg => msg.role !== 'system' ? `${msg.content.replace('[Narrator]', '')}` : '')
-                        .join("\n")
+                        .join("\n") + `What could I answer ?`
                 }
             ];            
 

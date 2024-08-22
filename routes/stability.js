@@ -375,7 +375,7 @@ fastify.post('/huggingface/txt2img', async (request, reply) => {
     async function fetchNovitaMagic(data) {
       try {
         const image_request = {
-          model_name: data.checkpoint || "sudachi_v10_62914.safetensors",
+          model_name: data.checkpoint || "kizukiAnimeHentai_animeHentaiV3_60405.safetensors",
           prompt: data.prompt,
           negative_prompt: "(worst quality, low quality:1.4), boring_e621, bad anatomy, (human, smooth skin:1.3), (mutated body:1.3), blurry, text, error, missing fingers, , extra digit, fewer digits, cropped, jpeg artifacts, signature, watermark, username, blurry, pregnant,",          
           width: data.width,          
@@ -513,8 +513,8 @@ async function fetchNovitaResult(task_id) {
         negativePrompt: character ? character.negativePrompt : null,
         sampler: character ? character.sampler : null,
         checkpoint: closestCheckpoint,
-        width: 512,
-        height: 712,
+        width: 576,
+        height: 1024,
       });
   
       // Polling or wait for the task to complete (you might want to add a delay or retry logic here)

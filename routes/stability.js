@@ -377,7 +377,7 @@ fastify.post('/huggingface/txt2img', async (request, reply) => {
         const image_request = {
           model_name: data.checkpoint || "sudachi_v10_62914.safetensors",// "kizukiAnimeHentai_animeHentaiV3_60405.safetensors",
           prompt: data.prompt,
-          negative_prompt: "(worst quality, low quality:1.4), boring_e621, bad anatomy, (human, smooth skin:1.3), (mutated body:1.3), blurry, text, error, missing fingers, , extra digit, fewer digits, cropped, jpeg artifacts, signature, watermark, username, blurry, pregnant,",          
+          negative_prompt: "(worst quality, low quality:1.4), boring_e621, bad anatomy,pussy, (human, smooth skin:1.3), (mutated body:1.3), blurry, text, error, missing fingers, , extra digit, fewer digits, cropped, jpeg artifacts, signature, watermark, username, blurry, pregnant,",          
           width: data.width,          
           height: data.height,
           image_num: 1,

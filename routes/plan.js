@@ -180,6 +180,10 @@ async function routes(fastify, options) {
         return reply.status(404).send({ error: 'Subscription not found' });
       }
   
+      // Define the premium plan IDs
+      const premiumMonthlyId = process.env.MODE == 'local' ? process.env.STRIPE_PREMIUM_MONTLY_TEST : process.env.STRIPE_PREMIUM_MONTLY;
+      const premiumYearlyId = process.env.MODE == 'local' ? process.env.STRIPE_PREMIUM_YEARLY_TEST : process.env.STRIPE_PREMIUM_YEARLY;
+
       // Update the user's subscription status and details in your database
       await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').updateOne(
         { _id: new fastify.mongo.ObjectId(user._id) },
@@ -194,9 +198,14 @@ async function routes(fastify, options) {
             subscriptionStartDate: new Date(subscription.start_date * 1000), 
             subscriptionEndDate: new Date(subscription.current_period_end * 1000), 
           },
+          // Check if the subscribed plan is premium and increase coins by 1,000
+          ...(subscription.items.data[0].price.id === premiumMonthlyId || subscription.items.data[0].price.id === premiumYearlyId) && {
+            $inc: { coins: 1000 }
+          }
         },
         { upsert: true } 
       );
+
 
       // Add 1000 coins to the user's account
       await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(

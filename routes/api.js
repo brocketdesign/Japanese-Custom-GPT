@@ -551,7 +551,7 @@ async function routes(fastify, options) {
                             userId: new fastify.mongo.ObjectId(userId),
                             baseId: new fastify.mongo.ObjectId(chatId),
                             latestChatDate: today,
-                            visibility: 'private',
+                            //visibility: 'private',
                           };
                           delete newChatDocument._id; // Remove the _id field to let MongoDB create a new one
                       

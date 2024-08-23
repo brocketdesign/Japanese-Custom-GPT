@@ -7,8 +7,11 @@ const aws = require('aws-sdk');
 const { createHash } = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const  { checkUserAdmin } = require('../models/tool')
 
 async function routes(fastify, options) {
+
+
   // Configure AWS S3
   const s3 = new aws.S3({
       accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -42,7 +45,13 @@ async function routes(fastify, options) {
           return uploadToS3(buffer, hash, part.filename);
       }
   };
-  fastify.get('/scraper/zeta', (request, reply) => {
+  fastify.get('/scraper/zeta', async(request, reply) => {
+      
+  let user = await fastify.getUser(request, reply);
+  const isAdmin = await checkUserAdmin(fastify, user._id);
+      if (!isAdmin) {
+          return reply.status(403).send({ error: 'Access denied' });
+      }
       const puppeteer = require('puppeteer');
     
       const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
@@ -99,6 +108,12 @@ async function routes(fastify, options) {
       reply.send({ status: 'Done' })
     });
     fastify.get('/scraper/gohiai/update-images', async (request, reply) => {
+      
+  let user = await fastify.getUser(request, reply);
+  const isAdmin = await checkUserAdmin(fastify, user._id);
+      if (!isAdmin) {
+          return reply.status(403).send({ error: 'Access denied' });
+      }
       const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
     
       async function updateImages() {
@@ -134,6 +149,12 @@ async function routes(fastify, options) {
     
     
     fastify.get('/scraper/gohiai', async (request, reply) => {
+      
+  let user = await fastify.getUser(request, reply);
+  const isAdmin = await checkUserAdmin(fastify, user._id);
+      if (!isAdmin) {
+          return reply.status(403).send({ error: 'Access denied' });
+      }
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
     
         async function scrapeGohiai() {
@@ -201,6 +222,11 @@ async function routes(fastify, options) {
         scrapeGohiai();
       });
       fastify.get('/scraper/synclubaichat', async (request, reply) => {
+        let user = await fastify.getUser(request, reply);
+        const isAdmin = await checkUserAdmin(fastify, user._id);
+        if (!isAdmin) {
+            return reply.status(403).send({ error: 'Access denied' });
+        }
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
     
         async function scrapesynclubaichat() {
@@ -274,6 +300,12 @@ async function routes(fastify, options) {
         scrapesynclubaichat();
       });
       fastify.get('/scraper/civitai', async (request, reply) => {
+        
+  let user = await fastify.getUser(request, reply);
+  const isAdmin = await checkUserAdmin(fastify, user._id);
+        if (!isAdmin) {
+            return reply.status(403).send({ error: 'Access denied' });
+        }
         try {
           const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('characters');
           const nsfw = request.query.nsfw || 'Soft' //(None, Soft, Mature, X)
@@ -353,6 +385,12 @@ async function routes(fastify, options) {
 
       // Define the route with MongoDB integration
 fastify.get('/scraper/civitai/categories', async (request, reply) => {
+  
+  let user = await fastify.getUser(request, reply);
+  const isAdmin = await checkUserAdmin(fastify, user._id);
+  if (!isAdmin) {
+      return reply.status(403).send({ error: 'Access denied' });
+  }
     const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('categories');
     const nsfw = request.query.nsfw || false
     const categories = await collection.aggregate([
@@ -407,6 +445,11 @@ fastify.get('/scraper/civitai/categories', async (request, reply) => {
 });
 
 fastify.get('/scraper/download-images', async (request, reply) => {
+  let user = await fastify.getUser(request, reply);
+  const isAdmin = await checkUserAdmin(fastify, user._id);
+  if (!isAdmin) {
+      return reply.status(403).send({ error: 'Access denied' });
+  }
   try {
       const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
       const characters = await collection.find({ ext: 'synclubaichat' }).toArray();
@@ -422,7 +465,7 @@ fastify.get('/scraper/download-images', async (request, reply) => {
               } else if (/\bfemale\b/.test(gender)) {
                   gender = "female";
               } else {
-                  continue; // Skip if gender is not male or female
+                  gender = "other";
               }
 
               const downloadDirectory = path.join(baseDownloadDirectory, gender);
@@ -452,6 +495,12 @@ fastify.get('/scraper/download-images', async (request, reply) => {
 
 
 fastify.get('/scraper/upload-images', async (request, reply) => {
+  
+  let user = await fastify.getUser(request, reply);
+  const isAdmin = await checkUserAdmin(fastify, user._id);
+  if (!isAdmin) {
+      return reply.status(403).send({ error: 'Access denied' });
+  }
   try {
       const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
       const uploadDirectory = path.join(__dirname, '../public/upload/male'); // Same as download directory
@@ -493,6 +542,12 @@ fastify.get('/scraper/upload-images', async (request, reply) => {
 });
 
 fastify.get('/scraper/create-characters', async (request, reply) => {
+  
+  let user = await fastify.getUser(request, reply);
+  const isAdmin = await checkUserAdmin(fastify, user._id);
+  if (!isAdmin) {
+      return reply.status(403).send({ error: 'Access denied' });
+  }
   try {
       const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('characters');
       const baseDirectory = path.join(__dirname, '../public/upload');

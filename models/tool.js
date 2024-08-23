@@ -2,6 +2,18 @@
 const axios = require('axios');
 const { createHash } = require('crypto');
 const aws = require('aws-sdk');
+const { ObjectId } = require('mongodb');
+
+const adminEmails = ['japanclassicstore@gmail.com','didier@line.com','e2@gmail.com']; // Add your admin emails here
+
+async function checkUserAdmin(fastify, userId) {
+    const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+    const user = await usersCollection.findOne({_id: new ObjectId(userId)});
+    if (!user) {
+        throw new Error('User not found');
+    }
+    return adminEmails.includes(user.email);
+}
 
 // Configure AWS S3
 const s3 = new aws.S3({
@@ -139,4 +151,4 @@ async function checkLimits(fastify,userId) {
 }
 
 
-  module.exports = { getCounter, updateCounter, handleFileUpload, uploadToS3, checkLimits}
+  module.exports = { getCounter, updateCounter, handleFileUpload, uploadToS3, checkLimits, checkUserAdmin}

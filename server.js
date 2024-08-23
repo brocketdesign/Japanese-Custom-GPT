@@ -10,10 +10,24 @@ const handlebars = require('handlebars');
 const { v4: uuidv4 } = require('uuid');
 const fastifyMultipart = require('fastify-multipart');
 
+const cleanupNonRegisteredUsers = require('./models/cleanupNonRegisteredUsers');
+
 mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then((client) => {
     const db = client.db(process.env.MONGODB_NAME);
 
+    // Schedule the cleanup to run every day at midnight
+    cron.schedule('0 0 * * *', () => {
+      cleanupNonRegisteredUsers(db);
+    });
+    cron.schedule('0 0 * * *', async () => {
+      try {
+        await updateCounter(db, 0);
+        fastify.log.info('Counter has been reset to 0.');
+      } catch (err) {
+        fastify.log.error('Failed to reset counter:', err);
+      }
+    });
     // Register plugins
     fastify.register(require('@fastify/static'), {
       root: path.join(__dirname, 'public'),
@@ -345,14 +359,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       }
     });
 
-    cron.schedule('0 0 * * *', async () => {
-      try {
-        await updateCounter(db, 0);
-        fastify.log.info('Counter has been reset to 0.');
-      } catch (err) {
-        fastify.log.error('Failed to reset counter:', err);
-      }
-    });
+
     fastify.get('/generate/:userid', (request, reply) => {
       const userId = request.params.userid;
       reply.view('generate.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd', userId: userId });

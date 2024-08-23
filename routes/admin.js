@@ -1,13 +1,16 @@
 const { ObjectId } = require('mongodb');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
+const  { checkUserAdmin } = require('../models/tool')
+const cleanupNonRegisteredUsers = require('../models/cleanupNonRegisteredUsers');
 async function routes(fastify, options) {
+
+
     fastify.get('/admin/users', {
         preHandler: [fastify.authenticate]
       }, async (request, reply) => {
         try {
-            const isAdmin = await checkUserAdmin(request.user._id);
+            const isAdmin = await checkUserAdmin(fastify, request.user._id);
             if (!isAdmin) {
                 return reply.status(403).send({ error: 'Access denied' });
             }
@@ -50,7 +53,7 @@ async function routes(fastify, options) {
         preHandler: [fastify.authenticate]
       }, async (request, reply) => {
         try {
-          const isAdmin = await checkUserAdmin(request.user._id);
+          const isAdmin = await checkUserAdmin(fastify, request.user._id);
           if (!isAdmin) {
             return reply.status(403).send({ error: 'Access denied' });
           }
@@ -72,7 +75,7 @@ async function routes(fastify, options) {
         preHandler: [fastify.authenticate]
       }, async (request, reply) => {
         try {
-            const isAdmin = await checkUserAdmin(request.user._id);
+            const isAdmin = await checkUserAdmin(fastify, request.user._id);
             if (!isAdmin) {
                 return reply.status(403).send({ error: 'Access denied' });
             }
@@ -106,7 +109,7 @@ async function routes(fastify, options) {
         preHandler: [fastify.authenticate]
       }, async (request, reply) => {
         try {
-            const isAdmin = await checkUserAdmin(request.user._id);
+            const isAdmin = await checkUserAdmin(fastify, request.user._id);
             if (!isAdmin) {
                 return reply.status(403).send({ error: 'Access denied' });
             }
@@ -118,17 +121,26 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: error.message });
         }
     });
-    const adminEmails = ['japanclassicstore@gmail.com','didier@line.com','e2@gmail.com']; // Add your admin emails here
 
-    async function checkUserAdmin(userId) {
-        const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
-        const user = await usersCollection.findOne({_id: new ObjectId(userId)});
-        if (!user) {
-            throw new Error('User not found');
+    fastify.get('/admin/users/cleanup', {
+        preHandler: [fastify.authenticate]
+    }, async (request, reply) => {
+        try {
+            const isAdmin = await checkUserAdmin(fastify, request.user._id);
+            if (!isAdmin) {
+                return reply.status(403).send({ error: 'Access denied' });
+            }
+    
+            const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+            const resultMessage = await cleanupNonRegisteredUsers(db);
+    
+            return reply.send({ message: resultMessage });
+        } catch (error) {
+            console.log(error);
+            return reply.status(500).send({ error: error.message });
         }
-        return adminEmails.includes(user.email);
-    }
-}
+    });
+}    
 
 
 module.exports = routes;

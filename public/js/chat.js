@@ -25,6 +25,7 @@ $(document).ready(function() {
             let chatId = getIdFromUrl(window.location.href) || getIdFromUrl($.cookie('redirect_url'))||$(`#lamix-chat-widget`).data('id');
             let userChatId
             const userId = user._id
+            renderChatList(userId,chatId);
             localStorage.setItem('userId', userId);
             localStorage.setItem('user', JSON.stringify(user));
             let userCoins = user.coins
@@ -454,7 +455,7 @@ $(document).ready(function() {
                 
                 // Create the intro elements
                 let introContainer = $('<div></div>')
-                .addClass('intro-container my-3 px-3 pt-5')
+                .addClass('intro-container my-3 px-3')
                 .attr('id','introChat');
             
                 let title = $('<h2></h2>').text(name);
@@ -593,7 +594,7 @@ $(document).ready(function() {
                         userChatId = response.userChatId
                         chatId = response.chatId
                         isNew = false;
-                        renderChatList(userId);
+                        renderChatList(userId,chatId);
                         $(`#starter-${uniqueId}`).remove()
                         generateCompletion(function(){
                             $('#stability-gen-button').show();
@@ -637,83 +638,7 @@ $(document).ready(function() {
                     }                    
                 });
             }
-            window.renderChatList = function(userId) {
-                if($('#chat-list').length == 0 || $('#chat-widget-container').length > 0){
-                    return
-                }
-                $.ajax({
-                    type: 'GET',
-                    url: '/api/chat-list/'+userId, // replace with your API endpoint
-                    success: function(data) {
-                        var chatListHtml = '';
-                        $('#user-chat-count').html(data.length)
-                        $.each(data, function(index, chat) {
-                            chatListHtml += `
-                            <div class="chat-list item user-chat d-flex align-items-center justify-content-between p-1 mx-2 rounded bg-transparent" style="cursor: pointer;" 
-                                data-id="${chat._id}" data-userid="${chat.userId}" >
-                                <div class="d-flex align-items-center w-100">
-                                    <div class="user-chat-content" style="flex: 1;display: flex;align-items: center;">
-                                        <div class="thumb align-items-center text-center justify-content-center d-flex flex-column col-3 p-1" >
-                                            <img class="img-fluid" src="${chat.thumbnailUrl || chat.chatImageUrl || '/img/logo.webp'}" alt="">
-                                        </div>
-                                        <div class="chat-list-details ps-2">
-                                        <div class="chat-list-info">
-                                            <div class="chat-list-title">
-                                            <h6 class="mb-0 online-text" style="font-size: 14px;">${chat.name}</h6>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center">
-                                    <!-- Dropdown -->
-                                    <div class="dropdown pe-2">
-                                        <button class="btn border-0 shadow-0 dropdown-toggle ms-2 " type="button" id="dropdownMenuButton_${chat._id}" data-mdb-toggle="dropdown" aria-expanded="false">
-                                            <i class="fas fa-ellipsis-v text-secondary"></i>
-                                        </button>
-                                    <ul class="dropdown-menu dropdown-menu-end chat-option-menu bg-light shadow rounded mx-3" aria-labelledby="dropdownMenuButton_${chat._id}">
-                                        <li>
-                                            <button class="dropdown-item text-secondary chart-button" data-id="${chat._id}">
-                                                <i class="fas fa-info-circle me-2"></i>
-                                                <span class="text-muted" style="font-size:12px"></span>情報</span>
-                                            </button>
-                                        </li>
-                                        <li>
-                                            <button class="dropdown-item text-secondary tag-button" data-id="${chat._id}">
-                                                <i class="fas fa-share me-2"></i> 
-                                                <span class="text-muted" style="font-size:12px"></span>共有する</span>
-                                            </button>
-                                        </li>
-                                        <li>
-                                            <a href="/chat/edit/${chat._id}" class="dropdown-item text-secondary">
-                                                <i class="far fa-edit me-2"></i> 
-                                                <span class="text-muted" style="font-size:12px"></span>編集する</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <button class="dropdown-item text-secondary reset-chat" data-id="${chat._id}">
-                                            <i class="fas fa-plus-square me-2"></i>
-                                                <span class="text-muted" style="font-size:12px"></span>新しいチャット</span>
-                                            </button>
-                                        </li>
-                                        <li>
-                                            <span data-id="${chat._id}" class="dropdown-item text-danger delete-chat" style="cursor:pointer">
-                                                <i class="fas fa-trash me-2"></i> 
-                                                <span class="text-muted" style="font-size:12px"></span>削除する</span>
-                                            </span>
-                                        </li>
-                                    </ul>
-                                    </div>
-                                    <!-- End of Dropdown -->
-                                </div>
-                                </div>
-                            </div>
-                            `;
-                        });
-                        $('#chat-list').html(chatListHtml);
-                        enableToggleDropdown();
-                    }
-                });
-            }
+            
             function displayChat(userChat) {
                 $('#stability-gen-button').show();
                 $('.auto-gen').each(function(){$(this).show()})
@@ -1885,45 +1810,6 @@ $(document).ready(function() {
             enableToggleDropdown()
         }
     }
-    function enableToggleDropdown() {
-        $(document).find('.dropdown-toggle').each(function() {
-            if (!$(this).hasClass('event-attached')) {
-                $(this).addClass('event-attached');
-    
-                // Attach the event listener
-                $(this).on('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                });
-    
-                // Initialize the dropdown
-                const dropdown = new mdb.Dropdown($(this)[0]);
-    
-                // Find the parent element that has the hover effect
-                const parent = $(this).closest('.chat-list');
-    
-                // Add hover event listeners to the parent element
-                parent.hover(
-                    function() {
-                        // When the parent element is hovered
-                        $(this).find('.dropdown-toggle').css({
-                            'opacity': 1,
-                            'pointer-events': ''
-                        });
-                    },
-                    function() {
-                        // When the parent element is no longer hovered
-                        $(this).find('.dropdown-toggle').css({
-                            'opacity': 1,
-                            'pointer-events': 'none'
-                        });
-                        // Close the dropdown
-                        dropdown.hide();
-                    }
-                );
-            }
-        });
-    }
     
     function renderChatDropdown(chat) {
         const chatId = chat._id;
@@ -1986,7 +1872,45 @@ $(document).ready(function() {
         });
     }
 });
+function enableToggleDropdown() {
+    $(document).find('.dropdown-toggle').each(function() {
+        if (!$(this).hasClass('event-attached')) {
+            $(this).addClass('event-attached');
 
+            // Attach the event listener
+            $(this).on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
+            // Initialize the dropdown
+            const dropdown = new mdb.Dropdown($(this)[0]);
+
+            // Find the parent element that has the hover effect
+            const parent = $(this).closest('.chat-list');
+
+            // Add hover event listeners to the parent element
+            parent.hover(
+                function() {
+                    // When the parent element is hovered
+                    $(this).find('.dropdown-toggle').css({
+                        'opacity': 1,
+                        'pointer-events': ''
+                    });
+                },
+                function() {
+                    // When the parent element is no longer hovered
+                    $(this).find('.dropdown-toggle').css({
+                        'opacity': 1,
+                        'pointer-events': 'none'
+                    });
+                    // Close the dropdown
+                    dropdown.hide();
+                }
+            );
+        }
+    });
+}
 function showRegistrationForm(messageId) {
 
     const redirectUrl = window.location.pathname
@@ -2073,7 +1997,86 @@ $(document).find('#register-form').on('submit', function(event) {
     });
 });
 
-
+window.renderChatList = function(userId,chatId) {
+    if($('#chat-list').length == 0 || $('#chat-widget-container').length > 0){
+        return
+    }
+    $.ajax({
+        type: 'GET',
+        url: '/api/chat-list/'+userId, // replace with your API endpoint
+        success: function(data) {
+            data.sort(function(a, b) {
+                return (b._id === chatId) - (a._id === chatId);
+            });
+            var chatListHtml = '';
+            $('#user-chat-count').html(data.length)
+            $.each(data, function(index, chat) {
+                chatListHtml += `
+                <div class="${chat._id === chatId?'active':''} chat-list item user-chat d-flex align-items-center justify-content-between p-1 mx-2 rounded bg-transparent" style="cursor: pointer;" 
+                    data-id="${chat._id}" data-userid="${chat.userId}" >
+                    <div class="d-flex align-items-center w-100">
+                        <div class="user-chat-content" style="flex: 1;display: flex;align-items: center;">
+                            <div class="thumb align-items-center text-center justify-content-center d-flex flex-column col-3 p-1" >
+                                <img class="img-fluid" src="${chat.thumbnailUrl || chat.chatImageUrl || '/img/logo.webp'}" alt="">
+                            </div>
+                            <div class="chat-list-details ps-2">
+                            <div class="chat-list-info">
+                                <div class="chat-list-title">
+                                <h6 class="mb-0 online-text" style="font-size: 14px;">${chat.name}</h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <!-- Dropdown -->
+                        <div class="dropdown pe-2">
+                            <button class="btn border-0 shadow-0 dropdown-toggle ms-2 " type="button" id="dropdownMenuButton_${chat._id}" data-mdb-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v text-secondary"></i>
+                            </button>
+                        <ul class="dropdown-menu dropdown-menu-end chat-option-menu bg-light shadow rounded mx-3" aria-labelledby="dropdownMenuButton_${chat._id}">
+                            <li>
+                                <button class="dropdown-item text-secondary chart-button" data-id="${chat._id}">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <span class="text-muted" style="font-size:12px"></span>情報</span>
+                                </button>
+                            </li>
+                            <li>
+                                <button class="dropdown-item text-secondary tag-button" data-id="${chat._id}">
+                                    <i class="fas fa-share me-2"></i> 
+                                    <span class="text-muted" style="font-size:12px"></span>共有する</span>
+                                </button>
+                            </li>
+                            <li>
+                                <a href="/chat/edit/${chat._id}" class="dropdown-item text-secondary">
+                                    <i class="far fa-edit me-2"></i> 
+                                    <span class="text-muted" style="font-size:12px"></span>編集する</span>
+                                </a>
+                            </li>
+                            <li>
+                                <button class="dropdown-item text-secondary reset-chat" data-id="${chat._id}">
+                                <i class="fas fa-plus-square me-2"></i>
+                                    <span class="text-muted" style="font-size:12px"></span>新しいチャット</span>
+                                </button>
+                            </li>
+                            <li>
+                                <span data-id="${chat._id}" class="dropdown-item text-danger delete-chat" style="cursor:pointer">
+                                    <i class="fas fa-trash me-2"></i> 
+                                    <span class="text-muted" style="font-size:12px"></span>削除する</span>
+                                </span>
+                            </li>
+                        </ul>
+                        </div>
+                        <!-- End of Dropdown -->
+                    </div>
+                    </div>
+                </div>
+                `;
+            });
+            $('#chat-list').html(chatListHtml);
+            enableToggleDropdown();
+        }
+    });
+}
 window.updateCoins = function(userCoins) {
     if(!userCoins){
         let API_URL = localStorage.getItem('API_URL')

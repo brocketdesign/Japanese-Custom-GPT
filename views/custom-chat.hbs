@@ -551,66 +551,6 @@
             <span class="text-dark ps-4 fw-bold" style="font-size: 12px;">チャット一覧 (<span id="user-chat-count" >{{chats.length}}</span>)</span>
         </div>
         <div id="chat-list" class="mt-1 pb-3" style="flex-grow: 1;overflow-y: scroll;overflow-x: hidden;">
-            {{#each chats}}
-            <div class="chat-list item user-chat d-flex align-items-center justify-content-between p-1 mx-2 rounded bg-transparent" style="cursor: pointer;" 
-            data-id="{{this._id}}" data-userid="{{this.userId}}" >
-                <div class="d-flex align-items-center w-100">
-                    <div class="user-chat-content" style="flex: 1;display: flex;align-items: center;">
-                        <div class="thumb align-items-center text-center justify-content-center d-flex flex-column col-3 p-1" >
-                            <img class="img-fluid" src="{{#if this.thumbnailUrl}}{{this.thumbnailUrl}}{{else if this.chatImageUrl}}{{this.chatImageUrl}}{{else}}/img/logo.webp{{/if}}" alt="">
-                        </div>
-                        <div class="chat-list-details ps-2">
-                            <div class="chat-list-info">
-                                <div class="chat-list-title">
-                                    <h6 class="mb-0 online-text" style="font-size: 14px;">{{this.name}}</h6>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-center">
-                        <!-- Dropdown -->
-                        <div class="dropdown pe-2">
-                            <button class="btn border-0 shadow-0 dropdown-toggle ms-2 " type="button" id="dropdownMenuButton_{{this._id}}" data-mdb-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-ellipsis-v text-secondary"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end chat-option-menu bg-light shadow rounded mx-3" aria-labelledby="dropdownMenuButton_{{this._id}}">
-                                <li>
-                                    <button class="dropdown-item text-secondary chart-button" data-id="{{this._id}}">
-                                        <i class="fas fa-info-circle me-2"></i>
-                                        <span class="text-muted" style="font-size:12px"></span>情報</span>
-                                    </button>
-                                </li>
-                                <li>
-                                    <button class="dropdown-item text-secondary tag-button" data-id="{{this._id}}">
-                                        <i class="fas fa-share me-2"></i> 
-                                        <span class="text-muted" style="font-size:12px"></span>共有する</span>
-                                    </button>
-                                </li>
-                                <li>
-                                    <a href="/chat/edit/{{this._id}}" class="dropdown-item text-secondary ">
-                                        <i class="far fa-edit me-2"></i> 
-                                        <span class="text-muted" style="font-size:12px"></span>編集する</span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <button class="dropdown-item text-secondary reset-chat" data-id="{{this._id}}">
-                                       <i class="fas fa-plus-square me-2"></i>
-                                        <span class="text-muted" style="font-size:12px"></span>新しいチャット</span>
-                                    </button>
-                                </li>
-                                <li>
-                                    <span data-id="{{this._id}}" class="dropdown-item text-danger delete-chat" style="cursor:pointer">
-                                        <i class="fas fa-trash me-2"></i> 
-                                        <span class="text-muted" style="font-size:12px"></span>削除する</span>
-                                    </span>
-                                </li>
-                            </ul>
-                        </div>
-                        <!-- End of Dropdown -->
-                    </div>
-                </div>
-            </div>
-            {{/each}}
         </div>
         <div class="is-free-user" style="display: none;">
             <a href="/my-plan" class="m-2 btn border shadow-0 btn-secondary px-5 py-2" style="border-radius:40px;background: linear-gradient(90.9deg, rgba(110, 32, 244, 0.5) 2.74%, #6E20F4 102.92%);">

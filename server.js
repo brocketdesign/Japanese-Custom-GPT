@@ -174,12 +174,6 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       const userId = user._id;
       const chatsCollection = db.collection('chats');
       const collectionUserChat = db.collection('userChat');
-
-      // Fetch all chats for the given userId from the chats collection
-      const userCreatedChats = await chatsCollection.find({ 
-        userId: new fastify.mongo.ObjectId(userId) ,
-        name:{$exists:true}
-      }).sort({ _id: -1 }).toArray();
       
       const synclubaichat = await chatsCollection.aggregate([
         {
@@ -234,7 +228,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
       const totalUsers = await db.collection('users').countDocuments({ email: { $exists: true } });
 
-      return reply.view('custom-chat.hbs', { title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd', user, userId, chatId, chats: userCreatedChats, peopleChats, totalUsers });
+      return reply.view('custom-chat.hbs', { title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd', user, userId, chatId, peopleChats, totalUsers });
     });
     
     fastify.get('/character/:id', async (request, reply) => {

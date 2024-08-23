@@ -4,26 +4,25 @@ const qs = require('qs');
 const stripe = process.env.MODE == 'local'? require('stripe')(process.env.STRIPE_SECRET_KEY_TEST) : require('stripe')(process.env.STRIPE_SECRET_KEY)
 
 async function routes(fastify, options) {
-
+  const free_plan =  {
+    id: 'free',
+    name: "お試しプラン",
+    price: "無料",
+    monthly: "無料",
+    yearly: "無料",
+    features: [
+      "💬   1日50件までチャットできる",
+      "👥   フレンドを無制限で作成できる",
+      "🎨   新しいキャラクターを作成する",
+      "📝   チャット履歴を保存する",
+      "🤖   基本的なAIキャラクターとの対話",
+      "🖼   最大3件の画像生成",
+      "💡   10件のメッセージ提案機能",
+      "🎁   毎日プレゼントを受け取る"
+    ],
+    chatLimit:'無制限',
+  }
   const plans = [
-    {
-      id: 'free',
-      name: "お試しプラン",
-      price: "無料",
-      monthly: "無料",
-      yearly: "無料",
-      features: [
-        "💬   1日50件までチャットできる",
-        "👥   フレンドを無制限で作成できる",
-        "🎨   新しいキャラクターを作成する",
-        "📝   チャット履歴を保存する",
-        "🤖   基本的なAIキャラクターとの対話",
-        "🖼   最大3件の画像生成",
-        "💡   10件のメッセージ提案機能",
-        "🎁   毎日プレゼントを受け取る"
-      ],
-      chatLimit:'無制限',
-    },
     {
       id: 'premium',
       name: "プレミアムプラン",

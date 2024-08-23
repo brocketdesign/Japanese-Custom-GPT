@@ -471,16 +471,19 @@
                 type: 'GET',
                 dataType: 'json',
                 success: function(chatData) {
-                    if(chatData.isAutoGen){
+                    console.log(chatData)
+                    if(chatData.isAutoGen == 'true'){
                         $('input, textarea').prop('disabled', true);
                         $('#chatPurpose').hide();
                         $('#chatPurpose-markdownContainer').show()
                     }
                     if(chatData.purpose){
+                        console.log(chatData.purpose)
                         var htmlContent = marked.parse(chatData.purpose);
                         $('#chatPurpose-container').show()
-                        $('#chatPurpose-markdownContainer').html(htmlContent)
+                        //$('#chatPurpose-markdownContainer').html(htmlContent)
                         $('#chatPurpose').val(chatData.purpose)
+                        resizeTextarea($('#chatPurpose')[0])
                     }
                     if(chatData.name){
                         $('#chatName').val(chatData.name);
@@ -501,7 +504,7 @@
                     }
                     if(chatData.category){
                         $('#chatCategory').val(chatData.category);
-                        $('#chatCategory').parent().show()
+                        //$('#chatCategory').parent().show()
                     }
                     
                     var chatDescriptionTextare = $('#chatDescription')
@@ -522,9 +525,6 @@
                         },500)
                         chatRuleTextarea.parent().show();
                         $('#markdownContainer').show();
-
-                        $('#sendForm').show()
-                        $('.sendForm-text').show()
                     }
                     
                     $('#chatUrl').val(chatData.url);
@@ -548,7 +548,7 @@
                         $('#chatImage').attr('src', chatData.chatImageUrl).show().addClass('on');
                     }
 
-                    $('#sendForm').show()
+                    checkFieldsAndShowForm()
                     $('#chatForm').removeClass('d-none')
                     //$('#genStructure').removeClass('btn-outline-secondary').addClass('btn-secondary')
                 },

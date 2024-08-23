@@ -45,7 +45,39 @@ $(document).ready(function() {
 
             if(isTemporary){
                 setTimeout(() => {
-                    showRegistrationForm()
+                    showRegistrationForm(null,function(){
+                        const  triggerCustomAlert = function() {
+                            Swal.fire({
+                                position: 'top-end',
+                                title: '<strong class="u-color-grad" style="font-size:16px">ログインするとプレゼントを100円ゲット！</strong>',
+                                html: `
+                                    <p style="font-size: 14px; margin-bottom: 10px;">今すぐログインしてプレゼントを受け取りましょう！</p>
+                                    <a href="/authenticate" class="btn btn-dark border-0 shadow-0 w-100 custom-gradient-bg" style="font-size: 14px; padding: 8px;">ログイン</a>
+                                `,
+                                showConfirmButton: false,
+                                showCloseButton: true,
+                                backdrop: false,
+                                allowOutsideClick: false,
+                                customClass: {
+                                    title: 'swal2-custom-title',
+                                    popup: 'swal2-custom-popup bg-light border border-dark',
+                                    content: 'swal2-custom-content',
+                                    closeButton: 'swal2-top-left-close-button',
+                                    popup: 'swal2-custom-popup animate__animated animate__fadeIn',
+                                },
+                                showClass: {
+                                    popup: 'animate__animated animate__fadeIn'
+                                },
+                                hideClass: {
+                                    popup: 'animate__animated animate__slideOutRight'
+                                },
+                            });
+                        }
+                        setTimeout(() => {
+                            triggerCustomAlert();
+                        }, 2000);
+                        
+                    })
                 }, 5000);
             }
 
@@ -597,10 +629,12 @@ $(document).ready(function() {
                         renderChatList(userId,chatId);
                         $(`#starter-${uniqueId}`).remove()
                         generateCompletion(function(){
-                            $('#stability-gen-button').show();
                             $('.auto-gen').each(function(){$(this).show()})
                             $('#audio-play').show();
                             $('#input-container').show().addClass('d-flex');
+                            if($('#chat-widget-container').length == 0 && isTemporary){
+                                displayMessage('assistant',`<a class="btn btn-secondary custom-gradient-bg shadow-0 m-2 px-4 py-2" style="border-radius: 50px;" href="/authenticate"><i class="fas fa-sign-in-alt me-2"></i> ログイン</a>`)
+                            }
                         })
                         updateParameters(chatId,userId)
 
@@ -1889,9 +1923,14 @@ function enableToggleDropdown() {
             // Find the parent element that has the hover effect
             const parent = $(this).closest('.chat-list');
 
+            let hoverTimeout;
+
             // Add hover event listeners to the parent element
             parent.hover(
                 function() {
+                    if (hoverTimeout) {
+                        clearTimeout(hoverTimeout);
+                    }
                     // When the parent element is hovered
                     $(this).find('.dropdown-toggle').css({
                         'opacity': 1,
@@ -1899,19 +1938,21 @@ function enableToggleDropdown() {
                     });
                 },
                 function() {
-                    // When the parent element is no longer hovered
-                    $(this).find('.dropdown-toggle').css({
-                        'opacity': 1,
-                        'pointer-events': 'none'
-                    });
-                    // Close the dropdown
-                    dropdown.hide();
+                    hoverTimeout = setTimeout(() => {
+                        // When the parent element is no longer hovered
+                        $(this).find('.dropdown-toggle').css({
+                            'opacity': 1,
+                            'pointer-events': 'none'
+                        });
+                        // Close the dropdown
+                        dropdown.hide();
+                    }, 500);
                 }
             );
         }
     });
 }
-function showRegistrationForm(messageId) {
+function showRegistrationForm(messageId,callback) {
 
     const redirectUrl = window.location.pathname
     $.cookie('redirect_url', redirectUrl);
@@ -1968,6 +2009,9 @@ function showRegistrationForm(messageId) {
     }).then((result) => {
         if (result.dismiss) {
           $.removeCookie('redirect_url');
+          if(typeof callback === 'function'){
+            callback()
+          }
         }
       });
 }

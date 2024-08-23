@@ -22,6 +22,7 @@ $(document).ready(function() {
         localStorage.setItem('MODE',mode)
         localStorage.setItem('API_URL',API_URL)
         fetchUser(function(error, user){
+            console.log(user)
             let chatId = getIdFromUrl(window.location.href) || getIdFromUrl($.cookie('redirect_url'))||$(`#lamix-chat-widget`).data('id');
             let userChatId
             const userId = user._id

@@ -113,7 +113,7 @@ async function checkLimits(fastify,userId) {
         });
 
         if (existingSubscription) {
-            const billingCycle = existingSubscription.billingCycle + 'ly';
+            const billingCycle = existingSubscription.billingCycle;
             const currentPlanId = existingSubscription.currentPlanId;
             const plansFromDb = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('plans').findOne();
             const plans = plansFromDb.plans;

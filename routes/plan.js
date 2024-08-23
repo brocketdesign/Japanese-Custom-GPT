@@ -80,7 +80,7 @@ async function routes(fastify, options) {
   
       // Extract planId and billingCycle from the request body
       const { planId, billingCycle } = request.body;
-  
+
       // Find the plan from your available plans
       const plan = plans.find((plan) => plan.id === planId);
   
@@ -107,7 +107,7 @@ async function routes(fastify, options) {
         subscriptionType: process.env.MODE
       });
       if(existingSubscription && existingSubscription.currentPlanId != planPriceId ){
-        console.log(`change plan to ${planId}`)
+        console.log(`change plan to ${planId} ${billingCycle}`)
         return reply.send({
           action: 'upgrade',
           newPlanId: planId,
@@ -194,26 +194,33 @@ async function routes(fastify, options) {
             subscriptionStatus: 'active',
             subscriptionType: process.env.MODE,
             currentPlanId: subscription.items.data[0].price.id, 
-            billingCycle: subscription.items.data[0].price.recurring.interval, 
+            billingCycle: subscription.items.data[0].price.recurring.interval+'ly', 
             subscriptionStartDate: new Date(subscription.start_date * 1000), 
             subscriptionEndDate: new Date(subscription.current_period_end * 1000), 
           },
-          // Check if the subscribed plan is premium and increase coins by 1,000
-          ...(subscription.items.data[0].price.id === premiumMonthlyId || subscription.items.data[0].price.id === premiumYearlyId) && {
-            $inc: { coins: 1000 }
-          }
         },
         { upsert: true } 
       );
-
-
-      // Add 1000 coins to the user's account
       await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
         { _id: new fastify.mongo.ObjectId(user._id) },
         {
-          $inc: { coins: 1000 }
+          $set: { 
+            stripeCustomerId: session.customer, 
+            subscriptionStatus: 'active',
+            stripeSubscriptionId: session.subscription
+          }
         }
       );
+      if((subscription.items.data[0].price.id === premiumMonthlyId || subscription.items.data[0].price.id === premiumYearlyId)){
+        // Add 1000 coins to the user's account
+        await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
+          { _id: new fastify.mongo.ObjectId(user._id) },
+          {
+            $inc: { coins: 1000 }
+          }
+        );
+      }
+
 
       // Redirect the user to a success page or dashboard
       return reply.redirect(`${frontEnd}/chat/?subscribe=true`);
@@ -288,7 +295,22 @@ async function routes(fastify, options) {
       if (updateResult.modifiedCount === 0) {
         return reply.status(500).send({ error: 'サブスクリプションの更新に失敗しました' }); // Failed to update subscription
       }
-  
+
+      await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
+        { 
+          _id: new fastify.mongo.ObjectId(user._id),
+          subscriptionType: process.env.MODE 
+        },
+        {
+          $set: {
+            subscriptionStatus: 'canceled',
+            subscriptionEndDate: new Date(),
+          },
+          $unset: {
+            stripeSubscriptionId: '',
+          },
+        }
+      );
       return reply.send({ message: 'サブスクリプションがキャンセルされました' }); // Subscription canceled
     } catch (error) {
       console.error('Error canceling subscription:', error);
@@ -333,15 +355,15 @@ async function routes(fastify, options) {
             },
           ],
         });
-              // Update the user's subscription status and details in your database
+      // Update the user's subscription status and details in your database
       await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').updateOne(
         { _id: new fastify.mongo.ObjectId(userId) },
         {
           $set: {
             currentPlanId: planPriceId, 
+            billingCycle
           },
         },
-        { upsert: true } // Add this option to insert a new document if no match is found
       );
       } catch (stripeError) {
         return reply.status(500).send({ error: 'Error updating subscription', details: stripeError.message });

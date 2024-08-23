@@ -353,7 +353,7 @@ img {
     const currentPlanId = data.plan.currentPlanId
     $.get('/plan/list',function(data){
       const plans = data.plans
-      const plan = plans.find((plan) => plan[`${billingCycle}ly_id`] === currentPlanId);
+      const plan = plans.find((plan) => plan[`${billingCycle}_id`] === currentPlanId);
       if(plan){
         message = `現在のプランは : <span class="fw-bold">${plan.name}</span>`
         $('#cancel-plan').show()

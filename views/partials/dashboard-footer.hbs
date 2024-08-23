@@ -36,7 +36,7 @@ window.updatePlanStatus = function(user){
 
       $.get('/plan/list',function(data){
           const plans = data.plans
-          const plan = plans.find((plan) => plan[`${billingCycle}ly_id`] === currentPlanId);
+          const plan = plans.find((plan) => plan[`${billingCycle}_id`] === currentPlanId);
           switch (plan.id) {
             case 'free':
               message = `<span class="ms-1">&#x1F381;</span>`;

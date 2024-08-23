@@ -483,7 +483,9 @@
                         $('#chatPurpose-container').show()
                         //$('#chatPurpose-markdownContainer').html(htmlContent)
                         $('#chatPurpose').val(chatData.purpose)
-                        resizeTextarea($('#chatPurpose')[0])
+                        setTimeout(function(){
+                            resizeTextarea($('#chatPurpose')[0])
+                        },500)
                     }
                     if(chatData.name){
                         $('#chatName').val(chatData.name);
@@ -519,12 +521,12 @@
                     var chatRuleTextarea = $('#chatRule');
                     if(chatData.rule){
                         chatRuleTextarea.val(chatData.rule);
-                        $('#markdownContainer').html(chatData.rule)
+                        //$('#markdownContainer').html(chatData.rule)
                         setTimeout(function(){
                             resizeTextarea(chatRuleTextarea[0]);
                         },500)
-                        chatRuleTextarea.parent().show();
-                        $('#markdownContainer').show();
+                        //chatRuleTextarea.parent().show();
+                        //$('#markdownContainer').show();
                     }
                     
                     $('#chatUrl').val(chatData.url);

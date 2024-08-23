@@ -96,6 +96,7 @@ async function routes(fastify, options) {
         const options = { timeZone: 'Asia/Tokyo', year: 'numeric', month: 'long', day: 'numeric', weekday: 'long', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false };
         chatData.updatedAt = new Date(dateObj);
         chatData.dateStrJP = new Date(dateObj).toLocaleDateString('ja-JP', options);
+        chatData.isTemporary = false
 
         try {
             const existingChat = await collection.findOne({ _id: new fastify.mongo.ObjectId(chatData.chatId) });
@@ -109,7 +110,6 @@ async function routes(fastify, options) {
                 chatData.userId = userId;
                 chatData.createdAt = new Date(dateObj);
                 const result = await collection.insertOne(chatData);
-                console.log('New Chat added:', result.insertedId);
                 return reply.send({ message: 'Chat added successfully', chatId: result.insertedId });
             }
         } catch (error) {

@@ -19,56 +19,35 @@ async function routes(fastify, options) {
         "📝   チャット履歴を保存する",
         "🤖   基本的なAIキャラクターとの対話",
         "🖼   最大3件の画像生成",
-        "💡   10件のメッセージ提案機能"
+        "💡   10件のメッセージ提案機能",
+        "🎁   毎日プレゼントを受け取る"
       ],
       chatLimit:'無制限',
     },
     {
       id: 'premium',
       name: "プレミアムプラン",
-      price: "￥1,200円/月",
-      monthly: "￥1,200円/月",
-      yearly: "￥830円/月",
+      price: "￥500円/月",
+      monthly: "￥500円/月",
+      yearly: "￥300円/月",
       monthly_id : process.env.MODE == 'local'? process.env.STRIPE_PREMIUM_MONTLY_TEST: process.env.STRIPE_PREMIUM_MONTLY,
       yearly_id : process.env.MODE == 'local'? process.env.STRIPE_PREMIUM_YEARLY_TEST: process.env.STRIPE_PREMIUM_YEARLY,
       features: [
-        "💬   1日200件までチャットできる",
+        "💬   毎日無制限でチャットできる",
         "👥   フレンドを無制限で作成できる",
         "🎨   新しいキャラクターを作成する",
         "🚀   新機能の先行アクセス",
         "🗂   複数選択肢のチャット表示",
         "🌐   外部サイトへのチャット埋め込み",
-        "🖼   最大100件の画像生成",
-        "💡   50件のメッセージ提案機能"
-      ],
-      messageLimit:200,
-      chatLimit:'無制限',
-      imageLimit:100,
-      messageIdeasLimit:50,
-    },
-    {
-      id:'special',
-      name: "特別プラン",
-      price: "￥3,000円/月",
-      monthly: "￥3,000円/月",
-      yearly: "￥2,500円/月",
-      monthly_id : process.env.MODE == 'local'? process.env.STRIPE_SPECIAL_MONTLY_TEST: process.env.STRIPE_SPECIAL_MONTLY,
-      yearly_id : process.env.MODE == 'local'? process.env.STRIPE_SPECIAL_YEARLY_TEST: process.env.STRIPE_SPECIAL_YEARLY,
-      features: [
-        "💬   毎日無制限でチャットできる",
-        "👥   フレンドを無制限で作成できる",
-        "🎨   新しいキャラクターを作成する",
-        "🚀   新機能への早期アクセス",
-        "⚡   優先的なサポート対応",
-        "🌐  外部サイトへのチャット埋め込み",
-        "💡  無制限のメッセージ提案機能",
-        "🖼   500件の画像生成"
+        "🖼   無制限の画像生成",
+        "💡   無制限のメッセージ提案機能",
+        "🪙   毎月1,000コインを獲得する"
       ],
       messageLimit:'無制限',
       chatLimit:'無制限',
-      imageLimit:500,
+      imageLimit:'無制限',
       messageIdeasLimit:'無制限',
-    }
+    },
   ];
 
   fastify.get('/plan/list', async (request, reply) => {

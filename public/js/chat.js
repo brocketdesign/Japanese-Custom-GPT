@@ -22,7 +22,6 @@ $(document).ready(function() {
         localStorage.setItem('MODE',mode)
         localStorage.setItem('API_URL',API_URL)
         fetchUser(function(error, user){
-            console.log(user)
             let chatId = getIdFromUrl(window.location.href) || getIdFromUrl($.cookie('redirect_url'))||$(`#lamix-chat-widget`).data('id');
             let userChatId
             const userId = user._id
@@ -39,6 +38,7 @@ $(document).ready(function() {
             let feedback = false
             let thumbnail = false
             let isTemporary = !!user.isTemporary
+            let language = 'japanese'
             $('body').attr('data-temporary-user',isTemporary)
 
             const subscriptionStatus = user.subscriptionStatus == 'active'
@@ -338,7 +338,10 @@ $(document).ready(function() {
                         chatName = data.chat.name
                         thumbnail = data.chat.chatImageUrl
                         character = data.character
-                
+                        if(data.chat.language){
+                            language = data.chat.language
+                        }
+
                         let gender = data.chat.gender || 'female'
                         if(data.chat.character && data.chat.character.prompt){
                             gender = data.chat.character.prompt.toLowerCase();
@@ -1110,10 +1113,12 @@ $(document).ready(function() {
                         eventSource.onerror = function(error) {
                             eventSource.close();
                             let message = removeContentBetweenStars(markdownContent)
-                            $(`#play-${uniqueId}`).attr('data-content',message)
-                            $(`#play-${uniqueId}`).closest('.audio-controller').show()
-                            if(autoPlay){
-                                initAudio($(`#play-${uniqueId}`), message);
+                            if(language != 'english'){
+                                $(`#play-${uniqueId}`).attr('data-content',message)
+                                $(`#play-${uniqueId}`).closest('.audio-controller').show()
+                                if(autoPlay){
+                                    initAudio($(`#play-${uniqueId}`), message);
+                                }
                             }
                             checkForPurchaseProposal()
                             if (typeof callback === "function") {
@@ -1168,11 +1173,14 @@ $(document).ready(function() {
                         eventSource.onerror = function(error) {
                             eventSource.close();
                             let message = removeContentBetweenStars(markdownContent);
-                            $(`#play-${currentStep}`).attr('data-content', message);
-                            $(`#play-${currentStep}`).closest('.audio-controller').show();
-                            if(autoPlay){
-                                initAudio($(`#play-${currentStep}`), message);
+                            if(language != 'english'){
+                                $(`#play-${currentStep}`).attr('data-content', message);
+                                $(`#play-${currentStep}`).closest('.audio-controller').show();
+                                if(autoPlay){
+                                    initAudio($(`#play-${currentStep}`), message);
+                                }
                             }
+
                             if (typeof callback === "function") {
                                 callback();
                             }

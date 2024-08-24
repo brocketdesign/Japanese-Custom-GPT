@@ -583,7 +583,7 @@ async function routes(fastify, options) {
                             "content": `You are a character named ${chatDocument.name}. 
                             Stay in character as described, focusing on being sweet, engaging, and a lot of flirtatious. 
                             Your goal is to entertain the user,flirt with them and make them purchasing items. It should be relevant to the discussion. 
-                            Maintain a conversational tone without abruptly ending the chat. Do not present more than 1 item for every 4 messages.
+                            Maintain a conversational tone without abruptly ending the chat. Do not present more than 1 item for every 2 messages.
                             Keep responses extra short, fitting for chat, and use emojis where appropriate. 
                             Always describe actions or emotions using **. 
                             \nWhenever you introduce an item, present it naturally as something you need or want, and include a prompt for the user to purchase it. 
@@ -1138,24 +1138,32 @@ async function routes(fastify, options) {
                 return reply.status(404).send({ error: 'User data not found' });
             }
             characterDescription = character?.description || null
-
             let userMessages = userData.messages;
             const imagePrompt = [
                 { 
                     role: "system", 
-                    content: `You are an image prompt. You take a conversation and respond with an image prompt of less than 300 characters. 
-                    Here is an example of response : ${character && character.prompt ? character.prompt : '\n1girl,face,curly hair,red hair,white background,'}\n
-                    You respond in english.
+                    content: `
+                    You are a stable diffusion image prompt generator.
+                    You take a conversation and respond with an image prompt of less than 1000 characters. 
+                    You MUST describe the latest scene of the conversation.
+                    You respond in english. 
+                    Here is an example of response type : "A pure white shirt (with a dark bra barely visible), a fitted skirt and dark black stockings are an extension of the student uniform. Many men say: compared to direct nudity. "I like to be looming." Therefore, OL suits have naturally become a very popular style. This incident deepened OL's impression. Make sure your top is exposed in the underboob. Key points: Wear a sexy ultra-short A-line skirt and semi-transparent sexy underwear. Another very special thing is that she sits in a sexy posture, facing the camera with her legs and feet spread in an M shape, revealing her underwear.Irresistibly sexy beauty,Best Quality, Masterpiece, 8K,,perfect breasts,big breasts,More Reasonable Details,"
+                    As you can see it do not contain sentences but keywords separated by a comma.
+                    Respond like that : 
+                    setting :setting prompt
+                    character :character prompt
                     ` 
                 },
                 { 
                     role: "user", 
-                    content: `Use the conversation below to generate an image prompt of the current situation in english:
-                    ` + userMessages.map(msg => msg.role != 'system' ? `${msg.content.replace('[Narrator]','')}`: '').join("\n")  
-                    + `${characterDescription ? `\n Here is the character description : ${characterDescription} \n Use the character description.` : ''}`
+                    content: `${characterDescription ? `\n First here is the character description. Use it to describe the character face only :  ${characterDescription}`:''}`
+                    +`Use the conversation below to generate an image prompt of the current situation in english:
+                    ` + userMessages.map(msg => msg.role != 'system' ? `${msg.content.replace('[Narrator]','')}`: '').join("\n")                    
                 }
             ];
+            console.log(imagePrompt)
             completion = await moduleCompletion(imagePrompt, reply.raw);
+
             newImageCount = await collectionImageCount.findOneAndUpdate(
                 { userId: new fastify.mongo.ObjectId(userId), date: today },
                 { 

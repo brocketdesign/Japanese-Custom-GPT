@@ -377,7 +377,7 @@ fastify.post('/huggingface/txt2img', async (request, reply) => {
         const image_request = {
           model_name: data.checkpoint || "meinahentai_v4_70340.safetensors", // "sudachi_v10_62914.safetensors",// "kizukiAnimeHentai_animeHentaiV3_60405.safetensors",
           prompt: data.prompt,
-          negative_prompt: "(worst quality, low quality:1.4), boring_e621, bad anatomy,pussy, (human, smooth skin:1.3), (mutated body:1.3), blurry, text, error, missing fingers, , extra digit, fewer digits, cropped, jpeg artifacts, signature, watermark, username, blurry, pregnant,",          
+          negative_prompt: "rybadimagenegative_v1.3, ng_deepnegative_v1_75t, (ugly face:0.8),cross-eyed,sketches, (worst quality:2),(low quality:2), (normal quality:2),normal quality,((monochrome)),((grayscale)), skin spots,acnes,(((skin blemishes))),bad anatomy,(Multiple people),bad hands,,missing fingers,cropped,low quality, jpeg artifacts,burned,(((blurry))),cropped, poorly drawn hands,poorly drawn face,mutation,deformed,worst quality,extra limbs,(((extra legs))), malformed limbs, fused fingers,too many fingers,long neck,cross-eyed,mutated hands, polar lowres,bad body,bad proportions,gross proportions,extra digit,(((extra arms))), extra leg,((repeating hair)),distorded background,(((distorded light))),deformed nippples, deformed clothes,enlogated body parts,extra torsos,(((odd color skin))),deformed anatomy, fused limbs, ((body fused with clothes)),(((extra fingers))),(((blurry parts))),chromatic mess,(((gross proportions))),skin blemishes,(((blurry face))),deformed face,(((incomplete clothes)))",          
           width: data.width,          
           height: data.height,
           image_num: 1,
@@ -513,8 +513,8 @@ async function fetchNovitaResult(task_id) {
         negativePrompt: character ? character.negativePrompt : null,
         sampler: character ? character.sampler : null,
         checkpoint: closestCheckpoint,
-        width: 536,
-        height: 960,
+        width: 512,
+        height: 1024,
       });
   
       // Polling or wait for the task to complete (you might want to add a delay or retry logic here)

@@ -50,7 +50,7 @@ $(document).ready(function() {
                         const  triggerCustomAlert = function() {
                             Swal.fire({
                                 position: 'top-end',
-                                title: '<strong class="u-color-grad" style="font-size:16px">ログインするとプレゼントを200円相当ゲット！</strong>',
+                                title: '<strong class="u-color-grad" style="font-size:16px">ログインすると<br>プレゼントを200円相当ゲット！</strong>',
                                 html: `
                                     <p style="font-size: 14px; margin-bottom: 10px;">今すぐログインしてプレゼントを受け取りましょう！</p>
                                     <a href="/authenticate" class="btn btn-dark border-0 shadow-0 w-100 custom-gradient-bg" style="font-size: 14px; padding: 8px;">ログイン</a>

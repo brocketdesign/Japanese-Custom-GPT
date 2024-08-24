@@ -381,11 +381,11 @@ fastify.post('/huggingface/txt2img', async (request, reply) => {
           width: data.width,          
           height: data.height,
           image_num: 1,
-          steps: 30,
+          steps: 40,
           seed: -1,
           clip_skip: 1,
-          guidance_scale: 7.5,
-          sampler_name: "DPM++ 2S a Karras",
+          guidance_scale: 10,
+          sampler_name: "Euler a",// "DPM++ 2S a Karras",
         }
         console.log(image_request)
         const response = await axios.post('https://api.novita.ai/v3/async/txt2img', {
@@ -513,7 +513,7 @@ async function fetchNovitaResult(task_id) {
         negativePrompt: character ? character.negativePrompt : null,
         sampler: character ? character.sampler : null,
         checkpoint: closestCheckpoint,
-        width: 768,
+        width: 536,
         height: 960,
       });
   

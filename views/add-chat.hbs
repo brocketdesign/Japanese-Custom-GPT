@@ -1024,34 +1024,28 @@
             const imageUrl = $('#chatImageUrl').val();
             const language = $('#language').val();
 
-            convertImageUrlToBase64(imageUrl, function(base64Image) {
-                if (!base64Image) {
-                    console.log('Failed to convert image to Base64.');
-                    return;
-                }
+            const system = createSystemPayloadImage(language);
 
-                const system = createSystemPayloadImage(language);
-                const message = createMessagePayload(base64Image);
+            const apiUrl = '/api/openai-image-description';
 
-                const apiUrl = '/api/openai-image-description';
-
-                $.ajax({
-                    url: apiUrl,
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ message, system, imageUrl }),
-                    success: function(response) {
-                        if (callback) {
-                            callback(response);
-                        }
-                    },
-                    error: function(xhr) {
-                        console.log('Error:', xhr.responseText);
-                        if (callback) {
-                            callback(null);
-                        }
+            $.ajax({
+                url: apiUrl,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ system, imageUrl }),
+                success: function(response) {
+                    console.log(response);
+                    if (callback) {
+                        callback(response);
                     }
-                });
+                },
+                error: function(xhr) {
+                    alert('Error:', xhr.responseText)
+                    console.log('Error:', xhr.responseText);
+                    if (callback) {
+                        callback(null);
+                    }
+                }
             });
         }
 
@@ -1167,49 +1161,21 @@
 
         // Function to convert image URL to Base64 (as explained earlier)
         function convertImageUrlToBase64(url, callback) {
-            const img = new Image();
-            img.crossOrigin = 'Anonymous'; // Handle CORS if the image is from a different origin
-
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                const maxWidth = 800; // Default max width
-                const maxHeight = 800; // Default max height
-                const quality = 0.7; // Default quality for compression (0.7 = 70%)
-
-                let width = img.width;
-                let height = img.height;
-
-                // Calculate new dimensions based on the maximum width/height while maintaining aspect ratio
-                if (width > height) {
-                    if (width > maxWidth) {
-                        height *= maxWidth / width;
-                        width = maxWidth;
-                    }
-                } else {
-                    if (height > maxHeight) {
-                        width *= maxHeight / height;
-                        height = maxHeight;
-                    }
+            $.ajax({
+                url: '/api/convert-image-url-to-base64', // Your Fastify API endpoint
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ imageUrl: url }),
+                success: function(response) {
+                    callback(response.base64Image);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error converting image URL to Base64:', error);
+                    callback(null);
                 }
-
-                canvas.width = width;
-                canvas.height = height;
-
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-
-                // Convert the canvas to a Base64 string with specified quality (JPEG)
-                const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
-                callback(compressedBase64.split(',')[1]); // Extract Base64 string from Data URL
-            };
-
-            img.onerror = function() {
-                console.error('Image load error');
-                callback(null);
-            };
-
-            img.src = url;
+            });
         }
+
 
         function generateName(callback) {
 

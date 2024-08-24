@@ -151,4 +151,20 @@ async function checkLimits(fastify,userId) {
 }
 
 
-  module.exports = { getCounter, updateCounter, handleFileUpload, uploadToS3, checkLimits, checkUserAdmin}
+async function convertImageUrlToBase64(imageUrl) {
+    try {
+        const response = await axios.get(imageUrl, {
+            responseType: 'arraybuffer'
+        });
+
+        const buffer = Buffer.from(response.data, 'binary');
+        const base64Image = buffer.toString('base64');
+
+        return `data:image/jpeg;base64,${base64Image}`;
+    } catch (error) {
+        throw new Error('Failed to convert image URL to Base64');
+    }
+}
+
+
+  module.exports = { getCounter, updateCounter, handleFileUpload, uploadToS3, checkLimits, checkUserAdmin, convertImageUrlToBase64}

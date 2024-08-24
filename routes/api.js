@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const aws = require('aws-sdk');
 const sessions = new Map(); // Define sessions map
 const { analyzeScreenshot, processURL } = require('../models/scrap');
-const { handleFileUpload, uploadToS3, checkLimits } = require('../models/tool');
+const { handleFileUpload, uploadToS3, checkLimits, convertImageUrlToBase64 } = require('../models/tool');
 const { createHash } = require('crypto');
 const { convert } = require('html-to-text');
 const axios = require('axios');
@@ -1631,22 +1631,35 @@ async function routes(fastify, options) {
             reply.status(500).send({ status: 'error', message: 'Error fetching categories', error: error.message });
         }
     });
+
     fastify.post('/api/openai-image-description', async (request, reply) => {
-        const { message, system, imageUrl } = request.body;
+        const { system, imageUrl } = request.body;
     
-        if (!message || !system) {
-            return reply.status(400).send({ error: 'Message and System parameters are required' });
+        if (!system || !imageUrl) {
+            return reply.status(400).send({ error: 'System and Image URL parameters are required' });
         }
     
         try {
+            // Convert image URL to Base64
+            const base64Image = await convertImageUrlToBase64(imageUrl);
+    
             let messages = [
                 { role: "system", content: system },
-                { role: "user", content: message },
+                { 
+                    role: "user", 
+                    content: [{
+                        "type": "image_url",
+                        "image_url": {
+                            "url": base64Image
+                        }
+                    }]
+                }
             ];
+    
             // Trigger the operations without waiting
             moduleCompletion(messages)
                 .then(async (description) => {
-                    console.log({description})
+                    console.log({description});
                     const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
                     const collection = db.collection('characters');
     
@@ -1657,21 +1670,45 @@ async function routes(fastify, options) {
                     };
     
                     await collection.updateOne(
-                        { image:imageUrl },
+                        { image: imageUrl },
                         { $set: result },
                         { upsert: true }
                     );
-
                 })
                 .catch(error => console.error('Error processing the image description:', error));
     
             // Immediately respond without waiting for the background operations
             reply.send({ status: 'Processing in the background' });
         } catch (error) {
+            console.log(error);
             reply.status(500).send({ error: 'Internal Server Error', details: error.message });
         }
-    });    
+    });
+      
+
+    fastify.post('/api/convert-image-url-to-base64', async (request, reply) => {
+        const { imageUrl } = request.body;
     
+        if (!imageUrl) {
+            return reply.status(400).send({ error: 'Image URL is required' });
+        }
+    
+        try {
+            const response = await axios.get(imageUrl, {
+                responseType: 'arraybuffer'
+            });
+    
+            const buffer = Buffer.from(response.data, 'binary');
+    
+            // Convert image buffer to Base64
+            const base64Image = buffer.toString('base64');
+    
+            reply.send({ base64Image });
+        } catch (error) {
+            reply.status(500).send({ error: 'Failed to convert image to Base64', details: error.message });
+        }
+    });
+
     fastify.get('/api/check-image-description', async (request, reply) => {
         const imageUrl = request.query.imageUrl;
         
@@ -1689,7 +1726,7 @@ async function routes(fastify, options) {
             result = result?.description
 
             if (!result) {
-                return reply.status(404).send({ error: 'No description found for this image' });
+                return reply.send(false);
             }
     
             // Return the result

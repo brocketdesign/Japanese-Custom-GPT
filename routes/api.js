@@ -168,7 +168,7 @@ async function routes(fastify, options) {
         let { userId, chatId, userChatId } = request.body;
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
         const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-        const collectionCharacters = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('characters'); // Assuming this is the collection for characters
+        const collectionCharacters = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('characters');
     
         let response = {
             isNew: true,
@@ -202,9 +202,11 @@ async function routes(fastify, options) {
             }
     
             response.chat = chat;
-    
-            // Find the corresponding character based on chat.chatImageUrl
-            const character = await collectionCharacters.findOne({ image: chat.chatImageUrl });
+            const image_url = new URL(chat.chatImageUrl);
+            const path = image_url.pathname;
+            const character = await collectionCharacters.findOne({
+                image: { $regex: path }
+            });
             if (character) {
                 response.character = character;
             } else {
@@ -473,7 +475,6 @@ async function routes(fastify, options) {
 
         try{
             const chat = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
-
             if (!chat) {
                 return reply.status(404).send({ error: 'chat not found' });
             }
@@ -1136,6 +1137,7 @@ async function routes(fastify, options) {
                 console.log(`User data not found`)
                 return reply.status(404).send({ error: 'User data not found' });
             }
+            characterDescription = character?.description || null
 
             let userMessages = userData.messages;
             const imagePrompt = [
@@ -1149,7 +1151,8 @@ async function routes(fastify, options) {
                 { 
                     role: "user", 
                     content: `Use the conversation below to generate an image prompt of the current situation in english:
-                    ` + userMessages.map(msg => msg.role != 'system' ? `${msg.content.replace('[Narrator]','')}`: '').join("\n") 
+                    ` + userMessages.map(msg => msg.role != 'system' ? `${msg.content.replace('[Narrator]','')}`: '').join("\n")  
+                    + `${characterDescription ? `\n Here is the character description : ${characterDescription} \n Use the character description.` : ''}`
                 }
             ];
             completion = await moduleCompletion(imagePrompt, reply.raw);
@@ -1618,6 +1621,73 @@ async function routes(fastify, options) {
         } catch (error) {
             console.error('Error fetching categories:', error);
             reply.status(500).send({ status: 'error', message: 'Error fetching categories', error: error.message });
+        }
+    });
+    fastify.post('/api/openai-image-description', async (request, reply) => {
+        const { message, system, imageUrl } = request.body;
+    
+        if (!message || !system) {
+            return reply.status(400).send({ error: 'Message and System parameters are required' });
+        }
+    
+        try {
+            let messages = [
+                { role: "system", content: system },
+                { role: "user", content: message },
+            ];
+            // Trigger the operations without waiting
+            moduleCompletion(messages)
+                .then(async (description) => {
+                    console.log({description})
+                    const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+                    const collection = db.collection('characters');
+    
+                    const result = {
+                        image: imageUrl,
+                        description: description,
+                        timestamp: new Date()
+                    };
+    
+                    await collection.updateOne(
+                        { image:imageUrl },
+                        { $set: result },
+                        { upsert: true }
+                    );
+
+                })
+                .catch(error => console.error('Error processing the image description:', error));
+    
+            // Immediately respond without waiting for the background operations
+            reply.send({ status: 'Processing in the background' });
+        } catch (error) {
+            reply.status(500).send({ error: 'Internal Server Error', details: error.message });
+        }
+    });    
+    
+    fastify.get('/api/check-image-description', async (request, reply) => {
+        const imageUrl = request.query.imageUrl;
+        
+        if (!imageUrl) {
+            return reply.status(400).send({ error: 'Image URL parameter is required' });
+        }
+    
+        try {
+            const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+            const collection = db.collection('characters');
+    
+            // Check if the description for the image already exists in the database
+            let result = await collection.findOne({ chatImageUrl: imageUrl });
+            
+            result = result?.description
+
+            if (!result) {
+                return reply.status(404).send({ error: 'No description found for this image' });
+            }
+    
+            // Return the result
+            reply.send(result);
+        } catch (error) {
+            reply.status(500).send({ error: 'Internal Server Error', details: error.message });
         }
     });
     

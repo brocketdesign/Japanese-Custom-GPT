@@ -338,6 +338,7 @@ $(document).ready(function() {
                         chatName = data.chat.name
                         thumbnail = data.chat.chatImageUrl
                         character = data.character
+                        console.log(character)
                         if(data.chat.language){
                             language = data.chat.language
                         }

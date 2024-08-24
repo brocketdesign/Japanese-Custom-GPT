@@ -471,14 +471,12 @@
                 type: 'GET',
                 dataType: 'json',
                 success: function(chatData) {
-                    console.log(chatData)
                     if(chatData.isAutoGen == 'true'){
                         $('input, textarea').prop('disabled', true);
                         $('#chatPurpose').hide();
                         $('#chatPurpose-markdownContainer').show()
                     }
                     if(chatData.purpose){
-                        console.log(chatData.purpose)
                         var htmlContent = marked.parse(chatData.purpose);
                         $('#chatPurpose-container').show()
                         //$('#chatPurpose-markdownContainer').html(htmlContent)
@@ -665,6 +663,13 @@
             $('#genStructure').removeClass('btn-outline-secondary').addClass('btn-secondary')
         });
         $('#ai-assist').on('click', function() {
+
+            checkImageDescription(function(response){
+                if(!response){
+                    generateImageDescriptionBackend()
+                }
+            }) 
+            
             $('#ai-assist .fa-spinner').show();
             $('#ai-assist .fa-magic').hide();
 
@@ -990,6 +995,65 @@
                 }
             });
         }
+        
+        function checkImageDescription(callback) {
+            const imageUrl = $('#chatImageUrl').val();
+
+            if (!imageUrl) {
+                console.log('Image URL is required.');
+                return;
+            }
+
+            $.ajax({
+                url: '/api/check-image-description',
+                method: 'GET',
+                data: { imageUrl: imageUrl },
+                success: function(response) {
+                    if (callback) {
+                        callback(response);
+                    }
+                },
+                error: function(xhr) {
+                    if (callback) {
+                        callback(null);
+                    }
+                }
+            });
+        }
+        function generateImageDescriptionBackend(callback) {
+            const imageUrl = $('#chatImageUrl').val();
+            const language = $('#language').val();
+
+            convertImageUrlToBase64(imageUrl, function(base64Image) {
+                if (!base64Image) {
+                    console.log('Failed to convert image to Base64.');
+                    return;
+                }
+
+                const system = createSystemPayloadImage(language);
+                const message = createMessagePayload(base64Image);
+
+                const apiUrl = '/api/openai-image-description';
+
+                $.ajax({
+                    url: apiUrl,
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ message, system, imageUrl }),
+                    success: function(response) {
+                        if (callback) {
+                            callback(response);
+                        }
+                    },
+                    error: function(xhr) {
+                        console.log('Error:', xhr.responseText);
+                        if (callback) {
+                            callback(null);
+                        }
+                    }
+                });
+            });
+        }
 
         function generateImageDescription(callback) {
             const imageUrl = $('#chatImageUrl').val();
@@ -1031,6 +1095,16 @@
                     Here is some example : {{prompts}}
                     YOU MUST respond in ${language}. 
                     Start by providing a name or nickname for the character`
+                }
+            ];
+        }        // Helper function to create the system payload
+        function createSystemPayloadImage(language) {
+            return [
+                {
+                    "type": "text",
+                    "text": 
+                    `You are a useful assistant. Generate a highly detailed character description from the image provided, focusing on features that will allow the same character to be recreated in different settings. Include specifics on age, skin color, hair, eyes, body type, gender, facial features, and attire. Respond in a single, descriptive line of plain text. \n
+                    Here is an example : masterpiece, best quality, 1girl, yellow eyes, long hair, white hair, tree, stairs, standing, kimono, sky, cherry blossoms, temple, looking at viewer, upper body, from below, looking back,`
                 }
             ];
         }

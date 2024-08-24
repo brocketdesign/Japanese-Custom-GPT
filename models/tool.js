@@ -1,5 +1,6 @@
 
 const axios = require('axios');
+const sharp = require('sharp');
 const { createHash } = require('crypto');
 const aws = require('aws-sdk');
 const { ObjectId } = require('mongodb');
@@ -158,13 +159,22 @@ async function convertImageUrlToBase64(imageUrl) {
         });
 
         const buffer = Buffer.from(response.data, 'binary');
-        const base64Image = buffer.toString('base64');
+
+        // Compress and resize the image using sharp
+        const compressedBuffer = await sharp(buffer)
+            .resize(800, 800, { // Resize to a max of 800x800 while maintaining aspect ratio
+                fit: sharp.fit.inside,
+                withoutEnlargement: true
+            })
+            .jpeg({ quality: 70 }) // Compress the image to 70% quality
+            .toBuffer();
+
+        const base64Image = compressedBuffer.toString('base64');
 
         return `data:image/jpeg;base64,${base64Image}`;
     } catch (error) {
-        throw new Error('Failed to convert image URL to Base64');
+        throw new Error('Failed to convert and compress image URL to Base64');
     }
 }
-
 
   module.exports = { getCounter, updateCounter, handleFileUpload, uploadToS3, checkLimits, checkUserAdmin, convertImageUrlToBase64}

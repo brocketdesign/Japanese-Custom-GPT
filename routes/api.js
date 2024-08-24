@@ -1144,7 +1144,7 @@ async function routes(fastify, options) {
                     role: "system", 
                     content: `
                     You are a stable diffusion image prompt generator.
-                    You take a conversation and respond with an image prompt of less than 1000 characters. 
+                    You take a conversation and respond with an image prompt of less than 800 characters. 
                     You MUST describe the latest scene of the conversation.
                     You respond in english. 
                     Here is an example of response type : "A pure white shirt (with a dark bra barely visible), a fitted skirt and dark black stockings are an extension of the student uniform. Many men say: compared to direct nudity. "I like to be looming." Therefore, OL suits have naturally become a very popular style. This incident deepened OL's impression. Make sure your top is exposed in the underboob. Key points: Wear a sexy ultra-short A-line skirt and semi-transparent sexy underwear. Another very special thing is that she sits in a sexy posture, facing the camera with her legs and feet spread in an M shape, revealing her underwear.Irresistibly sexy beauty,Best Quality, Masterpiece, 8K,,perfect breasts,big breasts,More Reasonable Details,"
@@ -1161,7 +1161,6 @@ async function routes(fastify, options) {
                     ` + userMessages.map(msg => msg.role != 'system' ? `${msg.content.replace('[Narrator]','')}`: '').join("\n")                    
                 }
             ];
-            console.log(imagePrompt)
             completion = await moduleCompletion(imagePrompt, reply.raw);
 
             newImageCount = await collectionImageCount.findOneAndUpdate(

@@ -375,17 +375,18 @@ fastify.post('/huggingface/txt2img', async (request, reply) => {
     async function fetchNovitaMagic(data) {
       try {
         const image_request = {
-          model_name: data.checkpoint || "meinahentai_v4_70340.safetensors", // "sudachi_v10_62914.safetensors",// "kizukiAnimeHentai_animeHentaiV3_60405.safetensors",
-          prompt: data.prompt,
-          negative_prompt: "rybadimagenegative_v1.3, ng_deepnegative_v1_75t, (ugly face:0.8),cross-eyed,sketches, (worst quality:2),(low quality:2), (normal quality:2),normal quality,((monochrome)),((grayscale)), skin spots,acnes,(((skin blemishes))),bad anatomy,(Multiple people),bad hands,,missing fingers,cropped,low quality, jpeg artifacts,burned,(((blurry))),cropped, poorly drawn hands,poorly drawn face,mutation,deformed,worst quality,extra limbs,(((extra legs))), malformed limbs, fused fingers,too many fingers,long neck,cross-eyed,mutated hands, polar lowres,bad body,bad proportions,gross proportions,extra digit,(((extra arms))), extra leg,((repeating hair)),distorded background,(((distorded light))),deformed nippples, deformed clothes,enlogated body parts,extra torsos,(((odd color skin))),deformed anatomy, fused limbs, ((body fused with clothes)),(((extra fingers))),(((blurry parts))),chromatic mess,(((gross proportions))),skin blemishes,(((blurry face))),deformed face,(((incomplete clothes)))",          
+          model_name: "meinahentai_v4_70340.safetensors",
+          prompt: "(((perfect  anatomy))),(((masterpiece))),(((best quality))),(((ultra-detailed))),(((perfect skin))),(((perfect fingers))),perfect anatomy,(((HD))),(((4K quality))),(((perfect hands))),(((nsfw))),(((candide))),setting: A traditional Japanese restaurant setting, with wooden decor and paper lanterns. A beautifully arranged sushi platter is placed on a low table, surrounded by elegant tea cups. Soft lighting enhances the serene atmosphere.  \n' +\n    'character: Young woman, bright blue hair, red eyes, fair skin, confident expression, wearing a traditional kimono with a red obi. She smiles gently at her companion while sitting gracefully beside them. Her presence radiates elegance and warmth as she gestures towards the sushi platter with enthusiasm and delight. Key features include delicate makeup enhancing her features and an inviting aura that reflects her charming personality.",
+          negative_prompt: "rybadimagenegative_v1.3, ng_deepnegative_v1_75t, (ugly face:0.8),cross-eyed,sketches, (worst quality:2),(low quality:2), (normal quality:2),normal quality,((monochrome)),((grayscale)), skin spots,acnes,(((skin blemishes))),bad anatomy,(Multiple people),bad hands,,missing fingers,cropped,low quality, jpeg artifacts,burned,(((blurry))),cropped, poorly drawn hands,poorly drawn face,mutation,deformed,worst quality,extra limbs,(((extra legs))), malformed limbs, fused fingers,too many fingers,long neck,cross-eyed,mutated hands, polar lowres,bad body,bad proportions,gross proportions,extra digit,(((extra arms))), extra leg,((repeating hair)),distorded background,(((distorded light))),deformed nippples, deformed clothes,enlogated body parts,extra torsos,(((odd color skin))),deformed anatomy, fused limbs, ((body fused with clothes)),(((extra fingers))),(((blurry parts))),chromatic mess,(((gross proportions))),skin blemishes,(((blurry face))),deformed face,(((incomplete clothes)))",
           width: data.width,          
           height: data.height,
+          sampler_name: "Euler a",
+          guidance_scale: 7,
+          steps: 30,
           image_num: 1,
-          steps: 40,
+          clip_skip: 0,
           seed: -1,
-          clip_skip: 1,
-          guidance_scale: 10,
-          sampler_name: "Euler a",// "DPM++ 2S a Karras",
+          loras: [],
         }
         console.log(image_request)
         const response = await axios.post('https://api.novita.ai/v3/async/txt2img', {

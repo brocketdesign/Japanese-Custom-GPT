@@ -679,7 +679,6 @@ $(document).ready(function() {
             }
             
             function displayChat(userChat) {
-                console.log(userChat)
                 $('#stability-gen-button').show();
                 $('.auto-gen').each(function(){$(this).show()})
                 $('#audio-play').show();

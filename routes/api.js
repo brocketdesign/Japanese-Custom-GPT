@@ -1146,22 +1146,20 @@ async function routes(fastify, options) {
                     You are a stable diffusion image prompt generator.
                     You take a conversation and respond with an image prompt of less than 800 characters. 
                     You MUST describe the latest scene of the conversation.
-                    You respond in english. 
-                    Here is an example of response type : "A pure white shirt (with a dark bra barely visible), a fitted skirt and dark black stockings are an extension of the student uniform. Many men say: compared to direct nudity. "I like to be looming." Therefore, OL suits have naturally become a very popular style. This incident deepened OL's impression. Make sure your top is exposed in the underboob. Key points: Wear a sexy ultra-short A-line skirt and semi-transparent sexy underwear. Another very special thing is that she sits in a sexy posture, facing the camera with her legs and feet spread in an M shape, revealing her underwear.Irresistibly sexy beauty,Best Quality, Masterpiece, 8K,,perfect breasts,big breasts,More Reasonable Details,"
-                    As you can see it do not contain sentences but keywords separated by a comma.
-                    Respond like that : 
-                    setting :setting prompt
-                    character :character prompt
+                    Respond like that with only one of two keywords in english: 
+                    day or night, inside or outside, setting name, \n
+                    young girl, yellow eyes, long hair,pink hair, white hair, white skin, voluptuous body, cute face, smiling,
+                    Customize the example to match the current character description. DO NOT MAKE SENTENCES, I WANT A LIST OF KEY WORDS THAT DESCRIBE THE IMAGE.
                     ` 
                 },
                 { 
                     role: "user", 
-                    content: `${characterDescription ? `\n First here is the character description. Use it to describe the character face only :  ${characterDescription}`:''}`
-                    +`Use the conversation below to generate an image prompt of the current situation in english:
+                    content: `${characterDescription ? `\n First here is the character description:  ${characterDescription}`:''}`
+                    +`Here are the messages:
                     ` + 
                     userMessages
                     .map(msg => 
-                        msg.role !== 'system' && !msg.content.startsWith('[Hidden]') 
+                        msg.role !== 'system' && !msg.content.startsWith('[Hidden]') && !msg.content.startsWith('[Starter]') && !msg.content.startsWith('[Image]')
                             ? `${msg.content.replace('[Narrator]', '')}` 
                             : ''
                     )
@@ -1237,7 +1235,10 @@ async function routes(fastify, options) {
             const narrationPrompt = [
                 {
                     role: "system",
-                    content: `You are an AI assistant helping formulate responses. Provide 3 short, engaging suggestions in ${language} for the user to choose from. Each suggestion should be a single sentence from the user's perspective, and should not include any content that implies it is from an assistant. Format the suggestions as a JSON array.`
+                    content: `You are an AI assistant helping formulate responses. 
+                    Provide 3 short, engaging suggestions in ${language} for the user to choose from. 
+                    Each suggestion should be a single sentence from the user's perspective, and should not include any content that implies it is from an assistant. 
+                    Format the suggestions as a JSON array.`
                 },
                 {
                     role: "user",
@@ -1245,15 +1246,15 @@ async function routes(fastify, options) {
                     Here is the conversation transcript: ` +
                     userMessages
                     .map(msg => 
-                        msg.role !== 'system' && !msg.content.startsWith('[Hidden]') 
+                        msg.role !== 'system' && !msg.content.startsWith('[Hidden]') && !msg.content.startsWith('[Starter]') && !msg.content.startsWith('[Image]')
                             ? `${msg.content.replace('[Narrator]', '')}` 
                             : ''
                     )
                     .join("\n")
-                    + `What could I answer ?`
+                    + `What could I answer ? Respond with a JSON array containin the suggestions in plain text. Do not add extra ponctuations.`
                 }
             ];            
-
+console.log(narrationPrompt)
             // Send the prompt to OpenAI and use response_format for parsing
             const completion = await openai.beta.chat.completions.parse({
                 model: "gpt-4o-mini",

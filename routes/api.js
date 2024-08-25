@@ -1158,7 +1158,14 @@ async function routes(fastify, options) {
                     role: "user", 
                     content: `${characterDescription ? `\n First here is the character description. Use it to describe the character face only :  ${characterDescription}`:''}`
                     +`Use the conversation below to generate an image prompt of the current situation in english:
-                    ` + userMessages.map(msg => msg.role != 'system' ? `${msg.content.replace('[Narrator]','')}`: '').join("\n")                    
+                    ` + 
+                    userMessages
+                    .map(msg => 
+                        msg.role !== 'system' && !msg.content.startsWith('[Hidden]') 
+                            ? `${msg.content.replace('[Narrator]', '')}` 
+                            : ''
+                    )
+                    .join("\n")                  
                 }
             ];
             completion = await moduleCompletion(imagePrompt, reply.raw);
@@ -1234,9 +1241,16 @@ async function routes(fastify, options) {
                 },
                 {
                     role: "user",
-                    content: `Here is the conversation transcript: ` + userMessages
-                        .map(msg => msg.role !== 'system' ? `${msg.content.replace('[Narrator]', '')}` : '')
-                        .join("\n") + `What could I answer ?`
+                    content: `
+                    Here is the conversation transcript: ` +
+                    userMessages
+                    .map(msg => 
+                        msg.role !== 'system' && !msg.content.startsWith('[Hidden]') 
+                            ? `${msg.content.replace('[Narrator]', '')}` 
+                            : ''
+                    )
+                    .join("\n")
+                    + `What could I answer ?`
                 }
             ];            
 

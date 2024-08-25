@@ -768,15 +768,20 @@ $(document).ready(function() {
                         // Check if the next message is a user message and display it
                         if (i + 1 < userChat.length && userChat[i + 1].role === "user") {
                             let userMessage = userChat[i + 1];
-                            messageHtml += `
-                                <div class="d-flex flex-row justify-content-end mb-4 message-container">
-                                    <div id="response-${designStep}" class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
-                                        ${marked.parse(userMessage.content)}
+                            const isHidden = userMessage.content.startsWith("[Hidden]");
+                            const isStarter = userMessage.content.startsWith("[Starter]") || userMessage.content.startsWith("Invent a situation");
+                            if(!isStarter && !isHidden){
+                                messageHtml += `
+                                    <div class="d-flex flex-row justify-content-end mb-4 message-container">
+                                        <div id="response-${designStep}" class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
+                                            ${marked.parse(userMessage.content)}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            `;
-                            i++; // Skip the next user message as it's been processed
+                                `;
+                            }
+
+                            i++; 
                         } else {
                             messageHtml += `
                                 <div id="response-${designStep}" class="choice-container d-none"></div>

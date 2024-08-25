@@ -1572,7 +1572,8 @@ console.log(narrationPrompt)
                 messages: [
                     { role: "system", content: `
                         You are an expert at structured data extraction. 
-                        Extract any proposals to buy or get an item or something then return the item names with a price (between 10 and 50) in japanese. ` },
+                        Extract any proposals. It could be to buy, get or find an item or something else. 
+                        Then return the item names with a price (between 10 and 50) in japanese. ` },
                     { role: "user", content: lastAssistantMessageContent },
                 ],
                 response_format: zodResponseFormat(PurchaseProposalExtraction, "purchase_proposal_extraction"),

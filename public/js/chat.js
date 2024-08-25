@@ -798,7 +798,7 @@ $(document).ready(function() {
                                 let messageHtml = '';
                                 if (/nsfw\b/i.test(response.imagePrompt) && !subscriptionStatus) {
                                     messageHtml = `
-                                    <div class="d-flex flex-row justify-content-start mb-4 message-container assistant-image-nsfw" style="position: relative;">
+                                    <div class="d-flex flex-row justify-content-start mb-4 message-container bot-image-nsfw" style="position: relative;">
                                         <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
                                         <div class="position-relative">
                                             <div class="p-3 ms-3 text-start assistant-image-box">
@@ -1293,18 +1293,19 @@ $(document).ready(function() {
                 }
                 if(messageClass === 'bot-image-nsfw'){
                     $('#chatContainer').append(`
-                        <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass}" style="position: relative;">
+                        <div class="d-flex flex-row justify-content-start mb-4 message-container bot-image-nsfw" style="position: relative;">
+                            <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
                             <div class="position-relative">
-                                <img src="/img/nsfw-blurred.jpg" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
+                                <div class="p-3 ms-3 text-start assistant-image-box">
+                                    <img src="/img/nsfw-blurred.jpg" alt="NSFW">
+                                </div>
                                 <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
-                                    <span class="badge bg-danger text-white" style="padding: 5px; border-radius: 5px;">
-                                        <i class="fas fa-lock"></i> NSFW
+                                    <span type="button" class="badge bg-danger text-white unlock-nsfw" style="padding: 5px; border-radius: 5px;">
+                                        <i class="fas fa-lock"></i> 成人向け
                                     </span>
                                 </div>
                             </div>
-                            <div class="p-3 ms-3 text-start assistant-image-box">
-                            </div>
-                        </div>      
+                        </div>   
                     `);                    
                     
                     // Now append the image to the chat box after it's been appended

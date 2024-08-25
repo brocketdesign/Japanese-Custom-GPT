@@ -141,7 +141,7 @@ async function routes(fastify, options) {
       const chatsGalleryCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('gallery');
   
       const imageId = new fastify.mongo.ObjectId(); // Generate a new ObjectId for the image
-  
+
       await chatsGalleryCollection.updateOne(
         { 
           userId: new fastify.mongo.ObjectId(userId),
@@ -163,17 +163,16 @@ async function routes(fastify, options) {
         return reply.status(404).send({ error: 'User data not found' });
       }
   
-      let userMessages = userData.messages || [];
+      // Append the image message to the user's messages array
       const imageMessage = { "role": "assistant", "content": `[Image] ${imageId}` };
-      userMessages.push(imageMessage);
-      userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-  
-      // Update the chat document in the database
       await userDataCollection.updateOne(
-        { userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) },
-        { $set: { messages: userMessages, updatedAt: userData.updatedAt } }
+          { userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) },
+          { 
+              $push: { messages: imageMessage }, 
+              $set: { updatedAt: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) }
+          }
       );
-  
+
       return { imageId, imageUrl }; // Return both the imageId and imageUrl
   
     } catch (error) {

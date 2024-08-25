@@ -338,7 +338,7 @@ $(document).ready(function() {
                         chatName = data.chat.name
                         thumbnail = data.chat.chatImageUrl
                         character = data.character
-                        console.log(character)
+                        
                         if(data.chat.language){
                             language = data.chat.language
                         }
@@ -679,6 +679,7 @@ $(document).ready(function() {
             }
             
             function displayChat(userChat) {
+                console.log(userChat)
                 $('#stability-gen-button').show();
                 $('.auto-gen').each(function(){$(this).show()})
                 $('#audio-play').show();

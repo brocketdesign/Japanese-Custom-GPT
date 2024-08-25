@@ -132,7 +132,10 @@ $(document).ready(function() {
                 messageTitle = '⚠️ 画像生成機能にはアップグレードが必要です';
                 messageText = '画像生成機能を利用するには、有料プランにアップグレードしてください。';
                 break;
-            
+            case 'unlock-nsfw':
+                messageTitle = '⚠️ 成人向けンテンツの利用にはアップグレードが必要です';
+                messageText = '成人向けコンテンツを生成するには、有料プランにアップグレードしてください。';
+                break;
             default:
                 messageTitle = '制限に達しました';
                 messageText = 'ご利用中のプランの制限に達しました。有料プランにアップグレードして、より多くの機能をお楽しみください。';

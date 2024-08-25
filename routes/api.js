@@ -1149,7 +1149,8 @@ async function routes(fastify, options) {
                     Respond like that with only one of two keywords in english: 
                     day or night, inside or outside, setting name, \n
                     young girl, yellow eyes, long hair,pink hair, white hair, white skin, voluptuous body, cute face, smiling,
-                    Customize the example to match the current character description. DO NOT MAKE SENTENCES, I WANT A LIST OF KEY WORDS THAT DESCRIBE THE IMAGE.
+                    Customize the example to match the current character description. DO NOT MAKE SENTENCES, I WANT A LIST OF KEY WORDS THAT DESCRIBE THE IMAGE.\n
+                    Repond EXCLUSIVELY IN ENGLISH !
                     ` 
                 },
                 { 
@@ -1167,7 +1168,7 @@ async function routes(fastify, options) {
                 }
             ];
             completion = await moduleCompletion(imagePrompt, reply.raw);
-
+            console.log({completion})
             newImageCount = await collectionImageCount.findOneAndUpdate(
                 { userId: new fastify.mongo.ObjectId(userId), date: today },
                 { 
@@ -1254,7 +1255,7 @@ async function routes(fastify, options) {
                     + `What could I answer ? Respond with a JSON array containin the suggestions in plain text. Do not add extra ponctuations.`
                 }
             ];            
-console.log(narrationPrompt)
+            
             // Send the prompt to OpenAI and use response_format for parsing
             const completion = await openai.beta.chat.completions.parse({
                 model: "gpt-4o-mini",

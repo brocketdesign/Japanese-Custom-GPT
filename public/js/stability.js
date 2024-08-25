@@ -211,6 +211,8 @@ window.generateImage = function(data,prompt){
 
   const imageUrl = data.url;
   const imageId = data.id
+  const imagePrompt = data.prompt
+
   // Create an <img> element
   const img = document.createElement('img');
   img.setAttribute('src', imageUrl);
@@ -218,6 +220,12 @@ window.generateImage = function(data,prompt){
   img.setAttribute('class', 'm-auto');
   img.setAttribute('data-id',imageId)
 
-  displayMessage('bot-image',img)
-  
+  const user = JSON.parse(localStorage.getItem('user'))
+  const subscriptionStatus = user.subscriptionStatus == 'active'
+  console.log({subscriptionStatus})
+  if (/nsfw\b/i.test(imagePrompt) && !subscriptionStatus) {
+    displayMessage('bot-image-nsfw')
+  }else{
+    displayMessage('bot-image',img)
+  }  
 }

@@ -369,33 +369,17 @@ fastify.post('/huggingface/txt2img', async (request, reply) => {
     }
   });
   // NOVITA
-    const default_prompt = `,perfect anatomy,masterpiece,(((best quality))),(((ultra-detailed))),(perfect skin),perfect fingers,perfect anatomy,HD,4K quality,(perfect hands:0.1),((sfw)),((((sexy)))),erotic pose,((sexy pose))
-`
     // Function to trigger the Novita API for text-to-image generation
     async function fetchNovitaMagic(data) {
+      console.log(data)
       try {
-        const image_request = {
-          model_name: "abyssorangemix2SFW_abyssorangemix2Sfw.safetensors",
-          prompt: data.prompt + default_prompt,
-          negative_prompt: "nsfw,naked pussy,pussy,((vagin)),vaginal,((((pussy)))),(((nipple))),nude,((naked)),sex,(((genital))), rybadimagenegative_v1.3, ng_deepnegative_v1_75t, (ugly face),cross-eyed,sketches, (worst quality:2),(low quality:2), (normal quality:2),normal quality,((monochrome)),((grayscale)), skin spots,acnes,(((skin blemishes))),bad anatomy,(Multiple people),bad hands,,missing fingers,cropped,low quality, jpeg artifacts,burned,(((blurry))),cropped, poorly drawn hands,poorly drawn face,mutation,deformed,worst quality,",
-          width: data.width,          
-          height: data.height,
-          sampler_name: "Euler a",
-          guidance_scale: 10,
-          steps: 30,
-          image_num: 2,
-          clip_skip: 0,
-          seed: -1,
-          loras: [],
-        }
-        console.log(image_request)
         const response = await axios.post('https://api.novita.ai/v3/async/txt2img', {
           extra: {
             response_image_type: 'jpeg',
             enable_nsfw_detection: false,
             nsfw_detection_level: 0,
           },
-          request: image_request,
+          request: data,
         }, {
           headers: {
             Authorization: `Bearer ${process.env.NOVITA_API_KEY}`,
@@ -478,6 +462,32 @@ async function fetchNovitaResult(task_id) {
   });
 }
 
+  const default_prompt ={
+    nsfw: {
+      prompt: `,perfect anatomy,masterpiece,(((best quality))),(((ultra-detailed))),(perfect skin),perfect fingers,perfect anatomy,HD,4K quality,(perfect hands:0.1),((nsfw)),((((sexy)))),erotic pose,((sexy pose))`,
+      negative_prompt: "rybadimagenegative_v1.3, ng_deepnegative_v1_75t, (ugly face),cross-eyed,sketches, (worst quality:2),(low quality:2), (normal quality:2),normal quality,((monochrome)),((grayscale)), skin spots,acnes,(((skin blemishes))),bad anatomy,(Multiple people),bad hands,,missing fingers,cropped,low quality, jpeg artifacts,burned,(((blurry))),cropped, poorly drawn hands,poorly drawn face,mutation,deformed,worst quality,"
+    },
+    sfw: {
+      prompt: `,perfect anatomy,masterpiece,(((best quality))),(((ultra-detailed))),(perfect skin),perfect fingers,perfect anatomy,HD,4K quality,(perfect hands:0.1),((sfw))`,
+      negative_prompt : "nsfw,naked pussy,pussy,((vagin)),vaginal,((((pussy)))),(((nipple))),nude,((naked)),sex,(((genital))), rybadimagenegative_v1.3, ng_deepnegative_v1_75t, (ugly face),cross-eyed,sketches, (worst quality:2),(low quality:2), (normal quality:2),normal quality,((monochrome)),((grayscale)), skin spots,acnes,(((skin blemishes))),bad anatomy,(Multiple people),bad hands,,missing fingers,cropped,low quality, jpeg artifacts,burned,(((blurry))),cropped, poorly drawn hands,poorly drawn face,mutation,deformed,worst quality,"
+    }
+  }
+  const params = {
+    model_name: "abyssorangemix2SFW_abyssorangemix2Sfw.safetensors",
+    prompt: '',
+    negative_prompt: '',
+    width: 768,
+    height: 1024,
+    sampler_name: "Euler a",
+    guidance_scale: 10,
+    steps: 30,
+    image_num: 1,
+    clip_skip: 0,
+    seed: -1,
+    loras: [],
+  }
+
+  
   fastify.post('/novita/txt2img', async (request, reply) => {
     const { prompt, aspectRatio, userId, chatId, userChatId, character } = request.body;
     try {
@@ -492,35 +502,42 @@ async function fetchNovitaResult(task_id) {
           }
         });
         const data = response.data;
-        
+        /*
         if (data.models && data.models.length > 0) {
           const normalizedQuery = query.toLowerCase().replace(/[^a-z0-9]/g, '');
           const modelNames = data.models.map(model => model.sd_name.toLowerCase().replace(/[^a-z0-9]/g, ''));
           let bestMatch = stringSimilarity.findBestMatch(normalizedQuery, modelNames);
           const similarityThreshold = 0.5;
           if (bestMatch.bestMatch.rating >= similarityThreshold) {
-            console.log({closestCheckpoint})
             closestCheckpoint = data.models[bestMatch.bestMatchIndex].sd_name;
           }
         }
+        */
       }
-      const taskId = await fetchNovitaMagic({
-        prompt,
-        negativePrompt: character ? character.negativePrompt : null,
-        sampler: character ? character.sampler : null,
-        checkpoint: closestCheckpoint,
-        width: 768,
-        height: 1024,
-      });
-  
-      const imageUrls = await fetchNovitaResult(taskId);
-
-      const images = await Promise.all(imageUrls.map(async (imageUrl) => {
-          const { imageId } = await saveImageToDB(userId, chatId, userChatId, prompt, imageUrl, aspectRatio);
-          return { id: imageId, url: imageUrl };
-      }));
+      const image_request1 = { ...params };
+      image_request1.prompt = prompt + default_prompt.sfw.prompt;
+      image_request1.negative_prompt = default_prompt.sfw.negative_prompt;
       
-      reply.send({ images });
+      const image_request2 = { ...params };
+      image_request2.prompt = prompt + default_prompt.nsfw.prompt;
+      image_request2.negative_prompt = default_prompt.nsfw.negative_prompt;
+      
+      const handleImageRequest = async (image_request) => {
+        const taskId = await fetchNovitaMagic(image_request);
+        const imageUrls = await fetchNovitaResult(taskId);
+        return await Promise.all(imageUrls.map(async (imageUrl) => {
+            const { imageId } = await saveImageToDB(userId, chatId, userChatId, image_request.prompt, imageUrl, aspectRatio);
+            return { id: imageId, url: imageUrl, prompt: image_request.prompt };
+        }));
+    };
+    
+    const [images1, images2] = await Promise.all([
+        handleImageRequest(image_request1),
+        handleImageRequest(image_request2)
+    ]);
+    
+    reply.send({ images: [...images1, ...images2] });
+    
       
     } catch (err) {
       console.error(err);

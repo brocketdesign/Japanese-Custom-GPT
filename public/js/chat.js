@@ -682,14 +682,14 @@ $(document).ready(function() {
                 });
             }
             
-            function displayChat(userChat) {
+            async function displayChat(userChat) {
                 $('#stability-gen-button').show();
-                $('.auto-gen').each(function(){$(this).show()})
+                $('.auto-gen').each(function(){$(this).show()});
                 $('#audio-play').show();
-
+            
                 let chatContainer = $('#chatContainer');
                 chatContainer.empty();
-
+            
                 if(userChat[1].role === "user"){
                     let userMessage = userChat[2];
                     const isStarter = userMessage.content.startsWith("[Starter]") || userMessage.content.startsWith("Invent a situation");
@@ -706,7 +706,7 @@ $(document).ready(function() {
                         chatContainer.append($(messageHtml).hide().fadeIn());
                     }
                 }
-
+            
                 for (let i = 1; i < userChat.length; i++) {
                     // Skip system messages
                     if (userChat[i].role === "system") {
@@ -736,19 +736,12 @@ $(document).ready(function() {
                             `;
                         } else if (isImage) {
                             const imageId = assistantMessage.content.replace("[Image]", "").trim();
-                            messageHtml += `
-                                <div id="container-${designStep}">
-                                    <div class="d-flex flex-row justify-content-start mb-4 message-container">
-                                        <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
-                                        <div class="p-3 ms-3 text-start assistant-image-box">
-                                            <img id="image-${imageId}">
-                                        </div>
-                                    </div>
-                            `;
-                            getImageUrlById(imageId)
+                            
+                            messageHtml += await getImageUrlById(imageId, designStep, thumbnail); // Wait for the image URL and HTML
+            
                         } else {
                             if(assistantMessage.content){
-                                let message = removeContentBetweenStars(assistantMessage.content)
+                                let message = removeContentBetweenStars(assistantMessage.content);
                                 messageHtml += `
                                     <div id="container-${designStep}">
                                         <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
@@ -762,7 +755,7 @@ $(document).ready(function() {
                                         </div>
                                 `;
                             }
-
+            
                         }
             
                         // Check if the next message is a user message and display it
@@ -780,7 +773,7 @@ $(document).ready(function() {
                                 </div>
                                 `;
                             }
-
+            
                             i++; 
                         } else {
                             messageHtml += `
@@ -792,39 +785,62 @@ $(document).ready(function() {
                         chatContainer.append($(messageHtml).hide().fadeIn());
                     }
                 }
-                function getImageUrlById(imageId) {
-                    $.ajax({
-                      url: `/image/${imageId}`,
-                      method: 'GET',
-                      success: function(response) {
-                        if (response.imageUrl) {
-                          $(`#image-${imageId}`)
-                          .attr('src', response.imageUrl)
-                          .attr('alt', response.imagePrompt);
-                        } else {
-                          console.error('No image URL returned');
-                        }
-                      },
-                      error: function(xhr, status, error) {
-                        console.error('Error fetching image URL:', error);
-                      }
-                    });
-                  }
-                  
-                if (userChat[userChat.length - 1].role === "user" && userChat[userChat.length - 1].content) {
-                    if (currentStep < totalSteps) {
-                        displayStep(chatData, currentStep);
-                    } else {
-                        generateCompletion();
-                    }
-                } else {
-                    //generateChoice();
-                }
             }
             
             
+            function getImageUrlById(imageId, designStep, thumbnail) {
+                return new Promise((resolve, reject) => {
+                    $.ajax({
+                        url: `/image/${imageId}`,
+                        method: 'GET',
+                        success: function(response) {
+                            if (response.imageUrl) {
+                                let messageHtml = '';
+                                if (/nsfw\b/i.test(response.imagePrompt) && !subscriptionStatus) {
+                                    messageHtml = `
+                                    <div class="d-flex flex-row justify-content-start mb-4 message-container assistant-image-nsfw" style="position: relative;">
+                                        <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+                                        <div class="position-relative">
+                                            <div class="p-3 ms-3 text-start assistant-image-box">
+                                                <img src="/img/nsfw-blurred.jpg" alt="${response.imagePrompt}">
+                                            </div>
+                                            <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
+                                                <span type="button" class="badge bg-danger text-white unlock-nsfw" style="padding: 5px; border-radius: 5px;">
+                                                    <i class="fas fa-lock"></i> 成人向け
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>   
+                                    `;
+                                } else {
+                                    messageHtml =   `
+                                    <div id="container-${designStep}">
+                                        <div class="d-flex flex-row justify-content-start mb-4 message-container">
+                                            <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+                                            <div class="p-3 ms-3 text-start assistant-image-box">
+                                                <img id="image-${imageId}" src="${response.imageUrl}" alt="${response.imagePrompt}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    `;
+                                }
+                                resolve(messageHtml);
+                            } else {
+                                console.error('No image URL returned');
+                                reject('No image URL returned');
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error fetching image URL:', error);
+                            reject(error);
+                        }
+                    });
+                });
+            }
             
-            
+            $(document).on('click','.unlock-nsfw',function(){
+                showUpgradePopup('unlock-nsfw');
+            })
             function displayStep(chatData, currentStep) {
                 const step = chatData[currentStep];
                 $('#chatContainer').append(`
@@ -1271,6 +1287,25 @@ $(document).ready(function() {
                             </div>
                         </div>      
                     `);
+                    
+                    // Now append the image to the chat box after it's been appended
+                    $(`#image-${imageId}`).append(message.outerHTML);
+                }
+                if(messageClass === 'bot-image-nsfw'){
+                    $('#chatContainer').append(`
+                        <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass}" style="position: relative;">
+                            <div class="position-relative">
+                                <img src="/img/nsfw-blurred.jpg" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
+                                <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
+                                    <span class="badge bg-danger text-white" style="padding: 5px; border-radius: 5px;">
+                                        <i class="fas fa-lock"></i> NSFW
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="p-3 ms-3 text-start assistant-image-box">
+                            </div>
+                        </div>      
+                    `);                    
                     
                     // Now append the image to the chat box after it's been appended
                     $(`#image-${imageId}`).append(message.outerHTML);

@@ -192,7 +192,9 @@ window.generateImageNovita = function(API_URL, userId, chatId, userChatId, chara
     }
     return response.json();
   })
-  .then(images => {
+  .then(data => {
+    const images = data.images
+    console.log(images)
     images.forEach(image => {
       generateImage(image, prompt);
     })

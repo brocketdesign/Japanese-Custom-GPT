@@ -41,6 +41,7 @@ $(document).ready(function() {
             let language = 'japanese'
             $('body').attr('data-temporary-user',isTemporary)
 
+            let count_proposal = 0
             const subscriptionStatus = user.subscriptionStatus == 'active'
             $('.is-free-user').each(function(){if(!subscriptionStatus && !isTemporary)$(this).show()})
 
@@ -135,7 +136,6 @@ $(document).ready(function() {
 
             $(document).on('click','.reset-chat', function(){
                 chatId = $(this).data('id')
-                console.log({chatId})
                 fetchchatData(chatId, userId, true) ;
             })
             $(document).on('click','.user-chat-history', function(){
@@ -319,6 +319,7 @@ $(document).ready(function() {
                 if(fetch_reset){
                     currentStep = 0
                 }
+                count_proposal = 0
                 $.ajax({
                     url: API_URL+`/api/chat/`,
                     type: 'POST',
@@ -689,7 +690,8 @@ $(document).ready(function() {
                 if(userChat[1].role === "user"){
                     let userMessage = userChat[2];
                     const isStarter = userMessage.content.startsWith("[Starter]") || userMessage.content.startsWith("Invent a situation");
-                    if(!isStarter){
+                    const isHidden = userMessage.content.startsWith("[Hidden]");
+                    if(!isStarter && !isHidden){
                         let messageHtml = `
                             <div class="d-flex flex-row justify-content-end mb-4 message-container">
                                 <div id="response-1" class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
@@ -1624,7 +1626,21 @@ $(document).ready(function() {
                                 </div>
                             `;
                             displayMessage('assistant', message);
+                            count_proposal = 0
+                        }else{
+                            if(count_proposal >= 4){
+                                let message = `[Hidden] Prepare to sell me something`
+                                addMessageToChat(chatId, userChatId, 'user', message, function(error, res) {
+                                    if (error) {
+                                        console.error('Error adding message:', error);
+                                    } else {
+                                        console.log('Message added successfully:', res);
+                                    }
+                                });
+                            }
                         }
+                        count_proposal ++
+                        console.log({count_proposal})
                     },
                     error: function(xhr, status, error) {
                         console.error('Error checking purchase proposal:', error);

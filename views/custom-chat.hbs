@@ -3,6 +3,8 @@
     {{> dashboard-header}}
 <body>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css">
+
     <style>
         .swal2-custom-close-button {
             display: none;
@@ -723,6 +725,7 @@
 <script src="/js/stability.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
 <script src="https://js.stripe.com/v3/"></script>
+<script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
 <script>
 $(document).ready(function() {
     function adjustHeight() {
@@ -928,30 +931,75 @@ $(document).ready(function() {
                 });
             });
     });
-    $(document).on('click', '.assistant-image-box', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
+$(document).on('click', '.assistant-image-box', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
 
-        const imageUrl = $(this).find('img').attr('src');
+    const images = $('.assistant-image-box img').map(function() {
+        return $(this).attr('src');
+    }).get();
 
-        Swal.fire({
-            imageUrl: imageUrl,
-            imageWidth: '100%',
-            imageHeight: 'auto',
-            showCloseButton: true,
-            showConfirmButton: false,
-            background: 'rgba(0,0,0,0.85)',
-            customClass: {
-                popup: 'animated-popup'  // Custom class for animation
-            },
-            showClass: {
-                popup: 'animate__animated animate__fadeInDown'  // Use animate.css classes for smooth entry
-            },
-            hideClass: {
-                popup: 'animate__animated animate__fadeOutUp'  // Use animate.css classes for smooth exit
-            }
-        });
+    let slides = '';
+    images.forEach(imageUrl => {
+        slides += `<div class="swiper-slide"><img src="${imageUrl}" style="width: 100%; height: 90vh;object-fit: contain;"></div>`;
     });
+
+    Swal.fire({
+        html: `
+            <div class="swiper-container">
+                <div class="swiper-wrapper">
+                    ${slides}
+                </div>
+                <div class="swiper-pagination"></div>
+                <div class="swiper-button-next text-white d-none"></div>
+                <div class="swiper-button-prev text-white d-none"></div>
+            </div>
+        `,
+        showCloseButton: true,
+        showConfirmButton: false,
+        width: '90%',
+        background: 'rgba(0,0,0,0.85)',
+        customClass: {
+            popup: 'animated-popup image-preview p-0',
+            htmlContainer: 'bg-light'
+
+        },
+        showClass: {
+            popup: 'animate__animated animate__fadeIn'
+        },
+        hideClass: {
+            popup: 'animate__animated animate__fadeOut'
+        },
+        didOpen: () => {
+            new Swiper('.swiper-container', {
+                loop: true,
+                navigation: {
+                    nextEl: '.swiper-button-next',
+                    prevEl: '.swiper-button-prev',
+                },
+                pagination: {
+                    el: '.swiper-pagination',
+                    clickable: true,
+                },
+                autoHeight: true,
+                breakpoints: {
+                    320: {
+                        slidesPerView: 1,
+                        spaceBetween: 10
+                    },
+                    640: {
+                        slidesPerView: 2,
+                        spaceBetween: 20
+                    },
+                    1024: {
+                        slidesPerView: 3,
+                        spaceBetween: 30
+                    }
+                }
+            });
+        }
+    });
+});
 
 
     $(document).on('click', '.tag-button', function(e) {

@@ -939,9 +939,12 @@ $(document).on('click', '.assistant-image-box', function(e) {
         return $(this).attr('src');
     }).get();
 
+    const clickedImageUrl = $(this).find('img').attr('src');
+    const initialSlideIndex = images.indexOf(clickedImageUrl);
+
     let slides = '';
     images.forEach(imageUrl => {
-        slides += `<div class="swiper-slide"><img src="${imageUrl}" style="width: 100%; height: 90vh;object-fit: contain;"></div>`;
+        slides += `<div class="swiper-slide"><img src="${imageUrl}" style="width: 100%; height: 90vh; object-fit: contain;"></div>`;
     });
 
     Swal.fire({
@@ -962,7 +965,6 @@ $(document).on('click', '.assistant-image-box', function(e) {
         customClass: {
             popup: 'animated-popup image-preview p-0',
             htmlContainer: 'bg-light'
-
         },
         showClass: {
             popup: 'animate__animated animate__fadeIn'
@@ -973,6 +975,7 @@ $(document).on('click', '.assistant-image-box', function(e) {
         didOpen: () => {
             new Swiper('.swiper-container', {
                 loop: true,
+                initialSlide: initialSlideIndex,
                 navigation: {
                     nextEl: '.swiper-button-next',
                     prevEl: '.swiper-button-prev',
@@ -1000,6 +1003,7 @@ $(document).on('click', '.assistant-image-box', function(e) {
         }
     });
 });
+
 
 
     $(document).on('click', '.tag-button', function(e) {

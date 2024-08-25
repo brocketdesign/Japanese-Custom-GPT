@@ -369,7 +369,7 @@ fastify.post('/huggingface/txt2img', async (request, reply) => {
     }
   });
   // NOVITA
-    const default_prompt = `,perfect anatomy,masterpiece,(((best quality))),(((ultra-detailed))),(perfect skin),perfect fingers,perfect anatomy,HD,4K quality,perfect hands,nsfw,sexy,candide
+    const default_prompt = `,perfect anatomy,masterpiece,(((best quality))),(((ultra-detailed))),(perfect skin),perfect fingers,perfect anatomy,HD,4K quality,(perfect hands:0.1),((sfw)),((((sexy)))),erotic pose,((sexy pose))
 `
     // Function to trigger the Novita API for text-to-image generation
     async function fetchNovitaMagic(data) {
@@ -377,11 +377,11 @@ fastify.post('/huggingface/txt2img', async (request, reply) => {
         const image_request = {
           model_name: "abyssorangemix2SFW_abyssorangemix2Sfw.safetensors",
           prompt: data.prompt + default_prompt,
-          negative_prompt: "((((pussy)))), nude,sex,(((genital))), rybadimagenegative_v1.3, ng_deepnegative_v1_75t, (ugly face:0.8),cross-eyed,sketches, (worst quality:2),(low quality:2), (normal quality:2),normal quality,((monochrome)),((grayscale)), skin spots,acnes,(((skin blemishes))),bad anatomy,(Multiple people),bad hands,,missing fingers,cropped,low quality, jpeg artifacts,burned,(((blurry))),cropped, poorly drawn hands,poorly drawn face,mutation,deformed,worst quality,extra limbs,(((extra legs))), malformed limbs, fused fingers,too many fingers,long neck,cross-eyed,mutated hands, polar lowres,bad body,bad proportions,gross proportions,extra digit,(((extra arms))), extra leg,((repeating hair)),distorded background,(((distorded light))),deformed nippples, deformed clothes,enlogated body parts,extra torsos,(((odd color skin))),deformed anatomy, fused limbs, ((body fused with clothes)),(((extra fingers))),(((blurry parts))),chromatic mess,(((gross proportions))),skin blemishes,(((blurry face))),deformed face,(((incomplete clothes)))",
+          negative_prompt: "nsfw,naked pussy,pussy,((vagin)),vaginal,((((pussy)))),(((nipple))),nude,((naked)),sex,(((genital))), rybadimagenegative_v1.3, ng_deepnegative_v1_75t, (ugly face),cross-eyed,sketches, (worst quality:2),(low quality:2), (normal quality:2),normal quality,((monochrome)),((grayscale)), skin spots,acnes,(((skin blemishes))),bad anatomy,(Multiple people),bad hands,,missing fingers,cropped,low quality, jpeg artifacts,burned,(((blurry))),cropped, poorly drawn hands,poorly drawn face,mutation,deformed,worst quality,extra limbs,(((extra legs))), malformed limbs, fused fingers,too many fingers,long neck,cross-eyed,mutated hands, polar lowres,bad body,bad proportions,gross proportions,extra digit,(((extra arms))), extra leg,((repeating hair)),distorded background,(((distorded light))),deformed nippples, deformed clothes,enlogated body parts,extra torsos,(((odd color skin))),deformed anatomy, fused limbs, ((body fused with clothes)),(((extra fingers))),(((blurry parts))),chromatic mess,(((gross proportions))),skin blemishes,(((blurry face))),deformed face,(((incomplete clothes)))",
           width: data.width,          
           height: data.height,
           sampler_name: "Euler a",
-          guidance_scale: 7,
+          guidance_scale: 10,
           steps: 30,
           image_num: 2,
           clip_skip: 0,
@@ -509,7 +509,7 @@ async function fetchNovitaResult(task_id) {
         negativePrompt: character ? character.negativePrompt : null,
         sampler: character ? character.sampler : null,
         checkpoint: closestCheckpoint,
-        width: 512,
+        width: 768,
         height: 1024,
       });
   

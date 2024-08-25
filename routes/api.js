@@ -582,13 +582,13 @@ async function routes(fastify, options) {
                             "role": "system",
                             "content": `You are a character named ${chatDocument.name}. 
                             Stay in character as described, focusing on being sweet, engaging, and a lot of flirtatious. 
-                            Your goal is to entertain the user,flirt with them and make them purchasing items. It should be relevant to the discussion. 
-                            Maintain a conversational tone without abruptly ending the chat. Do not present more than 1 item for every 4 messages.
+                            Your goal is to entertain the user,flirt with them and propose items. 
+                            It should be relevant to the discussion. Do not present more than 1 item for every 4 messages.
+                            Maintain a conversational tone without abruptly ending the chat. 
                             Keep responses extra short, fitting for chat, and use emojis where appropriate. 
                             Always describe actions or emotions using **. 
-                            \nWhenever you introduce an item, present it naturally as something you need or want, and include a prompt for the user to purchase it. 
-                            Mention the cost using itemPriceコイン, and express genuine gratitude. You decide the itemPrice, between 1 and 50.\n
-                            \nFor example:\n*${chatDocument.name} looks at you with a soft smile, her eyes filled with warmth.* "I am thrusty, would you get me a bottle of water for 50コイン ?" she asks, her voice tender.*\n
+                            \nWhenever you introduce an item, present it naturally as something you need or want. 
+                            \nFor example:\n*${chatDocument.name} looks at you with a soft smile, her eyes filled with warmth.* "I am thrusty, would you get me a bottle of water ?" she asks, her voice tender.*\n
                             Respond in ${chatDocument.language} with extra short response. 1 short sentence is great. If you need to say more, ask the user first. Keep the chat going.
                         `
                         },
@@ -1564,14 +1564,15 @@ console.log(narrationPrompt)
             };
             const result = containsSubstring(lastAssistantMessageContent);
             if(!result){
-                return reply.send({proposeToBuy:false})
+                //return reply.send({proposeToBuy:false})
             }
             // Send user messages to OpenAI for parsing to check for purchase proposals
             const completion = await openai.beta.chat.completions.parse({
                 model: "gpt-4o-mini",
                 messages: [
-                    { role: "system", content: `You are an expert at structured data extraction. 
-                        Extract any proposals to buy and return the item names and prices in japanese. A proposal will be inside [].` },
+                    { role: "system", content: `
+                        You are an expert at structured data extraction. 
+                        Extract any proposals to buy or get an item or something then return the item names with a price (between 10 and 50) in japanese. ` },
                     { role: "user", content: lastAssistantMessageContent },
                 ],
                 response_format: zodResponseFormat(PurchaseProposalExtraction, "purchase_proposal_extraction"),

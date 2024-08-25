@@ -280,7 +280,9 @@ $(document).ready(function() {
                                 isNew = false
                             }else{
                                 //generateNarration()
-                                generateCompletion()
+                                generateCompletion(function(){
+                                    checkForPurchaseProposal()
+                                })
                                 isNew = false
                             }
                         },
@@ -641,6 +643,7 @@ $(document).ready(function() {
                             if($('#chat-widget-container').length == 0 && isTemporary){
                                 displayMessage('assistant',`<a class="btn btn-secondary custom-gradient-bg shadow-0 m-2 px-4 py-2" style="border-radius: 50px;" href="/authenticate"><i class="fas fa-sign-in-alt me-2"></i> ログイン</a>`)
                             }
+                            checkForPurchaseProposal()
                         })
                         updateParameters(chatId,userId)
 
@@ -872,7 +875,9 @@ $(document).ready(function() {
                         });
                     })
                 }else{
-                    generateCompletion()
+                    generateCompletion(function(){
+                        checkForPurchaseProposal()
+                    })
                 }
             }
 
@@ -1123,7 +1128,6 @@ $(document).ready(function() {
                                     initAudio($(`#play-${uniqueId}`), message);
                                 }
                             }
-                            checkForPurchaseProposal()
                             if (typeof callback === "function") {
                                 callback();
                             }
@@ -1617,11 +1621,14 @@ $(document).ready(function() {
                             const itemId = `item-${currentStep}-${Date.now()}`;
                             const message = `
                                 <div id="${itemId}" class="card bg-transparent text-white border-0">
-                                    <div class="card-body" style="height:auto !important;">
+                                    <div class="card-body-none" style="height:auto !important;">
                                         <h5 class="card-title" style="font-size: 14px;">${item.name}</h5>
-                                        <p class="card-text mb-2 fw-bold">必要コイン: ${item.price}コイン</p>
-                                        <button class="btn custom-gradient-bg  shadow-0 w-100" onclick="buyItem('${itemId}','${item.name}', ${item.price}, true, '${userId}', '${chatId}', '${userChatId}')">今すぐゲット</button>
-                                        <button class="btn btn-outline-danger border-0 shadow-0 rounded-0 position-absolute px-2 py-1" style="font-size: 12px;position: absolute;top: 0;right: 0;" onclick="buyItem('${itemId}','${item.name}', ${item.price}, false, '${userId}', '${chatId}', '${userChatId}')">見送る</button>
+                                        
+                                        <button class="btn custom-gradient-bg  shadow-0 w-100" 
+                                            onclick="buyItem('${itemId}','${item.name}', ${item.price}, true, '${userId}', '${chatId}', '${userChatId}')">
+                                            <span> ${item.price}<span class="mx-1">🪙</span></span>
+                                        </button>
+                                        <button class="d-none btn btn-outline-danger border-0 shadow-0 rounded-0 position-absolute px-2 py-1" style="font-size: 12px;position: absolute;top: 0;right: 0;" onclick="buyItem('${itemId}','${item.name}', ${item.price}, false, '${userId}', '${chatId}', '${userChatId}')">見送る</button>
                                     </div>
                                 </div>
                             `;
@@ -1629,18 +1636,17 @@ $(document).ready(function() {
                             count_proposal = 0
                         }else{
                             if(count_proposal >= 4){
-                                let message = `[Hidden] Prepare to sell me something`
+                                let message = `[Hidden] Prepare to propose an item`
                                 addMessageToChat(chatId, userChatId, 'user', message, function(error, res) {
                                     if (error) {
                                         console.error('Error adding message:', error);
                                     } else {
-                                        console.log('Message added successfully:', res);
+                                        //console.log('Message added successfully:', res);
                                     }
                                 });
                             }
                         }
                         count_proposal ++
-                        console.log({count_proposal})
                     },
                     error: function(xhr, status, error) {
                         console.error('Error checking purchase proposal:', error);

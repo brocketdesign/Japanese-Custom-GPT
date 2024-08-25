@@ -370,20 +370,20 @@ fastify.post('/huggingface/txt2img', async (request, reply) => {
     }
   });
   // NOVITA
-    const default_prompt = `(((perfect  anatomy))),(((masterpiece))),(((best quality))),(((ultra-detailed))),(((perfect skin))),(((perfect fingers))),perfect anatomy,(((HD))),(((4K quality))),(((perfect hands))),(((nsfw))),(((candide))),`
+    const default_prompt = `(((perfect  anatomy))),(((masterpiece))),(((best quality))),(((ultra-detailed))),(((perfect skin))),(((perfect fingers))),perfect anatomy,(((HD))),(((4K quality))),(((perfect hands))),(nsfw),(sexy),(((candide))),`
     // Function to trigger the Novita API for text-to-image generation
     async function fetchNovitaMagic(data) {
       try {
         const image_request = {
           model_name: "meinahentai_v4_70340.safetensors",
           prompt: default_prompt + data.prompt,
-          negative_prompt: "rybadimagenegative_v1.3, ng_deepnegative_v1_75t, (ugly face:0.8),cross-eyed,sketches, (worst quality:2),(low quality:2), (normal quality:2),normal quality,((monochrome)),((grayscale)), skin spots,acnes,(((skin blemishes))),bad anatomy,(Multiple people),bad hands,,missing fingers,cropped,low quality, jpeg artifacts,burned,(((blurry))),cropped, poorly drawn hands,poorly drawn face,mutation,deformed,worst quality,extra limbs,(((extra legs))), malformed limbs, fused fingers,too many fingers,long neck,cross-eyed,mutated hands, polar lowres,bad body,bad proportions,gross proportions,extra digit,(((extra arms))), extra leg,((repeating hair)),distorded background,(((distorded light))),deformed nippples, deformed clothes,enlogated body parts,extra torsos,(((odd color skin))),deformed anatomy, fused limbs, ((body fused with clothes)),(((extra fingers))),(((blurry parts))),chromatic mess,(((gross proportions))),skin blemishes,(((blurry face))),deformed face,(((incomplete clothes)))",
+          negative_prompt: "((((pussy)))), nude,sex,(((genital))), rybadimagenegative_v1.3, ng_deepnegative_v1_75t, (ugly face:0.8),cross-eyed,sketches, (worst quality:2),(low quality:2), (normal quality:2),normal quality,((monochrome)),((grayscale)), skin spots,acnes,(((skin blemishes))),bad anatomy,(Multiple people),bad hands,,missing fingers,cropped,low quality, jpeg artifacts,burned,(((blurry))),cropped, poorly drawn hands,poorly drawn face,mutation,deformed,worst quality,extra limbs,(((extra legs))), malformed limbs, fused fingers,too many fingers,long neck,cross-eyed,mutated hands, polar lowres,bad body,bad proportions,gross proportions,extra digit,(((extra arms))), extra leg,((repeating hair)),distorded background,(((distorded light))),deformed nippples, deformed clothes,enlogated body parts,extra torsos,(((odd color skin))),deformed anatomy, fused limbs, ((body fused with clothes)),(((extra fingers))),(((blurry parts))),chromatic mess,(((gross proportions))),skin blemishes,(((blurry face))),deformed face,(((incomplete clothes)))",
           width: data.width,          
           height: data.height,
           sampler_name: "Euler a",
           guidance_scale: 7,
           steps: 30,
-          image_num: 1,
+          image_num: 2,
           clip_skip: 0,
           seed: -1,
           loras: [],
@@ -439,27 +439,22 @@ async function fetchNovitaResult(task_id) {
               const taskStatus = response.data.task.status;
 
               if (taskStatus === 'TASK_STATUS_SUCCEED') {
-                  clearInterval(timer);
-                  const images = response.data.images;
-                  if (images.length === 0) {
-                      throw new Error('No images returned from Novita API');
-                  }
-
-                  // Download the image from Novita
-                  const imageUrl = images[0].image_url;
-                  const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
-                  const buffer = Buffer.from(imageResponse.data, 'binary');
-
-                  // Generate a hash from the buffer
-                  const hash = createHash('md5').update(buffer).digest('hex');
-
-                  // Upload the image to S3
-                  const s3Url = await uploadToS3(buffer, hash, 'novita_result_image.png');
-                  
-                  // Resolve the promise with the S3 URL
-                  resolve(s3Url);
-
-              } else if (taskStatus === 'TASK_STATUS_FAILED') {
+                clearInterval(timer);
+                const images = response.data.images;
+                if (images.length === 0) {
+                    throw new Error('No images returned from Novita API');
+                }
+            
+                const s3Urls = await Promise.all(images.map(async (image) => {
+                    const imageUrl = image.image_url;
+                    const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+                    const buffer = Buffer.from(imageResponse.data, 'binary');
+                    const hash = createHash('md5').update(buffer).digest('hex');
+                    return uploadToS3(buffer, hash, 'novita_result_image.png');
+                }));
+            
+                resolve(s3Urls);
+            } else if (taskStatus === 'TASK_STATUS_FAILED') {
                   clearInterval(timer);
                   reject(`Task failed with reason: ${response.data.task.reason}`);
               } else if (attempts >= maxAttempts) {
@@ -518,12 +513,15 @@ async function fetchNovitaResult(task_id) {
         height: 1024,
       });
   
-      // Polling or wait for the task to complete (you might want to add a delay or retry logic here)
-      const imageUrl = await fetchNovitaResult(taskId);
-  
-      const { imageId } = await saveImageToDB(userId, chatId, userChatId, prompt, imageUrl, aspectRatio);
-  
-      reply.send({ image_id: imageId, image: imageUrl });
+      const imageUrls = await fetchNovitaResult(taskId);
+
+      const images = await Promise.all(imageUrls.map(async (imageUrl) => {
+          const { imageId } = await saveImageToDB(userId, chatId, userChatId, prompt, imageUrl, aspectRatio);
+          return { id: imageId, url: imageUrl };
+      }));
+      
+      reply.send({ images });
+      
     } catch (err) {
       console.error(err);
       reply.status(500).send('Error generating image');

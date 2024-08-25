@@ -192,8 +192,10 @@ window.generateImageNovita = function(API_URL, userId, chatId, userChatId, chara
     }
     return response.json();
   })
-  .then(data => {
-    generateImage(data, prompt); // Directly use the data returned from your API
+  .then(images => {
+    images.forEach(image => {
+      generateImage(image, prompt);
+    })
   })
   .catch(error => {
     console.error('Error generating diffused image:', error);
@@ -206,8 +208,8 @@ window.generateImageNovita = function(API_URL, userId, chatId, userChatId, chara
 }
 window.generateImage = function(data,prompt){
 
-  const imageUrl = data.image;
-  const imageId = data.image_id
+  const imageUrl = data.url;
+  const imageId = data.id
   // Create an <img> element
   const img = document.createElement('img');
   img.setAttribute('src', imageUrl);

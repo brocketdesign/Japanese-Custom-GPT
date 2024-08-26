@@ -600,7 +600,7 @@ $(document).ready(function() {
                     $('#chatContainer').append(botResponseContainer);
                     $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
                 }
-                let message = `[Starter] 状況を発明し、何が起こっているかを説明してください。会話を開始したかのように応答してください。確認から始めず、答えから始めてください。
+                let message = `[Starter] あなたはどでで何をしてるのかを発明してください。会話を開始したかのように応答してください。確認から始めず、答えから始めてください。
                 Provide a SHORT message,sweet and chatty with emojis. DO NOT sell anything in your first response but later on.`;
             
                 if($('#chat-widget-container').length == 0 && isTemporary){

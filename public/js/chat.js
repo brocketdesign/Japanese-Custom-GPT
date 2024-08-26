@@ -339,7 +339,8 @@ $(document).ready(function() {
                         totalSteps = chatData ? chatData.length : 0;
 
                         chatName = data.chat.name
-                        thumbnail = data.chat.chatImageUrl
+                        thumbnail = data.chat.thumbnailUrl || data.chat.chatImageUrl
+
                         character = data.character
                         
                         if(data.chat.language){

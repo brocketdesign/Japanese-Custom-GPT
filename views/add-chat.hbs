@@ -574,7 +574,7 @@
             const pdf = $('#chatPdf')[0].files[0];
             const content = saveJson();
             const thumbnail = $('#chatThumbnail')[0].files[0];
-            const chatImageUrl = $('#chatImageUrl').val()
+            const chatImageUrl = thumbnail || $('#chatImageUrl').val()
             const visibility = $('#visibility').val()
 
             formData.append('name', name);

@@ -95,7 +95,6 @@ async function routes(fastify, options) {
         _id: new fastify.mongo.ObjectId(userId),
         currentPlanId: planPriceId,
         subscriptionStatus: 'active',
-        subscriptionType: process.env.MODE
       });
       if (existingSubscription) {
         return reply.status(400).send({ error: 'You already have an active subscription for this plan.' });
@@ -103,7 +102,6 @@ async function routes(fastify, options) {
       existingSubscription = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').findOne({
         _id: new fastify.mongo.ObjectId(userId),
         subscriptionStatus: 'active', 
-        subscriptionType: process.env.MODE
       });
       if(existingSubscription && existingSubscription.currentPlanId != planPriceId ){
         console.log(`change plan to ${planId} ${billingCycle}`)
@@ -191,7 +189,6 @@ async function routes(fastify, options) {
             stripeCustomerId: session.customer, 
             stripeSubscriptionId: session.subscription, 
             subscriptionStatus: 'active',
-            subscriptionType: process.env.MODE,
             currentPlanId: subscription.items.data[0].price.id, 
             billingCycle: subscription.items.data[0].price.recurring.interval+'ly', 
             subscriptionStartDate: new Date(subscription.start_date * 1000), 
@@ -278,7 +275,6 @@ async function routes(fastify, options) {
       const updateResult = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').updateOne(
         { 
           _id: new fastify.mongo.ObjectId(user._id),
-          subscriptionType: process.env.MODE 
         },
         {
           $set: {
@@ -298,7 +294,6 @@ async function routes(fastify, options) {
       await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
         { 
           _id: new fastify.mongo.ObjectId(user._id),
-          subscriptionType: process.env.MODE 
         },
         {
           $set: {

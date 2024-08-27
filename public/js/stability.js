@@ -222,7 +222,7 @@ window.generateImage = function(data,prompt){
 
   const user = JSON.parse(localStorage.getItem('user'))
   const subscriptionStatus = user.subscriptionStatus == 'active'
-  console.log({subscriptionStatus})
+
   if (/nsfw\b/i.test(imagePrompt) && !subscriptionStatus) {
     displayMessage('bot-image-nsfw')
   }else{

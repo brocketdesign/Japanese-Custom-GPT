@@ -492,7 +492,6 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       existingSubscription = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').findOne({
         _id: new fastify.mongo.ObjectId(userId),
         subscriptionStatus: 'active',
-        subscriptionType: process.env.MODE
       });
       return reply.send({plan:existingSubscription})
     } catch (error) {

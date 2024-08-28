@@ -76,7 +76,7 @@ $(document).ready(function() {
                             });
                         }
                         setTimeout(() => {
-                            triggerCustomAlert();
+                            //triggerCustomAlert();
                         }, 2000);
                         
                     })

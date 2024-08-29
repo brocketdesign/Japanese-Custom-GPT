@@ -1861,8 +1861,12 @@ async function routes(fastify, options) {
             const user = await fastify.getUser(request, reply);
             const userId = user._id;
             const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
-            
+    
             if (action === 'add') {
+                const userDoc = await collection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
+                if (userDoc.personas.length >= 8) {
+                    return reply.status(400).send({ error: 'これ以上のペルソナを追加できません。（最大8個まで）' });
+                }
                 await collection.updateOne(
                     { _id: new fastify.mongo.ObjectId(userId) },
                     { $addToSet: { personas: new fastify.mongo.ObjectId(personaId) } }
@@ -1877,9 +1881,10 @@ async function routes(fastify, options) {
             return reply.send({ success: true });
         } catch (error) {
             console.log(error);
-            return reply.status(500).send({ error: 'An error occurred while updating the persona.' });
+            return reply.status(500).send({ error: 'ペルソナの更新中にエラーが発生しました。' });
         }
     });
+    
     fastify.post('/api/user/persona', async (request, reply) => {
         try {
             const { personaId } = request.body;

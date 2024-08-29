@@ -141,6 +141,7 @@ $(document).ready(function() {
             })
             $(document).on('click','.user-chat-history', function(){
                 //const selectUser = $(this).data('user')
+                chatId = $(this).data('id')
                 userChatId = $(this).data('chat')
                 fetchchatData(chatId, userId)
             })
@@ -1913,126 +1914,6 @@ $(document).ready(function() {
 
     }
 
-    function getUserChatHistory(chatId, userId, callback) {
-        $.ajax({
-          url: `/api/chat-history/${chatId}`,
-          type: 'POST',
-          data: JSON.stringify({ userId: userId }),
-          contentType: 'application/json',
-          dataType: 'json',
-          success: function(data) {
-            const lastChat = data.find(chat =>!chat.isWidget);
-            if(lastChat){
-                userChatId = lastChat._id
-                localStorage.setItem('userChatId', userChatId);
-            }
-            displayUserChatHistory(data);
-            if (callback) { callback(lastChat) }
-          },
-          error: function(jqXHR, textStatus, errorThrown) {
-            console.error('Error fetching user chat history:', errorThrown);
-          }
-        });
-    }
-
-    function displayUserChatHistory(userChat) {
-        const chatHistoryContainer = $('#chat-history');
-        chatHistoryContainer.empty();
-    
-        if (userChat && userChat.length > 0) {
-            // Create two separate cards for user and widget chat history
-            const userChatCard = $('<div class="card rounded-0 shadow-0 bg-transparent"></div>');
-            const widgetChatCard = $('<div class="card rounded-0 shadow-0 bg-transparent"></div>');
-    
-            // User chat history
-            const userChatHeader = $('<div class="card-header"></div>');
-            userChatHeader.text('チャット履歴');
-            userChatCard.append(userChatHeader);
-    
-            const userChatListGroup = $('<ul class="list-group list-group-flush"></ul>');
-            const userChats = userChat.filter(chat =>!chat.isWidget);
-            userChats.forEach(chat => {
-                const listItem = $(`<li class="list-group-item user-chat-history bg-transparent d-flex align-items-center justify-content-between" data-id="${chat.chatId}" data-chat="${chat._id}" data-user="${chat.userId}"></li>`);
-                listItem.css('cursor', 'pointer');
-    
-                const small = $('<small class="text-secondary"></small>');
-                small.append($('<i class="fas fa-clock me-1"></i>'));
-                var chatUpdatedAt = new Date(chat.updatedAt);
-                // Convert to Japanese localized date string
-                var japaneseDateString = chatUpdatedAt.toLocaleDateString('ja-JP', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                weekday: 'long'
-                });
-                small.append(japaneseDateString);
-    
-                const dropdown = renderChatDropdown(chat)
-                
-                listItem.append(small);
-                listItem.append(dropdown);
-                userChatListGroup.append(listItem);
-            });
-    
-            userChatCard.append(userChatListGroup);
-    
-            // Widget chat history
-            const widgetChatHeader = $('<div class="card-header"></div>');
-            widgetChatHeader.text('ウィジェットチャット履歴');
-            widgetChatCard.append(widgetChatHeader);
-    
-            const widgetChatListGroup = $('<ul class="list-group list-group-flush"></ul>');
-            const widgetChats = userChat.filter(chat => chat.isWidget);
-            widgetChats.forEach(chat => {
-                const listItem = $(`<li class="list-group-item user-chat-history bg-transparent d-flex align-items-center justify-content-between" data-id="${chat.chatId}" data-chat="${chat._id}" data-user="${chat.userId}"></li>`);
-                listItem.css('cursor', 'pointer');
-    
-                const small = $('<small class="text-secondary"></small>');
-                small.append($('<i class="fas fa-clock me-1"></i>'));
-                small.append(chat.updatedAt);
-    
-                const dropdown = renderChatDropdown(chat)
-                
-                listItem.append(small);
-                listItem.append(dropdown);
-                widgetChatListGroup.append(listItem);
-            });
-    
-            widgetChatCard.append(widgetChatListGroup);
-    
-            // Append both cards to the container
-            chatHistoryContainer.append(userChatCard);
-            chatHistoryContainer.append(widgetChatCard);
-    
-            enableToggleDropdown()
-        }
-    }
-    
-    function renderChatDropdown(chat) {
-        const chatId = chat._id;
-        const dropdownHtml = `
-            <div class="d-inline-block align-items-center">
-                <!-- Dropdown -->
-                <div class="dropdown pe-2">
-                    <button class="btn border-0 shadow-0 dropdown-toggle ms-2" type="button" id="dropdownMenuButton_${chatId}" data-mdb-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-ellipsis-v text-secondary"></i>
-                    </button>
-                    <ul class="chat-option-menu dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton_${chatId}">
-                        <li>
-                            <span data-id="${chatId}" class="dropdown-item text-danger delete-chat-history" style="cursor:pointer">
-                                <i class="fas fa-trash me-2"></i>
-                                <span class="text-muted" style="font-size:12px"></span>削除する</span>
-                            </span>
-                        </li>
-                    </ul>
-                </div>
-                <!-- End of Dropdown -->
-            </div>
-        `;
-
-        return dropdownHtml 
-    }
-
     function clearContentFromEnd($element, callback) {
         $element.html('')
         if (typeof callback === 'function') {
@@ -2203,7 +2084,124 @@ $(document).find('#register-form').on('submit', function(event) {
         }
     });
 });
+function displayUserChatHistory(userChat) {
+    const chatHistoryContainer = $('#chat-history');
+    chatHistoryContainer.empty();
 
+    if (userChat && userChat.length > 0) {
+        // Create two separate cards for user and widget chat history
+        const userChatCard = $('<div class="card rounded-0 shadow-0 bg-transparent"></div>');
+        const widgetChatCard = $('<div class="card rounded-0 shadow-0 bg-transparent"></div>');
+
+        // User chat history
+        const userChatHeader = $('<div class="card-header"></div>');
+        userChatHeader.text('チャット履歴');
+        userChatCard.append(userChatHeader);
+
+        const userChatListGroup = $('<ul class="list-group list-group-flush"></ul>');
+        const userChats = userChat.filter(chat =>!chat.isWidget);
+        userChats.forEach(chat => {
+            const listItem = $(`<li class="list-group-item user-chat-history bg-transparent d-flex align-items-center justify-content-between" data-id="${chat.chatId}" data-chat="${chat._id}" data-user="${chat.userId}"></li>`);
+            listItem.css('cursor', 'pointer');
+
+            const small = $('<small class="text-secondary"></small>');
+            small.append($('<i class="fas fa-clock me-1"></i>'));
+            var chatUpdatedAt = new Date(chat.updatedAt);
+            // Convert to Japanese localized date string
+            var japaneseDateString = chatUpdatedAt.toLocaleDateString('ja-JP', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            weekday: 'long'
+            });
+            small.append(japaneseDateString);
+
+            const dropdown = renderChatDropdown(chat)
+            
+            listItem.append(small);
+            listItem.append(dropdown);
+            userChatListGroup.append(listItem);
+        });
+
+        userChatCard.append(userChatListGroup);
+
+        // Widget chat history
+        const widgetChatHeader = $('<div class="card-header"></div>');
+        widgetChatHeader.text('ウィジェットチャット履歴');
+        widgetChatCard.append(widgetChatHeader);
+
+        const widgetChatListGroup = $('<ul class="list-group list-group-flush"></ul>');
+        const widgetChats = userChat.filter(chat => chat.isWidget);
+        widgetChats.forEach(chat => {
+            const listItem = $(`<li class="list-group-item user-chat-history bg-transparent d-flex align-items-center justify-content-between" data-id="${chat.chatId}" data-chat="${chat._id}" data-user="${chat.userId}"></li>`);
+            listItem.css('cursor', 'pointer');
+
+            const small = $('<small class="text-secondary"></small>');
+            small.append($('<i class="fas fa-clock me-1"></i>'));
+            small.append(chat.updatedAt);
+
+            const dropdown = renderChatDropdown(chat)
+            
+            listItem.append(small);
+            listItem.append(dropdown);
+            widgetChatListGroup.append(listItem);
+        });
+
+        widgetChatCard.append(widgetChatListGroup);
+
+        // Append both cards to the container
+        chatHistoryContainer.append(userChatCard);
+        chatHistoryContainer.append(widgetChatCard);
+
+        enableToggleDropdown()
+    }
+}
+
+function renderChatDropdown(chat) {
+    const chatId = chat._id;
+    const dropdownHtml = `
+        <div class="d-inline-block align-items-center">
+            <!-- Dropdown -->
+            <div class="dropdown pe-2">
+                <button class="btn border-0 shadow-0 dropdown-toggle ms-2" type="button" id="dropdownMenuButton_${chatId}" data-mdb-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-ellipsis-v text-secondary"></i>
+                </button>
+                <ul class="chat-option-menu dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton_${chatId}">
+                    <li>
+                        <span data-id="${chatId}" class="dropdown-item text-danger delete-chat-history" style="cursor:pointer">
+                            <i class="fas fa-trash me-2"></i>
+                            <span class="text-muted" style="font-size:12px"></span>削除する</span>
+                        </span>
+                    </li>
+                </ul>
+            </div>
+            <!-- End of Dropdown -->
+        </div>
+    `;
+
+    return dropdownHtml 
+}
+window.getUserChatHistory = function(chatId, userId, callback) {
+    $.ajax({
+      url: `/api/chat-history/${chatId}`,
+      type: 'POST',
+      data: JSON.stringify({ userId: userId }),
+      contentType: 'application/json',
+      dataType: 'json',
+      success: function(data) {
+        const lastChat = data.find(chat =>!chat.isWidget);
+        if(lastChat){
+            userChatId = lastChat._id
+            localStorage.setItem('userChatId', userChatId);
+        }
+        displayUserChatHistory(data);
+        if (callback) { callback(lastChat) }
+      },
+      error: function(jqXHR, textStatus, errorThrown) {
+        console.error('Error fetching user chat history:', errorThrown);
+      }
+    });
+}
 window.renderChatList = function(userId,chatId) {
     if($('#chat-list').length == 0 || $('#chat-widget-container').length > 0){
         return
@@ -2260,7 +2258,7 @@ window.renderChatList = function(userId,chatId) {
                                 </a>
                             </li>
                             <li>
-                                <button class="dropdown-item text-secondary history-chat" data-id="${chat._id}">
+                                <button class="dropdown-item text-secondary history-chat" data-id="${chat._id}" data-user="${userId}">
                                     <i class="fas fa-history me-2"></i>
                                     <span class="text-muted" style="font-size:12px"></span>チャット履歴</span>
                                 </button>

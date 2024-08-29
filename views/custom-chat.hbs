@@ -797,6 +797,9 @@ $(document).ready(function() {
         }
     });
     $(document).on('click','.history-chat', function(){
+        const chatId = $(this).data('id')
+        const userId = $(this).data('user')
+        getUserChatHistory(chatId, userId)
         $('.sidebar-history').toggleClass('hidden');
         $('.sidebar').removeClass('hidden');
         $('.content').removeClass('collapsed');

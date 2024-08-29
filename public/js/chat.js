@@ -332,6 +332,8 @@ $(document).ready(function() {
                     data: JSON.stringify({ userId: fetch_userId, chatId: fetch_chatId, userChatId}),
                     success: function(data) {
                         chatId = data.chat._id
+                        $(document).find(`.chat-list.item[data-id="${chatId}"]`).addClass('active').siblings().removeClass('active');
+
                         isNew = fetch_reset || data.isNew
                         if(!data.chat){
                             showDiscovery();

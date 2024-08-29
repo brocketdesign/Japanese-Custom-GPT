@@ -525,10 +525,45 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       currentUser = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(currentUserId) });
   
       const user = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(userId) });
-      
+  
       if (!user) {
         return reply.status(404).send({ error: 'User not found' });
       }
+  
+      // Fetch and validate personas including selected persona
+      let personas = user.personas || [];
+      let validPersonaIds = [];
+  
+      for (const personaId of personas) {
+        const personaExists = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(personaId) });
+        if (personaExists) {
+          validPersonaIds.push(personaId);
+        }
+      }
+  
+      // Validate selected persona
+      if (user.persona && !validPersonaIds.includes(user.persona)) {
+        user.persona = null; // Reset if invalid
+      } else if (user.persona) {
+        validPersonaIds.push(user.persona); // Ensure selected persona is included
+      }
+  
+      // Ensure unique persona IDs
+      validPersonaIds = [...new Set(validPersonaIds)];
+  
+      // Fetch the actual persona objects
+      personas = await collectionChat.find({ _id: { $in: validPersonaIds.map(id => new fastify.mongo.ObjectId(id)) } }).toArray();
+  
+      // Update the user document with valid personas and selected persona
+      await collectionUser.updateOne(
+        { _id: new fastify.mongo.ObjectId(userId) },
+        { 
+          $set: { 
+            personas: validPersonaIds, 
+            persona: user.persona || (validPersonaIds.length > 0 ? validPersonaIds[0] : null) // Set default if needed
+          } 
+        }
+      );
   
       const chatQuery = {
         $or: [
@@ -539,7 +574,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       };
   
       let isAdmin = false;
-      
+  
       if (currentUserId.toString() === userId) {
         isAdmin = true;
         chatQuery.visibility = { $in: ["public", "private"] };
@@ -580,9 +615,11 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
           visibility: chat.visibility
         })),
         publicChatCount,
-        privateChatCount
+        privateChatCount,
+        personas // Returning persona objects
       });
     } catch (error) {
+      console.log(error)
       return reply.status(500).send({ error: 'An error occurred' });
     }
   });

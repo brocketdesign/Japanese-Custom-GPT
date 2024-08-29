@@ -629,6 +629,11 @@
                                             {{this.nickname}}
                                         </a>
                                     <div id="spinner-{{this._id}}" class="position-absolute spinner-grow  spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
+                                    <div class="persona position-absolute" style="color: rgb(165 164 164);opacity:0.8; top:10px;right:10px" data-id="{{this._id}}">
+                                        <span class="badge bg-dark" >
+                                            <i class="far fa-bookmark"></i>
+                                        </span>
+                                    </div>
                                 </div>
                                 <div class="card-body bg-transparent border-0 pb-0 text-start">
                                     <h5 class="card-title character-title">{{this.name}}</h5>
@@ -642,6 +647,14 @@
                 {{#if peopleChats}}
                     <section class="w-100 px-0 py-0">
                         <h4 class="px-4">キャラクターライブラリー</h4>
+                        <ul class="nav nav-pills nav-fill m-1 d-none">
+                            <li class="nav-item">
+                                <a class="nav-link active" aria-current="page" href="#">全て</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">ペルソナ</a>
+                            </li>
+                        </ul>
                         <div class="row m-0 px-1">
                             {{#each peopleChats.synclubaichat}}
                             <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2 redirectToChat" style="cursor:pointer;" data-id="{{this._id}}" data-image="{{this.chatImageUrl}}">
@@ -654,7 +667,7 @@
                                             </span>
                                         {{/each}}
                                     </div>
-                                    <div class="persona position-absolute" style="color: rgb(165 164 164);opacity:0.8; top:10px;left:10px" data-id="{{this._id}}">
+                                    <div class="persona position-absolute" style="color: rgb(165 164 164);opacity:0.8; top:10px;right:10px" data-id="{{this._id}}">
                                         <span class="badge bg-dark" >
                                             <i class="far fa-bookmark"></i>
                                         </span>
@@ -733,7 +746,7 @@
 <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
 <script>
 $(document).ready(function() {
-    const user = JSON.parse(localStorage.getItem('user'))
+    const user = {{{json user}}}
 
     function adjustHeight() {
         const newHeight = $(window).height() * 0.97;
@@ -888,7 +901,8 @@ $(document).ready(function() {
         e.stopPropagation();
         // data-id属性からチャットIDを取得
         var chatId = $(this).data('id');
-        const userId = localStorage.getItem('userId');
+        const user = {{{json user}}}
+        const userId = user._id
         // POSTリクエストを送信
         $.post('/api/chat-analyze/', { chatId: chatId, userId })
             .done(function(response) {
@@ -1014,7 +1028,7 @@ $(document).ready(function() {
     $(document).on('click', '.tag-button', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        let user = JSON.parse(localStorage.getItem('user'))
+        const user = {{{json user}}}
         const isTemporary = !!user.isTemporary
         const subscriptionStatus = user.subscriptionStatus == 'active'
         if(isTemporary || !subscriptionStatus){
@@ -1043,7 +1057,8 @@ $(document).ready(function() {
         e.preventDefault()
         e.stopPropagation();
         const chatId = $(this).data('id');
-        const userId = localStorage.getItem('userId');
+        const user = {{{json user}}}
+        const userId = user._id
         Swal.fire({
             title: '本当に削除しますか？',
             text: "この操作は元に戻せません！",
@@ -1105,9 +1120,28 @@ $(document).ready(function() {
             }
         });
     });
+
+    $('.nav-link').on('click', function(e) {
+        e.preventDefault();
+        $('.nav-link').removeClass('active');
+        $(this).addClass('active');
+        
+        if ($(this).text().trim() === 'ペルソナ') {
+            $('.custom-card').hide();
+            $('.custom-card .persona.on').closest('.custom-card').show();
+        } else {
+            $('.custom-card').show();
+        }
+    });
+
     $(document).on('click', '.persona', function(e) {
         e.stopPropagation();
         e.preventDefault();
+        const user = {{{json user}}}
+        const isTemporary = !!user.isTemporary
+        if(isTemporary){ showRegistrationForm(); return; }
+        const $this = $(this)
+        $this.toggleClass('on');
         const $icon = $(this).find('i');
         const isAdding = $icon.hasClass('far');
         $icon.toggleClass('fas far');
@@ -1124,6 +1158,7 @@ $(document).ready(function() {
             const status = 'error';
             showNotification(message, status);
             $icon.toggleClass('fas far');
+            $this.toggleClass('on');
         });
 
     });
@@ -1142,8 +1177,10 @@ function initializePersonaStats(personas) {
         $('.persona').each(function() {
             const personaId = $(this).data('id');
             if (personas.includes(personaId)) {
+                $(this).addClass('on')
                 $(this).find('i').addClass('fas').removeClass('far');
             } else {
+                $(this).removeClass('on')
                 $(this).find('i').addClass('far').removeClass('fas');
             }
         });
@@ -1157,7 +1194,8 @@ function redirectToChat(chatId,chatImage) {
     }
     $('#chat-container').css('background-image', chatImage);
     $(`#spinner-${chatId}`).addClass('on').show()
-    const userId = localStorage.getItem('userId');
+    const user = {{{json user}}}
+    const userId = user._id
     fetchchatData(chatId,userId,null,function(){
         $(`#spinner-${chatId}`).removeClass('on').hide()
     })
@@ -1168,7 +1206,8 @@ $('.date-time').each(function() {
     $(this).text(trimmedDate); // Update the element's content
 });
 function initiateCheckout(buttonId) {
-    const userId = localStorage.getItem('userId');
+    const user = {{{json user}}}
+    const userId = user._id
     let stripe
     if(window.location.href.indexOf('https://') >= 0){
         stripe = Stripe('pk_live_51PjtRbE5sP7DA1XvCkdmezori9qPGoO21y7yKSVvgkQVyrhWZfHAUkNsjPMnbwpPlp4zzoYsRjn79Ad7XN7HTHcc00UjBA9adF'); // Use your publishable key here

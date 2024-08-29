@@ -294,7 +294,7 @@
             <label for="chatUrl" class="form-label d-none">URL</label>
             <input type="hidden" class="form-control" id="chatUrl" name="url">
         </div>
-        <div class="container mt-1 d-none">
+        <div class="container mt-1 is-premium d-none">
             <label for="chatContentEdition" class="form-label">チャットの構造</label>
             <div id="chatContentEdition"></div>
             <button type="button" id="genStructure" class="btn w-100 btn-outline-secondary mb-3 shadow-0" data-toggle="tooltip" title="チャット構造の生成">
@@ -326,8 +326,12 @@
         var count = 0
         let chatId = '{{chatId}}';
         const isTemporaryChat = '{{isTemporaryChat}}'
+        const user = {{{json user}}}
+        const subscriptionStatus = user.subscriptionStatus == 'active'
         let isAutoGen = false
-
+        if(subscriptionStatus){
+            $('.is-premium').each(function(){$(this).toggleClass('d-none')})
+        }
         $('input, textarea').val('');
         $('#resetForm').on('click',function(){
             $('input, textarea').val('');
@@ -389,7 +393,9 @@
         }
         $('#visibility').val('public')
         $('#visibility').change(function() {
-            let user = JSON.parse(localStorage.getItem('user'))
+            
+            const user = {{{json user}}}
+            const userId = user._id
             if(!user){
                 fetchUser(function(error, user){
                     user = localStorage.setItem('user',JSON.stringify(user))
@@ -491,7 +497,9 @@
                         $('#sendForm span').html(`${chatData.name}とチャットする`)
                     }
                     if(chatData.visibility){
-                        const user = JSON.parse(localStorage.getItem('user'))
+                        
+                        const user = {{{json user}}}
+                        const userId = user._id
                         if(user.subscriptionStatus == 'active'){
                             $('#visibility').val(chatData.visibility)
                         }

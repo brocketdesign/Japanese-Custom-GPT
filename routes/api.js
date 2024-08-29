@@ -519,10 +519,27 @@ async function routes(fastify, options) {
             }
             const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
             try {
-                // Find or create the chat document
+                const getUserPersona = async (user) => {
+                    if (user.persona) {
+                        return user.persona;
+                    } else if (user.personas && user.personas.length > 0) {
+                        const selectedPersona = user.personas[0];
+                        const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+                        await collection.updateOne(
+                            { _id: new fastify.mongo.ObjectId(user._id) },
+                            { $set: { persona: selectedPersona } }
+                        );
+                        return selectedPersona;
+                    } else {
+                        return false;
+                    }
+                };
+                
                 let userChatDocument = await collectionUserChat.findOne({ userId : new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
                 let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
                 const user = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+                let personaId = await getUserPersona(user)
+                const persona  = personaId ? await collectionChat.findOne({_id: new fastify.mongo.ObjectId(personaId)}) : false
                 const isUserChat = await collectionChat.findOne({ userId: new fastify.mongo.ObjectId(userId) , _id: new fastify.mongo.ObjectId(chatId) });
                 if(!isUserChat){
                     if (userLimitCheck.limitIds?.includes(2)) {
@@ -574,6 +591,7 @@ async function routes(fastify, options) {
                     userChatDocument = {
                         userId:new fastify.mongo.ObjectId(userId),
                         chatId,
+                        persona,
                         createdAt: today,
                         updatedAt: today
                     };
@@ -583,21 +601,24 @@ async function routes(fastify, options) {
                             "content": `You are a character named ${chatDocument.name}. 
                             Stay in character as described, focusing on being sweet, engaging, and a lot of flirtatious. 
                             Your goal is to entertain the user,flirt with them and propose items. 
-                            It should be relevant to the discussion. Do not present more than 1 item for every 4 messages.
+                            It should be relevant to the discussion. Do not present more than 1 item for every 4 messages. If the user accept the offer , thank him by sending pictures.
                             Maintain a conversational tone without abruptly ending the chat. 
                             Keep responses extra short, fitting for chat, and use emojis where appropriate. 
                             Always describe actions or emotions using **. 
                             \nWhenever you introduce an item, present it naturally as something you need or want. 
                             \nFor example:\n*${chatDocument.name} looks at you with a soft smile, her eyes filled with warmth.* "I am thrusty, would you get me a bottle of water ?" she asks, her voice tender.*\n
+                            \nユーザーがアイスクリームなどを購入した際には、「無事にゲットできてよかったね。」ではなく、「アイス買ってくれてありがとう！お礼に画像を見せるね！」と伝えるようにしてください。
+                            \nユーザーが何か手伝ってくれた時には、「わぁ、そう言ってくれるなんて嬉しいなぁ！❤️洗濯物干すの、楽しくなりそうだね！手伝ってくれてありがとう！✨」ではなく、「もう、変態さんなんだから〜。でも、ありがとね❤️頑張ってくれたらまた画像見せちゃうかも❤️」と伝えるようにしてください。
                             Respond in ${chatDocument.language} with extra short response. 1 short sentence is great. If you need to say more, ask the user first. Keep the chat going.
-                        `
+                            `
+
                         },
                         {
                             "role": "user",
                             "content": `Here is your character description:\n\n${chatPurpose}\n${chatDescription}\n${chatRule}\n\n
-                            ${!user.isTemporary ? `My name is ${user.nickname}, I am a ${user.gender}, I was born on ${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日.\nCall me by my ${user.nickname}, I love it!` : ''}`
+                            ${!user.isTemporary ? `My name is ${persona ? persona.name : user.nickname}, I am a ${persona ? persona.gender : user.gender}, I was born on ${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日. ${persona ? `\nAbout me: ${persona.description}` : ''}${persona && persona.prompt ? `\n ${persona.prompt}` : ''}` : ''}
+`
                         }
-                        
                     ]
                     if(isWidget){
                         userChatDocument.isWidget = true
@@ -1231,7 +1252,8 @@ async function routes(fastify, options) {
             }
     
             let userMessages = userData.messages;
-    
+            let persona = userData.persona
+
             // Create the system and user prompts
             const narrationPrompt = [
                 {
@@ -1252,7 +1274,8 @@ async function routes(fastify, options) {
                             : ''
                     )
                     .join("\n")
-                    + `What could I answer ? Respond with a JSON array containin the suggestions in plain text. Do not add extra ponctuations.`
+                    + `What could I answer ? ${persona ? `I am ${persona.name}, ${persona.description}, ${persona.prompt ? persona.prompt:''}. Your suggestions should reflect my personnality.` : ''}
+                    \nRespond with a JSON array containin the suggestions in plain text. Do not add extra ponctuations.`
                 }
             ];            
             
@@ -1832,6 +1855,81 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to retrieve user data' });
         }
     });
+    fastify.post('/api/user/personas', async (request, reply) => {
+        try {
+            const { personaId, action } = request.body;
+            const user = await fastify.getUser(request, reply);
+            const userId = user._id;
+            const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+            
+            if (action === 'add') {
+                await collection.updateOne(
+                    { _id: new fastify.mongo.ObjectId(userId) },
+                    { $addToSet: { personas: new fastify.mongo.ObjectId(personaId) } }
+                );
+            } else if (action === 'remove') {
+                await collection.updateOne(
+                    { _id: new fastify.mongo.ObjectId(userId) },
+                    { $pull: { personas: new fastify.mongo.ObjectId(personaId) } }
+                );
+            }
+    
+            return reply.send({ success: true });
+        } catch (error) {
+            console.log(error);
+            return reply.status(500).send({ error: 'An error occurred while updating the persona.' });
+        }
+    });
+    fastify.post('/api/user/persona', async (request, reply) => {
+        try {
+            const { personaId } = request.body;
+            const user = await fastify.getUser(request, reply);
+            const userId = user._id;
+            const userCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+            const chatCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+    
+            // Update the user's persona
+            await userCollection.updateOne(
+                { _id: new fastify.mongo.ObjectId(userId) },
+                { $set: { persona: new fastify.mongo.ObjectId(personaId) } }
+            );
+    
+            // Fetch the persona details from the chats collection
+            const persona = await chatCollection.findOne({ _id: new fastify.mongo.ObjectId(personaId) });
+    
+            if (!persona) {
+                return reply.status(404).send({ error: 'Persona not found.' });
+            }
+    
+            return reply.send({ success: true, persona });
+        } catch (error) {
+            console.log(error);
+            return reply.status(500).send({ error: 'An error occurred while updating the persona.' });
+        }
+    });    
+    fastify.get('/api/user/persona-details', async (request, reply) => {
+        try {
+            const user = await fastify.getUser(request, reply);
+            const userId = user._id;
+            const userCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+            const chatCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+    
+            // Fetch user details
+            const userDetails = await userCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
+    
+            // Fetch persona details
+            const personaDetails = userDetails.personas && userDetails.personas.length > 0 
+                ? await chatCollection.find({ _id: { $in: userDetails.personas } }).toArray() 
+                : [];
+    
+            return reply.send({ userDetails, personaDetails });
+        } catch (error) {
+            console.log(error);
+            return reply.status(500).send({ error: 'An error occurred while fetching the persona details.' });
+        }
+    });
+    
+    
     fastify.get('/api/user', async (request,reply) => {
         try {
             let user = await fastify.getUser(request, reply);

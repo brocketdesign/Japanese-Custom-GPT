@@ -30,6 +30,7 @@ $(document).ready(function() {
             localStorage.setItem('user', JSON.stringify(user));
             let userCoins = user.coins
             updateCoins(userCoins)
+            let persona
             let currentStep = 0;
             let totalSteps = 0;
             let chatData = {};
@@ -342,7 +343,7 @@ $(document).ready(function() {
                         thumbnail = data.chat.thumbnailUrl || data.chat.chatImageUrl
 
                         character = data.character
-                        
+
                         if(data.chat.language){
                             language = data.chat.language
                         }
@@ -367,7 +368,8 @@ $(document).ready(function() {
                         $('#userMessage').attr('placeholder',chatName+'にメッセージを送る')
 
                         if(!isNew){
-                            displayChat(data.userChat.messages)
+                            persona = data.userChat.persona
+                            displayChat(data.userChat.messages,data.userChat.persona)
                             if(data.userChat.log_success){
                                 displayThankMessage()
                             }
@@ -474,7 +476,13 @@ $(document).ready(function() {
                 
                 // Add click event listener to the button
                 button.on('click', function() {
-                    displayStarter();
+                    if(isTemporary){
+                        displayStarter();
+                    }else{
+                        selectPersona(function(){
+                            displayStarter();
+                        })
+                    }
                 });
 
             }
@@ -578,6 +586,84 @@ $(document).ready(function() {
                 }
                 */
             }
+            function selectPersona(callback) {
+                $.get('/api/user/persona-details', function(response) {
+                    const user = response.userDetails;
+                    const personas = response.personaDetails;
+                    if(!personas || personas.length == 0 ){
+                        if (callback) {
+                            callback();
+                        }
+                        return
+                    }
+            
+                    let personaHtml = '';
+                    personas.forEach(persona => {
+                        const isActive = user?.persona?.includes(persona._id);
+                        personaHtml += `
+                            <div class="persona-item" style="display: inline-block; margin: 10px;">
+                                <img src="${persona.chatImageUrl}" class="rounded-circle ${isActive ? 'active' : ''}" style="width: 80px; height: 80px; cursor: pointer;object-fit: cover;object-position: top;" data-id="${persona._id}">
+                            </div>
+                        `;
+                    });
+            
+                    const swalHtml = `
+                        <div class="persona-item" style="display: inline-block; margin: 10px;">
+                            <img src="${user.profile ? user.profile: '/img/avatar.png'}" class="rounded-circle" style="width: 80px; height: 80px; cursor: pointer;object-fit: cover;object-position: top;">
+                        </div>
+                        ${personaHtml}
+                    `;
+            
+                    Swal.fire({
+                        title: 'ペルソナを選択してください',
+                        html: swalHtml,
+                        showCloseButton: false,
+                        showConfirmButton: false,
+                        allowOutsideClick: false,
+                        customClass: {
+                            title:'text-muted small',
+                            popup: 'animate__animated animate__fadeIn',
+                            hideClass: 'animate__animated animate__fadeOut'
+                        }
+                    });
+            
+                    $(document).off('click', '.persona-item img').on('click', '.persona-item img', function() {
+                        const $this = $(this);
+                        const personaId = $this.data('id');
+                        if(!personaId){
+                            Swal.fire({
+                                showConfirmButton: false,
+                                timer: 10  // This timer can be adjusted to close the modal immediately
+                            }).then(() => {
+                                Swal.close(); // Ensures the modal is closed
+                            });
+                            if (callback) {
+                                callback(personaId);
+                            }
+                            return
+                        }
+                        $.post('/api/user/persona', { personaId: personaId }, function(response) {
+                            $this.toggleClass('active');
+                            persona = response.persona
+                            if (callback) {
+                                callback(personaId);
+                            }
+                            Swal.fire({
+                                showConfirmButton: false,
+                                timer: 10  // This timer can be adjusted to close the modal immediately
+                            }).then(() => {
+                                Swal.close(); // Ensures the modal is closed
+                            });
+                        }).fail(function() {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'エラー',
+                                text: 'ペルソナの更新中に問題が発生しました。もう一度お試しください。'
+                            });
+                        });
+                    });
+                });
+            }            
             
             function displayStarter() {
                 $('#startButtonContained').hide();
@@ -683,7 +769,7 @@ $(document).ready(function() {
                 });
             }
             
-            async function displayChat(userChat) {
+            async function displayChat(userChat,persona) {
                 $('#stability-gen-button').show();
                 $('.auto-gen').each(function(){$(this).show()});
                 $('#audio-play').show();
@@ -701,6 +787,7 @@ $(document).ready(function() {
                                 <div id="response-1" class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
                                     ${marked.parse(userMessage.content)}
                                 </div>
+                                ${persona ? `<img src="${persona.chatImageUrl || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">`:''}
                             </div>
                         </div>
                         `;
@@ -770,6 +857,7 @@ $(document).ready(function() {
                                         <div id="response-${designStep}" class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
                                             ${marked.parse(userMessage.content)}
                                         </div>
+                                        ${persona ? `<img src="${persona.chatImageUrl || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">`:''}
                                     </div>
                                 </div>
                                 `;
@@ -1276,6 +1364,7 @@ $(document).ready(function() {
                             <div class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
                                 <span>${message}</span>
                             </div>
+                            ${persona ? `<img src="${persona.chatImageUrl || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">`:''}
                         </div>
                     `);
                 } 

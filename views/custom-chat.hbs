@@ -622,7 +622,7 @@
                         <h4 class="px-4">最新のキャラクター</h4>
                         <div id="latest-chat" class="chat-container pb-0">
                             {{#each peopleChats.recent}}
-                            <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 col-7 col-sm-4 col-lg-2" style="cursor:pointer;" onclick="redirectToChat('{{this._id}}','{{this.chatImageUrl}}')">
+                            <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2 redirectToChat" style="cursor:pointer;" data-id="{{this._id}}" data-image="{{this.chatImageUrl}}">
                                 <div style="background-image:url('{{#if this.chatImageUrl}}{{this.chatImageUrl}}{{else}}/img/logo.webp{{/if}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
                                     <a href="/user/{{this.userId}}" class="badge bg-dark position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px">
                                         <i class="fas fa-user-circle me-2"></i>
@@ -644,7 +644,7 @@
                         <h4 class="px-4">キャラクターライブラリー</h4>
                         <div class="row m-0 px-1">
                             {{#each peopleChats.synclubaichat}}
-                            <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2" style="cursor:pointer;" onclick="redirectToChat('{{this._id}}','{{this.chatImageUrl}}')">
+                            <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2 redirectToChat" style="cursor:pointer;" data-id="{{this._id}}" data-image="{{this.chatImageUrl}}">
                                 <div style="background-image:url('{{this.chatImageUrl}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
                                     <div id="spinner-{{this._id}}" class="position-absolute spinner-grow  spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
                                     <div class="tags position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px">
@@ -653,6 +653,11 @@
                                                 {{this}}
                                             </span>
                                         {{/each}}
+                                    </div>
+                                    <div class="persona position-absolute" style="color: rgb(165 164 164);opacity:0.8; top:10px;left:10px" data-id="{{this._id}}">
+                                        <span class="badge bg-dark" >
+                                            <i class="far fa-bookmark"></i>
+                                        </span>
                                     </div>
                                 </div>
                                 <div class="card-body bg-transparent border-0 pb-0 text-start">
@@ -728,6 +733,8 @@
 <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
 <script>
 $(document).ready(function() {
+    const user = JSON.parse(localStorage.getItem('user'))
+
     function adjustHeight() {
         const newHeight = $(window).height() * 0.97;
         $('.chat-contain .card-body').height(newHeight);
@@ -931,80 +938,78 @@ $(document).ready(function() {
                 });
             });
     });
-$(document).on('click', '.assistant-image-box', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
+    $(document).on('click', '.assistant-image-box', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
 
-    const images = $('.assistant-image-box img').map(function() {
-        return $(this).attr('src');
-    }).get();
+        const images = $('.assistant-image-box img').map(function() {
+            return $(this).attr('src');
+        }).get();
 
-    const clickedImageUrl = $(this).find('img').attr('src');
-    const initialSlideIndex = images.indexOf(clickedImageUrl);
+        const clickedImageUrl = $(this).find('img').attr('src');
+        const initialSlideIndex = images.indexOf(clickedImageUrl);
 
-    let slides = '';
-    images.forEach(imageUrl => {
-        slides += `<div class="swiper-slide"><img src="${imageUrl}" style="width: 100%; height: 90vh; object-fit: contain;"></div>`;
-    });
+        let slides = '';
+        images.forEach(imageUrl => {
+            slides += `<div class="swiper-slide"><img src="${imageUrl}" style="width: 100%; height: 90vh; object-fit: contain;"></div>`;
+        });
 
-    Swal.fire({
-        html: `
-            <div class="swiper-container">
-                <div class="swiper-wrapper">
-                    ${slides}
+        Swal.fire({
+            html: `
+                <div class="swiper-container">
+                    <div class="swiper-wrapper">
+                        ${slides}
+                    </div>
+                    <div class="swiper-pagination"></div>
+                    <div class="swiper-button-next text-white" style="opacity:0.8;"></div>
+                    <div class="swiper-button-prev text-white" style="opacity:0.8;"></div>
                 </div>
-                <div class="swiper-pagination"></div>
-                <div class="swiper-button-next text-white" style="opacity:0.8;"></div>
-                <div class="swiper-button-prev text-white" style="opacity:0.8;"></div>
-            </div>
-        `,
-        showCloseButton: true,
-        showConfirmButton: false,
-        width: '90%',
-        background: 'rgba(0,0,0,0.85)',
-        customClass: {
-            popup: 'animated-popup image-preview p-0',
-            htmlContainer: 'bg-light'
-        },
-        showClass: {
-            popup: 'animate__animated animate__fadeIn'
-        },
-        hideClass: {
-            popup: 'animate__animated animate__fadeOut'
-        },
-        didOpen: () => {
-            new Swiper('.swiper-container', {
-                loop: true,
-                initialSlide: initialSlideIndex,
-                navigation: {
-                    nextEl: '.swiper-button-next',
-                    prevEl: '.swiper-button-prev',
-                },
-                pagination: {
-                    el: '.swiper-pagination',
-                    clickable: true,
-                },
-                autoHeight: true,
-                breakpoints: {
-                    320: {
-                        slidesPerView: 1,
-                        spaceBetween: 10
+            `,
+            showCloseButton: true,
+            showConfirmButton: false,
+            width: '90%',
+            background: 'rgba(0,0,0,0.85)',
+            customClass: {
+                popup: 'animated-popup image-preview p-0',
+                htmlContainer: 'bg-light'
+            },
+            showClass: {
+                popup: 'animate__animated animate__fadeIn'
+            },
+            hideClass: {
+                popup: 'animate__animated animate__fadeOut'
+            },
+            didOpen: () => {
+                new Swiper('.swiper-container', {
+                    loop: true,
+                    initialSlide: initialSlideIndex,
+                    navigation: {
+                        nextEl: '.swiper-button-next',
+                        prevEl: '.swiper-button-prev',
                     },
-                    640: {
-                        slidesPerView: 2,
-                        spaceBetween: 20
+                    pagination: {
+                        el: '.swiper-pagination',
+                        clickable: true,
                     },
-                    1024: {
-                        slidesPerView: 3,
-                        spaceBetween: 30
+                    autoHeight: true,
+                    breakpoints: {
+                        320: {
+                            slidesPerView: 1,
+                            spaceBetween: 10
+                        },
+                        640: {
+                            slidesPerView: 2,
+                            spaceBetween: 20
+                        },
+                        1024: {
+                            slidesPerView: 3,
+                            spaceBetween: 30
+                        }
                     }
-                }
-            });
-        }
+                });
+            }
+        });
     });
-});
-
-
 
     $(document).on('click', '.tag-button', function(e) {
         e.preventDefault();
@@ -1100,8 +1105,44 @@ $(document).on('click', '.assistant-image-box', function(e) {
             }
         });
     });
+    $(document).on('click', '.persona', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        const $icon = $(this).find('i');
+        const isAdding = $icon.hasClass('far');
+        $icon.toggleClass('fas far');
+        const personaId = $(this).data('id');
 
+        $.post('/api/user/personas', { personaId: personaId, action: isAdding ? 'add' : 'remove' }, function() {
+            const message = isAdding ? 'ペルソナが追加されました' : 'ペルソナが削除されました';
+            const status = isAdding ? 'success' : 'error';
+            showNotification(message, status);
+        });
+    });
+
+    initializePersonaStats(user.personas)
+
+    $(document).on('click','.redirectToChat',function(){
+        const chatId = $(this).data('id');
+        const chatImage = $(this).data('image');
+        redirectToChat(chatId,chatImage)
+    })
 });
+function initializePersonaStats(personas) {
+
+    if(personas){
+        $('.persona').each(function() {
+            const personaId = $(this).data('id');
+            if (personas.includes(personaId)) {
+                $(this).find('i').addClass('fas').removeClass('far');
+            } else {
+                $(this).find('i').addClass('far').removeClass('fas');
+            }
+        });
+    }
+
+}
+
 function redirectToChat(chatId,chatImage) {
     if($(`#spinner-${chatId}`).hasClass('on')){
         return

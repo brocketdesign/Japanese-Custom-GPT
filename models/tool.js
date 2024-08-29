@@ -118,10 +118,11 @@ async function checkLimits(fastify,userId) {
             const plansFromDb = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('plans').findOne();
             const plans = plansFromDb.plans;
             const plan = plans.find((plan) => plan[`${billingCycle}_id`] === currentPlanId);
-            messageLimit = plan.messageLimit || messageLimit;
-            chatLimit = plan.chatLimit || chatLimit;
-            imageLimit = plan.imageLimit || imageLimit;
-            messageIdeasLimit = plan.messageIdeasLimit || messageIdeasLimit;
+
+            messageLimit = plan?.messageLimit || messageLimit;
+            chatLimit = plan?.chatLimit || chatLimit;
+            imageLimit = plan?.imageLimit || imageLimit;
+            messageIdeasLimit = plan?.messageIdeasLimit || messageIdeasLimit;
         }
     }
 

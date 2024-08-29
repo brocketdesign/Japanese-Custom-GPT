@@ -2260,6 +2260,12 @@ window.renderChatList = function(userId,chatId) {
                                 </a>
                             </li>
                             <li>
+                                <button class="dropdown-item text-secondary history-chat" data-id="${chat._id}">
+                                    <i class="fas fa-history me-2"></i>
+                                    <span class="text-muted" style="font-size:12px"></span>チャット履歴</span>
+                                </button>
+                            </li>
+                            <li>
                                 <button class="dropdown-item text-secondary reset-chat" data-id="${chat._id}">
                                 <i class="fas fa-plus-square me-2"></i>
                                     <span class="text-muted" style="font-size:12px"></span>新しいチャット</span>

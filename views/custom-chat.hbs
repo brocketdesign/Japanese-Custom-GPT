@@ -529,7 +529,12 @@
     </style>
     
     <div class="sidebar-history hidden shadow">
-        <h5 class="my-2 mx-3">チャット履歴</h5>
+        <div class="d-flex justify-content-between">
+            <h5 class="my-2 mx-3">チャット履歴</h5>
+            <button type="button" class="btn btn-light">
+                <i class="fas fa-angle-left history-chat"></i>
+            </button>
+        </div>
         <div id="chat-history"></div>
     </div>
     <div class="sidebar hidden bg-light shadow-0 d-flex flex-column">
@@ -568,7 +573,6 @@
 
                         <button class="menu-chat-sm d-sm-none btn btn-light"><i class="fa-solid fa-bars"></i></button>
                         <button id="menu-chat" class="d-none d-sm-inline-block btn btn-light"><i class="fa-solid fa-bars"></i></button>
-                        <button id="history-chat" class="btn btn-light onchat-on"><i class="fas fa-history"></i></button>
                     </div>
                     <div class="d-flex flex-row" style="cursor:pointer" onclick="showDiscovery()">
                         <img src="/img/logo.webp" alt="" class="mx-3" width="40px">
@@ -792,7 +796,7 @@ $(document).ready(function() {
             Cookies.set('sidebarState', 'expanded', { expires: 7 });
         }
     });
-    $('#history-chat').on('click', function(){
+    $(document).on('click','.history-chat', function(){
         $('.sidebar-history').toggleClass('hidden');
         $('.sidebar').removeClass('hidden');
         $('.content').removeClass('collapsed');

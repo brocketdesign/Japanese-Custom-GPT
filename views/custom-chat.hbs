@@ -531,8 +531,8 @@
     <div class="sidebar-history hidden shadow">
         <div class="d-flex justify-content-between">
             <h5 class="my-2 mx-3">チャット履歴</h5>
-            <button type="button" class="btn btn-light">
-                <i class="fas fa-angle-left history-chat"></i>
+            <button type="button" class="btn btn-light history-chat">
+                <i class="fas fa-angle-left"></i>
             </button>
         </div>
         <div id="chat-history"></div>
@@ -799,7 +799,9 @@ $(document).ready(function() {
     $(document).on('click','.history-chat', function(){
         const chatId = $(this).data('id')
         const userId = $(this).data('user')
-        getUserChatHistory(chatId, userId)
+        if(chatId && userId){ 
+            getUserChatHistory(chatId, userId) 
+        }
         $('.sidebar-history').toggleClass('hidden');
         $('.sidebar').removeClass('hidden');
         $('.content').removeClass('collapsed');

@@ -56,7 +56,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       });
       handlebars.registerHelper('json', function(context) {
         return JSON.stringify(context);
-    });
+      });
     });
     fastify.register(require('fastify-cookie'), {
       secret: "my-secret",
@@ -69,6 +69,12 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       credentials: true
     });
     fastify.register(fastifyMultipart);
+
+    fastify.decorateReply('renderWithGtm', function(template, data) {
+        data = data || {};
+        data.gtmId = process.env.GTM_ID;
+        return this.view(template, data);
+    });
 
     fastify.register(require('@fastify/mongodb'), { client: client });
     fastify.register(require('fastify-sse'));
@@ -149,7 +155,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     fastify.get('/authenticate',async (request, reply) => {
       const user = await fastify.getUser(request, reply);
       if (user.isTemporary || request.query.register ) {
-        return reply.view('authenticate.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' , register:!!request.query.register });
+        return reply.renderWithGtm('authenticate.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' , register:!!request.query.register });
       } else {
         return reply.redirect('/dashboard')
       }
@@ -157,7 +163,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     fastify.get('/authenticate/mail',async (request, reply) => {
       const user = await fastify.getUser(request, reply);
       if (user.isTemporary || request.query.register ) {
-        return reply.view('authenticate-v1.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' , register:!!request.query.register });
+        return reply.renderWithGtm('authenticate-v1.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' , register:!!request.query.register });
       } else {
         return reply.redirect('/dashboard')
       }
@@ -166,7 +172,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       let user = await fastify.getUser(request, reply);
       const userId = user._id;
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-      return reply.view('plan.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' , user });
+      return reply.renderWithGtm('plan.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' , user });
     }); 
     fastify.get('/chat', (request, reply) => {
       reply.redirect('chat/');
@@ -237,7 +243,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
       const totalUsers = await db.collection('users').countDocuments({ email: { $exists: true } });
 
-      return reply.view('custom-chat.hbs', { title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd',mode:process.env.MODE, user, userId, chatId, peopleChats, totalUsers });
+      return reply.renderWithGtm('custom-chat.hbs', { title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd',mode:process.env.MODE, user, userId, chatId, peopleChats, totalUsers });
     });
     
     fastify.get('/character/:id', async (request, reply) => {
@@ -248,7 +254,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         data = await chatsCollection.findOne({ _id: new fastify.mongo.ObjectId(chatId) }); 
       }catch{}
       const allData = await chatsCollection.find({}).toArray(); 
-      return reply.view('chat-detail.hbs', { title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd', data, allData}); 
+      return reply.renderWithGtm('chat-detail.hbs', { title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd', data, allData}); 
     });
     
     fastify.get('/chat-index', async(request, reply) => {
@@ -257,15 +263,15 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       const peopleChats = await collectionChats.find({
         visibility: { $exists: true, $eq: "public" }
       }).sort({_id:-1}).limit(10).toArray();
-      return reply.view('custom-chat.hbs', { title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd', peopleChats });
-      //return reply.view('chat.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd',chats });
+      return reply.renderWithGtm('custom-chat.hbs', { title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd', peopleChats });
+      //return reply.renderWithGtm('chat.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd',chats });
     });
     fastify.get('/about', async(request, reply) => {
       const collectionChats = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
       const chats = await collectionChats.find({
         visibility: { $exists: true, $eq: "public" }
       }).sort({_id:-1}).limit(10).toArray();
-      return reply.view('chat.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd',chats });
+      return reply.renderWithGtm('chat.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd',chats });
     });
     fastify.get('/chat/list/:id', async (request, reply) => {
       try {
@@ -287,7 +293,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         // Fetch chats that are not marked as deleted by the owner
         const sortedChats = await chatsCollection.find(query).sort({ "updatedAt": -1 }).toArray();
 
-        return reply.view('chat-list', { title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd', chats: sortedChats, user });
+        return reply.renderWithGtm('chat-list', { title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd', chats: sortedChats, user });
       } catch (err) {
         console.log(err);
         return reply.status(500).send({ error: 'Failed to retrieve chat list' });
@@ -297,7 +303,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       let user = await fastify.getUser(request, reply);
       const userId = user._id;
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-      return reply.view('chat-discover.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' , user });
+      return reply.renderWithGtm('chat-discover.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' , user });
     });
 
     fastify.get('/chat/edit/:chatId', {
@@ -323,7 +329,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
           await chatsCollection.insertOne({userId:new fastify.mongo.ObjectId(userId), _id : chatId, isTemporary:true})
         }
         const prompts = await fs.readFileSync('./models/girl_char.md', 'utf8');
-        return reply.view('add-chat.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd', chatId, isTemporaryChat, user, prompts});
+        return reply.renderWithGtm('add-chat.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd', chatId, isTemporaryChat, user, prompts});
       } catch (error) {
         console.log(error)
         return reply.status(500).send({ error: 'Failed to retrieve chatId' });
@@ -331,7 +337,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     });
     fastify.get('/users', (request, reply) => {
       if (process.env.MODE == 'local') {
-        reply.view('user-list.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' });
+        reply.renderWithGtm('user-list.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' });
       } else {
         reply.redirect('/');
       }
@@ -359,14 +365,14 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
           reply.send(err);
         });
       } else {
-        reply.view('index.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd', storyId: storyId, variant: variant });
+        reply.renderWithGtm('index.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd', storyId: storyId, variant: variant });
       }
     });
 
 
     fastify.get('/generate/:userid', (request, reply) => {
       const userId = request.params.userid;
-      reply.view('generate.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd', userId: userId });
+      reply.renderWithGtm('generate.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd', userId: userId });
     });
     fastify.get('/test-db', async (request, reply) => {
       try {
@@ -400,7 +406,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         const userId = request.user._id
         const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
         const userData = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
-        return reply.view('/settings', { title: 'AIフレンズ  | Powered by Hato,Ltd', user:userData})
+        return reply.renderWithGtm('/settings', { title: 'AIフレンズ  | Powered by Hato,Ltd', user:userData})
       } catch (err) {
         return reply.status(500).send({ error: 'Unable to render the settings' });
       }

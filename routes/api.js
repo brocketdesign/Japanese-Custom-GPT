@@ -5,6 +5,7 @@ const aws = require('aws-sdk');
 const sessions = new Map(); // Define sessions map
 const { analyzeScreenshot, processURL } = require('../models/scrap');
 const { handleFileUpload, uploadToS3, checkLimits, convertImageUrlToBase64 } = require('../models/tool');
+const {sendMail, getRefreshToken} = require('../models/mailer');
 const { createHash } = require('crypto');
 const { convert } = require('html-to-text');
 const axios = require('axios');
@@ -12,9 +13,13 @@ const OpenAI = require("openai");
 const { z } = require("zod");
 const { zodResponseFormat } = require("openai/helpers/zod");
 
-
 async function routes(fastify, options) {
-
+   // getRefreshToken()
+    /*
+    sendMail('contact@hatoltd.com', 'Test Email', 'This is a test email.')
+    .then(response => console.log('Email sent:', response))
+    .catch(error => console.error('Error sending email:', error));
+    */
 
     fastify.get('/api/urlsummary', async (request, reply) => {
         const url = request.query.url;

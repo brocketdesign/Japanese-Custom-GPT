@@ -6,6 +6,9 @@
     <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css">
 
     <style>
+        #chat-container{
+            background-size:contain;
+        }
         .one-line {
             white-space: nowrap;
             overflow: hidden;
@@ -21,7 +24,7 @@
             top: 10px;
             left: 10px;
         }
-        #introChat{
+        #introChat-none{
             overflow-y: scroll;
             background-color: rgba(255, 255, 255, 0.9);
             justify-content: center;
@@ -330,6 +333,9 @@
             background: none !important;
         }
         @media (max-width: 600px) {
+            #chat-container{
+                background-size:cover;
+            }
             .noscroll{
                 display: block;
                 overflow: hidden;
@@ -557,9 +563,9 @@
                     <i class="fas fa-compass me-2"></i>ライブラリー
                 </span>
             </div>
-            <span class="text-dark ps-4 fw-bold" style="font-size: 12px;">チャット一覧 (<span id="user-chat-count" >{{chats.length}}</span>)</span>
+            <span class="text-dark ps-4 fw-bold" style="font-size: 12px;">チャット一覧 <span id="user-chat-count" >{{chats.length}}</span></span>
         </div>
-        <div id="chat-list" class="mt-1 pb-3" style="flex-grow: 1;overflow-y: scroll;overflow-x: hidden;">
+        <div id="chat-list" class="mt-1 pb-3" style="flex-grow: 1;overflow-y: scroll;overflow-x: hidden;border-top:1px solid #cccccc6b;">
         </div>
         <div class="is-free-user" style="display: none;">
             <a href="/my-plan" class="m-2 btn border shadow-0 btn-secondary px-5 py-2" style="border-radius:40px;background: linear-gradient(90.9deg, rgba(110, 32, 244, 0.5) 2.74%, #6E20F4 102.92%);">
@@ -633,11 +639,23 @@
                             {{#each peopleChats.recent}}
                             <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2 redirectToChat" style="cursor:pointer;" data-id="{{this._id}}" data-image="{{this.chatImageUrl}}">
                                 <div style="background-image:url('{{#if this.chatImageUrl}}{{this.chatImageUrl}}{{else}}/img/logo.webp{{/if}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
-                                    <a href="/user/{{this.userId}}" class="badge bg-dark position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px">
-                                        <i class="fas fa-user-circle me-2"></i>
+                                    <div id="spinner-{{this._id}}" class="position-absolute spinner-grow  spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
+                                    
+                                    <div class="position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px">
+                                        {{#if this.tags}}
+                                        <div class="tags">
+                                            {{#each this.tags}}
+                                                <span class="badge bg-dark" >
+                                                    {{this}}
+                                                </span>
+                                            {{/each}}
+                                        </div>
+                                        {{/if}}
+                                        <a href="/user/{{this.userId}}" class="badge bg-dark" style="color: rgb(165 164 164);">
+                                            <i class="fas fa-user-circle me-2"></i>
                                             {{this.nickname}}
                                         </a>
-                                    <div id="spinner-{{this._id}}" class="position-absolute spinner-grow  spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
+                                    </div>
                                     <div class="persona position-absolute" style="color: rgb(165 164 164);opacity:0.8; top:10px;right:10px" data-id="{{this._id}}">
                                         <span class="badge bg-dark" >
                                             <i class="far fa-bookmark"></i>
@@ -669,6 +687,7 @@
                             <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2 redirectToChat" style="cursor:pointer;" data-id="{{this._id}}" data-image="{{this.chatImageUrl}}">
                                 <div style="background-image:url('{{this.chatImageUrl}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
                                     <div id="spinner-{{this._id}}" class="position-absolute spinner-grow  spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
+                                    {{#if this.tags}}
                                     <div class="tags position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px">
                                         {{#each this.tags}}
                                             <span class="badge bg-dark" >
@@ -676,6 +695,7 @@
                                             </span>
                                         {{/each}}
                                     </div>
+                                    {{/if}}
                                     <div class="persona position-absolute" style="color: rgb(165 164 164);opacity:0.8; top:10px;right:10px" data-id="{{this._id}}">
                                         <span class="badge bg-dark" >
                                             <i class="far fa-bookmark"></i>
@@ -704,7 +724,7 @@
                 </div>
         </section>
         <div class="container chat-contain px-0 onchat-on">
-            <div id="chat-container" class="card shadow-0 border-0 rounded-0" style="background-size: cover;background-position: top center;background-repeat: no-repeat;">
+            <div id="chat-container" class="card shadow-0 border-0 rounded-0" style="background-position: top center;background-repeat: no-repeat;">
                 <div class="card-body text-center py-0 container" style="min-height:250px;overflow-y:hidden;">
                     <div id="chatContainer" class="pt-2" style="padding-top: 80px !important;;padding-bottom: 100px !important;"></div>
                     <div id="chatInput" class="input-group rounded-0 rounded-bottom" style="position: absolute;bottom: 0;left: 0;right: 0;padding: 0px 15px 5px 15px;">
@@ -1146,61 +1166,12 @@ $(document).ready(function() {
             $('.custom-card').show();
         }
     });
-
-    $(document).on('click', '.persona', function(e) {
-        e.stopPropagation();
-        e.preventDefault();
-        const user = {{{json user}}}
-        const isTemporary = !!user.isTemporary
-        if(isTemporary){ showRegistrationForm(); return; }
-        const $this = $(this)
-        $this.toggleClass('on');
-        const $icon = $(this).find('i');
-        const isAdding = $icon.hasClass('far');
-        $icon.toggleClass('fas far');
-        const personaId = $(this).data('id');
-
-        $.post('/api/user/personas', { personaId: personaId, action: isAdding ? 'add' : 'remove' }, function() {
-            const message = isAdding ? 'ペルソナが追加されました' : 'ペルソナが削除されました';
-            const status = 'success';
-            showNotification(message, status);
-        }).fail(function(jqXHR) {
-            const message = jqXHR.responseJSON && jqXHR.responseJSON.error 
-                ? jqXHR.responseJSON.error 
-                : (isAdding ? 'ペルソナの追加に失敗しました' : 'ペルソナの削除に失敗しました');
-            const status = 'error';
-            showNotification(message, status);
-            $icon.toggleClass('fas far');
-            $this.toggleClass('on');
-        });
-
-    });
-
-    initializePersonaStats(user.personas)
-
     $(document).on('click','.redirectToChat',function(){
         const chatId = $(this).data('id');
         const chatImage = $(this).data('image');
         redirectToChat(chatId,chatImage)
     })
 });
-function initializePersonaStats(personas) {
-
-    if(personas){
-        $('.persona').each(function() {
-            const personaId = $(this).data('id');
-            if (personas.includes(personaId)) {
-                $(this).addClass('on')
-                $(this).find('i').addClass('fas').removeClass('far');
-            } else {
-                $(this).removeClass('on')
-                $(this).find('i').addClass('far').removeClass('fas');
-            }
-        });
-    }
-
-}
-
 function redirectToChat(chatId,chatImage) {
     if($(`#spinner-${chatId}`).hasClass('on')){
         return

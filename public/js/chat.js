@@ -507,7 +507,7 @@ $(document).ready(function() {
                 
                 // Create the intro elements
                 let introContainer = $('<div></div>')
-                .addClass('intro-container my-3 px-3')
+                .addClass('intro-container assistant-chat-box my-3 p-3')
                 .attr('id','introChat');
             
                 let title = $('<h2></h2>').text(name);
@@ -2216,7 +2216,7 @@ window.renderChatList = function(userId,chatId) {
                 return (b._id === chatId) - (a._id === chatId);
             });
             var chatListHtml = '';
-            $('#user-chat-count').html(data.length)
+            $('#user-chat-count').html(`(${data.length})`)
             $.each(data, function(index, chat) {
                 chatListHtml += `
                 <div class="${chat._id === chatId?'active':''} chat-list item user-chat d-flex align-items-center justify-content-between p-1 mx-2 rounded bg-transparent" style="cursor: pointer;" 
@@ -2286,7 +2286,7 @@ window.renderChatList = function(userId,chatId) {
                 </div>
                 `;
             });
-            $('#chat-list').html(chatListHtml);
+            $('#chat-list').html($(chatListHtml).hide().fadeIn());
             enableToggleDropdown();
         }
     });

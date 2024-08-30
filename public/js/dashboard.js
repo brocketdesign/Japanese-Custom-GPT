@@ -5,6 +5,7 @@ $(document).ready(function() {
     const sessionId = urlParams.get('session_id');
     const priceId = urlParams.get('priceId');
     const paymentFalse = urlParams.get('payment') == 'false';
+    const user = JSON.parse(localStorage.getItem('user'))
 
     if (success === 'true' && sessionId) {
         $.ajax({
@@ -186,8 +187,60 @@ $(document).ready(function() {
             }
           });
     }
+        
+    $(document).on('click', '.persona', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        const isTemporary = !!user.isTemporary
+        if(isTemporary){ showRegistrationForm(); return; }
+        const $this = $(this)
+        $this.toggleClass('on');
+        const $icon = $(this).find('i');
+        const isAdding = $icon.hasClass('far');
+        $icon.toggleClass('fas far');
+        const personaId = $(this).data('id');
+
+        $.post('/api/user/personas', { personaId: personaId, action: isAdding ? 'add' : 'remove' }, function() {
+            const message = isAdding ? 'ペルソナが追加されました' : 'ペルソナが削除されました';
+            const status = 'success';
+            showNotification(message, status);
+        }).fail(function(jqXHR) {
+            const message = jqXHR.responseJSON && jqXHR.responseJSON.error 
+                ? jqXHR.responseJSON.error 
+                : (isAdding ? 'ペルソナの追加に失敗しました' : 'ペルソナの削除に失敗しました');
+            const status = 'error';
+            showNotification(message, status);
+            $icon.toggleClass('fas far');
+            $this.toggleClass('on');
+        });
+
+    });
+
+    initializePersonaStats(user.personas)
+
+    $(document).on('click','.open-chat',function(){
+        const chatId = $(this).data('id');
+        window.location = '/chat/'+chatId
+    })
 });
 
+
+
+function initializePersonaStats(personas) {
+
+    if(personas){
+        $('.persona').each(function() {
+            const personaId = $(this).data('id');
+            if (personas.includes(personaId)) {
+                $(this).addClass('on')
+                $(this).find('i').addClass('fas').removeClass('far');
+            } else {
+                $(this).removeClass('on')
+                $(this).find('i').addClass('far').removeClass('fas');
+            }
+        });
+    }
+}
 window.showCoinShop = function(el){
     if(el && $(el).hasClass('open')){
        return

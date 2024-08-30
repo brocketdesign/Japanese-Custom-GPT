@@ -54,14 +54,13 @@ async function routes(fastify, options) {
         }
     });
 
-
     fastify.post('/api/add-chat', async (request, reply) => {
+        const openai = new OpenAI();
         const parts = request.parts();
         let chatData = {};
         const user = await fastify.getUser(request, reply);
         const userId = new fastify.mongo.ObjectId(user._id);
-
-
+    
         for await (const part of parts) {
             switch (part.fieldname) {
                 case 'name':
@@ -91,29 +90,33 @@ async function routes(fastify, options) {
                     break;
             }
         }
-
+    
         if (!chatData.name || !chatData.content) {
             return reply.status(400).send({ error: 'Missing name or content for the chat' });
         }
-
+    
         const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+        const tagsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('tags');
         const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
         const options = { timeZone: 'Asia/Tokyo', year: 'numeric', month: 'long', day: 'numeric', weekday: 'long', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false };
         chatData.updatedAt = new Date(dateObj);
         chatData.dateStrJP = new Date(dateObj).toLocaleDateString('ja-JP', options);
-        chatData.isTemporary = false
-
+        chatData.isTemporary = false;
+    
         try {
             const existingChat = await collection.findOne({ _id: new fastify.mongo.ObjectId(chatData.chatId) });
-            if (!existingChat) {
-                return reply.status(404).send({ error: 'Chat not found' });
-            }
-            if (existingChat.userId.toString() == userId.toString()) {
-                await collection.updateOne({ _id: new fastify.mongo.ObjectId(chatData.chatId) }, { $set: chatData });
-                return reply.send({ message: 'Chat updated successfully', chatId: chatData.chatId });
+            if (existingChat) {
+                if (existingChat.userId.toString() == userId.toString()) {
+                    chatData.tags = await generateAndSaveTags(chatData.description, chatData.chatId);
+                    await collection.updateOne({ _id: new fastify.mongo.ObjectId(chatData.chatId) }, { $set: chatData });
+                    return reply.send({ message: 'Chat updated successfully', chatId: chatData.chatId });
+                } else {
+                    return reply.status(403).send({ error: 'Unauthorized to update this chat' });
+                }
             } else {
                 chatData.userId = userId;
                 chatData.createdAt = new Date(dateObj);
+                chatData.tags = await generateAndSaveTags(chatData.description, result.insertedId);
                 const result = await collection.insertOne(chatData);
                 return reply.send({ message: 'Chat added successfully', chatId: result.insertedId });
             }
@@ -121,7 +124,43 @@ async function routes(fastify, options) {
             console.error('Failed to add or update the Chat:', error);
             return reply.status(500).send({ error: 'Failed to add or update the Chat' });
         }
+    
+        async function generateAndSaveTags(description, chatId) {
+            const existingTags = await tagsCollection.find({}).limit(20).toArray();
+            const tagsPrompt = [
+                {
+                    role: "system",
+                    content: `You are an AI assistant that generates tags for a chat description. 
+                    Use the following example tags: ${existingTags.map(tag => tag.name).join(', ')}.`
+                },
+                {
+                    role: "user",
+                    content: `Here is the description: ${description}\nGenerate a list of 2 relevant tags based on the description, considering the example tags provided.Only 2`
+                }
+            ];
+            const PossibleAnswersExtraction = z.object({
+                answers: z.array(z.string())
+            });
+            const tagsCompletion = await openai.beta.chat.completions.parse({
+                model: "gpt-4o-mini",
+                messages: tagsPrompt,
+                response_format: zodResponseFormat(PossibleAnswersExtraction, "possible_answers_extraction"),
+            });
+            
+            const generatedTags = tagsCompletion.choices[0].message.parsed.answers;
+
+            for (const tag of generatedTags) {
+                await tagsCollection.updateOne(
+                    { name: tag },
+                    { $set: { name: tag }, $addToSet: { chatIds: chatId } },
+                    { upsert: true }
+                );
+            }
+    
+            return generatedTags;
+        }
     });
+    
 
     fastify.delete('/api/delete-chat/:id', async (request, reply) => {
         try {

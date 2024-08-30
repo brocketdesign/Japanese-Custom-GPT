@@ -299,10 +299,35 @@ async function routes(fastify, options) {
     
         scrapesynclubaichat();
       });
+      fastify.get('/scraper/save-tags', async (request, reply) => {
+        let user = await fastify.getUser(request, reply);
+        const isAdmin = await checkUserAdmin(fastify, user._id);
+        if (!isAdmin) {
+            return reply.status(403).send({ error: 'Access denied' });
+        }
+        const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+        const tagsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('tags');
+    
+        const chats = await chatsCollection.find({}).toArray();
+    
+        for (const chat of chats) {
+            if (chat.tags && chat.tags.length > 0) {
+                for (const tag of chat.tags) {
+                    await tagsCollection.updateOne(
+                        { name: tag },
+                        { $set: { name: tag }, $addToSet: { chatIds: chat._id } },
+                        { upsert: true }
+                    );
+                }
+            }
+        }
+    
+        reply.send({ status: 'Tags saved successfully' });
+    });
+    
       fastify.get('/scraper/civitai', async (request, reply) => {
-        
-  let user = await fastify.getUser(request, reply);
-  const isAdmin = await checkUserAdmin(fastify, user._id);
+        let user = await fastify.getUser(request, reply);
+        const isAdmin = await checkUserAdmin(fastify, user._id);
         if (!isAdmin) {
             return reply.status(403).send({ error: 'Access denied' });
         }

@@ -3,6 +3,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <title>{{title}}</title>
     <link rel="icon" href="/img/logo.webp" type="image/webp">
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{gtmId}}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', '{{gtmId}}');
+    </script>
     <script>
         // Function to get the value of a specific cookie
         function getCookie(name) {
@@ -29,15 +37,6 @@
                 window.location.replace(window.location.origin + decodeURIComponent(redirectUrl) );
             }
         })();
-    </script>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id={{gtmId}}"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-
-        gtag('config', '{{gtmId}}');
     </script>
 
     <link

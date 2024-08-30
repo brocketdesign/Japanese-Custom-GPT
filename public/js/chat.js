@@ -2230,6 +2230,7 @@ window.renderChatList = function(userId,chatId) {
                             <div class="chat-list-info">
                                 <div class="chat-list-title">
                                 <h6 class="mb-0 online-text" style="font-size: 14px;">${chat.name}</h6>
+                                <span class="text-muted one-line ${chat.lastMessage ? '':'d-none' }" style="font-size:11px;">${chat.lastMessage ? chat.lastMessage.content :'d-none' }</span>
                                 </div>
                             </div>
                         </div>

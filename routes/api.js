@@ -635,7 +635,11 @@ async function routes(fastify, options) {
                 // Add the new user message to the chat document
                 userChatDocument.messages.push({ "role": "user", "content": message });
                 userChatDocument.updatedAt = today;
-        
+                
+                await collectionChat.updateOne(
+                    {_id: new fastify.mongo.ObjectId(chatId)},
+                    { $set: {lastMessage:{ "role": "user", "content": message, updatedAt: today }}}
+                );
                 const query = { 
                     userId: new fastify.mongo.ObjectId(userId), 
                     _id: new fastify.mongo.ObjectId(userChatId) 
@@ -1045,8 +1049,16 @@ async function routes(fastify, options) {
             // Append the assistant's response to the messages array in the chat document
             const assistantMessage = { "role": "assistant", "content": completion };
             userMessages.push(assistantMessage);
-            userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-    
+            const today = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
+            userData.updatedAt = today;
+            const removeContentBetweenStars = function (str) {
+                if (!str) { return str; }
+                return str.replace(/\*.*?\*/g, '').replace(/"/g, '');
+            }      
+            await collectionChat.updateOne(
+                { _id: new fastify.mongo.ObjectId(chatId) },
+                { $set: {lastMessage:{ "role": "assistant", "content": removeContentBetweenStars(completion), updatedAt: today }}}
+            );
             // Update the chat document in the database
             const result = await collectionUserChat.updateOne(
                 { userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) },

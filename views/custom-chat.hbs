@@ -6,6 +6,13 @@
     <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css">
 
     <style>
+        .one-line {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100px;
+            display: block;
+        }
         .swal2-custom-close-button {
             display: none;
         }
@@ -584,9 +591,9 @@
                                 </li>
                                 {{/if}}
                                 <!-- Avatar -->
-                                <div class="nav-item dropdown onchat-off">
+                                <li class="nav-item dropdown onchat-off">
                                     {{> dashboard-avatar}}
-                                </div>
+                                </li>
                             </ul>
                         </div>
                     </div>     
@@ -616,6 +623,7 @@
                         </div>
                         <p class="text-muted px-3 mb-1" style="font-size: 12px;">お気に入りのキャラクターを選んで楽しい会話を楽しめます。最新のAI技術でキャラクターが生き生きとし、まるで本物の友達と話しているかのような体験ができます。さらに、キャラクターを自分好みにカスタマイズしたり、ゼロから新しいキャラクターを作成することも可能です。新しい友達を作って、自由におしゃべりを楽しんでください！</p>
                     </section>
+                </div>
             {{else}}
             {{/if}}
                 {{#if peopleChats}}
@@ -643,7 +651,7 @@
                                 </div>
                             </div>
                             {{/each}}
-                    </div>
+                        </div>
                     </section>
                 {{/if}}
                 {{#if peopleChats}}
@@ -681,7 +689,7 @@
                                 </div>
                             </div>
                             {{/each}}
-                    </div>
+                        </div>
                     </section>
                 {{/if}}
                 <section>
@@ -695,7 +703,6 @@
                         <i class="fas fa-plus me-2"></i>キャラクター作成
                     </a>
                 </div>
-            </div>
         </section>
         <div class="container chat-contain px-0 onchat-on">
             <div id="chat-container" class="card shadow-0 border-0 rounded-0" style="background-size: cover;background-position: top center;background-repeat: no-repeat;">

@@ -242,7 +242,7 @@ $(document).ready(function() {
                 $('#gen-ideas').removeClass('done')
                 Swal.close();
 
-                let hidden_message = `[Hidden] current time ${new Data()}`
+                let hidden_message = `[Hidden] current time ${new Date()}`
                 addMessageToChat(chatId, userChatId, 'user', hidden_message, function(error, res) {
                     if (error) {
                         console.error('Error adding message:', error);

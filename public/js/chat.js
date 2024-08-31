@@ -279,7 +279,7 @@ $(document).ready(function() {
                            if(!isTemporary && $('#chat-widget-container').length == 0 ){
                                 const nextLevel = response.nextLevel || 10
                                 const messagesCount = response.messagesCount || 0
-                                //initializeOrUpdateProgress(messagesCount,nextLevel)
+                                initializeOrUpdateProgress(messagesCount,nextLevel)
                            }
 
                                 

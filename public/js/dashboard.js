@@ -6,7 +6,7 @@ $(document).ready(function() {
     const priceId = urlParams.get('priceId');
     const paymentFalse = urlParams.get('payment') == 'false';
     const user = JSON.parse(localStorage.getItem('user'))
-
+    const isTemporary = !!user.isTemporary
     if (success === 'true' && sessionId) {
         $.ajax({
             url: '/plan/update-coins',
@@ -215,8 +215,11 @@ $(document).ready(function() {
         });
 
     });
-
-    initializePersonaStats(user.personas)
+    if(isTemporary){
+        const personas = user?.personas || false
+        initializePersonaStats(personas)
+    }
+    
 
     $(document).on('click','.open-chat',function(){
         const chatId = $(this).data('id');

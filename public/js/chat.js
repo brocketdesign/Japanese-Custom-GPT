@@ -394,11 +394,13 @@ $(document).ready(function() {
                             createIntro(data.chat)
                             createButton(data.chat)
                         }
-
+                        if(!isTemporary){
                         const messagesCount = data.userChat.messagesCount || 0;
                         const maxMessages = data.userChat.nextLevel || 10 ;
                         initializeOrUpdateProgress(messagesCount,maxMessages)
+                        }
 
+                        
                         updateParameters(data.chat._id,fetch_userId)
                         showChat();    
 

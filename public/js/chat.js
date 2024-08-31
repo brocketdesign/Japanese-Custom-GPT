@@ -2019,6 +2019,7 @@ function initializeOrUpdateProgress(messagesCount, maxMessages) {
 }
 
 function updateProgress(messagesCount, maxMessages) {
+    if(messagesCount>=maxMessages){return}
     // Calculate fill percentage out of 100
     const fillPercentage = Math.min((messagesCount / maxMessages) * 100, 100);
     const fillHeight = 500 - (500 * fillPercentage / 100);

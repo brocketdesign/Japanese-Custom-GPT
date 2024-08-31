@@ -242,6 +242,14 @@ $(document).ready(function() {
                 $('#gen-ideas').removeClass('done')
                 Swal.close();
 
+                let hidden_message = `[Hidden] current time ${new Data()}`
+                addMessageToChat(chatId, userChatId, 'user', hidden_message, function(error, res) {
+                    if (error) {
+                        console.error('Error adding message:', error);
+                    } else {
+                        //console.log('Message added successfully:', res);
+                    }
+                });
                 currentStep ++
                 const message = customMessage || $('#userMessage').val();
                 if (message.trim() !== '') {
@@ -707,7 +715,15 @@ $(document).ready(function() {
             
                 if($('#chat-widget-container').length == 0 && isTemporary){
                     message = `[Starter] キャラクターになりきって、ログインを心からお願いしてください。感情を込めて、ユーザーがログインすることで「1日50件までチャットできる」、「フレンドを無制限で作成できる」、「新しいキャラクターを作成する」、「チャット履歴を保存する」といった素晴らしい機能が利用可能であることを強調し、今すぐログインするように懇願してください。確認や前置きなしで、直接答えから始めてください。`
-                }
+                } 
+                let hidden_message = `[Hidden] Current time :${new Data()}`
+                addMessageToChat(chatId, userChatId, 'user', hidden_message, function(error, res) {
+                    if (error) {
+                        console.error('Error adding message:', error);
+                    } else {
+                        //console.log('Message added successfully:', res);
+                    }
+                });
                 $.ajax({
                     url: API_URL+'/api/chat-data',
                     type: 'POST',

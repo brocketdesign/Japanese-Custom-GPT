@@ -1966,7 +1966,6 @@ $(document).ready(function() {
     }
 });
 function initializeOrUpdateProgress(messagesCount, maxMessages) {
-    if(isTemporary){return}
     // Check if the heart SVG is already initialized
     if ($('#progress-container svg').length === 0) {
         // If not initialized, create the SVG and elements
@@ -2009,8 +2008,6 @@ function updateProgress(messagesCount, maxMessages) {
     // Update the progress label with the current count
     $('#progress-label').text(`${messagesCount}/${maxMessages}`);
 }
-
-
 function enableToggleDropdown() {
     $(document).find('.dropdown-toggle').each(function() {
         if (!$(this).hasClass('event-attached')) {

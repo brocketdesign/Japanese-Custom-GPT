@@ -1963,6 +1963,7 @@ $(document).ready(function() {
     }
 });
 function initializeOrUpdateProgress(messagesCount, maxMessages) {
+    if(isTemporary){return}
     // Check if the heart SVG is already initialized
     if ($('#progress-container svg').length === 0) {
         // If not initialized, create the SVG and elements

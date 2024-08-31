@@ -751,6 +751,7 @@ $(document).ready(function() {
                         generateCompletion(function(){
                             $('.auto-gen').each(function(){$(this).show()})
                             $('#audio-play').show();
+                            $('#progress-container').show();
                             $('#input-container').show().addClass('d-flex');
                             if($('#chat-widget-container').length == 0 && isTemporary){
                                 displayMessage('assistant',`<a class="btn btn-secondary custom-gradient-bg shadow-0 m-2 px-4 py-2" style="border-radius: 50px;" href="/authenticate"><i class="fas fa-sign-in-alt me-2"></i> ログイン</a>`)
@@ -799,6 +800,7 @@ $(document).ready(function() {
             }
             
             async function displayChat(userChat,persona) {
+                $('#progress-container').show();
                 $('#stability-gen-button').show();
                 $('.auto-gen').each(function(){$(this).show()});
                 $('#audio-play').show();

@@ -679,10 +679,12 @@ async function routes(fastify, options) {
                 userChatDocument.messages.push({ "role": "user", "content": message });
                 userChatDocument.messagesCount = (userChatDocument.messagesCount ?? 0) + 1
                 userChatDocument.updatedAt = today;
-                await collectionChat.updateOne(
-                    {_id: new fastify.mongo.ObjectId(chatId)},
-                    { $set: {lastMessage:{ "role": "user", "content": message, updatedAt: today }}}
-                );
+                if( !messages.startsWith("[Starter]") || !messages.startsWith("[Hidden]") || !messages.startsWith("[Image]") ){
+                    await collectionChat.updateOne(
+                        {_id: new fastify.mongo.ObjectId(chatId)},
+                        { $set: {lastMessage:{ "role": "user", "content": message, updatedAt: today }}}
+                    );
+                }
                 const query = { 
                     userId: new fastify.mongo.ObjectId(userId), 
                     _id: new fastify.mongo.ObjectId(userChatId) 

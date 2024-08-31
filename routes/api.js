@@ -1087,7 +1087,6 @@ async function routes(fastify, options) {
             const chatname = chatDocument.name
 
             const userMessages = userData.messages;
-            console.log(userMessages)
             let completion = ``
             completion = await fetchOpenAICompletion(userMessages, reply.raw, 300);
 

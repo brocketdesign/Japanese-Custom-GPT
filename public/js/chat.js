@@ -264,6 +264,7 @@ $(document).ready(function() {
                             isWidget : $('#chat-widget-container').length > 0
                         }),
                         success: function(response) {
+                            /*
                             const messageCountDoc = response.messageCountDoc
                             if(messageCountDoc.limit){
                                 let limitMess = messageCountDoc.limit == '無制限' ? messageCountDoc.limit : `${parseInt(messageCountDoc.count)}/${messageCountDoc.limit}`
@@ -274,7 +275,13 @@ $(document).ready(function() {
                                     </span>
                                 `)
                                 .hide()
-                            }
+                            }*/
+                           if(!isTemporary && $('#chat-widget-container').length == 0 ){
+                                const nextLevel = response.nextLevel || 10
+                                initializeOrUpdateProgress(response.messagesCount,nextLevel)
+                           }
+
+                                
                             userChatId = response.userChatId
                             chatId = response.chatId
                             if(currentStep < totalSteps){
@@ -387,6 +394,10 @@ $(document).ready(function() {
                             createIntro(data.chat)
                             createButton(data.chat)
                         }
+
+                        const messagesCount = data.userChat.messagesCount || 0;
+                        const maxMessages = data.userChat.nextLevel || 10 ;
+                        initializeOrUpdateProgress(messagesCount,maxMessages)
 
                         updateParameters(data.chat._id,fetch_userId)
                         showChat();    
@@ -689,8 +700,7 @@ $(document).ready(function() {
                     $('#chatContainer').append(botResponseContainer);
                     $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
                 }
-                let message = `[Starter] あなたはどでで何をしてるのかを発明してください。会話を開始したかのように応答してください。確認から始めず、答えから始めてください。
-                Provide a SHORT message,sweet and chatty with emojis. DO NOT sell anything in your first response but later on.`;
+                let message = `あなたは私たちが完全な見知らぬ者であるかのように、会話のきっかけを作ってください。確認から始めず、答えから始めてください。`;
             
                 if($('#chat-widget-container').length == 0 && isTemporary){
                     message = `[Starter] キャラクターになりきって、ログインを心からお願いしてください。感情を込めて、ユーザーがログインすることで「1日50件までチャットできる」、「フレンドを無制限で作成できる」、「新しいキャラクターを作成する」、「チャット履歴を保存する」といった素晴らしい機能が利用可能であることを強調し、今すぐログインするように懇願してください。確認や前置きなしで、直接答えから始めてください。`
@@ -1952,6 +1962,51 @@ $(document).ready(function() {
         });
     }
 });
+function initializeOrUpdateProgress(messagesCount, maxMessages) {
+    // Check if the heart SVG is already initialized
+    if ($('#progress-container svg').length === 0) {
+        // If not initialized, create the SVG and elements
+        const svgContent = `
+            <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 100%;">
+                <!-- Background Heart -->
+                <path id="heart-background" fill="white" stroke="black" stroke-width="5" d="
+                    M140 20C73 20 20 74 20 140c0 135 136 170 228 303 88-132 229-173 229-303 0-66-54-120-120-120-48 0-90 28-109 69-19-41-60-69-108-69z" />
+                
+                <!-- GIF Container -->
+                <image id="heart-gif" x="0" y="500" width="500" height="500" xlink:href="/img/wave.webp" clip-path="url(#fill-mask)" />
+                
+                <!-- Mask for GIF -->
+                <clipPath id="fill-mask">
+                    <path d="
+                        M140 20C73 20 20 74 20 140c0 135 136 170 228 303 88-132 229-173 229-303 0-66-54-120-120-120-48 0-90 28-109 69-19-41-60-69-108-69z" />
+                </clipPath>
+            </svg>
+            <span id="progress-label" style="position: absolute; width: 100%; text-align: center; top: 45%; left: 50%; transform: translate(-50%, -50%); color: #111; font-weight: bold; font-size: 12px;">
+                0/100
+            </span>
+        `;
+        
+        // Append the SVG content to the container
+        $('#progress-container').html(svgContent);
+    }
+
+    // Update the progress
+    updateProgress(messagesCount, maxMessages);
+}
+
+function updateProgress(messagesCount, maxMessages) {
+    // Calculate fill percentage out of 100
+    const fillPercentage = Math.min((messagesCount / maxMessages) * 100, 100);
+    const fillHeight = 500 - (500 * fillPercentage / 100);
+
+    // Adjust the y-position of the GIF to create the moving fill effect
+    $('#heart-gif').attr('y', fillHeight);
+
+    // Update the progress label with the current count
+    $('#progress-label').text(`${messagesCount}/${maxMessages}`);
+}
+
+
 function enableToggleDropdown() {
     $(document).find('.dropdown-toggle').each(function() {
         if (!$(this).hasClass('event-attached')) {

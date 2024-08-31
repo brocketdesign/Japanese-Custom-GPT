@@ -730,7 +730,6 @@
                     <div id="chatInput" class="input-group rounded-0 rounded-bottom" style="position: absolute;bottom: 0;left: 0;right: 0;padding: 0px 15px 5px 15px;">
                         <div class="d-flex justify-content-between align-items-center w-100">
                             <div>
-                                <span id="message-number" class="d-none text-muted px-3 py-1" style="font-size: 12px;"></span>
                                 <button type="button" class="btn btn-md bg-light shadow-0 border-0 mb-2 mx-1" id="audio-play" style="display: none;">
                                     <i class="fa" id="audio-icon"></i>
                                 </button>
@@ -752,8 +751,11 @@
                                         AI画像
                                     </div>
                                 </button>
+                                <div id="progress-container" style="position: absolute; width: 44px; height: 100px;bottom: 50px;right: 10px;">
+                                </div>
                             </div>
                         </div>
+
                         <div id="input-container" class="d-flex w-100">
                             <button id="gen-ideas" class="btn btn-light px-4 border-0">💡</button>
                             <textarea id="userMessage" class="form-control py-3 border-0" placeholder="チャットしよう"></textarea>

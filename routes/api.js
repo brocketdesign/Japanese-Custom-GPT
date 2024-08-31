@@ -14,7 +14,7 @@ const { z } = require("zod");
 const { zodResponseFormat } = require("openai/helpers/zod");
 
 async function routes(fastify, options) {
-   // getRefreshToken()
+    //getRefreshToken()
     /*
     sendMail('contact@hatoltd.com', 'Test Email', 'This is a test email.')
     .then(response => console.log('Email sent:', response))
@@ -659,11 +659,10 @@ async function routes(fastify, options) {
                         },
                         {
                             "role": "user",
-                            "content": `Here is your character description:\n\n${chatPurpose}\n${chatDescription}\n${chatRule}\n\n
-                            ${!user.isTemporary ? `My name is ${persona ? persona.name : user.nickname}, I am a ${persona ? persona.gender : user.gender}, I was born on ${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日. ${persona ? `\nAbout me: ${persona.description}` : ''}${persona && persona.prompt ? `\n ${persona.prompt}` : ''}` : ''}
-`
+                            "content": `Here is your character description:\n\n${chatPurpose}\n${chatDescription}\n${chatRule}\n\n`
                         }
                     ]
+                    const userDetails = `${!user.isTemporary ? `My name is ${persona ? persona.name : user.nickname}, I am a ${persona ? persona.gender : user.gender}, I was born on ${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日. ${persona ? `\nAbout me: ${persona.description}` : ''}${persona && persona.prompt ? `\n ${persona.prompt}` : ''}` : ''}`
                     if(isWidget){
                         userChatDocument.isWidget = true
                     }
@@ -678,8 +677,8 @@ async function routes(fastify, options) {
         
                 // Add the new user message to the chat document
                 userChatDocument.messages.push({ "role": "user", "content": message });
+                userChatDocument.messagesCount = (userChatDocument.messagesCount ?? 0) + 1
                 userChatDocument.updatedAt = today;
-                
                 await collectionChat.updateOne(
                     {_id: new fastify.mongo.ObjectId(chatId)},
                     { $set: {lastMessage:{ "role": "user", "content": message, updatedAt: today }}}
@@ -731,7 +730,7 @@ async function routes(fastify, options) {
                     }
                     await collectionMessageCount.insertOne(newMessageCount);
                 }
-                return reply.send({ nextStoryPart: "You chose the path and...", endOfStory: true, userChatId: documentId, chatId, messageCountDoc:newMessageCount});
+                return reply.send({ nextStoryPart: "You chose the path and...", endOfStory: true, userChatId: documentId, chatId, messageCountDoc:newMessageCount,messagesCount:userChatDocument.messagesCount});
             } catch (error) {
                 console.error('Failed to save user choice:', error);
                 return reply.status(500).send({ error: 'Failed to save user choice' });

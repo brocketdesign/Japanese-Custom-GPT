@@ -215,7 +215,7 @@ $(document).ready(function() {
         });
 
     });
-    if(isTemporary){
+    if(!isTemporary){
         const personas = user?.personas || false
         initializePersonaStats(personas)
     }

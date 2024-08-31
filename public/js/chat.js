@@ -745,7 +745,8 @@ $(document).ready(function() {
                             if($('#chat-widget-container').length == 0 && isTemporary){
                                 displayMessage('assistant',`<a class="btn btn-secondary custom-gradient-bg shadow-0 m-2 px-4 py-2" style="border-radius: 50px;" href="/authenticate"><i class="fas fa-sign-in-alt me-2"></i> ログイン</a>`)
                             }
-                            checkForPurchaseProposal()
+                            if(!isTemporary){checkForPurchaseProposal()}
+                        
                         })
                         updateParameters(chatId,userId)
 

@@ -242,7 +242,9 @@ $(document).ready(function() {
                 $('#gen-ideas').removeClass('done')
                 Swal.close();
 
-                let hidden_message = `[Hidden] 現在の時刻 ${new Date()}`
+                let currentDate = new Date();
+                let currentTimeInJapanese = `${currentDate.getHours()}時${currentDate.getMinutes()}分`;
+                let hidden_message = `[Hidden] 現在の時刻 ${currentTimeInJapanese}`
                 addMessageToChat(chatId, userChatId, 'user', hidden_message, function(error, res) {
                     if (error) {
                         console.error('Error adding message:', error);
@@ -711,11 +713,15 @@ $(document).ready(function() {
                     $('#chatContainer').append(botResponseContainer);
                     $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
                 }
-                let message = `[Starter]  これはウェブアプリケーションのためのプロンプトです。私たちがまったく見知らぬ者同士であるかのように、自然に会話のきっかけを作ってください。現在の時刻（${new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}）を活用して、タイムリーで親しみやすい挨拶をしてください。確認から始めず、答えから始めてください。`;
-            
+                let currentDate = new Date();
+                let currentTimeInJapanese = `${currentDate.getHours()}時${currentDate.getMinutes()}分`;
+                
+                let message = `[Starter]  これはウェブアプリケーションのためのプロンプトです。私たちがまったく見知らぬ者同士であるかのように、自然に会話のきっかけを作ってください。現在の時刻（${currentTimeInJapanese}）を活用して、タイムリーで親しみやすい挨拶をしてください。確認から始めず、答えから始めてください。`;
+                
                 if($('#chat-widget-container').length == 0 && isTemporary){
-                    message = `[Starter] これはウェブアプリケーションの登録プロセスを促進するためのプロンプトです。キャラクターになりきって、現在の時刻（${new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}）を活用し、この瞬間にログインまたは登録することがどれほど重要かを強調してください。登録することで「1日50件までチャットできる」、「フレンドを無制限で作成できる」、「新しいキャラクターを作成する」、「チャット履歴を保存する」といった素晴らしい機能が今すぐ利用可能であることを、感情を込めて懇願してください。確認や前置きなしで、直接答えから始めてください。`
-                } 
+                    message = `[Starter] これはウェブアプリケーションの登録プロセスを促進するためのプロンプトです。キャラクターになりきって、現在の時刻（${currentTimeInJapanese}）を活用し、この瞬間にログインまたは登録することがどれほど重要かを強調してください。登録することで「1日50件までチャットできる」、「フレンドを無制限で作成できる」、「新しいキャラクターを作成する」、「チャット履歴を保存する」といった素晴らしい機能が今すぐ利用可能であることを、感情を込めて懇願してください。確認や前置きなしで、直接答えから始めてください。`
+                }
+                
                 $.ajax({
                     url: API_URL+'/api/chat-data',
                     type: 'POST',

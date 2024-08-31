@@ -6,7 +6,7 @@ $(document).ready(function() {
     const priceId = urlParams.get('priceId');
     const paymentFalse = urlParams.get('payment') == 'false';
     const user = JSON.parse(localStorage.getItem('user'))
-    const isTemporary = !!user.isTemporary
+    const isTemporary = !!user?.isTemporary || true
     if (success === 'true' && sessionId) {
         $.ajax({
             url: '/plan/update-coins',

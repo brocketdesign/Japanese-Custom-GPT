@@ -711,19 +711,11 @@ $(document).ready(function() {
                     $('#chatContainer').append(botResponseContainer);
                     $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
                 }
-                let message = `あなたは私たちが完全な見知らぬ者であるかのように、会話のきっかけを作ってください。確認から始めず、答えから始めてください。`;
+                message = `[Starter] これはウェブアプリケーションのためのプロンプトです。キャラクターになりきって、ユーザーに登録を心からお願いする内容です。現在の時刻（${new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}）だからこそ、この瞬間にログインまたは登録することがどれだけ重要かを強調し、ユーザーが「1日50件までチャットできる」、「フレンドを無制限で作成できる」、「新しいキャラクターを作成する」、「チャット履歴を保存する」といった素晴らしい機能を今すぐ利用できるように感情を込めて懇願してください。確認や前置きなしで、直接答えから始めてください。`
             
                 if($('#chat-widget-container').length == 0 && isTemporary){
-                    message = `[Starter] キャラクターになりきって、ログインを心からお願いしてください。感情を込めて、ユーザーがログインすることで「1日50件までチャットできる」、「フレンドを無制限で作成できる」、「新しいキャラクターを作成する」、「チャット履歴を保存する」といった素晴らしい機能が利用可能であることを強調し、今すぐログインするように懇願してください。確認や前置きなしで、直接答えから始めてください。`
+                    message = `[Starter] キャラクターになりきって、ログインを心からお願いしてください。感情を込めて、現在の時刻（${new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}）に特に重要であることを強調し、ユーザーがログインすることで「1日50件までチャットできる」、「フレンドを無制限で作成できる」、「新しいキャラクターを作成する」、「チャット履歴を保存する」といった素晴らしい機能が利用可能であることを伝え、今すぐログインするように懇願してください。確認や前置きなしで、直接答えから始めてください。`
                 } 
-                let hidden_message = `[Hidden] Current time :${new Data()}`
-                addMessageToChat(chatId, userChatId, 'user', hidden_message, function(error, res) {
-                    if (error) {
-                        console.error('Error adding message:', error);
-                    } else {
-                        //console.log('Message added successfully:', res);
-                    }
-                });
                 $.ajax({
                     url: API_URL+'/api/chat-data',
                     type: 'POST',
@@ -755,6 +747,7 @@ $(document).ready(function() {
                         isNew = false;
                         renderChatList(userId,chatId);
                         $(`#starter-${uniqueId}`).remove()
+                       
                         generateCompletion(function(){
                             $('.auto-gen').each(function(){$(this).show()})
                             $('#audio-play').show();
@@ -765,6 +758,7 @@ $(document).ready(function() {
                             if(!isTemporary){checkForPurchaseProposal()}
                         
                         })
+
                         updateParameters(chatId,userId)
 
                         if(isTemporary){
@@ -776,7 +770,9 @@ $(document).ready(function() {
                     error: function(xhr, status, error)  {
                         $('#startButtonContained').show();
                         $('#introChat').show();
+                        $(`#starter-${uniqueId}`).remove()
                         if (xhr.responseJSON) {
+                            console.log(xhr.responseJSON)
                             var errorStatus = xhr.status;
                             if (errorStatus === 403) {
                                 var limitIds = xhr.responseJSON.limitIds || [];

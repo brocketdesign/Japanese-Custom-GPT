@@ -679,7 +679,7 @@ async function routes(fastify, options) {
                 userChatDocument.messages.push({ "role": "user", "content": message });
                 userChatDocument.messagesCount = (userChatDocument.messagesCount ?? 0) + 1
                 userChatDocument.updatedAt = today;
-                if (!messages.matches("^\\[[^\\]]+\\].*")) {
+                if (!message.match(/^\[[^\]]+\].*/)) {
                     await collectionChat.updateOne(
                         {_id: new fastify.mongo.ObjectId(chatId)},
                         { $set: {lastMessage:{ "role": "user", "content": message, updatedAt: today }}}
@@ -1087,7 +1087,7 @@ async function routes(fastify, options) {
             const chatname = chatDocument.name
 
             const userMessages = userData.messages;
-
+            console.log(userMessages)
             let completion = ``
             completion = await fetchOpenAICompletion(userMessages, reply.raw, 300);
 

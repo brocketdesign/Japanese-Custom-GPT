@@ -396,8 +396,8 @@ $(document).ready(function() {
                             createButton(data.chat)
                         }
                         if(!isTemporary){
-                        const messagesCount = data.userChat.messagesCount || 0;
-                        const maxMessages = data.userChat.nextLevel || 10 ;
+                        const messagesCount = data?.userChat?.messagesCount || 0;
+                        const maxMessages = data?.userChat?.nextLevel || 10 ;
                         initializeOrUpdateProgress(messagesCount,maxMessages)
                         }
 

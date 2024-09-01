@@ -6,8 +6,24 @@
     <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css">
 
     <style>
+        .rounded-avatar {
+            width: 70px;
+            height: 70px;
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: top;
+            border-radius: 50px;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
         #chat-container{
             background-size:contain;
+        }
+        #chatContainer > div:nth-child(1) {
+            padding-top: 35px;
         }
         .one-line {
             white-space: nowrap;
@@ -62,7 +78,7 @@
         }
         .gen-idea-container{
             border-radius: 40px 40px 0 0;
-            background: linear-gradient(135deg, #1e1946, #6f4cb0, #24243e);
+            background: linear-gradient(135deg, #1e1946, #1e1928c2, #24243e);
             width: 100%;
             position: absolute;
             left: 0;
@@ -401,8 +417,15 @@
             height: 100%;
             overflow-y: scroll;
         }
+        .fade-content {
+            height: 100%;
+            mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 10%);
+            -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 10%);
+        }
+
+
         #chat-container {
-            flex: 1;
+            flex-grow: 1;
             display: flex;
             flex-direction: column;
             overflow-x: hidden;
@@ -630,6 +653,7 @@
                     </section>
                 </div>
             {{else}}
+                <iframe id="user-profile-page" src="/user/{{user._id}}" frameborder="0" ></iframe>
             {{/if}}
                 {{#if peopleChats}}
                     <section class="w-100 px-0 py-0">
@@ -641,20 +665,19 @@
                                 <div style="background-image:url('{{#if this.chatImageUrl}}{{this.chatImageUrl}}{{else}}/img/logo.webp{{/if}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
                                     <div id="spinner-{{this._id}}" class="position-absolute spinner-grow  spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
                                     
-                                    <div class="position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px">
+                                    <div class="position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px;right:10px;">
                                         {{#if this.tags}}
-                                        <div class="tags">
-                                            {{#each this.tags}}
-                                                <span class="badge bg-dark" >
-                                                    {{this}}
-                                                </span>
-                                            {{/each}}
+                                        <div class="tags d-flex justify-content-between align-items-center flex-wrap">
+                                            {{#each this.tags}} <span class="badge bg-dark" > {{this}} </span> {{/each}}
                                         </div>
                                         {{/if}}
-                                        <a href="/user/{{this.userId}}" class="badge bg-dark" style="color: rgb(165 164 164);">
-                                            <i class="fas fa-user-circle me-2"></i>
-                                            {{this.nickname}}
-                                        </a>
+                                        <div class="d-flex justify-content-between align-items-center mt-1">
+                                            <a href="/user/{{this.userId}}" class="badge bg-dark text-white" style="text-decoration: none;">
+                                                <i class="fas fa-user-circle me-2"></i>
+                                                {{this.nickname}}
+                                            </a>
+                                           {{#if this.messagesCount}}<span class="badge bg-dark message-count"><i class="fas fa-comment-alt me-2"></i>{{this.messagesCount}}</span>{{/if}}
+                                        </div>
                                     </div>
                                     <div class="persona position-absolute" style="color: rgb(165 164 164);opacity:0.8; top:10px;right:10px" data-id="{{this._id}}">
                                         <span class="badge bg-dark" >
@@ -687,15 +710,16 @@
                             <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2 redirectToChat" style="cursor:pointer;" data-id="{{this._id}}" data-image="{{this.chatImageUrl}}">
                                 <div style="background-image:url('{{this.chatImageUrl}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
                                     <div id="spinner-{{this._id}}" class="position-absolute spinner-grow  spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
-                                    {{#if this.tags}}
-                                    <div class="tags position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px">
-                                        {{#each this.tags}}
-                                            <span class="badge bg-dark" >
-                                                {{this}}
-                                            </span>
-                                        {{/each}}
+                                    <div class="position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px;right:10px;">
+                                        {{#if this.tags}}
+                                        <div class="tags d-flex justify-content-between align-items-center flex-wrap">
+                                            {{#each this.tags}} <span class="badge bg-dark" > {{this}} </span> {{/each}}
+                                        </div>
+                                        {{/if}}
+                                        <div class="d-flex justify-content-end align-items-center mt-1">
+                                           {{#if this.messagesCount}}<span class="badge bg-dark message-count"><i class="fas fa-comment-alt me-2"></i>{{this.messagesCount}}</span>{{/if}}
+                                        </div>
                                     </div>
-                                    {{/if}}
                                     <div class="persona position-absolute" style="color: rgb(165 164 164);opacity:0.8; top:10px;right:10px" data-id="{{this._id}}">
                                         <span class="badge bg-dark" >
                                             <i class="far fa-bookmark"></i>
@@ -725,41 +749,46 @@
         </section>
         <div class="container chat-contain px-0 onchat-on">
             <div id="chat-container" class="card shadow-0 border-0 rounded-0" style="background-position: top center;background-repeat: no-repeat;">
-                <div class="card-body text-center py-0 container" style="min-height:250px;overflow-y:hidden;">
-                    <div id="chatContainer" class="pt-2" style="padding-top: 80px !important;;padding-bottom: 100px !important;"></div>
-                    <div id="chatInput" class="input-group rounded-0 rounded-bottom" style="position: absolute;bottom: 0;left: 0;right: 0;padding: 0px 15px 5px 15px;">
-                        <div class="d-flex justify-content-between align-items-center w-100">
-                            <div>
-                                <button type="button" class="btn btn-md bg-light shadow-0 border-0 mb-2 mx-1" id="audio-play" style="display: none;">
-                                    <i class="fa" id="audio-icon"></i>
-                                </button>
-                            </div>
-                            <div class="d-flex pe-2">
-                                <button class="d-none btn btn-dark border-light shadow-0 mx-1 my-1 img-gen-button" id="stability-gen-button-none" style="display:none;background-image:url('/img/sd.jpg')"><i class="fa fa-spinner fa-spin fa-fw fa-hidden" style="display: none;"></i><i class="far fa-image"></i></button>
-                                <button class="d-none btn btn-dark border-light shadow-0 mx-1 my-1 img-gen-button" id="novita-gen-button-none" style="display:none;background-image:url('/img/novita.jpg')"><i class="fa fa-spinner fa-spin fa-fw fa-hidden" style="display: none;"></i><i class="far fa-image"></i></button>
-                                <button type="button" class="d-none btn btn-md custom-gradient-bg shadow-0 border-0 mb-2 mx-1 auto-gen" id="novita-gen-button" style="display: none;">
-                                    <div class="d-flex">
-                                        <i class="fa fa-spinner fa-spin fa-fw fa-hidden" style="display: none;"></i>
-                                        <i class="fa fa-image me-2"></i>
-                                        AI画像
+                <div class="card-body text-center py-0 container" style="min-height:250px;overflow-y:hidden;display: flex;flex-direction: column;">
+                    <div id="chat-recommend" class="text-white rounded d-flex align-items-center justify-content-center" style="margin-top: 70px !important;margin-bottom:10px">
+                        <div class="characters" style="display: flex;flex-direction: row;overflow-x: scroll;"></div>
+                    </div>
+                    <div style="flex-grow:1;height: 100%;overflow: scroll;">
+                        <div id="chatContainer" class="pt-2 fade-content" style="padding-bottom: 150px !important;"></div>
+                        <div id="chatInput" class="input-group rounded-0 rounded-bottom" style="position: absolute;bottom: 0;left: 0;right: 0;padding: 0px 15px 5px 15px;">
+                            <div class="d-flex justify-content-between align-items-center w-100">
+                                <div>
+                                    <button type="button" class="btn btn-md bg-light shadow-0 border-0 mb-2 mx-1" id="audio-play" style="display: none;">
+                                        <i class="fa" id="audio-icon"></i>
+                                    </button>
+                                </div>
+                                <div class="d-flex pe-2">
+                                    <button class="d-none btn btn-dark border-light shadow-0 mx-1 my-1 img-gen-button" id="stability-gen-button-none" style="display:none;background-image:url('/img/sd.jpg')"><i class="fa fa-spinner fa-spin fa-fw fa-hidden" style="display: none;"></i><i class="far fa-image"></i></button>
+                                    <button class="d-none btn btn-dark border-light shadow-0 mx-1 my-1 img-gen-button" id="novita-gen-button-none" style="display:none;background-image:url('/img/novita.jpg')"><i class="fa fa-spinner fa-spin fa-fw fa-hidden" style="display: none;"></i><i class="far fa-image"></i></button>
+                                    <button type="button" class="d-none btn btn-md custom-gradient-bg shadow-0 border-0 mb-2 mx-1 auto-gen" id="novita-gen-button" style="display: none;">
+                                        <div class="d-flex">
+                                            <i class="fa fa-spinner fa-spin fa-fw fa-hidden" style="display: none;"></i>
+                                            <i class="fa fa-image me-2"></i>
+                                            AI画像
+                                        </div>
+                                    </button>
+                                    <button type="button" class="d-none btn btn-md custom-gradient-bg shadow-0 border-0 mb-2 mx-1 auto-gen-none" id="huggingface-gen-button" style="display: none;">
+                                        <div class="d-flex">
+                                            <i class="fa fa-spinner fa-spin fa-fw fa-hidden" style="display: none;"></i>
+                                            <i class="fa fa-image me-2"></i>
+                                            AI画像
+                                        </div>
+                                    </button>
+                                    <div id="progress-container" style="position: absolute; width: 44px; height: 100px;bottom: 50px;right: 10px;display:none;">
                                     </div>
-                                </button>
-                                <button type="button" class="d-none btn btn-md custom-gradient-bg shadow-0 border-0 mb-2 mx-1 auto-gen-none" id="huggingface-gen-button" style="display: none;">
-                                    <div class="d-flex">
-                                        <i class="fa fa-spinner fa-spin fa-fw fa-hidden" style="display: none;"></i>
-                                        <i class="fa fa-image me-2"></i>
-                                        AI画像
-                                    </div>
-                                </button>
-                                <div id="progress-container" style="position: absolute; width: 44px; height: 100px;bottom: 50px;right: 10px;display:none;">
                                 </div>
                             </div>
-                        </div>
 
-                        <div id="input-container" class="d-flex w-100">
-                            <button id="gen-ideas" class="btn btn-light px-4 border-0">💡</button>
-                            <textarea id="userMessage" class="form-control py-3 border-0" placeholder="チャットしよう"></textarea>
-                            <button id="sendMessage" class="btn btn-light px-4 border-0"><i class="fas fa-paper-plane"></i></button>
+                            <div id="input-container" class="d-flex w-100">
+                                <button id="gen-ideas" class="btn btn-light px-4 border-0">💡</button>
+                                <textarea id="userMessage" class="form-control py-3 border-0" placeholder="チャットしよう"></textarea>
+                                <button id="sendMessage" class="btn btn-light px-4 border-0"><i class="fas fa-paper-plane"></i></button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -782,12 +811,35 @@ $(document).ready(function() {
         const newHeight = $(window).height() * 0.97;
         $('.chat-contain .card-body').height(newHeight);
     }
-
-    // Adjust height on document ready
     $(document).ready(adjustHeight);
-
-    // Adjust height on window resize
     $(window).resize(adjustHeight);
+
+    function resizeIframe() {
+        var iframe = $('#user-profile-page');
+        const newHeight = iframe[0].contentWindow.document.body.scrollHeight
+        console.log(`resizeIframe ${newHeight}`)
+        if( newHeight > 0) { iframe.height(newHeight); }
+        
+    }
+    $(window).on('load', resizeIframe);
+    $(window).on('resize', resizeIframe);
+    window.addEventListener('message', function(event) {
+        if (event.data === 'resizeIframe') {
+            resizeIframe();
+        }
+    });
+
+    window.addEventListener('message', function(event) {
+        if (event.data.event === 'openChat') {
+            redirectToChat(event.data.chatId)
+        }
+    });
+
+    window.addEventListener('message', function(event) {
+        if (event.data.event === 'updatePersona') {
+             updatePersona(event.data.personaId,event.data.isAdding)
+        }
+    });
 
     // Initialize user preference from cookie
     if (Cookies.get('sidebarState') === 'expanded') {
@@ -887,8 +939,8 @@ $(document).ready(function() {
                     </ul>
                 </div>
             `,
-            showClass: { popup: 'animate__fadeInUp animate__faster' },
-            hideClass: { popup: 'animate__fadeOutDown animate__faster' },
+            showClass: { popup: 'animate__animated animate__slideInUp animate__faster' },
+            hideClass: { popup: 'animate__animated animate__slideOutDown animate__faster' },
             position: 'bottom', backdrop: 'rgba(43, 43, 43, 0.2)',
             showCloseButton: true, showConfirmButton: false,
             customClass: { container: 'p-0', popup: 'gen-idea-container shadow', closeButton: 'position-absolute' }
@@ -1178,7 +1230,9 @@ function redirectToChat(chatId,chatImage) {
     if($(`#spinner-${chatId}`).hasClass('on')){
         return
     }
-    $('#chat-container').css('background-image', chatImage);
+    if(chatImage){
+        $('#chat-container').css('background-image', chatImage);
+    }
     $(`#spinner-${chatId}`).addClass('on').show()
     const user = {{{json user}}}
     const userId = user._id
@@ -1212,6 +1266,22 @@ function initiateCheckout(buttonId) {
         }
     });
 }
+    const characters = {{{json peopleChats.synclubaichat}}};
+    renderCircleGrid(characters,$('#chat-recommend .characters'))
+    function renderCircleGrid(cardInfos,container){
+        cardInfos.forEach(function(item) {
+            var card = $(`
+                <div class="card custom-card bg-transparent shadow-0 border-0 px-1 col-3 col-sm-4 col-lg-2" style="cursor:pointer;" data-id="${item._id}">
+                    <div style="background-image:url(${item.chatImageUrl})" class="card-img-top rounded-avatar position-relative m-auto" alt="${item.name}">
+                    </div>
+                </div>
+            `);
+            card.on('click', function() {
+                redirectToChat($(this).attr('data-id'))
+            });
+            container.append(card);
+        });   
+    }
 </script>
 </body>
 </html>

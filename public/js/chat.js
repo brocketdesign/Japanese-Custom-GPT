@@ -402,8 +402,16 @@ $(document).ready(function() {
                         }
 
                         if(isNew && chatData && chatData.length == 0 ){
-                            createIntro(data.chat)
-                            createButton(data.chat)
+                            //createIntro(data.chat)
+                            //createButton(data.chat)
+                            
+                            if(isTemporary){
+                                displayStarter();
+                            }else{
+                                selectPersona(function(){
+                                    displayStarter();
+                                })
+                            }
                         }
                         if(!isTemporary){
                         const messagesCount = data?.userChat?.messagesCount || 0;
@@ -805,7 +813,7 @@ $(document).ready(function() {
                 });
             }
             
-            async function displayChat(userChat,persona) {
+            async function displayChatWithStep(userChat,persona) {
                 $('#progress-container').show();
                 $('#stability-gen-button').show();
                 $('.auto-gen').each(function(){$(this).show()});
@@ -908,6 +916,74 @@ $(document).ready(function() {
                             `;
                         }
             
+                        chatContainer.append($(messageHtml).hide().fadeIn());
+                    }
+                }
+            }
+            async function displayChat(userChat, persona) {
+                $('#progress-container').show();
+                $('#stability-gen-button').show();
+                $('.auto-gen').each(function() { $(this).show(); });
+                $('#audio-play').show();
+            
+                let chatContainer = $('#chatContainer');
+                chatContainer.empty();
+            
+                for (let i = 0; i < userChat.length; i++) {
+                    let messageHtml = '';
+                    let chatMessage = userChat[i];
+            
+                    if (chatMessage.role === "user") {
+                        const isStarter = chatMessage.content.startsWith("[Starter]") || chatMessage.content.startsWith("Invent a situation") || chatMessage.content.startsWith("Here is your character description");
+                        const isHidden = chatMessage.content.startsWith("[Hidden]");
+                        if (!isStarter && !isHidden) {
+                            messageHtml = `
+                                <div class="d-flex flex-row justify-content-end mb-4 message-container">
+                                    <div class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
+                                        ${marked.parse(chatMessage.content)}
+                                    </div>
+                                    ${persona ? `<img src="${persona.chatImageUrl || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">` : ''}
+                                </div>
+                            `;
+                        }
+                    } else if (chatMessage.role === "assistant") {
+                        const isNarratorMessage = chatMessage.content.startsWith("[Narrator]");
+                        const isImage = chatMessage.content.startsWith("[Image]");
+                        const designStep = Math.floor(i / 2) + 1;
+            
+                        if (isNarratorMessage) {
+                            const narrationContent = chatMessage.content.replace("[Narrator]", "").trim();
+                            messageHtml = `
+                                <div id="narrator-container-${designStep}" class="d-flex flex-row justify-content-start message-container">
+                                    <div id="narration-${designStep}" class="p-3 ms-3 text-start narration-container" style="border-radius: 15px;">
+                                        ${marked.parse(narrationContent)}
+                                    </div>
+                                </div>
+                            `;
+                        } else if (isImage) {
+                            const imageId = chatMessage.content.replace("[Image]", "").trim();
+                            messageHtml = await getImageUrlById(imageId, designStep, thumbnail); // Fetch and display image
+                        } else {
+                            if (chatMessage.content) {
+                                let message = removeContentBetweenStars(chatMessage.content);
+                                messageHtml = `
+                                    <div id="container-${designStep}">
+                                        <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
+                                            <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+                                            <div class="audio-controller">
+                                                <button id="play-${designStep}" class="audio-content badge bg-dark" data-content="${message}">►</button>
+                                            </div>
+                                            <div id="message-${designStep}" class="p-3 ms-3 text-start assistant-chat-box">
+                                                ${marked.parse(chatMessage.content)}
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        }
+                    }
+            
+                    if (messageHtml) {
                         chatContainer.append($(messageHtml).hide().fadeIn());
                     }
                 }
@@ -1232,6 +1308,7 @@ $(document).ready(function() {
 
                 hideOtherChoice(false, currentStep)
                 // Initialize the bot response container
+                const animationClass = 'animate__animated animate__slideInUp';
                 const uniqueId = `${currentStep}-${Date.now()}`;
                 const botResponseContainer = $(`
                     <div id="container-${uniqueId}">
@@ -1244,9 +1321,9 @@ $(document).ready(function() {
                                 <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
                             </div>
                         </div>
-                        <div id="response-${uniqueId}" class="choice-container" ></div>
-                    </div>`);
+                    </div>`).hide();
                 $('#chatContainer').append(botResponseContainer);
+                botResponseContainer.addClass(animationClass).fadeIn();
                 $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
                 $.ajax({
                     url: apiUrl,
@@ -1302,7 +1379,6 @@ $(document).ready(function() {
                                 <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
                             </div>
                         </div>
-                        <div id="response-${currentStep}" class="choice-container" ></div>
                     </div>`);
                 $('#chatContainer').append(botResponseContainer);
                 $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
@@ -1390,37 +1466,39 @@ $(document).ready(function() {
                 });
             }
             
-            
             // Function to display a message in the chat
             window.displayMessage = function(sender, message, callback) {
                 const messageClass = sender === 'user' ? 'user-message' : sender;
+                const animationClass = 'animate__animated animate__slideInUp';
 
                 if(messageClass === 'user-message'){
-                    $('#chatContainer').append(`
-                        <div class="d-flex flex-row justify-content-end mb-4 message-container ${messageClass}">
+                    const messageElement = $(`
+                        <div class="d-flex flex-row justify-content-end mb-4 message-container ${messageClass} animate__animated">
                             <div class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
                                 <span>${message}</span>
                             </div>
                             ${persona ? `<img src="${persona.chatImageUrl || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">`:''}
                         </div>
-                    `);
+                    `).hide();
+                    $('#chatContainer').append(messageElement);
+                    messageElement.addClass(animationClass).fadeIn();
                 } 
                 if(messageClass === 'bot-image'){
                     const imageId = message.getAttribute('data-id');
-                    $('#chatContainer').append(`
-                        <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass}">
+                    const messageElement = $(`
+                        <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} animate__animated">
                             <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
                             <div id="image-${imageId}" class="p-3 ms-3 text-start assistant-image-box">
                             </div>
                         </div>      
-                    `);
-                    
-                    // Now append the image to the chat box after it's been appended
+                    `).hide();
+                    $('#chatContainer').append(messageElement);
                     $(`#image-${imageId}`).append(message.outerHTML);
+                    messageElement.addClass(animationClass).fadeIn();
                 }
                 if(messageClass === 'bot-image-nsfw'){
-                    $('#chatContainer').append(`
-                        <div class="d-flex flex-row justify-content-start mb-4 message-container bot-image-nsfw" style="position: relative;">
+                    const messageElement = $(`
+                        <div class="d-flex flex-row justify-content-start mb-4 message-container bot-image-nsfw animate__animated" style="position: relative;">
                             <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
                             <div class="position-relative">
                                 <div class="p-3 ms-3 text-start assistant-image-box">
@@ -1433,24 +1511,25 @@ $(document).ready(function() {
                                 </div>
                             </div>
                         </div>   
-                    `);                    
-                    
-                    // Now append the image to the chat box after it's been appended
+                    `).hide();
+                    $('#chatContainer').append(messageElement);
                     $(`#image-${imageId}`).append(message.outerHTML);
+                    messageElement.addClass(animationClass).fadeIn();
                 }
                 if (messageClass === 'assistant') {
                     const uniqueId = `completion-${currentStep}-${Date.now()}`;
                     const botResponseContainer = $(`
-                        <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
+                        <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container animate__animated">
                             <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
                             <div id="${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">
                             </div>
                         </div>
-                    `);
+                    `).hide();
                     $('#chatContainer').append(botResponseContainer);
-                    $(`#${uniqueId}`).html(message);                   
+                    $(`#${uniqueId}`).html(message);
+                    botResponseContainer.show().addClass(animationClass);
                 }               
-                
+
                 $('#chatContainer').animate({
                     scrollTop: $('#chatContainer').prop("scrollHeight")
                 }, 500); 
@@ -1459,6 +1538,7 @@ $(document).ready(function() {
                     callback();
                 }
             }
+
             window.buyItem = function(itemId, itemName, itemPrice, status, userId, chatId, userChatId) {
             
                 if (status) {
@@ -1986,6 +2066,7 @@ $(document).ready(function() {
         });
     }
 });
+
 function initializeOrUpdateProgress(messagesCount, maxMessages) {
     // Check if the heart SVG is already initialized
     if ($('#progress-container svg').length === 0) {
@@ -1997,7 +2078,7 @@ function initializeOrUpdateProgress(messagesCount, maxMessages) {
                     M140 20C73 20 20 74 20 140c0 135 136 170 228 303 88-132 229-173 229-303 0-66-54-120-120-120-48 0-90 28-109 69-19-41-60-69-108-69z" />
                 
                 <!-- GIF Container -->
-                <image id="heart-gif" x="0" y="500" width="500" height="500" xlink:href="/img/wave.webp" clip-path="url(#fill-mask)" />
+                <image id="heart-gif" x="0" y="500" width="500" height="500" xlink:href="/img/wave.png" clip-path="url(#fill-mask)" />
                 
                 <!-- Mask for GIF -->
                 <clipPath id="fill-mask">
@@ -2019,7 +2100,7 @@ function initializeOrUpdateProgress(messagesCount, maxMessages) {
 }
 
 function updateProgress(messagesCount, maxMessages) {
-    if(messagesCount>=maxMessages){return}
+    if(messagesCount>maxMessages){return}
     // Calculate fill percentage out of 100
     const fillPercentage = Math.min((messagesCount / maxMessages) * 100, 100);
     const fillHeight = 500 - (500 * fillPercentage / 100);
@@ -2260,6 +2341,25 @@ function renderChatDropdown(chat) {
     `;
 
     return dropdownHtml 
+}
+window.updatePersona = function(personaId,isAdding,callback,callbackError){
+    $.post('/api/user/personas', { personaId: personaId, action: isAdding ? 'add' : 'remove' }, function() {
+        const message = isAdding ? 'ペルソナが追加されました' : 'ペルソナが削除されました';
+        const status = 'success';
+        showNotification(message, status);
+        if(typeof callback =='function'){
+            callback()
+        }
+    }).fail(function(jqXHR) {
+        const message = jqXHR.responseJSON && jqXHR.responseJSON.error 
+            ? jqXHR.responseJSON.error 
+            : (isAdding ? 'ペルソナの追加に失敗しました' : 'ペルソナの削除に失敗しました');
+        const status = 'error';
+        showNotification(message, status);
+        if(typeof callbackError =='function'){
+            callbackError()
+        }
+    });
 }
 window.getUserChatHistory = function(chatId, userId, callback) {
     $.ajax({

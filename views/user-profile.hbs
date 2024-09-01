@@ -2,9 +2,8 @@
 <html lang="ja">
        {{> dashboard-header}}
 <body>
-{{> dashboard-nav}}
     <style>
-      
+        footer{display:none}
         .isLoading .fa-image{
             display: none;
         }
@@ -106,6 +105,12 @@
             -webkit-box-orient: vertical;
             font-size: 13px;
         }
+        .scroll-horizontal {
+            flex-wrap: nowrap;
+            width: 100%;
+            flex-direction: row;
+            overflow-x: scroll;
+        }
         @media (max-width: 600px) {
             .chat-contain .card-body{
                 width: 100%;
@@ -115,11 +120,11 @@
 <section class="container">
   <div class="row justify-content-center">
     <div class="col-12">
-      <div class="user-profile my-5">
+      <div class="user-profile mt-4">
         <div class="row mb-3">
-          <div id="profileSection" class="text-center mb-4">
+          <div id="profileSection" class="text-center">
             <div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative mb-2">
-              <img id="profileImage" src="{{default userData.profileUrl '/img/logo.webp'}}" alt="chat Thumbnail" class="rounded-circle" 
+              <img id="profileImage" src="{{default userData.profileUrl '/img/avatar.png'}}" alt="chat Thumbnail" class="rounded-circle" 
               style="width: 100px; height: 100px; object-fit: cover; object-position: top;">
             </div>
             <h2>{{userData.nickname}}</h2>
@@ -134,12 +139,9 @@
   </div>
 </section>
 
-<section class="bg-light py-3">
+<section class="py-3">
   <div class="container-0">
     {{#if userChats}}
-      <section class="w-100 px-0 py-0">
-        <h4 class="px-4">{{userData.nickname}}さんが作ったキャラクターたち</h4>
-        <hr>
       {{#if isAdmin}}
         <ul class="nav nav-tabs mb-2" id="chatTabs" role="tablist">
           <li class="nav-item" role="presentation">
@@ -160,12 +162,13 @@
             <div class="row m-0 px-1">
             <div>
               <span class="badge bg-secondary">
-                <i class="fas fa-comments me-2"></i> {{publicChatCount}}
+                <i class="fas fa-unlock me-2"></i> {{publicChatCount}}
               </span>
             </div>
+            <div class="d-flex scroll-horizontal">
               {{#each userChats}}
                 {{#if (eq this.visibility "public")}}
-                  <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-3 open-chat" 
+                  <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2 open-chat" 
                       style="cursor:pointer;" 
                       data-id="{{this._id}}">
                     <div style="background-image:url('{{this.chatImageUrl}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
@@ -184,6 +187,7 @@
                 {{/if}}
               {{/each}}
             </div>
+            </div>
           </div>
 
       {{#if isAdmin}}
@@ -192,12 +196,13 @@
           <div class="row m-0 px-1">
             <div>
               <span class="badge bg-secondary">
-                <i class="fas fa-comments me-2"></i> {{privateChatCount}}
+                <i class="fas fa-lock me-2"></i> {{privateChatCount}}
               </span>
             </div>
+            <div class="d-flex scroll-horizontal">
             {{#each userChats}}
               {{#if (eq this.visibility "private")}}
-                <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-3 open-chat" 
+                <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2 open-chat" 
                     style="cursor:pointer;" 
                     data-id="{{this._id}}">
                   <div style="background-image:url('{{this.chatImageUrl}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
@@ -215,6 +220,7 @@
                 </div>
               {{/if}}
             {{/each}}
+            </div>
           </div>
         </div>
       {{/if}}
@@ -223,8 +229,14 @@
       <div class="tab-pane fade" id="persona" role="tabpanel" aria-labelledby="persona-tab">
         <div class="row m-0 px-1">
           {{#if personas.length}}
+            <div>
+              <span class="badge bg-secondary">
+                <i class="fas fa-user-circle me-2"></i> {{personas.length}}
+              </span>
+            </div>
+            <div class="d-flex scroll-horizontal">
             {{#each personas}}
-              <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-3 open-chat" 
+              <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2 open-chat" 
                   style="cursor:pointer;" 
                   data-id="{{this._id}}">
                 <div style="background-image:url('{{this.chatImageUrl}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
@@ -234,7 +246,7 @@
                     <span class="badge bg-dark">{{this}}</span>
                     {{/each}}
                   </div>
-                  <div class="persona position-absolute" style="color: rgb(165 164 164);opacity:0.8; top:10px;right:10px" data-id="{{this._id}}">
+                  <div class="persona position-absolute" style="color: rgb(165 164 164);opacity:0.8; top:10px;right:10px" data-event="true" data-id="{{this._id}}">
                       <span class="badge bg-dark" >
                           <i class="fas fa-bookmark"></i>
                       </span>
@@ -246,6 +258,7 @@
                 </div>
               </div>
             {{/each}}
+            </div>
           {{else}}
             <p class="text-muted">No personas available.</p>
           {{/if}}
@@ -260,5 +273,20 @@
 
   </div>
 </section>
-
 {{> dashboard-footer}}
+<script>
+  $(document).ready(function(){
+      $(document).on('click','.open-chat',function(){
+        const chatId = $(this).data('id');
+        window.parent.postMessage({ event: 'openChat', chatId: chatId }, '*');
+      })
+  })
+  /*
+    document.addEventListener('click', notifyParent);
+    function notifyParent() {
+      setTimeout(function(){
+        window.parent.postMessage('resizeIframe', '*');
+      },500)
+    }
+  */
+</script>

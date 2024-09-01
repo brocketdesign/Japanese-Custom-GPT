@@ -187,7 +187,6 @@ $(document).ready(function() {
             }
           });
     }
-        
     $(document).on('click', '.persona', function(e) {
         e.stopPropagation();
         e.preventDefault();
@@ -198,36 +197,23 @@ $(document).ready(function() {
         const $icon = $(this).find('i');
         const isAdding = $icon.hasClass('far');
         $icon.toggleClass('fas far');
-        const personaId = $(this).data('id');
-
-        $.post('/api/user/personas', { personaId: personaId, action: isAdding ? 'add' : 'remove' }, function() {
-            const message = isAdding ? 'ペルソナが追加されました' : 'ペルソナが削除されました';
-            const status = 'success';
-            showNotification(message, status);
-        }).fail(function(jqXHR) {
-            const message = jqXHR.responseJSON && jqXHR.responseJSON.error 
-                ? jqXHR.responseJSON.error 
-                : (isAdding ? 'ペルソナの追加に失敗しました' : 'ペルソナの削除に失敗しました');
-            const status = 'error';
-            showNotification(message, status);
-            $icon.toggleClass('fas far');
-            $this.toggleClass('on');
-        });
-
+        const personaId = $(this).attr('data-id');
+        const isEvent = $(this).attr('data-event') == 'true'
+        if(isEvent){
+            window.parent.postMessage({ event: 'updatePersona', personaId,isAdding }, '*');
+        }else{
+            updatePersona(personaId,isAdding,null,function(){
+                $icon.toggleClass('fas far');
+                $this.toggleClass('on');
+            })
+        }
     });
     if(!isTemporary){
         const personas = user?.personas || false
         initializePersonaStats(personas)
     }
     
-
-    $(document).on('click','.open-chat',function(){
-        const chatId = $(this).data('id');
-        window.location = '/chat/'+chatId
-    })
 });
-
-
 
 function initializePersonaStats(personas) {
 
@@ -244,6 +230,7 @@ function initializePersonaStats(personas) {
         });
     }
 }
+
 window.showCoinShop = function(el){
     if(el && $(el).hasClass('open')){
        return

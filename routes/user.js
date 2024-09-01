@@ -561,95 +561,42 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     }
   });
   fastify.get('/user/chat-data/:userId', async (request, reply) => {
-
     const { userId } = request.params;
-  
     const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
     const collectionChat = db.collection('chats');
     const collectionUser = db.collection('users');
   
     try {
-  
-      let currentUser = await fastify.getUser(request, reply);
-      const currentUserId = currentUser._id;
-      currentUser = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(currentUserId) });
-  
+      const currentUser = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId((await fastify.getUser(request, reply))._id) });
       const user = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(userId) });
+      if (!user) return reply.status(404).send({ error: 'User not found' });
   
-      if (!user) {
-        return reply.status(404).send({ error: 'User not found' });
-      }
-  
-      // Fetch and validate personas including selected persona
       let personas = user.personas || [];
-      let validPersonaIds = [];
+      const validPersonaIds = (await collectionChat.find({ _id: { $in: personas.map(id => new fastify.mongo.ObjectId(id)) } }).toArray()).map(p => p._id.toString());
+      
+      if (user.persona && !validPersonaIds.includes(user.persona.toString())) user.persona = null;
+      if (user.persona) validPersonaIds.push(user.persona.toString());
   
-      for (const personaId of personas) {
-        const personaExists = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(personaId) });
-        if (personaExists) {
-          validPersonaIds.push(personaId);
-        }
-      }
+      personas = await collectionChat.find({ _id: { $in: [...new Set(validPersonaIds)].map(id => new fastify.mongo.ObjectId(id)) } }).toArray();
   
-      // Validate selected persona
-      if (user.persona && !validPersonaIds.includes(user.persona)) {
-        user.persona = null; // Reset if invalid
-      } else if (user.persona) {
-        validPersonaIds.push(user.persona); // Ensure selected persona is included
-      }
-  
-      // Ensure unique persona IDs
-      validPersonaIds = [...new Set(validPersonaIds)];
-  
-      // Fetch the actual persona objects
-      personas = await collectionChat.find({ _id: { $in: validPersonaIds.map(id => new fastify.mongo.ObjectId(id)) } }).toArray();
-  
-      // Update the user document with valid personas and selected persona
       await collectionUser.updateOne(
         { _id: new fastify.mongo.ObjectId(userId) },
-        { 
-          $set: { 
-            personas: validPersonaIds, 
-            persona: user.persona || (validPersonaIds.length > 0 ? validPersonaIds[0] : null) // Set default if needed
-          } 
-        }
+        { $set: { personas: validPersonaIds, persona: user.persona || validPersonaIds[0] || null } }
       );
   
       const chatQuery = {
-        $or: [
-          { userId },
-          { userId: new fastify.mongo.ObjectId(userId) }
-        ],
-        visibility: "public"
+        $or: [{ userId }, { userId: new fastify.mongo.ObjectId(userId) }],
+        visibility: currentUser._id.toString() === userId ? { $in: ["public", "private"] } : "public"
       };
   
-      let isAdmin = false;
-  
-      if (currentUserId.toString() === userId) {
-        isAdmin = true;
-        chatQuery.visibility = { $in: ["public", "private"] };
-      }
-  
       const userChats = await collectionChat.find(chatQuery).sort({_id:-1}).toArray();
-  
-      const publicChatCount = await collectionChat.countDocuments({
-        $or: [
-          { userId },
-          { userId: new fastify.mongo.ObjectId(userId) }
-        ],
-        visibility: "public"
-      });
-  
-      const privateChatCount = await collectionChat.countDocuments({
-        $or: [
-          { userId },
-          { userId: new fastify.mongo.ObjectId(userId) }
-        ],
-        visibility: "private"
-      });
+      const [publicChatCount, privateChatCount] = await Promise.all([
+        collectionChat.countDocuments({ ...chatQuery, visibility: "public" }),
+        collectionChat.countDocuments({ ...chatQuery, visibility: "private" })
+      ]);
   
       return reply.send({
-        isAdmin,
+        isAdmin: currentUser._id.toString() === userId,
         user: currentUser,
         userData: {
           profileUrl: user.profileUrl,
@@ -660,7 +607,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
           _id: chat._id,
           name: chat.name,
           description: chat.description,
-          chatImageUrl: chat.chatImageUrl != undefined && chat.chatImageUrl != '' ? chat.chatImageUrl : chat.thumbnailUrl,
+          chatImageUrl: chat.chatImageUrl || chat.thumbnailUrl || '',
           tags: chat.tags || [],
           visibility: chat.visibility
         })),
@@ -669,10 +616,11 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
         personas
       });
     } catch (error) {
-      console.log(error)
+      console.log(error);
       return reply.status(500).send({ error: 'An error occurred' });
     }
   });
+  
   
 }
 

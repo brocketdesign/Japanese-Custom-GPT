@@ -658,7 +658,8 @@ $(document).ready(function() {
                         customClass: {
                             title:'text-muted small',
                             popup: 'animate__animated animate__fadeIn',
-                            hideClass: 'animate__animated animate__fadeOut'
+                            hideClass: 'animate__animated animate__fadeOut',
+                            htmlContainer:'p-0'
                         }
                     });
             
@@ -2507,6 +2508,7 @@ window.showDiscovery = function() {
         'visibility': ''
     }); 
     resetChatUrl();
+    window.postMessage('resizeIframe', '*');
 }
 window.showChat = function() {
     $('.onchat-off').hide()

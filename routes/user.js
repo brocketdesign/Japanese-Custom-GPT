@@ -530,6 +530,56 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
         return reply.status(404).send({ error: 'User not found' });
       }
   
+      const chatQuery = {
+        $or: [
+          { userId },
+          { userId: new fastify.mongo.ObjectId(userId) }
+        ],
+        visibility: "public"
+      };
+  
+      let isAdmin = false;
+  
+      if (currentUserId.toString() === userId) {
+        isAdmin = true;
+      }
+
+  
+      return reply.view('/user-profile.hbs', {
+        isAdmin,
+        user: currentUser,
+        userData: {
+          _id : user._id,
+          profileUrl: user.profileUrl,
+          nickname: user.nickname,
+          coins: user.coins,
+        },
+      });
+    } catch (error) {
+      console.log(error)
+      return reply.status(500).send({ error: 'An error occurred' });
+    }
+  });
+  fastify.get('/user/chat-data/:userId', async (request, reply) => {
+
+    const { userId } = request.params;
+  
+    const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+    const collectionChat = db.collection('chats');
+    const collectionUser = db.collection('users');
+  
+    try {
+  
+      let currentUser = await fastify.getUser(request, reply);
+      const currentUserId = currentUser._id;
+      currentUser = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(currentUserId) });
+  
+      const user = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(userId) });
+  
+      if (!user) {
+        return reply.status(404).send({ error: 'User not found' });
+      }
+  
       // Fetch and validate personas including selected persona
       let personas = user.personas || [];
       let validPersonaIds = [];
@@ -598,7 +648,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
         visibility: "private"
       });
   
-      return reply.view('/user-profile.hbs', {
+      return reply.send({
         isAdmin,
         user: currentUser,
         userData: {
@@ -616,7 +666,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
         })),
         publicChatCount,
         privateChatCount,
-        personas // Returning persona objects
+        personas
       });
     } catch (error) {
       console.log(error)

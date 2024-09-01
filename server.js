@@ -181,69 +181,11 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       let user = await fastify.getUser(request, reply);
       const chatId = request.params.chatId;
       const userId = user._id;
-      const chatsCollection = db.collection('chats');
-      const collectionUserChat = db.collection('userChat');
 
-      const synclubaichat = await chatsCollection.aggregate([
-        {
-          $match: {
-            visibility: { $exists: true, $eq: "public" },
-            scrap: true,
-            ext: 'synclubaichat',
-          }
-        },
-        {
-          $group: {
-            _id: "$chatImageUrl",
-            doc: { $first: "$$ROOT" },
-          },
-        },
-        { $replaceRoot: { newRoot: "$doc" } },
-        { $sort: { updatedAt: -1 } }, 
-        { $limit: 100 }, 
-      ]).toArray();      
-      
-      // Find recent characters
-      const currentDateObj = new Date();
-      const tokyoOffset = 9 * 60; // Offset in minutes for Tokyo (UTC+9)
-      const tokyoTime = new Date(currentDateObj.getTime() + tokyoOffset * 60000);
-      const sevenDaysAgo = new Date(tokyoTime);
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      sevenDaysAgo.setHours(0, 0, 0, 0); // Ensure the start of the day
-      
-      // Assuming you have defined `sevenDaysAgo` as a Date object representing 7 days ago
-      const recent = await chatsCollection.aggregate([
-        {
-          $match: {
-            visibility: { $exists: true, $eq: "public" },
-            chatImageUrl: { $exists: true, $ne: '' },
-            updatedAt: { $gt: sevenDaysAgo },
-          },
-        },
-        {
-          $group: {
-            _id: "$name",
-            doc: { $first: "$$ROOT" },
-          },
-        },
-        { $replaceRoot: { newRoot: "$doc" } },
-        { $sort: { updatedAt: -1 } }, 
-        { $limit: 10 }, 
-      ]).toArray();
-      
-      const recentWithUser = await Promise.all(recent.map(async chat => {
-        const user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(chat.userId) });
-        return {
-          ...chat,
-          nickname: user ? user.nickname : null, // Add the user's nickname
-        };
-      }));
-      
-      peopleChats = { synclubaichat, recent: recentWithUser };
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
       const totalUsers = await db.collection('users').countDocuments({ email: { $exists: true } });
 
-      return reply.renderWithGtm('custom-chat.hbs', { title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd',mode:process.env.MODE, user, userId, chatId, peopleChats, totalUsers });
+      return reply.renderWithGtm('custom-chat.hbs', { title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd',mode:process.env.MODE, user, userId, chatId});
     });
     
     fastify.get('/character/:id', async (request, reply) => {

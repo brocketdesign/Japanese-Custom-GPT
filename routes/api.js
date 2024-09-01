@@ -1868,7 +1868,73 @@ async function routes(fastify, options) {
             reply.status(500).send({ success: false, message: "An error occurred while updating log_success" });
         }
     });
-    
+
+    fastify.get('/api/people-chat', async (request, reply) => {
+        const db = fastify.mongo.client.db(process.env.MONGODB_NAME)
+        let user = await fastify.getUser(request, reply);
+        const userId = user._id;
+        const chatsCollection = db.collection('chats');
+  
+        const synclubaichat = await chatsCollection.aggregate([
+          {
+            $match: {
+              visibility: { $exists: true, $eq: "public" },
+              scrap: true,
+              ext: 'synclubaichat',
+            }
+          },
+          {
+            $group: {
+              _id: "$chatImageUrl",
+              doc: { $first: "$$ROOT" },
+            },
+          },
+          { $replaceRoot: { newRoot: "$doc" } },
+          { $sort: { updatedAt: -1 } }, 
+          { $limit: 100 }, 
+        ]).toArray();      
+        
+        // Find recent characters
+        const currentDateObj = new Date();
+        const tokyoOffset = 9 * 60; // Offset in minutes for Tokyo (UTC+9)
+        const tokyoTime = new Date(currentDateObj.getTime() + tokyoOffset * 60000);
+        const sevenDaysAgo = new Date(tokyoTime);
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        sevenDaysAgo.setHours(0, 0, 0, 0); // Ensure the start of the day
+        
+        // Assuming you have defined `sevenDaysAgo` as a Date object representing 7 days ago
+        const recent = await chatsCollection.aggregate([
+          {
+            $match: {
+              visibility: { $exists: true, $eq: "public" },
+              chatImageUrl: { $exists: true, $ne: '' },
+              updatedAt: { $gt: sevenDaysAgo },
+            },
+          },
+          {
+            $group: {
+              _id: "$name",
+              doc: { $first: "$$ROOT" },
+            },
+          },
+          { $replaceRoot: { newRoot: "$doc" } },
+          { $sort: { updatedAt: -1 } }, 
+          { $limit: 10 }, 
+        ]).toArray();
+        
+        const recentWithUser = await Promise.all(recent.map(async chat => {
+          const user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(chat.userId) });
+          return {
+            ...chat,
+            nickname: user ? user.nickname : null, // Add the user's nickname
+          };
+        }));
+        
+        peopleChats = { synclubaichat, recent: recentWithUser };
+  
+        return reply.send({ peopleChats });
+      });
+      
     fastify.get('/api/user-data', async (request, reply) => {
         if (process.env.MODE != 'local') {
             return reply.send([]);

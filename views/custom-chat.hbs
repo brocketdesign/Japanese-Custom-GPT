@@ -655,86 +655,7 @@
             {{else}}
                 <iframe id="user-profile-page" src="/user/{{user._id}}" frameborder="0" ></iframe>
             {{/if}}
-                {{#if peopleChats}}
-                    <section class="w-100 px-0 py-0">
-                        <span class="d-none badge ms-4 custom-gradient-bg"> <i class="fas fa-users me-2"></i>{{totalUsers}} ユーザー</span>
-                        <h4 class="px-4">最新のキャラクター</h4>
-                        <div id="latest-chat" class="chat-container pb-0">
-                            {{#each peopleChats.recent}}
-                            <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2 redirectToChat" style="cursor:pointer;" data-id="{{this._id}}" data-image="{{this.chatImageUrl}}">
-                                <div style="background-image:url('{{#if this.chatImageUrl}}{{this.chatImageUrl}}{{else}}/img/logo.webp{{/if}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
-                                    <div id="spinner-{{this._id}}" class="position-absolute spinner-grow  spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
-                                    
-                                    <div class="position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px;right:10px;">
-                                        {{#if this.tags}}
-                                        <div class="tags d-flex justify-content-between align-items-center flex-wrap">
-                                            {{#each this.tags}} <span class="badge bg-dark" > {{this}} </span> {{/each}}
-                                        </div>
-                                        {{/if}}
-                                        <div class="d-flex justify-content-between align-items-center mt-1">
-                                            <a href="/user/{{this.userId}}" class="badge bg-dark text-white" style="text-decoration: none;">
-                                                <i class="fas fa-user-circle me-2"></i>
-                                                {{this.nickname}}
-                                            </a>
-                                           {{#if this.messagesCount}}<span class="badge bg-dark message-count"><i class="fas fa-comment-alt me-2"></i>{{this.messagesCount}}</span>{{/if}}
-                                        </div>
-                                    </div>
-                                    <div class="persona position-absolute" style="color: rgb(165 164 164);opacity:0.8; top:10px;right:10px" data-id="{{this._id}}">
-                                        <span class="badge bg-dark" >
-                                            <i class="far fa-bookmark"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="card-body bg-transparent border-0 pb-0 text-start">
-                                    <h5 class="card-title character-title">{{this.name}}</h5>
-                                    <p class="card-text character-short-description">{{this.description}}</p>
-                                </div>
-                            </div>
-                            {{/each}}
-                        </div>
-                    </section>
-                {{/if}}
-                {{#if peopleChats}}
-                    <section class="w-100 px-0 py-0">
-                        <h4 class="px-4">キャラクターライブラリー</h4>
-                        <ul class="nav nav-pills nav-fill m-1 d-none">
-                            <li class="nav-item">
-                                <a class="nav-link active" aria-current="page" href="#">全て</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">ペルソナ</a>
-                            </li>
-                        </ul>
-                        <div class="row m-0 px-1">
-                            {{#each peopleChats.synclubaichat}}
-                            <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2 redirectToChat" style="cursor:pointer;" data-id="{{this._id}}" data-image="{{this.chatImageUrl}}">
-                                <div style="background-image:url('{{this.chatImageUrl}}')" class="card-img-top girls_avatar position-relative" alt="{{this.name}}">
-                                    <div id="spinner-{{this._id}}" class="position-absolute spinner-grow  spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
-                                    <div class="position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px;right:10px;">
-                                        {{#if this.tags}}
-                                        <div class="tags d-flex justify-content-between align-items-center flex-wrap">
-                                            {{#each this.tags}} <span class="badge bg-dark" > {{this}} </span> {{/each}}
-                                        </div>
-                                        {{/if}}
-                                        <div class="d-flex justify-content-end align-items-center mt-1">
-                                           {{#if this.messagesCount}}<span class="badge bg-dark message-count"><i class="fas fa-comment-alt me-2"></i>{{this.messagesCount}}</span>{{/if}}
-                                        </div>
-                                    </div>
-                                    <div class="persona position-absolute" style="color: rgb(165 164 164);opacity:0.8; top:10px;right:10px" data-id="{{this._id}}">
-                                        <span class="badge bg-dark" >
-                                            <i class="far fa-bookmark"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="card-body bg-transparent border-0 pb-0 text-start">
-                                    <h5 class="card-title character-title">{{this.name}}</h5>
-                                    <p class="card-text character-short-description">{{this.description}}</p>
-                                </div>
-                            </div>
-                            {{/each}}
-                        </div>
-                    </section>
-                {{/if}}
+                <div id="people-chat"></div>
                 <section>
                     <div class="text-center mt-3 container">
                         <h3>キャラクターを作成する</h3>
@@ -806,7 +727,7 @@
 <script>
 $(document).ready(function() {
     const user = {{{json user}}}
-
+    displayPepopleChat();
     function adjustHeight() {
         const newHeight = $(window).height() * 0.97;
         $('.chat-contain .card-body').height(newHeight);
@@ -817,9 +738,7 @@ $(document).ready(function() {
     function resizeIframe() {
         var iframe = $('#user-profile-page');
         const newHeight = iframe[0].contentWindow.document.body.scrollHeight
-        console.log(`resizeIframe ${newHeight}`)
         if( newHeight > 0) { iframe.height(newHeight); }
-        
     }
     $(window).on('load', resizeIframe);
     $(window).on('resize', resizeIframe);
@@ -1266,8 +1185,7 @@ function initiateCheckout(buttonId) {
         }
     });
 }
-    const characters = {{{json peopleChats.synclubaichat}}};
-    renderCircleGrid(characters,$('#chat-recommend .characters'))
+
     function renderCircleGrid(cardInfos,container){
         cardInfos.forEach(function(item) {
             var card = $(`
@@ -1282,6 +1200,93 @@ function initiateCheckout(buttonId) {
             container.append(card);
         });   
     }
+    function displayPepopleChat(){
+        $.getJSON('/api/people-chat', function(data) {
+            let peopleChats = data.peopleChats;
+            let htmlContent = '';
+
+            if (peopleChats) {
+                const characters =  peopleChats.synclubaichat;
+                renderCircleGrid(characters,$('#chat-recommend .characters'))
+                // Latest Chat Section
+                htmlContent += `
+                <section class="w-100 px-0 py-0">
+                    <span class="d-none badge ms-4 custom-gradient-bg"> <i class="fas fa-users me-2"></i>${peopleChats.recent.length} ユーザー</span>
+                    <h4 class="px-4">最新のキャラクター</h4>
+                    <div id="latest-chat" class="chat-container pb-0">`;
+
+                peopleChats.recent.forEach(chat => {
+                    htmlContent += `
+                    <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2 redirectToChat" style="cursor:pointer;" data-id="${chat._id}" data-image="${chat.chatImageUrl}">
+                        <div style="background-image:url('${chat.chatImageUrl ? chat.chatImageUrl : '/img/logo.webp'}')" class="card-img-top girls_avatar position-relative" alt="${chat.name}">
+                            <div id="spinner-${chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
+                            <div class="position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px;right:10px;">
+                                ${chat.tags ? `<div class="tags d-flex justify-content-between align-items-center flex-wrap">${chat.tags.map(tag => `<span class="badge bg-dark">${tag}</span>`).join('')}</div>` : ''}
+                                <div class="d-flex justify-content-between align-items-center mt-1">
+                                    <a href="/user/${chat.userId}" class="badge bg-dark text-white" style="text-decoration: none;">
+                                        <i class="fas fa-user-circle me-2"></i>${chat.nickname}
+                                    </a>
+                                    ${chat.messagesCount ? `<span class="badge bg-dark message-count"><i class="fas fa-comment-alt me-2"></i>${chat.messagesCount}</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="persona position-absolute" style="color: rgb(165 164 164);opacity:0.8; top:10px;right:10px" data-id="${chat._id}">
+                                <span class="badge bg-dark">
+                                    <i class="far fa-bookmark"></i>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body bg-transparent border-0 pb-0 text-start">
+                            <h5 class="card-title character-title">${chat.name}</h5>
+                            <p class="card-text character-short-description">${chat.description}</p>
+                        </div>
+                    </div>`;
+                });
+
+                htmlContent += `
+                    </div>
+                </section>`;
+
+                // Character Library Section
+                htmlContent += `
+                <section class="w-100 px-0 py-0">
+                    <h4 class="px-4">キャラクターライブラリー</h4>
+                    <div class="row m-0 px-1">`;
+
+                peopleChats.synclubaichat.forEach(chat => {
+                    htmlContent += `
+                    <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2 redirectToChat" style="cursor:pointer;" data-id="${chat._id}" data-image="${chat.chatImageUrl}">
+                        <div style="background-image:url('${chat.chatImageUrl}')" class="card-img-top girls_avatar position-relative" alt="${chat.name}">
+                            <div id="spinner-${chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
+                            <div class="position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px;right:10px;">
+                                ${chat.tags ? `<div class="tags d-flex justify-content-between align-items-center flex-wrap">${chat.tags.map(tag => `<span class="badge bg-dark">${tag}</span>`).join('')}</div>` : ''}
+                                <div class="d-flex justify-content-end align-items-center mt-1">
+                                    ${chat.messagesCount ? `<span class="badge bg-dark message-count"><i class="fas fa-comment-alt me-2"></i>${chat.messagesCount}</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="persona position-absolute" style="color: rgb(165 164 164);opacity:0.8; top:10px;right:10px" data-id="${chat._id}">
+                                <span class="badge bg-dark">
+                                    <i class="far fa-bookmark"></i>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body bg-transparent border-0 pb-0 text-start">
+                            <h5 class="card-title character-title">${chat.name}</h5>
+                            <p class="card-text character-short-description">${chat.description}</p>
+                        </div>
+                    </div>`;
+                });
+
+                htmlContent += `
+                    </div>
+                </section>`;
+            }
+            
+            $('#people-chat').html(htmlContent);
+        });
+        
+    }
+
+
 </script>
 </body>
 </html>

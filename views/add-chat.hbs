@@ -5,6 +5,8 @@
     {{> dashboard-nav}}
 
     <style>
+
+
     .animated.fadeInDown .swal2-image{
         margin:0;
     }
@@ -177,28 +179,26 @@
         border-radius: 50px;
     }
     </style>
+
 <div class="container my-4 px-0">
-    <h2 class="d-none">{{#if chatId}}チャットを編集{{else}}新しいチャットを追加{{/if}}</h2>
-    <div id="imageSection" class="text-center mb-4" ><div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative">
-        <img id="chatImage" src="/img/logo.webp" alt="chat Thumbnail" class="rounded-circle" style="cursor: pointer;">
-        <i class="fas fa-edit position-absolute" style="bottom: 5px; font-size: 1em; color: white; background-color: rgba(0, 0, 0, 0.5); border-radius: 50%; padding: 5px;cursor: pointer;"></i>
-    </div>
-    <div class="mt-3 d-none">
-        <button type="button" id="genChat" class="d-none btn btn-sm custom-gradient-bg shadow-0"
-        data-toggle="tooltip" title="チャット構造の生成">
-            <i class="fa fa-spinner fa-spin fa-fw fa-hidden me-2" style="display: none;"></i>
-            <i class="fa fa-magic me-2"></i>
-            AIに任せよう
-        </button>
-    </div>
-    </div>  
-    <button type="button" id="displayProcess" class="badge btn-ligh text-muted border mb-2 mx-3 d-none" style="font-size: 12px;border-radius:40px">プロセスを表示する</button>
-    <div id="displayProcessToggle" class="mb-3 mx-3 d-none">
-        <label for="chatContent" class="form-label d-none">チャットコンテンツ (JSON形式)</label>
-        <textarea class="form-control" id="chatContent" name="content" rows="10"></textarea>
-    </div>
-    
+        <div id="imageSection" class="text-center mb-4">
+            <div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative">
+                <img id="chatImage" src="/img/logo.webp" alt="chat Thumbnail" class="rounded-circle" style="cursor: pointer;">
+                <i class="fas fa-edit position-absolute" style="bottom: 5px; font-size: 1em; color: white; background-color: rgba(0, 0, 0, 0.5); border-radius: 50%; padding: 5px;cursor: pointer;"></i>
+            </div>
+        </div>
+
     <form id="chatForm" class="mb-5 pb-5 mx-0">
+
+        <div class="mb-3 mx-3" id="thumbnailInputContainer" style="display: none;">
+            <label for="chatThumbnail" class="form-label">チャットのサムネイルをアップロード</label>
+            <input type="file" id="chatThumbnail" name="thumbnail" accept="image/*" style="display: none;">
+        </div>
+        <div class="mb-3 mx-3 d-none">
+            <label for="chatImageUrl" class="form-label">chatImage</label>
+            <input type="text" class="form-control" id="chatImageUrl" name="chatImageUrl" placeholder="URLを入力してください" value="" hidden>
+        </div>
+
         <div class="mb-3 mx-3 row justify-content-between">
             <div class="col-auto ps-0">
                 <label for="visibility" class="form-label"><i class="fas fa-eye"></i> 公開設定:</label>
@@ -211,7 +211,6 @@
                 <label for="language" class="form-label"><i class="fas fa-language"></i> 言語:</label>
                 <select class="form-select w-auto" id="language" name="language">
                     <option value="japanese" selected><i class="fas fa-flag"></i> 日本語</option>
-                    <option value="english"><i class="fas fa-flag"></i> 英語</option>
                 </select>
             </div>
             <div class="col-auto pe-0">
@@ -222,6 +221,7 @@
                 </select>
             </div>
         </div>
+
         <div id="chatPurpose-container" class="mb-3 mx-3">
             <div class="d-flex justify-content-start align-items-end mb-1">
                 <label for="chatPurpose" class="d-none form-label">キャラクターの詳細</label>
@@ -234,80 +234,40 @@
             </div>
             <textarea class="form-control" id="chatPurpose" name="content" rows="3" 
             placeholder="キャラクターの詳細：中村美咲（27歳）は明るく社交的なOLで、責任感が強く、チームをサポートする姿勢が評価されている。趣味は旅行とカフェ巡りで、休日には友達と過ごすことが多い。話し方は礼儀正しく丁寧でありながら柔らかく、安心感を与える。"></textarea>
-            <div id="chatPurpose-markdownContainer" class="rounded form-control px-3 py-2" contenteditable="false" style="min-height:50px;height: auto;display:none;" ></div>
         </div>
+
         <div class="mb-3 mx-3">
             <div class="d-flex justify-content-between align-items-end">
                 <label for="chatName" class="d-none form-label">名前</label>
             </div>
             <input type="text" class="form-control" id="chatName" name="name" placeholder="名前" contenteditable="false" required style="display:none;">
         </div>
+
         <div class="mb-3 mx-3">
             <label for="chatDescription" class="d-none form-label">簡単な説明</label>
             <textarea class="form-control" id="chatDescription"  style="display:none;" name="content" rows="3" placeholder="簡単な説明" ifplaceholder="チャットボットの詳細な説明をここに記入してください。どのような機能を持たせたいのか、どのようなユーザーに向けたものなのか、具体的なシナリオや対話の流れなど、できるだけ詳しく記載してください。ユーザーがどのようにチャットボットとやり取りするかの例も含めてください。" required></textarea>
         </div>
+
         <div class="mb-3 mx-3">
             <div class="d-flex-none d-none justify-content-between align-items-end">
                 <label for="chatRule" class="d-none form-label" >話し方</label>
-                <button type="button" id="gen-chatRule" class="d-none btn btn-sm custom-gradient-bg shadow-0  border-0 mb-1 auto-gen">
-                    <i class="fa fa-spinner fa-spin fa-fw fa-hidden me-2" style="display: none;"></i>
-                    <i class="fa fa-magic me-2"></i>
-                    AI生成
-                </button>
             </div>
             <textarea class="d-none form-control" id="chatRule" name="content" rows="5" placeholder="話し方" ifplaceholder="チャットボットの動作についての指示をここに記入してください。ユーザーに対する返答のトーン、応答のスタイル、特定の状況に対する反応、使用する言葉遣いなど、チャットボットがどのように振る舞うべきかをできるだけ詳しく記載してください。"></textarea>
-            <div id="markdownContainer" class="border-0" contenteditable="false" style="display: none;"></div>
+            <div id="markdownContainer" class="border-0 p-0 text-start" contenteditable="false" style="display: none;"></div>
         </div>
-        <div class="mb-3 mx-3" id="thumbnailInputContainer" style="display: none;">
-            <label for="chatThumbnail" class="form-label">チャットのサムネイルをアップロード</label>
-            <input type="file" class="form-control" id="chatThumbnail" name="thumbnail" accept="image/*">
-        </div>
-        <div class="mb-3 mx-3 d-none">
-            <label for="myUrl" class="form-label">URL</label>
-            <div class="input-group ">
-                <input type="url" class="form-control" id="myUrl" name="url" placeholder="URLを入力してください">
-                <button class="btn btn-outline-secondary" type="button" id="urlButton">
-                    <i class="fas fa-search"></i>
-                </button>
-                <div class="load bg-light px-4 d-flex justify-content-center align-items-center border d-none url-load">
-                    <div class="spinner-grow spinner-grow-sm text-dark" role="status"><span class="visually-hidden">Loading...</span></div>
-                </div>
+        
+        <div id="imageGalleryWrapper" class="mb-3 mx-3 is-premium d-none">
+            <div class="d-flex justify-content-between align-items-end">
+                <label for="imageGallery-1-name" class="d-none form-label">アルバム名</label>
             </div>
+            <div class="d-flex">
+                <input type="text" class="form-control" id="imageGallery-1-name" name="imageGallery_1_name" placeholder="アルバム名" contenteditable="false">
+                <input type="number" class="form-control" id="imageGallery-1-price" name="imageGallery_1_price" placeholder="アルバム価格" min="100" max="100000">
+            </div>
+            <div id="imageGallery-1"></div>
+            <button type="button" id="addMoreGallery" class="d-none btn btn-light"><i class="fas fa-plus-circle"></i></button>
         </div>
-        <div class="mb-3 mx-3 d-none">
-            <label for="chatImageUrl" class="form-label">chatImage</label>
-            <input type="text" class="form-control" id="chatImageUrl" name="chatImageUrl" placeholder="URLを入力してください" value="" hidden>
-        </div>
-        <div class="mb-3 mx-3 d-none">
-            <label for="chatPdf" class="form-label">PDFファイルを選択</label>
-            <input type="file" id="chatPdf" class="form-control" accept="pdf" lang="ja" title="PDFファイルを選択">
-        </div>
-        <div id="resultContainer" class="mt-3 mx-3" style="display: none;">
-            <h4>URLの概要</h4>
-            <p id="resultText"></p>
-        </div>
-        <div class="mb-3 mx-3" style="display: none;">
-            <label for="chatCategory" class="form-label">カテゴリー</label>
-            <input type="text" class="form-control" id="chatCategory" name="chatCategory">
-        </div>
-        <div class="mb-3 mx-3">
-            <label for="chatUrl" class="form-label d-none">URL</label>
-            <input type="hidden" class="form-control" id="chatUrl" name="url">
-        </div>
-        <div class="container mt-1 is-premium d-none">
-            <label for="chatContentEdition" class="form-label">チャットの構造</label>
-            <div id="chatContentEdition"></div>
-            <button type="button" id="genStructure" class="btn w-100 btn-outline-secondary mb-3 shadow-0" data-toggle="tooltip" title="チャット構造の生成">
-                <i class="fa fa-cog fa-fw me-2"></i>
-                <i class="fa fa-spinner fa-spin fa-fw fa-hidden d-none"></i>
-                チャット構造を生成する
-            </button>
-            <p class="text-small text-muted text-start" style="font-size:12px">
-                キャラクタープロファイルを提供することで、ユーザーは「チャット構造の生成」をクリックして、新しい会話を開始する際に常に使用されるチャットトラムを生成できます。トラムが提供されていない場合は、キャラクターの説明を使用してチャットが開始されます。
-            </p>
-            <button type="button" id="addQuestionBtn" class="btn btn-light float-end" data-toggle="tooltip" title="追加" data-original-title="Share"><i class="fas fa-plus"></i> </button>
-            <button type="button" id="saveButton" class="btn btn-primary mt-3 d-none">Save</button>
-        </div>
+
         <div class="sticky-bottom px-3 pb-3">
             <button type="submit" id="sendForm" class="btn custom-gradient-bg btn-large w-100" style="border-radius:50px;display:none;">
                     <i class="fa fa-spinner fa-spin fa-fw fa-hidden d-none me-2"></i>
@@ -315,9 +275,10 @@
             </button>
         </div>
     </form>
-    
 </div>
  {{> dashboard-footer}}
+<link type="text/css" rel="stylesheet" href="/css/image-uploader.css">
+<script type="text/javascript" src="/js/image-uploader.js"></script>
 <script>
     $(document).ready(function() {
         $('.dropdown-toggle').each(function(e) {
@@ -346,6 +307,16 @@
             $('#sendForm').hide()
             $('#sendForm span').html('チャット')
         })
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const chatImageUrl = urlParams.get('chatImage');
+    if (chatImageUrl) {
+        setTimeout(function(){
+            $('#chatImageUrl').val(chatImageUrl).change();
+        },500)
+        $('#chatImage').attr('src', chatImageUrl).show().addClass('on');
+    }
+
     function checkFieldsAndShowForm() {
         if ($('#chatName').val().trim() !== '' && 
             $('#chatDescription').val().trim() !== '' && 
@@ -355,25 +326,23 @@
             $('#sendForm').hide();
         }
     }
-
     $('#chatName, #chatDescription, #chatPurpose').on('input', checkFieldsAndShowForm);
-        $('#chatPurpose').val('')
+
         if (isTemporaryChat == 'false') {
             fetchchatData(chatId);
+        }else{
+            $('#imageGallery-1').imageUploader({
+                maxSize: 2 * 1024 * 1024,
+                maxFiles: 50
+            });
         }
-        
-        var savedURL = localStorage.getItem('savedURL');
-        if (savedURL) {
-            $('#myUrl').val(savedURL);
-            localStorage.removeItem('savedURL');
-        }
-
         $('textarea').each(function() {
             resizeTextarea(this);
             $(this).on('input change', function() {
                 resizeTextarea(this);
             });
         });
+
         function fetchUser(callback) {
             $.ajax({
                 url: API_URL+'/api/user',
@@ -428,37 +397,6 @@
             }
         }
 
-        $('#myUrl').on('input change',function(){
-             $('#chatUrl').val($(this).val());
-        });
-        function fetchUrlSummary(url) {
-            $.ajax({
-                url: '/api/urlsummary',
-                type: 'GET',
-                data: { url: url },
-                success: function(response) {
-                    $('#resultText').html(marked.parse(response.analysis));
-                    $('#resultContainer').show();
-                    $('.url-load').addClass('d-none');
-                    $('#urlButton').removeClass('d-none');
-                },
-                error: function(xhr, status, error) {
-                    $('#resultText').text('Error: ' + xhr.responseText);
-                    $('#resultContainer').show();
-                    $('.url-load').addClass('d-none');
-                    $('#urlButton').removeClass('d-none');
-                }
-            });
-        }
-
-        $('#urlButton').on('click', function() {
-            const url = $('#myUrl').val();
-            $('#chatUrl').val(url);
-            $('.url-load').removeClass('d-none');
-            $('#urlButton').addClass('d-none');
-            fetchUrlSummary(url);
-        });
-
         $('#chatImage').parent().click(function() {
             $('#chatThumbnail').click();
         });
@@ -477,6 +415,7 @@
                 type: 'GET',
                 dataType: 'json',
                 success: function(chatData) {
+                    
                     if(chatData.isAutoGen == 'true'){
                         $('input, textarea').prop('disabled', true);
                         $('#chatPurpose').hide();
@@ -512,7 +451,6 @@
                     }
                     if(chatData.category){
                         $('#chatCategory').val(chatData.category);
-                        //$('#chatCategory').parent().show()
                     }
                     
                     var chatDescriptionTextare = $('#chatDescription')
@@ -527,34 +465,41 @@
                     var chatRuleTextarea = $('#chatRule');
                     if(chatData.rule){
                         chatRuleTextarea.val(chatData.rule);
-                        //$('#markdownContainer').html(chatData.rule)
-                        setTimeout(function(){
-                            resizeTextarea(chatRuleTextarea[0]);
-                        },500)
-                        //chatRuleTextarea.parent().show();
-                        //$('#markdownContainer').show();
-                    }
-                    
-                    $('#chatUrl').val(chatData.url);
-                    $('#myUrl').val(chatData.url);
-                    if(chatData.url){
-                        fetchUrlSummary(chatData.url);
-                    }            
-                    if(chatData.content){
-                        $('#chatContent').val(JSON.stringify(chatData.content, null, 2));
-                        createEditor(chatData.content)
+                        $('#markdownContainer').show()
+                        $('#markdownContainer').html(marked.parse(chatData.rule));
                     }
 
                     if (chatData.thumbnailUrl && chatData.thumbnailUrl != undefined) {
                         $('#chatImageUrl').val(chatData.thumbnailUrl);
-                        console.log({thumb:chatData.thumbnailUrl})
                         $('#chatImage').attr('src', chatData.thumbnailUrl).show().addClass('on');
                     }
                     if (chatData.chatImageUrl && chatData.chatImageUrl != undefined) {
                         $('#chatImageUrl').val(chatData.chatImageUrl);
-                        console.log({chatImageUrl:chatData.chatImageUrl})
                         $('#chatImage').attr('src', chatData.chatImageUrl).show().addClass('on');
                     }
+                    $('#imageGallery-1-name').val(chatData.imageGallery_1_name)
+                    $('#imageGallery-1-price').val(chatData.imageGallery_1_price)
+                    if (chatData.gallery_1_Images && chatData.gallery_1_Images.length > 0) {
+                        let preloaded = chatData.gallery_1_Images.map((imageUrl, index) => {
+                            return {
+                                id: index + 1, // Assuming ids start from 1
+                                src: imageUrl   // Use the imageUrl from your galleryImages array
+                            };
+                        });
+                        $('#imageGallery-1').imageUploader({
+                            preloaded: preloaded,
+                            imagesInputName: 'photos',
+                            preloadedInputName: 'old',
+                            maxSize: 2 * 1024 * 1024,
+                            maxFiles: 50
+                        });
+                    }else{
+                        $('#imageGallery-1').imageUploader({
+                            maxSize: 2 * 1024 * 1024,
+                            maxFiles: 50
+                        });
+                    }
+
 
                     checkFieldsAndShowForm()
                     $('#chatForm').removeClass('d-none')
@@ -566,110 +511,81 @@
             });
         }
 
-        $('#chatForm').on('submit', function(e) {
-            e.preventDefault();
-            $('#sendForm .fa-spinner').toggleClass('d-none')
-
-            const formData = new FormData();
-            const name = $('#chatName').val();
-            const purpose = $('#chatPurpose').val()
-            const language = $('#language').val()
-            const gender = $('#gender').val()
-            const category = $('#chatCategory').val();
-            const description = $('#chatDescription').val();
-            const rule = $('#chatRule').val();
-            const url = $('#chatUrl').val();
-            const pdf = $('#chatPdf')[0].files[0];
-            const content = saveJson();
-            const thumbnail = $('#chatThumbnail')[0].files[0];
-            const chatImageUrl = thumbnail || $('#chatImageUrl').val()
-            const visibility = $('#visibility').val()
-
-            formData.append('name', name);
-            formData.append('purpose',purpose)
-            formData.append('language',language)
-            formData.append('gender',gender)
-            formData.append('chatImageUrl',chatImageUrl)
-            formData.append('category', category);
-            formData.append('description', description);
-            formData.append('content', content);
-            formData.append('rule', rule);
-            formData.append('url', url);
-            formData.append('visibility', visibility);
-            formData.append('isAutoGen', isAutoGen);
-            
-            if(thumbnail){
-                formData.append('thumbnail', thumbnail);
-            }
-            if(pdf){
-                formData.append('pdf',pdf)
-            }
-            if(chatId){
-                formData.append('chatId', chatId)
-            }
-            $.ajax({
-                url: '/api/add-chat',
-                type: 'POST',
-                processData: false,
-                contentType: false,
-                data: formData,
-                success: function(response) {
-                    $('#sendForm .fa-spinner').toggleClass('d-none')
-                    const {chatId}=response
-                    window.location = '/chat/'+chatId
-                },
-                error: function(error) {
-                    Swal.fire(
-                        'エラー!',
-                        'チャットの追加に失敗しました: ' + error.responseJSON.error,
-                        'error'
-                    );
-                }
-            });
+function getFilesFromGallery(galleryId) {
+    let files = [];
+    $(galleryId).find('.image-uploader input[type="file"]').each(function() {
+        $.each(this.files, function(_, file) {
+            files.push(file);
         });
-
-        $('#gen-chatRule').click(generateRule)
-        // Event handler for the send button
-        $('#genChat').on('click', function() {
-            isAutoGen = true
-            $('#genChat .fa-spinner ').show()
-            $('#genChat .fa-magic').hide()
-            $('input, textarea').prop('disabled', true);
-            if($('#chatImageUrl').val().trim().length > 0 && $('#chatPurpose').val().trim() == ''){
-                generateImageDescription(function() {
-                    generateName(function(){
-                        generateDescription(function(){
-                            $('#sendForm').show()
-                            $('.sendForm-text').show()
-                            $('#genChat .fa-spinner').hide()
-                            $('#genChat .fa-magic').show()
-                        });
-                    });
-                    $('#genStructure').removeClass('btn-outline-secondary').addClass('btn-secondary')
-                });
-                return
-            }
-            if ($('#chatPurpose').val().trim() == '') {
-                Swal.fire({
-                    title: '警告',
-                    text: 'キャラクターの詳細は必須項目です。入力してください。',
-                    icon: 'warning',
-                    confirmButtonText: 'OK'
-                });
-                $('#genChat .fa-spinner').hide()
-                $('#genChat .fa-magic').show()
-                return;
-            }
-            generateName(function(){
-                generateDescription(function(){
-                    $('#sendForm').show()
-                    $('.sendForm-text').show()
-                    $('#genChat .fa-spinner').hide()
-                    $('#genChat .fa-magic').show()
-                });
-            });
-            $('#genStructure').removeClass('btn-outline-secondary').addClass('btn-secondary')
+    });
+    if(files.length == 0){
+        $(galleryId).find('.uploaded-image img').each(function() {
+            files.push($(this).attr('src'));
         });
+    }
+    return files;
+}
+// Form Submission
+$('#chatForm').on('submit', function(e) {
+    e.preventDefault();
+    $('#sendForm .fa-spinner').toggleClass('d-none');
+
+    const formData = new FormData();
+    formData.append('name', $('#chatName').val());
+    formData.append('purpose', $('#chatPurpose').val());
+    formData.append('language', $('#language').val());
+    formData.append('gender', $('#gender').val());
+    formData.append('description', $('#chatDescription').val());
+    formData.append('rule', $('#chatRule').val());
+    formData.append('visibility', $('#visibility').val());
+    formData.append('isAutoGen', isAutoGen);
+    formData.append('imageGallery_1_name',$('#imageGallery-1-name').val())
+    formData.append('imageGallery_1_price',$('#imageGallery-1-price').val())
+    
+    const file = $('#chatThumbnail')[0].files[0];
+    if (file) {
+        formData.append('thumbnail', file);
+    } else {
+        const chatImageUrl = $('#chatImageUrl').val();
+        if (chatImageUrl) {
+            formData.append('chatImageUrl', chatImageUrl);
+        }
+    }
+
+    const galleryFiles = getFilesFromGallery('#imageGallery-1');
+    galleryFiles.forEach(file => formData.append('gallery_1_Images[]', file));
+
+    if (chatId) {
+        formData.append('chatId', chatId);
+    }
+
+    $.ajax({
+        url: '/api/add-chat',
+        type: 'POST',
+        processData: false,
+        contentType: false,
+        data: formData,
+        success: function(response) {
+            console.log('Success:', response); // Debugging success response
+            $('#sendForm .fa-spinner').toggleClass('d-none');
+            const { chatId } = response;
+            window.location = '/chat/' + chatId;
+        },
+        error: function(error) {
+            console.log('Error:', error); // Debugging error response
+            $('#sendForm .fa-spinner').toggleClass('d-none');
+            Swal.fire(
+                'エラー!',
+                'チャットの追加に失敗しました: ' + error.responseJSON.error,
+                'error'
+            );
+        }
+    });
+});
+
+
+
+
         $('#ai-assist').on('click', function() {
 
             checkImageDescription(function(response){
@@ -699,311 +615,59 @@
             $('#chatDescription').prop('disabled', true);
             $('#chatName').val('')
             $('#chatDescription').val('')
-            if ($('#chatName').val().trim() == '') {
-                generateDescription(function() {
-                    generateName(function(){
-                        generateRule(function(){
-                            $('#sendForm').show();
-                            $('.sendForm-text').show();
-                            $('#ai-assist .fa-spinner').hide();
-                            $('#ai-assist .fa-magic').show();
-                        })
-                    });
-                });
-            } else {
-                generateDescription(function() {
-                    generateRule(function (){
-                        $('#sendForm').show();
-                        $('.sendForm-text').show();
-                        $('#ai-assist .fa-spinner').hide();
-                        $('#ai-assist .fa-magic').show();
-                    })
-                });
-            }
+
+            generateCompletion(function() {
+                $('#sendForm').show();
+                $('.sendForm-text').show();
+                $('#ai-assist .fa-spinner').hide();
+                $('#ai-assist .fa-magic').show();
+            });
         });
 
-        $('#genStructure').click(function(){
-            generateCompletion()
-        })
-        
-        const urlParams = new URLSearchParams(window.location.search);
-        const chatCategory= urlParams.get('chatCategory');
-        if (chatCategory) {
-            $('#chatCategory').val(chatCategory);
-        }
-        const userMessage = urlParams.get('userMessage');
-        if (userMessage) {
-            var htmlContent = marked.parse(userMessage);
-            $('#chatPurpose-container').show()
-            $('#chatPurpose-markdownContainer').html(htmlContent)
-            $('#chatPurpose').val(userMessage);
-        }
-        const chatImageUrl = urlParams.get('chatImage');
-        if (chatImageUrl) {
-            setTimeout(function(){
-                $('#chatImageUrl').val(chatImageUrl).change();
-            },500)
-            $('#chatImage').attr('src', chatImageUrl).show().addClass('on');
-        }
         function generateCompletion(callback) {
 
             const apiUrl = '/api/openai-chat-creation';
 
-            let message = $('#chatPurpose').val().trim();
+            let prompt = $('#chatPurpose').val().trim();
             let language =$('#language').val()
-            message = message + 'YOU MUST respond in '+language
-            const urlSummary = $(`#resultText`).text()
-            const myUrl = $('#myUrl').val()
-
-            if(urlSummary.trim() != ''){
-                message = `URL : ${myUrl} \n Content Summary : ${urlSummary}. \n\n Considering the above informations, ${message}`
-            }
-            
-            // Clear the chatContent area only if it's not empty
-            if ($('#chatContent').val().trim() !== '') {
-                $('#chatContent').val('');
-            }       
-            if(message.length == 0){
+            prompt = prompt + 'YOU MUST respond in '+language
+              
+            if(prompt.length == 0){
                 return
             } 
-            $('#genStructure .fa-spinner').toggleClass('d-none')
 
             $.ajax({
                 url: apiUrl,
                 method: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({ chatId, message : getSystem('chatContent'), system : message }),
+                data: JSON.stringify({ prompt}),
                 success: function(response) {
-
-                    const sessionId = response.sessionId;
-                    const streamUrl = `/api/openai-chat-creation-stream/${sessionId}`;
-                    const eventSource = new EventSource(streamUrl);
-                    let markdownContent = "";
-
-                    eventSource.onmessage = function(event) {
-                        const data = JSON.parse(event.data);
-                        markdownContent += data.content;
-
-                        // Update the bot response container with the new content
-                        $('#chatContent').val($('#chatContent').val() + data.content);
-
-                    };
-
-                    eventSource.onerror = function(error) {
-                        eventSource.close();
-
-                        // Clean the JSON string when the stream ends
-                        let cleanedContent = cleanJsonArray(markdownContent);
-                        $('#chatContent').html(cleanedContent);
-                        $('#chatContent').val(cleanedContent)
-
-                        $('#genStructure .fa-spinner').toggleClass('d-none')
-
-                        createEditor(JSON.parse(cleanedContent))
-                    };
-                },
-                error: function(error) {
-                    console.error('Error:', error);
-                }
-            });
-        }
-        function generateRule(callback) {
-
-            let message = $('#chatPurpose').val();
-            let language =$('#language').val()
-            const name = $('#chatName').val();
-            message = message + 'The character name is : '+ name + '\n\n YOU MUST respond in '+ language
-            const urlSummary = $(`#resultText`).text()
-            const myUrl = $('#myUrl').val()
-
-            if(urlSummary.trim() != ''){
-                message = `URL : ${myUrl} \n Content Summary : ${urlSummary}. \n\n Considering the above informations, ${message}`
-            }
-            const apiUrl = '/api/openai-chat-creation';
-            
-            $('#chatRule').val('')
-            $('#markdownContainer').html('');
-            $.ajax({
-                url: apiUrl,
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ chatId, message, system : createSystemPayload(language) }), //getSystem('chatRule')
-                success: function(response) {
-                    $('#chatRule').parent().show()
-                    $('#chatRule').show()
+                    console.log(response)
+                    const  { name, short_desc, long_desc } = response
                     $('#markdownContainer').show()
+                    $('#chatDescription').show()
+                    $('#chatName').show()
 
-                    const sessionId = response.sessionId;
-                    const streamUrl = `/api/openai-chat-creation-stream/${sessionId}`;
-                    const eventSource = new EventSource(streamUrl);
-                    let markdownContent = "";
+                    $('#chatDescription').val(short_desc)
 
-                    eventSource.onmessage = function(event) {
-                        const data = JSON.parse(event.data);
-                        markdownContent += data.content;
-                        var htmlContent = marked.parse(markdownContent);
-                        $('#markdownContainer').html(htmlContent);
-                        $('#chatRule').val(htmlContent);
-                    };
+                    $('#markdownContainer').html(marked.parse(long_desc));
+                    $('#chatRule').val(long_desc)
 
-                    eventSource.onerror = function(error) {
-                        eventSource.close();
-                        resizeTextarea($('#chatRule')[0])
-                        if (typeof callback === 'function') {
-                            callback();
-                        }
+                    $('#chatName').val(name)
+                    updateButtonText()
 
-                    };
+                    if (typeof callback === 'function') {
+                        callback();
+                    }
                 },
                 error: function(error) {
                     console.error('Error:', error);
+                    $('#ai-assist .fa-spinner').hide();
+                    $('#ai-assist .fa-magic').show();
                 }
             });
         }
-        function generateQuestion(cleanedContent, chatId, callback) {
 
-            const apiUrl = '/api/openai-chat-creation';
-
-            const description = $('#chatDescription').val()
-            const category = $('#chatCategory').val()
-            const name = $('#chatName').val()
-            const message = `Name : ${name} \n Category: ${category} \n Description: ${description} \n JSON : ${cleanedContent}`
-            let language =$('#language').val()
-            message = message + 'YOU MUST respond in '+language
-
-            $.ajax({
-                url: apiUrl,
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ chatId, message, system : getSystem('chatQuestion') }),
-                success: function(response) {
-
-                    const sessionId = response.sessionId;
-                    const streamUrl = `/api/openai-chat-creation-stream/${sessionId}`;
-                    const eventSource = new EventSource(streamUrl);
-                    let markdownContent = "";
-
-                    eventSource.onmessage = function(event) {
-                        const data = JSON.parse(event.data);
-                        markdownContent += data.content;
-
-                    };
-
-                    eventSource.onerror = function(error) {
-                        eventSource.close();
-                        if (typeof callback === 'function') {
-                            callback(markdownContent);
-                        }
-                    };
-                },
-                error: function(error) {
-                    console.error('Error:', error);
-                }
-            });
-        }
-        function generateDescription(callback) {
-
-            let message = $('#chatPurpose').val();
-            let language =$('#language').val();
-            const name = $('#chatName').val();
-            if (typeof name === 'undefined' || name.trim() === '') {
-                message = message + '\n\n YOU MUST respond in ' + language;
-            } else {
-                message = message + 'The character name is: ' + name + '\n\n YOU MUST respond in ' + language;
-            }
-
-            const urlSummary = $(`#resultText`).text()
-            const myUrl = $('#myUrl').val()
-            if(urlSummary.trim() != ''){
-                message = `URL : ${myUrl} \n Content Summary : ${urlSummary}. \n\n Considering the above informations, ${message}`
-            }
-            const apiUrl = '/api/openai-chat-creation';
-            // Clear the chatContent area only if it's not empty
-            if ($('#chatDescription').val().trim() !== '') {
-                $('#chatDescription').val('');
-            }        
-            $.ajax({
-                url: apiUrl,
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ chatId, message, system : getSystem('chatDescription') }),
-                success: function(response) {
-
-                    $('#chatDescription').html('')
-                    //$('#chatDescription').parent().show()
-                    //$('#chatDescription').show()
-                    const sessionId = response.sessionId;
-                    const streamUrl = `/api/openai-chat-creation-stream/${sessionId}`;
-                    const eventSource = new EventSource(streamUrl);
-                    let markdownContent = "";
-
-                    eventSource.onmessage = function(event) {
-                        const data = JSON.parse(event.data);
-                        markdownContent += data.content;
-                        $('#chatDescription').val($('#chatDescription').val() + data.content);
-                        resizeTextarea($('#chatDescription')[0])
-                    };
-
-                    eventSource.onerror = function(error) {
-                        eventSource.close();
-                        resizeTextarea($('#chatDescription')[0])
-                        if (typeof callback === 'function') {
-                            callback();
-                        }
-                    };
-                },
-                error: function(error) {
-                    console.error('Error:', error);
-                }
-            });
-        }
-        function generateCategory() {
-
-            let message = $('#chatPurpose').val();
-            let language =$('#language').val()
-            message = message + 'YOU MUST respond in '+language
-            const urlSummary = $(`#resultText`).text()
-            const myUrl = $('#myUrl').val()
-
-            if(urlSummary.trim() != ''){
-                message = `URL : ${myUrl} \n Content Summary : ${urlSummary}. \n\n Considering the above informations, ${message}`
-            }
-
-            const apiUrl = '/api/openai-chat-creation';
-            
-            $('#chatCategory').val('')
-            $.ajax({
-                url: apiUrl,
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ chatId, message, system : getSystem('chatCategory') }),
-                success: function(response) {
-
-                    const sessionId = response.sessionId;
-                    const streamUrl = `/api/openai-chat-creation-stream/${sessionId}`;
-                    const eventSource = new EventSource(streamUrl);
-                    let markdownContent = "";
-                    $('#chatCategory').parent().show()
-
-                    eventSource.onmessage = function(event) {
-                        const data = JSON.parse(event.data);
-                        markdownContent += data.content;
-
-                        // Update the bot response container with the new content
-                        $('#chatCategory').val(markdownContent);
-
-                    };
-
-                    eventSource.onerror = function(error) {
-                        eventSource.close();
-                    };
-                },
-                error: function(error) {
-                    console.error('Error:', error);
-                }
-            });
-        }
-        
         function checkImageDescription(callback) {
             const imageUrl = $('#chatImageUrl').val();
 
@@ -1056,50 +720,6 @@
                 }
             });
         }
-
-        function generateImageDescription(callback) {
-            const imageUrl = $('#chatImageUrl').val();
-            const language = $('#language').val();
-
-            // Convert the image URL to a Base64 string
-            convertImageUrlToBase64(imageUrl, function(base64Image) {
-                if (!base64Image) {
-                    console.log('Failed to convert image to Base64.');
-                    return;
-                }
-
-                // Create system and message payloads
-                const system = createSystemPayload(language);
-                const message = createMessagePayload(base64Image);
-
-                // API endpoint for generating image description
-                const apiUrl = '/api/openai-chat-creation';
-
-                // Clear previous description
-                $('#chatPurpose').val('');
-
-                // Send a POST request to the API
-                sendPostRequest(apiUrl, { message, system }, function(sessionId) {
-                    const streamUrl = `/api/openai-chat-creation-stream/${sessionId}`;
-                    listenToEventSource(streamUrl, callback);
-                });
-            });
-        }
-
-        // Helper function to create the system payload
-        function createSystemPayload(language) {
-            return [
-                {
-                    "type": "text",
-                    "text": 
-                    `You are a useful assistant. 
-                    You generate a creative character description and setting for the image I will provide. 
-                    Here is some example : {{prompts}}
-                    YOU MUST respond in ${language}. 
-                    Start by providing a name or nickname for the character`
-                }
-            ];
-        }        // Helper function to create the system payload
         function createSystemPayloadImage(language) {
             return [
                 {
@@ -1125,455 +745,14 @@
             ];
         }
 
-        // Helper function to send a POST request
-        function sendPostRequest(apiUrl, data, successCallback) {
-            $.ajax({
-                url: apiUrl,
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(data),
-                success: function(response) {
-                    const sessionId = response.sessionId;
-                    successCallback(sessionId);
-                },
-                error: function(error) {
-                    console.error('Error:', error);
-                }
-            });
-        }
 
-        // Helper function to listen to the EventSource
-        function listenToEventSource(streamUrl, callback) {
-            const eventSource = new EventSource(streamUrl);
-            let markdownContent = "";
-            eventSource.onmessage = function(event) {
-                const data = JSON.parse(event.data);
-                markdownContent += data.content;
-                var htmlContent = marked.parse(markdownContent);
-                $('#chatPurpose-markdownContainer').html(htmlContent);
-                $('#chatPurpose').val(markdownContent);
-                $('#chatPurpose').hide()
-                $('#chatPurpose-markdownContainer').show()
-                $('#chatPurpose-container').show()
-            };
-
-            eventSource.onerror = function(error) {
-                resizeTextarea($('#chatPurpose')[0]);
-                eventSource.close();
-                if (typeof callback === 'function') {
-                    callback();
-                }
-
-            };
-        }
-
-        // Function to convert image URL to Base64 (as explained earlier)
-        function convertImageUrlToBase64(url, callback) {
-            $.ajax({
-                url: '/api/convert-image-url-to-base64', // Your Fastify API endpoint
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ imageUrl: url }),
-                success: function(response) {
-                    callback(response.base64Image);
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error converting image URL to Base64:', error);
-                    callback(null);
-                }
-            });
-        }
-
-
-        function generateName(callback) {
-
-            let message = $('#chatPurpose').val();
-            let language =$('#language').val()
-            message = message + 'YOU MUST respond in '+ language
-            const urlSummary = $(`#resultText`).text()
-            const myUrl = $('#myUrl').val()
-
-            if(urlSummary.trim() != ''){
-                message = `URL : ${myUrl} \n Content Summary : ${urlSummary}. \n\n Considering the above informations, ${message}`
-            }
-
-            const apiUrl = '/api/openai-chat-creation';
-            
-            $('#chatName').val('')
-            $.ajax({
-                url: apiUrl,
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ chatId, message, system : getSystem('chatName') }),
-                success: function(response) {
-
-                    const sessionId = response.sessionId;
-                    const streamUrl = `/api/openai-chat-creation-stream/${sessionId}`;
-                    const eventSource = new EventSource(streamUrl);
-                    let markdownContent = "";
-
-                    //$('#chatName').parent().show()
-                    //$('#chatName').show()
-                    eventSource.onmessage = function(event) {
-                        const data = JSON.parse(event.data);
-                        markdownContent += data.content;
-                        $('#chatName').val(markdownContent);
-                        $('#sendForm span').html(`${markdownContent}とチャットする`)
-                    };
-
-                    eventSource.onerror = function(error) {
-                        eventSource.close();
-                        
-                        if (typeof callback === 'function') {
-                            callback();
-                        }
-
-                    };
-                },
-                error: function(error) {
-                    console.error('Error:', error);
-                }
-            });
-        }
-        function cleanJsonString(jsonString) {
-            // Remove all characters before the first '{'
-            let start = jsonString.indexOf('{');
-            if (start !== -1) {
-                jsonString = jsonString.substring(start);
-            }
-
-            // Remove all characters after the last '}'
-            let end = jsonString.lastIndexOf('}');
-            if (end !== -1) {
-                jsonString = jsonString.substring(0, end + 1);
-            }
-
-            return jsonString;
-        }
-        function cleanJsonArray(jsonString) {
-            // Remove all characters before the first '{'
-            let start = jsonString.indexOf('[');
-            if (start !== -1) {
-                jsonString = jsonString.substring(start);
-            }
-
-            // Remove all characters after the last '}'
-            let end = jsonString.lastIndexOf(']');
-            if (end !== -1) {
-                jsonString = jsonString.substring(0, end + 1);
-            }
-
-            return jsonString;
-        }
-        function getSystem(systemType){
-            var system;
-            switch (systemType) {
-                case 'chatRule':
-                    system = `
-                        You are an character tone generator. \n
-                        Use the provided details of the character.
-                        Explain how the character speaks and his emotional state. Be concice.
-                    `;
-                    break;
-                case 'chatQuestion':
-                    system = `
-                        You are a JSON generator. 
-                        You take the information and the JSON provided by the user and return a new question on the same subject.\n
-                        Be creative to provide interesting questions.\n
-                        You respond MUST MATCH THE JSON BELOW.\n\n
-                        {
-                            "question": "string",
-                            "responses": [
-                            "string",
-                            "string",
-                            "string"
-                            ]
-                        }
-                    `;
-                    break;
-                case 'chatDescription':
-                    system = `
-                        You are a description generator. 
-                        You take the provided content by the user and return a short description of 2 sentences.
-                        You should respond in plain text with the description ONLY.NO COMMENTS.
-                    `;
-                    break;
-                case 'chatName':
-                    system = `
-                        You take the provided content by the user and return the name of the character.
-                        If no name is provided, create a new inventive name that fit the character description.
-                        You should respond in plain text with the name ONLY.NO COMMENTS.
-                    `;
-                    break;
-                case 'chatCategory':
-                    system = `
-                        You are a JSON category generator. You take the provided content by the user and return a category.
-                        You should respond in plain text with the category ONLY. NO COMMENTS.
-                    `;
-                    break;
-                case "chatContent":
-                    system = `
-                    Provide conversation starters. It must sound like we are chatting, stay in your role.\n
-                    responses is used help me respond to you. If I should instead write something, keep responses empty.\n
-                    You respond MUST MATCH THE JSON BELOW.\n\n
-                    [
-                        {
-                            "question": "string",
-                            "responses": [
-                            "string",
-                            "string",
-                            "string"
-                            ]
-                        },
-                        {
-                            "question": "string",
-                            "responses": [
-                            "string",
-                            "string",
-                            "string"
-                            ]
-                        }
-                    ]
-                    `;
-                    break;
-                default:
-                    system = "Your are a useful assistant.";
-                    break;
-                    
-            }
-            return system
-        }
-        function createEditor(json) {
-            $('#chatContentEdition').empty(); // Clear previous content
-            json.forEach((qa, index) => {
-                const qaDiv = $('<div></div>').addClass('qa card mb-3 bg-light');
-                const qaCardBody = $('<div></div>').addClass('card-body');
-
-                // Question
-                qaCardBody.append(`<h5 class="card-title">質問 ${index + 1}</h5>`);
-                qaCardBody.append(`<div class="mb-3"><label class="form-label">質問:</label><input type="text" class="form-control question" value="${qa.question}" /></div>`);
-
-                // Responses
-                qa.responses.forEach((response, responseIndex) => {
-                    const responseDiv = $('<div class="ps-5"></div>').addClass('response mb-3');
-                    responseDiv.append(`<h6>回答 ${responseIndex + 1}</h6>`);
-                    responseDiv.append(`<div class="mb-2"><label class="form-label">回答テキスト:</label><input type="text" class="form-control responseText" value="${response}" /></div>`);
-                    qaCardBody.append(responseDiv);
-                });
-
-                // Add Regenerate and Delete buttons
-                const buttonGroup = $('<div class="position-absolute"></div>').addClass('button-group mt-3');
-
-                const regenerateButton = $(`<button type="button" data-toggle="tooltip" title="再生成" data-original-title="Regenerate"></button>`).addClass('btn btn-outline-warning me-2 gen-question').html('<i class="fas fa-sync"></i>').click(() => {
-                    Swal.fire({
-                        title: '再生成',
-                        text: `質問 ${index + 1} を再生成しますか？`,
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonText: 'はい',
-                        cancelButtonText: 'いいえ'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            const questionIndex = index + 1
-                            const cleanedContent = saveJson();
-                            generateQuestion(cleanedContent, chatId, function(response){
-                                const cleanResponse = JSON.parse(response)
-                                updateQuestion(cleanResponse, index)
-                                saveJson();
-                                Swal.fire(
-                                    '再生成しました!',
-                                    `質問 ${index + 1} が再生成されました。`,
-                                    'success'
-                                );
-                            })
-                        }
-                    });
-                });
-
-                const deleteButton = $('<button type="button" data-toggle="tooltip" title="削除" data-original-title="Delete"></button>').addClass('btn btn-outline-danger').html('<i class="fas fa-trash"></i>').click(() => {
-                    Swal.fire({
-                        title: '削除',
-                        text: `質問 ${index + 1} を削除しますか？`,
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonText: 'はい',
-                        cancelButtonText: 'いいえ'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            qaDiv.remove();
-                            const cleanJSON = saveJson();
-                            const parsedJson = JSON.parse(cleanJSON)
-                            createEditor(parsedJson)
-                        }
-                    });
-                });
-                buttonGroup.append(regenerateButton, deleteButton);
-                qaCardBody.append(buttonGroup);
-
-                qaDiv.append(qaCardBody);
-                $('#chatContentEdition').append(qaDiv);
-            });
-        }
-
-
-        function addNewQuestion() {
-            const newIndex = $('#chatContentEdition .qa').length + 1;
-            if(newIndex>10){
-                Swal.fire({
-                    title: '警告',
-                    text: '質問は最大10件までです。',
-                    icon: 'warning',
-                    confirmButtonText: '了解'
-                });
-                return
-            }
-            const newQaDiv = $('<div></div>').addClass('qa card mb-3 bg-light');
-            const newQaCardBody = $('<div></div>').addClass('card-body');
-
-            // New Question
-            newQaCardBody.append(`<h5 class="card-title">質問 ${newIndex}</h5>`);
-            newQaCardBody.append(`<div class="mb-3"><label class="form-label">質問:</label><input type="text" class="form-control question" value="" /></div>`);
-
-            // Add empty response sections
-            for (let i = 1; i <= 3; i++) {
-                const newResponseDiv = $('<div class="ps-5"></div>').addClass('response mb-3');
-                newResponseDiv.append(`<h6>回答 ${i}</h6>`);
-                newResponseDiv.append(`<div class="mb-2"><label class="form-label">回答テキスト:</label><input type="text" class="form-control responseText" value="" /></div>`);
-                newQaCardBody.append(newResponseDiv);
-            }
-
-            // Add Regenerate and Delete buttons
-            const buttonGroup = $('<div class="position-absolute"></div>').addClass('button-group mt-3');
-
-            const regenerateButton = $(`<button type="button" data-toggle="tooltip" title="再生成" data-original-title="Regenerate" data-index="${newIndex}"></button>`).addClass('btn btn-outline-warning me-2 gen-question').html('<i class="fas fa-sync"></i>').click(() => {
-                Swal.fire({
-                    title: '再生成',
-                    text: `質問 ${newIndex} を再生成しますか？`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'はい',
-                    cancelButtonText: 'いいえ'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        const cleanedContent = saveJson();
-                        generateQuestion(cleanedContent, chatId, function(response){
-                            const cleanResponse = JSON.parse(response)
-                            updateQuestion(cleanResponse, newIndex-1)
-                            saveJson();
-                            // Handle regenerate logic here
-                            Swal.fire(
-                                '再生成しました!',
-                                `質問 ${newIndex} が再生成されました。`,
-                                'success'
-                            );
-                        })
-                    }
-                });
-            });
-
-            const deleteButton = $('<button type="button" data-toggle="tooltip" title="削除" data-original-title="Delete"></button>').addClass('btn btn-outline-danger').html('<i class="fas fa-trash"></i>').click(() => {
-                Swal.fire({
-                    title: '削除',
-                    text: `質問 ${newIndex} を削除しますか？`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'はい',
-                    cancelButtonText: 'いいえ'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        newQaDiv.remove();
-                        const cleanJSON = saveJson();
-                        const parsedJson = JSON.parse(cleanJSON)
-                        createEditor(parsedJson)
-                    }
-                });
-            });
-
-            buttonGroup.append(regenerateButton, deleteButton);
-            newQaCardBody.append(buttonGroup);
-
-            newQaDiv.append(newQaCardBody);
-            $('#chatContentEdition').append(newQaDiv);
-        }
-
-        $('#addQuestionBtn').on('click', addNewQuestion);
-        
-        function updateQuestion(obj, index) {
-            // Find the corresponding question card based on the index
-            const qaCard = $('#chatContentEdition .qa').eq(index);
-
-            if (qaCard.length > 0) {
-                // Update the question text
-                const questionInput = qaCard.find('.question');
-                questionInput.val(obj.question);
-
-                // Update the responses
-                const responseDivs = qaCard.find('.response');
-                responseDivs.each((responseIndex, responseDiv) => {
-                    const responseInput = $(responseDiv).find('.responseText');
-                    if (obj.responses[responseIndex] !== undefined) {
-                        responseInput.val(obj.responses[responseIndex]);
-                    } else {
-                        responseInput.val('');
-                    }
-                });
-
-                // Handle additional responses if there are more in the object than in the current card
-                if (obj.responses.length > responseDivs.length) {
-                    const qaCardBody = qaCard.find('.card-body');
-                    for (let i = responseDivs.length; i < obj.responses.length; i++) {
-                        const newResponseDiv = $('<div class="ps-5"></div>').addClass('response mb-3');
-                        newResponseDiv.append(`<h6>回答 ${i + 1}</h6>`);
-                        newResponseDiv.append(`<div class="mb-2"><label class="form-label">回答テキスト:</label><input type="text" class="form-control responseText" value="${obj.responses[i]}" /></div>`);
-                        qaCardBody.append(newResponseDiv);
-                    }
-                }
-            } else {
-                console.error(`No question found at index ${index}`);
-            }
-        }
-        function saveJson() {
-            const updatedJson = [];
-            $('.qa').each(function(index, qaDiv) {
-                const qaData = {
-                    question: $(qaDiv).find('.question').val(),
-                    responses: []
-                };
-
-                $(qaDiv).find('.response').each(function(responseIndex, responseDiv) {
-                    const responseText = $(responseDiv).find('.responseText').val();
-                    qaData.responses.push(responseText);
-                });
-
-                updatedJson.push(qaData);
-            });
-
-            //console.log(JSON.stringify(updatedJson, null, 2));
-            $('#chatContent').val(JSON.stringify(updatedJson, null, 2));
-            return JSON.stringify(updatedJson, null, 2);
-        }
-
-        $('#saveButton').click(function() {
-            saveJson();
-        });
-        $('#displayProcess').click(function(){
-            $('#displayProcessToggle').toggleClass('d-none')
-        })
-        function updateTextarea() {
-            var containerHtml = $('#chatPurpose-markdownContainer').html();
-            $('#chatPurpose').val(containerHtml);
-        }
         function updateButtonText() {
             let chatName = $('#chatName').val().trim();
             $('#sendForm span').html(`${chatName}とチャットする`);
         }
-        var observer = new MutationObserver(updateButtonText);
-        observer.observe(document.getElementById('chatName'), { childList: true, subtree: true, characterData: true });
-        $('#chatName').on('input', updateButtonText);
         
-        var observer = new MutationObserver(updateTextarea);
-        observer.observe(document.getElementById('chatPurpose-markdownContainer'), { childList: true, subtree: true });
-    });
+       
+});
 </script>
 </body>
 </html>

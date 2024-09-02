@@ -45,7 +45,6 @@ async function getCounter(db) {
 };
 const handleFileUpload = async (part) => {
     let buffer;
-    
     if (part.file) {
         // Handling uploaded file
         const chunks = [];

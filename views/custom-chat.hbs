@@ -71,12 +71,15 @@
             font-size: 12px;
             width: 50px;
         }
-        .gen-idea-container #swal2-html-container{
+        .album-popup {
+            height: 80vh;
+        }
+        .gen-idea-container #swal2-html-container, .album-popup #swal2-html-container{
             border-radius: 40px 40px 0 0;
             padding: 0;
             width: 100%;
         }
-        .gen-idea-container{
+        .gen-idea-container, .album-popup{
             border-radius: 40px 40px 0 0;
             background: linear-gradient(135deg, #1e1946, #1e1928c2, #24243e);
             width: 100%;
@@ -85,12 +88,23 @@
             right: 0;
             bottom: 0;
         }
+        .album-popup {
+            background: linear-gradient(135deg, #1e1946, #1e1928c2, #24243e);
+        }
+        .gen-idea-container{
+            background: linear-gradient(135deg, #1e1946, #1e1928c2, #24243e);
+        }
         .gen-idea-container .swal2-close{
             right: 15px;
-            background: #9796963d;
             border-radius: 50%;
             font-size: 31px;
             top: 10px;
+        }
+        .gen-idea-container .swal2-close {
+            background: #9796963d;
+        }
+        .gen-idea-container .swal2-close {
+            background: #9796963d;
         }
         em {
             font-size: 13px;
@@ -1204,7 +1218,7 @@ function displayPepopleChat(){
     $.getJSON('/api/people-chat', function(data) {
         let peopleChats = data.peopleChats || {}; // Default to an empty object if undefined
         let htmlContent = '';
-
+        //renderCircleGrid(peopleChats.synclubaichat,$('#chat-recommend .characters'))
         if (peopleChats) {
             // Navigation Tabs
             htmlContent += `

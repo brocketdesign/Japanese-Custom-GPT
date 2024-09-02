@@ -68,8 +68,11 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       allowedHeaders: ['Content-Type', 'Authorization'],
       credentials: true
     });
-    fastify.register(fastifyMultipart);
-
+    fastify.register(fastifyMultipart, {
+      limits: {
+          fileSize: 10 * 1024 * 1024, // Limit file size to 10MB
+      },
+    });
     fastify.decorateReply('renderWithGtm', function(template, data) {
         data = data || {};
         data.gtmId = process.env.GTM_ID;

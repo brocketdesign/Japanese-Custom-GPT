@@ -12,6 +12,7 @@ const axios = require('axios');
 const OpenAI = require("openai");
 const { z } = require("zod");
 const { zodResponseFormat } = require("openai/helpers/zod");
+const fs = require('fs');
 
 async function routes(fastify, options) {
     //getRefreshToken()
@@ -53,114 +54,128 @@ async function routes(fastify, options) {
             reply.status(500).send({ error: 'Internal Server Error', details: error.message });
         }
     });
-
     fastify.post('/api/add-chat', async (request, reply) => {
-        const openai = new OpenAI();
-        const parts = request.parts();
-        let chatData = {};
-        const user = await fastify.getUser(request, reply);
-        const userId = new fastify.mongo.ObjectId(user._id);
-    
-        for await (const part of parts) {
-            switch (part.fieldname) {
-                case 'name':
-                case 'purpose':
-                case 'language':
-                case 'gender':
-                case 'visibility':
-                case 'isAutoGen':
-                case 'category':
-                case 'rule':
-                case 'url':
-                case 'description':
-                case 'chatId':
-                    chatData[part.fieldname] = part.value;
-                    break;
-                case 'content':
-                    chatData.content = JSON.parse(part.value);
-                    break;
-                case 'chatImageUrl':
-                    chatData.chatImageUrl = await handleFileUpload(part);
-                    break;
-                case 'thumbnail':
-                    chatData.thumbnailUrl = await handleFileUpload(part);
-                    break;
-                case 'pdf':
-                    chatData.pdfUrl = await handleFileUpload(part);
-                    break;
-            }
-        }
-    
-        if (!chatData.name || !chatData.content) {
-            return reply.status(400).send({ error: 'Missing name or content for the chat' });
-        }
-    
-        const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-        const tagsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('tags');
-        const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-        const options = { timeZone: 'Asia/Tokyo', year: 'numeric', month: 'long', day: 'numeric', weekday: 'long', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false };
-        chatData.updatedAt = new Date(dateObj);
-        chatData.dateStrJP = new Date(dateObj).toLocaleDateString('ja-JP', options);
-        chatData.isTemporary = false;
-    
         try {
-            const existingChat = await collection.findOne({ _id: new fastify.mongo.ObjectId(chatData.chatId) });
-            if (existingChat) {
-                if (existingChat.userId.toString() == userId.toString()) {
-                    chatData.tags = await generateAndSaveTags(chatData.description, chatData.chatId);
-                    await collection.updateOne({ _id: new fastify.mongo.ObjectId(chatData.chatId) }, { $set: chatData });
-                    return reply.send({ message: 'Chat updated successfully', chatId: chatData.chatId });
-                } else {
-                    return reply.status(403).send({ error: 'Unauthorized to update this chat' });
+            const parts = request.parts();
+            let chatData = {};
+            const user = await fastify.getUser(request, reply);
+            const userId = new fastify.mongo.ObjectId(user._id);
+            let gallery_1_Images = [];
+
+            for await (const part of parts) {
+                switch (part.fieldname) {
+                    case 'name':
+                    case 'purpose':
+                    case 'language':
+                    case 'gender':
+                    case 'visibility':
+                    case 'isAutoGen':
+                    case 'rule':
+                    case 'description':
+                    case 'imageGallery_1_name':
+                    case 'imageGallery_1_price':
+                    case 'chatId':
+                        chatData[part.fieldname] = part.value;
+                        break;
+                    case 'chatImageUrl':
+                        chatData.chatImageUrl = await handleFileUpload(part);
+                        break;
+                    case 'thumbnail':
+                        chatData.thumbnailUrl = await handleFileUpload(part);
+                        break;
+                    case 'gallery_1_Images[]':
+                        const imageUrl = await handleFileUpload(part);
+                        gallery_1_Images.push(imageUrl);
+                        break;
                 }
-            } else {
-                chatData.userId = userId;
-                chatData.createdAt = new Date(dateObj);
-                chatData.tags = await generateAndSaveTags(chatData.description, result.insertedId);
-                const result = await collection.insertOne(chatData);
-                return reply.send({ message: 'Chat added successfully', chatId: result.insertedId });
+            }
+    
+            if (!chatData.name) {
+                return reply.status(400).send({ error: 'Missing name or content for the chat' });
+            }
+    
+            if (chatData.chatImageUrl && !chatData.thumbnailUrl) {
+                chatData.thumbnailUrl = chatData.chatImageUrl;
+            } else if (chatData.thumbnailUrl && !chatData.chatImageUrl) {
+                chatData.chatImageUrl = chatData.thumbnailUrl;
+            }
+
+            if(gallery_1_Images.length > 0){
+                chatData.gallery_1_Images = gallery_1_Images;
+            }
+            chatData.userId = userId;
+            const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+            const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
+            const options = { timeZone: 'Asia/Tokyo', year: 'numeric', month: 'long', day: 'numeric', weekday: 'long', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false };
+            chatData.updatedAt = new Date(dateObj);
+            chatData.dateStrJP = new Date(dateObj).toLocaleDateString('ja-JP', options);
+            chatData.isTemporary = false;
+    
+            const chatId = chatData.chatId ? new fastify.mongo.ObjectId(chatData.chatId) : null;
+    
+            try {
+                if (chatId) {
+                    const existingChat = await collection.findOne({ _id: chatId });
+                    if (existingChat && existingChat.userId.toString() === userId.toString()) {
+                        chatData.tags = await generateAndSaveTags(chatData.description, chatId);
+                        await collection.updateOne({ _id: chatId }, { $set: chatData });
+                        return reply.send({ message: 'Chat updated successfully', chatId });
+                    } else {
+                        return reply.status(403).send({ error: 'Unauthorized to update this chat' });
+                    }
+                } else {
+                    chatData.createdAt = new Date(dateObj);
+                    const result = await collection.insertOne(chatData);
+                    chatData.tags = await generateAndSaveTags(chatData.description, result.insertedId);
+                    return reply.send({ message: 'Chat added successfully', chatId: result.insertedId });
+                }
+            } catch (error) {
+                console.error('Failed to add or update the Chat:', error);
+                return reply.status(500).send({ error: 'Failed to add or update the Chat' });
             }
         } catch (error) {
-            console.error('Failed to add or update the Chat:', error);
-            return reply.status(500).send({ error: 'Failed to add or update the Chat' });
+            console.error('Error handling chat data:', error);
+            return reply.status(500).send({ error: 'Internal server error' });
         }
     
-        async function generateAndSaveTags(description, chatId) {
-            const existingTags = await tagsCollection.find({}).limit(20).toArray();
-            const tagsPrompt = [
-                {
-                    role: "system",
-                    content: `You are an AI assistant that generates tags for a chat description. 
-                    Use the following example tags: ${existingTags.map(tag => tag.name).join(', ')}.`
-                },
-                {
-                    role: "user",
-                    content: `Here is the description: ${description}\nGenerate a list of 2 relevant tags based on the description, considering the example tags provided.Only 2`
-                }
-            ];
-            const PossibleAnswersExtraction = z.object({
-                answers: z.array(z.string())
-            });
-            const tagsCompletion = await openai.beta.chat.completions.parse({
-                model: "gpt-4o-mini",
-                messages: tagsPrompt,
-                response_format: zodResponseFormat(PossibleAnswersExtraction, "possible_answers_extraction"),
-            });
-            
-            const generatedTags = tagsCompletion.choices[0].message.parsed.answers;
-
-            for (const tag of generatedTags) {
-                await tagsCollection.updateOne(
-                    { name: tag },
-                    { $set: { name: tag }, $addToSet: { chatIds: chatId } },
-                    { upsert: true }
-                );
-            }
-    
-            return generatedTags;
-        }
     });
     
+    async function generateAndSaveTags(description, chatId) {
+        const openai = new OpenAI();
+        const tagsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('tags');
+        const existingTags = await tagsCollection.find({}).limit(20).toArray();
+        const tagsPrompt = [
+            {
+                role: "system",
+                content: `You are an AI assistant that generates tags for a chat description. 
+                Use the following example tags: ${existingTags.map(tag => tag.name).join(', ')}.`
+            },
+            {
+                role: "user",
+                content: `Here is the description: ${description}\nGenerate a list of 2 relevant tags based on the description, considering the example tags provided.Only 2`
+            }
+        ];
+        const PossibleAnswersExtraction = z.object({
+            answers: z.array(z.string())
+        });
+        const tagsCompletion = await openai.beta.chat.completions.parse({
+            model: "gpt-4o-mini",
+            messages: tagsPrompt,
+            response_format: zodResponseFormat(PossibleAnswersExtraction, "possible_answers_extraction"),
+        });
+
+        const generatedTags = tagsCompletion.choices[0].message.parsed.answers;
+
+        for (const tag of generatedTags) {
+            await tagsCollection.updateOne(
+                { name: tag },
+                { $set: { name: tag }, $addToSet: { chatIds: chatId } },
+                { upsert: true }
+            );
+        }
+
+        return generatedTags;
+    }
 
     fastify.delete('/api/delete-chat/:id', async (request, reply) => {
         try {
@@ -1455,69 +1470,44 @@ async function routes(fastify, options) {
         }
     });
     fastify.post('/api/openai-chat-creation', async (request, reply) => {
-        const { chatId, message, system } = request.body;
+        const { prompt } = request.body;
         const user = await fastify.getUser(request, reply);
-        const userId = user._id
-        const sessionId = Math.random().toString(36).substring(2, 15); // Generate a unique session ID
-        sessions.set(sessionId, { userId, chatId, message, system });
-        return reply.send({ sessionId });
-    });
-    fastify.get('/api/openai-chat-creation-stream/:sessionId', async (request, reply) => {
-        const { sessionId } = request.params;
-        const session = sessions.get(sessionId);
+        const userId = user._id;
     
-        if (!session) {
-            reply.status(404).send({ error: 'Session not found' });
-            return;
-        }
-    
-        reply.raw.setHeader('Content-Type', 'text/event-stream');
-        reply.raw.setHeader('Cache-Control', 'no-cache');
-        reply.raw.setHeader('Connection', 'keep-alive');
-        reply.raw.flushHeaders();
-    
-        try {
-            const userId = session.userId;
-            const chatId = session.chatId;
-            const message = session.message;
-            const system = session.system;
-    
-            const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
-            let userData = await userDataCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) }) 
+        const CharacterDescriptionSchema = z.object({
+            name: z.string(),
+            short_desc: z.string(),
+            long_desc: z.string()
+        });
 
-            if (!userData) {
-                reply.raw.end(); // End the stream before sending the response
-                return reply.status(404).send({ error: 'User data not found' });
+        const examplePrompts = await fs.readFileSync('./models/girl_char.md', 'utf8');
+        const systemPayload = createSystemPayload("Japanese",examplePrompts,prompt);  // You can change "English" to any language you need
+
+        const openai = new OpenAI();
+        const completionResponse = await openai.beta.chat.completions.parse({
+            model: "gpt-4o-mini",
+            messages: systemPayload,
+            response_format: zodResponseFormat(CharacterDescriptionSchema, "character_description_extraction"),
+        });
+    
+        const { name, short_desc, long_desc } = completionResponse.choices[0].message.parsed;
+
+        reply.send({ name, short_desc, long_desc });
+    });
+    
+    function createSystemPayload(language,examplePrompts,prompt) {
+        return [
+            {
+                role: "system",
+                content: `You are a useful assistant. You generate a creative character description and setting for the prompt. Here is some example: ${examplePrompts} YOU MUST respond in ${language}. Start by providing a name or nickname for the character.`
+            },
+            {
+                role: "user",
+                content: `Here is the prompt : ${prompt} \n\n the long_desc must be in markdown and match the example I provided`
             }
+        ];
+    }
     
-            const userObjectId = userData._id;
-    
-            const chatCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-    
-            let messages = [
-                { role: "system", content: system },
-                { role: "user", content: message },
-            ]
-
-            const completion = await fetchOpenAICompletion(messages, reply.raw);
-
-            messages.push({ role: "system", content: completion })
-            // Update the chat document in the database
-            /*
-                await chatCollection.updateOne(
-                    { userId: userObjectId, chatId },
-                    { $set: { messages: messages, updatedAt: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) } },
-                    {upsert:true}
-                );
-            */
-    
-            // End the stream only after the completion has been sent and stored
-            reply.raw.end();
-        } catch (error) {
-            reply.raw.end(); // End the stream before sending the response
-            reply.status(500).send({ error: 'Error fetching OpenAI completion' });
-        }
-    });
     // POST Route to create a session with a custom prompt
     fastify.post('/api/openai-custom-chat', async (request, reply) => {
         const { chatId, userChatId, role, customPrompt } = request.body;
@@ -1752,6 +1742,7 @@ async function routes(fastify, options) {
         }
     
         try {
+            
             // Convert image URL to Base64
             const base64Image = await convertImageUrlToBase64(imageUrl);
     
@@ -1767,7 +1758,6 @@ async function routes(fastify, options) {
                     }]
                 }
             ];
-    
             // Trigger the operations without waiting
             moduleCompletion(messages)
                 .then(async (description) => {

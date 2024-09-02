@@ -413,10 +413,18 @@ $(document).ready(function() {
                                 })
                             }
                         }
+                        if(data.chat.galleryImages && data.chat.galleryImages.length > 0){
+                            const album =  {
+                                name: data.chat.imageGallery_1_name,
+                                price: data.chat.imageGallery_1_price,
+                                images: data.chat.galleryImages
+                            }
+                            displayAlbumThumb(album)
+                        }
                         if(!isTemporary){
-                        const messagesCount = data?.userChat?.messagesCount || 0;
-                        const maxMessages = data?.userChat?.nextLevel || 10 ;
-                        initializeOrUpdateProgress(messagesCount,maxMessages)
+                            const messagesCount = data?.userChat?.messagesCount || 0;
+                            const maxMessages = data?.userChat?.nextLevel || 10 ;
+                            initializeOrUpdateProgress(messagesCount,maxMessages)
                         }
 
                         
@@ -438,6 +446,38 @@ $(document).ready(function() {
                     }
                 });
             }
+            function displayAlbumThumb(album){
+                var card = $(`
+                    <div class="card custom-card bg-transparent shadow-0 border-0 px-1 col-3 col-sm-4 col-lg-2" style="cursor:pointer;">
+                        <div style="background-image:url(${album.images[0]})" class="card-img-top rounded-avatar position-relative m-auto" alt="${album.name}">
+                        </div>
+                    </div>
+                `);
+                card.on('click', function() {
+                    displayAlbum(album)
+                });
+                $('#chat-recommend').append(card);
+            }
+            function displayAlbum(album) {
+                let imagesHTML = album.images.map((url,index) => `<img src="${url}" class="img-fluid mb-2" style="width:auto;height: 200px;object-fit:contain;${index > 0 ? 'filter: blur(10px);' : ''}">`).join('');
+            
+                Swal.fire({
+                    html: `
+                        <div id="album-container" class="text-white pt-2 px-3 w-100" style="min-height:200px;">
+                            <h5 class="mb-0">${album.name}</h5>
+                            <span class="text-white" style="font-size:14px;">${album.price}¥</span>
+                            <hr class="my-1">
+                            <div class="images">${imagesHTML}</div>
+                        </div>
+                    `,
+                    showClass: { popup: 'animate__animated animate__slideInUp animate__faster' },
+                    hideClass: { popup: 'animate__animated animate__slideOutDown animate__faster' },
+                    position: 'bottom', backdrop: 'rgba(43, 43, 43, 0.2)',
+                    showCloseButton: true, showConfirmButton: false,
+                    customClass: { container: 'p-0', popup: 'album-popup shadow', closeButton: 'position-absolute' }
+                });
+            }
+            
             function displayThankMessage(){
                 const customPrompt = {
                     systemContent: "あなたの役割は、常にキャラクターとして行動し、ユーザーに対して優しく丁寧な対応をすることです。今回は、ログインしてくれたユーザーに感謝の気持ちを伝える必要があります。ユーザーが戻ってきたことを嬉しく思っていることを、短くて優しい言葉で伝えてください。",
@@ -2069,6 +2109,7 @@ $(document).ready(function() {
 });
 
 function initializeOrUpdateProgress(messagesCount, maxMessages) {
+    return
     // Check if the heart SVG is already initialized
     if ($('#progress-container svg').length === 0) {
         // If not initialized, create the SVG and elements

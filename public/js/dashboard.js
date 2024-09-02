@@ -7,9 +7,10 @@ $(document).ready(function() {
     const paymentFalse = urlParams.get('payment') == 'false';
     const user = JSON.parse(localStorage.getItem('user'))
     const isTemporary = !!user?.isTemporary || true
-    if (success === 'true' && sessionId) {
+
+    if (success && sessionId) {
         $.ajax({
-            url: '/plan/update-coins',
+            url: `/plan/update-${success}`,
             method: 'POST',
             data: { sessionId, priceId },
             success: function(response) {
@@ -17,7 +18,7 @@ $(document).ready(function() {
                     Swal.fire({
                         position: 'top-end',
                         icon: 'success',
-                        title: 'コインが無事に追加されました！',
+                        title: 'ご購入ありがとうございます!',
                         showConfirmButton: false,
                         timer: 3000,
                         toast: true,
@@ -34,7 +35,7 @@ $(document).ready(function() {
                             popup: 'animate__animated animate__slideOutRight'
                         }
                     });
-                    updateCoins()
+                    window.postMessage({ event: 'updateCoins' }, '*');
                 } else {
                     console.error('Failed to update coins:', response.error);
                 }
@@ -312,7 +313,7 @@ window.showCoinShop = function(el){
             popup: 'bg-light animate__animated animate__fadeOutUp'
         },
         didOpen: () => {
-            updateCoins();
+            window.postMessage({ event: 'updateCoins' }, '*');
             $(document).on('click','.buycoin', function() {
                 const buttonId = this.id;
                 initiateCheckout(buttonId);

@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const aws = require('aws-sdk');
 const sessions = new Map(); // Define sessions map
 const { analyzeScreenshot, processURL } = require('../models/scrap');
-const { handleFileUpload, uploadToS3, checkLimits, convertImageUrlToBase64 } = require('../models/tool');
+const { handleFileUpload, uploadToS3, checkLimits, convertImageUrlToBase64, createBlurredImage } = require('../models/tool');
 const {sendMail, getRefreshToken} = require('../models/mailer');
 const { createHash } = require('crypto');
 const { convert } = require('html-to-text');
@@ -13,55 +13,18 @@ const OpenAI = require("openai");
 const { z } = require("zod");
 const { zodResponseFormat } = require("openai/helpers/zod");
 const fs = require('fs');
+const stripe = process.env.MODE == 'local'? require('stripe')(process.env.STRIPE_SECRET_KEY_TEST) : require('stripe')(process.env.STRIPE_SECRET_KEY)
 
 async function routes(fastify, options) {
-    //getRefreshToken()
-    /*
-    sendMail('contact@hatoltd.com', 'Test Email', 'This is a test email.')
-    .then(response => console.log('Email sent:', response))
-    .catch(error => console.error('Error sending email:', error));
-    */
 
-    fastify.get('/api/urlsummary', async (request, reply) => {
-        const url = request.query.url;
-        
-        if (!url) {
-            return reply.status(400).send({ error: 'URL parameter is required' });
-        }
-    
-        try {
-            const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
-            const collection = db.collection('urlSummaries');
-    
-            // Check if the result for the URL already exists in the database
-            let result = await collection.findOne({ url: url });
-    
-            if (!result || !result.analysis) {
-                // If not found or analysis is falsy, analyze the screenshot
-                const analysisResult = await processURL(url);
-                // Save the result in the database
-                result = {
-                    url: url,
-                    analysis: analysisResult,
-                    timestamp: new Date()
-                };
-                await collection.insertOne(result);
-            }
-    
-            // Return the result
-            reply.send(result);
-        } catch (error) {
-            reply.status(500).send({ error: 'Internal Server Error', details: error.message });
-        }
-    });
     fastify.post('/api/add-chat', async (request, reply) => {
         try {
             const parts = request.parts();
             let chatData = {};
             const user = await fastify.getUser(request, reply);
             const userId = new fastify.mongo.ObjectId(user._id);
-            let gallery_1_Images = [];
-
+            let galleries = [];
+            let blurred_galleries = [];
             for await (const part of parts) {
                 switch (part.fieldname) {
                     case 'name':
@@ -72,8 +35,6 @@ async function routes(fastify, options) {
                     case 'isAutoGen':
                     case 'rule':
                     case 'description':
-                    case 'imageGallery_1_name':
-                    case 'imageGallery_1_price':
                     case 'chatId':
                         chatData[part.fieldname] = part.value;
                         break;
@@ -83,9 +44,27 @@ async function routes(fastify, options) {
                     case 'thumbnail':
                         chatData.thumbnailUrl = await handleFileUpload(part);
                         break;
-                    case 'gallery_1_Images[]':
-                        const imageUrl = await handleFileUpload(part);
-                        gallery_1_Images.push(imageUrl);
+                    default:
+                        if (part.fieldname.startsWith('imageGallery_')) {
+                            const [galleryIndex, galleryField] = part.fieldname.split('_').slice(1);
+                            if (!galleries[galleryIndex]) galleries[galleryIndex] = {};
+                            if (!blurred_galleries[galleryIndex]) blurred_galleries[galleryIndex] = {};
+                        
+                            if (galleryField === 'Images[]') {
+                                const imageUrl = await handleFileUpload(part);
+                                const blurredImageUrl = await createBlurredImage(imageUrl);
+
+                                if (!galleries[galleryIndex].images) galleries[galleryIndex].images = [];
+                                if (!blurred_galleries[galleryIndex].images) blurred_galleries[galleryIndex].images = [];
+                                
+                                galleries[galleryIndex].images.push(imageUrl);
+                                blurred_galleries[galleryIndex].images.push(blurredImageUrl);
+                            } else {
+                                const fieldValue = galleryField === 'price' ? parseInt(part.value, 10) : part.value;
+                                galleries[galleryIndex][galleryField.toLowerCase()] = fieldValue;
+                                blurred_galleries[galleryIndex][galleryField.toLowerCase()] = fieldValue;
+                            }
+                        }                        
                         break;
                 }
             }
@@ -99,10 +78,27 @@ async function routes(fastify, options) {
             } else if (chatData.thumbnailUrl && !chatData.chatImageUrl) {
                 chatData.chatImageUrl = chatData.thumbnailUrl;
             }
-
-            if(gallery_1_Images.length > 0){
-                chatData.gallery_1_Images = gallery_1_Images;
+    
+            for (const gallery of galleries) {
+                if (gallery.name && gallery.price && gallery.images && gallery.images.length > 0) {
+                    try {
+                        const stripeProduct = await createProductWithPrice(gallery.name, gallery.price, gallery.images[0]);
+                        gallery.stripeProductId = stripeProduct.productId;
+                        gallery.stripePriceId = stripeProduct.priceId;
+                    } catch (error) {
+                        return reply.status(500).send({ error: `Failed to create product on Stripe for gallery ${gallery.name}` });
+                    }
+                }
             }
+    
+            if (galleries.length > 0) {
+                chatData.galleries = galleries;
+            }
+    
+            if (blurred_galleries.length > 0) {
+                chatData.blurred_galleries = blurred_galleries;
+            }
+    
             chatData.userId = userId;
             const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
             const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
@@ -137,9 +133,34 @@ async function routes(fastify, options) {
             console.error('Error handling chat data:', error);
             return reply.status(500).send({ error: 'Internal server error' });
         }
-    
     });
     
+    async function createProductWithPrice(name, price, image) {
+        try {
+            // Create a product on Stripe with a single identifying image
+            const product = await stripe.products.create({
+                name: name,
+                images: [image],  // Use a single image to identify the product
+            });
+    
+            // Create a price for the product in Japanese Yen (JPY)
+            const productPrice = await stripe.prices.create({
+                unit_amount: price,
+                currency: 'jpy', // Set currency to Japanese Yen
+                product: product.id,
+            });
+    
+            return {
+                productId: product.id,
+                priceId: productPrice.id
+            };
+        } catch (error) {
+            throw new Error('Failed to create product on Stripe');
+        }
+    }
+    
+    
+
     async function generateAndSaveTags(description, chatId) {
         const openai = new OpenAI();
         const tagsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('tags');
@@ -177,6 +198,38 @@ async function routes(fastify, options) {
         return generatedTags;
     }
 
+    fastify.get('/api/urlsummary', async (request, reply) => {
+        const url = request.query.url;
+        
+        if (!url) {
+            return reply.status(400).send({ error: 'URL parameter is required' });
+        }
+    
+        try {
+            const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+            const collection = db.collection('urlSummaries');
+    
+            // Check if the result for the URL already exists in the database
+            let result = await collection.findOne({ url: url });
+    
+            if (!result || !result.analysis) {
+                // If not found or analysis is falsy, analyze the screenshot
+                const analysisResult = await processURL(url);
+                // Save the result in the database
+                result = {
+                    url: url,
+                    analysis: analysisResult,
+                    timestamp: new Date()
+                };
+                await collection.insertOne(result);
+            }
+    
+            // Return the result
+            reply.send(result);
+        } catch (error) {
+            reply.status(500).send({ error: 'Internal Server Error', details: error.message });
+        }
+    });
     fastify.delete('/api/delete-chat/:id', async (request, reply) => {
         try {
             const chatId = request.params.id;
@@ -683,6 +736,7 @@ async function routes(fastify, options) {
                             "content": `[Hidden] Here is your character description:\n\n${chatPurpose}\n${chatDescription}\n${chatRule}\n\n`
                         }
                     ]
+
                     if(isWidget){
                         userChatDocument.isWidget = true
                     }
@@ -1916,10 +1970,10 @@ async function routes(fastify, options) {
           const user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(chat.userId) });
           return {
             ...chat,
-            nickname: user ? user.nickname : null, // Add the user's nickname
+            nickname: user ? user.nickname : null,
           };
         }));
-        
+
         peopleChats = { synclubaichat, recent: recentWithUser };
   
         return reply.send({ peopleChats });
@@ -2000,10 +2054,19 @@ async function routes(fastify, options) {
                     { $addToSet: { personas: new fastify.mongo.ObjectId(personaId) } }
                 );
             } else if (action === 'remove') {
-                await collection.updateOne(
+                
+                const result = await collection.updateOne(
                     { _id: new fastify.mongo.ObjectId(userId) },
-                    { $pull: { personas: new fastify.mongo.ObjectId(personaId) } }
+                    { $pull: { personas: { $in: [new fastify.mongo.ObjectId(personaId), personaId] } } }
                 );
+                
+                if (result.modifiedCount > 0) {
+                    console.log(`persona removed : ${personaId}`)
+                } else {
+                    console.log(`Error finding persona`)
+                    return reply.status(500).send({ error: 'ペルソナの更新中にエラーが発生しました。' });
+                }
+                
             }
     
             return reply.send({ success: true });

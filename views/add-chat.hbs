@@ -255,19 +255,20 @@
             <textarea class="d-none form-control" id="chatRule" name="content" rows="5" placeholder="話し方" ifplaceholder="チャットボットの動作についての指示をここに記入してください。ユーザーに対する返答のトーン、応答のスタイル、特定の状況に対する反応、使用する言葉遣いなど、チャットボットがどのように振る舞うべきかをできるだけ詳しく記載してください。"></textarea>
             <div id="markdownContainer" class="border-0 p-0 text-start" contenteditable="false" style="display: none;"></div>
         </div>
-        
-        <div id="imageGalleryWrapper" class="mb-3 mx-3 is-premium d-none">
-            <div class="d-flex justify-content-between align-items-end">
-                <label for="imageGallery-1-name" class="d-none form-label">アルバム名</label>
+        <button type="button" id="addMoreGallery" class="btn btn-light"><i class="fas fa-plus-circle"></i></button>
+        <div id="galleries">
+            <div class="imageGalleryWrapper mb-3 mx-3 is-premium d-none">
+                <div class="d-flex justify-content-between align-items-end">
+                    <label for="imageGallery-0-name" class="d-none form-label">アルバム名</label>
+                </div>
+                <div class="d-flex">
+                    <input type="text" class="form-control" id="imageGallery-0-name" name="imageGallery_0_name" placeholder="アルバム名" contenteditable="false">
+                    <input type="number" class="form-control" id="imageGallery-0-price" name="imageGallery_0_price" placeholder="アルバム価格" min="100" max="100000">
+                </div>
+                <textarea row="3" class="form-control" id="imageGallery-0-description" name="imageGallery_0_description" placeholder="アルバム説明" contenteditable="false"></textarea>
+                <div id="imageGallery-0"></div>
             </div>
-            <div class="d-flex">
-                <input type="text" class="form-control" id="imageGallery-1-name" name="imageGallery_1_name" placeholder="アルバム名" contenteditable="false">
-                <input type="number" class="form-control" id="imageGallery-1-price" name="imageGallery_1_price" placeholder="アルバム価格" min="100" max="100000">
-            </div>
-            <div id="imageGallery-1"></div>
-            <button type="button" id="addMoreGallery" class="d-none btn btn-light"><i class="fas fa-plus-circle"></i></button>
         </div>
-
         <div class="sticky-bottom px-3 pb-3">
             <button type="submit" id="sendForm" class="btn custom-gradient-bg btn-large w-100" style="border-radius:50px;display:none;">
                     <i class="fa fa-spinner fa-spin fa-fw fa-hidden d-none me-2"></i>
@@ -331,7 +332,7 @@
         if (isTemporaryChat == 'false') {
             fetchchatData(chatId);
         }else{
-            $('#imageGallery-1').imageUploader({
+            $('#imageGallery-0').imageUploader({
                 maxSize: 2 * 1024 * 1024,
                 maxFiles: 50
             });
@@ -408,6 +409,46 @@
             }
             reader.readAsDataURL(event.target.files[0]);
         });
+        
+        function addNewGallery(init = false) {
+            let galleryIndex = $('.imageGalleryWrapper').length;
+            let newGalleryWrapper = $('.imageGalleryWrapper').eq(0).clone();
+
+            newGalleryWrapper.find('[for^="imageGallery-"]').each(function() {
+                const currentFor = $(this).attr('for');
+                const newFor = currentFor.replace(/\d+/, galleryIndex);
+                $(this).attr('for', newFor);
+            });
+
+            newGalleryWrapper.find('[id^="imageGallery-"]').each(function() {
+                const currentId = $(this).attr('id');
+                const newId = currentId.replace(/\d+/, galleryIndex);
+                $(this).attr('id', newId);
+            });
+
+            newGalleryWrapper.find('[name^="imageGallery_"]').each(function() {
+                const currentName = $(this).attr('name');
+                const newName = currentName.replace(/\d+/, galleryIndex);
+                $(this).attr('name', newName);
+            });
+
+            newGalleryWrapper.find('input[type="text"], input[type="number"]').val('');
+            newGalleryWrapper.find(`#imageGallery-${galleryIndex}`).empty();
+
+            $('#galleries').prepend(newGalleryWrapper);
+
+            if(init){
+                $(`#imageGallery-${galleryIndex}`).imageUploader({
+                    maxSize: 2 * 1024 * 1024,
+                    maxFiles: 50
+                });
+            }
+
+        }
+
+        $('#addMoreGallery').on('click', function(){addNewGallery(true);});
+
+
 
         function fetchchatData(chatId) {
             $.ajax({
@@ -477,30 +518,43 @@
                         $('#chatImageUrl').val(chatData.chatImageUrl);
                         $('#chatImage').attr('src', chatData.chatImageUrl).show().addClass('on');
                     }
-                    $('#imageGallery-1-name').val(chatData.imageGallery_1_name)
-                    $('#imageGallery-1-price').val(chatData.imageGallery_1_price)
-                    if (chatData.gallery_1_Images && chatData.gallery_1_Images.length > 0) {
-                        let preloaded = chatData.gallery_1_Images.map((imageUrl, index) => {
-                            return {
-                                id: index + 1, // Assuming ids start from 1
-                                src: imageUrl   // Use the imageUrl from your galleryImages array
-                            };
-                        });
-                        $('#imageGallery-1').imageUploader({
-                            preloaded: preloaded,
-                            imagesInputName: 'photos',
-                            preloadedInputName: 'old',
-                            maxSize: 2 * 1024 * 1024,
-                            maxFiles: 50
-                        });
-                    }else{
-                        $('#imageGallery-1').imageUploader({
-                            maxSize: 2 * 1024 * 1024,
-                            maxFiles: 50
-                        });
-                    }
 
 
+                        if (chatData.galleries && chatData.galleries.length > 0) {
+
+                            chatData.galleries.forEach((gallery, galleryIndex) => {
+
+                                if (gallery.images && gallery.images.length > 0) {
+                                    let preloaded = gallery.images.map((imageUrl, idx) => {
+                                        return {
+                                            id: idx + 1, 
+                                            src: imageUrl  
+                                        };
+                                    });
+                                    
+                                    if($(`#imageGallery-${galleryIndex}`).length == 0){
+                                        addNewGallery()
+                                    }
+
+                                    $(`#imageGallery-${galleryIndex}-name`).val(gallery.name);
+                                    $(`#imageGallery-${galleryIndex}-price`).val(gallery.price);
+                                    $(`#imageGallery-${galleryIndex}-description`).val(gallery.description);
+                                    $(`#imageGallery-${galleryIndex}`).imageUploader({
+                                        preloaded: preloaded,
+                                        imagesInputName: 'photos',
+                                        preloadedInputName: 'old',
+                                        maxSize: 2 * 1024 * 1024,
+                                        maxFiles: 50
+                                    });
+                                } else {
+                                    $(`#imageGallery-${galleryIndex}`).imageUploader({
+                                        maxSize: 2 * 1024 * 1024,
+                                        maxFiles: 50
+                                    });
+                                }
+
+                            });
+                        }
                     checkFieldsAndShowForm()
                     $('#chatForm').removeClass('d-none')
                     //$('#genStructure').removeClass('btn-outline-secondary').addClass('btn-secondary')
@@ -511,77 +565,82 @@
             });
         }
 
-function getFilesFromGallery(galleryId) {
-    let files = [];
-    $(galleryId).find('.image-uploader input[type="file"]').each(function() {
-        $.each(this.files, function(_, file) {
-            files.push(file);
-        });
-    });
-    if(files.length == 0){
-        $(galleryId).find('.uploaded-image img').each(function() {
-            files.push($(this).attr('src'));
-        });
-    }
-    return files;
-}
-// Form Submission
-$('#chatForm').on('submit', function(e) {
-    e.preventDefault();
-    $('#sendForm .fa-spinner').toggleClass('d-none');
-
-    const formData = new FormData();
-    formData.append('name', $('#chatName').val());
-    formData.append('purpose', $('#chatPurpose').val());
-    formData.append('language', $('#language').val());
-    formData.append('gender', $('#gender').val());
-    formData.append('description', $('#chatDescription').val());
-    formData.append('rule', $('#chatRule').val());
-    formData.append('visibility', $('#visibility').val());
-    formData.append('isAutoGen', isAutoGen);
-    formData.append('imageGallery_1_name',$('#imageGallery-1-name').val())
-    formData.append('imageGallery_1_price',$('#imageGallery-1-price').val())
-    
-    const file = $('#chatThumbnail')[0].files[0];
-    if (file) {
-        formData.append('thumbnail', file);
-    } else {
-        const chatImageUrl = $('#chatImageUrl').val();
-        if (chatImageUrl) {
-            formData.append('chatImageUrl', chatImageUrl);
+        function getFilesFromGallery(galleryId) {
+            let files = [];
+            $(galleryId).find('.image-uploader input[type="file"]').each(function() {
+                $.each(this.files, function(_, file) {
+                    files.push(file);
+                });
+            });
+            if(files.length == 0){
+                $(galleryId).find('.uploaded-image img').each(function() {
+                    files.push($(this).attr('src'));
+                });
+            }
+            return files;
         }
-    }
-
-    const galleryFiles = getFilesFromGallery('#imageGallery-1');
-    galleryFiles.forEach(file => formData.append('gallery_1_Images[]', file));
-
-    if (chatId) {
-        formData.append('chatId', chatId);
-    }
-
-    $.ajax({
-        url: '/api/add-chat',
-        type: 'POST',
-        processData: false,
-        contentType: false,
-        data: formData,
-        success: function(response) {
-            console.log('Success:', response); // Debugging success response
+        // Form Submission
+        $('#chatForm').on('submit', function(e) {
+            e.preventDefault();
             $('#sendForm .fa-spinner').toggleClass('d-none');
-            const { chatId } = response;
-            window.location = '/chat/' + chatId;
-        },
-        error: function(error) {
-            console.log('Error:', error); // Debugging error response
-            $('#sendForm .fa-spinner').toggleClass('d-none');
-            Swal.fire(
-                'エラー!',
-                'チャットの追加に失敗しました: ' + error.responseJSON.error,
-                'error'
-            );
-        }
-    });
-});
+
+            const formData = new FormData();
+            formData.append('name', $('#chatName').val());
+            formData.append('purpose', $('#chatPurpose').val());
+            formData.append('language', $('#language').val());
+            formData.append('gender', $('#gender').val());
+            formData.append('description', $('#chatDescription').val());
+            formData.append('rule', $('#chatRule').val());
+            formData.append('visibility', $('#visibility').val());
+            formData.append('isAutoGen', isAutoGen);
+
+            const file = $('#chatThumbnail')[0].files[0];
+            if (file) {
+                formData.append('thumbnail', file);
+            } else {
+                const chatImageUrl = $('#chatImageUrl').val();
+                if (chatImageUrl) {
+                    formData.append('chatImageUrl', chatImageUrl);
+                }
+            }
+
+            if (chatId) {
+                formData.append('chatId', chatId);
+            }
+            // Loop through all galleries and append their data
+            $('#galleries .imageGalleryWrapper').each(function(index) {
+                const galleryIndex = index; // Use the loop index to handle multiple galleries
+                formData.append(`imageGallery_${galleryIndex}_name`, $(`#imageGallery-${galleryIndex}-name`).val());
+                formData.append(`imageGallery_${galleryIndex}_price`, $(`#imageGallery-${galleryIndex}-price`).val());
+                formData.append(`imageGallery_${galleryIndex}_description`, $(`#imageGallery-${galleryIndex}-description`).val());
+
+                const galleryFiles = getFilesFromGallery(`#imageGallery-${galleryIndex}`);
+                galleryFiles.forEach(file => formData.append(`imageGallery_${galleryIndex}_Images[]`, file)); // Append gallery files
+            });
+
+            $.ajax({
+                url: '/api/add-chat',
+                type: 'POST',
+                processData: false,
+                contentType: false,
+                data: formData,
+                success: function(response) {
+                    console.log('Success:', response);
+                    $('#sendForm .fa-spinner').toggleClass('d-none');
+                    const { chatId } = response;
+                    window.location = '/chat/' + chatId;
+                },
+                error: function(error) {
+                    console.log('Error:', error);
+                    $('#sendForm .fa-spinner').toggleClass('d-none');
+                    Swal.fire(
+                        'エラー!',
+                        'チャットの追加に失敗しました: ' + error.responseJSON.error,
+                        'error'
+                    );
+                }
+            });
+        });
 
 
 

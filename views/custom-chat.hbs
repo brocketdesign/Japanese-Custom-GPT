@@ -751,6 +751,7 @@ $(document).ready(function() {
 
     function resizeIframe() {
         var iframe = $('#user-profile-page');
+        if(iframe.length == 0 ){return}
         const newHeight = iframe[0].contentWindow.document.body.scrollHeight
         if( newHeight > 0) { iframe.height(newHeight); }
     }
@@ -771,6 +772,12 @@ $(document).ready(function() {
     window.addEventListener('message', function(event) {
         if (event.data.event === 'updatePersona') {
              updatePersona(event.data.personaId,event.data.isAdding)
+        }
+    });
+    
+    window.addEventListener('message', function(event) {
+        if (event.data.event === 'updateCoins') {
+             updateCoins()
         }
     });
 
@@ -1199,6 +1206,31 @@ function initiateCheckout(buttonId) {
         }
     });
 }
+function initiateAlbumCheckout(priceId,chatId) {
+    const user = {{{json user}}}
+    if(user.isTemporary){
+        showRegistrationForm()
+        return
+    }
+    const userId = user._id
+    let stripe
+    if(window.location.href.indexOf('https://') >= 0){
+        stripe = Stripe('pk_live_51PjtRbE5sP7DA1XvCkdmezori9qPGoO21y7yKSVvgkQVyrhWZfHAUkNsjPMnbwpPlp4zzoYsRjn79Ad7XN7HTHcc00UjBA9adF'); // Use your publishable key here
+    }else{
+        stripe = Stripe('pk_test_51PjtRbE5sP7DA1XvD68v7X7Qj7pG6ZJpQmvuNodJjxc7MbH1ss2Te2gahFAS9nms4pbmEdMYdfCPxFDWHBbu9CxR003ikTnRES'); // Use your publishable key here
+    }
+    $.ajax({
+        url: '/album/create-checkout-session',
+        method: 'POST',
+        data: { priceId, userId, chatId },
+        success: function(session) {
+            return stripe.redirectToCheckout({ sessionId: session.id });
+        },
+        error: function(xhr, status, error) {
+            console.error('Error creating Stripe checkout session:', error);
+        }
+    });
+}
 
     function renderCircleGrid(cardInfos,container){
         cardInfos.forEach(function(item) {
@@ -1243,28 +1275,31 @@ function displayPepopleChat(){
                     <div id="latest-chat" class="chat-container pb-0">`;
 
             (peopleChats.recent || []).forEach(chat => {
-                htmlContent += `
-                <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2 redirectToChat" style="cursor:pointer;" data-id="${chat._id}" data-image="${chat.chatImageUrl}">
-                    <div style="background-image:url('${chat.chatImageUrl || '/img/logo.webp'}')" class="card-img-top girls_avatar position-relative" alt="${chat.name}">
-                        <div id="spinner-${chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
-                        <div class="position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px;right:10px;">
-                            ${(chat.tags || []).length ? `<div class="tags d-flex justify-content-between align-items-center flex-wrap">${chat.tags.map(tag => `<span class="badge bg-dark">${tag}</span>`).join('')}</div>` : ''}
-                            <div class="d-flex justify-content-between align-items-center mt-1">
-                                <a href="/user/${chat.userId}" class="badge bg-dark text-white" style="text-decoration: none;">
-                                    <i class="fas fa-user-circle me-2"></i>${chat.nickname}
-                                </a>
-                                ${chat.messagesCount ? `<span class="badge bg-dark message-count"><i class="fas fa-comment-alt me-2"></i>${chat.messagesCount}</span>` : ''}
+                if(chat.nickname){
+                    htmlContent += `
+                    <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2 redirectToChat" style="cursor:pointer;" data-id="${chat._id}" data-image="${chat.chatImageUrl}">
+                        <div style="background-image:url('${chat.chatImageUrl || '/img/logo.webp'}')" class="card-img-top girls_avatar position-relative" alt="${chat.name}">
+                            <div id="spinner-${chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
+                            <div class="position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px;right:10px;">
+                                ${(chat.tags || []).length ? `<div class="tags d-flex justify-content-between align-items-center flex-wrap">${chat.tags.map(tag => `<span class="badge bg-dark">${tag}</span>`).join('')}</div>` : ''}
+                                <div class="d-flex justify-content-between align-items-center mt-1">
+                                    <a href="/user/${chat.userId}" class="badge bg-dark text-white" style="text-decoration: none;">
+                                        <i class="fas fa-user-circle me-2"></i>${chat.nickname}
+                                    </a>
+                                    ${chat.messagesCount ? `<span class="badge bg-dark message-count"><i class="fas fa-comment-alt me-2"></i>${chat.messagesCount}</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="persona position-absolute" style="color: rgb(165 164 164);opacity:0.8; top:10px;right:10px" data-id="${chat._id}">
+                                <span class="badge bg-dark"><i class="far fa-bookmark"></i></span>
                             </div>
                         </div>
-                        <div class="persona position-absolute" style="color: rgb(165 164 164);opacity:0.8; top:10px;right:10px" data-id="${chat._id}">
-                            <span class="badge bg-dark"><i class="far fa-bookmark"></i></span>
+                        <div class="card-body bg-transparent border-0 pb-0 text-start">
+                            <h5 class="card-title character-title">${chat.name}</h5>
+                            <p class="card-text character-short-description">${chat.description}</p>
                         </div>
-                    </div>
-                    <div class="card-body bg-transparent border-0 pb-0 text-start">
-                        <h5 class="card-title character-title">${chat.name}</h5>
-                        <p class="card-text character-short-description">${chat.description}</p>
-                    </div>
                 </div>`;
+                }
+
             });
 
             htmlContent += `

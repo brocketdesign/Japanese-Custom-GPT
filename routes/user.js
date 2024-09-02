@@ -572,6 +572,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       if (!user) return reply.status(404).send({ error: 'User not found' });
   
       let personas = user.personas || [];
+      console.log(personas)
       const validPersonaIds = (await collectionChat.find({ _id: { $in: personas.map(id => new fastify.mongo.ObjectId(id)) } }).toArray()).map(p => p._id.toString());
       
       if (user.persona && !validPersonaIds.includes(user.persona.toString())) user.persona = null;

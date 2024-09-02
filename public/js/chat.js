@@ -154,6 +154,7 @@ $(document).ready(function() {
                 $this.closest('.chat-list.item').addClass('active').siblings().removeClass('active');
                 $('#chat-container').css('background-image', `url(${chatImageUrl})`);
                 $('#chatContainer').empty();
+                $('#chat-recommend').empty()
                 getUserChatHistory(selectChatId, userId, function(lastChat) {
                     if (lastChat) {
                         userChatId = lastChat._id;
@@ -338,6 +339,8 @@ $(document).ready(function() {
 
                 $('#chatContainer').empty()
                 $('#startButtonContained').remove();
+                $('#chat-recommend').empty()
+
                 if(fetch_reset){
                     currentStep = 0
                 }
@@ -404,7 +407,6 @@ $(document).ready(function() {
                         if(isNew && chatData && chatData.length == 0 ){
                             //createIntro(data.chat)
                             //createButton(data.chat)
-                            
                             if(isTemporary){
                                 displayStarter();
                             }else{
@@ -413,14 +415,26 @@ $(document).ready(function() {
                                 })
                             }
                         }
-                        if(data.chat.galleryImages && data.chat.galleryImages.length > 0){
-                            const album =  {
-                                name: data.chat.imageGallery_1_name,
-                                price: data.chat.imageGallery_1_price,
-                                images: data.chat.galleryImages
-                            }
-                            displayAlbumThumb(album)
+
+                        if (data.chat.galleries && data.chat.galleries.length > 0) {
+                            data.chat.galleries.forEach((gallery, galleryIndex) => {
+                                const blurredImages = data.chat.blurred_galleries[galleryIndex].images; 
+                                const album = {
+                                    chatId,
+                                    userId,
+                                    name: gallery.name,
+                                    price: gallery.price,
+                                    description: gallery.description,
+                                    blurredImages: [gallery.images[0], ...blurredImages],
+                                    images: gallery.images,
+                                    stripePriceId: gallery.stripePriceId,
+                                    stripeProductId: gallery.stripeProductId
+                                };
+                                
+                                displayAlbumThumb(album)
+                            });
                         }
+                        
                         if(!isTemporary){
                             const messagesCount = data?.userChat?.messagesCount || 0;
                             const maxMessages = data?.userChat?.nextLevel || 10 ;
@@ -458,25 +472,132 @@ $(document).ready(function() {
                 });
                 $('#chat-recommend').append(card);
             }
-            function displayAlbum(album) {
-                let imagesHTML = album.images.map((url,index) => `<img src="${url}" class="img-fluid mb-2" style="width:auto;height: 200px;object-fit:contain;${index > 0 ? 'filter: blur(10px);' : ''}">`).join('');
-            
-                Swal.fire({
-                    html: `
-                        <div id="album-container" class="text-white pt-2 px-3 w-100" style="min-height:200px;">
-                            <h5 class="mb-0">${album.name}</h5>
-                            <span class="text-white" style="font-size:14px;">${album.price}¥</span>
-                            <hr class="my-1">
-                            <div class="images">${imagesHTML}</div>
+
+async function displayAlbum(album) {
+    try {
+        const isClient = await checkIfClient(album.userId, album.chatId, album.stripePriceId);
+        const images = isClient ? album.images : album.blurredImages;
+        let imagesHTML = images.map((url, index) => `<img src="${url}" class="img-fluid rounded shadow m-1" style="width:auto;height: auto;object-fit:contain;" data-index="${index}">`).join('');
+    
+        Swal.fire({
+            html: `
+                <div ${!isClient ? 'type="button" onclick="initiateAlbumCheckout(\'' + album.stripePriceId + '\', \'' + album.chatId + '\')"' : ''}>
+                    <div style="top: 0;left: 0;right: 0;border-radius: 40px 40px 0 0;background: linear-gradient(to top, rgba(0, 0, 0, 0), rgba(46, 44, 72, 0.91) 45%);" class="sticky-top pt-3">
+                        <h5 class="mb-0 text-white">${album.name}</h5>
+                        <span class="text-muted" style="font-size:14px;">${album.price}¥</span>
+                        <p style="color: white;font-size: 12px;" class="p-4">${album.description}</p>
+                    </div>
+                    <div class="sticky-top text-start">
+                        <span type="button" id="destroy-swiper" class="btn btn-light mx-3"><i class="fas fa-th-large"></i></span>
+                    </div>
+                    <div id="album-container" class="position-relative text-white pt-2 px-3 w-100" style="min-height:200px;overflow: hidden;">
+                        <div class="images swiper-container" data-id="${album.chatId}">
+                            <div class="swiper-wrapper wrapper">
+                                ${images.map((url, index) => `
+                                    <div class="swiper-slide slide">
+                                        <img src="${url}" class="img-fluid rounded shadow m-1" style="width:auto;max-height:400pxobject-fit:contain;" data-index="${index}">
+                                    </div>`).join('')}
+                            </div>
+                            <div class="swiper-button-next text-white" style="opacity:0.8;"></div>
+                            <div class="swiper-button-prev text-white" style="opacity:0.8;"></div>
                         </div>
-                    `,
-                    showClass: { popup: 'animate__animated animate__slideInUp animate__faster' },
-                    hideClass: { popup: 'animate__animated animate__slideOutDown animate__faster' },
-                    position: 'bottom', backdrop: 'rgba(43, 43, 43, 0.2)',
-                    showCloseButton: true, showConfirmButton: false,
-                    customClass: { container: 'p-0', popup: 'album-popup shadow', closeButton: 'position-absolute' }
+                    </div>
+                    ${!isClient ? `
+                        <div style="bottom: 20px;z-index: 100;" class="mx-auto mt-4 position-fixed w-100">
+                            <button class="btn btn-lg custom-gradient-bg" style="border-radius:50px;"><i class="far fa-images me-2"></i>アルバムを購入する</button>
+                        </div>`:''
+                    }
+                </div>
+            `,
+            showClass: { popup: 'animate__animated animate__slideInUp animate__faster' },
+            hideClass: { popup: 'animate__animated animate__slideOutDown animate__faster' },
+            position: 'bottom',
+            backdrop: 'rgba(43, 43, 43, 0.2)',
+            showCloseButton: true,
+            showConfirmButton: false,
+            customClass: { container: 'p-0', popup: 'album-popup shadow', htmlContainer:'position-relative', closeButton: 'position-absolute' }
+        });
+
+        let swiper = new Swiper('.swiper-container', {
+            loop: true,
+            spaceBetween: 5,
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+            breakpoints: {
+                320: { // screens up to 320px
+                    slidesPerView: 2,
+                },
+                480: { // screens up to 480px
+                    slidesPerView: 2,
+                },
+                768: { // screens up to 768px
+                    slidesPerView: 3,
+                },
+                1024: { // screens up to 1024px
+                    slidesPerView: 5,
+                },
+            }
+        });
+        
+        $(document).on('click', '#destroy-swiper', function () {
+            if (swiper.initialized) {
+                swiper.destroy(true, true); // true to reset styles
+            } else {
+                swiper = new Swiper('.swiper-container', {
+                    loop: true,
+                    spaceBetween: 5,
+                    navigation: {
+                        nextEl: '.swiper-button-next',
+                        prevEl: '.swiper-button-prev',
+                    },
+                    breakpoints: {
+                        320: { // screens up to 320px
+                            slidesPerView: 2,
+                        },
+                        480: { // screens up to 480px
+                            slidesPerView: 2,
+                        },
+                        768: { // screens up to 768px
+                            slidesPerView: 3,
+                        },
+                        1024: { // screens up to 1024px
+                            slidesPerView: 5,
+                        },
+                    }
                 });
             }
+            $(this).toggleClass('mt-3')
+            $(this).find('i').toggleClass('fa-th-large fa-image')
+            $('#album-container .wrapper').toggleClass('swiper-wrappe row m-auto');
+            $('#album-container .slide').toggleClass('swiper-slide col-12 col-sm-4 col-lg-3');
+        });
+        
+    } catch (error) {
+        console.error('Error displaying album:', error);
+    }
+}
+
+            
+            function checkIfClient(userId, chatId, priceId) {
+                return $.ajax({
+                    url: '/album/check-client',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        userId: userId,
+                        chatId: chatId,
+                        priceId: priceId
+                    }),
+                    dataType: 'json'
+                }).then(response => response.isClient)
+                  .catch(error => {
+                      console.error('Error checking client status:', error);
+                      return false;
+                  });
+            }
+            
             
             function displayThankMessage(){
                 const customPrompt = {

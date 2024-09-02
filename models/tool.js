@@ -1,9 +1,11 @@
-
-const axios = require('axios');
-const sharp = require('sharp');
 const { createHash } = require('crypto');
 const aws = require('aws-sdk');
 const { ObjectId } = require('mongodb');
+const sharp = require('sharp');
+const axios = require('axios');
+const crypto = require('crypto');
+const stream = require('stream');
+const { promisify } = require('util');
 
 const adminEmails = ['japanclassicstore@gmail.com','didier@line.com','e2@gmail.com']; // Add your admin emails here
 
@@ -22,6 +24,9 @@ const s3 = new aws.S3({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     region: process.env.AWS_REGION
 });
+const getS3Stream = (bucket, key) => {
+    return s3.getObject({ Bucket: bucket, Key: key }).createReadStream();
+};
 // Function to get the current counter value from the database
 async function getCounter(db) {
   const counterDoc = await db.collection('counters').findOne({ _id: 'storyCounter' });
@@ -43,6 +48,8 @@ async function getCounter(db) {
     const uploadResult = await s3.upload(params).promise();
     return uploadResult.Location;
 };
+
+
 const handleFileUpload = async (part) => {
     let buffer;
     if (part.file) {
@@ -72,6 +79,7 @@ const handleFileUpload = async (part) => {
         return uploadToS3(buffer, hash, part.filename || 'uploaded_file');
     }
 };
+
 
 const isValidUrl = (string) => {
     try {
@@ -176,4 +184,51 @@ async function convertImageUrlToBase64(imageUrl) {
     }
 }
 
-  module.exports = { getCounter, updateCounter, handleFileUpload, uploadToS3, checkLimits, checkUserAdmin, convertImageUrlToBase64}
+// Utility to convert a stream to a buffer
+const streamToBuffer = async (readableStream) => {
+    const chunks = [];
+    for await (const chunk of readableStream) {
+        chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
+};
+
+const createBlurredImage = async (imageUrl, blurLevel = 30, width = 50, height = 50) => {
+    try {
+        // Extract the S3 key from the URL
+        const urlParts = imageUrl.split('/');
+        const s3Key = decodeURIComponent(urlParts.slice(3).join('/'));
+        
+        // Get the image as a stream directly from S3
+        const imageStream = getS3Stream(process.env.AWS_S3_BUCKET_NAME, s3Key);
+
+        // Convert the stream to a buffer
+        const imageBuffer = await streamToBuffer(imageStream);
+
+        // Process the image using sharp (blur and resize)
+        const processedImageBuffer = await sharp(imageBuffer)
+            .blur(blurLevel)
+            .toBuffer();
+
+        // Generate a hash for the processed image buffer
+        const hash = crypto.createHash('md5').update(processedImageBuffer).digest('hex');
+
+        // Upload the processed image to S3 and return the URL
+        const filename = urlParts[urlParts.length - 1];
+        const uploadUrl = await uploadToS3(processedImageBuffer, hash, filename);
+
+        return uploadUrl;
+    } catch (error) {
+        console.error('Error creating blurred image:', error.message);
+        throw new Error('Failed to process the image.');
+    }
+};
+  module.exports = { getCounter, 
+    updateCounter, 
+    handleFileUpload, 
+    uploadToS3, 
+    checkLimits, 
+    checkUserAdmin, 
+    convertImageUrlToBase64,
+    createBlurredImage
+}

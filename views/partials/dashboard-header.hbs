@@ -32,12 +32,15 @@
         // Immediately retrieve the 'redirect_url' cookie, delete it, and redirect
         (function() {
             const redirectUrl = getCookie('redirect_url');
-            if (redirectUrl) {
+            const hasQueryParams = window.location.search.length > 0;
+
+            if (redirectUrl && !hasQueryParams) {
                 deleteCookie('redirect_url');
-                window.location.replace(window.location.origin + decodeURIComponent(redirectUrl) );
+                window.location.replace(window.location.origin + decodeURIComponent(redirectUrl));
             }
         })();
     </script>
+
 
     <link
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"

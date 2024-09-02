@@ -477,7 +477,7 @@ async function routes(fastify, options) {
                   quantity: 1,
               }],
               mode: 'payment',
-              success_url: `${frontEnd}/chat/?success=true&priceId=${priceId}&session_id={CHECKOUT_SESSION_ID}`,
+              success_url: `${frontEnd}/chat/?success=coins&priceId=${priceId}&session_id={CHECKOUT_SESSION_ID}`,
               cancel_url: `${frontEnd}/chat/?payment=false`,
               metadata: {
                   userId: userId 
@@ -491,6 +491,122 @@ async function routes(fastify, options) {
           reply.code(500).send({ error: 'Internal Server Error' });
       }
   });
+  fastify.post('/album/create-checkout-session', async (request, reply) => {
+    const { priceId, userId, chatId } = request.body;
+
+    const frontEnd = process.env.MODE === 'local' 
+      ? 'http://localhost:3000' 
+      : `https://${request.headers.host}`;
+
+    const user = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({
+        _id: new fastify.mongo.ObjectId(userId),
+    });
+
+    if (!user) {
+        return reply.status(404).send({ error: 'User not found' });
+    }
+
+    if (!priceId) {
+        return reply.code(400).send({ error: 'Invalid price ID' });
+    }
+
+    try {
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            customer_email: user.email,
+            line_items: [{
+                price: priceId,
+                quantity: 1,
+            }],
+            mode: 'payment',
+            success_url: `${frontEnd}/chat/?success=clients&priceId=${priceId}&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${frontEnd}/chat/?payment=false`,
+            metadata: {
+                userId,
+                chatId,
+                priceId
+            },
+            locale: 'ja',
+        });
+
+        reply.send({ id: session.id });
+    } catch (error) {
+        console.error('Error creating Stripe checkout session:', error);
+        reply.code(500).send({ error: 'Internal Server Error' });
+    }
+});
+fastify.post('/plan/update-clients', async (request, reply) => {
+  const { sessionId } = request.body;
+
+  try {
+      // Verify the session with Stripe
+      const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+      if (session.payment_status === 'paid') {
+          const userId = session.metadata.userId;
+          const chatId = session.metadata.chatId;
+          const priceId = session.metadata.priceId;
+
+          // Check if the session has already been processed
+          const existingClient = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('clients').findOne({
+              chatId: chatId,
+              priceId: priceId,
+              clients: userId
+          });
+
+          if (existingClient) {
+              return reply.code(400).send({ error: 'Session already processed' });
+          }
+
+          // Update the clients collection
+          await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('clients').updateOne(
+              { chatId: chatId, priceId: priceId },
+              {
+                  $setOnInsert: {
+                      chatId: chatId,
+                      priceId: priceId,
+                  },
+                  $addToSet: { clients: userId }
+              },
+              { upsert: true }
+          );
+
+          reply.send({ success: true });
+      } else {
+          reply.code(400).send({ error: 'Payment not completed' });
+      }
+  } catch (error) {
+      console.error('Error updating clients:', error);
+      reply.code(500).send({ error: 'Internal Server Error' });
+  }
+});
+fastify.post('/album/check-client', async (request, reply) => {
+  const { userId, chatId, priceId } = request.body;
+
+  if (!userId || !chatId || !priceId) {
+      return reply.status(400).send({ error: 'Missing userId, chatId, or productId' });
+  }
+
+  try {
+    const all_client = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('clients').find({}).toArray();
+    console.log(all_client)
+      const client = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('clients').findOne({
+          chatId: chatId,
+          priceId: priceId,
+          clients: userId
+      });
+
+      if (client) {
+          reply.send({ isClient: true });
+      } else {
+          reply.send({ isClient: false });
+      }
+  } catch (error) {
+      console.error('Error checking client:', error);
+      reply.send({ isClient: false });
+  }
+});
+
 
 }
 

@@ -1715,7 +1715,7 @@ async function routes(fastify, options) {
                 messages: [
                     { role: "system", content: `
                         You are an expert at structured data extraction. 
-                        Extract any proposals. It could be to buy, get or find an item or something else. 
+                        Extract any proposals. It could be to buy, get, find an item, sending picture or something else. 
                         Then return the item names with a price (between 10 and 50) in japanese. ` },
                     { role: "user", content: lastAssistantMessageContent },
                 ],

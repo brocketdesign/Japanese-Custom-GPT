@@ -33,7 +33,6 @@
         (function() {
             const redirectUrl = getCookie('redirect_url');
             const hasQueryParams = window.location.search.length > 0;
-
             if (redirectUrl && !hasQueryParams) {
                 deleteCookie('redirect_url');
                 window.location.replace(window.location.origin + decodeURIComponent(redirectUrl));

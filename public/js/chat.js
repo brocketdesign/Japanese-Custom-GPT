@@ -91,11 +91,12 @@ $(document).ready(function() {
                 $('#chatContainer').empty();
                 $('#startButtonContained').remove();
                 $('#chat-recommend').empty();
-
+                
                 const lastUserChat = await getUserChatHistory(fetch_chatId, fetch_userId);
 
                 fetch_chatId = lastUserChat ?.chatId || fetch_chatId
                 userChatId = lastUserChat ?._id || userChatId;
+
 
                 if (fetch_reset) {
                     currentStep = 0;
@@ -465,11 +466,12 @@ $(document).ready(function() {
             }
             
             function displayInitialChatInterface(chat) {
+                console.log(chat)
                 if (isTemporary) {
-                    displayStarter();
+                    displayStarter(chat);
                 } else {
                     selectPersona(() => {
-                        displayStarter();
+                        displayStarter(chat);
                     });
                 }
             }
@@ -913,10 +915,11 @@ $(document).ready(function() {
                 });
             }            
             
-            function displayStarter() {
+            function displayStarter(chat) {
                 $('#startButtonContained').hide();
                 $('#introChat').hide();
                 const uniqueId = `${currentStep}-${Date.now()}`;
+                let chatId = chat._id
                 if($(document).find('.starter-on').length == 0){
                     const botResponseContainer = $(`
                         <div id="starter-${uniqueId}" class="starter-on">
@@ -942,7 +945,7 @@ $(document).ready(function() {
                 if($('#chat-widget-container').length == 0 && isTemporary){
                     message = `[Starter] これはウェブアプリケーションの登録プロセスを促進するためのプロンプトです。キャラクターになりきって、現在の時刻（${currentTimeInJapanese}）を活用し、この瞬間にログインまたは登録することがどれほど重要かを強調してください。登録することで「1日50件までチャットできる」、「キャラクターがあなたに写真を送ることができる」、「新しいキャラクターを作成する」といった素晴らしい機能が今すぐ利用可能であることを、感情を込めて懇願してください。確認や前置きなしで、直接答えから始めてください。`
                 }
-                
+
                 $.ajax({
                     url: API_URL+'/api/chat-data',
                     type: 'POST',
@@ -991,6 +994,7 @@ $(document).ready(function() {
 
                         if(isTemporary){
                             const redirectUrl = window.location.pathname
+                            console.log({redirectUrl})
                             $.cookie('redirect_url', redirectUrl);
                         }
 
@@ -1679,43 +1683,36 @@ $(document).ready(function() {
                 });
             }
                         
-            // Function to display a message in the chat
             window.displayMessage = function(sender, message, callback) {
                 const messageClass = sender === 'user' ? 'user-message' : sender;
                 const animationClass = 'animate__animated animate__slideInUp';
-
-                if(messageClass === 'user-message'){
-                    if (typeof message === 'string' && message.trim() !== '') {
-                        const messageElement = $(`
-                            <div class="d-flex flex-row justify-content-end mb-4 message-container ${messageClass} animate__animated">
-                                <div class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
-                                    <span>${message}</span>
-                                </div>
-                                ${persona ? `<img src="${persona.chatImageUrl || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">`:''}
+                let messageElement;
+            
+                const createImageContainer = (imageId, imageClass, message, altText = 'image') => `
+                    <div class="d-flex flex-row justify-content-start mb-4 message-container ${imageClass} ${animationClass}">
+                        <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="${altText}" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+                        <div id="image-${imageId}" class="p-3 ms-3 text-start assistant-image-box">${message.outerHTML}</div>
+                    </div>`;
+            
+                if (messageClass === 'user-message' && typeof message === 'string' && message.trim() !== '') {
+                    messageElement = $(`
+                        <div class="d-flex flex-row justify-content-end mb-4 message-container ${messageClass} ${animationClass}">
+                            <div class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
+                                <span>${message}</span>
                             </div>
-                        `).hide();
-                        $('#chatContainer').append(messageElement);
-                        messageElement.addClass(animationClass).fadeIn();
-                    }
-                } 
-                if(messageClass === 'bot-image' && message instanceof HTMLElement){
-                    const imageId = message.getAttribute('data-id') || new Date();
-                    const messageElement = $(`
-                        <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} animate__animated">
-                            <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
-                            <div id="image-${imageId}" class="p-3 ms-3 text-start assistant-image-box">
-                            </div>
-                        </div>      
+                            ${persona ? `<img src="${persona.chatImageUrl || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">` : ''}
+                        </div>
                     `).hide();
-                    $('#chatContainer').append(messageElement);
-                    $(`#image-${imageId}`).append(message.outerHTML);
-                    messageElement.addClass(animationClass).fadeIn();
-                }
-                if(messageClass === 'bot-image-nsfw' && message instanceof HTMLElement){
-                    const imageId = message.getAttribute('data-id') || new Date();
-                    const messageElement = $(`
-                        <div class="d-flex flex-row justify-content-start mb-4 message-container bot-image-nsfw animate__animated" style="position: relative;">
-                            <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+                } 
+                else if (messageClass === 'bot-image' && message instanceof HTMLElement) {
+                    const imageId = message.getAttribute('data-id') || `image-${Date.now()}`;
+                    messageElement = $(createImageContainer(imageId, messageClass, message)).hide();
+                } 
+                else if (messageClass === 'bot-image-nsfw' && message instanceof HTMLElement) {
+                    const imageId = message.getAttribute('data-id') || `image-${Date.now()}`;
+                    messageElement = $(`
+                        <div class="d-flex flex-row justify-content-start mb-4 message-container bot-image-nsfw ${animationClass}" style="position: relative;">
+                            <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
                             <div class="position-relative">
                                 <div class="p-3 ms-3 text-start assistant-image-box">
                                     <img src="/img/nsfw-blurred.jpg" alt="NSFW">
@@ -1726,34 +1723,31 @@ $(document).ready(function() {
                                     </span>
                                 </div>
                             </div>
-                        </div>   
-                    `).hide();
-                    $('#chatContainer').append(messageElement);
-                    $(`#image-${imageId}`).append(message.outerHTML);
-                    messageElement.addClass(animationClass).fadeIn();
-                }
-                if (messageClass === 'assistant' && typeof message === 'string' && message.trim() !== '') {
-                    const uniqueId = `completion-${currentStep}-${Date.now()}`;
-                    const botResponseContainer = $(`
-                        <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container animate__animated">
-                            <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
-                            <div id="${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">
-                            </div>
                         </div>
                     `).hide();
-                    $('#chatContainer').append(botResponseContainer);
-                    $(`#${uniqueId}`).html(message);
-                    botResponseContainer.show().addClass(animationClass);
-                }               
-
-                $('#chatContainer').animate({
-                    scrollTop: $('#chatContainer').prop("scrollHeight")
-                }, 500); 
-
+                    $(`#image-${imageId}`).append(message.outerHTML);
+                } 
+                else if (messageClass === 'assistant' && typeof message === 'string' && message.trim() !== '') {
+                    const uniqueId = `completion-${currentStep}-${Date.now()}`;
+                    messageElement = $(`
+                        <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container ${animationClass}">
+                            <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
+                            <div id="${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">${message}</div>
+                        </div>
+                    `).hide();
+                }
+            
+                if (messageElement) {
+                    $('#chatContainer').append(messageElement);
+                    messageElement.fadeIn();
+                    $('#chatContainer').animate({ scrollTop: $('#chatContainer').prop("scrollHeight") }, 500);
+                }
+            
                 if (typeof callback === 'function') {
                     callback();
                 }
-            }
+            };
+            
 
 
             window.buyItem = function(itemId, itemName, itemPrice, status, userId, chatId, userChatId) {
@@ -2686,7 +2680,7 @@ window.getUserChatHistory = async function(chatId, userId) {
     return null;
 }
 window.renderChatList = function(userId,chatId) {
-    console.log({userId,chatId})
+
     if($(document).find('#chat-list').length == 0 || $('#chat-widget-container').length > 0){
         return
     }
@@ -2696,13 +2690,14 @@ window.renderChatList = function(userId,chatId) {
         url: '/api/chat-list/'+userId, // replace with your API endpoint
         success: function(data) {
             data.sort(function(a, b) {
+                if (!chatId) return 0; // No sorting if chatId is undefined
                 return (b._id === chatId) - (a._id === chatId);
-            });
+            });            
             var chatListHtml = '';
             $('#user-chat-count').html(`(${data.length})`)
             $.each(data, function(index, chat) {
                 chatListHtml += `
-                <div class="${chat._id === chatId?'active':''} chat-list item user-chat d-flex align-items-center justify-content-between p-1 mx-2 rounded bg-transparent" style="cursor: pointer;" 
+                    <div class="${chatId && chat._id === chatId ? 'active' : ''} chat-list item user-chat d-flex align-items-center justify-content-between p-1 mx-2 rounded bg-transparent" 
                     data-id="${chat._id}" data-userid="${chat.userId}" >
                     <div class="d-flex align-items-center w-100">
                         <div class="user-chat-content" style="flex: 1;display: flex;align-items: center;">

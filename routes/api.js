@@ -624,6 +624,8 @@ async function routes(fastify, options) {
                 
                 let userChatDocument = await collectionUserChat.findOne({ userId : new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
                 let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
+                console.log({chatId})
+                console.log({name:chatDocument.name})
                 const user = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
                 let personaId = await getUserPersona(user)
                 const persona  = personaId ? await collectionChat.findOne({_id: new fastify.mongo.ObjectId(personaId)}) : false
@@ -672,6 +674,13 @@ async function routes(fastify, options) {
                         }
                     }
                 }
+
+                const chats = await collectionChat.find({ 
+                    userId: new fastify.mongo.ObjectId(userId) ,
+                    name:{$exists:true}
+                }).sort({ latestChatDate: -1 }).toArray();
+                //console.log(chats)
+
                 if (!userChatDocument || isNew) {
                     //console.log(`Initialize chat: ${chatId}`);
                     const chatPurpose = convert(chatDocument.purpose)

@@ -479,6 +479,7 @@ $(document).ready(function() {
             
             function displayGalleries(galleries, blurred_galleries, chatId, fetch_userId) {
                 galleries.forEach((gallery, index) => {
+                    if(!gallery.images || gallery.images.length == 0){return}
                     const blurredImages = blurred_galleries[index].images;
                     const album = {
                         chatId,

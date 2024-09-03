@@ -994,7 +994,6 @@ $(document).ready(function() {
 
                         if(isTemporary){
                             const redirectUrl = window.location.pathname
-                            console.log({redirectUrl})
                             $.cookie('redirect_url', redirectUrl);
                         }
 
@@ -1688,31 +1687,38 @@ $(document).ready(function() {
                 const animationClass = 'animate__animated animate__slideInUp';
                 let messageElement;
             
-                const createImageContainer = (imageId, imageClass, message, altText = 'image') => `
-                    <div class="d-flex flex-row justify-content-start mb-4 message-container ${imageClass} ${animationClass}">
-                        <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="${altText}" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
-                        <div id="image-${imageId}" class="p-3 ms-3 text-start assistant-image-box">${message.outerHTML}</div>
-                    </div>`;
-            
-                if (messageClass === 'user-message' && typeof message === 'string' && message.trim() !== '') {
-                    messageElement = $(`
-                        <div class="d-flex flex-row justify-content-end mb-4 message-container ${messageClass} ${animationClass}">
-                            <div class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
-                                <span>${message}</span>
+                if (messageClass === 'user-message') {
+                    if (typeof message === 'string' && message.trim() !== '') {
+                        messageElement = $(`
+                            <div class="d-flex flex-row justify-content-end mb-4 message-container ${messageClass} ${animationClass}">
+                                <div class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
+                                    <span>${message}</span>
+                                </div>
+                                ${persona ? `<img src="${persona.chatImageUrl || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">` : ''}
                             </div>
-                            ${persona ? `<img src="${persona.chatImageUrl || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">` : ''}
-                        </div>
-                    `).hide();
+                        `).hide();
+                        $('#chatContainer').append(messageElement);
+                        messageElement.addClass(animationClass).fadeIn();
+                    }
                 } 
+            
                 else if (messageClass === 'bot-image' && message instanceof HTMLElement) {
-                    const imageId = message.getAttribute('data-id') || `image-${Date.now()}`;
-                    messageElement = $(createImageContainer(imageId, messageClass, message)).hide();
-                } 
-                else if (messageClass === 'bot-image-nsfw' && message instanceof HTMLElement) {
-                    const imageId = message.getAttribute('data-id') || `image-${Date.now()}`;
                     messageElement = $(`
-                        <div class="d-flex flex-row justify-content-start mb-4 message-container bot-image-nsfw ${animationClass}" style="position: relative;">
-                            <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+                        <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass}">
+                            <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
+                            <div class="p-3 ms-3 text-start assistant-image-box">
+                                ${message.outerHTML}
+                            </div>
+                        </div>      
+                    `).hide();
+                    $('#chatContainer').append(messageElement);
+                    messageElement.addClass(animationClass).fadeIn();
+                } 
+            
+                else if (messageClass === 'bot-image-nsfw') {
+                    messageElement = $(`
+                        <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass}" style="position: relative;">
+                            <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
                             <div class="position-relative">
                                 <div class="p-3 ms-3 text-start assistant-image-box">
                                     <img src="/img/nsfw-blurred.jpg" alt="NSFW">
@@ -1723,32 +1729,34 @@ $(document).ready(function() {
                                     </span>
                                 </div>
                             </div>
-                        </div>
+                        </div>   
                     `).hide();
-                    $(`#image-${imageId}`).append(message.outerHTML);
+                    $('#chatContainer').append(messageElement);
+                    messageElement.addClass(animationClass).fadeIn();
                 } 
+            
                 else if (messageClass === 'assistant' && typeof message === 'string' && message.trim() !== '') {
                     const uniqueId = `completion-${currentStep}-${Date.now()}`;
                     messageElement = $(`
                         <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container ${animationClass}">
-                            <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
-                            <div id="${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">${message}</div>
+                            <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top; cursor:pointer;">
+                            <div id="${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">
+                                ${message}
+                            </div>
                         </div>
                     `).hide();
+                    $('#chatContainer').append(messageElement);
+                    messageElement.show().addClass(animationClass);
                 }
             
-                if (messageElement) {
-                    $('#chatContainer').append(messageElement);
-                    messageElement.fadeIn();
-                    $('#chatContainer').animate({ scrollTop: $('#chatContainer').prop("scrollHeight") }, 500);
-                }
+                $('#chatContainer').animate({
+                    scrollTop: $('#chatContainer').prop("scrollHeight")
+                }, 500); 
             
                 if (typeof callback === 'function') {
                     callback();
                 }
-            };
-            
-
+            };            
 
             window.buyItem = function(itemId, itemName, itemPrice, status, userId, chatId, userChatId) {
             

@@ -447,6 +447,7 @@ $(document).ready(function() {
                 const today = new Date().toISOString().split('T')[0];
                 if (userChat.log_success) {
                     displayThankMessage();
+                    $.cookie('dailyBonusClaimed', today, { expires: 1 });
                 }else if ($.cookie('dailyBonusClaimed') != today && !isTemporary) {
                     thankUserAndAddCoins(function(response){
                         if(!response){return}

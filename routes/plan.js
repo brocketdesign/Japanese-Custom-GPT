@@ -459,6 +459,7 @@ fastify.post('/user/daily-bonus-coins', async (request, reply) => {
   try {
       let user = await fastify.getUser(request, reply);
       const userId = user._id;
+      user = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
       const today = new Date();
       today.setHours(0, 0, 0, 0); // Reset the time to midnight to compare dates

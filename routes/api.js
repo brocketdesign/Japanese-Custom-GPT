@@ -1673,13 +1673,11 @@ async function routes(fastify, options) {
             .reverse()
             .find(message => message.role === 'assistant')
             .content;
-            const containsSubstring = (str) => {
-                const regex = /\[\$\{\d+\}(coins|コイン)\]|\[|\]|coins|コイン/;
-                return regex.test(str);
-            };
-            const result = containsSubstring(lastAssistantMessageContent);
-            if(!result){
-                //return reply.send({proposeToBuy:false})
+
+            const result = lastAssistantMessageContent.startsWith("[");
+
+            if(result){
+                return reply.send({proposeToBuy:false})
             }
             // Send user messages to OpenAI for parsing to check for purchase proposals
             const completion = await openai.beta.chat.completions.parse({
@@ -1687,8 +1685,7 @@ async function routes(fastify, options) {
                 messages: [
                     { role: "system", content: `
                         You are an expert at structured data extraction. 
-                        Extract any proposals. It could be to buy, get, find an item, sending picture or something else. 
-                        Then return the item names with a price (between 10 and 50) in japanese. ` },
+                        Verify if the message is about sending a picture. If so return the image name with a price (between 10 and 50) in japanese. ` },
                     { role: "user", content: lastAssistantMessageContent },
                 ],
                 response_format: zodResponseFormat(PurchaseProposalExtraction, "purchase_proposal_extraction"),

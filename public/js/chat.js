@@ -447,11 +447,17 @@ $(document).ready(function() {
                 if (userChat.log_success) {
                     displayThankMessage();
                 }else if ($.cookie('dailyBonusClaimed') != today) {
-                    thankUserAndAddCoins()
-                    let message = `[Hidden] Ask me qhat picture of you that I want.`
-                    addMessageToChat(chatId, userChatId, 'user', message);
-                    generateCompletion(function(){
-                        checkForPurchaseProposal()
+                    thankUserAndAddCoins(function(response){
+                        if(!response){return}
+                        updateCoins()
+                        let message = `[Hidden] Tell me that you will send me a picture of you.`
+                        addMessageToChat(chatId, userChatId, 'user', message,function(){
+                            generateCompletion(function(){
+                                generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
+                                    generateImageNovita(API_URL, userId, chatId, userChatId, character, { prompt });
+                                });
+                            })
+                        });
                     })
                 }
 
@@ -625,7 +631,7 @@ $(document).ready(function() {
                   });
             }
             
-            function thankUserAndAddCoins() {
+            function thankUserAndAddCoins(callback) {
                 const customPrompt = {
                     systemContent: "あなたの役割は、ユーザーに感謝の気持ちを伝えるキャラクターとして行動することです。今回は、ログインしてくれたユーザーに、再び戻ってきてくれたことへの感謝を伝え、10コインをプレゼントする旨を優しく伝えてください。",
                     userContent: "ユーザーが再度ログインしました。心からの感謝とともに、10コインをプレゼントする短いメッセージを伝えてください。",
@@ -635,8 +641,12 @@ $(document).ready(function() {
                     presence_penalty: 0
                 };
 
-                generateCustomCompletion(customPrompt, function() {
-                    claimDailyBonus();
+                claimDailyBonus(function(response){
+                    if(response){
+                        generateCustomCompletion(customPrompt, function() {
+                            if(typeof callback == 'function'){callback(response)}
+                        });
+                    }
                 });
             }
 
@@ -1826,10 +1836,14 @@ $(document).ready(function() {
                         message: message
                     }),
                     success: function(response) {
-                        callback(null, response); // Pass the response to the callback on success
+                        if(typeof callback == 'function'){
+                            callback(null, response);
+                        }
                     },
                     error: function(xhr, status, error) {
-                        callback(error); // Pass the error to the callback on failure
+                        if(typeof callback == 'function'){
+                            callback(error);
+                        }
                     }
                 });
             }
@@ -2017,7 +2031,11 @@ $(document).ready(function() {
                     }
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        handleUserInfo(result.value)
+                        handleUserInfo(result.value);
+                        showPopupWithSwiper(function(){
+                            $.cookie('showPremiumPopup',true)
+                        })
+                        //showPremiumPopup()
                     }
                     
                 });
@@ -2172,13 +2190,6 @@ $(document).ready(function() {
                             populateDays($('#birthMonth').val(), $('#birthYear').val());
                         });
                     });
-                }else{
-                    if(!isTemporary && !subscriptionStatus && !$.cookie('showPremiumPopup')){
-                        showPopupWithSwiper(function(){
-                            $.cookie('showPremiumPopup',true)
-                        })
-                        //showPremiumPopup()
-                    }
                 }
             }
         });
@@ -2589,12 +2600,10 @@ window.claimDailyBonus = function(callback) {
                 showNotification('10 コインがデイリーボーナスとして追加されました！', 'success');
                 if (callback) callback(true);
             } else {
-                showNotification('デイリーボーナスを受け取ることができませんでした: ' + response.error, 'error');
                 if (callback) callback(false);
             }
         },
         error: function(xhr, status, error) {
-            showNotification('エラーが発生しました: ' + error, 'error');
             if (callback) callback(false);
         }
     });
@@ -2746,8 +2755,7 @@ window.renderChatList = function(userId,chatId) {
         }
     });
 }
-window.updateCoins = function(userCoins) {
-    if(!userCoins){
+window.updateCoins = function(userCoins = null) {
         let API_URL = localStorage.getItem('API_URL')
         $.ajax({
             url: API_URL+'/api/user',
@@ -2758,7 +2766,7 @@ window.updateCoins = function(userCoins) {
             }
         });
         return
-    }
+    
     $('.user-coins').each(function(){$(this).html(userCoins)})
 }
 window.resetChatUrl = function() {

@@ -656,7 +656,7 @@ $(document).ready(function() {
             function displayThankMessage(){
                 const customPrompt = {
                     systemContent: "あなたの役割は、常にキャラクターとして行動し、ユーザーに対して優しく丁寧な対応をすることです。今回は、ログインしてくれたユーザーに感謝の気持ちを伝える必要があります。ユーザーが戻ってきたことを嬉しく思っていることを、短くて優しい言葉で伝えてください。",
-                    userContent: "ユーザーがログインしました。あなたのキャラクターとして、心からの感謝と喜びを表現する短いメッセージを伝えてください。",
+                    userContent: "ユーザーがログインしました。あなたのキャラクターとして、心からの感謝と喜びを表現する短いメッセージを伝えてください。そして、100コインがユーザーに贈られたこともお伝えください。",
                     temperature: 0.7,
                     top_p: 0.9,
                     frequency_penalty: 0,
@@ -677,7 +677,6 @@ $(document).ready(function() {
                     data: JSON.stringify({ userId, userChatId }),
                     success: function(response) {
                         if (response.success) {
-                            console.log("log_success updated to false.");
                         } else {
                             console.warn(response.message);
                         }
@@ -1004,7 +1003,6 @@ $(document).ready(function() {
                         $('#introChat').show();
                         $(`#starter-${uniqueId}`).remove()
                         if (xhr.responseJSON) {
-                            console.log(xhr.responseJSON)
                             var errorStatus = xhr.status;
                             if (errorStatus === 403) {
                                 var limitIds = xhr.responseJSON.limitIds || [];
@@ -2418,9 +2416,6 @@ function enableToggleDropdown() {
 }
 function showRegistrationForm(messageId,callback) {
 
-    const redirectUrl = window.location.pathname
-    $.cookie('redirect_url', redirectUrl);
-
     //window.location = "/authenticate?register=true"
     Swal.fire({
       title: '',
@@ -2472,7 +2467,6 @@ function showRegistrationForm(messageId,callback) {
       }
     }).then((result) => {
         if (result.dismiss) {
-          $.removeCookie('redirect_url');
           if(typeof callback === 'function'){
             callback()
           }

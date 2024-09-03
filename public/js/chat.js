@@ -393,7 +393,7 @@ $(document).ready(function() {
                 }
             
                 if (data.chat.galleries && data.chat.galleries.length > 0) {
-                    displayGalleries(data.chat.galleries, data.chat.blurred_galleries, chatId, fetch_userId);
+                    displayGalleries(thumbnail, data.chat.galleries, data.chat.blurred_galleries, chatId, fetch_userId);
                 }
             
                 if (!isTemporary) {
@@ -489,7 +489,7 @@ $(document).ready(function() {
                 }
             }
             
-            function displayGalleries(galleries, blurred_galleries, chatId, fetch_userId) {
+            function displayGalleries(thumbnail, galleries, blurred_galleries, chatId, fetch_userId) {
                 galleries.forEach((gallery, index) => {
                     if(!gallery.images || gallery.images.length == 0){return}
                     const blurredImages = blurred_galleries[index].images;
@@ -499,20 +499,20 @@ $(document).ready(function() {
                         name: gallery.name,
                         price: gallery.price,
                         description: gallery.description,
-                        blurredImages: [gallery.images[0], ...blurredImages],
+                        blurredImages: [thumbnail, ...blurredImages],
                         images: gallery.images,
                         stripePriceId: gallery.stripePriceId,
                         stripeProductId: gallery.stripeProductId
                     };
             
-                    displayAlbumThumb(album);
+                    displayAlbumThumb(thumbnail, album);
                 });
             }
             
-            function displayAlbumThumb(album){
+            function displayAlbumThumb(thumbnail, album){
                 var card = $(`
                     <div class="card custom-card bg-transparent shadow-0 border-0 px-1 col-3 col-sm-4 col-lg-2" style="cursor:pointer;">
-                        <div style="background-image:url(${album.images[0]})" class="card-img-top rounded-avatar position-relative m-auto" alt="${album.name}">
+                        <div style="background-image:url(${thumbnail})" class="card-img-top rounded-avatar position-relative m-auto" alt="${album.name}">
                         </div>
                     </div>
                 `);

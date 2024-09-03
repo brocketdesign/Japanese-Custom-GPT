@@ -512,7 +512,7 @@ $(document).ready(function() {
             function displayAlbumThumb(thumbnail, album){
                 var card = $(`
                     <div class="card custom-card bg-transparent shadow-0 border-0 px-1 col-3 col-sm-4 col-lg-2" style="cursor:pointer;">
-                        <div style="background-image:url(${thumbnail})" class="card-img-top rounded-avatar position-relative m-auto" alt="${album.name}">
+                        <div style="background-image:url(${thumbnail});border:4px solid white;" class="card-img-top rounded-avatar position-relative m-auto shadow" alt="${album.name}">
                         </div>
                     </div>
                 `);

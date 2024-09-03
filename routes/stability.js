@@ -371,7 +371,6 @@ fastify.post('/huggingface/txt2img', async (request, reply) => {
   // NOVITA
     // Function to trigger the Novita API for text-to-image generation
     async function fetchNovitaMagic(data) {
-      console.log(data)
       try {
         const response = await axios.post('https://api.novita.ai/v3/async/txt2img', {
           extra: {
@@ -448,9 +447,9 @@ async function fetchNovitaResult(task_id) {
 
               // Optionally, you can log the progress or queue status
               if (taskStatus === 'TASK_STATUS_QUEUED') {
-                  console.log("Queueing...");
+                  //console.log("Queueing...");
               } else if (taskStatus === 'TASK_STATUS_RUNNING') {
-                  console.log(`Progress: ${response.data.task.progress_percent}%`);
+                  //console.log(`Progress: ${response.data.task.progress_percent}%`);
               }
 
           } catch (error) {

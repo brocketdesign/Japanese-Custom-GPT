@@ -1336,7 +1336,6 @@ async function routes(fastify, options) {
                 }
             ];
             completion = await moduleCompletion(imagePrompt, reply.raw);
-            console.log({completion})
             newImageCount = await collectionImageCount.findOneAndUpdate(
                 { userId: new fastify.mongo.ObjectId(userId), date: today },
                 { 
@@ -1889,7 +1888,7 @@ async function routes(fastify, options) {
                   { image: imageUrl }
                 ]
             });
-                          
+
             result = result?.description
 
             if (!result) {

@@ -3,7 +3,7 @@
 // Image generation is for premium users
 
 window.generateImagePromt = function(API_URL, userId, chatId, userChatId, thumbnail, character, callback) {
-console.log({character})
+
   const apiUrl = API_URL + '/api/openai-chat-image-completion/';          
   // Initialize the narrator response container
   const imageResponseContainer = $(`

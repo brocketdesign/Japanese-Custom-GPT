@@ -1972,7 +1972,7 @@ $(document).ready(function() {
                         </div>
                     `
             }
-            function handleUserInfo(value){
+            function handleUserInfo(value,callback){
                 const { nickname, birthYear, birthMonth, birthDay, gender } = value;
                 const formData = new FormData();
                 formData.append('nickname', nickname);
@@ -1988,10 +1988,12 @@ $(document).ready(function() {
                     contentType: false,
                     data: formData,
                     success: function(response) {
-                        showNotification('情報が更新されました。','success')
+                        //showNotification('情報が更新されました。','success')
+                        if(typeof callback == 'function'){callback()}
                     },
                     error: function() {
                         showNotification('情報の更新中に問題が発生しました。','error')
+                        if(typeof callback == 'function'){callback()}
                     }
                 });
             }
@@ -2032,10 +2034,13 @@ $(document).ready(function() {
                 }).then((result) => {
                     if (result.isConfirmed) {
                         handleUserInfo(result.value);
-                        showPopupWithSwiper(function(){
-                            $.cookie('showPremiumPopup',true)
-                        })
-                        //showPremiumPopup()
+
+                        if(!isTemporary && !subscriptionStatus && !$.cookie('showPremiumPopup')){
+                            showPopupWithSwiper(function(){
+                                $.cookie('showPremiumPopup',true)
+                            })
+                            //showPremiumPopup()
+                        }
                     }
                     
                 });
@@ -2190,6 +2195,13 @@ $(document).ready(function() {
                             populateDays($('#birthMonth').val(), $('#birthYear').val());
                         });
                     });
+                }else{
+                    if(!isTemporary && !subscriptionStatus && !$.cookie('showPremiumPopup')){
+                        showPopupWithSwiper(function(){
+                            $.cookie('showPremiumPopup',true)
+                        })
+                        //showPremiumPopup()
+                    }
                 }
             }
         });

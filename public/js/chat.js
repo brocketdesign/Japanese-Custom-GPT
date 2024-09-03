@@ -462,11 +462,11 @@ $(document).ready(function() {
                     })
                 }
 
-                checkForPurchaseProposal();
+                if(!isTemporary){checkForPurchaseProposal()}
             }
             
             function displayInitialChatInterface(chat) {
-                console.log(chat)
+
                 if (isTemporary) {
                     displayStarter(chat);
                 } else {

@@ -86,12 +86,7 @@ $(document).ready(function() {
 
             sendCustomData({action: 'viewpage'});
             if(chatId){
-                getUserChatHistory(chatId, userId,function(lastChat){
-                    if(lastChat){
-                        userChatId = lastChat._id
-                    }
-                    fetchchatData(chatId, userId)
-                });
+                fetchchatData(chatId, userId)
             }else{
                 showDiscovery()
             }
@@ -155,13 +150,9 @@ $(document).ready(function() {
                 $('#chat-container').css('background-image', `url(${chatImageUrl})`);
                 $('#chatContainer').empty();
                 $('#chat-recommend').empty()
-                getUserChatHistory(selectChatId, userId, function(lastChat) {
-                    if (lastChat) {
-                        userChatId = lastChat._id;
-                    }
-                    fetchchatData(selectChatId, userId, null, function() {
-                        $this.removeClass('loading');
-                    });
+                
+                fetchchatData(selectChatId, userId, null, function() {
+                    $this.removeClass('loading');
                 });
             });
              
@@ -335,131 +326,148 @@ $(document).ready(function() {
                 sendCustomData({action:'unlock-result'})
                 promptForEmail()
             })
-            window.fetchchatData = function(fetch_chatId,fetch_userId,fetch_reset,callback) {
-
-                $('#chatContainer').empty()
+            window.fetchchatData = async function(fetch_chatId, fetch_userId, fetch_reset, callback) {
+                $('#chatContainer').empty();
                 $('#startButtonContained').remove();
-                $('#chat-recommend').empty()
-
-                if(fetch_reset){
-                    currentStep = 0
+                $('#chat-recommend').empty();
+            
+                const lastUserChat = await getUserChatHistory(fetch_chatId, fetch_userId);
+                userChatId = lastUserChat ? lastUserChat._id : userChatId;
+            
+                if (fetch_reset) {
+                    currentStep = 0;
                 }
-                count_proposal = 0
+            
+                count_proposal = 0;
+            
                 $.ajax({
-                    url: API_URL+`/api/chat/`,
+                    url: `${API_URL}/api/chat/`,
                     type: 'POST',
                     dataType: 'json',
                     contentType: 'application/json',
-                    data: JSON.stringify({ userId: fetch_userId, chatId: fetch_chatId, userChatId}),
+                    data: JSON.stringify({ userId: fetch_userId, chatId: fetch_chatId, userChatId }),
                     success: function(data) {
-                        chatId = data.chat._id
-                        $(document).find(`.chat-list.item[data-id="${chatId}"]`).addClass('active').siblings().removeClass('active');
-
-                        isNew = fetch_reset || data.isNew
-                        if(!data.chat){
-                            showDiscovery();
-                            return
-                        }
-                        chatData = data.chat.content || [];
-                        totalSteps = chatData ? chatData.length : 0;
-
-                        chatName = data.chat.name
-                        thumbnail = data.chat.thumbnailUrl || data.chat.chatImageUrl
-
-                        character = data.character
-
-                        if(data.chat.language){
-                            language = data.chat.language
-                        }
-
-                        let gender = data.chat.gender || 'female'
-                        if(data.chat.character && data.chat.character.prompt){
-                            gender = data.chat.character.prompt.toLowerCase();
-                            if (/\bmale\b/.test(gender)) {
-                                gender = "male";
-                            } else if (/\bfemale\b/.test(gender)) {
-                                gender = "female";
-                            }
-                            
-                        }
-                        $('#chat-container').attr('data-genre',gender)
-                        var currentImageUrl = $('#chat-container').css('background-image').replace(/url\(["']?|["']?\)$/g, '');
-                        if(currentImageUrl != thumbnail){
-                            $('#chat-container').css(`background-image`,`url(${thumbnail})`)
-                        }
-                        $('#chat-title').text(chatName)
-                        $('#input-container').show().addClass('d-flex');
-                        $('#userMessage').attr('placeholder',chatName+'にメッセージを送る')
-
-                        if(!isNew){
-                            persona = data.userChat.persona
-                            displayChat(data.userChat.messages,data.userChat.persona)
-                            if(data.userChat.log_success){
-                                displayThankMessage()
-                            }
-                            checkForPurchaseProposal();
-                        }
-
-                        if(isNew && chatData && chatData.length > 0){
-                            displayStep(chatData, currentStep);
-                        }
-
-                        if(isNew && chatData && chatData.length == 0 ){
-                            //createIntro(data.chat)
-                            //createButton(data.chat)
-                            if(isTemporary){
-                                displayStarter();
-                            }else{
-                                selectPersona(function(){
-                                    displayStarter();
-                                })
-                            }
-                        }
-
-                        if (data.chat.galleries && data.chat.galleries.length > 0) {
-                            data.chat.galleries.forEach((gallery, galleryIndex) => {
-                                const blurredImages = data.chat.blurred_galleries[galleryIndex].images; 
-                                const album = {
-                                    chatId,
-                                    userId,
-                                    name: gallery.name,
-                                    price: gallery.price,
-                                    description: gallery.description,
-                                    blurredImages: [gallery.images[0], ...blurredImages],
-                                    images: gallery.images,
-                                    stripePriceId: gallery.stripePriceId,
-                                    stripeProductId: gallery.stripeProductId
-                                };
-                                
-                                displayAlbumThumb(album)
-                            });
-                        }
-                        
-                        if(!isTemporary){
-                            const messagesCount = data?.userChat?.messagesCount || 0;
-                            const maxMessages = data?.userChat?.nextLevel || 10 ;
-                            initializeOrUpdateProgress(messagesCount,maxMessages)
-                        }
-
-                        
-                        updateParameters(data.chat._id,fetch_userId)
-                        showChat();    
-
-                        $('#chatContainer').animate({
-                            scrollTop: $('#chatContainer').prop("scrollHeight")
-                        }, 500); 
+                        handleChatSuccess(data, fetch_reset, fetch_userId);
                     },
                     error: function(xhr, status, error) {
-                        //console.log(error)
                         showDiscovery();
                     },
                     complete: function(xhr, status) {
-                      if(typeof callback == 'function'){
-                        callback()
-                      }
+                        if (typeof callback === 'function') {
+                            callback();
+                        }
                     }
                 });
             }
+            
+            function handleChatSuccess(data, fetch_reset, fetch_userId) {
+                const chatId = data.chat._id;
+                $(document).find(`.chat-list.item[data-id="${chatId}"]`).addClass('active').siblings().removeClass('active');
+            
+                const isNew = fetch_reset || data.isNew;
+                if (!data.chat) {
+                    showDiscovery();
+                    return;
+                }
+            
+                setupChatData(data.chat);
+                setupChatInterface(data.chat, data.character);
+                
+                if (!isNew) {
+                    displayExistingChat(data.userChat);
+                } else if (data.chat.content && data.chat.content.length > 0) {
+                    displayStep(data.chat.content, currentStep);
+                } else {
+                    displayInitialChatInterface(data.chat);
+                }
+            
+                if (data.chat.galleries && data.chat.galleries.length > 0) {
+                    displayGalleries(data.chat.galleries, data.chat.blurred_galleries, chatId, fetch_userId);
+                }
+            
+                if (!isTemporary) {
+                    initializeOrUpdateProgress(data?.userChat?.messagesCount || 0, data?.userChat?.nextLevel || 10);
+                }
+            
+                updateParameters(chatId, fetch_userId);
+                showChat();
+            
+                $('#chatContainer').animate({
+                    scrollTop: $('#chatContainer').prop("scrollHeight")
+                }, 500);
+            }
+            
+            function setupChatData(chat) {
+                chatData = chat.content || [];
+                totalSteps = chatData.length;
+                chatName = chat.name;
+                thumbnail = chat.thumbnailUrl || chat.chatImageUrl;
+            }
+            
+            function setupChatInterface(chat, character) {
+                const gender = determineChatGender(chat);
+            
+                $('#chat-container').attr('data-genre', gender);
+                updateChatBackgroundImage(thumbnail);
+                $('#chat-title').text(chatName);
+                $('#input-container').show().addClass('d-flex');
+                $('#userMessage').attr('placeholder', `${chatName}にメッセージを送る`);
+            }
+            
+            function determineChatGender(chat) {
+                let gender = chat.gender || 'female';
+                if (chat.character && chat.character.prompt) {
+                    gender = chat.character.prompt.toLowerCase();
+                    gender = /\bmale\b/.test(gender) ? "male" : "female";
+                }
+                return gender;
+            }
+            
+            function updateChatBackgroundImage(thumbnail) {
+                const currentImageUrl = $('#chat-container').css('background-image').replace(/url\(["']?|["']?\)$/g, '');
+                if (currentImageUrl !== thumbnail) {
+                    $('#chat-container').css('background-image', `url(${thumbnail})`);
+                }
+            }
+            
+            function displayExistingChat(userChat) {
+                persona = userChat.persona;
+                displayChat(userChat.messages, persona);
+                if (userChat.log_success) {
+                    displayThankMessage();
+                }
+                checkForPurchaseProposal();
+            }
+            
+            function displayInitialChatInterface(chat) {
+                if (isTemporary) {
+                    displayStarter();
+                } else {
+                    selectPersona(() => {
+                        displayStarter();
+                    });
+                }
+            }
+            
+            function displayGalleries(galleries, blurred_galleries, chatId, fetch_userId) {
+                galleries.forEach((gallery, index) => {
+                    const blurredImages = blurred_galleries[index].images;
+                    const album = {
+                        chatId,
+                        userId: fetch_userId,
+                        name: gallery.name,
+                        price: gallery.price,
+                        description: gallery.description,
+                        blurredImages: [gallery.images[0], ...blurredImages],
+                        images: gallery.images,
+                        stripePriceId: gallery.stripePriceId,
+                        stripeProductId: gallery.stripeProductId
+                    };
+            
+                    displayAlbumThumb(album);
+                });
+            }
+            
             function displayAlbumThumb(album){
                 var card = $(`
                     <div class="card custom-card bg-transparent shadow-0 border-0 px-1 col-3 col-sm-4 col-lg-2" style="cursor:pointer;">
@@ -1889,7 +1897,6 @@ async function displayAlbum(album) {
                                     </label>
                                     <div class="input-group">
                                         <input id="nickname" type="text" class="form-control form-control-sm" placeholder="ニックネームを入力">
-                                        <button id="generate-nickname" type="button" class="btn btn-light btn-sm shadow-0 border-0 input-group-tex">生成</button>
                                     </div>
                                 </div>                        
                             </div>        
@@ -1927,7 +1934,7 @@ async function displayAlbum(album) {
                       confirmButton: 'bg-secondary px-5'
                     },
                     showClass: {
-                        popup: 'bg-dark animate__animated animate__fadeInDown'
+                        popup: 'custom-gradient-bg-no-animation animate__animated animate__fadeInDown'
                     },
                     hideClass: {
                         popup: 'animate__animated animate__fadeOutUp'
@@ -2072,7 +2079,7 @@ async function displayAlbum(album) {
                 const userBirthYear = user?.birthDate?.year ?? '';
                 const userBirthMonth = user?.birthDate?.month ?? '';
                 const userBirthDay = user?.birthDate?.day ?? '';
-                
+                //showPopupUserInfo()
                 if (!userNickname || !userBirthYear || !userBirthMonth || !userBirthDay || !userGender) {
                     showPopupUserInfo(function(callback){
                         var currentYear = new Date().getFullYear() - 15;
@@ -2109,9 +2116,8 @@ async function displayAlbum(album) {
                         });
                     });
                 }else{
-                    if(!isTemporary && !subscriptionStatus && !localStorage.getItem('showPremiumPopup')){
+                    if(!isTemporary && !subscriptionStatus && !$.cookie('showPremiumPopup')){
                         showPremiumPopup()
-                        localStorage.setItem('showPremiumPopup',true)
                     }
                 }
             }
@@ -2524,26 +2530,27 @@ window.updatePersona = function(personaId,isAdding,callback,callbackError){
         }
     });
 }
-window.getUserChatHistory = function(chatId, userId, callback) {
-    $.ajax({
-      url: `/api/chat-history/${chatId}`,
-      type: 'POST',
-      data: JSON.stringify({ userId: userId }),
-      contentType: 'application/json',
-      dataType: 'json',
-      success: function(data) {
-        const lastChat = data.find(chat =>!chat.isWidget);
-        if(lastChat){
-            userChatId = lastChat._id
+window.getUserChatHistory = async function(chatId, userId) {
+    try {
+        const response = await $.ajax({
+            url: `/api/chat-history/${chatId}`,
+            type: 'POST',
+            data: JSON.stringify({ userId: userId }),
+            contentType: 'application/json',
+            dataType: 'json'
+        });
+
+        console.log(response);
+        const lastChat = response.find(chat => !chat.isWidget);
+        if (lastChat) {
+            const userChatId = lastChat._id;
             localStorage.setItem('userChatId', userChatId);
+            return lastChat;
         }
-        displayUserChatHistory(data);
-        if (callback) { callback(lastChat) }
-      },
-      error: function(jqXHR, textStatus, errorThrown) {
-        console.error('Error fetching user chat history:', errorThrown);
-      }
-    });
+    } catch (error) {
+        console.error('Error fetching user chat history:', error);
+    }
+    return null;
 }
 window.renderChatList = function(userId,chatId) {
     if($('#chat-list').length == 0 || $('#chat-widget-container').length > 0){

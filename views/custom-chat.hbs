@@ -122,7 +122,9 @@
         .isLoading .fa-spin{
             display: inherit !important;
         }
-        
+        .custom-gradient-bg-no-animation{
+            background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
+        }
         .custom-gradient-bg {
             background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
             color: white;
@@ -1165,6 +1167,7 @@ function redirectToChat(chatId,chatImage) {
     $(`#spinner-${chatId}`).addClass('on').show()
     const user = {{{json user}}}
     const userId = user._id
+
     fetchchatData(chatId,userId,null,function(){
         $(`#spinner-${chatId}`).removeClass('on').hide()
     })

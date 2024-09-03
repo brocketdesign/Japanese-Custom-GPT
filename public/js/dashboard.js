@@ -391,6 +391,7 @@ window.showPremiumPopup = function() {
             }, 3000);
         }
     }).then((result) => {
+        $.cookie('showPremiumPopup', true, { expires: 1/24 });
         if (result.dismiss) {
             // Display a secondary popup after the first one is closed
             Swal.fire({

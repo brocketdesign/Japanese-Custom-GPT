@@ -591,6 +591,10 @@ $(document).ready(function() {
                 });
         
         $(document).on('click', '#destroy-swiper', function () {
+            toggleSwiper(swiper)
+        });
+        
+        function toggleSwiper(swiper){
             if (swiper.initialized) {
                 swiper.destroy(true, true); // true to reset styles
             } else {
@@ -617,12 +621,14 @@ $(document).ready(function() {
                     }
                 });
             }
-            $(this).toggleClass('mt-3')
-            $(this).find('i').toggleClass('fa-th-large fa-image')
+            $(document).find('#destroy-swiper').toggleClass('mt-3')
+            $(document).find('#destroy-swiper').find('i').toggleClass('fa-th-large fa-image')
             $('#album-container .wrapper').toggleClass('swiper-wrappe row m-auto');
-            $('#album-container .slide').toggleClass('swiper-slide col-12 col-sm-4 col-lg-3');
-        });
-        
+            $('#album-container .slide').toggleClass('swiper-slide col-4 col-sm-4 col-lg-3');
+            $('#album-container').find('.swiper-button-next').hide()
+            $('#album-container').find('.swiper-button-prev').hide()
+        }
+        toggleSwiper(swiper)
     } catch (error) {
         console.error('Error displaying album:', error);
     }

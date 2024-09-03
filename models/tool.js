@@ -193,7 +193,7 @@ const streamToBuffer = async (readableStream) => {
     return Buffer.concat(chunks);
 };
 
-const createBlurredImage = async (imageUrl, blurLevel = 30, width = 50, height = 50) => {
+const createBlurredImage = async (imageUrl, blurLevel = 50, width = 50, height = 50) => {
     try {
         // Extract the S3 key from the URL
         const urlParts = imageUrl.split('/');

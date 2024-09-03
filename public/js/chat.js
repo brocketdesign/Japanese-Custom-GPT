@@ -373,7 +373,7 @@ $(document).ready(function() {
             function handleChatSuccess(data, fetch_reset, fetch_userId) {
                 const chatId = data.chat._id;
                 $(document).find(`.chat-list.item[data-id="${chatId}"]`).addClass('active').siblings().removeClass('active');
-console.log(data.character)
+
                 const isNew = fetch_reset || data.isNew;
 
                 if (!data.chat) {
@@ -413,6 +413,8 @@ console.log(data.character)
                 totalSteps = chatData.length;
                 chatName = chat.name;
                 thumbnail = chat.thumbnailUrl || chat.chatImageUrl;
+                console.log(thumbnail)
+                localStorage.setItem('thumbnail',thumbnail)
             }
             
             function setupChatInterface(chat, character) {
@@ -443,6 +445,7 @@ console.log(data.character)
             
             function displayExistingChat(userChat,character) {
                 persona = userChat.persona;
+                thumbnail = character?.image || localStorage.getItem('thumbnail')
                 displayChat(userChat.messages, persona);
                 const today = new Date().toISOString().split('T')[0];
                 if (userChat.log_success) {
@@ -455,9 +458,19 @@ console.log(data.character)
                         let message = `[Hidden] Tell me that you will send me a picture of you.`
                         addMessageToChat(chatId, userChatId, 'user', message,function(){
                             generateCompletion(function(){
-                                generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
-                                    generateImageNovita(API_URL, userId, chatId, userChatId, character, { prompt });
-                                });
+                                checkImageDescription(thumbnail,function(response){
+                                    if(!response){
+                                        generateImageDescriptionBackend(thumbnail,function(){
+                                            generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
+                                                generateImageNovita(API_URL, userId, chatId, userChatId, character, { prompt });
+                                            });
+                                        })
+                                    }else{
+                                        generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
+                                            generateImageNovita(API_URL, userId, chatId, userChatId, character, { prompt });
+                                        });
+                                    }
+                                }) 
                             })
                         });
                     })
@@ -1782,10 +1795,23 @@ console.log(data.character)
                                     if (error) {
                                         console.error('Error adding message:', error);
                                     } else {
+                                        thumbnail = thumbnail || localStorage.getItem('thumbnail')
+                                        console.log({thumbnail})
                                         generateCompletion(function(){
-                                            generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
-                                                generateImageNovita(API_URL, userId, chatId, userChatId, character, { prompt });
-                                            });
+                                            checkImageDescription(thumbnail,function(response){
+                                                if(!response){
+                                                    generateImageDescriptionBackend(thumbnail,function(){
+                                                        generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
+                                                            generateImageNovita(API_URL, userId, chatId, userChatId, character, { prompt });
+                                                        });
+                                                    })
+                                                }else{
+                                                    console.log(response)
+                                                    generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
+                                                        generateImageNovita(API_URL, userId, chatId, userChatId, character, { prompt });
+                                                    });
+                                                }
+                                            }) 
                                         });
                                     }
                                 });

@@ -106,6 +106,73 @@ $(document).ready(function() {
     }
 
     //checkAndRedirect();
+    window.checkImageDescription = function(imageUrl = null, callback) {
+        imageUrl = imageUrl ? imageUrl : $('#chatImageUrl').val();
+
+        if (!imageUrl) {
+            console.log('Image URL is required.');
+            callback(null);
+            return;
+        }
+
+        $.ajax({
+            url: '/api/check-image-description',
+            method: 'GET',
+            data: { imageUrl: imageUrl },
+            success: function(response) {
+                if (callback) {
+                    callback(response);
+                }
+            },
+            error: function(xhr) {
+                if (callback) {
+                    callback(null);
+                }
+            }
+        });
+    }
+    window.generateImageDescriptionBackend = function(imageUrl = null, callback) {
+        imageUrl = imageUrl ? imageUrl : $('#chatImageUrl').val();
+        const language = $('#language').val() || 'japanese';
+
+        const system = createSystemPayloadImage(language);
+
+        const apiUrl = '/api/openai-image-description';
+
+        $.ajax({
+            url: apiUrl,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ system, imageUrl }),
+            success: function(response) {
+                console.log(response);
+                if (callback) {
+                    callback(response);
+                }
+            },
+            error: function(xhr) {
+                alert('Error:', xhr.responseText)
+                console.log('Error:', xhr.responseText);
+                if (callback) {
+                    callback(null);
+                }
+            }
+        });
+    }
+
+
+    function createSystemPayloadImage(language) {
+        return [
+            {
+                "type": "text",
+                "text": 
+                `
+                You generate a highly detailed character face description from the image provided, 
+                Your response containe the character on age, skin color, hair, eyes, body type, gender, facial features. Respond in a single, descriptive line of plain text using keywords. \n
+                Here is an example : young girl, yellow eyes, long hair, white hair, white skin, voluptuous body, cute face, smiling.`
+            }
+        ];
+    }
 
     window.showUpgradePopup = function(limitType) {
         const redirectUrl = window.location.pathname

@@ -1279,6 +1279,8 @@ async function routes(fastify, options) {
         if (userLimitCheck.limitIds?.includes(3)) {
             return reply.status(403).send(userLimitCheck);
         }
+        const collectionCharacters = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('characters');
+        const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
         const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
         const collectionImageCount = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('ImageCount');
         const { chatId, userChatId, character } = request.body;    
@@ -1290,7 +1292,22 @@ async function routes(fastify, options) {
                 console.log(`User data not found`)
                 return reply.status(404).send({ error: 'User data not found' });
             }
+
             characterDescription = character?.description || null
+            if(!characterDescription){
+                const chatData = await collectionChat.findOne({_id: new fastify.mongo.ObjectId(chatId) })
+                if(chatData.chatImageUrl){
+                    const image_url = new URL(chatData.chatImageUrl);
+                    const path = image_url.pathname;
+    
+                    const character = await collectionCharacters.findOne({
+                        image: { $regex: path }
+                    });
+                    if (character) {
+                        characterDescription = character?.description || null;
+                    } 
+                }
+            }
             let userMessages = userData.messages;
             const imagePrompt = [
                 { 

@@ -373,7 +373,7 @@ $(document).ready(function() {
             function handleChatSuccess(data, fetch_reset, fetch_userId) {
                 const chatId = data.chat._id;
                 $(document).find(`.chat-list.item[data-id="${chatId}"]`).addClass('active').siblings().removeClass('active');
-            
+console.log(data.character)
                 const isNew = fetch_reset || data.isNew;
 
                 if (!data.chat) {
@@ -385,7 +385,7 @@ $(document).ready(function() {
                 setupChatInterface(data.chat, data.character);
                 
                 if (!isNew) {
-                    displayExistingChat(data.userChat);
+                    displayExistingChat(data.userChat, data.character);
                 } else if (data.chat.content && data.chat.content.length > 0) {
                     displayStep(data.chat.content, currentStep);
                 } else {
@@ -441,7 +441,7 @@ $(document).ready(function() {
                 }
             }
             
-            function displayExistingChat(userChat) {
+            function displayExistingChat(userChat,character) {
                 persona = userChat.persona;
                 displayChat(userChat.messages, persona);
                 const today = new Date().toISOString().split('T')[0];

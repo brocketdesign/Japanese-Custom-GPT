@@ -142,6 +142,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         sameSite: 'None', // Allows cross-domain cookies
         //secure: true // Ensures the cookie is only sent over HTTPS
       });
+
     } else {
       tempUser = JSON.parse(tempUser);
     }

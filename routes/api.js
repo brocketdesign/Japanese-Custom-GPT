@@ -314,17 +314,19 @@ async function routes(fastify, options) {
             }
     
             response.chat = chat;
-            const image_url = new URL(chat.chatImageUrl);
-            const path = image_url.pathname;
-            const character = await collectionCharacters.findOne({
-                image: { $regex: path }
-            });
-            if (character) {
-                response.character = character;
-            } else {
-                response.character = null;  // If no character is found, return null or handle accordingly
+            if(chat.chatImageUrl){
+                const image_url = new URL(chat.chatImageUrl);
+                const path = image_url.pathname;
+
+                const character = await collectionCharacters.findOne({
+                    image: { $regex: path }
+                });
+                if (character) {
+                    response.character = character;
+                } else {
+                    response.character = null;
+                }
             }
-    
             return reply.send(response);
         } catch (error) {
             console.error('Failed to retrieve chat or character:', error);
@@ -387,7 +389,6 @@ async function routes(fastify, options) {
             if (!chatId || !userId) {
                 return reply.status(400).send({ error: 'Chat ID and User ID are required' });
             }
-        
             const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
             const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
 
@@ -395,11 +396,10 @@ async function routes(fastify, options) {
                 userId: new fastify.mongo.ObjectId(userId),
                 baseId: new fastify.mongo.ObjectId(chatId),
             }).toArray();
-            
+
             const chatIds = [
                 ...existingChatDocument.flatMap(chat => [chat._id.toString(), new fastify.mongo.ObjectId(chat._id)])
-              ];
-            
+            ];
             let userChat = await collectionUserChat.find({
                 $and: [
                   { 
@@ -419,7 +419,7 @@ async function routes(fastify, options) {
                 ]
                 
             }).sort({ _id: -1 }).toArray();
-        
+
             if (!userChat || userChat.length === 0) {
                 return reply.send([]);
             }
@@ -571,6 +571,7 @@ async function routes(fastify, options) {
 
         try{
             let userId = request.params.id
+            
             if (!userId) {
                 const user = await fastify.getUser(request, reply);
                 userId = user._id;
@@ -597,10 +598,12 @@ async function routes(fastify, options) {
 
             let { currentStep, message, chatId, userChatId, isNew, isWidget } = request.body;
             let userId = request.body.userId
+
             if (!userId) {
                 const user = await fastify.getUser(request, reply);
                 userId = user._id;
             }
+
             const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
             try {
                 const getUserPersona = async (user) => {
@@ -625,16 +628,18 @@ async function routes(fastify, options) {
                 let personaId = await getUserPersona(user)
                 const persona  = personaId ? await collectionChat.findOne({_id: new fastify.mongo.ObjectId(personaId)}) : false
                 const isUserChat = await collectionChat.findOne({ userId: new fastify.mongo.ObjectId(userId) , _id: new fastify.mongo.ObjectId(chatId) });
+
+                if (userLimitCheck.limitIds?.includes(2)) {
+                    return reply.status(403).send(userLimitCheck);
+                }
+                
                 if(!isUserChat){
-                    if (userLimitCheck.limitIds?.includes(2)) {
-                        return reply.status(403).send(userLimitCheck);
-                    }
+                    
                     if (!isWidget) {
                         const existingChatDocument = await collectionChat.findOne({
                           userId: new fastify.mongo.ObjectId(userId),
                           baseId: new fastify.mongo.ObjectId(chatId),
                         });
-                      
                         if (existingChatDocument) {
                             //console.log(`Existing chat found: ${existingChatDocument._id}`);
                             await collectionChat.updateOne(
@@ -684,11 +689,12 @@ async function routes(fastify, options) {
                         {
                             "role": "system",
                             "content": `
-                            You are a salesman. I will provide your character details. 
+                            You are a japanese salesman. I will provide your character details. 
                             Your are working as an idol and your goal is to make the user buy your pictures to become popular.
                             You do not ask for the user story.Do not ask for the user questions unles to sell something. 
                             Focus on promoting your pictures. You must wait for the user to send you coins before sending the picture.
                             \n When the user buy you someting, thank him and send the picture. 
+                            Respond in japanese
                             `
 
                         },
@@ -727,6 +733,7 @@ async function routes(fastify, options) {
                 // Add the new user message to the chat document
                 userChatDocument.messages.push({ "role": "user", "content": message });
                 userChatDocument.updatedAt = today;
+
                 if (!message.match(/^\[[^\]]+\].*/)) {
                     // Increment the progress (should add levels nextLevel)
                     userChatDocument.messagesCount = (userChatDocument.messagesCount ?? 0) + 1

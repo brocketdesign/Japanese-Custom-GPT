@@ -91,12 +91,12 @@ $(document).ready(function() {
                 $('#chatContainer').empty();
                 $('#startButtonContained').remove();
                 $('#chat-recommend').empty();
-            
+
                 const lastUserChat = await getUserChatHistory(fetch_chatId, fetch_userId);
 
                 fetch_chatId = lastUserChat ?.chatId || fetch_chatId
                 userChatId = lastUserChat ?._id || userChatId;
-            
+
                 if (fetch_reset) {
                     currentStep = 0;
                 }
@@ -446,7 +446,7 @@ $(document).ready(function() {
                 const today = new Date().toISOString().split('T')[0];
                 if (userChat.log_success) {
                     displayThankMessage();
-                }else if ($.cookie('dailyBonusClaimed') != today) {
+                }else if ($.cookie('dailyBonusClaimed') != today && !isTemporary) {
                     thankUserAndAddCoins(function(response){
                         if(!response){return}
                         updateCoins()
@@ -1678,26 +1678,28 @@ $(document).ready(function() {
                     }
                 });
             }
-            
+                        
             // Function to display a message in the chat
             window.displayMessage = function(sender, message, callback) {
                 const messageClass = sender === 'user' ? 'user-message' : sender;
                 const animationClass = 'animate__animated animate__slideInUp';
 
                 if(messageClass === 'user-message'){
-                    const messageElement = $(`
-                        <div class="d-flex flex-row justify-content-end mb-4 message-container ${messageClass} animate__animated">
-                            <div class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
-                                <span>${message}</span>
+                    if (typeof message === 'string' && message.trim() !== '') {
+                        const messageElement = $(`
+                            <div class="d-flex flex-row justify-content-end mb-4 message-container ${messageClass} animate__animated">
+                                <div class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
+                                    <span>${message}</span>
+                                </div>
+                                ${persona ? `<img src="${persona.chatImageUrl || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">`:''}
                             </div>
-                            ${persona ? `<img src="${persona.chatImageUrl || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">`:''}
-                        </div>
-                    `).hide();
-                    $('#chatContainer').append(messageElement);
-                    messageElement.addClass(animationClass).fadeIn();
+                        `).hide();
+                        $('#chatContainer').append(messageElement);
+                        messageElement.addClass(animationClass).fadeIn();
+                    }
                 } 
-                if(messageClass === 'bot-image'){
-                    const imageId = message.getAttribute('data-id');
+                if(messageClass === 'bot-image' && message instanceof HTMLElement){
+                    const imageId = message.getAttribute('data-id') || new Date();
                     const messageElement = $(`
                         <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} animate__animated">
                             <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
@@ -1709,7 +1711,8 @@ $(document).ready(function() {
                     $(`#image-${imageId}`).append(message.outerHTML);
                     messageElement.addClass(animationClass).fadeIn();
                 }
-                if(messageClass === 'bot-image-nsfw'){
+                if(messageClass === 'bot-image-nsfw' && message instanceof HTMLElement){
+                    const imageId = message.getAttribute('data-id') || new Date();
                     const messageElement = $(`
                         <div class="d-flex flex-row justify-content-start mb-4 message-container bot-image-nsfw animate__animated" style="position: relative;">
                             <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
@@ -1729,7 +1732,7 @@ $(document).ready(function() {
                     $(`#image-${imageId}`).append(message.outerHTML);
                     messageElement.addClass(animationClass).fadeIn();
                 }
-                if (messageClass === 'assistant') {
+                if (messageClass === 'assistant' && typeof message === 'string' && message.trim() !== '') {
                     const uniqueId = `completion-${currentStep}-${Date.now()}`;
                     const botResponseContainer = $(`
                         <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container animate__animated">
@@ -1751,6 +1754,7 @@ $(document).ready(function() {
                     callback();
                 }
             }
+
 
             window.buyItem = function(itemId, itemName, itemPrice, status, userId, chatId, userChatId) {
             
@@ -2498,6 +2502,7 @@ $(document).find('#register-form').on('submit', function(event) {
     });
 });
 function displayUserChatHistory(userChat) {
+
     const chatHistoryContainer = $('#chat-history');
     chatHistoryContainer.empty();
 
@@ -2681,9 +2686,11 @@ window.getUserChatHistory = async function(chatId, userId) {
     return null;
 }
 window.renderChatList = function(userId,chatId) {
-    if($('#chat-list').length == 0 || $('#chat-widget-container').length > 0){
+    console.log({userId,chatId})
+    if($(document).find('#chat-list').length == 0 || $('#chat-widget-container').length > 0){
         return
     }
+
     $.ajax({
         type: 'GET',
         url: '/api/chat-list/'+userId, // replace with your API endpoint

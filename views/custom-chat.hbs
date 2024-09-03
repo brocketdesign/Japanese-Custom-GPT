@@ -1177,7 +1177,6 @@ function redirectToChat(chatId,chatImage) {
     $(`#spinner-${chatId}`).addClass('on').show()
     const user = {{{json user}}}
     const userId = user._id
-
     fetchChatData(chatId,userId,null,function(){
         $(`#spinner-${chatId}`).removeClass('on').hide()
     })

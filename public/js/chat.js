@@ -1796,7 +1796,6 @@ $(document).ready(function() {
                                         console.error('Error adding message:', error);
                                     } else {
                                         thumbnail = thumbnail || localStorage.getItem('thumbnail')
-                                        console.log({thumbnail})
                                         generateCompletion(function(){
                                             checkImageDescription(thumbnail,function(response){
                                                 if(!response){
@@ -1806,7 +1805,6 @@ $(document).ready(function() {
                                                         });
                                                     })
                                                 }else{
-                                                    console.log(response)
                                                     generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
                                                         generateImageNovita(API_URL, userId, chatId, userChatId, character, { prompt });
                                                     });

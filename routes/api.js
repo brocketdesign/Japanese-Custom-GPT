@@ -1308,6 +1308,7 @@ async function routes(fastify, options) {
                     } 
                 }
             }
+            console.log({characterDescription})
             let userMessages = userData.messages;
             const imagePrompt = [
                 { 
@@ -1817,29 +1818,33 @@ async function routes(fastify, options) {
                     }]
                 }
             ];
-            // Trigger the operations without waiting
-            moduleCompletion(messages)
-                .then(async (description) => {
-                    console.log({description});
-                    const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
-                    const collection = db.collection('characters');
-    
-                    const result = {
-                        image: imageUrl,
-                        description: description,
-                        timestamp: new Date()
-                    };
-    
-                    await collection.updateOne(
-                        { image: imageUrl },
-                        { $set: result },
-                        { upsert: true }
-                    );
-                })
-                .catch(error => console.error('Error processing the image description:', error));
-    
-            // Immediately respond without waiting for the background operations
-            reply.send({ status: 'Processing in the background' });
+
+            try {
+                const description = await moduleCompletion(messages);
+                console.log({ description });
+
+                const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+                const collection = db.collection('characters');
+
+                const result = {
+                    image: imageUrl,
+                    description: description,
+                    timestamp: new Date()
+                };
+
+                await collection.updateOne(
+                    { image: imageUrl },
+                    { $set: result },
+                    { upsert: true }
+                );
+
+                // Send the description after all operations are done
+                reply.send({ description });
+            } catch (error) {
+                console.error('Error processing the image description:', error);
+                reply.send({ error: 'Failed to process the description' });
+            }
+
         } catch (error) {
             console.log(error);
             reply.status(500).send({ error: 'Internal Server Error', details: error.message });

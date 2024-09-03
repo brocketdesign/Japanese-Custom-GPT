@@ -413,7 +413,6 @@ $(document).ready(function() {
                 totalSteps = chatData.length;
                 chatName = chat.name;
                 thumbnail = chat.thumbnailUrl || chat.chatImageUrl;
-                console.log(thumbnail)
                 localStorage.setItem('thumbnail',thumbnail)
             }
             

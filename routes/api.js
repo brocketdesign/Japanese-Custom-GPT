@@ -624,8 +624,6 @@ async function routes(fastify, options) {
                 
                 let userChatDocument = await collectionUserChat.findOne({ userId : new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
                 let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
-                console.log({chatId})
-                console.log({name:chatDocument.name})
                 const user = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
                 let personaId = await getUserPersona(user)
                 const persona  = personaId ? await collectionChat.findOne({_id: new fastify.mongo.ObjectId(personaId)}) : false
@@ -1308,7 +1306,6 @@ async function routes(fastify, options) {
                     } 
                 }
             }
-            console.log({characterDescription})
             let userMessages = userData.messages;
             const imagePrompt = [
                 { 
@@ -1821,7 +1818,6 @@ async function routes(fastify, options) {
 
             try {
                 const description = await moduleCompletion(messages);
-                console.log({ description });
 
                 const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
                 const collection = db.collection('characters');
@@ -1887,8 +1883,13 @@ async function routes(fastify, options) {
             const collection = db.collection('characters');
     
             // Check if the description for the image already exists in the database
-            let result = await collection.findOne({ chatImageUrl: imageUrl });
-            
+            let result = await collection.findOne({
+                $or: [
+                  { chatImageUrl: imageUrl },
+                  { image: imageUrl }
+                ]
+            });
+                          
             result = result?.description
 
             if (!result) {

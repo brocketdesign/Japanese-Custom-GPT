@@ -145,14 +145,12 @@ $(document).ready(function() {
             contentType: 'application/json',
             data: JSON.stringify({ system, imageUrl }),
             success: function(response) {
-                console.log(response);
                 if (callback) {
                     callback(response);
                 }
             },
             error: function(xhr) {
                 alert('Error:', xhr.responseText)
-                console.log('Error:', xhr.responseText);
                 if (callback) {
                     callback(null);
                 }

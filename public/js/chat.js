@@ -102,7 +102,6 @@ $(document).ready(function() {
                 }
             
                 count_proposal = 0;
-                console.log({fetch_chatId, fetch_userId, userChatId, fetch_reset})
                 
                 postChatData(fetch_chatId, fetch_userId, userChatId, fetch_reset, callback);
             }
@@ -444,9 +443,13 @@ $(document).ready(function() {
             function displayExistingChat(userChat) {
                 persona = userChat.persona;
                 displayChat(userChat.messages, persona);
+                const today = new Date().toISOString().split('T')[0];
                 if (userChat.log_success) {
                     displayThankMessage();
+                }else if ($.cookie('dailyBonusClaimed') != today) {
+                    thankUserAndAddCoins()
                 }
+
                 checkForPurchaseProposal();
             }
             
@@ -617,7 +620,21 @@ $(document).ready(function() {
                   });
             }
             
-            
+            function thankUserAndAddCoins() {
+                const customPrompt = {
+                    systemContent: "あなたの役割は、ユーザーに感謝の気持ちを伝えるキャラクターとして行動することです。今回は、ログインしてくれたユーザーに、再び戻ってきてくれたことへの感謝を伝え、10コインをプレゼントする旨を優しく伝えてください。",
+                    userContent: "ユーザーが再度ログインしました。心からの感謝とともに、10コインをプレゼントする短いメッセージを伝えてください。",
+                    temperature: 0.7,
+                    top_p: 0.9,
+                    frequency_penalty: 0,
+                    presence_penalty: 0
+                };
+
+                generateCustomCompletion(customPrompt, function() {
+                    claimDailyBonus();
+                });
+            }
+
             function displayThankMessage(){
                 const customPrompt = {
                     systemContent: "あなたの役割は、常にキャラクターとして行動し、ユーザーに対して優しく丁寧な対応をすることです。今回は、ログインしてくれたユーザーに感謝の気持ちを伝える必要があります。ユーザーが戻ってきたことを嬉しく思っていることを、短くて優しい言葉で伝えてください。",
@@ -2026,6 +2043,11 @@ $(document).ready(function() {
                                     <img src="/img/sales/4.jpg" alt="Image 3" style="width: 100%;">
                                     </a>
                                 </div>
+                                <div class="swiper-slide">
+                                    <a href="/my-plan">
+                                    <img src="/img/sales/5.jpg" alt="Image 3" style="width: 100%;">
+                                    </a>
+                                </div>
                             </div>
                         </div>
                         <div style="bottom: -50px;left:0;right:0;z-index: 100;" class="mx-auto position-absolute w-100">
@@ -2037,7 +2059,6 @@ $(document).ready(function() {
                     showConfirmButton: false,
                     allowOutsideClick: false,
                     showCancelButton: false,
-                    backdrop: 'rgba(255, 255, 255, 0.11)',
                     customClass: {
                         confirmButton: 'bg-secondary px-5', htmlContainer:'position-relative overflow-visible'
                     },
@@ -2154,7 +2175,9 @@ $(document).ready(function() {
                     });
                 }else{
                     if(!isTemporary && !subscriptionStatus && !$.cookie('showPremiumPopup')){
-                        showPopupWithSwiper()
+                        showPopupWithSwiper(function(){
+                            $.cookie('showPremiumPopup',true)
+                        })
                         //showPremiumPopup()
                     }
                 }
@@ -2549,6 +2572,54 @@ function renderChatDropdown(chat) {
 
     return dropdownHtml 
 }
+window.claimDailyBonus = function(callback) {
+    const today = new Date().toISOString().split('T')[0];
+
+    if ($.cookie('dailyBonusClaimed') === today) {
+        showNotification('今日のデイリーボーナスはすでに受け取っています。', 'error');
+        if (callback) callback(false);
+        return;
+    }
+
+    $.ajax({
+        url: '/user/daily-bonus-coins',
+        type: 'POST',
+        success: function(response) {
+            if (response.success) {
+                $.cookie('dailyBonusClaimed', today, { expires: 1 });
+                showNotification('10 コインがデイリーボーナスとして追加されました！', 'success');
+                if (callback) callback(true);
+            } else {
+                showNotification('デイリーボーナスを受け取ることができませんでした: ' + response.error, 'error');
+                if (callback) callback(false);
+            }
+        },
+        error: function(xhr, status, error) {
+            showNotification('エラーが発生しました: ' + error, 'error');
+            if (callback) callback(false);
+        }
+    });
+};
+
+
+window.addCoinsToUser = function(coinsToAdd) {
+    $.ajax({
+        url: '/user/add-coins',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ coinsToAdd: coinsToAdd }),
+        success: function(response) {
+            if (response.success) {
+                showNotification(`${coinsToAdd} コインが正常に追加されました！`, 'success');
+            } else {
+                showNotification(`${coinsToAdd} コインの追加に失敗しました: ${response.error}`, 'error');
+            }
+        },
+        error: function(xhr, status, error) {
+            showNotification(`エラーが発生しました: ${error}`, 'error');
+        }
+    });
+};
 window.updatePersona = function(personaId,isAdding,callback,callbackError){
     $.post('/api/user/personas', { personaId: personaId, action: isAdding ? 'add' : 'remove' }, function() {
         const message = isAdding ? 'ペルソナが追加されました' : 'ペルソナが削除されました';

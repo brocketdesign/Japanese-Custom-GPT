@@ -433,6 +433,60 @@ async function routes(fastify, options) {
       }
       return priceMapping[priceId] || 0;
   }
+  fastify.post('/user/add-coins', async (request, reply) => {
+    try {
+        let user = await fastify.getUser(request, reply);
+        const userId = user._id;
+        const { coinsToAdd } = request.body;
+
+        if (coinsToAdd > 0) {
+            // Update the user's coins
+            await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
+                { _id: new fastify.mongo.ObjectId(userId) },
+                { $inc: { coins: coinsToAdd } }
+            );
+
+            reply.send({ success: true });
+        } else {
+            reply.code(400).send({ error: 'Invalid number of coins' });
+        }
+    } catch (error) {
+        console.error('Error adding coins:', error);
+        reply.code(500).send({ error: 'Internal Server Error' });
+    }
+});
+fastify.post('/user/daily-bonus-coins', async (request, reply) => {
+  try {
+      let user = await fastify.getUser(request, reply);
+      const userId = user._id;
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Reset the time to midnight to compare dates
+
+      // Check if the user has already claimed the daily bonus
+      const lastClaimed = user.lastDailyBonus ? new Date(user.lastDailyBonus) : null;
+
+      if (lastClaimed && lastClaimed.getTime() === today.getTime()) {
+          return reply.code(400).send({ error: 'Daily bonus already claimed' });
+      }
+
+      // Add 10 coins to the user and update the lastDailyBonus date
+      await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
+          { _id: new fastify.mongo.ObjectId(userId) },
+          {
+              $inc: { coins: 10 },
+              $set: { lastDailyBonus: today }
+          }
+      );
+
+      reply.send({ success: true, message: '10 coins added as daily bonus' });
+  } catch (error) {
+      console.error('Error adding daily bonus coins:', error);
+      reply.code(500).send({ error: 'Internal Server Error' });
+  }
+});
+
+
   fastify.post('/plan/create-checkout-session', async (request, reply) => {
       const { buttonId, userId} = request.body;
       const frontEnd = process.env.MODE === 'local' 

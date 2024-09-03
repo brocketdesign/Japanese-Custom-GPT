@@ -1572,7 +1572,7 @@ async function routes(fastify, options) {
 
         try {
             const { userId, chatId, userChatId, customPrompt } = session;
-            
+            console.log(session)
             const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
             let userData = await collectionUserChat.findOne({ userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
 

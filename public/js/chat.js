@@ -44,6 +44,7 @@ $(document).ready(function() {
 
             let count_proposal = 0
             const subscriptionStatus = user.subscriptionStatus == 'active'
+
             $('.is-free-user').each(function(){if(!subscriptionStatus && !isTemporary)$(this).show()})
 
             if(isTemporary){
@@ -92,7 +93,7 @@ $(document).ready(function() {
                 $('#chat-recommend').empty();
             
                 const lastUserChat = await getUserChatHistory(fetch_chatId, fetch_userId);
-                console.log(lastUserChat)
+
                 fetch_chatId = lastUserChat ?.chatId || fetch_chatId
                 userChatId = lastUserChat ?._id || userChatId;
             
@@ -1894,10 +1895,8 @@ $(document).ready(function() {
                 const nouns = ["ライオン", "トラ", "ファルコン", "フェニックス", "オオカミ", "イーグル"];
                 return adjectives[Math.floor(Math.random() * adjectives.length)] + nouns[Math.floor(Math.random() * nouns.length)];
             }
-        
-            function showPopupUserInfo(callback) {
-                Swal.fire({
-                    html: `
+            function UserInfoForm(){
+                return `
                         <div class="row mb-3">    
                             <div class="col-9">
                                 <div class="form-group mb-3 text-start">
@@ -1935,7 +1934,35 @@ $(document).ready(function() {
                                 </select>
                             </div>
                         </div>
-                    `,
+                    `
+            }
+            function handleUserInfo(value){
+                const { nickname, birthYear, birthMonth, birthDay, gender } = value;
+                const formData = new FormData();
+                formData.append('nickname', nickname);
+                formData.append('birthYear', birthYear);
+                formData.append('birthMonth', birthMonth);
+                formData.append('birthDay', birthDay);
+                formData.append('gender', gender);
+            
+                $.ajax({
+                    url: '/user/update-info',
+                    type: 'POST',
+                    processData: false,
+                    contentType: false,
+                    data: formData,
+                    success: function(response) {
+                        showNotification('情報が更新されました。','success')
+                    },
+                    error: function() {
+                        showNotification('情報の更新中に問題が発生しました。','error')
+                    }
+                });
+            }
+
+            function showPopupUserInfo(callback) {
+                Swal.fire({
+                    html: UserInfoForm(),
                     focusConfirm: false,
                     confirmButtonText: '送信',
                     allowOutsideClick: false,
@@ -1943,14 +1970,14 @@ $(document).ready(function() {
                     customClass: {
                       confirmButton: 'bg-secondary px-5'
                     },
-                    showClass: {
-                        popup: 'custom-gradient-bg-no-animation animate__animated animate__fadeInDown'
+                        showClass: {
+                            popup: 'custom-gradient-bg-no-animation animate__animated animate__fadeIn'
                     },
-                    hideClass: {
-                        popup: 'animate__animated animate__fadeOutUp'
+                        hideClass: {
+                            popup: 'animate__animated animate__fadeOut'
                     },
-                    didOpen: () => {
-                        if (callback) callback();
+                        didOpen: () => {
+                            if (callback) callback();
                     },
                     preConfirm: () => {
                         const nickname = $('#nickname').val();
@@ -1968,72 +1995,72 @@ $(document).ready(function() {
                     }
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        const { nickname, birthYear, birthMonth, birthDay, gender } = result.value;
-                    
-                        const formData = new FormData();
-                        formData.append('nickname', nickname);
-                        formData.append('birthYear', birthYear);
-                        formData.append('birthMonth', birthMonth);
-                        formData.append('birthDay', birthDay);
-                        formData.append('gender', gender);
-                    
-                        $.ajax({
-                            url: '/user/update-info',
-                            type: 'POST',
-                            processData: false,
-                            contentType: false,
-                            data: formData,
-                            success: function(response) {
-                                Swal.fire({
-                                    position: 'top-end',
-                                    icon: 'success',
-                                    title: '情報が更新されました。',
-                                    showConfirmButton: false,
-                                    timer: 3000,
-                                    toast: true,
-                                    animation: false,
-                                    customClass: {
-                                        container: 'animate__animated animate__fadeOutUp animate__delay-3s',
-                                        title: 'swal2-custom-title',
-                                        popup: 'swal2-custom-popup'
-                                    },
-                                    showClass: {
-                                        popup: 'animate__animated animate__slideInRight'
-                                    },
-                                    hideClass: {
-                                        popup: 'animate__animated animate__slideOutRight'
-                                    }
-                                });
-                            },
-                            error: function() {
-                                Swal.fire({
-                                    position: 'top-end',
-                                    icon: 'error',
-                                    title: '情報の更新中に問題が発生しました。',
-                                    showConfirmButton: false,
-                                    timer: 3000,
-                                    toast: true,
-                                    animation: false,
-                                    customClass: {
-                                        container: 'animate__animated animate__fadeOutUp animate__delay-3s',
-                                        title: 'swal2-custom-title',
-                                        popup: 'swal2-custom-popup'
-                                    },
-                                    didOpen: (popup) => {
-                                        popup.classList.add('animate__animated', 'animate__slideInRight');
-                                    },
-                                    willClose: (popup) => {
-                                        popup.classList.add('animate__animated', 'animate__slideOutRight');
-                                    }
-                                });
-                            }
-                        });
+                        handleUserInfo(result.value)
                     }
                     
                 });
-        
-                $('#generate-nickname').on('click', function() {
-                    $('#nickname').val(generateRandomNickname());
+            }
+            
+            function showPopupWithSwiper(callback) {
+                Swal.fire({
+                    html: `
+                        <div class="swiper-container">
+                            <div class="swiper-wrapper">
+                                <div class="swiper-slide">
+                                    <a href="/my-plan">
+                                    <img src="/img/sales/1.jpg" alt="Image 1" style="width: 100%;">
+                                    </a>
+                                </div>
+                                <div class="swiper-slide">
+                                    <a href="/my-plan">
+                                    <img src="/img/sales/2.jpg" alt="Image 2" style="width: 100%;">
+                                    </a>
+                                </div>
+                                <div class="swiper-slide">
+                                    <a href="/my-plan">
+                                    <img src="/img/sales/3.jpg" alt="Image 3" style="width: 100%;">
+                                    </a>
+                                </div>
+                                <div class="swiper-slide">
+                                    <a href="/my-plan">
+                                    <img src="/img/sales/4.jpg" alt="Image 3" style="width: 100%;">
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="bottom: -50px;left:0;right:0;z-index: 100;" class="mx-auto position-absolute w-100">
+                            <a href="/my-plan" class="btn btn-lg custom-gradient-bg text-white fw-bold" style="border-radius:50px;"><i class="far fa-star me-2"></i>プレミアムプランを試す</a>
+                            <span id="closeButton" style="opacity:0" class="text-muted mx-auto w-100 d-block mt-1">検討する</span>
+                        </div>
+                    `,
+                    focusConfirm: false,
+                    showConfirmButton: false,
+                    allowOutsideClick: false,
+                    showCancelButton: false,
+                    backdrop: 'rgba(255, 255, 255, 0.11)',
+                    customClass: {
+                        confirmButton: 'bg-secondary px-5', htmlContainer:'position-relative overflow-visible'
+                    },
+                    showClass: {
+                        popup: 'bg-transparent animate__animated animate__fadeIn'
+                    },
+                    hideClass: {
+                        popup: 'animate__animated animate__fadeOut'
+                    },
+                    didOpen: () => {
+                        new Swiper('.swiper-container', {
+                            slidesPerView: 1,
+                            loop: false,
+                            spaceBetween: 20,
+                        });
+                        document.getElementById('closeButton').addEventListener('click', () => {
+                            Swal.close();
+                        });
+                        setTimeout(() => {
+                            $('#closeButton').animate({ opacity: 1 }, 'slow');
+                        }, 3000);
+                        if (callback) callback();
+                    }
                 });
             }
             function checkForPurchaseProposal() {
@@ -2089,7 +2116,7 @@ $(document).ready(function() {
                 const userBirthYear = user?.birthDate?.year ?? '';
                 const userBirthMonth = user?.birthDate?.month ?? '';
                 const userBirthDay = user?.birthDate?.day ?? '';
-                //showPopupUserInfo()
+               
                 if (!userNickname || !userBirthYear || !userBirthMonth || !userBirthDay || !userGender) {
                     showPopupUserInfo(function(callback){
                         var currentYear = new Date().getFullYear() - 15;
@@ -2127,7 +2154,8 @@ $(document).ready(function() {
                     });
                 }else{
                     if(!isTemporary && !subscriptionStatus && !$.cookie('showPremiumPopup')){
-                        showPremiumPopup()
+                        showPopupWithSwiper()
+                        //showPremiumPopup()
                     }
                 }
             }

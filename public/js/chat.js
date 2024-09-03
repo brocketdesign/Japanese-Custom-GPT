@@ -2539,8 +2539,6 @@ window.getUserChatHistory = async function(chatId, userId) {
             contentType: 'application/json',
             dataType: 'json'
         });
-
-        console.log(response);
         const lastChat = response.find(chat => !chat.isWidget);
         if (lastChat) {
             const userChatId = lastChat._id;

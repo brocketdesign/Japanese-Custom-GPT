@@ -448,6 +448,11 @@ $(document).ready(function() {
                     displayThankMessage();
                 }else if ($.cookie('dailyBonusClaimed') != today) {
                     thankUserAndAddCoins()
+                    let message = `[Hidden] Ask me qhat picture of you that I want.`
+                    addMessageToChat(chatId, userChatId, 'user', message);
+                    generateCompletion(function(){
+                        checkForPurchaseProposal()
+                    })
                 }
 
                 checkForPurchaseProposal();
@@ -2112,13 +2117,7 @@ $(document).ready(function() {
                         }else{
                             if(count_proposal >= 4){
                                 let message = `[Hidden] Prepare to propose an item`
-                                addMessageToChat(chatId, userChatId, 'user', message, function(error, res) {
-                                    if (error) {
-                                        console.error('Error adding message:', error);
-                                    } else {
-                                        //console.log('Message added successfully:', res);
-                                    }
-                                });
+                                addMessageToChat(chatId, userChatId, 'user', message);
                             }
                         }
                         count_proposal ++

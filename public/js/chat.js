@@ -85,8 +85,50 @@ $(document).ready(function() {
             }
 
             sendCustomData({action: 'viewpage'});
+
+            window.fetchChatData = async function(fetch_chatId, fetch_userId, fetch_reset, callback) {
+                $('#chatContainer').empty();
+                $('#startButtonContained').remove();
+                $('#chat-recommend').empty();
+            
+                const lastUserChat = await getUserChatHistory(fetch_chatId, fetch_userId);
+                console.log(lastUserChat)
+                fetch_chatId = lastUserChat ?.chatId || fetch_chatId
+                userChatId = lastUserChat ?._id || userChatId;
+            
+                if (fetch_reset) {
+                    currentStep = 0;
+                }
+            
+                count_proposal = 0;
+                console.log({fetch_chatId, fetch_userId, userChatId, fetch_reset})
+                
+                postChatData(fetch_chatId, fetch_userId, userChatId, fetch_reset, callback);
+            }
+            
+            function postChatData(fetch_chatId, fetch_userId, userChatId, fetch_reset, callback) {
+                $.ajax({
+                    url: `${API_URL}/api/chat/`,
+                    type: 'POST',
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ userId: fetch_userId, chatId: fetch_chatId, userChatId }),
+                    success: function(data) {
+                        handleChatSuccess(data, fetch_reset, fetch_userId);
+                    },
+                    error: function(xhr, status, error) {
+                        showDiscovery();
+                    },
+                    complete: function(xhr, status) {
+                        if (typeof callback === 'function') {
+                            callback();
+                        }
+                    }
+                });
+            }            
+
             if(chatId){
-                fetchchatData(chatId, userId)
+                fetchChatData(chatId, userId)
             }else{
                 showDiscovery()
             }
@@ -132,13 +174,13 @@ $(document).ready(function() {
 
             $(document).on('click','.reset-chat', function(){
                 chatId = $(this).data('id')
-                fetchchatData(chatId, userId, true) ;
+                fetchChatData(chatId, userId, true) ;
             })
             $(document).on('click','.user-chat-history', function(){
                 //const selectUser = $(this).data('user')
                 chatId = $(this).data('id')
                 userChatId = $(this).data('chat')
-                fetchchatData(chatId, userId)
+                postChatData(chatId, userId, userChatId, null, null) 
             })
             $(document).on('click', '.chat-list.item.user-chat .user-chat-content', function(e) {
                 const $this = $(this);
@@ -151,7 +193,7 @@ $(document).ready(function() {
                 $('#chatContainer').empty();
                 $('#chat-recommend').empty()
                 
-                fetchchatData(selectChatId, userId, null, function() {
+                fetchChatData(selectChatId, userId, null, function() {
                     $this.removeClass('loading');
                 });
             });
@@ -326,45 +368,13 @@ $(document).ready(function() {
                 sendCustomData({action:'unlock-result'})
                 promptForEmail()
             })
-            window.fetchchatData = async function(fetch_chatId, fetch_userId, fetch_reset, callback) {
-                $('#chatContainer').empty();
-                $('#startButtonContained').remove();
-                $('#chat-recommend').empty();
-            
-                const lastUserChat = await getUserChatHistory(fetch_chatId, fetch_userId);
-                userChatId = lastUserChat ? lastUserChat._id : userChatId;
-            
-                if (fetch_reset) {
-                    currentStep = 0;
-                }
-            
-                count_proposal = 0;
-            
-                $.ajax({
-                    url: `${API_URL}/api/chat/`,
-                    type: 'POST',
-                    dataType: 'json',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ userId: fetch_userId, chatId: fetch_chatId, userChatId }),
-                    success: function(data) {
-                        handleChatSuccess(data, fetch_reset, fetch_userId);
-                    },
-                    error: function(xhr, status, error) {
-                        showDiscovery();
-                    },
-                    complete: function(xhr, status) {
-                        if (typeof callback === 'function') {
-                            callback();
-                        }
-                    }
-                });
-            }
             
             function handleChatSuccess(data, fetch_reset, fetch_userId) {
                 const chatId = data.chat._id;
                 $(document).find(`.chat-list.item[data-id="${chatId}"]`).addClass('active').siblings().removeClass('active');
             
                 const isNew = fetch_reset || data.isNew;
+
                 if (!data.chat) {
                     showDiscovery();
                     return;
@@ -481,73 +491,73 @@ $(document).ready(function() {
                 $('#chat-recommend').append(card);
             }
 
-async function displayAlbum(album) {
-    try {
-        const isClient = await checkIfClient(album.userId, album.chatId, album.stripePriceId);
-        const images = isClient ? album.images : album.blurredImages;
-        let imagesHTML = images.map((url, index) => `<img src="${url}" class="img-fluid rounded shadow m-1" style="width:auto;height: auto;object-fit:contain;" data-index="${index}">`).join('');
-    
-        Swal.fire({
-            html: `
-                <div ${!isClient ? 'type="button" onclick="initiateAlbumCheckout(\'' + album.stripePriceId + '\', \'' + album.chatId + '\')"' : ''}>
-                    <div style="top: 0;left: 0;right: 0;border-radius: 40px 40px 0 0;background: linear-gradient(to top, rgba(0, 0, 0, 0), rgba(46, 44, 72, 0.91) 45%);" class="sticky-top pt-3">
-                        <h5 class="mb-0 text-white">${album.name}</h5>
-                        <span class="text-muted" style="font-size:14px;">${album.price}¥</span>
-                        <p style="color: white;font-size: 12px;" class="p-4">${album.description}</p>
-                    </div>
-                    <div class="sticky-top text-start">
-                        <span type="button" id="destroy-swiper" class="btn btn-light mx-3"><i class="fas fa-th-large"></i></span>
-                    </div>
-                    <div id="album-container" class="position-relative text-white pt-2 px-3 w-100" style="min-height:200px;overflow: hidden;">
-                        <div class="images swiper-container" data-id="${album.chatId}">
-                            <div class="swiper-wrapper wrapper">
-                                ${images.map((url, index) => `
-                                    <div class="swiper-slide slide">
-                                        <img src="${url}" class="img-fluid rounded shadow m-1" style="width:auto;max-height:400pxobject-fit:contain;" data-index="${index}">
-                                    </div>`).join('')}
+        async function displayAlbum(album) {
+            try {
+                const isClient = await checkIfClient(album.userId, album.chatId, album.stripePriceId);
+                const images = isClient ? album.images : album.blurredImages;
+                let imagesHTML = images.map((url, index) => `<img src="${url}" class="img-fluid rounded shadow m-1" style="width:auto;height: auto;object-fit:contain;" data-index="${index}">`).join('');
+            
+                Swal.fire({
+                    html: `
+                        <div ${!isClient ? 'type="button" onclick="initiateAlbumCheckout(\'' + album.stripePriceId + '\', \'' + album.chatId + '\')"' : ''}>
+                            <div style="top: 0;left: 0;right: 0;border-radius: 40px 40px 0 0;background: linear-gradient(to top, rgba(0, 0, 0, 0), rgba(46, 44, 72, 0.91) 45%);" class="sticky-top pt-3">
+                                <h5 class="mb-0 text-white">${album.name}</h5>
+                                <span class="text-muted" style="font-size:14px;">${album.price}¥</span>
+                                <p style="color: white;font-size: 12px;" class="p-4">${album.description}</p>
                             </div>
-                            <div class="swiper-button-next text-white" style="opacity:0.8;"></div>
-                            <div class="swiper-button-prev text-white" style="opacity:0.8;"></div>
+                            <div class="sticky-top text-start">
+                                <span type="button" id="destroy-swiper" class="btn btn-light mx-3"><i class="fas fa-th-large"></i></span>
+                            </div>
+                            <div id="album-container" class="position-relative text-white pt-2 px-3 w-100" style="min-height:200px;overflow: hidden;">
+                                <div class="images swiper-container" data-id="${album.chatId}">
+                                    <div class="swiper-wrapper wrapper">
+                                        ${images.map((url, index) => `
+                                            <div class="swiper-slide slide">
+                                                <img src="${url}" class="img-fluid rounded shadow m-1" style="width:auto;max-height:400pxobject-fit:contain;" data-index="${index}">
+                                            </div>`).join('')}
+                                    </div>
+                                    <div class="swiper-button-next text-white" style="opacity:0.8;"></div>
+                                    <div class="swiper-button-prev text-white" style="opacity:0.8;"></div>
+                                </div>
+                            </div>
+                            ${!isClient ? `
+                                <div style="bottom: 20px;z-index: 100;" class="mx-auto mt-4 position-fixed w-100">
+                                    <button class="btn btn-lg custom-gradient-bg" style="border-radius:50px;"><i class="far fa-images me-2"></i>アルバムを購入する</button>
+                                </div>`:''
+                            }
                         </div>
-                    </div>
-                    ${!isClient ? `
-                        <div style="bottom: 20px;z-index: 100;" class="mx-auto mt-4 position-fixed w-100">
-                            <button class="btn btn-lg custom-gradient-bg" style="border-radius:50px;"><i class="far fa-images me-2"></i>アルバムを購入する</button>
-                        </div>`:''
-                    }
-                </div>
-            `,
-            showClass: { popup: 'animate__animated animate__slideInUp animate__faster' },
-            hideClass: { popup: 'animate__animated animate__slideOutDown animate__faster' },
-            position: 'bottom',
-            backdrop: 'rgba(43, 43, 43, 0.2)',
-            showCloseButton: true,
-            showConfirmButton: false,
-            customClass: { container: 'p-0', popup: 'album-popup shadow', htmlContainer:'position-relative', closeButton: 'position-absolute' }
-        });
+                    `,
+                    showClass: { popup: 'animate__animated animate__slideInUp animate__faster' },
+                    hideClass: { popup: 'animate__animated animate__slideOutDown animate__faster' },
+                    position: 'bottom',
+                    backdrop: 'rgba(43, 43, 43, 0.2)',
+                    showCloseButton: true,
+                    showConfirmButton: false,
+                    customClass: { container: 'p-0', popup: 'album-popup shadow', htmlContainer:'position-relative', closeButton: 'position-absolute' }
+                });
 
-        let swiper = new Swiper('.swiper-container', {
-            loop: true,
-            spaceBetween: 5,
-            navigation: {
-                nextEl: '.swiper-button-next',
-                prevEl: '.swiper-button-prev',
-            },
-            breakpoints: {
-                320: { // screens up to 320px
-                    slidesPerView: 2,
-                },
-                480: { // screens up to 480px
-                    slidesPerView: 2,
-                },
-                768: { // screens up to 768px
-                    slidesPerView: 3,
-                },
-                1024: { // screens up to 1024px
-                    slidesPerView: 5,
-                },
-            }
-        });
+                let swiper = new Swiper('.swiper-container', {
+                    loop: true,
+                    spaceBetween: 5,
+                    navigation: {
+                        nextEl: '.swiper-button-next',
+                        prevEl: '.swiper-button-prev',
+                    },
+                    breakpoints: {
+                        320: { // screens up to 320px
+                            slidesPerView: 2,
+                        },
+                        480: { // screens up to 480px
+                            slidesPerView: 2,
+                        },
+                        768: { // screens up to 768px
+                            slidesPerView: 3,
+                        },
+                        1024: { // screens up to 1024px
+                            slidesPerView: 5,
+                        },
+                    }
+                });
         
         $(document).on('click', '#destroy-swiper', function () {
             if (swiper.initialized) {
@@ -2539,6 +2549,7 @@ window.getUserChatHistory = async function(chatId, userId) {
             contentType: 'application/json',
             dataType: 'json'
         });
+        displayUserChatHistory(response);
         const lastChat = response.find(chat => !chat.isWidget);
         if (lastChat) {
             const userChatId = lastChat._id;

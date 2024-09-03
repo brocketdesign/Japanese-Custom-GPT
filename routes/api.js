@@ -388,65 +388,37 @@ async function routes(fastify, options) {
                 return reply.status(400).send({ error: 'Chat ID and User ID are required' });
             }
         
-            const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-            const isUserChat = await chatsCollection.findOne({ 
-                $or: [
-                    { userId },
-                    { userId: new fastify.mongo.ObjectId(userId) }
-                ],
-                 _id: new fastify.mongo.ObjectId(chatId) 
-            });    
-            
             const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-        
-            let userChat;
-            if (isUserChat) {
-                userChat = await collectionUserChat.find({ 
-                    $and: [
-                      { $or: [
+            const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+
+            const existingChatDocument = await collectionChat.find({
+                userId: new fastify.mongo.ObjectId(userId),
+                baseId: new fastify.mongo.ObjectId(chatId),
+            }).toArray();
+            
+            const chatIds = [
+                ...existingChatDocument.flatMap(chat => [chat._id.toString(), new fastify.mongo.ObjectId(chat._id)])
+              ];
+            
+            let userChat = await collectionUserChat.find({
+                $and: [
+                  { 
+                    $or: [
                         { chatId },
                         { chatId: new fastify.mongo.ObjectId(chatId) },
-                      ]},
-                      { $expr: { $gte: [ { $size: "$messages" }, 2 ] } }
+                        { chatId: {$in : chatIds } },
                     ]
-                  }).sort({ _id: -1 }).toArray();
-                //Check for other derivate
-                /*
-                const collectionUser = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-                const derivedChats = await collectionUser.find({
+                  },
+                  { 
                     $or: [
-                        { baseId : chatId },
-                        { baseId: new fastify.mongo.ObjectId(chatId) },
-                        { name: isUserChat.name}
+                      { userId },
+                      { userId: new fastify.mongo.ObjectId(userId) }
                     ]
-                })
-                .project({ _id: 1 }) // extract only the _id field
-                .sort({ _id: -1 })
-                .toArray();
-                const chatIds = derivedChats.map(chat => chat._id);
-                const userChats = await collectionUserChat.find({ chatId: { $in: chatIds } }).toArray();
-                console.log(userChats)
-                */
-            } else {
-                userChat = await collectionUserChat.find({
-                    $and: [
-                      { 
-                        $or: [
-                          { chatId },
-                          { chatId: new fastify.mongo.ObjectId(chatId) }
-                        ]
-                      },
-                      { 
-                        $or: [
-                          { userId },
-                          { userId: new fastify.mongo.ObjectId(userId) }
-                        ]
-                      },
-                      { $expr: { $gte: [ { $size: "$messages" }, 2 ] } }
-                    ]
-                    
-                  }).sort({ _id: -1 }).toArray();
-            }
+                  },
+                  { $expr: { $gte: [ { $size: "$messages" }, 1 ] } }
+                ]
+                
+            }).sort({ _id: -1 }).toArray();
         
             if (!userChat || userChat.length === 0) {
                 return reply.send([]);
@@ -715,7 +687,7 @@ async function routes(fastify, options) {
                             You are a salesman. I will provide your character details. 
                             Your are working as an idol and your goal is to make the user buy your pictures to become popular.
                             You do not ask for the user story.Do not ask for the user questions unles to sell something. 
-                            Focus on promoting your pictures.
+                            Focus on promoting your pictures. You must wait for the user to send you coins before sending the picture.
                             \n When the user buy you someting, thank him and send the picture. 
                             `
 

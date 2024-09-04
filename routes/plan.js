@@ -468,7 +468,7 @@ fastify.post('/user/daily-bonus-coins', async (request, reply) => {
       const lastClaimed = user.lastDailyBonus ? new Date(user.lastDailyBonus) : null;
 
       if (lastClaimed && lastClaimed.getTime() === today.getTime()) {
-          return reply.code(400).send({ error: 'Daily bonus already claimed' });
+          return reply.send({ success: false, error: 'Daily bonus already claimed' });
       }
 
       // Add 10 coins to the user and update the lastDailyBonus date

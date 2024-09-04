@@ -376,7 +376,8 @@ $(document).ready(function() {
             
                 setupChatData(data.chat);
                 setupChatInterface(data.chat, data.character);
-                
+                renderChatList(fetch_userId,chatId);
+
                 if (!isNew) {
                     displayExistingChat(data.userChat, data.character);
                 } else if (data.chat.content && data.chat.content.length > 0) {

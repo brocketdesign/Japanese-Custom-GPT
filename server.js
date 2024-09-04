@@ -257,6 +257,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     fastify.get('/chat/edit/:chatId', {
       preHandler: [fastify.authenticate]
     }, async (request, reply) => {
+
       let user = await fastify.getUser(request, reply);
       const userId = user._id;
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
@@ -268,23 +269,26 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
 
       let chatId = request.params.chatId 
       const chatImage = request.query.chatImage
+      //Must have an image 
       if(!chatId && !chatImage){
         return reply.redirect('/discover')
       }
+
       try {
+        const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+        const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+
         let user = await fastify.getUser(request, reply);
         const userId = user._id;
-        const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
         user = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
-       
         const isTemporaryChat = request.params.chatId ? false : true
-
         if(isTemporaryChat){
           chatId = new fastify.mongo.ObjectId()
-          const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
           await chatsCollection.insertOne({userId:new fastify.mongo.ObjectId(userId), _id : chatId, isTemporary:true})
         }
+
         const prompts = await fs.readFileSync('./models/girl_char.md', 'utf8');
+
         return reply.renderWithGtm('add-chat.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd', chatId, isTemporaryChat, user, prompts});
       } catch (error) {
         console.log(error)

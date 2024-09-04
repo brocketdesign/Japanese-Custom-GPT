@@ -559,6 +559,7 @@ async function routes(fastify, options) {
 
         try{
             const chat = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
+
             if (!chat) {
                 return reply.status(404).send({ error: 'chat not found' });
             }
@@ -672,12 +673,6 @@ async function routes(fastify, options) {
                         }
                     }
                 }
-
-                const chats = await collectionChat.find({ 
-                    userId: new fastify.mongo.ObjectId(userId) ,
-                    name:{$exists:true}
-                }).sort({ latestChatDate: -1 }).toArray();
-                //console.log(chats)
 
                 if (!userChatDocument || isNew) {
                     //console.log(`Initialize chat: ${chatId}`);

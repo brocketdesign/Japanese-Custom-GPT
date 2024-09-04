@@ -334,7 +334,7 @@
         }else{
             $('#imageGallery-0').imageUploader({
                 maxSize: 2 * 1024 * 1024,
-                maxFiles: 100
+                maxFiles: 10
             });
         }
         $('textarea').each(function() {
@@ -440,7 +440,7 @@
             if(init){
                 $(`#imageGallery-${galleryIndex}`).imageUploader({
                     maxSize: 2 * 1024 * 1024,
-                    maxFiles: 100
+                    maxFiles: 10
                 });
             }
 
@@ -544,12 +544,12 @@
                                         imagesInputName: 'photos',
                                         preloadedInputName: 'old',
                                         maxSize: 2 * 1024 * 1024,
-                                        maxFiles: 100
+                                        maxFiles: 10
                                     });
                                 } else {
                                     $(`#imageGallery-${galleryIndex}`).imageUploader({
                                         maxSize: 2 * 1024 * 1024,
-                                        maxFiles: 100
+                                        maxFiles: 10
                                     });
                                 }
 
@@ -607,15 +607,24 @@
             if (chatId) {
                 formData.append('chatId', chatId);
             }
-            // Loop through all galleries and append their data
+            
+            // Loop through all galleries and append their data only if not empty or not just whitespace
             $('#galleries .imageGalleryWrapper').each(function(index) {
                 const galleryIndex = index; // Use the loop index to handle multiple galleries
-                formData.append(`imageGallery_${galleryIndex}_name`, $(`#imageGallery-${galleryIndex}-name`).val());
-                formData.append(`imageGallery_${galleryIndex}_price`, $(`#imageGallery-${galleryIndex}-price`).val());
-                formData.append(`imageGallery_${galleryIndex}_description`, $(`#imageGallery-${galleryIndex}-description`).val());
+                const name = $(`#imageGallery-${galleryIndex}-name`).val().trim();
+                const price = $(`#imageGallery-${galleryIndex}-price`).val().trim();
+                const description = $(`#imageGallery-${galleryIndex}-description`).val().trim();
 
-                const galleryFiles = getFilesFromGallery(`#imageGallery-${galleryIndex}`);
-                galleryFiles.forEach(file => formData.append(`imageGallery_${galleryIndex}_Images[]`, file)); // Append gallery files
+                if (name || price || description) {
+                    if (name) formData.append(`imageGallery_${galleryIndex}_name`, name);
+                    if (price) formData.append(`imageGallery_${galleryIndex}_price`, price);
+                    if (description) formData.append(`imageGallery_${galleryIndex}_description`, description);
+
+                    const galleryFiles = getFilesFromGallery(`#imageGallery-${galleryIndex}`);
+                    if (galleryFiles.length) {
+                        galleryFiles.forEach(file => formData.append(`imageGallery_${galleryIndex}_Images[]`, file)); // Append gallery files
+                    }
+                }
             });
 
             $.ajax({

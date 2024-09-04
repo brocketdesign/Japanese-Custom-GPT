@@ -10,7 +10,13 @@ const handlebars = require('handlebars');
 const { v4: uuidv4 } = require('uuid');
 const fastifyMultipart = require('fastify-multipart');
 
-const cleanupNonRegisteredUsers = require('./models/cleanupNonRegisteredUsers');
+const {
+  cleanupNonRegisteredUsers,
+  deleteOldRecords, 
+  deleteCharactersWithoutDescription,
+  deleteClientsWithoutProductId,
+  deleteUserChatsWithoutMessages
+ } = require('./models/cleanupNonRegisteredUsers');
 
 mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then((client) => {
@@ -19,6 +25,10 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     // Schedule the cleanup to run every day at midnight
     cron.schedule('0 0 * * *', () => {
       cleanupNonRegisteredUsers(db);
+      deleteOldRecords(db)
+      deleteCharactersWithoutDescription(db)
+      deleteClientsWithoutProductId(db)
+      deleteUserChatsWithoutMessages(db)
     });
     cron.schedule('0 0 * * *', async () => {
       try {

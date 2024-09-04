@@ -1878,50 +1878,6 @@ $(document).ready(function() {
                     }
                 });
             }
-            
-            
-            function sendCustomData(customData){
-                $.ajax({
-                    url: API_URL+'/api/custom-data',
-                    type: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    data: JSON.stringify({ userId, customData: customData }),
-                    success: function(response) {
-                        
-                    },
-                    error: function(error) {
-                        console.log(error.statusText);
-                    }
-                });
-            }
-            
-            let maxScrollHeight = 0;
-            let lastTriggeredHeight = 0;
-            const viewportHeight = $(window).height();
-            const updateInterval = viewportHeight * 0.05; // 5% of the viewport height
-
-            function maxScroll() {
-                const currentScrollHeight = $(window).scrollTop();
-                const documentHeight = $(document).height();
-                const windowHeight = $(window).height();
-                const scrollPercentage = (currentScrollHeight / (documentHeight - windowHeight)) * 100;
-
-                if (currentScrollHeight > maxScrollHeight) {
-                    maxScrollHeight = currentScrollHeight;
-                    if (Math.abs(currentScrollHeight - lastTriggeredHeight) >= updateInterval) {
-                        sendCustomData({
-                            action: 'scroll',
-                            value: maxScrollHeight,
-                            scrollPercentage: scrollPercentage.toFixed(2)
-                        });
-                        lastTriggeredHeight = currentScrollHeight;
-                    }
-                }
-
-    
-            }
 
             function handleImageGeneration(buttonSelector, generateImageFunction) {
                 $(document).on('click', buttonSelector, function() {

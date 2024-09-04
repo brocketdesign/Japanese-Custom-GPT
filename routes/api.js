@@ -860,6 +860,10 @@ async function routes(fastify, options) {
     });
     
     fastify.post('/api/custom-data', async (request, reply) => {
+        
+        console.error('Failed to save user data:', error);
+        return reply.status(500).send({ error: 'Failed to save user data' });
+        
         const { userId, customData } = request.body;
     
         const serverUserId = parseInt(userId) || 'user_' + Date.now();

@@ -74,6 +74,11 @@ $(document).ready(function() {
             url: '/user/logout',
             type: 'POST',
             success: function(response) {
+
+                Object.keys($.cookie()).forEach(function(cookie) {
+                    $.removeCookie(cookie, { path: '/' });
+                });
+    
                 window.location.href = '/';
             },
             error: function() {
@@ -85,6 +90,7 @@ $(document).ready(function() {
             }
         });
     });
+    
     
 /*
     $(document).find('input, textarea').each(function() {

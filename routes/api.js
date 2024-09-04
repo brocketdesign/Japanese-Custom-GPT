@@ -597,6 +597,7 @@ async function routes(fastify, options) {
             const collectionMessageCount = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageCount');
 
             let { currentStep, message, chatId, userChatId, isNew, isWidget } = request.body;
+            console.log({isNew})
             let userId = request.body.userId
 
             if (!userId) {
@@ -1161,14 +1162,26 @@ async function routes(fastify, options) {
             const chatname = chatDocument.name
 
             const userMessages = userData.messages;
+
+            //Add the time before completion
+            let currentDate = new Date();
+            let currentTimeInJapanese = `${currentDate.getHours()}時${currentDate.getMinutes()}分`;
+            let timeMessage = `[Hidden] 現在の時刻 ${currentTimeInJapanese}.Do not tell me the time. Use it to be coherent.`
+            timeMessage = { "role": "assistant", "content": timeMessage };
+            userMessages.push(timeMessage);
+
+            // Gen completion
             let completion = ``
             completion = await fetchOpenAICompletion(userMessages, reply.raw, 300);
 
             // Append the assistant's response to the messages array in the chat document
             const assistantMessage = { "role": "assistant", "content": completion };
             userMessages.push(assistantMessage);
+
             const today = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
             userData.updatedAt = today;
+
+            // Remove special character for lastMessage
             const removeContentBetweenStars = function (str) {
                 if (!str) { return str; }
                 return str.replace(/\*.*?\*/g, '').replace(/"/g, '');
@@ -1177,6 +1190,7 @@ async function routes(fastify, options) {
                 { _id: new fastify.mongo.ObjectId(chatId) },
                 { $set: {lastMessage:{ "role": "assistant", "content": removeContentBetweenStars(completion), updatedAt: today }}}
             );
+
             // Update the chat document in the database
             const result = await collectionUserChat.updateOne(
                 { userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) },

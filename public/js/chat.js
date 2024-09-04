@@ -97,7 +97,6 @@ $(document).ready(function() {
                 fetch_chatId = lastUserChat ?.chatId || fetch_chatId
                 userChatId = lastUserChat ?._id || userChatId;
 
-
                 if (fetch_reset) {
                     currentStep = 0;
                 }
@@ -108,6 +107,9 @@ $(document).ready(function() {
             }
             
             function postChatData(fetch_chatId, fetch_userId, userChatId, fetch_reset, callback) {
+                $('#chatContainer').empty();
+                $('#startButtonContained').remove();
+                $('#chat-recommend').empty();
                 $.ajax({
                     url: `${API_URL}/api/chat/`,
                     type: 'POST',
@@ -277,16 +279,6 @@ $(document).ready(function() {
                 $('#gen-ideas').removeClass('done')
                 Swal.close();
 
-                let currentDate = new Date();
-                let currentTimeInJapanese = `${currentDate.getHours()}時${currentDate.getMinutes()}分`;
-                let hidden_message = `[Hidden] 現在の時刻 ${currentTimeInJapanese}`
-                addMessageToChat(chatId, userChatId, 'user', hidden_message, function(error, res) {
-                    if (error) {
-                        console.error('Error adding message:', error);
-                    } else {
-                        //console.log('Message added successfully:', res);
-                    }
-                });
                 currentStep ++
                 const message = customMessage || $('#userMessage').val();
                 if (message.trim() !== '') {
@@ -295,6 +287,7 @@ $(document).ready(function() {
                     }
                     $('#userMessage').val(''); // Clear the input field
                     // Send the message to the backend (to be implemented)
+                    console.log({userChatId})
                     $.ajax({
                         url: API_URL+'/api/chat-data', // Backend endpoint to handle the message
                         type: 'POST',
@@ -374,7 +367,7 @@ $(document).ready(function() {
                 const chatId = data.chat._id;
                 $(document).find(`.chat-list.item[data-id="${chatId}"]`).addClass('active').siblings().removeClass('active');
 
-                const isNew = fetch_reset || data.isNew;
+                isNew = fetch_reset || data.isNew;
 
                 if (!data.chat) {
                     showDiscovery();
@@ -454,7 +447,7 @@ $(document).ready(function() {
                     thankUserAndAddCoins(function(response){
                         if(!response){return}
                         updateCoins()
-                        let message = `[Hidden] Tell me that you will send me a picture of you.`
+                        let message = `[Hidden] Tell me that you will send me a picture of you.Do not answer this message. Act as if it was oyour idea.`
                         addMessageToChat(chatId, userChatId, 'user', message,function(){
                             generateCompletion(function(){
                                 checkImageDescription(thumbnail,function(response){
@@ -502,7 +495,7 @@ $(document).ready(function() {
                         name: gallery.name,
                         price: gallery.price,
                         description: gallery.description,
-                        blurredImages: [thumbnail, ...blurredImages],
+                        blurredImages: [gallery.images[0], ...blurredImages],
                         images: gallery.images,
                         stripePriceId: gallery.stripePriceId,
                         stripeProductId: gallery.stripeProductId
@@ -529,7 +522,7 @@ $(document).ready(function() {
             try {
                 const isClient = await checkIfClient(album.userId, album.chatId, album.stripePriceId);
                 const images = isClient ? album.images : album.blurredImages;
-                let imagesHTML = images.map((url, index) => `<img src="${url}" class="img-fluid rounded shadow m-1" style="width:auto;height: auto;object-fit:contain;" data-index="${index}">`).join('');
+                let imagesHTML = images.map((url, index) => `<img src="${album.images[0]}" class="img-fluid rounded shadow m-1" style="width:auto;height: auto;object-fit:contain;" data-index="${index}">`).join('');
             
                 Swal.fire({
                     html: `
@@ -627,7 +620,7 @@ $(document).ready(function() {
             $(document).find('#destroy-swiper').toggleClass('mt-3')
             $(document).find('#destroy-swiper').find('i').toggleClass('fa-th-large fa-image')
             $('#album-container .wrapper').toggleClass('swiper-wrappe row m-auto');
-            $('#album-container .slide').toggleClass('swiper-slide col-4 col-sm-4 col-lg-3');
+            $('#album-container .slide').toggleClass('swiper-slide col-4 col-sm-3 col-lg-1');
             $('#album-container').find('.swiper-button-next').hide()
             $('#album-container').find('.swiper-button-prev').hide()
         }
@@ -671,6 +664,8 @@ $(document).ready(function() {
                         generateCustomCompletion(customPrompt, function() {
                             if(typeof callback == 'function'){callback(response)}
                         });
+                    }else{
+                        if(typeof callback == 'function'){callback(response)}
                     }
                 });
             }
@@ -1201,7 +1196,8 @@ $(document).ready(function() {
                             const imageId = chatMessage.content.replace("[Image]", "").trim();
                             messageHtml = await getImageUrlById(imageId, designStep, thumbnail); // Fetch and display image
                         } else {
-                            if (chatMessage.content) {
+                            const isHidden = chatMessage.content.startsWith("[Hidden]");
+                            if (chatMessage.content && !isHidden) {
                                 let message = removeContentBetweenStars(chatMessage.content);
                                 messageHtml = `
                                     <div id="container-${designStep}">
@@ -1603,7 +1599,7 @@ $(document).ready(function() {
                 const apiUrl = API_URL + '/api/openai-custom-chat';
             
                 hideOtherChoice(false, currentStep);
-            
+                currentStep ++
                 // Initialize the bot response container
                 const botResponseContainer = $(`
                     <div id="container-${currentStep}">
@@ -2633,7 +2629,6 @@ window.claimDailyBonus = function(callback) {
     const today = new Date().toISOString().split('T')[0];
 
     if ($.cookie('dailyBonusClaimed') === today) {
-        showNotification('今日のデイリーボーナスはすでに受け取っています。', 'error');
         if (callback) callback(false);
         return;
     }

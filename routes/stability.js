@@ -463,16 +463,16 @@ async function fetchNovitaResult(task_id) {
 
   const default_prompt ={
     nsfw: {
-      prompt: `,perfect anatomy,masterpiece,(((best quality))),(((ultra-detailed))),(perfect skin),perfect fingers,perfect anatomy,HD,4K quality,(perfect hands:0.1),((nsfw)),((((sexy)))),erotic pose,((sexy pose))`,
+      prompt: `score_10_up, score_9_up, score_8_up, score_7_up, source_anime,,perfect anatomy,masterpiece,(((best quality))),(((ultra-detailed))),(perfect skin),perfect fingers,perfect anatomy,HD,4K quality,(perfect hands:0.1),((nsfw)),((((sexy)))),erotic pose,((sexy pose)),`,
       negative_prompt: "naked pussy,pussy,vagin,sex,dick,rybadimagenegative_v1.3, ng_deepnegative_v1_75t, (ugly face),cross-eyed,sketches, (worst quality:2),(low quality:2), (normal quality:2),normal quality,((monochrome)),((grayscale)), skin spots,acnes,(((skin blemishes))),bad anatomy,(Multiple people),bad hands,,missing fingers,cropped,low quality, jpeg artifacts,burned,(((blurry))),cropped, poorly drawn hands,poorly drawn face,mutation,deformed,worst quality,"
     },
     sfw: {
-      prompt: `,perfect anatomy,masterpiece,(((best quality))),(((ultra-detailed))),(perfect skin),perfect fingers,perfect anatomy,HD,4K quality,(perfect hands:0.1),((sfw))`,
+      prompt: `score_10_up, score_9_up, score_8_up, score_7_up, source_anime,,perfect anatomy,masterpiece,(((best quality))),(((ultra-detailed))),(perfect skin),perfect fingers,perfect anatomy,HD,4K quality,(perfect hands:0.1),((sfw)),`,
       negative_prompt : "nsfw,naked pussy,pussy,((vagin)),vaginal,((((pussy)))),(((nipple))),nude,((naked)),sex,(((genital))), rybadimagenegative_v1.3, ng_deepnegative_v1_75t, (ugly face),cross-eyed,sketches, (worst quality:2),(low quality:2), (normal quality:2),normal quality,((monochrome)),((grayscale)), skin spots,acnes,(((skin blemishes))),bad anatomy,(Multiple people),bad hands,,missing fingers,cropped,low quality, jpeg artifacts,burned,(((blurry))),cropped, poorly drawn hands,poorly drawn face,mutation,deformed,worst quality,"
     }
   }
   const params = {
-    model_name: "abyssorangemix2SFW_abyssorangemix2Sfw.safetensors",
+    model_name: "novaAnimeXL_xlV10_341799.safetensors",
     prompt: '',
     negative_prompt: '',
     width: 768,
@@ -514,11 +514,11 @@ async function fetchNovitaResult(task_id) {
         */
       }
       const image_request1 = { ...params };
-      image_request1.prompt = prompt + default_prompt.sfw.prompt;
+      image_request1.prompt = default_prompt.sfw.prompt + prompt;
       image_request1.negative_prompt = default_prompt.sfw.negative_prompt;
       
       const image_request2 = { ...params };
-      image_request2.prompt = prompt + default_prompt.nsfw.prompt;
+      image_request2.prompt = default_prompt.nsfw.prompt + prompt;
       image_request2.negative_prompt = default_prompt.nsfw.negative_prompt;
       
       const handleImageRequest = async (image_request) => {

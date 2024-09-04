@@ -516,13 +516,14 @@ $(document).ready(function() {
 
         async function displayAlbum(album) {
             try {
-                const isClient = await checkIfClient(album.userId, album.chatId, album.stripePriceId);
-                const images = isClient ? album.images : album.blurredImages;
+                const isAuthorized = await checkIfClient(album.userId, album.chatId, album.stripePriceId);
+                const images = isAuthorized ? album.images : album.blurredImages;
+                console.log({isAuthorized})
                 let imagesHTML = images.map((url, index) => `<img src="${album.images[0]}" class="img-fluid rounded shadow m-1" style="width:auto;height: auto;object-fit:contain;" data-index="${index}">`).join('');
             
                 Swal.fire({
                     html: `
-                        <div ${!isClient ? 'type="button" onclick="initiateAlbumCheckout(\'' + album.stripePriceId + '\', \'' + album.chatId + '\')"' : ''}>
+                        <div ${!isAuthorized ? 'type="button" onclick="initiateAlbumCheckout(\'' + album.stripePriceId + '\', \'' + album.chatId + '\')"' : ''}>
                             <div style="top: 0;left: 0;right: 0;border-radius: 40px 40px 0 0;background: linear-gradient(to top, rgba(0, 0, 0, 0), rgba(46, 44, 72, 0.91) 45%);" class="sticky-top pt-3">
                                 <h5 class="mb-0 text-white">${album.name}</h5>
                                 <span class="text-muted" style="font-size:14px;">${album.price}¥</span>
@@ -543,7 +544,7 @@ $(document).ready(function() {
                                     <div class="swiper-button-prev text-white" style="opacity:0.8;"></div>
                                 </div>
                             </div>
-                            ${!isClient ? `
+                            ${!isAuthorized && !isTemporary ? `
                                 <div style="bottom: 20px;z-index: 100;" class="mx-auto mt-4 position-fixed w-100">
                                     <button class="btn btn-lg custom-gradient-bg" style="border-radius:50px;"><i class="far fa-images me-2"></i>アルバムを購入する</button>
                                     <a href="/my-plan" class="d-block mt-1 text-white">Lamixプレミアムなら無料で見放題</a>
@@ -578,20 +579,27 @@ $(document).ready(function() {
                             slidesPerView: 3,
                         },
                         1024: { // screens up to 1024px
-                            slidesPerView: 5,
+                            slidesPerView: 4,
                         },
                     }
                 });
         
         $(document).on('click', '#destroy-swiper', function () {
-            toggleSwiper(swiper)
+            toggleSwiper()
         });
         
-        function toggleSwiper(swiper){
+        function toggleSwiper(){
+            const swiperContainer = $(document).find('.swiper-container')
+            $(document).find('#destroy-swiper').toggleClass('mt-3')
+            $(document).find('#destroy-swiper').find('i').toggleClass('fa-th-large fa-image')
+            $(document).find('#album-container .wrapper').toggleClass('swiper-wrapper row m-auto');
+            $(document).find('#album-container .slide').toggleClass('swiper-slide col-4 col-sm-3 col-lg-1');
+            $(document).find('#album-container').find('.swiper-button-next').toggle()
+            $(document).find('#album-container').find('.swiper-button-prev').toggle()
             if (swiper.initialized) {
                 swiper.destroy(true, true); // true to reset styles
             } else {
-                swiper = new Swiper('.swiper-container', {
+                swiper = new Swiper(swiperContainer[0], {
                     loop: true,
                     spaceBetween: 5,
                     navigation: {
@@ -609,19 +617,13 @@ $(document).ready(function() {
                             slidesPerView: 3,
                         },
                         1024: { // screens up to 1024px
-                            slidesPerView: 5,
+                            slidesPerView: 4,
                         },
                     }
                 });
             }
-            $(document).find('#destroy-swiper').toggleClass('mt-3')
-            $(document).find('#destroy-swiper').find('i').toggleClass('fa-th-large fa-image')
-            $('#album-container .wrapper').toggleClass('swiper-wrappe row m-auto');
-            $('#album-container .slide').toggleClass('swiper-slide col-4 col-sm-3 col-lg-1');
-            $('#album-container').find('.swiper-button-next').hide()
-            $('#album-container').find('.swiper-button-prev').hide()
         }
-        toggleSwiper(swiper)
+        //toggleSwiper(swiper)
     } catch (error) {
         console.error('Error displaying album:', error);
     }
@@ -639,7 +641,7 @@ $(document).ready(function() {
                         priceId: priceId
                     }),
                     dataType: 'json'
-                }).then(response => response.isClient)
+                }).then(response => response.isAuthorized)
                   .catch(error => {
                       console.error('Error checking client status:', error);
                       return false;

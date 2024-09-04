@@ -172,7 +172,9 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         return reply.redirect('/dashboard')
       }
     });
-    fastify.get('/my-plan', async (request, reply) => {
+    fastify.get('/my-plan', {
+      preHandler: [fastify.authenticate]
+    }, async (request, reply) => {
       let user = await fastify.getUser(request, reply);
       const userId = user._id;
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });

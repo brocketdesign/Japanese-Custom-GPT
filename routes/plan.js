@@ -640,27 +640,35 @@ fastify.post('/album/check-client', async (request, reply) => {
   const { userId, chatId, priceId } = request.body;
 
   if (!userId || !chatId || !priceId) {
-      return reply.status(400).send({ error: 'Missing userId, chatId, or productId' });
+    return reply.status(400).send({ error: 'Missing userId, chatId, or priceId' });
   }
 
   try {
-    const all_client = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('clients').find({}).toArray();
-      const client = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('clients').findOne({
-          chatId: chatId,
-          priceId: priceId,
-          clients: userId
-      });
+    // Check if the user is a client
+    const client = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('clients').findOne({
+      chatId: chatId,
+      priceId: priceId,
+      clients: userId
+    });
 
-      if (client) {
-          reply.send({ isClient: true });
-      } else {
-          reply.send({ isClient: false });
-      }
+    // Check if the user is subscribed
+    const user = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({
+      _id: new fastify.mongo.ObjectId(userId)
+    });
+
+    const isSubscribed = user && user.subscriptionStatus === 'active';
+
+    // Return true if the user is a client OR a subscriber
+    const isAuthorized = !!client || isSubscribed;
+
+    reply.send({ isAuthorized });
   } catch (error) {
-      console.error('Error checking client:', error);
-      reply.send({ isClient: false });
+    console.error('Error checking client or subscription:', error);
+    reply.send({ isAuthorized: false });
   }
 });
+
+
 
 
 }

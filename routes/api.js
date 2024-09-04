@@ -597,7 +597,6 @@ async function routes(fastify, options) {
             const collectionMessageCount = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageCount');
 
             let { currentStep, message, chatId, userChatId, isNew, isWidget } = request.body;
-            console.log({isNew})
             let userId = request.body.userId
 
             if (!userId) {
@@ -1057,7 +1056,6 @@ async function routes(fastify, options) {
     
         try {
             const userId = session.userId;
-            console.log({userId})
 
             const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
             let userData = isNewObjectId(userId) ? await userDataCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) }) : await userDataCollection.findOne({ userId: parseInt(userId) });
@@ -1069,7 +1067,6 @@ async function routes(fastify, options) {
             }
 
             const { storyId, choices } = userData;
-            console.log({ storyId, choices })
             const storiesCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('stories');
             const story = await storiesCollection.findOne({ _id: new fastify.mongo.ObjectId(storyId) });
 
@@ -1501,8 +1498,6 @@ async function routes(fastify, options) {
         try {
             const userId = session.userId;
             const chatId = session.chatId;
-
-            console.log({ userId, chatId });
     
             const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
             let userData = isNewObjectId(userId) ? await userDataCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) }) : await userDataCollection.findOne({ userId: parseInt(userId) });

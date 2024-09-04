@@ -5,7 +5,6 @@ const FormData = require('form-data');
 const aws = require('aws-sdk');
 const { createHash } = require('crypto');
 const stringSimilarity = require('string-similarity'); 
-const { createBlurredImage } = require('../models/tool')
 
 async function routes(fastify, options) {
   // Configure AWS S3
@@ -137,13 +136,12 @@ async function routes(fastify, options) {
           return uploadToS3(buffer, hash, part.filename);
       }
   };
-
-  async function saveImageToDB(userId, chatId, userChatId, prompt, imageUrl, aspectRatio, blurredImageUrl = null, reply) {
+  async function saveImageToDB(userId, chatId, userChatId, prompt, imageUrl, aspectRatio, reply) {
     try {
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
-      const chatsGalleryCollection = db.collection('gallery');
-      const imageId = new fastify.mongo.ObjectId();
+      const chatsGalleryCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('gallery');
   
+      const imageId = new fastify.mongo.ObjectId(); // Generate a new ObjectId for the image
+
       await chatsGalleryCollection.updateOne(
         { 
           userId: new fastify.mongo.ObjectId(userId),
@@ -151,42 +149,31 @@ async function routes(fastify, options) {
         },
         { 
           $push: { 
-            images: { 
-              _id: imageId, 
-              prompt, 
-              imageUrl, 
-              blurredImageUrl, 
-              aspectRatio, 
-              isBlurred: !!blurredImageUrl 
-            } 
+            images: { _id: imageId, prompt, imageUrl, aspectRatio } 
           } 
         },
         { upsert: true }
       );
   
-      const userDataCollection = db.collection('userChat');
-      const userData = await userDataCollection.findOne({ 
-        userId: new fastify.mongo.ObjectId(userId), 
-        _id: new fastify.mongo.ObjectId(userChatId) 
-      });
+      const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+      let userData = await userDataCollection.findOne({ userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
   
       if (!userData) {
+        console.log(`User data not found`);
         return reply.status(404).send({ error: 'User data not found' });
       }
   
-      const imageMessage = { role: "assistant", content: `[Image] ${imageId}` };
+      // Append the image message to the user's messages array
+      const imageMessage = { "role": "assistant", "content": `[Image] ${imageId}` };
       await userDataCollection.updateOne(
-        { 
-          userId: new fastify.mongo.ObjectId(userId), 
-          _id: new fastify.mongo.ObjectId(userChatId) 
-        },
-        { 
-          $push: { messages: imageMessage }, 
-          $set: { updatedAt: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) } 
-        }
+          { userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) },
+          { 
+              $push: { messages: imageMessage }, 
+              $set: { updatedAt: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) }
+          }
       );
-  
-      return { imageId, imageUrl };
+
+      return { imageId, imageUrl }; // Return both the imageId and imageUrl
   
     } catch (error) {
       console.log(error);
@@ -194,7 +181,6 @@ async function routes(fastify, options) {
     }
   }
 
-  
   function getClosestAllowedDimension(height, ratio) {
     const [widthRatio, heightRatio] = ratio.split(':').map(Number);
     const targetAspectRatio = widthRatio / heightRatio;
@@ -353,47 +339,35 @@ fastify.post('/huggingface/txt2img', async (request, reply) => {
       reply.status(500).send('Error generating image');
     }
   });
+
   fastify.get('/image/:imageId', async (request, reply) => {
     try {
       const { imageId } = request.params;
       const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
       const galleryCollection = db.collection('gallery');
   
+      // Convert the imageId string to a MongoDB ObjectId
       const objectId = new fastify.mongo.ObjectId(imageId);
   
+      // Find the image document containing this imageId in the gallery
       const imageDocument = await galleryCollection.findOne({
         "images._id": objectId
       }, {
-        projection: { "images.$": 1 }
+        projection: { "images.$": 1 } // Only return the matching image
       });
   
       if (!imageDocument || !imageDocument.images || imageDocument.images.length === 0) {
         return reply.status(404).send({ error: 'Image not found' });
       }
   
-      const imageDetails = imageDocument.images[0];
-      let imageUrl = imageDetails.imageUrl;
-      const imagePrompt = imageDetails.prompt;
-  
-      const collectionUser = db.collection('users');
-      let user = await fastify.getUser(request, reply);
-      const userId = new fastify.mongo.ObjectId(user._id);
-      user = await collectionUser.findOne({ _id: userId });
-  
-      let isBlur = false
-      if (imageDetails.isBlurred && user.subscriptionStatus !== 'active') {
-        imageUrl = imageDetails.blurredImageUrl; 
-        isBlur = true
-      }
-  
-      return reply.status(200).send({ imageUrl, imagePrompt, isBlur });
-  
+      const imageUrl = imageDocument.images[0].imageUrl;
+      const imagePrompt = imageDocument.images[0].prompt
+      return reply.status(200).send({ imageUrl, imagePrompt});
     } catch (error) {
       console.error('Error fetching image URL:', error);
       return reply.status(500).send({ error: 'An error occurred while fetching the image URL' });
     }
   });
-  
   // NOVITA
     // Function to trigger the Novita API for text-to-image generation
     async function fetchNovitaMagic(data) {
@@ -489,7 +463,7 @@ async function fetchNovitaResult(task_id) {
 
   const default_prompt ={
     nsfw: {
-      prompt: `score_10_up, score_9_up, score_8_up, score_7_up, source_anime,,perfect anatomy,masterpiece,(((best quality))),(((ultra-detailed))),(perfect skin),perfect fingers,perfect anatomy,HD,4K quality,(perfect hands:0.1),((nsfw)),((((sexy)))),erotic pose,((sexy pose)), naughty face, completely nude, uncensored,nsfw `,
+      prompt: `score_10_up, score_9_up, score_8_up, score_7_up, source_anime,,perfect anatomy,masterpiece,(((best quality))),(((ultra-detailed))),(perfect skin),perfect fingers,perfect anatomy,HD,4K quality,(perfect hands:0.1),((nsfw)),((((sexy)))),erotic pose,((sexy pose)), naughty face, completely nude, uncensored, `,
       negative_prompt: "naked pussy,pussy,vagin,sex,dick,rybadimagenegative_v1.3, ng_deepnegative_v1_75t, (ugly face),cross-eyed,sketches, (worst quality:2),(low quality:2), (normal quality:2),normal quality,((monochrome)),((grayscale)), skin spots,acnes,(((skin blemishes))),bad anatomy,(Multiple people),bad hands,,missing fingers,cropped,low quality, jpeg artifacts,burned,(((blurry))),cropped, poorly drawn hands,poorly drawn face,mutation,deformed,worst quality,"
     },
     sfw: {
@@ -514,61 +488,61 @@ async function fetchNovitaResult(task_id) {
 
   
   fastify.post('/novita/txt2img', async (request, reply) => {
-    const { prompt, aspectRatio, userId, chatId, userChatId } = request.body;
+    const { prompt, aspectRatio, userId, chatId, userChatId, character } = request.body;
     try {
-      const collectionUser = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
-      let user = await fastify.getUser(request, reply);
-      const userIdObj = new fastify.mongo.ObjectId(user._id);
-      user = await collectionUser.findOne({ _id: userIdObj });
-  
-      const isSubscribed = user.subscriptionStatus === 'active';
-  
-      const image_request1 = { ...params, prompt: default_prompt.sfw.prompt + prompt, negative_prompt: default_prompt.sfw.negative_prompt };
-      const image_request2 = { ...params, prompt: default_prompt.nsfw.prompt + prompt, negative_prompt: default_prompt.nsfw.negative_prompt };
-  
-      const handleImageRequest = async (image_request, blur = false) => {
-        const taskId = await fetchNovitaMagic(image_request);
-        let imageUrls = await fetchNovitaResult(taskId);
-        
-        return await Promise.all(imageUrls.map(async (imageUrl) => {
-          let blurredImageUrl = null;
-      
-          // If blur is requested, create a blurred version
-          if (blur) {
-            blurredImageUrl = await createBlurredImage(imageUrl);
+      const apiKey = process.env.NOVITA_API_KEY;
+      let closestCheckpoint = null
+      const query = character ? character.checkpoint : null;
+      if(query){
+        const novitaApiUrl = `https://api.novita.ai/v3/model?pagination.limit=60&pagination.cursor=c_0&filter.source=civitai&filter.query=${encodeURIComponent(query)}&filter.types=checkpoint&filter.is_nsfw=false&filter.is_inpainting=0`;
+        const response = await axios.get(novitaApiUrl, {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`
           }
+        });
+        const data = response.data;
+        /*
+        if (data.models && data.models.length > 0) {
+          const normalizedQuery = query.toLowerCase().replace(/[^a-z0-9]/g, '');
+          const modelNames = data.models.map(model => model.sd_name.toLowerCase().replace(/[^a-z0-9]/g, ''));
+          let bestMatch = stringSimilarity.findBestMatch(normalizedQuery, modelNames);
+          const similarityThreshold = 0.5;
+          if (bestMatch.bestMatch.rating >= similarityThreshold) {
+            closestCheckpoint = data.models[bestMatch.bestMatchIndex].sd_name;
+          }
+        }
+        */
+      }
+      const image_request1 = { ...params };
+      image_request1.prompt = default_prompt.sfw.prompt + prompt;
+      image_request1.negative_prompt = default_prompt.sfw.negative_prompt;
       
-          // Save both the original and blurred (if exists) URLs in the DB
-          const { imageId } = await saveImageToDB(
-            userId, 
-            chatId, 
-            userChatId, 
-            image_request.prompt, 
-            imageUrl,  // original image
-            aspectRatio, 
-            blurredImageUrl  // blurred image (if exists)
-          );
+      const image_request2 = { ...params };
+      image_request2.prompt = default_prompt.nsfw.prompt + prompt;
+      image_request2.negative_prompt = default_prompt.nsfw.negative_prompt;
       
-          // Return the correct URL based on the blur flag
-          const returnUrl = blur && blurredImageUrl ? blurredImageUrl : imageUrl;
-      
-          return { id: imageId, url: returnUrl, prompt: image_request.prompt };
+      const handleImageRequest = async (image_request) => {
+        const taskId = await fetchNovitaMagic(image_request);
+        const imageUrls = await fetchNovitaResult(taskId);
+        return await Promise.all(imageUrls.map(async (imageUrl) => {
+            const { imageId } = await saveImageToDB(userId, chatId, userChatId, image_request.prompt, imageUrl, aspectRatio);
+            return { id: imageId, url: imageUrl, prompt: image_request.prompt };
         }));
-      };     
-  
+      };
+    
       const [images1, images2] = await Promise.all([
-        handleImageRequest(image_request1),
-        handleImageRequest(image_request2, !isSubscribed)
+          handleImageRequest(image_request1),
+          handleImageRequest(image_request2)
       ]);
-  
+      
       reply.send({ images: [...images1, ...images2] });
-  
+    
+      
     } catch (err) {
       console.error(err);
       reply.status(500).send('Error generating image');
     }
   });
-  
   
 }
 

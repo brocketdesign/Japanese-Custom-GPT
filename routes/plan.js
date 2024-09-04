@@ -645,7 +645,6 @@ fastify.post('/album/check-client', async (request, reply) => {
 
   try {
     const all_client = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('clients').find({}).toArray();
-    console.log(all_client)
       const client = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('clients').findOne({
           chatId: chatId,
           priceId: priceId,

@@ -224,7 +224,7 @@ window.generateImage = function(data,prompt){
   const subscriptionStatus = user.subscriptionStatus == 'active'
 
   if (/nsfw\b/i.test(imagePrompt) && !subscriptionStatus) {
-    displayMessage('bot-image-nsfw')
+    displayMessage('bot-image-nsfw',img)
   }else{
     displayMessage('bot-image',img)
   }  

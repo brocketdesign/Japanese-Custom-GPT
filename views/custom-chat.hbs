@@ -1009,11 +1009,11 @@ $(document).ready(function() {
             `,
             showCloseButton: true,
             showConfirmButton: false,
-            width: '90%',
+            width: '100%',
             background: 'rgba(0,0,0,0.85)',
             customClass: {
-                popup: 'animated-popup image-preview p-0',
-                htmlContainer: 'bg-light'
+                popup: 'bg-transparent animated-popup image-preview p-0',
+                htmlContainer: 'bg-transparent'
             },
             showClass: {
                 popup: 'animate__animated animate__fadeIn'
@@ -1034,20 +1034,7 @@ $(document).ready(function() {
                         clickable: true,
                     },
                     autoHeight: true,
-                    breakpoints: {
-                        320: {
-                            slidesPerView: 1,
-                            spaceBetween: 10
-                        },
-                        640: {
-                            slidesPerView: 2,
-                            spaceBetween: 20
-                        },
-                        1024: {
-                            slidesPerView: 3,
-                            spaceBetween: 30
-                        }
-                    }
+                    slideToSHow : 1,
                 });
             }
         });

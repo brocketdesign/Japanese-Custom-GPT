@@ -43,7 +43,6 @@ async function routes(fastify, options) {
             
             
             const users = await getUniqueUsers()
-            console.log(users[0])
             return reply.view('/admin/users',{users,title:'Latest users'})
         } catch (error) {
             return reply.status(500).send({ error: error.message });

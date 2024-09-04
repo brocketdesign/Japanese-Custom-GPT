@@ -395,10 +395,6 @@ $(document).ready(function() {
             
                 updateParameters(chatId, fetch_userId);
                 showChat();
-            
-                $('#chatContainer').animate({
-                    scrollTop: $('#chatContainer').prop("scrollHeight")
-                }, 500);
             }
             
             function setupChatData(chat) {
@@ -1220,6 +1216,9 @@ $(document).ready(function() {
                         chatContainer.append($(messageHtml).hide().fadeIn());
                     }
                 }
+                $('#chatContainer').animate({
+                    scrollTop: $('#chatContainer').prop("scrollHeight")
+                }, 500);
             }
             
             
@@ -1229,36 +1228,25 @@ $(document).ready(function() {
                         url: `/image/${imageId}`,
                         method: 'GET',
                         success: function(response) {
+                            let isBlur = response.isBlur
                             if (response.imageUrl) {
-                                let messageHtml = '';
-                                if (/nsfw\b/i.test(response.imagePrompt) && !subscriptionStatus) {
-                                    messageHtml = `
-                                    <div class="d-flex flex-row justify-content-start mb-4 message-container bot-image-nsfw" style="position: relative;">
-                                        <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+                                const messageHtml = `
+                                <div id="container-${designStep}">
+                                    <div class="d-flex flex-row justify-content-start mb-4 message-container">
+                                        <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
                                         <div class="position-relative">
                                             <div class="p-3 ms-3 text-start assistant-image-box">
-                                                <img src="/img/nsfw-blurred.jpg" alt="${response.imagePrompt}">
+                                                <img id="image-${imageId}" src="${response.imageUrl}" alt="${response.imagePrompt}">
                                             </div>
+                                            ${isBlur ? `
                                             <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
                                                 <span type="button" class="badge bg-danger text-white unlock-nsfw" style="padding: 5px; border-radius: 5px;">
                                                     <i class="fas fa-lock"></i> 成人向け
                                                 </span>
-                                            </div>
-                                        </div>
-                                    </div>   
-                                    `;
-                                } else {
-                                    messageHtml =   `
-                                    <div id="container-${designStep}">
-                                        <div class="d-flex flex-row justify-content-start mb-4 message-container">
-                                            <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
-                                            <div class="p-3 ms-3 text-start assistant-image-box">
-                                                <img id="image-${imageId}" src="${response.imageUrl}" alt="${response.imagePrompt}">
-                                            </div>
+                                            </div>` : ''}
                                         </div>
                                     </div>
-                                    `;
-                                }
+                                </div>`;
                                 resolve(messageHtml);
                             } else {
                                 console.error('No image URL returned');
@@ -1272,6 +1260,7 @@ $(document).ready(function() {
                     });
                 });
             }
+            
             
             $(document).on('click','.unlock-nsfw',function(){
                 showUpgradePopup('unlock-nsfw');
@@ -1732,13 +1721,13 @@ $(document).ready(function() {
                     messageElement.addClass(animationClass).fadeIn();
                 } 
             
-                else if (messageClass === 'bot-image-nsfw') {
+                else if (messageClass === 'bot-image-nsfw'&& message instanceof HTMLElement) {
                     messageElement = $(`
                         <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass}" style="position: relative;">
                             <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
                             <div class="position-relative">
                                 <div class="p-3 ms-3 text-start assistant-image-box">
-                                    <img src="/img/nsfw-blurred.jpg" alt="NSFW">
+                                    ${message.outerHTML}
                                 </div>
                                 <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
                                     <span type="button" class="badge bg-danger text-white unlock-nsfw" style="padding: 5px; border-radius: 5px;">

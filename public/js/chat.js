@@ -546,6 +546,7 @@ $(document).ready(function() {
                             ${!isClient ? `
                                 <div style="bottom: 20px;z-index: 100;" class="mx-auto mt-4 position-fixed w-100">
                                     <button class="btn btn-lg custom-gradient-bg" style="border-radius:50px;"><i class="far fa-images me-2"></i>アルバムを購入する</button>
+                                    <a href="/my-plan" class="d-block mt-1 text-white">Lamixプレミアムなら無料で見放題</a>
                                 </div>`:''
                             }
                         </div>
@@ -1232,7 +1233,7 @@ $(document).ready(function() {
                             if (response.imageUrl) {
                                 const messageHtml = `
                                 <div id="container-${designStep}">
-                                    <div class="d-flex flex-row justify-content-start mb-4 message-container">
+                                    <div class="d-flex flex-row justify-content-start mb-4 message-container ${isBlur ? 'unlock-nsfw':''}">
                                         <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
                                         <div class="position-relative">
                                             <div class="p-3 ms-3 text-start assistant-image-box">
@@ -1240,7 +1241,7 @@ $(document).ready(function() {
                                             </div>
                                             ${isBlur ? `
                                             <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
-                                                <span type="button" class="badge bg-danger text-white unlock-nsfw" style="padding: 5px; border-radius: 5px;">
+                                                <span type="button" class="badge bg-danger text-white" style="padding: 5px; border-radius: 5px;">
                                                     <i class="fas fa-lock"></i> 成人向け
                                                 </span>
                                             </div>` : ''}
@@ -1723,14 +1724,14 @@ $(document).ready(function() {
             
                 else if (messageClass === 'bot-image-nsfw'&& message instanceof HTMLElement) {
                     messageElement = $(`
-                        <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass}" style="position: relative;">
+                        <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass} unlock-nsfw" style="position: relative;">
                             <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
                             <div class="position-relative">
                                 <div class="p-3 ms-3 text-start assistant-image-box">
                                     ${message.outerHTML}
                                 </div>
                                 <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
-                                    <span type="button" class="badge bg-danger text-white unlock-nsfw" style="padding: 5px; border-radius: 5px;">
+                                    <span type="button" class="badge bg-danger text-white" style="padding: 5px; border-radius: 5px;">
                                         <i class="fas fa-lock"></i> 成人向け
                                     </span>
                                 </div>

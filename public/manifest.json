@@ -1,0 +1,8 @@
+{
+    "name": "LAMIX",
+    "short_name": "LAMIX",
+    "start_url": "/",
+    "display": "standalone",
+    "theme_color": "#6E20F4",
+    "background_color": "#ffffff"
+}

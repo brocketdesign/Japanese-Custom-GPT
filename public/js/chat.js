@@ -85,8 +85,6 @@ $(document).ready(function() {
                 }, 5000);
             }
 
-            sendCustomData({action: 'viewpage'});
-
             window.fetchChatData = async function(fetch_chatId, fetch_userId, fetch_reset, callback) {
                 $('#chatContainer').empty();
                 $('#startButtonContained').remove();
@@ -359,7 +357,6 @@ $(document).ready(function() {
                 }
             }
             $(document).on('click','#unlock-result',function(){
-                sendCustomData({action:'unlock-result'})
                 promptForEmail()
             })
             
@@ -1925,10 +1922,6 @@ $(document).ready(function() {
 
     
             }
-
-            $(window).on('scroll', function() {
-                maxScroll();
-            });
 
             function handleImageGeneration(buttonSelector, generateImageFunction) {
                 $(document).on('click', buttonSelector, function() {

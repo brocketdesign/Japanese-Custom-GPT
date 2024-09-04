@@ -742,7 +742,7 @@
 <script>
 $(document).ready(function() {
     const user = {{{json user}}}
-    
+    displayPepopleChat()
     function adjustHeight() {
         const newHeight = $(window).height() * 0.97;
         $('.chat-contain .card-body').height(newHeight);
@@ -1243,7 +1243,7 @@ function displayPepopleChat(){
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="recent-tab" data-bs-toggle="tab" data-bs-target="#recent" type="button" role="tab" aria-controls="recent" aria-selected="true">最新</button>
                 </li>
-                <li class="nav-item" role="presentation">
+                <li class="nav-item d-none" role="presentation">
                     <button class="nav-link" id="2d-tab" data-bs-toggle="tab" data-bs-target="#anime-tab" type="button" role="tab" aria-controls="2d" aria-selected="false">2D</button>
                 </li>
                 <li class="nav-item d-none" role="presentation">
@@ -1293,6 +1293,7 @@ function displayPepopleChat(){
             </div>`;
 
             // 2D Characters
+            
             htmlContent += `
             <div class="tab-pane fade" id="anime-tab" role="tabpanel" aria-labelledby="2d-tab">
                 <section class="w-100 px-0 py-0">
@@ -1325,7 +1326,7 @@ function displayPepopleChat(){
                     </div>
                 </section>
             </div>`;
-
+            
             // 3D Characters
             htmlContent += `
             <div class="tab-pane fade" id="real-tab" role="tabpanel" aria-labelledby="3d-tab">

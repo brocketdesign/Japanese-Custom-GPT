@@ -1932,7 +1932,7 @@ async function routes(fastify, options) {
         let user = await fastify.getUser(request, reply);
         const userId = user._id;
         const chatsCollection = db.collection('chats');
-  
+        /*
         const synclubaichat = await chatsCollection.aggregate([
           {
             $match: {
@@ -1949,9 +1949,9 @@ async function routes(fastify, options) {
           },
           { $replaceRoot: { newRoot: "$doc" } },
           { $sort: { updatedAt: -1 } }, 
-          { $limit: 100 }, 
+          { $limit: 10 }, 
         ]).toArray();      
-        
+        */
         // Find recent characters
         const currentDateObj = new Date();
         const tokyoOffset = 9 * 60; // Offset in minutes for Tokyo (UTC+9)
@@ -1988,7 +1988,7 @@ async function routes(fastify, options) {
           };
         }));
 
-        peopleChats = { synclubaichat, recent: recentWithUser };
+        peopleChats = { recent: recentWithUser };
   
         return reply.send({ peopleChats });
       });

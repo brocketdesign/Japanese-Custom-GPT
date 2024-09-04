@@ -47,7 +47,7 @@ $(document).ready(function() {
 
             $('.is-free-user').each(function(){if(!subscriptionStatus && !isTemporary)$(this).show()})
 
-            if(isTemporary){
+            if(false && isTemporary){
                 setTimeout(() => {
                     showRegistrationForm(null,function(){
                         const  triggerCustomAlert = function() {

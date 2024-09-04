@@ -552,8 +552,8 @@ $(document).ready(function() {
                             }
                         </div>
                     `,
-                    showClass: { popup: 'animate__animated animate__slideInUp animate__faster' },
-                    hideClass: { popup: 'animate__animated animate__slideOutDown animate__faster' },
+                    showClass: { popup: 'animate__animated animate__slideInUp' },
+                    hideClass: { popup: 'animate__animated animate__slideOutDown' },
                     position: 'bottom',
                     backdrop: 'rgba(43, 43, 43, 0.2)',
                     showCloseButton: true,

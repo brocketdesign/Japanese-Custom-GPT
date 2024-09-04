@@ -257,6 +257,14 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     fastify.get('/chat/edit/:chatId', {
       preHandler: [fastify.authenticate]
     }, async (request, reply) => {
+      let user = await fastify.getUser(request, reply);
+      const userId = user._id;
+      user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+
+      const isSubscribed = user.subscriptionStatus === 'active';
+      if(!isSubscribed){
+        return reply.redirect('/my-plan');
+      }
 
       let chatId = request.params.chatId 
       const chatImage = request.query.chatImage

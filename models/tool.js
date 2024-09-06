@@ -17,7 +17,6 @@ async function checkUserAdmin(fastify, userId) {
     }
     return adminEmails.includes(user.email);
 }
-
 // Configure AWS S3
 const s3 = new aws.S3({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -37,7 +36,22 @@ async function getCounter(db) {
   async function updateCounter(db, value) {
     await db.collection('counters').updateOne({ _id: 'storyCounter' }, { $set: { value: value } }, { upsert: true });
   }
+  async function deleteObjectFromUrl(url) {
+    const bucket = url.split('.')[0].split('//')[1];  // Extract bucket from URL
+    const key = url.split('.com/')[1];  // Extract key from URL
 
+    const params = {
+        Bucket: bucket,
+        Key: key
+    };
+
+    try {
+        await s3.deleteObject(params).promise();
+        return 'Object deleted successfully';
+    } catch (error) {
+        throw new Error(`Error deleting object: ${error.message}`);
+    }
+};
   const uploadToS3 = async (buffer, hash, filename) => {
     const params = {
         Bucket: process.env.AWS_S3_BUCKET_NAME,
@@ -230,5 +244,6 @@ const createBlurredImage = async (imageUrl, blurLevel = 50, width = 50, height =
     checkLimits, 
     checkUserAdmin, 
     convertImageUrlToBase64,
-    createBlurredImage
+    createBlurredImage,
+    deleteObjectFromUrl
 }

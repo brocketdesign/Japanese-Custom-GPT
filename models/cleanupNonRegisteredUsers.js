@@ -1,3 +1,5 @@
+const  { deleteObjectFromUrl } = require('./tool')
+
 async function cleanupNonRegisteredUsers(db) {
     try {
         const usersCollection = db.collection('users');

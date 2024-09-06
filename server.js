@@ -281,7 +281,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       const chatImage = request.query.chatImage
       //Must have an image 
       if(!chatId && !chatImage){
-        return reply.redirect('/discover')
+        //return reply.redirect('/discover')
       }
 
       try {

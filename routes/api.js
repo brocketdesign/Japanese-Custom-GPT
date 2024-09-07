@@ -1906,7 +1906,6 @@ async function routes(fastify, options) {
         }
     });
     
-    
     fastify.get('/api/user', async (request,reply) => {
         try {
             let user = await fastify.getUser(request, reply);
@@ -1919,7 +1918,7 @@ async function routes(fastify, options) {
         }
     })
     fastify.get('/api/mode', async (request,reply) => {
-        return process.env.MODE
+        return {mode:process.env.MODE}
     })
     function getActionObject(customData, action) {
         if(!customData){return false}

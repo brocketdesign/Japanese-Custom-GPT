@@ -1,11 +1,11 @@
-$(document).ready(function() {
+$(document).ready(async function() {
     
     const urlParams = new URLSearchParams(window.location.search);
     const success = urlParams.get('success');
     const sessionId = urlParams.get('session_id');
     const priceId = urlParams.get('priceId');
     const paymentFalse = urlParams.get('payment') == 'false';
-    const user = JSON.parse(localStorage.getItem('user'))
+    const user = await fetchUser();
     const isTemporary = !!user?.isTemporary || true
 
     if (success && sessionId) {
@@ -110,7 +110,6 @@ $(document).ready(function() {
             }
         }
     }
-
     //checkAndRedirect();
     window.checkImageDescription = function(imageUrl = null, callback) {
         imageUrl = imageUrl ? imageUrl : $('#chatImageUrl').val();
@@ -262,6 +261,7 @@ $(document).ready(function() {
         e.stopPropagation();
         e.preventDefault();
         const isTemporary = !!user.isTemporary
+        console.log({isTemporary})
         if(isTemporary){ showRegistrationForm(); return; }
         const $this = $(this)
         $this.toggleClass('on');

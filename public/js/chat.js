@@ -1,6 +1,6 @@
 const audioCache = new Map();
 const audioPool = [];
-$(document).ready(function() {
+$(document).ready(async function() {
     let autoPlay = localStorage.getItem('audioAutoPlay') === 'true';
     $('#audio-icon').addClass(autoPlay ? 'fa-volume-up' : 'fa-volume-mute');
     $('#audio-play').click(function() {
@@ -9,512 +9,503 @@ $(document).ready(function() {
         $('#audio-icon').toggleClass('fa-volume-up fa-volume-mute');
     });
     
-    let API_URL = ""
-    let MODE = "" 
-    fetchMode(function(error,mode){
-        MODE = mode
-        if (mode !== 'local') {
-            API_URL = window.location.origin;
-            if (!API_URL.includes('lamix')) {
-                API_URL = 'https://www.lamix.jp';
-            }
-        }        
-        localStorage.setItem('MODE',mode)
-        localStorage.setItem('API_URL',API_URL)
-        fetchUser(function(error, user){
-            let chatId = getIdFromUrl(window.location.href) || getIdFromUrl($.cookie('redirect_url'))||$(`#lamix-chat-widget`).data('id');
-            let userChatId
-            const userId = user._id
-            renderChatList(userId,chatId);
-            localStorage.setItem('userId', userId);
-            localStorage.setItem('user', JSON.stringify(user));
-            let userCoins = user.coins
-            updateCoins(userCoins)
-            let persona
-            let currentStep = 0;
-            let totalSteps = 0;
-            let chatData = {};
-            let character = {}
-            let isNew = true;
-            let feedback = false
-            let thumbnail = false
-            let isTemporary = !!user.isTemporary
-            let language = 'japanese'
-            $('body').attr('data-temporary-user',isTemporary)
-
-            let count_proposal = 0
-            const subscriptionStatus = user.subscriptionStatus == 'active'
-
-            $('.is-free-user').each(function(){if(!subscriptionStatus && !isTemporary)$(this).show()})
-
-            if(false && isTemporary){
-                setTimeout(() => {
-                    showRegistrationForm(null,function(){
-                        const  triggerCustomAlert = function() {
-                            Swal.fire({
-                                position: 'top-end',
-                                title: '<strong class="u-color-grad" style="font-size:16px">ログインすると<br>プレゼントを200円相当ゲット！</strong>',
-                                html: `
-                                    <p style="font-size: 14px; margin-bottom: 10px;">今すぐログインしてプレゼントを受け取りましょう！</p>
-                                    <a href="/authenticate" class="btn btn-dark border-0 shadow-0 w-100 custom-gradient-bg" style="font-size: 14px; padding: 8px;">ログイン</a>
-                                `,
-                                showConfirmButton: false,
-                                showCloseButton: true,
-                                backdrop: false,
-                                allowOutsideClick: false,
-                                customClass: {
-                                    title: 'swal2-custom-title',
-                                    popup: 'swal2-custom-popup bg-light border border-dark',
-                                    content: 'swal2-custom-content',
-                                    closeButton: 'swal2-top-left-close-button',
-                                    popup: 'swal2-custom-popup animate__animated animate__fadeIn',
-                                },
-                                showClass: {
-                                    popup: 'animate__animated animate__fadeIn'
-                                },
-                                hideClass: {
-                                    popup: 'animate__animated animate__slideOutRight'
-                                },
-                            });
-                        }
-                        setTimeout(() => {
-                            //triggerCustomAlert();
-                        }, 2000);
-                        
-                    })
-                }, 5000);
-            }
-
-            window.fetchChatData = async function(fetch_chatId, fetch_userId, fetch_reset, callback) {
-                $('#chatContainer').empty();
-                $('#startButtonContained').remove();
-                $('#chat-recommend').empty();
-                
-                const lastUserChat = await getUserChatHistory(fetch_chatId, fetch_userId);
-
-                fetch_chatId = lastUserChat ?.chatId || fetch_chatId
-                userChatId = lastUserChat ?._id || userChatId;
-
-                if (fetch_reset) {
-                    currentStep = 0;
-                }
-            
-                count_proposal = 0;
-                
-                postChatData(fetch_chatId, fetch_userId, userChatId, fetch_reset, callback);
-            }
-            
-            function postChatData(fetch_chatId, fetch_userId, userChatId, fetch_reset, callback) {
-                $('#chatContainer').empty();
-                $('#startButtonContained').remove();
-                $('#chat-recommend').empty();
-                $.ajax({
-                    url: `${API_URL}/api/chat/`,
-                    type: 'POST',
-                    dataType: 'json',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ userId: fetch_userId, chatId: fetch_chatId, userChatId }),
-                    success: function(data) {
-                        handleChatSuccess(data, fetch_reset, fetch_userId);
-                    },
-                    error: function(xhr, status, error) {
-                        showDiscovery();
-                    },
-                    complete: function(xhr, status) {
-                        if (typeof callback === 'function') {
-                            callback();
-                        }
-                    }
-                });
-            }            
-
-            if(chatId){
-                fetchChatData(chatId, userId)
-            }else{
-                showDiscovery()
-            }
-
-            enableToggleDropdown()
-            
-            $('textarea').each(function() {
-                //resizeTextarea(this);
-                $(this).on('input change keypress', function(e) {
-                    if (e.type === 'keypress' && e.which !== 13) {
-                        return;
-                    }
-                    resizeTextarea(this);
-                });
-            });
-            
-            $('#sendMessage').on('click', function() {
-                sendMessage();
-                $('#userMessage').val('');  
-                //$('#userMessage').attr('placeholder', 'チャットしよう'); 
-                setTimeout(() => {
-                    resizeTextarea($('#userMessage')[0]);
-                }, 500);
-            });
 
 
-            // Event handler for the Enter key
-            $('#userMessage').on('keypress', function(event) {
-                if (event.which == 13 && !event.shiftKey) { 
-                    sendMessage();
-                    setTimeout(() => {
-                        $('#userMessage').val('');  
-                        $('#userMessage').attr('placeholder', 'チャットしよう'); 
-                        resizeTextarea($('#userMessage')[0]);
-                    }, 500);
-                }
-            });     
+    const { API_URL, MODE } = await window.setApiUrlAndMode();
+    const user = await fetchUser();
 
-            function resizeTextarea(element){
-                element.style.height = 'auto';
-                element.style.height = (element.scrollHeight - 20 ) + 'px';  
-            }
+    let chatId = getIdFromUrl(window.location.href) || getIdFromUrl($.cookie('redirect_url'))||$(`#lamix-chat-widget`).data('id');
+    let userChatId
+    const userId = user._id
+    let userCoins = user.coins
+    let persona
+    let currentStep = 0;
+    let totalSteps = 0;
+    let chatData = {};
+    let character = {}
+    let isNew = true;
+    let feedback = false
+    let thumbnail = false
+    let isTemporary = !!user.isTemporary
+    let language = 'japanese'
 
-            $(document).on('click','.reset-chat', function(){
-                chatId = $(this).data('id')
-                fetchChatData(chatId, userId, true) ;
-            })
-            $(document).on('click','.user-chat-history', function(){
-                //const selectUser = $(this).data('user')
-                chatId = $(this).data('id')
-                userChatId = $(this).data('chat')
-                postChatData(chatId, userId, userChatId, null, null) 
-            })
-            $(document).on('click', '.chat-list.item.user-chat .user-chat-content', function(e) {
-                const $this = $(this);
-                if ($this.hasClass('loading')) return;
-                $this.addClass('loading');
-                const selectChatId = $this.closest('.user-chat').data('id');
-                const chatImageUrl = $this.find('img').attr('src');
-                $this.closest('.chat-list.item').addClass('active').siblings().removeClass('active');
-                $('#chat-container').css('background-image', `url(${chatImageUrl})`);
-                $('#chatContainer').empty();
-                $('#chat-recommend').empty()
-                
-                fetchChatData(selectChatId, userId, null, function() {
-                    $this.removeClass('loading');
-                });
-            });
-             
+    $('body').attr('data-temporary-user',isTemporary)
+    renderChatList(userId,chatId);
+    updateCoins(userCoins)
 
-            function updateParameters(newchatId, newuserId){
-                chatId = newchatId
-                localStorage.setItem('chatId', chatId);
-                var currentUrl = window.location.href;
-                var urlParts = currentUrl.split('/');
-                urlParts[urlParts.length - 1] = newchatId;
-                var newUrl = urlParts.join('/');
-                if($('#chat-widget-container').length == 0){
-                    window.history.pushState({ path: newUrl }, '', newUrl);
-                }
+    let count_proposal = 0
+    const subscriptionStatus = user.subscriptionStatus == 'active'
 
-                if($('#chat-widget-container').length == 0){
-                    $('.auto-gen').each(function(){
-                        $(this)
-                        .attr('data-chat-id',chatId)
-                        .attr('data-user-id',userId)
-                        .attr('data-user-chat-id',userChatId)
-                        .attr('data-thumbnail',thumbnail)
-                        .attr('data-character',JSON.stringify(character))
-                    })
+    $('.is-free-user').each(function(){if(!subscriptionStatus && !isTemporary)$(this).show()})
 
-                    $('#gen-ideas')
-                    .attr('data-chat-id',chatId)
-                    .attr('data-user-id',userId)
-                    .attr('data-user-chat-id',userChatId)
-                    .removeClass('done')
-                }
-
-                const elementsToUpdate = ['.content .chart-button', '.content .tag-button', '.content .delete-chat'];
-                elementsToUpdate.forEach(selector => {
-                    $(selector).each(function() {
-                        $(this).attr('data-id', chatId);
-                    });
-                });
-                $('.edit-chat').each(function(){
-                    $(this).attr('href','/chat/edit/'+newchatId)
-                })
-            }
-            window.choosePath = function(userResponse) {
-                currentStep++;
-                hideOtherChoice(userResponse,currentStep)
-                $.ajax({
-                    url: API_URL+'/api/chat-data',
-                    type: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    data: JSON.stringify({ 
-                        currentStep:currentStep-1, 
-                        message:userResponse, 
-                        userId, 
-                        chatId, 
-                        userChatId, 
-                        isNew ,
-                        isWidget : $('#chat-widget-container').length > 0
-                    }),
-                    success: function(response) {
-                        userChatId = response.userChatId
-                        isNew = false
-                        updatechatContent(userResponse);
-                    },
-                    error: function(error) {
-                        console.log(error.statusText);
-                    }
-                });
-            };
-            window.sendMessage = function(customMessage,displayStatus = true) {
-                if($('#chat-widget-container').length == 0 && isTemporary){
-                    showRegistrationForm()
-                    return
-                }
-
-                $('#startButtonContained').hide();
-                $('#introChat').hide();
-                $('#gen-ideas').removeClass('done')
-                Swal.close();
-
-                currentStep ++
-                const message = customMessage || $('#userMessage').val();
-                if (message.trim() !== '') {
-                    if(displayStatus){
-                        displayMessage('user', message);
-                    }
-                    $('#userMessage').val(''); // Clear the input field
-                    // Send the message to the backend (to be implemented)
-                    console.log({userChatId})
-                    $.ajax({
-                        url: API_URL+'/api/chat-data', // Backend endpoint to handle the message
-                        type: 'POST',
-                        contentType: 'application/json',
-                        data: JSON.stringify({ 
-                            currentStep:currentStep-1, 
-                            message, 
-                            userId, 
-                            chatId, 
-                            userChatId, 
-                            isNew ,
-                            isWidget : $('#chat-widget-container').length > 0
-                        }),
-                        success: function(response) {
-                            /*
-                            const messageCountDoc = response.messageCountDoc
-                            if(messageCountDoc.limit){
-                                let limitMess = messageCountDoc.limit == '無制限' ? messageCountDoc.limit : `${parseInt(messageCountDoc.count)}/${messageCountDoc.limit}`
-                                $('#message-number')
-                                .html(`
-                                    <span class="badge bg-dark" style="color: rgb(165 164 164);opacity:0.8;font-size: 12px;">
-                                        <i class="fa fa-comment me-1"></i>${limitMess}
-                                    </span>
-                                `)
-                                .hide()
-                            }*/
-                           if(!isTemporary && $('#chat-widget-container').length == 0 ){
-                                const nextLevel = response.nextLevel || 10
-                                const messagesCount = response.messagesCount || 0
-                                initializeOrUpdateProgress(messagesCount,nextLevel)
-                           }
-
-                                
-                            userChatId = response.userChatId
-                            chatId = response.chatId
-                            if(currentStep < totalSteps){
-                                displayStep(chatData, currentStep);
-                                isNew = false
-                            }else{
-                                //generateNarration()
-                                generateCompletion(function(){
-                                    checkForPurchaseProposal()
-                                })
-                                isNew = false
-                            }
+    if(false && isTemporary){
+        setTimeout(() => {
+            showRegistrationForm(null,function(){
+                const  triggerCustomAlert = function() {
+                    Swal.fire({
+                        position: 'top-end',
+                        title: '<strong class="u-color-grad" style="font-size:16px">ログインすると<br>プレゼントを200円相当ゲット！</strong>',
+                        html: `
+                            <p style="font-size: 14px; margin-bottom: 10px;">今すぐログインしてプレゼントを受け取りましょう！</p>
+                            <a href="/authenticate" class="btn btn-dark border-0 shadow-0 w-100 custom-gradient-bg" style="font-size: 14px; padding: 8px;">ログイン</a>
+                        `,
+                        showConfirmButton: false,
+                        showCloseButton: true,
+                        backdrop: false,
+                        allowOutsideClick: false,
+                        customClass: {
+                            title: 'swal2-custom-title',
+                            popup: 'swal2-custom-popup bg-light border border-dark',
+                            content: 'swal2-custom-content',
+                            closeButton: 'swal2-top-left-close-button',
+                            popup: 'swal2-custom-popup animate__animated animate__fadeIn',
                         },
-                        error: function(error) {
-                            if (error.status === 403) {
-                                var limitIds = error.responseJSON?.limitIds || [];
-                        
-                                if ($('#chat-widget-container').length == 0 && isTemporary) {
-                                    showRegistrationForm();
-                                    return;
-                                }
-                                if (limitIds.includes(1) && $('#chat-widget-container').length == 0) {
-                                    showUpgradePopup('chat-message');
-                                    return;
-                                }
-                                if (limitIds.includes(2)) {
-                                    showUpgradePopup('chat-character');
-                                    return;
-                                }
-                            } else {
-                                console.error('Error:', error);
-                                displayMessage('bot', 'An error occurred while sending the message.');
-                            }
-                        }                        
+                        showClass: {
+                            popup: 'animate__animated animate__fadeIn'
+                        },
+                        hideClass: {
+                            popup: 'animate__animated animate__slideOutRight'
+                        },
                     });
                 }
-            }
-            $(document).on('click','#unlock-result',function(){
-                promptForEmail()
+                setTimeout(() => {
+                    //triggerCustomAlert();
+                }, 2000);
+                
             })
-            
-            function handleChatSuccess(data, fetch_reset, fetch_userId) {
-                const chatId = data.chat._id;
-                $(document).find(`.chat-list.item[data-id="${chatId}"]`).addClass('active').siblings().removeClass('active');
+        }, 5000);
+    }
 
-                isNew = fetch_reset || data.isNew;
+    window.fetchChatData = async function(fetch_chatId, fetch_userId, fetch_reset, callback) {
+        $('#chatContainer').empty();
+        $('#startButtonContained').remove();
+        $('#chat-recommend').empty();
+        
+        const lastUserChat = await getUserChatHistory(fetch_chatId, fetch_userId);
 
-                if (!data.chat) {
-                    showDiscovery();
-                    return;
-                }
-            
-                setupChatData(data.chat);
-                setupChatInterface(data.chat, data.character);
-                renderChatList(fetch_userId,chatId);
+        fetch_chatId = lastUserChat ?.chatId || fetch_chatId
+        userChatId = lastUserChat ?._id || userChatId;
 
-                if (!isNew) {
-                    displayExistingChat(data.userChat, data.character);
-                } else if (data.chat.content && data.chat.content.length > 0) {
-                    displayStep(data.chat.content, currentStep);
-                } else {
-                    displayInitialChatInterface(data.chat);
-                }
-            
-                if (data.chat.galleries && data.chat.galleries.length > 0) {
-                    displayGalleries(thumbnail, data.chat.galleries, data.chat.blurred_galleries, chatId, fetch_userId);
-                }
-            
-                if (!isTemporary) {
-                    initializeOrUpdateProgress(data?.userChat?.messagesCount || 0, data?.userChat?.nextLevel || 10);
-                }
-            
-                updateParameters(chatId, fetch_userId);
-                showChat();
-            }
-            
-            function setupChatData(chat) {
-                chatData = chat.content || [];
-                totalSteps = chatData.length;
-                chatName = chat.name;
-                thumbnail = chat.thumbnailUrl || chat.chatImageUrl;
-                localStorage.setItem('thumbnail',thumbnail)
-            }
-            
-            function setupChatInterface(chat, character) {
-                const gender = determineChatGender(chat);
-            
-                $('#chat-container').attr('data-genre', gender);
-                updateChatBackgroundImage(thumbnail);
-                $('#chat-title').text(chatName);
-                $('#input-container').show().addClass('d-flex');
-                $('#userMessage').attr('placeholder', `${chatName}にメッセージを送る`);
-            }
-            
-            function determineChatGender(chat) {
-                let gender = chat.gender || 'female';
-                if (chat.character && chat.character.prompt) {
-                    gender = chat.character.prompt.toLowerCase();
-                    gender = /\bmale\b/.test(gender) ? "male" : "female";
-                }
-                return gender;
-            }
-            
-            function updateChatBackgroundImage(thumbnail) {
-                const currentImageUrl = $('#chat-container').css('background-image').replace(/url\(["']?|["']?\)$/g, '');
-                if (currentImageUrl !== thumbnail) {
-                    $('#chat-container').css('background-image', `url(${thumbnail})`);
+        if (fetch_reset) {
+            currentStep = 0;
+        }
+    
+        count_proposal = 0;
+        
+        postChatData(fetch_chatId, fetch_userId, userChatId, fetch_reset, callback);
+    }
+    
+    function postChatData(fetch_chatId, fetch_userId, userChatId, fetch_reset, callback) {
+        $('#chatContainer').empty();
+        $('#startButtonContained').remove();
+        $('#chat-recommend').empty();
+        $.ajax({
+            url: `${API_URL}/api/chat/`,
+            type: 'POST',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify({ userId: fetch_userId, chatId: fetch_chatId, userChatId }),
+            success: function(data) {
+                handleChatSuccess(data, fetch_reset, fetch_userId);
+            },
+            error: function(xhr, status, error) {
+                showDiscovery();
+            },
+            complete: function(xhr, status) {
+                if (typeof callback === 'function') {
+                    callback();
                 }
             }
-            
-            function displayExistingChat(userChat,character) {
-                persona = userChat.persona;
-                thumbnail = character?.image || localStorage.getItem('thumbnail')
-                displayChat(userChat.messages, persona);
-                const today = new Date().toISOString().split('T')[0];
-                if (userChat.log_success) {
-                    displayThankMessage();
-                    $.cookie('dailyBonusClaimed', today, { expires: 1 });
-                }else if ($.cookie('dailyBonusClaimed') != today && !isTemporary) {
-                    thankUserAndAddCoins(function(response){
-                        if(!response){return}
-                        updateCoins()
-                        let message = `[Hidden] Tell me that you will send me a picture of you.Do not answer this message. Act as if it was oyour idea.`
-                        addMessageToChat(chatId, userChatId, 'user', message,function(){
-                            generateCompletion(function(){
-                                checkImageDescription(thumbnail,function(response){
-                                    if(!response){
-                                        generateImageDescriptionBackend(thumbnail,function(){
-                                            generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
-                                                generateImageNovita(API_URL, userId, chatId, userChatId, character, { prompt });
-                                            });
-                                        })
-                                    }else{
-                                        generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
-                                            generateImageNovita(API_URL, userId, chatId, userChatId, character, { prompt });
-                                        });
-                                    }
-                                }) 
-                            })
-                        });
-                    })
-                }
+        });
+    }            
 
-                if($('#chat-widget-container').length == 0 && isTemporary){
-                    displayMessage('assistant',`<a class="btn btn-secondary custom-gradient-bg shadow-0 m-2 px-4 py-2" style="border-radius: 50px;" href="/authenticate"><i class="fas fa-sign-in-alt me-2"></i> ログイン</a>`)
-                }
-                if(!isTemporary){checkForPurchaseProposal()}
-            }
-            
-            function displayInitialChatInterface(chat) {
+    if(chatId){
+        fetchChatData(chatId, userId)
+    }else{
+        showDiscovery()
+    }
 
-                if (isTemporary) {
-                    displayStarter(chat);
-                } else {
-                    selectPersona(() => {
-                        displayStarter(chat);
-                    });
-                }
+    enableToggleDropdown()
+    
+    $('textarea').each(function() {
+        //resizeTextarea(this);
+        $(this).on('input change keypress', function(e) {
+            if (e.type === 'keypress' && e.which !== 13) {
+                return;
             }
-            
-            function displayGalleries(thumbnail, galleries, blurred_galleries, chatId, fetch_userId) {
-                galleries.forEach((gallery, index) => {
-                    if(!gallery.images || gallery.images.length == 0){return}
-                    const blurredImages = blurred_galleries[index].images;
-                    const stripeProductId = MODE ? gallery['stripeProductIdLocal'] : gallery['stripeProductIdLive'];
-                    const stripePriceId = MODE ? gallery['stripePriceIdLocal' ]: gallery['stripePriceIdLive']; 
-                    const album = {
-                        chatId,
-                        userId: fetch_userId,
-                        name: gallery.name,
-                        price: gallery.price,
-                        description: gallery.description,
-                        blurredImages: [gallery.images[0], ...blurredImages],
-                        images: gallery.images,
-                        stripePriceId,
-                        stripeProductId,
-                    };
-                    console.log({stripePriceId,stripeProductId})
-                    if(stripeProductId && stripePriceId){
-                        displayAlbumThumb(thumbnail, album);
+            resizeTextarea(this);
+        });
+    });
+    
+    $('#sendMessage').on('click', function() {
+        sendMessage();
+        $('#userMessage').val('');  
+        //$('#userMessage').attr('placeholder', 'チャットしよう'); 
+        setTimeout(() => {
+            resizeTextarea($('#userMessage')[0]);
+        }, 500);
+    });
+
+
+    // Event handler for the Enter key
+    $('#userMessage').on('keypress', function(event) {
+        if (event.which == 13 && !event.shiftKey) { 
+            sendMessage();
+            setTimeout(() => {
+                $('#userMessage').val('');  
+                $('#userMessage').attr('placeholder', 'チャットしよう'); 
+                resizeTextarea($('#userMessage')[0]);
+            }, 500);
+        }
+    });     
+
+    function resizeTextarea(element){
+        element.style.height = 'auto';
+        element.style.height = (element.scrollHeight - 20 ) + 'px';  
+    }
+
+    $(document).on('click','.reset-chat', function(){
+        chatId = $(this).data('id')
+        fetchChatData(chatId, userId, true) ;
+    })
+    $(document).on('click','.user-chat-history', function(){
+        //const selectUser = $(this).data('user')
+        chatId = $(this).data('id')
+        userChatId = $(this).data('chat')
+        postChatData(chatId, userId, userChatId, null, null) 
+    })
+    $(document).on('click', '.chat-list.item.user-chat .user-chat-content', function(e) {
+        const $this = $(this);
+        if ($this.hasClass('loading')) return;
+        $this.addClass('loading');
+        const selectChatId = $this.closest('.user-chat').data('id');
+        const chatImageUrl = $this.find('img').attr('src');
+        $this.closest('.chat-list.item').addClass('active').siblings().removeClass('active');
+        $('#chat-container').css('background-image', `url(${chatImageUrl})`);
+        $('#chatContainer').empty();
+        $('#chat-recommend').empty()
+        
+        fetchChatData(selectChatId, userId, null, function() {
+            $this.removeClass('loading');
+        });
+    });
+        
+
+    function updateParameters(newchatId, newuserId){
+        chatId = newchatId
+        localStorage.setItem('chatId', chatId);
+        var currentUrl = window.location.href;
+        var urlParts = currentUrl.split('/');
+        urlParts[urlParts.length - 1] = newchatId;
+        var newUrl = urlParts.join('/');
+        if($('#chat-widget-container').length == 0){
+            window.history.pushState({ path: newUrl }, '', newUrl);
+        }
+
+        if($('#chat-widget-container').length == 0){
+            $('.auto-gen').each(function(){
+                $(this)
+                .attr('data-chat-id',chatId)
+                .attr('data-user-id',userId)
+                .attr('data-user-chat-id',userChatId)
+                .attr('data-thumbnail',thumbnail)
+                .attr('data-character',JSON.stringify(character))
+            })
+
+            $('#gen-ideas')
+            .attr('data-chat-id',chatId)
+            .attr('data-user-id',userId)
+            .attr('data-user-chat-id',userChatId)
+            .removeClass('done')
+        }
+
+        const elementsToUpdate = ['.content .chart-button', '.content .tag-button', '.content .delete-chat'];
+        elementsToUpdate.forEach(selector => {
+            $(selector).each(function() {
+                $(this).attr('data-id', chatId);
+            });
+        });
+        $('.edit-chat').each(function(){
+            $(this).attr('href','/chat/edit/'+newchatId)
+        })
+    }
+    window.choosePath = function(userResponse) {
+        currentStep++;
+        hideOtherChoice(userResponse,currentStep)
+        $.ajax({
+            url: API_URL+'/api/chat-data',
+            type: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            data: JSON.stringify({ 
+                currentStep:currentStep-1, 
+                message:userResponse, 
+                userId, 
+                chatId, 
+                userChatId, 
+                isNew ,
+                isWidget : $('#chat-widget-container').length > 0
+            }),
+            success: function(response) {
+                userChatId = response.userChatId
+                isNew = false
+                updatechatContent(userResponse);
+            },
+            error: function(error) {
+                console.log(error.statusText);
+            }
+        });
+    };
+    window.sendMessage = function(customMessage,displayStatus = true) {
+        if($('#chat-widget-container').length == 0 && isTemporary){
+            showRegistrationForm()
+            return
+        }
+
+        $('#startButtonContained').hide();
+        $('#introChat').hide();
+        $('#gen-ideas').removeClass('done')
+        Swal.close();
+
+        currentStep ++
+        const message = customMessage || $('#userMessage').val();
+        if (message.trim() !== '') {
+            if(displayStatus){
+                displayMessage('user', message);
+            }
+            $('#userMessage').val(''); // Clear the input field
+            // Send the message to the backend (to be implemented)
+            console.log({userChatId})
+            $.ajax({
+                url: API_URL+'/api/chat-data', // Backend endpoint to handle the message
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ 
+                    currentStep:currentStep-1, 
+                    message, 
+                    userId, 
+                    chatId, 
+                    userChatId, 
+                    isNew ,
+                    isWidget : $('#chat-widget-container').length > 0
+                }),
+                success: function(response) {
+                    /*
+                    const messageCountDoc = response.messageCountDoc
+                    if(messageCountDoc.limit){
+                        let limitMess = messageCountDoc.limit == '無制限' ? messageCountDoc.limit : `${parseInt(messageCountDoc.count)}/${messageCountDoc.limit}`
+                        $('#message-number')
+                        .html(`
+                            <span class="badge bg-dark" style="color: rgb(165 164 164);opacity:0.8;font-size: 12px;">
+                                <i class="fa fa-comment me-1"></i>${limitMess}
+                            </span>
+                        `)
+                        .hide()
+                    }*/
+                    if(!isTemporary && $('#chat-widget-container').length == 0 ){
+                        const nextLevel = response.nextLevel || 10
+                        const messagesCount = response.messagesCount || 0
+                        initializeOrUpdateProgress(messagesCount,nextLevel)
                     }
+
+                        
+                    userChatId = response.userChatId
+                    chatId = response.chatId
+                    if(currentStep < totalSteps){
+                        displayStep(chatData, currentStep);
+                        isNew = false
+                    }else{
+                        //generateNarration()
+                        generateCompletion(function(){
+                            checkForPurchaseProposal()
+                        })
+                        isNew = false
+                    }
+                },
+                error: function(error) {
+                    if (error.status === 403) {
+                        var limitIds = error.responseJSON?.limitIds || [];
+                
+                        if ($('#chat-widget-container').length == 0 && isTemporary) {
+                            showRegistrationForm();
+                            return;
+                        }
+                        if (limitIds.includes(1) && $('#chat-widget-container').length == 0) {
+                            showUpgradePopup('chat-message');
+                            return;
+                        }
+                        if (limitIds.includes(2)) {
+                            showUpgradePopup('chat-character');
+                            return;
+                        }
+                    } else {
+                        console.error('Error:', error);
+                        displayMessage('bot', 'An error occurred while sending the message.');
+                    }
+                }                        
+            });
+        }
+    }
+    $(document).on('click','#unlock-result',function(){
+        promptForEmail()
+    })
+    
+    function handleChatSuccess(data, fetch_reset, fetch_userId) {
+        const chatId = data.chat._id;
+        $(document).find(`.chat-list.item[data-id="${chatId}"]`).addClass('active').siblings().removeClass('active');
+
+        isNew = fetch_reset || data.isNew;
+
+        if (!data.chat) {
+            showDiscovery();
+            return;
+        }
+    
+        setupChatData(data.chat);
+        setupChatInterface(data.chat, data.character);
+        renderChatList(fetch_userId,chatId);
+
+        if (!isNew) {
+            displayExistingChat(data.userChat, data.character);
+        } else if (data.chat.content && data.chat.content.length > 0) {
+            displayStep(data.chat.content, currentStep);
+        } else {
+            displayInitialChatInterface(data.chat);
+        }
+    
+        if (data.chat.galleries && data.chat.galleries.length > 0) {
+            displayGalleries(thumbnail, data.chat.galleries, data.chat.blurred_galleries, chatId, fetch_userId);
+        }
+    
+        if (!isTemporary) {
+            initializeOrUpdateProgress(data?.userChat?.messagesCount || 0, data?.userChat?.nextLevel || 10);
+        }
+    
+        updateParameters(chatId, fetch_userId);
+        showChat();
+    }
+    
+    function setupChatData(chat) {
+        chatData = chat.content || [];
+        totalSteps = chatData.length;
+        chatName = chat.name;
+        thumbnail = chat.thumbnailUrl || chat.chatImageUrl;
+        localStorage.setItem('thumbnail',thumbnail)
+    }
+    
+    function setupChatInterface(chat, character) {
+        const gender = determineChatGender(chat);
+    
+        $('#chat-container').attr('data-genre', gender);
+        updateChatBackgroundImage(thumbnail);
+        $('#chat-title').text(chatName);
+        $('#input-container').show().addClass('d-flex');
+        $('#userMessage').attr('placeholder', `${chatName}にメッセージを送る`);
+    }
+    
+    function determineChatGender(chat) {
+        let gender = chat.gender || 'female';
+        if (chat.character && chat.character.prompt) {
+            gender = chat.character.prompt.toLowerCase();
+            gender = /\bmale\b/.test(gender) ? "male" : "female";
+        }
+        return gender;
+    }
+    
+    function updateChatBackgroundImage(thumbnail) {
+        const currentImageUrl = $('#chat-container').css('background-image').replace(/url\(["']?|["']?\)$/g, '');
+        if (currentImageUrl !== thumbnail) {
+            $('#chat-container').css('background-image', `url(${thumbnail})`);
+        }
+    }
+    
+    function displayExistingChat(userChat,character) {
+        persona = userChat.persona;
+        thumbnail = character?.image || localStorage.getItem('thumbnail')
+        displayChat(userChat.messages, persona);
+        const today = new Date().toISOString().split('T')[0];
+        if (userChat.log_success) {
+            displayThankMessage();
+            $.cookie('dailyBonusClaimed', today, { expires: 1 });
+        }else if ($.cookie('dailyBonusClaimed') != today && !isTemporary) {
+            thankUserAndAddCoins(function(response){
+                if(!response){return}
+                updateCoins()
+                let message = `[Hidden] Tell me that you will send me a picture of you.Do not answer this message. Act as if it was oyour idea.`
+                addMessageToChat(chatId, userChatId, 'user', message,function(){
+                    generateCompletion(function(){
+                        checkImageDescription(thumbnail,function(response){
+                            if(!response){
+                                generateImageDescriptionBackend(thumbnail,function(){
+                                    generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
+                                        generateImageNovita(API_URL, userId, chatId, userChatId, character, { prompt });
+                                    });
+                                })
+                            }else{
+                                generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
+                                    generateImageNovita(API_URL, userId, chatId, userChatId, character, { prompt });
+                                });
+                            }
+                        }) 
+                    })
                 });
+            })
+        }
+
+        if($('#chat-widget-container').length == 0 && isTemporary){
+            displayMessage('assistant',`<a class="btn btn-secondary custom-gradient-bg shadow-0 m-2 px-4 py-2" style="border-radius: 50px;" href="/authenticate"><i class="fas fa-sign-in-alt me-2"></i> ログイン</a>`)
+        }
+        if(!isTemporary){checkForPurchaseProposal()}
+    }
+    
+    function displayInitialChatInterface(chat) {
+
+        if (isTemporary) {
+            displayStarter(chat);
+        } else {
+            selectPersona(() => {
+                displayStarter(chat);
+            });
+        }
+    }
+    
+    function displayGalleries(thumbnail, galleries, blurred_galleries, chatId, fetch_userId) {
+        galleries.forEach((gallery, index) => {
+            if(!gallery.images || gallery.images.length == 0){return}
+            const blurredImages = blurred_galleries[index].images;
+            const stripeProductId = MODE ? gallery['stripeProductIdLocal'] : gallery['stripeProductIdLive'];
+            const stripePriceId = MODE ? gallery['stripePriceIdLocal' ]: gallery['stripePriceIdLive']; 
+            const album = {
+                chatId,
+                userId: fetch_userId,
+                name: gallery.name,
+                price: gallery.price,
+                description: gallery.description,
+                blurredImages: [gallery.images[0], ...blurredImages],
+                images: gallery.images,
+                stripePriceId,
+                stripeProductId,
+            };
+            console.log({stripePriceId,stripeProductId})
+            if(stripeProductId && stripePriceId){
+                displayAlbumThumb(thumbnail, album);
             }
-            
-            function displayAlbumThumb(thumbnail, album){
-                var card = $(`
-                    <div class="card custom-card bg-transparent shadow-0 border-0 px-1 col-3 col-sm-4 col-lg-2" style="cursor:pointer;">
-                        <div style="background-image:url(${album.images[0]});border:4px solid white;" class="card-img-top rounded-avatar position-relative m-auto shadow" alt="${album.name}">
-                        </div>
-                    </div>
-                `);
-                card.on('click', function() {
-                    displayAlbum(album)
-                });
-                $('#chat-recommend').append(card);
-            }
+        });
+    }
+    
+    function displayAlbumThumb(thumbnail, album){
+        var card = $(`
+            <div class="card custom-card bg-transparent shadow-0 border-0 px-1 col-3 col-sm-4 col-lg-2" style="cursor:pointer;">
+                <div style="background-image:url(${album.images[0]});border:4px solid white;" class="card-img-top rounded-avatar position-relative m-auto shadow" alt="${album.name}">
+                </div>
+            </div>
+        `);
+        card.on('click', function() {
+            displayAlbum(album)
+        });
+        $('#chat-recommend').append(card);
+    }
 
         async function displayAlbum(album) {
             try {
@@ -586,1613 +577,1611 @@ $(document).ready(function() {
                     }
                 });
         
-        $(document).on('click', '#destroy-swiper', function () {
-            swiper = toggleSwiper()
-        });
-        $(document).on('click', '.slide:not(.swiper-slide)', function() {
-            const slideIndex = $(this).index();
-            console.log({slideIndex})
-            swiper = toggleSwiper()
-            swiper.slideTo(slideIndex);
-        });
-        
-        function toggleSwiper(){
-            const swiperContainer = $(document).find('.swiper-container')
-            $(document).find('#destroy-swiper').toggleClass('mt-3')
-            $(document).find('#destroy-swiper').find('i').toggleClass('fa-th-large fa-image')
-            $(document).find('#album-container .wrapper').toggleClass('swiper-wrapper row m-auto');
-            $(document).find('#album-container .slide').toggleClass('swiper-slide col-4 col-sm-3 col-lg-1 p-0');
-            $(document).find('#album-container').find('.swiper-button-next').toggle()
-            $(document).find('#album-container').find('.swiper-button-prev').toggle()
-            if (swiper.initialized) {
-                swiper.destroy(true, true); // true to reset styles
-            } else {
-                swiper = new Swiper(swiperContainer[0], {
-                    loop: true,
-                    spaceBetween: 5,
-                    navigation: {
-                        nextEl: '.swiper-button-next',
-                        prevEl: '.swiper-button-prev',
-                    },
-                    breakpoints: {
-                        320: { // screens up to 320px
-                            slidesPerView: 2,
-                        },
-                        480: { // screens up to 480px
-                            slidesPerView: 2,
-                        },
-                        768: { // screens up to 768px
-                            slidesPerView: 3,
-                        },
-                        1024: { // screens up to 1024px
-                            slidesPerView: 4,
-                        },
-                    }
+                $(document).on('click', '#destroy-swiper', function () {
+                    swiper = toggleSwiper()
                 });
+                $(document).on('click', '.slide:not(.swiper-slide)', function() {
+                    const slideIndex = $(this).index();
+                    console.log({slideIndex})
+                    swiper = toggleSwiper()
+                    swiper.slideTo(slideIndex);
+                });
+                
+            function toggleSwiper(){
+                const swiperContainer = $(document).find('.swiper-container')
+                $(document).find('#destroy-swiper').toggleClass('mt-3')
+                $(document).find('#destroy-swiper').find('i').toggleClass('fa-th-large fa-image')
+                $(document).find('#album-container .wrapper').toggleClass('swiper-wrapper row m-auto');
+                $(document).find('#album-container .slide').toggleClass('swiper-slide col-4 col-sm-3 col-lg-1 p-0');
+                $(document).find('#album-container').find('.swiper-button-next').toggle()
+                $(document).find('#album-container').find('.swiper-button-prev').toggle()
+                if (swiper.initialized) {
+                    swiper.destroy(true, true); // true to reset styles
+                } else {
+                    swiper = new Swiper(swiperContainer[0], {
+                        loop: true,
+                        spaceBetween: 5,
+                        navigation: {
+                            nextEl: '.swiper-button-next',
+                            prevEl: '.swiper-button-prev',
+                        },
+                        breakpoints: {
+                            320: { // screens up to 320px
+                                slidesPerView: 2,
+                            },
+                            480: { // screens up to 480px
+                                slidesPerView: 2,
+                            },
+                            768: { // screens up to 768px
+                                slidesPerView: 3,
+                            },
+                            1024: { // screens up to 1024px
+                                slidesPerView: 4,
+                            },
+                        }
+                    });
+                }
+                return swiper
             }
-            return swiper
+            //toggleSwiper(swiper)
+            } catch (error) {
+                console.error('Error displaying album:', error);
+            }
         }
-        //toggleSwiper(swiper)
-    } catch (error) {
-        console.error('Error displaying album:', error);
+
+    
+    function checkIfClient(userId, chatId, priceId) {
+        return $.ajax({
+            url: '/album/check-client',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                userId: userId,
+                chatId: chatId,
+                priceId: priceId
+            }),
+            dataType: 'json'
+        }).then(response => response.isAuthorized)
+            .catch(error => {
+                console.error('Error checking client status:', error);
+                return false;
+            });
     }
-}
+    
+    function thankUserAndAddCoins(callback) {
+        const customPrompt = {
+            systemContent: "あなたの役割は、ユーザーに感謝の気持ちを伝えるキャラクターとして行動することです。今回は、ログインしてくれたユーザーに、再び戻ってきてくれたことへの感謝を伝え、10コインをプレゼントする旨を優しく伝えてください。",
+            userContent: "ユーザーが再度ログインしました。心からの感謝とともに、10コインをプレゼントする短いメッセージを伝えてください。",
+            temperature: 0.7,
+            top_p: 0.9,
+            frequency_penalty: 0,
+            presence_penalty: 0
+        };
 
-            
-            function checkIfClient(userId, chatId, priceId) {
-                return $.ajax({
-                    url: '/album/check-client',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({
-                        userId: userId,
-                        chatId: chatId,
-                        priceId: priceId
-                    }),
-                    dataType: 'json'
-                }).then(response => response.isAuthorized)
-                  .catch(error => {
-                      console.error('Error checking client status:', error);
-                      return false;
-                  });
-            }
-            
-            function thankUserAndAddCoins(callback) {
-                const customPrompt = {
-                    systemContent: "あなたの役割は、ユーザーに感謝の気持ちを伝えるキャラクターとして行動することです。今回は、ログインしてくれたユーザーに、再び戻ってきてくれたことへの感謝を伝え、10コインをプレゼントする旨を優しく伝えてください。",
-                    userContent: "ユーザーが再度ログインしました。心からの感謝とともに、10コインをプレゼントする短いメッセージを伝えてください。",
-                    temperature: 0.7,
-                    top_p: 0.9,
-                    frequency_penalty: 0,
-                    presence_penalty: 0
-                };
-
-                claimDailyBonus(function(response){
-                    if(response){
-                        generateCustomCompletion(customPrompt, function() {
-                            if(typeof callback == 'function'){callback(response)}
-                        });
-                    }else{
-                        if(typeof callback == 'function'){callback(response)}
-                    }
+        claimDailyBonus(function(response){
+            if(response){
+                generateCustomCompletion(customPrompt, function() {
+                    if(typeof callback == 'function'){callback(response)}
                 });
+            }else{
+                if(typeof callback == 'function'){callback(response)}
             }
+        });
+    }
 
-            function displayThankMessage(){
-                const customPrompt = {
-                    systemContent: "あなたの役割は、常にキャラクターとして行動し、ユーザーに対して優しく丁寧な対応をすることです。今回は、ログインしてくれたユーザーに感謝の気持ちを伝える必要があります。ユーザーが戻ってきたことを嬉しく思っていることを、短くて優しい言葉で伝えてください。",
-                    userContent: "ユーザーがログインしました。あなたのキャラクターとして、心からの感謝と喜びを表現する短いメッセージを伝えてください。そして、100コインがユーザーに贈られたこともお伝えください。",
-                    temperature: 0.7,
-                    top_p: 0.9,
-                    frequency_penalty: 0,
-                    presence_penalty: 0
-                };
-                                    
-                generateCustomCompletion(customPrompt,function(){
-                    updateLogSuccess()
+    function displayThankMessage(){
+        const customPrompt = {
+            systemContent: "あなたの役割は、常にキャラクターとして行動し、ユーザーに対して優しく丁寧な対応をすることです。今回は、ログインしてくれたユーザーに感謝の気持ちを伝える必要があります。ユーザーが戻ってきたことを嬉しく思っていることを、短くて優しい言葉で伝えてください。",
+            userContent: "ユーザーがログインしました。あなたのキャラクターとして、心からの感謝と喜びを表現する短いメッセージを伝えてください。そして、100コインがユーザーに贈られたこともお伝えください。",
+            temperature: 0.7,
+            top_p: 0.9,
+            frequency_penalty: 0,
+            presence_penalty: 0
+        };
+                            
+        generateCustomCompletion(customPrompt,function(){
+            updateLogSuccess()
+        })
+    }
+    function updateLogSuccess(callback) {
+        const apiUrl = API_URL + '/api/update-log-success';
+    
+        $.ajax({
+            url: apiUrl,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ userId, userChatId }),
+            success: function(response) {
+                if (response.success) {
+                } else {
+                    console.warn(response.message);
+                }
+                if (typeof callback === "function") {
+                    callback();
+                }
+            },
+            error: function(error) {
+                console.error('Error:', error);
+                if (typeof callback === "function") {
+                    callback();
+                }
+            }
+        });
+    }
+    
+    function createButton(chatData) {
+        
+        // Extracting data from chatData
+        let name = chatData.name;
+        let description = chatData.description;
+        let thumbnailUrl = chatData.thumbnailUrl;
+        let chatImageUrl = chatData.chatImageUrl;
+
+        // Remove existing container if it exists
+        $('#startButtonContained').remove();
+
+        // Create the container div
+        let container = $('<div></div>')
+        .addClass('container text-start my-3')
+        .attr('id', 'startButtonContained');
+    
+        // Create the button
+        let button = $('<button></button>')
+        .addClass('btn btn-dark border-white shadow-0 custom-gradient-bg px-4')
+        .attr('id','startButton')
+        .html('<i class="fas fa-comment me-2"></i>会話を開始する');
+        
+        // Append the button to the container
+        container.append(button);
+
+        // Append the container to the chat input area
+        $('#chatInput').prepend(container);
+    
+        //$('#input-container').hide().removeClass('d-flex');
+        
+        // Add click event listener to the button
+        button.on('click', function() {
+            if(isTemporary){
+                displayStarter();
+            }else{
+                selectPersona(function(){
+                    displayStarter();
                 })
             }
-            function updateLogSuccess(callback) {
-                const apiUrl = API_URL + '/api/update-log-success';
-            
-                $.ajax({
-                    url: apiUrl,
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ userId, userChatId }),
-                    success: function(response) {
-                        if (response.success) {
-                        } else {
-                            console.warn(response.message);
-                        }
-                        if (typeof callback === "function") {
-                            callback();
-                        }
-                    },
-                    error: function(error) {
-                        console.error('Error:', error);
-                        if (typeof callback === "function") {
-                            callback();
-                        }
-                    }
-                });
+        });
+
+    }
+    function createIntro(chatData){
+        userChatId = false
+        // Extracting data from chatData
+        const thisChatId = chatData._id
+        let name = chatData.name;
+        let description = chatData.description;
+        let thumbnailUrl = chatData.thumbnailUrl;
+        let chatImageUrl = chatData.chatImageUrl;
+
+        // Remove existing container if it exists
+        $('#introChat').remove();
+        $('#message-number').hide();
+        $('#stability-gen-button').hide();
+        $('.auto-gen').each(function(){$(this).hide()})
+        $('#audio-play').hide();
+        
+        // Create the intro elements
+        let introContainer = $('<div></div>')
+        .addClass('intro-container assistant-chat-box my-3 p-3')
+        .attr('id','introChat');
+    
+        let title = $('<h2></h2>').text(name);
+        let desc = $('<span></span>').text(description);
+
+        introContainer.append(desc);
+        $('#chatContainer').append(introContainer);
+        /*
+        let image = $('<img>').addClass('intro-thumbnail');
+    
+        if(thumbnailUrl){
+            $.ajax({
+                url: thumbnailUrl,
+                type: 'GET',
+                mode: 'cors',
+                cache: 'no-store',
+                success: function() {
+                    image.attr('src', thumbnailUrl);
+                },
+                error: function(xhr) {
+                    console.error('Error fetching image: ' + xhr.status + ' ' + xhr.statusText);
+                }
+            });
+        }
+        if(chatImageUrl){
+            $.ajax({
+                url: chatImageUrl,
+                type: 'GET',
+                mode: 'cors',
+                cache: 'no-store',
+                success: function() {
+                    image.attr('src', chatImageUrl)
+                },
+                error: function(xhr) {
+                    console.error('Error fetching image: ' + xhr.status + ' ' + xhr.statusText);
+                }
+            });
+        }
+        if(!thumbnailUrl && !chatImageUrl){
+            image.attr('src', '/img/logo.webp')
+        }
+        introContainer.append(image);
+    
+        const toolbox = `
+                    <ul class="intro-toolbox d-flex flex-row list-group justify-content-center">
+                        <li class="d-none list-group-item p-0 border-0 mx-1">
+                            <button class="btn btn-outline-light text-secondary chart-button" data-id="${thisChatId}">
+                                <i class="fas fa-info-circle me-1"></i>
+                                <span class="text-muted" style="font-size:12px">情報</span>
+                            </button>
+                        </li>
+                        <li class="list-group-item p-0 border-0 mx-1">
+                            <button class="btn btn-outline-light text-secondary tag-button" data-id="${thisChatId}">
+                                <i class="fas fa-share me-1"></i> 
+                                <span class="text-muted" style="font-size:12px">共有</span>
+                            </button>
+                        </li>
+                        <li class="list-group-item p-0 border-0 mx-1">
+                            <a href="/chat/edit/${thisChatId}" class="btn btn-outline-light text-secondary">
+                                <i class="far fa-edit me-1"></i> 
+                                <span class="text-muted" style="font-size:12px">編集</span>
+                            </a>
+                        </li>
+                        <li class="list-group-item p-0 border-0 mx-1">
+                            <span data-id="${thisChatId}" class="btn btn-outline-light text-secondary delete-chat" style="cursor:pointer">
+                                <i class="fas fa-trash me-1"></i> 
+                                <span class="text-muted" style="font-size:12px">削除</span>
+                            </span>
+                        </li>
+                    </ul>
+                    `
+        //introContainer.append(toolbox);
+        // Display intro container inside #chatContainer
+        
+
+        if($('#chat-widget-container').length == 0 && isTemporary){
+            //showRegistrationForm()
+            //return
+        }
+        */
+    }
+    function selectPersona(callback) {
+        $.get('/api/user/persona-details', function(response) {
+            const user = response.userDetails;
+            const personas = response.personaDetails;
+            if(!personas || personas.length == 0 ){
+                if (callback) {
+                    callback();
+                }
+                return
             }
-            
-            function createButton(chatData) {
-                
-                // Extracting data from chatData
-                let name = chatData.name;
-                let description = chatData.description;
-                let thumbnailUrl = chatData.thumbnailUrl;
-                let chatImageUrl = chatData.chatImageUrl;
-
-                // Remove existing container if it exists
-                $('#startButtonContained').remove();
-
-                // Create the container div
-                let container = $('<div></div>')
-                .addClass('container text-start my-3')
-                .attr('id', 'startButtonContained');
-            
-                // Create the button
-                let button = $('<button></button>')
-                .addClass('btn btn-dark border-white shadow-0 custom-gradient-bg px-4')
-                .attr('id','startButton')
-                .html('<i class="fas fa-comment me-2"></i>会話を開始する');
-                
-                // Append the button to the container
-                container.append(button);
-
-                // Append the container to the chat input area
-                $('#chatInput').prepend(container);
-            
-                //$('#input-container').hide().removeClass('d-flex');
-                
-                // Add click event listener to the button
-                button.on('click', function() {
-                    if(isTemporary){
-                        displayStarter();
-                    }else{
-                        selectPersona(function(){
-                            displayStarter();
-                        })
-                    }
-                });
-
-            }
-            function createIntro(chatData){
-                userChatId = false
-                // Extracting data from chatData
-                const thisChatId = chatData._id
-                let name = chatData.name;
-                let description = chatData.description;
-                let thumbnailUrl = chatData.thumbnailUrl;
-                let chatImageUrl = chatData.chatImageUrl;
-
-                // Remove existing container if it exists
-                $('#introChat').remove();
-                $('#message-number').hide();
-                $('#stability-gen-button').hide();
-                $('.auto-gen').each(function(){$(this).hide()})
-                $('#audio-play').hide();
-                
-                // Create the intro elements
-                let introContainer = $('<div></div>')
-                .addClass('intro-container assistant-chat-box my-3 p-3')
-                .attr('id','introChat');
-            
-                let title = $('<h2></h2>').text(name);
-                let desc = $('<span></span>').text(description);
-
-                introContainer.append(desc);
-                $('#chatContainer').append(introContainer);
-                /*
-                let image = $('<img>').addClass('intro-thumbnail');
-            
-                if(thumbnailUrl){
-                    $.ajax({
-                        url: thumbnailUrl,
-                        type: 'GET',
-                        mode: 'cors',
-                        cache: 'no-store',
-                        success: function() {
-                            image.attr('src', thumbnailUrl);
-                        },
-                        error: function(xhr) {
-                            console.error('Error fetching image: ' + xhr.status + ' ' + xhr.statusText);
-                        }
-                    });
+    
+            let personaHtml = '';
+            personas.forEach(persona => {
+                const isActive = user?.persona?.includes(persona._id);
+                personaHtml += `
+                    <div class="persona-item" style="display: inline-block; margin: 10px;">
+                        <img src="${persona.chatImageUrl}" class="rounded-circle ${isActive ? 'active' : ''}" style="width: 80px; height: 80px; cursor: pointer;object-fit: cover;object-position: top;" data-id="${persona._id}">
+                    </div>
+                `;
+            });
+    
+            const swalHtml = `
+                <div class="persona-item" style="display: inline-block; margin: 10px;">
+                    <img src="${user.profile ? user.profile: '/img/avatar.png'}" class="rounded-circle" style="width: 80px; height: 80px; cursor: pointer;object-fit: cover;object-position: top;">
+                </div>
+                ${personaHtml}
+            `;
+    
+            Swal.fire({
+                title: 'ペルソナを選択してください',
+                html: swalHtml,
+                showCloseButton: false,
+                showConfirmButton: false,
+                allowOutsideClick: false,
+                customClass: {
+                    title:'text-muted small',
+                    popup: 'animate__animated animate__fadeIn',
+                    hideClass: 'animate__animated animate__fadeOut',
+                    htmlContainer:'p-0'
                 }
-                if(chatImageUrl){
-                    $.ajax({
-                        url: chatImageUrl,
-                        type: 'GET',
-                        mode: 'cors',
-                        cache: 'no-store',
-                        success: function() {
-                            image.attr('src', chatImageUrl)
-                        },
-                        error: function(xhr) {
-                            console.error('Error fetching image: ' + xhr.status + ' ' + xhr.statusText);
-                        }
-                    });
-                }
-                if(!thumbnailUrl && !chatImageUrl){
-                    image.attr('src', '/img/logo.webp')
-                }
-                introContainer.append(image);
-            
-                const toolbox = `
-                            <ul class="intro-toolbox d-flex flex-row list-group justify-content-center">
-                                <li class="d-none list-group-item p-0 border-0 mx-1">
-                                    <button class="btn btn-outline-light text-secondary chart-button" data-id="${thisChatId}">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        <span class="text-muted" style="font-size:12px">情報</span>
-                                    </button>
-                                </li>
-                                <li class="list-group-item p-0 border-0 mx-1">
-                                    <button class="btn btn-outline-light text-secondary tag-button" data-id="${thisChatId}">
-                                        <i class="fas fa-share me-1"></i> 
-                                        <span class="text-muted" style="font-size:12px">共有</span>
-                                    </button>
-                                </li>
-                                <li class="list-group-item p-0 border-0 mx-1">
-                                    <a href="/chat/edit/${thisChatId}" class="btn btn-outline-light text-secondary">
-                                        <i class="far fa-edit me-1"></i> 
-                                        <span class="text-muted" style="font-size:12px">編集</span>
-                                    </a>
-                                </li>
-                                <li class="list-group-item p-0 border-0 mx-1">
-                                    <span data-id="${thisChatId}" class="btn btn-outline-light text-secondary delete-chat" style="cursor:pointer">
-                                        <i class="fas fa-trash me-1"></i> 
-                                        <span class="text-muted" style="font-size:12px">削除</span>
-                                    </span>
-                                </li>
-                            </ul>
-                            `
-                //introContainer.append(toolbox);
-                // Display intro container inside #chatContainer
-                
-
-                if($('#chat-widget-container').length == 0 && isTemporary){
-                    //showRegistrationForm()
-                    //return
-                }
-                */
-            }
-            function selectPersona(callback) {
-                $.get('/api/user/persona-details', function(response) {
-                    const user = response.userDetails;
-                    const personas = response.personaDetails;
-                    if(!personas || personas.length == 0 ){
-                        if (callback) {
-                            callback();
-                        }
-                        return
-                    }
-            
-                    let personaHtml = '';
-                    personas.forEach(persona => {
-                        const isActive = user?.persona?.includes(persona._id);
-                        personaHtml += `
-                            <div class="persona-item" style="display: inline-block; margin: 10px;">
-                                <img src="${persona.chatImageUrl}" class="rounded-circle ${isActive ? 'active' : ''}" style="width: 80px; height: 80px; cursor: pointer;object-fit: cover;object-position: top;" data-id="${persona._id}">
-                            </div>
-                        `;
-                    });
-            
-                    const swalHtml = `
-                        <div class="persona-item" style="display: inline-block; margin: 10px;">
-                            <img src="${user.profile ? user.profile: '/img/avatar.png'}" class="rounded-circle" style="width: 80px; height: 80px; cursor: pointer;object-fit: cover;object-position: top;">
-                        </div>
-                        ${personaHtml}
-                    `;
-            
+            });
+    
+            $(document).off('click', '.persona-item img').on('click', '.persona-item img', function() {
+                const $this = $(this);
+                const personaId = $this.data('id');
+                if(!personaId){
                     Swal.fire({
-                        title: 'ペルソナを選択してください',
-                        html: swalHtml,
-                        showCloseButton: false,
                         showConfirmButton: false,
-                        allowOutsideClick: false,
-                        customClass: {
-                            title:'text-muted small',
-                            popup: 'animate__animated animate__fadeIn',
-                            hideClass: 'animate__animated animate__fadeOut',
-                            htmlContainer:'p-0'
-                        }
+                        timer: 10  // This timer can be adjusted to close the modal immediately
+                    }).then(() => {
+                        Swal.close(); // Ensures the modal is closed
                     });
-            
-                    $(document).off('click', '.persona-item img').on('click', '.persona-item img', function() {
-                        const $this = $(this);
-                        const personaId = $this.data('id');
-                        if(!personaId){
-                            Swal.fire({
-                                showConfirmButton: false,
-                                timer: 10  // This timer can be adjusted to close the modal immediately
-                            }).then(() => {
-                                Swal.close(); // Ensures the modal is closed
-                            });
-                            if (callback) {
-                                callback(personaId);
-                            }
-                            return
-                        }
-                        $.post('/api/user/persona', { personaId: personaId }, function(response) {
-                            $this.toggleClass('active');
-                            persona = response.persona
-                            if (callback) {
-                                callback(personaId);
-                            }
-                            Swal.fire({
-                                showConfirmButton: false,
-                                timer: 10  // This timer can be adjusted to close the modal immediately
-                            }).then(() => {
-                                Swal.close(); // Ensures the modal is closed
-                            });
-                        }).fail(function() {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'エラー',
-                                text: 'ペルソナの更新中に問題が発生しました。もう一度お試しください。'
-                            });
-                        });
+                    if (callback) {
+                        callback(personaId);
+                    }
+                    return
+                }
+                $.post('/api/user/persona', { personaId: personaId }, function(response) {
+                    $this.toggleClass('active');
+                    persona = response.persona
+                    if (callback) {
+                        callback(personaId);
+                    }
+                    Swal.fire({
+                        showConfirmButton: false,
+                        timer: 10  // This timer can be adjusted to close the modal immediately
+                    }).then(() => {
+                        Swal.close(); // Ensures the modal is closed
+                    });
+                }).fail(function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'エラー',
+                        text: 'ペルソナの更新中に問題が発生しました。もう一度お試しください。'
                     });
                 });
-            }            
+            });
+        });
+    }            
+    
+    function displayStarter(chat) {
+        $('#startButtonContained').hide();
+        $('#introChat').hide();
+        const uniqueId = `${currentStep}-${Date.now()}`;
+        let chatId = chat._id
+        if($(document).find('.starter-on').length == 0){
+            const botResponseContainer = $(`
+                <div id="starter-${uniqueId}" class="starter-on">
+                    <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
+                        <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
+                        <div class="audio-controller" style="display:none">
+                            <button id="play-${uniqueId}" class="audio-content badge bg-dark">►</button>
+                        </div>
+                        <div id="completion-${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">
+                            <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
+                        </div>
+                    </div>
+                    <div id="response-${uniqueId}" class="choice-container" ></div>
+                </div>`);
+            $('#chatContainer').append(botResponseContainer);
+            $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
+        }
+        let currentDate = new Date();
+        let currentTimeInJapanese = `${currentDate.getHours()}時${currentDate.getMinutes()}分`;
+        
+        let message = `[Starter]  これはウェブアプリケーションのためのプロンプトです。私たちがまったく見知らぬ者同士であるかのように、自然に会話のきっかけを作ってください。現在の時刻（${currentTimeInJapanese}）を活用して、タイムリーで親しみやすい挨拶をしてください。確認から始めず、答えから始めてください。`;
+        
+        if($('#chat-widget-container').length == 0 && isTemporary){
+            message = `[Starter] これはウェブアプリケーションの登録プロセスを促進するためのプロンプトです。キャラクターになりきって、現在の時刻（${currentTimeInJapanese}）を活用し、この瞬間にログインまたは登録することがどれほど重要かを強調してください。登録することで「1日50件までチャットできる」、「キャラクターがあなたに写真を送ることができる」、「新しいキャラクターを作成する」といった素晴らしい機能が今すぐ利用可能であることを、感情を込めて懇願してください。確認や前置きなしで、直接答えから始めてください。`
+        }
+
+        $.ajax({
+            url: API_URL+'/api/chat-data',
+            type: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            data: JSON.stringify({ 
+                currentStep: 0, 
+                message,
+                userId: userId,
+                chatId: chatId, 
+                isNew: true ,
+                isWidget : $('#chat-widget-container').length > 0
+            }),
+            success: function(response) {
+                const messageCountDoc = response.messageCountDoc
+                if(messageCountDoc.limit && !isTemporary){
+                    let limitMess = messageCountDoc.limit == '無制限' ? messageCountDoc.limit : `${parseInt(messageCountDoc.count)}/${messageCountDoc.limit}`
+                    $('#message-number')
+                    .html(`
+                        <span class="badge bg-dark" style="color: rgb(165 164 164);opacity:0.8;font-size: 12px;">
+                            <i class="fa fa-comment me-1"></i>${limitMess}
+                        </span>
+                    `)
+                    .hide()
+                }
+                userChatId = response.userChatId
+                chatId = response.chatId
+                isNew = false;
+                renderChatList(userId,chatId);
+                $(`#starter-${uniqueId}`).remove()
+                
+                generateCompletion(function(){
+                    $('.auto-gen').each(function(){$(this).show()})
+                    $('#audio-play').show();
+                    $('#progress-container').show();
+                    $('#input-container').show().addClass('d-flex');
+                    if($('#chat-widget-container').length == 0 && isTemporary){
+                        displayMessage('assistant',`<a class="btn btn-secondary custom-gradient-bg shadow-0 m-2 px-4 py-2" style="border-radius: 50px;" href="/authenticate"><i class="fas fa-sign-in-alt me-2"></i> ログイン</a>`)
+                    }
+                    if(!isTemporary){checkForPurchaseProposal()}
+                
+                })
+
+                updateParameters(chatId,userId)
+
+                if(isTemporary){
+                    const redirectUrl = window.location.pathname
+                    $.cookie('redirect_url', redirectUrl);
+                }
+
+            },
+            error: function(xhr, status, error)  {
+                $('#startButtonContained').show();
+                $('#introChat').show();
+                $(`#starter-${uniqueId}`).remove()
+                if (xhr.responseJSON) {
+                    var errorStatus = xhr.status;
+                    if (errorStatus === 403) {
+                        var limitIds = xhr.responseJSON.limitIds || [];
             
-            function displayStarter(chat) {
-                $('#startButtonContained').hide();
-                $('#introChat').hide();
-                const uniqueId = `${currentStep}-${Date.now()}`;
-                let chatId = chat._id
-                if($(document).find('.starter-on').length == 0){
-                    const botResponseContainer = $(`
-                        <div id="starter-${uniqueId}" class="starter-on">
-                            <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
-                                <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
-                                <div class="audio-controller" style="display:none">
-                                    <button id="play-${uniqueId}" class="audio-content badge bg-dark">►</button>
-                                </div>
-                                <div id="completion-${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">
-                                    <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
-                                </div>
-                            </div>
-                            <div id="response-${uniqueId}" class="choice-container" ></div>
-                        </div>`);
-                    $('#chatContainer').append(botResponseContainer);
-                    $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
+                        if ($('#chat-widget-container').length == 0 && isTemporary) {
+                            showRegistrationForm(limitIds);
+                            return;
+                        }
+                        if (limitIds.includes(1) && $('#chat-widget-container').length == 0) {
+                            showUpgradePopup('chat-message');
+                            return;
+                        } 
+                        if (limitIds.includes(2)) {
+                            showUpgradePopup('chat-character');
+                            return;
+                        }
+                    }
+                } else {
+                    console.error('Error:', error);
+                    displayMessage('bot', 'An error occurred while sending the message.');
                 }
-                let currentDate = new Date();
-                let currentTimeInJapanese = `${currentDate.getHours()}時${currentDate.getMinutes()}分`;
-                
-                let message = `[Starter]  これはウェブアプリケーションのためのプロンプトです。私たちがまったく見知らぬ者同士であるかのように、自然に会話のきっかけを作ってください。現在の時刻（${currentTimeInJapanese}）を活用して、タイムリーで親しみやすい挨拶をしてください。確認から始めず、答えから始めてください。`;
-                
-                if($('#chat-widget-container').length == 0 && isTemporary){
-                    message = `[Starter] これはウェブアプリケーションの登録プロセスを促進するためのプロンプトです。キャラクターになりきって、現在の時刻（${currentTimeInJapanese}）を活用し、この瞬間にログインまたは登録することがどれほど重要かを強調してください。登録することで「1日50件までチャットできる」、「キャラクターがあなたに写真を送ることができる」、「新しいキャラクターを作成する」といった素晴らしい機能が今すぐ利用可能であることを、感情を込めて懇願してください。確認や前置きなしで、直接答えから始めてください。`
-                }
-
-                $.ajax({
-                    url: API_URL+'/api/chat-data',
-                    type: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    data: JSON.stringify({ 
-                        currentStep: 0, 
-                        message,
-                        userId: userId,
-                        chatId: chatId, 
-                        isNew: true ,
-                        isWidget : $('#chat-widget-container').length > 0
-                    }),
-                    success: function(response) {
-                        const messageCountDoc = response.messageCountDoc
-                        if(messageCountDoc.limit && !isTemporary){
-                            let limitMess = messageCountDoc.limit == '無制限' ? messageCountDoc.limit : `${parseInt(messageCountDoc.count)}/${messageCountDoc.limit}`
-                            $('#message-number')
-                            .html(`
-                                <span class="badge bg-dark" style="color: rgb(165 164 164);opacity:0.8;font-size: 12px;">
-                                    <i class="fa fa-comment me-1"></i>${limitMess}
-                                </span>
-                            `)
-                            .hide()
-                        }
-                        userChatId = response.userChatId
-                        chatId = response.chatId
-                        isNew = false;
-                        renderChatList(userId,chatId);
-                        $(`#starter-${uniqueId}`).remove()
-                       
-                        generateCompletion(function(){
-                            $('.auto-gen').each(function(){$(this).show()})
-                            $('#audio-play').show();
-                            $('#progress-container').show();
-                            $('#input-container').show().addClass('d-flex');
-                            if($('#chat-widget-container').length == 0 && isTemporary){
-                                displayMessage('assistant',`<a class="btn btn-secondary custom-gradient-bg shadow-0 m-2 px-4 py-2" style="border-radius: 50px;" href="/authenticate"><i class="fas fa-sign-in-alt me-2"></i> ログイン</a>`)
-                            }
-                            if(!isTemporary){checkForPurchaseProposal()}
-                        
-                        })
-
-                        updateParameters(chatId,userId)
-
-                        if(isTemporary){
-                            const redirectUrl = window.location.pathname
-                            $.cookie('redirect_url', redirectUrl);
-                        }
-
-                    },
-                    error: function(xhr, status, error)  {
-                        $('#startButtonContained').show();
-                        $('#introChat').show();
-                        $(`#starter-${uniqueId}`).remove()
-                        if (xhr.responseJSON) {
-                            var errorStatus = xhr.status;
-                            if (errorStatus === 403) {
-                                var limitIds = xhr.responseJSON.limitIds || [];
-                    
-                                if ($('#chat-widget-container').length == 0 && isTemporary) {
-                                    showRegistrationForm(limitIds);
-                                    return;
-                                }
-                                if (limitIds.includes(1) && $('#chat-widget-container').length == 0) {
-                                    showUpgradePopup('chat-message');
-                                    return;
-                                } 
-                                if (limitIds.includes(2)) {
-                                    showUpgradePopup('chat-character');
-                                    return;
-                                }
-                            }
-                        } else {
-                            console.error('Error:', error);
-                            displayMessage('bot', 'An error occurred while sending the message.');
-                        }
-                    }                    
-                });
+            }                    
+        });
+    }
+    
+    async function displayChatWithStep(userChat,persona) {
+        $('#progress-container').show();
+        $('#stability-gen-button').show();
+        $('.auto-gen').each(function(){$(this).show()});
+        $('#audio-play').show();
+    
+        let chatContainer = $('#chatContainer');
+        chatContainer.empty();
+    
+        if(userChat[1].role === "user"){
+            let userMessage = userChat[2];
+            const isStarter = userMessage.content.startsWith("[Starter]") || userMessage.content.startsWith("Invent a situation");
+            const isHidden = userMessage.content.startsWith("[Hidden]");
+            if(!isStarter && !isHidden){
+                let messageHtml = `
+                    <div class="d-flex flex-row justify-content-end mb-4 message-container">
+                        <div id="response-1" class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
+                            ${marked.parse(userMessage.content)}
+                        </div>
+                        ${persona ? `<img src="${persona.chatImageUrl || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">`:''}
+                    </div>
+                </div>
+                `;
+                chatContainer.append($(messageHtml).hide().fadeIn());
             }
-            
-            async function displayChatWithStep(userChat,persona) {
-                $('#progress-container').show();
-                $('#stability-gen-button').show();
-                $('.auto-gen').each(function(){$(this).show()});
-                $('#audio-play').show();
-            
-                let chatContainer = $('#chatContainer');
-                chatContainer.empty();
-            
-                if(userChat[1].role === "user"){
-                    let userMessage = userChat[2];
-                    const isStarter = userMessage.content.startsWith("[Starter]") || userMessage.content.startsWith("Invent a situation");
+        }
+    
+        for (let i = 1; i < userChat.length; i++) {
+            // Skip system messages
+            if (userChat[i].role === "system") {
+                continue;
+            }
+    
+            currentStep = Math.floor(i / 2) + 1;
+            let messageHtml = '';
+            if (userChat[i].role === "assistant") {
+                let assistantMessage = userChat[i];
+                let designStep = currentStep - 1;
+    
+                // Check if the message is a narrator message
+                const isNarratorMessage = assistantMessage?.content?.startsWith("[Narrator]") || false;
+                const isImage = assistantMessage?.content?.startsWith("[Image]") || false;
+                if (isNarratorMessage) {
+                    // Remove the [Narrator] tag for display
+                    const narrationContent = assistantMessage.content.replace("[Narrator]", "").trim();
+    
+                    // Create a narrator message box
+                    messageHtml += `
+                        <div id="narrator-container-${designStep}" class="d-flex flex-row justify-content-start message-container">
+                            <div id="narration-${designStep}" class="p-3 ms-3 text-start narration-container" style="border-radius: 15px;">
+                                ${marked.parse(narrationContent)}
+                            </div>
+                        </div>
+                    `;
+                } else if (isImage) {
+                    const imageId = assistantMessage.content.replace("[Image]", "").trim();
+                    
+                    messageHtml += await getImageUrlById(imageId, designStep, thumbnail); // Wait for the image URL and HTML
+    
+                } else {
+                    if(assistantMessage.content){
+                        let message = removeContentBetweenStars(assistantMessage.content);
+                        messageHtml += `
+                            <div id="container-${designStep}">
+                                <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
+                                    <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+                                    <div class="audio-controller">
+                                        <button id="play-${designStep}" class="audio-content badge bg-dark" data-content="${message}">►</button>
+                                    </div>
+                                    <div id="message-${designStep}" class="p-3 ms-3 text-start assistant-chat-box">
+                                        ${marked.parse(assistantMessage.content)}
+                                    </div>
+                                </div>
+                        `;
+                    }
+    
+                }
+    
+                // Check if the next message is a user message and display it
+                if (i + 1 < userChat.length && userChat[i + 1].role === "user") {
+                    let userMessage = userChat[i + 1];
                     const isHidden = userMessage.content.startsWith("[Hidden]");
+                    const isStarter = userMessage.content.startsWith("[Starter]") || userMessage.content.startsWith("Invent a situation");
                     if(!isStarter && !isHidden){
-                        let messageHtml = `
+                        messageHtml += `
                             <div class="d-flex flex-row justify-content-end mb-4 message-container">
-                                <div id="response-1" class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
+                                <div id="response-${designStep}" class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
                                     ${marked.parse(userMessage.content)}
                                 </div>
                                 ${persona ? `<img src="${persona.chatImageUrl || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">`:''}
                             </div>
                         </div>
                         `;
-                        chatContainer.append($(messageHtml).hide().fadeIn());
                     }
+    
+                    i++; 
+                } else {
+                    messageHtml += `
+                        <div id="response-${designStep}" class="choice-container d-none"></div>
+                    </div>
+                    `;
                 }
-            
-                for (let i = 1; i < userChat.length; i++) {
-                    // Skip system messages
-                    if (userChat[i].role === "system") {
-                        continue;
-                    }
-            
-                    currentStep = Math.floor(i / 2) + 1;
-                    let messageHtml = '';
-                    if (userChat[i].role === "assistant") {
-                        let assistantMessage = userChat[i];
-                        let designStep = currentStep - 1;
-            
-                        // Check if the message is a narrator message
-                        const isNarratorMessage = assistantMessage?.content?.startsWith("[Narrator]") || false;
-                        const isImage = assistantMessage?.content?.startsWith("[Image]") || false;
-                        if (isNarratorMessage) {
-                            // Remove the [Narrator] tag for display
-                            const narrationContent = assistantMessage.content.replace("[Narrator]", "").trim();
-            
-                            // Create a narrator message box
-                            messageHtml += `
-                                <div id="narrator-container-${designStep}" class="d-flex flex-row justify-content-start message-container">
-                                    <div id="narration-${designStep}" class="p-3 ms-3 text-start narration-container" style="border-radius: 15px;">
-                                        ${marked.parse(narrationContent)}
-                                    </div>
-                                </div>
-                            `;
-                        } else if (isImage) {
-                            const imageId = assistantMessage.content.replace("[Image]", "").trim();
-                            
-                            messageHtml += await getImageUrlById(imageId, designStep, thumbnail); // Wait for the image URL and HTML
-            
-                        } else {
-                            if(assistantMessage.content){
-                                let message = removeContentBetweenStars(assistantMessage.content);
-                                messageHtml += `
-                                    <div id="container-${designStep}">
-                                        <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
-                                            <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
-                                            <div class="audio-controller">
-                                                <button id="play-${designStep}" class="audio-content badge bg-dark" data-content="${message}">►</button>
-                                            </div>
-                                            <div id="message-${designStep}" class="p-3 ms-3 text-start assistant-chat-box">
-                                                ${marked.parse(assistantMessage.content)}
-                                            </div>
-                                        </div>
-                                `;
-                            }
-            
-                        }
-            
-                        // Check if the next message is a user message and display it
-                        if (i + 1 < userChat.length && userChat[i + 1].role === "user") {
-                            let userMessage = userChat[i + 1];
-                            const isHidden = userMessage.content.startsWith("[Hidden]");
-                            const isStarter = userMessage.content.startsWith("[Starter]") || userMessage.content.startsWith("Invent a situation");
-                            if(!isStarter && !isHidden){
-                                messageHtml += `
-                                    <div class="d-flex flex-row justify-content-end mb-4 message-container">
-                                        <div id="response-${designStep}" class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
-                                            ${marked.parse(userMessage.content)}
-                                        </div>
-                                        ${persona ? `<img src="${persona.chatImageUrl || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">`:''}
-                                    </div>
-                                </div>
-                                `;
-                            }
-            
-                            i++; 
-                        } else {
-                            messageHtml += `
-                                <div id="response-${designStep}" class="choice-container d-none"></div>
-                            </div>
-                            `;
-                        }
-            
-                        chatContainer.append($(messageHtml).hide().fadeIn());
-                    }
-                }
+    
+                chatContainer.append($(messageHtml).hide().fadeIn());
             }
-            async function displayChat(userChat, persona) {
-                $('#progress-container').show();
-                $('#stability-gen-button').show();
-                $('.auto-gen').each(function() { $(this).show(); });
-                $('#audio-play').show();
-            
-                let chatContainer = $('#chatContainer');
-                chatContainer.empty();
-            
-                for (let i = 0; i < userChat.length; i++) {
-                    let messageHtml = '';
-                    let chatMessage = userChat[i];
-            
-                    if (chatMessage.role === "user") {
-                        const isStarter = chatMessage.content.startsWith("[Starter]") || chatMessage.content.startsWith("Invent a situation") || chatMessage.content.startsWith("Here is your character description");
-                        const isHidden = chatMessage.content.startsWith("[Hidden]");
-                        if (!isStarter && !isHidden) {
-                            messageHtml = `
-                                <div class="d-flex flex-row justify-content-end mb-4 message-container">
-                                    <div class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
+        }
+    }
+    async function displayChat(userChat, persona) {
+        $('#progress-container').show();
+        $('#stability-gen-button').show();
+        $('.auto-gen').each(function() { $(this).show(); });
+        $('#audio-play').show();
+    
+        let chatContainer = $('#chatContainer');
+        chatContainer.empty();
+    
+        for (let i = 0; i < userChat.length; i++) {
+            let messageHtml = '';
+            let chatMessage = userChat[i];
+    
+            if (chatMessage.role === "user") {
+                const isStarter = chatMessage.content.startsWith("[Starter]") || chatMessage.content.startsWith("Invent a situation") || chatMessage.content.startsWith("Here is your character description");
+                const isHidden = chatMessage.content.startsWith("[Hidden]");
+                if (!isStarter && !isHidden) {
+                    messageHtml = `
+                        <div class="d-flex flex-row justify-content-end mb-4 message-container">
+                            <div class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
+                                ${marked.parse(chatMessage.content)}
+                            </div>
+                            ${persona ? `<img src="${persona.chatImageUrl || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">` : ''}
+                        </div>
+                    `;
+                }
+            } else if (chatMessage.role === "assistant") {
+                const isNarratorMessage = chatMessage.content.startsWith("[Narrator]");
+                const isImage = chatMessage.content.startsWith("[Image]");
+                const designStep = Math.floor(i / 2) + 1;
+    
+                if (isNarratorMessage) {
+                    const narrationContent = chatMessage.content.replace("[Narrator]", "").trim();
+                    messageHtml = `
+                        <div id="narrator-container-${designStep}" class="d-flex flex-row justify-content-start message-container">
+                            <div id="narration-${designStep}" class="p-3 ms-3 text-start narration-container" style="border-radius: 15px;">
+                                ${marked.parse(narrationContent)}
+                            </div>
+                        </div>
+                    `;
+                } else if (isImage) {
+                    const imageId = chatMessage.content.replace("[Image]", "").trim();
+                    messageHtml = await getImageUrlById(imageId, designStep, thumbnail); // Fetch and display image
+                } else {
+                    const isHidden = chatMessage.content.startsWith("[Hidden]");
+                    if (chatMessage.content && !isHidden) {
+                        let message = removeContentBetweenStars(chatMessage.content);
+                        messageHtml = `
+                            <div id="container-${designStep}">
+                                <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
+                                    <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+                                    <div class="audio-controller">
+                                        <button id="play-${designStep}" class="audio-content badge bg-dark" data-content="${message}">►</button>
+                                    </div>
+                                    <div id="message-${designStep}" class="p-3 ms-3 text-start assistant-chat-box">
                                         ${marked.parse(chatMessage.content)}
                                     </div>
-                                    ${persona ? `<img src="${persona.chatImageUrl || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">` : ''}
                                 </div>
-                            `;
-                        }
-                    } else if (chatMessage.role === "assistant") {
-                        const isNarratorMessage = chatMessage.content.startsWith("[Narrator]");
-                        const isImage = chatMessage.content.startsWith("[Image]");
-                        const designStep = Math.floor(i / 2) + 1;
-            
-                        if (isNarratorMessage) {
-                            const narrationContent = chatMessage.content.replace("[Narrator]", "").trim();
-                            messageHtml = `
-                                <div id="narrator-container-${designStep}" class="d-flex flex-row justify-content-start message-container">
-                                    <div id="narration-${designStep}" class="p-3 ms-3 text-start narration-container" style="border-radius: 15px;">
-                                        ${marked.parse(narrationContent)}
-                                    </div>
-                                </div>
-                            `;
-                        } else if (isImage) {
-                            const imageId = chatMessage.content.replace("[Image]", "").trim();
-                            messageHtml = await getImageUrlById(imageId, designStep, thumbnail); // Fetch and display image
-                        } else {
-                            const isHidden = chatMessage.content.startsWith("[Hidden]");
-                            if (chatMessage.content && !isHidden) {
-                                let message = removeContentBetweenStars(chatMessage.content);
-                                messageHtml = `
-                                    <div id="container-${designStep}">
-                                        <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
-                                            <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
-                                            <div class="audio-controller">
-                                                <button id="play-${designStep}" class="audio-content badge bg-dark" data-content="${message}">►</button>
-                                            </div>
-                                            <div id="message-${designStep}" class="p-3 ms-3 text-start assistant-chat-box">
-                                                ${marked.parse(chatMessage.content)}
-                                            </div>
-                                        </div>
-                                    </div>
-                                `;
-                            }
-                        }
-                    }
-            
-                    if (messageHtml) {
-                        chatContainer.append($(messageHtml).hide().fadeIn());
+                            </div>
+                        `;
                     }
                 }
-                $('#chatContainer').animate({
-                    scrollTop: $('#chatContainer').prop("scrollHeight")
-                }, 500);
             }
-            
-            
-            function getImageUrlById(imageId, designStep, thumbnail) {
-                return new Promise((resolve, reject) => {
-                    $.ajax({
-                        url: `/image/${imageId}`,
-                        method: 'GET',
-                        success: function(response) {
-                            let isBlur = response.isBlur
-                            if (response.imageUrl) {
-                                const messageHtml = `
-                                <div id="container-${designStep}">
-                                    <div class="d-flex flex-row justify-content-start mb-4 message-container ${isBlur ? 'unlock-nsfw':''}">
-                                        <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
-                                        <div class="position-relative">
-                                            <div class="p-3 ms-3 text-start assistant-image-box">
-                                                <img id="image-${imageId}" src="${response.imageUrl}" alt="${response.imagePrompt}">
-                                            </div>
-                                            ${isBlur ? `
-                                            <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
-                                                <span type="button" class="badge bg-danger text-white" style="padding: 5px; border-radius: 5px;">
-                                                    <i class="fas fa-lock"></i> 成人向け
-                                                </span>
-                                            </div>` : ''}
-                                        </div>
+    
+            if (messageHtml) {
+                chatContainer.append($(messageHtml).hide().fadeIn());
+            }
+        }
+        $('#chatContainer').animate({
+            scrollTop: $('#chatContainer').prop("scrollHeight")
+        }, 500);
+    }
+    
+    
+    function getImageUrlById(imageId, designStep, thumbnail) {
+        return new Promise((resolve, reject) => {
+            $.ajax({
+                url: `/image/${imageId}`,
+                method: 'GET',
+                success: function(response) {
+                    let isBlur = response.isBlur
+                    if (response.imageUrl) {
+                        const messageHtml = `
+                        <div id="container-${designStep}">
+                            <div class="d-flex flex-row justify-content-start mb-4 message-container ${isBlur ? 'unlock-nsfw':''}">
+                                <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
+                                <div class="position-relative">
+                                    <div class="p-3 ms-3 text-start assistant-image-box">
+                                        <img id="image-${imageId}" src="${response.imageUrl}" alt="${response.imagePrompt}">
                                     </div>
-                                </div>`;
-                                resolve(messageHtml);
-                            } else {
-                                console.error('No image URL returned');
-                                reject('No image URL returned');
-                            }
-                        },
-                        error: function(xhr, status, error) {
-                            console.error('Error fetching image URL:', error);
-                            reject(error);
-                        }
-                    });
-                });
-            }
-            
-            
-            $(document).on('click','.unlock-nsfw',function(){
-                showUpgradePopup('unlock-nsfw');
-            })
-            function displayStep(chatData, currentStep) {
-                const step = chatData[currentStep];
-                $('#chatContainer').append(`
-                <div id="container-${currentStep}">
-                    <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
-                        <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
-                        <div id="message-${currentStep}" class="p-3 ms-3 text-start assistant-chat-box"></div>
-                    </div>
-                    <div id="response-${currentStep}" class="choice-container" ></div>
-                </div>`)
-                step.responses.forEach((response, index) => {
-                    if(response.trim() != '' ){
-                        const button = $(`<button class="btn btn-outline-secondary m-1" onclick="choosePath('${response}')">${response}</button>`);
-                        button.css('opacity',0)
-                        $(`#response-${currentStep}`).append(button);
+                                    ${isBlur ? `
+                                    <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
+                                        <span type="button" class="badge bg-danger text-white" style="padding: 5px; border-radius: 5px;">
+                                            <i class="fas fa-lock"></i> 成人向け
+                                        </span>
+                                    </div>` : ''}
+                                </div>
+                            </div>
+                        </div>`;
+                        resolve(messageHtml);
+                    } else {
+                        console.error('No image URL returned');
+                        reject('No image URL returned');
                     }
-                });
-                appendHeadlineCharacterByCharacter($(`#message-${currentStep}`), step.question,function(){
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching image URL:', error);
+                    reject(error);
+                }
+            });
+        });
+    }
+    
+    
+    $(document).on('click','.unlock-nsfw',function(){
+        showUpgradePopup('unlock-nsfw');
+    })
+    function displayStep(chatData, currentStep) {
+        const step = chatData[currentStep];
+        $('#chatContainer').append(`
+        <div id="container-${currentStep}">
+            <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
+                <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+                <div id="message-${currentStep}" class="p-3 ms-3 text-start assistant-chat-box"></div>
+            </div>
+            <div id="response-${currentStep}" class="choice-container" ></div>
+        </div>`)
+        step.responses.forEach((response, index) => {
+            if(response.trim() != '' ){
+                const button = $(`<button class="btn btn-outline-secondary m-1" onclick="choosePath('${response}')">${response}</button>`);
+                button.css('opacity',0)
+                $(`#response-${currentStep}`).append(button);
+            }
+        });
+        appendHeadlineCharacterByCharacter($(`#message-${currentStep}`), step.question,function(){
+            $(`#response-${currentStep} button`).each(function(){
+                $(this).css('opacity',1)
+            })
+        })
+    }
+
+    function updatechatContent(response) {
+        const previousStep = chatData[currentStep-1]; // Previous step where the choice was made
+
+
+        if (currentStep < totalSteps) {
+            $('#chatContainer').append(`
+            <div id="container-${currentStep}">
+                <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
+                    <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+                    <div id="message-${currentStep}" class="p-3 ms-3 text-start assistant-chat-box"></div>
+                </div>
+                <div id="response-${currentStep}" class="choice-container" ></div>
+            </div>`)
+            const nextStep = chatData[currentStep];
+            nextStep.responses.forEach(response => {
+                if(response.trim() != ''){
+                    const button = $(`<button class="btn btn-outline-secondary m-1" onclick="choosePath('${response}')">${response}</button>`)
+                    button.css('opacity',0)
+                    $(`#response-${currentStep}`).append(button);
+                }
+            });
+
+            const choice = previousStep.responses.find(c => c === response);
+            $(`#message-${currentStep}`).closest('.message-container').animate({ opacity: 1 }, 500, function() { 
+                appendHeadlineCharacterByCharacter($(`#message-${currentStep}`), nextStep.question,function(){
                     $(`#response-${currentStep} button`).each(function(){
                         $(this).css('opacity',1)
                     })
-                })
-            }
-
-            function updatechatContent(response) {
-                const previousStep = chatData[currentStep-1]; // Previous step where the choice was made
-
-
-                if (currentStep < totalSteps) {
-                    $('#chatContainer').append(`
-                    <div id="container-${currentStep}">
-                        <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
-                            <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
-                            <div id="message-${currentStep}" class="p-3 ms-3 text-start assistant-chat-box"></div>
-                        </div>
-                        <div id="response-${currentStep}" class="choice-container" ></div>
-                    </div>`)
-                    const nextStep = chatData[currentStep];
-                    nextStep.responses.forEach(response => {
-                        if(response.trim() != ''){
-                            const button = $(`<button class="btn btn-outline-secondary m-1" onclick="choosePath('${response}')">${response}</button>`)
-                            button.css('opacity',0)
-                            $(`#response-${currentStep}`).append(button);
-                        }
-                    });
-
-                    const choice = previousStep.responses.find(c => c === response);
-                    $(`#message-${currentStep}`).closest('.message-container').animate({ opacity: 1 }, 500, function() { 
-                        appendHeadlineCharacterByCharacter($(`#message-${currentStep}`), nextStep.question,function(){
-                            $(`#response-${currentStep} button`).each(function(){
-                                $(this).css('opacity',1)
-                            })
-                        });
-                    })
-                }else{
-                    generateCompletion(function(){
-                        checkForPurchaseProposal()
-                    })
-                }
-            }
-
-            function hideOtherChoice(response, currentStep, callback) {
-
-                $(`#response-${currentStep - 1} button`).each(function() {
-                    const currentChoice = $(this).text()
-                    if(response == currentChoice){
-                        const response = $(this).text()
-                        $(`#response-${currentStep - 1}`).remove()
-                        $(`#container-${currentStep - 1}`).append(`
-                            <div class="d-flex flex-row justify-content-end mb-4 message-container" style="opacity:0;">
-                                <div id="response-${currentStep - 1}" class="p-3 me-3 border-0" style="border-radius: 15px; background-color: #fbfbfbdb;">${response}</div>
-                            </div>
-                        `)
-                    }
-                    $(this).remove()
                 });
-                $(`#response-${currentStep - 1}`).closest('.message-container').animate({ opacity: 1 }, 1000,function(){
-                    if (callback) {callback()}
-                })
+            })
+        }else{
+            generateCompletion(function(){
+                checkForPurchaseProposal()
+            })
+        }
+    }
+
+    function hideOtherChoice(response, currentStep, callback) {
+
+        $(`#response-${currentStep - 1} button`).each(function() {
+            const currentChoice = $(this).text()
+            if(response == currentChoice){
+                const response = $(this).text()
+                $(`#response-${currentStep - 1}`).remove()
+                $(`#container-${currentStep - 1}`).append(`
+                    <div class="d-flex flex-row justify-content-end mb-4 message-container" style="opacity:0;">
+                        <div id="response-${currentStep - 1}" class="p-3 me-3 border-0" style="border-radius: 15px; background-color: #fbfbfbdb;">${response}</div>
+                    </div>
+                `)
             }
+            $(this).remove()
+        });
+        $(`#response-${currentStep - 1}`).closest('.message-container').animate({ opacity: 1 }, 1000,function(){
+            if (callback) {callback()}
+        })
+    }
 
-            function generateChoice(){
-                const apiUrl = API_URL+'/api/openai-chat-choice/'
+    function generateChoice(){
+        const apiUrl = API_URL+'/api/openai-chat-choice/'
 
-                $.ajax({
-                    url: apiUrl,
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ userId, chatId }),
-                    success: function(response) {
-                        const cleanResponse = cleanJsonArray(response)
+        $.ajax({
+            url: apiUrl,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ userId, chatId }),
+            success: function(response) {
+                const cleanResponse = cleanJsonArray(response)
 
-                        cleanResponse.forEach(choice => {
-                            const button = $(`<button class="btn btn-outline-secondary m-1" onclick="sendMessage('${choice}')">${choice}</button>`)
-                            $(`#response-${currentStep}`).append(button);
-                        });
-                    },
-                    error: function(error) {
-                        console.error('Error:', error);
-                    }
+                cleanResponse.forEach(choice => {
+                    const button = $(`<button class="btn btn-outline-secondary m-1" onclick="sendMessage('${choice}')">${choice}</button>`)
+                    $(`#response-${currentStep}`).append(button);
                 });
+            },
+            error: function(error) {
+                console.error('Error:', error);
             }
-            function cleanJsonArray(jsonString) {
-                // Remove all characters before the first '{'
-                let start = jsonString.indexOf('[');
-                if (start !== -1) {
-                    jsonString = jsonString.substring(start);
-                }
+        });
+    }
+    function cleanJsonArray(jsonString) {
+        // Remove all characters before the first '{'
+        let start = jsonString.indexOf('[');
+        if (start !== -1) {
+            jsonString = jsonString.substring(start);
+        }
 
-                // Remove all characters after the last '}'
-                let end = jsonString.lastIndexOf(']');
-                if (end !== -1) {
-                    jsonString = jsonString.substring(0, end + 1);
-                }
+        // Remove all characters after the last '}'
+        let end = jsonString.lastIndexOf(']');
+        if (end !== -1) {
+            jsonString = jsonString.substring(0, end + 1);
+        }
 
-                return JSON.parse(jsonString);
-            }
-            let audioPermissionGranted = true;
+        return JSON.parse(jsonString);
+    }
+    let audioPermissionGranted = true;
 
-            function requestAudioPermission() {
-                if (audioPermissionGranted) {
-                    return Promise.resolve(true);
-                }
-            
-                return Swal.fire({
-                    title: 'オーディオ再生の許可',
-                    text: '次回から自動再生されます。',
-                    icon: 'info',
-                    toast: true,
-                    position: 'top-end',
-                    showCancelButton: true,
-                    confirmButtonText: 'はい',
-                    cancelButtonText: 'いいえ',
-                    customClass: {
-                        popup: 'animate__animated animate__fadeIn animate__faster',
-                        backdrop: 'swal2-backdrop-show animate__animated animate__fadeIn animate__faster',
-                        container: 'swal2-container swal2-top-end',
-                        title: 'swal2-title',
-                        content: 'swal2-content',
-                        actions: 'swal2-actions',
-                        confirmButton: 'swal2-confirm swal2-styled',
-                        cancelButton: 'swal2-cancel swal2-styled',
-                    },
-                    didClose: () => {
-                        Swal.getPopup().classList.add('animate__animated', 'animate__fadeOut', 'animate__faster');
-                    }
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        audioPermissionGranted = true;
-                    }
-                    return result.isConfirmed;
-                });
-            }       
-            function stopAllAudios() {
-                audioPool.forEach(audio => {
-                    audio.pause();
-                    audio.currentTime = 0;
-                });
+    function requestAudioPermission() {
+        if (audioPermissionGranted) {
+            return Promise.resolve(true);
+        }
+    
+        return Swal.fire({
+            title: 'オーディオ再生の許可',
+            text: '次回から自動再生されます。',
+            icon: 'info',
+            toast: true,
+            position: 'top-end',
+            showCancelButton: true,
+            confirmButtonText: 'はい',
+            cancelButtonText: 'いいえ',
+            customClass: {
+                popup: 'animate__animated animate__fadeIn animate__faster',
+                backdrop: 'swal2-backdrop-show animate__animated animate__fadeIn animate__faster',
+                container: 'swal2-container swal2-top-end',
+                title: 'swal2-title',
+                content: 'swal2-content',
+                actions: 'swal2-actions',
+                confirmButton: 'swal2-confirm swal2-styled',
+                cancelButton: 'swal2-cancel swal2-styled',
+            },
+            didClose: () => {
+                Swal.getPopup().classList.add('animate__animated', 'animate__fadeOut', 'animate__faster');
             }
-            
-            function getAvailableAudio() {
-                const idleAudio = audioPool.find(a => a.paused && a.currentTime === 0);
-                if (idleAudio) {
-                    return idleAudio;
-                } else {
-                    const newAudio = new Audio();
-                    audioPool.push(newAudio);
-                    return newAudio;
-                }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                audioPermissionGranted = true;
             }
-            
-            $(document).on('click', function() {
-                getAvailableAudio();
+            return result.isConfirmed;
+        });
+    }       
+    function stopAllAudios() {
+        audioPool.forEach(audio => {
+            audio.pause();
+            audio.currentTime = 0;
+        });
+    }
+    
+    function getAvailableAudio() {
+        const idleAudio = audioPool.find(a => a.paused && a.currentTime === 0);
+        if (idleAudio) {
+            return idleAudio;
+        } else {
+            const newAudio = new Audio();
+            audioPool.push(newAudio);
+            return newAudio;
+        }
+    }
+    
+    $(document).on('click', function() {
+        getAvailableAudio();
+    });
+    
+    $(document).on('click', '.audio-controller .audio-content', function(event) {
+        event.stopPropagation();
+        const $el = $(this);
+        const message = $el.attr('data-content');
+        stopAllAudios();
+    
+        (function() {
+            const duration = $el.attr('data-audio-duration');
+            if (duration) $el.html('► ' + Math.round(duration) + '"');
+        })();
+    
+        initAudio($el, message);
+    });
+    
+    function initAudio($el, message) {
+        requestAudioPermission().then(isAllowed => {
+            if (!isAllowed) {
+                return $el.html('再生がキャンセルされました');
+            }
+    
+            $el.html('<div class="spinner-grow spinner-grow-sm" role="status"><span class="visually-hidden">Loading...</span></div>');
+            const voiceUrl = getVoiceUrl(message);
+    
+            $.post(voiceUrl, response => {
+                if (response.errno !== 0) {
+                    return $el.html('エラーが発生しました');
+                }
+    
+                const audioUrl = response.data.audio_url;
+                audioCache.set(message, audioUrl);
+                const audio = getAvailableAudio();
+                playAudio($el, audio, audioUrl);
             });
-            
-            $(document).on('click', '.audio-controller .audio-content', function(event) {
-                event.stopPropagation();
-                const $el = $(this);
-                const message = $el.attr('data-content');
-                stopAllAudios();
-            
-                (function() {
-                    const duration = $el.attr('data-audio-duration');
-                    if (duration) $el.html('► ' + Math.round(duration) + '"');
-                })();
-            
-                initAudio($el, message);
-            });
-            
-            function initAudio($el, message) {
-                requestAudioPermission().then(isAllowed => {
-                    if (!isAllowed) {
-                        return $el.html('再生がキャンセルされました');
-                    }
-            
-                    $el.html('<div class="spinner-grow spinner-grow-sm" role="status"><span class="visually-hidden">Loading...</span></div>');
-                    const voiceUrl = getVoiceUrl(message);
-            
-                    $.post(voiceUrl, response => {
-                        if (response.errno !== 0) {
-                            return $el.html('エラーが発生しました');
-                        }
-            
-                        const audioUrl = response.data.audio_url;
-                        audioCache.set(message, audioUrl);
-                        const audio = getAvailableAudio();
-                        playAudio($el, audio, audioUrl);
-                    });
-                });
+        });
+    }
+    
+    function getVoiceUrl(message) {
+        const baseUrl = 'https://api.synclubaichat.com/aichat/h5/tts/msg2Audio';
+        const params = `?device=web_desktop&product=aichat&sys_lang=en-US&country=&referrer=&zone=9&languageV2=ja&uuid=&app_version=1.6.4&message=${encodeURIComponent(message)}&voice_actor=default_voice`;
+        return $('#chat-container').attr('data-genre') == 'male' 
+            ? `${baseUrl}${params}&robot_id=1533008538&ts=1723632421&t_secret=661712&sign=9e2bfc4903b8c1176f7e2c973538908b` 
+            : `${baseUrl}${params}&robot_id=1533008511&ts=1724029265&t_secret=58573&sign=3beb590d1261bc75d6687176f50470eb`;
+    }
+    function playAudio($el, audio, audioUrl) {
+        if (audio.src !== audioUrl) audio.src = audioUrl;
+    
+        audio.play();
+    
+        audio.onloadedmetadata = () => 
+            $el.attr('data-audio-duration', audio.duration).html(`❚❚ ${Math.round(audio.duration)}"`);
+    
+        audio.onended = () => 
+            $el.html(`► ${Math.round(audio.duration)}"`);
+    
+        $el.off('click').on('click', (event) => {
+            event.stopPropagation();
+        
+            const message = $el.attr('data-content');
+            const audioDuration = $el.attr('data-audio-duration')
+            const cachedUrl = audioCache.get(message);
+            let audio = audioPool.find(a => a.src === cachedUrl) || getAvailableAudio();
+        
+            if (audio.src !== cachedUrl) {
+                audio.src = cachedUrl;
             }
-            
-            function getVoiceUrl(message) {
-                const baseUrl = 'https://api.synclubaichat.com/aichat/h5/tts/msg2Audio';
-                const params = `?device=web_desktop&product=aichat&sys_lang=en-US&country=&referrer=&zone=9&languageV2=ja&uuid=&app_version=1.6.4&message=${encodeURIComponent(message)}&voice_actor=default_voice`;
-                return $('#chat-container').attr('data-genre') == 'male' 
-                    ? `${baseUrl}${params}&robot_id=1533008538&ts=1723632421&t_secret=661712&sign=9e2bfc4903b8c1176f7e2c973538908b` 
-                    : `${baseUrl}${params}&robot_id=1533008511&ts=1724029265&t_secret=58573&sign=3beb590d1261bc75d6687176f50470eb`;
-            }
-            function playAudio($el, audio, audioUrl) {
-                if (audio.src !== audioUrl) audio.src = audioUrl;
-            
+        
+            if (audio.paused) {
                 audio.play();
-            
-                audio.onloadedmetadata = () => 
-                    $el.attr('data-audio-duration', audio.duration).html(`❚❚ ${Math.round(audio.duration)}"`);
-            
-                audio.onended = () => 
-                    $el.html(`► ${Math.round(audio.duration)}"`);
-            
-                $el.off('click').on('click', (event) => {
-                    event.stopPropagation();
-                
-                    const message = $el.attr('data-content');
-                    const audioDuration = $el.attr('data-audio-duration')
-                    const cachedUrl = audioCache.get(message);
-                    let audio = audioPool.find(a => a.src === cachedUrl) || getAvailableAudio();
-                
-                    if (audio.src !== cachedUrl) {
-                        audio.src = cachedUrl;
-                    }
-                
-                    if (audio.paused) {
-                        audio.play();
-                        $el.html(`❚❚ ${Math.round(audioDuration)}"`);
-                    } else {
-                        audio.pause();
-                        audio.currentTime = 0;
-                        $el.html(`► ${Math.round(audioDuration)}"`);
-                    }
-                });
-                
+                $el.html(`❚❚ ${Math.round(audioDuration)}"`);
+            } else {
+                audio.pause();
+                audio.currentTime = 0;
+                $el.html(`► ${Math.round(audioDuration)}"`);
             }
-            
-            
-            
-            function removeContentBetweenStars(str) {
-                if (!str) { return str; }
-                return str.replace(/\*.*?\*/g, '').replace(/"/g, '');
-            }                    
-            function generateCompletion(callback){
-                
-                const apiUrl = API_URL+'/api/openai-chat-completion';
+        });
+        
+    }
+    
+    
+    
+    function removeContentBetweenStars(str) {
+        if (!str) { return str; }
+        return str.replace(/\*.*?\*/g, '').replace(/"/g, '');
+    }                    
+    function generateCompletion(callback){
+        
+        const apiUrl = API_URL+'/api/openai-chat-completion';
 
-                hideOtherChoice(false, currentStep)
-                // Initialize the bot response container
-                const animationClass = 'animate__animated animate__slideInUp';
-                const uniqueId = `${currentStep}-${Date.now()}`;
-                const botResponseContainer = $(`
-                    <div id="container-${uniqueId}">
-                        <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
-                            <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
-                            <div class="audio-controller" style="display:none">
-                                <button id="play-${uniqueId}" class="audio-content badge bg-dark">►</button>
-                            </div>
-                            <div id="completion-${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">
-                                <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
-                            </div>
-                        </div>
-                    </div>`).hide();
-                $('#chatContainer').append(botResponseContainer);
-                botResponseContainer.addClass(animationClass).fadeIn();
-                $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
-                $.ajax({
-                    url: apiUrl,
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ userId, chatId, userChatId }),
-                    success: function(response) {
-                        const sessionId = response.sessionId;
-                        const streamUrl = API_URL+`/api/openai-chat-completion-stream/${sessionId}`;
-                        const eventSource = new EventSource(streamUrl);
-                        let markdownContent = "";
+        hideOtherChoice(false, currentStep)
+        // Initialize the bot response container
+        const animationClass = 'animate__animated animate__slideInUp';
+        const uniqueId = `${currentStep}-${Date.now()}`;
+        const botResponseContainer = $(`
+            <div id="container-${uniqueId}">
+                <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
+                    <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
+                    <div class="audio-controller" style="display:none">
+                        <button id="play-${uniqueId}" class="audio-content badge bg-dark">►</button>
+                    </div>
+                    <div id="completion-${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">
+                        <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
+                    </div>
+                </div>
+            </div>`).hide();
+        $('#chatContainer').append(botResponseContainer);
+        botResponseContainer.addClass(animationClass).fadeIn();
+        $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
+        $.ajax({
+            url: apiUrl,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ userId, chatId, userChatId }),
+            success: function(response) {
+                const sessionId = response.sessionId;
+                const streamUrl = API_URL+`/api/openai-chat-completion-stream/${sessionId}`;
+                const eventSource = new EventSource(streamUrl);
+                let markdownContent = "";
 
-                        eventSource.onmessage = function(event) {
-                            const data = JSON.parse(event.data);
-                            markdownContent += data.content;
-                            $(`#completion-${uniqueId}`).html(marked.parse(markdownContent));
-                        };
+                eventSource.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    markdownContent += data.content;
+                    $(`#completion-${uniqueId}`).html(marked.parse(markdownContent));
+                };
 
-                        eventSource.onerror = function(error) {
-                            eventSource.close();
-                            let message = removeContentBetweenStars(markdownContent)
-                            if(language != 'english'){
-                                $(`#play-${uniqueId}`).attr('data-content',message)
-                                $(`#play-${uniqueId}`).closest('.audio-controller').show()
-                                if(autoPlay){
-                                    initAudio($(`#play-${uniqueId}`), message);
-                                }
-                            }
-                            if (typeof callback === "function") {
-                                callback();
-                            }
-                        };
-                    },
-                    error: function(error) {
-                        console.error('Error:', error);
+                eventSource.onerror = function(error) {
+                    eventSource.close();
+                    let message = removeContentBetweenStars(markdownContent)
+                    if(language != 'english'){
+                        $(`#play-${uniqueId}`).attr('data-content',message)
+                        $(`#play-${uniqueId}`).closest('.audio-controller').show()
+                        if(autoPlay){
+                            initAudio($(`#play-${uniqueId}`), message);
+                        }
                     }
-                });
+                    if (typeof callback === "function") {
+                        callback();
+                    }
+                };
+            },
+            error: function(error) {
+                console.error('Error:', error);
             }
-            function generateCustomCompletion(customPrompt, callback) {
-                const apiUrl = API_URL + '/api/openai-custom-chat';
-            
-                hideOtherChoice(false, currentStep);
-                currentStep ++
-                // Initialize the bot response container
-                const botResponseContainer = $(`
-                    <div id="container-${currentStep}">
-                        <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
-                            <img src="${thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
-                            <div class="audio-controller" style="display:none">
-                                <button id="play-${currentStep}" class="audio-content badge bg-dark">►</button>
-                            </div>
-                            <div id="completion-${currentStep}" class="p-3 ms-3 text-start assistant-chat-box">
-                                <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
-                            </div>
-                        </div>
-                    </div>`);
-                $('#chatContainer').append(botResponseContainer);
-                $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
-            
-                $.ajax({
-                    url: apiUrl,
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ userId, chatId, userChatId, customPrompt }),
-                    success: function(response) {
-                        const sessionId = response.sessionId;
-                        const streamUrl = API_URL + `/api/openai-custom-chat-stream/${sessionId}`;
-                        const eventSource = new EventSource(streamUrl);
-                        let markdownContent = "";
-            
-                        eventSource.onmessage = function(event) {
-                            const data = JSON.parse(event.data);
-                            markdownContent += data.content;
-                            $(`#completion-${currentStep}`).html(marked.parse(markdownContent));
-                        };
-            
-                        eventSource.onerror = function(error) {
-                            eventSource.close();
-                            let message = removeContentBetweenStars(markdownContent);
-                            if(language != 'english'){
-                                $(`#play-${currentStep}`).attr('data-content', message);
-                                $(`#play-${currentStep}`).closest('.audio-controller').show();
-                                if(autoPlay){
-                                    initAudio($(`#play-${currentStep}`), message);
-                                }
-                            }
-
-                            if (typeof callback === "function") {
-                                callback();
-                            }
-                        };
-                    },
-                    error: function(error) {
-                        console.error('Error:', error);
+        });
+    }
+    function generateCustomCompletion(customPrompt, callback) {
+        const apiUrl = API_URL + '/api/openai-custom-chat';
+    
+        hideOtherChoice(false, currentStep);
+        currentStep ++
+        // Initialize the bot response container
+        const botResponseContainer = $(`
+            <div id="container-${currentStep}">
+                <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
+                    <img src="${thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
+                    <div class="audio-controller" style="display:none">
+                        <button id="play-${currentStep}" class="audio-content badge bg-dark">►</button>
+                    </div>
+                    <div id="completion-${currentStep}" class="p-3 ms-3 text-start assistant-chat-box">
+                        <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
+                    </div>
+                </div>
+            </div>`);
+        $('#chatContainer').append(botResponseContainer);
+        $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
+    
+        $.ajax({
+            url: apiUrl,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ userId, chatId, userChatId, customPrompt }),
+            success: function(response) {
+                const sessionId = response.sessionId;
+                const streamUrl = API_URL + `/api/openai-custom-chat-stream/${sessionId}`;
+                const eventSource = new EventSource(streamUrl);
+                let markdownContent = "";
+    
+                eventSource.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    markdownContent += data.content;
+                    $(`#completion-${currentStep}`).html(marked.parse(markdownContent));
+                };
+    
+                eventSource.onerror = function(error) {
+                    eventSource.close();
+                    let message = removeContentBetweenStars(markdownContent);
+                    if(language != 'english'){
+                        $(`#play-${currentStep}`).attr('data-content', message);
+                        $(`#play-${currentStep}`).closest('.audio-controller').show();
+                        if(autoPlay){
+                            initAudio($(`#play-${currentStep}`), message);
+                        }
                     }
-                });
-            }            
-            function generateNarration(callback) {
-                const apiUrl = API_URL + '/api/openai-chat-narration';
-                        
-                // Initialize the narrator response container
-                const narratorResponseContainer = $(`
-                    <div id="narrator-container-${currentStep}" class="d-flex flex-row justify-content-start message-container">
-                        <div id="narration-${currentStep}" class="p-3 ms-3 text-start narration-container" style="border-radius: 15px;">
-                            <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
+
+                    if (typeof callback === "function") {
+                        callback();
+                    }
+                };
+            },
+            error: function(error) {
+                console.error('Error:', error);
+            }
+        });
+    }            
+    function generateNarration(callback) {
+        const apiUrl = API_URL + '/api/openai-chat-narration';
+                
+        // Initialize the narrator response container
+        const narratorResponseContainer = $(`
+            <div id="narrator-container-${currentStep}" class="d-flex flex-row justify-content-start message-container">
+                <div id="narration-${currentStep}" class="p-3 ms-3 text-start narration-container" style="border-radius: 15px;">
+                    <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
+                </div>
+            </div>
+        `);
+    
+        $('#chatContainer').append(narratorResponseContainer);
+        $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
+    
+        $.ajax({
+            url: apiUrl,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ userId, chatId, userChatId }),
+            success: function(response) {
+                const sessionId = response.sessionId;
+                const streamUrl = API_URL + `/api/openai-chat-narration-stream/${sessionId}`;
+                const eventSource = new EventSource(streamUrl);
+                let narrationContent = "";
+    
+                eventSource.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    narrationContent += data.content;
+                    $(`#narration-${currentStep}`).html(marked.parse(narrationContent));
+                };
+    
+                eventSource.onerror = function(error) {
+                    eventSource.close();
+                    if (typeof callback === "function") {
+                        callback();
+                    }
+                };
+            },
+            error: function(error) {
+                console.error('Error:', error);
+            }
+        });
+    }
+                
+    window.displayMessage = function(sender, message, callback) {
+        const messageClass = sender === 'user' ? 'user-message' : sender;
+        const animationClass = 'animate__animated animate__slideInUp';
+        let messageElement;
+    
+        if (messageClass === 'user-message') {
+            if (typeof message === 'string' && message.trim() !== '') {
+                messageElement = $(`
+                    <div class="d-flex flex-row justify-content-end mb-4 message-container ${messageClass} ${animationClass}">
+                        <div class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
+                            <span>${message}</span>
+                        </div>
+                        ${persona ? `<img src="${persona.chatImageUrl || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">` : ''}
+                    </div>
+                `).hide();
+                $('#chatContainer').append(messageElement);
+                messageElement.addClass(animationClass).fadeIn();
+            }
+        } 
+    
+        else if (messageClass === 'bot-image' && message instanceof HTMLElement) {
+            messageElement = $(`
+                <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass}">
+                    <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
+                    <div class="p-3 ms-3 text-start assistant-image-box">
+                        ${message.outerHTML}
+                    </div>
+                </div>      
+            `).hide();
+            $('#chatContainer').append(messageElement);
+            messageElement.addClass(animationClass).fadeIn();
+        } 
+    
+        else if (messageClass === 'bot-image-nsfw'&& message instanceof HTMLElement) {
+            messageElement = $(`
+                <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass} unlock-nsfw" style="position: relative;">
+                    <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
+                    <div class="position-relative">
+                        <div class="p-3 ms-3 text-start assistant-image-box">
+                            ${message.outerHTML}
+                        </div>
+                        <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
+                            <span type="button" class="badge bg-danger text-white" style="padding: 5px; border-radius: 5px;">
+                                <i class="fas fa-lock"></i> 成人向け
+                            </span>
                         </div>
                     </div>
-                `);
-            
-                $('#chatContainer').append(narratorResponseContainer);
-                $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
-            
-                $.ajax({
-                    url: apiUrl,
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ userId, chatId, userChatId }),
-                    success: function(response) {
-                        const sessionId = response.sessionId;
-                        const streamUrl = API_URL + `/api/openai-chat-narration-stream/${sessionId}`;
-                        const eventSource = new EventSource(streamUrl);
-                        let narrationContent = "";
-            
-                        eventSource.onmessage = function(event) {
-                            const data = JSON.parse(event.data);
-                            narrationContent += data.content;
-                            $(`#narration-${currentStep}`).html(marked.parse(narrationContent));
-                        };
-            
-                        eventSource.onerror = function(error) {
-                            eventSource.close();
-                            if (typeof callback === "function") {
-                                callback();
-                            }
-                        };
-                    },
-                    error: function(error) {
-                        console.error('Error:', error);
-                    }
-                });
-            }
-                        
-            window.displayMessage = function(sender, message, callback) {
-                const messageClass = sender === 'user' ? 'user-message' : sender;
-                const animationClass = 'animate__animated animate__slideInUp';
-                let messageElement;
-            
-                if (messageClass === 'user-message') {
-                    if (typeof message === 'string' && message.trim() !== '') {
-                        messageElement = $(`
-                            <div class="d-flex flex-row justify-content-end mb-4 message-container ${messageClass} ${animationClass}">
-                                <div class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
-                                    <span>${message}</span>
-                                </div>
-                                ${persona ? `<img src="${persona.chatImageUrl || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">` : ''}
-                            </div>
-                        `).hide();
-                        $('#chatContainer').append(messageElement);
-                        messageElement.addClass(animationClass).fadeIn();
-                    }
-                } 
-            
-                else if (messageClass === 'bot-image' && message instanceof HTMLElement) {
-                    messageElement = $(`
-                        <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass}">
-                            <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
-                            <div class="p-3 ms-3 text-start assistant-image-box">
-                                ${message.outerHTML}
-                            </div>
-                        </div>      
-                    `).hide();
-                    $('#chatContainer').append(messageElement);
-                    messageElement.addClass(animationClass).fadeIn();
-                } 
-            
-                else if (messageClass === 'bot-image-nsfw'&& message instanceof HTMLElement) {
-                    messageElement = $(`
-                        <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass} unlock-nsfw" style="position: relative;">
-                            <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
-                            <div class="position-relative">
-                                <div class="p-3 ms-3 text-start assistant-image-box">
-                                    ${message.outerHTML}
-                                </div>
-                                <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
-                                    <span type="button" class="badge bg-danger text-white" style="padding: 5px; border-radius: 5px;">
-                                        <i class="fas fa-lock"></i> 成人向け
-                                    </span>
-                                </div>
-                            </div>
-                        </div>   
-                    `).hide();
-                    $('#chatContainer').append(messageElement);
-                    messageElement.addClass(animationClass).fadeIn();
-                } 
-            
-                else if (messageClass === 'assistant' && typeof message === 'string' && message.trim() !== '') {
-                    const uniqueId = `completion-${currentStep}-${Date.now()}`;
-                    messageElement = $(`
-                        <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container ${animationClass}">
-                            <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top; cursor:pointer;">
-                            <div id="${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">
-                                ${message}
-                            </div>
-                        </div>
-                    `).hide();
-                    $('#chatContainer').append(messageElement);
-                    messageElement.show().addClass(animationClass);
-                }
-            
-                $('#chatContainer').animate({
-                    scrollTop: $('#chatContainer').prop("scrollHeight")
-                }, 500); 
-            
-                if (typeof callback === 'function') {
-                    callback();
-                }
-            };            
+                </div>   
+            `).hide();
+            $('#chatContainer').append(messageElement);
+            messageElement.addClass(animationClass).fadeIn();
+        } 
+    
+        else if (messageClass === 'assistant' && typeof message === 'string' && message.trim() !== '') {
+            const uniqueId = `completion-${currentStep}-${Date.now()}`;
+            messageElement = $(`
+                <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container ${animationClass}">
+                    <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top; cursor:pointer;">
+                    <div id="${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">
+                        ${message}
+                    </div>
+                </div>
+            `).hide();
+            $('#chatContainer').append(messageElement);
+            messageElement.show().addClass(animationClass);
+        }
+    
+        $('#chatContainer').animate({
+            scrollTop: $('#chatContainer').prop("scrollHeight")
+        }, 500); 
+    
+        if (typeof callback === 'function') {
+            callback();
+        }
+    };            
 
-            window.buyItem = function(itemId, itemName, itemPrice, status, userId, chatId, userChatId) {
-            
-                if (status) {
-                    initiatePurchase(itemId, itemName, itemPrice, userId, function(response) {
-                        let message;
-                        if (response.success) {
-                            const successMessages = [
-                                `${itemName}を購入しました！`,
-                                `${itemName}を手に入れました！`,
-                                `${itemName}があなたのものになりました！`,
-                                `${itemName}をゲットしました！`,
-                                `${itemName}を${itemPrice}コインで購入しました。`,
-                                `${itemName}を無事に${itemPrice}コインでゲットしました！`,
-                                `${itemName}を${itemPrice}コインで手に入れました。`
-                            ];
-                            
-                            let message = successMessages[Math.floor(Math.random() * successMessages.length)];                            
-                            $(`#${itemId} button`).each(function() { $(this).hide() });
-                            updateCoins(response.coins)
-                            displayMessage('user', message, function() {
-                                addMessageToChat(chatId, userChatId, 'user', message, function(error, res) {
-                                    if (error) {
-                                        console.error('Error adding message:', error);
-                                    } else {
-                                        thumbnail = thumbnail || localStorage.getItem('thumbnail')
-                                        generateCompletion(function(){
-                                            checkImageDescription(thumbnail,function(response){
-                                                if(!response){
-                                                    generateImageDescriptionBackend(thumbnail,function(){
-                                                        generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
-                                                            generateImageNovita(API_URL, userId, chatId, userChatId, character, { prompt });
-                                                        });
-                                                    })
-                                                }else{
-                                                    generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
-                                                        generateImageNovita(API_URL, userId, chatId, userChatId, character, { prompt });
-                                                    });
-                                                }
-                                            }) 
-                                        });
-                                    }
-                                });
-                            });
-                        } else {
-                            showCoinShop()
-                        }
-                    });
-                } else {
-                    const messages = [
-                        `${itemName}は今のところ購入されていません。`,
-                        `${itemName}をスキップしました。`,
-                        `${itemName}を今は手に入れませんでした。`,
-                        `${itemName}を今は選択しませんでした。`
+    window.buyItem = function(itemId, itemName, itemPrice, status, userId, chatId, userChatId) {
+    
+        if (status) {
+            initiatePurchase(itemId, itemName, itemPrice, userId, function(response) {
+                let message;
+                if (response.success) {
+                    const successMessages = [
+                        `${itemName}を購入しました！`,
+                        `${itemName}を手に入れました！`,
+                        `${itemName}があなたのものになりました！`,
+                        `${itemName}をゲットしました！`,
+                        `${itemName}を${itemPrice}コインで購入しました。`,
+                        `${itemName}を無事に${itemPrice}コインでゲットしました！`,
+                        `${itemName}を${itemPrice}コインで手に入れました。`
                     ];
-                    let message = messages[Math.floor(Math.random() * messages.length)];
+                    
+                    let message = successMessages[Math.floor(Math.random() * successMessages.length)];                            
+                    $(`#${itemId} button`).each(function() { $(this).hide() });
+                    updateCoins(response.coins)
                     displayMessage('user', message, function() {
                         addMessageToChat(chatId, userChatId, 'user', message, function(error, res) {
                             if (error) {
                                 console.error('Error adding message:', error);
                             } else {
-                                console.log('Message added successfully:', res);
-                                generateCompletion();
+                                thumbnail = thumbnail || localStorage.getItem('thumbnail')
+                                generateCompletion(function(){
+                                    checkImageDescription(thumbnail,function(response){
+                                        if(!response){
+                                            generateImageDescriptionBackend(thumbnail,function(){
+                                                generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
+                                                    generateImageNovita(API_URL, userId, chatId, userChatId, character, { prompt });
+                                                });
+                                            })
+                                        }else{
+                                            generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
+                                                generateImageNovita(API_URL, userId, chatId, userChatId, character, { prompt });
+                                            });
+                                        }
+                                    }) 
+                                });
                             }
                         });
                     });
+                } else {
+                    showCoinShop()
                 }
-            }
-            
-            function initiatePurchase(itemId, itemName, itemPrice, userId, callback) {
-                $.ajax({
-                    url: '/api/purchaseItem',
-                    method: 'POST',
-                    data: { itemId, itemName, itemPrice, userId },
-                    success: function(response) {
-                        callback(response);
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Error during purchase request:', error);
-                        callback({ success: false, error: error });
+            });
+        } else {
+            const messages = [
+                `${itemName}は今のところ購入されていません。`,
+                `${itemName}をスキップしました。`,
+                `${itemName}を今は手に入れませんでした。`,
+                `${itemName}を今は選択しませんでした。`
+            ];
+            let message = messages[Math.floor(Math.random() * messages.length)];
+            displayMessage('user', message, function() {
+                addMessageToChat(chatId, userChatId, 'user', message, function(error, res) {
+                    if (error) {
+                        console.error('Error adding message:', error);
+                    } else {
+                        console.log('Message added successfully:', res);
+                        generateCompletion();
                     }
                 });
+            });
+        }
+    }
+    
+    function initiatePurchase(itemId, itemName, itemPrice, userId, callback) {
+        $.ajax({
+            url: '/api/purchaseItem',
+            method: 'POST',
+            data: { itemId, itemName, itemPrice, userId },
+            success: function(response) {
+                callback(response);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error during purchase request:', error);
+                callback({ success: false, error: error });
             }
-            
-            function addMessageToChat(chatId, userChatId, role, message, callback) {
-                $.ajax({
-                    url: '/api/chat/add-message',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({
-                        chatId: chatId,
-                        userChatId: userChatId,
-                        role: role,
-                        message: message
-                    }),
-                    success: function(response) {
-                        if(typeof callback == 'function'){
-                            callback(null, response);
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        if(typeof callback == 'function'){
-                            callback(error);
-                        }
-                    }
-                });
-            }
-
-            function handleImageGeneration(buttonSelector, generateImageFunction) {
-                $(document).on('click', buttonSelector, function() {
-                    if($(buttonSelector).hasClass('isLoading')){
-                        return;
-                    }
-                    
-                    if ($('#chat-widget-container').length == 0 && isTemporary) {
-                        showRegistrationForm();
-                        return;
-                    }
-
-                    $(buttonSelector).addClass('isLoading');
-                    const API_URL = localStorage.getItem('API_URL');
-                    const userId = $(this).attr('data-user-id');
-                    const chatId = $(this).attr('data-chat-id');
-                    const userChatId = $(this).attr('data-user-chat-id');
-                    const thumbnail = $(this).attr('data-thumbnail');
-                    const character = JSON.parse($(this).attr('data-character'));
-                    generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
-                        generateImageFunction(API_URL, userId, chatId, userChatId, character, { prompt });
-                    });
-                });
-            }
-            
-            handleImageGeneration('#stability-gen-button', generateImageStableDiffusion);
-            handleImageGeneration('#novita-gen-button', generateImageNovita);
-            handleImageGeneration('#huggingface-gen-button', generateImageHuggingFace);
-            
-            // User info popup
-                
-            function generateRandomNickname() {
-                const adjectives = ["すばやい", "静かな", "強力な", "勇敢な", "明るい", "高貴な"];
-                const nouns = ["ライオン", "トラ", "ファルコン", "フェニックス", "オオカミ", "イーグル"];
-                return adjectives[Math.floor(Math.random() * adjectives.length)] + nouns[Math.floor(Math.random() * nouns.length)];
-            }
-            function UserInfoForm(){
-                return `
-                        <div class="row mb-3">    
-                            <div class="col-9">
-                                <div class="form-group mb-3 text-start">
-                                    <label for="nickname" class="form-label">
-                                        <span class="small text-white" style="font-size:12px">ニックネーム</span>
-                                        <span class="small text-muted" style="font-size:10px">キャラクターに呼んでほしい名前</span>
-                                    </label>
-                                    <div class="input-group">
-                                        <input id="nickname" type="text" class="form-control form-control-sm" placeholder="ニックネームを入力">
-                                    </div>
-                                </div>                        
-                            </div>        
-                            <div class="col-3 text-start">
-                                <label for="gender" class="form-label text-white" style="font-size:12px"><i class="fas fa-user"></i> 性別</label>
-                                <select class="form-select w-auto" id="gender" name="gender">
-                                    <option value="female" selected><i class="fas fa-female"></i> 女性</option>
-                                    <option value="male"><i class="fas fa-male"></i> 男性</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="row text-start">
-                            <label for="birthdate" class="form-label text-white" style="font-size:12px">生年月日</label>
-                            <div class="d-flex">
-                                <select class="form-control me-2" id="birthYear" name="birthYear" style="cursor:pointer;">
-                                    <option value="" selected>年</option>
-                                </select>
-                
-                                <select class="form-control me-2" id="birthMonth" name="birthMonth" style="cursor:pointer;">
-                                    <option value="" selected>月</option>
-                                </select>
-                
-                                <select class="form-control" id="birthDay" name="birthDay" style="cursor:pointer;">
-                                    <option value="" selected>日</option>
-                                </select>
-                            </div>
-                        </div>
-                    `
-            }
-            function handleUserInfo(value,callback){
-                const { nickname, birthYear, birthMonth, birthDay, gender } = value;
-                const formData = new FormData();
-                formData.append('nickname', nickname);
-                formData.append('birthYear', birthYear);
-                formData.append('birthMonth', birthMonth);
-                formData.append('birthDay', birthDay);
-                formData.append('gender', gender);
-            
-                $.ajax({
-                    url: '/user/update-info',
-                    type: 'POST',
-                    processData: false,
-                    contentType: false,
-                    data: formData,
-                    success: function(response) {
-                        //showNotification('情報が更新されました。','success')
-                        if(typeof callback == 'function'){callback()}
-                    },
-                    error: function() {
-                        showNotification('情報の更新中に問題が発生しました。','error')
-                        if(typeof callback == 'function'){callback()}
-                    }
-                });
-            }
-
-            function showPopupUserInfo(callback) {
-                Swal.fire({
-                    html: UserInfoForm(),
-                    focusConfirm: false,
-                    confirmButtonText: '送信',
-                    allowOutsideClick: false,
-                    showCancelButton: false,
-                    customClass: {
-                      confirmButton: 'bg-secondary px-5'
-                    },
-                        showClass: {
-                            popup: 'custom-gradient-bg-no-animation animate__animated animate__fadeIn'
-                    },
-                        hideClass: {
-                            popup: 'animate__animated animate__fadeOut'
-                    },
-                        didOpen: () => {
-                            if (callback) callback();
-                    },
-                    preConfirm: () => {
-                        const nickname = $('#nickname').val();
-                        const birthYear = $('#birthYear').val();
-                        const birthMonth = $('#birthMonth').val();
-                        const birthDay = $('#birthDay').val();
-                        const gender = $('#gender').val()
-        
-                        if (!nickname || !birthYear || !birthMonth || !birthDay || !gender)  {
-                            Swal.showValidationMessage('すべてのフィールドを入力してください');
-                            return false;
-                        }
-        
-                        return { nickname, birthYear, birthMonth, birthDay, gender };
-                    }
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        handleUserInfo(result.value);
-
-                        if(!isTemporary && !subscriptionStatus && !$.cookie('showPremiumPopup')){
-                            showPopupWithSwiper(function(){
-                                $.cookie('showPremiumPopup',true)
-                            })
-                            //showPremiumPopup()
-                        }
-                    }
-                    
-                });
-            }
-            
-            function showPopupWithSwiper(callback) {
-                Swal.fire({
-                    html: `
-                        <div class="swiper-container">
-                            <div class="swiper-wrapper">
-                                <div class="swiper-slide">
-                                    <a href="/my-plan">
-                                    <img src="/img/sales/1.jpg" alt="Image 1" style="width: 100%;">
-                                    </a>
-                                </div>
-                                <div class="swiper-slide">
-                                    <a href="/my-plan">
-                                    <img src="/img/sales/2.jpg" alt="Image 2" style="width: 100%;">
-                                    </a>
-                                </div>
-                                <div class="swiper-slide">
-                                    <a href="/my-plan">
-                                    <img src="/img/sales/3.jpg" alt="Image 3" style="width: 100%;">
-                                    </a>
-                                </div>
-                                <div class="swiper-slide">
-                                    <a href="/my-plan">
-                                    <img src="/img/sales/4.jpg" alt="Image 3" style="width: 100%;">
-                                    </a>
-                                </div>
-                                <div class="swiper-slide">
-                                    <a href="/my-plan">
-                                    <img src="/img/sales/5.jpg" alt="Image 3" style="width: 100%;">
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        <div style="bottom: -50px;left:0;right:0;z-index: 100;" class="mx-auto position-absolute w-100">
-                            <a href="/my-plan" class="btn btn-lg custom-gradient-bg text-white fw-bold" style="border-radius:50px;"><i class="far fa-star me-2"></i>プレミアムプランを試す</a>
-                            <span id="closeButton" style="opacity:0" class="text-muted mx-auto w-100 d-block mt-1">検討する</span>
-                        </div>
-                    `,
-                    focusConfirm: false,
-                    showConfirmButton: false,
-                    allowOutsideClick: false,
-                    showCancelButton: false,
-                    customClass: {
-                        confirmButton: 'bg-secondary px-5', htmlContainer:'position-relative overflow-visible'
-                    },
-                    showClass: {
-                        popup: 'bg-transparent animate__animated animate__fadeIn'
-                    },
-                    hideClass: {
-                        popup: 'animate__animated animate__fadeOut'
-                    },
-                    didOpen: () => {
-                        new Swiper('.swiper-container', {
-                            slidesPerView: 1,
-                            loop: false,
-                            spaceBetween: 20,
-                        });
-                        document.getElementById('closeButton').addEventListener('click', () => {
-                            Swal.close();
-                        });
-                        setTimeout(() => {
-                            $('#closeButton').animate({ opacity: 1 }, 'slow');
-                        }, 3000);
-                        if (callback) callback();
-                    }
-                });
-            }
-            function checkForPurchaseProposal() {
-                $.ajax({
-                    url: '/api/check-assistant-proposal',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ userId, chatId, userChatId }),
-                    success: function(response) {
-                        if (response.proposeToBuy && response.items.length > 0) {
-                            const item = response.items[0]
-                            const itemId = `item-${currentStep}-${Date.now()}`;
-                            const message = `
-                                <div id="${itemId}" class="card bg-transparent text-white border-0">
-                                    <div class="card-body-none" style="height:auto !important;">
-                                        <h5 class="card-title" style="font-size: 14px;">${item.name}</h5>
-                                        
-                                        <button class="btn custom-gradient-bg  shadow-0 w-100" 
-                                            onclick="buyItem('${itemId}','${item.name}', ${item.price}, true, '${userId}', '${chatId}', '${userChatId}')">
-                                            <span> ${item.price}<span class="mx-1">🪙</span></span>
-                                        </button>
-                                        <button class="d-none btn btn-outline-danger border-0 shadow-0 rounded-0 position-absolute px-2 py-1" style="font-size: 12px;position: absolute;top: 0;right: 0;" onclick="buyItem('${itemId}','${item.name}', ${item.price}, false, '${userId}', '${chatId}', '${userChatId}')">見送る</button>
-                                    </div>
-                                </div>
-                            `;
-                            displayMessage('assistant', message);
-                            count_proposal = 0
-                        }else{
-                            if(count_proposal >= 4){
-                                let message = `[Hidden] Prepare to propose an item`
-                                addMessageToChat(chatId, userChatId, 'user', message);
-                            }
-                        }
-                        count_proposal ++
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Error checking purchase proposal:', error);
-                    }
-                });
-            }
-            
-            if(!isTemporary && $('#chat-widget-container').length == 0){
-                let user = JSON.parse(localStorage.getItem('user'))
-
-                const userNickname = user?.nickname ?? '';
-                const userGender = user?.gender ?? '';
-                const userBirthYear = user?.birthDate?.year ?? '';
-                const userBirthMonth = user?.birthDate?.month ?? '';
-                const userBirthDay = user?.birthDate?.day ?? '';
-               
-                if (!userNickname || !userBirthYear || !userBirthMonth || !userBirthDay || !userGender) {
-                    showPopupUserInfo(function(callback){
-                        var currentYear = new Date().getFullYear() - 15;
-                        var startYear = 1900; 
-                        for (var year = currentYear; year >= startYear; year--) {
-                            $('#birthYear').append($('<option>', {
-                                value: year,
-                                text: year + '年'
-                            }));
-                        }
-                        for (var month = 1; month <= 12; month++) {
-                            $('#birthMonth').append($('<option>', {
-                                value: month,
-                                text: month + '月'
-                            }));
-                        }
-                        function populateDays(month, year) {
-                            $('#birthDay').empty().append($('<option>', {
-                                value: '',
-                                text: '日'
-                            }));
-
-                            var daysInMonth = new Date(year, month, 0).getDate();
-                            for (var day = 1; day <= daysInMonth; day++) {
-                                $('#birthDay').append($('<option>', {
-                                    value: day,
-                                    text: day + '日'
-                                }));
-                            }
-                        }
-                        populateDays($('#birthMonth').val(), $('#birthYear').val());
-                        $('#birthMonth, #birthYear').change(function() {
-                            populateDays($('#birthMonth').val(), $('#birthYear').val());
-                        });
-                    });
-                }else{
-                    if(!isTemporary && !subscriptionStatus && !$.cookie('showPremiumPopup')){
-                        showPopupWithSwiper(function(){
-                            $.cookie('showPremiumPopup',true)
-                        })
-                        //showPremiumPopup()
-                    }
+        });
+    }
+    
+    function addMessageToChat(chatId, userChatId, role, message, callback) {
+        $.ajax({
+            url: '/api/chat/add-message',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                chatId: chatId,
+                userChatId: userChatId,
+                role: role,
+                message: message
+            }),
+            success: function(response) {
+                if(typeof callback == 'function'){
+                    callback(null, response);
+                }
+            },
+            error: function(xhr, status, error) {
+                if(typeof callback == 'function'){
+                    callback(error);
                 }
             }
         });
-    })
+    }
+
+    function handleImageGeneration(buttonSelector, generateImageFunction) {
+        $(document).on('click', buttonSelector, function() {
+            if($(buttonSelector).hasClass('isLoading')){
+                return;
+            }
+            
+            if ($('#chat-widget-container').length == 0 && isTemporary) {
+                showRegistrationForm();
+                return;
+            }
+
+            $(buttonSelector).addClass('isLoading');
+            const API_URL = localStorage.getItem('API_URL');
+            const userId = $(this).attr('data-user-id');
+            const chatId = $(this).attr('data-chat-id');
+            const userChatId = $(this).attr('data-user-chat-id');
+            const thumbnail = $(this).attr('data-thumbnail');
+            const character = JSON.parse($(this).attr('data-character'));
+            generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
+                generateImageFunction(API_URL, userId, chatId, userChatId, character, { prompt });
+            });
+        });
+    }
+    
+    handleImageGeneration('#stability-gen-button', generateImageStableDiffusion);
+    handleImageGeneration('#novita-gen-button', generateImageNovita);
+    handleImageGeneration('#huggingface-gen-button', generateImageHuggingFace);
+    
+    // User info popup
+        
+    function generateRandomNickname() {
+        const adjectives = ["すばやい", "静かな", "強力な", "勇敢な", "明るい", "高貴な"];
+        const nouns = ["ライオン", "トラ", "ファルコン", "フェニックス", "オオカミ", "イーグル"];
+        return adjectives[Math.floor(Math.random() * adjectives.length)] + nouns[Math.floor(Math.random() * nouns.length)];
+    }
+    function UserInfoForm(){
+        return `
+                <div class="row mb-3">    
+                    <div class="col-9">
+                        <div class="form-group mb-3 text-start">
+                            <label for="nickname" class="form-label">
+                                <span class="small text-white" style="font-size:12px">ニックネーム</span>
+                                <span class="small text-muted" style="font-size:10px">キャラクターに呼んでほしい名前</span>
+                            </label>
+                            <div class="input-group">
+                                <input id="nickname" type="text" class="form-control form-control-sm" placeholder="ニックネームを入力">
+                            </div>
+                        </div>                        
+                    </div>        
+                    <div class="col-3 text-start">
+                        <label for="gender" class="form-label text-white" style="font-size:12px"><i class="fas fa-user"></i> 性別</label>
+                        <select class="form-select w-auto" id="gender" name="gender">
+                            <option value="female" selected><i class="fas fa-female"></i> 女性</option>
+                            <option value="male"><i class="fas fa-male"></i> 男性</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row text-start">
+                    <label for="birthdate" class="form-label text-white" style="font-size:12px">生年月日</label>
+                    <div class="d-flex">
+                        <select class="form-control me-2" id="birthYear" name="birthYear" style="cursor:pointer;">
+                            <option value="" selected>年</option>
+                        </select>
+        
+                        <select class="form-control me-2" id="birthMonth" name="birthMonth" style="cursor:pointer;">
+                            <option value="" selected>月</option>
+                        </select>
+        
+                        <select class="form-control" id="birthDay" name="birthDay" style="cursor:pointer;">
+                            <option value="" selected>日</option>
+                        </select>
+                    </div>
+                </div>
+            `
+    }
+    function handleUserInfo(value,callback){
+        const { nickname, birthYear, birthMonth, birthDay, gender } = value;
+        const formData = new FormData();
+        formData.append('nickname', nickname);
+        formData.append('birthYear', birthYear);
+        formData.append('birthMonth', birthMonth);
+        formData.append('birthDay', birthDay);
+        formData.append('gender', gender);
+    
+        $.ajax({
+            url: '/user/update-info',
+            type: 'POST',
+            processData: false,
+            contentType: false,
+            data: formData,
+            success: function(response) {
+                //showNotification('情報が更新されました。','success')
+                if(typeof callback == 'function'){callback()}
+            },
+            error: function() {
+                showNotification('情報の更新中に問題が発生しました。','error')
+                if(typeof callback == 'function'){callback()}
+            }
+        });
+    }
+
+    function showPopupUserInfo(callback) {
+        Swal.fire({
+            html: UserInfoForm(),
+            focusConfirm: false,
+            confirmButtonText: '送信',
+            allowOutsideClick: false,
+            showCancelButton: false,
+            customClass: {
+                confirmButton: 'bg-secondary px-5'
+            },
+                showClass: {
+                    popup: 'custom-gradient-bg-no-animation animate__animated animate__fadeIn'
+            },
+                hideClass: {
+                    popup: 'animate__animated animate__fadeOut'
+            },
+                didOpen: () => {
+                    if (callback) callback();
+            },
+            preConfirm: () => {
+                const nickname = $('#nickname').val();
+                const birthYear = $('#birthYear').val();
+                const birthMonth = $('#birthMonth').val();
+                const birthDay = $('#birthDay').val();
+                const gender = $('#gender').val()
+
+                if (!nickname || !birthYear || !birthMonth || !birthDay || !gender)  {
+                    Swal.showValidationMessage('すべてのフィールドを入力してください');
+                    return false;
+                }
+
+                return { nickname, birthYear, birthMonth, birthDay, gender };
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                handleUserInfo(result.value);
+
+                if(!isTemporary && !subscriptionStatus && !$.cookie('showPremiumPopup')){
+                    showPopupWithSwiper(function(){
+                        $.cookie('showPremiumPopup',true)
+                    })
+                    //showPremiumPopup()
+                }
+            }
+            
+        });
+    }
+    
+    function showPopupWithSwiper(callback) {
+        Swal.fire({
+            html: `
+                <div class="swiper-container">
+                    <div class="swiper-wrapper">
+                        <div class="swiper-slide">
+                            <a href="/my-plan">
+                            <img src="/img/sales/1.jpg" alt="Image 1" style="width: 100%;">
+                            </a>
+                        </div>
+                        <div class="swiper-slide">
+                            <a href="/my-plan">
+                            <img src="/img/sales/2.jpg" alt="Image 2" style="width: 100%;">
+                            </a>
+                        </div>
+                        <div class="swiper-slide">
+                            <a href="/my-plan">
+                            <img src="/img/sales/3.jpg" alt="Image 3" style="width: 100%;">
+                            </a>
+                        </div>
+                        <div class="swiper-slide">
+                            <a href="/my-plan">
+                            <img src="/img/sales/4.jpg" alt="Image 3" style="width: 100%;">
+                            </a>
+                        </div>
+                        <div class="swiper-slide">
+                            <a href="/my-plan">
+                            <img src="/img/sales/5.jpg" alt="Image 3" style="width: 100%;">
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div style="bottom: -50px;left:0;right:0;z-index: 100;" class="mx-auto position-absolute w-100">
+                    <a href="/my-plan" class="btn btn-lg custom-gradient-bg text-white fw-bold" style="border-radius:50px;"><i class="far fa-star me-2"></i>プレミアムプランを試す</a>
+                    <span id="closeButton" style="opacity:0" class="text-muted mx-auto w-100 d-block mt-1">検討する</span>
+                </div>
+            `,
+            focusConfirm: false,
+            showConfirmButton: false,
+            allowOutsideClick: false,
+            showCancelButton: false,
+            customClass: {
+                confirmButton: 'bg-secondary px-5', htmlContainer:'position-relative overflow-visible'
+            },
+            showClass: {
+                popup: 'bg-transparent animate__animated animate__fadeIn'
+            },
+            hideClass: {
+                popup: 'animate__animated animate__fadeOut'
+            },
+            didOpen: () => {
+                new Swiper('.swiper-container', {
+                    slidesPerView: 1,
+                    loop: false,
+                    spaceBetween: 20,
+                });
+                document.getElementById('closeButton').addEventListener('click', () => {
+                    Swal.close();
+                });
+                setTimeout(() => {
+                    $('#closeButton').animate({ opacity: 1 }, 'slow');
+                }, 3000);
+                if (callback) callback();
+            }
+        });
+    }
+    function checkForPurchaseProposal() {
+        $.ajax({
+            url: '/api/check-assistant-proposal',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ userId, chatId, userChatId }),
+            success: function(response) {
+                if (response.proposeToBuy && response.items.length > 0) {
+                    const item = response.items[0]
+                    const itemId = `item-${currentStep}-${Date.now()}`;
+                    const message = `
+                        <div id="${itemId}" class="card bg-transparent text-white border-0">
+                            <div class="card-body-none" style="height:auto !important;">
+                                <h5 class="card-title" style="font-size: 14px;">${item.name}</h5>
+                                
+                                <button class="btn custom-gradient-bg  shadow-0 w-100" 
+                                    onclick="buyItem('${itemId}','${item.name}', ${item.price}, true, '${userId}', '${chatId}', '${userChatId}')">
+                                    <span> ${item.price}<span class="mx-1">🪙</span></span>
+                                </button>
+                                <button class="d-none btn btn-outline-danger border-0 shadow-0 rounded-0 position-absolute px-2 py-1" style="font-size: 12px;position: absolute;top: 0;right: 0;" onclick="buyItem('${itemId}','${item.name}', ${item.price}, false, '${userId}', '${chatId}', '${userChatId}')">見送る</button>
+                            </div>
+                        </div>
+                    `;
+                    displayMessage('assistant', message);
+                    count_proposal = 0
+                }else{
+                    if(count_proposal >= 4){
+                        let message = `[Hidden] Prepare to propose an item`
+                        addMessageToChat(chatId, userChatId, 'user', message);
+                    }
+                }
+                count_proposal ++
+            },
+            error: function(xhr, status, error) {
+                console.error('Error checking purchase proposal:', error);
+            }
+        });
+    }
+    
+    if(!isTemporary && $('#chat-widget-container').length == 0){
+        let user = await fetchUser()
+
+        const userNickname = user?.nickname ?? '';
+        const userGender = user?.gender ?? '';
+        const userBirthYear = user?.birthDate?.year ?? '';
+        const userBirthMonth = user?.birthDate?.month ?? '';
+        const userBirthDay = user?.birthDate?.day ?? '';
+        
+        if (!userNickname || !userBirthYear || !userBirthMonth || !userBirthDay || !userGender) {
+            showPopupUserInfo(function(callback){
+                var currentYear = new Date().getFullYear() - 15;
+                var startYear = 1900; 
+                for (var year = currentYear; year >= startYear; year--) {
+                    $('#birthYear').append($('<option>', {
+                        value: year,
+                        text: year + '年'
+                    }));
+                }
+                for (var month = 1; month <= 12; month++) {
+                    $('#birthMonth').append($('<option>', {
+                        value: month,
+                        text: month + '月'
+                    }));
+                }
+                function populateDays(month, year) {
+                    $('#birthDay').empty().append($('<option>', {
+                        value: '',
+                        text: '日'
+                    }));
+
+                    var daysInMonth = new Date(year, month, 0).getDate();
+                    for (var day = 1; day <= daysInMonth; day++) {
+                        $('#birthDay').append($('<option>', {
+                            value: day,
+                            text: day + '日'
+                        }));
+                    }
+                }
+                populateDays($('#birthMonth').val(), $('#birthYear').val());
+                $('#birthMonth, #birthYear').change(function() {
+                    populateDays($('#birthMonth').val(), $('#birthYear').val());
+                });
+            });
+        }else{
+            if(!isTemporary && !subscriptionStatus && !$.cookie('showPremiumPopup')){
+                showPopupWithSwiper(function(){
+                    $.cookie('showPremiumPopup',true)
+                })
+                //showPremiumPopup()
+            }
+        }
+    }
 
     // Fetch the user's IP address and generate a unique ID
    
@@ -2206,40 +2195,6 @@ $(document).ready(function() {
         } else {
             return null;
         }
-    }
-    function fetchUser(callback) {
-        $.ajax({
-            url: API_URL+'/api/user',
-            method: 'GET',
-            success: function(response) {
-                if (callback && typeof callback === 'function') {
-                    callback(null, response.user);
-                }
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                console.error('Error fetching user:', textStatus, errorThrown);
-                if (callback && typeof callback === 'function') {
-                    callback(new Error(textStatus + ': ' + errorThrown), null);
-                }
-            }
-        });
-    }
-
-    function fetchMode(callback) {
-        $.ajax({
-            url: '/api/mode',
-            method: 'GET',
-            success: function(response) {
-                if (callback && typeof callback === 'function') {
-                    callback(null, response);
-                }
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                if (callback && typeof callback === 'function') {
-                    callback(null,'online');
-                }
-            }
-        });
     }
 
     function appendHeadlineCharacterByCharacter($element, headline, callback) {
@@ -2631,6 +2586,8 @@ window.updatePersona = function(personaId,isAdding,callback,callbackError){
         if(typeof callback =='function'){
             callback()
         }
+
+        $('#user-profile-page').attr('src', function(i, val) { return val; });
     }).fail(function(jqXHR) {
         const message = jqXHR.responseJSON && jqXHR.responseJSON.error 
             ? jqXHR.responseJSON.error 

@@ -756,6 +756,7 @@ $(document).ready(function() {
         const newHeight = iframe[0].contentWindow.document.body.scrollHeight
         if( newHeight > 0) { iframe.height(newHeight); }
     }
+
     $(window).on('load', resizeIframe);
     $(window).on('resize', resizeIframe);
     window.addEventListener('message', function(event) {
@@ -1261,6 +1262,14 @@ function displayPepopleChat(){
 
             (peopleChats.recent || []).forEach(chat => {
                 if(chat.nickname){
+                    let galleryIco = ''
+                    if(chat.galleries && chat.galleries.length > 0) {
+                        galleryIco = `
+                            <div class="gallery" style="color: rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
+                                <span class="badge bg-dark"><i class="far fa-images"></i></span>
+                            </div>
+                            `
+                    }
                     htmlContent += `
                     <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2 redirectToChat" style="cursor:pointer;" data-id="${chat._id}" data-image="${chat.chatImageUrl}">
                         <div style="background-image:url('${chat.chatImageUrl || '/img/logo.webp'}')" class="card-img-top girls_avatar position-relative" alt="${chat.name}">
@@ -1274,8 +1283,11 @@ function displayPepopleChat(){
                                     ${chat.messagesCount ? `<span class="badge bg-dark message-count"><i class="fas fa-comment-alt me-2"></i>${chat.messagesCount}</span>` : ''}
                                 </div>
                             </div>
-                            <div class="persona position-absolute" style="color: rgb(165 164 164);opacity:0.8; top:10px;right:10px" data-id="${chat._id}">
-                                <span class="badge bg-dark"><i class="far fa-bookmark"></i></span>
+                            <div class="position-absolute" style="top:10px;right:10px">
+                                <div class="persona" style="color:rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
+                                    <span class="badge bg-dark" style="width: 30px;"><i class="far fa-user-circle"></i></span>
+                                </div>
+                                ${galleryIco}
                             </div>
                         </div>
                         <div class="card-body bg-transparent border-0 pb-0 text-start">
@@ -1312,7 +1324,7 @@ function displayPepopleChat(){
                             </div>
                         </div>
                         <div class="persona position-absolute" style="color: rgb(165 164 164);opacity:0.8; top:10px;right:10px" data-id="${chat._id}">
-                            <span class="badge bg-dark"><i class="far fa-bookmark"></i></span>
+                            <span class="badge bg-dark" style="width: 30px;"><i class="far fa-user-circle"></i></span>
                         </div>
                     </div>
                     <div class="card-body bg-transparent border-0 pb-0 text-start">
@@ -1346,7 +1358,7 @@ function displayPepopleChat(){
                             </div>
                         </div>
                         <div class="persona position-absolute" style="color: rgb(165 164 164);opacity:0.8; top:10px;right:10px" data-id="${chat._id}">
-                            <span class="badge bg-dark"><i class="far fa-bookmark"></i></span>
+                            <span class="badge bg-dark" style="width: 30px;"><i class="far fa-user-circle"></i></span>
                         </div>
                     </div>
                     <div class="card-body bg-transparent border-0 pb-0 text-start">

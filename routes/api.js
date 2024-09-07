@@ -1893,12 +1893,15 @@ async function routes(fastify, options) {
     
             // Fetch user details
             const userDetails = await userCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
-    
-            // Fetch persona details
-            const personaDetails = userDetails.personas && userDetails.personas.length > 0 
-                ? await chatCollection.find({ _id: { $in: userDetails.personas } }).toArray() 
+
+            const personaIds = userDetails.personas && userDetails.personas.length > 0 
+            ? userDetails.personas.map(id => new fastify.mongo.ObjectId(id)) 
+            : [];
+        
+            const personaDetails = personaIds.length > 0 
+                ? await chatCollection.find({ _id: { $in: personaIds } }).toArray() 
                 : [];
-    
+        
             return reply.send({ userDetails, personaDetails });
         } catch (error) {
             console.log(error);

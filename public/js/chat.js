@@ -276,7 +276,6 @@ $(document).ready(async function() {
             }
             $('#userMessage').val(''); // Clear the input field
             // Send the message to the backend (to be implemented)
-            console.log({userChatId})
             $.ajax({
                 url: API_URL+'/api/chat-data', // Backend endpoint to handle the message
                 type: 'POST',
@@ -460,14 +459,9 @@ $(document).ready(async function() {
     }
     
     function displayInitialChatInterface(chat) {
-
-        if (isTemporary) {
+        selectPersona(() => {
             displayStarter(chat);
-        } else {
-            selectPersona(() => {
-                displayStarter(chat);
-            });
-        }
+        });
     }
     
     function displayGalleries(thumbnail, galleries, blurred_galleries, chatId, fetch_userId) {
@@ -487,7 +481,6 @@ $(document).ready(async function() {
                 stripePriceId,
                 stripeProductId,
             };
-            console.log({stripePriceId,stripeProductId})
             if(stripeProductId && stripePriceId){
                 displayAlbumThumb(thumbnail, album);
             }
@@ -852,6 +845,9 @@ $(document).ready(async function() {
         */
     }
     function selectPersona(callback) {
+
+        if(isTemporary){return callback()}
+
         $.get('/api/user/persona-details', function(response) {
             const user = response.userDetails;
             const personas = response.personaDetails;

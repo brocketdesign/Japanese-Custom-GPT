@@ -147,6 +147,7 @@ async function routes(fastify, options) {
     
     async function createProductWithPrice(name, price, image) {
         try {
+            console.log({image})
             // Create a product on Stripe with a single identifying image
             const product = await stripe.products.create({
                 name: name,

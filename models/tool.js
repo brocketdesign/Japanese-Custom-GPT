@@ -90,6 +90,7 @@ const handleFileUpload = async (part) => {
     }).promise();
     
     if (existingFiles.Contents.length > 0) {
+        console.log(`Already exists in S3`)
         return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFiles.Contents[0].Key}`;
     } else {
         return uploadToS3(buffer, hash, part.filename || 'uploaded_file');
@@ -220,7 +221,7 @@ const createBlurredImage = async (imageUrl, blurLevel = 50, width = 50, height =
         // Extract the S3 key from the URL
         const urlParts = imageUrl.split('/');
         const s3Key = decodeURIComponent(urlParts.slice(3).join('/'));
-        
+
         // Get the image as a stream directly from S3
         const imageStream = getS3Stream(process.env.AWS_S3_BUCKET_NAME, s3Key);
 
@@ -235,6 +236,17 @@ const createBlurredImage = async (imageUrl, blurLevel = 50, width = 50, height =
         // Generate a hash for the processed image buffer
         const hash = crypto.createHash('md5').update(processedImageBuffer).digest('hex');
 
+        // Check if image with this hash already exists in S3
+        const existingFiles = await s3.listObjectsV2({
+            Bucket: process.env.AWS_S3_BUCKET_NAME,
+            Prefix: hash,
+        }).promise();
+
+        if (existingFiles.Contents.length > 0) {
+            console.log(`Blurred image already exists in S3`);
+            return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFiles.Contents[0].Key}`;
+        }
+
         // Upload the processed image to S3 and return the URL
         const filename = urlParts[urlParts.length - 1];
         const uploadUrl = await uploadToS3(processedImageBuffer, hash, filename);
@@ -245,6 +257,8 @@ const createBlurredImage = async (imageUrl, blurLevel = 50, width = 50, height =
         throw new Error('Failed to process the image.');
     }
 };
+
+
   module.exports = { getCounter, 
     updateCounter, 
     handleFileUpload, 

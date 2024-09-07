@@ -483,6 +483,8 @@ $(document).ready(function() {
                 galleries.forEach((gallery, index) => {
                     if(!gallery.images || gallery.images.length == 0){return}
                     const blurredImages = blurred_galleries[index].images;
+                    const stripeProductId = MODE ? gallery['stripeProductIdLocal'] : gallery['stripeProductIdLive'];
+                    const stripePriceId = MODE ? gallery['stripePriceIdLocal' ]: gallery['stripePriceIdLive']; 
                     const album = {
                         chatId,
                         userId: fetch_userId,
@@ -491,11 +493,13 @@ $(document).ready(function() {
                         description: gallery.description,
                         blurredImages: [gallery.images[0], ...blurredImages],
                         images: gallery.images,
-                        stripePriceId: gallery.stripePriceId,
-                        stripeProductId: gallery.stripeProductId
+                        stripePriceId,
+                        stripeProductId,
                     };
-            
-                    displayAlbumThumb(thumbnail, album);
+                    console.log({stripePriceId,stripeProductId})
+                    if(stripeProductId && stripePriceId){
+                        displayAlbumThumb(thumbnail, album);
+                    }
                 });
             }
             
@@ -516,7 +520,6 @@ $(document).ready(function() {
             try {
                 const isAuthorized = await checkIfClient(album.userId, album.chatId, album.stripePriceId);
                 const images = isAuthorized ? album.images : album.blurredImages;
-                console.log({isAuthorized})
                 let imagesHTML = images.map((url, index) => `<img src="${album.images[0]}" class="img-fluid rounded shadow m-1" style="width:auto;height: auto;object-fit:contain;" data-index="${index}">`).join('');
             
                 Swal.fire({

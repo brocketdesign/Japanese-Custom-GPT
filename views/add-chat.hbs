@@ -255,6 +255,8 @@
             <textarea class="d-none form-control" id="chatRule" name="content" rows="5" placeholder="話し方" ifplaceholder="チャットボットの動作についての指示をここに記入してください。ユーザーに対する返答のトーン、応答のスタイル、特定の状況に対する反応、使用する言葉遣いなど、チャットボットがどのように振る舞うべきかをできるだけ詳しく記載してください。"></textarea>
             <div id="markdownContainer" class="border-0 p-0 text-start" contenteditable="false" style="display: none;"></div>
         </div>
+
+        <div id="dynamic-fields"></div>
         <button type="button" id="addMoreGallery" class="btn btn-light is-premium d-none"><i class="fas fa-plus-circle"></i></button>
         <div id="galleries">
             <div class="imageGalleryWrapper mb-3 mx-3 is-premium d-none">
@@ -456,7 +458,34 @@
                 type: 'GET',
                 dataType: 'json',
                 success: function(chatData) {
-                    
+                    const isLocalMode = chatData.mode === 'local';
+            
+                    const productIdField = isLocalMode ? 'stripeProductIdLocal' : 'stripeProductIdLive';
+                    const priceIdField = isLocalMode ? 'stripePriceIdLocal' : 'stripePriceIdLive';
+
+                    $('#dynamic-fields').empty();
+
+                    $('<input>').attr({
+                        type: 'hidden',
+                        id: productIdField,
+                        name: productIdField,
+                        value: chatData[productIdField]
+                    }).appendTo('#dynamic-fields');
+
+                    $('<input>').attr({
+                        type: 'hidden',
+                        id: priceIdField,
+                        name: priceIdField,
+                        value: chatData[priceIdField]
+                    }).appendTo('#dynamic-fields');
+
+                    $('<input>').attr({
+                        type: 'hidden',
+                        id: 'mode',
+                        name: 'mode',
+                        value: chatData.mode
+                    }).appendTo('#dynamic-fields');
+
                     if(chatData.isAutoGen == 'true'){
                         $('input, textarea').prop('disabled', true);
                         $('#chatPurpose').hide();
@@ -608,6 +637,13 @@
                 formData.append('chatId', chatId);
             }
             
+            const isLocalMode = $('#mode').val() === 'local';
+            const productIdField = isLocalMode ? 'stripeProductIdLocal' : 'stripeProductIdLive';
+            const priceIdField = isLocalMode ? 'stripePriceIdLocal' : 'stripePriceIdLive';
+
+            formData.append(productIdField, $(`#${productIdField}`).val());
+            formData.append(priceIdField, $(`#${priceIdField}`).val());
+
             // Loop through all galleries and append their data only if not empty or not just whitespace
             $('#galleries .imageGalleryWrapper').each(function(index) {
                 const galleryIndex = index; // Use the loop index to handle multiple galleries

@@ -25,6 +25,7 @@ async function routes(fastify, options) {
             const userId = new fastify.mongo.ObjectId(user._id);
             let galleries = [];
             let blurred_galleries = [];
+            let imageCount = 0;
             for await (const part of parts) {
                 switch (part.fieldname) {
                     case 'name':
@@ -51,6 +52,8 @@ async function routes(fastify, options) {
                             if (!blurred_galleries[galleryIndex]) blurred_galleries[galleryIndex] = {};
                         
                             if (galleryField === 'Images[]') {
+                                imageCount++;
+                                console.log(`Processed ${imageCount} images`);
                                 const imageUrl = await handleFileUpload(part);
                                 const blurredImageUrl = await createBlurredImage(imageUrl);
 
@@ -68,7 +71,7 @@ async function routes(fastify, options) {
                         break;
                 }
             }
-    
+
             if (!chatData.name) {
                 return reply.status(400).send({ error: 'Missing name or content for the chat' });
             }
@@ -81,15 +84,22 @@ async function routes(fastify, options) {
     
             for (const gallery of galleries) {
                 if (gallery.name && gallery.price && gallery.images && gallery.images.length > 0) {
-                    try {
-                        const stripeProduct = await createProductWithPrice(gallery.name, gallery.price, gallery.images[0]);
-                        gallery.stripeProductId = stripeProduct.productId;
-                        gallery.stripePriceId = stripeProduct.priceId;
-                    } catch (error) {
-                        return reply.status(500).send({ error: `Failed to create product on Stripe for gallery ${gallery.name}` });
+                    const isLocalMode = process.env.MODE === 'local';
+                    const productIdField = isLocalMode ? 'stripeProductIdLocal' : 'stripeProductIdLive';
+                    const priceIdField = isLocalMode ? 'stripePriceIdLocal' : 'stripePriceIdLive';
+                    
+                    if (!gallery[productIdField] || !gallery[priceIdField]) {
+                        try {
+                            const stripeProduct = await createProductWithPrice(gallery.name, gallery.price, gallery.images[0], isLocalMode);
+                            gallery[productIdField] = stripeProduct.productId;
+                            gallery[priceIdField] = stripeProduct.priceId;
+                        } catch (error) {
+                            return reply.status(500).send({ error: `Failed to create product on Stripe for gallery ${gallery.name}` });
+                        }
                     }
                 }
             }
+            
     
             if (galleries.length > 0) {
                 chatData.galleries = galleries;
@@ -507,7 +517,7 @@ async function routes(fastify, options) {
 
         try{
             const chat = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
-
+            chat.mode = process.env.MODE
             if (!chat) {
                 return reply.status(404).send({ error: 'chat not found' });
             }

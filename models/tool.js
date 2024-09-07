@@ -25,6 +25,7 @@ const s3 = new aws.S3({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     region: process.env.AWS_REGION
 });
+
 const getS3Stream = (bucket, key) => {
     return s3.getObject({ Bucket: bucket, Key: key }).createReadStream();
 };
@@ -64,39 +65,6 @@ async function getCounter(db) {
     const uploadResult = await s3.upload(params).promise();
     return uploadResult.Location;
 };
-
-
-const handleFileUpload = async (part) => {
-    let buffer;
-    if (part.file) {
-        // Handling uploaded file
-        const chunks = [];
-        for await (const chunk of part.file) {
-            chunks.push(chunk);
-        }
-        buffer = Buffer.concat(chunks);
-    } else if (part.value && isValidUrl(part.value)) {
-        // Handling file from URL
-        const response = await axios.get(part.value, { responseType: 'arraybuffer' });
-        buffer = Buffer.from(response.data, 'binary');
-    } else {
-        throw new Error('No valid file or URL provided');
-    }
-
-    const hash = createHash('md5').update(buffer).digest('hex');
-    const existingFiles = await s3.listObjectsV2({
-        Bucket: process.env.AWS_S3_BUCKET_NAME,
-        Prefix: hash,
-    }).promise();
-    
-    if (existingFiles.Contents.length > 0) {
-        console.log(`Already exists in S3`)
-        return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFiles.Contents[0].Key}`;
-    } else {
-        return uploadToS3(buffer, hash, part.filename || 'uploaded_file');
-    }
-};
-
 
 const isValidUrl = (string) => {
     try {
@@ -216,16 +184,58 @@ const streamToBuffer = async (readableStream) => {
     return Buffer.concat(chunks);
 };
 
-const createBlurredImage = async (imageUrl, blurLevel = 50, width = 50, height = 50) => {
+const handleFileUpload = async (part, db) => {
+    let buffer;
+    if (part.file) {
+        const chunks = [];
+        for await (const chunk of part.file) {
+            chunks.push(chunk);
+        }
+        buffer = Buffer.concat(chunks);
+    } else if (part.value && isValidUrl(part.value)) {
+        const response = await axios.get(part.value, { responseType: 'arraybuffer' });
+        buffer = Buffer.from(response.data, 'binary');
+    } else {
+        throw new Error('No valid file or URL provided');
+    }
+
+    const hash = createHash('md5').update(buffer).digest('hex');
+    const awsimages = db.collection('awsimages');
+
+    // Check if the image already exists in MongoDB
+    const existingFile = await awsimages.findOne({ hash });
+    if (existingFile) {
+        console.log(`Already exists in DB`);
+        return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFile.key}`;
+    }
+
+    // If not in DB, check S3
+    const existingFiles = await s3.listObjectsV2({
+        Bucket: process.env.AWS_S3_BUCKET_NAME,
+        Prefix: hash,
+    }).promise();
+    
+    if (existingFiles.Contents.length > 0) {
+        console.log(`Already exists in S3`);
+        await awsimages.insertOne({ key: existingFiles.Contents[0].Key, hash });
+        return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFiles.Contents[0].Key}`;
+    } else {
+        const uploadUrl = await uploadToS3(buffer, hash, part.filename || 'uploaded_file');
+        await awsimages.insertOne({ key: uploadUrl.split('/').pop(), hash });
+        return uploadUrl;
+    }
+};
+
+const createBlurredImage = async (imageUrl, db) => {
     try {
-        // Extract the S3 key from the URL
+        const blurLevel = 50
         const urlParts = imageUrl.split('/');
         const s3Key = decodeURIComponent(urlParts.slice(3).join('/'));
 
-        // Get the image as a stream directly from S3
-        const imageStream = getS3Stream(process.env.AWS_S3_BUCKET_NAME, s3Key);
+        const awsimages = db.collection('awsimages');
 
-        // Convert the stream to a buffer
+        // Get the original image as a stream from S3
+        const imageStream = getS3Stream(process.env.AWS_S3_BUCKET_NAME, s3Key);
         const imageBuffer = await streamToBuffer(imageStream);
 
         // Process the image using sharp (blur and resize)
@@ -233,10 +243,17 @@ const createBlurredImage = async (imageUrl, blurLevel = 50, width = 50, height =
             .blur(blurLevel)
             .toBuffer();
 
-        // Generate a hash for the processed image buffer
+        // Generate a hash for the processed (blurred) image buffer
         const hash = crypto.createHash('md5').update(processedImageBuffer).digest('hex');
 
-        // Check if image with this hash already exists in S3
+        // Check if the blurred image already exists in the database
+        const existingFile = await awsimages.findOne({ hash });
+        if (existingFile) {
+            console.log(`Blurred image already exists in DB`);
+            return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFile.key}`;
+        }
+
+        // Check if the blurred image already exists in S3
         const existingFiles = await s3.listObjectsV2({
             Bucket: process.env.AWS_S3_BUCKET_NAME,
             Prefix: hash,
@@ -244,12 +261,17 @@ const createBlurredImage = async (imageUrl, blurLevel = 50, width = 50, height =
 
         if (existingFiles.Contents.length > 0) {
             console.log(`Blurred image already exists in S3`);
-            return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFiles.Contents[0].Key}`;
+            const blurredKey = existingFiles.Contents[0].Key;
+            await awsimages.insertOne({ key: blurredKey, hash });
+            return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${blurredKey}`;
         }
 
-        // Upload the processed image to S3 and return the URL
-        const filename = urlParts[urlParts.length - 1];
+        // Upload the blurred image to S3
+        const filename = `${hash}_${urlParts[urlParts.length - 1]}`;
         const uploadUrl = await uploadToS3(processedImageBuffer, hash, filename);
+
+        // Save the blurred image key and hash in the database
+        await awsimages.insertOne({ key: filename, hash });
 
         return uploadUrl;
     } catch (error) {

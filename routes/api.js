@@ -19,6 +19,7 @@ async function routes(fastify, options) {
 
     fastify.post('/api/add-chat', async (request, reply) => {
         try {
+            const db = await fastify.mongo.client.db(process.env.MONGODB_NAME)
             const parts = request.parts();
             let chatData = {};
             const user = await fastify.getUser(request, reply);
@@ -40,10 +41,10 @@ async function routes(fastify, options) {
                         chatData[part.fieldname] = part.value;
                         break;
                     case 'chatImageUrl':
-                        chatData.chatImageUrl = await handleFileUpload(part);
+                        chatData.chatImageUrl = await handleFileUpload(part,db);
                         break;
                     case 'thumbnail':
-                        chatData.thumbnailUrl = await handleFileUpload(part);
+                        chatData.thumbnailUrl = await handleFileUpload(part,db);
                         break;
                     default:
                         if (part.fieldname.startsWith('imageGallery_')) {
@@ -54,8 +55,8 @@ async function routes(fastify, options) {
                             if (galleryField === 'Images[]') {
                                 imageCount++;
                                 console.log(`Processed ${imageCount} images`);
-                                const imageUrl = await handleFileUpload(part);
-                                const blurredImageUrl = await createBlurredImage(imageUrl);
+                                const imageUrl = await handleFileUpload(part,db);
+                                const blurredImageUrl = await createBlurredImage(imageUrl,db);
 
                                 if (!galleries[galleryIndex].images) galleries[galleryIndex].images = [];
                                 if (!blurred_galleries[galleryIndex].images) blurred_galleries[galleryIndex].images = [];
@@ -147,7 +148,6 @@ async function routes(fastify, options) {
     
     async function createProductWithPrice(name, price, image) {
         try {
-            console.log({image})
             // Create a product on Stripe with a single identifying image
             const product = await stripe.products.create({
                 name: name,

@@ -15,7 +15,8 @@ const {
   deleteOldRecords, 
   deleteCharactersWithoutDescription,
   deleteClientsWithoutProductId,
-  deleteUserChatsWithoutMessages
+  deleteUserChatsWithoutMessages,
+  saveAllImageHashesToDB
  } = require('./models/cleanupNonRegisteredUsers');
 
 mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })

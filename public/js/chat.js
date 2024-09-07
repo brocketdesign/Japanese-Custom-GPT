@@ -520,6 +520,7 @@ $(document).ready(function() {
             try {
                 const isAuthorized = await checkIfClient(album.userId, album.chatId, album.stripePriceId);
                 const images = isAuthorized ? album.images : album.blurredImages;
+                console.log({isAuthorized})
                 let imagesHTML = images.map((url, index) => `<img src="${album.images[0]}" class="img-fluid rounded shadow m-1" style="width:auto;height: auto;object-fit:contain;" data-index="${index}">`).join('');
             
                 Swal.fire({

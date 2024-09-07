@@ -117,7 +117,7 @@ $(document).ready(function() {
 
         if (!imageUrl) {
             console.log('Image URL is required.');
-            callback(null);
+            callback({error:'Abord'});
             return;
         }
 
@@ -132,7 +132,7 @@ $(document).ready(function() {
             },
             error: function(xhr) {
                 if (callback) {
-                    callback(null);
+                    callback(false);
                 }
             }
         });
@@ -156,7 +156,6 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr) {
-                alert('Error:', xhr.responseText)
                 if (callback) {
                     callback(null);
                 }

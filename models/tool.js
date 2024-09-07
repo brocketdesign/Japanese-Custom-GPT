@@ -6,6 +6,8 @@ const axios = require('axios');
 const crypto = require('crypto');
 const stream = require('stream');
 const { promisify } = require('util');
+const fs = require('fs').promises;
+const path = require('path');
 
 const adminEmails = ['japanclassicstore@gmail.com','didier@line.com','e2@gmail.com']; // Add your admin emails here
 
@@ -175,28 +177,34 @@ async function checkLimits(fastify,userId) {
 
 async function convertImageUrlToBase64(imageUrl) {
     try {
-        const response = await axios.get(imageUrl, {
-            responseType: 'arraybuffer'
-        });
+        let buffer;
 
-        const buffer = Buffer.from(response.data, 'binary');
+        // Check if it's a URL or file path
+        if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+            const response = await axios.get(imageUrl, {
+                responseType: 'arraybuffer'
+            });
+            buffer = Buffer.from(response.data, 'binary');
+        } else {
+            buffer = await fs.readFile(path.resolve(imageUrl));
+        }
 
         // Compress and resize the image using sharp
         const compressedBuffer = await sharp(buffer)
-            .resize(800, 800, { // Resize to a max of 800x800 while maintaining aspect ratio
+            .resize(800, 800, { 
                 fit: sharp.fit.inside,
                 withoutEnlargement: true
             })
-            .jpeg({ quality: 70 }) // Compress the image to 70% quality
+            .jpeg({ quality: 70 })
             .toBuffer();
 
         const base64Image = compressedBuffer.toString('base64');
-
         return `data:image/jpeg;base64,${base64Image}`;
     } catch (error) {
-        throw new Error('Failed to convert and compress image URL to Base64');
+        throw new Error('Failed to convert and compress image to Base64');
     }
 }
+
 
 // Utility to convert a stream to a buffer
 const streamToBuffer = async (readableStream) => {

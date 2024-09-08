@@ -87,15 +87,17 @@ async function routes(fastify, options) {
                 if (gallery.name && gallery.price && gallery.images && gallery.images.length > 0) {
                     const isLocalMode = process.env.MODE === 'local';
                     console.log({isLocalMode})
+                    console.log({gallery})
                     const productIdField = isLocalMode ? 'stripeProductIdLocal' : 'stripeProductIdLive';
                     const priceIdField = isLocalMode ? 'stripePriceIdLocal' : 'stripePriceIdLive';
-                    
+                    console.log({productIdField,priceIdField})
                     if (!gallery[productIdField] || !gallery[priceIdField]) {
                         try {
                             const stripeProduct = await createProductWithPrice(gallery.name, gallery.price, gallery.images[0], isLocalMode);
                             gallery[productIdField] = stripeProduct.productId;
                             gallery[priceIdField] = stripeProduct.priceId;
                             console.log({[productIdField]:gallery[productIdField],[priceIdField]:gallery[priceIdField]})
+                            console.log({gallery})
                         } catch (error) {
                             return reply.status(500).send({ error: `Failed to create product on Stripe for gallery ${gallery.name}` });
                         }
@@ -128,6 +130,7 @@ async function routes(fastify, options) {
                     if (existingChat && existingChat.userId.toString() === userId.toString()) {
                         chatData.tags = await generateAndSaveTags(chatData.description, chatId);
                         await collection.updateOne({ _id: chatId }, { $set: chatData });
+                        console.log(`Chat updated successfully`)
                         return reply.send({ message: 'Chat updated successfully', chatId });
                     } else {
                         return reply.status(403).send({ error: 'Unauthorized to update this chat' });
@@ -136,6 +139,7 @@ async function routes(fastify, options) {
                     chatData.createdAt = new Date(dateObj);
                     const result = await collection.insertOne(chatData);
                     chatData.tags = await generateAndSaveTags(chatData.description, result.insertedId);
+                    console.log(`Chat added successfully`)
                     return reply.send({ message: 'Chat added successfully', chatId: result.insertedId });
                 }
             } catch (error) {

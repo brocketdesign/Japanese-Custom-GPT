@@ -51,7 +51,7 @@ async function routes(fastify, options) {
                             const [galleryIndex, galleryField] = part.fieldname.split('_').slice(1);
                             if (!galleries[galleryIndex]) galleries[galleryIndex] = {};
                             if (!blurred_galleries[galleryIndex]) blurred_galleries[galleryIndex] = {};
-                        
+                            console.log({galleryIndex})
                             if (galleryField === 'Images[]') {
                                 imageCount++;
                                 console.log(`Processed ${imageCount} images`);

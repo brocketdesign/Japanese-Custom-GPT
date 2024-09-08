@@ -504,7 +504,7 @@ $(document).ready(async function() {
                     galleryThumbnails += `
                         <div class="col-3 col-sm-4 col-lg-2">
                             <div data-index="${index}" style="background-image:url(${album.images[0]}); border-radius: 5px !important;border:1px solid white; cursor:pointer;" 
-                                 id="open-album-${album.chatId}" class="card-img-top rounded-avatar position-relative m-auto shadow" alt="${album.name}">
+                                 id="open-album-${album.chatId}-${index}" class="card-img-top rounded-avatar position-relative m-auto shadow" alt="${album.name}">
                             </div>
                             <span style="font-size: 12px;color: #fff;">${album.name}</span>
                             <span class="text-muted" style="font-size: 12px;">(${album.images.length}枚)</span>
@@ -537,7 +537,7 @@ $(document).ready(async function() {
                         const album = createAlbum(gallery, index);
     
                         if (album.stripeProductId && album.stripePriceId) {
-                            $(`#open-album-${album.chatId}`).on('click', function () {
+                            $(`#open-album-${album.chatId}-${index}`).on('click', function () {
                                 displayAlbum(album);
                             });
                         }

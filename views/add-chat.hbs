@@ -451,7 +451,6 @@
         $('#addMoreGallery').on('click', function(){addNewGallery(true);});
 
 
-
         function fetchchatData(chatId) {
             $.ajax({
                 url: `/api/chat-data/${chatId}`,
@@ -549,41 +548,47 @@
                     }
 
 
-                        if (chatData.galleries && chatData.galleries.length > 0) {
+                    if (chatData.galleries && chatData.galleries.length > 0) {
 
-                            chatData.galleries.forEach((gallery, galleryIndex) => {
+                        chatData.galleries.forEach((gallery, galleryIndex) => {
 
-                                if (gallery.images && gallery.images.length > 0) {
-                                    let preloaded = gallery.images.map((imageUrl, idx) => {
-                                        return {
-                                            id: idx + 1, 
-                                            src: imageUrl  
-                                        };
-                                    });
-                                    
-                                    if($(`#imageGallery-${galleryIndex}`).length == 0){
-                                        addNewGallery()
-                                    }
-
-                                    $(`#imageGallery-${galleryIndex}-name`).val(gallery.name);
-                                    $(`#imageGallery-${galleryIndex}-price`).val(gallery.price);
-                                    $(`#imageGallery-${galleryIndex}-description`).val(gallery.description);
-                                    $(`#imageGallery-${galleryIndex}`).imageUploader({
-                                        preloaded: preloaded,
-                                        imagesInputName: 'photos',
-                                        preloadedInputName: 'old',
-                                        maxSize: 2 * 1024 * 1024,
-                                        maxFiles: 100
-                                    });
-                                } else {
-                                    $(`#imageGallery-${galleryIndex}`).imageUploader({
-                                        maxSize: 2 * 1024 * 1024,
-                                        maxFiles: 100
-                                    });
+                            if (gallery.images && gallery.images.length > 0) {
+                                let preloaded = gallery.images.map((imageUrl, idx) => {
+                                    return {
+                                        id: idx + 1, 
+                                        src: imageUrl  
+                                    };
+                                });
+                                
+                                if($(`#imageGallery-${galleryIndex}`).length == 0){
+                                    addNewGallery()
                                 }
 
-                            });
-                        }
+                                $(`#imageGallery-${galleryIndex}-name`).val(gallery.name);
+                                $(`#imageGallery-${galleryIndex}-price`).val(gallery.price);
+                                $(`#imageGallery-${galleryIndex}-description`).val(gallery.description);
+                                $(`#imageGallery-${galleryIndex}`).imageUploader({
+                                    preloaded: preloaded,
+                                    imagesInputName: 'photos',
+                                    preloadedInputName: 'old',
+                                    maxSize: 2 * 1024 * 1024,
+                                    maxFiles: 100
+                                });
+                            } else {
+                                $(`#imageGallery-${galleryIndex}`).imageUploader({
+                                    maxSize: 2 * 1024 * 1024,
+                                    maxFiles: 100
+                                });
+                            }
+
+                        });
+                    }else{
+
+                        $('#imageGallery-0').imageUploader({
+                            maxSize: 2 * 1024 * 1024,
+                            maxFiles: 100
+                        });
+                    }
                     checkFieldsAndShowForm()
                     $('#chatForm').removeClass('d-none')
                     //$('#genStructure').removeClass('btn-outline-secondary').addClass('btn-secondary')

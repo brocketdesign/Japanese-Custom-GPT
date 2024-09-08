@@ -55,16 +55,22 @@ async function getCounter(db) {
         throw new Error(`Error deleting object: ${error.message}`);
     }
 };
-  const uploadToS3 = async (buffer, hash, filename) => {
+const uploadToS3 = async (buffer, hash, filename) => {
     const params = {
         Bucket: process.env.AWS_S3_BUCKET_NAME,
         Key: `${hash}_${filename}`,
         Body: buffer,
         ACL: 'public-read'
     };
-    const uploadResult = await s3.upload(params).promise();
-    return uploadResult.Location;
+    try {
+        const uploadResult = await s3.upload(params).promise();
+        return uploadResult.Location;
+    } catch (error) {
+        console.error("S3 Upload Error:", error);
+        throw error;
+    }
 };
+
 
 const isValidUrl = (string) => {
     try {
@@ -228,7 +234,7 @@ const handleFileUpload = async (part, db) => {
 
 const createBlurredImage = async (imageUrl, db) => {
     try {
-        const blurLevel = 50
+        const blurLevel = 50;
         const urlParts = imageUrl.split('/');
         const s3Key = decodeURIComponent(urlParts.slice(3).join('/'));
 
@@ -249,8 +255,16 @@ const createBlurredImage = async (imageUrl, db) => {
         // Check if the blurred image already exists in the database
         const existingFile = await awsimages.findOne({ hash });
         if (existingFile) {
-            console.log(`Blurred image already exists in DB`);
-            return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFile.key}`;
+            const existingFileUrl = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFile.key}`;
+            
+            // Check if the image is accessible
+            const checkDbImage = await fetch(existingFileUrl, { method: 'HEAD' });
+            if (checkDbImage.ok) {
+                console.log(`Blurred image already exists in DB and is accessible`);
+                return existingFileUrl;
+            } else {
+                console.warn(`Blurred image found in DB but not accessible (status: ${checkDbImage.status})`);
+            }
         }
 
         // Check if the blurred image already exists in S3
@@ -260,10 +274,18 @@ const createBlurredImage = async (imageUrl, db) => {
         }).promise();
 
         if (existingFiles.Contents.length > 0) {
-            console.log(`Blurred image already exists in S3`);
             const blurredKey = existingFiles.Contents[0].Key;
-            await awsimages.insertOne({ key: blurredKey, hash });
-            return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${blurredKey}`;
+            const blurredImageUrl = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${blurredKey}`;
+            
+            // Check if the image is accessible
+            const checkS3Image = await fetch(blurredImageUrl, { method: 'HEAD' });
+            if (checkS3Image.ok) {
+                console.log(`Blurred image already exists in S3 and is accessible`);
+                await awsimages.insertOne({ key: blurredKey, hash });
+                return blurredImageUrl;
+            } else {
+                console.warn(`Blurred image found in S3 but not accessible (status: ${checkS3Image.status})`);
+            }
         }
 
         // Upload the blurred image to S3

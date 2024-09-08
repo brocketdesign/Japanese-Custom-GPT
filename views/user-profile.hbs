@@ -159,6 +159,7 @@
 
 
   $(document).ready(function() {
+    return
     const userId = `{{{userData._id}}}`;
     $.getJSON(`/user/chat-data/${userId}`, function(data) {
         let htmlContent = '';

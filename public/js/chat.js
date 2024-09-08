@@ -375,6 +375,8 @@ $(document).ready(async function() {
     
         if (data.chat.galleries && data.chat.galleries.length > 0) {
             displayGalleries(thumbnail, data.chat.galleries, data.chat.blurred_galleries, chatId, fetch_userId);
+        }else{
+            $('#galleries-open').hide();
         }
     
         if (!isTemporary) {
@@ -465,109 +467,90 @@ $(document).ready(async function() {
     }
     
     function displayGalleries(thumbnail, galleries, blurred_galleries, chatId, fetch_userId) {
-        $('#galleries-open').show()
+        const isLocalMode = MODE === 'local';
+        const productIdField = isLocalMode ? 'stripeProductIdLocal' : 'stripeProductIdLive';
+        const priceIdField = isLocalMode ? 'stripePriceIdLocal' : 'stripePriceIdLive';
+    
+        $('#galleries-open').show();
+    
+        const createAlbum = (gallery, index) => ({
+            chatId,
+            userId: fetch_userId,
+            name: gallery.name,
+            price: gallery.price,
+            description: gallery.description,
+            blurredImages: [gallery.images[0], ...blurred_galleries[index].images],
+            images: gallery.images,
+            stripePriceId: gallery[priceIdField],
+            stripeProductId: gallery[productIdField],
+        });
+    
         galleries.forEach((gallery, index) => {
-            if(!gallery.images || gallery.images.length == 0){return}
-            const isLocalMode = MODE === 'local';
-            const blurredImages = blurred_galleries[index].images;
-            const productIdField = isLocalMode ? 'stripeProductIdLocal' : 'stripeProductIdLive';
-            const priceIdField = isLocalMode ? 'stripePriceIdLocal' : 'stripePriceIdLive';
-            const album = {
-                chatId,
-                userId: fetch_userId,
-                name: gallery.name,
-                price: gallery.price,
-                description: gallery.description,
-                blurredImages: [gallery.images[0], ...blurredImages],
-                images: gallery.images,
-                stripePriceId: gallery[priceIdField],
-                stripeProductId: gallery[productIdField],
-            };
-            if(album.stripeProductId && album.stripePriceId){
-                //displayAlbumThumb(thumbnail, album);
+            if (gallery.images && gallery.images.length > 0) {
+                const album = createAlbum(gallery, index);
+                if (album.stripeProductId && album.stripePriceId) {
+                    displayAlbumThumb(thumbnail, album);
+                }
             }
         });
-
-            $('#galleries-open').on('click', function() {
-                let galleryThumbnails = '';
-                
-                galleries.forEach((gallery, index) => {
-                    const isLocalMode = MODE === 'local';
-                    const album = {
-                        chatId,
-                        userId: fetch_userId,
-                        name: gallery.name,
-                        price: gallery.price,
-                        description: gallery.description,
-                        blurredImages: [gallery.images[0], ...blurred_galleries[index].images],
-                        images: gallery.images,
-                        stripePriceId: gallery[isLocalMode ? 'stripePriceIdLocal' : 'stripePriceIdLive'],
-                        stripeProductId: gallery[isLocalMode ? 'stripeProductIdLocal' : 'stripeProductIdLive'],
-                    };
-            
-                    // Only display if both stripeProductId and stripePriceId are present
-                    if (album.stripeProductId && album.stripePriceId) {
-                        galleryThumbnails += `
-                            <div class="col-3 col-sm-4 col-lg-2">
-                                <div data-index="${index}" style="background-image:url(${album.images[0]}); border-radius: 5px !important;border:1px solid white; cursor:pointer;" 
-                                     class="card-img-top rounded-avatar position-relative m-auto shadow" alt="${album.name}">
-                                </div>
-                                <span style="font-size: 12px;color: #fff;">${album.name}</span>
-                                <span class="text-muted" style="font-size: 12px;">(${album.images.length}枚)</span>
-                            </div>`;
-                    }
-                });
-            
-                // Show SweetAlert2 modal
-                Swal.fire({
-                    html: `
-                        <div style="top: 0;left: 0;right: 0;border-radius: 40px 40px 0 0;background: linear-gradient(to top, rgba(0, 0, 0, 0), rgba(46, 44, 72, 0.91) 45%);" class="sticky-top pt-3">
-                            <h5 class="mb-0 text-white">${chatName}のアルバム</h5>
-                        </div>
-                        <div class="row no-gutters pt-3 ps-3 mx-0">
-                            ${galleryThumbnails}
-                        </div>`,
-                    showClass: { popup: 'animate__animated animate__slideInUp' },
-                    hideClass: { popup: 'animate__animated animate__slideOutDown' },
-                    position: 'bottom',
-                    backdrop: 'rgba(43, 43, 43, 0.2)',
-                    showCloseButton: true,
-                    showConfirmButton: false,
-                    customClass: { 
-                        container: 'p-0', 
-                        popup: 'album-popup shadow', 
-                        htmlContainer:'position-relative', 
-                        closeButton: 'position-absolute' 
-                    },
-                    didOpen: () => {
-                        const isLocalMode = MODE === 'local';
-                        // Add click event to the dynamically created thumbnails
-                        $('.card-img-top').on('click', function() {
-                            const index = $(this).data('index');
-                            const album = {
-                                chatId,
-                                userId: fetch_userId,
-                                name: galleries[index].name,
-                                price: galleries[index].price,
-                                description: galleries[index].description,
-                                blurredImages: [galleries[index].images[0], ...blurred_galleries[index].images],
-                                images: galleries[index].images,
-                                stripePriceId: galleries[index][isLocalMode ? 'stripePriceIdLocal' : 'stripePriceIdLive'],
-                                stripeProductId: galleries[index][isLocalMode ? 'stripeProductIdLocal' : 'stripeProductIdLive'],
-                            };
-            
-                            // Call displayAlbum function with the clicked album
-                            displayAlbum(album);
-                        });
-                    }
-                });
+    
+        $('#galleries-open').on('click', function () {
+            let galleryThumbnails = '';
+    
+            galleries.forEach((gallery, index) => {
+                const album = createAlbum(gallery, index);
+    
+                if (album.stripeProductId && album.stripePriceId) {
+                    galleryThumbnails += `
+                        <div class="col-3 col-sm-4 col-lg-2">
+                            <div data-index="${index}" style="background-image:url(${album.images[0]}); border-radius: 5px !important;border:1px solid white; cursor:pointer;" 
+                                 id="open-album-${album.chatId}" class="card-img-top rounded-avatar position-relative m-auto shadow" alt="${album.name}">
+                            </div>
+                            <span style="font-size: 12px;color: #fff;">${album.name}</span>
+                            <span class="text-muted" style="font-size: 12px;">(${album.images.length}枚)</span>
+                        </div>`;
+                }
             });
-            
+    
+            Swal.fire({
+                html: `
+                    <div style="top: 0;left: 0;right: 0;border-radius: 40px 40px 0 0;background: linear-gradient(to top, rgba(0, 0, 0, 0), rgba(46, 44, 72, 0.91) 45%);" class="sticky-top pt-3">
+                        <h5 class="mb-0 text-white">${chatName}のアルバム</h5>
+                    </div>
+                    <div class="row no-gutters pt-3 ps-3 mx-0">
+                        ${galleryThumbnails}
+                    </div>`,
+                showClass: { popup: 'animate__animated animate__slideInUp' },
+                hideClass: { popup: 'animate__animated animate__slideOutDown' },
+                position: 'bottom',
+                backdrop: 'rgba(43, 43, 43, 0.2)',
+                showCloseButton: true,
+                showConfirmButton: false,
+                customClass: { 
+                    container: 'p-0', 
+                    popup: 'album-popup shadow', 
+                    htmlContainer:'position-relative', 
+                    closeButton: 'position-absolute me-3' 
+                },
+                didOpen: () => {
+                    galleries.forEach((gallery, index) => {
+                        const album = createAlbum(gallery, index);
+    
+                        if (album.stripeProductId && album.stripePriceId) {
+                            $(`#open-album-${album.chatId}`).on('click', function () {
+                                displayAlbum(album);
+                            });
+                        }
+                    });
+                }
+            });
+        });
     }
+    
     
     function displayAlbumThumb(thumbnail, album){
         var card = $(`
-            <div class="card custom-card bg-transparent shadow-0 border-0 px-1 col-3 col-sm-4 col-lg-2" style="cursor:pointer;">
+            <div class="card custom-card bg-transparent shadow-0 border-0 px-1 mx-1" style="cursor:pointer;">
                 <div style="background-image:url(${album.images[0]});border:4px solid white;" class="card-img-top rounded-avatar position-relative m-auto shadow" alt="${album.name}">
                 </div>
             </div>
@@ -620,7 +603,7 @@ $(document).ready(async function() {
                     backdrop: 'rgba(43, 43, 43, 0.2)',
                     showCloseButton: true,
                     showConfirmButton: false,
-                    customClass: { container: 'p-0', popup: 'album-popup h-100vh shadow', htmlContainer:'position-relative', closeButton: 'position-absolute' }
+                    customClass: { container: 'p-0', popup: 'album-popup h-100vh shadow', htmlContainer:'position-relative', closeButton: 'position-absolute  me-3' }
                 });
 
                 const colSizes = [1, 2, 3, 4, 6, 12]; // Allowed col sizes

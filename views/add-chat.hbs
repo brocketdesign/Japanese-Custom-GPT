@@ -336,7 +336,7 @@
         }else{
             $('#imageGallery-0').imageUploader({
                 maxSize: 2 * 1024 * 1024,
-                maxFiles: 50
+                maxFiles: 100
             });
         }
         $('textarea').each(function() {
@@ -442,7 +442,7 @@
             if(init){
                 $(`#imageGallery-${galleryIndex}`).imageUploader({
                     maxSize: 2 * 1024 * 1024,
-                    maxFiles: 50
+                    maxFiles: 100
                 });
             }
 
@@ -573,12 +573,12 @@
                                         imagesInputName: 'photos',
                                         preloadedInputName: 'old',
                                         maxSize: 2 * 1024 * 1024,
-                                        maxFiles: 50
+                                        maxFiles: 100
                                     });
                                 } else {
                                     $(`#imageGallery-${galleryIndex}`).imageUploader({
                                         maxSize: 2 * 1024 * 1024,
-                                        maxFiles: 50
+                                        maxFiles: 100
                                     });
                                 }
 

@@ -83,21 +83,29 @@ async function routes(fastify, options) {
                 chatData.chatImageUrl = chatData.thumbnailUrl;
             }
     
+            const stripeLocal = require('stripe')(process.env.STRIPE_SECRET_KEY_TEST);
+            const stripeLive = require('stripe')(process.env.STRIPE_SECRET_KEY);
+            
             for (const gallery of galleries) {
                 if (gallery.name && gallery.price && gallery.images && gallery.images.length > 0) {
-                    const isLocalMode = process.env.MODE === 'local';
-                    console.log({isLocalMode})
-                    console.log({gallery})
-                    const productIdField = isLocalMode ? 'stripeProductIdLocal' : 'stripeProductIdLive';
-                    const priceIdField = isLocalMode ? 'stripePriceIdLocal' : 'stripePriceIdLive';
-                    console.log({productIdField,priceIdField})
-                    if (!gallery[productIdField] || !gallery[priceIdField]) {
+                    const localFieldsMissing = !gallery['stripeProductIdLocal'] || !gallery['stripePriceIdLocal'];
+                    const liveFieldsMissing = !gallery['stripeProductIdLive'] || !gallery['stripePriceIdLive'];
+
+                    if (localFieldsMissing || liveFieldsMissing) {
                         try {
-                            const stripeProduct = await createProductWithPrice(gallery.name, gallery.price, gallery.images[0], isLocalMode);
-                            gallery[productIdField] = stripeProduct.productId;
-                            gallery[priceIdField] = stripeProduct.priceId;
-                            console.log({[productIdField]:gallery[productIdField],[priceIdField]:gallery[priceIdField]})
-                            console.log({gallery})
+                            if (localFieldsMissing) {
+                                const stripeProductLocal = await createProductWithPrice(gallery.name, gallery.price, gallery.images[0], stripeLocal);
+                                gallery['stripeProductIdLocal'] = stripeProductLocal.productId;
+                                gallery['stripePriceIdLocal'] = stripeProductLocal.priceId;
+                                console.log({ stripeProductIdLocal: gallery['stripeProductIdLocal'], stripePriceIdLocal: gallery['stripePriceIdLocal'] });
+                            }
+            
+                            if (liveFieldsMissing) {
+                                const stripeProductLive = await createProductWithPrice(gallery.name, gallery.price, gallery.images[0], stripeLive);
+                                gallery['stripeProductIdLive'] = stripeProductLive.productId;
+                                gallery['stripePriceIdLive'] = stripeProductLive.priceId;
+                                console.log({ stripeProductIdLive: gallery['stripeProductIdLive'], stripePriceIdLive: gallery['stripePriceIdLive'] });
+                            }
                         } catch (error) {
                             return reply.status(500).send({ error: `Failed to create product on Stripe for gallery ${gallery.name}` });
                         }
@@ -105,7 +113,6 @@ async function routes(fastify, options) {
                 }
             }
             
-    
             if (galleries.length > 0) {
                 chatData.galleries = galleries;
             }
@@ -152,16 +159,16 @@ async function routes(fastify, options) {
         }
     });
     
-    async function createProductWithPrice(name, price, image) {
+    async function createProductWithPrice(name, price, image, stripeInstance) {
         try {
-            // Create a product on Stripe with a single identifying image
-            const product = await stripe.products.create({
+            // Create a product on the passed Stripe instance (either live or local)
+            const product = await stripeInstance.products.create({
                 name: name,
-                images: [image],  // Use a single image to identify the product
+                images: [image],
             });
     
             // Create a price for the product in Japanese Yen (JPY)
-            const productPrice = await stripe.prices.create({
+            const productPrice = await stripeInstance.prices.create({
                 unit_amount: price,
                 currency: 'jpy', // Set currency to Japanese Yen
                 product: product.id,
@@ -169,7 +176,7 @@ async function routes(fastify, options) {
     
             return {
                 productId: product.id,
-                priceId: productPrice.id
+                priceId: productPrice.id,
             };
         } catch (error) {
             throw new Error('Failed to create product on Stripe');

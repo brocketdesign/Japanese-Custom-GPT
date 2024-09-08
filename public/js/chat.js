@@ -467,9 +467,7 @@ $(document).ready(async function() {
     function displayGalleries(thumbnail, galleries, blurred_galleries, chatId, fetch_userId) {
         galleries.forEach((gallery, index) => {
             if(!gallery.images || gallery.images.length == 0){return}
-            console.log(gallery)
             const isLocalMode = MODE === 'local';
-            console.log({isLocalMode})
             const blurredImages = blurred_galleries[index].images;
             const productIdField = isLocalMode ? 'stripeProductIdLocal' : 'stripeProductIdLive';
             const priceIdField = isLocalMode ? 'stripePriceIdLocal' : 'stripePriceIdLive';
@@ -484,7 +482,6 @@ $(document).ready(async function() {
                 stripePriceId: gallery[priceIdField],
                 stripeProductId: gallery[productIdField],
             };
-            console.log({[productIdField]: album.stripeProductId,[priceIdField]: album.stripePriceId})
             if(album.stripeProductId && album.stripePriceId){
                 displayAlbumThumb(thumbnail, album);
             }
@@ -508,30 +505,28 @@ $(document).ready(async function() {
             try {
                 const isAuthorized = await checkIfClient(album.userId, album.chatId, album.stripePriceId);
                 const images = isAuthorized ? album.images : album.blurredImages;
-                console.log({isAuthorized})
+
                 let imagesHTML = images.map((url, index) => `<img src="${album.images[0]}" class="img-fluid rounded shadow m-1" style="width:auto;height: auto;object-fit:contain;" data-index="${index}">`).join('');
             
                 Swal.fire({
                     html: `
                         <div ${!isAuthorized ? 'type="button" onclick="initiateAlbumCheckout(\'' + album.stripePriceId + '\', \'' + album.chatId + '\')"' : ''}>
                             <div style="top: 0;left: 0;right: 0;border-radius: 40px 40px 0 0;background: linear-gradient(to top, rgba(0, 0, 0, 0), rgba(46, 44, 72, 0.91) 45%);" class="sticky-top pt-3">
-                                <h5 class="mb-0 text-white">${album.name}</h5>
+                                <h5 class="mb-0 text-white">${album.name} (${album.images.length}枚)</h5>
                                 <span class="text-muted" style="font-size:14px;">${album.price}¥</span>
                                 <p style="color: white;font-size: 12px;" class="p-4">${album.description}</p>
                             </div>
                             <div class="sticky-top text-start">
-                                <span type="button" id="destroy-swiper" class="btn btn-light mx-3"><i class="fas fa-th-large"></i></span>
+                                <span type="button" id="toggle-grid-${album.chatId}" class="btn btn-light mx-3"><i class="fas fa-th-large"></i></span>
                             </div>
                             <div id="album-container" class="position-relative text-white pt-2 px-3 w-100" style="min-height:200px;overflow: hidden;">
-                                <div class="images swiper-container" data-id="${album.chatId}">
-                                    <div class="swiper-wrapper wrapper">
+                                <div class="images" data-id="${album.chatId}">
+                                    <div class="row wrapper">
                                         ${images.map((url, index) => `
-                                            <div class="swiper-slide slide">
+                                            <div class="slide col-3">
                                                 <img src="${url}" class="img-fluid rounded shadow m-1" style="width:auto;max-height:400pxobject-fit:contain;" data-index="${index}">
                                             </div>`).join('')}
                                     </div>
-                                    <div class="swiper-button-next text-white" style="opacity:0.8;"></div>
-                                    <div class="swiper-button-prev text-white" style="opacity:0.8;"></div>
                                 </div>
                             </div>
                             ${!isAuthorized && !isTemporary ? `
@@ -551,76 +546,33 @@ $(document).ready(async function() {
                     customClass: { container: 'p-0', popup: 'album-popup shadow', htmlContainer:'position-relative', closeButton: 'position-absolute' }
                 });
 
-                let swiper = new Swiper('.swiper-container', {
-                    loop: true,
-                    spaceBetween: 5,
-                    navigation: {
-                        nextEl: '.swiper-button-next',
-                        prevEl: '.swiper-button-prev',
-                    },
-                    breakpoints: {
-                        320: { // screens up to 320px
-                            slidesPerView: 2,
-                        },
-                        480: { // screens up to 480px
-                            slidesPerView: 2,
-                        },
-                        768: { // screens up to 768px
-                            slidesPerView: 3,
-                        },
-                        1024: { // screens up to 1024px
-                            slidesPerView: 4,
-                        },
-                    }
-                });
-        
-                $(document).on('click', '#destroy-swiper', function () {
-                    swiper = toggleSwiper()
-                });
-                $(document).on('click', '.slide:not(.swiper-slide)', function() {
-                    const slideIndex = $(this).index();
-                    console.log({slideIndex})
-                    swiper = toggleSwiper()
-                    swiper.slideTo(slideIndex);
-                });
+                const colSizes = [1, 2, 3, 4, 6, 12]; // Allowed col sizes
+
+                // Toggle and save to localStorage
+                $(document).on('click', `#toggle-grid-${album.chatId}`, function(){
+                    const container = $(document).find(`.images[data-id="${album.chatId}"]`);
+                    const currentClass = container.find('.slide').first().attr('class').match(/col-\d+/)[0];
+                    const currentCol = parseInt(currentClass.split('-')[1]);
+                    let nextIndex = colSizes.indexOf(currentCol) + 1;
+                    if (nextIndex >= colSizes.length) nextIndex = 0; // Loop back to the first column size
                 
-            function toggleSwiper(){
-                const swiperContainer = $(document).find('.swiper-container')
-                $(document).find('#destroy-swiper').toggleClass('mt-3')
-                $(document).find('#destroy-swiper').find('i').toggleClass('fa-th-large fa-image')
-                $(document).find('#album-container .wrapper').toggleClass('swiper-wrapper row m-auto');
-                $(document).find('#album-container .slide').toggleClass('swiper-slide col-4 col-sm-3 col-lg-1 p-0');
-                $(document).find('#album-container').find('.swiper-button-next').toggle()
-                $(document).find('#album-container').find('.swiper-button-prev').toggle()
-                if (swiper.initialized) {
-                    swiper.destroy(true, true); // true to reset styles
-                } else {
-                    swiper = new Swiper(swiperContainer[0], {
-                        loop: true,
-                        spaceBetween: 5,
-                        navigation: {
-                            nextEl: '.swiper-button-next',
-                            prevEl: '.swiper-button-prev',
-                        },
-                        breakpoints: {
-                            320: { // screens up to 320px
-                                slidesPerView: 2,
-                            },
-                            480: { // screens up to 480px
-                                slidesPerView: 2,
-                            },
-                            768: { // screens up to 768px
-                                slidesPerView: 3,
-                            },
-                            1024: { // screens up to 1024px
-                                slidesPerView: 4,
-                            },
-                        }
+                    const nextCol = colSizes[nextIndex];
+                
+                    container.find('.slide').each(function(){
+                        $(this).removeClass(currentClass).addClass(`col-${nextCol}`);
                     });
-                }
-                return swiper
-            }
-            //toggleSwiper(swiper)
+                
+                    // Save user preference in localStorage
+                    localStorage.setItem(`gridPreference`, nextCol);
+                });
+
+                // Initialize on page load based on saved preference
+                const savedCol = localStorage.getItem(`gridPreference`) || 3; // Default to col-3
+                const container = $(document).find(`.images[data-id="${album.chatId}"]`);
+                container.find('.slide').each(function(){
+                    $(this).removeClass().addClass(`col-${savedCol} slide`); // Initialize with saved col class
+                });
+
             } catch (error) {
                 console.error('Error displaying album:', error);
             }

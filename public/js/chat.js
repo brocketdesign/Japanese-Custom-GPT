@@ -468,9 +468,11 @@ $(document).ready(async function() {
         galleries.forEach((gallery, index) => {
             if(!gallery.images || gallery.images.length == 0){return}
             console.log(gallery)
+            const isLocalMode = MODE === 'local';
+            console.log({isLocalMode})
             const blurredImages = blurred_galleries[index].images;
-            const stripeProductId = MODE ? gallery['stripeProductIdLocal'] : gallery['stripeProductIdLive'];
-            const stripePriceId = MODE ? gallery['stripePriceIdLocal' ]: gallery['stripePriceIdLive']; 
+            const productIdField = isLocalMode ? 'stripeProductIdLocal' : 'stripeProductIdLive';
+            const priceIdField = isLocalMode ? 'stripePriceIdLocal' : 'stripePriceIdLive';
             const album = {
                 chatId,
                 userId: fetch_userId,
@@ -479,11 +481,11 @@ $(document).ready(async function() {
                 description: gallery.description,
                 blurredImages: [gallery.images[0], ...blurredImages],
                 images: gallery.images,
-                stripePriceId,
-                stripeProductId,
+                stripePriceId: gallery[priceIdField],
+                stripeProductId: gallery[productIdField],
             };
-            console.log({stripeProductId,stripePriceId})
-            if(stripeProductId && stripePriceId){
+            console.log({[productIdField]: album.stripeProductId,[priceIdField]: album.stripePriceId})
+            if(album.stripeProductId && album.stripePriceId){
                 displayAlbumThumb(thumbnail, album);
             }
         });

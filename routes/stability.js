@@ -516,6 +516,7 @@ async function fetchNovitaResult(task_id) {
   fastify.post('/novita/txt2img', async (request, reply) => {
     const { prompt, aspectRatio, userId, chatId, userChatId } = request.body;
     try {
+      const db = await fastify.mongo.client.db(process.env.MONGODB_NAME)
       const collectionUser = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
       let user = await fastify.getUser(request, reply);
       const userIdObj = new fastify.mongo.ObjectId(user._id);
@@ -535,7 +536,7 @@ async function fetchNovitaResult(task_id) {
       
           // If blur is requested, create a blurred version
           if (blur) {
-            blurredImageUrl = await createBlurredImage(imageUrl);
+            blurredImageUrl = await createBlurredImage(imageUrl,db);
           }
       
           // Save both the original and blurred (if exists) URLs in the DB
@@ -564,7 +565,7 @@ async function fetchNovitaResult(task_id) {
       reply.send({ images: [...images1, ...images2] });
   
     } catch (err) {
-      console.error(err);
+      console.log(err);
       reply.status(500).send('Error generating image');
     }
   });

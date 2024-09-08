@@ -2112,8 +2112,8 @@ $(document).ready(async function() {
                     displayMessage('assistant', message);
                     count_proposal = 0
                 }else{
-                    if(count_proposal >= 4){
-                        let message = `[Hidden] Prepare to propose an item`
+                    if(count_proposal >= 2){
+                        let message = `[Hidden] Prepare to propose a picture of you.`
                         addMessageToChat(chatId, userChatId, 'user', message);
                     }
                 }

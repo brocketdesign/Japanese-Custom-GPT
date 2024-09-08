@@ -994,7 +994,7 @@ $(document).ready(function() {
 
         let slides = '';
         images.forEach(imageUrl => {
-            slides += `<div class="swiper-slide"><img src="${imageUrl}" style="width: 100%;object-fit: contain;"></div>`;
+            slides += `<div class="swiper-slide"><img src="${imageUrl}" style="width: 100%;object-fit: contain;max-height:90vh"></div>`;
         });
 
         Swal.fire({

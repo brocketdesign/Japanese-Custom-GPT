@@ -141,7 +141,7 @@ async function routes(fastify, options) {
                 return reply.status(500).send({ error: 'Failed to add or update the Chat' });
             }
         } catch (error) {
-            console.error('Error handling chat data:', error);
+            console.log('Error handling chat data:', error);
             return reply.status(500).send({ error: 'Internal server error' });
         }
     });

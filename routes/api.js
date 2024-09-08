@@ -86,6 +86,7 @@ async function routes(fastify, options) {
             for (const gallery of galleries) {
                 if (gallery.name && gallery.price && gallery.images && gallery.images.length > 0) {
                     const isLocalMode = process.env.MODE === 'local';
+                    console.log({isLocalMode})
                     const productIdField = isLocalMode ? 'stripeProductIdLocal' : 'stripeProductIdLive';
                     const priceIdField = isLocalMode ? 'stripePriceIdLocal' : 'stripePriceIdLive';
                     

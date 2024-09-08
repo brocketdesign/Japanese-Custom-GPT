@@ -513,10 +513,10 @@ $(document).ready(async function() {
                         <div ${!isAuthorized ? 'type="button" onclick="initiateAlbumCheckout(\'' + album.stripePriceId + '\', \'' + album.chatId + '\')"' : ''}>
                             <div style="top: 0;left: 0;right: 0;border-radius: 40px 40px 0 0;background: linear-gradient(to top, rgba(0, 0, 0, 0), rgba(46, 44, 72, 0.91) 45%);" class="sticky-top pt-3">
                                 <h5 class="mb-0 text-white">${album.name} (${album.images.length}枚)</h5>
-                                <span class="text-muted" style="font-size:14px;">${album.price}¥</span>
-                                <p style="color: white;font-size: 12px;" class="p-4">${album.description}</p>
+                                <span class="text-muted ${isAuthorized ? 'd-none':''}" style="font-size:14px;">${album.price}¥</span>
                             </div>
-                            <div class="sticky-top text-start">
+                            <p style="color: white;font-size: 12px;" class="p-4">${album.description}</p>
+                            <div class="text-start">
                                 <span type="button" id="toggle-grid-${album.chatId}" class="btn btn-light mx-3"><i class="fas fa-th-large"></i></span>
                             </div>
                             <div id="album-container" class="position-relative text-white pt-2 px-3 w-100" style="min-height:200px;overflow: hidden;">

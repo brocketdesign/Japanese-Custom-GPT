@@ -137,7 +137,7 @@ async function routes(fastify, options) {
                     return reply.send({ message: 'Chat added successfully', chatId: result.insertedId });
                 }
             } catch (error) {
-                console.error('Failed to add or update the Chat:', error);
+                console.log('Failed to add or update the Chat:', error);
                 return reply.status(500).send({ error: 'Failed to add or update the Chat' });
             }
         } catch (error) {

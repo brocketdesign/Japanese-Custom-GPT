@@ -481,6 +481,7 @@ $(document).ready(async function() {
                 stripePriceId,
                 stripeProductId,
             };
+            console.log({stripeProductId,stripePriceId})
             if(stripeProductId && stripePriceId){
                 displayAlbumThumb(thumbnail, album);
             }

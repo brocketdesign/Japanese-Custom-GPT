@@ -207,7 +207,7 @@ window.generateImageNovita = function(API_URL, userId, chatId, userChatId, chara
     $('#novita-gen-button').removeClass('isLoading');
   });
 }
-window.generateImage = function(data,prompt){
+window.generateImage = async function(data,prompt){
 
   const imageUrl = data.url;
   const imageId = data.id
@@ -220,7 +220,7 @@ window.generateImage = function(data,prompt){
   img.setAttribute('class', 'm-auto');
   img.setAttribute('data-id',imageId)
 
-  const user = JSON.parse(localStorage.getItem('user'))
+  const user = await fetchUser()
   const subscriptionStatus = user.subscriptionStatus == 'active'
 
   if (/nsfw\b/i.test(imagePrompt) && !subscriptionStatus) {

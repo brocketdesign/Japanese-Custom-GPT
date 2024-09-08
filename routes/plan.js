@@ -463,10 +463,10 @@ fastify.post('/user/daily-bonus-coins', async (request, reply) => {
 
       const today = new Date();
       today.setHours(0, 0, 0, 0); // Reset the time to midnight to compare dates
-
+console.log(user.lastDailyBonus)
       // Check if the user has already claimed the daily bonus
       const lastClaimed = user.lastDailyBonus ? new Date(user.lastDailyBonus) : null;
-
+console.log( lastClaimed.getTime() , today.getTime())
       if (lastClaimed && lastClaimed.getTime() === today.getTime()) {
           return reply.send({ success: false, error: 'Daily bonus already claimed' });
       }

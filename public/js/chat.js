@@ -467,6 +467,7 @@ $(document).ready(async function() {
     function displayGalleries(thumbnail, galleries, blurred_galleries, chatId, fetch_userId) {
         galleries.forEach((gallery, index) => {
             if(!gallery.images || gallery.images.length == 0){return}
+            console.log(gallery)
             const blurredImages = blurred_galleries[index].images;
             const stripeProductId = MODE ? gallery['stripeProductIdLocal'] : gallery['stripeProductIdLive'];
             const stripePriceId = MODE ? gallery['stripePriceIdLocal' ]: gallery['stripePriceIdLive']; 

@@ -94,6 +94,7 @@ async function routes(fastify, options) {
                             const stripeProduct = await createProductWithPrice(gallery.name, gallery.price, gallery.images[0], isLocalMode);
                             gallery[productIdField] = stripeProduct.productId;
                             gallery[priceIdField] = stripeProduct.priceId;
+                            console.log({[productIdField]:gallery[productIdField],[priceIdField]:gallery[priceIdField]})
                         } catch (error) {
                             return reply.status(500).send({ error: `Failed to create product on Stripe for gallery ${gallery.name}` });
                         }

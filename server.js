@@ -237,7 +237,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         const post = await db.collection('posts').findOne({ _id: new fastify.mongo.ObjectId(postId) });
 
         const postUserId = post.userId;
-        postUser = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+        postUser = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(postUserId) });
 
         console.log({postUser})
         if (!post) {

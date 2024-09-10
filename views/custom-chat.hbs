@@ -1271,12 +1271,18 @@ function displayPepopleChat(){
             (peopleChats.recent || []).forEach(chat => {
                 if(chat.nickname){
                     let galleryIco = ''
+                    let image_count = 0
                     if(chat.galleries && chat.galleries.length > 0) {
+                        chat.galleries.forEach((gallery, index) => {
+                            if (gallery.images && gallery.images.length > 0) {
+                                image_count += gallery.images.length
+                            }
+                        })
                         galleryIco = `
                             <div class="gallery" style="color: rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
-                                <span class="badge bg-dark"><i class="far fa-images"></i></span>
+                                <span class="badge bg-dark"><i class="far fa-images me-1"></i>${image_count}</span>
                             </div>
-                            `
+                        `
                     }
                     htmlContent += `
                     <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2 redirectToChat" style="cursor:pointer;" data-id="${chat._id}" data-image="${chat.chatImageUrl}">
@@ -1291,7 +1297,7 @@ function displayPepopleChat(){
                                     ${chat.messagesCount ? `<span class="badge bg-dark message-count"><i class="fas fa-comment-alt me-2"></i>${chat.messagesCount}</span>` : ''}
                                 </div>
                             </div>
-                            <div class="position-absolute" style="top:10px;right:10px">
+                            <div class="position-absolute text-end" style="top:10px;right:10px">
                                 <div class="persona" style="color:rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
                                     <span class="badge bg-dark" style="width: 30px;"><i class="far fa-user-circle"></i></span>
                                 </div>

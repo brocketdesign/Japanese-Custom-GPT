@@ -493,8 +493,8 @@ async function fetchNovitaResult(task_id) {
       negative_prompt: "naked pussy,pussy,vagin,sex,dick,rybadimagenegative_v1.3, ng_deepnegative_v1_75t, (ugly face),cross-eyed,sketches, (worst quality:2),(low quality:2), (normal quality:2),normal quality,((monochrome)),((grayscale)), skin spots,acnes,(((skin blemishes))),bad anatomy,(Multiple people),bad hands,,missing fingers,cropped,low quality, jpeg artifacts,burned,(((blurry))),cropped, poorly drawn hands,poorly drawn face,mutation,deformed,worst quality,"
     },
     sfw: {
-      prompt: `score_10_up, score_9_up, score_8_up, score_7_up, source_anime,,perfect anatomy,masterpiece,(((best quality))),(((ultra-detailed))),(perfect skin),perfect fingers,perfect anatomy,HD,4K quality,(perfect hands:0.1),((sfw)),`,
-      negative_prompt : "nsfw,naked pussy,pussy,((vagin)),vaginal,((((pussy)))),(((nipple))),nude,((naked)),sex,(((genital))), rybadimagenegative_v1.3, ng_deepnegative_v1_75t, (ugly face),cross-eyed,sketches, (worst quality:2),(low quality:2), (normal quality:2),normal quality,((monochrome)),((grayscale)), skin spots,acnes,(((skin blemishes))),bad anatomy,(Multiple people),bad hands,,missing fingers,cropped,low quality, jpeg artifacts,burned,(((blurry))),cropped, poorly drawn hands,poorly drawn face,mutation,deformed,worst quality,"
+      prompt: `score_10_up, score_9_up, score_8_up, score_7_up, source_anime,,perfect anatomy,masterpiece,(((best quality))),(((ultra-detailed))),(perfect skin),perfect fingers,perfect anatomy,HD,4K quality,(perfect hands:0.1),((sfw)),dressed, clothes,`,
+      negative_prompt : "nipple,topless,nsfw,naked pussy,pussy,((vagin)),vaginal,((((pussy)))),(((nipple))),nude,((naked)),sex,(((genital))), rybadimagenegative_v1.3, ng_deepnegative_v1_75t, (ugly face),cross-eyed,sketches, (worst quality:2),(low quality:2), (normal quality:2),normal quality,((monochrome)),((grayscale)), skin spots,acnes,(((skin blemishes))),bad anatomy,(Multiple people),bad hands,,missing fingers,cropped,low quality, jpeg artifacts,burned,(((blurry))),cropped, poorly drawn hands,poorly drawn face,mutation,deformed,worst quality,"
     }
   }
   const params = {

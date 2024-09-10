@@ -136,6 +136,7 @@ async function routes(fastify, options) {
                                 // If the current gallery already exists, merge the images
                                 if (existingChat.galleries[index]) {
                                     existingChat.galleries[index].images = existingChat.galleries[index].images || [];
+                                    console.log(`Ol images are ${existingChat.galleries[index].images.length}`)
                                     existingChat.galleries[index].images = [
                                         ...existingChat.galleries[index].images, 
                                         ...(newGallery.images || [])
@@ -573,54 +574,33 @@ async function routes(fastify, options) {
             console.log(error)
         }
     });
-    fastify.get('/api/chat-list/:id', async (request, reply) => {
-        try {
-            let userId = request.params.id;
-    
+    fastify.get('/api/chat-list/:id',async (request, reply) => {
+
+        try{
+            let userId = request.params.id
+            
             if (!userId) {
                 const user = await fastify.getUser(request, reply);
                 userId = user._id;
             }
-    
-            const userChatCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+
             const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-            const chatLastMessageCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chatLastMessage');
-    
-            // Fetch chatIds from userChat collection
-            const userChats = await userChatCollection.find({
-                userId: new fastify.mongo.ObjectId(userId)
-            }).toArray();
-    
-            const chatIds = userChats.map(userChat => new fastify.mongo.ObjectId(userChat.chatId));
-    
-            // Fetch chats based on chatIds
-            const chats = await chatsCollection.find({
-                _id: { $in: chatIds },
-                name: { $exists: true }
-            }).sort({ latestChatDate: -1 }).toArray();
-    
-            // For each chat, fetch the last message
-            for (let chat of chats) {
-                const lastMessage = await chatLastMessageCollection.findOne(
-                    { chatId: new fastify.mongo.ObjectId(chat._id), userId: new fastify.mongo.ObjectId(userId) },
-                    { projection: { lastMessage: 1, _id: 0 } }
-                );
-                chat.lastMessage = lastMessage ? lastMessage.lastMessage : null;
-            }
-    
+            const chats = await chatsCollection.find({ 
+                userId: new fastify.mongo.ObjectId(userId) ,
+                name:{$exists:true}
+              }).sort({ latestChatDate: -1 }).toArray();
+
             return reply.send(chats);
-        } catch (error) {
-            console.log(error);
-            return reply.code(500).send({ error: 'An error occurred' });
+        }catch(error){
+            console.log(error)
         }
     });
-     
+    
     fastify.post('/api/chat-data', async (request, reply) => {
         try {
             const userLimitCheck = await checkLimits(fastify, request.body.userId);
             const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
             const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-            const collectionChatLastMessage = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chatLastMessage');
             const collectionMessageCount = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageCount');
 
             let { currentStep, message, chatId, userChatId, isNew, isWidget } = request.body;
@@ -654,9 +634,50 @@ async function routes(fastify, options) {
                 const user = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
                 let personaId = await getUserPersona(user)
                 const persona  = personaId ? await collectionChat.findOne({_id: new fastify.mongo.ObjectId(personaId)}) : false
+                const isUserChat = await collectionChat.findOne({ userId: new fastify.mongo.ObjectId(userId) , _id: new fastify.mongo.ObjectId(chatId) });
 
                 if (userLimitCheck.limitIds?.includes(2)) {
                     return reply.status(403).send(userLimitCheck);
+                }
+                
+                if(!isUserChat){
+                    
+                    if (!isWidget) {
+                        const existingChatDocument = await collectionChat.findOne({
+                          userId: new fastify.mongo.ObjectId(userId),
+                          baseId: new fastify.mongo.ObjectId(chatId),
+                        });
+                        if (existingChatDocument) {
+                            //console.log(`Existing chat found: ${existingChatDocument._id}`);
+                            await collectionChat.updateOne(
+                                {
+                                    userId: new fastify.mongo.ObjectId(userId),
+                                    baseId: new fastify.mongo.ObjectId(chatId),
+                                },
+                                { $set : {latestChatDate: today} }
+                            );
+                          chatDocument = existingChatDocument;
+                          chatId = chatDocument._id;
+                        } else {
+                          //console.log(`Create a copy`);
+                          const newChatDocument = {
+                           ...chatDocument,
+                            userId: new fastify.mongo.ObjectId(userId),
+                            baseId: new fastify.mongo.ObjectId(chatId),
+                            latestChatDate: today,
+                            //visibility: 'private',
+                          };
+                          delete newChatDocument._id; // Remove the _id field to let MongoDB create a new one
+                      
+                          const newChatResult = await collectionChat.insertOne(newChatDocument);
+                          chatDocument = await collectionChat.findOne({
+                            _id: new fastify.mongo.ObjectId(newChatResult.insertedId),
+                            userId: new fastify.mongo.ObjectId(userId),
+                          });
+                      
+                          chatId = chatDocument._id;
+                        }
+                    }
                 }
 
                 if (!userChatDocument || isNew) {
@@ -724,19 +745,20 @@ async function routes(fastify, options) {
                 if (!message.match(/^\[[^\]]+\].*/)) {
                     // Increment the progress (should add levels nextLevel)
                     userChatDocument.messagesCount = (userChatDocument.messagesCount ?? 0) + 1
-
+                    // Increment the overall chat number for the chat and the base chat
+                    await collectionChat.updateOne(
+                        { _id: new fastify.mongo.ObjectId(chatDocument.baseId) },
+                        { $inc : {messagesCount: 1}}
+                    );
                     await collectionChat.updateOne(
                         { _id: new fastify.mongo.ObjectId(userChatDocument.chatId) },
                         { $inc : {messagesCount: 1}}
                     );
-
                     // Save last message to display it in the chat list
-                    await collectionChatLastMessage.updateOne(
-                        { chatId: new fastify.mongo.ObjectId(chatId), userId: new fastify.mongo.ObjectId(userId) },
-                        { $set: { lastMessage: { "role": "user", "content": message, updatedAt: today }}},
-                        { upsert: true }
+                    await collectionChat.updateOne(
+                        {_id: new fastify.mongo.ObjectId(chatId)},
+                        { $set: {lastMessage:{ "role": "user", "content": message, updatedAt: today }}}
                     );
-                    
                 }
                 const query = { 
                     userId: new fastify.mongo.ObjectId(userId), 
@@ -933,7 +955,6 @@ async function routes(fastify, options) {
             const chatId = session.chatId;
             const userChatId = session.userChatId;
             
-            const collectionChatLastMessage = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chatLastMessage');
             const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
             let userData = await collectionUserChat.findOne({ userId:new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) })
 
@@ -971,11 +992,9 @@ async function routes(fastify, options) {
                 if (!str) { return str; }
                 return str.replace(/\*.*?\*/g, '').replace(/"/g, '');
             }      
-
-            await collectionChatLastMessage.updateOne(
-                { chatId: new fastify.mongo.ObjectId(chatId), userId: new fastify.mongo.ObjectId(userId) },
-                { $set: { lastMessage: { "role": "assistant", "content": removeContentBetweenStars(completion), updatedAt: today }}},
-                { upsert: true }
+            await collectionChat.updateOne(
+                { _id: new fastify.mongo.ObjectId(chatId) },
+                { $set: {lastMessage:{ "role": "assistant", "content": removeContentBetweenStars(completion), updatedAt: today }}}
             );
 
             // Update the chat document in the database
@@ -1700,22 +1719,7 @@ async function routes(fastify, options) {
             reply.status(500).send({ error: 'Internal Server Error', details: error.message });
         }
     });
-    fastify.get('/lastMessage/:chatId/:userId', async (request, reply) => {
-        const { chatId, userId } = request.params;
-        const collectionChatLastMessage = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chatLastMessage');
-        
-        const result = await collectionChatLastMessage.findOne(
-            { chatId: new fastify.mongo.ObjectId(chatId), userId: new fastify.mongo.ObjectId(userId) },
-            { projection: { lastMessage: 1, _id: 0 } }
-        );
-
-        if (result) {
-            return reply.send(result);
-        } else {
-            return reply.code(404).send({ message: 'Last message not found' });
-        }
-    });
-
+    
     fastify.post('/api/update-log-success', async (request, reply) => {
         try {
             const { userId, userChatId } = request.body;

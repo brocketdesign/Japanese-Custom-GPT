@@ -120,6 +120,8 @@ $(document).ready(async function() {
             return;
         }
 
+        if ($('#image_description').val()){return $('#image_description').val()}
+        
         $.ajax({
             url: '/api/check-image-description',
             method: 'GET',

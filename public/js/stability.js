@@ -222,10 +222,12 @@ window.generateImage = async function(data,prompt){
 
   const user = await fetchUser()
   const subscriptionStatus = user.subscriptionStatus == 'active'
-
+  console.log({subscriptionStatus})
   if (/nsfw\b/i.test(imagePrompt) && !subscriptionStatus) {
+    console.log('NSFW image')
     displayMessage('bot-image-nsfw',img)
   }else{
+    console.log('Normal image')
     displayMessage('bot-image',img)
   }  
 }

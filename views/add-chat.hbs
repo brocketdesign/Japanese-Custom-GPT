@@ -198,6 +198,10 @@
             <label for="chatImageUrl" class="form-label">chatImage</label>
             <input type="text" class="form-control" id="chatImageUrl" name="chatImageUrl" placeholder="URLを入力してください" value="" hidden>
         </div>
+        <div class="mb-3 mx-3" style="display:none;">
+            <label for="imageDescription" class="form-label">画像の説明</label>
+            <textarea row="3" class="form-control" id="imageDescription" name="imageDescription" placeholder="imageDescription" value=""></textarea>
+        </div>
 
         <div class="mb-3 mx-3 row justify-content-between">
             <div class="col-auto ps-0">
@@ -283,6 +287,8 @@
 <link type="text/css" rel="stylesheet" href="/css/image-uploader.css">
 <script type="text/javascript" src="/js/image-uploader.js"></script>
 <script>
+    // Store modified galleries
+    const modifiedGalleries = new Set();
     $(document).ready(function() {
         $('.dropdown-toggle').each(function(e) {
             new mdb.Dropdown($(this)[0]);
@@ -332,7 +338,25 @@
     $('#chatName, #chatDescription, #chatPurpose').on('input', checkFieldsAndShowForm);
 
         if (isTemporaryChat == 'false') {
-            fetchchatData(chatId);
+            setTimeout(function(){
+                fetchchatData(chatId,function(){
+                    function observeGalleryChanges(galleryIndex) {
+                        const galleryElement = document.querySelector(`#imageGallery-${galleryIndex}`);
+                        if (!galleryElement) return;
+
+                        const observer = new MutationObserver(function(mutationsList, observer) {
+                            modifiedGalleries.add(galleryIndex);
+                        });
+
+                        observer.observe(galleryElement, { childList: true, subtree: true });
+                    }
+
+                    $('#galleries .imageGalleryWrapper').each(function(index) {
+                        observeGalleryChanges(index);
+                    });
+                });
+            },500)
+
         }else{
             $('#imageGallery-0').imageUploader({
                 maxSize: 2 * 1024 * 1024,
@@ -444,6 +468,7 @@
                     maxSize: 2 * 1024 * 1024,
                     maxFiles: 100
                 });
+                modifiedGalleries.add(galleryIndex);
             }
 
         }
@@ -451,7 +476,7 @@
         $('#addMoreGallery').on('click', function(){addNewGallery(true);});
 
 
-        function fetchchatData(chatId) {
+        function fetchchatData(chatId,callback) {
             $.ajax({
                 url: `/api/chat-data/${chatId}`,
                 type: 'GET',
@@ -521,7 +546,7 @@
                     if(chatData.category){
                         $('#chatCategory').val(chatData.category);
                     }
-                    
+
                     var chatDescriptionTextare = $('#chatDescription')
                     if(chatData.description){
                         chatDescriptionTextare.val(chatData.description);
@@ -547,6 +572,17 @@
                         $('#chatImage').attr('src', chatData.chatImageUrl).show().addClass('on');
                     }
 
+                    if(chatData.imageDescription){
+                        $('#imageDescription').val(chatData.imageDescription);
+                        $('#imageDescription').parent().show()
+                    }else{
+                        checkImageDescription(null,function(response){
+                            if(!response.error){
+                                $('#imageDescription').val(response).show()
+                                $('#imageDescription').parent().show()
+                            }
+                        }) 
+                    }
 
                     if (chatData.galleries && chatData.galleries.length > 0) {
 
@@ -583,7 +619,6 @@
 
                         });
                     }else{
-
                         $('#imageGallery-0').imageUploader({
                             maxSize: 2 * 1024 * 1024,
                             maxFiles: 100
@@ -596,6 +631,9 @@
                 error: function(xhr, status, error) {
                    console.log(`New tempry chat`)
                 }
+            })
+            .always(function(){
+                 if(typeof callback == 'function'){callback()}
             });
         }
 
@@ -624,6 +662,7 @@
             formData.append('language', $('#language').val());
             formData.append('gender', $('#gender').val());
             formData.append('description', $('#chatDescription').val());
+            formData.append('imageDescription', $('#imageDescription').val());
             formData.append('rule', $('#chatRule').val());
             formData.append('visibility', $('#visibility').val());
             formData.append('isAutoGen', isAutoGen);
@@ -655,11 +694,12 @@
                 const name = $(`#imageGallery-${galleryIndex}-name`).val().trim();
                 const price = $(`#imageGallery-${galleryIndex}-price`).val().trim();
                 const description = $(`#imageGallery-${galleryIndex}-description`).val().trim();
+                if (name) formData.append(`imageGallery_${galleryIndex}_name`, name);
+                if (price) formData.append(`imageGallery_${galleryIndex}_price`, price);
+                if (description) formData.append(`imageGallery_${galleryIndex}_description`, description);
 
-                if (name || price || description) {
-                    if (name) formData.append(`imageGallery_${galleryIndex}_name`, name);
-                    if (price) formData.append(`imageGallery_${galleryIndex}_price`, price);
-                    if (description) formData.append(`imageGallery_${galleryIndex}_description`, description);
+                if (modifiedGalleries.has(galleryIndex)) {
+            console.log({galleryIndex})
 
                     const galleryFiles = getFilesFromGallery(`#imageGallery-${galleryIndex}`);
                     if (galleryFiles.length) {
@@ -667,7 +707,7 @@
                     }
                 }
             });
-
+            
             $.ajax({
                 url: '/api/add-chat',
                 type: 'POST',
@@ -699,7 +739,15 @@
 
             checkImageDescription(null,function(response){
                 if(!response){
-                    generateImageDescriptionBackend()
+                    generateImageDescriptionBackend(function(response){
+                        const imageDescription = response.description
+                        console.log({imageDescription})
+                        $('#imageDescription').val(imageDescription).show()
+                        $('#imageDescription').parent().show()
+                    })
+                }else{
+                    $('#imageDescription').val(response).show()
+                    $('#imageDescription').parent().show()
                 }
             }) 
             

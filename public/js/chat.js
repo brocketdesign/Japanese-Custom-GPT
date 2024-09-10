@@ -659,7 +659,7 @@ $(document).ready(async function() {
     
     function thankUserAndAddCoins(callback) {
         const customPrompt = {
-            systemContent: "あなたの役割は、ユーザーに感謝の気持ちを伝えるキャラクターとして行動することです。今回は、ログインしてくれたユーザーに、再び戻ってきてくれたことへの感謝を伝え、10コインをプレゼントする旨を優しく伝えてください。",
+            systemContent: "あなたの役割は、ユーザーに感謝の気持ちを伝えるキャラクターとして行動することです。今回は、ログインしてくれたユーザーに、再び戻ってきてくれたことへの感謝を伝え、100コインをプレゼントする旨を優しく伝えてください。",
             userContent: "ユーザーが再度ログインしました。心からの感謝とともに、10コインをプレゼントする短いメッセージを伝えてください。",
             temperature: 0.7,
             top_p: 0.9,
@@ -1603,23 +1603,24 @@ $(document).ready(async function() {
         const apiUrl = API_URL + '/api/openai-custom-chat';
     
         hideOtherChoice(false, currentStep);
-        currentStep ++
         // Initialize the bot response container
+        const animationClass = 'animate__animated animate__slideInUp';
+        const uniqueId = `${currentStep}-${Date.now()}`;
         const botResponseContainer = $(`
-            <div id="container-${currentStep}">
+            <div id="container-${uniqueId}">
                 <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
-                    <img src="${thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
+                    <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
                     <div class="audio-controller" style="display:none">
-                        <button id="play-${currentStep}" class="audio-content badge bg-dark">►</button>
+                        <button id="play-${uniqueId}" class="audio-content badge bg-dark">►</button>
                     </div>
-                    <div id="completion-${currentStep}" class="p-3 ms-3 text-start assistant-chat-box">
+                    <div id="completion-${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">
                         <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
                     </div>
                 </div>
-            </div>`);
+            </div>`).hide();
         $('#chatContainer').append(botResponseContainer);
+        botResponseContainer.addClass(animationClass).fadeIn();
         $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
-    
         $.ajax({
             url: apiUrl,
             method: 'POST',
@@ -1704,6 +1705,7 @@ $(document).ready(async function() {
     }
                 
     window.displayMessage = function(sender, message, callback) {
+        console.log({sender, message})
         const messageClass = sender === 'user' ? 'user-message' : sender;
         const animationClass = 'animate__animated animate__slideInUp';
         let messageElement;
@@ -1724,6 +1726,7 @@ $(document).ready(async function() {
         } 
     
         else if (messageClass === 'bot-image' && message instanceof HTMLElement) {
+            console.log('display bot-image')
             messageElement = $(`
                 <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass}">
                     <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
@@ -1737,6 +1740,7 @@ $(document).ready(async function() {
         } 
     
         else if (messageClass === 'bot-image-nsfw'&& message instanceof HTMLElement) {
+            console.log('display bot-image-nsfw')
             messageElement = $(`
                 <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass} unlock-nsfw" style="position: relative;">
                     <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">

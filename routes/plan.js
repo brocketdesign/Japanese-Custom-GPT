@@ -463,26 +463,27 @@ fastify.post('/user/daily-bonus-coins', async (request, reply) => {
 
       const today = new Date();
       today.setHours(0, 0, 0, 0); // Reset the time to midnight to compare dates
-console.log(user.lastDailyBonus)
+
       // Check if the user has already claimed the daily bonus
       const lastClaimed = user.lastDailyBonus ? new Date(user.lastDailyBonus) : null;
-console.log( lastClaimed.getTime() , today.getTime())
+
       if (lastClaimed && lastClaimed.getTime() === today.getTime()) {
-          return reply.send({ success: false, error: 'Daily bonus already claimed' });
+        console.log('Daily bonus already claimed')
+        return reply.send({ success: false, error: 'Daily bonus already claimed' });
       }
 
       // Add 10 coins to the user and update the lastDailyBonus date
       await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
           { _id: new fastify.mongo.ObjectId(userId) },
           {
-              $inc: { coins: 10 },
+              $inc: { coins: 100 },
               $set: { lastDailyBonus: today }
           }
       );
 
       reply.send({ success: true, message: '10 coins added as daily bonus' });
   } catch (error) {
-      console.error('Error adding daily bonus coins:', error);
+      console.log('Error adding daily bonus coins:', error);
       reply.code(500).send({ error: 'Internal Server Error' });
   }
 });

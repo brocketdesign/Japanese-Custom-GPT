@@ -1849,7 +1849,7 @@ async function routes(fastify, options) {
       
                 if (seenPosts.has(item.post._id.toString())) return null;
                 seenPosts.add(item.post._id.toString());
-      
+
                 return user && chat ? {
                   userName: user.nickname || 'Unknown User',
                   profilePicture: user.profileUrl || '/img/avatar.png',
@@ -1862,7 +1862,8 @@ async function routes(fastify, options) {
                     prompt: item.post.image.prompt,
                     comment: item.post.comment || '',
                     createdAt: item.post.createdAt,
-                    likes: item.post.likes || 0
+                    likes: item.post.likes || 0,
+                    likedBy: item.post.likedBy || []
                   }
                 } : null;
               })

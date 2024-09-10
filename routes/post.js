@@ -129,6 +129,47 @@ async function routes(fastify, options) {
       reply.code(500).send('Internal Server Error');
     }
   });
+  fastify.post('/posts/:id/like', async (request, reply) => {
+    try {
+      const postId = new fastify.mongo.ObjectId(request.params.id);
+      const user = await fastify.getUser(request, reply); // Assuming you have a method to get the user
+      const userId = new fastify.mongo.ObjectId(user._id);
+  
+      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const postsCollection = db.collection('posts');
+      const likesCollection = db.collection('posts_likes');
+  
+      // Check if the user already liked the post
+      const existingLike = await likesCollection.findOne({ postId, userId });
+  
+      if (existingLike) {
+        return reply.code(400).send({ error: 'User has already liked this post' });
+      }
+  
+      // Add the like in the likes collection
+      await likesCollection.insertOne({
+        postId,
+        userId,
+        likedAt: new Date(),
+      });
+  
+      // Increment the like count on the post
+      const result = await postsCollection.updateOne(
+        { _id: postId },
+        { $inc: { likes: 1 }, $addToSet: { likedBy: userId } } // Adding userId to the likedBy array
+      );
+  
+      if (result.matchedCount === 0) {
+        return reply.code(404).send({ error: 'Post not found' });
+      }
+  
+      reply.send({ message: 'Post liked successfully' });
+    } catch (err) {
+      console.error(err);
+      reply.code(500).send('Internal Server Error');
+    }
+  });
+  
   fastify.post('/posts/:id/unlike', async (request, reply) => {
     try {
       const postId = new fastify.mongo.ObjectId(request.params.id);
@@ -137,7 +178,7 @@ async function routes(fastify, options) {
   
       const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
       const postsCollection = db.collection('posts');
-      const likesCollection = db.collection('likes');
+      const likesCollection = db.collection('posts_likes');
   
       // Check if the user has already liked the post
       const existingLike = await likesCollection.findOne({ postId, userId });

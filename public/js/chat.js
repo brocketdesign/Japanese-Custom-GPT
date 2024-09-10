@@ -1798,7 +1798,6 @@ $(document).ready(async function() {
         } 
     
         else if (messageClass === 'bot-image' && message instanceof HTMLElement) {
-            alert('display bot-image')
             messageElement = $(`
                 <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass}">
                     <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
@@ -1816,7 +1815,6 @@ $(document).ready(async function() {
         } 
     
         else if (messageClass === 'bot-image-nsfw'&& message instanceof HTMLElement) {
-            alert('display bot-image-nsfw')
             messageElement = $(`
                 <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass} unlock-nsfw" style="position: relative;">
                     <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
@@ -2432,65 +2430,6 @@ function enableToggleDropdown() {
             );
         }
     });
-}
-function showRegistrationForm(messageId,callback) {
-
-    //window.location = "/authenticate?register=true"
-    Swal.fire({
-      title: '',
-      text: '',
-      //imageUrl: '/img/login-bg-862c043f.png', // replace with your image URL
-      imageWidth: 'auto',
-      imageHeight: 'auto',
-      position: 'bottom',
-      html: `
-        <h2><span class="u-color-grad">無料で</span><br>チャットを続けましょう</h2>
-        <p class="text-muted mb-2 header" style="font-size: 16px;">今すぐ体験を始めよう！</p>
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-md-8">
-                    <div class="card shadow-0 border-0">
-                        <div class="card-body">
-                            <a href="/user/google-auth" class="btn btn-light ico-login-button mb-3">
-                                <img src="/img/google_logo_neutral.png" alt="Google"/>
-                                <span class="gsi-material-button-contents">で続ける</span>
-                            </a>
-                            <a href="/user/line-auth" class="btn btn-light ico-login-button mb-3">
-                                <img src="/img/line_btn_base.png" alt="LINE"/>
-                                <span class="gsi-material-button-contents">で続ける</span>
-                            </a>
-                            <p>または</p>
-                            <a href="/authenticate/mail" class="btn btn-light ico-login-button mb-3 py-2">
-                                <i class="fas fa-envelope me-3"></i>
-                                <span>メールで続ける</span>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    `,
-      showCancelButton: false,
-      showConfirmButton: false,
-      showCloseButton: true,
-      allowOutsideClick: false,
-      showClass: {
-          popup: 'swal2-bottom-slide-in'
-      },
-      hideClass: {
-          popup: 'swal2-bottom-slide-out'
-      },
-      customClass: {
-        popup: 'animated fadeInDown'
-      }
-    }).then((result) => {
-        if (result.dismiss) {
-          if(typeof callback === 'function'){
-            callback()
-          }
-        }
-      });
 }
 
 $(document).find('#register-form').on('submit', function(event) {

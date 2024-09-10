@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ja">
+       {{> dashboard-header}}
+<body>
+    {{> dashboard-nav}}
+    <style>
+        footer{display:none}
+        .isLoading .fa-image{
+            display: none;
+        }
+        .isLoading .fa-spin{
+            display: inherit !important;
+        }
+        
+        .custom-gradient-bg {
+            background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: color 0.3s ease-in-out;
+        }
+
+        .custom-gradient-bg::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 300%;
+            height: 300%;
+            background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 80%);
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.5s ease-in-out;
+            z-index: 0;
+        }
+
+        .custom-gradient-bg:hover::before {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .custom-gradient-bg:hover {
+            color: #fff;
+        }
+
+        .text-muted {
+            color: #aeb0b4 !important;
+            font-weight: 300;
+        }
+        .u-color-grad {
+          background: linear-gradient(90.9deg, rgba(110, 32, 244, 0.5) 2.74%, #6E20F4 102.92%);
+            background-clip: border-box;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          margin-right: 6px;
+          letter-spacing: 0;
+          font-size: 26px;
+          line-height: 1;
+        }
+        .avatar{
+            object-fit: cover;
+            object-position: top;
+            width: 32px;
+        }
+        .card-img-top.girls_avatar {
+            object-fit: cover;
+            object-position: top;
+            width: 100%;  
+            margin: auto;
+            border-radius: 15px;
+            height: 350px;
+            padding: 0 5px;  
+            background-position: top;
+            background-size: cover;
+        }
+        .swal-image.analyze{
+            object-fit: cover;
+            object-position: top;
+            width: auto !important;
+            height: 200px !important;
+            border-radius: 6px !important;
+        }
+        .card-header, .card-footer {
+            flex-shrink: 0;
+        }
+        .card-body {
+            flex-grow: 1;
+            overflow-y: auto;
+            position: relative;
+        }
+        .chat-contain .card-body{
+                width: 100%;
+        }
+        .character-title{
+            font-weight: 600;
+            font-size: 16px;
+            color: black;
+        }
+        .character-short-description {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            font-size: 13px;
+        }
+        .scroll-horizontal {
+            flex-wrap: nowrap;
+            width: 100%;
+            flex-direction: row;
+            overflow-x: scroll;
+        }
+        .liked i{
+          color:red;
+        }
+        @media (max-width: 600px) {
+            .chat-contain .card-body{
+                width: 100%;
+            }
+        }
+    </style>
+    <div class="container mt-4">
+      <!-- Row for User Profile and Post Content -->
+      <div class="row">
+
+        <!-- Post Content Section -->
+        <div class="col-lg-8">
+          <div class="card">
+            <img src="{{post.image.imageUrl}}" class="card-img-top" alt="{{post.prompt}}" style="max-height:400px;width:auto;object-fit:contain;">
+            <div class="card-body">
+              <h5 class="card-title">{{post.prompt}}</h5>
+              <p class="card-text">{{post.comment}}</p>
+              <p class="text-muted">投稿日: <span class="jp-date">{{post.createdAt}}</span></p>
+              <div class="d-flex justify-content-between align-items-center">
+                <button class="btn btn-light shadow-0 post-fav {{#if  (includesObjectId post.likedBy user._id) }}liked{{else}}{{/if}}" data-id="{{post._id}}"> <i class="bi bi-heart-fill me-2"></i>いいね (<span class="ct">{{post.likes}}</span>)</button>
+                <a href="/chat/{{post.chatId}}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットに参加</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Profile Section -->
+        <div class="col-lg-4 mb-4">
+          <div class="card">
+            <div class="card-body text-center">
+              <div class="user-profile mt-4">
+                <div class="row mb-3">
+                  <div id="profileSection" class="text-center">
+                    <div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative mb-2">
+                      <img id="profileImage" src="{{default postUser.profileUrl '/img/avatar.png'}}" alt="chat Thumbnail" class="rounded-circle" 
+                      style="width: 100px; height: 100px; object-fit: cover; object-position: top;">
+                    </div>
+                    <h2>{{postUser.nickname}}</h2>
+                    <span class="btn btn-light onchat-on me-2">
+                        <span>🪙</span>
+                        <span class="user-coins fw-bold">{{postUser.coins}}</span>
+                    </span>
+                    {{#if postUser.bio}}
+                        <p class="user-bio fw-bold">{{postUser.bio}}</p>
+                    {{/if}}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<section class="container">
+  <div class="row justify-content-center">
+    <div class="col-12 mt-4">
+        <h4>投稿したAI画像</h4>
+        <hr>
+        <div id="user-posts-gallery" class="row g-3"></div>
+        <div id="pagination-controls" class="d-flex justify-content-center my-3"></div>
+    </div>
+  </div>
+</section>
+
+<section class="py-3">
+  <div class="container-0">
+
+  </div>
+</section>
+{{> dashboard-footer}}
+<script>
+    const userId = `{{{postUser._id}}}`;
+
+  $(document).ready(function(){
+        $(document).on('click', '.open-chat', function(){
+          const chatId = $(this).data('id');
+          if (window.self !== window.top) {
+            window.parent.postMessage({ event: 'openChat', chatId: chatId }, '*');
+          } else {
+            window.location = `/chat/${chatId}`
+          }
+        });
+  });
+
+
+  $(document).ready(function() {
+    return
+    const userId = `{{{postUser._id}}}`;
+    console.log({userId})
+    $.getJSON(`/user/chat-data/${userId}`, function(data) {
+        let htmlContent = '';
+
+        if (data.userChats.length > 0) {
+            // Tabs for Admin
+            if (data.isAdmin) {
+                htmlContent += `
+                <ul class="nav nav-tabs mb-2" id="chatTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="public-tab" data-bs-toggle="tab" data-bs-target="#public" type="button" role="tab" aria-controls="public" aria-selected="true">チャット</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="private-tab" data-bs-toggle="tab" data-bs-target="#private" type="button" role="tab" aria-controls="private" aria-selected="false">非公開キャラクター</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="persona-tab" data-bs-toggle="tab" data-bs-target="#persona" type="button" role="tab" aria-controls="persona" aria-selected="false">ペルソナ</button>
+                    </li>
+                </ul>`;
+            }
+
+            // Tab Content
+            htmlContent += `<div class="tab-content" id="chatTabContent">`;
+
+            // Public Chats
+            htmlContent += `
+            <div class="tab-pane fade show active" id="public" role="tabpanel" aria-labelledby="public-tab">
+                <div class="row m-0 px-1">
+                    <div><span class="badge bg-secondary"><i class="fas fa-unlock me-2"></i> ${data.publicChatCount}</span></div>
+                    <div class="d-flex scroll-horizontal">`;
+
+            data.userChats.forEach(chat => {
+                if (chat.visibility === "public") {
+                    htmlContent += `
+                    <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2 open-chat" 
+                        style="cursor:pointer;" 
+                        data-id="${chat._id}">
+                        <div style="background-image:url('${chat.chatImageUrl}')" class="card-img-top girls_avatar position-relative" alt="${chat.name}">
+                            <div id="spinner-${chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
+                            <div class="tags position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px">
+                                  ${(chat?.tags ?? []).map(tag => `<span class="badge bg-dark">${tag}</span>`).join('')}
+                            </div>
+                        </div>
+                        <div class="card-body bg-transparent border-0 pb-0 text-start">
+                            <h5 class="card-title character-title">${chat.name}</h5>
+                            <p class="card-text character-short-description">${chat.description}</p>
+                        </div>
+                    </div>`;
+                }
+            });
+
+            htmlContent += `</div></div></div>`;
+
+            // Private Chats (Admin Only)
+            if (data.isAdmin) {
+                htmlContent += `
+                <div class="tab-pane fade" id="private" role="tabpanel" aria-labelledby="private-tab">
+                    <div class="row m-0 px-1">
+                        <div><span class="badge bg-secondary"><i class="fas fa-lock me-2"></i> ${data.privateChatCount}</span></div>
+                        <div class="d-flex scroll-horizontal">`;
+
+                data.userChats.forEach(chat => {
+                    if (chat.visibility === "private") {
+                        htmlContent += `
+                        <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2 open-chat" 
+                            style="cursor:pointer;" 
+                            data-id="${chat._id}">
+                            <div style="background-image:url('${chat.chatImageUrl}')" class="card-img-top girls_avatar position-relative" alt="${chat.name}">
+                                <div id="spinner-${chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
+                                <div class="tags position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px">
+                                  ${(chat?.tags ?? []).map(tag => `<span class="badge bg-dark">${tag}</span>`).join('')}
+                                </div>
+                            </div>
+                            <div class="card-body bg-transparent border-0 pb-0 text-start">
+                                <h5 class="card-title character-title">${chat.name}</h5>
+                                <p class="card-text character-short-description">${chat.description}</p>
+                            </div>
+                        </div>`;
+                    }
+                });
+
+                htmlContent += `</div></div></div>`;
+            }
+
+            // Personas (Admin Only)
+            if (data.isAdmin) {
+                htmlContent += `
+                <div class="tab-pane fade" id="persona" role="tabpanel" aria-labelledby="persona-tab">
+                    <div class="row m-0 px-1">`;
+
+                if (data.personas.length > 0) {
+                    htmlContent += `
+                    <div><span class="badge bg-secondary"><i class="fas fa-user-circle me-2"></i> ${data.personas.length}</span></div>
+                    <div class="d-flex scroll-horizontal">`;
+
+                    data.personas.forEach(persona => {
+                        htmlContent += `
+                        <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2 open-chat" 
+                            style="cursor:pointer;" 
+                            data-id="${persona._id}">
+                            <div style="background-image:url('${persona.chatImageUrl}')" class="card-img-top girls_avatar position-relative" alt="${persona.name}">
+                                <div id="spinner-${persona._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
+                                <div class="tags position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px">
+                                  ${(persona?.tags ?? []).map(tag => `<span class="badge bg-dark">${tag}</span>`).join('')}
+                                </div>
+                                <div class="persona position-absolute" style="color: rgb(165 164 164);opacity:0.8; top:10px;right:10px" data-event="true" data-id="${persona._id}">
+                                    <span class="badge bg-dark" style="width: 30px;"><i class="fas fa-user-circle"></i></span>
+                                </div>
+                            </div>
+                            <div class="card-body bg-transparent border-0 pb-0 text-start">
+                                <h5 class="card-title character-title">${persona.name}</h5>
+                                <p class="card-text character-short-description">${persona.description}</p>
+                            </div>
+                        </div>`;
+                    });
+
+                    htmlContent += `</div>`;
+                } else {
+                    htmlContent += `<p class="text-muted">まだペルソナがありません。</p>`;
+                }
+
+                htmlContent += `</div></div>`;
+            }
+
+            htmlContent += `</div>`;
+        } else {
+            htmlContent += `<div class="container text-center"><p>チャットはありません。</p></div>`;
+        }
+
+        $('.container-0').html(htmlContent);
+        window.parent.postMessage('resizeIframe', '*');
+    });
+});
+
+</script>
+<script>
+  // On page load, you can call the function with the userId and the page you want to start from (e.g., page 1).
+  $(document).ready(function () {
+    loadUserPosts(userId, 1);
+  });
+
+  $(document).ready(function () {
+  $(document).find('.jp-date').each(function () {
+    const originalDate = new Date($(this).text());
+
+    // Format date into Japanese format: 年/月/日 時間
+    const formattedDate = originalDate.getFullYear() + '年' +
+                          (originalDate.getMonth() + 1) + '月' +
+                          originalDate.getDate() + '日 ' +
+                          originalDate.getHours() + '時' +
+                          originalDate.getMinutes() + '分';
+
+    // Set the formatted date back into the element
+    $(this).text(formattedDate);
+  });
+});
+
+</script>

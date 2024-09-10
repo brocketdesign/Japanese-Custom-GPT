@@ -68,6 +68,10 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       handlebars.registerHelper('json', function(context) {
         return JSON.stringify(context);
       });
+      handlebars.registerHelper('includesObjectId', function (array, userId) {
+        // Check if any ObjectId in the array matches the userId after converting both to strings
+        return array?.some(id => id.toString() === userId.toString());
+      });      
     });
     fastify.register(require('fastify-cookie'), {
       secret: "my-secret",
@@ -167,7 +171,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     fastify.get('/', async (request, reply) => {
       const user = await fastify.getUser(request, reply);
       if (user.isTemporary) {
-        return reply.redirect('/discover/')
+        return reply.redirect('/discover')
       }else{
         return reply.redirect('/chat/')
       }
@@ -221,6 +225,38 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
 
       return reply.renderWithGtm('custom-chat.hbs', { title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd',mode:process.env.MODE, user, userId, chatId});
     });
+    fastify.get('/post/:postId', async (request, reply) => {
+      try {
+        let user = await fastify.getUser(request, reply);
+        const userId = user._id;
+        const postId = request.params.postId;
+        
+        const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+        user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+    
+        const post = await db.collection('posts').findOne({ _id: new fastify.mongo.ObjectId(postId) });
+
+        const postUserId = post.userId;
+        postUser = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+
+        console.log({postUser})
+        if (!post) {
+          return reply.code(404).send({ error: 'Post not found' });
+        }
+        return reply.renderWithGtm('post.hbs', {
+          title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd',
+          mode: process.env.MODE,
+          user,
+          postUser,
+          userId,
+          post,
+        });
+      } catch (err) {
+        console.log(err);
+        return reply.code(500).send('Internal Server Error');
+      }
+    });
+    
     fastify.get('/character/:id', async (request, reply) => {
       const chatId = request.params.id;
       const chatsCollection = db.collection('chats');
@@ -305,7 +341,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       let user = await fastify.getUser(request, reply);
       const userId = user._id;
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-      return reply.renderWithGtm('chat-discover.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' , user });
+      return reply.renderWithGtm('discover.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' , user });
     });
 
     fastify.get('/chat/edit/:chatId', {

@@ -138,12 +138,11 @@ async function routes(fastify, options) {
       }
   };
 
-  async function saveImageToDB(userId, chatId, userChatId, prompt, imageUrl, aspectRatio, blurredImageUrl = null, reply) {
+  async function saveImageToDB(userId, chatId, userChatId, prompt, imageUrl, aspectRatio, blurredImageUrl = null,nsfw = false, reply) {
     try {
       const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
       const chatsGalleryCollection = db.collection('gallery');
       const imageId = new fastify.mongo.ObjectId();
-  
       await chatsGalleryCollection.updateOne(
         { 
           userId: new fastify.mongo.ObjectId(userId),
@@ -157,7 +156,8 @@ async function routes(fastify, options) {
               imageUrl, 
               blurredImageUrl, 
               aspectRatio, 
-              isBlurred: !!blurredImageUrl 
+              isBlurred: !!blurredImageUrl,
+              nsfw
             } 
           } 
         },
@@ -489,12 +489,12 @@ async function fetchNovitaResult(task_id) {
 
   const default_prompt ={
     nsfw: {
-      prompt: `score_10_up, score_9_up, score_8_up, score_7_up, source_anime,,perfect anatomy,masterpiece,(((best quality))),(((ultra-detailed))),(perfect skin),perfect fingers,perfect anatomy,HD,4K quality,(perfect hands:0.1),((nsfw)),((((sexy)))),erotic pose,((sexy pose)), naughty face, completely nude, uncensored,nsfw `,
-      negative_prompt: "naked pussy,pussy,vagin,sex,dick,rybadimagenegative_v1.3, ng_deepnegative_v1_75t, (ugly face),cross-eyed,sketches, (worst quality:2),(low quality:2), (normal quality:2),normal quality,((monochrome)),((grayscale)), skin spots,acnes,(((skin blemishes))),bad anatomy,(Multiple people),bad hands,,missing fingers,cropped,low quality, jpeg artifacts,burned,(((blurry))),cropped, poorly drawn hands,poorly drawn face,mutation,deformed,worst quality,"
+      prompt: `((nsfw)),((((sexy)))),erotic pose,((sexy pose)), naughty face, completely nude, uncensored,nsfw `,
+      negative_prompt: "naked pussy,pussy,vagin,sex,dick,(ugly face),score_6,score_5,score_4,blurry,signature,username,watermark,jpeg artifacts,normal quality,worst quality,low quality,missing fingers,extra digits,fewer digits,bad eye,"
     },
     sfw: {
-      prompt: `score_10_up, score_9_up, score_8_up, score_7_up, source_anime,,perfect anatomy,masterpiece,(((best quality))),(((ultra-detailed))),(perfect skin),perfect fingers,perfect anatomy,HD,4K quality,(perfect hands:0.1),((sfw)),dressed, clothes,`,
-      negative_prompt : "nipple,topless,nsfw,naked pussy,pussy,((vagin)),vaginal,((((pussy)))),(((nipple))),nude,((naked)),sex,(((genital))), rybadimagenegative_v1.3, ng_deepnegative_v1_75t, (ugly face),cross-eyed,sketches, (worst quality:2),(low quality:2), (normal quality:2),normal quality,((monochrome)),((grayscale)), skin spots,acnes,(((skin blemishes))),bad anatomy,(Multiple people),bad hands,,missing fingers,cropped,low quality, jpeg artifacts,burned,(((blurry))),cropped, poorly drawn hands,poorly drawn face,mutation,deformed,worst quality,"
+      prompt: `HD,4K quality,(perfect hands:0.1),((sfw)),dressed,clothes,`,
+      negative_prompt : "nipple,topless,nsfw,naked pussy,pussy,((vagin)),vaginal,((((pussy)))),(((nipple))),nude,((naked)),sex,(((genital))), score_6,score_5,score_4,blurry,signature,username,watermark,jpeg artifacts,normal quality,worst quality,low quality,missing fingers,extra digits,fewer digits,bad eye,"
     }
   }
   const params = {
@@ -527,7 +527,7 @@ async function fetchNovitaResult(task_id) {
       const image_request1 = { ...params, prompt: default_prompt.sfw.prompt + prompt, negative_prompt: default_prompt.sfw.negative_prompt };
       const image_request2 = { ...params, prompt: default_prompt.nsfw.prompt + prompt, negative_prompt: default_prompt.nsfw.negative_prompt };
   
-      const handleImageRequest = async (image_request, blur = false) => {
+      const handleImageRequest = async (image_request, blur = false, nsfw = false) => {
         const taskId = await fetchNovitaMagic(image_request);
         let imageUrls = await fetchNovitaResult(taskId);
         
@@ -538,7 +538,7 @@ async function fetchNovitaResult(task_id) {
           if (blur) {
             blurredImageUrl = await createBlurredImage(imageUrl,db);
           }
-      
+
           // Save both the original and blurred (if exists) URLs in the DB
           const { imageId } = await saveImageToDB(
             userId, 
@@ -547,7 +547,8 @@ async function fetchNovitaResult(task_id) {
             image_request.prompt, 
             imageUrl,  // original image
             aspectRatio, 
-            blurredImageUrl  // blurred image (if exists)
+            blurredImageUrl,  // blurred image (if exists)
+            nsfw
           );
       
           // Return the correct URL based on the blur flag
@@ -559,7 +560,7 @@ async function fetchNovitaResult(task_id) {
   
       const [images1, images2] = await Promise.all([
         handleImageRequest(image_request1),
-        handleImageRequest(image_request2, !isSubscribed)
+        handleImageRequest(image_request2, !isSubscribed, true)
       ]);
   
       reply.send({ images: [...images1, ...images2] });

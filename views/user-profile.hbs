@@ -2,6 +2,7 @@
 <html lang="ja">
        {{> dashboard-header}}
 <body>
+    {{> dashboard-nav}}
     <style>
         footer{display:none}
         .isLoading .fa-image{
@@ -136,6 +137,12 @@
         </div>
       </div>
     </div>
+    <div class="col-12 mt-4">
+        <h4>投稿したAI画像</h4>
+        <hr>
+        <div id="user-posts-gallery" class="row g-3"></div>
+        <div id="pagination-controls" class="d-flex justify-content-center my-3"></div>
+    </div>
   </div>
 </section>
 
@@ -146,6 +153,7 @@
 </section>
 {{> dashboard-footer}}
 <script>
+    const userId = `{{{userData._id}}}`;
   $(document).ready(function(){
         $(document).on('click', '.open-chat', function(){
           const chatId = $(this).data('id');
@@ -294,4 +302,66 @@
     });
 });
 
+</script>
+<script>
+  function loadUserPosts(userId, page = 1) {
+    $.ajax({
+      url: `/user/${userId}/posts?page=${page}`,
+      method: 'GET',
+      success: function (data) {
+        let galleryHtml = '';
+        data.posts.forEach(item => {
+          galleryHtml += `
+            <div class="col-6 col-md-4 col-lg-3">
+              <div class="card">
+                <a href="/post/${item._id}" class="text-muted text-decoration-none">
+                    <img src="${item.image.imageUrl}" alt="${item.image.prompt}" class="card-img-top">
+                </a>
+                <div class="card-body p-2">
+                  <a href="/post/${item._id}" class="text-muted text-decoration-none">${item.comment || 'No Comment'}</a>
+                  <span class="float-end post-fav" data-id="${item._id}">
+                    <i class="bi bi-heart" style="cursor: pointer;"></i>
+                  </span>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        $('#user-posts-gallery').html(galleryHtml);
+        generatePagination(data.page, data.totalPages, userId);
+      },
+      error: function (err) {
+        console.error('Failed to load posts', err);
+      }
+    });
+  }
+
+  function generatePagination(currentPage, totalPages, userId) {
+    let paginationHtml = '';
+
+    if (totalPages > 1) {
+      // Previous Button
+      paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadUserPosts('${userId}', ${currentPage - 1})">前へ</button>`;
+
+      // Page numbers
+      for (let i = 1; i <= totalPages; i++) {
+        paginationHtml += `
+          <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadUserPosts('${userId}', ${i})">
+            ${i}
+          </button>
+        `;
+      }
+
+      // Next Button
+      paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadUserPosts('${userId}', ${currentPage + 1})">次へ</button>`;
+    }
+
+    $('#pagination-controls').html(paginationHtml);
+  }
+
+  // On page load, you can call the function with the userId and the page you want to start from (e.g., page 1).
+  $(document).ready(function () {
+    loadUserPosts(userId, 1);
+  });
 </script>

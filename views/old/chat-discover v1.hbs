@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="ja">
+       {{> dashboard-header}}
+<body>
+    {{> dashboard-nav}}
+    <style>
+        .gen-idea-container #swal2-html-container{
+            border-radius: 40px 40px 0 0;
+            padding: 0;
+            width: 100%;
+        }
+        .gen-idea-container{
+            border-radius: 40px 40px 0 0;
+            background-color: #313030;
+            width: 100%;
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+        .gen-idea-container .swal2-close{
+            right: 15px;
+            background: #9796963d;
+            border-radius: 50%;
+            font-size: 31px;
+            top: 10px;
+        }
+        em {
+            font-size: 13px;
+            color: #979393;
+        }
+        .assistant-image-box img{
+            width: 100%;
+            border-radius: 5px;
+            max-width: 200px;
+            cursor: pointer;
+        }
+        .isLoading .fa-image{
+            display: none;
+        }
+        .isLoading .fa-spin{
+            display: inherit !important;
+        }
+        
+        .custom-gradient-bg {
+            background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: color 0.3s ease-in-out;
+        }
+
+        .custom-gradient-bg::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 300%;
+            height: 300%;
+            background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 80%);
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.5s ease-in-out;
+            z-index: 0;
+        }
+
+        .custom-gradient-bg:hover::before {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .custom-gradient-bg:hover {
+            color: #fff;
+        }
+        .chatbot-info-card {
+            height: 80vh;
+            overflow-y: scroll;
+        }
+        .chatbot-info-card .swal-image.analyze {
+            margin-left: auto !important;
+            margin-right: auto !important;
+            margin-top: 25px !important;
+        }
+        .chatbot-image-chat{
+            cursor: pointer;
+        }
+        .chatbot-category-button img {
+            object-fit: cover;
+            width: 70px !important;
+            height: 70px;
+            border-radius: 50%;
+            object-position: top;
+        }
+        .assistant-chat-box{
+            border-radius: 0px 15px 15px 15px;
+            background-color: #151213b0;
+            color: #fff;
+        }
+        .narration-container{
+            font-size: 13px;
+            color: #606060;
+        }
+        .chat-option-menu .dropdown-item{
+            padding: 5px 15px;
+        }
+        .chat-option-menu li {
+            padding: 3px 10px;
+        }
+        #chat-discovery h4{
+            margin-bottom: 0px !important;
+        }
+        .message-container p {
+            margin-bottom: 0;
+        }
+        .btn.ico-login-button {
+            background-color: #f2f2f2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn.ico-login-button img {
+            width: 30px;
+            margin-right: 10px;
+        }
+        .animated.fadeInDown .swal2-image{
+            margin:0;
+        }
+        .animated.fadeInDown .swal2-close{
+            border:0;
+        }
+        /* Custom animation for sliding in from the bottom */
+        .swal2-bottom-slide-in {
+            animation: bottom-slide-in 0.5s;
+        }
+
+        .swal2-bottom-slide-out {
+            animation: bottom-slide-out 0.5s;
+        }
+
+        @keyframes bottom-slide-in {
+            0% {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes bottom-slide-out {
+            0% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+        }
+
+        .text-muted {
+            color: #aeb0b4 !important;
+        }
+        .text-muted {
+            font-weight: 300;
+        }
+        .scroll-horizontal {
+            flex-wrap: nowrap;
+            width: 100%;
+            flex-direction: row;
+            overflow-x: scroll;
+        }
+            .u-color-grad {
+            background: linear-gradient(90.9deg, rgba(110, 32, 244, 0.5) 2.74%, #6E20F4 102.92%);
+                background-clip: border-box;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-right: 6px;
+            letter-spacing: 0;
+            font-size: 26px;
+            line-height: 1;
+            }
+        .onchat-off, .onchat-on{
+            display: none;
+        }
+        .avatar{
+            object-fit: cover;
+            object-position: top;
+            width: 32px;
+        }
+        .card-img-top.girls_avatar {
+            object-fit: cover;
+            object-position: top;
+            width: 100%;  
+            margin: auto;
+            border-radius: 15px;
+            height: 350px;
+            padding: 0 5px;  
+            background-position: top;
+            background-size: cover;
+        }
+        .scroll-container {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        }
+        .scroll-container > * {
+        flex: 0 0 auto;
+        width: auto;
+        }
+        .category-container {
+            display: flex;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        .category-button {
+            margin: 5px;
+        }
+        .card-round-design .col-12{
+            margin-top: 50px;
+        }
+        .card-round-design .col-12 .card .card-img-top{
+            position: absolute;
+            top: -50px;
+            width: 100px;
+            height: 100px;
+            left: 0;
+            right: 0;
+            margin: auto;
+            border-radius: 150px;
+            object-fit: cover;
+            object-position: top;
+        }
+        .card-round-design .col-12 .card .card-body{
+            padding-top: 100px;
+        }
+        .card-round-design .col-10 .card .card-img-top{
+            height: 270px;
+            margin: auto;
+            object-fit: cover;
+            object-position: top;
+        }
+        .swal-image.analyze{
+            object-fit: cover;
+            object-position: top;
+            width: auto !important;
+            height: 200px !important;
+            border-radius: 6px !important;
+        }
+        .chat-container {
+            display: flex;
+            overflow-x: auto;
+            padding-bottom: 0px;
+            padding-top: 0px;
+        }
+        .chat-card {
+            flex: 0 0 auto;
+            width: 30vw;
+            margin-right: 15px;
+        }
+        .online-text {
+            width: 95%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .character-short-description {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            font-size: 13px;
+        }
+        .character-title{
+            font-weight: 600;
+            font-size: 16px;
+            color: black;
+        }
+        .chat-container .card:hover {
+            background: none !important;
+        }
+        @media (max-width: 600px) {
+            .noscroll{
+                display: block;
+                overflow: hidden;
+            }
+            .top-img{
+                width: 70%;
+            }
+            .card.chat-card {
+                width: 330px;
+            }
+        }
+        .intro-thumbnail{
+            border-radius: 150px;
+            margin-bottom: 10px;
+            width: 100px;
+            object-fit: cover;
+            height: 100px;
+            object-position: top;
+        }
+        .sidebar, .sidebar-history {
+            height: 100vh;
+            width: 260px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1034;
+            background-color: #f5f5f5;
+            transition: transform 0.3s ease;
+            transform: translateX(0);
+            overflow: scroll;
+        }
+        .sidebar.hidden ,.sidebar-history.hidden {
+            transform: translateX(-260px);
+        }
+        .sidebar-history.shadow {
+            z-index: 1035;
+        }
+        .content {
+            margin-left: 260px;
+            transition: margin-left 0.3s ease;
+        }
+        .content.collapsed {
+            margin-left: 0;
+        }
+        nav.navbar {
+            margin-left: 0;
+            transition: margin-left 0.3s ease;
+        }
+        nav.navbar.move {
+            margin-left: 260px;
+        }
+        .choice-container {
+            text-wrap: nowrap;
+            overflow: auto;
+            padding: 15px 0px;
+        }
+        #startButton {
+            border-radius: 10px;
+            font-weight: 600;
+            padding: 15px 0px;
+        }
+        #chatContainer {
+            height: 100%;
+            overflow-y: scroll;
+        }
+        #chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+        .card-header, .card-footer {
+            flex-shrink: 0;
+        }
+        .card-body {
+            flex-grow: 1;
+            overflow-y: auto;
+            position: relative;
+        }
+        .btn-flat-border {
+            display: inline-block;
+            padding: 0.3em 1em;
+            text-decoration: none;
+            color: #742af4;
+            border: solid 2px #b58df9;
+            border-radius: 3px;
+            transition: .4s;
+            margin-right: 5px;
+            margin-left: 5px;
+            font-size: 18px;;
+        }
+        .dropdown-toggle::after {
+            display:none !important;
+        }
+
+        .btn-flat-border:hover {
+            background: #742af4;
+            color: white;
+        }
+        #messages {
+            padding: 10px;
+            padding-bottom: 100px;
+            border-radius: 5px;
+            z-index: 1;
+        }
+        #chatInput {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            right: 0;
+            left: 0;
+            background: linear-gradient(to top, white 40%, transparent 100%);
+            z-index: 1000;
+            padding: 10px;
+        }
+        #sendMessage,
+        #chatInput .load {
+            border-left: 0 !important;
+            border-radius: 0px 30px 30px 0px !important;
+            box-shadow: none;
+        }
+        #gen-ideas{
+            border-right: 0 !important;
+            border-radius: 30px 0px 0px 30px !important;
+            box-shadow: none;
+        }
+        #userMessage {
+            border-radius: 0 !important;
+            background-color: #f5f5f5;
+            height: 50px;
+            font-size: 14px;
+            padding-left: 20px;
+            resize: none;
+        }
+        #userMessage:focus {
+            outline: none;
+            box-shadow: none; /* If there is a box shadow applied on focus */
+        }
+        .user-chat{
+            cursor: pointer;
+        }
+        .user-chat:hover{
+            background-color: #f8f9fa;
+        }
+
+        .chat-list .thumb {
+            margin-right: 0px;
+        }
+        .chat-list .thumb img {
+            width: 40px;
+            height: 40px;
+            -o-object-fit: cover;
+            object-fit: cover;
+            overflow: hidden;
+            object-position: top;
+            border-radius: 13px;
+        }
+        .chat-list.item:hover, .user-chat-history:hover {
+            background-color: #c6c9cc99 !important;
+        }
+        .chat-list .dropdown .dropdown-toggle, #chat-history .dropdown .dropdown-toggle{
+            transform: rotate(90deg);
+        }
+        .chat-list .dropdown .dropdown-toggle, #chat-history .dropdown .dropdown-toggle{
+            opacity: 1;
+            pointer-events: 'none';
+        }
+        .online-text {
+            width: 150px; 
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .lines-paragraph {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;  
+            overflow: hidden;
+        }
+
+        .chat-contain .card-body{
+                width: 100%;
+        }
+        .swal-image{
+            border-radius: 50px;
+            object-fit: cover;
+        }
+        .img-gen-button {
+            background-size: cover;
+            border-radius: 50%;
+            padding: 15px;
+        }
+        @media (max-width: 600px) {
+            .chat-contain .card-body{
+                width: 100%;
+            }
+            .content,
+            nav.navbar.move {
+                margin-left: 0px;
+            }
+        }
+    </style>
+<div class="container my-5 px-0">
+    <h4 class="px-4">キャラクターライブラリー</h4>
+    <p class="text-muted px-4" style="font-size: 12px;">好きなキャラクターを選び、最新の生成AI技術でカスタマイズしましょう。私たちのライブラリーにはたくさんのキャラクターが揃っており、あなたのファンタジーに合わせたストーリーを作成して、自由にチャットを楽しむことができます。自分だけの世界を創り上げ、キャラクターとの対話を通じて新たな物語を体験してください。</p>
+    <section id="chat-discovery" class="sticky-top mb-2" style="display: block;background-color: #ffffffd9;">
+        <div id="chatbot-category" class="row px-3 mx-0 scroll-horizontal"></div>
+    </section>
+    <section class="w-100 p-0">
+        <div id="chatbot-library" class="chat-container row px-0 mx-0 mt-3" style="min-height:10px"></div>
+        <div id="chatbot-loading" class="text-center p-5" style="display: none;">
+            <div class="spinner-border spinner-border-md" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </section>
+</div>
+ {{> dashboard-footer}}
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.1/jquery.waypoints.js" integrity="sha512-ZKNVEa7gi0Dz4Rq9jXcySgcPiK+5f01CqW+ZoKLLKr9VMXuCsw3RjWiv8ZpIOa0hxO79np7Ec8DDWALM0bDOaQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+
+    //Infinite scroll
+    function renderInfiniteGrid(cardInfos,container){
+        cardInfos.forEach(function(item) {
+            var card = $(`
+                <div class="card custom-card bg-transparent shadow-0 border-0 my-0 p-1 col-6 col-sm-4 col-lg-2" style="cursor:pointer;">
+                    <div style="background-image:url(${item.chatImageUrl.indexOf('http')>=0 ? item.chatImageUrl : `/img/${item.chatImageUrl}`})" class="card-img-top girls_avatar position-relative" alt="${item.title}">
+                    </div>
+                </div>
+            `);
+            card.on('click', function() {
+                const redirectUrl = `/chat/edit/?chatImage=${encodeURIComponent(item.chatImageUrl)}`
+                if($('body').data('temporary-user')){
+                    $.cookie('redirect_url', redirectUrl);
+                    window.open('/authenticate')
+                    return
+                }
+                window.location = redirectUrl 
+            });
+            container.append(card);
+        });   
+    }
+    var  currentPage  = 1;
+    var isLoading = false;
+    function loadNextPage() {
+        if (isLoading) return;
+        isLoading = true;
+        const libraryInfo = JSON.parse(localStorage.getItem('chatbot-library'))
+        if(!libraryInfo){
+            return
+        }
+        const { gender, category } = libraryInfo
+        $('#chatbot-loading').show()
+        $.ajax({
+            type: 'GET',
+            url: `/characters/${gender}/${category}?page=${currentPage}`,
+            success: function(data) {
+                $('#chatbot-loading').hide()
+                renderInfiniteGrid(data.characters, $('#chatbot-library'));
+                currentPage++;
+                setTimeout(() => {
+                    isLoading = false;
+                }, 1000);
+            },
+            error: function(error) {
+                $('#chatbot-loading').hide()
+            }
+        });
+    }
+    $(document).on('scroll',function(){
+        if($('#chatbot-library').length == 0){
+            return
+        }
+        $('#chatbot-library').waypoint(function() {
+            loadNextPage();
+          }, {
+            offset: 'bottom-in-view'
+          });    
+    })
+    function fetchAndRenderCategories() {
+        $.ajax({
+            url: '/characters/categories', // The updated endpoint URL
+            method: 'GET',
+            success: function(response) {
+                $('#chatbot-category').empty();
+
+                if (response.status === 'Success' && response.categories) {
+                    response.categories.forEach(category => {
+                        const categoryButton = `
+                            <div type="button" class="chatbot-category-button col text-center" data-gender="${category.name[0]}" data-category="${category.name[1]}" onclick="libraryInfoUpdate(this)">
+                                <img src="${category.image}" alt="${category.name.join(' ')}" class="border border-light">
+                                <span class="small">${category.name[1]}</span>
+                            </div>`;
+                        $('#chatbot-category').append(categoryButton);
+                    });
+                } else {
+                    $('#chatbot-category').append('<p>No categories found.</p>');
+                }
+
+                const libraryInfo = JSON.parse(localStorage.getItem('chatbot-library'));
+                if (!libraryInfo) {
+                    const dataInit = { 
+                        gender: response.categories[0].name[0], 
+                        category: response.categories[0].name[1]
+                    };
+                    localStorage.setItem('chatbot-library', JSON.stringify(dataInit));
+                    loadNextPage();
+                } else {
+                    loadNextPage();
+                }
+            },
+            error: function(error) {
+                console.error('An error occurred:', error);
+                $('#chatbot-category').append('<p>Error fetching categories. Please try again later.</p>');
+            }
+        });
+    }
+
+    // Call the function to fetch and render categories
+    //fetchAndRenderCategories();
+    window.libraryInfoUpdate = function(el) {
+        if($(el).hasClass('done')){return}
+        $(el).addClass('done')
+        const gender = $(el).data('gender')
+        const category = $(el).data('category')
+        //$('#chatbot-library').empty()
+        $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+        currentPage = 1
+        localStorage.setItem('chatbot-library',JSON.stringify({ gender, category }))
+        isLoading = false
+        loadNextPage();
+    };
+</script>
+
+</body>
+</html>

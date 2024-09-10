@@ -1,7 +1,58 @@
 // Save the number of image generated
 // Implement a limit
 // Image generation is for premium users
+window.checkImageDescription = function(imageUrl = null, callback) {
+  imageUrl = imageUrl ? imageUrl : $('#chatImageUrl').val();
 
+  if (!imageUrl) {
+      console.log('Image URL is required.');
+      callback({error:'Abord'});
+      return;
+  }
+
+  if ($('#image_description').val()){return $('#image_description').val()}
+  
+  $.ajax({
+      url: '/api/check-image-description',
+      method: 'GET',
+      data: { imageUrl: imageUrl },
+      success: function(response) {
+          if (callback) {
+              callback(response);
+          }
+      },
+      error: function(xhr) {
+          if (callback) {
+              callback(false);
+          }
+      }
+  });
+}
+window.generateImageDescriptionBackend = function(imageUrl = null, chatId, callback) {
+  imageUrl = imageUrl ? imageUrl : $('#chatImageUrl').val();
+  const language = $('#language').val() || 'japanese';
+
+  const system = createSystemPayloadImage(language);
+
+  const apiUrl = '/api/openai-image-description';
+
+  $.ajax({
+      url: apiUrl,
+      method: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({ system, imageUrl, chatId }),
+      success: function(response) {
+          if (callback) {
+              callback(response);
+          }
+      },
+      error: function(xhr) {
+          if (callback) {
+              callback(null);
+          }
+      }
+  });
+}
 window.generateImagePromt = function(API_URL, userId, chatId, userChatId, thumbnail, character, callback) {
 
   const apiUrl = API_URL + '/api/openai-chat-image-completion/';          
@@ -154,22 +205,40 @@ window.generateImageHuggingFace = function(API_URL, userId, chatId, userChatId, 
   });
 }
 // NOVITA
-window.generateImageNovita = function(API_URL, userId, chatId, userChatId, character, option = {}) {
+window.generateImageNovita = async function(API_URL, userId, chatId, userChatId, item_id, thumbnail, option = {}) {
 
-  if (!option.prompt) {
-    console.log(`Provide a prompt`);
-    return;
-  }
-  
+  // Initialize the narrator response container
+  const imageResponseContainer = $(`
+    <div id="load-image-container" class="d-flex flex-row justify-content-start">
+        <div class="d-flex flex-row justify-content-start mb-4 message-container" style="border-radius: 15px;">
+            <img src="${thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+            <div class="d-flex justify-content-center align-items-center px-3">
+              <img src="/img/image-placeholder.gif" width="50px">
+            </div>
+        </div>
+    </div>
+`);
+
+$('#chatContainer').append(imageResponseContainer);
+$('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
+
+
+  const proposal = await getProposalById(item_id);
   
   const {
     negativePrompt = $('#negativePrompt-input').val(),
-    prompt = $('#prompt-input').val(),
+    prompt = proposal.description || $('#prompt-input').val(),
     aspectRatio = '9:16',
     isRoop = false,
     baseFace = null,
     itemId = null
   } = option;
+
+  if (!prompt) {
+    console.log(`Provide a prompt`);
+    return;
+  }
+  
 
   const API_ENDPOINT = API_URL + '/novita/txt2img';
 
@@ -183,7 +252,7 @@ window.generateImageNovita = function(API_URL, userId, chatId, userChatId, chara
       negative_prompt: negativePrompt, 
       aspectRatio,
       baseFace,
-      userId, chatId, userChatId, character
+      userId, chatId, userChatId,
     })
   })
   .then(response => {
@@ -193,10 +262,12 @@ window.generateImageNovita = function(API_URL, userId, chatId, userChatId, chara
     return response.json();
   })
   .then(data => {
-    const images = data.images
-    images.forEach(image => {
-      generateImage(image, prompt);
-    })
+    const images = data.images;
+    images.forEach((image, index) => {
+      setTimeout(() => {
+        generateImage(image, prompt);
+      }, index * 1000);
+    });    
   })
   .catch(error => {
     console.error('Error generating diffused image:', error);
@@ -205,6 +276,20 @@ window.generateImageNovita = function(API_URL, userId, chatId, userChatId, chara
     $('#load-image-container').remove();
     $('#novita-gen-button').show();
     $('#novita-gen-button').removeClass('isLoading');
+  });
+}
+function getProposalById(id) {
+  return new Promise((resolve, reject) => {
+    $.ajax({
+      url: `/api/proposal/${id}`,
+      method: 'GET',
+      success: function(data) {
+        resolve(data); // Resolve the promise with the proposal data
+      },
+      error: function(err) {
+        reject(err); // Reject the promise if there is an error
+      }
+    });
   });
 }
 window.generateImage = async function(data,prompt){
@@ -222,12 +307,10 @@ window.generateImage = async function(data,prompt){
 
   const user = await fetchUser()
   const subscriptionStatus = user.subscriptionStatus == 'active'
-  console.log({subscriptionStatus})
+
   if (/nsfw\b/i.test(imagePrompt) && !subscriptionStatus) {
-    console.log('NSFW image')
     displayMessage('bot-image-nsfw',img)
   }else{
-    console.log('Normal image')
     displayMessage('bot-image',img)
   }  
 }

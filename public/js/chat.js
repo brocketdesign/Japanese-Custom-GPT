@@ -380,9 +380,15 @@ $(document).ready(async function() {
         }
     
         if (!isTemporary) {
-            initializeOrUpdateProgress(data?.userChat?.messagesCount || 0, data?.userChat?.nextLevel || 10);
+            //initializeOrUpdateProgress(data?.userChat?.messagesCount || 0, data?.userChat?.nextLevel || 10);
         }
-    
+        console.log({thumbnail})
+        checkImageDescription(thumbnail,function(response){
+            if(!response){
+                generateImageDescriptionBackend(thumbnail,chatId)
+            }
+        }) 
+
         updateParameters(chatId, fetch_userId);
         showChat();
     }
@@ -440,12 +446,12 @@ $(document).ready(async function() {
                             if(!response){
                                 generateImageDescriptionBackend(thumbnail,function(){
                                     generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
-                                        generateImageNovita(API_URL, userId, chatId, userChatId, character, { prompt });
+                                        generateImageNovita(API_URL, userId, chatId, userChatId, character, thumbnail, { prompt });
                                     });
                                 })
                             }else{
                                 generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
-                                    generateImageNovita(API_URL, userId, chatId, userChatId, character, { prompt });
+                                    generateImageNovita(API_URL, userId, chatId, userChatId, character, thumbnail, { prompt });
                                 });
                             }
                         }) 
@@ -1250,8 +1256,14 @@ $(document).ready(async function() {
                             <div class="d-flex flex-row justify-content-start mb-4 message-container ${isBlur ? 'unlock-nsfw':''}">
                                 <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
                                 <div class="position-relative">
-                                    <div class="p-3 ms-3 text-start assistant-image-box">
-                                        <img id="image-${imageId}" src="${response.imageUrl}" alt="${response.imagePrompt}">
+                                    <div class="ms-3 text-start assistant-image-box">
+                                        <img id="image-${imageId}" data-id="${imageId}" src="${response.imageUrl}" alt="${response.imagePrompt}">
+                                    ${!isBlur ?`
+                                        <span class="badge custom-gradient-bg comment-badge position-absolute" data-id="${imageId}" 
+                                        style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
+                                        <i class="bi bi-chat-dots"></i>
+                                        </span>`
+                                    :''}
                                     </div>
                                     ${isBlur ? `
                                     <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
@@ -1275,6 +1287,67 @@ $(document).ready(async function() {
             });
         });
     }
+    
+    $(document).on('click','.comment-badge', function (e) {
+        e.stopPropagation()
+        e.preventDefault()
+        const imageId = $(this).attr('data-id')
+        Swal.fire({
+          html: `
+          <div class="container mt-4">
+            <form id="commentForm" class="form-group">
+                <div class="mb-3">
+                <label for="comment" class="form-label text-white">投稿を作成する</label>
+                <textarea id="comment" class="form-control" rows="4" placeholder="ここにコメントを追加してください..." required></textarea>
+                </div>
+            </form>
+          </div>
+        `,        
+          confirmButtonText: '投稿',
+          showCancelButton: false,
+          showCloseButton: true,
+          width:"100%",
+          position: 'bottom',
+          backdrop: 'rgba(43, 43, 43, 0.2)',
+          showClass: {
+            popup: 'album-popup animate__animated animate__slideInUp'
+          },
+          hideClass: {
+            popup: 'album-popup animate__animated animate__slideOutDown'
+          },
+          customClass: { 
+              container: 'p-0', 
+              popup: 'album-popup shadow', 
+              htmlContainer:'position-relative', 
+              closeButton: 'position-absolute me-3' 
+          },
+          preConfirm: () => {
+            const comment = document.getElementById('comment').value;
+            if (!comment) {
+              Swal.showValidationMessage('コメントを入力してください');
+              return false;
+            }
+            return comment;
+          }
+        }).then((result) => {
+          if (result.isConfirmed) {
+
+            $.ajax({
+              url: `/posts`, 
+              method: 'POST',
+              data: JSON.stringify({ imageId, comment: result.value }),
+              contentType: 'application/json',
+              success: function (response) {
+                showNotification('コメントが投稿されました', 'success');
+              },
+              error: function () {
+                showNotification('コメントの投稿に失敗しました', 'error');
+              }
+            });
+
+          }
+        });
+      });
     
     
     $(document).on('click','.unlock-nsfw',function(){
@@ -1705,7 +1778,6 @@ $(document).ready(async function() {
     }
                 
     window.displayMessage = function(sender, message, callback) {
-        console.log({sender, message})
         const messageClass = sender === 'user' ? 'user-message' : sender;
         const animationClass = 'animate__animated animate__slideInUp';
         let messageElement;
@@ -1726,12 +1798,16 @@ $(document).ready(async function() {
         } 
     
         else if (messageClass === 'bot-image' && message instanceof HTMLElement) {
-            console.log('display bot-image')
+            alert('display bot-image')
             messageElement = $(`
                 <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass}">
                     <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
                     <div class="p-3 ms-3 text-start assistant-image-box">
                         ${message.outerHTML}
+                        <span class="badge custom-gradient-bg comment-badge position-absolute" data-id="${imageId}" 
+                        style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
+                        <i class="bi bi-chat-dots"></i>
+                        </span>
                     </div>
                 </div>      
             `).hide();
@@ -1740,7 +1816,7 @@ $(document).ready(async function() {
         } 
     
         else if (messageClass === 'bot-image-nsfw'&& message instanceof HTMLElement) {
-            console.log('display bot-image-nsfw')
+            alert('display bot-image-nsfw')
             messageElement = $(`
                 <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass} unlock-nsfw" style="position: relative;">
                     <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
@@ -1783,7 +1859,7 @@ $(document).ready(async function() {
         }
     };            
 
-    window.buyItem = function(itemId, itemName, itemPrice, status, userId, chatId, userChatId) {
+    window.buyItem = function(itemId, itemName, itemPrice, item_id, status, userId, chatId, userChatId) {
     
         if (status) {
             initiatePurchase(itemId, itemName, itemPrice, userId, function(response) {
@@ -1809,19 +1885,7 @@ $(document).ready(async function() {
                             } else {
                                 thumbnail = thumbnail || localStorage.getItem('thumbnail')
                                 generateCompletion(function(){
-                                    checkImageDescription(thumbnail,function(response){
-                                        if(!response){
-                                            generateImageDescriptionBackend(thumbnail,function(){
-                                                generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
-                                                    generateImageNovita(API_URL, userId, chatId, userChatId, character, { prompt });
-                                                });
-                                            })
-                                        }else{
-                                            generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
-                                                generateImageNovita(API_URL, userId, chatId, userChatId, character, { prompt });
-                                            });
-                                        }
-                                    }) 
+                                    generateImageNovita(API_URL, userId, chatId, userChatId, item_id, thumbnail);
                                 });
                             }
                         });
@@ -2113,24 +2177,26 @@ $(document).ready(async function() {
             contentType: 'application/json',
             data: JSON.stringify({ userId, chatId, userChatId }),
             success: function(response) {
-                if (response.proposeToBuy && response.items.length > 0) {
-                    const item = response.items[0]
-                    const itemId = `item-${currentStep}-${Date.now()}`;
-                    const message = `
-                        <div id="${itemId}" class="card bg-transparent text-white border-0">
-                            <div class="card-body-none" style="height:auto !important;">
-                                <h5 class="card-title" style="font-size: 14px;">${item.name}</h5>
-                                
-                                <button class="btn custom-gradient-bg  shadow-0 w-100" 
-                                    onclick="buyItem('${itemId}','${item.name}', ${item.price}, true, '${userId}', '${chatId}', '${userChatId}')">
-                                    <span> ${item.price}<span class="mx-1">🪙</span></span>
-                                </button>
-                                <button class="d-none btn btn-outline-danger border-0 shadow-0 rounded-0 position-absolute px-2 py-1" style="font-size: 12px;position: absolute;top: 0;right: 0;" onclick="buyItem('${itemId}','${item.name}', ${item.price}, false, '${userId}', '${chatId}', '${userChatId}')">見送る</button>
+                if (response.length > 0) {
+                    response.forEach(item => {
+                        const itemId = `item-${currentStep}-${Date.now()}-${Math.random().toString(36).substring(7)}`; // Generate a unique item ID
+                        const message = `
+                            <div id="${itemId}" class="card bg-transparent text-white border-0">
+                                <div class="card-body-none" style="height:auto !important;">
+                                    <h5 class="card-title" style="font-size: 14px;">${item.name}</h5>
+                                    
+                                    <button class="btn custom-gradient-bg shadow-0 w-100" 
+                                        onclick="buyItem('${itemId}', '${item.name}' ,${item.price}, '${item._id}', true, '${userId}', '${chatId}', '${userChatId}')">
+                                        <span> ${item.price}<span class="mx-1">🪙</span></span>
+                                    </button>
+                                    <button class="d-none btn btn-outline-danger border-0 shadow-0 rounded-0 position-absolute px-2 py-1" style="font-size: 12px;position: absolute;top: 0;right: 0;" 
+                                        onclick="buyItem('${itemId}','${item.name}' ,${item.price}, '${item._id}', false, '${userId}', '${chatId}', '${userChatId}')">見送る</button>
+                                </div>
                             </div>
-                        </div>
-                    `;
-                    displayMessage('assistant', message);
-                    count_proposal = 0
+                        `;
+                        displayMessage('assistant', message);
+                    });
+                    count_proposal = 0;
                 }else{
                     if(count_proposal >= 2){
                         let message = `[Hidden] Prepare to propose a picture of you.`

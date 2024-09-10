@@ -111,59 +111,6 @@ $(document).ready(async function() {
         }
     }
     //checkAndRedirect();
-    window.checkImageDescription = function(imageUrl = null, callback) {
-        imageUrl = imageUrl ? imageUrl : $('#chatImageUrl').val();
-
-        if (!imageUrl) {
-            console.log('Image URL is required.');
-            callback({error:'Abord'});
-            return;
-        }
-
-        if ($('#image_description').val()){return $('#image_description').val()}
-        
-        $.ajax({
-            url: '/api/check-image-description',
-            method: 'GET',
-            data: { imageUrl: imageUrl },
-            success: function(response) {
-                if (callback) {
-                    callback(response);
-                }
-            },
-            error: function(xhr) {
-                if (callback) {
-                    callback(false);
-                }
-            }
-        });
-    }
-    window.generateImageDescriptionBackend = function(imageUrl = null, callback) {
-        imageUrl = imageUrl ? imageUrl : $('#chatImageUrl').val();
-        const language = $('#language').val() || 'japanese';
-
-        const system = createSystemPayloadImage(language);
-
-        const apiUrl = '/api/openai-image-description';
-
-        $.ajax({
-            url: apiUrl,
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ system, imageUrl }),
-            success: function(response) {
-                if (callback) {
-                    callback(response);
-                }
-            },
-            error: function(xhr) {
-                if (callback) {
-                    callback(null);
-                }
-            }
-        });
-    }
-
 
     function createSystemPayloadImage(language) {
         return [

@@ -1088,7 +1088,6 @@ async function routes(fastify, options) {
             let userData = await userDataCollection.findOne({ userId : new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) })
 
             if (!userData) {
-                console.log(`User data not found`)
                 return reply.status(404).send({ error: 'User data not found' });
             }
 
@@ -1483,6 +1482,7 @@ async function routes(fastify, options) {
                 z.object({
                 name: z.string(),
                 price: z.number(),
+                description: z.string(),
                 })
             ),
         });
@@ -1508,20 +1508,79 @@ async function routes(fastify, options) {
             if(result){
                 return reply.send({proposeToBuy:false})
             }
+
+            const collectionCharacters = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('characters');
+            const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+            const chatData = await collectionChat.findOne({_id: new fastify.mongo.ObjectId(chatId) })
+            let characterDescription = chatData?.imageDescription || null
+            if(!characterDescription){
+                if(chatData?.chatImageUrl){
+                    const image_url = new URL(chatData.chatImageUrl);
+                    const path = image_url.pathname;
+    
+                    const character = await collectionCharacters.findOne({
+                        image: { $regex: path }
+                    });
+                    if (character) {
+                        characterDescription = character?.description || null;
+                    } 
+                }
+            }
+            console.log({characterDescription})
+
             // Send user messages to OpenAI for parsing to check for purchase proposals
             const completion = await openai.beta.chat.completions.parse({
                 model: "gpt-4o-mini",
                 messages: [
                     { role: "system", content: `
-                        You are an expert at structured data extraction. 
-                        Verify if the message is about sending a picture. If so return the image name with a price (between 10 and 50) in japanese. ` },
-                    { role: "user", content: lastAssistantMessageContent },
+                        You are an expert at structured data extraction.\n
+                        Verify if the message is about sending, proposing a picture.\n
+                        If so return the image name in japanese with a price (between 10 and 50) and a description in english.\n
+
+                        The description will be use in Stable Diffusion.\n
+                        Stable Diffusion is an AI art generation model similar to DALLE-2.\nBelow is a list of prompts that can be used to generate images with Stable Diffusion:
+        
+                        \n- portait of a homer simpson archer shooting arrow at forest monster, front game card, drark, marvel comics, dark, intricate, highly detailed, smooth, artstation, digital illustration by ruan jia and mandy jurgens and artgerm and wayne barlowe and greg rutkowski and zdislav beksinski
+                        \n- pirate, concept art, deep focus, fantasy, intricate, highly detailed, digital painting, artstation, matte, sharp focus, illustration, art by magali villeneuve, chippy, ryan yee, rk post, clint cearley, daniel ljunggren, zoltan boros, gabor szikszai, howard lyon, steve argyle, winona nelson
+                        \n- ghost inside a hunted room, art by lois van baarle and loish and ross tran and rossdraws and sam yang and samdoesarts and artgerm, digital art, highly detailed, intricate, sharp focus, Trending on Artstation HQ, deviantart, unreal engine 5, 4K UHD image
+                        \n- red dead redemption 2, cinematic view, epic sky, detailed, concept art, low angle, high detail, warm lighting, volumetric, godrays, vivid, beautiful, trending on artstation, by jordan grimmer, huge scene, grass, art greg rutkowski
+                        \n- a fantasy style portrait painting of rachel lane / alison brie hybrid in the style of francois boucher oil painting unreal 5 daz. rpg portrait, extremely detailed artgerm greg rutkowski alphonse mucha greg hildebrandt tim hildebrandt
+                        \n- athena, greek goddess, claudia black, art by artgerm and greg rutkowski and magali villeneuve, bronze greek armor, owl crown, d & d, fantasy, intricate, portrait, highly detailed, headshot, digital painting, trending on artstation, concept art, sharp focus, illustration
+                        \n- closeup portrait shot of a large strong female biomechanic woman in a scenic scifi environment, intricate, elegant, highly detailed, centered, digital painting, artstation, concept art, smooth, sharp focus, warframe, illustration, thomas kinkade, tomasz alen kopera, peter mohrbacher, donato giancola, leyendecker, boris vallejo
+                        \n- ultra realistic illustration of steve urkle as the hulk, intricate, elegant, highly detailed, digital painting, artstation, concept art, smooth, sharp focus, illustration, art by artgerm and greg rutkowski and alphonse mucha
+
+                        \nI want you to write me a detailed prompt exactly about the idea written after IDEA. Follow the structure of the example prompts. This means a very short description of the scene, followed by modifiers divided by commas to alter the mood, style, lighting, and more.
+
+                    ` },
+                    { role: "user", content: 'IDEA : '+ lastAssistantMessageContent },
                 ],
                 response_format: zodResponseFormat(PurchaseProposalExtraction, "purchase_proposal_extraction"),
             });
 
-            const proposal = completion.choices[0].message.parsed;
-
+            let proposal = completion.choices[0].message.parsed;
+            if (proposal.proposeToBuy && proposal.items.length > 0) {
+                const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+                const itemProposalCollection = db.collection('itemProposal');
+                const insertedProposals = [];
+          
+                // Loop through all items
+                for (let item of proposal.items) {
+                  if (characterDescription) {
+                    item.description = characterDescription + item.description;
+                  }
+          
+                  // Insert each item into the itemProposal collection and save the full object with inserted _id
+                  const result = await itemProposalCollection.insertOne(item);
+          
+                  // Add the inserted proposal with its _id to the array
+                  insertedProposals.push({
+                    _id: result.insertedId,
+                    proposeToBuy: true,
+                    ...item
+                  });
+                }
+                return reply.send(insertedProposals);
+            }
             return reply.send(proposal);
             
         } catch (error) {
@@ -1529,6 +1588,28 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Error checking assistant proposal' });
         }
     });
+    fastify.get('/api/proposal/:id', async (request, reply) => {
+        try {
+          const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+          const itemProposalCollection = db.collection('itemProposal');
+          
+          const proposalId = new fastify.mongo.ObjectId(request.params.id); // Convert the id to ObjectId
+      
+          // Find the proposal by _id
+          const proposal = await itemProposalCollection.findOne({ _id: proposalId });
+      
+          if (!proposal) {
+            return reply.code(404).send({ error: 'Proposal not found' });
+          }
+      
+          // Send back the proposal data
+          reply.send(proposal);
+        } catch (err) {
+          console.log(err);
+          reply.code(500).send('Internal Server Error');
+        }
+      });
+      
     fastify.get('/characters/:gender/:category', async (request, reply) => {
         try {
             const { gender, category } = request.params;
@@ -1590,7 +1671,7 @@ async function routes(fastify, options) {
     });
 
     fastify.post('/api/openai-image-description', async (request, reply) => {
-        const { system, imageUrl } = request.body;
+        const { system, imageUrl, chatId } = request.body;
     
         if (!system || !imageUrl) {
             return reply.status(400).send({ error: 'System and Image URL parameters are required' });
@@ -1615,23 +1696,21 @@ async function routes(fastify, options) {
             ];
 
             try {
-                const description = await moduleCompletion(messages);
+                const imageDescription = await moduleCompletion(messages);
 
                 const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
-                const collection = db.collection('characters');
+                const collectionChat = db.collection('chats');
 
-                const result = {
-                    image: imageUrl,
-                    description: description,
-                    timestamp: new Date()
-                };
-
-                await collection.updateOne(
-                    { image: imageUrl },
-                    { $set: result },
-                    { upsert: true }
+                const result = await collectionChat.updateOne(
+                    { _id: new fastify.mongo.ObjectId(chatId) },
+                    { $set: {imageDescription} },
                 );
-
+                if (result.modifiedCount > 0) {
+                   console.log(`Image description updated`)
+                  } else {
+                    console.log(`Error Image description could not be upddated`)
+                  }
+                  
                 // Send the description after all operations are done
                 reply.send({ description });
             } catch (error) {
@@ -1736,7 +1815,132 @@ async function routes(fastify, options) {
             reply.status(500).send({ success: false, message: "An error occurred while updating log_success" });
         }
     });
-
+    fastify.get('/api/user-posts', async (request, reply) => {
+        try {
+          const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+          const postsCollection = db.collection('posts');
+          const usersCollection = db.collection('users');
+          const chatsCollection = db.collection('chats');
+      
+          let validPosts = [], iterations = 0, seenPosts = new Set();
+      
+          while (validPosts.length < 8 && iterations < 10) {
+            iterations++;
+      
+            const postsCursor = await postsCollection.aggregate([
+              { $match: { 'image.nsfw': false } },
+              { $sample: { size: 100 } },
+              { $group: { _id: '$userId', post: { $first: '$$ROOT' } } },
+              { $limit: 8 - validPosts.length }
+            ]).toArray();
+      
+            const userIds = postsCursor.map(item => item._id);
+            const chatIds = postsCursor.map(item => item.post.chatId);
+      
+            const [users, chats] = await Promise.all([
+              usersCollection.find({ _id: { $in: userIds } }).toArray(),
+              chatsCollection.find({ _id: { $in: chatIds } }).toArray()
+            ]);
+      
+            validPosts = [...validPosts, ...postsCursor
+              .map(item => {
+                const user = users.find(u => u._id.equals(item._id));
+                const chat = chats.find(c => c._id.equals(item.post.chatId));
+      
+                if (seenPosts.has(item.post._id.toString())) return null;
+                seenPosts.add(item.post._id.toString());
+      
+                return user && chat ? {
+                  userName: user.nickname || 'Unknown User',
+                  profilePicture: user.profileUrl || '/img/avatar.png',
+                  chatId: chat._id || null,
+                  userId: item._id,
+                  chatName: chat.name || 'Unknown Chat',
+                  post: {
+                    postId: item.post._id,
+                    imageUrl: item.post.image.imageUrl,
+                    prompt: item.post.image.prompt,
+                    comment: item.post.comment || '',
+                    createdAt: item.post.createdAt,
+                    likes: item.post.likes || 0
+                  }
+                } : null;
+              })
+              .filter(Boolean)]; 
+          }
+      
+          reply.send(validPosts.slice(0, 8));
+        } catch (err) {
+          console.log("Error: ", err);
+          reply.code(500).send('Internal Server Error');
+        }
+      });
+      
+      
+    fastify.get('/api/user-generated-images', async (request, reply) => {
+        try {
+          const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+          const galleryCollection = db.collection('gallery');
+          const usersCollection = db.collection('users');
+          const chatsCollection = db.collection('chats');
+      
+          let validImages = [];
+      
+          while (validImages.length < 8) {
+            const imagesPerUserPipeline = [
+              { $unwind: '$images' },
+              { $match: { 'images.isBlurred': false } },  // Filter out blurred images
+              { $sample: { size: 100 } }, // Get a random sample of 100 images
+              {
+                $group: {
+                  _id: '$userId',
+                  image: { $first: '$images' },
+                  chatId: { $first: '$chatId' },
+                },
+              },
+              { $limit: 8 - validImages.length }, // Ensure we don't over-fetch
+            ];
+      
+            const imagesCursor = galleryCollection.aggregate(imagesPerUserPipeline);
+            const images = await imagesCursor.toArray();
+      
+            const userIds = images.map((item) => item._id);
+            const chatIds = images.map((item) => item.chatId);
+      
+            const users = await usersCollection
+              .find({ _id: { $in: userIds } })
+              .toArray();
+      
+            const chats = await chatsCollection
+              .find({ _id: { $in: chatIds } })
+              .toArray();
+      
+            const results = images
+              .map((item) => {
+                const user = users.find((u) => u._id.equals(item._id));
+                const chat = chats.find((c) => c._id.equals(item.chatId));
+      
+                return {
+                  userName: user?.nickname || null,
+                  profilePicture: user?.profileUrl || '/img/avatar.png',
+                  chatId: chat?._id || null,
+                  userId: item._id,
+                  chatName: chat?.name || null,
+                  image: item.image,
+                };
+              })
+              .filter((item) => item.userName !== null && item.chatName !== null); // Filter invalid entries
+      
+            validImages = [...validImages, ...results]; // Accumulate valid images
+          }
+      
+          reply.send(validImages.slice(0, 8)); // Ensure only 8 images are returned
+        } catch (err) {
+          console.error(err);
+          reply.code(500).send('Internal Server Error');
+        }
+      });
+            
     fastify.get('/api/people-chat', async (request, reply) => {
         const db = fastify.mongo.client.db(process.env.MONGODB_NAME)
         let user = await fastify.getUser(request, reply);

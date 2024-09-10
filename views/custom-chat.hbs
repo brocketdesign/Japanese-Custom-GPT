@@ -604,6 +604,9 @@
                 <a href="/chat/edit/" class="m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius:40px;">
                     <i class="fas fa-plus me-2"></i>キャラクター作成
                 </a>
+                <a href="/discover" class="m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius:40px;">
+                    ライブラリー
+                </a>
                 <span onclick="showDiscovery()" class="d-none m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius: 40px;">
                     <i class="fas fa-compass me-2"></i>ライブラリー
                 </span>
@@ -672,7 +675,31 @@
                     </section>
                 </div>
             {{else}}
-                <iframe id="user-profile-page" src="/user/{{user._id}}" frameborder="0" ></iframe>
+                <section class="container onchat-off">
+                    <div class="row justify-content-center">
+                        <div class="col-12">
+                        <div class="user-profile mt-4">
+                            <div class="row mb-3">
+                            <div id="profileSection" class="text-center">
+                                <div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative mb-2">
+                                    <a href="/user/{{user._id}}">
+                                        <img id="profileImage" src="{{default user.profileUrl '/img/avatar.png'}}" alt="chat Thumbnail" class="rounded-circle" 
+                                        style="width: 100px; height: 100px; object-fit: cover; object-position: top;">
+                                    </a>
+                                </div>
+                                <a href="/user/{{user._id}}" class="text-secondary" style="text-decoration: none;;">
+                                    <h2>{{user.nickname}}</h2>
+                                </a>
+                                <span class="btn btn-light me-2" onclick="showCoinShop(this)">
+                                    <span>🪙</span>
+                                    <span class="user-coins fw-bold">{{user.coins}}</span>
+                                </span>
+                            </div>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                </section>
             {{/if}}
             <div id="people-chat"></div>
             <section class="is-free-user my-2" style="display: none;">
@@ -763,10 +790,7 @@ $(document).ready(function() {
         if(iframe.length == 0 ){return}
         const newHeight = iframe[0].contentWindow.document.body.scrollHeight
         if( newHeight > 0) { iframe.height(newHeight); }
-    }
-
-    $(window).on('load', resizeIframe);
-    $(window).on('resize', resizeIframe);
+    }  
     window.addEventListener('message', function(event) {
         if (event.data === 'resizeIframe') {
             resizeIframe();

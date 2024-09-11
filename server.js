@@ -265,13 +265,19 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       try{
         data = await chatsCollection.findOne({ _id: new fastify.mongo.ObjectId(chatId) }); 
       }catch{}
+      let user = await fastify.getUser(request, reply);
+      const userId = user._id;
+      const postId = request.params.postId;
+      
       const allData = await chatsCollection.find({}).toArray(); 
-      return reply.renderWithGtm('custom-chat.hbs', { 
+      return reply.renderWithGtm('character.hbs', { 
         title: 'LAMIX | AIグラビア | ラミックスの画像生成AI体験', 
         mode: process.env.MODE, 
         user, 
         userId, 
         chatId,
+        allData,
+        data,
         seo: [
           { name: 'description', content: 'AIグラビアは、ラミックスが提供する画像生成AI体験です。' },
           { name: 'keywords', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },

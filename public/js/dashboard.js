@@ -113,19 +113,6 @@ $(document).ready(async function() {
     }
     //checkAndRedirect();
 
-    function createSystemPayloadImage(language) {
-        return [
-            {
-                "type": "text",
-                "text": 
-                `
-                You generate a highly detailed character face description from the image provided, 
-                Your response containe the character on age, skin color, hair, eyes, body type, gender, facial features. Respond in a single, descriptive line of plain text using keywords. \n
-                Here is an example : young girl, yellow eyes, long hair, white hair, white skin, voluptuous body, cute face, smiling.`
-            }
-        ];
-    }
-
     window.showUpgradePopup = function(limitType) {
         const redirectUrl = window.location.pathname
         $.cookie('redirect_url', redirectUrl);
@@ -243,13 +230,13 @@ $(document).ready(async function() {
     
         const action = isLiked ? 'unlike' : 'like'; // Determine action
     
+        $this.toggleClass('liked');
+
         $.ajax({
           url: `/posts/${postId}/like-toggle`, // Single endpoint
           method: 'POST',
           data: { action: action }, // Send action (like/unlike) in the request body
           success: function () {
-            // Toggle like/unlike button state
-            $this.toggleClass('liked');
     
             // Show success notification in Japanese
             if (action === 'like') {
@@ -262,6 +249,7 @@ $(document).ready(async function() {
           },
           error: function () {
             // Show error notification in Japanese
+            $this.toggleClass('liked');
             showNotification('リクエストに失敗しました。', 'error');
           }
         });
@@ -276,14 +264,13 @@ $(document).ready(async function() {
         const isLiked = $(this).hasClass('liked'); // Check if already liked
     
         const action = isLiked ? 'unlike' : 'like'; // Determine action
+        $this.toggleClass('liked');
     
         $.ajax({
           url: `/gallery/${imageId}/like-toggle`, // Single endpoint
           method: 'POST',
           data: { action: action }, // Send action (like/unlike) in the request body
           success: function () {
-            // Toggle like/unlike button state
-            $this.toggleClass('liked');
     
             // Show success notification in Japanese
             if (action === 'like') {
@@ -295,7 +282,7 @@ $(document).ready(async function() {
             }
           },
           error: function () {
-            // Show error notification in Japanese
+            $this.toggleClass('liked');
             showNotification('リクエストに失敗しました。', 'error');
           }
         });
@@ -343,30 +330,47 @@ $(document).ready(async function() {
 });
 window.loadUserImages = async function (userId, page = 1) {
     const currentUser = await fetchUser();
-    const currentUserId = currentUser._id;
-    
+    const currentUserId = currentUser._id
+    const subscriptionStatus = currentUser.subscriptionStatus == 'active'
     $.ajax({
       url: `/user/${userId}/liked-images?page=${page}`,
       method: 'GET',
       success: function (data) {
         let galleryHtml = '';
         data.images.forEach(item => {
-          const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
-          galleryHtml += `
-            <div class="col-6 col-md-4 col-lg-3">
-              <div class="card">
-                <a href="/image/${item._id}" class="text-muted text-decoration-none">
-                    <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
-                </a>
-                <div class="card-body p-2">
-                  <a href="/image/${item._id}" class="text-muted text-decoration-none d-none">${item.prompt || 'No Prompt'}</a>
-                  <span class="float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
-                    <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
-                  </span>
+            let isBlur = item?.nsfw && !subscriptionStatus 
+            const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
+            galleryHtml += `
+                <div class="col-6 col-md-4 col-lg-3">
+                <div class="card">
+                    <div class="d-flex align-items-center p-2">
+                        <a href="/character/${item.chatId}">
+                            <img src="${item?.chatThumbnailUrl}" alt="${item?.chatName}" class="rounded-circle me-2" width="40" height="40">
+                        </a>
+                        <a href="/character/${item.chatId}" class="text-decoration-none text-dark">
+                            <strong>${item?.chatName}</strong>
+                        </a>
+                    </div>
+                    ${isBlur ? `
+                    <div type="button" onclick=showPremiumPopup()>
+                        <img src="/img/nsfw-blurred.jpg" class="card-img-top" style="object-fit: cover;">
+                        <div class="card-body p-2">
+                        </div>
+                    </div>
+                    ` : `
+                    <a href="/character/${item._id}" class="text-muted text-decoration-none">
+                        <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
+                    </a>
+                    <div class="card-body p-2 d-flex align-items-center justify-content-between">
+                        <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
+                        <span class="float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
+                            <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
+                        </span>
+                    </div>
+                    `}
                 </div>
-              </div>
-            </div>
-          `;
+                </div>
+            `;
         });
 
         $('#user-images-gallery').html(galleryHtml);
@@ -398,12 +402,12 @@ function generateImagePagination(currentPage, totalPages, userId) {
     $('#images-pagination-controls').html(paginationHtml);
 }
 
-window.loadUserPosts = async function (userId, page = 1) {
+window.loadUserPosts = async function (userId, page = 1, like = false) {
     const currentUser = await fetchUser();
     const currentUserId = currentUser._id
     const subscriptionStatus = currentUser.subscriptionStatus == 'active'
     $.ajax({
-      url: `/user/${userId}/posts?page=${page}`,
+      url: `/user/${userId}/posts?page=${page}&like=${like}`,
       method: 'GET',
       success: function (data) {
         let galleryHtml = '';
@@ -413,6 +417,14 @@ window.loadUserPosts = async function (userId, page = 1) {
             galleryHtml += `
                 <div class="col-6 col-md-4 col-lg-3">
                 <div class="card">
+                    <div class="d-flex align-items-center p-2">
+                        <a href="/user/${item.userId}">
+                            <img src="${item?.profilePicture}" alt="${item?.userName}" class="rounded-circle me-2" width="40" height="40">
+                        </a>
+                        <a href="/user/${item.userId}" class="text-decoration-none text-dark">
+                            <strong>${item?.userName}</strong>
+                        </a>
+                    </div>
                     ${isBlur ? `
                     <div type="button" onclick=showPremiumPopup()>
                         <img src="/img/nsfw-blurred.jpg" class="card-img-top" style="object-fit: cover;">
@@ -437,16 +449,16 @@ window.loadUserPosts = async function (userId, page = 1) {
                 </div>
             `;
         });
-
-        $('#user-posts-gallery').html(galleryHtml);
+        const containerId = like ? 'user-posts-like' : 'user-posts-gallery'
+        $(`#${containerId}`).html(galleryHtml);
         generatePagination(data.page, data.totalPages, userId);
       },
       error: function (err) {
-        console.error('Failed to load posts', err);
+        console.log('Failed to load posts', err);
       }
     });
   }
-  function generatePagination(currentPage, totalPages, userId) {
+  function generatePagination(currentPage, totalPages, userId, like = false) {
     let paginationHtml = '';
 
     if (totalPages > 1) {
@@ -466,7 +478,8 @@ window.loadUserPosts = async function (userId, page = 1) {
       paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadUserPosts('${userId}', ${currentPage + 1})">次へ</button>`;
     }
 
-    $('#pagination-controls').html(paginationHtml);
+    const containerId = like ? 'posts-like-pagination-controls' : 'pagination-controls'
+    $(`#${containerId}`).html(paginationHtml);
   }
 window.showRegistrationForm = function(messageId,callback) {
 

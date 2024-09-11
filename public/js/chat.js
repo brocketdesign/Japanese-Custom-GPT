@@ -382,7 +382,7 @@ $(document).ready(async function() {
         if (!isTemporary) {
             //initializeOrUpdateProgress(data?.userChat?.messagesCount || 0, data?.userChat?.nextLevel || 10);
         }
-        console.log({thumbnail})
+
         checkImageDescription(thumbnail,function(response){
             if(!response){
                 generateImageDescriptionBackend(thumbnail,chatId)

@@ -555,7 +555,7 @@ async function fetchNovitaResult(task_id) {
           // Return the correct URL based on the blur flag
           const returnUrl = blur && blurredImageUrl ? blurredImageUrl : imageUrl;
       
-          return { id: imageId, url: returnUrl, prompt: image_request.prompt };
+          return { id: imageId, url: returnUrl, prompt: image_request.prompt, nsfw };
         }));
       };     
   

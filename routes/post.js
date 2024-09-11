@@ -64,35 +64,73 @@ async function routes(fastify, options) {
   fastify.get('/user/:userId/posts', async (request, reply) => {
     try {
       const userId = new fastify.mongo.ObjectId(request.params.userId);
-
+  
       const currentUser = await fastify.getUser(request, reply);
       const currentUserId = new fastify.mongo.ObjectId(currentUser._id);
-
+  
       const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const usersCollection = db.collection('users');
       const postsCollection = db.collection('posts');
+      const likesCollection = db.collection('posts_likes');
   
       // Pagination settings
-      const page = parseInt(request.query.page) || 1; // Default to page 1
-      const limit = 6; // Fixed to 6 posts per page
+      const page = parseInt(request.query.page) || 1;
+      const limit = 6;
       const skip = (page - 1) * limit;
   
-      const query = currentUserId.toString() === userId.toString()
-      ? { userId } // If currentUser and userId are the same, return all posts
-      : { userId, $or: [ { isPrivate: false }, { isPrivate: { $exists: false } } ] };
-    
-      // Find all posts for the specific user with pagination
-      const userPosts = await postsCollection
+      // Check if the like parameter is present and set to true
+      const isLikeFilter = request.query.like === 'true';
+  
+      let query, userPosts;
+  
+      if (isLikeFilter) {
+        // Get the posts liked by the user in the URL parameter (userId)
+        const likedPosts = await likesCollection
+          .find({ userId })
+          .toArray();
+  
+        const likedPostIds = likedPosts.map(like => like.postId);
+  
+        // Filter posts by liked post IDs
+        query = { _id: { $in: likedPostIds } };
+      } else {
+        // Standard post query based on userId and privacy settings
+        query = currentUserId.toString() === userId.toString()
+          ? { userId }
+          : { userId, $or: [{ isPrivate: false }, { isPrivate: { $exists: false } }] };
+      }
+  
+      // Find posts with pagination
+      userPosts = await postsCollection
         .find(query)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .toArray();
-        
-      // Get total number of posts for this user (for pagination info)
-      const totalPosts = await postsCollection.countDocuments({ userId });
+  
+      // Get the unique userIds from the posts (including liked posts)
+      const postOwnerIds = [...new Set(userPosts.map(post => post.userId))];
+  
+      // Fetch user details for the post owners
+      const users = await usersCollection
+        .find({ _id: { $in: postOwnerIds } })
+        .toArray();
+  
+      // Attach user details (userName, profilePicture) to the posts
+      userPosts = userPosts.map(post => {
+        const user = users.find(u => u._id.equals(post.userId));
+        return {
+          ...post,
+          userName: user ? user.nickname : 'Unknown User',
+          profilePicture: user ? user.profileUrl : '/img/avatar.png',
+        };
+      });
+  
+      // Get total number of posts for pagination info
+      const totalPosts = await postsCollection.countDocuments(query);
   
       if (userPosts.length === 0) {
-        return reply.code(404).send({ error: 'No posts found for this user' });
+        return reply.code(404).send({ error: 'No posts found' });
       }
   
       reply.send({

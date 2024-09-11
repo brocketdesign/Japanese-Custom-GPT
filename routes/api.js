@@ -1814,7 +1814,7 @@ async function routes(fastify, options) {
       
             const postsCursor = await postsCollection.aggregate([
               { $match: { 'image.nsfw': false } },
-              { $sample: { size: 100 } },
+              { $sample: { size: 10 } },
               { $group: { _id: '$userId', post: { $first: '$$ROOT' } } },
               { $limit: 8 - validPosts.length }
             ]).toArray();

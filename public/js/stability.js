@@ -28,6 +28,19 @@ window.checkImageDescription = function(imageUrl = null, callback) {
       }
   });
 }
+
+function createSystemPayloadImage(language) {
+  return [
+      {
+          "type": "text",
+          "text": 
+          `
+          You generate a highly detailed character face description from the image provided, 
+          Your response containe the character on age, skin color, hair, eyes, body type, gender, facial features. Respond in a single, descriptive line of plain text using keywords. \n
+          Here is an example : young girl, yellow eyes, long hair, white hair, white skin, voluptuous body, cute face, smiling.`
+      }
+  ];
+}
 window.generateImageDescriptionBackend = function(imageUrl = null, chatId, callback) {
   imageUrl = imageUrl ? imageUrl : $('#chatImageUrl').val();
   const language = $('#language').val() || 'japanese';
@@ -297,6 +310,8 @@ window.generateImage = async function(data,prompt){
   const imageUrl = data.url;
   const imageId = data.id
   const imagePrompt = data.prompt
+  const imageNsfw = data.nsfw
+  console.log({imageNsfw})
 
   // Create an <img> element
   const img = document.createElement('img');
@@ -308,7 +323,7 @@ window.generateImage = async function(data,prompt){
   const user = await fetchUser()
   const subscriptionStatus = user.subscriptionStatus == 'active'
 
-  if (/nsfw\b/i.test(imagePrompt) && !subscriptionStatus) {
+  if ( imageNsfw && !subscriptionStatus) {
     displayMessage('bot-image-nsfw',img)
   }else{
     displayMessage('bot-image',img)

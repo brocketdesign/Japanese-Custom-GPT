@@ -151,7 +151,10 @@
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="post-tab" data-bs-toggle="tab" data-bs-target="#post" type="button" role="tab" aria-controls="post" aria-selected="true">投稿一覧</button>
             </li>
-            <li class="nav-item {{#if isAdmin}}{{else}}d-none{{/if}}" role="presentation">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="post-like-tab" data-bs-toggle="tab" data-bs-target="#post-like" type="button" role="tab" aria-controls="post" aria-selected="true">いいねした投稿</button>
+            </li>
+            <li class="nav-item" role="presentation">
                 <button class="nav-link" id="image-tab" data-bs-toggle="tab" data-bs-target="#image" type="button" role="tab" aria-controls="image" aria-selected="false">いいねしたAI画像</button>
             </li>
         </ul>
@@ -159,6 +162,10 @@
             <div class="tab-pane fade show active" id="post" role="tabpanel" aria-labelledby="post-tab">
               <div id="user-posts-gallery" class="row g-3"></div>
               <div id="pagination-controls" class="d-flex justify-content-center my-3"></div>
+            </div>
+            <div class="tab-pane fade" id="post-like" role="tabpanel" aria-labelledby="post-like-tab">
+              <div id="user-posts-like" class="row g-3"></div>
+              <div id="posts-like-pagination-controls" class="d-flex justify-content-center my-3"></div>
             </div>
             <div class="tab-pane fade" id="image" role="tabpanel" aria-labelledby="image-tab">
               <div id="user-images-gallery" class="row g-3"></div>
@@ -374,6 +381,9 @@
 
   $(document).ready(function () {
     loadUserPosts(userId, 1);
+    $('#post-like-tab').on('shown.bs.tab', function (e) {
+        loadUserPosts(userId, 1, true);
+    });
     $('#image-tab').on('shown.bs.tab', function (e) {
         loadUserImages(userId, 1);
     });

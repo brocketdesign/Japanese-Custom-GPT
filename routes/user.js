@@ -547,7 +547,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
   
       return reply.view('/user-profile.hbs', {
         isAdmin,
-        user: currentUser,
+        user :currentUser,
         userData: {
           _id : user._id,
           profileUrl: user.profileUrl,

@@ -128,7 +128,7 @@
               <div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative mb-2">
                 <img id="profileImage" src="{{default userData.profileUrl '/img/avatar.png'}}" alt="chat Thumbnail" class="rounded-circle" 
                 style="width: 100px; height: 100px; object-fit: cover; object-position: top;cursor:pointer;">
-                <i type="button" class="fas fa-edit position-absolute" style="bottom: 5px; font-size: 1em; color: white; background-color: rgba(0, 0, 0, 0.5); border-radius: 50%; padding: 5px;cursor:pointer;"></i>
+                <i type="button" class="fas fa-edit position-absolute {{#if isAdmin}}{{else}}d-none{{/if}}" style="bottom: 5px; font-size: 1em; color: white; background-color: rgba(0, 0, 0, 0.5); border-radius: 50%; padding: 5px;cursor:pointer;"></i>
               </div>
               <h2>{{userData.nickname}}</h2>
               </a>
@@ -179,6 +179,8 @@
 {{> dashboard-footer}}
 <script>
   $(document).ready(function(){
+    const isAdmin = `{{isAdmin}}` == 'true'
+    if(!isAdmin){return}
     $('#profileImage').parent().click(function() {
         $('#profileImageInput').click();
     });

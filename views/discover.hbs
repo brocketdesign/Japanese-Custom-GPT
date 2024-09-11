@@ -44,29 +44,44 @@
         }
     </style>
 <div class="container px-0">
-    <img src="/img/discover-top.png" width="100%">
-    <div class="container">
 
-      <h3 class="my-4 text-center">コミュニティからの最新投稿</h3>
-      <p>Lamixでは、AIグラビアとのチャット中に生成された画像を使って、簡単に投稿を作成することができます。お気に入りの瞬間やクリエイティブな画像をシェアすることで、他のユーザーと楽しさを共有しましょう。画像を選んで投稿に追加するだけで、あなただけのオリジナルコンテンツを簡単に発信できます。</p>
-      <div id="post-gallery" class="row g-3"></div>
-      <div id="image-gallery" class="row g-3 mt-4 mb-2"></div>
-      <div class="w-100 text-center">
-          <a href="/chat" class="my-4 btn btn-lg text-white fw-bold custom-gradient-bg">すべてを見る</a>
-      </div>
-      
-      <h3 class="my-4 text-center">コミュニティからの最新のAIグラビア</h3>
-      <p>Lamixでは、キャラクターとの会話がもっと楽しくなります！お気に入りのキャラクターが、AI技術で生成された魅力的な写真を会話中に送信してくれるだけでなく、特別なフォトアルバムも楽しめます。キャラクターの写真アルバムには、興味深いシーンがたくさん詰まっていて、まるで彼らの世界に飛び込んだかのような体験が待っています。Lamixで、カスタマイズ可能なキャラクターと共に、写真付きのユニークな会話を楽しんでみませんか？</p>
-      <div id="people-chat"></div>
-      <div class="w-100 text-center">
-          <a href="/chat" class="my-4 btn btn-lg text-white fw-bold custom-gradient-bg">すべてを見る</a>
-      </div>
+  <div class="swiper-container" style="overflow: hidden;">
+    <div class="swiper-wrapper">
+      <div class="swiper-slide"><img src="/img/banner1.png" alt="Banner 1" width="100%"></div>
+      <div class="swiper-slide"><img src="/img/banner2.png" alt="Banner 2" width="100%"></div>
     </div>
-      
+  </div>
+
+  <div class="container">
+    <h3 class="my-4 text-center">コミュニティからの最新投稿</h3>
+    <p>Lamixでは、AIグラビアとのチャット中に生成された画像を使って、簡単に投稿を作成することができます。お気に入りの瞬間やクリエイティブな画像をシェアすることで、他のユーザーと楽しさを共有しましょう。画像を選んで投稿に追加するだけで、あなただけのオリジナルコンテンツを簡単に発信できます。</p>
+    <div id="post-gallery" class="row g-3"></div>
+    <div id="image-gallery" class="row g-3 mt-4 mb-2"></div>
+    <div class="w-100 text-center">
+        <a href="/chat" class="my-4 btn btn-lg text-white fw-bold custom-gradient-bg">すべてを見る</a>
+    </div>
+    
+    <h3 class="my-4 text-center">コミュニティからの最新のAIグラビア</h3>
+    <p>Lamixでは、キャラクターとの会話がもっと楽しくなります！お気に入りのキャラクターが、AI技術で生成された魅力的な写真を会話中に送信してくれるだけでなく、特別なフォトアルバムも楽しめます。キャラクターの写真アルバムには、興味深いシーンがたくさん詰まっていて、まるで彼らの世界に飛び込んだかのような体験が待っています。Lamixで、カスタマイズ可能なキャラクターと共に、写真付きのユニークな会話を楽しんでみませんか？</p>
+    <div id="people-chat"></div>
+    <div class="w-100 text-center">
+        <a href="/chat" class="my-4 btn btn-lg text-white fw-bold custom-gradient-bg">すべてを見る</a>
+    </div>
+  </div>
+    
 
 </div>
  {{> dashboard-footer}}
- 
+ <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
+<script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+ <script>
+  $(document).ready(function () {
+    new Swiper('.swiper-container', {
+      loop: true,
+      autoplay: true
+    });
+  });
+</script>
 <script>
   const userId = `{{{user._id}}}`;
   $(document).ready(function () {

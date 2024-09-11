@@ -1509,23 +1509,9 @@ async function routes(fastify, options) {
                 return reply.send({proposeToBuy:false})
             }
 
-            const collectionCharacters = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('characters');
             const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
             const chatData = await collectionChat.findOne({_id: new fastify.mongo.ObjectId(chatId) })
             let characterDescription = chatData?.imageDescription || null
-            if(!characterDescription){
-                if(chatData?.chatImageUrl){
-                    const image_url = new URL(chatData.chatImageUrl);
-                    const path = image_url.pathname;
-    
-                    const character = await collectionCharacters.findOne({
-                        image: { $regex: path }
-                    });
-                    if (character) {
-                        characterDescription = character?.description || null;
-                    } 
-                }
-            }
             console.log({characterDescription})
 
             // Send user messages to OpenAI for parsing to check for purchase proposals

@@ -157,7 +157,8 @@ async function routes(fastify, options) {
               blurredImageUrl, 
               aspectRatio, 
               isBlurred: !!blurredImageUrl,
-              nsfw
+              nsfw,
+              createdAt : new Date()
             } 
           } 
         },

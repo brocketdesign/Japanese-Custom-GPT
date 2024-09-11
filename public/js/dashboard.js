@@ -323,11 +323,160 @@ $(document).ready(async function() {
             showNotification('リクエストに失敗しました。', 'error');
           }
         });
-    });
-    
-    
+    }); 
 
 });
+window.loadAllChatImages = async function (page = 1) {
+    const currentUser = await fetchUser();
+    const currentUserId = currentUser._id;
+    const subscriptionStatus = currentUser.subscriptionStatus === 'active';
+
+    $.ajax({
+      url: `/chats/images?page=${page}`,
+      method: 'GET',
+      success: function (data) {
+        let chatGalleryHtml = '';
+        data.images.forEach(item => {
+            let isBlur = item?.nsfw && !subscriptionStatus;
+            const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
+            chatGalleryHtml += `
+                <div class="col-6 col-md-4 col-lg-3">
+                <div class="card">
+                    <div class="d-flex align-items-center p-2">
+                        <a href="/character/${item.chatId}?imageId=${item._id}">
+                            <img src="${item?.chatThumbnailUrl}" alt="${item?.chatName}" class="rounded-circle me-2" width="40" height="40">
+                        </a>
+                        <a href="/character/${item.chatId}?imageId=${item._id}" class="text-decoration-none text-dark">
+                            <strong>${item?.chatName}</strong>
+                        </a>
+                    </div>
+                    ${isBlur ? `
+                    <div type="button" onclick=showPremiumPopup()>
+                        <img src="/img/nsfw-blurred.jpg" class="card-img-top" style="object-fit: cover;">
+                        <div class="card-body p-2">
+                        </div>
+                    </div>
+                    ` : `
+                    <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
+                        <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
+                    </a>
+                    <div class="card-body p-2 d-flex align-items-center justify-content-between">
+                        <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
+                        <span class="float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
+                            <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
+                        </span>
+                    </div>
+                    `}
+                </div>
+                </div>
+            `;
+        });
+
+        $('#all-chats-images-gallery').html(chatGalleryHtml);
+        generateAllChatsImagePagination(data.page, data.totalPages);
+      },
+      error: function (err) {
+        console.error('Failed to load images', err);
+      }
+    });
+}
+
+function generateAllChatsImagePagination(currentPage, totalPages) {
+    let paginationHtml = '';
+
+    if (totalPages > 1) {
+      paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadAllChatImages(${currentPage - 1})">前へ</button>`;
+
+      for (let i = 1; i <= totalPages; i++) {
+        paginationHtml += `
+          <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadAllChatImages(${i})">
+            ${i}
+          </button>
+        `;
+      }
+
+      paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadAllChatImages(${currentPage + 1})">次へ</button>`;
+    }
+
+    $('#all-chats-images-pagination-controls').html(paginationHtml);
+}
+
+window.loadChatImages = async function (chatId, page = 1) {
+    const currentUser = await fetchUser();
+    const currentUserId = currentUser._id;
+    const subscriptionStatus = currentUser.subscriptionStatus === 'active';
+
+    $.ajax({
+      url: `/chat/${chatId}/images?page=${page}`,
+      method: 'GET',
+      success: function (data) {
+        let chatGalleryHtml = '';
+        data.images.forEach(item => {
+            let isBlur = item?.nsfw && !subscriptionStatus;
+            const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
+            chatGalleryHtml += `
+                <div class="col-6 col-md-4 col-lg-3">
+                <div class="card">
+                    <div class="d-flex align-items-center p-2">
+                        <a href="/character/${item.chatId}?imageId=${item._id}">
+                            <img src="${item?.chatThumbnailUrl}" alt="${item?.chatName}" class="rounded-circle me-2" width="40" height="40">
+                        </a>
+                        <a href="/character/${item.chatId}?imageId=${item._id}" class="text-decoration-none text-dark">
+                            <strong>${item?.chatName}</strong>
+                        </a>
+                    </div>
+                    ${isBlur ? `
+                    <div type="button" onclick=showPremiumPopup()>
+                        <img src="/img/nsfw-blurred.jpg" class="card-img-top" style="object-fit: cover;">
+                        <div class="card-body p-2">
+                            <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
+                        </div>
+                    </div>
+                    ` : `
+                    <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
+                        <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
+                    </a>
+                    <div class="card-body p-2 d-flex align-items-center justify-content-between">
+                        <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
+                        <span class="float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
+                            <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
+                        </span>
+                    </div>
+                    `}
+                </div>
+                </div>
+            `;
+        });
+
+        $('#chat-images-gallery').html(chatGalleryHtml);
+        generateChatImagePagination(data.page, data.totalPages, chatId);
+      },
+      error: function (err) {
+        console.error('Failed to load images', err);
+      }
+    });
+}
+
+function generateChatImagePagination(currentPage, totalPages, chatId) {
+    let paginationHtml = '';
+
+    if (totalPages > 1) {
+      paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadChatImages('${chatId}', ${currentPage - 1})">前へ</button>`;
+
+      for (let i = 1; i <= totalPages; i++) {
+        paginationHtml += `
+          <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadChatImages('${chatId}', ${i})">
+            ${i}
+          </button>
+        `;
+      }
+
+      paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadChatImages('${chatId}', ${currentPage + 1})">次へ</button>`;
+    }
+
+    $('#chat-images-pagination-controls').html(paginationHtml);
+}
+
 window.loadUserImages = async function (userId, page = 1) {
     const currentUser = await fetchUser();
     const currentUserId = currentUser._id
@@ -344,10 +493,10 @@ window.loadUserImages = async function (userId, page = 1) {
                 <div class="col-6 col-md-4 col-lg-3">
                 <div class="card">
                     <div class="d-flex align-items-center p-2">
-                        <a href="/character/${item.chatId}">
+                        <a href="/character/${item.chatId}?imageId=${item._id}">
                             <img src="${item?.chatThumbnailUrl}" alt="${item?.chatName}" class="rounded-circle me-2" width="40" height="40">
                         </a>
-                        <a href="/character/${item.chatId}" class="text-decoration-none text-dark">
+                        <a href="/character/${item.chatId}?imageId=${item._id}" class="text-decoration-none text-dark">
                             <strong>${item?.chatName}</strong>
                         </a>
                     </div>
@@ -358,11 +507,11 @@ window.loadUserImages = async function (userId, page = 1) {
                         </div>
                     </div>
                     ` : `
-                    <a href="/character/${item._id}" class="text-muted text-decoration-none">
+                    <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
                         <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
                     </a>
                     <div class="card-body p-2 d-flex align-items-center justify-content-between">
-                        <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
+                        <a href="/chat/${item.chatId}?imageId=${item._id}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
                         <span class="float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
                             <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
                         </span>

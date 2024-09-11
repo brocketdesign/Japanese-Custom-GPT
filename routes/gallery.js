@@ -146,7 +146,133 @@ async function routes(fastify, options) {
       reply.code(500).send('Internal Server Error');
     }
   });
+  fastify.get('/chats/images', async (request, reply) => {
+    try {
+      const page = parseInt(request.query.page) || 1;
+      const limit = 12; // Number of images per page
+      const skip = (page - 1) * limit;
   
+      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const chatsGalleryCollection = db.collection('gallery');
+      const chatsCollection = db.collection('chats');
+  
+      // Find and paginate images across all chats where chatThumbnailUrl exists
+      const allChatImagesDocs = await chatsGalleryCollection
+      .aggregate([
+        { $unwind: '$images' },           // Unwind the images array
+        { $match: { 'images.imageUrl': { $exists: true, $ne: null }, 'images.nsfw': { $exists: true } } },  // Filter images with valid imageUrl
+        { $skip: skip },                  // Skip for pagination
+        { $limit: limit },                // Limit the results to the page size
+        { $project: { _id: 0, image: '$images', chatId: 1 } }  // Project image and chatId
+      ])
+      .toArray();    
+
+      // Extract chatIds from the images
+      const chatIds = allChatImagesDocs.map(doc => doc.chatId);
+
+      // Fetch the chat data with a non-null chatThumbnailUrl from the chats collection
+      const chats = await chatsCollection
+        .find({ _id: { $in: chatIds } })
+        .toArray();
+
+        // Map the chat data to the images
+      const imagesWithChatData = allChatImagesDocs
+        .filter(doc => chats.find(c => c._id.equals(doc.chatId)))  // Filter images with valid chatThumbnailUrl
+        .map(doc => {
+          const image = doc.image;
+          const chat = chats.find(c => c._id.equals(doc.chatId));
+          return {
+            ...image,
+            chatId: chat?._id,
+            chatName: chat ? chat.name : 'Unknown Chat',
+            chatThumbnailUrl: chat ? chat.thumbnailUrl : '/img/default-thumbnail.png'
+          };
+        });
+  
+      // Get total image count for pagination info
+      const totalImagesCount = imagesWithChatData.length;
+      const totalPages = Math.ceil(totalImagesCount / limit);
+  
+      if (totalImagesCount === 0) {
+        return reply.code(404).send({ images: [], page, totalPages: 0 });
+      }
+
+      // Send the paginated images response
+      reply.send({
+        images: imagesWithChatData,
+        page,
+        totalPages
+      });
+    } catch (err) {
+      console.error(err);
+      reply.code(500).send('Internal Server Error');
+    }
+  });
+  
+  fastify.get('/chat/:chatId/images', async (request, reply) => {
+    try {
+      const chatId = new fastify.mongo.ObjectId(request.params.chatId);
+      const page = parseInt(request.query.page) || 1;
+      const limit = 12; // Number of images per page
+      const skip = (page - 1) * limit;
+  
+      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const chatsGalleryCollection = db.collection('gallery');
+      const chatsCollection = db.collection('chats');
+  
+      // Fetch the chat data (chatName and chatThumbnailUrl)
+      const chat = await chatsCollection.findOne({ _id: chatId });
+      if (!chat) {
+        return reply.code(404).send({ error: 'Chat not found' });
+      }
+  
+      // Find the chat document and paginate the images
+      const chatImagesDocs = await chatsGalleryCollection
+        .aggregate([
+          { $match: { chatId } },           // Match the document by chatId
+          { $unwind: '$images' },           // Unwind the images array
+          { $skip: skip },                  // Skip for pagination
+          { $limit: limit },                // Limit the results to the page size
+          { $project: { _id: 0, image: '$images', chatId: 1 } }  // Project image and chatId
+        ])
+        .toArray();
+  
+      // Get total image count for pagination info
+      const totalImagesCount = await chatsGalleryCollection
+        .aggregate([
+          { $match: { chatId } },
+          { $unwind: '$images' },
+          { $count: 'total' }
+        ])
+        .toArray();
+  
+      const totalImages = totalImagesCount.length > 0 ? totalImagesCount[0].total : 0;
+      const totalPages = Math.ceil(totalImages / limit);
+  
+      // If no images found
+      if (chatImagesDocs.length === 0) {
+        return reply.code(404).send({ images: [], page, totalPages: 0 });
+      }
+  
+      // Map the chat data to the images
+      const imagesWithChatData = chatImagesDocs.map(doc => ({
+        ...doc.image,
+        chatId: chat._id,
+        chatName: chat.name,
+        chatThumbnailUrl: chat.thumbnailUrl || '/img/default-thumbnail.png',
+      }));
+  
+      // Send the paginated images response
+      return reply.send({
+        images: imagesWithChatData,
+        page,
+        totalPages
+      });
+    } catch (err) {
+      console.error(err);
+      reply.code(500).send('Internal Server Error');
+    }
+  });  
   
 }
 

@@ -16,7 +16,8 @@ const {
   deleteCharactersWithoutDescription,
   deleteClientsWithoutProductId,
   deleteUserChatsWithoutMessages,
-  saveAllImageHashesToDB
+  saveAllImageHashesToDB,
+  cleanUpDatabase
  } = require('./models/cleanupNonRegisteredUsers');
 
 mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -30,7 +31,9 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       deleteCharactersWithoutDescription(db)
       deleteClientsWithoutProductId(db)
       deleteUserChatsWithoutMessages(db)
+      cleanUpDatabase(db)
     });
+
     cron.schedule('0 0 * * *', async () => {
       try {
         await updateCounter(db, 0);
@@ -258,35 +261,70 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       }
     });
     
-    fastify.get('/character/:id', async (request, reply) => {
-      const chatId = request.params.id;
-      const chatsCollection = db.collection('chats');
-      let data 
-      try{
-        data = await chatsCollection.findOne({ _id: new fastify.mongo.ObjectId(chatId) }); 
-      }catch{}
-      let user = await fastify.getUser(request, reply);
-      const userId = user._id;
-      const postId = request.params.postId;
-      
-      const allData = await chatsCollection.find({}).toArray(); 
-      return reply.renderWithGtm('character.hbs', { 
-        title: 'LAMIX | AIグラビア | ラミックスの画像生成AI体験', 
-        mode: process.env.MODE, 
-        user, 
-        userId, 
-        chatId,
-        allData,
-        data,
-        seo: [
-          { name: 'description', content: 'AIグラビアは、ラミックスが提供する画像生成AI体験です。' },
-          { name: 'keywords', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },
-          { property: 'og:title', content: 'LAMIX | AIグラビア | ラミックスの画像生成AI体験' },
-          { property: 'og:description', content: 'AIグラビアは、リアルタイム画像生成AI体験を提供します。' },
-          { property: 'og:image', content: '/img/share.png' },
-          { property: 'og:url', content: `https://app.lamix.jp/chat/${chatId}` }
-        ]
-      });
+    fastify.get('/character/:chatId', async (request, reply) => {
+      try {
+        let user = await fastify.getUser(request, reply);
+        const userId = user._id;
+
+
+        const chatId = new fastify.mongo.ObjectId(request.params.chatId);
+        const imageId = request.query.imageId ? new fastify.mongo.ObjectId(request.query.imageId) : null;
+    
+        const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+        const chatsCollection = db.collection('chats');
+        const galleryCollection = db.collection('gallery');
+
+        user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+        const subscriptionStatus = user.subscriptionStatus === 'active';
+
+        // Fetch chat profile data
+        const chat = await chatsCollection.findOne({ _id: chatId });
+    
+        if (!chat) {
+          return reply.code(404).send({ error: 'Chat not found' });
+        }
+    
+        let image = null;
+        let isBlur = false;
+        // Fetch the specific image if imageId is provided, otherwise leave image null
+        if (imageId) {
+          const imageDoc = await galleryCollection
+            .aggregate([
+              { $match: { chatId: chatId } },
+              { $unwind: '$images' },
+              { $match: { 'images._id': imageId } },
+              { $project: { image: '$images', _id: 0 } }
+            ])
+            .toArray();
+    
+          if (imageDoc.length > 0) {
+            image = imageDoc[0].image;
+            isBlur = image?.nsfw && !subscriptionStatus;
+          } else {
+            return reply.code(404).send({ error: 'Image not found' });
+          }
+        }
+
+        // Render the page with chat and image data (image can be null if no imageId was provided)
+        return reply.view('character.hbs', {
+          chat,
+          image,
+          chatId,
+          isBlur,
+          seo: [
+            { name: 'description', content: 'AIグラビアは、ラミックスが提供する画像生成AI体験です。' },
+            { name: 'keywords', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },
+            { property: 'og:title', content: 'LAMIX | AIグラビア | ラミックスの画像生成AI体験' },
+            { property: 'og:description', content: 'AIグラビアは、リアルタイム画像生成AI体験を提供します。' },
+            { property: 'og:image', content: '/img/share.png' },
+            { property: 'og:url', content: `https://app.lamix.jp/chat/${chatId}` }
+          ]
+        });
+    
+      } catch (err) {
+        console.error(err);
+        reply.code(500).send('Internal Server Error');
+      }
     });
     
     fastify.get('/about', async(request, reply) => {

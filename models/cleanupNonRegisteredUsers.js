@@ -192,7 +192,46 @@ async function saveAllImageHashesToDB(db) {
     }
 };
 
-
+async function cleanUpDatabase(db) {
+    try {
+      const chatsGalleryCollection = db.collection('gallery');
+      const chatsCollection = db.collection('chats');
+  
+      // Step 1: Delete all images without an imageUrl
+      console.log('Step 1: Deleting images without imageUrl...');
+      const resultImages = await chatsGalleryCollection.updateMany(
+        {},
+        { $pull: { images: { imageUrl: { $exists: false } } } }
+      );
+      console.log(`Images without imageUrl deleted: ${resultImages.modifiedCount} documents modified.`);
+  
+      // Step 2: Delete chats without thumbnailUrl
+      console.log('Step 2: Deleting chats without thumbnailUrl...');
+      const resultChats = await chatsCollection.deleteMany({
+        thumbnailUrl: { $exists: false }
+      });
+      console.log(`Chats without thumbnailUrl deleted: ${resultChats.deletedCount} documents deleted.`);
+  
+      // Step 3: Delete orphan galleries (galleries with chatId that do not exist in chats)
+      console.log('Step 3: Deleting orphan galleries...');
+      
+      // Find all valid chatIds
+      const validChatIds = await chatsCollection.distinct('_id');
+      console.log(`Valid chatIds: ${validChatIds.length}`);
+  
+      // Delete galleries whose chatId is not in the valid chatIds
+      const resultOrphanGalleries = await chatsGalleryCollection.deleteMany({
+        chatId: { $nin: validChatIds }
+      });
+      console.log(`Orphan galleries deleted: ${resultOrphanGalleries.deletedCount} documents deleted.`);
+  
+      console.log('Clean up complete.');
+    } catch (error) {
+      console.error('Error during cleanup:', error);
+    }
+  };
+  
+  
 
 module.exports = { 
     cleanupNonRegisteredUsers,
@@ -200,5 +239,6 @@ module.exports = {
     deleteCharactersWithoutDescription,
     deleteClientsWithoutProductId, 
     deleteUserChatsWithoutMessages,
-    saveAllImageHashesToDB
+    saveAllImageHashesToDB,
+    cleanUpDatabase
 }

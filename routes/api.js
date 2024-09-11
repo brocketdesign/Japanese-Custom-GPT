@@ -1807,60 +1807,53 @@ async function routes(fastify, options) {
           const usersCollection = db.collection('users');
           const chatsCollection = db.collection('chats');
       
-          let validPosts = [], iterations = 0, seenPosts = new Set();
+          const postsCursor = await postsCollection.find(
+            { 'image.nsfw': false, comment: { $exists: true }, chatId: { $exists: true } }
+          ).limit(10).toArray();
       
-          while (validPosts.length < 8 && iterations < 10) {
-            iterations++;
-      
-            const postsCursor = await postsCollection.aggregate([
-              { $match: { 'image.nsfw': false } },
-              { $sample: { size: 10 } },
-              { $group: { _id: '$userId', post: { $first: '$$ROOT' } } },
-              { $limit: 8 - validPosts.length }
-            ]).toArray();
-      
-            const userIds = postsCursor.map(item => item._id);
-            const chatIds = postsCursor.map(item => item.post.chatId);
-      
-            const [users, chats] = await Promise.all([
-              usersCollection.find({ _id: { $in: userIds } }).toArray(),
-              chatsCollection.find({ _id: { $in: chatIds } }).toArray()
-            ]);
-      
-            validPosts = [...validPosts, ...postsCursor
-              .map(item => {
-                const user = users.find(u => u._id.equals(item._id));
-                const chat = chats.find(c => c._id.equals(item.post.chatId));
-      
-                if (seenPosts.has(item.post._id.toString())) return null;
-                seenPosts.add(item.post._id.toString());
-
-                return user && chat ? {
-                  userName: user.nickname || 'Unknown User',
-                  profilePicture: user.profileUrl || '/img/avatar.png',
-                  chatId: chat._id || null,
-                  userId: item._id,
-                  chatName: chat.name || 'Unknown Chat',
-                  post: {
-                    postId: item.post._id,
-                    imageUrl: item.post.image.imageUrl,
-                    prompt: item.post.image.prompt,
-                    comment: item.post.comment || '',
-                    createdAt: item.post.createdAt,
-                    likes: item.post.likes || 0,
-                    likedBy: item.post.likedBy || []
-                  }
-                } : null;
-              })
-              .filter(Boolean)]; 
+          if (!postsCursor.length) {
+            reply.send([]);
+            return;
           }
+
+          const userIds = postsCursor.map(item => item.userId);
+          const chatIds = postsCursor.map(item => item.chatId);
       
-          reply.send(validPosts.slice(0, 8));
+          const [users, chats] = await Promise.all([
+            usersCollection.find({ _id: { $in: userIds } }).toArray(),
+            chatsCollection.find({ _id: { $in: chatIds } }).toArray()
+          ]);
+
+          const validPosts = postsCursor.map(item => {
+
+            const user = users.find(u => u._id.toString() === item.userId.toString());
+            const chat = chats.find(c => c._id.toString() === item.chatId.toString());            
+
+            return user && chat ? {
+              userName: user.nickname || 'Unknown User',
+              profilePicture: user.profileUrl || '/img/avatar.png',
+              chatId: chat._id || null,
+              userId: item._id,
+              chatName: chat.name || 'Unknown Chat',
+              post: {
+                postId: item._id,
+                imageUrl: item.image.imageUrl,
+                prompt: item.image.prompt,
+                comment: item.comment || '',
+                createdAt: item.createdAt,
+                likes: item.likes || 0,
+                likedBy: item.likedBy || []
+              }
+            } : null;
+          }).filter(Boolean);
+      
+          reply.send(validPosts);
         } catch (err) {
           console.log("Error: ", err);
           reply.code(500).send('Internal Server Error');
         }
       });
+      
       
       
     fastify.get('/api/user-generated-images', async (request, reply) => {

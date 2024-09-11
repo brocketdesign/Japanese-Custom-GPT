@@ -2,6 +2,10 @@
 .overflow-visible {
   overflow: visible !important;
 }
+.rounded-circle{
+  object-fit: cover;
+  object-position: top;
+}
 .rounded-avatar {
   width: 70px;
   height: 70px;

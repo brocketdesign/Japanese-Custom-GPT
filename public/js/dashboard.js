@@ -401,32 +401,41 @@ function generateImagePagination(currentPage, totalPages, userId) {
 window.loadUserPosts = async function (userId, page = 1) {
     const currentUser = await fetchUser();
     const currentUserId = currentUser._id
+    const subscriptionStatus = currentUserId.subscriptionStatus == 'active'
     $.ajax({
       url: `/user/${userId}/posts?page=${page}`,
       method: 'GET',
       success: function (data) {
         let galleryHtml = '';
         data.posts.forEach(item => {
-          const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
-          galleryHtml += `
-            <div class="col-6 col-md-4 col-lg-3">
-              <div class="card">
-                <a href="/post/${item._id}" class="text-muted text-decoration-none">
-                    <img src="${item.image.imageUrl}" alt="${item.image.prompt}" class="card-img-top">
-                </a>
-                <div class="card-body p-2">
-                  <a href="/post/${item._id}" class="text-muted text-decoration-none">${item.comment || 'No Comment'}</a>
-                  <span class="float-end post-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
-                    <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
-                  </span>
-                  <span class="float-end post-visible ${item.isPrivate ? 'private':''} ${item.userId.toString() != currentUser._id.toString() ? 'd-none':''}" data-id="${item._id}">
-                    <i class="bi ${item.isPrivate ? 'bi-eye-slash':'bi-eye'} me-2" style="cursor: pointer;"></i>
-                  </span>
-
+            let isBlur = item?.image?.nsfw && !subscriptionStatus 
+            const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
+            galleryHtml += `
+                <div class="col-6 col-md-4 col-lg-3">
+                <div class="card">
+                    ${isBlur ? `
+                    <div type="button" onclick=showPremiumPopup()>
+                        <img src="/img/nsfw-blurred.jpg" class="card-img-top" style="object-fit: cover;">
+                        <div class="card-body p-2">
+                        </div>
+                    </div>
+                    ` : `
+                    <a href="/post/${item._id}" class="text-muted text-decoration-none">
+                        <img src="${item.image.imageUrl}" alt="${item.image.prompt}" class="card-img-top">
+                    </a>
+                    <div class="card-body p-2">
+                        <a href="/post/${item._id}" class="text-muted text-decoration-none">${item.comment || 'No Comment'}</a>
+                        <span class="float-end post-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
+                            <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
+                        </span>
+                        <span class="float-end post-visible ${item.isPrivate ? 'private':''} ${item.userId.toString() != currentUser._id.toString() ? 'd-none':''}" data-id="${item._id}">
+                            <i class="bi ${item.isPrivate ? 'bi-eye-slash':'bi-eye'} me-2" style="cursor: pointer;"></i>
+                        </span>
+                    </div>
+                    `}
                 </div>
-              </div>
-            </div>
-          `;
+                </div>
+            `;
         });
 
         $('#user-posts-gallery').html(galleryHtml);

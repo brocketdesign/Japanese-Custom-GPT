@@ -490,7 +490,7 @@ async function fetchNovitaResult(task_id) {
 
   const default_prompt ={
     nsfw: {
-      prompt: `((nsfw)),((((sexy)))),erotic pose,((sexy pose)), naughty face, completely nude, uncensored,nsfw `,
+      prompt: `(sexy),erotic pose,(sexy pose), naughty face, sexy clothes, censored, `,
       negative_prompt: "naked pussy,pussy,vagin,sex,dick,(ugly face),score_6,score_5,score_4,blurry,signature,username,watermark,jpeg artifacts,normal quality,worst quality,low quality,missing fingers,extra digits,fewer digits,bad eye,"
     },
     sfw: {

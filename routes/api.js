@@ -1512,7 +1512,6 @@ async function routes(fastify, options) {
             const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
             const chatData = await collectionChat.findOne({_id: new fastify.mongo.ObjectId(chatId) })
             let characterDescription = chatData?.imageDescription || null
-            console.log({characterDescription})
 
             // Send user messages to OpenAI for parsing to check for purchase proposals
             const completion = await openai.beta.chat.completions.parse({

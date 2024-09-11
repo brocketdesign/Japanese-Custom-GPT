@@ -150,11 +150,15 @@
                 <div class="row mb-3">
                   <div id="profileSection" class="text-center">
                     <div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative mb-2">
-                      <img id="profileImage" src="{{default postUser.profileUrl '/img/avatar.png'}}" alt="chat Thumbnail" class="rounded-circle" 
-                      style="width: 100px; height: 100px; object-fit: cover; object-position: top;">
+                      <a href="/user/{{postUser._id}}" class="text-secondary" style="text-decoration:none;">  
+                        <img id="profileImage" src="{{default postUser.profileUrl '/img/avatar.png'}}" alt="chat Thumbnail" class="rounded-circle" 
+                        style="width: 100px; height: 100px; object-fit: cover; object-position: top;">
+                      </a>
                     </div>
-                    <h2>{{postUser.nickname}}</h2>
-                    <span class="btn btn-light onchat-on me-2">
+                    <a href="/user/{{postUser._id}}" class="text-secondary" style="text-decoration:none;">
+                      <h2>{{postUser.nickname}}</h2>
+                    </a>
+                    <span class="btn btn-light me-2">
                         <span>🪙</span>
                         <span class="user-coins fw-bold">{{postUser.coins}}</span>
                     </span>

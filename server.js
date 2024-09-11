@@ -104,6 +104,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
     fastify.register(require('./routes/user'));
     fastify.register(require('./routes/admin'));
     fastify.register(require('./routes/post'));
+    fastify.register(require('./routes/gallery'));
  
     // Authentication decorator
     fastify.decorate('authenticate', async function (request, reply) {

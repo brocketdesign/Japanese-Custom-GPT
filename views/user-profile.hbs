@@ -121,29 +121,54 @@
 <section class="container">
   <div class="row justify-content-center">
     <div class="col-12">
-      <div class="user-profile mt-4">
-        <div class="row mb-3">
-          <div id="profileSection" class="text-center">
-            <div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative mb-2">
-              <img id="profileImage" src="{{default userData.profileUrl '/img/avatar.png'}}" alt="chat Thumbnail" class="rounded-circle" 
-              style="width: 100px; height: 100px; object-fit: cover; object-position: top;">
+      <div class="user-profile mt-4"></div>
+        <form id="user-info-form">
+          <div class="row mb-3">
+            <div id="profileSection" class="text-center">
+              <div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative mb-2">
+                <img id="profileImage" src="{{default userData.profileUrl '/img/avatar.png'}}" alt="chat Thumbnail" class="rounded-circle" 
+                style="width: 100px; height: 100px; object-fit: cover; object-position: top;cursor:pointer;">
+                <i type="button" class="fas fa-edit position-absolute" style="bottom: 5px; font-size: 1em; color: white; background-color: rgba(0, 0, 0, 0.5); border-radius: 50%; padding: 5px;cursor:pointer;"></i>
+              </div>
+              <h2>{{userData.nickname}}</h2>
+              </a>
+              <span class="btn btn-light me-2">
+                  <span>🪙</span>
+                  <span class="user-coins fw-bold">{{userData.coins}}</span>
+              </span>
             </div>
-            <h2>{{userData.nickname}}</h2>
-            <span class="btn btn-light onchat-on me-2">
-                <span>🪙</span>
-                <span class="user-coins fw-bold">{{userData.coins}}</span>
-            </span>
           </div>
-        </div>
+          <div class="mb-3 mx-3" id="thumbnailInputContainer" style="display: none;">
+            <label for="profileImageInput" class="form-label">チャットのサムネイルをアップロード</label>
+            <input type="file" class="form-control" id="profileImageInput" name="profileImageInput" accept="image/*">
+          </div>
+        </form>
       </div>
     </div>
+
     <div class="col-12 mt-4">
-        <h4>投稿したAI画像</h4>
-        <hr>
-        <div id="user-posts-gallery" class="row g-3"></div>
-        <div id="pagination-controls" class="d-flex justify-content-center my-3"></div>
+        <ul class="nav nav-tabs mb-2" id="characterTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="post-tab" data-bs-toggle="tab" data-bs-target="#post" type="button" role="tab" aria-controls="post" aria-selected="true">投稿</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="image-tab" data-bs-toggle="tab" data-bs-target="#image" type="button" role="tab" aria-controls="image" aria-selected="false">いいね</button>
+            </li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="post" role="tabpanel" aria-labelledby="post-tab">
+              <h4>投稿したAI画像</h4>
+              <div id="user-posts-gallery" class="row g-3"></div>
+              <div id="pagination-controls" class="d-flex justify-content-center my-3"></div>
+            </div>
+            <div class="tab-pane fade" id="image" role="tabpanel" aria-labelledby="image-tab">
+              <h4>いいねしたAI画像</h4>
+              <div id="user-images-gallery" class="row g-3"></div>
+              <div id="images-pagination-controls" class="d-flex justify-content-center my-3"></div>
+            </div>
+        </div>
     </div>
-  </div>
+
 </section>
 
 <section class="py-3">
@@ -152,6 +177,49 @@
   </div>
 </section>
 {{> dashboard-footer}}
+<script>
+  $(document).ready(function(){
+    $('#profileImage').parent().click(function() {
+        $('#profileImageInput').click();
+    });
+
+    $('#profileImageInput').change(function(event) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            $('#profileImage').attr('src', e.target.result).show();
+        }
+        reader.readAsDataURL(event.target.files[0]);
+
+        const formData = new FormData();
+        const profileImage = $('#profileImageInput')[0].files[0];
+        if (profileImage) {
+          formData.append('profile', profileImage);
+          $.ajax({
+            url: '/user/update-info',
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+              Swal.fire({
+                icon: 'success',
+                title: '成功',
+                text: response.status,
+              });
+            },
+            error: function(jqXHR) {
+              Swal.fire({
+                icon: 'error',
+                title: 'エラー',
+                text: jqXHR.responseJSON.error,
+              });
+            }
+          });
+        }
+
+    });
+  })
+</script>
 <script>
     const userId = `{{{userData._id}}}`;
   $(document).ready(function(){
@@ -165,9 +233,8 @@
         });
   });
 
-
+  /*
   $(document).ready(function() {
-    return
     const userId = `{{{userData._id}}}`;
     $.getJSON(`/user/chat-data/${userId}`, function(data) {
         let htmlContent = '';
@@ -300,68 +367,16 @@
         $('.container-0').html(htmlContent);
         window.parent.postMessage('resizeIframe', '*');
     });
-});
-
+  });
+  */
 </script>
 <script>
-  function loadUserPosts(userId, page = 1) {
-    $.ajax({
-      url: `/user/${userId}/posts?page=${page}`,
-      method: 'GET',
-      success: function (data) {
-        let galleryHtml = '';
-        data.posts.forEach(item => {
-          galleryHtml += `
-            <div class="col-6 col-md-4 col-lg-3">
-              <div class="card">
-                <a href="/post/${item._id}" class="text-muted text-decoration-none">
-                    <img src="${item.image.imageUrl}" alt="${item.image.prompt}" class="card-img-top">
-                </a>
-                <div class="card-body p-2">
-                  <a href="/post/${item._id}" class="text-muted text-decoration-none">${item.comment || 'No Comment'}</a>
-                  <span class="float-end post-fav" data-id="${item._id}">
-                    <i class="bi bi-heart" style="cursor: pointer;"></i>
-                  </span>
-                </div>
-              </div>
-            </div>
-          `;
-        });
 
-        $('#user-posts-gallery').html(galleryHtml);
-        generatePagination(data.page, data.totalPages, userId);
-      },
-      error: function (err) {
-        console.error('Failed to load posts', err);
-      }
-    });
-  }
-
-  function generatePagination(currentPage, totalPages, userId) {
-    let paginationHtml = '';
-
-    if (totalPages > 1) {
-      // Previous Button
-      paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadUserPosts('${userId}', ${currentPage - 1})">前へ</button>`;
-
-      // Page numbers
-      for (let i = 1; i <= totalPages; i++) {
-        paginationHtml += `
-          <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadUserPosts('${userId}', ${i})">
-            ${i}
-          </button>
-        `;
-      }
-
-      // Next Button
-      paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadUserPosts('${userId}', ${currentPage + 1})">次へ</button>`;
-    }
-
-    $('#pagination-controls').html(paginationHtml);
-  }
-
-  // On page load, you can call the function with the userId and the page you want to start from (e.g., page 1).
   $(document).ready(function () {
     loadUserPosts(userId, 1);
+    $('#image-tab').on('shown.bs.tab', function (e) {
+        loadUserImages(userId, 1);
+    });
+
   });
 </script>

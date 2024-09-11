@@ -266,7 +266,40 @@ $(document).ready(async function() {
           }
         });
     });
+    $(document).on('click', '.image-fav', function () {
+
+        const isTemporary = !!user.isTemporary;
+        if (isTemporary) { showRegistrationForm(); return; }
     
+        const $this = $(this);
+        const imageId = $(this).data('id');
+        const isLiked = $(this).hasClass('liked'); // Check if already liked
+    
+        const action = isLiked ? 'unlike' : 'like'; // Determine action
+    
+        $.ajax({
+          url: `/gallery/${imageId}/like-toggle`, // Single endpoint
+          method: 'POST',
+          data: { action: action }, // Send action (like/unlike) in the request body
+          success: function () {
+            // Toggle like/unlike button state
+            $this.toggleClass('liked');
+    
+            // Show success notification in Japanese
+            if (action === 'like') {
+              showNotification('いいねしました！', 'success');
+              $this.find('.ct').text(parseInt($this.find('.ct').text()) + 1);
+            } else {
+              showNotification('いいねを取り消しました！', 'success');
+              $this.find('.ct').text(parseInt($this.find('.ct').text()) - 1);
+            }
+          },
+          error: function () {
+            // Show error notification in Japanese
+            showNotification('リクエストに失敗しました。', 'error');
+          }
+        });
+    });
 
       $(document).on('click', '.post-visible', function () {
 
@@ -308,6 +341,62 @@ $(document).ready(async function() {
     
 
 });
+window.loadUserImages = async function (userId, page = 1) {
+    const currentUser = await fetchUser();
+    const currentUserId = currentUser._id;
+    
+    $.ajax({
+      url: `/user/${userId}/liked-images?page=${page}`,
+      method: 'GET',
+      success: function (data) {
+        let galleryHtml = '';
+        data.images.forEach(item => {
+          const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
+          galleryHtml += `
+            <div class="col-6 col-md-4 col-lg-3">
+              <div class="card">
+                <a href="/image/${item._id}" class="text-muted text-decoration-none">
+                    <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
+                </a>
+                <div class="card-body p-2">
+                  <a href="/image/${item._id}" class="text-muted text-decoration-none d-none">${item.prompt || 'No Prompt'}</a>
+                  <span class="float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
+                    <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
+                  </span>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        $('#user-images-gallery').html(galleryHtml);
+        generateImagePagination(data.page, data.totalPages, userId);
+      },
+      error: function (err) {
+        console.error('Failed to load images', err);
+      }
+    });
+}
+
+function generateImagePagination(currentPage, totalPages, userId) {
+    let paginationHtml = '';
+
+    if (totalPages > 1) {
+      paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadUserImages('${userId}', ${currentPage - 1})">前へ</button>`;
+
+      for (let i = 1; i <= totalPages; i++) {
+        paginationHtml += `
+          <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadUserImages('${userId}', ${i})">
+            ${i}
+          </button>
+        `;
+      }
+
+      paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadUserImages('${userId}', ${currentPage + 1})">次へ</button>`;
+    }
+
+    $('#images-pagination-controls').html(paginationHtml);
+}
 
 window.loadUserPosts = async function (userId, page = 1) {
     const currentUser = await fetchUser();
@@ -347,6 +436,28 @@ window.loadUserPosts = async function (userId, page = 1) {
         console.error('Failed to load posts', err);
       }
     });
+  }
+  function generatePagination(currentPage, totalPages, userId) {
+    let paginationHtml = '';
+
+    if (totalPages > 1) {
+      // Previous Button
+      paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadUserPosts('${userId}', ${currentPage - 1})">前へ</button>`;
+
+      // Page numbers
+      for (let i = 1; i <= totalPages; i++) {
+        paginationHtml += `
+          <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadUserPosts('${userId}', ${i})">
+            ${i}
+          </button>
+        `;
+      }
+
+      // Next Button
+      paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadUserPosts('${userId}', ${currentPage + 1})">次へ</button>`;
+    }
+
+    $('#pagination-controls').html(paginationHtml);
   }
 window.showRegistrationForm = function(messageId,callback) {
 
@@ -407,28 +518,6 @@ window.showRegistrationForm = function(messageId,callback) {
         }
       });
 }
-  function generatePagination(currentPage, totalPages, userId) {
-    let paginationHtml = '';
-
-    if (totalPages > 1) {
-      // Previous Button
-      paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadUserPosts('${userId}', ${currentPage - 1})">前へ</button>`;
-
-      // Page numbers
-      for (let i = 1; i <= totalPages; i++) {
-        paginationHtml += `
-          <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadUserPosts('${userId}', ${i})">
-            ${i}
-          </button>
-        `;
-      }
-
-      // Next Button
-      paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadUserPosts('${userId}', ${currentPage + 1})">次へ</button>`;
-    }
-
-    $('#pagination-controls').html(paginationHtml);
-  }
 
 function initializePersonaStats(personas) {
 

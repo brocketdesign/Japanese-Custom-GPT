@@ -372,6 +372,7 @@ fastify.post('/huggingface/txt2img', async (request, reply) => {
       }
   
       const imageDetails = imageDocument.images[0];
+
       let imageUrl = imageDetails.imageUrl;
       const imagePrompt = imageDetails.prompt;
   
@@ -386,7 +387,7 @@ fastify.post('/huggingface/txt2img', async (request, reply) => {
         isBlur = true
       }
   
-      return reply.status(200).send({ imageUrl, imagePrompt, isBlur });
+      return reply.status(200).send({ imageDetails, imageUrl, imagePrompt, isBlur });
   
     } catch (error) {
       console.error('Error fetching image URL:', error);

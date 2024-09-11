@@ -1242,6 +1242,20 @@ $(document).ready(async function() {
         }, 500);
     }
     
+    function getImageTools(imageId,isLiked = false){
+        return `
+            <div class="bg-white py-2 d-flex justify-content-between">
+                <span class="badge bg-light text-secondary image-fav ${isLiked ? 'liked':''}" data-id="${imageId}" 
+                style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
+                <i class="bi bi-heart-fill"></i>
+                </span>
+                <span class="badge bg-light text-secondary comment-badge" data-id="${imageId}" 
+                style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
+                <i class="bi bi-send me-2"></i>シェアする
+                </span>
+            </div>
+        `
+    }
     
     function getImageUrlById(imageId, designStep, thumbnail) {
         return new Promise((resolve, reject) => {
@@ -1251,6 +1265,7 @@ $(document).ready(async function() {
                 success: function(response) {
                     let isBlur = response.isBlur
                     if (response.imageUrl) {
+                        const isLiked = response?.imageDetails?.likedBy?.some(id => id.toString() === userId.toString());
                         const messageHtml = `
                         <div id="container-${designStep}">
                             <div class="d-flex flex-row justify-content-start mb-4 message-container ${isBlur ? 'unlock-nsfw':''}">
@@ -1258,12 +1273,7 @@ $(document).ready(async function() {
                                 <div class="position-relative">
                                     <div class="ms-3 text-start assistant-image-box">
                                         <img id="image-${imageId}" data-id="${imageId}" src="${response.imageUrl}" alt="${response.imagePrompt}">
-                                    ${!isBlur ?`
-                                        <span class="badge custom-gradient-bg comment-badge position-absolute" data-id="${imageId}" 
-                                        style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
-                                        <i class="bi bi-chat-dots"></i>
-                                        </span>`
-                                    :''}
+                                    ${!isBlur ? getImageTools(imageId,isLiked) :''}
                                     </div>
                                     ${isBlur ? `
                                     <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
@@ -1798,15 +1808,13 @@ $(document).ready(async function() {
         } 
     
         else if (messageClass === 'bot-image' && message instanceof HTMLElement) {
+            const imageId = message.getAttribute('data-id');
             messageElement = $(`
                 <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass}">
                     <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
                     <div class="p-3 ms-3 text-start assistant-image-box">
                         ${message.outerHTML}
-                        <span class="badge custom-gradient-bg comment-badge position-absolute" data-id="${imageId}" 
-                        style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
-                        <i class="bi bi-chat-dots"></i>
-                        </span>
+                        ${getImageTools(imageId)}
                     </div>
                 </div>      
             `).hide();

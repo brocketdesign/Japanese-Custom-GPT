@@ -401,7 +401,7 @@ function generateImagePagination(currentPage, totalPages, userId) {
 window.loadUserPosts = async function (userId, page = 1) {
     const currentUser = await fetchUser();
     const currentUserId = currentUser._id
-    const subscriptionStatus = currentUserId.subscriptionStatus == 'active'
+    const subscriptionStatus = currentUser.subscriptionStatus == 'active'
     $.ajax({
       url: `/user/${userId}/posts?page=${page}`,
       method: 'GET',

@@ -64,6 +64,10 @@ async function routes(fastify, options) {
   fastify.get('/user/:userId/posts', async (request, reply) => {
     try {
       const userId = new fastify.mongo.ObjectId(request.params.userId);
+
+      const currentUser = await fastify.getUser(request, reply);
+      const currentUserId = new fastify.mongo.ObjectId(currentUser._id);
+
       const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
       const postsCollection = db.collection('posts');
   
@@ -72,14 +76,18 @@ async function routes(fastify, options) {
       const limit = 6; // Fixed to 6 posts per page
       const skip = (page - 1) * limit;
   
+      const query = currentUserId.toString() === userId.toString()
+      ? { userId } // If currentUser and userId are the same, return all posts
+      : { userId, $or: [ { isPrivate: false }, { isPrivate: { $exists: false } } ] };
+    
       // Find all posts for the specific user with pagination
       const userPosts = await postsCollection
-        .find({ userId })
-        .sort({ createdAt: -1 }) // Sort by most recent
+        .find(query)
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .toArray();
-  
+        
       // Get total number of posts for this user (for pagination info)
       const totalPosts = await postsCollection.countDocuments({ userId });
   
@@ -129,9 +137,35 @@ async function routes(fastify, options) {
       reply.code(500).send('Internal Server Error');
     }
   });
-  fastify.post('/posts/:id/like', async (request, reply) => {
+  fastify.post('/posts/:id/set-private', async (request, reply) => {
     try {
       const postId = new fastify.mongo.ObjectId(request.params.id);
+      const { isPrivate } = request.body; // Expecting a boolean value
+      const user = await fastify.getUser(request, reply);
+      const userId = new fastify.mongo.ObjectId(user._id);
+      
+      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const postsCollection = db.collection('posts');
+  
+      const result = await postsCollection.updateOne(
+        { _id: postId, userId: userId }, // Only allow the post owner to update
+        { $set: { isPrivate: isPrivate == 'true' } }
+      );
+  
+      if (result.matchedCount === 0) {
+        return reply.code(404).send({ error: 'Post not found or you are not the owner' });
+      }
+  
+      reply.send({ message: 'Post privacy updated successfully' });
+    } catch (err) {
+      console.error(err);
+      reply.code(500).send('Internal Server Error');
+    }
+  });
+  fastify.post('/posts/:id/like-toggle', async (request, reply) => {
+    try {
+      const postId = new fastify.mongo.ObjectId(request.params.id);
+      const { action } = request.body; // 'like' or 'unlike'
       const user = await fastify.getUser(request, reply); // Assuming you have a method to get the user
       const userId = new fastify.mongo.ObjectId(user._id);
   
@@ -139,73 +173,64 @@ async function routes(fastify, options) {
       const postsCollection = db.collection('posts');
       const likesCollection = db.collection('posts_likes');
   
-      // Check if the user already liked the post
-      const existingLike = await likesCollection.findOne({ postId, userId });
+      if (action === 'like') {
+        // Check if the user already liked the post
+        const existingLike = await likesCollection.findOne({ postId, userId });
   
-      if (existingLike) {
-        return reply.code(400).send({ error: 'User has already liked this post' });
+        if (existingLike) {
+          return reply.code(400).send({ error: 'User has already liked this post' });
+        }
+  
+        // Add the like in the likes collection
+        await likesCollection.insertOne({
+          postId,
+          userId,
+          likedAt: new Date(),
+        });
+  
+        // Increment the like count on the post
+        const result = await postsCollection.updateOne(
+          { _id: postId },
+          { $inc: { likes: 1 }, $addToSet: { likedBy: userId } } // Adding userId to likedBy array
+        );
+  
+        if (result.matchedCount === 0) {
+          return reply.code(404).send({ error: 'Post not found' });
+        }
+  
+        return reply.send({ message: 'Post liked successfully' });
+  
+      } else if (action === 'unlike') {
+        // Check if the user has already liked the post
+        const existingLike = await likesCollection.findOne({ postId, userId });
+  
+        if (!existingLike) {
+          return reply.code(400).send({ error: 'User has not liked this post yet' });
+        }
+  
+        // Remove the like from the likes collection
+        await likesCollection.deleteOne({ postId, userId });
+  
+        // Decrement the like count on the post
+        const result = await postsCollection.updateOne(
+          { _id: postId, likes: { $gt: 0 } }, // Ensure that likes count does not go below 0
+          { $inc: { likes: -1 }, $pull: { likedBy: userId } } // Remove userId from likedBy array
+        );
+  
+        if (result.matchedCount === 0) {
+          return reply.code(404).send({ error: 'Post not found or no likes to remove' });
+        }
+  
+        return reply.send({ message: 'Post unliked successfully' });
+      } else {
+        return reply.code(400).send({ error: 'Invalid action' });
       }
-  
-      // Add the like in the likes collection
-      await likesCollection.insertOne({
-        postId,
-        userId,
-        likedAt: new Date(),
-      });
-  
-      // Increment the like count on the post
-      const result = await postsCollection.updateOne(
-        { _id: postId },
-        { $inc: { likes: 1 }, $addToSet: { likedBy: userId } } // Adding userId to the likedBy array
-      );
-  
-      if (result.matchedCount === 0) {
-        return reply.code(404).send({ error: 'Post not found' });
-      }
-  
-      reply.send({ message: 'Post liked successfully' });
     } catch (err) {
       console.error(err);
       reply.code(500).send('Internal Server Error');
     }
   });
   
-  fastify.post('/posts/:id/unlike', async (request, reply) => {
-    try {
-      const postId = new fastify.mongo.ObjectId(request.params.id);
-      const user = await fastify.getUser(request, reply); // Assuming you have a method to get the user
-      const userId = new fastify.mongo.ObjectId(user._id);
-  
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
-      const postsCollection = db.collection('posts');
-      const likesCollection = db.collection('posts_likes');
-  
-      // Check if the user has already liked the post
-      const existingLike = await likesCollection.findOne({ postId, userId });
-  
-      if (!existingLike) {
-        return reply.code(400).send({ error: 'User has not liked this post yet' });
-      }
-  
-      // Remove the like from the likes collection
-      await likesCollection.deleteOne({ postId, userId });
-  
-      // Decrement the like count on the post
-      const result = await postsCollection.updateOne(
-        { _id: postId, likes: { $gt: 0 } }, // Ensure that likes count does not go below 0
-        { $inc: { likes: -1 }, $pull: { likedBy: userId } } // Remove userId from likedBy array
-      );
-  
-      if (result.matchedCount === 0) {
-        return reply.code(404).send({ error: 'Post not found or no likes to remove' });
-      }
-  
-      reply.send({ message: 'Post unliked successfully' });
-    } catch (err) {
-      console.error(err);
-      reply.code(500).send('Internal Server Error');
-    }
-  });
   
 }
 

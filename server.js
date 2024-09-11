@@ -63,14 +63,14 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         return value || fallback;
       });
       handlebars.registerHelper('eq', function (a, b) {
-        return a === b;
+        return a.toString() === b.toString();
       });
       handlebars.registerHelper('json', function(context) {
         return JSON.stringify(context);
       });
       handlebars.registerHelper('includesObjectId', function (array, userId) {
         // Check if any ObjectId in the array matches the userId after converting both to strings
-        return array?.some(id => id.toString() === userId.toString());
+        return array?.some(id => id?.toString() === userId?.toString());
       });      
     });
     fastify.register(require('fastify-cookie'), {
@@ -239,10 +239,10 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         const postUserId = post.userId;
         postUser = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(postUserId) });
 
-        console.log({postUser})
         if (!post) {
           return reply.code(404).send({ error: 'Post not found' });
         }
+
         return reply.renderWithGtm('post.hbs', {
           title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd',
           mode: process.env.MODE,

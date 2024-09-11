@@ -233,43 +233,121 @@ $(document).ready(async function() {
         initializePersonaStats(personas)
     }
     $(document).on('click', '.post-fav', function () {
+
+        const isTemporary = !!user.isTemporary;
+        if (isTemporary) { showRegistrationForm(); return; }
     
-        const isTemporary = !!user.isTemporary
-        if(isTemporary){ showRegistrationForm(); return; }
-    
-        const $this = $(this)
+        const $this = $(this);
         const postId = $(this).data('id');
         const isLiked = $(this).hasClass('liked'); // Check if already liked
-      
-        // Set the correct URL for like or unlike
-        const url = isLiked ? `/posts/${postId}/unlike` : `/posts/${postId}/like`;
-        const action = isLiked ? 'unlike' : 'like';
-      
+    
+        const action = isLiked ? 'unlike' : 'like'; // Determine action
+    
         $.ajax({
-          url: url,
+          url: `/posts/${postId}/like-toggle`, // Single endpoint
           method: 'POST',
+          data: { action: action }, // Send action (like/unlike) in the request body
           success: function () {
             // Toggle like/unlike button state
-            $(this).toggleClass('liked');
-      
+            $this.toggleClass('liked');
+    
             // Show success notification in Japanese
             if (action === 'like') {
               showNotification('いいねしました！', 'success');
-              $this.find('.ct').text(parseInt($this.find('.ct').text()) + 1)
+              $this.find('.ct').text(parseInt($this.find('.ct').text()) + 1);
             } else {
               showNotification('いいねを取り消しました！', 'success');
-              $this.find('.ct').text(parseInt($this.find('.ct').text()) - 1)
+              $this.find('.ct').text(parseInt($this.find('.ct').text()) - 1);
             }
-          }.bind(this), // Ensure 'this' refers to the clicked element
+          },
           error: function () {
             // Show error notification in Japanese
             showNotification('リクエストに失敗しました。', 'error');
           }
         });
-      });
+    });
     
+
+      $(document).on('click', '.post-visible', function () {
+
+        const isTemporary = !!user.isTemporary;
+        if (isTemporary) { showRegistrationForm(); return; }
+    
+        const $this = $(this);
+        const postId = $(this).data('id');
+        const isPrivate = $(this).hasClass('private'); // Check if already private
+    
+        const newPrivacyState = !isPrivate; // Toggle privacy state
+
+        $.ajax({
+          url: `/posts/${postId}/set-private`, // Single endpoint for both public and private
+          method: 'POST',
+          data: { isPrivate: newPrivacyState },
+          success: function () {
+            // Toggle private/public button state
+            $this.toggleClass('private');
+            const ico = newPrivacyState ? 'bi-eye-slash' : 'bi-eye'
+            const text = newPrivacyState ? '非公開' : '公開'
+            $this.find('i').removeClass('bi-eye bi-eye-slash').addClass(ico);
+            $this.find('.text').text(text)
+
+            // Show success notification in Japanese
+            if (newPrivacyState) {
+              showNotification('投稿を非公開にしました！', 'success');
+            } else {
+              showNotification('投稿を公開にしました！', 'success');
+            }
+          },
+          error: function () {
+            // Show error notification in Japanese
+            showNotification('リクエストに失敗しました。', 'error');
+          }
+        });
+    });
+    
+    
+
 });
 
+window.loadUserPosts = async function (userId, page = 1) {
+    const currentUser = await fetchUser();
+    const currentUserId = currentUser._id
+    $.ajax({
+      url: `/user/${userId}/posts?page=${page}`,
+      method: 'GET',
+      success: function (data) {
+        let galleryHtml = '';
+        data.posts.forEach(item => {
+          const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
+          galleryHtml += `
+            <div class="col-6 col-md-4 col-lg-3">
+              <div class="card">
+                <a href="/post/${item._id}" class="text-muted text-decoration-none">
+                    <img src="${item.image.imageUrl}" alt="${item.image.prompt}" class="card-img-top">
+                </a>
+                <div class="card-body p-2">
+                  <a href="/post/${item._id}" class="text-muted text-decoration-none">${item.comment || 'No Comment'}</a>
+                  <span class="float-end post-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
+                    <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
+                  </span>
+                  <span class="float-end post-visible ${item.isPrivate ? 'private':''} ${item.userId.toString() != currentUser._id.toString() ? 'd-none':''}" data-id="${item._id}">
+                    <i class="bi ${item.isPrivate ? 'bi-eye-slash':'bi-eye'} me-2" style="cursor: pointer;"></i>
+                  </span>
+
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        $('#user-posts-gallery').html(galleryHtml);
+        generatePagination(data.page, data.totalPages, userId);
+      },
+      error: function (err) {
+        console.error('Failed to load posts', err);
+      }
+    });
+  }
 window.showRegistrationForm = function(messageId,callback) {
 
     //window.location = "/authenticate?register=true"
@@ -329,40 +407,6 @@ window.showRegistrationForm = function(messageId,callback) {
         }
       });
 }
-  window.loadUserPosts = function (userId, page = 1) {
-    $.ajax({
-      url: `/user/${userId}/posts?page=${page}`,
-      method: 'GET',
-      success: function (data) {
-        let galleryHtml = '';
-        data.posts.forEach(item => {
-          const isLiked = item?.likedBy?.some(id => id.toString() === userId.toString());
-          galleryHtml += `
-            <div class="col-6 col-md-4 col-lg-3">
-              <div class="card">
-                <a href="/post/${item._id}" class="text-muted text-decoration-none">
-                    <img src="${item.image.imageUrl}" alt="${item.image.prompt}" class="card-img-top">
-                </a>
-                <div class="card-body p-2">
-                  <a href="/post/${item._id}" class="text-muted text-decoration-none">${item.comment || 'No Comment'}</a>
-                  <span class="float-end post-fav  ${isLiked ? 'liked':''}" data-id="${item._id}">
-                    <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
-                  </span>
-                </div>
-              </div>
-            </div>
-          `;
-        });
-
-        $('#user-posts-gallery').html(galleryHtml);
-        generatePagination(data.page, data.totalPages, userId);
-      },
-      error: function (err) {
-        console.error('Failed to load posts', err);
-      }
-    });
-  }
-
   function generatePagination(currentPage, totalPages, userId) {
     let paginationHtml = '';
 
@@ -593,5 +637,88 @@ window.showPremiumPopup = function() {
         }
         
         
+    });
+}
+window.displayPepopleChat = function(){
+    $.getJSON('/api/people-chat', function(data) {
+        let peopleChats = data.peopleChats || {}; // Default to an empty object if undefined
+        let htmlContent = '';
+        //renderCircleGrid(peopleChats.synclubaichat,$('#chat-recommend .characters'))
+        if (peopleChats) {
+            // Navigation Tabs
+            htmlContent += `
+            <ul class="nav nav-tabs mb-2" id="characterTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="recent-tab" data-bs-toggle="tab" data-bs-target="#recent" type="button" role="tab" aria-controls="recent" aria-selected="true">最新</button>
+                </li>
+            </ul>
+            <div class="tab-content" id="characterTabContent">`;
+
+            // Recent Characters
+            htmlContent += `
+            <div class="tab-pane fade show active" id="recent" role="tabpanel" aria-labelledby="recent-tab">
+                <section class="w-100 px-0 py-0">
+                    <div id="latest-chat" class="chat-container pb-0">`;
+
+            (peopleChats.recent || []).forEach(chat => {
+                if(chat.nickname){
+                    let galleryIco = ''
+                    let image_count = 0
+                    if(chat.galleries && chat.galleries.length > 0) {
+                        chat.galleries.forEach((gallery, index) => {
+                            if (gallery.images && gallery.images.length > 0) {
+                                image_count += gallery.images.length
+                            }
+                        })
+                        galleryIco = `
+                            <div class="gallery" style="color: rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
+                                <span class="badge bg-dark"><i class="far fa-images me-1"></i>${image_count}</span>
+                            </div>
+                        `
+                    }
+                    htmlContent += `
+                    <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2 redirectToChat" style="cursor:pointer;" data-id="${chat._id}" data-image="${chat.chatImageUrl}">
+                        <div style="background-image:url('${chat.chatImageUrl || '/img/logo.webp'}')" class="card-img-top girls_avatar position-relative" alt="${chat.name}">
+                            <div id="spinner-${chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
+                            <div class="position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px;right:10px;">
+                                ${(chat.tags || []).length ? `<div class="tags d-flex justify-content-between align-items-center flex-wrap">${chat.tags.map(tag => `<span class="badge bg-dark">${tag}</span>`).join('')}</div>` : ''}
+                            </div>
+                            <div class="position-absolute text-end" style="top:10px;right:10px">
+                                <div class="persona" style="color:rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
+                                    <span class="badge bg-dark" style="width: 30px;"><i class="far fa-user-circle"></i></span>
+                                </div>
+                                ${galleryIco}
+                                ${chat.messagesCount ? `<span class="badge bg-dark message-count"><i class="fas fa-comment-alt me-2"></i>${chat.messagesCount}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="card-body bg-transparent border-0 pb-0 text-start">
+                            <div class="row">
+                                <div class="col-3 text-center">
+                                    <a href="/user/${chat.userId}" style="text-decoration: none;">
+                                        <img src="${chat.profileUrl}" alt="${chat.nickname}" class="rounded-circle" width="40" height="40">
+                                    </a>
+                                </div>
+                                <div class="col-8 ms-2">
+                                    <h5 class="card-title character-title mb-0">${chat.name}</h5>
+                                    <a href="/user/${chat.userId}" class="text-muted" style="text-decoration: none;">
+                                        <span style="font-size:12px;">${chat.nickname}</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                </div>`;
+                }
+
+            });
+
+            htmlContent += `
+                    </div>
+                </section>
+            </div>`;
+
+            htmlContent += `</div>`; // Close tab-content
+        }
+
+        $('#people-chat').html(htmlContent);
     });
 }

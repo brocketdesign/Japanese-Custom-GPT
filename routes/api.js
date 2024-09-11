@@ -2000,6 +2000,7 @@ async function routes(fastify, options) {
           return {
             ...chat,
             nickname: user ? user.nickname : null,
+            profileUrl: user ? user.profileUrl : null,
           };
         }));
 

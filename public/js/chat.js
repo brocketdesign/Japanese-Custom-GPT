@@ -1277,8 +1277,8 @@ $(document).ready(async function() {
                                 <div class="position-relative">
                                     <div class="ms-3 text-start assistant-image-box">
                                         <img id="image-${imageId}" data-id="${imageId}" src="${response.imageUrl}" alt="${response.imagePrompt}">
-                                    ${!isBlur ? getImageTools(imageId,isLiked,response.imagePrompt) :''}
                                     </div>
+                                    ${!isBlur ? getImageTools(imageId,isLiked,response.imagePrompt) :''}
                                     ${isBlur ? `
                                     <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
                                         <span type="button" class="badge bg-danger text-white" style="padding: 5px; border-radius: 5px;">
@@ -1819,8 +1819,8 @@ $(document).ready(async function() {
                     <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
                     <div class="p-3 ms-3 text-start assistant-image-box">
                         ${message.outerHTML}
-                        ${getImageTools(imageId,false,description)}
                     </div>
+                    ${getImageTools(imageId,false,description)}
                 </div>      
             `).hide();
             $('#chatContainer').append(messageElement);

@@ -29,7 +29,7 @@ $(document).ready(async function() {
     $('body').attr('data-temporary-user',isTemporary)
     renderChatList(userId,chatId);
     updateCoins(userCoins)
-    
+
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageFav') {
             let message = `[Hidden] I liked on of your picture.`
@@ -1880,12 +1880,8 @@ $(document).ready(async function() {
                 if (response.success) {
                     const successMessages = [
                         `${itemName}を購入しました！`,
-                        `${itemName}を手に入れました！`,
-                        `${itemName}があなたのものになりました！`,
-                        `${itemName}をゲットしました！`,
                         `${itemName}を${itemPrice}コインで購入しました。`,
                         `${itemName}を無事に${itemPrice}コインでゲットしました！`,
-                        `${itemName}を${itemPrice}コインで手に入れました。`
                     ];
                     
                     let message = successMessages[Math.floor(Math.random() * successMessages.length)];                            

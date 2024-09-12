@@ -572,7 +572,7 @@ window.displayPepopleChat = async function (page = 1) {
 
                 // Render chat
                 htmlContent += `
-                <div class="col-6 col-sm-4 col-lg-2">
+                <div class="col-12 col-sm-4 col-lg-2">
                     <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 redirectToChat" style="cursor:pointer;" data-id="${chat._id}" data-image="${chat.chatImageUrl}">
                         <div style="background-image:url('${chat.chatImageUrl || '/img/logo.webp'}')" class="card-img-top girls_avatar position-relative" alt="${chat.name}">
                             <div id="spinner-${chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>

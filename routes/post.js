@@ -112,6 +112,7 @@ async function routes(fastify, options) {
       // Fetch paginated posts
       const postsCursor = await postsCollection
         .find({ comment: { $exists: true }, chatId: { $exists: true } })
+        .sort({_id:-1})
         .skip(skip)
         .limit(limit)
         .toArray();

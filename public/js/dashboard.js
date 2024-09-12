@@ -428,7 +428,115 @@ $(document).ready(async function() {
             }
         });
     }); 
+    $(document).on('click', '.follow-button', function () {
+
+        const isTemporary = !!user.isTemporary;
+        if (isTemporary) { showRegistrationForm(); return; }
+    
+        const $this = $(this);
+        const userId = $this.data('user-id');
+        const isFollowing = $this.hasClass('following'); // Check if already following
+    
+        const action = isFollowing ? false : true;
+        $this.toggleClass('following');
+    
+        $.ajax({
+            url: `/user/${userId}/follow-toggle`, // Single endpoint for both follow/unfollow
+            method: 'POST',
+            data: { action: action }, // Send action (follow/unfollow) in the request body
+            success: function () {
+                // Update the button text
+                if (action) {
+                    $this.find('.user-follow').text('フォロー中');
+                    showNotification('フォローしました！', 'success');
+                } else {
+                    $this.find('.user-follow').text('フォロー');
+                    showNotification('フォローを解除しました！', 'success');
+                }
+            },
+            error: function () {
+                $this.toggleClass('following'); // Revert the state on error
+                showNotification('リクエストに失敗しました。', 'error');
+            }
+        });
+    });
+    
 });
+window.displayPeopleList = async function (userId, type = 'followers', page = 1) {
+    try {
+        const response = await fetch(`/user/${userId}/followers-or-followings?type=${type}&page=${page}`);
+        const data = await response.json();
+
+        let people = data.users || [];
+        let htmlContent = '';
+
+        // If there are followers or following users
+        people.forEach(user => {
+            htmlContent += `
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <a href="/user/${user.userId}" class="d-flex align-items-center text-decoration-none">
+                        <img src="${user.profilePicture}" alt="${user.userName}" class="rounded-circle me-3" width="50" height="50">
+                        <div class="ms-3">
+                            <h5 class="mb-0 text-dark">${user.userName}</h5>
+                            <small class="text-muted d-none">@${user.userId}</small>
+                        </div>
+                    </a>
+                </div>
+                <a href="/user/${user.userId}" class="btn btn-outline-primary btn-sm">プロフィールを見る</a>
+            </li>`;            
+        });
+
+        // Update the HTML content for the list
+        $('#people-list').html(htmlContent);
+
+        // Generate pagination controls
+        generatePagination(data.page, data.totalPages, userId, type);
+
+    } catch (err) {
+        console.error('Failed to load list', err);
+    }
+};
+
+// Generate pagination for the followers/following list
+function generatePagination(currentPage, totalPages, userId, type) {
+    let paginationHtml = '';
+    const maxPagesToShow = 5;
+    const sidePagesToShow = 2;
+
+    if (totalPages > 1) {
+        paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="displayPeopleList('${userId}', '${type}', ${currentPage - 1})">前へ</button>`;
+
+        if (currentPage > sidePagesToShow + 1) {
+            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="displayPeopleList('${userId}', '${type}', 1)">1</button>`;
+            if (currentPage > sidePagesToShow + 2) {
+                paginationHtml += `<span class="mx-1">...</span>`;
+            }
+        }
+
+        let startPage = Math.max(1, currentPage - sidePagesToShow);
+        let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
+
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHtml += `
+            <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="displayPeopleList('${userId}', '${type}', ${i})">
+                ${i}
+            </button>`;
+        }
+
+        if (currentPage < totalPages - sidePagesToShow - 1) {
+            if (currentPage < totalPages - sidePagesToShow - 2) {
+                paginationHtml += `<span class="mx-1">...</span>`;
+            }
+            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="displayPeopleList('${userId}', '${type}', ${totalPages})">${totalPages}</button>`;
+        }
+
+        paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="displayPeopleList('${userId}', '${type}', ${currentPage + 1})">次へ</button>`;
+    }
+
+    $('#pagination-controls').html(paginationHtml);
+}
+
 window.displayPepopleChat = async function (page = 1) {
     const currentUser = await fetchUser();
     const currentUserId = currentUser._id;

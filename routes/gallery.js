@@ -10,7 +10,8 @@ async function routes(fastify, options) {
   
       const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
       const galleryCollection = db.collection('gallery');
-      const imagesLikesCollection = db.collection('images_likes'); // Collection to track individual likes
+      const imagesLikesCollection = db.collection('images_likes');
+      const usersCollection = db.collection('users'); // Collection to update user's imageLikeCount
   
       if (action === 'like') {
         // Check if the user already liked the image
@@ -40,6 +41,12 @@ async function routes(fastify, options) {
           likedAt: new Date(),
         });
   
+        // Increment user's imageLikeCount
+        await usersCollection.updateOne(
+          { _id: userId },
+          { $inc: { imageLikeCount: 1 } }
+        );
+  
         return reply.send({ message: 'Image liked successfully' });
   
       } else if (action === 'unlike') {
@@ -50,24 +57,40 @@ async function routes(fastify, options) {
           return reply.code(400).send({ error: 'User has not liked this image yet' });
         }
   
-        // Remove like from the gallery collection
-        const result = await galleryCollection.updateOne(
-          { 'images._id': imageId },
-          {
-            $inc: { 'images.$.likes': -1 },
-            $pull: { 'images.$.likedBy': userId }
+        // Fetch the current likes count to ensure it doesn't go below 0
+        const image = await galleryCollection.findOne({ 'images._id': imageId });
+        const likes = image ? image.images.find(img => img._id.equals(imageId)).likes : 0;
+  
+        if (likes > 0) {
+          // Remove like from the gallery collection
+          const result = await galleryCollection.updateOne(
+            { 'images._id': imageId },
+            {
+              $inc: { 'images.$.likes': -1 },
+              $pull: { 'images.$.likedBy': userId }
+            }
+          );
+  
+          if (result.matchedCount === 0) {
+            return reply.code(404).send({ error: 'Image not found' });
           }
-        );
   
-        if (result.matchedCount === 0) {
-          return reply.code(404).send({ error: 'Image not found' });
+          // Remove like from the images_likes collection
+          await imagesLikesCollection.deleteOne({ imageId, userId });
+  
+          // Decrement user's imageLikeCount, ensuring it doesn't go below 0
+          const userDoc = await usersCollection.findOne({ _id: userId });
+          if (userDoc.imageLikeCount > 0) {
+            await usersCollection.updateOne(
+              { _id: userId },
+              { $inc: { imageLikeCount: -1 } }
+            );
+          }
+  
+          return reply.send({ message: 'Image unliked successfully' });
+        } else {
+          return reply.code(400).send({ error: 'Cannot decrease like count below 0' });
         }
-  
-        // Remove like from the images_likes collection
-        await imagesLikesCollection.deleteOne({ imageId, userId });
-  
-        return reply.send({ message: 'Image unliked successfully' });
-  
       } else {
         return reply.code(400).send({ error: 'Invalid action' });
       }
@@ -76,6 +99,7 @@ async function routes(fastify, options) {
       reply.code(500).send('Internal Server Error');
     }
   });
+  
   fastify.get('/user/:userId/liked-images', async (request, reply) => {
     try {
       const userId = new ObjectId(request.params.userId);

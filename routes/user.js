@@ -511,7 +511,6 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     }
   });
   fastify.get('/user/:userId', async (request, reply) => {
-
     const { userId } = request.params;
   
     const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
@@ -519,7 +518,6 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     const collectionUser = db.collection('users');
   
     try {
-  
       let currentUser = await fastify.getUser(request, reply);
       const currentUserId = currentUser._id;
       currentUser = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(currentUserId) });
@@ -529,14 +527,9 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       if (!user) {
         return reply.status(404).send({ error: 'User not found' });
       }
-  
-      const chatQuery = {
-        $or: [
-          { userId },
-          { userId: new fastify.mongo.ObjectId(userId) }
-        ],
-        visibility: "public"
-      };
+
+      // Check if current user is following the target user
+      const isFollowing = currentUser.following && currentUser.following.some(followingId => followingId.toString() === user._id.toString());
   
       let isAdmin = false;
   
@@ -544,22 +537,27 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
         isAdmin = true;
       }
 
-  
       return reply.view('/user-profile.hbs', {
         isAdmin,
-        user :currentUser,
+        user: currentUser,
         userData: {
-          _id : user._id,
+          _id: user._id,
           profileUrl: user.profileUrl,
           nickname: user.nickname,
           coins: user.coins,
+          follow: isFollowing,
+          followCount: user.followCount,
+          followerCount: user.followerCount,
+          imageLikeCount: user.imageLikeCount,
+          postCount: user.postCount
         },
       });
     } catch (error) {
-      console.log(error)
+      console.log(error);
       return reply.status(500).send({ error: 'An error occurred' });
     }
   });
+  
   fastify.get('/user/chat-data/:userId', async (request, reply) => {
     const { userId } = request.params;
     const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
@@ -618,6 +616,175 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     } catch (error) {
       console.log(error);
       return reply.status(500).send({ error: 'An error occurred' });
+    }
+  });
+  fastify.post('/user/:userId/follow-toggle', async (request, reply) => {
+    const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+    const usersCollection = db.collection('users');
+    
+    let currentUser = await fastify.getUser(request, reply);
+    const currentUserId = new fastify.mongo.ObjectId(currentUser._id);
+    const targetUserId = new fastify.mongo.ObjectId(request.params.userId);
+    const action = request.body.action == 'true';
+
+    try {
+      if (action) {
+        await usersCollection.updateOne(
+          { _id: currentUserId },
+          { $addToSet: { following: targetUserId }, $inc: { followCount: 1 } }
+        );
+        await usersCollection.updateOne(
+          { _id: targetUserId },
+          { $addToSet: { followers: currentUserId }, $inc: { followerCount: 1 } }
+        );
+        reply.send({ message: 'フォローしました！' });
+      } else {
+        // Check current follow count before decrementing
+        let currentUserData = await usersCollection.findOne({ _id: currentUserId });
+        let targetUserData = await usersCollection.findOne({ _id: targetUserId });
+  
+        if (currentUserData.followCount > 0) {
+          await usersCollection.updateOne(
+            { _id: currentUserId },
+            { $pull: { following: targetUserId }, $inc: { followCount: -1 } }
+          );
+        }
+        if (targetUserData.followerCount > 0) {
+          await usersCollection.updateOne(
+            { _id: targetUserId },
+            { $pull: { followers: currentUserId }, $inc: { followerCount: -1 } }
+          );
+        }
+  
+        reply.send({ message: 'フォローを解除しました！' });
+      }
+    } catch (err) {
+      console.log(err);
+      reply.code(500).send({ error: 'リクエストに失敗しました。' });
+    }
+  });
+  fastify.get('/user/:userId/followers-or-followings', async (request, reply) => {
+    try {
+      const { userId } = request.params;
+      const type = request.query.type || 'followers'; // 'followers' or 'following'
+      const page = parseInt(request.query.page) || 1;
+      const limit = 12; // Number of users per page
+      const skip = (page - 1) * limit;
+  
+      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const usersCollection = db.collection('users');
+  
+      // Find the user and either get their followers or following list
+      const user = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
+  
+      if (!user) {
+        return reply.code(404).send({ error: 'User not found' });
+      }
+  
+      const list = type === 'followers' ? user.followers : user.following;
+      const totalItems = list ? list.length : 0;
+  
+      if (!list || totalItems === 0) {
+        return reply.code(404).send({ users: [], page, totalPages: 0 });
+      }
+  
+      // Get paginated followers or following
+      const paginatedUserIds = list.slice(skip, skip + limit);
+      const paginatedUsers = await usersCollection
+        .find({ _id: { $in: paginatedUserIds.map(id => new fastify.mongo.ObjectId(id)) } })
+        .toArray();
+  
+      // Format users for response
+      const formattedUsers = paginatedUsers.map(user => ({
+        userId: user._id,
+        userName: user.nickname || 'Unknown User',
+        profilePicture: user.profileUrl || '/img/avatar.png',
+      }));
+  
+      const totalPages = Math.ceil(totalItems / limit);
+  
+      // Send paginated response
+      reply.send({
+        users: formattedUsers,
+        page,
+        totalPages,
+      });
+    } catch (err) {
+      console.log('Error: ', err);
+      reply.code(500).send('Internal Server Error');
+    }
+  });
+  fastify.get('/follower/:userId', async (request, reply) => {
+    try {
+      // Get current user
+      let currentUser = await fastify.getUser(request, reply);
+      const currentUserId = currentUser._id;
+  
+      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      currentUser = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(currentUserId) });
+  
+      const { userId } = request.params;
+      const type = request.query.type || 'followers'; // Default to 'followers' if type not provided
+  
+      // Find the specified user
+      const user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+  
+      if (!user) {
+        return reply.code(404).send({ error: 'User not found' });
+      }
+  
+      // Determine which list to return (followers or following)
+      let list = type === 'followers' ? user.followers : user.following;
+  
+      if (!list || list.length === 0) {
+        list = []; // Ensure it's an empty array if there are no followers or following
+      }      
+  
+      // Fetch the users in the followers or following list
+      const users = await db.collection('users')
+      .find({ _id: { $in: list.map(id => new fastify.mongo.ObjectId(id)) } })
+      .toArray() || [];    
+  
+      const formattedUsers = users.map(user => ({
+        userId: user._id.toString(),
+        userName: user.nickname || 'Unknown User',
+        profilePicture: user.profileUrl || '/img/avatar.png',
+      }));
+
+      const isFollowing = currentUser.following && currentUser.following.some(followingId => followingId.toString() === user._id.toString());
+      const isFollowedBy = user.following && user.following.some(followingId => followingId.toString() === currentUserId.toString());
+      const title = `${user.nickname} の${type === 'followers' ? 'フォロワー' : 'フォロー中'}リスト`;
+
+      return reply.view('follower.hbs', {
+        title,
+        currentUser: {
+          userId: currentUserId,
+          userName: currentUser.nickname,
+          profilePicture: currentUser.profileUrl || '/img/avatar.png',
+          postCount: currentUser.postCount || 0,
+          imageLikeCount: currentUser.imageLikeCount || 0,
+          followCount: currentUser.followCount || 0,
+          followerCount: currentUser.followerCount || 0,
+          coins: currentUser.coins || 0,
+        },
+        requestedUser: {
+          userId: userId,
+          userName: user.nickname,
+          profilePicture: user.profileUrl || '/img/avatar.png',
+          postCount: user.postCount || 0,
+          imageLikeCount: user.imageLikeCount || 0,
+          followCount: user.followCount || 0,
+          followerCount: user.followerCount || 0,
+          coins: user.coins || 0,
+          follow: isFollowing,
+          followedBy: isFollowedBy
+        },
+        type: type,
+        users: formattedUsers,
+      });      
+    } catch (err) {
+      console.error('Error:', err);
+      reply.code(500).send({ error: 'Internal Server Error' });
     }
   });
   

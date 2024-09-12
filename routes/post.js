@@ -10,6 +10,7 @@ async function routes(fastify, options) {
       const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
       const galleryCollection = db.collection('gallery');
       const postsCollection = db.collection('posts');
+      const usersCollection = db.collection('users');
   
       // Find the image in the user's gallery
       const userGallery = await galleryCollection.findOne({
@@ -22,8 +23,8 @@ async function routes(fastify, options) {
       }
   
       const image = userGallery.images.find(img => img._id.equals(imageId));
-      const chatId = userGallery.chatId
-
+      const chatId = userGallery.chatId;
+  
       const post = {
         userId: new fastify.mongo.ObjectId(userId),
         chatId,
@@ -33,9 +34,15 @@ async function routes(fastify, options) {
         comments: [],
         createdAt: new Date(),
       };
-
+  
       // Insert the post into the posts collection
       const result = await postsCollection.insertOne(post);
+  
+      // Increment the user's postCount field
+      await usersCollection.updateOne(
+        { _id: userId },
+        { $inc: { postCount: 1 } }
+      );
   
       reply.code(201).send({ postId: result.insertedId });
     } catch (err) {
@@ -43,6 +50,7 @@ async function routes(fastify, options) {
       reply.code(500).send('Internal Server Error');
     }
   });
+  
   fastify.put('/user/posts/:postId/nsfw', async (request, reply) => {
     try {
       const postId = new fastify.mongo.ObjectId(request.params.postId);

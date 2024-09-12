@@ -230,7 +230,87 @@ async function cleanUpDatabase(db) {
       console.error('Error during cleanup:', error);
     }
   };
+  async function updateAllUsersImageLikeCount(db) {
+    try {
+      const usersCollection = db.collection('users');
+      const imagesLikesCollection = db.collection('images_likes');
   
+      // Fetch distinct userIds from the images_likes collection
+      const userIds = await imagesLikesCollection.distinct('userId');
+      let userCount = 0;
+  
+      console.log('Starting to update imageLikeCount for users who liked images...');
+  
+      // Iterate through users who have liked images
+      for (const userId of userIds) {
+        userCount++;
+  
+        // Log the current user being processed
+        console.log(`Processing user ${userId} (${userCount})...`);
+  
+        // Count the number of likes by this user in the images_likes collection
+        const imageLikeCount = await imagesLikesCollection.countDocuments({ userId: userId });
+  
+        // Update the user's imageLikeCount in the users collection
+        const result = await usersCollection.updateOne(
+          { _id: userId },
+          { $set: { imageLikeCount: imageLikeCount } }
+        );
+  
+        // Log the update result
+        if (result.modifiedCount > 0) {
+          console.log(`User ${userId} imageLikeCount updated to ${imageLikeCount}`);
+        } else {
+          console.log(`No update needed for user ${userId}`);
+        }
+      }
+  
+      console.log(`Finished updating imageLikeCount for ${userCount} users who liked images.`);
+    } catch (error) {
+      console.log('Error updating imageLikeCount for users:', error);
+    }
+  }
+  
+  async function initializeAllUsersPostCount(db) {
+    try {
+      const usersCollection = db.collection('users');
+      const postsCollection = db.collection('posts');
+      
+      // Fetch distinct userIds from the posts collection (only users who have posts)
+      const userIds = await postsCollection.distinct('userId');
+      let userCount = 0;
+  
+      console.log('Starting to initialize postCount for users with posts...');
+  
+      // Iterate through users who have posts
+      for (const userId of userIds) {
+        userCount++;
+  
+        // Log the current user being processed
+        console.log(`Processing user ${userId} (${userCount})...`);
+  
+        // Count the number of posts by this user in the posts collection
+        const postCount = await postsCollection.countDocuments({ userId: userId });
+  
+        // Update the user's postCount in the users collection
+        const result = await usersCollection.updateOne(
+          { _id: userId },
+          { $set: { postCount: postCount } }
+        );
+  
+        // Log the update result
+        if (result.modifiedCount > 0) {
+          console.log(`User ${userId} postCount initialized to ${postCount}`);
+        } else {
+          console.log(`No update needed for user ${userId}`);
+        }
+      }
+  
+      console.log(`Finished initializing postCount for ${userCount} users.`);
+    } catch (error) {
+      console.log('Error initializing postCount for users:', error);
+    }
+  }
   
 
 module.exports = { 
@@ -240,5 +320,7 @@ module.exports = {
     deleteClientsWithoutProductId, 
     deleteUserChatsWithoutMessages,
     saveAllImageHashesToDB,
-    cleanUpDatabase
+    cleanUpDatabase,
+    updateAllUsersImageLikeCount,
+    initializeAllUsersPostCount
 }

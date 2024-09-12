@@ -311,7 +311,6 @@ window.generateImage = async function(data,prompt){
   const imageId = data.id
   const imagePrompt = data.prompt
   const imageNsfw = data.nsfw
-  console.log({imageNsfw})
 
   // Create an <img> element
   const img = document.createElement('img');

@@ -33,6 +33,7 @@ $(document).ready(async function() {
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageFav') {
             const description = event.data.description
+            console.log({description})
             if(!description)return
             let message = `[Hidden] I liked one of your picture. That one : ${description}. Thanks me and comment about the moment you took the picture.`
             addMessageToChat(chatId, userChatId, 'user', message,function(){
@@ -1252,12 +1253,17 @@ $(document).ready(async function() {
     }
   
     function sanitizeString(inputString) {
-        var wordsToRemove = ['nsfw', 'nude', 'sexy', 'erotic', 'naughty', 'body', 'breast','breasts','nipple','nipples', 'boobs', 'curvy', 'uncensored']; // Add words to remove
+        var wordsToRemove = ["latex","topless","abortion","adultery","assault","bestiality","bisexuality","incest","pedophilia","rape","sadism","suicide","transphobia", "violence",'sexy', 'masturbation','nsfw', 'nude', 'sexy', 'erotic', 'naughty', 'body', 'breast','breasts','nipple','nipples', 'boobs', 'curvy', 'uncensored']; // Add words to remove
         wordsToRemove.forEach(function(word) {
             var regex = new RegExp('\\b' + word + '\\b', 'g');
             inputString = inputString.replace(regex, '');
         });
-        return inputString.replace(/\s+/g, ' ').trim();  // Clean up extra spaces
+        inputString.replace(/\s+/g, ' ').trim();  
+        if (inputString.includes(",,,")){
+            return inputString.split(",,,")[1].trim();
+        }
+        
+        return inputString;
     }
     
     function getImageTools(imageId,isLiked = false, description = false){

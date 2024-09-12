@@ -694,9 +694,10 @@ window.loadAllUserPosts = async function (page = 1) {
                     <button class="btn btn-light post-nsfw-toggle isAdmin" data-id="${item.post.postId}">
                         <i class="bi ${item?.post?.nsfw ? 'bi-eye-slash-fill':'bi-eye-fill'}"></i> 
                     </button>
-                    <span class="float-end post-fav ${isLiked ? 'liked' : ''}" data-id="${item.post.postId}">
-                      <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
-                    </span>
+                    <button class="btn btn-light shadow-0 post-fav  ${isLiked ? 'liked' : ''}" data-id="${item.post.postId}"> 
+                        <i class="bi bi-heart-fill me-2"></i>いいね 
+                        <span class="ct">${item.post.likes || 0}</span>
+                    </button>
                   </div>
                   `}
                 </div>
@@ -1064,9 +1065,10 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
                     </a>
                     <div class="card-body p-2">
                         <a href="/post/${item._id}" class="text-muted text-decoration-none">${item.comment || 'No Comment'}</a>
-                        <span class="float-end post-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
-                            <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
-                        </span>
+                        <button class="btn btn-light shadow-0 post-fav  ${isLiked ? 'liked' : ''}" data-id="${item._idd}"> 
+                            <i class="bi bi-heart-fill me-2"></i>いいね 
+                            <span class="ct">${item.likes || 0}</span>
+                        </button>
                         <span class="float-end post-visible d-none ${item.isPrivate ? 'private':''} ${item.userId.toString() != currentUser._id.toString() ? 'd-none':''}" data-id="${item._id}">
                             <i class="bi ${item.isPrivate ? 'bi-eye-slash':'bi-eye'} me-2" style="cursor: pointer;"></i>
                         </span>

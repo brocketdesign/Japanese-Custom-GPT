@@ -160,11 +160,17 @@ async function routes(fastify, options) {
               nsfw,
               createdAt : new Date()
             } 
-          } 
+          },
         },
         { upsert: true }
       );
-  
+      
+      const chatsCollection = db.collection('chats');
+      await chatsCollection.updateOne(
+        { _id: new fastify.mongo.ObjectId(chatId) },
+        { $inc: { imageCount: 1 } }
+      );
+      
       const userDataCollection = db.collection('userChat');
       const userData = await userDataCollection.findOne({ 
         userId: new fastify.mongo.ObjectId(userId), 

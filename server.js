@@ -19,7 +19,8 @@ const {
   saveAllImageHashesToDB,
   cleanUpDatabase,
   updateAllUsersImageLikeCount,
-  initializeAllUsersPostCount
+  initializeAllUsersPostCount,
+  updateImageCount
  } = require('./models/cleanupNonRegisteredUsers');
 
 mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })

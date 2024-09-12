@@ -583,6 +583,9 @@ window.displayPepopleChat = async function (page = 1) {
                                 <div class="persona" style="color:rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
                                     <span class="badge bg-dark" style="width: 30px;"><i class="far fa-user-circle"></i></span>
                                 </div>
+                                <div class="gallery" style="color: rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
+                                    <span class="badge bg-dark"><i class="far fa-image me-1"></i>${chat.imageCount || 0}</span>
+                                </div>
                                 ${galleryIco}
                                 ${chat.messagesCount ? `<span class="badge bg-dark message-count"><i class="fas fa-comment-alt me-2"></i>${chat.messagesCount}</span>` : ''}
                             </div>

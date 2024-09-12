@@ -311,6 +311,37 @@ async function cleanUpDatabase(db) {
       console.log('Error initializing postCount for users:', error);
     }
   }
+  async function updateImageCount(db) {
+    try {
+      const galleryCollection = db.collection('gallery');
+      const chatsCollection = db.collection('chats');
+  
+      console.log('Fetching chats with images...');
+      const chatsWithImages = await galleryCollection.find({ images: { $exists: true, $not: { $size: 0 } } }).toArray();
+  
+      console.log(`Found ${chatsWithImages.length} chats with images.`);
+      
+      for (const chat of chatsWithImages) {
+        const imageCount = chat.images.length;
+  
+        console.log(`Updating imageCount for chatId: ${chat.chatId}, imageCount: ${imageCount}`);
+  
+        await chatsCollection.updateOne(
+          { _id: chat.chatId },
+          { $set: { imageCount: imageCount } }
+        );
+  
+        console.log(`Updated imageCount for chatId: ${chat.chatId}`);
+      }
+  
+      console.log('Image count update process completed.');
+      return { success: true };
+    } catch (error) {
+      console.log('Error occurred:', error);
+      return { error: 'An error occurred while updating image count' };
+    }
+  }
+  
   
 
 module.exports = { 
@@ -322,5 +353,6 @@ module.exports = {
     saveAllImageHashesToDB,
     cleanUpDatabase,
     updateAllUsersImageLikeCount,
-    initializeAllUsersPostCount
+    initializeAllUsersPostCount,
+    updateImageCount
 }

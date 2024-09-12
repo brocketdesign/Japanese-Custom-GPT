@@ -690,14 +690,20 @@ window.loadAllUserPosts = async function (page = 1) {
                     <img src="${item.post.imageUrl}" alt="${item.post.prompt}" class="card-img-top">
                   </a>
                   <div class="card-body p-2 d-flex align-items-center justify-content-between">
-                    <a href="/post/${item.post.postId}" class="text-muted text-decoration-none">${item.post.comment}</a>
-                    <button class="btn btn-light post-nsfw-toggle isAdmin" data-id="${item.post.postId}">
-                        <i class="bi ${item?.post?.nsfw ? 'bi-eye-slash-fill':'bi-eye-fill'}"></i> 
-                    </button>
-                    <button class="btn btn-light shadow-0 post-fav  ${isLiked ? 'liked' : ''}" data-id="${item.post.postId}"> 
-                        <i class="bi bi-heart-fill me-2"></i>いいね 
-                        <span class="ct">${item.post.likes || 0}</span>
-                    </button>
+                    <div class="row">
+                            <div class="col-12" style="overflow:hidden; text-wrap:nowrap;">
+                                <a href="/post/${item.post.postId}" class="text-muted text-decoration-none text-short">${item.post.comment}</a>
+                            </div>
+                            <div class="col-12 text-end">
+                                <button class="btn btn-light post-nsfw-toggle isAdmin" data-id="${item.post.postId}">
+                                    <i class="bi ${item?.post?.nsfw ? 'bi-eye-slash-fill':'bi-eye-fill'}"></i> 
+                                </button>
+                                <button class="btn btn-light shadow-0 post-fav  ${isLiked ? 'liked' : ''}" data-id="${item.post.postId}"> 
+                                    <i class="bi bi-heart-fill me-2"></i>いいね 
+                                    <span class="ct">${item.post.likes || 0}</span>
+                                </button>
+                            </div>
+                        </div>
                   </div>
                   `}
                 </div>
@@ -767,7 +773,7 @@ window.loadAllChatImages = async function (page = 1) {
             let isBlur = item?.nsfw && !subscriptionStatus;
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             chatGalleryHtml += `
-                <div class="col-12 col-md-4 col-lg-3">
+                <div class="col-12 col-md-6 col-lg-4">
                 <div class="card">
                     <div class="d-flex align-items-center p-2">
                         <a href="/character/${item.chatId}?imageId=${item._id}">
@@ -792,7 +798,7 @@ window.loadAllChatImages = async function (page = 1) {
                         <button class="btn btn-light image-nsfw-toggle isAdmin" data-id="${item._id}">
                             <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill':'bi-eye-fill'}"></i> 
                         </button>
-                        <span class="float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
+                        <span class="btn btn-light float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
                             <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
                         </span>
                     </div>
@@ -865,7 +871,7 @@ window.loadChatImages = async function (chatId, page = 1) {
             let isBlur = item?.nsfw && !subscriptionStatus;
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             chatGalleryHtml += `
-                <div class="col-12 col-md-4 col-lg-3">
+                <div class="col-12 col-md-6 col-lg-4">
                 <div class="card">
                     <div class="d-flex align-items-center p-2">
                         <a href="/character/${item.chatId}?imageId=${item._id}">
@@ -888,7 +894,7 @@ window.loadChatImages = async function (chatId, page = 1) {
                     </a>
                     <div class="card-body p-2 d-flex align-items-center justify-content-between">
                         <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
-                        <span class="float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
+                        <span class="btn btn-light float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
                             <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
                         </span>
                     </div>
@@ -959,7 +965,7 @@ window.loadUserImages = async function (userId, page = 1) {
             let isBlur = item?.nsfw && !subscriptionStatus 
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             galleryHtml += `
-                <div class="col-12 col-md-4 col-lg-3">
+                <div class="col-12 col-md-6 col-lg-4">
                 <div class="card">
                     <div class="d-flex align-items-center p-2">
                         <a href="/character/${item.chatId}?imageId=${item._id}">
@@ -981,7 +987,7 @@ window.loadUserImages = async function (userId, page = 1) {
                     </a>
                     <div class="card-body p-2 d-flex align-items-center justify-content-between">
                         <a href="/chat/${item.chatId}?imageId=${item._id}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
-                        <span class="float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
+                        <span class="btn btn-light float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
                             <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
                         </span>
                     </div>
@@ -1064,14 +1070,20 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
                         <img src="${item.image.imageUrl}" alt="${item.image.prompt}" class="card-img-top">
                     </a>
                     <div class="card-body p-2">
-                        <a href="/post/${item._id}" class="text-muted text-decoration-none">${item.comment || 'No Comment'}</a>
-                        <button class="btn btn-light shadow-0 post-fav  ${isLiked ? 'liked' : ''}" data-id="${item._idd}"> 
-                            <i class="bi bi-heart-fill me-2"></i>いいね 
-                            <span class="ct">${item.likes || 0}</span>
-                        </button>
-                        <span class="float-end post-visible d-none ${item.isPrivate ? 'private':''} ${item.userId.toString() != currentUser._id.toString() ? 'd-none':''}" data-id="${item._id}">
-                            <i class="bi ${item.isPrivate ? 'bi-eye-slash':'bi-eye'} me-2" style="cursor: pointer;"></i>
-                        </span>
+                        <div class="row">
+                            <div class="col-12" style="overflow:hidden; text-wrap:nowrap;">
+                                <a href="/post/${item._id}" class="text-muted text-decoration-none text-short ">${item.comment || 'No Comment'}</a>
+                            </div>
+                            <div class="col-12 text-end">
+                                <button class="btn btn-light shadow-0 post-fav  ${isLiked ? 'liked' : ''}" data-id="${item._idd}"> 
+                                    <i class="bi bi-heart-fill me-2"></i>いいね 
+                                    <span class="ct">${item.likes || 0}</span>
+                                </button>
+                                <span class="float-end post-visible d-none ${item.isPrivate ? 'private':''} ${item.userId.toString() != currentUser._id.toString() ? 'd-none':''}" data-id="${item._id}">
+                                    <i class="bi ${item.isPrivate ? 'bi-eye-slash':'bi-eye'} me-2" style="cursor: pointer;"></i>
+                                </span>
+                            </div>
+                        </div>
                     </div>
                     `}
                 </div>

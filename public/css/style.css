@@ -116,6 +116,14 @@ em {
   font-size: 13px;
   color: #979393;
 }
+.text-short {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 150px; 
+  display: inline-block;
+}
+
 .assistant-image-box img{
   width: 100%;
   border-radius: 5px;

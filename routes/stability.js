@@ -492,11 +492,11 @@ async function fetchNovitaResult(task_id) {
   const default_prompt ={
     nsfw: {
       prompt: `(sexy),erotic pose,(sexy pose), naughty face, sexy clothes, censored, `,
-      negative_prompt: "naked pussy,pussy,vagin,sex,dick,(ugly face),score_6,score_5,score_4,blurry,signature,username,watermark,jpeg artifacts,normal quality,worst quality,low quality,missing fingers,extra digits,fewer digits,bad eye,"
+      negative_prompt: "naked pussy,pussy,vulve,vagin,sex,dick,blurry,signature,username,watermark,jpeg artifacts,normal quality,worst quality,low quality"
     },
     sfw: {
       prompt: `1girl,HD,4K quality,(perfect hands:0.1),(sfw),dressed,clothes,`,
-      negative_prompt : "nipple,topless,nsfw,naked pussy,pussy,((vagin)),vaginal,((((pussy)))),(((nipple))),nude,((naked)),sex,(((genital))), score_6,score_5,score_4,blurry,signature,username,watermark,jpeg artifacts,normal quality,worst quality,low quality,missing fingers,extra digits,fewer digits,bad eye,"
+      negative_prompt : "nipple,topless,nsfw,naked,pussy,vulve,vagin,,nude,sex,worst quality,low quality,"
     }
   }
   const params = {
@@ -525,9 +525,21 @@ async function fetchNovitaResult(task_id) {
       user = await collectionUser.findOne({ _id: userIdObj });
   
       const isSubscribed = user.subscriptionStatus === 'active';
-  
-      const image_request1 = { ...params, prompt: default_prompt.sfw.prompt + prompt, negative_prompt: default_prompt.sfw.negative_prompt };
-      const image_request2 = { ...params, prompt: default_prompt.nsfw.prompt + prompt, negative_prompt: default_prompt.nsfw.negative_prompt };
+      
+      const truncate = (text, maxLength = 1024) => [...text].slice(0, maxLength).join('');
+
+      const image_request1 = { 
+        ...params, 
+        prompt: truncate(default_prompt.sfw.prompt + prompt), 
+        negative_prompt: truncate(default_prompt.sfw.negative_prompt)
+      };
+      
+      const image_request2 = { 
+        ...params, 
+        prompt: truncate(default_prompt.nsfw.prompt + prompt), 
+        negative_prompt: truncate(default_prompt.nsfw.negative_prompt)
+      };
+      
   
       const handleImageRequest = async (image_request, blur = false, nsfw = false) => {
         const taskId = await fetchNovitaMagic(image_request);

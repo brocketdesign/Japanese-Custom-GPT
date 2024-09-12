@@ -439,6 +439,7 @@ $(document).ready(async function() {
             thankUserAndAddCoins(function(response){
                 if(!response){return}
                 updateCoins()
+                return
                 let message = `[Hidden] Tell me that you will send me a picture of you.Do not answer this message. Act as if it was oyour idea.`
                 addMessageToChat(chatId, userChatId, 'user', message,function(){
                     generateCompletion(function(){

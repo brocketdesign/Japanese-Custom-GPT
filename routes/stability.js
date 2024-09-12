@@ -543,35 +543,40 @@ async function fetchNovitaResult(task_id) {
       console.log(image_request1,image_request2)
   
       const handleImageRequest = async (image_request, blur = false, nsfw = false) => {
-        const taskId = await fetchNovitaMagic(image_request);
-        let imageUrls = await fetchNovitaResult(taskId);
-        
-        return await Promise.all(imageUrls.map(async (imageUrl) => {
-          let blurredImageUrl = null;
+        try {
+          const taskId = await fetchNovitaMagic(image_request);
+          let imageUrls = await fetchNovitaResult(taskId);
       
-          // If blur is requested, create a blurred version
-          if (blur) {
-            blurredImageUrl = await createBlurredImage(imageUrl,db);
-          }
-
-          // Save both the original and blurred (if exists) URLs in the DB
-          const { imageId } = await saveImageToDB(
-            userId, 
-            chatId, 
-            userChatId, 
-            image_request.prompt, 
-            imageUrl,  // original image
-            aspectRatio, 
-            blurredImageUrl,  // blurred image (if exists)
-            nsfw
-          );
+          return await Promise.all(imageUrls.map(async (imageUrl) => {
+            let blurredImageUrl = null;
       
-          // Return the correct URL based on the blur flag
-          const returnUrl = blur && blurredImageUrl ? blurredImageUrl : imageUrl;
+            // If blur is requested, create a blurred version
+            if (blur) {
+              blurredImageUrl = await createBlurredImage(imageUrl, db);
+            }
       
-          return { id: imageId, url: returnUrl, prompt: image_request.prompt, nsfw };
-        }));
-      };     
+            // Save both the original and blurred (if exists) URLs in the DB
+            const { imageId } = await saveImageToDB(
+              userId, 
+              chatId, 
+              userChatId, 
+              image_request.prompt, 
+              imageUrl,  // original image
+              aspectRatio, 
+              blurredImageUrl,  // blurred image (if exists)
+              nsfw
+            );
+      
+            // Return the correct URL based on the blur flag
+            const returnUrl = blur && blurredImageUrl ? blurredImageUrl : imageUrl;
+      
+            return { id: imageId, url: returnUrl, prompt: image_request.prompt, nsfw };
+          }));
+        } catch (error) {
+          console.log(`Failed to handle image request: ${image_request.prompt}`, error);
+          return {}; // Return an empty object to avoid breaking Promise.all
+        }
+      }; 
   
       const [images1, images2] = await Promise.all([
         handleImageRequest(image_request1),

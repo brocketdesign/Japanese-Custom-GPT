@@ -1743,7 +1743,8 @@ $(document).ready(async function() {
             },
             error: function(error) {
                 console.error('Error:', error);
-            }
+                $(`#container-${uniqueId}`).remove()
+            },
         });
     }            
     function generateNarration(callback) {

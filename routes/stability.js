@@ -539,7 +539,8 @@ async function fetchNovitaResult(task_id) {
         prompt: truncate(default_prompt.nsfw.prompt + prompt), 
         negative_prompt: truncate(default_prompt.nsfw.negative_prompt)
       };
-      
+       
+      console.log(image_request1,image_request2)
   
       const handleImageRequest = async (image_request, blur = false, nsfw = false) => {
         const taskId = await fetchNovitaMagic(image_request);

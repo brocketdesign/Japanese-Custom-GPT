@@ -194,6 +194,19 @@ $(document).ready(async function() {
             }
           });
     }
+    $(document).find('.jp-date').each(function () {
+        const originalDate = new Date($(this).text());
+  
+        // Format date into Japanese format: 年/月/日 時間
+        const formattedDate = originalDate.getFullYear() + '年' +
+                              (originalDate.getMonth() + 1) + '月' +
+                              originalDate.getDate() + '日 ' +
+                              originalDate.getHours() + '時' +
+                              originalDate.getMinutes() + '分';
+  
+        // Set the formatted date back into the element
+        $(this).text(formattedDate);
+      });
     $(document).on('click', '.persona', function(e) {
         e.stopPropagation();
         e.preventDefault();
@@ -324,8 +337,192 @@ $(document).ready(async function() {
           }
         });
     }); 
+    $(document).on('click', '.image-nsfw-toggle', function () {
 
+        const isTemporary = !!user.isTemporary;
+        //if (isTemporary) { showRegistrationForm(); return; }
+    
+        const $this = $(this);
+        const imageId = $this.data('id');
+        const isNSFW = $this.hasClass('nsfw'); // Check if already marked as NSFW
+    
+        const nsfwStatus = !isNSFW; // Toggle NSFW status
+    
+        $this.toggleClass('nsfw'); // Toggle NSFW class for UI change
+    
+        // Update the button icon based on the NSFW status
+        const icon = nsfwStatus 
+          ? '<i class="bi bi-eye-slash-fill"></i>'   // NSFW icon (eye-slash for hidden content)
+          : '<i class="bi bi-eye-fill"></i>';        // Non-NSFW icon (eye for visible content)
+    
+        $this.html(icon); // Update the button's icon
+    
+        $.ajax({
+          url: `/images/${imageId}/nsfw`, // Endpoint for updating NSFW status
+          method: 'PUT',
+          contentType: 'application/json',
+          data: JSON.stringify({ nsfw: nsfwStatus }), // Send NSFW status in request body
+          success: function () {
+    
+            // Show success notification in Japanese
+            if (nsfwStatus) {
+              showNotification('NSFWに設定されました！', 'success');
+            } else {
+              showNotification('NSFW設定が解除されました！', 'success');
+            }
+          },
+          error: function () {
+            $this.toggleClass('nsfw'); // Revert the class change if request fails
+            $this.html(isNSFW 
+              ? '<i class="bi bi-eye-fill"></i>' 
+              : '<i class="bi bi-eye-slash-fill"></i>'); // Revert the icon as well
+            showNotification('リクエストに失敗しました。', 'error');
+          }
+        });
+    });
+    $(document).on('click', '.post-nsfw-toggle', function () {
+
+        const isTemporary = !!user.isTemporary;
+        // if (isTemporary) { showRegistrationForm(); return; }
+    
+        const $this = $(this);
+        const postId = $this.data('id'); // Post ID is stored in data attribute
+        const isNSFW = $this.hasClass('nsfw'); // Check if already marked as NSFW
+
+        const nsfwStatus = !isNSFW; // Toggle NSFW status
+    
+        $this.toggleClass('nsfw'); // Toggle NSFW class for UI change
+    
+        // Update the button icon based on the NSFW status
+        const icon = nsfwStatus 
+          ? '<i class="bi bi-eye-slash-fill"></i>'   // NSFW icon (eye-slash for hidden content)
+          : '<i class="bi bi-eye-fill"></i>';        // Non-NSFW icon (eye for visible content)
+    
+        $this.html(icon); // Update the button's icon
+    
+        $.ajax({
+            url: `/user/posts/${postId}/nsfw`, // Endpoint for updating NSFW status
+            method: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({ nsfw: nsfwStatus }), // Send NSFW status in request body
+            success: function () {
+                // Show success notification
+                if (nsfwStatus) {
+                    showNotification('NSFWに設定されました！', 'success');
+                } else {
+                    showNotification('NSFW設定が解除されました！', 'success');
+                }
+            },
+            error: function () {
+                $this.toggleClass('nsfw'); // Revert the class change if request fails
+                $this.html(isNSFW 
+                  ? '<i class="bi bi-eye-fill"></i>' 
+                  : '<i class="bi bi-eye-slash-fill"></i>'); // Revert the icon as well
+                showNotification('リクエストに失敗しました。', 'error');
+            }
+        });
+    });
+    
+        
 });
+window.loadAllUserPosts = async function (page = 1) {
+    const currentUser = await fetchUser();
+    const currentUserId = currentUser._id;
+    const subscriptionStatus = currentUser.subscriptionStatus === 'active';
+
+    $.ajax({
+      url: `/user/posts?page=${page}`,
+      method: 'GET',
+      success: function (data) {
+        let galleryHtml = '';
+        data.posts.forEach(item => {
+            let isBlur = item?.post?.nsfw && !subscriptionStatus; 
+            const isLiked = item?.post?.likedBy?.some(id => id.toString() === currentUserId.toString());
+
+            galleryHtml += `
+              <div class="col-12 col-md-4 col-lg-3">
+                <div class="card">
+                  <div class="d-flex align-items-center p-2">
+                    <a href="/user/${item.userId}">
+                      <img src="${item.profilePicture}" alt="${item.userName}" class="rounded-circle me-2" width="40" height="40">
+                    </a>
+                    <a href="/user/${item.userId}" class="text-decoration-none text-dark">
+                      <strong>${item.userName}</strong>
+                    </a>
+                  </div>
+                  ${isBlur ? `
+                  <div type="button" onclick=showPremiumPopup()>
+                    <img src="/img/nsfw-blurred.jpg" class="card-img-top" style="object-fit: cover;">
+                    <div class="card-body p-2">
+                    </div>
+                  </div>
+                  ` : `
+                  <a href="/post/${item.post.postId}" class="text-muted text-decoration-none">
+                    <img src="${item.post.imageUrl}" alt="${item.post.prompt}" class="card-img-top">
+                  </a>
+                  <div class="card-body p-2 d-flex align-items-center justify-content-between">
+                    <a href="/post/${item.post.postId}" class="text-muted text-decoration-none">${item.post.comment}</a>
+                    <button class="btn btn-light post-nsfw-toggle isAdmin" data-id="${item.post.postId}">
+                        <i class="bi ${item?.post?.nsfw ? 'bi-eye-slash-fill':'bi-eye-fill'}"></i> 
+                    </button>
+                    <span class="float-end post-fav ${isLiked ? 'liked' : ''}" data-id="${item.post.postId}">
+                      <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
+                    </span>
+                  </div>
+                  `}
+                </div>
+              </div>
+            `;
+        });
+
+        $('#post-gallery').html(galleryHtml);
+        generateUserPostsPagination(data.page, data.totalPages);
+      },
+      error: function (err) {
+        console.error('Failed to load posts', err);
+      }
+    });
+}
+
+function generateUserPostsPagination(currentPage, totalPages) {
+    let paginationHtml = '';
+    const maxPagesToShow = 5;
+    const sidePagesToShow = 2;
+
+    if (totalPages > 1) {
+      paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadAllUserPosts(${currentPage - 1})">前へ</button>`;
+
+      if (currentPage > sidePagesToShow + 1) {
+        paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadAllUserPosts(1)">1</button>`;
+        if (currentPage > sidePagesToShow + 2) {
+          paginationHtml += `<span class="mx-1">...</span>`;
+        }
+      }
+
+      let startPage = Math.max(1, currentPage - sidePagesToShow);
+      let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
+
+      for (let i = startPage; i <= endPage; i++) {
+        paginationHtml += `
+          <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadAllUserPosts(${i})">
+            ${i}
+          </button>
+        `;
+      }
+
+      if (currentPage < totalPages - sidePagesToShow - 1) {
+        if (currentPage < totalPages - sidePagesToShow - 2) {
+          paginationHtml += `<span class="mx-1">...</span>`;
+        }
+        paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadAllUserPosts(${totalPages})">${totalPages}</button>`;
+      }
+
+      paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadAllUserPosts(${currentPage + 1})">次へ</button>`;
+    }
+
+    $('#user-posts-pagination-controls').html(paginationHtml);
+}
+
 window.loadAllChatImages = async function (page = 1) {
     const currentUser = await fetchUser();
     const currentUserId = currentUser._id;
@@ -340,7 +537,7 @@ window.loadAllChatImages = async function (page = 1) {
             let isBlur = item?.nsfw && !subscriptionStatus;
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             chatGalleryHtml += `
-                <div class="col-6 col-md-4 col-lg-3">
+                <div class="col-12 col-md-4 col-lg-3">
                 <div class="card">
                     <div class="d-flex align-items-center p-2">
                         <a href="/character/${item.chatId}?imageId=${item._id}">
@@ -362,6 +559,9 @@ window.loadAllChatImages = async function (page = 1) {
                     </a>
                     <div class="card-body p-2 d-flex align-items-center justify-content-between">
                         <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
+                        <button class="btn btn-light image-nsfw-toggle isAdmin" data-id="${item._id}">
+                            <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill':'bi-eye-fill'}"></i> 
+                        </button>
                         <span class="float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
                             <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
                         </span>
@@ -383,11 +583,23 @@ window.loadAllChatImages = async function (page = 1) {
 
 function generateAllChatsImagePagination(currentPage, totalPages) {
     let paginationHtml = '';
+    const maxPagesToShow = 5;
+    const sidePagesToShow = 2; // Pages to show on each side of the current page
 
     if (totalPages > 1) {
       paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadAllChatImages(${currentPage - 1})">前へ</button>`;
 
-      for (let i = 1; i <= totalPages; i++) {
+      if (currentPage > sidePagesToShow + 1) {
+        paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadAllChatImages(1)">1</button>`;
+        if (currentPage > sidePagesToShow + 2) {
+          paginationHtml += `<span class="mx-1">...</span>`;
+        }
+      }
+
+      let startPage = Math.max(1, currentPage - sidePagesToShow);
+      let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
+
+      for (let i = startPage; i <= endPage; i++) {
         paginationHtml += `
           <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadAllChatImages(${i})">
             ${i}
@@ -395,11 +607,19 @@ function generateAllChatsImagePagination(currentPage, totalPages) {
         `;
       }
 
+      if (currentPage < totalPages - sidePagesToShow - 1) {
+        if (currentPage < totalPages - sidePagesToShow - 2) {
+          paginationHtml += `<span class="mx-1">...</span>`;
+        }
+        paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadAllChatImages(${totalPages})">${totalPages}</button>`;
+      }
+
       paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadAllChatImages(${currentPage + 1})">次へ</button>`;
     }
-
+    
     $('#all-chats-images-pagination-controls').html(paginationHtml);
 }
+
 
 window.loadChatImages = async function (chatId, page = 1) {
     const currentUser = await fetchUser();
@@ -415,7 +635,7 @@ window.loadChatImages = async function (chatId, page = 1) {
             let isBlur = item?.nsfw && !subscriptionStatus;
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             chatGalleryHtml += `
-                <div class="col-6 col-md-4 col-lg-3">
+                <div class="col-12 col-md-4 col-lg-3">
                 <div class="card">
                     <div class="d-flex align-items-center p-2">
                         <a href="/character/${item.chatId}?imageId=${item._id}">
@@ -456,14 +676,25 @@ window.loadChatImages = async function (chatId, page = 1) {
       }
     });
 }
-
 function generateChatImagePagination(currentPage, totalPages, chatId) {
     let paginationHtml = '';
+    const maxPagesToShow = 5;
+    const sidePagesToShow = 2; // Pages to show on each side of the current page
 
     if (totalPages > 1) {
       paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadChatImages('${chatId}', ${currentPage - 1})">前へ</button>`;
 
-      for (let i = 1; i <= totalPages; i++) {
+      if (currentPage > sidePagesToShow + 1) {
+        paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadChatImages('${chatId}', 1)">1</button>`;
+        if (currentPage > sidePagesToShow + 2) {
+          paginationHtml += `<span class="mx-1">...</span>`;
+        }
+      }
+
+      let startPage = Math.max(1, currentPage - sidePagesToShow);
+      let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
+
+      for (let i = startPage; i <= endPage; i++) {
         paginationHtml += `
           <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadChatImages('${chatId}', ${i})">
             ${i}
@@ -471,11 +702,19 @@ function generateChatImagePagination(currentPage, totalPages, chatId) {
         `;
       }
 
+      if (currentPage < totalPages - sidePagesToShow - 1) {
+        if (currentPage < totalPages - sidePagesToShow - 2) {
+          paginationHtml += `<span class="mx-1">...</span>`;
+        }
+        paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadChatImages('${chatId}', ${totalPages})">${totalPages}</button>`;
+      }
+
       paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadChatImages('${chatId}', ${currentPage + 1})">次へ</button>`;
     }
 
     $('#chat-images-pagination-controls').html(paginationHtml);
 }
+
 
 window.loadUserImages = async function (userId, page = 1) {
     const currentUser = await fetchUser();
@@ -490,7 +729,7 @@ window.loadUserImages = async function (userId, page = 1) {
             let isBlur = item?.nsfw && !subscriptionStatus 
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             galleryHtml += `
-                <div class="col-6 col-md-4 col-lg-3">
+                <div class="col-12 col-md-4 col-lg-3">
                 <div class="card">
                     <div class="d-flex align-items-center p-2">
                         <a href="/character/${item.chatId}?imageId=${item._id}">
@@ -533,16 +772,26 @@ window.loadUserImages = async function (userId, page = 1) {
 
 function generateImagePagination(currentPage, totalPages, userId) {
     let paginationHtml = '';
+    const sidePagesToShow = 2;
 
     if (totalPages > 1) {
       paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadUserImages('${userId}', ${currentPage - 1})">前へ</button>`;
 
-      for (let i = 1; i <= totalPages; i++) {
-        paginationHtml += `
-          <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadUserImages('${userId}', ${i})">
-            ${i}
-          </button>
-        `;
+      if (currentPage > sidePagesToShow + 1) {
+        paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadUserImages('${userId}', 1)">1</button>`;
+        if (currentPage > sidePagesToShow + 2) paginationHtml += `<span class="mx-1">...</span>`;
+      }
+
+      let startPage = Math.max(1, currentPage - sidePagesToShow);
+      let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
+
+      for (let i = startPage; i <= endPage; i++) {
+        paginationHtml += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadUserImages('${userId}', ${i})">${i}</button>`;
+      }
+
+      if (currentPage < totalPages - sidePagesToShow - 1) {
+        if (currentPage < totalPages - sidePagesToShow - 2) paginationHtml += `<span class="mx-1">...</span>`;
+        paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadUserImages('${userId}', ${totalPages})">${totalPages}</button>`;
       }
 
       paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadUserImages('${userId}', ${currentPage + 1})">次へ</button>`;
@@ -564,7 +813,7 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
             let isBlur = item?.image?.nsfw && !subscriptionStatus 
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             galleryHtml += `
-                <div class="col-6 col-md-4 col-lg-3">
+                <div class="col-12 col-md-4 col-lg-3">
                 <div class="card">
                     <div class="d-flex align-items-center p-2">
                         <a href="/user/${item.userId}">
@@ -609,27 +858,40 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
   }
   function generatePagination(currentPage, totalPages, userId, like = false) {
     let paginationHtml = '';
+    const sidePagesToShow = 2;
 
     if (totalPages > 1) {
       // Previous Button
       paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadUserPosts('${userId}', ${currentPage - 1})">前へ</button>`;
 
-      // Page numbers
-      for (let i = 1; i <= totalPages; i++) {
-        paginationHtml += `
-          <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadUserPosts('${userId}', ${i})">
-            ${i}
-          </button>
-        `;
+      // First page and ellipsis
+      if (currentPage > sidePagesToShow + 1) {
+        paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadUserPosts('${userId}', 1)">1</button>`;
+        if (currentPage > sidePagesToShow + 2) paginationHtml += `<span class="mx-1">...</span>`;
+      }
+
+      // Visible page numbers
+      let startPage = Math.max(1, currentPage - sidePagesToShow);
+      let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
+
+      for (let i = startPage; i <= endPage; i++) {
+        paginationHtml += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadUserPosts('${userId}', ${i})">${i}</button>`;
+      }
+
+      // Last page and ellipsis
+      if (currentPage < totalPages - sidePagesToShow - 1) {
+        if (currentPage < totalPages - sidePagesToShow - 2) paginationHtml += `<span class="mx-1">...</span>`;
+        paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadUserPosts('${userId}', ${totalPages})">${totalPages}</button>`;
       }
 
       // Next Button
       paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadUserPosts('${userId}', ${currentPage + 1})">次へ</button>`;
     }
 
-    const containerId = like ? 'posts-like-pagination-controls' : 'pagination-controls'
+    const containerId = like ? 'posts-like-pagination-controls' : 'pagination-controls';
     $(`#${containerId}`).html(paginationHtml);
-  }
+}
+
 window.showRegistrationForm = function(messageId,callback) {
 
     //window.location = "/authenticate?register=true"

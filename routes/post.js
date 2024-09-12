@@ -43,6 +43,35 @@ async function routes(fastify, options) {
       reply.code(500).send('Internal Server Error');
     }
   });
+  fastify.put('/user/posts/:postId/nsfw', async (request, reply) => {
+    try {
+      const postId = new fastify.mongo.ObjectId(request.params.postId);
+      const { nsfw } = request.body; // Expecting nsfw in the request body
+
+      if (typeof nsfw !== 'boolean') {
+        return reply.code(400).send({ message: 'Invalid value for nsfw. Must be a boolean.' });
+      }
+  
+      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const postsCollection = db.collection('posts');
+  
+      // Update the nsfw attribute of the post
+      const result = await postsCollection.updateOne(
+        { _id: new fastify.mongo.ObjectId(postId) },
+        { $set: { 'image.nsfw': nsfw } }
+      );
+  
+      if (result.modifiedCount === 0) {
+        return reply.code(404).send({ message: 'Post not found or nsfw attribute not updated.' });
+      }
+  
+      reply.send({ message: 'NSFW attribute updated successfully.' });
+    } catch (err) {
+      console.log("Error: ", err);
+      reply.code(500).send('Internal Server Error');
+    }
+  });
+  
   fastify.get('/posts/:id', async (request, reply) => {
     try {
       const postId = new fastify.mongo.ObjectId(request.params.id);
@@ -58,6 +87,77 @@ async function routes(fastify, options) {
       reply.send(post);
     } catch (err) {
       console.error(err);
+      reply.code(500).send('Internal Server Error');
+    }
+  });
+  fastify.get('/user/posts', async (request, reply) => {
+    try {
+      const page = parseInt(request.query.page) || 1;
+      const limit = 13; // Number of posts per page
+      const skip = (page - 1) * limit;
+  
+      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const postsCollection = db.collection('posts');
+      const usersCollection = db.collection('users');
+      const chatsCollection = db.collection('chats');
+  
+      // Fetch paginated posts
+      const postsCursor = await postsCollection
+        .find({ comment: { $exists: true }, chatId: { $exists: true } })
+        .skip(skip)
+        .limit(limit)
+        .toArray();
+  
+      if (!postsCursor.length) {
+        return reply.code(404).send({ posts: [], page, totalPages: 0 });
+      }
+  
+      const userIds = postsCursor.map(item => item.userId);
+      const chatIds = postsCursor.map(item => item.chatId);
+  
+      const [users, chats] = await Promise.all([
+        usersCollection.find({ _id: { $in: userIds } }).toArray(),
+        chatsCollection.find({ _id: { $in: chatIds } }).toArray()
+      ]);
+  
+      const validPosts = postsCursor.map(item => {
+        const user = users.find(u => u._id.toString() === item.userId.toString());
+        const chat = chats.find(c => c._id.toString() === item.chatId.toString());
+
+        return user && chat ? {
+          userName: user.nickname || 'Unknown User',
+          profilePicture: user.profileUrl || '/img/avatar.png',
+          chatId: chat.chatId || null,
+          userId: item.userId,
+          chatName: chat.name || 'Unknown Chat',
+          post: {
+            postId: item._id,
+            imageUrl: item.image.imageUrl,
+            nsfw: item.image.nsfw,
+            prompt: item.image.prompt,
+            comment: item.comment || '',
+            createdAt: item.createdAt,
+            likes: item.likes || 0,
+            likedBy: item.likedBy || []
+          }
+        } : null;
+      }).filter(Boolean);
+  
+      // Get total count of posts for pagination
+      const totalPostsCount = await postsCollection.countDocuments({
+        comment: { $exists: true },
+        chatId: { $exists: true }
+      });
+      const totalPages = Math.ceil(totalPostsCount / limit);
+  
+      // Send paginated response
+      reply.send({
+        posts: validPosts,
+        page,
+        totalPages
+      });
+    } catch (err) {
+      console.log("Error: ", err);
       reply.code(500).send('Internal Server Error');
     }
   });

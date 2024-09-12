@@ -126,6 +126,7 @@
       <div class="row">
 
         <!-- Post Content Section -->
+        {{#if post}}
         <div class="col-lg-8 mb-4">
           <div class="card">
             <img src="{{post.image.imageUrl}}" class="card-img-top" alt="{{post.prompt}}" style="max-height:400px;width:auto;object-fit:contain;">
@@ -141,8 +142,9 @@
             </div>
           </div>
         </div>
-
+        {{/if}}
         <!-- User Profile Section -->
+        {{#if postUser}}
         <div class="col-lg-4 mb-4">
           <div class="card">
             <div class="card-body text-center">
@@ -171,10 +173,12 @@
             </div>
           </div>
         </div>
+        {{/if}}
       </div>
     </div>
 
 <section class="container">
+  {{#if userId}}
   <div class="row justify-content-center">
     <div class="col-12 mt-4">
         <h4>投稿したAI画像</h4>
@@ -183,182 +187,29 @@
         <div id="pagination-controls" class="d-flex justify-content-center my-3"></div>
     </div>
   </div>
+  {{else}}
+  <h3 class="my-4 text-center">コミュニティからの最新投稿</h3>
+  <p>Lamixでは、AIグラビアとのチャット中に生成された画像を使って、簡単に投稿を作成することができます。お気に入りの瞬間やクリエイティブな画像をシェアすることで、他のユーザーと楽しさを共有しましょう。画像を選んで投稿に追加するだけで、あなただけのオリジナルコンテンツを簡単に発信できます。</p>
+    
+  <div class="container mt-4 mb-5">
+    <div class="row" id="post-gallery"></div>
+    <div class="d-flex justify-content-center mt-4" id="user-posts-pagination-controls"></div>
+  </div>
+
+  {{/if}}
 </section>
 
 {{> dashboard-footer}}
+
 <script>
-    const userId = `{{{postUser._id}}}`;
-
-  $(document).ready(function(){
-        $(document).on('click', '.open-chat', function(){
-          const chatId = $(this).data('id');
-          if (window.self !== window.top) {
-            window.parent.postMessage({ event: 'openChat', chatId: chatId }, '*');
-          } else {
-            window.location = `/chat/${chatId}`
-          }
-        });
-  });
-
-
-  $(document).ready(function() {
-    return
-    const userId = `{{{postUser._id}}}`;
-    console.log({userId})
-    $.getJSON(`/user/chat-data/${userId}`, function(data) {
-        let htmlContent = '';
-
-        if (data.userChats.length > 0) {
-            // Tabs for Admin
-            if (data.isAdmin) {
-                htmlContent += `
-                <ul class="nav nav-tabs mb-2" id="chatTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="public-tab" data-bs-toggle="tab" data-bs-target="#public" type="button" role="tab" aria-controls="public" aria-selected="true">チャット</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="private-tab" data-bs-toggle="tab" data-bs-target="#private" type="button" role="tab" aria-controls="private" aria-selected="false">非公開キャラクター</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="persona-tab" data-bs-toggle="tab" data-bs-target="#persona" type="button" role="tab" aria-controls="persona" aria-selected="false">ペルソナ</button>
-                    </li>
-                </ul>`;
-            }
-
-            // Tab Content
-            htmlContent += `<div class="tab-content" id="chatTabContent">`;
-
-            // Public Chats
-            htmlContent += `
-            <div class="tab-pane fade show active" id="public" role="tabpanel" aria-labelledby="public-tab">
-                <div class="row m-0 px-1">
-                    <div><span class="badge bg-secondary"><i class="fas fa-unlock me-2"></i> ${data.publicChatCount}</span></div>
-                    <div class="d-flex scroll-horizontal">`;
-
-            data.userChats.forEach(chat => {
-                if (chat.visibility === "public") {
-                    htmlContent += `
-                    <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2 open-chat" 
-                        style="cursor:pointer;" 
-                        data-id="${chat._id}">
-                        <div style="background-image:url('${chat.chatImageUrl}')" class="card-img-top girls_avatar position-relative" alt="${chat.name}">
-                            <div id="spinner-${chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
-                            <div class="tags position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px">
-                                  ${(chat?.tags ?? []).map(tag => `<span class="badge bg-dark">${tag}</span>`).join('')}
-                            </div>
-                        </div>
-                        <div class="card-body bg-transparent border-0 pb-0 text-start">
-                            <h5 class="card-title character-title">${chat.name}</h5>
-                            <p class="card-text character-short-description">${chat.description}</p>
-                        </div>
-                    </div>`;
-                }
-            });
-
-            htmlContent += `</div></div></div>`;
-
-            // Private Chats (Admin Only)
-            if (data.isAdmin) {
-                htmlContent += `
-                <div class="tab-pane fade" id="private" role="tabpanel" aria-labelledby="private-tab">
-                    <div class="row m-0 px-1">
-                        <div><span class="badge bg-secondary"><i class="fas fa-lock me-2"></i> ${data.privateChatCount}</span></div>
-                        <div class="d-flex scroll-horizontal">`;
-
-                data.userChats.forEach(chat => {
-                    if (chat.visibility === "private") {
-                        htmlContent += `
-                        <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2 open-chat" 
-                            style="cursor:pointer;" 
-                            data-id="${chat._id}">
-                            <div style="background-image:url('${chat.chatImageUrl}')" class="card-img-top girls_avatar position-relative" alt="${chat.name}">
-                                <div id="spinner-${chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
-                                <div class="tags position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px">
-                                  ${(chat?.tags ?? []).map(tag => `<span class="badge bg-dark">${tag}</span>`).join('')}
-                                </div>
-                            </div>
-                            <div class="card-body bg-transparent border-0 pb-0 text-start">
-                                <h5 class="card-title character-title">${chat.name}</h5>
-                                <p class="card-text character-short-description">${chat.description}</p>
-                            </div>
-                        </div>`;
-                    }
-                });
-
-                htmlContent += `</div></div></div>`;
-            }
-
-            // Personas (Admin Only)
-            if (data.isAdmin) {
-                htmlContent += `
-                <div class="tab-pane fade" id="persona" role="tabpanel" aria-labelledby="persona-tab">
-                    <div class="row m-0 px-1">`;
-
-                if (data.personas.length > 0) {
-                    htmlContent += `
-                    <div><span class="badge bg-secondary"><i class="fas fa-user-circle me-2"></i> ${data.personas.length}</span></div>
-                    <div class="d-flex scroll-horizontal">`;
-
-                    data.personas.forEach(persona => {
-                        htmlContent += `
-                        <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2 open-chat" 
-                            style="cursor:pointer;" 
-                            data-id="${persona._id}">
-                            <div style="background-image:url('${persona.chatImageUrl}')" class="card-img-top girls_avatar position-relative" alt="${persona.name}">
-                                <div id="spinner-${persona._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
-                                <div class="tags position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px">
-                                  ${(persona?.tags ?? []).map(tag => `<span class="badge bg-dark">${tag}</span>`).join('')}
-                                </div>
-                                <div class="persona position-absolute" style="color: rgb(165 164 164);opacity:0.8; top:10px;right:10px" data-event="true" data-id="${persona._id}">
-                                    <span class="badge bg-dark" style="width: 30px;"><i class="fas fa-user-circle"></i></span>
-                                </div>
-                            </div>
-                            <div class="card-body bg-transparent border-0 pb-0 text-start">
-                                <h5 class="card-title character-title">${persona.name}</h5>
-                                <p class="card-text character-short-description">${persona.description}</p>
-                            </div>
-                        </div>`;
-                    });
-
-                    htmlContent += `</div>`;
-                } else {
-                    htmlContent += `<p class="text-muted">まだペルソナがありません。</p>`;
-                }
-
-                htmlContent += `</div></div>`;
-            }
-
-            htmlContent += `</div>`;
-        } else {
-            htmlContent += `<div class="container text-center"><p>チャットはありません。</p></div>`;
-        }
-
-        $('.container-0').html(htmlContent);
-        window.parent.postMessage('resizeIframe', '*');
-    });
-});
-
-</script>
-<script>
-  // On page load, you can call the function with the userId and the page you want to start from (e.g., page 1).
-  $(document).ready(function () {
-    loadUserPosts(userId, 1);
-  });
 
   $(document).ready(function () {
-  $(document).find('.jp-date').each(function () {
-    const originalDate = new Date($(this).text());
-
-    // Format date into Japanese format: 年/月/日 時間
-    const formattedDate = originalDate.getFullYear() + '年' +
-                          (originalDate.getMonth() + 1) + '月' +
-                          originalDate.getDate() + '日 ' +
-                          originalDate.getHours() + '時' +
-                          originalDate.getMinutes() + '分';
-
-    // Set the formatted date back into the element
-    $(this).text(formattedDate);
+    const userId = `{{{postUser._id}}}`;
+    if(userId){
+      loadUserPosts(chatId, 1);
+    }else{
+      loadAllUserPosts(1);
+    }
   });
-});
 
 </script>

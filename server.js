@@ -229,6 +229,28 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
 
       return reply.renderWithGtm('custom-chat.hbs', { title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd',mode:process.env.MODE, user, userId, chatId});
     });
+    
+    fastify.get('/post', async (request, reply) => {
+      try {
+        let user = await fastify.getUser(request, reply);
+        const userId = user._id;
+        user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+
+        return reply.view('post.hbs', {
+          user,
+          seo: [
+            { name: 'description', content: 'AIグラビアは、ラミックスが提供する画像生成AI体験です。' },
+            { name: 'keywords', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },
+            { property: 'og:title', content: 'LAMIX | AIグラビア | ラミックスの画像生成AI体験' },
+            { property: 'og:description', content: 'AIグラビアは、リアルタイム画像生成AI体験を提供します。' },
+            { property: 'og:image', content: '/img/share.png' },
+          ]
+        });
+      } catch (error) {
+        console.log(error)
+      }
+    });
+
     fastify.get('/post/:postId', async (request, reply) => {
       try {
         let user = await fastify.getUser(request, reply);
@@ -261,6 +283,26 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       }
     });
     
+    fastify.get('/character', async (request, reply) => {
+      try {
+        let user = await fastify.getUser(request, reply);
+        const userId = user._id;
+        user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+
+        return reply.view('character.hbs', {
+          user,
+          seo: [
+            { name: 'description', content: 'AIグラビアは、ラミックスが提供する画像生成AI体験です。' },
+            { name: 'keywords', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },
+            { property: 'og:title', content: 'LAMIX | AIグラビア | ラミックスの画像生成AI体験' },
+            { property: 'og:description', content: 'AIグラビアは、リアルタイム画像生成AI体験を提供します。' },
+            { property: 'og:image', content: '/img/share.png' },
+          ]
+        });
+      } catch (error) {
+        console.log(error)
+      }
+    });
     fastify.get('/character/:chatId', async (request, reply) => {
       try {
         let user = await fastify.getUser(request, reply);

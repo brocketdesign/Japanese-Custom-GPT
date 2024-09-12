@@ -159,13 +159,16 @@ async function routes(fastify, options) {
       // Find and paginate images across all chats where chatThumbnailUrl exists
       const allChatImagesDocs = await chatsGalleryCollection
       .aggregate([
-        { $unwind: '$images' },           // Unwind the images array
-        { $match: { 'images.imageUrl': { $exists: true, $ne: null }, 'images.nsfw': { $exists: true } } },  // Filter images with valid imageUrl
-        { $skip: skip },                  // Skip for pagination
-        { $limit: limit },                // Limit the results to the page size
-        { $project: { _id: 0, image: '$images', chatId: 1 } }  // Project image and chatId
+        { $unwind: '$images' },           
+        { $match: { 'images.imageUrl': { $exists: true, $ne: null } } },
+        { $sort: { _id: -1 } },  // Sort by newest first
+        { $skip: skip },                        // Skip for pagination
+        { $limit: limit },                      // Limit the results to the page size
+        { $project: { _id: 0, image: '$images', chatId: 1 } }
       ])
-      .toArray();    
+      .toArray();
+    
+    
 
       // Extract chatIds from the images
       const chatIds = allChatImagesDocs.map(doc => doc.chatId);
@@ -189,9 +192,17 @@ async function routes(fastify, options) {
           };
         });
   
-      // Get total image count for pagination info
-      const totalImagesCount = imagesWithChatData.length;
-      const totalPages = Math.ceil(totalImagesCount / limit);
+        // Get the total count of images matching the filtering condition
+        const totalImagesCount = await chatsGalleryCollection
+          .aggregate([
+            { $unwind: '$images' },
+            { $match: { 'images.imageUrl': { $exists: true, $ne: null } } },
+            { $count: 'total' }
+          ])
+          .toArray();
+          
+        const totalImages = totalImagesCount.length > 0 ? totalImagesCount[0].total : 0;
+        const totalPages = Math.ceil(totalImages / limit);
   
       if (totalImagesCount === 0) {
         return reply.code(404).send({ images: [], page, totalPages: 0 });
@@ -273,6 +284,34 @@ async function routes(fastify, options) {
       reply.code(500).send('Internal Server Error');
     }
   });  
+  fastify.put('/images/:imageId/nsfw', async (request, reply) => {
+    try {
+      const imageId = new fastify.mongo.ObjectId(request.params.imageId);
+      const { nsfw } = request.body;
+
+      if (typeof nsfw !== 'boolean') {
+        return reply.code(400).send({ error: 'Invalid NSFW value. It must be a boolean.' });
+      }
+  
+      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const galleryCollection = db.collection('gallery');
+  
+      // Update the nsfw field of the specific image in the gallery
+      const result = await galleryCollection.updateOne(
+        { 'images._id': imageId },       // Match the specific image by imageId
+        { $set: { 'images.$.nsfw': nsfw } }  // Update the nsfw field
+      );
+  
+      if (result.matchedCount === 0) {
+        return reply.code(404).send({ error: 'Image not found.' });
+      }
+  
+      reply.send({ message: 'NSFW status updated successfully.' });
+    } catch (err) {
+      console.error(err);
+      reply.code(500).send('Internal Server Error');
+    }
+  });
   
 }
 

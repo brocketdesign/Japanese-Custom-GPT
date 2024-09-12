@@ -2,6 +2,9 @@
 .overflow-visible {
   overflow: visible !important;
 }
+.isAdmin{
+  display: none;
+}
 .rounded-circle{
   object-fit: cover;
   object-position: top;

@@ -1800,61 +1800,6 @@ async function routes(fastify, options) {
             reply.status(500).send({ success: false, message: "An error occurred while updating log_success" });
         }
     });
-    fastify.get('/api/user-posts', async (request, reply) => {
-        try {
-          const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
-          const postsCollection = db.collection('posts');
-          const usersCollection = db.collection('users');
-          const chatsCollection = db.collection('chats');
-      
-          const postsCursor = await postsCollection.find(
-            { 'image.nsfw': false, comment: { $exists: true }, chatId: { $exists: true } }
-          ).limit(10).toArray();
-      
-          if (!postsCursor.length) {
-            reply.send([]);
-            return;
-          }
-
-          const userIds = postsCursor.map(item => item.userId);
-          const chatIds = postsCursor.map(item => item.chatId);
-      
-          const [users, chats] = await Promise.all([
-            usersCollection.find({ _id: { $in: userIds } }).toArray(),
-            chatsCollection.find({ _id: { $in: chatIds } }).toArray()
-          ]);
-
-          const validPosts = postsCursor.map(item => {
-
-            const user = users.find(u => u._id.toString() === item.userId.toString());
-            const chat = chats.find(c => c._id.toString() === item.chatId.toString());            
-
-            return user && chat ? {
-              userName: user.nickname || 'Unknown User',
-              profilePicture: user.profileUrl || '/img/avatar.png',
-              chatId: chat._id || null,
-              userId: item._id,
-              chatName: chat.name || 'Unknown Chat',
-              post: {
-                postId: item._id,
-                imageUrl: item.image.imageUrl,
-                prompt: item.image.prompt,
-                comment: item.comment || '',
-                createdAt: item.createdAt,
-                likes: item.likes || 0,
-                likedBy: item.likedBy || []
-              }
-            } : null;
-          }).filter(Boolean);
-      
-          reply.send(validPosts);
-        } catch (err) {
-          console.log("Error: ", err);
-          reply.code(500).send('Internal Server Error');
-        }
-      });
-      
-      
       
     fastify.get('/api/user-generated-images', async (request, reply) => {
         try {

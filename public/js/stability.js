@@ -235,7 +235,6 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
 $('#chatContainer').append(imageResponseContainer);
 $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
 
-  console.log(item_id)
   if(!item_id){return}
   const proposal = await getProposalById(item_id);
   

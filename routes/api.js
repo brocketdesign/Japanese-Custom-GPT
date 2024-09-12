@@ -1579,10 +1579,10 @@ async function routes(fastify, options) {
           const itemProposalCollection = db.collection('itemProposal');
           
           const proposalId = new fastify.mongo.ObjectId(request.params.id); // Convert the id to ObjectId
-      
+      console.log({proposalId})
           // Find the proposal by _id
           const proposal = await itemProposalCollection.findOne({ _id: proposalId });
-      
+        console.log({proposal})
           if (!proposal) {
             return reply.code(404).send({ error: 'Proposal not found' });
           }

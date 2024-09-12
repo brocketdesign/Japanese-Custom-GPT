@@ -56,14 +56,13 @@
     <h3 class="my-4 text-center">コミュニティからの最新投稿</h3>
     <p>Lamixでは、AIグラビアとのチャット中に生成された画像を使って、簡単に投稿を作成することができます。お気に入りの瞬間やクリエイティブな画像をシェアすることで、他のユーザーと楽しさを共有しましょう。画像を選んで投稿に追加するだけで、あなただけのオリジナルコンテンツを簡単に発信できます。</p>
     <div class="row" id="post-gallery"></div>
-
     <div class="w-100 text-center">
         <a href="/post" class="my-4 btn btn-lg text-white fw-bold custom-gradient-bg">すべてを見る</a>
     </div>
     
     <h3 class="my-4 text-center">コミュニティからの最新のAIグラビア</h3>
     <p>Lamixでは、キャラクターとの会話がもっと楽しくなります！お気に入りのキャラクターが、AI技術で生成された魅力的な写真を会話中に送信してくれるだけでなく、特別なフォトアルバムも楽しめます。キャラクターの写真アルバムには、興味深いシーンがたくさん詰まっていて、まるで彼らの世界に飛び込んだかのような体験が待っています。Lamixで、カスタマイズ可能なキャラクターと共に、写真付きのユニークな会話を楽しんでみませんか？</p>
-    <div id="people-chat"></div>
+    <div id="chat-gallery" class="row"></div>
     <div class="w-100 text-center">
         <a href="/chat" class="my-4 btn btn-lg text-white fw-bold custom-gradient-bg">すべてを見る</a>
     </div>
@@ -95,7 +94,7 @@
   const userId = `{{{user._id}}}`;
   $(document).ready(function () {
 
-    displayPepopleChat();
+    displayPepopleChat(1);
     loadAllChatImages(1);
     loadAllUserPosts(1)
 

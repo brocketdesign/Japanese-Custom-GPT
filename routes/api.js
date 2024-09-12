@@ -1865,71 +1865,73 @@ async function routes(fastify, options) {
         }
       });
             
-    fastify.get('/api/people-chat', async (request, reply) => {
-        const db = fastify.mongo.client.db(process.env.MONGODB_NAME)
-        let user = await fastify.getUser(request, reply);
-        const userId = user._id;
-        const chatsCollection = db.collection('chats');
-        /*
-        const synclubaichat = await chatsCollection.aggregate([
-          {
-            $match: {
-              visibility: { $exists: true, $eq: "public" },
-              scrap: true,
-              ext: 'synclubaichat',
-            }
-          },
-          {
-            $group: {
-              _id: "$chatImageUrl",
-              doc: { $first: "$$ROOT" },
-            },
-          },
-          { $replaceRoot: { newRoot: "$doc" } },
-          { $sort: { updatedAt: -1 } }, 
-          { $limit: 10 }, 
-        ]).toArray();      
-        */
-        // Find recent characters
-        const currentDateObj = new Date();
-        const tokyoOffset = 9 * 60; // Offset in minutes for Tokyo (UTC+9)
-        const tokyoTime = new Date(currentDateObj.getTime() + tokyoOffset * 60000);
-        const sevenDaysAgo = new Date(tokyoTime);
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        sevenDaysAgo.setHours(0, 0, 0, 0); // Ensure the start of the day
-        
-        // Assuming you have defined `sevenDaysAgo` as a Date object representing 7 days ago
-        const recent = await chatsCollection.aggregate([
-          {
-            $match: {
-              visibility: { $exists: true, $eq: "public" },
-              chatImageUrl: { $exists: true, $ne: '' },
-              updatedAt: { $gt: sevenDaysAgo },
-            },
-          },
-          {
-            $group: {
-              _id: "$name",
-              doc: { $first: "$$ROOT" },
-            },
-          },
-          { $replaceRoot: { newRoot: "$doc" } },
-          { $sort: { updatedAt: -1 } }, 
-          { $limit: 10 }, 
-        ]).toArray();
-        
-        const recentWithUser = await Promise.all(recent.map(async chat => {
-          const user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(chat.userId) });
-          return {
-            ...chat,
-            nickname: user ? user.nickname : null,
-            profileUrl: user ? user.profileUrl : null,
-          };
-        }));
+      fastify.get('/api/chats', async (request, reply) => {
+        try {
+          const page = parseInt(request.query.page) || 1;
+          const limit = 12; // Number of chats per page
+          const skip = (page - 1) * limit;
+      
+          const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+          const chatsCollection = db.collection('chats');
+          const usersCollection = db.collection('users');
+      
+          const synclab = await chatsCollection.find({ext:'synclubaichat'}).toArray()
 
-        peopleChats = { recent: recentWithUser };
-  
-        return reply.send({ peopleChats });
+          // Fetch paginated chats, sorted by _id in descending order
+          const recentCursor = await chatsCollection.aggregate([
+            {
+              $match: {
+                visibility: { $exists: true, $eq: "public" },
+                chatImageUrl: { $exists: true, $ne: '' },
+              },
+            },
+            {
+              $group: {
+                _id: "$name",
+                doc: { $first: "$$ROOT" },
+              },
+            },
+            { $replaceRoot: { newRoot: "$doc" } },
+            { $sort: { _id: -1 } }, // Sort by _id in descending order
+            { $skip: skip },
+            { $limit: limit },
+          ]).toArray();
+
+          if (!recentCursor.length) {
+            return reply.code(404).send({ recent: [], page, totalPages: 0 });
+          }
+      
+          const recentWithUser = await Promise.all(
+            recentCursor.map(async (chat) => {
+              const user = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(chat.userId) });
+              return {
+                ...chat,
+                nickname: user ? user.nickname : null,
+                profileUrl: user ? user.profileUrl : null,
+              };
+            })
+          );
+      
+          // Get total count of chats for pagination
+          const totalChatsCount = await chatsCollection.countDocuments({
+            visibility: { $exists: true, $eq: "public" },
+            chatImageUrl: { $exists: true, $ne: '' },
+          });
+          let totalPages = Math.ceil(totalChatsCount / limit);
+          if(recentCursor.length < limit){
+            totalPages = page
+          }
+      
+          // Send paginated response
+          reply.send({
+            recent: recentWithUser,
+            page,
+            totalPages,
+          });
+        } catch (err) {
+          console.log("Error: ", err);
+          reply.code(500).send('Internal Server Error');
+        }
       });
       
     fastify.get('/api/user-data', async (request, reply) => {

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    <link rel="icon" href="/img/logo.webp" type="image/webp">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="/css/chat.css">
+</head>
+<style>
+
+    .avatar{
+        object-fit: cover;
+        object-position: top;
+        width: 32px;
+    }
+    .top-img{
+        width: 30%;
+    }
+    .chat-container {
+        display: flex;
+        overflow-x: auto;
+        padding-bottom: 10px;
+    }
+    .chat-card {
+        flex: 0 0 auto;
+        width: 30vw;
+        margin-right: 15px;
+    }
+    .online-text {
+        width: 95%; /* Adjust the width as needed */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .chat-container .card:hover {
+        background: #eee !important;
+    }
+    @media (max-width: 600px) {
+        .top-img{
+            width: 70%;
+        }
+        .card.chat-card {
+            width: 330px;
+        }
+    }
+    </style>
+<body>
+    <nav class="navbar navbar-light py-1 fixed-top bg-white" style="border-bottom: 1px solid rgba(210, 184, 255, 0.2);">
+        <div class="container-fluid justify-content-between">
+            <a class="navbar-brand d-flex flex-row align-items-center bg-white px-4 py-2" href="/chat-index">
+                <img src="/img/logo.webp" alt="" class="logo">
+                <span class="brand-name ms-3 fw-bold">バーチャル友達</span>
+            </a>
+
+            <ul class="nav d-none d-lg-flex">
+                <li class="nav-item">
+                    <a href="#top" class="nav-link text-dark fw-bold">トップ</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#バーチャル友達-chat" class="nav-link text-dark fw-bold">バーチャル友達とは</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#nagare" class="nav-link text-dark fw-bold">導入手順</a>
+                </li>
+            </ul>
+            <a href="/authenticate" class="btn px-4 py-2 border" style="border-radius:40px;background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);">
+                <i class="fas fa-plus me-2"></i>作成する
+            </a>
+        </div>
+
+    </nav>
+    <section id="top" class="hero bg-light pt-5" 
+    style="background-position:bottom!important;background-color:#88888812;" >
+        <div class="container text-center d-flex flex-column align-items-center pt-5">
+            <div class="text-center mt-5 mb-3">
+                <img src="/img/logo.webp" alt="バーチャル友達ボット ロゴ" class="top-logo m-auto top-img" style="border-radius: 100%;width: 100px;">
+            </div>
+            <div class="container text-center text-dark d-flex flex-column align-items-center pb-5">
+                <h2 class="c-section-title u-tal ">
+                    <span class="u-font-manrope u-color-grad">バーチャル友達</span>とは、
+                </h2>
+                <h4>あなたの理想の友達、憧れのアイドルとチャット</h4>
+                <h4 class="text-center d-none">URLを入力するだけで、内容の要約とチャットボットを作成します。このチャットボットはどこでも共有でき、話題に関する会話が可能です</h4>
+                <div class="input-group my-5 d-none">
+                    <input type="text" id="url-input" class="form-control" placeholder="URLを入力してください" aria-label="URLを入力してください" aria-describedby="button-addon2">
+                    <button class="btn btn-large btn-primary" type="button" id="save-url">チャットボットを作成する</button>
+                </div>
+            </div>
+        </div>
+        <div class="mt-2">
+            <h4 class="mb-4 d-none">Try these</h4>
+            <div class="chat-container px-3">
+                {{#each chats}}
+                <div class="card chat-card flex-row bg-white border-0" style="border-radius: 20px; cursor:pointer" onclick="redirectToChat('{{this._id}}')">
+                    <div style="min-width:100px;width: 300px; height: auto; display: flex; justify-content: center; align-items: center;">
+                        <img src="{{this.thumbnailUrl}}" class="img-fluid m-3" alt="Thumbnail" onerror="this.src='/img/logo.webp';" style="width: 50px; height: 50px; object-fit: cover;border-radius: 50px;">
+                    </div>
+                    <div class="card-body">
+                        <h6 class="card-title fw-bold text-start">{{this.name}}</h6>
+                        <p class="card-text online-text">{{this.description}}</p>
+                        <p class="text-muted d-none"><i class="fas fa-clock"></i> 更新: {{this.dateStrJP}}</p>
+                    </div>
+                </div>
+                {{/each}}
+            </div>
+        </div>
+    </section>
+    <section>
+        <div id="バーチャル友達-chat" class="container text-center d-flex flex-column align-items-center py-5">
+            <h1 class="fw-bold">理想の仲間を作成して、<br>チャットを楽しもう！</h1>
+            <p class="fw-bold mt-4">AIがあなたの好みに合わせて、理想の仲間を作り出します。<br>いつでもどこでも楽しくチャット！ </p>
+        </div>
+        <div class="d-flex flex-row">
+            <img src="/img/arrow-down.gif" class="m-auto" style="width:75px">
+        </div>
+    </section>
+    <section>
+        <div class="container d-flex py-5 px-3 justify-content-center align-items-center">
+            <div id="cardGrid" class="row"></div>
+        </div>
+    </section>
+    <section id="nagare" class="p-best mb-5">
+      <div class="c-section-inner">
+        <h2 class="c-section-title u-tal">
+          未来への一歩は、<br>
+          <span class="u-font-manrope u-color-grad">バーチャル友達</span>から始まる！
+          <div class="p-best-illust">
+            <span><img src="/img/logo.webp" alt="" class="u-rocketman" style="max-width: 30vw;"></span>
+          </div>
+        </h2>
+        <ul class="p-best__lists" style="list-style: none;padding: 0;">
+            <li class="p-best__list u-border-grad">
+                <div class="p-best__listInner u-border-grad--bg">
+                    <div class="p-best__title--flex">
+                        <h3 class="p-best__title"><span class="u-color-grad">STEP1</span><span class="p-best__title--sub">AIを使って理想のキャラクターを作成</span></h3>
+                    </div>
+                    <p class="p-best__text">
+                        まずはAIの魔法を使って、あなたの理想のキャラクターを作りましょう！好みの外見や性格を選ぶだけで、まるで魔法のように完璧な仲間が誕生します。驚きの連続ですよ！
+                    </p>
+                </div>
+            </li>
+
+            <li class="p-best__list u-border-grad">
+                <div class="p-best__listInner u-border-grad--bg">
+                    <div class="p-best__title--flex">
+                        <h3 class="p-best__title"><span class="u-color-grad">STEP2</span><span class="p-best__title--sub">チャットを楽しもう</span></h3>
+                    </div>
+                    <p class="p-best__text">
+                        キャラクターが完成したら、さあチャットを始めましょう！どんな話題でもOK。おしゃべり好きな友達と一緒に、笑いが絶えない楽しい時間を過ごせますよ。暇な時も退屈しません！                    </p>
+                </div>
+            </li>
+            <li class="p-best__list u-border-grad">
+                <div class="p-best__listInner u-border-grad--bg">
+                    <div class="p-best__title--flex">
+                        <h3 class="p-best__title"><span class="u-color-grad">STEP3</span><span class="p-best__title--sub">キャラクターを世界中と共有しよう</span></h3>
+                    </div>
+                    <p class="p-best__text">
+                        最後に、自分だけの素敵なキャラクターを友達や世界中の人たちとシェアしましょう！みんなに見せびらかして、感動を共有するのも楽しみの一つ。あなたのキャラクターが世界を笑顔にします！
+                    </p>
+                </div>
+            </li>
+        </ul>
+      </div>
+    </section>
+ {{> dashboard-footer}}
+<script>
+    
+function redirectToChat(chatId) {
+    localStorage.setItem('selectedChatId', chatId);
+    window.location.href = '/chat/' + chatId;
+}
+$(document).ready(function() {
+
+    // Sample data array
+    var cardData = [
+        {
+            image: "avatar_img1.jpeg",
+            title: "さくら",
+            description: "さくらは、勉強熱心な高校生で、いつも明るく前向きです。彼女は友達と一緒に過ごすことが大好きで、将来は教師になることを夢見ています。"
+        },
+        {
+            image: "avatar_img2.jpeg",
+            title: "木村樹夫",
+            description: "木村樹夫は、環境保護に熱心な弁護士で、自然を愛する心を持っています。彼は木々と対話できる能力を持ち、その知識を使って環境保護のために戦っています。"
+        },
+        {
+            image: "avatar_img3.jpeg",
+            title: "ルシファー",
+            description: "ルシファーは、人間界と魔界の両方で活躍する魔界のプリンセスです。彼女は知識と魔法の力を使って、どちらの世界にも平和をもたらそうと努力しています。"
+        },
+        {
+            image: "avatar_img4.jpeg",
+            title: "ミミ",
+            description: "ミミは、冒険好きな発明家のネズミです。彼女は新しい発明を作り出すのが得意で、仲間と一緒に楽しい冒険に出かけるのが好きです。"
+        },
+        // Add more objects as needed
+    ];
+
+    // Function to create a card
+    function createCard(data) {
+        var card = `
+            <div class="col-12 col-sm-3 mb-4">
+                <div class="card">
+                    <img src="/img/${data.image}" class="card-img-top" alt="${data.title}">
+                    <div class="card-body">
+                        <h5 class="card-title">${data.title}</h5>
+                        <p class="card-text">${data.description}</p>
+                        <button class="btn btn-outline-dark w-100" onclick='handleClick(${JSON.stringify(data)}, "${data.image}")'>
+                            チャット
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        return card;
+    }
+
+    // Function to render the grid of cards
+    function renderCardGrid(dataArray) {
+        var cardGrid = "";
+        for (var i = 0; i < dataArray.length; i++) {
+            cardGrid += createCard(dataArray[i]);
+        }
+        $("#cardGrid").html(cardGrid);
+    }
+
+    // Call the render function with the sample data
+    renderCardGrid(cardData);
+
+    $('#save-url').click(function() {
+        var urlInput = $('#url-input').val();
+        localStorage.setItem('savedURL', urlInput);
+        window.location.href = '/authenticate';
+    });
+
+    function appendHeadlineCharacterByCharacter($element, headline, callback) {
+        let index = 0;
+
+        setTimeout(() => {
+            setTimeout(() => {
+                let intervalID = setInterval(function() {
+                    if (index < headline.length) {
+                        $element.append(headline.charAt(index));
+                        index++;
+                    } else {
+                        clearInterval(intervalID);
+                        if (callback) callback();
+                    }
+                }, 25);
+            }, 100);
+        }, 500);
+    };
+
+    function clearContentFromEnd($element, callback) {
+        let currentContent = $element.text();
+
+        let clearIntervalID = setInterval(function() {
+            if (currentContent.length > 0) {
+                currentContent = currentContent.substring(0, currentContent.length - 1);
+                $element.text(currentContent);
+            } else {
+                clearInterval(clearIntervalID);
+                if (typeof callback === 'function') {
+                    callback();
+                }
+            }
+        }, 25); // This duration can be adjusted as per your requirement
+    }
+
+let catchphrases = [
+    'カスタムチャットボットの簡単管理',
+    'バーチャル友達ボットで可能性最大化',
+    '直感的なダッシュボード管理',
+    'チャットボットのリアルタイム監視',
+    'ビジネスの次のレベルへ'
+];
+
+
+    let index = 0;
+
+    function displayNextCatchphrase() {
+        appendHeadlineCharacterByCharacter($('#chat-hero'), catchphrases[index], function() {
+            setTimeout(function() {
+                clearContentFromEnd($('#chat-hero'), function() {
+                    index = (index + 1) % catchphrases.length;
+                    displayNextCatchphrase();
+                });
+            }, 3000);
+        });
+    }
+    
+});
+  // Function to save data to local storage
+    function saveData(data) {
+        localStorage.setItem('savedData', JSON.stringify(data));
+    }
+
+    // Function to handle the onclick event
+    function handleClick(data, chatbotImage) {
+        // Save data to local storage
+        saveData(data);
+
+        // Redirect with URL parameters
+        var encodedMessage = encodeURIComponent(`${data.title}は${data.description}`);
+        window.location.href = `/chat/edit/?userMessage=${encodedMessage}&chatImage=/img/${chatbotImage}`;
+    }
+</script>
+</body>
+</html>

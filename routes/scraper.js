@@ -234,64 +234,65 @@ async function routes(fastify, options) {
           const characters = Array.from(response.data.data)
           const charactersData = [];
           characters.forEach((character, index) => {
-            const chatImageUrl = character.thumbnail;
-            const name = character.name;
-            const description = character.self_introduction + '\n' + character.prologue;
-            const category = character.category;
-            const tags = character.personality_tag_array;
-            const checkpoint = character.sd_prompt ? character.sd_prompt.model : null;
-        
-            // Map the sd_prompt object into a string prompt
-            const prompt = character.sd_prompt ? 
-                Object.entries(character.sd_prompt)
-                    .filter(([key]) => key !== "seed" && key !== "model")
-                    .map(([key, value]) => value.toString().replace('_', ' ') + (key === "age" ? "" : ","))
-                    .join(" ").trim()
-                : "";
-        
-            const finalPrompt = prompt != '' ? prompt : null;
-        
-            charactersData.push({
-                category,
-                chatImageUrl,
-                name,
-                tags,
-                description,
-                character:{prompt:finalPrompt,checkpoint},
-                language: 'japanese',
-                visibility: 'public',
-                scrap: true,
-                ext: 'synclubaichat',
-            });
-        });
-        let i = 1;
-        for (const character of charactersData) {
-          console.log(`Processing ${i}/${charactersData.length}: ${character.name}`);
+              const chatImageUrl = character.thumbnail;
+              const name = character.name;
+              const description = character.self_introduction + '\n' + character.prologue;
+              const category = character.category;
+              const tags = character.personality_tag_array;
+              const checkpoint = character.sd_prompt ? character.sd_prompt.model : null;
           
-          const existingChat = await collection.findOne({ name: character.name });
+              // Map the sd_prompt object into a string prompt
+              const prompt = character.sd_prompt ? 
+                  Object.entries(character.sd_prompt)
+                      .filter(([key]) => key !== "seed" && key !== "model")
+                      .map(([key, value]) => value.toString().replace('_', ' ') + (key === "age" ? "" : ","))
+                      .join(" ").trim()
+                  : "";
+          
+              const finalPrompt = prompt != '' ? prompt : null;
+          
+              charactersData.push({
+                  category,
+                  chatImageUrl,
+                  thumbnailUrl:chatImageUrl,
+                  name,
+                  tags,
+                  description,
+                  character:{prompt:finalPrompt,checkpoint},
+                  language: 'japanese',
+                  visibility: 'public',
+                  scrap: true,
+                  ext: 'synclubaichat',
+              });
+          });
+          let i = 1;
+          for (const character of charactersData) {
+            console.log(`Processing ${i}/${charactersData.length}: ${character.name}`);
+            
+            const existingChat = await collection.findOne({ name: character.name });
 
-          if (true) {
-            console.log(`Uploading image for: ${character.name}, ${character.chatImageUrl}`);
-            const imageBuffer = await axios.get(character.chatImageUrl, { responseType: 'arraybuffer' });
-            const hash = createHash('md5').update(imageBuffer.data).digest('hex');
-            const imageUrl = await handleFileUpload({ file: [imageBuffer.data], filename: `${hash}.jpg` });
-            character.chatImageUrl = imageUrl;
-            console.log(`New image URL : ${imageUrl}`)
-          } else {
-            console.log(`Image already exists for: ${character.name} ${character.chatImageUrl}`);
+            if (true) {
+              console.log(`Uploading image for: ${character.name}, ${character.chatImageUrl}`);
+              const imageBuffer = await axios.get(character.chatImageUrl, { responseType: 'arraybuffer' });
+              const hash = createHash('md5').update(imageBuffer.data).digest('hex');
+              const imageUrl = await handleFileUpload({ file: [imageBuffer.data], filename: `${hash}.jpg` });
+              character.chatImageUrl = imageUrl;
+              console.log(`New image URL : ${imageUrl}`)
+            } else {
+              console.log(`Image already exists for: ${character.name} ${character.chatImageUrl}`);
+            }
+          
+            if (existingChat) {
+              console.log(`Updating existing entry for: ${character.name}`);
+              await collection.updateOne({ name: character.name }, { $set: character });
+            } else {
+              console.log(`Inserting new entry for: ${character.name}`);
+              await collection.insertOne(character);
+            }
+          
+            i++;
           }
-        
-          if (existingChat) {
-            console.log(`Updating existing entry for: ${character.name}`);
-            await collection.updateOne({ name: character.name }, { $set: character });
-          } else {
-            console.log(`Inserting new entry for: ${character.name}`);
-            await collection.insertOne(character);
-          }
-        
-          i++;
-        }
-        console.log('Processing complete.');
+          console.log('Processing complete.');
         
           
           reply.send({ status: 'Done' });

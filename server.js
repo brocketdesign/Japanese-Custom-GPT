@@ -177,7 +177,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       if (user.isTemporary) {
         return reply.redirect('/discover')
       }else{
-        return reply.redirect('/chat/')
+        return reply.redirect('/chat')
       }
     });
 
@@ -216,8 +216,25 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         ]
       });      
     }); 
-    fastify.get('/chat', (request, reply) => {
-      reply.redirect('chat/');
+    fastify.get('/chat', async (request, reply) => {
+      try {
+        let user = await fastify.getUser(request, reply);
+        const userId = user._id;
+        user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+
+        return reply.view('chat-all.hbs', {
+          user,
+          seo: [
+            { name: 'description', content: 'AIグラビアは、ラミックスが提供する画像生成AI体験です。' },
+            { name: 'keywords', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },
+            { property: 'og:title', content: 'LAMIX | AIグラビア | ラミックスの画像生成AI体験' },
+            { property: 'og:description', content: 'AIグラビアは、リアルタイム画像生成AI体験を提供します。' },
+            { property: 'og:image', content: '/img/share.png' },
+          ]
+        });
+      } catch (error) {
+        console.log(error)
+      }
     });
     fastify.get('/chat/:chatId', async (request, reply) => {
       let user = await fastify.getUser(request, reply);
@@ -227,7 +244,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
       const totalUsers = await db.collection('users').countDocuments({ email: { $exists: true } });
 
-      return reply.renderWithGtm('custom-chat.hbs', { title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd',mode:process.env.MODE, user, userId, chatId});
+      return reply.renderWithGtm('chat.hbs', { title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd',mode:process.env.MODE, user, userId, chatId});
     });
     
     fastify.get('/post', async (request, reply) => {

@@ -196,7 +196,11 @@ $(document).ready(async function() {
     }
     $(document).find('.jp-date').each(function () {
         const originalDate = new Date($(this).text());
-  
+        if (isNaN(originalDate.getTime())) {
+            $(this).parent().hide(); 
+            return;
+        }
+        
         // Format date into Japanese format: 年/月/日 時間
         const formattedDate = originalDate.getFullYear() + '年' +
                               (originalDate.getMonth() + 1) + '月' +
@@ -421,10 +425,125 @@ $(document).ready(async function() {
                 showNotification('リクエストに失敗しました。', 'error');
             }
         });
-    });
-    
-        
+    }); 
 });
+window.displayPepopleChat = async function (page = 1) {
+    const currentUser = await fetchUser();
+    const currentUserId = currentUser._id;
+
+    try {
+        const response = await fetch(`/api/chats?page=${page}`);
+        const data = await response.json();
+
+        let recentChats = data.recent || [];
+        let htmlContent = '';
+
+        // If there are recent chats
+        recentChats.forEach(chat => {
+            if (chat.nickname) {
+                let galleryIco = '';
+                let image_count = 0;
+
+                // Handle galleries
+                if (chat.galleries && chat.galleries.length > 0) {
+                    chat.galleries.forEach(gallery => {
+                        if (gallery.images && gallery.images.length > 0) {
+                            image_count += gallery.images.length;
+                        }
+                    });
+                    if(image_count > 0){
+                        galleryIco = `
+                            <div class="gallery" style="color: rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
+                                <span class="badge bg-dark"><i class="far fa-images me-1"></i>${image_count}</span>
+                            </div>
+                        `;
+                    }
+                }
+
+                // Render chat
+                htmlContent += `
+                <div class="col-6 col-sm-4 col-lg-2">
+                    <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 redirectToChat" style="cursor:pointer;" data-id="${chat._id}" data-image="${chat.chatImageUrl}">
+                        <div style="background-image:url('${chat.chatImageUrl || '/img/logo.webp'}')" class="card-img-top girls_avatar position-relative" alt="${chat.name}">
+                            <div id="spinner-${chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
+                            <div class="position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px;right:10px;">
+                                ${(chat.tags || []).length ? `<div class="tags d-flex justify-content-between align-items-center flex-wrap">${chat.tags.map(tag => `<span class="badge bg-dark">${tag}</span>`).join('')}</div>` : ''}
+                            </div>
+                            <div class="position-absolute text-end" style="top:10px;right:10px">
+                                <div class="persona" style="color:rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
+                                    <span class="badge bg-dark" style="width: 30px;"><i class="far fa-user-circle"></i></span>
+                                </div>
+                                ${galleryIco}
+                                ${chat.messagesCount ? `<span class="badge bg-dark message-count"><i class="fas fa-comment-alt me-2"></i>${chat.messagesCount}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="card-body bg-transparent border-0 pb-0 text-start">
+                            <div class="row">
+                                <div class="col-3 text-center">
+                                    <a href="/user/${chat.userId}" style="text-decoration: none;">
+                                        <img src="${chat.profileUrl || '/img/avatar.png'}" alt="${chat.nickname}" class="rounded-circle" width="40" height="40">
+                                    </a>
+                                </div>
+                                <div class="col-8 ms-2">
+                                    <h5 class="card-title character-title mb-0">${chat.name}</h5>
+                                    <a href="/user/${chat.userId}" class="text-muted" style="text-decoration: none;">
+                                        <span style="font-size:12px;">${chat.nickname}</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }
+        });
+
+        // Update the gallery HTML
+        $('#chat-gallery').html(htmlContent);
+        generateChatsPagination(data.page, data.totalPages);
+
+    } catch (err) {
+        console.error('Failed to load chats', err);
+    }
+};
+
+function generateChatsPagination(currentPage, totalPages) {
+    let paginationHtml = '';
+    const maxPagesToShow = 5;
+    const sidePagesToShow = 2;
+
+    if (totalPages > 1) {
+        paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="displayPepopleChat(${currentPage - 1})">前へ</button>`;
+
+        if (currentPage > sidePagesToShow + 1) {
+            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="displayPepopleChat(1)">1</button>`;
+            if (currentPage > sidePagesToShow + 2) {
+                paginationHtml += `<span class="mx-1">...</span>`;
+            }
+        }
+
+        let startPage = Math.max(1, currentPage - sidePagesToShow);
+        let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
+
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHtml += `
+            <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="displayPepopleChat(${i})">
+                ${i}
+            </button>`;
+        }
+
+        if (currentPage < totalPages - sidePagesToShow - 1) {
+            if (currentPage < totalPages - sidePagesToShow - 2) {
+                paginationHtml += `<span class="mx-1">...</span>`;
+            }
+            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="displayPepopleChat(${totalPages})">${totalPages}</button>`;
+        }
+
+        paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="displayPepopleChat(${currentPage + 1})">次へ</button>`;
+    }
+
+    $('#chat-pagination-controls').html(paginationHtml);
+}
+
 window.loadAllUserPosts = async function (page = 1) {
     const currentUser = await fetchUser();
     const currentUserId = currentUser._id;
@@ -838,7 +957,7 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
                         <span class="float-end post-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
                             <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
                         </span>
-                        <span class="float-end post-visible ${item.isPrivate ? 'private':''} ${item.userId.toString() != currentUser._id.toString() ? 'd-none':''}" data-id="${item._id}">
+                        <span class="float-end post-visible d-none ${item.isPrivate ? 'private':''} ${item.userId.toString() != currentUser._id.toString() ? 'd-none':''}" data-id="${item._id}">
                             <i class="bi ${item.isPrivate ? 'bi-eye-slash':'bi-eye'} me-2" style="cursor: pointer;"></i>
                         </span>
                     </div>
@@ -1159,88 +1278,5 @@ window.showPremiumPopup = function() {
         }
         
         
-    });
-}
-window.displayPepopleChat = function(){
-    $.getJSON('/api/people-chat', function(data) {
-        let peopleChats = data.peopleChats || {}; // Default to an empty object if undefined
-        let htmlContent = '';
-        //renderCircleGrid(peopleChats.synclubaichat,$('#chat-recommend .characters'))
-        if (peopleChats) {
-            // Navigation Tabs
-            htmlContent += `
-            <ul class="nav nav-tabs mb-2" id="characterTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="recent-tab" data-bs-toggle="tab" data-bs-target="#recent" type="button" role="tab" aria-controls="recent" aria-selected="true">最新</button>
-                </li>
-            </ul>
-            <div class="tab-content" id="characterTabContent">`;
-
-            // Recent Characters
-            htmlContent += `
-            <div class="tab-pane fade show active" id="recent" role="tabpanel" aria-labelledby="recent-tab">
-                <section class="w-100 px-0 py-0">
-                    <div id="latest-chat" class="chat-container pb-0">`;
-
-            (peopleChats.recent || []).forEach(chat => {
-                if(chat.nickname){
-                    let galleryIco = ''
-                    let image_count = 0
-                    if(chat.galleries && chat.galleries.length > 0) {
-                        chat.galleries.forEach((gallery, index) => {
-                            if (gallery.images && gallery.images.length > 0) {
-                                image_count += gallery.images.length
-                            }
-                        })
-                        galleryIco = `
-                            <div class="gallery" style="color: rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
-                                <span class="badge bg-dark"><i class="far fa-images me-1"></i>${image_count}</span>
-                            </div>
-                        `
-                    }
-                    htmlContent += `
-                    <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 col-6 col-sm-4 col-lg-2 redirectToChat" style="cursor:pointer;" data-id="${chat._id}" data-image="${chat.chatImageUrl}">
-                        <div style="background-image:url('${chat.chatImageUrl || '/img/logo.webp'}')" class="card-img-top girls_avatar position-relative" alt="${chat.name}">
-                            <div id="spinner-${chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
-                            <div class="position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px;right:10px;">
-                                ${(chat.tags || []).length ? `<div class="tags d-flex justify-content-between align-items-center flex-wrap">${chat.tags.map(tag => `<span class="badge bg-dark">${tag}</span>`).join('')}</div>` : ''}
-                            </div>
-                            <div class="position-absolute text-end" style="top:10px;right:10px">
-                                <div class="persona" style="color:rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
-                                    <span class="badge bg-dark" style="width: 30px;"><i class="far fa-user-circle"></i></span>
-                                </div>
-                                ${galleryIco}
-                                ${chat.messagesCount ? `<span class="badge bg-dark message-count"><i class="fas fa-comment-alt me-2"></i>${chat.messagesCount}</span>` : ''}
-                            </div>
-                        </div>
-                        <div class="card-body bg-transparent border-0 pb-0 text-start">
-                            <div class="row">
-                                <div class="col-3 text-center">
-                                    <a href="/user/${chat.userId}" style="text-decoration: none;">
-                                        <img src="${chat.profileUrl}" alt="${chat.nickname}" class="rounded-circle" width="40" height="40">
-                                    </a>
-                                </div>
-                                <div class="col-8 ms-2">
-                                    <h5 class="card-title character-title mb-0">${chat.name}</h5>
-                                    <a href="/user/${chat.userId}" class="text-muted" style="text-decoration: none;">
-                                        <span style="font-size:12px;">${chat.nickname}</span>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                </div>`;
-                }
-
-            });
-
-            htmlContent += `
-                    </div>
-                </section>
-            </div>`;
-
-            htmlContent += `</div>`; // Close tab-content
-        }
-
-        $('#people-chat').html(htmlContent);
     });
 }

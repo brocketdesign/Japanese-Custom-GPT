@@ -15,7 +15,7 @@
       <div class="card">
         <img src="{{#if isBlur}}/img/nsfw-blurred.jpg{{else}}{{image.imageUrl}}{{/if}}" class="card-img-top" alt="{{image.prompt}}" style="max-height:400px;width:auto;object-fit:contain;">
         <div class="card-body">
-          <h5 class="card-title">{{image.prompt}}</h5>
+          <h5 class="card-title d-none">{{image.prompt}}</h5>
           <p class="card-text">{{image.comment}}</p>
           <p class="text-muted">投稿日: <span class="jp-date">{{image.createdAt}}</span></p>
           <div class="d-flex justify-content-between align-items-center">

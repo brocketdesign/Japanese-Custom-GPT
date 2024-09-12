@@ -32,7 +32,7 @@
             <tbody>
                 {{#each users}}
                 <tr data-user-id="{{this._id}}">
-                    <td class="jp-date">{{this.createdAt}}</td>
+                    <td class="jp-d">{{this.createdAt}}</td>
                     <td>{{this.email}}</td>
                     <td>{{this.nickname}}</td>
                     <td>{{this.gender}}</td>
@@ -116,7 +116,7 @@
                 var date = new Date(dateString);
                 return date.toLocaleDateString('ja-JP', options);
             }
-            $('.jp-date').each(function() {
+            $('.jp-d').each(function() {
                 var originalDate = $(this).text();
                 var japaneseDate = convertToJapaneseDate(originalDate);
                 $(this).text(japaneseDate);

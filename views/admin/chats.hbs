@@ -19,7 +19,7 @@
                 {{#each chats}}
                 <tr>
                     <td>{{this.name}}</td>
-                    <td class="jp-date">{{this.updatedAt}}</td>
+                    <td class="jp-d">{{this.updatedAt}}</td>
                     <td>
                         <a href="/chat/{{this._id}}" class="btn btn-secondary">
                             <i class="fas fa-external-link-alt"></i>
@@ -43,7 +43,7 @@
             return date.toLocaleDateString('ja-JP', options);
         }
 
-        $('.jp-date').each(function() {
+        $('.jp-d').each(function() {
             var originalDate = $(this).text();
             var japaneseDate = convertToJapaneseDate(originalDate);
             $(this).text(japaneseDate);

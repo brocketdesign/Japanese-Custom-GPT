@@ -604,8 +604,8 @@ $(document).ready(async function() {
                             </div>
                             ${!subscriptionStatus && !isTemporary ? `
                                 <div style="bottom: 20px;z-index: 100;" class="mx-auto mt-4 position-fixed w-100">
-                                    <button class="btn btn-lg custom-gradient-bg" style="border-radius:50px;"><i class="far fa-images me-2"></i>アルバムを購入する</button>
-                                    <a href="/my-plan" class="d-block mt-1 text-white">Lamixプレミアムなら無料で見放題</a>
+                                    <a href="/my-plan" class="btn btn-lg custom-gradient-bg" style="border-radius:50px;"><i class="far fa-images me-2"></i>プレミアムに登録する</a>
+                                    <a href="/my-plan" class="d-block mt-1 text-white">Lamixプレミアムなら見放題</a>
                                 </div>`:''
                             }
                         </div>

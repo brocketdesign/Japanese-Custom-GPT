@@ -90,8 +90,7 @@ async function routes(fastify, options) {
             
             const femalePercentage = parseInt((femaleCount / totalUsers) * 100);
             const malePercentage = parseInt((maleCount / totalUsers) * 100);
-            
-            
+
             return reply.view('/admin/users',{
                 users,
                 femaleCount, 

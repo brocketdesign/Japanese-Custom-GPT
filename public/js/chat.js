@@ -8,9 +8,6 @@ $(document).ready(async function() {
         localStorage.setItem('audioAutoPlay', autoPlay);
         $('#audio-icon').toggleClass('fa-volume-up fa-volume-mute');
     });
-    
-
-
     const { API_URL, MODE } = await window.setApiUrlAndMode();
     const user = await fetchUser();
 
@@ -32,6 +29,15 @@ $(document).ready(async function() {
     $('body').attr('data-temporary-user',isTemporary)
     renderChatList(userId,chatId);
     updateCoins(userCoins)
+    
+    window.addEventListener('message', function(event) {
+        if (event.data.event === 'imageFav') {
+            let message = `[Hidden] I liked on of your picture.`
+            addMessageToChat(chatId, userChatId, 'user', message,function(){
+                generateCompletion()
+            });
+        }
+    });
 
     let count_proposal = 0
     const subscriptionStatus = user.subscriptionStatus == 'active'

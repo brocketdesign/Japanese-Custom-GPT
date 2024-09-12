@@ -491,7 +491,7 @@ async function fetchNovitaResult(task_id) {
 
   const default_prompt ={
     nsfw: {
-      prompt: `(sexy),erotic pose,(sexy pose), naughty face, sexy clothes, censored, `,
+      prompt: `(nsfw),(sexy),erotic pose,(sexy pose), naughty face, sexy clothes, censored,very sexy, `,
       negative_prompt: "naked pussy,pussy,vulve,vagin,sex,dick,blurry,signature,username,watermark,jpeg artifacts,normal quality,worst quality,low quality"
     },
     sfw: {
@@ -525,7 +525,7 @@ async function fetchNovitaResult(task_id) {
       user = await collectionUser.findOne({ _id: userIdObj });
   
       const isSubscribed = user.subscriptionStatus === 'active';
-      
+
       const truncate = (text, maxLength = 1024) => [...text].slice(0, maxLength).join('');
 
       const image_request1 = { 

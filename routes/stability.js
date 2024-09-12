@@ -491,8 +491,8 @@ async function fetchNovitaResult(task_id) {
 
   const default_prompt ={
     nsfw: {
-      prompt: `score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime,1girl,(nsfw),uncensored,breasts,covered erect nipples,panty,large breast,erotic pose,(sexy pose), naughty face, sexy clothes, censored, very sexy , `,
-      negative_prompt: "score_6, score_5, score_4, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, naked pussy,pussy,vulve,vagin,sex,dick,blurry,signature,username,watermark,jpeg artifacts,normal quality,worst quality,low quality"
+      prompt: `score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime,1girl,(nsfw),uncensored,breasts,erect nipples,panty,large breast,(sexy pose), naughty face, sexy clothes, `,
+      negative_prompt: "score_6, score_5, score_4, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye,pussy,vulve,vagin,sex,dick,blurry,signature,username,watermark,jpeg artifacts,normal quality,worst quality,low quality"
     },
     sfw: {
       prompt: `score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime,1girl,HD,4K quality,(perfect hands:0.1),(sfw),dressed,clothes ,`,

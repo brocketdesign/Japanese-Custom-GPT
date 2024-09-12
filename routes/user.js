@@ -538,6 +538,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       }
 
       return reply.view('/user-profile.hbs', {
+        title: `${user.nickname}さんのプロフィール`,
         isAdmin,
         user: currentUser,
         userData: {

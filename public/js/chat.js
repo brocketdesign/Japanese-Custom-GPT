@@ -484,8 +484,6 @@ $(document).ready(async function() {
     
     function displayGalleries(thumbnail, galleries, blurred_galleries, chatId, fetch_userId) {
         const isLocalMode = MODE === 'local';
-        const productIdField = isLocalMode ? 'stripeProductIdLocal' : 'stripeProductIdLive';
-        const priceIdField = isLocalMode ? 'stripePriceIdLocal' : 'stripePriceIdLive';
     
         $('#galleries-open').show();
     
@@ -497,16 +495,12 @@ $(document).ready(async function() {
             description: gallery.description,
             blurredImages: [gallery.images[0], ...blurred_galleries[index].images],
             images: gallery.images,
-            stripePriceId: gallery[priceIdField],
-            stripeProductId: gallery[productIdField],
         });
     
         galleries.forEach((gallery, index) => {
             if (gallery.images && gallery.images.length > 0) {
                 const album = createAlbum(gallery, index);
-                if (album.stripeProductId && album.stripePriceId) {
-                    displayAlbumThumb(thumbnail, album);
-                }
+                displayAlbumThumb(thumbnail, album);
             }
         });
     
@@ -516,16 +510,15 @@ $(document).ready(async function() {
             galleries.forEach((gallery, index) => {
                 const album = createAlbum(gallery, index);
     
-                if (album.stripeProductId && album.stripePriceId) {
-                    galleryThumbnails += `
-                        <div class="col-3 col-sm-4 col-lg-2">
-                            <div data-index="${index}" style="background-image:url(${album.images[0]}); border-radius: 5px !important;border:1px solid white; cursor:pointer;" 
-                                 id="open-album-${album.chatId}-${index}" class="card-img-top rounded-avatar position-relative m-auto shadow" alt="${album.name}">
-                            </div>
-                            <span style="font-size: 12px;color: #fff;">${album.name}</span>
-                            <span class="text-muted" style="font-size: 12px;">(${album.images.length}枚)</span>
-                        </div>`;
-                }
+                galleryThumbnails += `
+                    <div class="col-3 col-sm-4 col-lg-2">
+                        <div data-index="${index}" style="background-image:url(${album.images[0]}); border-radius: 5px !important;border:1px solid white; cursor:pointer;" 
+                                id="open-album-${album.chatId}-${index}" class="card-img-top rounded-avatar position-relative m-auto shadow" alt="${album.name}">
+                        </div>
+                        <span style="font-size: 12px;color: #fff;">${album.name}</span>
+                        <span class="text-muted" style="font-size: 12px;">(${album.images.length}枚)</span>
+                    </div>`;
+                
             });
     
             Swal.fire({
@@ -551,12 +544,9 @@ $(document).ready(async function() {
                 didOpen: () => {
                     galleries.forEach((gallery, index) => {
                         const album = createAlbum(gallery, index);
-    
-                        if (album.stripeProductId && album.stripePriceId) {
-                            $(`#open-album-${album.chatId}-${index}`).on('click', function () {
-                                displayAlbum(album);
-                            });
-                        }
+                        $(`#open-album-${album.chatId}-${index}`).on('click', function () {
+                            displayAlbum(album);
+                        });
                     });
                 }
             });
@@ -579,17 +569,16 @@ $(document).ready(async function() {
 
         async function displayAlbum(album) {
             try {
-                const isAuthorized = await checkIfClient(album.userId, album.chatId, album.stripePriceId);
-                const images = isAuthorized ? album.images : album.blurredImages;
+        
+                const images = subscriptionStatus ? album.images : album.blurredImages;
 
                 let imagesHTML = images.map((url, index) => `<img src="${album.images[0]}" class="img-fluid rounded shadow m-1" style="width:auto;height: auto;object-fit:contain;" data-index="${index}">`).join('');
             
                 Swal.fire({
                     html: `
-                        <div ${!isAuthorized ? 'type="button" onclick="initiateAlbumCheckout(\'' + album.stripePriceId + '\', \'' + album.chatId + '\')"' : ''}>
+                        <div>
                             <div style="top: 0;left: 0;right: 0;border-radius: 40px 40px 0 0;background: linear-gradient(to top, rgba(0, 0, 0, 0), rgba(46, 44, 72, 0.91) 45%);" class="sticky-top pt-3">
                                 <h5 class="mb-0 text-white">${album.name} (${album.images.length}枚)</h5>
-                                <span class="text-muted ${isAuthorized ? 'd-none':''}" style="font-size:14px;">${album.price}¥</span>
                             </div>
                             <p style="color: white;font-size: 12px;" class="p-4">${album.description}</p>
                             <div class="text-start">
@@ -605,7 +594,7 @@ $(document).ready(async function() {
                                     </div>
                                 </div>
                             </div>
-                            ${!isAuthorized && !isTemporary ? `
+                            ${!subscriptionStatus && !isTemporary ? `
                                 <div style="bottom: 20px;z-index: 100;" class="mx-auto mt-4 position-fixed w-100">
                                     <button class="btn btn-lg custom-gradient-bg" style="border-radius:50px;"><i class="far fa-images me-2"></i>アルバムを購入する</button>
                                     <a href="/my-plan" class="d-block mt-1 text-white">Lamixプレミアムなら無料で見放題</a>
@@ -622,7 +611,7 @@ $(document).ready(async function() {
                     customClass: { container: 'p-0', popup: 'album-popup h-100vh shadow', htmlContainer:'position-relative', closeButton: 'position-absolute  me-3' }
                 });
 
-                const colSizes = [1, 2, 3, 4, 6, 12]; // Allowed col sizes
+                const colSizes = [ 2, 3, 6, 12]; // Allowed col sizes
 
                 // Toggle and save to localStorage
                 $(document).on('click', `#toggle-grid-${album.chatId}`, function(){
@@ -654,24 +643,6 @@ $(document).ready(async function() {
             }
         }
 
-    
-    function checkIfClient(userId, chatId, priceId) {
-        return $.ajax({
-            url: '/album/check-client',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({
-                userId: userId,
-                chatId: chatId,
-                priceId: priceId
-            }),
-            dataType: 'json'
-        }).then(response => response.isAuthorized)
-            .catch(error => {
-                console.error('Error checking client status:', error);
-                return false;
-            });
-    }
     
     function thankUserAndAddCoins(callback) {
         const customPrompt = {
@@ -1894,7 +1865,7 @@ $(document).ready(async function() {
     window.buyItem = function(itemId, itemName, itemPrice, item_id, status, userId, chatId, userChatId) {
     
         if (status) {
-            initiatePurchase(itemId, itemName, itemPrice, userId, function(response) {
+            initiatePurchase(itemId, itemName, itemPrice, userId, chatId, function(response) {
                 let message;
                 if (response.success) {
                     const successMessages = [
@@ -1943,11 +1914,11 @@ $(document).ready(async function() {
         }
     }
     
-    function initiatePurchase(itemId, itemName, itemPrice, userId, callback) {
+    function initiatePurchase(itemId, itemName, itemPrice, userId, chatId, callback) {
         $.ajax({
             url: '/api/purchaseItem',
             method: 'POST',
-            data: { itemId, itemName, itemPrice, userId },
+            data: { itemId, itemName, itemPrice, userId, chatId },
             success: function(response) {
                 callback(response);
             },

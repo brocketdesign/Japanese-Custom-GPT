@@ -84,36 +84,6 @@ async function routes(fastify, options) {
                 chatData.chatImageUrl = chatData.thumbnailUrl;
             }
     
-            const stripeLocal = require('stripe')(process.env.STRIPE_SECRET_KEY_TEST);
-            const stripeLive = require('stripe')(process.env.STRIPE_SECRET_KEY);
-            
-            for (const gallery of galleries) {
-                if (gallery.name && gallery.price && gallery.images && gallery.images.length > 0) {
-                    const localFieldsMissing = !gallery['stripeProductIdLocal'] || !gallery['stripePriceIdLocal'];
-                    const liveFieldsMissing = !gallery['stripeProductIdLive'] || !gallery['stripePriceIdLive'];
-
-                    if (localFieldsMissing || liveFieldsMissing) {
-                        try {
-                            if (localFieldsMissing) {
-                                const stripeProductLocal = await createProductWithPrice(gallery.name, gallery.price, gallery.images[0], stripeLocal);
-                                gallery['stripeProductIdLocal'] = stripeProductLocal.productId;
-                                gallery['stripePriceIdLocal'] = stripeProductLocal.priceId;
-                                console.log({ stripeProductIdLocal: gallery['stripeProductIdLocal'], stripePriceIdLocal: gallery['stripePriceIdLocal'] });
-                            }
-            
-                            if (liveFieldsMissing) {
-                                const stripeProductLive = await createProductWithPrice(gallery.name, gallery.price, gallery.images[0], stripeLive);
-                                gallery['stripeProductIdLive'] = stripeProductLive.productId;
-                                gallery['stripePriceIdLive'] = stripeProductLive.priceId;
-                                console.log({ stripeProductIdLive: gallery['stripeProductIdLive'], stripePriceIdLive: gallery['stripePriceIdLive'] });
-                            }
-                        } catch (error) {
-                            return reply.status(500).send({ error: `Failed to create product on Stripe for gallery ${gallery.name}` });
-                        }
-                    }
-                }
-            }
-    
             chatData.userId = userId;
             const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
             const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
@@ -796,49 +766,33 @@ async function routes(fastify, options) {
         
     });
     fastify.post('/api/purchaseItem', async (request, reply) => {
-        const { itemId, itemName, itemPrice, userId, chatId } = request.body;
+        const { itemId, itemName, itemPrice, userId } = request.body;
     
         try {
-            // Log the incoming request data
-            console.log('Request received:', { itemId, itemName, itemPrice, userId, chatId });
-    
-            // Ensure itemPrice is a number
-            const price = Number(itemPrice);
-            if (isNaN(price) || price <= 0) {
-                return reply.code(400).send({ error: 'Invalid item price' });
-            }
-    
-            // Fetch the buyer (user making the purchase)
             const user = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
     
             if (!user) {
-                console.log('User not found:', userId);
                 return reply.code(404).send({ error: 'User not found' });
             }
     
-            let userCoins = user.coins;
-    
-            if (userCoins < price) {
-                console.log('Insufficient coins:', { userCoins, itemPrice: price });
+            let userCoins =  user.coins;
+            
+            if (userCoins < itemPrice) {
                 return reply.code(400).send({ error: 'Insufficient coins', id: 1 });
             }
     
-            userCoins -= price;
+            userCoins -= itemPrice;
     
-            console.log(`User ${userId} has ${userCoins} coins left after purchasing ${itemName}`);
-    
-            // Create new item record
             const newItem = {
                 itemName: itemName,
-                itemPrice: price,
+                itemPrice: itemPrice,
                 purchaseDate: new Date(),
                 userId: userId
             };
     
             const itemResult = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('items').insertOne(newItem);
-            console.log('New item created:', itemResult.insertedId);
     
-            // Update buyer's data (deduct coins and add item to purchasedItems)
+            // Update user data
             await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
                 { _id: new fastify.mongo.ObjectId(userId) },
                 {
@@ -852,33 +806,9 @@ async function routes(fastify, options) {
                 }
             );
     
-            console.log(`User ${userId} updated with new coin balance and purchased item`);
-    
-            // Fetch the chat info to get the seller (chat owner)
-            const chat = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats').findOne({ _id: new fastify.mongo.ObjectId(chatId) });
-    
-            if (!chat) {
-                console.log('Chat not found:', chatId);
-                return reply.code(404).send({ error: 'Chat not found' });
-            }
-    
-            const chatOwnerId = chat.userId;
-            console.log(`Chat owner found: ${chatOwnerId}`);
-    
-            // Update seller's (chat owner's) coins if the buyer is not the seller
-            if (chatOwnerId.toString() !== userId.toString()) {
-                console.log(`Crediting ${price} coins to chat owner ${chatOwnerId}`);
-                await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
-                    { _id: new fastify.mongo.ObjectId(chatOwnerId) },
-                    { $inc: { coins: price } }  // Credit seller with itemPrice
-                );
-            } else {
-                console.log('Buyer is the chat owner, no credit given to themselves.');
-            }
-    
             reply.send({ success: true, coins: userCoins });
         } catch (error) {
-            console.log('Error during purchase:', error);
+            console.error('Error during purchase:', error);
             reply.code(500).send({ error: 'Internal server error' });
         }
     });

@@ -392,7 +392,7 @@ $(document).ready(async function() {
             //initializeOrUpdateProgress(data?.userChat?.messagesCount || 0, data?.userChat?.nextLevel || 10);
         }
 
-        checkImageDescription(thumbnail,function(response){
+        checkImageDescription(chatId,function(response){
             if(!response){
                 generateImageDescriptionBackend(thumbnail,chatId)
             }

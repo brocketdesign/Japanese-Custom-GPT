@@ -1691,13 +1691,13 @@ async function routes(fastify, options) {
                     { $set: {imageDescription} },
                 );
                 if (result.modifiedCount > 0) {
-                   console.log(`Image description updated`)
+                    console.log({imageDescription})
+                    console.log(`Image description updated`)
                   } else {
                     console.log(`Error Image description could not be upddated`)
                   }
                   
-                // Send the description after all operations are done
-                reply.send({ description });
+                reply.send({ description : imageDescription });
             } catch (error) {
                 console.error('Error processing the image description:', error);
                 reply.send({ error: 'Failed to process the description' });
@@ -1734,32 +1734,28 @@ async function routes(fastify, options) {
     });
 
     fastify.get('/api/check-image-description', async (request, reply) => {
-        const imageUrl = request.query.imageUrl;
-        
-        if (!imageUrl) {
-            return reply.status(400).send({ error: 'Image URL parameter is required' });
+        const chatId = new fastify.mongo.ObjectId(request.query.chatId);
+
+        if (!chatId) {
+            return reply.status(400).send({ error: 'chatId parameter is required' });
         }
     
         try {
             const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
-            const collection = db.collection('characters');
+            const collection = db.collection('chats');
     
             // Check if the description for the image already exists in the database
-            let result = await collection.findOne({
-                $or: [
-                  { chatImageUrl: imageUrl },
-                  { image: imageUrl }
-                ]
+            let chat = await collection.findOne({
+                _id : chatId,
             });
 
-            result = result?.description
+            imageDescription = chat?.imageDescription
 
-            if (!result) {
+            if (!imageDescription) {
                 return reply.send(false);
             }
     
-            // Return the result
-            reply.send(result);
+            reply.send(imageDescription);
         } catch (error) {
             reply.status(500).send({ error: 'Internal Server Error', details: error.message });
         }

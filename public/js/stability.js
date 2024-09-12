@@ -1,11 +1,10 @@
 // Save the number of image generated
 // Implement a limit
 // Image generation is for premium users
-window.checkImageDescription = function(imageUrl = null, callback) {
-  imageUrl = imageUrl ? imageUrl : $('#chatImageUrl').val();
+window.checkImageDescription = function(chatId = null, callback) {
 
-  if (!imageUrl) {
-      console.log('Image URL is required.');
+  if (!chatId) {
+      console.log('chatId is required.');
       callback({error:'Abord'});
       return;
   }
@@ -15,7 +14,7 @@ window.checkImageDescription = function(imageUrl = null, callback) {
   $.ajax({
       url: '/api/check-image-description',
       method: 'GET',
-      data: { imageUrl: imageUrl },
+      data: { chatId: chatId },
       success: function(response) {
           if (callback) {
               callback(response);

@@ -495,7 +495,7 @@ async function fetchNovitaResult(task_id) {
       negative_prompt: "naked pussy,pussy,vagin,sex,dick,(ugly face),score_6,score_5,score_4,blurry,signature,username,watermark,jpeg artifacts,normal quality,worst quality,low quality,missing fingers,extra digits,fewer digits,bad eye,"
     },
     sfw: {
-      prompt: `HD,4K quality,(perfect hands:0.1),((sfw)),dressed,clothes,`,
+      prompt: `1girl,HD,4K quality,(perfect hands:0.1),(sfw),dressed,clothes,`,
       negative_prompt : "nipple,topless,nsfw,naked pussy,pussy,((vagin)),vaginal,((((pussy)))),(((nipple))),nude,((naked)),sex,(((genital))), score_6,score_5,score_4,blurry,signature,username,watermark,jpeg artifacts,normal quality,worst quality,low quality,missing fingers,extra digits,fewer digits,bad eye,"
     }
   }

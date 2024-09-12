@@ -1250,8 +1250,9 @@ $(document).ready(async function() {
             scrollTop: $('#chatContainer').prop("scrollHeight")
         }, 500);
     }
+  
     function sanitizeString(inputString) {
-        var wordsToRemove = ['nsfw', 'nude', 'sexy', 'erotic', 'naughty', 'body', 'breast', 'boobs', 'curvy']; // Add words to remove
+        var wordsToRemove = ['nsfw', 'nude', 'sexy', 'erotic', 'naughty', 'body', 'breast','breasts','nipple','nipples', 'boobs', 'curvy', 'uncensored']; // Add words to remove
         wordsToRemove.forEach(function(word) {
             var regex = new RegExp('\\b' + word + '\\b', 'g');
             inputString = inputString.replace(regex, '');

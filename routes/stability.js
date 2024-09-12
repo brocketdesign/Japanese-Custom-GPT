@@ -491,7 +491,7 @@ async function fetchNovitaResult(task_id) {
 
   const default_prompt ={
     nsfw: {
-      prompt: `(nsfw),topless,panty,large breast,erotic pose,(sexy pose), naughty face, sexy clothes, censored, very sexy, `,
+      prompt: `(nsfw),uncensored,topless,panty,large breast,erotic pose,(sexy pose), naughty face, sexy clothes, censored, very sexy, `,
       negative_prompt: "naked pussy,pussy,vulve,vagin,sex,dick,blurry,signature,username,watermark,jpeg artifacts,normal quality,worst quality,low quality"
     },
     sfw: {

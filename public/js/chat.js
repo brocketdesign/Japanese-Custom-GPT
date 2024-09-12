@@ -33,7 +33,6 @@ $(document).ready(async function() {
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageFav') {
             const description = event.data.description
-            console.log({description})
             if(!description)return
             let message = `[Hidden] I liked one of your picture. That one : ${description}. Thanks me and comment about the moment you took the picture.`
             addMessageToChat(chatId, userChatId, 'user', message,function(){

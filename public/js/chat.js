@@ -32,7 +32,9 @@ $(document).ready(async function() {
 
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageFav') {
-            let message = `[Hidden] I liked on of your picture.`
+            const description = event.data.description
+            if(!description)return
+            let message = `[Hidden] I liked one of your picture. That one : ${description}`
             addMessageToChat(chatId, userChatId, 'user', message,function(){
                 generateCompletion()
             });
@@ -1248,11 +1250,20 @@ $(document).ready(async function() {
             scrollTop: $('#chatContainer').prop("scrollHeight")
         }, 500);
     }
+    function sanitizeString(inputString) {
+        var wordsToRemove = ['nsfw', 'nude', 'sexy', 'erotic', 'naughty', 'body', 'breast', 'boobs', 'curvy']; // Add words to remove
+        wordsToRemove.forEach(function(word) {
+            var regex = new RegExp('\\b' + word + '\\b', 'g');
+            inputString = inputString.replace(regex, '');
+        });
+        return inputString.replace(/\s+/g, ' ').trim();  // Clean up extra spaces
+    }
     
-    function getImageTools(imageId,isLiked = false){
+    function getImageTools(imageId,isLiked = false, description = false){
+        description = sanitizeString(description);
         return `
             <div class="bg-white py-2 d-flex justify-content-between">
-                <span class="badge bg-light text-secondary image-fav ${isLiked ? 'liked':''}" data-id="${imageId}" 
+                <span class="badge bg-light text-secondary image-fav ${isLiked ? 'liked':''}" data-description="${description}" data-id="${imageId}" 
                 style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
                 <i class="bi bi-heart-fill"></i>
                 </span>
@@ -1280,7 +1291,7 @@ $(document).ready(async function() {
                                 <div class="position-relative">
                                     <div class="ms-3 text-start assistant-image-box">
                                         <img id="image-${imageId}" data-id="${imageId}" src="${response.imageUrl}" alt="${response.imagePrompt}">
-                                    ${!isBlur ? getImageTools(imageId,isLiked) :''}
+                                    ${!isBlur ? getImageTools(imageId,isLiked,response.imagePrompt) :''}
                                     </div>
                                     ${isBlur ? `
                                     <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
@@ -1816,12 +1827,13 @@ $(document).ready(async function() {
     
         else if (messageClass === 'bot-image' && message instanceof HTMLElement) {
             const imageId = message.getAttribute('data-id');
+            const description = message.getAttribute('alt');
             messageElement = $(`
                 <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass}">
                     <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
                     <div class="p-3 ms-3 text-start assistant-image-box">
                         ${message.outerHTML}
-                        ${getImageTools(imageId)}
+                        ${getImageTools(imageId,false,description)}
                     </div>
                 </div>      
             `).hide();

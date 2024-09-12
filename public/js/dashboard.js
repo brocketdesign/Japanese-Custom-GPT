@@ -277,7 +277,7 @@ $(document).ready(async function() {
         if (isTemporary) { showRegistrationForm(); return; }
     
         const $this = $(this);
-        const description = $(this).data('alt')
+        const description = $(this).data('description') == 'false' ? false : $(this).data('description')
         const imageId = $(this).data('id');
         const isLiked = $(this).hasClass('liked'); // Check if already liked
     

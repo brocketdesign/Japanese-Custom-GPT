@@ -305,7 +305,10 @@ function getProposalById(id) {
   });
 }
 window.generateImage = async function(data,prompt){
-
+  if (!data || !data.url || !data.id || !data.prompt) {
+    console.error('Invalid image data');
+    return; // Exit early if the data is empty or incomplete
+  }
   const imageUrl = data.url;
   const imageId = data.id
   const imagePrompt = data.prompt
@@ -321,9 +324,12 @@ window.generateImage = async function(data,prompt){
   const user = await fetchUser()
   const subscriptionStatus = user.subscriptionStatus == 'active'
 
-  if ( imageNsfw && !subscriptionStatus) {
-    displayMessage('bot-image-nsfw',img)
-  }else{
-    displayMessage('bot-image',img)
-  }  
+  if (imageNsfw && !subscriptionStatus) {
+    displayMessage('bot-image-nsfw', img);
+    showNotification('この画像はNSFWコンテンツです。サブスクリプションが必要です。', 'warning');
+  } else {
+      displayMessage('bot-image', img);
+      showNotification('画像が表示されました。', 'success');
+  }
+
 }

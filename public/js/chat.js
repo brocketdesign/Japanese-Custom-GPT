@@ -42,7 +42,8 @@ $(document).ready(async function() {
     });
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageError') {
-            let message = `[Hidden] There way an error. I could not receive the image.`
+            const error = event.data.error
+            let message = `[Hidden] There way an error. I could not receive the image. Error : ${error}`
             addMessageToChat(chatId, userChatId, 'user', message,function(){
                 generateCompletion()
             });

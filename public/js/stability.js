@@ -281,7 +281,7 @@ $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
   })
   .catch(error => {
     console.error('Error generating diffused image:', error);
-    window.postMessage({ event: 'imageError'}, '*');
+    window.postMessage({ event: 'imageError',error}, '*');
   })
   .finally(() => {
     $('#load-image-container').remove();

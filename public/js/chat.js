@@ -666,7 +666,7 @@ $(document).ready(async function() {
     function thankUserAndAddCoins(callback) {
         const customPrompt = {
             systemContent: "あなたの役割は、ユーザーに感謝の気持ちを伝えるキャラクターとして行動することです。今回は、ログインしてくれたユーザーに、再び戻ってきてくれたことへの感謝を伝え、100コインをプレゼントする旨を優しく伝えてください。",
-            userContent: "ユーザーが再度ログインしました。心からの感謝とともに、10コインをプレゼントする短いメッセージを伝えてください。",
+            userContent: "ユーザーが再度ログインしました。心からの感謝とともに、100コインをプレゼントする短いメッセージを伝えてください。",
             temperature: 0.7,
             top_p: 0.9,
             frequency_penalty: 0,
@@ -2576,7 +2576,7 @@ window.claimDailyBonus = function(callback) {
         success: function(response) {
             if (response.success) {
                 $.cookie('dailyBonusClaimed', today, { expires: 1 });
-                showNotification('10 コインがデイリーボーナスとして追加されました！', 'success');
+                showNotification('100 コインがデイリーボーナスとして追加されました！', 'success');
                 if (callback) callback(true);
             } else {
                 if (callback) callback(false);

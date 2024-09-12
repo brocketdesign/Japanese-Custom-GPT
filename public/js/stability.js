@@ -205,7 +205,7 @@ window.generateImageHuggingFace = function(API_URL, userId, chatId, userChatId, 
     return response.json();
   })
   .then(data => {
-    generateImage(data, prompt); // Directly use the data returned from your API
+    generateImage(data, prompt);
   })
   .catch(error => {
     console.error('Error generating diffused image:', error);
@@ -276,9 +276,7 @@ $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
   .then(data => {
     const images = data.images;
     images.forEach((image, index) => {
-      setTimeout(() => {
         generateImage(image, prompt);
-      }, index * 1000);
     });    
   })
   .catch(error => {

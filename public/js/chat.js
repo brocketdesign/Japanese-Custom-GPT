@@ -40,7 +40,16 @@ $(document).ready(async function() {
             });
         }
     });
-
+    window.addEventListener('message', function(event) {
+        if (event.data.event === 'imageError') {
+            const description = event.data.description
+            if(!description)return
+            let message = `[Hidden] There way an error. I could not receive the image.`
+            addMessageToChat(chatId, userChatId, 'user', message,function(){
+                generateCompletion()
+            });
+        }
+    });
     let count_proposal = 0
     const subscriptionStatus = user.subscriptionStatus == 'active'
 

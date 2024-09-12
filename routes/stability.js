@@ -491,7 +491,7 @@ async function fetchNovitaResult(task_id) {
 
   const default_prompt ={
     nsfw: {
-      prompt: `score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime,1girl,(nsfw),uncensored,breasts,erect nipples,panty,large breast,(sexy pose), naughty face, sexy clothes, `,
+      prompt: `score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime,1girl,(nsfw),uncensored,breasts,erect nipples,panty,large breast,(sexy pose), naughty face, sexy micro clothes, `,
       negative_prompt: "score_6, score_5, score_4, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye,pussy,vulve,vagin,sex,dick,blurry,signature,username,watermark,jpeg artifacts,normal quality,worst quality,low quality"
     },
     sfw: {
@@ -578,11 +578,14 @@ async function fetchNovitaResult(task_id) {
         }
       }; 
   
-      const [images1, images2] = await Promise.all([
+      const [result1, result2] = await Promise.allSettled([
         handleImageRequest(image_request1),
         handleImageRequest(image_request2, !isSubscribed, true)
       ]);
-  
+      
+      const images1 = result1.status === 'fulfilled' ? result1.value : [];
+      const images2 = result2.status === 'fulfilled' ? result2.value : [];
+      
       reply.send({ images: [...images1, ...images2] });
   
     } catch (err) {

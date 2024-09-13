@@ -1600,9 +1600,18 @@ $(document).ready(async function() {
             ? `${baseUrl}${params}&robot_id=1533008538&ts=1723632421&t_secret=661712&sign=9e2bfc4903b8c1176f7e2c973538908b` 
             : `${baseUrl}${params}&robot_id=1533008511&ts=1724029265&t_secret=58573&sign=3beb590d1261bc75d6687176f50470eb`;
     }
+
     function playAudio($el, audio, audioUrl) {
+        // Mute all other audios
+        audioPool.forEach(a => {
+            if (a !== audio) {
+                a.muted = true;
+            }
+        });
+    
         if (audio.src !== audioUrl) audio.src = audioUrl;
     
+        audio.muted = false;
         audio.play();
     
         audio.onloadedmetadata = () => 
@@ -1615,24 +1624,32 @@ $(document).ready(async function() {
             event.stopPropagation();
         
             const message = $el.attr('data-content');
-            const audioDuration = $el.attr('data-audio-duration')
+            const audioDuration = $el.attr('data-audio-duration');
             const cachedUrl = audioCache.get(message);
-            let audio = audioPool.find(a => a.src === cachedUrl) || getAvailableAudio();
+            let currentAudio = audioPool.find(a => a.src === cachedUrl) || getAvailableAudio();
         
-            if (audio.src !== cachedUrl) {
-                audio.src = cachedUrl;
+            // Mute all other audios
+            audioPool.forEach(a => {
+                if (a !== currentAudio) {
+                    a.muted = true;
+                }
+            });
+        
+            if (currentAudio.src !== cachedUrl) {
+                currentAudio.src = cachedUrl;
             }
         
-            if (audio.paused) {
-                audio.play();
+            if (currentAudio.paused) {
+                currentAudio.muted = false;
+                currentAudio.play();
                 $el.html(`❚❚ ${Math.round(audioDuration)}"`);
             } else {
-                audio.pause();
-                audio.currentTime = 0;
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                currentAudio.muted = true;
                 $el.html(`► ${Math.round(audioDuration)}"`);
             }
         });
-        
     }
     
     
@@ -1834,7 +1851,7 @@ $(document).ready(async function() {
                 <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass}">
                     <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
                     <div class="ms-3 position-relative">
-                        <div class="ps-3 text-start assistant-image-box">
+                        <div class="text-start assistant-image-box">
                             ${message.outerHTML}
                         </div>
                         ${getImageTools(imageId,false,description)}
@@ -1849,8 +1866,8 @@ $(document).ready(async function() {
             messageElement = $(`
                 <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass} unlock-nsfw" style="position: relative;">
                     <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
-                    <div class="position-relative">
-                        <div class="p-3 ms-3 text-start assistant-image-box">
+                    <div class="ms-3 position-relative">
+                        <div class="text-start assistant-image-box">
                             ${message.outerHTML}
                         </div>
                         <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
@@ -1909,7 +1926,7 @@ $(document).ready(async function() {
                                 console.error('Error adding message:', error);
                             } else {
                                 thumbnail = thumbnail || localStorage.getItem('thumbnail')
-                                let message = `[Hidden] Wait for the user to see the image. You are sending the image right now.`
+                                let message = `[Hidden] I did not received the image yet. Wait for mer to see the image. The image is being sent right now.`
                                 addMessageToChat(chatId, userChatId, 'user', message,function(){
                                     generateCompletion(function(){
                                         generateImageNovita(API_URL, userId, chatId, userChatId, item_id, thumbnail);

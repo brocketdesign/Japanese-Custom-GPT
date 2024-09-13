@@ -644,7 +644,7 @@ $(document).ready(async function() {
                     backdrop: 'rgba(43, 43, 43, 0.2)',
                     showCloseButton: true,
                     showConfirmButton: false,
-                    customClass: { container: 'p-0', popup: 'album-popup h-100vh shadow', htmlContainer:'position-relative', closeButton: 'position-absolute  me-3' }
+                    customClass: { container: 'p-0', popup: 'album-popup h-90vh shadow', htmlContainer:'position-relative', closeButton: 'position-absolute  me-3' }
                 });
 
                 const colSizes = [ 2, 3, 6, 12]; // Allowed col sizes

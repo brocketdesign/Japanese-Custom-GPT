@@ -234,7 +234,7 @@ function getProposalById(id) {
       });
   });
 }
-
+let messCt = 0
 // Display Generated Image
 window.generateImage = async function(data, prompt) {
   console.log('generateImage called with data:', data, 'prompt:', prompt);
@@ -274,8 +274,11 @@ window.generateImage = async function(data, prompt) {
           // Optionally, uncomment the line below to notify success
           // showNotification('画像が表示されました。', 'success');
       }
-      if(subscriptionStatus){
+      if(subscriptionStatus && messCt == 0){
         window.postMessage({ event: 'imageDone' }, '*');
+        messCt ++
+      }else{
+        messCt = 0
       }
 
   } catch (error) {

@@ -572,7 +572,7 @@ window.displayPepopleChat = async function (page = 1) {
 
                 // Render chat
                 htmlContent += `
-                <div class="col-12 col-sm-4 col-lg-2">
+                <div class="col-12 col-sm-4 col-lg-2 mb-2">
                     <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 redirectToChat" style="cursor:pointer;" data-id="${chat._id}" data-image="${chat.chatImageUrl}">
                         <div style="background-image:url('${chat.chatImageUrl || '/img/logo.webp'}')" class="card-img-top girls_avatar position-relative" alt="${chat.name}">
                             <div id="spinner-${chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
@@ -672,7 +672,7 @@ window.loadAllUserPosts = async function (page = 1) {
             const isLiked = item?.post?.likedBy?.some(id => id.toString() === currentUserId.toString());
 
             galleryHtml += `
-              <div class="col-12 col-md-4 col-lg-3">
+              <div class="col-12 col-md-4 col-lg-3 mb-2">
                 <div class="card">
                   <div class="d-flex align-items-center p-2">
                     <a href="/user/${item.userId}">
@@ -776,37 +776,37 @@ window.loadAllChatImages = async function (page = 1) {
             let isBlur = item?.nsfw && !subscriptionStatus;
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             chatGalleryHtml += `
-                <div class="col-12 col-md-6 col-lg-4">
-                <div class="card">
-                    <div class="d-flex align-items-center p-2">
-                        <a href="/character/${item.chatId}?imageId=${item._id}">
-                            <img src="${item?.chatThumbnailUrl}" alt="${item?.chatName}" class="rounded-circle me-2" width="40" height="40">
-                        </a>
-                        <a href="/character/${item.chatId}?imageId=${item._id}" class="text-decoration-none text-dark">
-                            <strong>${item?.chatName}</strong>
-                        </a>
-                    </div>
-                    ${isBlur ? `
-                    <div type="button" onclick=showPremiumPopup()>
-                        <img src="/img/nsfw-blurred.jpg" class="card-img-top" style="object-fit: cover;">
-                        <div class="card-body p-2">
+                <div class="col-12 col-md-6 col-lg-4 mb-2">
+                    <div class="card">
+                        <div class="d-flex align-items-center p-2">
+                            <a href="/character/${item.chatId}?imageId=${item._id}">
+                                <img src="${item?.chatThumbnailUrl}" alt="${item?.chatName}" class="rounded-circle me-2" width="40" height="40">
+                            </a>
+                            <a href="/character/${item.chatId}?imageId=${item._id}" class="text-decoration-none text-dark">
+                                <strong>${item?.chatName}</strong>
+                            </a>
                         </div>
+                        ${isBlur ? `
+                        <div type="button" onclick=showPremiumPopup()>
+                            <img src="/img/nsfw-blurred.jpg" class="card-img-top" style="object-fit: cover;">
+                            <div class="card-body p-2">
+                            </div>
+                        </div>
+                        ` : `
+                        <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
+                            <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
+                        </a>
+                        <div class="card-body p-2 d-flex align-items-center justify-content-between">
+                            <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
+                            <button class="btn btn-light image-nsfw-toggle isAdmin" data-id="${item._id}">
+                                <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill':'bi-eye-fill'}"></i> 
+                            </button>
+                            <span class="btn btn-light float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
+                                <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
+                            </span>
+                        </div>
+                        `}
                     </div>
-                    ` : `
-                    <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
-                        <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
-                    </a>
-                    <div class="card-body p-2 d-flex align-items-center justify-content-between">
-                        <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
-                        <button class="btn btn-light image-nsfw-toggle isAdmin" data-id="${item._id}">
-                            <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill':'bi-eye-fill'}"></i> 
-                        </button>
-                        <span class="btn btn-light float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
-                            <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
-                        </span>
-                    </div>
-                    `}
-                </div>
                 </div>
             `;
         });
@@ -874,7 +874,7 @@ window.loadChatImages = async function (chatId, page = 1) {
             let isBlur = item?.nsfw && !subscriptionStatus;
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             chatGalleryHtml += `
-                <div class="col-12 col-md-6 col-lg-4">
+                <div class="col-12 col-md-6 col-lg-4 mb-2">
                 <div class="card">
                     <div class="d-flex align-items-center p-2">
                         <a href="/character/${item.chatId}?imageId=${item._id}">
@@ -968,7 +968,7 @@ window.loadUserImages = async function (userId, page = 1) {
             let isBlur = item?.nsfw && !subscriptionStatus 
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             galleryHtml += `
-                <div class="col-12 col-md-6 col-lg-4">
+                <div class="col-12 col-md-6 col-lg-4 mb-2">
                 <div class="card">
                     <div class="d-flex align-items-center p-2">
                         <a href="/character/${item.chatId}?imageId=${item._id}">
@@ -1052,7 +1052,7 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
             let isBlur = item?.image?.nsfw && !subscriptionStatus 
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             galleryHtml += `
-                <div class="col-12 col-md-4 col-lg-3">
+                <div class="col-12 col-md-6 col-lg-4 mb-2">
                 <div class="card">
                     <div class="d-flex align-items-center p-2">
                         <a href="/user/${item.userId}">
@@ -1078,7 +1078,7 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
                                 <a href="/post/${item._id}" class="text-muted text-decoration-none text-short ">${item.comment || 'No Comment'}</a>
                             </div>
                             <div class="col-12 text-end">
-                                <button class="btn btn-light shadow-0 post-fav  ${isLiked ? 'liked' : ''}" data-id="${item._idd}"> 
+                                <button class="btn btn-light shadow-0 post-fav  ${isLiked ? 'liked' : ''}" data-id="${item._id}"> 
                                     <i class="bi bi-heart-fill me-2"></i>いいね 
                                     <span class="ct">${item.likes || 0}</span>
                                 </button>

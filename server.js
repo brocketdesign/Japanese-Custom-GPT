@@ -353,6 +353,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         return reply.view('character.hbs', {
           chat,
           image,
+          user,
           chatId,
           isBlur,
           seo: [

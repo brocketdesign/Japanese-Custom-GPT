@@ -7,7 +7,7 @@ async function routes(fastify, options) {
       const { action } = request.body; // 'like' or 'unlike'
       const user = await fastify.getUser(request, reply);
       const userId = new fastify.mongo.ObjectId(user._id);
-  
+
       const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
       const galleryCollection = db.collection('gallery');
       const imagesLikesCollection = db.collection('images_likes');
@@ -16,7 +16,7 @@ async function routes(fastify, options) {
       if (action === 'like') {
         // Check if the user already liked the image
         const existingLike = await imagesLikesCollection.findOne({ imageId, userId });
-  
+
         if (existingLike) {
           return reply.code(400).send({ error: 'User has already liked this image' });
         }
@@ -52,7 +52,7 @@ async function routes(fastify, options) {
       } else if (action === 'unlike') {
         // Check if the user has already liked the image
         const existingLike = await imagesLikesCollection.findOne({ imageId, userId });
-  
+
         if (!existingLike) {
           return reply.code(400).send({ error: 'User has not liked this image yet' });
         }

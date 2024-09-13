@@ -1138,7 +1138,7 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
                         <img src="${item.image.imageUrl}" alt="${item.image.prompt}" class="card-img-top">
                     </a>
                     <div class="card-body p-2">
-                        <div class="row">
+                        <div class="row mx-0">
                             <div class="col-12" style="overflow:hidden; text-wrap:nowrap;">
                                 <a href="/post/${item._id}" class="text-muted text-decoration-none text-short ">${item.comment || 'No Comment'}</a>
                             </div>

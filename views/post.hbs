@@ -123,7 +123,7 @@
     </style>
     <div class="container mt-4">
       <!-- Row for User Profile and Post Content -->
-      <div class="row">
+      <div class="row mx-0">
 
         <!-- Post Content Section -->
         {{#if post}}
@@ -149,7 +149,7 @@
           <div class="card">
             <div class="card-body text-center">
               <div class="user-profile mt-4">
-                <div class="row mb-3">
+                <div class="row mx-0 mb-3">
                   <div id="profileSection" class="text-center">
                     <div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative mb-2">
                       <a href="/user/{{postUser._id}}" class="text-secondary" style="text-decoration:none;">  
@@ -179,11 +179,11 @@
 
 <section class="container">
   {{#if userId}}
-  <div class="row justify-content-center">
+  <div class="row mx-0 justify-content-center">
     <div class="col-12 mt-4">
         <h4>投稿したAI画像</h4>
         <hr>
-        <div id="user-posts-gallery" class="row g-3"></div>
+        <div id="user-posts-gallery" class="row mx-0 g-3"></div>
         <div id="pagination-controls" class="d-flex justify-content-center my-3"></div>
     </div>
   </div>
@@ -192,7 +192,7 @@
   <p>Lamixでは、AIグラビアとのチャット中に生成された画像を使って、簡単に投稿を作成することができます。お気に入りの瞬間やクリエイティブな画像をシェアすることで、他のユーザーと楽しさを共有しましょう。画像を選んで投稿に追加するだけで、あなただけのオリジナルコンテンツを簡単に発信できます。</p>
     
   <div class="container mt-4 mb-5">
-    <div class="row" id="post-gallery"></div>
+    <div class="row mx-0" id="post-gallery"></div>
     <div class="d-flex justify-content-center mt-4" id="user-posts-pagination-controls"></div>
   </div>
 

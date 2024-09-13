@@ -61,7 +61,20 @@ $(document).ready(async function() {
         if (event.data.event === 'imageNsfw') {
             let message = `[Hidden] Tell me that I can unlock more personal and attractive images if I subscribe to the premium plan which is 300 JPY per month if I pay yearly. is not that cheap ?! It is to celebrate the lauching of this app, ラミックス ! Plus I get 1000 coins to enjoy plenty of pictures of you. \n Provide a new message every time.`
             addMessageToChat(chatId, userChatId, 'user', message,function(){
-                generateCompletion()
+                generateCompletion(function(){
+                    const message = `
+                    <div class="card bg-transparent text-white border-0">
+                        <div class="card-body-none" style="height:auto !important;">
+                            <button class="btn custom-gradient-bg shadow-0 w-100" 
+                                onclick="window.location.href='/my-plan'">
+                                <span>プレミアムプランを確認</span>
+                            </button>
+                        </div>
+                    </div>`
+                ;
+                displayMessage('assistant', message);
+
+                })
             });
         }
     });
@@ -1556,6 +1569,28 @@ $(document).ready(async function() {
     $(document).on('click', function() {
         getAvailableAudio();
     });
+    $(document).on('click', '.message-container', function(event) {
+        event.stopPropagation();
+        
+        const $el = $(this).find('.audio-content');
+        const message = $el.attr('data-content');
+        
+        if (!message) {
+            return;
+        }
+        
+        stopAllAudios();
+        
+        (function() {
+            const duration = $el.attr('data-audio-duration');
+            if (duration) {
+                $el.html('► ' + Math.round(duration) + '"');
+            }
+        })();
+        
+        initAudio($el, message);
+    });
+    
     
     $(document).on('click', '.audio-controller .audio-content', function(event) {
         event.stopPropagation();

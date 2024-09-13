@@ -207,7 +207,7 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
 
   } catch (error) {
       console.error('generateImageNovita Error:', error);
-      alert(`Error generating image: ${error.message}`);
+      console.log(`Error generating image: ${error.message}`);
       window.postMessage({ event: 'imageError', error: error.message }, '*');
   } finally {
       console.log('Finalizing generateImageNovita: Removing loader and updating UI.');

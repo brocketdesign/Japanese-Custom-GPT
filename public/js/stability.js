@@ -204,7 +204,6 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
       }
 
       console.log('Posting imageDone event.');
-      window.postMessage({ event: 'imageDone' }, '*');
 
   } catch (error) {
       console.error('generateImageNovita Error:', error);
@@ -265,6 +264,7 @@ window.generateImage = async function(data, prompt) {
 
       if (imageNsfw && !subscriptionStatus) {
           console.warn('NSFW content detected and user is not subscribed.');
+          window.postMessage({ event: 'imageNsfw' }, '*');
           displayMessage('bot-image-nsfw', img);
           showNotification('この画像はNSFWコンテンツです。サブスクリプションが必要です。', 'warning');
       } else {
@@ -274,6 +274,10 @@ window.generateImage = async function(data, prompt) {
           // Optionally, uncomment the line below to notify success
           // showNotification('画像が表示されました。', 'success');
       }
+      if(subscriptionStatus){
+        window.postMessage({ event: 'imageDone' }, '*');
+      }
+
   } catch (error) {
       console.error('generateImage Error fetching user:', error);
       showNotification('ユーザー情報の取得に失敗しました。', 'error');

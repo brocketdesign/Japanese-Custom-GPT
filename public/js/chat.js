@@ -57,6 +57,14 @@ $(document).ready(async function() {
             });
         }
     });
+    window.addEventListener('message', function(event) {
+        if (event.data.event === 'imageNsfw') {
+            let message = `[Hidden] Tell me that I can unlock more personal and attractive images if I subscribe to the premium plan which is 300 JPY per month if I pay yearly. is not that cheap ?! It is to celebrate the lauching of this app, ラミックス ! \n Provide a new message every time.`
+            addMessageToChat(chatId, userChatId, 'user', message,function(){
+                generateCompletion()
+            });
+        }
+    });
     let count_proposal = 0
     const subscriptionStatus = user.subscriptionStatus == 'active'
 
@@ -1901,8 +1909,11 @@ $(document).ready(async function() {
                                 console.error('Error adding message:', error);
                             } else {
                                 thumbnail = thumbnail || localStorage.getItem('thumbnail')
-                                generateCompletion(function(){
-                                    generateImageNovita(API_URL, userId, chatId, userChatId, item_id, thumbnail);
+                                let message = `[Hidden] Wait for the user to see the image. You are sending the image right now.`
+                                addMessageToChat(chatId, userChatId, 'user', message,function(){
+                                    generateCompletion(function(){
+                                        generateImageNovita(API_URL, userId, chatId, userChatId, item_id, thumbnail);
+                                    });
                                 });
                             }
                         });

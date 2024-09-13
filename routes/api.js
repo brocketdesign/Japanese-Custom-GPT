@@ -636,6 +636,7 @@ async function routes(fastify, options) {
                             Your are working as an idol and your goal is to make the user buy your pictures to become popular.
                             You do not ask for the user story.Do not ask for the user questions unles to sell something. 
                             Focus on promoting your pictures. You must wait for the user to send you coins before sending the picture.
+                            \n When you propose a picture, describe what is in it. Describe you clothes and emotion, what is going on in the picture.
                             \n When the user buy you someting, thank him and send the picture. 
                             Respond in japanese
                             `
@@ -1332,7 +1333,7 @@ async function routes(fastify, options) {
 
         const examplePrompts = await fs.readFileSync('./models/girl_char.md', 'utf8');
         const systemPayload = createSystemPayloadChatRule(examplePrompts,prompt,gender);  // You can change "English" to any language you need
-console.log({createSystemPayloadChatRule})
+
         const openai = new OpenAI();
         const completionResponse = await openai.beta.chat.completions.parse({
             model: "gpt-4o-mini",
@@ -1607,7 +1608,7 @@ console.log({createSystemPayloadChatRule})
                 messages: [
                     { role: "system", content: `
                         You are an expert at structured data extraction.\n
-                        Verify if the message is about sending, proposing a picture.\n
+                        Verify if the message is about sending, proposing a picture or maybe resend a picture because of an error.\n
                         If so return the image name in japanese with a price (between 10 and 50) and a description in english.\n
 
                         The description will be use in Stable Diffusion.\n

@@ -1729,17 +1729,17 @@ $(document).ready(async function() {
                 eventSource.onmessage = function(event) {
                     const data = JSON.parse(event.data);
                     markdownContent += data.content;
-                    $(`#completion-${currentStep}`).html(marked.parse(markdownContent));
+                    $(`#completion-${uniqueId}`).html(marked.parse(markdownContent));
                 };
     
                 eventSource.onerror = function(error) {
                     eventSource.close();
                     let message = removeContentBetweenStars(markdownContent);
                     if(language != 'english'){
-                        $(`#play-${currentStep}`).attr('data-content', message);
-                        $(`#play-${currentStep}`).closest('.audio-controller').show();
+                        $(`#play-${uniqueId}`).attr('data-content', message);
+                        $(`#play-${uniqueId}`).closest('.audio-controller').show();
                         if(autoPlay){
-                            initAudio($(`#play-${currentStep}`), message);
+                            initAudio($(`#play-${uniqueId}`), message);
                         }
                     }
 

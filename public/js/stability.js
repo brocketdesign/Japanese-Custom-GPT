@@ -44,6 +44,10 @@ window.generateImageDescriptionBackend = function(imageUrl = null, chatId, callb
   imageUrl = imageUrl ? imageUrl : $('#chatImageUrl').val();
   const language = $('#language').val() || 'japanese';
 
+  if(!imageUrl && !chatId){
+    console.log('Image URL or chatId must be provided')
+    return
+  }
   const system = createSystemPayloadImage(language);
 
   const apiUrl = '/api/openai-image-description';

@@ -1363,7 +1363,8 @@ async function routes(fastify, options) {
         }
     });
     fastify.post('/api/openai-chat-creation', async (request, reply) => {
-        const { prompt } = request.body;
+        const { prompt, gender } = request.body;
+
         const user = await fastify.getUser(request, reply);
         const userId = user._id;
     
@@ -1374,7 +1375,7 @@ async function routes(fastify, options) {
         });
 
         const examplePrompts = await fs.readFileSync('./models/girl_char.md', 'utf8');
-        const systemPayload = createSystemPayload("Japanese",examplePrompts,prompt);  // You can change "English" to any language you need
+        const systemPayload = createSystemPayload("Japanese",examplePrompts,prompt,gender);  // You can change "English" to any language you need
 
         const openai = new OpenAI();
         const completionResponse = await openai.beta.chat.completions.parse({
@@ -1388,15 +1389,21 @@ async function routes(fastify, options) {
         reply.send({ name, short_desc, long_desc });
     });
     
-    function createSystemPayload(language,examplePrompts,prompt) {
+    function createSystemPayload(language,examplePrompts,prompt, gender) {
         return [
             {
                 role: "system",
-                content: `You are a useful assistant. You generate a creative character description and setting for the prompt. Here is some example: ${examplePrompts} YOU MUST respond in ${language}. Start by providing a name or nickname for the character.`
+                content: `You are a useful assistant. 
+                You generate a creative japanese anime character description. 
+                Here is some example: ${examplePrompts} \nYOU MUST respond in ${language}. 
+                name : A real japanese name and last name with no furigana. It should match the character gender and description.
+                short_desc :  2 lines to describe the character personnality.
+                long_desc : use the examples and be creative. It is for entertainment purposes.
+                `
             },
             {
                 role: "user",
-                content: `Here is the prompt : ${prompt} \n\n the long_desc must be in markdown and match the example I provided`
+                content: `Gender is ${gender}. \n Here is the information : ${prompt} \n\n`
             }
         ];
     }
@@ -2151,7 +2158,24 @@ async function routes(fastify, options) {
         return false;
         }
     }
-          
+    fastify.post('/api/upload-image', async function (request, reply) {
+        const db = await fastify.mongo.client.db(process.env.MONGODB_NAME);
+        const parts = request.parts();
+        let imageUrl = null;
+        
+        for await (const part of parts) {
+            if (part.file) {
+                imageUrl = await handleFileUpload(part, db);
+            }
+        }
+    
+        if (!imageUrl) {
+            return reply.status(400).send({ error: 'File upload failed' });
+        }
+    
+        reply.send({ imageUrl });
+    });
+    
         
 }
 

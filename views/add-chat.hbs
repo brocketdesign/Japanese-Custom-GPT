@@ -181,6 +181,14 @@
     </style>
 
 <div class="container my-4 px-0">
+    <!-- ステップの進行状況を表示 -->
+    <div class="progress mb-4">
+        <div class="progress-bar" role="progressbar" style="width: 34%;" id="progressBar">キャラクターの外見 1/3</div>
+    </div>
+
+    <!-- 1. キャラクター画像 -->
+    <div id="step1" class="step">
+        <h4>キャラクター画像をアップロード</h4>
         <div id="imageSection" class="text-center mb-4">
             <div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative">
                 <img id="chatImage" src="/img/logo.webp" alt="chat Thumbnail" class="rounded-circle" style="cursor: pointer;">
@@ -188,20 +196,23 @@
             </div>
         </div>
 
-    <form id="chatForm" class="mb-5 pb-5 mx-0">
+        <input type="file" id="chatThumbnail" name="thumbnail" accept="image/*" hidden>
+        <input type="text" class="form-control" id="chatImageUrl" name="chatImageUrl" hidden>
 
-        <div class="mb-3 mx-3" id="thumbnailInputContainer" style="display: none;">
-            <label for="chatThumbnail" class="form-label">チャットのサムネイルをアップロード</label>
-            <input type="file" id="chatThumbnail" name="thumbnail" accept="image/*" style="display: none;">
+        <div class="mb-3 mx-3">
+            <div class="d-flex justify-content-between">
+                <label for="imageDescription" class="form-label">画像の説明</label>
+                <button type="button" id="ai-assist-image" class="btn btn-sm custom-gradient-bg shadow-0"><i class="fa fa-spinner fa-spin fa-fw fa-hidden me-2" style="display: none;"></i><i class="fa fa-magic me-2"></i>AI生成</button>
+            </div>
+            <textarea row="3" maxlength="400" class="form-control" id="imageDescription" name="imageDescription" placeholder="imageDescription"></textarea>
         </div>
-        <div class="mb-3 mx-3 d-none">
-            <label for="chatImageUrl" class="form-label">chatImage</label>
-            <input type="text" class="form-control" id="chatImageUrl" name="chatImageUrl" placeholder="URLを入力してください" value="" hidden>
-        </div>
-        <div class="mb-3 mx-3" style="display:none;">
-            <label for="imageDescription" class="form-label">画像の説明</label>
-            <textarea row="3" maxlength="400" class="form-control" id="imageDescription" name="imageDescription" placeholder="imageDescription" value=""></textarea>
-        </div>
+
+        <button type="button" id="nextStep1" class="btn btn-primary w-100 nextStep">次へ</button>
+    </div>
+
+    <!-- 2. キャラクターの性格 -->
+    <div id="step2" class="step d-none">
+        <h4>キャラクターの性格を設定</h4>
 
         <div class="mb-3 mx-3 row justify-content-between">
             <div class="col-auto ps-0">
@@ -227,66 +238,100 @@
         </div>
 
         <div id="chatPurpose-container" class="mb-3 mx-3">
-            <div class="d-flex justify-content-start align-items-end mb-1">
-                <label for="chatPurpose" class="d-none form-label">キャラクターの詳細</label>
-                <button type="button" id="resetForm" class="btn btn-sm btn-light border-0 shadow-0"><i class="fas fa-eraser"></i></button>
-                <button type="button" id="ai-assist" class="btn btn-sm custom-gradient-bg shadow-0">
-                    <i class="fa fa-spinner fa-spin fa-fw fa-hidden me-2" style="display: none;"></i>
-                    <i class="fa fa-magic me-2"></i>
-                    AI生成
-                </button>
+
+            <div class="d-flex justify-content-between">
+                <label for="chatPurpose" class="form-label">キャラクターの詳細</label>
+                <button type="button" id="ai-assist" class="btn btn-sm custom-gradient-bg shadow-0"><i class="fa fa-spinner fa-spin fa-fw fa-hidden me-2" style="display: none;"></i><i class="fa fa-magic me-2"></i>AI生成</button>
             </div>
-            <textarea class="form-control" id="chatPurpose" name="content" rows="3" 
-            placeholder="キャラクターの詳細：中村美咲（27歳）は明るく社交的なOLで、責任感が強く、チームをサポートする姿勢が評価されている。趣味は旅行とカフェ巡りで、休日には友達と過ごすことが多い。話し方は礼儀正しく丁寧でありながら柔らかく、安心感を与える。"></textarea>
+            <textarea class="form-control mb-2" id="chatPurpose" name="content" rows="3" placeholder="キャラクターの詳細を記入してください"></textarea>
+
+            <input type="text" class="form-control mb-2" id="chatName" name="chatName" placeholder="名前" contenteditable="false" disabled="true" required style="display:none;">
+            <textarea class="form-control mb-2" id="chatDescription" style="display:none;" name="chatDescription" rows="3" placeholder="簡単な説明" disabled="true" required></textarea>
+            <textarea class="d-none form-control" id="chatRule" name="content" rows="5" placeholder="話し方" disabled="true" hidden></textarea>
+
+            <div id="markdownContainer" class="border-0 py-2 px-3 text-start" style="background-color: #e9ecef; display:none;" contenteditable="false" style="display: none;"></div>
+
         </div>
 
-        <div class="mb-3 mx-3">
-            <div class="d-flex justify-content-between align-items-end">
-                <label for="chatName" class="d-none form-label">名前</label>
-            </div>
-            <input type="text" class="form-control" id="chatName" name="name" placeholder="名前" contenteditable="false" required style="display:none;">
-        </div>
+        <button type="button" id="prevStep2" class="btn btn-secondary w-100 mb-2 prevStep">戻る</button>
+        <button type="button" id="nextStep2" class="btn btn-primary w-100 nextStep">次へ</button>
+    </div>
 
-        <div class="mb-3 mx-3">
-            <label for="chatDescription" class="d-none form-label">簡単な説明</label>
-            <textarea class="form-control" id="chatDescription"  style="display:none;" name="content" rows="3" placeholder="簡単な説明" ifplaceholder="チャットボットの詳細な説明をここに記入してください。どのような機能を持たせたいのか、どのようなユーザーに向けたものなのか、具体的なシナリオや対話の流れなど、できるだけ詳しく記載してください。ユーザーがどのようにチャットボットとやり取りするかの例も含めてください。" required></textarea>
-        </div>
-
-        <div class="mb-3 mx-3">
-            <div class="d-flex-none d-none justify-content-between align-items-end">
-                <label for="chatRule" class="d-none form-label" >話し方</label>
-            </div>
-            <textarea class="d-none form-control" id="chatRule" name="content" rows="5" placeholder="話し方" ifplaceholder="チャットボットの動作についての指示をここに記入してください。ユーザーに対する返答のトーン、応答のスタイル、特定の状況に対する反応、使用する言葉遣いなど、チャットボットがどのように振る舞うべきかをできるだけ詳しく記載してください。"></textarea>
-            <div id="markdownContainer" class="border-0 p-0 text-start" contenteditable="false" style="display: none;"></div>
-        </div>
-
-        <div id="dynamic-fields"></div>
-        <button type="button" id="addMoreGallery" class="btn btn-light is-premium d-none"><i class="fas fa-plus-circle"></i></button>
+    <!-- 3. 画像ギャラリー -->
+    <div id="step3" class="step d-none">
+        <h4>画像ギャラリーを作成</h4>
+        <button type="button" id="addMoreGallery" class="btn btn-light mx-3"><i class="fas fa-plus-circle"></i></button>
         <div id="galleries">
-            <div class="imageGalleryWrapper mb-3 mx-3 is-premium d-none">
-                <div class="d-flex justify-content-between align-items-end">
-                    <label for="imageGallery-0-name" class="d-none form-label">アルバム名</label>
-                </div>
-                <div class="d-flex">
-                    <input type="text" class="form-control" id="imageGallery-0-name" name="imageGallery_0_name" placeholder="アルバム名" contenteditable="false">
-                </div>
-                <textarea row="3" class="form-control" id="imageGallery-0-description" name="imageGallery_0_description" placeholder="アルバム説明" contenteditable="false"></textarea>
+            <div class="imageGalleryWrapper mb-3 mx-3">
+                <label for="imageGallery-0-name" class="form-label">アルバム名</label>
+                <input type="text" class="form-control" id="imageGallery-0-name" name="imageGallery_0_name" placeholder="アルバム名">
+                <textarea row="3" class="form-control" id="imageGallery-0-description" name="imageGallery_0_description" placeholder="アルバム説明"></textarea>
                 <div id="imageGallery-0"></div>
             </div>
         </div>
-        <div class="sticky-bottom px-3 pb-3">
-            <button type="submit" id="sendForm" class="btn custom-gradient-bg btn-large w-100" style="border-radius:50px;display:none;">
-                    <i class="fa fa-spinner fa-spin fa-fw fa-hidden d-none me-2"></i>
-                    <span>チャット</span>
-            </button>
-        </div>
-    </form>
+        <button type="button" id="prevStep3" class="btn btn-secondary w-100 mb-2 prevStep">戻る</button>
+        <button type="submit" id="submitForm" class="btn custom-gradient-bg btn-large w-100">完了</button>
+    </div>
 </div>
+
  {{> dashboard-footer}}
 <link type="text/css" rel="stylesheet" href="/css/image-uploader.css">
 <script type="text/javascript" src="/js/image-uploader.js"></script>
 <script type="text/javascript" src="/js/stability.js"></script>
+
 <script>
+    $(document).ready(function() {
+        let currentStep = 1;
+        
+        function showStep(step) {
+            let title
+            switch(step) {
+                case 1:
+                    title = 'キャラクターの外見';
+                    break;
+                case 2:
+                    title = 'キャラクターの性格';
+                    break;
+                case 3:
+                    title = 'ギャラリー';
+                    break;
+            }
+
+            $('.step').addClass('d-none');
+            $('#step' + step).removeClass('d-none');
+            $('#progressBar')
+            .css('width', (step * 34) + '%')
+            .text(title +' '+ step + '/3');
+        }
+
+        function validateStep(step) {
+            if (step === 1) {
+                return ($('#chatThumbnail').val() || $('#chatImageUrl').val()) && $('#imageDescription').val();
+            } else if (step === 2) {
+                return $('#chatPurpose').val();
+            }
+            return true;
+        }
+
+        $('.nextStep').click(function() {
+            if (validateStep(currentStep)) {
+                currentStep++;
+                showStep(currentStep);
+            } else {
+                showNotification('すべてのフィールドを入力してください', 'error');
+            }
+        });
+
+        $('.prevStep').click(function() {
+            currentStep--;
+            showStep(currentStep);
+        });
+
+        showStep(currentStep);
+    });
+</script>
+<script>
+    
     // Store modified galleries
     const modifiedGalleries = new Set();
     $(document).ready(function() {
@@ -370,23 +415,6 @@
             });
         });
 
-        function fetchUser(callback) {
-            $.ajax({
-                url: API_URL+'/api/user',
-                method: 'GET',
-                success: function(response) {
-                    if (callback && typeof callback === 'function') {
-                        callback(null, response.user);
-                    }
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    console.error('Error fetching user:', textStatus, errorThrown);
-                    if (callback && typeof callback === 'function') {
-                        callback(new Error(textStatus + ': ' + errorThrown), null);
-                    }
-                }
-            });
-        }
         $('#visibility').val('public')
         $('#visibility').change(function() {
             
@@ -429,12 +457,28 @@
         });
 
         $('#chatThumbnail').change(function(event) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                $('#chatImage').attr('src', e.target.result).show().addClass('on');
-            }
-            reader.readAsDataURL(event.target.files[0]);
+            const file = event.target.files[0];
+            const formData = new FormData();
+            formData.append('image', file);
+
+            $.ajax({
+                url: '/api/upload-image',  // Your image upload endpoint
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    // Assuming the response contains the image URL
+                    const imageUrl = response.imageUrl;
+                    $('#chatImage').attr('src', imageUrl).show().addClass('on');
+                    $('#chatImageUrl').val(imageUrl);  // Store URL in hidden input
+                },
+                error: function(xhr) {
+                    console.log('Image upload failed');
+                }
+            });
         });
+
         
         function addNewGallery(init = false) {
             let galleryIndex = $('.imageGalleryWrapper').length;
@@ -482,26 +526,10 @@
                 type: 'GET',
                 dataType: 'json',
                 success: function(chatData) {
+                    console.log(chatData)
                     const isLocalMode = chatData.mode === 'local';
-            
-                    const productIdField = isLocalMode ? 'stripeProductIdLocal' : 'stripeProductIdLive';
-                    const priceIdField = isLocalMode ? 'stripePriceIdLocal' : 'stripePriceIdLive';
 
                     $('#dynamic-fields').empty();
-
-                    $('<input>').attr({
-                        type: 'hidden',
-                        id: productIdField,
-                        name: productIdField,
-                        value: chatData[productIdField]
-                    }).appendTo('#dynamic-fields');
-
-                    $('<input>').attr({
-                        type: 'hidden',
-                        id: priceIdField,
-                        name: priceIdField,
-                        value: chatData[priceIdField]
-                    }).appendTo('#dynamic-fields');
 
                     $('<input>').attr({
                         type: 'hidden',
@@ -526,8 +554,12 @@
                     }
                     if(chatData.name){
                         $('#chatName').val(chatData.name);
-                        $('#chatName').parent().show()
+                        $('#chatName').show()
                         $('#sendForm span').html(`${chatData.name}とチャットする`)
+                    }
+                    if(chatData.description){
+                        $('#chatDescription').val(chatData.description);
+                        $('#chatDescription').show()
                     }
                     if(chatData.visibility){
                         
@@ -576,7 +608,7 @@
                         $('#imageDescription').val(chatData.imageDescription);
                         $('#imageDescription').parent().show()
                     }else{
-                        checkImageDescription(null,function(response){
+                        checkImageDescription(chatId,function(response){
                             if(!response.error){
                                 $('#imageDescription').val(response).show()
                                 $('#imageDescription').parent().show()
@@ -651,7 +683,7 @@
             return files;
         }
         // Form Submission
-        $('#chatForm').on('submit', function(e) {
+        $('#submitForm').on('click', function(e) {
             e.preventDefault();
             $('#sendForm .fa-spinner').toggleClass('d-none');
 
@@ -679,13 +711,6 @@
             if (chatId) {
                 formData.append('chatId', chatId);
             }
-            
-            const isLocalMode = $('#mode').val() === 'local';
-            const productIdField = isLocalMode ? 'stripeProductIdLocal' : 'stripeProductIdLive';
-            const priceIdField = isLocalMode ? 'stripePriceIdLocal' : 'stripePriceIdLive';
-
-            formData.append(productIdField, $(`#${productIdField}`).val());
-            formData.append(priceIdField, $(`#${priceIdField}`).val());
 
             // Loop through all galleries and append their data only if not empty or not just whitespace
             $('#galleries .imageGalleryWrapper').each(function(index) {
@@ -693,11 +718,9 @@
                 const name = $(`#imageGallery-${galleryIndex}-name`).val().trim();
                 const description = $(`#imageGallery-${galleryIndex}-description`).val().trim();
                 if (name) formData.append(`imageGallery_${galleryIndex}_name`, name);
-                if (price) formData.append(`imageGallery_${galleryIndex}_price`, price);
                 if (description) formData.append(`imageGallery_${galleryIndex}_description`, description);
 
                 if (modifiedGalleries.has(galleryIndex)) {
-            console.log({galleryIndex})
 
                     const galleryFiles = getFilesFromGallery(`#imageGallery-${galleryIndex}`);
                     if (galleryFiles.length) {
@@ -731,43 +754,46 @@
         });
 
 
+        $('#ai-assist-image').on('click',function(){
 
+            $('#ai-assist-image .fa-spinner').show();
+            $('#ai-assist-image .fa-magic').hide();
 
-        $('#ai-assist').on('click', function() {
-
-            checkImageDescription(null,function(response){
-                if(!response){
-                    generateImageDescriptionBackend(function(response){
+            checkImageDescription(chatId,function(response){
+                if(!response || response.error){
+                    generateImageDescriptionBackend(null,chatId,function(response){
                         const imageDescription = response.description
                         console.log({imageDescription})
                         $('#imageDescription').val(imageDescription).show()
                         $('#imageDescription').parent().show()
+                        $('#ai-assist-image .fa-spinner').hide();
+                        $('#ai-assist .fa-magic').show();
                     })
                 }else{
                     $('#imageDescription').val(response).show()
                     $('#imageDescription').parent().show()
+                    $('#ai-assist-image .fa-spinner').hide();
+                    $('#ai-assist-image .fa-magic').show();
                 }
             }) 
-            
+        })
+
+        $('#ai-assist').on('click', function() {
+
             $('#ai-assist .fa-spinner').show();
             $('#ai-assist .fa-magic').hide();
 
             if ($('#chatPurpose').val().trim() == '') {
-                Swal.fire({
-                    title: '警告',
-                    text: 'キャラクターの説明は必須項目です。入力してください。',
-                    icon: 'warning',
-                    confirmButtonText: 'OK'
-                });
+                showNotification('キャラクターの説明は必須項目です。入力してください。', 'error');
                 $('#ai-assist .fa-spinner').hide();
                 $('#ai-assist .fa-magic').show();
                 return;
             }
 
-            $('#chatName').prop('disabled', true);
             $('#chatPurpose').prop('disabled', false);
+            $('#chatName').prop('disabled', true);
             $('#chatDescription').prop('disabled', true);
-            $('#chatDescription').prop('disabled', true);
+
             $('#chatName').val('')
             $('#chatDescription').val('')
 
@@ -785,7 +811,9 @@
 
             let prompt = $('#chatPurpose').val().trim();
             let language =$('#language').val()
-            prompt = prompt + 'YOU MUST respond in '+language
+            let gender = $('#gender').val()
+
+            prompt = prompt + '\n YOU MUST respond in '+ language
               
             if(prompt.length == 0){
                 return
@@ -795,7 +823,7 @@
                 url: apiUrl,
                 method: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({ prompt}),
+                data: JSON.stringify({ prompt, gender}),
                 success: function(response) {
                     console.log(response)
                     const  { name, short_desc, long_desc } = response

@@ -1,6 +1,8 @@
 const  { deleteObjectFromUrl } = require('./tool')
 const aws = require('aws-sdk');
 const crypto = require('crypto');
+const fastify = require('fastify');
+const { ObjectId } = require('mongodb');
 
 async function cleanupNonRegisteredUsers(db) {
     try {
@@ -315,25 +317,30 @@ async function cleanUpDatabase(db) {
     try {
       const galleryCollection = db.collection('gallery');
       const chatsCollection = db.collection('chats');
-  
-      console.log('Fetching chats with images...');
-      const chatsWithImages = await galleryCollection.find({ images: { $exists: true, $not: { $size: 0 } } }).toArray();
-  
-      console.log(`Found ${chatsWithImages.length} chats with images.`);
+    
+      console.log('Fetching unique chatIds with images...');
+      const uniqueChatsWithImages = await galleryCollection.aggregate([
+        { $match: { images: { $exists: true, $not: { $size: 0 } } } },
+        { $group: { _id: "$chatId" } }
+      ]).toArray();
+    
+      console.log(`Found ${uniqueChatsWithImages.length} unique chatIds with images.`);
       
-      for (const chat of chatsWithImages) {
-        const imageCount = chat.images.length;
-  
-        console.log(`Updating imageCount for chatId: ${chat.chatId}, imageCount: ${imageCount}`);
-  
+      for (const gallery of uniqueChatsWithImages) {
+        const chatId = gallery._id;
+        const galleryData = await galleryCollection.findOne({ chatId });
+        const imageCount = galleryData.images.length;
+    
+        console.log(`Updating imageCount for chatId: ${chatId}, imageCount: ${imageCount}`);
+    
         await chatsCollection.updateOne(
-          { _id: chat.chatId },
+          { _id: chatId },
           { $set: { imageCount: imageCount } }
         );
-  
-        console.log(`Updated imageCount for chatId: ${chat.chatId}`);
+    
+        console.log(`Updated imageCount for chatId: ${chatId}`);
       }
-  
+    
       console.log('Image count update process completed.');
       return { success: true };
     } catch (error) {
@@ -341,6 +348,7 @@ async function cleanUpDatabase(db) {
       return { error: 'An error occurred while updating image count' };
     }
   }
+  
   
   
 

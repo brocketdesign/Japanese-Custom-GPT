@@ -151,7 +151,7 @@ window.generateImageStableDiffusion = function(API_URL, userId, chatId, userChat
         throw new Error(`Network response was not ok (${response.status} ${response.statusText})`);
       }
 
-      return response.json(); // Use response.json() to parse the JSON response
+      return response.json(); 
     })
     .then(data => {
       generateImage(data,prompt)

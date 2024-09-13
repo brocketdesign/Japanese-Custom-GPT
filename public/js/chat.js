@@ -43,7 +43,7 @@ $(document).ready(async function() {
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageError') {
             const error = event.data.error
-            let message = `[Hidden] There way an error. I could not receive the image. Error : ${error}. Explain the error to me.`
+            let message = `[Hidden] There way an error. I could not receive the image. Error : ${error}.`
             addMessageToChat(chatId, userChatId, 'user', message,function(){
                 generateCompletion()
             });
@@ -1817,10 +1817,12 @@ $(document).ready(async function() {
             messageElement = $(`
                 <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass}">
                     <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
-                    <div class="p-3 ms-3 text-start assistant-image-box">
-                        ${message.outerHTML}
+                    <div class="position-relative">
+                        <div class="p-3 ms-3 text-start assistant-image-box">
+                            ${message.outerHTML}
+                        </div>
+                        ${getImageTools(imageId,false,description)}
                     </div>
-                    ${getImageTools(imageId,false,description)}
                 </div>      
             `).hide();
             $('#chatContainer').append(messageElement);

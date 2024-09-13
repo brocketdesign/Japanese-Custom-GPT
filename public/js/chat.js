@@ -1282,7 +1282,7 @@ $(document).ready(async function() {
                             <div class="d-flex flex-row justify-content-start mb-4 message-container ${isBlur ? 'unlock-nsfw':''}">
                                 <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
                                 <div class="position-relative">
-                                    <div class="text-start assistant-image-box">
+                                    <div class="ps-3 text-start assistant-image-box">
                                         <img id="image-${imageId}" data-id="${imageId}" src="${response.imageUrl}" alt="${response.imagePrompt}">
                                     </div>
                                     ${!isBlur ? getImageTools(imageId,isLiked,response.imagePrompt) :''}
@@ -1826,7 +1826,7 @@ $(document).ready(async function() {
                 <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass}">
                     <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
                     <div class="position-relative">
-                        <div class="p-3 text-start assistant-image-box">
+                        <div class="ps-3 text-start assistant-image-box">
                             ${message.outerHTML}
                         </div>
                         ${getImageTools(imageId,false,description)}

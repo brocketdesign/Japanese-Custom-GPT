@@ -181,7 +181,7 @@
 <div class="container my-4 px-0">
     <!-- ステップの進行状況を表示 -->
     <div class="progress mb-4 mx-3">
-        <div class="progress-bar" role="progressbar" style="width: 50%;" id="progressBar">ステップ 1/3</div>
+        <div class="progress-bar" role="progressbar" style="width: 34%;" id="progressBar">ステップ 1/3</div>
     </div>
 
     <!-- 1. キャラクター画像 -->
@@ -295,10 +295,30 @@
             </button>
 
             <button type="button" id="prevStep2" class="btn btn-secondary w-100 mb-2 prevStep">戻る</button>
-            <button type="submit" id="submitForm" class="btn custom-gradient-bg btn-large w-100">完了</button>     
+            <button type="button" id="nextStep2" class="btn btn-primary w-100 nextStep">次へ</button>
 
         </div>
     
+    </div>
+
+    <!-- 3. 画像ギャラリー -->
+    <div id="step3" class="step d-none">
+        <div class="mb-3 mx-3">
+            <h4>画像ギャラリーを作成</h4>
+            <button type="button" id="addMoreGallery" class="btn btn-light mx-3"><i class="fas fa-plus-circle"></i></button>
+            <div id="galleries">
+                <div class="imageGalleryWrapper mb-3 mx-3">
+                    <label for="imageGallery-0-name" class="form-label">アルバム名</label>
+                    <input type="text" class="form-control" id="imageGallery-0-name" name="imageGallery_0_name" placeholder="アルバム名">
+                    <textarea row="3" class="form-control" id="imageGallery-0-description" name="imageGallery_0_description" placeholder="アルバム説明"></textarea>
+                    <div id="imageGallery-0"></div>
+                    <button type="button" class="btn btn-danger resetGallery mt-2">ギャラリーをリセット</button>
+                </div>
+            </div>
+            <button type="button" id="prevStep3" class="btn btn-secondary w-100 mb-2 prevStep">戻る</button>
+            <button type="submit" id="submitForm" class="btn custom-gradient-bg btn-large w-100">完了</button>            
+        </div>
+
     </div>
 </div>
 
@@ -315,8 +335,8 @@
             $('.step').addClass('d-none');
             $('#step' + step).removeClass('d-none');
             $('#progressBar')
-            .css('width', (step * 50) + '%')
-            .text('ステップ '+ step + '/2');
+            .css('width', (step * 34) + '%')
+            .text('ステップ '+ step + '/3');
         }
 
         function validateStep(step) {

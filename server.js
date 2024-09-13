@@ -22,6 +22,7 @@ const {
   initializeAllUsersPostCount,
   updateImageCount
  } = require('./models/cleanupNonRegisteredUsers');
+ const  { checkUserAdmin } = require('./models/tool')
 
 mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then((client) => {
@@ -445,7 +446,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
 
       const isSubscribed = user.subscriptionStatus === 'active';
       if(!isSubscribed){
-        return reply.redirect('/my-plan');
+        //return reply.redirect('/my-plan');
       }
 
       let chatId = request.params.chatId 
@@ -468,7 +469,13 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
           await chatsCollection.insertOne({userId:new fastify.mongo.ObjectId(userId), _id : chatId, isTemporary:true})
         }
         const prompts = await fs.readFileSync('./models/girl_char.md', 'utf8');
-        return reply.renderWithGtm('add-chat.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd', chatId, isTemporaryChat, user, prompts});
+
+        const isAdmin = await checkUserAdmin(fastify, request.user._id);
+        let template = 'add-chat.hbs'
+        if (isAdmin) {
+          template = 'add-chat-admin.hbs'
+        }
+        return reply.renderWithGtm(template, { title: 'AIフレンズ  | Powered by Hato,Ltd', chatId, isTemporaryChat, user, prompts});
       } catch (error) {
         console.log(error)
         return reply.status(500).send({ error: 'Failed to retrieve chatId' });

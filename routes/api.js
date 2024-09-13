@@ -1407,7 +1407,96 @@ async function routes(fastify, options) {
             }
         ];
     }
+    // Define the schema for request validation
+    const EnhancePromptSchema = z.object({
+        prompt: z.string().min(10, 'プロンプトは最低でも10文字必要です'),
+        chatId: z.string().regex(/^[0-9a-fA-F]{24}$/, '無効なchatIdです') // Validates MongoDB ObjectId
+    });
+
+    fastify.post('/api/enhance-prompt', async (request, reply) => {
+        try {
+            // Validate and parse the request body
+            const { prompt, chatId } = EnhancePromptSchema.parse(request.body);
+
+            // Create the system payload for OpenAI
+            const systemPayload = createSystemPayload(prompt);
     
+            // Initialize OpenAI (ensure you have set your API key in environment variables)
+            const openai = new OpenAI({
+                apiKey: process.env.OPENAI_API_KEY
+            });
+    
+            // Make the request to OpenAI
+            const completionResponse = await openai.chat.completions.create({
+                model: "gpt-4o-mini",
+                messages: systemPayload,
+                max_tokens: 300, // Adjust as needed
+                temperature: 0.7, // Adjust creativity
+                n: 1, // Number of responses
+                stop: null
+            });
+    
+            // Extract the enhanced prompt from the response
+            const enhancedPrompt = completionResponse.choices[0].message.content.trim();
+    
+            // Access MongoDB and update the chat document
+            const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+            const collectionChats = db.collection('chats'); // Replace 'chats' with your actual collection name
+    
+            // Convert chatId string to ObjectId
+            const chatObjectId = new fastify.mongo.ObjectId(chatId);
+    
+            // Update the imageDescription field in the chat document
+            const updateResult = await collectionChats.updateOne(
+                { _id: chatObjectId },
+                { $set: { imageDescription: enhancedPrompt } }
+            );
+    
+            // Check if the chat document was found and updated
+            if (updateResult.matchedCount === 0) {
+                return reply.status(404).send({ error: '指定されたチャットが見つかりませんでした。' });
+            }
+    
+            if (updateResult.modifiedCount === 0) {
+                fastify.log.warn(`Chat with ID ${chatId} was found but imageDescription was not updated.`);
+            }
+    
+            // Send the enhanced prompt back to the client
+            reply.send({ enhancedPrompt });
+        } catch (error) {
+            // Handle validation errors
+            if (error instanceof z.ZodError) {
+                return reply.status(400).send({ error: error.errors });
+            }
+    
+            // Log and handle other errors
+            fastify.log.error(error);
+            reply.status(500).send({ error: 'プロンプトの生成に失敗しました。' });
+        }
+    });
+
+    // Helper function to create the system payload
+    function createSystemPayload(prompt) {
+        return [
+            {
+                role: "system",
+                content: `
+                    You are a stable diffusion image prompt generator.
+                    You take a conversation and respond with an image prompt of less than 800 characters. 
+                    You MUST describe the latest scene of the conversation.
+                    Respond like that with only one of two keywords in english: 
+                    day or night, inside or outside, setting name, \n
+                    young girl, yellow eyes, long hair,pink hair, white hair, white skin, voluptuous body, cute face, smiling,
+                    Customize the example to match the current character description. DO NOT MAKE SENTENCES, I WANT A LIST OF KEY WORDS THAT DESCRIBE THE IMAGE.\n
+                    Repond EXCLUSIVELY IN ENGLISH !
+                `
+            },
+            {
+                role: "user",
+                content: `Here is the character description: ${prompt}`
+            }
+        ];
+    }
     // POST Route to create a session with a custom prompt
     fastify.post('/api/openai-custom-chat', async (request, reply) => {
         const { chatId, userChatId, role, customPrompt } = request.body;

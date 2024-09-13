@@ -188,24 +188,66 @@
 
     <!-- 1. キャラクター画像 -->
     <div id="step1" class="step">
-        <h4>キャラクター画像をアップロード</h4>
-        <div id="imageSection" class="text-center mb-4">
-            <div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative">
-                <img id="chatImage" src="/img/logo.webp" alt="chat Thumbnail" class="rounded-circle" style="cursor: pointer;">
-                <i class="fas fa-edit position-absolute" style="bottom: 5px; font-size: 1em; color: white; background-color: rgba(0, 0, 0, 0.5); border-radius: 50%; padding: 5px;cursor: pointer;"></i>
-            </div>
-        </div>
+    <h4 class="mb-4 text-center">キャラクター作成フォーム</h4>
 
-        <input type="file" id="chatThumbnail" name="thumbnail" accept="image/*" hidden>
-        <input type="text" class="form-control" id="chatImageUrl" name="chatImageUrl" hidden>
-
-        <div class="mb-3 mx-3">
-            <div class="d-flex justify-content-between">
-                <label for="imageDescription" class="form-label">画像の説明</label>
-                <button type="button" id="ai-assist-image" class="btn btn-sm custom-gradient-bg shadow-0"><i class="fa fa-spinner fa-spin fa-fw fa-hidden me-2" style="display: none;"></i><i class="fa fa-magic me-2"></i>AI生成</button>
+            <!-- Character Creation Form -->
+            <div id="characterCreationForm" class="container my-5">
+                
+                <div class="row">
+                    <!-- Left Column: Prompts and Button -->
+                    <div class="col-lg-6 mb-4">
+                        <!-- 1. Character Prompt Input -->
+                        <div class="mb-4">
+                            <label for="characterPrompt" class="form-label">キャラクタープロンプト</label>
+                            <textarea
+                                class="form-control"
+                                id="characterPrompt"
+                                name="characterPrompt"
+                                rows="4"
+                                maxlength="500"
+                                placeholder="キャラクターの詳細な説明を入力してください..."
+                            ></textarea>
+                        </div>
+                        
+                        <!-- 2. Enhanced Prompt Display -->
+                        <div class="mb-4">
+                            <label for="enhancedPrompt" class="form-label">AI強化プロンプト</label>
+                            <textarea
+                                class="form-control"
+                                id="enhancedPrompt"
+                                name="enhancedPrompt"
+                                rows="3"
+                                readonly
+                                placeholder="AIによって強化されたプロンプトがここに表示されます..."
+                            ></textarea>
+                        </div>
+                        
+                        <!-- 4. Single Action Button -->
+                        <div class="d-grid">
+                            <button type="button" id="generateButton" class="btn btn-primary btn-lg">
+                                <i class="fas fa-magic me-2"></i>AIで生成
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column: Generated Image -->
+                    <div class="col-lg-6 mb-4 d-flex flex-column align-items-center">
+                        <!-- 3. Generated Image Display -->
+                        <div class="mb-4 w-100">
+                            <label class="form-label d-block mb-2 text-center">生成されたキャラクター画像</label>
+                            <img
+                                id="generatedImage"
+                                src="/img/default-character.png"
+                                alt="Generated Character Image"
+                                class="img-fluid rounded shadow"
+                                style="max-height: 300px; width: 100%; object-fit: contain;"
+                            >
+                        </div>
+                    </div>
+                </div>
             </div>
-            <textarea row="3" maxlength="400" class="form-control" id="imageDescription" name="imageDescription" placeholder="imageDescription"></textarea>
-        </div>
+
+
 
         <button type="button" id="nextStep1" class="btn btn-primary w-100 nextStep">次へ</button>
     </div>
@@ -751,6 +793,52 @@
                     );
                 }
             });
+        });
+        
+        $('#generateButton').on('click', async function() {
+            // Retrieve the user-provided prompt from the textarea
+            const prompt = $('#characterPrompt').val().trim();
+
+            // Check if the prompt is empty
+            if (!prompt) {
+                showNotification('すべてのフィールドを入力してください', 'error');
+                return;
+            }
+
+            // Disable the generate button to prevent multiple clicks and show a loading state
+            const $button = $(this);
+            $button.prop('disabled', true);
+            $button.html('<i class="fas fa-spinner fa-spin me-2"></i>生成中...');
+
+            try {
+                // Send a POST request to the /api/enhance-prompt endpoint
+                const response = await $.ajax({
+                    url: '/api/enhance-prompt',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        prompt,
+                        chatId
+                    })
+                });
+
+                // Check if the response contains the enhanced prompt
+                if (response && response.enhancedPrompt) {
+                    // Update the enhancedPrompt textarea with the received enhanced prompt
+                    $('#enhancedPrompt').val(response.enhancedPrompt);
+                } else {
+                    // If the response is not as expected, show an error notification
+                    showNotification('プロンプトの生成に失敗しました。再試行してください。', 'error');
+                }
+            } catch (error) {
+                console.error('Error enhancing prompt:', error);
+                // Show an error notification to inform the user
+                showNotification('プロンプトの生成中にエラーが発生しました。', 'error');
+            } finally {
+                // Re-enable the generate button and reset its content
+                $button.prop('disabled', false);
+                $button.html('<i class="fas fa-magic me-2"></i>AIで生成');
+            }
         });
 
 

@@ -1247,12 +1247,12 @@ $(document).ready(async function() {
     function getImageTools(imageId,isLiked = false, description = false){
         description = sanitizeString(description);
         return `
-            <div class="bg-white py-2 d-flex justify-content-between">
-                <span class="badge bg-light text-secondary image-fav ${isLiked ? 'liked':''}" data-description="${description}" data-id="${imageId}" 
+            <div class="bg-white py-2 rounded mt-1 d-flex justify-content-between">
+                <span class="badge bg-white text-secondary image-fav ${isLiked ? 'liked':''}" data-description="${description}" data-id="${imageId}" 
                 style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
                 <i class="bi bi-heart-fill"></i>
                 </span>
-                <span class="badge bg-light text-secondary comment-badge" data-id="${imageId}" 
+                <span class="badge bg-white text-secondary comment-badge" data-id="${imageId}" 
                 style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
                 <i class="bi bi-send me-2"></i>シェアする
                 </span>
@@ -1274,7 +1274,7 @@ $(document).ready(async function() {
                             <div class="d-flex flex-row justify-content-start mb-4 message-container ${isBlur ? 'unlock-nsfw':''}">
                                 <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
                                 <div class="position-relative">
-                                    <div class="ms-3 text-start assistant-image-box">
+                                    <div class="text-start assistant-image-box">
                                         <img id="image-${imageId}" data-id="${imageId}" src="${response.imageUrl}" alt="${response.imagePrompt}">
                                     </div>
                                     ${!isBlur ? getImageTools(imageId,isLiked,response.imagePrompt) :''}
@@ -1818,7 +1818,7 @@ $(document).ready(async function() {
                 <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass}">
                     <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
                     <div class="position-relative">
-                        <div class="p-3 ms-3 text-start assistant-image-box">
+                        <div class="p-3 text-start assistant-image-box">
                             ${message.outerHTML}
                         </div>
                         ${getImageTools(imageId,false,description)}

@@ -1610,6 +1610,7 @@ async function routes(fastify, options) {
                     { role: "system", content: `
                         You are an expert at structured data extraction.\n
                         Verify if the message is about sending, proposing a picture or maybe resend a picture because of an error.\n
+                        About images.
                         If so return the image name in japanese with a price (between 10 and 50) and a description in english.\n
 
                         The description will be use in Stable Diffusion.\n

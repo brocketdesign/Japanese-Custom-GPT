@@ -435,7 +435,7 @@ fastify.post('/huggingface/txt2img', async (request, reply) => {
 // Function to retrieve the result from Novita API using task_id with polling and upload it to S3
 async function fetchNovitaResult(task_id) {
   const pollInterval = 1000; // Poll every 1 second
-  const maxAttempts = 120; // Set a maximum number of attempts to avoid infinite loops
+  const maxAttempts = 300; // Set a maximum number of attempts to avoid infinite loops
 
   let attempts = 0;
 

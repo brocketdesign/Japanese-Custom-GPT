@@ -940,34 +940,34 @@ window.loadChatImages = async function (chatId, page = 1) {
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             chatGalleryHtml += `
                 <div class="col-12 col-md-6 col-lg-4 mb-2">
-                <div class="card">
-                    <div class="d-flex align-items-center p-2">
-                        <a href="/character/${item.chatId}?imageId=${item._id}">
-                            <img src="${item?.chatThumbnailUrl}" alt="${item?.chatName}" class="rounded-circle me-2" width="40" height="40">
-                        </a>
-                        <a href="/character/${item.chatId}?imageId=${item._id}" class="text-decoration-none text-dark">
-                            <strong>${item?.chatName}</strong>
-                        </a>
-                    </div>
-                    ${isBlur ? `
-                    <div type="button" onclick=showPremiumPopup()>
-                        <img src="/img/nsfw-blurred.jpg" class="card-img-top" style="object-fit: cover;">
-                        <div class="card-body p-2">
-                            <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
+                    <div class="card">
+                        <div class="d-flex align-items-center p-2">
+                            <a href="/character/${item.chatId}?imageId=${item._id}">
+                                <img src="${item?.chatThumbnailUrl}" alt="${item?.chatName}" class="rounded-circle me-2" width="40" height="40">
+                            </a>
+                            <a href="/character/${item.chatId}?imageId=${item._id}" class="text-decoration-none text-dark">
+                                <strong>${item?.chatName}</strong>
+                            </a>
                         </div>
+                        ${isBlur ? `
+                        <div type="button" onclick=showPremiumPopup()>
+                            <img src="/img/nsfw-blurred.jpg" class="card-img-top" style="object-fit: cover;">
+                            <div class="card-body p-2">
+                                <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
+                            </div>
+                        </div>
+                        ` : `
+                        <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
+                            <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
+                        </a>
+                        <div class="card-body p-2 d-flex align-items-center justify-content-between">
+                            <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
+                            <span class="btn btn-light float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
+                                <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
+                            </span>
+                        </div>
+                        `}
                     </div>
-                    ` : `
-                    <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
-                        <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
-                    </a>
-                    <div class="card-body p-2 d-flex align-items-center justify-content-between">
-                        <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
-                        <span class="btn btn-light float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
-                            <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
-                        </span>
-                    </div>
-                    `}
-                </div>
                 </div>
             `;
         });

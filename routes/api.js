@@ -1239,7 +1239,11 @@ async function routes(fastify, options) {
     
             let userMessages = userData.messages;
             let persona = userData.persona
-
+            const filteredMessages = userMessages
+            .filter(msg => msg.role !== 'system' && !msg.content.startsWith('[Hidden]') && !msg.content.startsWith('[Starter]') && !msg.content.startsWith('[Image]') && !msg.content.startsWith('[Narrator]'))
+            .slice(-2) // Get the last two messages
+            .map(msg => msg.content)
+            .join("\n");
             // Create the system and user prompts
             const narrationPrompt = [
                 {
@@ -1252,15 +1256,7 @@ async function routes(fastify, options) {
                 {
                     role: "user",
                     content: `
-                    Here is the conversation transcript: ` +
-                    userMessages
-                    .map(msg => 
-                        msg.role !== 'system' && !msg.content.startsWith('[Hidden]') && !msg.content.startsWith('[Starter]') && !msg.content.startsWith('[Image]')
-                            ? `${msg.content.replace('[Narrator]', '')}` 
-                            : ''
-                    )
-                    .join("\n")
-                    + `What could I answer ? ${persona ? `I am ${persona.name}, ${persona.description}, ${persona.prompt ? persona.prompt:''}. Your suggestions should reflect my personnality.` : ''}
+                    Here is the conversation transcript: ` + filteredMessages + `What could I answer ? ${persona ? `I am ${persona.name}, ${persona.description}, ${persona.prompt ? persona.prompt:''}. Your suggestions should reflect my personnality.` : ''}
                     \nRespond with a JSON array containin the suggestions in plain text. Do not add extra ponctuations.`
                 }
             ];            

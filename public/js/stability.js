@@ -278,6 +278,7 @@ $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
     images.forEach((image, index) => {
         generateImage(image, prompt);
     });    
+    window.postMessage({ event: 'imageDone'}, '*');
   })
   .catch(error => {
     console.log('Error generating diffused image:', error);
@@ -328,7 +329,7 @@ window.generateImage = async function(data,prompt){
     showNotification('この画像はNSFWコンテンツです。サブスクリプションが必要です。', 'warning');
   } else {
       displayMessage('bot-image', img);
-      showNotification('画像が表示されました。', 'success');
+      //showNotification('画像が表示されました。', 'success');
   }
 
 }

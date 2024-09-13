@@ -218,6 +218,9 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         ]
       });      
     }); 
+    fastify.get('/chat', (request, reply) => {
+      reply.redirect('/chat/')
+    });
     fastify.get('/chat/:chatId', async (request, reply) => {
       let user = await fastify.getUser(request, reply);
       const chatId = request.params.chatId;

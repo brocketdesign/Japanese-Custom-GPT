@@ -6,6 +6,7 @@ const aws = require('aws-sdk');
 const { createHash } = require('crypto');
 const stringSimilarity = require('string-similarity'); 
 const { createBlurredImage } = require('../models/tool')
+const { z } = require("zod");
 
 async function routes(fastify, options) {
   // Configure AWS S3
@@ -600,7 +601,69 @@ async function fetchNovitaResult(task_id) {
     }
   });
   
-  
+  async function saveChatImageToDB(db, chatId, imageUrl, thumbnailUrl) {
+    const collectionChats = db.collection('chats'); // Replace 'chats' with your actual collection name
+
+    // Convert chatId string to ObjectId
+    let chatObjectId;
+    try {
+        chatObjectId = new ObjectId(chatId);
+    } catch (error) {
+        throw new Error('無効なchatIdです。');
+    }
+
+    // Update the 'chats' collection with chatImageUrl and thumbnail
+    const updateResult = await collectionChats.updateOne(
+        { _id: chatObjectId },
+        { 
+            $set: { 
+                chatImageUrl: imageUrl,
+                thumbnail: thumbnailUrl
+            } 
+        }
+    );
+
+    if (updateResult.matchedCount === 0) {
+        throw new Error('指定されたチャットが見つかりませんでした。');
+    }
+
+    return updateResult;
+  }
+
+  const GenerateImageSchema = z.object({
+      prompt: z.string().min(10, 'プロンプトは最低でも10文字必要です'),
+      aspectRatio: z.string().optional().default('9:16'),
+      chatId: z.string().regex(/^[0-9a-fA-F]{24}$/, '無効なchatIdです')
+  });
+
+  fastify.post('/novita/generate-image', async (request, reply) => {
+      try {
+          const { prompt, aspectRatio, chatId } = GenerateImageSchema.parse(request.body);
+          const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+          const image_request = { 
+              ...params, 
+              prompt: prompt, 
+              negative_prompt: default_prompt.sfw.negative_prompt
+          };
+
+          const taskId = await fetchNovitaMagic(image_request);
+          const imageUrls = await fetchNovitaResult(taskId);
+
+          if (!imageUrls || imageUrls.length === 0) {
+              throw new Error('Novita APIから画像が返されませんでした');
+          }
+
+          const imageUrl = imageUrls[0];
+          const thumbnailUrl = imageUrl;
+
+          await saveChatImageToDB(db, chatId, imageUrl, thumbnailUrl);
+
+          reply.send({ images: [{ id: chatId, url: imageUrl, thumbnail: thumbnailUrl, prompt }] });
+      } catch (err) {
+          console.log(err)
+          reply.status(500).send({ error: '画像の生成に失敗しました。' });
+      }
+  });
 }
 
 module.exports = routes;

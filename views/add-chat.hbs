@@ -5,8 +5,6 @@
     {{> dashboard-nav}}
 
     <style>
-
-
     .animated.fadeInDown .swal2-image{
         margin:0;
     }
@@ -239,7 +237,7 @@
                                 id="generatedImage"
                                 src="/img/default-character.png"
                                 alt="Generated Character Image"
-                                class="img-fluid rounded shadow"
+                                class="img-fluid rounded"
                                 style="max-height: 300px; width: 100%; object-fit: contain;"
                             >
                         </div>
@@ -283,7 +281,10 @@
 
             <div class="d-flex justify-content-between">
                 <label for="chatPurpose" class="form-label">キャラクターの詳細</label>
-                <button type="button" id="ai-assist" class="btn btn-sm custom-gradient-bg shadow-0"><i class="fa fa-spinner fa-spin fa-fw fa-hidden me-2" style="display: none;"></i><i class="fa fa-magic me-2"></i>AI生成</button>
+                <button type="button" id="ai-assist" class="btn btn-sm custom-gradient-bg shadow-0">
+                    <i class="fa fa-spinner fa-spin fa-fw fa-hidden me-2" style="display: none;"></i>
+                    <i class="fa fa-magic me-2"></i>AI生成
+                </button>
             </div>
             <textarea class="form-control mb-2" id="chatPurpose" name="content" rows="3" placeholder="キャラクターの詳細を記入してください"></textarea>
 
@@ -291,7 +292,7 @@
             <textarea class="form-control mb-2" id="chatDescription" style="display:none;" name="chatDescription" rows="3" placeholder="簡単な説明" disabled="true" required></textarea>
             <textarea class="d-none form-control" id="chatRule" name="content" rows="5" placeholder="話し方" disabled="true" hidden></textarea>
 
-            <div id="markdownContainer" class="border-0 py-2 px-3 text-start" style="background-color: #e9ecef; display:none;" contenteditable="false" style="display: none;"></div>
+            <div id="markdownContainer" class="border-0 py-2 px-3 text-start" style="background-color: #e9ecef; display:none;" contenteditable="false"></div>
 
         </div>
 
@@ -309,6 +310,7 @@
                 <input type="text" class="form-control" id="imageGallery-0-name" name="imageGallery_0_name" placeholder="アルバム名">
                 <textarea row="3" class="form-control" id="imageGallery-0-description" name="imageGallery_0_description" placeholder="アルバム説明"></textarea>
                 <div id="imageGallery-0"></div>
+                <button type="button" class="btn btn-danger resetGallery mt-2">ギャラリーをリセット</button>
             </div>
         </div>
         <button type="button" id="prevStep3" class="btn btn-secondary w-100 mb-2 prevStep">戻る</button>
@@ -348,9 +350,9 @@
 
         function validateStep(step) {
             if (step === 1) {
-                return ($('#chatThumbnail').val() || $('#chatImageUrl').val()) && $('#imageDescription').val();
+                return $('#generatedImage').attr('src') !== '/img/default-character.png';
             } else if (step === 2) {
-                return $('#chatPurpose').val();
+                return $('#chatPurpose').val().trim() !== '';
             }
             return true;
         }
@@ -425,25 +427,22 @@
     $('#chatName, #chatDescription, #chatPurpose').on('input', checkFieldsAndShowForm);
 
         if (isTemporaryChat == 'false') {
-            setTimeout(function(){
-                fetchchatData(chatId,function(){
-                    function observeGalleryChanges(galleryIndex) {
-                        const galleryElement = document.querySelector(`#imageGallery-${galleryIndex}`);
-                        if (!galleryElement) return;
+            fetchchatData(chatId,function(){
+                function observeGalleryChanges(galleryIndex) {
+                    const galleryElement = document.querySelector(`#imageGallery-${galleryIndex}`);
+                    if (!galleryElement) return;
 
-                        const observer = new MutationObserver(function(mutationsList, observer) {
-                            modifiedGalleries.add(galleryIndex);
-                        });
-
-                        observer.observe(galleryElement, { childList: true, subtree: true });
-                    }
-
-                    $('#galleries .imageGalleryWrapper').each(function(index) {
-                        observeGalleryChanges(index);
+                    const observer = new MutationObserver(function(mutationsList, observer) {
+                        modifiedGalleries.add(galleryIndex);
                     });
-                });
-            },500)
 
+                    observer.observe(galleryElement, { childList: true, subtree: true });
+                }
+
+                $('#galleries .imageGalleryWrapper').each(function(index) {
+                    observeGalleryChanges(index);
+                });
+            });
         }else{
             $('#imageGallery-0').imageUploader({
                 maxSize: 2 * 1024 * 1024,
@@ -494,34 +493,6 @@
             }
         }
 
-        $('#chatImage').parent().click(function() {
-            $('#chatThumbnail').click();
-        });
-
-        $('#chatThumbnail').change(function(event) {
-            const file = event.target.files[0];
-            const formData = new FormData();
-            formData.append('image', file);
-
-            $.ajax({
-                url: '/api/upload-image',  // Your image upload endpoint
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response) {
-                    // Assuming the response contains the image URL
-                    const imageUrl = response.imageUrl;
-                    $('#chatImage').attr('src', imageUrl).show().addClass('on');
-                    $('#chatImageUrl').val(imageUrl);  // Store URL in hidden input
-                },
-                error: function(xhr) {
-                    console.log('Image upload failed');
-                }
-            });
-        });
-
-        
         function addNewGallery(init = false) {
             let galleryIndex = $('.imageGalleryWrapper').length;
             let newGalleryWrapper = $('.imageGalleryWrapper').eq(0).clone();
@@ -561,154 +532,35 @@
 
         $('#addMoreGallery').on('click', function(){addNewGallery(true);});
 
+        $(document).on('click', '.resetGallery', function() {
 
-        function fetchchatData(chatId,callback) {
+            const galleryWrapper = $(this).closest('.imageGalleryWrapper');
+            const galleryIndex = galleryWrapper.index(); 
+
+            galleryWrapper.find('input[type="text"]').val('');
+            galleryWrapper.find('textarea').val('');
+
+            const galleryId = galleryWrapper.find('div[id^="imageGallery-"]').attr('id');
+            const uploader = $(`#${galleryId}`).data('imageUploader'); 
+            
+            if (uploader) {
+                uploader.reset();
+            }
+
             $.ajax({
-                url: `/api/chat-data/${chatId}`,
-                type: 'GET',
-                dataType: 'json',
-                success: function(chatData) {
-                    console.log(chatData)
-                    const isLocalMode = chatData.mode === 'local';
-
-                    $('#dynamic-fields').empty();
-
-                    $('<input>').attr({
-                        type: 'hidden',
-                        id: 'mode',
-                        name: 'mode',
-                        value: chatData.mode
-                    }).appendTo('#dynamic-fields');
-
-                    if(chatData.isAutoGen == 'true'){
-                        $('input, textarea').prop('disabled', true);
-                        $('#chatPurpose').hide();
-                        $('#chatPurpose-markdownContainer').show()
-                    }
-                    if(chatData.purpose){
-                        var htmlContent = marked.parse(chatData.purpose);
-                        $('#chatPurpose-container').show()
-                        //$('#chatPurpose-markdownContainer').html(htmlContent)
-                        $('#chatPurpose').val(chatData.purpose)
-                        setTimeout(function(){
-                            resizeTextarea($('#chatPurpose')[0])
-                        },500)
-                    }
-                    if(chatData.name){
-                        $('#chatName').val(chatData.name);
-                        $('#chatName').show()
-                        $('#sendForm span').html(`${chatData.name}とチャットする`)
-                    }
-                    if(chatData.description){
-                        $('#chatDescription').val(chatData.description);
-                        $('#chatDescription').show()
-                    }
-                    if(chatData.visibility){
-                        
-                        const user = {{{json user}}}
-                        const userId = user._id
-                        if(user.subscriptionStatus == 'active'){
-                            $('#visibility').val(chatData.visibility)
-                        }
-                    }
-                    if(chatData.language){
-                        $('#language').val(chatData.language)
-                    }
-                    if(chatData.gender){
-                        $('#gender').val(chatData.gender)
-                    }
-                    if(chatData.category){
-                        $('#chatCategory').val(chatData.category);
-                    }
-
-                    var chatDescriptionTextare = $('#chatDescription')
-                    if(chatData.description){
-                        chatDescriptionTextare.val(chatData.description);
-                        setTimeout(function(){
-                            resizeTextarea(chatDescriptionTextare[0]);
-                        },500)
-                        chatDescriptionTextare.parent().show()
-                    }
-                    
-                    var chatRuleTextarea = $('#chatRule');
-                    if(chatData.rule){
-                        chatRuleTextarea.val(chatData.rule);
-                        $('#markdownContainer').show()
-                        $('#markdownContainer').html(marked.parse(chatData.rule));
-                    }
-
-                    if (chatData.thumbnailUrl && chatData.thumbnailUrl != undefined) {
-                        $('#chatImageUrl').val(chatData.thumbnailUrl);
-                        $('#chatImage').attr('src', chatData.thumbnailUrl).show().addClass('on');
-                    }
-                    if (chatData.chatImageUrl && chatData.chatImageUrl != undefined) {
-                        $('#chatImageUrl').val(chatData.chatImageUrl);
-                        $('#chatImage').attr('src', chatData.chatImageUrl).show().addClass('on');
-                    }
-
-                    if(chatData.imageDescription){
-                        $('#imageDescription').val(chatData.imageDescription);
-                        $('#imageDescription').parent().show()
-                    }else{
-                        checkImageDescription(chatId,function(response){
-                            if(!response.error){
-                                $('#imageDescription').val(response).show()
-                                $('#imageDescription').parent().show()
-                            }
-                        }) 
-                    }
-
-                    if (chatData.galleries && chatData.galleries.length > 0) {
-
-                        chatData.galleries.forEach((gallery, galleryIndex) => {
-
-                            if (gallery.images && gallery.images.length > 0) {
-                                let preloaded = gallery.images.map((imageUrl, idx) => {
-                                    return {
-                                        id: idx + 1, 
-                                        src: imageUrl  
-                                    };
-                                });
-                                
-                                if($(`#imageGallery-${galleryIndex}`).length == 0){
-                                    addNewGallery()
-                                }
-
-                                $(`#imageGallery-${galleryIndex}-name`).val(gallery.name);
-                                $(`#imageGallery-${galleryIndex}-description`).val(gallery.description);
-                                $(`#imageGallery-${galleryIndex}`).imageUploader({
-                                    preloaded: preloaded,
-                                    imagesInputName: 'photos',
-                                    preloadedInputName: 'old',
-                                    maxSize: 2 * 1024 * 1024,
-                                    maxFiles: 100
-                                });
-                            } else {
-                                $(`#imageGallery-${galleryIndex}`).imageUploader({
-                                    maxSize: 2 * 1024 * 1024,
-                                    maxFiles: 100
-                                });
-                            }
-
-                        });
-                    }else{
-                        $('#imageGallery-0').imageUploader({
-                            maxSize: 2 * 1024 * 1024,
-                            maxFiles: 100
-                        });
-                    }
-                    checkFieldsAndShowForm()
-                    $('#chatForm').removeClass('d-none')
-                    //$('#genStructure').removeClass('btn-outline-secondary').addClass('btn-secondary')
+                url: '/api/reset-gallery',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ chatId, galleryIndex }),
+                success: function(response) {
+                    showNotification('ギャラリーがリセットされました。', 'success');
                 },
-                error: function(xhr, status, error) {
-                   console.log(`New tempry chat`)
+                error: function(error) {
+                    console.error('ギャラリーリセットエラー:', error);
+                    showNotification('ギャラリーのリセットに失敗しました。', 'error');
                 }
-            })
-            .always(function(){
-                 if(typeof callback == 'function'){callback()}
             });
-        }
+        });
 
         function getFilesFromGallery(galleryId) {
             let files = [];
@@ -724,6 +576,110 @@
             }
             return files;
         }
+        function fetchchatData(chatId, callback) {
+            $.ajax({
+                url: `/api/chat-data/${chatId}`,
+                type: 'GET',
+                dataType: 'json',
+                success: function(chatData) {
+                    console.log('Fetched chat data:', chatData);
+
+                    // Populate Step 1: キャラクターの外見
+                    if (chatData.characterPrompt) {
+                        $('#characterPrompt').val(chatData.characterPrompt);
+                        resizeTextarea($('#characterPrompt')[0]);
+                    }
+
+                    if (chatData.imageDescription) {
+                      $('#enhancedPrompt').val(chatData.imageDescription);
+                    }
+
+                    if (chatData.chatImageUrl) {
+                        $('#generatedImage').attr('src', chatData.chatImageUrl).show().addClass('on');
+                    }
+
+                    // Populate Step 2: キャラクターの性格
+                    if (chatData.visibility) {
+                        $('#visibility').val(chatData.visibility);
+                    }
+
+                    if (chatData.language) {
+                        $('#language').val(chatData.language);
+                    }
+
+                    if (chatData.gender) {
+                        $('#gender').val(chatData.gender);
+                    }
+
+                    if (chatData.purpose) {
+                        $('#chatPurpose').val(chatData.purpose);
+                        resizeTextarea($('#chatPurpose')[0]);
+                    }
+
+                    if (chatData.name) {
+                        $('#chatName').val(chatData.name).show();
+                        $('#sendForm span').text(`${chatData.name}とチャットする`);
+                    }
+
+                    if (chatData.description) {
+                        $('#chatDescription').val(chatData.description).show();
+                        resizeTextarea($('#chatDescription')[0]);
+                    }
+
+                    if (chatData.rule) {
+                        $('#chatRule').val(chatData.rule);
+                        $('#markdownContainer').html(marked.parse(chatData.rule)).show();
+                    }
+
+                    // Populate Step 3: 画像ギャラリー
+                    if (chatData.galleries && chatData.galleries.length > 0) {
+                        chatData.galleries.forEach((gallery, index) => {
+                            if (index === 0) {
+                                // Populate the first gallery
+                                $(`#imageGallery-0-name`).val(gallery.name);
+                                $(`#imageGallery-0-description`).val(gallery.description);
+                                initializeImageUploader(`#imageGallery-0`, gallery.images);
+                            } else {
+                                // Add and populate additional galleries
+                                addNewGallery(true);
+                                $(`#imageGallery-${index}-name`).val(gallery.name);
+                                $(`#imageGallery-${index}-description`).val(gallery.description);
+                                initializeImageUploader(`#imageGallery-${index}`, gallery.images);
+                            }
+                        });
+                    } else {
+                        initializeImageUploader(`#imageGallery-0`, []);
+                    }
+
+                    // Callback if provided
+                    if (typeof callback === 'function') {
+                        callback();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching chat data:', error);
+                    showNotification('チャットデータの取得に失敗しました。再試行してください。', 'error');
+                }
+            });
+        }
+
+        function initializeImageUploader(gallerySelector, images) {
+            const preloaded = images.map((url, idx) => ({
+                id: idx + 1,
+                src: url
+            }));
+
+            $(gallerySelector).imageUploader({
+                preloaded: preloaded,
+                imagesInputName: 'photos',
+                preloadedInputName: 'old',
+                maxSize: 2 * 1024 * 1024,
+                maxFiles: 100
+            });
+
+            modifiedGalleries.add(gallerySelector.replace('#imageGallery-', ''));
+        }
+
         // Form Submission
         $('#submitForm').on('click', function(e) {
             e.preventDefault();
@@ -735,20 +691,9 @@
             formData.append('language', $('#language').val());
             formData.append('gender', $('#gender').val());
             formData.append('description', $('#chatDescription').val());
-            formData.append('imageDescription', $('#imageDescription').val());
             formData.append('rule', $('#chatRule').val());
             formData.append('visibility', $('#visibility').val());
             formData.append('isAutoGen', isAutoGen);
-
-            const file = $('#chatThumbnail')[0].files[0];
-            if (file) {
-                formData.append('thumbnail', file);
-            } else {
-                const chatImageUrl = $('#chatImageUrl').val();
-                if (chatImageUrl) {
-                    formData.append('chatImageUrl', chatImageUrl);
-                }
-            }
 
             if (chatId) {
                 formData.append('chatId', chatId);
@@ -795,76 +740,65 @@
             });
         });
         
+      // 更新されたGenerateボタンハンドラー（日本語版）
         $('#generateButton').on('click', async function() {
-            // Retrieve the user-provided prompt from the textarea
             const prompt = $('#characterPrompt').val().trim();
 
-            // Check if the prompt is empty
-            if (!prompt) {
+            if (!prompt || !chatId) {
                 showNotification('すべてのフィールドを入力してください', 'error');
                 return;
             }
 
-            // Disable the generate button to prevent multiple clicks and show a loading state
             const $button = $(this);
             $button.prop('disabled', true);
-            $button.html('<i class="fas fa-spinner fa-spin me-2"></i>生成中...');
+            $button.html('<i class="fas fa-spinner fa-spin me-2"></i>プロンプトを強化中...');
 
             try {
-                // Send a POST request to the /api/enhance-prompt endpoint
-                const response = await $.ajax({
+                // プロンプトを強化するリクエスト
+                const enhanceResponse = await $.ajax({
                     url: '/api/enhance-prompt',
                     method: 'POST',
                     contentType: 'application/json',
-                    data: JSON.stringify({
-                        prompt,
-                        chatId
-                    })
+                    data: JSON.stringify({ prompt, chatId })
                 });
 
-                // Check if the response contains the enhanced prompt
-                if (response && response.enhancedPrompt) {
-                    // Update the enhancedPrompt textarea with the received enhanced prompt
-                    $('#enhancedPrompt').val(response.enhancedPrompt);
+                if (enhanceResponse && enhanceResponse.enhancedPrompt) {
+                    $('#enhancedPrompt').val(enhanceResponse.enhancedPrompt);
+
+                    // ボタンテキストを「画像を生成中...」に更新
+                    $button.html('<i class="fas fa-spinner fa-spin me-2"></i>画像を生成中...');
+
+                    // 画像を生成するリクエスト
+                    const generateResponse = await $.ajax({
+                        url: '/novita/generate-image',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            prompt: enhanceResponse.enhancedPrompt,
+                            aspectRatio: '9:16',
+                            chatId
+                        })
+                    });
+
+                    if (generateResponse && generateResponse.images && generateResponse.images.length > 0) {
+                        const image = generateResponse.images[0];
+                        $('#generatedImage').attr('src', image.url);
+                        showNotification('画像が正常に生成されました。', 'success');
+                    } else {
+                        showNotification('画像の生成に失敗しました。再試行してください。', 'error');
+                    }
                 } else {
-                    // If the response is not as expected, show an error notification
                     showNotification('プロンプトの生成に失敗しました。再試行してください。', 'error');
                 }
             } catch (error) {
-                console.error('Error enhancing prompt:', error);
-                // Show an error notification to inform the user
-                showNotification('プロンプトの生成中にエラーが発生しました。', 'error');
+                console.error('Error:', error);
+                showNotification('プロンプトの生成中または画像の生成中にエラーが発生しました。', 'error');
             } finally {
-                // Re-enable the generate button and reset its content
+                // ボタンを有効化し、初期状態のテキストに戻す
                 $button.prop('disabled', false);
-                $button.html('<i class="fas fa-magic me-2"></i>AIで生成');
+                $button.html('<i class="fas fa-magic me-2"></i>AIで画像生成');
             }
         });
-
-
-        $('#ai-assist-image').on('click',function(){
-
-            $('#ai-assist-image .fa-spinner').show();
-            $('#ai-assist-image .fa-magic').hide();
-
-            checkImageDescription(chatId,function(response){
-                if(!response || response.error){
-                    generateImageDescriptionBackend(null,chatId,function(response){
-                        const imageDescription = response.description
-                        console.log({imageDescription})
-                        $('#imageDescription').val(imageDescription).show()
-                        $('#imageDescription').parent().show()
-                        $('#ai-assist-image .fa-spinner').hide();
-                        $('#ai-assist .fa-magic').show();
-                    })
-                }else{
-                    $('#imageDescription').val(response).show()
-                    $('#imageDescription').parent().show()
-                    $('#ai-assist-image .fa-spinner').hide();
-                    $('#ai-assist-image .fa-magic').show();
-                }
-            }) 
-        })
 
         $('#ai-assist').on('click', function() {
 
@@ -884,7 +818,7 @@
 
             $('#chatName').val('')
             $('#chatDescription').val('')
-
+            $('#markdownContainer').html('')
             generateCompletion(function() {
                 $('#sendForm').show();
                 $('.sendForm-text').show();
@@ -898,11 +832,10 @@
             const apiUrl = '/api/openai-chat-creation';
 
             let prompt = $('#chatPurpose').val().trim();
-            let language =$('#language').val()
             let gender = $('#gender').val()
 
-            prompt = prompt + '\n YOU MUST respond in '+ language
-              
+            prompt = prompt + '\n YOU MUST respond in japanese'
+              console.log({prompt})
             if(prompt.length == 0){
                 return
             } 

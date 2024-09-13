@@ -37,7 +37,6 @@ async function routes(fastify, options) {
                     case 'isAutoGen':
                     case 'rule':
                     case 'description':
-                    case 'imageDescription':
                     case 'chatId':
                         chatData[part.fieldname] = part.value;
                         break;
@@ -82,36 +81,6 @@ async function routes(fastify, options) {
                 chatData.thumbnailUrl = chatData.chatImageUrl;
             } else if (chatData.thumbnailUrl && !chatData.chatImageUrl) {
                 chatData.chatImageUrl = chatData.thumbnailUrl;
-            }
-    
-            const stripeLocal = require('stripe')(process.env.STRIPE_SECRET_KEY_TEST);
-            const stripeLive = require('stripe')(process.env.STRIPE_SECRET_KEY);
-            
-            for (const gallery of galleries) {
-                if (gallery.name && gallery.price && gallery.images && gallery.images.length > 0) {
-                    const localFieldsMissing = !gallery['stripeProductIdLocal'] || !gallery['stripePriceIdLocal'];
-                    const liveFieldsMissing = !gallery['stripeProductIdLive'] || !gallery['stripePriceIdLive'];
-
-                    if (localFieldsMissing || liveFieldsMissing) {
-                        try {
-                            if (localFieldsMissing) {
-                                const stripeProductLocal = await createProductWithPrice(gallery.name, gallery.price, gallery.images[0], stripeLocal);
-                                gallery['stripeProductIdLocal'] = stripeProductLocal.productId;
-                                gallery['stripePriceIdLocal'] = stripeProductLocal.priceId;
-                                console.log({ stripeProductIdLocal: gallery['stripeProductIdLocal'], stripePriceIdLocal: gallery['stripePriceIdLocal'] });
-                            }
-            
-                            if (liveFieldsMissing) {
-                                const stripeProductLive = await createProductWithPrice(gallery.name, gallery.price, gallery.images[0], stripeLive);
-                                gallery['stripeProductIdLive'] = stripeProductLive.productId;
-                                gallery['stripePriceIdLive'] = stripeProductLive.priceId;
-                                console.log({ stripeProductIdLive: gallery['stripeProductIdLive'], stripePriceIdLive: gallery['stripePriceIdLive'] });
-                            }
-                        } catch (error) {
-                            return reply.status(500).send({ error: `Failed to create product on Stripe for gallery ${gallery.name}` });
-                        }
-                    }
-                }
             }
     
             chatData.userId = userId;
@@ -191,32 +160,6 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Internal server error' });
         }
     });
-    
-    async function createProductWithPrice(name, price, image, stripeInstance) {
-        try {
-            // Create a product on the passed Stripe instance (either live or local)
-            const product = await stripeInstance.products.create({
-                name: name,
-                images: [image],
-            });
-    
-            // Create a price for the product in Japanese Yen (JPY)
-            const productPrice = await stripeInstance.prices.create({
-                unit_amount: price,
-                currency: 'jpy', // Set currency to Japanese Yen
-                product: product.id,
-            });
-    
-            return {
-                productId: product.id,
-                priceId: productPrice.id,
-            };
-        } catch (error) {
-            throw new Error('Failed to create product on Stripe');
-        }
-    }
-    
-    
 
     async function generateAndSaveTags(description, chatId) {
         const openai = new OpenAI();
@@ -254,39 +197,52 @@ async function routes(fastify, options) {
 
         return generatedTags;
     }
-
-    fastify.get('/api/urlsummary', async (request, reply) => {
-        const url = request.query.url;
-        
-        if (!url) {
-            return reply.status(400).send({ error: 'URL parameter is required' });
-        }
-    
+    fastify.post('/api/reset-gallery', async (request, reply) => {
         try {
-            const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
-            const collection = db.collection('urlSummaries');
-    
-            // Check if the result for the URL already exists in the database
-            let result = await collection.findOne({ url: url });
-    
-            if (!result || !result.analysis) {
-                // If not found or analysis is falsy, analyze the screenshot
-                const analysisResult = await processURL(url);
-                // Save the result in the database
-                result = {
-                    url: url,
-                    analysis: analysisResult,
-                    timestamp: new Date()
-                };
-                await collection.insertOne(result);
+            const { chatId, galleryIndex } = request.body;
+            if (!chatId || galleryIndex === undefined) {
+                return reply.status(400).send({ error: 'chatId and galleryIndex are required' });
             }
     
-            // Return the result
-            reply.send(result);
+            const db = await fastify.mongo.client.db(process.env.MONGODB_NAME);
+            const collection = db.collection('chats');
+            const user = await fastify.getUser(request, reply);
+            const userId = new fastify.mongo.ObjectId(user._id);
+            const chatObjectId = new fastify.mongo.ObjectId(chatId);
+    
+            const existingChat = await collection.findOne({ _id: chatObjectId });
+            if (!existingChat || existingChat.userId.toString() !== userId.toString()) {
+                return reply.status(403).send({ error: 'Unauthorized to reset this gallery' });
+            }
+    
+            if (existingChat.galleries && existingChat.galleries[galleryIndex]) {
+                existingChat.galleries[galleryIndex] = {
+                    name: '',
+                    description: '',
+                    images: []
+                };
+            }
+    
+            if (existingChat.blurred_galleries && existingChat.blurred_galleries[galleryIndex]) {
+                existingChat.blurred_galleries[galleryIndex] = {
+                    name: '',
+                    description: '',
+                    images: []
+                };
+            }
+    
+            await collection.updateOne(
+                { _id: chatObjectId },
+                { $set: { galleries: existingChat.galleries, blurred_galleries: existingChat.blurred_galleries } }
+            );
+    
+            return reply.send({ success: true });
         } catch (error) {
-            reply.status(500).send({ error: 'Internal Server Error', details: error.message });
+            console.log('Error resetting gallery:', error);
+            return reply.status(500).send({ error: 'Failed to reset gallery' });
         }
     });
+    
     fastify.delete('/api/delete-chat/:id', async (request, reply) => {
         try {
             const chatId = request.params.id;
@@ -1375,8 +1331,8 @@ async function routes(fastify, options) {
         });
 
         const examplePrompts = await fs.readFileSync('./models/girl_char.md', 'utf8');
-        const systemPayload = createSystemPayload("Japanese",examplePrompts,prompt,gender);  // You can change "English" to any language you need
-
+        const systemPayload = createSystemPayloadChatRule(examplePrompts,prompt,gender);  // You can change "English" to any language you need
+console.log({createSystemPayloadChatRule})
         const openai = new OpenAI();
         const completionResponse = await openai.beta.chat.completions.parse({
             model: "gpt-4o-mini",
@@ -1389,22 +1345,22 @@ async function routes(fastify, options) {
         reply.send({ name, short_desc, long_desc });
     });
     
-    function createSystemPayload(language,examplePrompts,prompt, gender) {
+    function createSystemPayloadChatRule(examplePrompts, prompt, gender) {
         return [
             {
                 role: "system",
-                content: `You are a useful assistant. 
-                You generate a creative japanese anime character description. 
-                Here is some example: ${examplePrompts} \nYOU MUST respond in ${language}. 
-                name : A real japanese name and last name with no furigana. It should match the character gender and description.
-                short_desc :  2 lines to describe the character personnality.
-                long_desc : use the examples and be creative. It is for entertainment purposes.
+                content: `あなたは有用なアシスタントです。
+                日本語の創造的なアニメキャラクターの説明を生成します。
+                以下は例です：${examplePrompts}
+                name: 実際の日本人の名前と苗字をふりがななしで記入してください。キャラクターの性別と説明に合致する必要があります。
+                short_desc: キャラクターの性格を2行で簡潔に説明してください。
+                long_desc: 例を参考にし、創造的に記述してください。これはエンターテインメント目的です。必ずすべて日本語で回答してください。
                 `
             },
             {
                 role: "user",
-                content: `Gender is ${gender}. \n Here is the information : ${prompt} \n\n`
-            }
+                content: `キャラクターの性別は${gender}です。\n以下の情報をご確認ください: ${prompt}`
+            },
         ];
     }
     // Define the schema for request validation
@@ -1449,7 +1405,7 @@ async function routes(fastify, options) {
             // Update the imageDescription field in the chat document
             const updateResult = await collectionChats.updateOne(
                 { _id: chatObjectId },
-                { $set: { imageDescription: enhancedPrompt } }
+                { $set: { characterPrompt:prompt, imageDescription: enhancedPrompt } }
             );
     
             // Check if the chat document was found and updated
@@ -1481,14 +1437,13 @@ async function routes(fastify, options) {
             {
                 role: "system",
                 content: `
-                    You are a stable diffusion image prompt generator.
-                    You take a conversation and respond with an image prompt of less than 800 characters. 
-                    You MUST describe the latest scene of the conversation.
-                    Respond like that with only one of two keywords in english: 
-                    day or night, inside or outside, setting name, \n
-                    young girl, yellow eyes, long hair,pink hair, white hair, white skin, voluptuous body, cute face, smiling,
-                    Customize the example to match the current character description. DO NOT MAKE SENTENCES, I WANT A LIST OF KEY WORDS THAT DESCRIBE THE IMAGE.\n
-                    Repond EXCLUSIVELY IN ENGLISH !
+                    You are a Stable Diffusion image prompt generator specializing in upper body character portraits.
+                    Your task is to generate a concise image prompt (under 800 characters) based on the latest character description provided.
+                    The prompt should be a comma-separated list of descriptive keywords in English that accurately depict the character's appearance, emotions, and style.
+                    Focus on attributes such as age, eye color, hair style and color, skin tone, body type, facial expressions, clothing, and any distinctive features.
+                    DO NOT form complete sentences; use only relevant keywords.
+                    Ensure the prompt is optimized for generating high-quality upper body portraits.
+                    Respond EXCLUSIVELY IN ENGLISH!
                 `
             },
             {
@@ -1497,6 +1452,7 @@ async function routes(fastify, options) {
             }
         ];
     }
+    
     // POST Route to create a session with a custom prompt
     fastify.post('/api/openai-custom-chat', async (request, reply) => {
         const { chatId, userChatId, role, customPrompt } = request.body;

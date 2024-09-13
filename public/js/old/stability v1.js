@@ -1,11 +1,9 @@
 // =========================
-// Enhanced Image Generation with Novita
+// Image Generation with Novita
 // =========================
 
 // Check Image Description and Implement Limits for Premium Users
 window.checkImageDescription = function(chatId = null, callback) {
-  console.log('checkImageDescription called with chatId:', chatId);
-  
   if (!chatId) {
       console.error('checkImageDescription Error: chatId is required.');
       callback({ error: 'Abort' });
@@ -13,8 +11,6 @@ window.checkImageDescription = function(chatId = null, callback) {
   }
 
   const imageDescription = $('#image_description').val();
-  console.log('Retrieved imageDescription from DOM:', imageDescription);
-  
   if (imageDescription) {
       console.log('Existing image description found.');
       callback({ description: imageDescription });
@@ -31,8 +27,8 @@ window.checkImageDescription = function(chatId = null, callback) {
               callback(response);
           }
       },
-      error: function(xhr, status, error) {
-          console.error('checkImageDescription Error:', status, error, xhr);
+      error: function(xhr) {
+          console.error('checkImageDescription Error:', xhr);
           if (callback) {
               callback({ error: 'Failed to check image description.' });
           }
@@ -42,7 +38,6 @@ window.checkImageDescription = function(chatId = null, callback) {
 
 // Create System Payload for Image Description
 function createSystemPayloadImage(language) {
-  console.log('createSystemPayloadImage called with language:', language);
   return [
       {
           "type": "text",
@@ -58,13 +53,8 @@ function createSystemPayloadImage(language) {
 
 // Generate Image Description Backend using Novita
 window.generateImageDescriptionBackend = function(imageUrl = null, chatId, callback) {
-  console.log('generateImageDescriptionBackend called with imageUrl:', imageUrl, 'chatId:', chatId);
-  
   imageUrl = imageUrl ? imageUrl : $('#chatImageUrl').val();
-  console.log('Final imageUrl after DOM retrieval:', imageUrl);
-  
   const language = $('#language').val() || 'japanese';
-  console.log('Language selected:', language);
 
   if (!imageUrl && !chatId) {
       console.error('generateImageDescriptionBackend Error: Image URL or chatId must be provided.');
@@ -73,10 +63,7 @@ window.generateImageDescriptionBackend = function(imageUrl = null, chatId, callb
   }
 
   const system = createSystemPayloadImage(language);
-  console.log('System payload for image description:', system);
-  
-  const apiUrl = '/api/openai-image-description'; // Verify if this is the correct Novita endpoint
-  console.log('API URL for image description:', apiUrl);
+  const apiUrl = '/api/openai-image-description'; // Assuming Novita uses this endpoint
 
   $.ajax({
       url: apiUrl,
@@ -89,8 +76,8 @@ window.generateImageDescriptionBackend = function(imageUrl = null, chatId, callb
               callback(response);
           }
       },
-      error: function(xhr, status, error) {
-          console.error('generateImageDescriptionBackend Error:', status, error, xhr);
+      error: function(xhr) {
+          console.error('generateImageDescriptionBackend Error:', xhr);
           if (callback) {
               callback({ error: 'Failed to generate image description.' });
           }
@@ -100,16 +87,6 @@ window.generateImageDescriptionBackend = function(imageUrl = null, chatId, callb
 
 // Generate Image using Novita
 window.generateImageNovita = async function(API_URL, userId, chatId, userChatId, item_id, thumbnail, option = {}) {
-  console.log('generateImageNovita called with parameters:', {
-      API_URL,
-      userId,
-      chatId,
-      userChatId,
-      item_id,
-      thumbnail,
-      option
-  });
-
   // Initialize the image loading container
   const imageResponseContainer = $(`
       <div id="load-image-container" class="d-flex flex-row justify-content-start">
@@ -121,7 +98,7 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
           </div>
       </div>
   `);
-  console.log('Appending imageResponseContainer to chatContainer.');
+
   $('#chatContainer').append(imageResponseContainer);
   $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
 
@@ -133,7 +110,6 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
   }
 
   try {
-      console.log('Fetching proposal with item_id:', item_id);
       const proposal = await getProposalById(item_id);
       console.log('Proposal fetched:', proposal);
 
@@ -144,8 +120,6 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
           baseFace = null
       } = option;
 
-      console.log('Parameters after destructuring:', { negativePrompt, prompt, aspectRatio, baseFace });
-
       if (!prompt) {
           console.error('generateImageNovita Error: Prompt is required.');
           showNotification('Prompt is required for image generation.', 'error');
@@ -153,17 +127,6 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
       }
 
       const API_ENDPOINT = `${API_URL}/novita/txt2img`;
-      console.log('API_ENDPOINT for image generation:', API_ENDPOINT);
-
-      console.log('Sending POST request to Novita API with payload:', {
-          prompt,
-          negative_prompt: negativePrompt,
-          aspectRatio,
-          baseFace,
-          userId,
-          chatId,
-          userChatId
-      });
 
       const response = await fetch(API_ENDPOINT, {
           method: 'POST',
@@ -181,29 +144,23 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
           })
       });
 
-      console.log('Fetch response received. Status:', response.status, response.statusText);
-
       if (!response.ok) {
           const errorText = await response.text();
-          console.error('Fetch response not ok. Status:', response.status, response.statusText, 'Response text:', errorText);
           throw new Error(`Network response was not ok (${response.status} ${response.statusText}): ${errorText}`);
       }
 
       const data = await response.json();
-      console.log('generateImageNovita Success: Received data from Novita:', data);
+      console.log('generateImageNovita Success:', data);
 
       const images = data.images;
       if (Array.isArray(images)) {
-          console.log('Images array received:', images);
           images.forEach((image, index) => {
-              console.log(`Generating image ${index + 1}:`, image);
               generateImage(image, prompt);
           });
       } else {
           console.warn('generateImageNovita Warning: No images returned.');
       }
 
-      console.log('Posting imageDone event.');
       window.postMessage({ event: 'imageDone' }, '*');
 
   } catch (error) {
@@ -211,7 +168,6 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
       alert(`Error generating image: ${error.message}`);
       window.postMessage({ event: 'imageError', error: error.message }, '*');
   } finally {
-      console.log('Finalizing generateImageNovita: Removing loader and updating UI.');
       $('#load-image-container').remove();
       $('#novita-gen-button').show().removeClass('isLoading');
   }
@@ -219,7 +175,6 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
 
 // Fetch Proposal by ID
 function getProposalById(id) {
-  console.log('getProposalById called with id:', id);
   return new Promise((resolve, reject) => {
       $.ajax({
           url: `/api/proposal/${id}`,
@@ -228,8 +183,8 @@ function getProposalById(id) {
               console.log('getProposalById Success:', data);
               resolve(data);
           },
-          error: function(err, status, error) {
-              console.error('getProposalById Error:', status, error, err);
+          error: function(err) {
+              console.error('getProposalById Error:', err);
               reject(new Error('Failed to fetch proposal.'));
           }
       });
@@ -238,15 +193,12 @@ function getProposalById(id) {
 
 // Display Generated Image
 window.generateImage = async function(data, prompt) {
-  console.log('generateImage called with data:', data, 'prompt:', prompt);
-  
   if (!data || !data.url || !data.id || !data.prompt) {
       console.error('generateImage Error: Invalid image data.', data);
       return;
   }
 
   const { url: imageUrl, id: imageId, prompt: imagePrompt, nsfw: imageNsfw } = data;
-  console.log('Parsed image data:', { imageUrl, imageId, imagePrompt, imageNsfw });
 
   // Create an <img> element
   const img = document.createElement('img');
@@ -256,19 +208,15 @@ window.generateImage = async function(data, prompt) {
   img.setAttribute('data-id', imageId);
 
   try {
-      console.log('Fetching user information.');
       const user = await fetchUser();
-      console.log('User information fetched:', user);
-
       const subscriptionStatus = user.subscriptionStatus === 'active';
       console.log('User subscription status:', subscriptionStatus);
 
       if (imageNsfw && !subscriptionStatus) {
-          console.warn('NSFW content detected and user is not subscribed.');
           displayMessage('bot-image-nsfw', img);
           showNotification('この画像はNSFWコンテンツです。サブスクリプションが必要です。', 'warning');
+          console.warn('generateImage Warning: NSFW content detected and user is not subscribed.');
       } else {
-          console.log('Displaying image to user.');
           displayMessage('bot-image', img);
           console.log('Image displayed successfully.');
           // Optionally, uncomment the line below to notify success

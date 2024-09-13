@@ -1995,9 +1995,7 @@ $(document).ready(async function() {
         });
     }
     
-    handleImageGeneration('#stability-gen-button', generateImageStableDiffusion);
     handleImageGeneration('#novita-gen-button', generateImageNovita);
-    handleImageGeneration('#huggingface-gen-button', generateImageHuggingFace);
     
     // User info popup
         

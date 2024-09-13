@@ -2087,7 +2087,7 @@ async function routes(fastify, options) {
     
             if (action === 'add') {
                 const userDoc = await collection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
-                if (userDoc.personas.length >= 8) {
+                if (userDoc?.personas?.length >= 8) {
                     return reply.status(400).send({ error: 'これ以上のペルソナを追加できません。（最大8個まで）' });
                 }
                 await collection.updateOne(

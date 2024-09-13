@@ -621,8 +621,8 @@ async function routes(fastify, options) {
                     const chatDescription = convert(chatDocument.description)
                     const chatRule = convert(chatDocument.rule)
                     userChatDocument = {
-                        userId:new fastify.mongo.ObjectId(userId),
-                        chatId,
+                        userId: new fastify.mongo.ObjectId(userId),
+                        chatId: new fastify.mongo.ObjectId(chatId),
                         persona,
                         createdAt: today,
                         updatedAt: today
@@ -751,7 +751,6 @@ async function routes(fastify, options) {
           } catch (error) {
             return reply.status(403).send({ error: error.message });
           }
-        
     });
     fastify.post('/api/purchaseItem', async (request, reply) => {
         const { itemId, itemName, itemPrice, userId, chatId } = request.body;

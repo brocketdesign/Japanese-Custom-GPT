@@ -462,6 +462,71 @@ $(document).ready(async function() {
     });
     
 });
+window.loadChatUsers = async function (chatId, page = 1) {
+    $.ajax({
+        url: `/chat/${chatId}/users?page=${page}`,
+        method: 'GET',
+        success: function (data) {
+            let chatUsersHtml = '';
+            data.users.forEach(user => {
+                chatUsersHtml += `
+                    <div class="me-3 text-center" style="min-width: 100px;">
+                        <a href="/user/${user.userId}" class="text-decoration-none text-dark">
+                            <img src="${user.profileUrl || '/img/default-avatar.png'}" alt="${user.nickname}" class="rounded-circle mb-2" width="60" height="60">
+                            <div>${user.nickname}</div>
+                        </a>
+                    </div>
+                `;
+            });
+
+            $('#chat-users-gallery').html(chatUsersHtml);
+            // Optionally, handle pagination if needed
+            // generateChatUserPagination(data.page, data.totalPages, chatId);
+        },
+        error: function (err) {
+            console.error('Failed to load users', err);
+        }
+    });
+}
+function generateChatUserPagination(currentPage, totalPages, chatId) {
+    let paginationHtml = '';
+    const maxPagesToShow = 5;
+    const sidePagesToShow = 2; // Pages to show on each side of the current page
+
+    if (totalPages > 1) {
+        paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadChatUsers('${chatId}', ${currentPage - 1})">前へ</button>`;
+
+        if (currentPage > sidePagesToShow + 1) {
+            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadChatUsers('${chatId}', 1)">1</button>`;
+            if (currentPage > sidePagesToShow + 2) {
+                paginationHtml += `<span class="mx-1">...</span>`;
+            }
+        }
+
+        let startPage = Math.max(1, currentPage - sidePagesToShow);
+        let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
+
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHtml += `
+                <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadChatUsers('${chatId}', ${i})">
+                    ${i}
+                </button>
+            `;
+        }
+
+        if (currentPage < totalPages - sidePagesToShow - 1) {
+            if (currentPage < totalPages - sidePagesToShow - 2) {
+                paginationHtml += `<span class="mx-1">...</span>`;
+            }
+            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadChatUsers('${chatId}', ${totalPages})">${totalPages}</button>`;
+        }
+
+        paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadChatUsers('${chatId}', ${currentPage + 1})">次へ</button>`;
+    }
+
+    $('#chat-users-pagination-controls').html(paginationHtml);
+}
+
 window.displayPeopleList = async function (userId, type = 'followers', page = 1) {
     try {
         const response = await fetch(`/user/${userId}/followers-or-followings?type=${type}&page=${page}`);

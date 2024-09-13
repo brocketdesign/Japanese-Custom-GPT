@@ -351,6 +351,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
 
         // Render the page with chat and image data (image can be null if no imageId was provided)
         return reply.view('character.hbs', {
+          title: chat.name+' LAMIX | AIフレンズ | Powered by Hato,Ltd',
           chat,
           image,
           user,

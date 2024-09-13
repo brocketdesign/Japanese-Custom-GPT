@@ -308,6 +308,88 @@ async function routes(fastify, options) {
       reply.code(500).send('Internal Server Error');
     }
   });  
+  fastify.get('/chat/:chatId/users', async (request, reply) => {
+    try {
+      // Extract chatId from URL parameters and validate it
+      const chatIdParam = request.params.chatId;
+      let chatId;
+      try {
+        chatId = new fastify.mongo.ObjectId(chatIdParam);
+      } catch (e) {
+        return reply.code(400).send({ error: 'Invalid chatId format' });
+      }
+  
+      // Handle pagination parameters
+      const page = parseInt(request.query.page, 10) || 1;
+      const limit = 20; // Number of users per page
+      const skip = (page - 1) * limit;
+  
+      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const userChatCollection = db.collection('userChat');
+      const usersCollection = db.collection('users');
+      const chatsCollection = db.collection('chats');
+  
+      // Verify that the chat exists
+      const chat = await chatsCollection.findOne({ _id: chatId });
+      if (!chat) {
+        return reply.code(404).send({ error: 'Chat not found' });
+      }
+  
+      // Find userChat documents for the chat
+      const userChatDocs = await userChatCollection
+      .find({ 
+        $or: [
+            { chatId: chatId.toString() },
+            { chatId: new fastify.mongo.ObjectId(chatId) }
+        ] })
+      .skip(skip).limit(limit).toArray();
+
+      if (userChatDocs.length === 0) {
+        return reply.code(200).send({
+          users: [],
+          page,
+          totalPages: 0
+        });
+      }
+  
+      // Extract userIds and exclude temporary users
+      const userIds = userChatDocs.map(doc => new fastify.mongo.ObjectId(doc.userId));
+  
+      // Fetch user details from usersCollection
+      const users = await usersCollection.find({
+        _id: { $in: userIds },
+        isTemporary: { $ne: true }
+      }).toArray();
+  
+      // Get total users count excluding temporary users
+      const totalUsers = await userChatCollection.countDocuments({
+        chatId: chatId
+        // Note: This count does not exclude temporary users. To exclude, use aggregation or adjust accordingly.
+      });
+  
+      const totalPages = Math.ceil(totalUsers / limit);
+  
+      // Format the response data
+      const formattedUsers = users.map(user => ({
+        userId: user._id,
+        nickname: user.nickname,
+        email: user.email,
+        profileUrl: user.profileUrl || '/img/avatar.png',
+        createdAt: user.createdAt,
+      }));
+
+      return reply.send({
+        users: formattedUsers,
+        page,
+        totalPages
+      });
+    } catch (err) {
+      console.error('Error fetching users for chat:', err);
+      return reply.code(500).send({ error: 'Internal Server Error' });
+    }
+  });
+  
+  
   fastify.put('/images/:imageId/nsfw', async (request, reply) => {
     try {
       const imageId = new fastify.mongo.ObjectId(request.params.imageId);

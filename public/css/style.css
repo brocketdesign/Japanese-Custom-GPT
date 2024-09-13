@@ -1,10 +1,26 @@
-
-.overflow-visible {
-  overflow: visible !important;
-}
 .isAdmin{
   display: none;
 }
+.overflow-visible {
+  overflow: visible !important;
+}
+#chat-users-gallery {
+  scrollbar-width: thin; /* Firefox */
+}
+
+#chat-users-gallery::-webkit-scrollbar {
+  height: 8px;
+}
+
+#chat-users-gallery::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.2);
+  border-radius: 4px;
+}
+
+#chat-users-gallery::-webkit-scrollbar-track {
+  background-color: rgba(0,0,0,0.05);
+}
+
 .rounded-circle{
   object-fit: cover;
   object-position: top;

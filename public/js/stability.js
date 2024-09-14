@@ -217,6 +217,8 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
         showNotification('画像の生成中にエラーが発生しました。', 'error');
     }
 }
+const displayedImageIds = new Set();
+
 // Function to poll the task status
 function pollTaskStatus(API_URL, taskId, type, prompt) {
     const POLLING_INTERVAL = 3000; // 3 seconds
@@ -240,24 +242,29 @@ function pollTaskStatus(API_URL, taskId, type, prompt) {
                 clearInterval(intervalId);
                 const { imageId, imageUrl } = statusData.result;
 
-                // Use the provided generateImage function to display the image
-                generateImage({
-                    url: imageUrl,
-                    id: imageId,
-                    prompt: prompt,
-                    nsfw: type === 'nsfw'
-                }, prompt);
+                if (!displayedImageIds.has(imageId)) {
+                    // Use the provided generateImage function to display the image
+                    generateImage({
+                        url: imageUrl,
+                        id: imageId,
+                        prompt: prompt,
+                        nsfw: type === 'nsfw'
+                    }, prompt);
 
-                showNotification(`${type.toUpperCase()} 画像が正常に生成されました。`, 'success');
-                if(type === 'nsfw' ){
-                    $('#load-image-container').find('.message-container').last().remove();
-                }else{
-                    $('#load-image-container').find('.message-container').first().remove();
+                    // Add imageId to the set
+                    displayedImageIds.add(imageId);
+
+                    showNotification(`${type.toUpperCase()} 画像が正常に生成されました。`, 'success');
+                    if(type === 'nsfw' ){
+                        $('#load-image-container').find('.message-container').last().remove();
+                    } else {
+                        $('#load-image-container').find('.message-container').first().remove();
+                    }
+                } else {
+                    console.log(`Image ${imageId} has already been displayed.`);
                 }
             } else if (statusData.status === 'failed') {
                 clearInterval(intervalId);
-                // Use the provided generateImage function to handle failure (optional)
-                // Here, we'll just show an error notification
                 showNotification(`画像の生成に失敗しました: ${statusData.error}`, 'error');
             } else {
                 console.log('タスクはまだ処理中です...');
@@ -275,6 +282,7 @@ function pollTaskStatus(API_URL, taskId, type, prompt) {
         }
     }, POLLING_INTERVAL);
 }
+
 
 
 // Fetch Proposal by ID

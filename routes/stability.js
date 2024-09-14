@@ -487,6 +487,10 @@ async function routes(fastify, options) {
 
       if (task.type === 'nsfw' && task.blur) {
         finalImageUrl = blurryImage
+        console.log(`Send blurred NSFW image`)
+      }else{
+
+        console.log(`Send normal image`)
       }
 
       return reply.send({

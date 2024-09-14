@@ -245,11 +245,15 @@ function pollTaskStatus(API_URL, taskId, type, prompt) {
                     url: imageUrl,
                     id: imageId,
                     prompt: prompt,
-                    nsfw: type === 'nsfw' && statusData.result.blur ? true : false
+                    nsfw: type === 'nsfw'
                 }, prompt);
 
                 showNotification(`${type.toUpperCase()} 画像が正常に生成されました。`, 'success');
-                $('#load-image-container').remove();
+                if(type === 'nsfw' ){
+                    $('#load-image-container').find('.message-container').last().remove();
+                }else{
+                    $('#load-image-container').find('.message-container').first().remove();
+                }
             } else if (statusData.status === 'failed') {
                 clearInterval(intervalId);
                 // Use the provided generateImage function to handle failure (optional)

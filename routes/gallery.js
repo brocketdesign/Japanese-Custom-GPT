@@ -147,11 +147,12 @@ async function routes(fastify, options) {
       const imagesWithChatData = likedImagesDocs.map(doc => {
         const image = doc.image;
         const chat = chats.find(c => c._id.equals(doc.chatId));
+
         return {
           ...image,
           chatId: chat?._id,
           chatName: chat ? chat.name : 'Unknown Chat',
-          thumbnail: chat ? chat.thumbnail : '/img/default-thumbnail.png'
+          thumbnail: chat ? chat?.thumbnail || chat?.thumbnailUrl : '/img/default-thumbnail.png'
         };
       });
   

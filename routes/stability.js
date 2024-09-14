@@ -139,10 +139,24 @@ async function routes(fastify, options) {
       }
   };
 
-  async function saveImageToDB(userId, chatId, userChatId, prompt, imageUrl, aspectRatio, blurredImageUrl = null,nsfw = false, reply) {
+  async function saveImageToDB(userId, chatId, userChatId, prompt, imageUrl, aspectRatio, blurredImageUrl = null, nsfw = false) {
     try {
       const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
       const chatsGalleryCollection = db.collection('gallery');
+  
+      // Check if the image has already been saved for this task
+      const existingImage = await chatsGalleryCollection.findOne({
+        userId: new fastify.mongo.ObjectId(userId),
+        chatId: new fastify.mongo.ObjectId(chatId),
+        'images.imageUrl': imageUrl // Assuming imageUrl is unique per image
+      });
+  
+      if (existingImage) {
+        // Image already exists, return existing imageId and imageUrl
+        const image = existingImage.images.find(img => img.imageUrl === imageUrl);
+        return { imageId: image._id, imageUrl: image.imageUrl };
+      }
+  
       const imageId = new fastify.mongo.ObjectId();
       await chatsGalleryCollection.updateOne(
         { 
@@ -159,19 +173,19 @@ async function routes(fastify, options) {
               aspectRatio, 
               isBlurred: !!blurredImageUrl,
               nsfw,
-              createdAt : new Date()
+              createdAt: new Date()
             } 
           },
         },
         { upsert: true }
       );
-      
+  
       const chatsCollection = db.collection('chats');
       await chatsCollection.updateOne(
         { _id: new fastify.mongo.ObjectId(chatId) },
         { $inc: { imageCount: 1 } }
       );
-      
+  
       const userDataCollection = db.collection('userChat');
       const userData = await userDataCollection.findOne({ 
         userId: new fastify.mongo.ObjectId(userId), 
@@ -179,7 +193,7 @@ async function routes(fastify, options) {
       });
   
       if (!userData) {
-        return reply.status(404).send({ error: 'User data not found' });
+        throw new Error('User data not found');
       }
   
       const imageMessage = { role: "assistant", content: `[Image] ${imageId}` };
@@ -197,10 +211,11 @@ async function routes(fastify, options) {
       return { imageId, imageUrl };
   
     } catch (error) {
-      console.log(error);
-      return reply.status(500).send({ error: 'An error occurred while saving the image' });
+      console.error(error);
+      throw new Error('An error occurred while saving the image');
     }
   }
+  
 
   
   fastify.get('/image/:imageId', async (request, reply) => {
@@ -422,107 +437,91 @@ async function routes(fastify, options) {
       /**
    * Endpoint to check the status of a task
    */
-  fastify.get('/novita/task-status/:taskId', async (request, reply) => {
-    const { taskId } = request.params;
+      fastify.get('/novita/task-status/:taskId', async (request, reply) => {
+        const { taskId } = request.params;
+        try {
+          const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+          const tasksCollection = db.collection('tasks');
+          const task = await tasksCollection.findOne({ taskId });
+      
+          if (!task) return reply.status(404).send({ error: 'Task not found.' });
+      
+          if (['completed', 'failed'].includes(task.status)) {
+            return reply.send({
+              taskId: task.taskId,
+              status: task.status,
+              ...(task.status === 'completed' ? { result: task.result } : { error: task.error })
+            });
+          }
+      
+          const result = await fetchNovitaResult(task.taskId);
+          if (!result) return reply.send({ taskId: task.taskId, status: 'processing' });
+      
+          const shouldBlur = task.type === 'nsfw' && task.blur;
+          let imageUrl = result.imageUrl;
+      
+          if (shouldBlur) {
+            try {
+              imageUrl = await createBlurredImage(result.imageUrl, db);
+            } catch (blurError) {
+              await tasksCollection.updateOne(
+                { taskId: task.taskId },
+                { $set: { status: 'failed', error: `Blurring failed: ${blurError.message}`, updatedAt: new Date() } }
+              );
+              return reply.status(500).send({ taskId: task.taskId, status: 'failed', error: `Blurring failed: ${blurError.message}` });
+            }
+          }
+      
+          // Attempt to atomically update the task to completed
+          const updateResult = await tasksCollection.findOneAndUpdate(
+            { taskId: task.taskId, status: { $in: ['pending', 'processing'] } },
+            { $set: { status: 'completed', result: { imageId: result.imageId, imageUrl }, updatedAt: new Date() } },
+            { returnOriginal: false }
+          );
+      
+          // If the task was already completed, don't skip saving the image, just retrieve and continue
+          let taskToSave = updateResult.value || (await tasksCollection.findOne({ taskId }));
 
-    try {
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
-      const task = await db.collection('tasks').findOne({ taskId });
-
-      if (!task) {
-        return reply.status(404).send({ error: 'Task not found.' });
-      }
-
-      if (task.status === 'completed') {
-        return reply.send({
-          taskId: task.taskId,
-          status: task.status,
-          result: task.result
-        });
-      }
-
-      if (task.status === 'failed') {
-        return reply.send({
-          taskId: task.taskId,
-          status: task.status,
-          error: task.error
-        });
-      }
-
-      // Task is still pending or in progress, check with Novita
-      const result = await fetchNovitaResult(task.taskId);
-
-      if (result === null) {
-        // Task is still processing
-        return reply.send({
-          taskId: task.taskId,
-          status: 'processing'
-        });
-      }
-
-      // Task completed successfully
-      const { imageId, imageUrl } = result;
-
-      // If NSFW and blur is required
-      let finalImageUrl = imageUrl;
-      let blurryImage = null
-      if (task.type === 'nsfw' && task.blur) {
-        blurryImage = await createBlurredImage(imageUrl, db);
-      }
-
-      // Save image to DB
-      await saveImageToDB(task.userId, task.chatId, task.userChatId, task.prompt, finalImageUrl, task.aspectRatio, blurryImage, task.type === 'nsfw' ? true : false);
-
-      // Update task in DB
-      await db.collection('tasks').updateOne(
-        { taskId },
-        { 
-          $set: { 
+          // Save the images to the DB, ensuring this step always occurs
+          const saveResult = await saveImageToDB(
+            taskToSave.userId,
+            taskToSave.chatId,
+            taskToSave.userChatId,
+            taskToSave.prompt,
+            result.imageUrl,
+            taskToSave.aspectRatio,
+            shouldBlur ? imageUrl : null,
+            shouldBlur
+          );
+      
+          // Send the correct response with the saved image data
+          return reply.send({
+            taskId: taskToSave.taskId,
             status: 'completed',
-            result: { imageId, imageUrl: finalImageUrl },
-            updatedAt: new Date()
-          } 
+            result: {
+              imageId: saveResult.imageId,
+              imageUrl: shouldBlur ? imageUrl : result.imageUrl
+            }
+          });
+      
+        } catch (error) {
+          try {
+            const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+            await db.collection('tasks').updateOne(
+              { taskId },
+              { $set: { status: 'failed', error: error.message, updatedAt: new Date() } }
+            );
+          } catch (updateError) {
+            console.error(`Failed to update task status to 'failed': ${updateError.message}`);
+          }
+      
+          return reply.send({ taskId, status: 'failed', error: error.message });
         }
-      );
-
-      if (task.type === 'nsfw' && task.blur) {
-        finalImageUrl = blurryImage
-        console.log(`Send blurred NSFW image`)
-      }else{
-
-        console.log(`Send normal image`)
-      }
-
-      return reply.send({
-        taskId: task.taskId,
-        status: 'completed',
-        result: { imageId, imageUrl: finalImageUrl }
       });
-
-    } catch (error) {
-      console.error('Error checking task status:', error);
-
-      // Update task as failed
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
-      await db.collection('tasks').updateOne(
-        { taskId },
-        { 
-          $set: { 
-            status: 'failed',
-            error: error.message,
-            updatedAt: new Date()
-          } 
-        }
-      );
-
-      return reply.send({
-        taskId: taskId,
-        status: 'failed',
-        error: error.message
-      });
-    }
-  });
-
+      
+      
+      
+      
   async function saveChatImageToDB(db, chatId, imageUrl, thumbnailUrl) {
     const collectionChats = db.collection('chats'); // Replace 'chats' with your actual collection name
 

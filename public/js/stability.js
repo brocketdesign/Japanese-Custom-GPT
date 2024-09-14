@@ -268,7 +268,6 @@ function pollTaskStatus(API_URL, taskId, type, prompt) {
                 }
             } else if (statusData.status === 'failed') {
                 clearInterval(intervalId);
-                showNotification(`画像の生成に失敗しました: ${statusData.error}`, 'error');
             } else {
                 console.log('タスクはまだ処理中です...');
             }
@@ -281,7 +280,6 @@ function pollTaskStatus(API_URL, taskId, type, prompt) {
         } catch (error) {
             console.error(`Error polling task status for ${type}:`, error);
             clearInterval(intervalId);
-            showNotification('画像の生成中にエラーが発生しました。', 'error');
         }
     }, POLLING_INTERVAL);
 }
@@ -333,7 +331,7 @@ window.generateImage = async function(data, prompt) {
       displayMessage('bot-image', img);
     }
 
-    if (subscriptionStatus && messCt == 1) {
+    if (messCt == 1) {
       window.postMessage({ event: 'imageDone' }, '*');
       messCt++;
     }

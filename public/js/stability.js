@@ -306,20 +306,15 @@ function getProposalById(id) {
       });
   });
 }
-let messCt = 0
-// Display Generated Image
+let messCt = 0;
+const sentImageIds = new Set();
+
 window.generateImage = async function(data, prompt) {
-  console.log('generateImage called with data:', data, 'prompt:', prompt);
-  
-  if (!data || !data.url || !data.id || !data.prompt) {
-      console.error('generateImage Error: Invalid image data.', data);
-      return;
-  }
+  if (!data || !data.url || !data.id || !data.prompt || sentImageIds.has(data.id)) return;
 
-  const { url: imageUrl, id: imageId, prompt: imagePrompt, nsfw: imageNsfw } = data;
-  console.log('Parsed image data:', { imageUrl, imageId, imagePrompt, imageNsfw });
+  const { url: imageUrl, id: imageId, nsfw: imageNsfw } = data;
+  sentImageIds.add(imageId);
 
-  // Create an <img> element
   const img = document.createElement('img');
   img.setAttribute('src', imageUrl);
   img.setAttribute('alt', prompt);
@@ -327,34 +322,22 @@ window.generateImage = async function(data, prompt) {
   img.setAttribute('data-id', imageId);
 
   try {
-      console.log('Fetching user information.');
-      const user = await fetchUser();
-      console.log('User information fetched:', user);
+    const user = await fetchUser();
+    const subscriptionStatus = user.subscriptionStatus === 'active';
 
-      const subscriptionStatus = user.subscriptionStatus === 'active';
-      console.log('User subscription status:', subscriptionStatus);
+    if (imageNsfw && !subscriptionStatus) {
+      window.postMessage({ event: 'imageNsfw' }, '*');
+      displayMessage('bot-image-nsfw', img);
+      showNotification('この画像はNSFWコンテンツです。サブスクリプションが必要です。', 'warning');
+    } else {
+      displayMessage('bot-image', img);
+    }
 
-      if (imageNsfw && !subscriptionStatus) {
-          console.warn('NSFW content detected and user is not subscribed.');
-          window.postMessage({ event: 'imageNsfw' }, '*');
-          displayMessage('bot-image-nsfw', img);
-          showNotification('この画像はNSFWコンテンツです。サブスクリプションが必要です。', 'warning');
-      } else {
-          console.log('Displaying image to user.');
-          displayMessage('bot-image', img);
-          console.log('Image displayed successfully.');
-          // Optionally, uncomment the line below to notify success
-          // showNotification('画像が表示されました。', 'success');
-      }
-      if(subscriptionStatus && messCt == 0){
-        window.postMessage({ event: 'imageDone' }, '*');
-        messCt ++
-      }else{
-        messCt = 0
-      }
-
+    if (subscriptionStatus && messCt == 1) {
+      window.postMessage({ event: 'imageDone' }, '*');
+      messCt++;
+    }
   } catch (error) {
-      console.error('generateImage Error fetching user:', error);
-      showNotification('ユーザー情報の取得に失敗しました。', 'error');
+    showNotification('ユーザー情報の取得に失敗しました。', 'error');
   }
-}
+};

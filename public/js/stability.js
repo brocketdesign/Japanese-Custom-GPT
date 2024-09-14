@@ -221,7 +221,7 @@ const displayedImageIds = new Set();
 
 // Function to poll the task status
 function pollTaskStatus(API_URL, taskId, type, prompt) {
-    const POLLING_INTERVAL = 3000; // 3 seconds
+    const POLLING_INTERVAL = 5000; // 3 seconds
     const MAX_ATTEMPTS = 60;
     let attempts = 0;
 

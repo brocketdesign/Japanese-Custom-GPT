@@ -260,6 +260,9 @@ function pollTaskStatus(API_URL, taskId, type, prompt) {
                     } else {
                         $('#load-image-container').find('.message-container').first().remove();
                     }
+                    if($('#load-image-container').find('.message-container').length == 0){
+                        $('#load-image-container').remove()
+                    }
                 } else {
                     console.log(`Image ${imageId} has already been displayed.`);
                 }

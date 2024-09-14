@@ -364,6 +364,7 @@
 
         showStep(currentStep);
     });
+
 </script>
 <script>
     
@@ -813,19 +814,13 @@
             $button.html('<i class="fas fa-spinner fa-spin me-2"></i>プロンプトを強化中...');
 
             try {
-                let enhanceResponse = {enhancedPrompt:''}
-
-                if($('#enhancedPrompt').val().trim() != ''){
-                    enhanceResponse.enhancedPrompt = $('#enhancedPrompt').val()
-                }else{
-                    // プロンプトを強化するリクエスト
-                    enhanceResponse = await $.ajax({
+                
+                const enhanceResponse = await $.ajax({
                         url: '/api/enhance-prompt',
                         method: 'POST',
                         contentType: 'application/json',
                         data: JSON.stringify({ prompt, chatId })
                     });
-                }
 
                 if (enhanceResponse && enhanceResponse.enhancedPrompt) {
                     $('#enhancedPrompt').val(enhanceResponse.enhancedPrompt);

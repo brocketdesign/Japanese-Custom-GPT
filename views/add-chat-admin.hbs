@@ -364,6 +364,11 @@
 
         showStep(currentStep);
     });
+    $(document).ready(function() {
+        $('#characterPrompt').on('input change', function() {
+            $('#enhancedPrompt').val('');
+        });
+    });
 
 </script>
 <script>
@@ -767,6 +772,7 @@
 
                         showNotification('画像が正常に生成されました。', 'success');
                         // ボタンを有効化し、初期状態のテキストに戻す
+                        $('#characterPrompt').prop('disabled', false);
                         $('#generateButton').prop('disabled', false);
                         $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
                     } else if (statusResponse.status === 'failed') {
@@ -774,6 +780,7 @@
                         $('#generatedImage').attr('src', '/img/default-character.png');
                         showNotification(`画像の生成に失敗しました: ${statusResponse.error}`, 'error');
                         // ボタンを有効化し、初期状態のテキストに戻す
+                        $('#characterPrompt').prop('disabled', false);
                         $('#generateButton').prop('disabled', false);
                         $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
                     } else {
@@ -786,6 +793,7 @@
                         showNotification('画像の生成がタイムアウトしました。再試行してください。', 'error');
 
                         // ボタンを有効化し、初期状態のテキストに戻す
+                        $('#characterPrompt').prop('disabled', false);
                         $('#generateButton').prop('disabled', false);
                         $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
                     }
@@ -796,6 +804,7 @@
                     $('#generatedImage').attr('src', '/img/default-character.png');
                     showNotification('画像の生成中にエラーが発生しました。', 'error');
                     // ボタンを有効化し、初期状態のテキストに戻す
+                    $('#characterPrompt').prop('disabled', false);
                     $('#generateButton').prop('disabled', false);
                     $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
                 }
@@ -812,15 +821,22 @@
             const $button = $(this);
             $button.prop('disabled', true);
             $button.html('<i class="fas fa-spinner fa-spin me-2"></i>プロンプトを強化中...');
+            $('#characterPrompt').prop('disabled', true);
 
             try {
-                
-                const enhanceResponse = await $.ajax({
+                let enhanceResponse = {enhancedPrompt:''}
+
+                if($('#enhancedPrompt').val().trim() != ''){
+                    enhanceResponse.enhancedPrompt = $('#enhancedPrompt').val()
+                }else{
+                    // プロンプトを強化するリクエスト
+                    enhanceResponse = await $.ajax({
                         url: '/api/enhance-prompt',
                         method: 'POST',
                         contentType: 'application/json',
                         data: JSON.stringify({ prompt, chatId })
                     });
+                }
 
                 if (enhanceResponse && enhanceResponse.enhancedPrompt) {
                     $('#enhancedPrompt').val(enhanceResponse.enhancedPrompt);

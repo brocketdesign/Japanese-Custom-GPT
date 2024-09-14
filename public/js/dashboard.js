@@ -462,6 +462,13 @@ $(document).ready(async function() {
     });
     
 });
+
+// Helper function to scroll to the top
+function scrollToTop() {
+    $('html, body').animate({ scrollTop: 0 }, 'slow');
+}
+
+
 window.loadChatUsers = async function (chatId, page = 1) {
     $.ajax({
         url: `/chat/${chatId}/users?page=${page}`,
@@ -479,7 +486,7 @@ window.loadChatUsers = async function (chatId, page = 1) {
                 `;
             });
 
-            $('#chat-users-gallery').html(chatUsersHtml);
+            $('#chat-users-gallery').append(chatUsersHtml);
             // Optionally, handle pagination if needed
             // generateChatUserPagination(data.page, data.totalPages, chatId);
         },
@@ -490,34 +497,40 @@ window.loadChatUsers = async function (chatId, page = 1) {
 }
 function generateChatUserPagination(currentPage, totalPages, chatId) {
     let paginationHtml = '';
-    const maxPagesToShow = 5;
-    const sidePagesToShow = 2; // Pages to show on each side of the current page
+    const sidePagesToShow = 2;
+    let pagesShown = new Set();
+
+    $(window).off('scroll').on('scroll', function() {
+        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+            if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
+                loadChatUsers(chatId, currentPage + 1);
+                pagesShown.add(currentPage + 1);
+            }
+        }
+    });
+
+    if (currentPage >= totalPages) {
+        $('#chat-users-pagination-controls').html('<button class="btn btn-primary" onclick="scrollToTop()">トップへ戻る</button>');
+        return;
+    }
 
     if (totalPages > 1) {
         paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadChatUsers('${chatId}', ${currentPage - 1})">前へ</button>`;
 
         if (currentPage > sidePagesToShow + 1) {
             paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadChatUsers('${chatId}', 1)">1</button>`;
-            if (currentPage > sidePagesToShow + 2) {
-                paginationHtml += `<span class="mx-1">...</span>`;
-            }
+            if (currentPage > sidePagesToShow + 2) paginationHtml += `<span class="mx-1">...</span>`;
         }
 
         let startPage = Math.max(1, currentPage - sidePagesToShow);
         let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
 
         for (let i = startPage; i <= endPage; i++) {
-            paginationHtml += `
-                <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadChatUsers('${chatId}', ${i})">
-                    ${i}
-                </button>
-            `;
+            paginationHtml += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadChatUsers('${chatId}', ${i})">${i}</button>`;
         }
 
         if (currentPage < totalPages - sidePagesToShow - 1) {
-            if (currentPage < totalPages - sidePagesToShow - 2) {
-                paginationHtml += `<span class="mx-1">...</span>`;
-            }
+            if (currentPage < totalPages - sidePagesToShow - 2) paginationHtml += `<span class="mx-1">...</span>`;
             paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadChatUsers('${chatId}', ${totalPages})">${totalPages}</button>`;
         }
 
@@ -553,7 +566,7 @@ window.displayPeopleList = async function (userId, type = 'followers', page = 1)
         });
 
         // Update the HTML content for the list
-        $('#people-list').html(htmlContent);
+        $('#people-list').append(htmlContent);
 
         // Generate pagination controls
         generatePagination(data.page, data.totalPages, userId, type);
@@ -562,13 +575,23 @@ window.displayPeopleList = async function (userId, type = 'followers', page = 1)
         console.error('Failed to load list', err);
     }
 };
-
-// Generate pagination for the followers/following list
 function generatePagination(currentPage, totalPages, userId, type) {
     let paginationHtml = '';
     const maxPagesToShow = 5;
     const sidePagesToShow = 2;
+    let pagesShown = new Set();  // Track the pages already displayed
 
+    // Scroll event listener to trigger infinite scroll
+    $(window).off('scroll').on('scroll', function() {
+        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+            if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
+                displayPeopleList(userId, type, currentPage + 1);
+                pagesShown.add(currentPage + 1);  // Mark page as shown
+            }
+        }
+    });
+
+    // If more than one page, generate pagination buttons
     if (totalPages > 1) {
         paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="displayPeopleList('${userId}', '${type}', ${currentPage - 1})">前へ</button>`;
 
@@ -601,6 +624,7 @@ function generatePagination(currentPage, totalPages, userId, type) {
 
     $('#pagination-controls').html(paginationHtml);
 }
+
 
 window.displayPepopleChat = async function (page = 1) {
     const currentUser = await fetchUser();
@@ -648,9 +672,11 @@ window.displayPepopleChat = async function (page = 1) {
                                 <div class="persona" style="color:rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
                                     <span class="badge bg-dark" style="width: 30px;"><i class="far fa-user-circle"></i></span>
                                 </div>
-                                <div class="gallery" style="color: rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
-                                    <span class="badge bg-dark"><i class="far fa-image me-1"></i>${chat.imageCount || 0}</span>
-                                </div>
+                                <a href="/character/${chat._id}">
+                                    <div class="gallery" style="color: rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
+                                        <span class="badge bg-dark"><i class="far fa-image me-1"></i>${chat.imageCount || 0}</span>
+                                    </div>
+                                </a>
                                 ${galleryIco}
                                 ${chat.messagesCount ? `<span class="badge bg-dark message-count"><i class="fas fa-comment-alt me-2"></i>${chat.messagesCount}</span>` : ''}
                             </div>
@@ -676,43 +702,51 @@ window.displayPepopleChat = async function (page = 1) {
         });
 
         // Update the gallery HTML
-        $('#chat-gallery').html(htmlContent);
+        $('#chat-gallery').append(htmlContent);
         generateChatsPagination(data.page, data.totalPages);
 
     } catch (err) {
         console.error('Failed to load chats', err);
     }
 };
-
 function generateChatsPagination(currentPage, totalPages) {
     let paginationHtml = '';
-    const maxPagesToShow = 5;
     const sidePagesToShow = 2;
+    let pagesShown = new Set();
+
+    // Scroll event listener for infinite scroll
+    $(window).off('scroll').on('scroll', function() {
+        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+            if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
+                displayPepopleChat(currentPage + 1);
+                pagesShown.add(currentPage + 1);
+            }
+        }
+    });
+
+    if (currentPage >= totalPages) {
+        // Hide pagination and show "Go to Top" button in Japanese
+        $('#chat-pagination-controls').html('<button class="btn btn-primary" onclick="scrollToTop()">トップへ戻る</button>');
+        return;
+    }
 
     if (totalPages > 1) {
         paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="displayPepopleChat(${currentPage - 1})">前へ</button>`;
 
         if (currentPage > sidePagesToShow + 1) {
             paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="displayPepopleChat(1)">1</button>`;
-            if (currentPage > sidePagesToShow + 2) {
-                paginationHtml += `<span class="mx-1">...</span>`;
-            }
+            if (currentPage > sidePagesToShow + 2) paginationHtml += `<span class="mx-1">...</span>`;
         }
 
         let startPage = Math.max(1, currentPage - sidePagesToShow);
         let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
 
         for (let i = startPage; i <= endPage; i++) {
-            paginationHtml += `
-            <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="displayPepopleChat(${i})">
-                ${i}
-            </button>`;
+            paginationHtml += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="displayPepopleChat(${i})">${i}</button>`;
         }
 
         if (currentPage < totalPages - sidePagesToShow - 1) {
-            if (currentPage < totalPages - sidePagesToShow - 2) {
-                paginationHtml += `<span class="mx-1">...</span>`;
-            }
+            if (currentPage < totalPages - sidePagesToShow - 2) paginationHtml += `<span class="mx-1">...</span>`;
             paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="displayPepopleChat(${totalPages})">${totalPages}</button>`;
         }
 
@@ -720,6 +754,10 @@ function generateChatsPagination(currentPage, totalPages) {
     }
 
     $('#chat-pagination-controls').html(paginationHtml);
+}
+
+function scrollToTop() {
+    $('html, body').animate({ scrollTop: 0 }, 'slow');
 }
 
 window.loadAllUserPosts = async function (page = 1) {
@@ -779,7 +817,7 @@ window.loadAllUserPosts = async function (page = 1) {
             `;
         });
 
-        $('#post-gallery').html(galleryHtml);
+        $('#post-gallery').append(galleryHtml);
         generateUserPostsPagination(data.page, data.totalPages);
       },
       error: function (err) {
@@ -787,41 +825,50 @@ window.loadAllUserPosts = async function (page = 1) {
       }
     });
 }
-
 function generateUserPostsPagination(currentPage, totalPages) {
     let paginationHtml = '';
     const maxPagesToShow = 5;
     const sidePagesToShow = 2;
+    let pagesShown = new Set();
+
+    $(window).off('scroll').on('scroll', function() {
+        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+            if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
+                loadAllUserPosts(currentPage + 1);
+                pagesShown.add(currentPage + 1);
+            }
+        }
+    });
 
     if (totalPages > 1) {
-      paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadAllUserPosts(${currentPage - 1})">前へ</button>`;
+        paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadAllUserPosts(${currentPage - 1})">前へ</button>`;
 
-      if (currentPage > sidePagesToShow + 1) {
-        paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadAllUserPosts(1)">1</button>`;
-        if (currentPage > sidePagesToShow + 2) {
-          paginationHtml += `<span class="mx-1">...</span>`;
+        if (currentPage > sidePagesToShow + 1) {
+            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadAllUserPosts(1)">1</button>`;
+            if (currentPage > sidePagesToShow + 2) {
+                paginationHtml += `<span class="mx-1">...</span>`;
+            }
         }
-      }
 
-      let startPage = Math.max(1, currentPage - sidePagesToShow);
-      let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
+        let startPage = Math.max(1, currentPage - sidePagesToShow);
+        let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
 
-      for (let i = startPage; i <= endPage; i++) {
-        paginationHtml += `
-          <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadAllUserPosts(${i})">
-            ${i}
-          </button>
-        `;
-      }
-
-      if (currentPage < totalPages - sidePagesToShow - 1) {
-        if (currentPage < totalPages - sidePagesToShow - 2) {
-          paginationHtml += `<span class="mx-1">...</span>`;
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHtml += `
+                <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadAllUserPosts(${i})">
+                    ${i}
+                </button>
+            `;
         }
-        paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadAllUserPosts(${totalPages})">${totalPages}</button>`;
-      }
 
-      paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadAllUserPosts(${currentPage + 1})">次へ</button>`;
+        if (currentPage < totalPages - sidePagesToShow - 1) {
+            if (currentPage < totalPages - sidePagesToShow - 2) {
+                paginationHtml += `<span class="mx-1">...</span>`;
+            }
+            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadAllUserPosts(${totalPages})">${totalPages}</button>`;
+        }
+
+        paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadAllUserPosts(${currentPage + 1})">次へ</button>`;
     }
 
     $('#user-posts-pagination-controls').html(paginationHtml);
@@ -876,7 +923,7 @@ window.loadAllChatImages = async function (page = 1) {
             `;
         });
 
-        $('#all-chats-images-gallery').html(chatGalleryHtml);
+        $('#all-chats-images-gallery').append(chatGalleryHtml);
         generateAllChatsImagePagination(data.page, data.totalPages);
       },
       error: function (err) {
@@ -884,46 +931,55 @@ window.loadAllChatImages = async function (page = 1) {
       }
     });
 }
-
 function generateAllChatsImagePagination(currentPage, totalPages) {
     let paginationHtml = '';
     const maxPagesToShow = 5;
-    const sidePagesToShow = 2; // Pages to show on each side of the current page
+    const sidePagesToShow = 2;
+    let pagesShown = new Set(); // Track the pages already displayed
+
+    // Scroll event listener for infinite scroll
+    $(window).off('scroll').on('scroll', function() {
+        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+            if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
+                loadAllChatImages(currentPage + 1);
+                pagesShown.add(currentPage + 1);
+            }
+        }
+    });
 
     if (totalPages > 1) {
-      paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadAllChatImages(${currentPage - 1})">前へ</button>`;
+        paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadAllChatImages(${currentPage - 1})">前へ</button>`;
 
-      if (currentPage > sidePagesToShow + 1) {
-        paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadAllChatImages(1)">1</button>`;
-        if (currentPage > sidePagesToShow + 2) {
-          paginationHtml += `<span class="mx-1">...</span>`;
+        if (currentPage > sidePagesToShow + 1) {
+            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadAllChatImages(1)">1</button>`;
+            if (currentPage > sidePagesToShow + 2) {
+                paginationHtml += `<span class="mx-1">...</span>`;
+            }
         }
-      }
 
-      let startPage = Math.max(1, currentPage - sidePagesToShow);
-      let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
+        let startPage = Math.max(1, currentPage - sidePagesToShow);
+        let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
 
-      for (let i = startPage; i <= endPage; i++) {
-        paginationHtml += `
-          <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadAllChatImages(${i})">
-            ${i}
-          </button>
-        `;
-      }
-
-      if (currentPage < totalPages - sidePagesToShow - 1) {
-        if (currentPage < totalPages - sidePagesToShow - 2) {
-          paginationHtml += `<span class="mx-1">...</span>`;
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHtml += `
+              <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadAllChatImages(${i})">
+                ${i}
+              </button>
+            `;
         }
-        paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadAllChatImages(${totalPages})">${totalPages}</button>`;
-      }
 
-      paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadAllChatImages(${currentPage + 1})">次へ</button>`;
+        if (currentPage < totalPages - sidePagesToShow - 1) {
+            if (currentPage < totalPages - sidePagesToShow - 2) {
+                paginationHtml += `<span class="mx-1">...</span>`;
+            }
+            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadAllChatImages(${totalPages})">${totalPages}</button>`;
+        }
+
+        paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadAllChatImages(${currentPage + 1})">次へ</button>`;
     }
-    
+
     $('#all-chats-images-pagination-controls').html(paginationHtml);
 }
-
 
 window.loadChatImages = async function (chatId, page = 1) {
     const currentUser = await fetchUser();
@@ -972,7 +1028,7 @@ window.loadChatImages = async function (chatId, page = 1) {
             `;
         });
 
-        $('#chat-images-gallery').html(chatGalleryHtml);
+        $('#chat-images-gallery').append(chatGalleryHtml);
         generateChatImagePagination(data.page, data.totalPages, chatId);
       },
       error: function (err) {
@@ -983,42 +1039,52 @@ window.loadChatImages = async function (chatId, page = 1) {
 function generateChatImagePagination(currentPage, totalPages, chatId) {
     let paginationHtml = '';
     const maxPagesToShow = 5;
-    const sidePagesToShow = 2; // Pages to show on each side of the current page
+    const sidePagesToShow = 2;
+    let pagesShown = new Set(); // Track displayed pages
+
+    // Scroll event listener for infinite scrolling
+    $(window).off('scroll').on('scroll', function() {
+        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+            if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
+                loadChatImages(chatId, currentPage + 1);
+                pagesShown.add(currentPage + 1); // Mark the page as shown
+            }
+        }
+    });
 
     if (totalPages > 1) {
-      paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadChatImages('${chatId}', ${currentPage - 1})">前へ</button>`;
+        paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadChatImages('${chatId}', ${currentPage - 1})">前へ</button>`;
 
-      if (currentPage > sidePagesToShow + 1) {
-        paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadChatImages('${chatId}', 1)">1</button>`;
-        if (currentPage > sidePagesToShow + 2) {
-          paginationHtml += `<span class="mx-1">...</span>`;
+        if (currentPage > sidePagesToShow + 1) {
+            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadChatImages('${chatId}', 1)">1</button>`;
+            if (currentPage > sidePagesToShow + 2) {
+                paginationHtml += `<span class="mx-1">...</span>`;
+            }
         }
-      }
 
-      let startPage = Math.max(1, currentPage - sidePagesToShow);
-      let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
+        let startPage = Math.max(1, currentPage - sidePagesToShow);
+        let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
 
-      for (let i = startPage; i <= endPage; i++) {
-        paginationHtml += `
-          <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadChatImages('${chatId}', ${i})">
-            ${i}
-          </button>
-        `;
-      }
-
-      if (currentPage < totalPages - sidePagesToShow - 1) {
-        if (currentPage < totalPages - sidePagesToShow - 2) {
-          paginationHtml += `<span class="mx-1">...</span>`;
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHtml += `
+              <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadChatImages('${chatId}', ${i})">
+                ${i}
+              </button>
+            `;
         }
-        paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadChatImages('${chatId}', ${totalPages})">${totalPages}</button>`;
-      }
 
-      paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadChatImages('${chatId}', ${currentPage + 1})">次へ</button>`;
+        if (currentPage < totalPages - sidePagesToShow - 1) {
+            if (currentPage < totalPages - sidePagesToShow - 2) {
+                paginationHtml += `<span class="mx-1">...</span>`;
+            }
+            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadChatImages('${chatId}', ${totalPages})">${totalPages}</button>`;
+        }
+
+        paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadChatImages('${chatId}', ${currentPage + 1})">次へ</button>`;
     }
 
     $('#chat-images-pagination-controls').html(paginationHtml);
 }
-
 
 window.loadUserImages = async function (userId, page = 1) {
     const currentUser = await fetchUser();
@@ -1065,7 +1131,7 @@ window.loadUserImages = async function (userId, page = 1) {
             `;
         });
 
-        $('#user-images-gallery').html(galleryHtml);
+        $('#user-images-gallery').append(galleryHtml);
         generateImagePagination(data.page, data.totalPages, userId);
       },
       error: function (err) {
@@ -1073,32 +1139,46 @@ window.loadUserImages = async function (userId, page = 1) {
       }
     });
 }
-
 function generateImagePagination(currentPage, totalPages, userId) {
     let paginationHtml = '';
     const sidePagesToShow = 2;
+    let pagesShown = new Set();
+
+    $(window).off('scroll').on('scroll', function() {
+        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+            if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
+                loadUserImages(userId, currentPage + 1);
+                pagesShown.add(currentPage + 1);
+            }
+        }
+    });
+
+    if (currentPage >= totalPages) {
+        $('#images-pagination-controls').html('<button class="btn btn-primary" onclick="scrollToTop()">トップへ戻る</button>');
+        return;
+    }
 
     if (totalPages > 1) {
-      paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadUserImages('${userId}', ${currentPage - 1})">前へ</button>`;
+        paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadUserImages('${userId}', ${currentPage - 1})">前へ</button>`;
 
-      if (currentPage > sidePagesToShow + 1) {
-        paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadUserImages('${userId}', 1)">1</button>`;
-        if (currentPage > sidePagesToShow + 2) paginationHtml += `<span class="mx-1">...</span>`;
-      }
+        if (currentPage > sidePagesToShow + 1) {
+            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadUserImages('${userId}', 1)">1</button>`;
+            if (currentPage > sidePagesToShow + 2) paginationHtml += `<span class="mx-1">...</span>`;
+        }
 
-      let startPage = Math.max(1, currentPage - sidePagesToShow);
-      let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
+        let startPage = Math.max(1, currentPage - sidePagesToShow);
+        let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
 
-      for (let i = startPage; i <= endPage; i++) {
-        paginationHtml += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadUserImages('${userId}', ${i})">${i}</button>`;
-      }
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHtml += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadUserImages('${userId}', ${i})">${i}</button>`;
+        }
 
-      if (currentPage < totalPages - sidePagesToShow - 1) {
-        if (currentPage < totalPages - sidePagesToShow - 2) paginationHtml += `<span class="mx-1">...</span>`;
-        paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadUserImages('${userId}', ${totalPages})">${totalPages}</button>`;
-      }
+        if (currentPage < totalPages - sidePagesToShow - 1) {
+            if (currentPage < totalPages - sidePagesToShow - 2) paginationHtml += `<span class="mx-1">...</span>`;
+            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadUserImages('${userId}', ${totalPages})">${totalPages}</button>`;
+        }
 
-      paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadUserImages('${userId}', ${currentPage + 1})">次へ</button>`;
+        paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadUserImages('${userId}', ${currentPage + 1})">次へ</button>`;
     }
 
     $('#images-pagination-controls').html(paginationHtml);
@@ -1159,44 +1239,55 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
             `;
         });
         const containerId = like ? 'user-posts-like' : 'user-posts-gallery'
-        $(`#${containerId}`).html(galleryHtml);
-        generatePagination(data.page, data.totalPages, userId);
+        $(`#${containerId}`).append(galleryHtml);
+        generateUserPostPagination(data.page, data.totalPages, userId);
       },
       error: function (err) {
         console.log('Failed to load posts', err);
       }
     });
-  }
-  function generatePagination(currentPage, totalPages, userId, like = false) {
+}
+function generateUserPostPagination(currentPage, totalPages, userId, like = false) {
     let paginationHtml = '';
     const sidePagesToShow = 2;
+    let pagesShown = new Set();
+
+    $(window).off('scroll').on('scroll', function() {
+        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+            if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
+                loadUserPosts(userId, currentPage + 1);
+                pagesShown.add(currentPage + 1);
+            }
+        }
+    });
+
+    if (currentPage >= totalPages) {
+        const containerId = like ? 'posts-like-pagination-controls' : 'pagination-controls';
+        $(`#${containerId}`).html('<button class="btn btn-primary" onclick="scrollToTop()">トップへ戻る</button>');
+        return;
+    }
 
     if (totalPages > 1) {
-      // Previous Button
-      paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadUserPosts('${userId}', ${currentPage - 1})">前へ</button>`;
+        paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadUserPosts('${userId}', ${currentPage - 1})">前へ</button>`;
 
-      // First page and ellipsis
-      if (currentPage > sidePagesToShow + 1) {
-        paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadUserPosts('${userId}', 1)">1</button>`;
-        if (currentPage > sidePagesToShow + 2) paginationHtml += `<span class="mx-1">...</span>`;
-      }
+        if (currentPage > sidePagesToShow + 1) {
+            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadUserPosts('${userId}', 1)">1</button>`;
+            if (currentPage > sidePagesToShow + 2) paginationHtml += `<span class="mx-1">...</span>`;
+        }
 
-      // Visible page numbers
-      let startPage = Math.max(1, currentPage - sidePagesToShow);
-      let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
+        let startPage = Math.max(1, currentPage - sidePagesToShow);
+        let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
 
-      for (let i = startPage; i <= endPage; i++) {
-        paginationHtml += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadUserPosts('${userId}', ${i})">${i}</button>`;
-      }
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHtml += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadUserPosts('${userId}', ${i})">${i}</button>`;
+        }
 
-      // Last page and ellipsis
-      if (currentPage < totalPages - sidePagesToShow - 1) {
-        if (currentPage < totalPages - sidePagesToShow - 2) paginationHtml += `<span class="mx-1">...</span>`;
-        paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadUserPosts('${userId}', ${totalPages})">${totalPages}</button>`;
-      }
+        if (currentPage < totalPages - sidePagesToShow - 1) {
+            if (currentPage < totalPages - sidePagesToShow - 2) paginationHtml += `<span class="mx-1">...</span>`;
+            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadUserPosts('${userId}', ${totalPages})">${totalPages}</button>`;
+        }
 
-      // Next Button
-      paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadUserPosts('${userId}', ${currentPage + 1})">次へ</button>`;
+        paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadUserPosts('${userId}', ${currentPage + 1})">次へ</button>`;
     }
 
     const containerId = like ? 'posts-like-pagination-controls' : 'pagination-controls';

@@ -213,7 +213,7 @@ async function routes(fastify, options) {
             ...image,
             chatId: chat?._id,
             chatName: chat ? chat.name : 'Unknown Chat',
-            thumbnail: chat ? chat.thumbnail : '/img/default-thumbnail.png'
+            thumbnail: chat?.thumbnail || chat?.thumbnailUrl || '/img/default-thumbnail.png'
           };
         });
   
@@ -289,13 +289,13 @@ async function routes(fastify, options) {
       if (chatImagesDocs.length === 0) {
         return reply.code(404).send({ images: [], page, totalPages: 0 });
       }
-  
+      
       // Map the chat data to the images
       const imagesWithChatData = chatImagesDocs.map(doc => ({
         ...doc.image,
         chatId: chat._id,
         chatName: chat.name,
-        thumbnail: chat.thumbnail || '/img/default-thumbnail.png',
+        thumbnail: chat?.thumbnail || chat?.thumbnailUrl || '/img/default-thumbnail.png',
       }));
   
       // Send the paginated images response

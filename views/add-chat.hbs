@@ -770,7 +770,7 @@
 
                     if (attempts >= MAX_ATTEMPTS) {
                         clearInterval(intervalId);
-                        $('#generatedImage').attr('src', '/img/timeout-placeholder.png');
+                        $('#generatedImage').attr('src', '/img/default-character.png');
                         showNotification('画像の生成がタイムアウトしました。再試行してください。', 'error');
                         // ボタンを有効化し、初期状態のテキストに戻す
                         $('#characterPrompt').prop('disabled', false);

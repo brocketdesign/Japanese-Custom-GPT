@@ -151,7 +151,7 @@ async function routes(fastify, options) {
           ...image,
           chatId: chat?._id,
           chatName: chat ? chat.name : 'Unknown Chat',
-          chatThumbnailUrl: chat ? chat.thumbnailUrl : '/img/default-thumbnail.png'
+          thumbnail: chat ? chat.thumbnail : '/img/default-thumbnail.png'
         };
       });
   
@@ -180,7 +180,7 @@ async function routes(fastify, options) {
       const chatsGalleryCollection = db.collection('gallery');
       const chatsCollection = db.collection('chats');
   
-      // Find and paginate images across all chats where chatThumbnailUrl exists
+      // Find and paginate images across all chats where thumbnail exists
       const allChatImagesDocs = await chatsGalleryCollection
       .aggregate([
         { $unwind: '$images' },           
@@ -197,14 +197,14 @@ async function routes(fastify, options) {
       // Extract chatIds from the images
       const chatIds = allChatImagesDocs.map(doc => doc.chatId);
 
-      // Fetch the chat data with a non-null chatThumbnailUrl from the chats collection
+      // Fetch the chat data with a non-null thumbnail from the chats collection
       const chats = await chatsCollection
         .find({ _id: { $in: chatIds } })
         .toArray();
 
         // Map the chat data to the images
       const imagesWithChatData = allChatImagesDocs
-        .filter(doc => chats.find(c => c._id.equals(doc.chatId)))  // Filter images with valid chatThumbnailUrl
+        .filter(doc => chats.find(c => c._id.equals(doc.chatId)))  // Filter images with valid thumbnail
         .map(doc => {
           const image = doc.image;
           const chat = chats.find(c => c._id.equals(doc.chatId));
@@ -212,7 +212,7 @@ async function routes(fastify, options) {
             ...image,
             chatId: chat?._id,
             chatName: chat ? chat.name : 'Unknown Chat',
-            chatThumbnailUrl: chat ? chat.thumbnailUrl : '/img/default-thumbnail.png'
+            thumbnail: chat ? chat.thumbnail : '/img/default-thumbnail.png'
           };
         });
   
@@ -255,7 +255,7 @@ async function routes(fastify, options) {
       const chatsGalleryCollection = db.collection('gallery');
       const chatsCollection = db.collection('chats');
   
-      // Fetch the chat data (chatName and chatThumbnailUrl)
+      // Fetch the chat data (chatName and thumbnail)
       const chat = await chatsCollection.findOne({ _id: chatId });
       if (!chat) {
         return reply.code(404).send({ error: 'Chat not found' });
@@ -294,7 +294,7 @@ async function routes(fastify, options) {
         ...doc.image,
         chatId: chat._id,
         chatName: chat.name,
-        chatThumbnailUrl: chat.thumbnailUrl || '/img/default-thumbnail.png',
+        thumbnail: chat.thumbnail || '/img/default-thumbnail.png',
       }));
   
       // Send the paginated images response

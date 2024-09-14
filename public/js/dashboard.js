@@ -845,7 +845,7 @@ window.loadAllChatImages = async function (page = 1) {
                     <div class="card">
                         <div class="d-flex align-items-center p-2">
                             <a href="/character/${item.chatId}?imageId=${item._id}">
-                                <img src="${item?.chatThumbnailUrl}" alt="${item?.chatName}" class="rounded-circle me-2" width="40" height="40">
+                                <img src="${item?.thumbnail}" alt="${item?.chatName}" class="rounded-circle me-2" width="40" height="40">
                             </a>
                             <a href="/character/${item.chatId}?imageId=${item._id}" class="text-decoration-none text-dark">
                                 <strong>${item?.chatName}</strong>
@@ -943,7 +943,7 @@ window.loadChatImages = async function (chatId, page = 1) {
                     <div class="card">
                         <div class="d-flex align-items-center p-2">
                             <a href="/character/${item.chatId}?imageId=${item._id}">
-                                <img src="${item?.chatThumbnailUrl}" alt="${item?.chatName}" class="rounded-circle me-2" width="40" height="40">
+                                <img src="${item?.thumbnail}" alt="${item?.chatName}" class="rounded-circle me-2" width="40" height="40">
                             </a>
                             <a href="/character/${item.chatId}?imageId=${item._id}" class="text-decoration-none text-dark">
                                 <strong>${item?.chatName}</strong>
@@ -1037,7 +1037,7 @@ window.loadUserImages = async function (userId, page = 1) {
                 <div class="card">
                     <div class="d-flex align-items-center p-2">
                         <a href="/character/${item.chatId}?imageId=${item._id}">
-                            <img src="${item?.chatThumbnailUrl}" alt="${item?.chatName}" class="rounded-circle me-2" width="40" height="40">
+                            <img src="${item?.thumbnail}" alt="${item?.chatName}" class="rounded-circle me-2" width="40" height="40">
                         </a>
                         <a href="/character/${item.chatId}?imageId=${item._id}" class="text-decoration-none text-dark">
                             <strong>${item?.chatName}</strong>

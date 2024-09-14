@@ -1466,7 +1466,13 @@ window.showCoinShop = function(el){
     });
     
 }
-window.showPremiumPopup = function() {
+window.showPremiumPopup = async function() {
+    const user = await fetchUser();
+    const isTemporary = !!user?.isTemporary || true
+    if(isTemporary){
+        showRegistrationForm()
+        return
+    }
     const features = [
         "毎日無制限でチャットできる",
         "フレンドを無制限で作成できる",

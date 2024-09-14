@@ -222,7 +222,7 @@
                         
                         <!-- 4. Single Action Button -->
                         <div class="d-grid">
-                            <button type="button" id="generateButton" class="btn custom-gradient-bg btn-lg">
+                            <button type="button" id="generateButton" class="btn custom-gradient-bg btn-lg text-white">
                                 <i class="fas fa-magic me-2"></i>AIで生成
                             </button>
                         </div>
@@ -711,7 +711,76 @@
             });
         });
         
-      // 更新されたGenerateボタンハンドラー（日本語版）
+      
+        function fetchTaskId(enhancedPrompt, aspectRatio, chatId) {
+            return $.ajax({
+                url: '/novita/generate-image',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    prompt: enhancedPrompt,
+                    aspectRatio: aspectRatio,
+                    chatId: chatId
+                })
+            });
+        }
+        function checkTaskStatus(taskId) {
+            const POLLING_INTERVAL = 3000; // 3秒
+            const MAX_ATTEMPTS = 30; // 最大90秒までポーリング
+            let attempts = 0;
+
+            const intervalId = setInterval(async () => {
+                attempts++;
+                try {
+                    const statusResponse = await $.ajax({
+                        url: `/novita/chat-thumb-task-status/${taskId}`,
+                        method: 'GET',
+                        dataType: 'json'
+                    });
+
+                    console.log(`Polling task status:`, statusResponse);
+
+                    if (statusResponse.status === 'completed') {
+                        clearInterval(intervalId);
+                        const { imageUrl } = statusResponse.result;
+
+                        $('#generatedImage').attr('src', imageUrl);
+
+                        showNotification('画像が正常に生成されました。', 'success');
+                        // ボタンを有効化し、初期状態のテキストに戻す
+                        $('#generateButton').prop('disabled', false);
+                        $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+                    } else if (statusResponse.status === 'failed') {
+                        clearInterval(intervalId);
+                        $('#generatedImage').attr('src', '/img/default-character.png');
+                        showNotification(`画像の生成に失敗しました: ${statusResponse.error}`, 'error');
+                        // ボタンを有効化し、初期状態のテキストに戻す
+                        $('#generateButton').prop('disabled', false);
+                        $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+                    } else {
+                        console.log('タスクはまだ処理中です...');
+                    }
+
+                    if (attempts >= MAX_ATTEMPTS) {
+                        clearInterval(intervalId);
+                        $('#generatedImage').attr('src', '/img/timeout-placeholder.png');
+                        showNotification('画像の生成がタイムアウトしました。再試行してください。', 'error');
+                        // ボタンを有効化し、初期状態のテキストに戻す
+                        $('#generateButton').prop('disabled', false);
+                        $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+                    }
+
+                } catch (error) {
+                    console.error('タスクステータスポーリングエラー:', error);
+                    clearInterval(intervalId);
+                    $('#generatedImage').attr('src', '/img/default-character.png');
+                    showNotification('画像の生成中にエラーが発生しました。', 'error');
+                        // ボタンを有効化し、初期状態のテキストに戻す
+                        $('#generateButton').prop('disabled', false);
+                        $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+                }
+            }, POLLING_INTERVAL);
+        }
         $('#generateButton').on('click', async function() {
             const prompt = $('#characterPrompt').val().trim();
 
@@ -725,13 +794,19 @@
             $button.html('<i class="fas fa-spinner fa-spin me-2"></i>プロンプトを強化中...');
 
             try {
-                // プロンプトを強化するリクエスト
-                const enhanceResponse = await $.ajax({
-                    url: '/api/enhance-prompt',
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ prompt, chatId })
-                });
+                let enhanceResponse = {enhancedPrompt:''}
+
+                if($('#enhancedPrompt').val().trim() != ''){
+                    enhanceResponse.enhancedPrompt = $('#enhancedPrompt').val()
+                }else{
+                    // プロンプトを強化するリクエスト
+                    enhanceResponse = await $.ajax({
+                        url: '/api/enhance-prompt',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ prompt, chatId })
+                    });
+                }
 
                 if (enhanceResponse && enhanceResponse.enhancedPrompt) {
                     $('#enhancedPrompt').val(enhanceResponse.enhancedPrompt);
@@ -739,35 +814,29 @@
                     // ボタンテキストを「画像を生成中...」に更新
                     $button.html('<i class="fas fa-spinner fa-spin me-2"></i>画像を生成中...');
 
-                    // 画像を生成するリクエスト
-                    const generateResponse = await $.ajax({
-                        url: '/novita/generate-image',
-                        method: 'POST',
-                        contentType: 'application/json',
-                        data: JSON.stringify({
-                            prompt: enhanceResponse.enhancedPrompt,
-                            aspectRatio: '9:16',
-                            chatId
-                        })
-                    });
+                    // タスクIDを取得するリクエスト
+                    const taskResponse = await fetchTaskId(enhanceResponse.enhancedPrompt, '9:16', chatId);
 
-                    if (generateResponse && generateResponse.images && generateResponse.images.length > 0) {
-                        const image = generateResponse.images[0];
-                        $('#generatedImage').attr('src', image.url);
-                        showNotification('画像が正常に生成されました。', 'success');
+                    if (taskResponse && taskResponse.taskId) {
+                        showNotification('画像生成タスクを開始しました。ステータスを確認中...', 'info');
+
+                        // タスクステータスをポーリング
+                        checkTaskStatus(taskResponse.taskId);
                     } else {
-                        showNotification('画像の生成に失敗しました。再試行してください。', 'error');
+                        showNotification('画像生成タスクの開始に失敗しました。再試行してください。', 'error');
+                        // ボタンを有効化し、初期状態のテキストに戻す
+                        $button.prop('disabled', false);
+                        $button.html('<i class="fas fa-magic me-2"></i>AIで画像生成');
                     }
                 } else {
                     showNotification('プロンプトの生成に失敗しました。再試行してください。', 'error');
+                    // ボタンを有効化し、初期状態のテキストに戻す
+                    $button.prop('disabled', false);
+                    $button.html('<i class="fas fa-magic me-2"></i>AIで画像生成');
                 }
             } catch (error) {
                 console.error('Error:', error);
                 showNotification('プロンプトの生成中または画像の生成中にエラーが発生しました。', 'error');
-            } finally {
-                // ボタンを有効化し、初期状態のテキストに戻す
-                $button.prop('disabled', false);
-                $button.html('<i class="fas fa-magic me-2"></i>AIで画像生成');
             }
         });
 

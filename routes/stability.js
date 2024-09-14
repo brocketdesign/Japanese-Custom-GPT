@@ -203,164 +203,6 @@ async function routes(fastify, options) {
   }
 
   
-  function getClosestAllowedDimension(height, ratio) {
-    const [widthRatio, heightRatio] = ratio.split(':').map(Number);
-    const targetAspectRatio = widthRatio / heightRatio;
-  
-    // Define allowed dimensions
-    const allowedDimensions = [
-      { width: 1024, height: 1024 }, { width: 1152, height: 896 },
-      { width: 1216, height: 832 }, { width: 1344, height: 768 },
-      { width: 1536, height: 640 }, { width: 640, height: 1536 },
-      { width: 768, height: 1344 }, { width: 832, height: 1216 },
-      { width: 896, height: 1152 }
-    ];
-  
-    // Sort dimensions by closeness to the target aspect ratio
-    const sortedDimensions = allowedDimensions.sort((a, b) => {
-      const ratioA = a.width / a.height;
-      const ratioB = b.width / b.height;
-      return Math.abs(ratioA - targetAspectRatio) - Math.abs(ratioB - targetAspectRatio);
-    });
-  
-    // Return the first (closest) dimension
-    return sortedDimensions[0];
-  }
-  async function convertImageToBase64(imagePath) {
-    const imageBuffer = await fs.promises.readFile(imagePath);
-    const base64Image = imageBuffer.toString('base64');
-    return base64Image;
-  }
-  async function ensureFolderExists(folderPath) {
-    try {
-      // Check if the folder exists
-      await fs.promises.access(folderPath, fs.constants.F_OK);
-    } catch (error) {
-      // Folder does not exist, create it
-      await fs.promises.mkdir(folderPath, { recursive: true });
-    }
-  }
-
-  // Hugging Face API Configuration
-const API_URL_HUGGINGFACE = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev";
-const HuggingFaceHeaders = {
-  Authorization: "Bearer "+process.env.HUGGINGFACE_API_KEY
-};
-
-async function queryHuggingFaceAPI(data) {
-  try {
-    const response = await fetch(API_URL_HUGGINGFACE, {
-      HuggingFaceHeaders,
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-
-    // Check if the response is successful
-    if (!response.ok) {
-      //throw new Error(`HTTP error! status: ${response.status}`);
-      throw new Error(`Non-200 response: ${await response.text()}`)
-
-    }
-
-    const imageBytes = await response.arrayBuffer();
-
-    return Buffer.from(imageBytes);
-  } catch (error) {
-    console.error("Oops! Ran into an issue: ", error.message);
-    throw error; // or return something else
-  }
-}
-fastify.post('/huggingface/txt2img', async (request, reply) => {
-  const { prompt, aspectRatio, userId, chatId, userChatId } = request.body;
-  
-  const huggingFacePayload = {
-    inputs: prompt,
-    parameters: {
-        "num_inference_steps": 20, 
-        "width": 768,              
-        "height": 1280,            
-        "negative_prompt": "(worst quality:2),(low quality:2),(normal quality:2),lowres,watermark",
-    }
-  };
-  try {
-    const imageBuffer = await queryHuggingFaceAPI(huggingFacePayload);
-    const imageUrl = await handleFileUpload({
-      file: [imageBuffer],
-      filename: `${Date.now()}.png`
-    });
-
-    const { imageId } = await saveImageToDB(userId, chatId, userChatId, prompt, imageUrl, aspectRatio);
-
-    console.log({ imageId, imageUrl });
-  
-    reply.send({ image_id: imageId, image: imageUrl });
-  } catch (err) {
-    console.error(err);
-    reply.status(500).send('Error generating image');
-  }
-});
-  fastify.post('/stability/txt2img', async (request, reply) => {
-    const { prompt, aspectRatio, userId, chatId, userChatId } = request.body;
-    const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
-  
-    const closestDimension = getClosestAllowedDimension(1024, aspectRatio);
-    const stableDiffusionPayload = {
-      prompt: prompt,
-      width: closestDimension.width,
-      height: closestDimension.height,
-      steps: 20,
-      seed: 0,
-      cfg_scale: 5,
-      samples: 1,
-      text_prompts: [
-        { text: prompt, weight: 1 },
-        { text: 'bad,blurry', weight: -1 }
-      ]
-    };
-
-    try {
-  
-      const imageBuffer = await fetchStabilityMagic(stableDiffusionPayload);
-      const imageUrl = await handleFileUpload({
-        file: [imageBuffer], // Convert buffer to an iterable for handleFileUpload
-        filename: `${Date.now()}.png`
-      });
-  
-      const { imageId } = await saveImageToDB(userId, chatId, userChatId, prompt, imageUrl, aspectRatio);
-      console.log({ imageId, imageUrl });
-  
-      reply.send({ image_id: imageId, image: imageUrl });
-    } catch (err) {
-      console.error(err);
-      reply.status(500).send('Error generating image');
-    }
-  });
-  // STABLE DIFFUSION
-  fastify.post('/stability/img2img', async (request, res) => {
-    const { prompt, negative_prompt, aspectRatio, imagePath } = request.body;
-
-    if (!imagePath) {
-      return res.status(400).send('An image path must be provided for img2img.');
-    }
-
-    try {
-      
-      console.log(`img2img`)
-      const stabilityPayload = createStabilityPayload(imagePath, prompt);
-      const resultImageBuffer = await transmogrifyImage(stabilityPayload);
-      const imageID = await saveImageToDB(global.db, request.user._id, prompt, resultImageBuffer, aspectRatio);
-
-      await ensureFolderExists('./public/output');
-      const outputImagePath = `./public/output/${imageID}.png`;
-      await fs.promises.writeFile(outputImagePath, resultImageBuffer);
-
-      const base64ResultImage = await convertImageToBase64(outputImagePath);
-      reply.send({ image_id: imageID, image: base64ResultImage });
-    } catch (err) {
-      console.error(err);
-      reply.status(500).send('Error generating image');
-    }
-  });
   fastify.get('/image/:imageId', async (request, reply) => {
     try {
       const { imageId } = request.params;
@@ -432,175 +274,251 @@ fastify.post('/huggingface/txt2img', async (request, reply) => {
       }
     }
   
-// Function to retrieve the result from Novita API using task_id with polling and upload it to S3
-async function fetchNovitaResult(task_id) {
-  const pollInterval = 1000; // Poll every 1 second
-  const maxAttempts = 300; // Set a maximum number of attempts to avoid infinite loops
+    // Function to fetch Novita's task result (single check)
+    async function fetchNovitaResult(task_id) {
+      try {
+        const response = await axios.get(`https://api.novita.ai/v3/async/task-result?task_id=${task_id}`, {
+          headers: {
+            Authorization: `Bearer ${process.env.NOVITA_API_KEY}`,
+          },
+        });
 
-  let attempts = 0;
-
-  return new Promise((resolve, reject) => {
-      const timer = setInterval(async () => {
-          attempts++;
-
-          try {
-              const response = await axios.get(`https://api.novita.ai/v3/async/task-result?task_id=${task_id}`, {
-                  headers: {
-                      Authorization: `Bearer ${process.env.NOVITA_API_KEY}`,
-                  },
-              });
-
-              if (response.status !== 200) {
-                  throw new Error(`Error fetching result: ${response.status} - ${response.data}`);
-              }
-
-              const taskStatus = response.data.task.status;
-
-              if (taskStatus === 'TASK_STATUS_SUCCEED') {
-                clearInterval(timer);
-                const images = response.data.images;
-                if (images.length === 0) {
-                    throw new Error('No images returned from Novita API');
-                }
-            
-                const s3Urls = await Promise.all(images.map(async (image) => {
-                    const imageUrl = image.image_url;
-                    const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
-                    const buffer = Buffer.from(imageResponse.data, 'binary');
-                    const hash = createHash('md5').update(buffer).digest('hex');
-                    return uploadToS3(buffer, hash, 'novita_result_image.png');
-                }));
-            
-                resolve(s3Urls);
-            } else if (taskStatus === 'TASK_STATUS_FAILED') {
-                  clearInterval(timer);
-                  reject(`Task failed with reason: ${response.data.task.reason}`);
-              } else if (attempts >= maxAttempts) {
-                  clearInterval(timer);
-                  reject('Task timed out.');
-              }
-
-              // Optionally, you can log the progress or queue status
-              if (taskStatus === 'TASK_STATUS_QUEUED') {
-                  //console.log("Queueing...");
-              } else if (taskStatus === 'TASK_STATUS_RUNNING') {
-                  //console.log(`Progress: ${response.data.task.progress_percent}%`);
-              }
-
-          } catch (error) {
-              clearInterval(timer);
-              console.error('Error fetching Novita result:', error.message);
-              reject(error);
-          }
-      }, pollInterval);
-  });
-}
-
-  const default_prompt ={
-    nsfw: {
-      prompt: `score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime,1girl,(nsfw),uncensored,breasts,erect nipples,panty,large breast,(sexy pose), naughty face, sexy micro clothes,nudity, `,
-      negative_prompt: "score_6, score_5, score_4, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye,pussy,vulve,vagin,sex,dick,blurry,signature,username,watermark,jpeg artifacts,normal quality,worst quality,low quality"
-    },
-    sfw: {
-      prompt: `score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime,1girl,HD,4K quality,(perfect hands:0.1),(sfw),dressed,clothes ,`,
-      negative_prompt : "score_6, score_5, score_4, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, nipple,topless,nsfw,naked,pussy,vulve,vagin,,nude,sex,worst quality,low quality,"
-    }
-  }
-  const params = {
-    model_name: "novaAnimeXL_xlV10_341799.safetensors",
-    prompt: '',
-    negative_prompt: '',
-    width: 768,
-    height: 1024,
-    sampler_name: "Euler a",
-    guidance_scale: 10,
-    steps: 30,
-    image_num: 1,
-    clip_skip: 0,
-    seed: -1,
-    loras: [],
-  }
-
-  
-  fastify.post('/novita/txt2img', async (request, reply) => {
-    const { prompt, aspectRatio, userId, chatId, userChatId } = request.body;
-    try {
-      const db = await fastify.mongo.client.db(process.env.MONGODB_NAME)
-      const collectionUser = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
-      let user = await fastify.getUser(request, reply);
-      const userIdObj = new fastify.mongo.ObjectId(user._id);
-      user = await collectionUser.findOne({ _id: userIdObj });
-  
-      const isSubscribed = user.subscriptionStatus === 'active';
-
-      const truncate = (text, maxLength = 1024) => [...text].slice(0, maxLength).join('');
-
-      const image_request1 = { 
-        ...params, 
-        prompt: truncate(default_prompt.sfw.prompt + prompt), 
-        negative_prompt: truncate(default_prompt.sfw.negative_prompt)
-      };
-      
-      const image_request2 = { 
-        ...params, 
-        prompt: truncate(default_prompt.nsfw.prompt + prompt), 
-        negative_prompt: truncate(default_prompt.nsfw.negative_prompt)
-      };
-       
-      console.log(image_request1,image_request2)
-  
-      const handleImageRequest = async (image_request, blur = false, nsfw = false) => {
-        try {
-          const taskId = await fetchNovitaMagic(image_request);
-          let imageUrls = await fetchNovitaResult(taskId);
-      
-          return await Promise.all(imageUrls.map(async (imageUrl) => {
-            let blurredImageUrl = null;
-      
-            // If blur is requested, create a blurred version
-            if (blur) {
-              blurredImageUrl = await createBlurredImage(imageUrl, db);
-            }
-      
-            // Save both the original and blurred (if exists) URLs in the DB
-            const { imageId } = await saveImageToDB(
-              userId, 
-              chatId, 
-              userChatId, 
-              image_request.prompt, 
-              imageUrl,  // original image
-              aspectRatio, 
-              blurredImageUrl,  // blurred image (if exists)
-              nsfw
-            );
-      
-            // Return the correct URL based on the blur flag
-            const returnUrl = blur && blurredImageUrl ? blurredImageUrl : imageUrl;
-      
-            return { id: imageId, url: returnUrl, prompt: image_request.prompt, nsfw };
-          }));
-        } catch (error) {
-          console.log(`Failed to handle image request: ${image_request.prompt}`, error);
-          return {}; // Return an empty object to avoid breaking Promise.all
+        if (response.status !== 200) {
+          throw new Error(`Non-200 response: ${await response.text()}`);
         }
-      }; 
+
+        const taskStatus = response.data.task.status;
+
+        if (taskStatus === 'TASK_STATUS_SUCCEED') {
+          const images = response.data.images;
+          if (images.length === 0) {
+            throw new Error('No images returned from Novita API');
+          }
+
+          const s3Urls = await Promise.all(images.map(async (image) => {
+            const imageUrl = image.image_url;
+            const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+            const buffer = Buffer.from(imageResponse.data, 'binary');
+            const hash = createHash('md5').update(buffer).digest('hex');
+            const uploadedUrl = await uploadToS3(buffer, hash, 'novita_result_image.png');
+            return { imageId: hash, imageUrl: uploadedUrl };
+          }));
+
+          return s3Urls[0]; // Assuming single image
+        } else if (taskStatus === 'TASK_STATUS_FAILED') {
+          throw new Error(`Task failed with reason: ${response.data.task.reason}`);
+        } else {
+          // Task is still processing or queued
+          return null;
+        }
+
+      } catch (error) {
+        console.error("Error fetching Novita result:", error.message);
+        throw error;
+      }
+    }
+
+    const default_prompt ={
+      nsfw: {
+        prompt: `score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime,1girl,(nsfw),uncensored,breasts,erect nipples,panty,large breast,(sexy pose), naughty face, sexy micro clothes,nudity, `,
+        negative_prompt: "score_6, score_5, score_4, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye,pussy,vulve,vagin,sex,dick,blurry,signature,username,watermark,jpeg artifacts,normal quality,worst quality,low quality"
+      },
+      sfw: {
+        prompt: `score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime,1girl,HD,4K quality,(perfect hands:0.1),(sfw),dressed,clothes ,`,
+        negative_prompt : "score_6, score_5, score_4, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, nipple,topless,nsfw,naked,pussy,vulve,vagin,,nude,sex,worst quality,low quality,"
+      }
+    }
+    const params = {
+      model_name: "novaAnimeXL_xlV10_341799.safetensors",
+      prompt: '',
+      negative_prompt: '',
+      width: 768,
+      height: 1024,
+      sampler_name: "Euler a",
+      guidance_scale: 10,
+      steps: 30,
+      image_num: 1,
+      clip_skip: 0,
+      seed: -1,
+      loras: [],
+    }
+
+    // Endpoint to initiate txt2img with SFW and NSFW
+    fastify.post('/novita/txt2img', async (request, reply) => {
+      const { prompt, aspectRatio, userId, chatId, userChatId } = request.body;
   
-      const [result1, result2] = await Promise.allSettled([
-        handleImageRequest(image_request1),
-        handleImageRequest(image_request2, !isSubscribed, true)
-      ]);
-      
-      const images1 = result1.status === 'fulfilled' ? result1.value : [];
-      const images2 = result2.status === 'fulfilled' ? result2.value : [];
-      
-      reply.send({ images: [...images1, ...images2] });
+      // Define the schema for validation
+      const Txt2ImgSchema = z.object({
+        prompt: z.string().min(10, 'Prompt must be at least 10 characters long'),
+        aspectRatio: z.string().optional().default('9:16'),
+        userId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid userId'),
+        chatId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid chatId'),
+        userChatId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid userChatId')
+      });
   
-    } catch (err) {
-      console.log(err);
-      reply.status(500).send('Error generating image');
+      try {
+        const validated = Txt2ImgSchema.parse(request.body);
+        const { prompt, aspectRatio, userId, chatId, userChatId } = validated;
+  
+        // Fetch user subscription status
+        const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+        const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+        const isSubscribed = user && user.subscriptionStatus === 'active';
+  
+        // Prepare tasks
+        const tasks = [];
+  
+        // SFW Task
+        const image_request1 = {
+          type: 'sfw',
+          prompt: default_prompt.sfw.prompt + prompt,
+          negative_prompt: default_prompt.sfw.negative_prompt
+        }
+        tasks.push({ ...params, ...image_request1 });
+
+  
+        // NSFW Task
+        const image_request2 = {
+          type: 'nsfw',
+          prompt: default_prompt.nsfw.prompt + prompt,
+          negative_prompt: default_prompt.nsfw.negative_prompt,
+          blur: !isSubscribed
+        }
+        tasks.push({ ...params, ...image_request2 });
+        
+  
+        // Initiate tasks and collect taskIds
+        const taskIds = await Promise.all(tasks.map(async (task) => {
+          // Send request to Novita and get taskId
+          const novitaTaskId = await fetchNovitaMagic(task);
+  
+          // Store task details in DB
+          await db.collection('tasks').insertOne({
+            taskId: novitaTaskId,
+            type: task.type,
+            status: 'pending',
+            prompt: prompt, // Original prompt without default
+            negative_prompt: task.negative_prompt,
+            aspectRatio: aspectRatio,
+            userId: new ObjectId(userId),
+            chatId: new ObjectId(chatId),
+            userChatId: new ObjectId(userChatId),
+            blur: task.blur || false,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+  
+          return { taskId: novitaTaskId, type: task.type };
+        }));
+  
+        // Respond with taskIds
+        reply.send({ tasks: taskIds, message: 'Image generation tasks started. Use the taskIds to check status.' });
+  
+      } catch (err) {
+        console.error(err);
+        reply.status(500).send({ error: 'Error initiating image generation.' });
+      }
+    });
+      /**
+   * Endpoint to check the status of a task
+   */
+  fastify.get('/novita/task-status/:taskId', async (request, reply) => {
+    const { taskId } = request.params;
+
+    try {
+      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const task = await db.collection('tasks').findOne({ taskId });
+
+      if (!task) {
+        return reply.status(404).send({ error: 'Task not found.' });
+      }
+
+      if (task.status === 'completed') {
+        return reply.send({
+          taskId: task.taskId,
+          status: task.status,
+          result: task.result
+        });
+      }
+
+      if (task.status === 'failed') {
+        return reply.send({
+          taskId: task.taskId,
+          status: task.status,
+          error: task.error
+        });
+      }
+
+      // Task is still pending or in progress, check with Novita
+      const result = await fetchNovitaResult(task.taskId);
+
+      if (result === null) {
+        // Task is still processing
+        return reply.send({
+          taskId: task.taskId,
+          status: 'processing'
+        });
+      }
+
+      // Task completed successfully
+      const { imageId, imageUrl } = result;
+
+      // If NSFW and blur is required
+      let finalImageUrl = imageUrl;
+      let blurryImage = null
+      if (task.type === 'nsfw' && task.blur) {
+        blurryImage = await createBlurredImage(imageUrl, db);
+      }
+
+      // Save image to DB
+      await saveImageToDB(task.userId, task.chatId, task.userChatId, task.prompt, finalImageUrl, task.aspectRatio, blurryImage, task.type === 'nsfw' ? true : false);
+
+      // Update task in DB
+      await db.collection('tasks').updateOne(
+        { taskId },
+        { 
+          $set: { 
+            status: 'completed',
+            result: { imageId, imageUrl: finalImageUrl },
+            updatedAt: new Date()
+          } 
+        }
+      );
+
+      if (task.type === 'nsfw' && task.blur) {
+        finalImageUrl = blurryImage
+      }
+
+      return reply.send({
+        taskId: task.taskId,
+        status: 'completed',
+        result: { imageId, imageUrl: finalImageUrl }
+      });
+
+    } catch (error) {
+      console.error('Error checking task status:', error);
+
+      // Update task as failed
+      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      await db.collection('tasks').updateOne(
+        { taskId },
+        { 
+          $set: { 
+            status: 'failed',
+            error: error.message,
+            updatedAt: new Date()
+          } 
+        }
+      );
+
+      return reply.send({
+        taskId: taskId,
+        status: 'failed',
+        error: error.message
+      });
     }
   });
-  
+
   async function saveChatImageToDB(db, chatId, imageUrl, thumbnailUrl) {
     const collectionChats = db.collection('chats'); // Replace 'chats' with your actual collection name
 
@@ -637,32 +555,136 @@ async function fetchNovitaResult(task_id) {
   });
 
   fastify.post('/novita/generate-image', async (request, reply) => {
-      try {
-          const { prompt, aspectRatio, chatId } = GenerateImageSchema.parse(request.body);
-          const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
-          const image_request = { 
-              ...params, 
-              prompt: prompt, 
-              negative_prompt: default_prompt.sfw.negative_prompt
-          };
+    try {
+      // Validate the request body
+      const { prompt, aspectRatio, chatId } = GenerateImageSchema.parse(request.body);
 
-          const taskId = await fetchNovitaMagic(image_request);
-          const imageUrls = await fetchNovitaResult(taskId);
+      // Retrieve user information (Assuming a getUser method exists)
+      const user = await fastify.getUser(request, reply);
+      const userId = user._id;
 
-          if (!imageUrls || imageUrls.length === 0) {
-              throw new Error('Novita APIから画像が返されませんでした');
-          }
+      // Combine user prompt with default SFW prompt
+      const fullPrompt = default_prompt.sfw.prompt + prompt;
+      const negativePrompt = default_prompt.sfw.negative_prompt;
 
-          const imageUrl = imageUrls[0];
-          const thumbnailUrl = imageUrl;
+      // Create image_request with default prompts
+      const image_request = { 
+        ...params, 
+        prompt: fullPrompt, 
+        negative_prompt: negativePrompt, 
+        aspectRatio: aspectRatio 
+      };      
 
-          await saveChatImageToDB(db, chatId, imageUrl, thumbnailUrl);
+      // Send request to Novita and get taskId
+      const novitaTaskId = await fetchNovitaMagic(image_request);
 
-          reply.send({ images: [{ id: chatId, url: imageUrl, thumbnail: thumbnailUrl, prompt }] });
-      } catch (err) {
-          console.log(err)
-          reply.status(500).send({ error: '画像の生成に失敗しました。' });
+      // Store task details in DB
+      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      await db.collection('tasks').insertOne({
+        taskId: novitaTaskId,
+        type: 'sfw',
+        status: 'pending',
+        prompt: prompt, // Original prompt without default
+        negative_prompt: negativePrompt,
+        aspectRatio: aspectRatio,
+        userId: new ObjectId(userId),
+        chatId: new ObjectId(chatId),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      // Respond with taskId
+      reply.send({ taskId: novitaTaskId, message: '画像生成タスクが開始されました。taskIdを使用してステータスを確認してください。' });
+
+    } catch (err) {
+      console.log(err);
+      reply.status(500).send({ error: '画像生成の開始中にエラーが発生しました。' });
+    }
+  });
+  fastify.get('/novita/chat-thumb-task-status/:taskId', async (request, reply) => {
+    const { taskId } = request.params;
+
+    try {
+      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const task = await db.collection('tasks').findOne({ taskId });
+
+      if (!task) {
+        return reply.status(404).send({ error: 'タスクが見つかりません。' });
       }
+
+      if (task.status === 'completed') {
+        return reply.send({
+          taskId: task.taskId,
+          status: task.status,
+          result: task.result
+        });
+      }
+
+      if (task.status === 'failed') {
+        return reply.send({
+          taskId: task.taskId,
+          status: task.status,
+          error: task.error
+        });
+      }
+
+      // Task is still pending or in progress, check with Novita
+      const result = await fetchNovitaResult(task.taskId);
+
+      if (result === null) {
+        // Task is still processing
+        return reply.send({
+          taskId: task.taskId,
+          status: 'processing'
+        });
+      }
+
+      // Task completed successfully
+      const { imageId, imageUrl } = result;
+
+      // Save image to DB using provided function
+      await saveChatImageToDB(db, task.chatId.toString(), imageUrl, imageUrl); // Assuming thumbnail is the same as imageUrl
+
+      // Update task in DB
+      await db.collection('tasks').updateOne(
+        { taskId },
+        { 
+          $set: { 
+            status: 'completed',
+            result: { imageId, imageUrl },
+            updatedAt: new Date()
+          } 
+        }
+      );
+
+      return reply.send({
+        taskId: task.taskId,
+        status: 'completed',
+        result: { imageId, imageUrl }
+      });
+
+    } catch (error) {
+      console.error('タスクステータス確認エラー:', error);
+
+      // Update task as failed
+      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      await db.collection('tasks').updateOne(
+        { taskId },
+        { 
+          $set: { 
+            status: 'failed',
+            error: error.message,
+            updatedAt: new Date()
+          } 
+        }
+      );
+
+      return reply.send({
+        taskId: taskId,
+        status: 'failed',
+        error: error.message
+      });
+    }
   });
 }
 

@@ -332,8 +332,10 @@ window.generateImage = async function(data, prompt) {
     }
 
     if (messCt == 1) {
-      window.postMessage({ event: 'imageDone' }, '*');
       messCt++;
+        setTimeout(() => {
+            window.postMessage({ event: 'imageDone' }, '*');
+        }, 1000);
     }
   } catch (error) {
     showNotification('ユーザー情報の取得に失敗しました。', 'error');

@@ -827,10 +827,10 @@ window.loadAllUserPosts = async function (page = 1) {
 }
 function generateUserPostsPagination(currentPage, totalPages) {
     let paginationHtml = '';
-    const maxPagesToShow = 5;
     const sidePagesToShow = 2;
     let pagesShown = new Set();
 
+    // Scroll event listener for infinite scroll
     $(window).off('scroll').on('scroll', function() {
         if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
             if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
@@ -840,9 +840,18 @@ function generateUserPostsPagination(currentPage, totalPages) {
         }
     });
 
+    // Check if the current page is the last page
+    if (currentPage >= totalPages) {
+        $('#user-posts-pagination-controls').html('<button class="btn btn-primary" onclick="scrollToTop()">トップへ戻る</button>');
+        return;
+    }
+
+    // Generate pagination buttons if more than one page
     if (totalPages > 1) {
+        // Previous button
         paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadAllUserPosts(${currentPage - 1})">前へ</button>`;
 
+        // First page and ellipsis
         if (currentPage > sidePagesToShow + 1) {
             paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadAllUserPosts(1)">1</button>`;
             if (currentPage > sidePagesToShow + 2) {
@@ -850,6 +859,7 @@ function generateUserPostsPagination(currentPage, totalPages) {
             }
         }
 
+        // Visible page numbers
         let startPage = Math.max(1, currentPage - sidePagesToShow);
         let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
 
@@ -861,6 +871,7 @@ function generateUserPostsPagination(currentPage, totalPages) {
             `;
         }
 
+        // Last page and ellipsis
         if (currentPage < totalPages - sidePagesToShow - 1) {
             if (currentPage < totalPages - sidePagesToShow - 2) {
                 paginationHtml += `<span class="mx-1">...</span>`;
@@ -868,6 +879,7 @@ function generateUserPostsPagination(currentPage, totalPages) {
             paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadAllUserPosts(${totalPages})">${totalPages}</button>`;
         }
 
+        // Next button
         paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadAllUserPosts(${currentPage + 1})">次へ</button>`;
     }
 

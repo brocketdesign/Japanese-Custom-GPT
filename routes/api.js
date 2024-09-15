@@ -1954,7 +1954,7 @@ async function routes(fastify, options) {
       fastify.get('/api/chats', async (request, reply) => {
         try {
           const page = parseInt(request.query.page) || 1;
-          const limit = 12; // Number of chats per page
+          const limit = 3; // Number of chats per page
           const skip = (page - 1) * limit;
       
           const db = fastify.mongo.client.db(process.env.MONGODB_NAME);

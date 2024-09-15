@@ -78,6 +78,10 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         // Check if any ObjectId in the array matches the userId after converting both to strings
         return array?.some(id => id?.toString() === userId?.toString());
       });      
+      handlebars.registerHelper('imagePlaceholder', function() {
+        return `/img/nsfw-blurred-2.png`;
+      });
+      
     });
     fastify.register(require('fastify-cookie'), {
       secret: "my-secret",

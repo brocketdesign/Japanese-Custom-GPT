@@ -1,5 +1,5 @@
-
-
+let isTemporary = true
+let subscriptionStatus = false
 $(document).ready(async function() {
     const urlParams = new URLSearchParams(window.location.search);
     const success = urlParams.get('success');
@@ -7,7 +7,8 @@ $(document).ready(async function() {
     const priceId = urlParams.get('priceId');
     const paymentFalse = urlParams.get('payment') == 'false';
     const user = await fetchUser();
-    const isTemporary = !!user?.isTemporary || true
+    isTemporary = !!user?.isTemporary
+    subscriptionStatus = user.subscriptionStatus == 'active'
 
     if (success && sessionId) {
         $.ajax({
@@ -468,7 +469,12 @@ function scrollToTop() {
     $('html, body').animate({ scrollTop: 0 }, 'slow');
 }
 
-
+let imgPlaceholder = '/img/nsfw-blurred-2.png'
+window.imagePlaceholder = function(){
+    if(!isTemporary){
+        return `/img/nsfw-blurred-2.png`
+    }
+}
 window.loadChatUsers = async function (chatId, page = 1) {
     $.ajax({
         url: `/chat/${chatId}/users?page=${page}`,
@@ -787,9 +793,7 @@ window.loadAllUserPosts = async function (page = 1) {
                   </div>
                   ${isBlur ? `
                   <div type="button" onclick=showPremiumPopup()>
-                    <img src="/img/nsfw-blurred.jpg" class="card-img-top" style="object-fit: cover;">
-                    <div class="card-body p-2">
-                    </div>
+                    <img src="${imagePlaceholder()}" class="card-img-top" style="object-fit: cover;">
                   </div>
                   ` : `
                   <a href="/post/${item.post.postId}" class="text-muted text-decoration-none">
@@ -912,9 +916,7 @@ window.loadAllChatImages = async function (page = 1) {
                         </div>
                         ${isBlur ? `
                         <div type="button" onclick=showPremiumPopup()>
-                            <img src="/img/nsfw-blurred.jpg" class="card-img-top" style="object-fit: cover;">
-                            <div class="card-body p-2">
-                            </div>
+                            <img src="${imagePlaceholder()}" class="card-img-top" style="object-fit: cover;">
                         </div>
                         ` : `
                         <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
@@ -1019,7 +1021,7 @@ window.loadChatImages = async function (chatId, page = 1) {
                         </div>
                         ${isBlur ? `
                         <div type="button" onclick=showPremiumPopup()>
-                            <img src="/img/nsfw-blurred.jpg" class="card-img-top" style="object-fit: cover;">
+                            <img src="${imagePlaceholder()}" class="card-img-top" style="object-fit: cover;">
                             <div class="card-body p-2">
                                 <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
                             </div>
@@ -1123,9 +1125,7 @@ window.loadUserImages = async function (userId, page = 1) {
                     </div>
                     ${isBlur ? `
                     <div type="button" onclick=showPremiumPopup()>
-                        <img src="/img/nsfw-blurred.jpg" class="card-img-top" style="object-fit: cover;">
-                        <div class="card-body p-2">
-                        </div>
+                        <img src="${imagePlaceholder()}" class="card-img-top" style="object-fit: cover;">
                     </div>
                     ` : `
                     <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
@@ -1221,9 +1221,7 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
                     </div>
                     ${isBlur ? `
                     <div type="button" onclick=showPremiumPopup()>
-                        <img src="/img/nsfw-blurred.jpg" class="card-img-top" style="object-fit: cover;">
-                        <div class="card-body p-2">
-                        </div>
+                        <img src="${imagePlaceholder()}" class="card-img-top" style="object-fit: cover;">
                     </div>
                     ` : `
                     <a href="/post/${item._id}" class="text-muted text-decoration-none">
@@ -1480,7 +1478,7 @@ window.showCoinShop = function(el){
 }
 window.showPremiumPopup = async function() {
     const user = await fetchUser();
-    const isTemporary = !!user?.isTemporary || true
+    const isTemporary = !!user?.isTemporary
     if(isTemporary){
         showRegistrationForm()
         return

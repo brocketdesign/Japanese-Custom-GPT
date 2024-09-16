@@ -680,13 +680,15 @@ window.displayUserChats = async function(userId, page = 1) {
                         </div>
                     </div>
                     <div class="card-body bg-transparent border-0 pb-0 text-start">
-                        <div class="row">
-                            <div class="col-12 text-center">
+                        <div class="row align-items-center">
+                            <div class="col-auto text-center">
                                 <a href="/character/${chat._id}" style="text-decoration: none;">
-                                    <img src="${chat.chatImageUrl || '/img/avatar.png'}" alt="${chat.name}" class="rounded-circle me-2" width="40" height="40">
-                                    <a href="/character/${chat._id}" class="text-muted" style="text-decoration: none;">
-                                        <span>${chat.name}</span>
-                                    </a>
+                                    <img src="${chat.chatImageUrl || '/img/avatar.png'}" alt="${chat.name}" class="rounded-circle" width="40" height="40">
+                                </a>
+                            </div>
+                            <div class="col-auto">
+                                <a href="/character/${chat._id}" class="text-muted" style="text-decoration: none;">
+                                    <h5 class="card-title character-title mb-0">${chat.name}</h5>
                                 </a>
                             </div>
                         </div>
@@ -808,12 +810,12 @@ window.displayPepopleChat = async function (page = 1) {
                         </div>
                         <div class="card-body bg-transparent border-0 pb-0 text-start">
                             <div class="row">
-                                <div class="col-3 text-center">
+                                <div class="col-auto text-center">
                                     <a href="/user/${chat.userId}" style="text-decoration: none;">
                                         <img src="${chat.profileUrl || '/img/avatar.png'}" alt="${chat.nickname}" class="rounded-circle" width="40" height="40">
                                     </a>
                                 </div>
-                                <div class="col-8 ms-2">
+                                <div class="col-auto ms-2">
                                     <h5 class="card-title character-title mb-0">${chat.name}</h5>
                                     <a href="/user/${chat.userId}" class="text-muted" style="text-decoration: none;">
                                         <span style="font-size:12px;">${chat.nickname}</span>

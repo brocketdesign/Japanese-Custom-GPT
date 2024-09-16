@@ -1,5 +1,5 @@
 .isAdmin{
-  display: inline;
+  display: none;
 }
 .overflow-visible {
   overflow: visible !important;

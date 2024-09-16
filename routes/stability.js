@@ -346,6 +346,7 @@ async function routes(fastify, options) {
       }
     }
     const params = {
+      model_name: "novaAnimeXL_xlV10_341799.safetensors",
       prompt: '',
       negative_prompt: '',
       width: 768,

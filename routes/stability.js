@@ -404,6 +404,8 @@ async function routes(fastify, options) {
   
         // Initiate tasks and collect taskIds
         const taskIds = await Promise.all(tasks.map(async (task) => {
+          console.log(`Request ${task.type} image`)
+          console.log(`Should be blurry : ${task.blur}`)
           // Send request to Novita and get taskId
           const novitaTaskId = await fetchNovitaMagic(task);
   
@@ -459,10 +461,10 @@ async function routes(fastify, options) {
       
           const shouldBlur = task.type === 'nsfw' && task.blur;
           let imageUrl = result.imageUrl;
-      
+          let blurryImageUrl
           if (shouldBlur) {
             try {
-              imageUrl = await createBlurredImage(result.imageUrl, db);
+              blurryImageUrl = await createBlurredImage(result.imageUrl, db);
             } catch (blurError) {
               await tasksCollection.updateOne(
                 { taskId: task.taskId },
@@ -490,17 +492,16 @@ async function routes(fastify, options) {
             taskToSave.prompt,
             result.imageUrl,
             taskToSave.aspectRatio,
-            shouldBlur ? imageUrl : null,
-            shouldBlur
+            blurryImageUrl,
+            task.type == 'nsfw'
           );
-      
           // Send the correct response with the saved image data
           return reply.send({
             taskId: taskToSave.taskId,
             status: 'completed',
             result: {
               imageId: saveResult.imageId,
-              imageUrl: shouldBlur ? imageUrl : result.imageUrl
+              imageUrl: shouldBlur ? blurryImageUrl : imageUrl
             }
           });
       

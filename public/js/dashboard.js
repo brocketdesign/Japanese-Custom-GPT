@@ -517,7 +517,7 @@ function generateChatUserPagination(currentPage, totalPages, chatId) {
     });
 
     if (currentPage >= totalPages) {
-        $('#chat-users-pagination-controls').html('<button class="btn btn-primary" onclick="scrollToTop()">トップへ戻る</button>');
+        $('#chat-users-pagination-controls').html('<button class="btn btn-outline-secondary" onclick="scrollToTop()"><i class="bi bi-arrow-up-circle-fill me-2"></i>トップへ戻る</button>');
         return;
     }
 
@@ -662,7 +662,7 @@ window.displayUserChats = async function(userId, page = 1) {
 
             // Render chat card
             htmlContent += `
-            <div class="col-12 col-sm-4 col-lg-2 mb-2">
+            <div class="col-12 col-sm-4 col-lg-4 mb-2">
                 <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 redirectToChat" style="cursor:pointer;" data-id="${chat._id}" data-image="${chat.chatImageUrl}">
                     <div style="background-image:url('${chat.chatImageUrl || '/img/logo.webp'}')" class="card-img-top girls_avatar position-relative" alt="${chat.name}">
                         <div id="spinner-${chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
@@ -722,7 +722,7 @@ function generateUserChatsPagination(userId, currentPage, totalPages) {
     });
 
     if (currentPage >= totalPages) {
-        $('#user-chat-pagination-controls').html('<button class="btn btn-primary" onclick="scrollToTop()">トップへ戻る</button>');
+        $('#user-chat-pagination-controls').html('<button class="btn btn-outline-secondary" onclick="scrollToTop()"><i class="bi bi-arrow-up-circle-fill me-2"></i>トップへ戻る</button>');
         return;
     }
 
@@ -788,7 +788,7 @@ window.displayPepopleChat = async function (page = 1) {
 
                 // Render chat
                 htmlContent += `
-                <div class="col-12 col-sm-4 col-lg-2 mb-2">
+                <div class="col-12 col-sm-4 col-lg-4 mb-2">
                     <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 redirectToChat" style="cursor:pointer;" data-id="${chat._id}" data-image="${chat.chatImageUrl}">
                         <div style="background-image:url('${chat.chatImageUrl || '/img/logo.webp'}')" class="card-img-top girls_avatar position-relative" alt="${chat.name}">
                             <div id="spinner-${chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
@@ -853,7 +853,7 @@ function generateChatsPagination(currentPage, totalPages) {
 
     if (currentPage >= totalPages) {
         // Hide pagination and show "Go to Top" button in Japanese
-        $('#chat-pagination-controls').html('<button class="btn btn-primary" onclick="scrollToTop()">トップへ戻る</button>');
+        $('#chat-pagination-controls').html('<button class="btn btn-outline-secondary" onclick="scrollToTop()"><i class="bi bi-arrow-up-circle-fill me-2"></i>トップへ戻る</button>');
         return;
     }
 
@@ -963,7 +963,7 @@ function generateUserPostsPagination(currentPage, totalPages) {
 
     // Check if the current page is the last page
     if (currentPage >= totalPages) {
-        $('#user-posts-pagination-controls').html('<button class="btn btn-primary" onclick="scrollToTop()">トップへ戻る</button>');
+        $('#user-posts-pagination-controls').html('<button class="btn btn-outline-secondary" onclick="scrollToTop()"><i class="bi bi-arrow-up-circle-fill me-2"></i>トップへ戻る</button>');
         return;
     }
 
@@ -1184,7 +1184,7 @@ function generateChatImagePagination(currentPage, totalPages, chatId) {
 
     // Hide pagination and show "Go to Top" button if no more pages
     if (currentPage >= totalPages) {
-        $('#chat-images-pagination-controls').html('<button class="btn btn-primary" onclick="scrollToTop()">トップへ戻る</button>');
+        $('#chat-images-pagination-controls').html('<button class="btn btn-outline-secondary" onclick="scrollToTop()"><i class="bi bi-arrow-up-circle-fill me-2"></i>トップへ戻る</button>');
         return;
     }
 
@@ -1294,7 +1294,7 @@ function generateImagePagination(currentPage, totalPages, userId) {
     });
 
     if (currentPage >= totalPages) {
-        $('#images-pagination-controls').html('<button class="btn btn-primary" onclick="scrollToTop()">トップへ戻る</button>');
+        $('#images-pagination-controls').html('<button class="btn btn-outline-secondary" onclick="scrollToTop()"><i class="bi bi-arrow-up-circle-fill me-2"></i>トップへ戻る</button>');
         return;
     }
 
@@ -1401,7 +1401,7 @@ function generateUserPostPagination(currentPage, totalPages, userId, like = fals
 
     if (currentPage >= totalPages) {
         const containerId = like ? 'posts-like-pagination-controls' : 'pagination-controls';
-        $(`#${containerId}`).html('<button class="btn btn-primary" onclick="scrollToTop()">トップへ戻る</button>');
+        $(`#${containerId}`).html('<button class="btn btn-outline-secondary" onclick="scrollToTop()"><i class="bi bi-arrow-up-circle-fill me-2"></i>トップへ戻る</button>');
         return;
     }
 

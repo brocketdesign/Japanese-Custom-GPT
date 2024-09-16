@@ -1167,7 +1167,6 @@ window.loadChatImages = async function (chatId, page = 1) {
 }
 function generateChatImagePagination(currentPage, totalPages, chatId) {
     let paginationHtml = '';
-    const maxPagesToShow = 5;
     const sidePagesToShow = 2;
     let pagesShown = new Set(); // Track displayed pages
 
@@ -1181,9 +1180,18 @@ function generateChatImagePagination(currentPage, totalPages, chatId) {
         }
     });
 
+    // Hide pagination and show "Go to Top" button if no more pages
+    if (currentPage >= totalPages) {
+        $('#chat-images-pagination-controls').html('<button class="btn btn-primary" onclick="scrollToTop()">トップへ戻る</button>');
+        return;
+    }
+
+    // Generate pagination if there are multiple pages
     if (totalPages > 1) {
+        // Previous button
         paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadChatImages('${chatId}', ${currentPage - 1})">前へ</button>`;
 
+        // First page and ellipsis
         if (currentPage > sidePagesToShow + 1) {
             paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadChatImages('${chatId}', 1)">1</button>`;
             if (currentPage > sidePagesToShow + 2) {
@@ -1191,17 +1199,19 @@ function generateChatImagePagination(currentPage, totalPages, chatId) {
             }
         }
 
+        // Visible page numbers
         let startPage = Math.max(1, currentPage - sidePagesToShow);
         let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
 
         for (let i = startPage; i <= endPage; i++) {
             paginationHtml += `
-              <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadChatImages('${chatId}', ${i})">
-                ${i}
-              </button>
+                <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadChatImages('${chatId}', ${i})">
+                    ${i}
+                </button>
             `;
         }
 
+        // Last page and ellipsis
         if (currentPage < totalPages - sidePagesToShow - 1) {
             if (currentPage < totalPages - sidePagesToShow - 2) {
                 paginationHtml += `<span class="mx-1">...</span>`;
@@ -1209,6 +1219,7 @@ function generateChatImagePagination(currentPage, totalPages, chatId) {
             paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadChatImages('${chatId}', ${totalPages})">${totalPages}</button>`;
         }
 
+        // Next button
         paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadChatImages('${chatId}', ${currentPage + 1})">次へ</button>`;
     }
 

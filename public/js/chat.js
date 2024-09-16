@@ -889,6 +889,7 @@ $(document).ready(async function() {
 
         $.get('/api/user/persona-details', function(response) {
             const user = response.userDetails;
+            console.log(user)
             const personas = response.personaDetails;
             if(!personas || personas.length == 0 ){
                 if (callback) {
@@ -909,7 +910,7 @@ $(document).ready(async function() {
     
             const swalHtml = `
                 <div class="persona-item" style="display: inline-block; margin: 10px;">
-                    <img src="${user.profile ? user.profile: '/img/avatar.png'}" class="rounded-circle" style="width: 80px; height: 80px; cursor: pointer;object-fit: cover;object-position: top;">
+                    <img src="${user.profileUrl ? user.profileUrl: '/img/avatar.png'}" class="rounded-circle" style="width: 80px; height: 80px; cursor: pointer;object-fit: cover;object-position: top;">
                 </div>
                 ${personaHtml}
             `;

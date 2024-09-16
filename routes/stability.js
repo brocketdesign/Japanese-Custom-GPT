@@ -340,13 +340,13 @@ async function routes(fastify, options) {
         negative_prompt: "bad-hands-5 bad-picture-chill-75v bad_prompt_version2-neg BadDream easynegative, verybadimagenegative_v1.3,  Unspeakable-Horrors-64v, boring_e621_v4, By bad artist -neg  negative_hand-neg, missing fingers, extra digits, fewer digits, bad eye,pussy,vulve,vagin,sex,dick,blurry,signature,username,watermark,jpeg artifacts,normal quality,worst quality,low quality"
       },
       sfw: {
-        model_name: "novaAnimeXL_xlV10_341799.safetensors",
+        model_name: "novaAnimeXL_ponyV20_461138.safetensors",
         prompt: `score_9, score_8_up, score_7_up,source_anime,1girl,HD,4K quality,(perfect hands:0.1),(sfw),dressed,clothes ,`,
         negative_prompt : "score_6, score_5, score_4, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, nipple,topless,nsfw,naked,pussy,vulve,vagin,,nude,sex,worst quality,low quality,"
       }
     }
     const params = {
-      model_name: "novaAnimeXL_xlV10_341799.safetensors",
+      model_name: "novaAnimeXL_ponyV20_461138.safetensors",
       prompt: '',
       negative_prompt: '',
       width: 768,

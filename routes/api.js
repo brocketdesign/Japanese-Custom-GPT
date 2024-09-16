@@ -173,7 +173,7 @@ async function routes(fastify, options) {
             },
             {
                 role: "user",
-                content: `Here is the description: ${description}\nGenerate a list of 2 relevant tags based on the description, considering the example tags provided.Only 2`
+                content: `Here is the description: ${description}\nGenerate a list of 5 relevant tags based on the description, considering the example tags provided.`
             }
         ];
         const PossibleAnswersExtraction = z.object({

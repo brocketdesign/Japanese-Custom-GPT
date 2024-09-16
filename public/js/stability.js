@@ -202,10 +202,15 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
             throw new Error('サーバーからタスクが返されませんでした。');
         }
 
+        const polledTaskIds = new Set();
+
         // Start polling for each task
         tasks.forEach(task => {
-            pollTaskStatus(API_URL, task.taskId, task.type, prompt);
-        });
+            if (!polledTaskIds.has(task.taskId)) {
+                polledTaskIds.add(task.taskId);
+                pollTaskStatus(API_URL, task.taskId, task.type, prompt);
+            }
+        });        
 
         console.log('Posting imageDone event.');
 

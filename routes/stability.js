@@ -319,7 +319,7 @@ async function routes(fastify, options) {
             return { imageId: hash, imageUrl: uploadedUrl };
           }));
 
-          return s3Urls[0]; // Assuming single image
+          return s3Urls.length === 1 ? s3Urls[0] : s3Urls;
         } else if (taskStatus === 'TASK_STATUS_FAILED') {
           throw new Error(`Task failed with reason: ${response.data.task.reason}`);
         } else {
@@ -336,7 +336,7 @@ async function routes(fastify, options) {
     const default_prompt ={
       nsfw: {
         model_name: "kizukiAnimeHentai_animeHentaiV3_60405.safetensors",
-        prompt: `score_9, score_8_up, score_7_up, source_anime,1girl,(nsfw),uncensored,breasts,erect nipples,panty,large breast,(sexy pose), naughty face, sexy micro clothes,nudity, `,
+        prompt: `score_9, score_8_up, score_7_up, source_anime,1girl,(nsfw),uncensored,breasts,erect nipples,panty,(sexy pose), naughty face,sexy micro clothes,nudity, `,
         negative_prompt: "bad-hands-5 bad-picture-chill-75v bad_prompt_version2-neg BadDream easynegative, verybadimagenegative_v1.3,  Unspeakable-Horrors-64v, boring_e621_v4, By bad artist -neg  negative_hand-neg, missing fingers, extra digits, fewer digits, bad eye,pussy,vulve,vagin,sex,dick,blurry,signature,username,watermark,jpeg artifacts,normal quality,worst quality,low quality"
       },
       sfw: {
@@ -527,7 +527,7 @@ async function routes(fastify, options) {
       
       
       
-  async function saveChatImageToDB(db, chatId, imageUrl, thumbnailUrl) {
+  async function saveChatImageToDB(db, chatId, imageUrl) {
     const collectionChats = db.collection('chats'); // Replace 'chats' with your actual collection name
 
     // Convert chatId string to ObjectId
@@ -544,7 +544,7 @@ async function routes(fastify, options) {
         { 
             $set: { 
                 chatImageUrl: imageUrl,
-                thumbnail: thumbnailUrl
+                thumbnail: imageUrl
             } 
         }
     );
@@ -578,6 +578,7 @@ async function routes(fastify, options) {
       // Create image_request with default prompts
       const image_request = { 
         ...params, 
+        image_num: 4,
         prompt: fullPrompt, 
         negative_prompt: negativePrompt, 
         aspectRatio: aspectRatio 
@@ -647,19 +648,13 @@ async function routes(fastify, options) {
         });
       }
 
-      // Task completed successfully
-      const { imageId, imageUrl } = result;
-
-      // Save image to DB using provided function
-      await saveChatImageToDB(db, task.chatId.toString(), imageUrl, imageUrl); // Assuming thumbnail is the same as imageUrl
-
       // Update task in DB
       await db.collection('tasks').updateOne(
         { taskId },
         { 
           $set: { 
             status: 'completed',
-            result: { imageId, imageUrl },
+            result: { imageUrls: result },
             updatedAt: new Date()
           } 
         }
@@ -668,7 +663,7 @@ async function routes(fastify, options) {
       return reply.send({
         taskId: task.taskId,
         status: 'completed',
-        result: { imageId, imageUrl }
+        result: { imageUrls: result }
       });
 
     } catch (error) {
@@ -694,6 +689,25 @@ async function routes(fastify, options) {
       });
     }
   });
+  fastify.post('/novita/save-image', async (request, reply) => {
+    const { imageUrl, chatId } = request.body;
+  
+    if (!imageUrl || !chatId) {
+      return reply.status(400).send({ error: 'imageId, imageUrl, and chatId are required' });
+    }
+  
+    try {
+      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      await saveChatImageToDB(db, chatId, imageUrl);
+  
+      return reply.status(200).send({ message: 'Image saved successfully' });
+  
+    } catch (error) {
+      console.error('Error saving image:', error);
+      return reply.status(500).send({ error: 'Failed to save image to database' });
+    }
+  });
+  
 }
 
 module.exports = routes;

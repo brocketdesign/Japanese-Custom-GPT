@@ -231,8 +231,8 @@
                     <!-- Right Column: Generated Image -->
                     <div class="col-lg-6 mb-4 d-flex flex-column align-items-center">
                         <!-- 3. Generated Image Display -->
-                        <div class="mb-4 w-100">
-                            <label class="form-label d-block mb-2 text-center">生成されたキャラクター画像</label>
+                        <label class="form-label d-block mb-2 text-center">生成されたキャラクター画像</label>
+                        <div id="imageContainer" class="row mb-4 w-100">
                             <img
                                 id="generatedImage"
                                 src="/img/default-character.png"
@@ -287,7 +287,7 @@
             <textarea class="form-control mb-2" id="chatDescription" style="display:none;" name="chatDescription" rows="3" placeholder="簡単な説明" disabled="true" required></textarea>
             <textarea class="d-none form-control" id="chatRule" name="content" rows="5" placeholder="話し方" disabled="true" hidden></textarea>
 
-            <div id="markdownContainer" class="border-0 py-2 px-3 text-start text-muted mb-2" style="font-size:15px;background-color: #e9ecef; display:none;" contenteditable="false"></div>
+            <div id="markdownContainer" class="border-0 py-2 px-3 text-start mb-2" style="font-size:15px;background-color: #e9ecef;color: #575a5d; display:none;" contenteditable="false"></div>
        
             <button type="button" id="ai-assist" class="btn btn-lg custom-gradient-bg shadow-0 mb-2 w-100">
                 <i class="fa fa-spinner fa-spin fa-fw fa-hidden me-2" style="display: none;"></i>
@@ -341,7 +341,7 @@
 
         function validateStep(step) {
             if (step === 1) {
-                return $('#generatedImage').attr('src') !== '/img/default-character.png';
+                return $('.img-thumbnail.select').length > 0;;
             } else if (step === 2) {
                 return $('#chatPurpose').val().trim() !== '' && $('#chatName').val().trim() !== '' && $('#chatDescription').val().trim() !== '' && $('#chatRule').val().trim() !== '';
             }
@@ -748,9 +748,9 @@
                 })
             });
         }
-        function checkTaskStatus(taskId) {
-            const POLLING_INTERVAL = 3000; // 3秒
-            const MAX_ATTEMPTS = 30; // 最大90秒までポーリング
+       function checkTaskStatus(taskId) {
+            const POLLING_INTERVAL = 3000; // 3 seconds
+            const MAX_ATTEMPTS = 30; // up to 90 seconds
             let attempts = 0;
 
             const intervalId = setInterval(async () => {
@@ -766,20 +766,58 @@
 
                     if (statusResponse.status === 'completed') {
                         clearInterval(intervalId);
-                        const { imageUrl } = statusResponse.result;
+                        const { imageUrls } = statusResponse.result;
 
-                        $('#generatedImage').attr('src', imageUrl);
+                        // Clear the container
+                        $('#imageContainer').empty();
+
+                        // For each image URL, create an image element and append to the container
+                        imageUrls.forEach(function(data) {
+                            const url = data.imageUrl
+                            const colDiv = $('<div>').addClass('col-12 col-md-6 mb-3');
+                            const imgElement = $('<img>')
+                                .attr('src', url)
+                                .addClass('img-fluid img-thumbnail')
+                                .css('cursor', 'pointer');
+
+                            // Add click handler to each image
+                            imgElement.on('click', function() {
+                                $('.img-thumbnail').each(function(){
+                                    $(this).removeClass('select')
+                                })
+                                $(this).addClass('select')
+                                $.ajax({
+                                    url: '/novita/save-image',
+                                    method: 'POST',
+                                    dataType: 'json',
+                                    data: {
+                                        imageUrl: url,
+                                        chatId: chatId
+                                    },
+                                    success: function(response) {
+                                        showNotification('画像が保存されました。', 'success');
+                                    },
+                                    error: function(error) {
+                                        showNotification('画像の保存に失敗しました。', 'error');
+                                    }
+                                });
+                            });
+
+                            colDiv.append(imgElement);
+                            $('#imageContainer').append(colDiv);
+                        });
 
                         showNotification('画像が正常に生成されました。', 'success');
-                        // ボタンを有効化し、初期状態のテキストに戻す
+                        // Enable buttons and reset text
                         $('#characterPrompt').prop('disabled', false);
                         $('#generateButton').prop('disabled', false);
                         $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+
                     } else if (statusResponse.status === 'failed') {
                         clearInterval(intervalId);
-                        $('#generatedImage').attr('src', '/img/default-character.png');
+                        $('#imageContainer').empty();
                         showNotification(`画像の生成に失敗しました: ${statusResponse.error}`, 'error');
-                        // ボタンを有効化し、初期状態のテキストに戻す
+                        // Enable buttons and reset text
                         $('#characterPrompt').prop('disabled', false);
                         $('#generateButton').prop('disabled', false);
                         $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
@@ -789,10 +827,9 @@
 
                     if (attempts >= MAX_ATTEMPTS) {
                         clearInterval(intervalId);
-                        $('#generatedImage').attr('src', '/img/timeout-placeholder.png');
+                        $('#imageContainer').empty();
                         showNotification('画像の生成がタイムアウトしました。再試行してください。', 'error');
-
-                        // ボタンを有効化し、初期状態のテキストに戻す
+                        // Enable buttons and reset text
                         $('#characterPrompt').prop('disabled', false);
                         $('#generateButton').prop('disabled', false);
                         $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
@@ -801,9 +838,9 @@
                 } catch (error) {
                     console.error('タスクステータスポーリングエラー:', error);
                     clearInterval(intervalId);
-                    $('#generatedImage').attr('src', '/img/default-character.png');
+                    $('#imageContainer').empty();
                     showNotification('画像の生成中にエラーが発生しました。', 'error');
-                    // ボタンを有効化し、初期状態のテキストに戻す
+                    // Enable buttons and reset text
                     $('#characterPrompt').prop('disabled', false);
                     $('#generateButton').prop('disabled', false);
                     $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
@@ -857,12 +894,14 @@
                         // ボタンを有効化し、初期状態のテキストに戻す
                         $button.prop('disabled', false);
                         $button.html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+                        $('#characterPrompt').prop('disabled', false);
                     }
                 } else {
                     showNotification('プロンプトの生成に失敗しました。再試行してください。', 'error');
                     // ボタンを有効化し、初期状態のテキストに戻す
                     $button.prop('disabled', false);
                     $button.html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+                    $('#characterPrompt').prop('disabled', false);
                 }
             } catch (error) {
                 console.error('Error:', error);
@@ -870,6 +909,7 @@
                 // ボタンを有効化し、初期状態のテキストに戻す
                 $button.prop('disabled', false);
                 $button.html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+                $('#characterPrompt').prop('disabled', false);
             }
         });
 

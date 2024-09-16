@@ -867,6 +867,9 @@
             } catch (error) {
                 console.error('Error:', error);
                 showNotification('プロンプトの生成中または画像の生成中にエラーが発生しました。', 'error');
+                // ボタンを有効化し、初期状態のテキストに戻す
+                $button.prop('disabled', false);
+                $button.html('<i class="fas fa-magic me-2"></i>AIで画像生成');
             }
         });
 

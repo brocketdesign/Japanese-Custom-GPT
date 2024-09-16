@@ -1954,23 +1954,28 @@ async function routes(fastify, options) {
       fastify.get('/api/chats', async (request, reply) => {
         try {
           const page = parseInt(request.query.page) || 1;
-          const limit = 3; // Number of chats per page
+          const limit = 12;
           const skip = (page - 1) * limit;
+          const { userId } = request.query;
       
           const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
           const chatsCollection = db.collection('chats');
           const usersCollection = db.collection('users');
       
-          const synclab = await chatsCollection.find({ext:'synclubaichat'}).toArray()
-
+          const query = {
+            visibility: { $exists: true, $eq: "public" },
+            chatImageUrl: { $exists: true, $ne: '' },
+          };
+      
+          if (userId) {
+            query.userId = new fastify.mongo.ObjectId(userId);
+          }
+      
+          const synclab = await chatsCollection.find({ ext: 'synclubaichat' }).toArray();
+      
           // Fetch paginated chats, sorted by _id in descending order
           const recentCursor = await chatsCollection.aggregate([
-            {
-              $match: {
-                visibility: { $exists: true, $eq: "public" },
-                chatImageUrl: { $exists: true, $ne: '' },
-              },
-            },
+            { $match: query },
             {
               $group: {
                 _id: "$name",
@@ -1978,11 +1983,11 @@ async function routes(fastify, options) {
               },
             },
             { $replaceRoot: { newRoot: "$doc" } },
-            { $sort: { _id: -1 } }, // Sort by _id in descending order
+            { $sort: { _id: -1 } },
             { $skip: skip },
             { $limit: limit },
           ]).toArray();
-
+      
           if (!recentCursor.length) {
             return reply.code(404).send({ recent: [], page, totalPages: 0 });
           }
@@ -1999,13 +2004,10 @@ async function routes(fastify, options) {
           );
       
           // Get total count of chats for pagination
-          const totalChatsCount = await chatsCollection.countDocuments({
-            visibility: { $exists: true, $eq: "public" },
-            chatImageUrl: { $exists: true, $ne: '' },
-          });
+          const totalChatsCount = await chatsCollection.countDocuments(query);
           let totalPages = Math.ceil(totalChatsCount / limit);
-          if(recentCursor.length < limit){
-            totalPages = page
+          if (recentCursor.length < limit) {
+            totalPages = page;
           }
       
           // Send paginated response
@@ -2019,6 +2021,7 @@ async function routes(fastify, options) {
           reply.code(500).send('Internal Server Error');
         }
       });
+      
       
     fastify.get('/api/user-data', async (request, reply) => {
         if (process.env.MODE != 'local') {

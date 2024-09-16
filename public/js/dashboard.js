@@ -474,6 +474,7 @@ window.imagePlaceholder = function(){
     if(!isTemporary){
         return `/img/nsfw-blurred-2.png`
     }
+    return imgPlaceholder
 }
 window.loadChatUsers = async function (chatId, page = 1) {
     $.ajax({

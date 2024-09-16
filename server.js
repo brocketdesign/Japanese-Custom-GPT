@@ -211,13 +211,13 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       const userId = user._id;
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
       return reply.renderWithGtm('plan.hbs', { 
-        title: 'AIグラビア | Powered by Hato,Ltd', 
+        title: 'プレミアムプランAI画像生成', 
         user, 
         seo: [
-          { name: 'description', content: 'AIグラビアは、Hato,Ltdによって提供される画像生成AI体験をお楽しみいただけます。' },
-          { name: 'keywords', content: 'AIグラビア, 画像生成AI, Hato Ltd, 日本語, AI画像生成' },
-          { property: 'og:title', content: 'AIグラビア | Powered by Hato,Ltd' },
-          { property: 'og:description', content: 'AIグラビアは、リアルタイム画像生成AI体験を提供します。' },
+          { name: 'description', content: 'Lamixでは、無料でAIグラビアとのチャット中に生成された画像を使って、簡単に投稿を作成することができます。お気に入りの瞬間やクリエイティブな画像をシェアすることで、他のユーザーと楽しさを共有しましょう。画像を選んで投稿に追加するだけで、あなただけのオリジナルコンテンツを簡単に発信できます。' },
+          { name: 'keywords', content: 'AIグラビア, 無料で画像生成AI, Hato Ltd, 日本語, AI画像生成' },
+          { property: 'og:title', content: 'プレミアムプランAI画像生成 | LAMIX | AIグラビア | ラミックスの画像生成AI体験' },
+          { property: 'og:description', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成, AIアート, AIイラスト, 自動画像生成, クリエイティブAI, 生成系AI, 画像共有, AIコミュニティ, AIツール, 画像編集AI, デジタルアート, テキストから画像生成, AIクリエーション' },
           { property: 'og:image', content: '/img/share.png' },
           { property: 'og:url', content: 'https://app.lamix.jp/chat/' }
         ]
@@ -234,7 +234,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
       const totalUsers = await db.collection('users').countDocuments({ email: { $exists: true } });
 
-      return reply.renderWithGtm('chat.hbs', { title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd',mode:process.env.MODE, user, userId, chatId});
+      return reply.renderWithGtm('chat.hbs', { title: 'LAMIX | 日本語でAI画像生成 | AIチャット',mode:process.env.MODE, user, userId, chatId});
     });
     
     fastify.get('/post', async (request, reply) => {
@@ -244,12 +244,13 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
         return reply.view('post.hbs', {
+          title: 'コミュニティからの最新投稿 | LAMIX | 日本語 | 無料AI画像生成 | 無料AIチャット',
           user,
           seo: [
-            { name: 'description', content: 'AIグラビアは、ラミックスが提供する画像生成AI体験です。' },
-            { name: 'keywords', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },
+            { name: 'description', content: 'Lamixでは、無料でAIグラビアとのチャット中に生成された画像を使って、簡単に投稿を作成することができます。お気に入りの瞬間やクリエイティブな画像をシェアすることで、他のユーザーと楽しさを共有しましょう。画像を選んで投稿に追加するだけで、あなただけのオリジナルコンテンツを簡単に発信できます。' },
+            { name: 'keywords', content: 'AIグラビア, 無料で画像生成AI, LAMIX, 日本語, AI画像生成, AIアート, AIイラスト, 自動画像生成, クリエイティブAI, 生成系AI, 画像共有, AIコミュニティ, AIツール, 画像編集AI, デジタルアート, テキストから画像生成, AIクリエーション' },
             { property: 'og:title', content: 'LAMIX | AIグラビア | ラミックスの画像生成AI体験' },
-            { property: 'og:description', content: 'AIグラビアは、リアルタイム画像生成AI体験を提供します。' },
+            { property: 'og:description', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成, AIアート, AIイラスト, 自動画像生成, クリエイティブAI, 生成系AI, 画像共有, AIコミュニティ, AIツール, 画像編集AI, デジタルアート, テキストから画像生成, AIクリエーション' },
             { property: 'og:image', content: '/img/share.png' },
           ]
         });
@@ -277,7 +278,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         }
 
         return reply.renderWithGtm('post.hbs', {
-          title: 'LAMIX | AIフレンズ | Powered by Hato,Ltd',
+          title: 'コミュニティからの最新投稿 | LAMIX | 日本語 | 無料AI画像生成 | 無料AIチャット',
           mode: process.env.MODE,
           user,
           postUser,
@@ -297,12 +298,13 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
         return reply.view('character.hbs', {
+          title: 'AIグラビアから送られてくる特別な写真 | LAMIX | 日本語 | 無料AI画像生成 | 無料AIチャット',
           user,
           seo: [
-            { name: 'description', content: 'AIグラビアは、ラミックスが提供する画像生成AI体験です。' },
-            { name: 'keywords', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },
+            { name: 'description', content: 'AIチャットしながらAI画像生成できるサイトです。日本語対応で簡単に使え、生成した画像を共有したり、他のユーザーの作品を楽しむことができるコミュニティです。' },
+            { name: 'keywords', content: 'AIグラビア, 無料画像生成AI, LAMIX, 日本語, AI画像生成, AIアート, AIイラスト, 自動画像生成, クリエイティブAI, 生成系AI, 画像共有, AIコミュニティ, AIツール, 画像編集AI, デジタルアート, テキストから画像生成, AIクリエーション, AIアート, AIイラスト, 自動画像生成, クリエイティブAI, 生成系AI, 画像共有, AIコミュニティ, AIツール, 画像編集AI, デジタルアート, テキストから画像生成, AIクリエーション' },
             { property: 'og:title', content: 'LAMIX | AIグラビア | ラミックスの画像生成AI体験' },
-            { property: 'og:description', content: 'AIグラビアは、リアルタイム画像生成AI体験を提供します。' },
+            { property: 'og:description', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成, AIアート, AIイラスト, 自動画像生成, クリエイティブAI, 生成系AI, 画像共有, AIコミュニティ, AIツール, 画像編集AI, デジタルアート, テキストから画像生成, AIクリエーション' },
             { property: 'og:image', content: '/img/share.png' },
           ]
         });
@@ -356,17 +358,17 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
 
         // Render the page with chat and image data (image can be null if no imageId was provided)
         return reply.view('character.hbs', {
-          title: chat.name+' LAMIX | AIフレンズ | Powered by Hato,Ltd',
+          title: chat.name+'日本語で無料AI画像生成 | 無料AIチャット',
           chat,
           image,
           user,
           chatId,
           isBlur,
           seo: [
-            { name: 'description', content: 'AIグラビアは、ラミックスが提供する画像生成AI体験です。' },
-            { name: 'keywords', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },
+            { name: 'description', content: '無料AIチャットしながら無料AI画像生成できるサイトです。日本語対応で簡単に使え、生成した画像を共有したり、他のユーザーの作品を楽しむことができるコミュニティです。' },
+            { name: 'keywords', content: 'AIグラビア,AIチャット, 画像生成AI, LAMIX, 日本語, AI画像生成' },
             { property: 'og:title', content: 'LAMIX | AIグラビア | ラミックスの画像生成AI体験' },
-            { property: 'og:description', content: 'AIグラビアは、リアルタイム画像生成AI体験を提供します。' },
+            { property: 'og:description', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成, AIアート, AIイラスト, 自動画像生成, クリエイティブAI, 生成系AI, 画像共有, AIコミュニティ, AIツール, 画像編集AI, デジタルアート, テキストから画像生成, AIクリエーション' },
             { property: 'og:image', content: '/img/share.png' },
             { property: 'og:url', content: `https://app.lamix.jp/chat/${chatId}` }
           ]
@@ -384,13 +386,13 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
         visibility: { $exists: true, $eq: "public" }
       }).sort({_id:-1}).limit(10).toArray();
       return reply.renderWithGtm('chat.hbs', { 
-        title: 'AIグラビア | ラミックスの画像生成AI体験', 
+        title: 'AIグラビア | ラミックスの無料画像生成AI体験', 
         chats,
         seo: [
-          { name: 'description', content: 'AIグラビアは、ラミックスが提供する画像生成AI体験です。' },
-          { name: 'keywords', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },
+          { name: 'description', content: 'AIチャットしながらAI画像生成できるサイトです。日本語対応で簡単に使え、生成した画像を共有したり、他のユーザーの作品を楽しむことができるコミュニティです。' },
+          { name: 'keywords', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成, AIアート, AIイラスト, 自動画像生成, クリエイティブAI, 生成系AI, 画像共有, AIコミュニティ, AIツール, 画像編集AI, デジタルアート, テキストから画像生成, AIクリエーション' },
           { property: 'og:title', content: 'AIグラビア | ラミックスの画像生成AI体験' },
-          { property: 'og:description', content: 'AIグラビアは、リアルタイム画像生成AI体験を提供します。' },
+          { property: 'og:description', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成, AIアート, AIイラスト, 自動画像生成, クリエイティブAI, 生成系AI, 画像共有, AIコミュニティ, AIツール, 画像編集AI, デジタルアート, テキストから画像生成, AIクリエーション' },
           { property: 'og:image', content: '/img/share.png' },
           { property: 'og:url', content: 'https://app.lamix.jp/about' }
         ]
@@ -420,10 +422,10 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
           chats: sortedChats, 
           user,
           seo: [
-            { name: 'description', content: 'AIグラビアは、ラミックスが提供する画像生成AI体験です。' },
-            { name: 'keywords', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },
+            { name: 'description', content: 'AIチャットしながらAI画像生成できるサイトです。日本語対応で簡単に使え、生成した画像を共有したり、他のユーザーの作品を楽しむことができるコミュニティです。' },
+            { name: 'keywords', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成, AIアート, AIイラスト, 自動画像生成, クリエイティブAI, 生成系AI, 画像共有, AIコミュニティ, AIツール, 画像編集AI, デジタルアート, テキストから画像生成, AIクリエーション' },
             { property: 'og:title', content: 'LAMIX | AIグラビア | ラミックスの画像生成AI体験' },
-            { property: 'og:description', content: 'AIグラビアは、リアルタイム画像生成AI体験を提供します。' },
+            { property: 'og:description', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成, AIアート, AIイラスト, 自動画像生成, クリエイティブAI, 生成系AI, 画像共有, AIコミュニティ, AIツール, 画像編集AI, デジタルアート, テキストから画像生成, AIクリエーション' },
             { property: 'og:image', content: '/img/share.png' },
             { property: 'og:url', content: `https://app.lamix.jp/chat/list/${request.params.id}` }
           ]

@@ -336,7 +336,7 @@ async function routes(fastify, options) {
     const default_prompt ={
       nsfw: {
         model_name: "kizukiAnimeHentai_animeHentaiV3_60405.safetensors",
-        prompt: `score_9, score_8_up, score_7_up, source_anime,anime,masterpiece, best quality, (ultra-detailed), 1girl,(nsfw),censored,breasts,erect nipples,panty,(sexy pose),naughty face,sexy micro clothes,nudity, `,
+        prompt: `score_9, score_8_up, score_7_up, source_anime,anime,masterpiece, best quality, (ultra-detailed), 1girl,(nsfw),uncensored,panty, breasts,erect nipples,panty,(sexy pose),naughty face,sexy micro clothes,nudity, `,
         negative_prompt: "bad-hands-5 bad-picture-chill-75v bad_prompt_version2-neg BadDream easynegative, verybadimagenegative_v1.3,  Unspeakable-Horrors-64v, boring_e621_v4, By bad artist -neg  negative_hand-neg, missing fingers, extra digits, fewer digits, bad eye,pussy,vulve,vagin,sex,dick,blurry,signature,username,watermark,jpeg artifacts,normal quality,worst quality,low quality"
       },
       sfw: {

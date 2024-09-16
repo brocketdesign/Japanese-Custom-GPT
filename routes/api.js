@@ -2002,14 +2002,14 @@ async function routes(fastify, options) {
               };
             })
           );
-      
+
           // Get total count of chats for pagination
           const totalChatsCount = await chatsCollection.countDocuments(query);
           let totalPages = Math.ceil(totalChatsCount / limit);
           if (recentCursor.length < limit) {
             totalPages = page;
           }
-      
+          
           // Send paginated response
           reply.send({
             recent: recentWithUser,

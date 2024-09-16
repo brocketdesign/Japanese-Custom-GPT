@@ -142,6 +142,12 @@
                   <p class="text-muted small"><i class="bi bi-heart-fill"></i> いいね</p>
                 </div>
                 <div class="mx-2">
+                  <h6 class="fw-bold">{{default userData.chatCount 0}}</h6>
+                  <p class="text-muted small">
+                    <i class="bi bi-chat-dots-fill"></i> キャラ
+                  </p>
+                </div>
+                <div class="mx-2">
                   <h6 class="fw-bold">{{default userData.followCount 0}}</h6>
                   <p class="text-muted small">
                     <a href="/follower/{{userData._id}}?type=following" class="text-decoration-none text-muted ">

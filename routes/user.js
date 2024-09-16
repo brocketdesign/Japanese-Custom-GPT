@@ -537,7 +537,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       if (!user) {
         return reply.status(404).send({ error: 'User not found' });
       }
-
+  
       // Check if current user is following the target user
       const isFollowing = currentUser.following && currentUser.following.some(followingId => followingId.toString() === user._id.toString());
   
@@ -546,7 +546,10 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       if (currentUserId.toString() === userId) {
         isAdmin = true;
       }
-
+  
+      // Fetch the total number of chats created by the user
+      const chatCount = await collectionChat.countDocuments({ userId: new fastify.mongo.ObjectId(userId) });
+  
       return reply.view('/user-profile.hbs', {
         title: `${user.nickname}さんのプロフィール`,
         isAdmin,
@@ -560,7 +563,8 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
           followCount: user.followCount,
           followerCount: user.followerCount,
           imageLikeCount: user.imageLikeCount,
-          postCount: user.postCount
+          postCount: user.postCount,
+          chatCount, // Include the total chat count here
         },
       });
     } catch (error) {

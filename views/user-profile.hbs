@@ -196,6 +196,9 @@
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="image-tab" data-bs-toggle="tab" data-bs-target="#image" type="button" role="tab" aria-controls="image" aria-selected="false">いいねしたAI画像</button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="user-chat-tab" data-bs-toggle="tab" data-bs-target="#user-chat" type="button" role="tab" aria-controls="user-chat" aria-selected="false">ユーザーが作成したチャット</button>
+            </li>
         </ul>
         <div class="tab-content">
             <div class="tab-pane fade show active" id="post" role="tabpanel" aria-labelledby="post-tab">
@@ -210,6 +213,11 @@
               <div id="user-images-gallery" class="row g-3"></div>
               <div id="images-pagination-controls" class="d-flex justify-content-center my-3"></div>
             </div>
+            <div class="tab-pane fade" id="user-chat" role="tabpanel" aria-labelledby="user-chat-tab">
+              <div id="user-chat-gallery" class="row g-3"></div>
+              <div id="user-chat-pagination-controls" class="d-flex justify-content-center my-3"></div>
+            </div>
+
         </div>
     </div>
 
@@ -426,6 +434,8 @@
     $('#image-tab').on('shown.bs.tab', function (e) {
         loadUserImages(userId, 1);
     });
-
+    $('#user-chat-tab').on('shown.bs.tab', function (e) {
+        displayUserChats(userId,1)
+    });
   });
 </script>

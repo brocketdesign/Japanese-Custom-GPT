@@ -632,6 +632,127 @@ function generatePagination(currentPage, totalPages, userId, type) {
     $('#pagination-controls').html(paginationHtml);
 }
 
+window.displayUserChats = async function(userId, page = 1) {
+    try {
+        const response = await fetch(`/api/chats?userId=${userId}&page=${page}`);
+        const data = await response.json();
+
+        let userChats = data.recent || [];
+        let htmlContent = '';
+
+        userChats.forEach(chat => {
+            let galleryIco = '';
+            let image_count = 0;
+
+            // Handle galleries
+            if (chat.galleries && chat.galleries.length > 0) {
+                chat.galleries.forEach(gallery => {
+                    if (gallery.images && gallery.images.length > 0) {
+                        image_count += gallery.images.length;
+                    }
+                });
+                if (image_count > 0) {
+                    galleryIco = `
+                        <div class="gallery" style="color: rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
+                            <span class="badge bg-dark"><i class="far fa-images me-1"></i>${image_count}</span>
+                        </div>
+                    `;
+                }
+            }
+
+            // Render chat card
+            htmlContent += `
+            <div class="col-12 col-sm-4 col-lg-2 mb-2">
+                <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 redirectToChat" style="cursor:pointer;" data-id="${chat._id}" data-image="${chat.chatImageUrl}">
+                    <div style="background-image:url('${chat.chatImageUrl || '/img/logo.webp'}')" class="card-img-top girls_avatar position-relative" alt="${chat.name}">
+                        <div id="spinner-${chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
+                        <div class="position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px;right:10px;">
+                            ${(chat.tags || []).length ? `<div class="tags d-flex justify-content-between align-items-center flex-wrap">${chat.tags.map(tag => `<span class="badge bg-dark">${tag}</span>`).join('')}</div>` : ''}
+                        </div>
+                        <div class="position-absolute text-end" style="top:10px;right:10px">
+                            <a href="/character/${chat._id}">
+                                <div class="gallery" style="color: rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
+                                    <span class="badge bg-dark"><i class="far fa-image me-1"></i>${chat.imageCount || 0}</span>
+                                </div>
+                            </a>
+                            ${galleryIco}
+                            ${chat.messagesCount ? `<span class="badge bg-dark message-count"><i class="fas fa-comment-alt me-2"></i>${chat.messagesCount}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="card-body bg-transparent border-0 pb-0 text-start">
+                        <div class="row">
+                            <div class="col-3 text-center">
+                                <a href="/user/${chat.userId}" style="text-decoration: none;">
+                                    <img src="${chat.profileUrl || '/img/avatar.png'}" alt="${chat.nickname}" class="rounded-circle" width="40" height="40">
+                                </a>
+                            </div>
+                            <div class="col-8 ms-2">
+                                <h5 class="card-title character-title mb-0">${chat.name}</h5>
+                                <a href="/user/${chat.userId}" class="text-muted" style="text-decoration: none;">
+                                    <span style="font-size:12px;">${chat.nickname}</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        });
+
+        // Update the gallery HTML
+        $('#user-chat-gallery').append(htmlContent);
+        generateUserChatsPagination(userId, data.page, data.totalPages);
+
+    } catch (err) {
+        console.error('Failed to load user chats', err);
+    }
+};
+
+function generateUserChatsPagination(userId, currentPage, totalPages) {
+    let paginationHtml = '';
+    const sidePagesToShow = 2;
+    let pagesShown = new Set();
+
+    // Infinite scroll
+    $(window).off('scroll').on('scroll', function() {
+        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+            if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
+                displayUserChats(userId, currentPage + 1);
+                pagesShown.add(currentPage + 1);
+            }
+        }
+    });
+
+    if (currentPage >= totalPages) {
+        $('#user-chat-pagination-controls').html('<button class="btn btn-primary" onclick="scrollToTop()">トップへ戻る</button>');
+        return;
+    }
+
+    if (totalPages > 1) {
+        paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="displayUserChats(${userId}, ${currentPage - 1})">前へ</button>`;
+
+        if (currentPage > sidePagesToShow + 1) {
+            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="displayUserChats(${userId}, 1)">1</button>`;
+            if (currentPage > sidePagesToShow + 2) paginationHtml += `<span class="mx-1">...</span>`;
+        }
+
+        let startPage = Math.max(1, currentPage - sidePagesToShow);
+        let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
+
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHtml += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="displayUserChats(${userId}, ${i})">${i}</button>`;
+        }
+
+        if (currentPage < totalPages - sidePagesToShow - 1) {
+            if (currentPage < totalPages - sidePagesToShow - 2) paginationHtml += `<span class="mx-1">...</span>`;
+            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="displayUserChats(${userId}, ${totalPages})">${totalPages}</button>`;
+        }
+
+        paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="displayUserChats(${userId}, ${currentPage + 1})">次へ</button>`;
+    }
+
+    $('#user-chat-pagination-controls').html(paginationHtml);
+}
+
 
 window.displayPepopleChat = async function (page = 1) {
     const currentUser = await fetchUser();
@@ -761,10 +882,6 @@ function generateChatsPagination(currentPage, totalPages) {
     }
 
     $('#chat-pagination-controls').html(paginationHtml);
-}
-
-function scrollToTop() {
-    $('html, body').animate({ scrollTop: 0 }, 'slow');
 }
 
 window.loadAllUserPosts = async function (page = 1) {

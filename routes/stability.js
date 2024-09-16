@@ -337,7 +337,7 @@ async function routes(fastify, options) {
       nsfw: {
         model_name: "kizukiAnimeHentai_animeHentaiV3_60405.safetensors",
         prompt: `score_9, score_8_up, score_7_up, source_anime,1girl,(nsfw),uncensored,breasts,erect nipples,panty,large breast,(sexy pose), naughty face, sexy micro clothes,nudity, `,
-        negative_prompt: "score_6, score_5, score_4, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye,pussy,vulve,vagin,sex,dick,blurry,signature,username,watermark,jpeg artifacts,normal quality,worst quality,low quality"
+        negative_prompt: "bad-hands-5 bad-picture-chill-75v bad_prompt_version2-neg BadDream easynegative, verybadimagenegative_v1.3,  Unspeakable-Horrors-64v, boring_e621_v4, By bad artist -neg  negative_hand-neg, missing fingers, extra digits, fewer digits, bad eye,pussy,vulve,vagin,sex,dick,blurry,signature,username,watermark,jpeg artifacts,normal quality,worst quality,low quality"
       },
       sfw: {
         model_name: "novaAnimeXL_xlV10_341799.safetensors",

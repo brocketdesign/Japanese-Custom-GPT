@@ -946,8 +946,8 @@ async function routes(fastify, options) {
             const userMessages = userData.messages;
 
             //Add the time before completion
-            let currentDate = new Date();
-            let currentTimeInJapanese = `${currentDate.getHours()}時${currentDate.getMinutes()}分`;
+            let currentDate = new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" });
+            let currentTimeInJapanese = `${new Date(currentDate).getHours()}時${new Date(currentDate).getMinutes()}分`;            
             let timeMessage = `[Hidden] 現在の時刻 ${currentTimeInJapanese}.Do not tell me the time. Use it to be coherent.`
             timeMessage = { "role": "assistant", "content": timeMessage };
             userMessages.push(timeMessage);
@@ -1970,9 +1970,7 @@ async function routes(fastify, options) {
           if (userId) {
             query.userId = new fastify.mongo.ObjectId(userId);
           }
-      
-          const synclab = await chatsCollection.find({ ext: 'synclubaichat' }).toArray();
-      
+            
           // Fetch paginated chats, sorted by _id in descending order
           const recentCursor = await chatsCollection.aggregate([
             { $match: query },

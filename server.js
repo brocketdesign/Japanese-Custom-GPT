@@ -35,7 +35,6 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       deleteCharactersWithoutDescription(db)
       deleteClientsWithoutProductId(db)
       deleteUserChatsWithoutMessages(db)
-      cleanUpDatabase(db)
     });
     cron.schedule('0 0 * * *', async () => {
       try {

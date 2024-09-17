@@ -41,7 +41,8 @@ async function cleanupNonRegisteredUsers(db) {
         console.log('Fetching all user IDs...');
         const allUserIds = await usersCollection.distinct('_id');
         console.log(`All user IDs: ${allUserIds.length}`);
-
+        
+        
         console.log('Deleting orphaned records...');
         await Promise.all([
             collectionChat.deleteMany({ userId: { $nin: allUserIds, $exists: true } }),
@@ -50,6 +51,7 @@ async function cleanupNonRegisteredUsers(db) {
         ]);
 
         console.log('Orphaned records deleted.');
+        
         return `${userIds.length} non-registered users and orphaned data deleted.`;
     } catch (error) {
         console.error(`Cleanup failed: ${error.message}`);
@@ -210,7 +212,8 @@ async function cleanUpDatabase(db) {
       // Step 2: Delete chats without thumbnailUrl
       console.log('Step 2: Deleting chats without thumbnailUrl...');
       const resultChats = await chatsCollection.deleteMany({
-        thumbnailUrl: { $exists: false }
+        thumbnailUrl: { $exists: false },
+        chatImageUrl: { $exists: false },
       });
       console.log(`Chats without thumbnailUrl deleted: ${resultChats.deletedCount} documents deleted.`);
   

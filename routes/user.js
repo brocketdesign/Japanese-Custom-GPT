@@ -352,11 +352,12 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     const parts = request.parts();
   
     // Initialize variables for the incoming form data
-    let email, nickname, birthYear, birthMonth, birthDay, gender, profileUrl;
+    let email, nickname, bio, birthYear, birthMonth, birthDay, gender, profileUrl;
   
     for await (const part of parts) {
       if (part.fieldname === 'email' && part.value) email = part.value;
       if (part.fieldname === 'nickname' && part.value) nickname = part.value;
+      if (part.fieldname === 'bio' && part.value) bio = part.value;
       if (part.fieldname === 'birthYear' && part.value) birthYear = part.value;
       if (part.fieldname === 'birthMonth' && part.value) birthMonth = part.value;
       if (part.fieldname === 'birthDay' && part.value) birthDay = part.value;
@@ -427,6 +428,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
 
       if (email) updateData.email = email;
       if (nickname) updateData.nickname = nickname;
+      if (bio) updateData.bio = bio;
       if (birthYear && birthMonth && birthDay) {
         updateData.birthDate = { year: birthYear, month: birthMonth, day: birthDay };
       }
@@ -558,6 +560,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
           _id: user._id,
           profileUrl: user.profileUrl,
           nickname: user.nickname,
+          bio: user.bio,
           coins: user.coins,
           follow: isFollowing,
           followCount: user.followCount,

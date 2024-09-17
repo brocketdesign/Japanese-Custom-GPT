@@ -115,6 +115,7 @@ async function routes(fastify, options) {
       // Find the images liked by the user
       const likedImageIds = await imagesLikesCollection
         .find({ userId })
+        .sort({ _id: -1 })
         .skip(skip)
         .limit(limit)
         .map(doc => doc.imageId)

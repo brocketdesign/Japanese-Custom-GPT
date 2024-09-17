@@ -336,7 +336,7 @@ async function routes(fastify, options) {
     const default_prompt ={
       nsfw: {
         model_name: "novaAnimeXL_ponyV20_461138.safetensors",
-        prompt: `score_9, score_8_up, score_7_up, source_anime,anime,masterpiece, best quality, (ultra-detailed), 1girl,(nsfw),uncensored,panty,breasts,erect nipples,panty,(sexy pose),naughty face,nude,nudity, `,
+        prompt: `score_9, score_8_up, score_7_up, source_anime,anime,masterpiece, best quality, (ultra-detailed), 1girl,(nsfw),uncensored,panty,breasts,erect nipples,panty,(sexy pose),naughty face,almost naked,nude,nudity, `,
         negative_prompt: "score_6, score_5, score_4, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye,pussy,vulve,vagin,sex,dick,blurry,signature,username,watermark,jpeg artifacts,normal quality,worst quality,low quality"
       },
       sfw: {

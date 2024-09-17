@@ -707,7 +707,172 @@ async function routes(fastify, options) {
       return reply.status(500).send({ error: 'Failed to save image to database' });
     }
   });
-  
+  fastify.get('/novita/img2img-task-status/:taskId', async (request, reply) => {
+      const { taskId } = request.params;
+
+      try {
+          const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+          const task = await db.collection('tasks').findOne({ taskId });
+
+          if (!task) {
+              return reply.status(404).send({ error: 'タスクが見つかりません。' });
+          }
+
+          if (task.status === 'completed') {
+              return reply.send({
+                  taskId: task.taskId,
+                  status: task.status,
+                  result: task.result
+              });
+          }
+
+          if (task.status === 'failed') {
+              return reply.send({
+                  taskId: task.taskId,
+                  status: task.status,
+                  error: task.error
+              });
+          }
+
+          // Task is still pending or in progress, check with Novita
+          const result = await fetchNovitaResult(task.taskId);
+
+          if (result === null) {
+              // Task is still processing
+              return reply.send({
+                  taskId: task.taskId,
+                  status: 'processing'
+              });
+          }
+
+          // Update task in DB
+          await db.collection('tasks').updateOne(
+              { taskId },
+              { 
+                  $set: { 
+                      status: 'completed',
+                      result: { imageUrls: result },
+                      updatedAt: new Date()
+                  } 
+              }
+          );
+
+          return reply.send({
+              taskId: task.taskId,
+              status: 'completed',
+              result: { imageUrls: result }
+          });
+
+      } catch (error) {
+          console.error('タスクステータス確認エラー:', error);
+
+          // Update task as failed
+          const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+          await db.collection('tasks').updateOne(
+              { taskId },
+              { 
+                  $set: { 
+                      status: 'failed',
+                      error: error.message,
+                      updatedAt: new Date()
+                  } 
+              }
+          );
+
+          return reply.send({
+              taskId: taskId,
+              status: 'failed',
+              error: error.message
+          });
+      }
+    });
+
+  async function fetchNovitaImg2ImgMagic(data) {
+      try {
+          const response = await axios.post('https://api.novita.ai/v3/async/img2img', {
+              extra: {
+                  response_image_type: 'jpeg',
+                  enable_nsfw_detection: false,
+                  nsfw_detection_level: 0,
+              },
+              request: data,
+          }, {
+              headers: {
+                  Authorization: `Bearer ${process.env.NOVITA_API_KEY}`,
+                  'Content-Type': 'application/json',
+              },
+          });
+
+          if (response.status !== 200) {
+              throw new Error(`Error: ${response.status} - ${response.data}`);
+          }
+
+          return response.data.task_id;
+      } catch (error) {
+          console.error('Error fetching Novita img2img:', error.message);
+          throw error;
+      }
+  }
+    
+  fastify.post('/novita/img2img', async (request, reply) => {
+    const { image_base64, prompt, aspectRatio, userId, chatId } = request.body;
+
+    // Define the schema for validation
+    const Img2ImgSchema = z.object({
+        image_base64: z.string().nonempty('Image is required'),
+        prompt: z.string().min(10, 'Prompt must be at least 10 characters long'),
+        aspectRatio: z.string().optional().default('9:16'),
+        userId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid userId'),
+        chatId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid chatId'),
+    });
+
+    try {
+        const validated = Img2ImgSchema.parse(request.body);
+
+        // Prepare the request data for the Novita API
+        const novitaRequestData = {
+            model_name: default_prompt.sfw.model_name,
+            image_base64: validated.image_base64,
+            prompt: default_prompt.sfw.prompt + validated.prompt,
+            negative_prompt: default_prompt.sfw.negative_prompt,
+            width: 768,
+            height: 1024,
+            sampler_name: "Euler a",
+            guidance_scale: 7,
+            steps: 30,
+            image_num: 4,
+            clip_skip: 0,
+            seed: -1,
+            loras: [],
+        };
+        
+        // Send request to Novita API and get taskId
+        const novitaTaskId = await fetchNovitaImg2ImgMagic(novitaRequestData);
+
+        // Store task details in DB
+        const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+        await db.collection('tasks').insertOne({
+            taskId: novitaTaskId,
+            type: 'img2img',
+            status: 'pending',
+            prompt: validated.prompt,
+            negative_prompt: default_prompt.sfw.negative_prompt,
+            aspectRatio: validated.aspectRatio,
+            userId: new ObjectId(validated.userId),
+            chatId: new ObjectId(validated.chatId),
+            createdAt: new Date(),
+            updatedAt: new Date()
+        });
+
+        // Respond with taskId
+        reply.send({ taskId: novitaTaskId, message: '画像生成タスクが開始されました。taskIdを使用してステータスを確認してください。' });
+
+    } catch (err) {
+        console.log(err);
+        reply.status(500).send({ error: '画像生成の開始中にエラーが発生しました。' });
+    }
+  });
+
 }
 
 module.exports = routes;

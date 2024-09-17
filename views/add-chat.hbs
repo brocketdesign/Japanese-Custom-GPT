@@ -241,6 +241,7 @@
                                 style="max-height: 300px; width: 100%; object-fit: contain;"
                             >
                         </div>
+                        <div id="imageUploaderContainer" class="w-100" style="cursor: pointer;"></div>
                     </div>
                 </div>
                 <button type="button" id="nextStep1" class="btn btn-primary w-100 nextStep">次へ</button>
@@ -382,55 +383,51 @@
             $('#sendForm span').html('チャット')
         })
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const chatImageUrl = urlParams.get('chatImage');
-    if (chatImageUrl) {
-        setTimeout(function(){
-            $('#chatImageUrl').val(chatImageUrl).change();
-        },500)
-        $('#chatImage').attr('src', chatImageUrl).show().addClass('on');
-    }
-
-    function checkFieldsAndShowForm() {
-        if ($('#chatName').val().trim() !== '' && 
-            $('#chatDescription').val().trim() !== '' && 
-            $('#chatPurpose').val().trim() !== '') {
-            $('#sendForm').show();
-        } else {
-            $('#sendForm').hide();
+        const urlParams = new URLSearchParams(window.location.search);
+        const chatImageUrl = urlParams.get('chatImage');
+        if (chatImageUrl) {
+            setTimeout(function(){
+                $('#chatImageUrl').val(chatImageUrl).change();
+            },500)
+            $('#chatImage').attr('src', chatImageUrl).show().addClass('on');
         }
-    }
-    $('#chatName, #chatDescription, #chatPurpose').on('input', checkFieldsAndShowForm);
 
-        if (isTemporaryChat == 'false') {
-            fetchchatData(chatId,function(){
-                function observeGalleryChanges(galleryIndex) {
-                    const galleryElement = document.querySelector(`#imageGallery-${galleryIndex}`);
-                    if (!galleryElement) return;
+        function checkFieldsAndShowForm() {
+            if ($('#chatName').val().trim() !== '' && 
+                $('#chatDescription').val().trim() !== '' && 
+                $('#chatPurpose').val().trim() !== '') {
+                $('#sendForm').show();
+            } else {
+                $('#sendForm').hide();
+            }
+        }
+        $('#chatName, #chatDescription, #chatPurpose').on('input', checkFieldsAndShowForm);
 
-                    const observer = new MutationObserver(function(mutationsList, observer) {
-                        modifiedGalleries.add(galleryIndex);
+            if (isTemporaryChat == 'false') {
+                fetchchatData(chatId,function(){
+                    function observeGalleryChanges(galleryIndex) {
+                        const galleryElement = document.querySelector(`#imageGallery-${galleryIndex}`);
+                        if (!galleryElement) return;
+
+                        const observer = new MutationObserver(function(mutationsList, observer) {
+                            modifiedGalleries.add(galleryIndex);
+                        });
+
+                        observer.observe(galleryElement, { childList: true, subtree: true });
+                    }
+
+                    $('#galleries .imageGalleryWrapper').each(function(index) {
+                        observeGalleryChanges(index);
                     });
+                });
+            }
 
-                    observer.observe(galleryElement, { childList: true, subtree: true });
-                }
-
-                $('#galleries .imageGalleryWrapper').each(function(index) {
-                    observeGalleryChanges(index);
+            $('textarea').each(function() {
+                resizeTextarea(this);
+                $(this).on('input change', function() {
+                    resizeTextarea(this);
                 });
             });
-        }else{
-            $('#imageGallery-0').imageUploader({
-                maxSize: 2 * 1024 * 1024,
-                maxFiles: 100
-            });
-        }
-        $('textarea').each(function() {
-            resizeTextarea(this);
-            $(this).on('input change', function() {
-                resizeTextarea(this);
-            });
-        });
 
         $('#visibility').val('public')
         $('#visibility').change(function() {
@@ -468,45 +465,6 @@
                 element.style.height = 'auto'; 
             }
         }
-
-        function addNewGallery(init = false) {
-            let galleryIndex = $('.imageGalleryWrapper').length;
-            let newGalleryWrapper = $('.imageGalleryWrapper').eq(0).clone();
-
-            newGalleryWrapper.find('[for^="imageGallery-"]').each(function() {
-                const currentFor = $(this).attr('for');
-                const newFor = currentFor.replace(/\d+/, galleryIndex);
-                $(this).attr('for', newFor);
-            });
-
-            newGalleryWrapper.find('[id^="imageGallery-"]').each(function() {
-                const currentId = $(this).attr('id');
-                const newId = currentId.replace(/\d+/, galleryIndex);
-                $(this).attr('id', newId);
-            });
-
-            newGalleryWrapper.find('[name^="imageGallery_"]').each(function() {
-                const currentName = $(this).attr('name');
-                const newName = currentName.replace(/\d+/, galleryIndex);
-                $(this).attr('name', newName);
-            });
-
-            newGalleryWrapper.find('input[type="text"], input[type="number"]').val('');
-            newGalleryWrapper.find(`#imageGallery-${galleryIndex}`).empty();
-
-            $('#galleries').prepend(newGalleryWrapper);
-
-            if(init){
-                $(`#imageGallery-${galleryIndex}`).imageUploader({
-                    maxSize: 2 * 1024 * 1024,
-                    maxFiles: 100
-                });
-                modifiedGalleries.add(galleryIndex);
-            }
-
-        }
-
-        $('#addMoreGallery').on('click', function(){addNewGallery(true);});
 
         $(document).on('click', '.resetGallery', function() {
 
@@ -607,26 +565,6 @@
                         $('#markdownContainer').html(marked.parse(chatData.rule)).show();
                     }
 
-                    // Populate Step 3: 画像ギャラリー
-                    if (chatData.galleries && chatData.galleries.length > 0) {
-                        chatData.galleries.forEach((gallery, index) => {
-                            if (index === 0) {
-                                // Populate the first gallery
-                                $(`#imageGallery-0-name`).val(gallery.name);
-                                $(`#imageGallery-0-description`).val(gallery.description);
-                                initializeImageUploader(`#imageGallery-0`, gallery.images);
-                            } else {
-                                // Add and populate additional galleries
-                                addNewGallery(true);
-                                $(`#imageGallery-${index}-name`).val(gallery.name);
-                                $(`#imageGallery-${index}-description`).val(gallery.description);
-                                initializeImageUploader(`#imageGallery-${index}`, gallery.images);
-                            }
-                        });
-                    } else {
-                        initializeImageUploader(`#imageGallery-0`, []);
-                    }
-
                     // Callback if provided
                     if (typeof callback === 'function') {
                         callback();
@@ -639,22 +577,12 @@
             });
         }
 
-        function initializeImageUploader(gallerySelector, images) {
-            const preloaded = images.map((url, idx) => ({
-                id: idx + 1,
-                src: url
-            }));
-
-            $(gallerySelector).imageUploader({
-                preloaded: preloaded,
-                imagesInputName: 'photos',
-                preloadedInputName: 'old',
-                maxSize: 2 * 1024 * 1024,
-                maxFiles: 100
-            });
-
-            modifiedGalleries.add(gallerySelector.replace('#imageGallery-', ''));
-        }
+        /*
+        $('#imageUploaderContainer').imageUploader({
+            maxSize: 2 * 1024 * 1024, // 2MB
+            maxFiles: 1
+        });
+        */
 
         // Form Submission
         $('#submitForm').on('click', function(e) {
@@ -712,8 +640,57 @@
                 })
             });
         }
+        function saveSelectedImage(imageUrl) {
+            const chatId = '{{chatId}}'; // Replace with actual chat ID
+
+            $.ajax({
+                url: '/novita/save-image',
+                method: 'POST',
+                dataType: 'json',
+                data: {
+                    imageUrl: imageUrl,
+                    chatId: chatId
+                },
+                success: function(response) {
+                    showNotification('画像が保存されました。', 'success');
+                },
+                error: function(error) {
+                    showNotification('画像の保存に失敗しました。', 'error');
+                }
+            });
+        }
+
+        function displayGeneratedImages(imageUrls) {
+            // Clear the container
+            $('#imageContainer').empty();
+
+            // For each image URL, create an image element and append to the container
+            imageUrls.forEach(function(data) {
+                const url = data.imageUrl
+                const colDiv = $('<div>').addClass('col-12 col-md-6 mb-3');
+                const imgElement = $('<img>')
+                    .attr('src', url)
+                    .addClass('img-fluid img-thumbnail')
+                    .css('cursor', 'pointer');
+
+                // Add click handler to each image
+                imgElement.on('click', function() {
+                    $('.img-thumbnail').each(function(){
+                        $(this).removeClass('select')
+                    })
+                    $(this).addClass('select')
+                    
+                    // Save the selected image (you can implement this function)
+                    saveSelectedImage(url);
+                });
+
+                colDiv.append(imgElement);
+                $('#imageContainer').append(colDiv);
+            });
+        }
+
         function checkTaskStatus(taskId) {
-            const POLLING_INTERVAL = 3000; // 3 seconds
+            const POLLING_INTERVAL = 10000; // 3 seconds
             const MAX_ATTEMPTS = 30; // up to 90 seconds
             let attempts = 0;
 
@@ -726,50 +703,11 @@
                         dataType: 'json'
                     });
 
-                    console.log(`Polling task status:`, statusResponse);
-
                     if (statusResponse.status === 'completed') {
                         clearInterval(intervalId);
                         const { imageUrls } = statusResponse.result;
 
-                        // Clear the container
-                        $('#imageContainer').empty();
-
-                        // For each image URL, create an image element and append to the container
-                        imageUrls.forEach(function(data) {
-                            const url = data.imageUrl
-                            const colDiv = $('<div>').addClass('col-12 col-md-6 mb-3');
-                            const imgElement = $('<img>')
-                                .attr('src', url)
-                                .addClass('img-fluid img-thumbnail')
-                                .css('cursor', 'pointer');
-
-                            // Add click handler to each image
-                            imgElement.on('click', function() {
-                                $('.img-thumbnail').each(function(){
-                                    $(this).removeClass('select')
-                                })
-                                $(this).addClass('select')
-                                $.ajax({
-                                    url: '/novita/save-image',
-                                    method: 'POST',
-                                    dataType: 'json',
-                                    data: {
-                                        imageUrl: url,
-                                        chatId: chatId
-                                    },
-                                    success: function(response) {
-                                        showNotification('画像が保存されました。', 'success');
-                                    },
-                                    error: function(error) {
-                                        showNotification('画像の保存に失敗しました。', 'error');
-                                    }
-                                });
-                            });
-
-                            colDiv.append(imgElement);
-                            $('#imageContainer').append(colDiv);
-                        });
+                        displayGeneratedImages(imageUrls)
 
                         showNotification('画像が正常に生成されました。', 'success');
                         // Enable buttons and reset text
@@ -811,6 +749,61 @@
                 }
             }, POLLING_INTERVAL);
         }
+        function checkImg2ImgTaskStatus(taskId) {
+            const POLLING_INTERVAL = 10000; // 3 seconds
+            const MAX_ATTEMPTS = 30;
+            let attempts = 0;
+
+            const intervalId = setInterval(async () => {
+                attempts++;
+                try {
+                    const statusResponse = await $.ajax({
+                        url: `/novita/img2img-task-status/${taskId}`,
+                        method: 'GET',
+                        dataType: 'json'
+                    });
+
+                    if (statusResponse.status === 'completed') {
+                        clearInterval(intervalId);
+                        const { imageUrls } = statusResponse.result;
+
+                        // Display the generated images for selection
+                        displayGeneratedImages(imageUrls);
+
+                        showNotification('画像が正常に生成されました。', 'success');
+                        $('#characterPrompt').prop('disabled', false);
+                        $('#generateButton').prop('disabled', false);
+                        $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+
+                    } else if (statusResponse.status === 'failed') {
+                        clearInterval(intervalId);
+                        showNotification(`画像の生成に失敗しました: ${statusResponse.error}`, 'error');
+                        $('#characterPrompt').prop('disabled', false);
+                        $('#generateButton').prop('disabled', false);
+                        $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+                    } else {
+                        console.log('タスクはまだ処理中です...');
+                    }
+
+                    if (attempts >= MAX_ATTEMPTS) {
+                        clearInterval(intervalId);
+                        showNotification('画像の生成がタイムアウトしました。再試行してください。', 'error');
+                        $('#characterPrompt').prop('disabled', false);
+                        $('#generateButton').prop('disabled', false);
+                        $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+                    }
+
+                } catch (error) {
+                    clearInterval(intervalId);
+                    console.error('タスクステータスポーリングエラー:', error);
+                    showNotification('画像の生成中にエラーが発生しました。', 'error');
+                    $('#characterPrompt').prop('disabled', false);
+                    $('#generateButton').prop('disabled', false);
+                    $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+
+                }
+            }, POLLING_INTERVAL);
+        }
 
         $('#generateButton').on('click', async function() {
             const prompt = $('#characterPrompt').val().trim();
@@ -839,13 +832,27 @@
                         data: JSON.stringify({ prompt, chatId })
                     });
                 }
-
                 if (enhanceResponse && enhanceResponse.enhancedPrompt) {
                     $('#enhancedPrompt').val(enhanceResponse.enhancedPrompt);
 
                     // ボタンテキストを「画像を生成中...」に更新
                     $button.html('<i class="fas fa-spinner fa-spin me-2"></i>画像を生成中...');
 
+                
+                    const files = $('#imageUploaderContainer')?.find('input[type="file"]')[0]?.files;
+                    if (files && files.length > 0) {
+                        const file = files[0];
+
+                        // Read the file as base64
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const base64Image = e.target.result.split(',')[1]; // Remove the data:image/png;base64, part
+                            // Now, send this base64 image to the backend
+                            sendImageToBackend(base64Image);
+                        };
+                        reader.readAsDataURL(file);
+                        return
+                    }
                     // タスクIDを取得するリクエスト
                     const taskResponse = await fetchTaskId(enhanceResponse.enhancedPrompt, '9:16', chatId);
 
@@ -876,6 +883,43 @@
                 $('#characterPrompt').prop('disabled', false);
             }
         });
+        function sendImageToBackend(base64Image) {
+            const prompt = $('#enhancedPrompt').val().trim();
+
+            if (!prompt) {
+                showNotification('プロンプトを入力してください。', 'error');
+                return;
+            }
+
+            const data = {
+                image_base64: base64Image,
+                prompt: prompt,
+                aspectRatio: '9:16',
+                userId: '{{user._id}}', 
+                chatId: '{{chatId}}',
+            };
+
+            $.ajax({
+                url: '/novita/img2img',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function(response) {
+                    const taskId = response.taskId;
+                    showNotification('画像生成タスクを開始しました。ステータスを確認中...', 'info');
+                    // Start polling for the task status
+                    checkImg2ImgTaskStatus(taskId);
+                },
+                error: function(error) {
+                    console.error('Error starting img2img task:', error);
+                    showNotification('画像生成タスクの開始に失敗しました。再試行してください。', 'error');
+                    $('#characterPrompt').prop('disabled', false);
+                    $('#generateButton').prop('disabled', false);
+                    $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+                }
+                
+            });
+        }
 
         $('#ai-assist').on('click', function() {
 

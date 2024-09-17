@@ -152,7 +152,7 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
             baseFace = null
         } = option;
 
-        console.log('Parameters after destructuring:', { negativePrompt, prompt, aspectRatio, baseFace });
+        //console.log('Parameters after destructuring:', { negativePrompt, prompt, aspectRatio, baseFace });
 
         if (!prompt) {
             console.error('generateImageNovita Error: Prompt is required.');
@@ -226,7 +226,7 @@ const displayedImageIds = new Set();
 
 // Function to poll the task status
 function pollTaskStatus(API_URL, taskId, type, prompt) {
-    const POLLING_INTERVAL = 5000; // 3 seconds
+    const POLLING_INTERVAL = 10000; // 3 seconds
     const MAX_ATTEMPTS = 60;
     let attempts = 0;
 
@@ -241,7 +241,7 @@ function pollTaskStatus(API_URL, taskId, type, prompt) {
             }
 
             const statusData = await statusResponse.json();
-            console.log(`Polling task status for ${type}:`, statusData);
+            //console.log(`Polling task status for ${type}:`, statusData);
 
             if (statusData.status === 'completed') {
                 clearInterval(intervalId);

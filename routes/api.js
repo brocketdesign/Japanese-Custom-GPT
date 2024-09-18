@@ -1,9 +1,7 @@
 const { ObjectId } = require('mongodb');
 const {moduleCompletion,fetchOpenAICompletion, fetchOpenAINarration, fetchNewAPICompletion, fetchOpenAICustomResponse} = require('../models/openai')
 const crypto = require('crypto');
-const aws = require('aws-sdk');
 const sessions = new Map(); // Define sessions map
-const { analyzeScreenshot, processURL } = require('../models/scrap');
 const { handleFileUpload, uploadToS3, checkLimits, convertImageUrlToBase64, createBlurredImage } = require('../models/tool');
 const {sendMail, getRefreshToken} = require('../models/mailer');
 const { createHash } = require('crypto');

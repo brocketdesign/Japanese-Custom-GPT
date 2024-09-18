@@ -4,7 +4,6 @@
 
 // Check Image Description and Implement Limits for Premium Users
 window.checkImageDescription = function(chatId = null, callback) {
-  console.log('checkImageDescription called with chatId:', chatId);
   
   if (!chatId) {
       console.error('checkImageDescription Error: chatId is required.');
@@ -13,10 +12,9 @@ window.checkImageDescription = function(chatId = null, callback) {
   }
 
   const imageDescription = $('#image_description').val();
-  console.log('Retrieved imageDescription from DOM:', imageDescription);
   
   if (imageDescription) {
-      console.log('Existing image description found.');
+      console.log('Existing image description found.',imageDescription);
       callback({ description: imageDescription });
       return;
   }

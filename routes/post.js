@@ -101,7 +101,7 @@ async function routes(fastify, options) {
   fastify.get('/user/posts', async (request, reply) => {
     try {
       const page = parseInt(request.query.page) || 1;
-      const limit = 13; // Number of posts per page
+      const limit = 12; // Number of posts per page
       const skip = (page - 1) * limit;
   
       const db = fastify.mongo.client.db(process.env.MONGODB_NAME);

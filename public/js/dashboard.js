@@ -7,9 +7,10 @@ $(document).ready(async function() {
     const priceId = urlParams.get('priceId');
     const paymentFalse = urlParams.get('payment') == 'false';
     const user = await fetchUser();
+    const userId = user._id
     isTemporary = !!user?.isTemporary
-    subscriptionStatus = user.subscriptionStatus == 'active'
-
+    subscriptionStatus = user.subscriptionStatus == 'active'  
+      
     if (success && sessionId) {
         $.ajax({
             url: `/plan/update-${success}`,
@@ -210,7 +211,7 @@ $(document).ready(async function() {
                               originalDate.getMinutes() + '分';
   
         // Set the formatted date back into the element
-        $(this).text(formattedDate);
+        $(this).text(formattedDate).show();
       });
     $(document).on('click', '.persona', function(e) {
         e.stopPropagation();
@@ -461,8 +462,25 @@ $(document).ready(async function() {
             }
         });
     });
-    
+
+    $(document).on('click','.redirectToChatPage',function(){
+        const chatId = $(this).data('id');
+        const chatImage = $(this).data('image');
+        window.location='/chat/'+chatId
+    })
+
 });
+
+
+async function checkIfAdmin(userId) {
+    try {
+      const response = await $.get(`/user/is-admin/${userId}`);
+      return response.isAdmin;
+    } catch (error) {
+      console.log('Error checking admin status');
+      return false;
+    }
+  }
 
 // Helper function to scroll to the top
 function scrollToTop() {
@@ -476,6 +494,79 @@ window.imagePlaceholder = function(){
     }
     return imgPlaceholder
 }
+window.loadUsers = async function (page = 1) {
+    $.ajax({
+        url: `/users/?page=${page}`,
+        method: 'GET',
+        success: function (data) {
+            let usersHtml = '';
+            data.users.forEach(user => {
+                usersHtml += `
+                    <div class="me-3 text-center" style="min-width: 100px;">
+                        <a href="/user/${user.userId}" class="text-decoration-none text-dark">
+                            <img src="${user.profilePicture || '/img/default-avatar.png'}" alt="${user.userName}" class="rounded-circle mb-2" width="60" height="60">
+                            <div>${user.userName}</div>
+                        </a>
+                    </div>
+                `;
+            });
+
+            $('#users-gallery').append(usersHtml);
+            if( $('#users-pagination-controls').length > 0){
+                generateUserPagination(data.page, data.totalPages);
+            }
+        },
+        error: function (err) {
+            console.error('Failed to load users', err);
+        }
+    });
+}
+
+function generateUserPagination(currentPage, totalPages) {
+    let paginationHtml = '';
+    const sidePagesToShow = 2;
+    let pagesShown = new Set();
+
+    $(window).off('scroll').on('scroll', function() {
+        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+            if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
+                loadUsers(currentPage + 1);
+                pagesShown.add(currentPage + 1);
+            }
+        }
+    });
+
+    if (currentPage >= totalPages) {
+        $('#users-pagination-controls').html('<button class="btn btn-outline-secondary" onclick="scrollToTop()"><i class="bi bi-arrow-up-circle-fill me-2"></i>Back to Top</button>');
+        return;
+    }
+
+    if (totalPages > 1) {
+        paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadUsers(${currentPage - 1})">Previous</button>`;
+
+        if (currentPage > sidePagesToShow + 1) {
+            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadUsers(1)">1</button>`;
+            if (currentPage > sidePagesToShow + 2) paginationHtml += `<span class="mx-1">...</span>`;
+        }
+
+        let startPage = Math.max(1, currentPage - sidePagesToShow);
+        let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
+
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHtml += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadUsers(${i})">${i}</button>`;
+        }
+
+        if (currentPage < totalPages - sidePagesToShow - 1) {
+            if (currentPage < totalPages - sidePagesToShow - 2) paginationHtml += `<span class="mx-1">...</span>`;
+            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadUsers(${totalPages})">${totalPages}</button>`;
+        }
+
+        paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadUsers(${currentPage + 1})">Next</button>`;
+    }
+
+    $('#users-pagination-controls').html(paginationHtml);
+}
+
 window.loadChatUsers = async function (chatId, page = 1) {
     $.ajax({
         url: `/chat/${chatId}/users?page=${page}`,
@@ -576,8 +667,10 @@ window.displayPeopleList = async function (userId, type = 'followers', page = 1)
         $('#people-list').append(htmlContent);
 
         // Generate pagination controls
-        generatePagination(data.page, data.totalPages, userId, type);
-
+        if ($('#pagination-controls').length > 0) {
+            generatePagination(data.page, data.totalPages, userId, type);
+            
+        }
     } catch (err) {
         console.error('Failed to load list', err);
     }
@@ -663,7 +756,7 @@ window.displayUserChats = async function(userId, page = 1) {
             // Render chat card
             htmlContent += `
             <div class="col-12 col-sm-4 col-lg-3 mb-2">
-                <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 redirectToChat" style="cursor:pointer;" data-id="${chat._id}" data-image="${chat.chatImageUrl}">
+                <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 redirectToChatPage" style="cursor:pointer;" data-id="${chat._id}" data-image="${chat.chatImageUrl}">
                     <div style="background-image:url('${chat.chatImageUrl || '/img/logo.webp'}')" class="card-img-top girls_avatar position-relative" alt="${chat.name}">
                         <div id="spinner-${chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
                         <div class="position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px;right:10px;">
@@ -699,8 +792,9 @@ window.displayUserChats = async function(userId, page = 1) {
 
         // Update the gallery HTML
         $('#user-chat-gallery').append(htmlContent);
-        generateUserChatsPagination(userId, data.page, data.totalPages);
-
+        if($('#user-chat-pagination-controls').length > 0){
+            generateUserChatsPagination(userId, data.page, data.totalPages);   
+        }
     } catch (err) {
         console.error('Failed to load user chats', err);
     }
@@ -830,8 +924,9 @@ window.displayPepopleChat = async function (page = 1) {
 
         // Update the gallery HTML
         $('#chat-gallery').append(htmlContent);
-        generateChatsPagination(data.page, data.totalPages);
-
+        if($('#chat-pagination-controls').length > 0){      
+            generateChatsPagination(data.page, data.totalPages);
+        }
     } catch (err) {
         console.error('Failed to load chats', err);
     }
@@ -887,7 +982,7 @@ window.loadAllUserPosts = async function (page = 1) {
     const currentUser = await fetchUser();
     const currentUserId = currentUser._id;
     const subscriptionStatus = currentUser.subscriptionStatus === 'active';
-
+    const isAdmin = await checkIfAdmin(userId);    
     $.ajax({
       url: `/user/posts?page=${page}`,
       method: 'GET',
@@ -898,7 +993,7 @@ window.loadAllUserPosts = async function (page = 1) {
             const isLiked = item?.post?.likedBy?.some(id => id.toString() === currentUserId.toString());
 
             galleryHtml += `
-              <div class="col-12 col-md-4 col-lg-3 mb-2">
+              <div class="col-12 col-md-3 col-lg-2 mb-2">
                 <div class="card">
                   <div class="d-flex align-items-center p-2">
                     <a href="/user/${item.userId}">
@@ -916,13 +1011,13 @@ window.loadAllUserPosts = async function (page = 1) {
                   <a href="/post/${item.post.postId}" class="text-muted text-decoration-none">
                     <img src="${item.post.imageUrl}" alt="${item.post.prompt}" class="card-img-top">
                   </a>
-                  <div class="card-body p-2 d-flex align-items-center justify-content-between">
+                  <div class="d-none card-body p-2 d-flex align-items-center justify-content-between">
                     <div class="row">
                             <div class="col-12" style="overflow:hidden; text-wrap:nowrap;">
                                 <a href="/post/${item.post.postId}" class="text-muted text-decoration-none text-short">${item.post.comment}</a>
                             </div>
                             <div class="col-12 text-end">
-                                <button class="btn btn-light post-nsfw-toggle isAdmin" data-id="${item.post.postId}">
+                                <button class="btn btn-light post-nsfw-toggle ${!isAdmin?'d-none':''}" data-id="${item.post.postId}">
                                     <i class="bi ${item?.post?.nsfw ? 'bi-eye-slash-fill':'bi-eye-fill'}"></i> 
                                 </button>
                                 <button class="btn btn-light shadow-0 post-fav  ${isLiked ? 'liked' : ''}" data-id="${item.post.postId}"> 
@@ -939,7 +1034,9 @@ window.loadAllUserPosts = async function (page = 1) {
         });
 
         $('#post-gallery').append(galleryHtml);
-        generateUserPostsPagination(data.page, data.totalPages);
+        if($('#user-posts-pagination-controls').length > 0){
+            generateUserPostsPagination(data.page, data.totalPages);
+        }
       },
       error: function (err) {
         console.error('Failed to load posts', err);
@@ -1011,7 +1108,7 @@ window.loadAllChatImages = async function (page = 1) {
     const currentUser = await fetchUser();
     const currentUserId = currentUser._id;
     const subscriptionStatus = currentUser.subscriptionStatus === 'active';
-
+    const isAdmin = await checkIfAdmin(userId);    
     $.ajax({
       url: `/chats/images?page=${page}`,
       method: 'GET',
@@ -1021,7 +1118,7 @@ window.loadAllChatImages = async function (page = 1) {
             let isBlur = item?.nsfw && !subscriptionStatus;
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             chatGalleryHtml += `
-                <div class="col-12 col-md-6 col-lg-4 mb-2">
+                <div class="col-12 col-md-3 col-lg-2 mb-2">
                     <div class="card">
                         <div class="d-flex align-items-center p-2">
                             <a href="/character/${item.chatId}?imageId=${item._id}">
@@ -1039,9 +1136,9 @@ window.loadAllChatImages = async function (page = 1) {
                         <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
                             <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
                         </a>
-                        <div class="card-body p-2 d-flex align-items-center justify-content-between">
+                        <div class="d-none card-body p-2 d-flex align-items-center justify-content-between">
                             <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
-                            <button class="btn btn-light image-nsfw-toggle isAdmin" data-id="${item._id}">
+                            <button class="btn btn-light image-nsfw-toggle ${!isAdmin?'d-none':''}" data-id="${item._id}">
                                 <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill':'bi-eye-fill'}"></i> 
                             </button>
                             <span class="btn btn-light float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
@@ -1055,7 +1152,9 @@ window.loadAllChatImages = async function (page = 1) {
         });
 
         $('#all-chats-images-gallery').append(chatGalleryHtml);
-        generateAllChatsImagePagination(data.page, data.totalPages);
+        if($('#all-chats-images-pagination-controls').length > 0){
+            generateAllChatsImagePagination(data.page, data.totalPages);
+        }
       },
       error: function (err) {
         console.error('Failed to load images', err);
@@ -1139,7 +1238,7 @@ window.loadChatImages = async function (chatId, page = 1) {
                         ${isBlur ? `
                         <div type="button" onclick=showPremiumPopup()>
                             <img src="${imagePlaceholder()}" class="card-img-top" style="object-fit: cover;">
-                            <div class="card-body p-2">
+                            <div class="d-none card-body p-2">
                                 <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
                             </div>
                         </div>
@@ -1147,7 +1246,7 @@ window.loadChatImages = async function (chatId, page = 1) {
                         <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
                             <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
                         </a>
-                        <div class="card-body p-2 d-flex align-items-center justify-content-between">
+                        <div class="d-none card-body p-2 d-flex align-items-center justify-content-between">
                             <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
                             <span class="btn btn-light float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
                                 <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
@@ -1160,7 +1259,9 @@ window.loadChatImages = async function (chatId, page = 1) {
         });
 
         $('#chat-images-gallery').append(chatGalleryHtml);
-        generateChatImagePagination(data.page, data.totalPages, chatId);
+        if($('#chat-images-pagination-controls').length > 0){
+            generateChatImagePagination(data.page, data.totalPages, chatId);
+        }
       },
       error: function (err) {
         console.error('Failed to load images', err);
@@ -1259,7 +1360,7 @@ window.loadUserImages = async function (userId, page = 1) {
                     <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
                         <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
                     </a>
-                    <div class="card-body p-2 d-flex align-items-center justify-content-between">
+                    <div class="d-none card-body p-2 d-flex align-items-center justify-content-between">
                         <a href="/chat/${item.chatId}?imageId=${item._id}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
                         <span class="btn btn-light float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
                             <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
@@ -1272,7 +1373,9 @@ window.loadUserImages = async function (userId, page = 1) {
         });
 
         $('#user-images-gallery').append(galleryHtml);
-        generateImagePagination(data.page, data.totalPages, userId);
+        if($('#images-pagination-controls').length > 0){
+            generateImagePagination(data.page, data.totalPages, userId);
+        }
       },
       error: function (err) {
         console.error('Failed to load images', err);
@@ -1355,7 +1458,7 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
                     <a href="/post/${item._id}" class="text-muted text-decoration-none">
                         <img src="${item.image.imageUrl}" alt="${item.image.prompt}" class="card-img-top">
                     </a>
-                    <div class="card-body p-2">
+                    <div class="d-none card-body p-2">
                         <div class="row mx-0">
                             <div class="col-12" style="overflow:hidden; text-wrap:nowrap;">
                                 <a href="/post/${item._id}" class="text-muted text-decoration-none text-short ">${item.comment || 'No Comment'}</a>
@@ -1378,7 +1481,10 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
         });
         const containerId = like ? 'user-posts-like' : 'user-posts-gallery'
         $(`#${containerId}`).append(galleryHtml);
-        generateUserPostPagination(data.page, data.totalPages, userId);
+        const pageContainerId = like ? 'posts-like-pagination-controls' : 'pagination-controls';
+        if($(`#${pageContainerId}`).length > 0){
+            generateUserPostPagination(data.page, data.totalPages, userId);
+        }
       },
       error: function (err) {
         console.log('Failed to load posts', err);

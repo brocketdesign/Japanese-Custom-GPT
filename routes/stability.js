@@ -2,7 +2,7 @@ const { ObjectId } = require('mongodb');
 const axios = require('axios');
 const fs = require('fs');
 const FormData = require('form-data');
-const aws = require('aws-sdk');
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const { createHash } = require('crypto');
 const stringSimilarity = require('string-similarity'); 
 const { createBlurredImage } = require('../models/tool')
@@ -10,7 +10,7 @@ const { z } = require("zod");
 
 async function routes(fastify, options) {
   // Configure AWS S3
-  const s3 = new aws.S3({
+  const s3 = new S3Client({
       accessKeyId: process.env.AWS_ACCESS_KEY_ID,
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
       region: process.env.AWS_REGION
@@ -111,32 +111,38 @@ async function routes(fastify, options) {
     return formData;
   }
   const uploadToS3 = async (buffer, hash, filename) => {
-      const params = {
-          Bucket: process.env.AWS_S3_BUCKET_NAME,
-          Key: `${hash}_${filename}`,
-          Body: buffer,
-          ACL: 'public-read'
-      };
-      const uploadResult = await s3.upload(params).promise();
-      return uploadResult.Location;
+    const params = {
+      Bucket: process.env.AWS_S3_BUCKET_NAME,
+      Key: `${hash}_${filename}`,
+      Body: buffer,
+      ACL: 'public-read', // Optionally remove if you manage this via bucket policy
+    };
+    
+    const command = new PutObjectCommand(params);
+    const uploadResult = await s3.send(command);
+    return `https://${params.Bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${params.Key}`;
   };
+  
 
   const handleFileUpload = async (part) => {
-      const chunks = [];
-      for await (const chunk of part.file) {
-          chunks.push(chunk);
-      }
-      const buffer = Buffer.concat(chunks);
-      const hash = createHash('md5').update(buffer).digest('hex');
-      const existingFiles = await s3.listObjectsV2({
-          Bucket: process.env.AWS_S3_BUCKET_NAME,
-          Prefix: hash,
-      }).promise();
-      if (existingFiles.Contents.length > 0) {
-          return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFiles.Contents[0].Key}`;
-      } else {
-          return uploadToS3(buffer, hash, part.filename);
-      }
+    const chunks = [];
+    for await (const chunk of part.file) {
+        chunks.push(chunk);
+    }
+    const buffer = Buffer.concat(chunks);
+    const hash = createHash('md5').update(buffer).digest('hex');
+    
+    const listParams = {
+        Bucket: process.env.AWS_S3_BUCKET_NAME,
+        Prefix: hash,
+    };
+    const existingFiles = await s3.send(new ListObjectsV2Command(listParams));
+    
+    if (existingFiles.Contents && existingFiles.Contents.length > 0) {
+        return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFiles.Contents[0].Key}`;
+    } else {
+        return uploadToS3(buffer, hash, part.filename);
+    }
   };
 
   async function saveImageToDB(userId, chatId, userChatId, prompt, imageUrl, aspectRatio, blurredImageUrl = null, nsfw = false) {

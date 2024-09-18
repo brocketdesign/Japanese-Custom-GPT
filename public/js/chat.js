@@ -889,7 +889,6 @@ $(document).ready(async function() {
 
         $.get('/api/user/persona-details', function(response) {
             const user = response.userDetails;
-            console.log(user)
             const personas = response.personaDetails;
             if(!personas || personas.length == 0 ){
                 if (callback) {

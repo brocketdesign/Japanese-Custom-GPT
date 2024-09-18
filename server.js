@@ -8,7 +8,7 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const handlebars = require('handlebars');
 const { v4: uuidv4 } = require('uuid');
-const fastifyMultipart = require('fastify-multipart');
+const fastifyMultipart = require('@fastify/multipart');
 
 const {
   cleanupNonRegisteredUsers,
@@ -24,7 +24,7 @@ const {
  } = require('./models/cleanupNonRegisteredUsers');
  const  { checkUserAdmin } = require('./models/tool')
 
-mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongodb.MongoClient.connect(process.env.MONGODB_URI)
   .then((client) => {
     const db = client.db(process.env.MONGODB_NAME);
 
@@ -82,7 +82,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI, { useNewUrlParser: true, us
       });
       
     });
-    fastify.register(require('fastify-cookie'), {
+    fastify.register(require('@fastify/cookie'), {
       secret: "my-secret",
       parseOptions: {},
     });

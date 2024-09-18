@@ -168,9 +168,6 @@
                   <span>🪙</span>
                   <span class="user-coins fw-bold">{{userData.coins}}</span>
               </span>
-              <p class="m-1">
-                {{userData.bio}}
-              </p>
               {{#if isAdmin}}
               {{else}}
               <span class="btn custom-gradient-bg me-2 follow-button {{#if userData.follow}}following{{/if}}" data-user-id="{{userData._id}}">
@@ -182,8 +179,10 @@
                   {{/if}}
                 </span>
               </span>
-
               {{/if}}
+              <p class="m-1 p-3" style="font-size: 14px;color: #555;">
+                {{userData.bio}}
+              </p>
             </div>
           </div>
           <div class="mb-3 mx-3" id="thumbnailInputContainer" style="display: none;">

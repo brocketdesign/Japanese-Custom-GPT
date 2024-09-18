@@ -4,9 +4,10 @@ const jwt = require('jsonwebtoken');
 const aws = require('aws-sdk');
 const crypto = require('crypto');
 const axios = require('axios');
-const { checkLimits } = require('../models/tool');
+const { checkLimits, checkUserAdmin } = require('../models/tool');
 
 async function routes(fastify, options) {
+  
   fastify.post('/user/register', async (request, reply) => {
     try {
       const { email, password } = request.body;
@@ -805,7 +806,54 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       reply.code(500).send({ error: 'Internal Server Error' });
     }
   });
+  fastify.get('/users/', async (request, reply) => {
+    try {
+      const page = parseInt(request.query.page, 10) || 1;
+      const limit = 5;
+      const skip = (page - 1) * limit;
   
+      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const usersCollection = db.collection('users');
+  
+      const usersCursor = await usersCollection
+        .find({isTemporary: {$exists:false},nickname: {$exists:true},profileUrl: {$exists:true}})
+        .sort({ _id: -1 })
+        .skip(skip)
+        .limit(limit)
+        .toArray();
+
+      if (!usersCursor.length) {
+        return reply.code(404).send({ users: [], page, totalPages: 0 });
+      }
+
+      const usersData = usersCursor.map(user => ({
+        userId: user._id,
+        userName: user.nickname || 'Unknown User',
+        profilePicture: user.profileUrl || '/img/avatar.png',
+      }));
+  
+      const totalUsersCount = await usersCollection.countDocuments({});
+      const totalPages = Math.ceil(totalUsersCount / limit);
+  
+      reply.send({
+        users: usersData,
+        page,
+        totalPages
+      });
+    } catch (err) {
+      reply.code(500).send({ error: 'Internal Server Error' });
+    }
+  });
+  
+  fastify.get('/user/is-admin/:userId', async (req, reply) => {
+    try {
+      const isAdmin = await checkUserAdmin(fastify, req.params.userId);
+      return reply.send({ isAdmin });
+    } catch (err) {
+      return reply.status(500).send({ error: err.message });
+    }
+  });
+
   
 }
 

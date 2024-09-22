@@ -982,7 +982,7 @@ window.loadAllUserPosts = async function (page = 1) {
     const currentUser = await fetchUser();
     const currentUserId = currentUser._id;
     const subscriptionStatus = currentUser.subscriptionStatus === 'active';
-    const isAdmin = await checkIfAdmin(userId);    
+    const isAdmin = await checkIfAdmin(currentUserId);    
     $.ajax({
       url: `/user/posts?page=${page}`,
       method: 'GET',
@@ -1108,7 +1108,7 @@ window.loadAllChatImages = async function (page = 1) {
     const currentUser = await fetchUser();
     const currentUserId = currentUser._id;
     const subscriptionStatus = currentUser.subscriptionStatus === 'active';
-    const isAdmin = await checkIfAdmin(userId);    
+    const isAdmin = await checkIfAdmin(currentUserId);    
     $.ajax({
       url: `/chats/images?page=${page}`,
       method: 'GET',

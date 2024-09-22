@@ -131,7 +131,9 @@
 <script>
   const userId = `{{{user._id}}}`;
   $(document).ready(function () {
-
+    setTimeout(function(){
+      showRegistrationForm()
+    },5000)
     displayPepopleChat(1);
     loadAllChatImages(1);
     loadAllUserPosts(1)

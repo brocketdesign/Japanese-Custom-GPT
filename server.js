@@ -13,14 +13,7 @@ const fastifyMultipart = require('@fastify/multipart');
 const {
   cleanupNonRegisteredUsers,
   deleteOldRecords, 
-  deleteCharactersWithoutDescription,
-  deleteClientsWithoutProductId,
   deleteUserChatsWithoutMessages,
-  saveAllImageHashesToDB,
-  cleanUpDatabase,
-  updateAllUsersImageLikeCount,
-  initializeAllUsersPostCount,
-  updateImageCount
  } = require('./models/cleanupNonRegisteredUsers');
  const  { checkUserAdmin } = require('./models/tool')
 
@@ -229,10 +222,17 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
       const userId = user._id;
 
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+
+      const lang = user.lang || 'en';
+
+      const translationsPath = path.join(__dirname, 'locales', `${lang}.json`);
+      const translations = JSON.parse(fs.readFileSync(translationsPath, 'utf-8'));
+
       const totalUsers = await db.collection('users').countDocuments({ email: { $exists: true } });
 
       return reply.renderWithGtm('chat.hbs', { 
         title: 'LAMIX | 日本語でAI画像生成 | AIチャット',
+        translations,
         mode:process.env.MODE, user, userId, chatId,
         seo: [
           { name: 'description', content: 'Lamixでは、無料でAIグラビアとのチャット中に生成された画像を使って、簡単に投稿を作成することができます。お気に入りの瞬間やクリエイティブな画像をシェアすることで、他のユーザーと楽しさを共有しましょう。画像を選んで投稿に追加するだけで、あなただけのオリジナルコンテンツを簡単に発信できます。' },

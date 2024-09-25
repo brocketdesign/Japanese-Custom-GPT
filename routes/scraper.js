@@ -47,7 +47,7 @@ async function routes(fastify, options) {
   };
   fastify.get('/scraper/zeta', async(request, reply) => {
       
-  let user = await fastify.getUser(request, reply);
+  let user = request.user;
   const isAdmin = await checkUserAdmin(fastify, user._id);
       if (!isAdmin) {
           return reply.status(403).send({ error: 'Access denied' });
@@ -109,7 +109,7 @@ async function routes(fastify, options) {
     });
     fastify.get('/scraper/gohiai/update-images', async (request, reply) => {
       
-  let user = await fastify.getUser(request, reply);
+  let user = request.user;
   const isAdmin = await checkUserAdmin(fastify, user._id);
       if (!isAdmin) {
           return reply.status(403).send({ error: 'Access denied' });
@@ -150,7 +150,7 @@ async function routes(fastify, options) {
     
     fastify.get('/scraper/gohiai', async (request, reply) => {
       
-  let user = await fastify.getUser(request, reply);
+  let user = request.user;
   const isAdmin = await checkUserAdmin(fastify, user._id);
       if (!isAdmin) {
           return reply.status(403).send({ error: 'Access denied' });
@@ -222,7 +222,7 @@ async function routes(fastify, options) {
         scrapeGohiai();
       });
       fastify.get('/scraper/synclubaichat', async (request, reply) => {
-        let user = await fastify.getUser(request, reply);
+        let user = request.user;
         const isAdmin = await checkUserAdmin(fastify, user._id);
         if (!isAdmin) {
             return reply.status(403).send({ error: 'Access denied' });
@@ -301,7 +301,7 @@ async function routes(fastify, options) {
         scrapesynclubaichat();
       });
       fastify.get('/scraper/save-tags', async (request, reply) => {
-        let user = await fastify.getUser(request, reply);
+        let user = request.user;
         const isAdmin = await checkUserAdmin(fastify, user._id);
         if (!isAdmin) {
             return reply.status(403).send({ error: 'Access denied' });
@@ -327,7 +327,7 @@ async function routes(fastify, options) {
     });
     
       fastify.get('/scraper/civitai', async (request, reply) => {
-        let user = await fastify.getUser(request, reply);
+        let user = request.user;
         const isAdmin = await checkUserAdmin(fastify, user._id);
         if (!isAdmin) {
             return reply.status(403).send({ error: 'Access denied' });
@@ -412,7 +412,7 @@ async function routes(fastify, options) {
       // Define the route with MongoDB integration
 fastify.get('/scraper/civitai/categories', async (request, reply) => {
   
-  let user = await fastify.getUser(request, reply);
+  let user = request.user;
   const isAdmin = await checkUserAdmin(fastify, user._id);
   if (!isAdmin) {
       return reply.status(403).send({ error: 'Access denied' });
@@ -471,7 +471,7 @@ fastify.get('/scraper/civitai/categories', async (request, reply) => {
 });
 
 fastify.get('/scraper/download-images', async (request, reply) => {
-  let user = await fastify.getUser(request, reply);
+  let user = request.user;
   const isAdmin = await checkUserAdmin(fastify, user._id);
   if (!isAdmin) {
       return reply.status(403).send({ error: 'Access denied' });
@@ -522,7 +522,7 @@ fastify.get('/scraper/download-images', async (request, reply) => {
 
 fastify.get('/scraper/upload-images', async (request, reply) => {
   
-  let user = await fastify.getUser(request, reply);
+  let user = request.user;
   const isAdmin = await checkUserAdmin(fastify, user._id);
   if (!isAdmin) {
       return reply.status(403).send({ error: 'Access denied' });
@@ -569,7 +569,7 @@ fastify.get('/scraper/upload-images', async (request, reply) => {
 
 fastify.get('/scraper/create-characters', async (request, reply) => {
   
-  let user = await fastify.getUser(request, reply);
+  let user = request.user;
   const isAdmin = await checkUserAdmin(fastify, user._id);
   if (!isAdmin) {
       return reply.status(403).send({ error: 'Access denied' });

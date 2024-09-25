@@ -66,7 +66,7 @@ async function routes(fastify, options) {
       : `https://${request.headers.host}`;
 
       // Retrieve user information
-      let user = await fastify.getUser(request, reply);
+      let user = request.user;
       const userId = user._id;
   
       // Fetch the user from the database using their ObjectId
@@ -248,7 +248,7 @@ async function routes(fastify, options) {
     try {
       const db = fastify.mongo.client.db(process.env.MONGODB_NAME)
       // Retrieve user
-      let user = await fastify.getUser(request, reply);
+      let user = request.user;
       if (!user) {
         return reply.status(404).send({ error: 'ユーザーが見つかりません' }); // User not found
       }
@@ -316,7 +316,7 @@ async function routes(fastify, options) {
   fastify.post('/plan/upgrade', async (request, reply) => {
     try {
       const db = fastify.mongo.client.db(process.env.MONGODB_NAME)
-      let user = await fastify.getUser(request, reply);
+      let user = request.user;
       const userId = user._id;
       userSubscription = await db.collection('subscriptions').findOne({ _id: new fastify.mongo.ObjectId(userId) });
   
@@ -435,7 +435,7 @@ async function routes(fastify, options) {
   }
   fastify.post('/user/add-coins', async (request, reply) => {
     try {
-        let user = await fastify.getUser(request, reply);
+        let user = request.user;
         const userId = user._id;
         const { coinsToAdd } = request.body;
 
@@ -457,7 +457,7 @@ async function routes(fastify, options) {
 });
 fastify.post('/user/daily-bonus-coins', async (request, reply) => {
   try {
-      let user = await fastify.getUser(request, reply);
+      let user = request.user;
       const userId = user._id;
       user = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
 

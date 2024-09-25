@@ -128,13 +128,17 @@
 </script>
 <script>
   const userId = `{{{user._id}}}`;
+  const user = `{{{json user}}}`
+
   $(document).ready(function () {
-    $(window).scroll(function() {
-      var scrollPercent = ($(window).scrollTop() / ($(document).height() - $(window).height())) * 100;
-      if (scrollPercent >= 60) {
-           showRegistrationForm()
-      }
-    });
+    if(user.isTemporary){
+      $(window).scroll(function() {
+        var scrollPercent = ($(window).scrollTop() / ($(document).height() - $(window).height())) * 100;
+        if (scrollPercent >= 60) {
+            showRegistrationForm()
+        }
+      });
+    }
 
     displayPepopleChat(1);
     loadAllChatImages(1);

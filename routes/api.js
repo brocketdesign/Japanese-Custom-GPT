@@ -2228,7 +2228,7 @@ async function routes(fastify, options) {
 
     fastify.get('/api/user', async (request,reply) => {
         try {
-            let user = await fastify.getUser(request, reply);
+            let user = request.user;
             const userId = user._id;
             const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
             user = await collection.findOne({ _id: new fastify.mongo.ObjectId(userId) });

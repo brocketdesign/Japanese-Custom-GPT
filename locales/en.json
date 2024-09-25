@@ -131,6 +131,65 @@
       "cookiesDetails": "Our website uses cookies to improve services.",
       "contact": "6. Contact Us",
       "contactDetails": "If you have any questions or concerns regarding our privacy policy, please contact us via the <a href=\"https://hatoltd.com/contact/\" target=\"_blank\">contact form</a>."
+    },
+    "setting": {
+      "pageTitle": "Settings",
+      "profile": "Profile",
+      "password": "Password",
+      "subscription": "Subscription",
+      "usage": "Usage",
+      "uploadThumbnail": "Upload Chat Thumbnail",
+      "userInfo": "User Information",
+      "nickname": "ID",
+      "email": "Email Address",
+      "birthdate": "Birthdate",
+      "year": "Year",
+      "month": "Month",
+      "day": "Day",
+      "gender": "Gender",
+      "female": "Female",
+      "male": "Male",
+      "language": "Language",
+      "japanese": "Japanese",
+      "english": "English",
+      "french": "French",
+      "bio": "Bio",
+      "saveUserInfo": "Save User Information",
+      "oldPassword": "Old Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm Password",
+      "requirements": "Requirements",
+      "requirementsDescription": "To create a new password, it must meet all of the following criteria:",
+      "minLength": "At least 8 characters",
+      "specialChar": "At least 1 special character",
+      "number": "At least 1 number",
+      "differentPassword": "Must not be the same as previous password",
+      "changePassword": "Change Password",
+      "manageSubscription": "Manage Subscription",
+      "cancelSubscription": "Cancel Subscription"
+    },
+    "avatar": {
+      "myPlan": "My Plan",
+      "profile": "Profile",
+      "characters": "Characters",
+      "createCharacter": "Create Character",
+      "settings": "Settings",
+      "logout": "Logout"
+    },
+    "tabs": {
+      "posts": "Posts",
+      "likedPosts": "Liked Posts",
+      "likedAIImages": "Liked AI Images",
+      "characters": "Characters"
+    },
+    "profile": {
+      "thumbnailAlt": "Chat Thumbnail",
+      "posts": "Posts",
+      "likes": "Likes",
+      "characters": "Characters",
+      "following": "Following",
+      "followers": "Followers",
+      "follow": "Follow"
     }
     
   }

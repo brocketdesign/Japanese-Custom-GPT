@@ -44,21 +44,21 @@ img {
 <div class="container">
   <div class="row justify-content-center">
     <div class="col-12 col-lg-10 col-xl-8 mx-auto">
-      <h2 class="h3 mb-4 page-title d-none">設定</h2>
+      <h2 class="h3 mb-4 page-title d-none">{{translations.setting.pageTitle}}</h2>
       <div class="my-4">
         <!-- Tab navigation -->
         <ul class="nav nav-tabs" id="myTab" role="tablist">
           <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="true">プロフィール</button>
+            <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="true">{{translations.setting.profile}}</button>
           </li>
           <li class="nav-item" role="presentation">
-            <button class="nav-link" id="password-tab" data-bs-toggle="tab" data-bs-target="#password" type="button" role="tab" aria-controls="password" aria-selected="false">パスワード</button>
+            <button class="nav-link" id="password-tab" data-bs-toggle="tab" data-bs-target="#password" type="button" role="tab" aria-controls="password" aria-selected="false">{{translations.setting.password}}</button>
           </li>
           <li class="nav-item" role="presentation">
-            <button class="nav-link" id="subscription-tab" data-bs-toggle="tab" data-bs-target="#subscription" type="button" role="tab" aria-controls="subscription" aria-selected="false">サブスクリプション</button>
+            <button class="nav-link" id="subscription-tab" data-bs-toggle="tab" data-bs-target="#subscription" type="button" role="tab" aria-controls="subscription" aria-selected="false">{{translations.setting.subscription}}</button>
           </li>
           <li class="nav-item" role="presentation">
-            <button class="nav-link" id="usage-tab" data-bs-toggle="tab" data-bs-target="#usage" type="button" role="tab" aria-controls="usage" aria-selected="false">使用回数</button>
+            <button class="nav-link" id="usage-tab" data-bs-toggle="tab" data-bs-target="#usage" type="button" role="tab" aria-controls="usage" aria-selected="false">{{translations.setting.usage}}</button>
           </li>
         </ul>
 
@@ -78,104 +78,123 @@ img {
               </div>
 
               <div class="mb-3 mx-3" id="thumbnailInputContainer" style="display: none;">
-                <label for="profileImageInput" class="form-label">チャットのサムネイルをアップロード</label>
+                <label for="profileImageInput" class="form-label">{{translations.setting.uploadThumbnail}}</label>
                 <input type="file" class="form-control" id="profileImageInput" name="profileImageInput" accept="image/*">
               </div>
 
-              <h6>ユーザー情報</h6>
+              <h6>{{translations.setting.userInfo}}</h6>
               <div class="mb-3">
-                <label for="nickname" class="form-label">ID</label>
+                <label for="nickname" class="form-label">{{translations.setting.nickname}}</label>
                 <input type="text" id="nickname" class="form-control" placeholder="" />
               </div>
 
               <div class="mb-3">
-                <label for="inputEmail4" class="form-label">メールアドレス</label>
+                <label for="inputEmail4" class="form-label">{{translations.setting.email}}</label>
                 <input type="email" class="form-control" id="inputEmail4" placeholder="" />
               </div>
 
               <div class="row mb-3">
-                <label for="birthdate" class="form-label">生年月日</label>
+                <label for="birthdate" class="form-label">{{translations.setting.birthdate}}</label>
                 <div class="d-flex">
                   <select class="form-control me-2" id="birthYear" name="birthYear">
-                    <option value="" selected>年</option>
+                    <option value="" selected>{{translations.setting.year}}</option>
                   </select>
 
                   <select class="form-control me-2" id="birthMonth" name="birthMonth">
-                    <option value="" selected>月</option>
+                    <option value="" selected>{{translations.setting.month}}</option>
                   </select>
 
                   <select class="form-control" id="birthDay" name="birthDay">
-                    <option value="" selected>日</option>
+                    <option value="" selected>{{translations.setting.day}}</option>
                   </select>
                 </div>
               </div>
 
               <div class="row mb-3">
                 <div class="col-auto">
-                  <label for="gender" class="form-label"><i class="fas fa-user"></i> 性別:</label>
+                  <label for="gender" class="form-label"><i class="fas fa-user"></i> {{translations.setting.gender}}:</label>
                   <select class="form-select w-auto" id="gender" name="gender">
-                    <option value="female" selected><i class="fas fa-female"></i> 女性</option>
-                    <option value="male"><i class="fas fa-male"></i> 男性</option>
+                    <option value="female" selected>{{translations.setting.female}}</option>
+                    <option value="male">{{translations.setting.male}}</option>
                   </select>
                 </div>
+                <div class="col-auto">
+                  <!-- Language Dropdown -->
+                  <label for="lang" class="form-label"><i class="fas fa-user"></i> {{translations.setting.language}}:</label>
+                  <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                      {{#if user.lang}}
+                        {{capitalize user.lang}}
+                      {{else}}
+                        {{translations.setting.japanese}}
+                      {{/if}}
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="languageDropdown">
+                      <li><a class="dropdown-item language-select" href="#" data-lang="ja">{{translations.setting.japanese}}</a></li>
+                      <li><a class="dropdown-item language-select" href="#" data-lang="en">{{translations.setting.english}}</a></li>
+                      <li><a class="dropdown-item language-select" href="#" data-lang="fr">{{translations.setting.french}}</a></li>
+                    </ul>
+                  </div>
+                </div>
+
               </div>
 
               <!-- Bio textarea -->
               <div class="mb-3">
-                <label for="bio" class="form-label">自己紹介</label>
+                <label for="bio" class="form-label">{{translations.setting.bio}}</label>
                 <textarea class="form-control" id="bio" name="bio" rows="5" maxlength="400"></textarea>
               </div>
 
               <div class="col">
-                <button type="submit" class="btn btn-secondary">ユーザー情報を保存</button>
+                <button type="submit" class="btn btn-secondary">{{translations.setting.saveUserInfo}}</button>
               </div>
             </form>
           </div>
 
           <!-- Password Tab -->
           <div class="tab-pane fade" id="password" role="tabpanel" aria-labelledby="password-tab">
-            <h6>パスワード</h6>
+            <h6>{{translations.setting.password}}</h6>
             <form id="user-password-form">
               <div class="row mb-4">
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label for="inputPassword4">古いパスワード</label>
+                    <label for="inputPassword4">{{translations.setting.oldPassword}}</label>
                     <input type="password" class="form-control" id="inputPassword4" />
                   </div>
                   <div class="form-group">
-                    <label for="inputPassword5">新しいパスワード</label>
+                    <label for="inputPassword5">{{translations.setting.newPassword}}</label>
                     <input type="password" class="form-control" id="inputPassword5" />
                   </div>
                   <div class="form-group">
-                    <label for="inputPassword6">パスワードの確認</label>
+                    <label for="inputPassword6">{{translations.setting.confirmPassword}}</label>
                     <input type="password" class="form-control" id="inputPassword6" />
                   </div>
                 </div>
                 <div class="col-md-6">
-                  <p class="mb-2">の要件</p>
-                  <p class="small text-muted mb-2">新しいパスワードを作成するには、以下のすべての要件を満たす必要があります:</p>
+                  <p class="mb-2">{{translations.setting.requirements}}</p>
+                  <p class="small text-muted mb-2">{{translations.setting.requirementsDescription}}</p>
                   <ul class="small text-muted pl-4 mb-0">
-                    <li>最低8文字</li>
-                    <li>少なくとも1つの特殊文字</li>
-                    <li>少なくとも1つの数字</li>
-                    <li>以前のパスワードと同じであってはならない</li>
+                    <li>{{translations.setting.minLength}}</li>
+                    <li>{{translations.setting.specialChar}}</li>
+                    <li>{{translations.setting.number}}</li>
+                    <li>{{translations.setting.differentPassword}}</li>
                   </ul>
                 </div>
               </div>
-              <button type="submit" class="btn btn-secondary">パスワードを変更</button>
+              <button type="submit" class="btn btn-secondary">{{translations.setting.changePassword}}</button>
             </form>
           </div>
 
           <!-- Subscription Tab -->
           <div class="tab-pane fade" id="subscription" role="tabpanel" aria-labelledby="subscription-tab">
-            <h6>サブスクリプションを管理する</h6>
+            <h6>{{translations.setting.manageSubscription}}</h6>
             <p id="user-plan" style="display: none;"></p>
-            <button id="cancel-plan" class="btn btn-danger" style="display: none;" data-user-id="{{user._id}}">サブスクリプションをキャンセルする</button>
+            <button id="cancel-plan" class="btn btn-danger" style="display: none;" data-user-id="{{user._id}}">{{translations.setting.cancelSubscription}}</button>
           </div>
 
           <!-- Usage Tab -->
           <div class="tab-pane fade" id="usage" role="tabpanel" aria-labelledby="usage-tab">
-            <h6>使用回数</h6>
+            <h6>{{translations.setting.usage}}</h6>
             <div id="user-limit"></div>
           </div>
         </div>
@@ -183,6 +202,7 @@ img {
     </div>
   </div>
 </div>
+
 
 {{> dashboard-footer}}
 

@@ -553,8 +553,11 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       // Fetch the total number of chats created by the user
       const chatCount = await collectionChat.countDocuments({ userId: new fastify.mongo.ObjectId(userId) });
   
+      const translations = request.translations
+
       return reply.view('/user-profile.hbs', {
         title: `${user.nickname}さんのプロフィール`,
+        translations,
         isAdmin,
         user: currentUser,
         userData: {

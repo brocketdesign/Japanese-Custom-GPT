@@ -131,6 +131,65 @@
       "cookiesDetails": "当社のウェブサイトでは、サービス向上のためにクッキーを使用しています。",
       "contact": "6. お問い合わせ",
       "contactDetails": "プライバシーポリシーに関するご質問やご不明点がございましたら、<a href=\"https://hatoltd.com/contact/\" target=\"_blank\">お問い合わせフォーム</a>よりご連絡ください。"
+    },
+    "setting": {
+      "pageTitle": "設定",
+      "profile": "プロフィール",
+      "password": "パスワード",
+      "subscription": "サブスクリプション",
+      "usage": "使用回数",
+      "uploadThumbnail": "チャットのサムネイルをアップロード",
+      "userInfo": "ユーザー情報",
+      "nickname": "ID",
+      "email": "メールアドレス",
+      "birthdate": "生年月日",
+      "year": "年",
+      "month": "月",
+      "day": "日",
+      "gender": "性別",
+      "female": "女性",
+      "male": "男性",
+      "language": "Language",
+      "japanese": "日本語",
+      "english": "English",
+      "french": "Français",
+      "bio": "自己紹介",
+      "saveUserInfo": "ユーザー情報を保存",
+      "oldPassword": "古いパスワード",
+      "newPassword": "新しいパスワード",
+      "confirmPassword": "パスワードの確認",
+      "requirements": "要件",
+      "requirementsDescription": "新しいパスワードを作成するには、以下のすべての要件を満たす必要があります:",
+      "minLength": "最低8文字",
+      "specialChar": "少なくとも1つの特殊文字",
+      "number": "少なくとも1つの数字",
+      "differentPassword": "以前のパスワードと同じであってはならない",
+      "changePassword": "パスワードを変更",
+      "manageSubscription": "サブスクリプションを管理する",
+      "cancelSubscription": "サブスクリプションをキャンセルする"
+    },
+    "avatar": {
+      "myPlan": "私のプラン",
+      "profile": "プロフィール",
+      "characters": "キャラクター",
+      "createCharacter": "キャラクター作成",
+      "settings": "設定",
+      "logout": "ログアウト"
+    },
+    "tabs": {
+      "posts": "投稿一覧",
+      "likedPosts": "いいねした投稿",
+      "likedAIImages": "いいねしたAI画像",
+      "characters": "キャラ"
+    },
+    "profile": {
+      "thumbnailAlt": "チャットのサムネイル",
+      "posts": "投稿",
+      "likes": "いいね",
+      "characters": "キャラ",
+      "following": "フォロー中",
+      "followers": "フォロワー",
+      "follow": "フォロー"
     }
     
   }

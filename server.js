@@ -12,6 +12,8 @@ const handlebars = require('handlebars');
 const { v4: uuidv4 } = require('uuid');
 const fastifyMultipart = require('@fastify/multipart');
 
+const translationsPlugin = require('./plugins/translations');
+
 const {
   cleanupNonRegisteredUsers,
   deleteOldRecords, 
@@ -93,6 +95,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
           fileSize: 10 * 1024 * 1024, // Limit file size to 10MB
       },
     });
+    fastify.register(translationsPlugin);
     fastify.decorateReply('renderWithGtm', function(template, data) {
         data = data || {};
         data.gtmId = process.env.GTM_ID;
@@ -130,83 +133,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
       }
     });
     
-    
-    // Load all translation files at startup
-    const translationsDir = path.join(__dirname, 'locales');
-    const translationFiles = fs.readdirSync(translationsDir).filter(file => file.endsWith('.json'));
-    const translations = {};
-    
-    translationFiles.forEach(file => {
-        const lang = path.basename(file, '.json');
-        const data = JSON.parse(fs.readFileSync(path.join(translationsDir, file), 'utf-8'));
-        translations[lang] = data;
-    });
-    
-    fastify.decorate('translations', translations);
-    
-    fastify.decorate('getUser', async function (request, reply) {
-      const userCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
-  
-      // Try to get authenticated user by token
-      const user = await getAuthenticatedUser(request, userCollection);
-      if (user) {
-          setTranslations(request, user.lang);
-          return user;
-      }
-  
-      // Handle temporary user
-      const tempUser = await getOrCreateTempUser(request, reply, userCollection);
-      setTranslations(request, tempUser.lang);
-      return tempUser;
-  });
-  
-  // Helper to get authenticated user
-  async function getAuthenticatedUser(request, userCollection) {
-      const token = request.cookies.token;
-      if (!token) return null;
-  
-      try {
-          const decoded = await jwt.verify(token, process.env.JWT_SECRET);
-          if (decoded && decoded._id) {
-              return await userCollection.findOne({ _id: new fastify.mongo.ObjectId(decoded._id) });
-          }
-      } catch (err) {
-          return null;
-      }
-      return null;
-  }
-  
-  // Helper to get or create temporary user
-  async function getOrCreateTempUser(request, reply, userCollection) {
-      let tempUserId = request.cookies.tempUserId;
-  
-      if (!tempUserId) {
-          const tempUser = {
-              isTemporary: true,
-              role: 'guest',
-              lang: 'ja',
-              createdAt: new Date()
-          };
-          const result = await userCollection.insertOne(tempUser);
-          tempUserId = result.insertedId.toString();
-          reply.setCookie('tempUserId', tempUserId, {
-              path: '/',
-              httpOnly: true,
-              maxAge: 60 * 60 * 24, // 24 Hours
-              sameSite: 'None'
-          });
-          return tempUser;
-      }
-  
-      return await userCollection.findOne({ _id: new fastify.mongo.ObjectId(tempUserId) });
-  }
-  
-  // Helper to set translations
-  function setTranslations(request, lang) {
-      lang = lang || 'ja'; // Default to 'ja'
-      request.translations = fastify.translations[lang] || fastify.translations['ja'];
-  }  
-    
+    //
     
     // Routes
     fastify.get('/', async (request, reply) => {
@@ -239,7 +166,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
     fastify.get('/my-plan', {
       preHandler: [fastify.authenticate]
     }, async (request, reply) => {
-      let user = await fastify.getUser(request, reply);
+      let user = request.user;
       const userId = user._id;
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
       const translations = request.translations
@@ -261,7 +188,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
       reply.redirect('/chat/')
     });
     fastify.get('/chat/:chatId', async (request, reply) => {
-      let user = await fastify.getUser(request, reply);
+      let user = request.user;
       const chatId = request.params.chatId;
       const userId = user._id;
       const translations = request.translations
@@ -286,7 +213,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
     
     fastify.get('/post', async (request, reply) => {
       try {
-        let user = await fastify.getUser(request, reply);
+        let user = request.user;
         const userId = user._id;
         user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
         const translations = request.translations
@@ -310,7 +237,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
 
     fastify.get('/post/:postId', async (request, reply) => {
       try {
-        let user = await fastify.getUser(request, reply);
+        let user = request.user;
         const translations = request.translations
         const userId = user._id;
         const postId = request.params.postId;
@@ -344,7 +271,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
     
     fastify.get('/character', async (request, reply) => {
       try {
-        let user = await fastify.getUser(request, reply);
+        let user = request.user;
         const translations = request.translations
         const userId = user._id;
         user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
@@ -368,7 +295,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
     fastify.get('/character/:chatId', async (request, reply) => {
       try {
         const translations = request.translations
-        let user = await fastify.getUser(request, reply);
+        let user = request.user;
         const userId = user._id;
 
 
@@ -496,7 +423,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
       }
     });
     fastify.get('/discover', async (request, reply) => {
-      let user = await fastify.getUser(request, reply);
+      let user = request.user;
       const userId = user._id;
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
       const translations = request.translations
@@ -519,7 +446,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
       preHandler: [fastify.authenticate]
     }, async (request, reply) => {
 
-      let user = await fastify.getUser(request, reply);
+      let user = request.user;
       const userId = user._id;
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
@@ -539,7 +466,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
         const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
         const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
 
-        let user = await fastify.getUser(request, reply);
+        let user = request.user;
         const userId = user._id;
         user = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
         const isTemporaryChat = request.params.chatId ? false : true

@@ -126,7 +126,7 @@
           <div class="row mb-3">
             <div id="profileSection" class="text-center">
               <div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative mb-2">
-                <img id="profileImage" src="{{default userData.profileUrl '/img/avatar.png'}}" alt="chat Thumbnail" class="rounded-circle" 
+                <img id="profileImage" src="{{default userData.profileUrl '/img/avatar.png'}}" alt="{{translations.profile.thumbnailAlt}}" class="rounded-circle" 
                 style="width: 100px; height: 100px; object-fit: cover; object-position: top;cursor:pointer;">
                 <i type="button" class="fas fa-edit position-absolute {{#if isAdmin}}{{else}}d-none{{/if}}" style="bottom: 5px; font-size: 1em; color: white; background-color: rgba(0, 0, 0, 0.5); border-radius: 50%; padding: 5px;cursor:pointer;"></i>
               </div>
@@ -135,23 +135,23 @@
               <div class="d-flex flex-wrap justify-content-center text-center">
                 <div class="mx-2">
                   <h6 class="fw-bold">{{default userData.postCount 0}}</h6>
-                  <p class="text-muted small"><i class="bi bi-grid-fill"></i> 投稿</p>
+                  <p class="text-muted small"><i class="bi bi-grid-fill"></i> {{translations.profile.posts}}</p>
                 </div>
                 <div class="mx-2">
                   <h6 class="fw-bold">{{default userData.imageLikeCount 0}}</h6>
-                  <p class="text-muted small"><i class="bi bi-heart-fill"></i> いいね</p>
+                  <p class="text-muted small"><i class="bi bi-heart-fill"></i> {{translations.profile.likes}}</p>
                 </div>
                 <div class="mx-2">
                   <h6 class="fw-bold">{{default userData.chatCount 0}}</h6>
                   <p class="text-muted small">
-                    <i class="bi bi-chat-dots-fill"></i> キャラ
+                    <i class="bi bi-chat-dots-fill"></i> {{translations.profile.characters}}
                   </p>
                 </div>
                 <div class="mx-2">
                   <h6 class="fw-bold">{{default userData.followCount 0}}</h6>
                   <p class="text-muted small">
                     <a href="/follower/{{userData._id}}?type=following" class="text-decoration-none text-muted ">
-                      <i class="bi bi-person-check-fill"></i> フォロー中
+                      <i class="bi bi-person-check-fill"></i> {{translations.profile.following}}
                     </a>
                   </p>
                 </div>
@@ -159,23 +159,23 @@
                   <h6 class="fw-bold">{{default userData.followerCount 0}}</h6>
                   <p class="text-muted small">
                     <a href="/follower/{{userData._id}}?type=followers" class="text-decoration-none text-muted ">
-                      <i class="bi bi-people-fill"></i> フォロワー
+                      <i class="bi bi-people-fill"></i> {{translations.profile.followers}}
                     </a>
                   </p>
                 </div>
               </div>
               <span class="btn btn-light me-2">
-                  <span>🪙</span>
-                  <span class="user-coins fw-bold">{{userData.coins}}</span>
+                <span>🪙</span>
+                <span class="user-coins fw-bold">{{userData.coins}}</span>
               </span>
               {{#if isAdmin}}
               {{else}}
               <span class="btn custom-gradient-bg me-2 follow-button {{#if userData.follow}}following{{/if}}" data-user-id="{{userData._id}}">
                 <span class="user-follow fw-bold">
                   {{#if userData.follow}}
-                    フォロー中
+                    {{translations.profile.following}}
                   {{else}}
-                    フォロー
+                    {{translations.profile.follow}}
                   {{/if}}
                 </span>
               </span>
@@ -185,8 +185,8 @@
               </p>
             </div>
           </div>
+
           <div class="mb-3 mx-3" id="thumbnailInputContainer" style="display: none;">
-            <label for="profileImageInput" class="form-label">チャットのサムネイルをアップロード</label>
             <input type="file" class="form-control" id="profileImageInput" name="profileImageInput" accept="image/*">
           </div>
         </form>
@@ -196,16 +196,16 @@
     <div class="col-12 mt-4">
         <ul class="nav nav-tabs mb-2" id="characterTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="post-tab" data-bs-toggle="tab" data-bs-target="#post" type="button" role="tab" aria-controls="post" aria-selected="true">投稿一覧</button>
+                <button class="nav-link active" id="post-tab" data-bs-toggle="tab" data-bs-target="#post" type="button" role="tab" aria-controls="post" aria-selected="true">{{translations.tabs.posts}}</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="post-like-tab" data-bs-toggle="tab" data-bs-target="#post-like" type="button" role="tab" aria-controls="post" aria-selected="true">いいねした投稿</button>
+                <button class="nav-link" id="post-like-tab" data-bs-toggle="tab" data-bs-target="#post-like" type="button" role="tab" aria-controls="post-like" aria-selected="true">{{translations.tabs.likedPosts}}</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="image-tab" data-bs-toggle="tab" data-bs-target="#image" type="button" role="tab" aria-controls="image" aria-selected="false">いいねしたAI画像</button>
+                <button class="nav-link" id="image-tab" data-bs-toggle="tab" data-bs-target="#image" type="button" role="tab" aria-controls="image" aria-selected="false">{{translations.tabs.likedAIImages}}</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="user-chat-tab" data-bs-toggle="tab" data-bs-target="#user-chat" type="button" role="tab" aria-controls="user-chat" aria-selected="false">キャラ</button>
+                <button class="nav-link" id="user-chat-tab" data-bs-toggle="tab" data-bs-target="#user-chat" type="button" role="tab" aria-controls="user-chat" aria-selected="false">{{translations.tabs.characters}}</button>
             </li>
         </ul>
         <div class="tab-content">

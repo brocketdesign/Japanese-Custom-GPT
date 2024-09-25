@@ -70,12 +70,14 @@ $(document).ready(async function() {
     isTemporary = !!user?.isTemporary
     subscriptionStatus = user.subscriptionStatus == 'active'  
     if(isTemporary){
-      $(document).scroll(function() {
-        var scrollPercent = ($(window).scrollTop() / ($(document).height() - $(window).height())) * 100;
-        if (scrollPercent >= 60) {
-            showRegistrationForm()
-        }
-      });
+        let formShown = false;
+        $(document).scroll(function() {
+          var scrollPercent = ($(window).scrollTop() / ($(document).height() - $(window).height())) * 100;
+          if (scrollPercent >= 60 && !formShown) {
+            formShown = true;
+            showRegistrationForm();
+          }
+        });
     }
 
     if (success && sessionId) {

@@ -15,18 +15,20 @@ async function routes(fastify, options) {
                 return reply.status(403).send({ error: 'Access denied' });
             }
             const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
-            const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+            const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
             
             const getUniqueUsers = async () => {
                 try {
                     // Get the unique userId's from the chats collection
                     const userIds = await chatsCollection.distinct('userId');
             
-                    // Get today's and yesterday's dates
                     const today = new Date();
-                    today.setHours(0, 0, 0, 0); // Set to start of today
+                    today.setHours(0, 0, 0, 0);
                     const yesterday = new Date(today);
-                    yesterday.setDate(today.getDate() - 1); // Set to start of yesterday
+                    yesterday.setDate(today.getDate() - 1);
+                    
+                    today.toLocaleDateString('ja-JP');
+                    yesterday.toLocaleDateString('ja-JP');                    
             
                     // Query the users collection to get the user details for the unique userIds
                     const users = await usersCollection.find({

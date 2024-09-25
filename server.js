@@ -23,9 +23,9 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
 
     // Schedule the cleanup to run every day at midnight
     cron.schedule('0 0 * * *', () => {
-      cleanupNonRegisteredUsers(db);
-      deleteOldRecords(db)
-      deleteUserChatsWithoutMessages(db)
+      //cleanupNonRegisteredUsers(db);
+      //deleteOldRecords(db)
+      //deleteUserChatsWithoutMessages(db)
     });
     cron.schedule('0 0 * * *', async () => {
       try {

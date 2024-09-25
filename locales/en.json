@@ -190,7 +190,12 @@
       "following": "Following",
       "followers": "Followers",
       "follow": "Follow"
-    }
+    },
+    "startChatting" : " Start chatting",
+    "like":"Like",
+    "backToTop":"Back to Top",
+    "next":"Next",
+    "prev":"Previous"
     
   }
   

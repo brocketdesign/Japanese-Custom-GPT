@@ -190,7 +190,12 @@
       "following": "フォロー中",
       "followers": "フォロワー",
       "follow": "フォロー"
-    }
+    },
+    "startChatting" : " チャットする",
+    "like":"いいね",
+    "backToTop":"トップへ戻る",
+    "next":"次へ",
+    "prev":"前へ"
     
   }
   

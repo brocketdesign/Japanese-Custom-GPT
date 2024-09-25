@@ -128,10 +128,8 @@
 </script>
 <script>
   const userId = `{{{user._id}}}`;
-  const user = `{{{json user}}}`
-
   $(document).ready(function () {
-    if(user.isTemporary){
+    if(isTemporary){
       $(window).scroll(function() {
         var scrollPercent = ($(window).scrollTop() / ($(document).height() - $(window).height())) * 100;
         if (scrollPercent >= 60) {

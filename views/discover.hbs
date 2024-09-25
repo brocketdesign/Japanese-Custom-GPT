@@ -127,17 +127,7 @@
   });
 </script>
 <script>
-  const userId = `{{{user._id}}}`;
   $(document).ready(function () {
-    if(isTemporary){
-      $(window).scroll(function() {
-        var scrollPercent = ($(window).scrollTop() / ($(document).height() - $(window).height())) * 100;
-        if (scrollPercent >= 60) {
-            showRegistrationForm()
-        }
-      });
-    }
-
     displayPepopleChat(1);
     loadAllChatImages(1);
     loadAllUserPosts(1)
@@ -152,6 +142,7 @@
 <script>
   $(document).ready(function () {
     return
+    const userId = `{{{user._id}}}`;
     $.ajax({
       url: '/api/user-generated-images',
       method: 'GET',

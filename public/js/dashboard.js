@@ -1,6 +1,3 @@
-let isTemporary = true
-let subscriptionStatus = false
-
 window.translations = JSON.parse(localStorage.getItem('translations')) || {};
 let currentLang = localStorage.getItem('currentLang') || 'ja';
 
@@ -72,7 +69,15 @@ $(document).ready(async function() {
     const userId = user._id
     isTemporary = !!user?.isTemporary
     subscriptionStatus = user.subscriptionStatus == 'active'  
-      
+    if(isTemporary){
+      $(document).scroll(function() {
+        var scrollPercent = ($(window).scrollTop() / ($(document).height() - $(window).height())) * 100;
+        if (scrollPercent >= 60) {
+            showRegistrationForm()
+        }
+      });
+    }
+
     if (success && sessionId) {
         $.ajax({
             url: `/plan/update-${success}`,

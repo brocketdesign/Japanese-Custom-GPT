@@ -129,9 +129,13 @@
 <script>
   const userId = `{{{user._id}}}`;
   $(document).ready(function () {
-    setTimeout(function(){
-      showRegistrationForm()
-    },5000)
+    $(window).scroll(function() {
+      var scrollPercent = ($(window).scrollTop() / ($(document).height() - $(window).height())) * 100;
+      if (scrollPercent >= 60) {
+           showRegistrationForm()
+      }
+    });
+
     displayPepopleChat(1);
     loadAllChatImages(1);
     loadAllUserPosts(1)

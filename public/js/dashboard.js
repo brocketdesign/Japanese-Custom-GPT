@@ -1644,7 +1644,7 @@ window.showRegistrationForm = function(messageId,callback) {
     `,
       showCancelButton: false,
       showConfirmButton: false,
-      showCloseButton: true,
+      showCloseButton: false,
       allowOutsideClick: false,
       showClass: {
           popup: 'swal2-bottom-slide-in'

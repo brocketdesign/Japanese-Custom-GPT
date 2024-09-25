@@ -123,6 +123,7 @@ window.fetchMode = async function() {
 };
 
 </script>
+
 <footer class="l-footer p-footer bg-white shadow-0 text-center  onchat-off ">
   <div class="container my-5 py-5">
     <div class="row">
@@ -135,29 +136,29 @@ window.fetchMode = async function() {
               <i class="bi bi-instagram"></i>
             </a>
           </div>
-        <p style="color: #555;">いつでもこちらからご連絡いただけます</p>
+        <p style="color: #555;">{{translations.contactUs}}</p>
       </div>
       <div class="col-12">
         <nav class="navbar navbar-expand-lg navbar-light shadow-0 py-0">
           <div class="container-fluid justify-content-center">
             <ul class="navbar-nav d-flex flex-row" style="flex-wrap: inherit;">
               <li class="nav-item m-1">
-                <a class="nav-link" href="/about" target="_blank" lang="ja">サービスについて</a>
+                <a class="nav-link" href="/about" target="_blank">{{translations.aboutService}}</a>
               </li>
               <li class="nav-item m-1">
-                <a class="nav-link" href=" https://lamix.jp/usage-policy/" target="_blank" lang="ja">利用規約</a>
+                <a class="nav-link" href="https://lamix.jp/usage-policy/" target="_blank">{{translations.termsOfUse}}</a>
               </li>
               <li class="nav-item m-1">
-                <a class="nav-link" href="https://lamix.jp/privacy-policy/" target="_blank" lang="ja">プライバシー ポリシー</a>
+                <a class="nav-link" href="https://lamix.jp/privacy-policy/" target="_blank">{{translations.privacyPolicy}}</a>
               </li>
               <li class="nav-item m-1">
-                <a class="nav-link" href="https://lamix.jp/%e4%bc%9a%e7%a4%be%e6%a6%82%e8%a6%81/" target="_blank" lang="ja">会社概要</a>
+                <a class="nav-link" href="https://lamix.jp/%e4%bc%9a%e7%a4%be%e6%a6%82%e8%a6%81/" target="_blank">{{translations.companyOverview}}</a>
               </li>
               <li class="nav-item m-1">
-                <a class="nav-link" href="https://lamix.jp/%e3%83%96%e3%83%ad%e3%82%b0/" target="_blank" lang="ja">ブログ</a>
+                <a class="nav-link" href="https://lamix.jp/%e3%83%96%e3%83%ad%e3%82%b0/" target="_blank">{{translations.blog}}</a>
               </li>
               <li class="nav-item m-1">
-                <a class="nav-link" href="/character" target="_blank" lang="ja">キャラクター</a>
+                <a class="nav-link" href="/character" target="_blank">{{translations.characters}}</a>
               </li>
             </ul>
           </div>
@@ -171,6 +172,23 @@ window.fetchMode = async function() {
             </small>
           </div>
         </nav>
+      </div>
+      <div class="col-12">
+        <!-- Language Dropdown -->
+        <div class="dropdown">
+          <button class="btn btn-secondary dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            {{#if user.lang}}
+              {{capitalize user.lang}}
+            {{else}}
+              日本語
+            {{/if}}
+          </button>
+          <ul class="dropdown-menu" aria-labelledby="languageDropdown">
+            <li><a class="dropdown-item language-select" href="#" data-lang="ja">日本語</a></li>
+            <li><a class="dropdown-item language-select" href="#" data-lang="en">English</a></li>
+            <li><a class="dropdown-item language-select" href="#" data-lang="fr">Français</a></li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>

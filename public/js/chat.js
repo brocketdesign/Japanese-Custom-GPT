@@ -1,5 +1,6 @@
 const audioCache = new Map();
 const audioPool = [];
+
 $(document).ready(async function() {
     let autoPlay = localStorage.getItem('audioAutoPlay') === 'true';
     $('#audio-icon').addClass(autoPlay ? 'fa-volume-up' : 'fa-volume-mute');
@@ -453,7 +454,11 @@ $(document).ready(async function() {
         updateChatBackgroundImage(thumbnail);
         $('#chat-title').text(chatName);
         $('#input-container').show().addClass('d-flex');
-        $('#userMessage').attr('placeholder', `${chatName}にメッセージを送る`);
+        if(user.lang == 'ja'){
+            $('#userMessage').attr('placeholder', `${chatName}${window,translations.sendMessageTo}`);
+        }else{
+            $('#userMessage').attr('placeholder', `${window,translations.sendMessageTo}${chatName}`);
+        }
     }
     
     function determineChatGender(chat) {
@@ -991,10 +996,10 @@ $(document).ready(async function() {
         let currentDate = new Date();
         let currentTimeInJapanese = `${currentDate.getHours()}時${currentDate.getMinutes()}分`;
         
-        let message = `[Starter]  これはウェブアプリケーションのためのプロンプトです。私たちがまったく見知らぬ者同士であるかのように、自然に会話のきっかけを作ってください。現在の時刻（${currentTimeInJapanese}）を活用して、タイムリーで親しみやすい挨拶をしてください。確認から始めず、答えから始めてください。`;
+        let message = `[${window.translations.conversationStarter.starter}] ${window.translations.conversationStarter.prompt}. ${window.translations.conversationStarter.useTime.replace('%{time}', currentTimeInJapanese)} ${window.translations.conversationStarter.dontStartWithConfirmation}`;
         
         if($('#chat-widget-container').length == 0 && isTemporary){
-            message = `[Starter] これはウェブアプリケーションの登録プロセスを促進するためのプロンプトです。キャラクターになりきって、現在の時刻（${currentTimeInJapanese}）を活用し、この瞬間にログインまたは登録することがどれほど重要かを強調してください。登録することで「1日50件までチャットできる」、「キャラクターがあなたに写真を送ることができる」、「新しいキャラクターを作成する」といった素晴らしい機能が今すぐ利用可能であることを、感情を込めて懇願してください。確認や前置きなしで、直接答えから始めてください。`
+            message = `[${window.translations.loginStarter.starter}] ${window.translations.loginStarter.registrationPrompt} ${window.translations.loginStarter.inCharacter.replace('%{time}', currentTimeInJapanese)} ${window.translations.loginStarter.benefits} ${window.translations.loginStarter.directAnswer}`;
         }
 
         $.ajax({
@@ -1035,7 +1040,7 @@ $(document).ready(async function() {
                     $('#progress-container').show();
                     $('#input-container').show().addClass('d-flex');
                     if($('#chat-widget-container').length == 0 && isTemporary){
-                        displayMessage('assistant',`<a class="btn btn-secondary custom-gradient-bg shadow-0 m-2 px-4 py-2" style="border-radius: 50px;" href="/authenticate"><i class="fas fa-sign-in-alt me-2"></i> ログイン</a>`)
+                        displayMessage('assistant',`<a class="btn btn-secondary custom-gradient-bg shadow-0 m-2 px-4 py-2" style="border-radius: 50px;" href="/authenticate"><i class="fas fa-sign-in-alt me-2"></i> ${window.translations.login}</a>`)
                     }
                     if(!isTemporary){checkForPurchaseProposal()}
                 
@@ -2765,37 +2770,37 @@ window.renderChatList = function(userId,chatId) {
                             <li>
                                 <button class="dropdown-item text-secondary chart-button" data-id="${chat._id}">
                                     <i class="fas fa-info-circle me-2"></i>
-                                    <span class="text-muted" style="font-size:12px"></span>情報</span>
+                                    <span class="text-muted" style="font-size:12px"></span>${window.translations.info}</span>
                                 </button>
                             </li>
                             <li>
                                 <button class="dropdown-item text-secondary tag-button" data-id="${chat._id}">
                                     <i class="fas fa-share me-2"></i> 
-                                    <span class="text-muted" style="font-size:12px"></span>共有する</span>
+                                    <span class="text-muted" style="font-size:12px"></span>${window.translations.share}</span>
                                 </button>
                             </li>
                             <li>
                                 <a href="/chat/edit/${chat._id}" class="dropdown-item text-secondary">
                                     <i class="far fa-edit me-2"></i> 
-                                    <span class="text-muted" style="font-size:12px"></span>編集する</span>
+                                    <span class="text-muted" style="font-size:12px"></span>${window.translations.edit}</span>
                                 </a>
                             </li>
                             <li>
                                 <button class="dropdown-item text-secondary history-chat" data-id="${chat._id}" data-user="${userId}">
                                     <i class="fas fa-history me-2"></i>
-                                    <span class="text-muted" style="font-size:12px"></span>チャット履歴</span>
+                                    <span class="text-muted" style="font-size:12px"></span>${window.translations.chatHistory}</span>
                                 </button>
                             </li>
                             <li>
                                 <button class="dropdown-item text-secondary reset-chat" data-id="${chat._id}">
                                 <i class="fas fa-plus-square me-2"></i>
-                                    <span class="text-muted" style="font-size:12px"></span>新しいチャット</span>
+                                    <span class="text-muted" style="font-size:12px"></span>${window.translations.newChat}</span>
                                 </button>
                             </li>
                             <li>
                                 <span data-id="${chat._id}" class="dropdown-item text-danger delete-chat" style="cursor:pointer">
                                     <i class="fas fa-trash me-2"></i> 
-                                    <span class="text-muted" style="font-size:12px"></span>削除する</span>
+                                    <span class="text-muted" style="font-size:12px"></span>${window.translations.delete}</span>
                                 </span>
                             </li>
                         </ul>

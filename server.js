@@ -1,11 +1,13 @@
 const fastify = require('fastify')({ logger: false });
-const path = require('path');
 require('dotenv').config();
 const mongodb = require('mongodb');
 const cron = require('node-cron');
 const { getCounter, updateCounter } = require('./models/tool');
 const jwt = require('jsonwebtoken');
+
+const path = require('path');
 const fs = require('fs');
+
 const handlebars = require('handlebars');
 const { v4: uuidv4 } = require('uuid');
 const fastifyMultipart = require('@fastify/multipart');
@@ -71,7 +73,10 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
       handlebars.registerHelper('imagePlaceholder', function() {
         return `/img/nsfw-blurred-2.png`;
       });
-      
+      handlebars.registerHelper('capitalize', function(str) {
+        if (typeof str !== 'string') return '';
+        return str.charAt(0).toUpperCase() + str.slice(1);
+      });
     });
     fastify.register(require('@fastify/cookie'), {
       secret: "my-secret",
@@ -125,48 +130,83 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
       }
     });
     
-  // User decorator
-  fastify.decorate('getUser', async function (request, reply) {
-    try {
-      const token = request.cookies.token;
-      if (token) {
-        const decoded = await jwt.verify(token, process.env.JWT_SECRET);
-        if (decoded && decoded._id) {
-          request.user = { _id: decoded._id, ...decoded }; // Attach user _id and other data to request
-          return request.user;
-        }
+    
+    // Load all translation files at startup
+    const translationsDir = path.join(__dirname, 'locales');
+    const translationFiles = fs.readdirSync(translationsDir).filter(file => file.endsWith('.json'));
+    const translations = {};
+    
+    translationFiles.forEach(file => {
+        const lang = path.basename(file, '.json');
+        const data = JSON.parse(fs.readFileSync(path.join(translationsDir, file), 'utf-8'));
+        translations[lang] = data;
+    });
+    
+    fastify.decorate('translations', translations);
+    
+    fastify.decorate('getUser', async function (request, reply) {
+      const userCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+  
+      // Try to get authenticated user by token
+      const user = await getAuthenticatedUser(request, userCollection);
+      if (user) {
+          setTranslations(request, user.lang);
+          return user;
       }
-    } catch (err) {
-      // If any error occurs during token verification, fall through to handle temporary user
-    }
-    // Handle temporary user
-    let tempUser = request.cookies.tempUser;
-    const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
-
-    if (!tempUser) {
-      tempUser = {
-        _id: new fastify.mongo.ObjectId(), // Use fastify.mongo.ObjectId for tempUser ID
-        isTemporary: true,
-        role: 'guest',
-        createdAt: new Date()
-        // Add any other temporary user properties if needed
-      };
-      await userDataCollection.insertOne(tempUser); // Insert tempUser into the users collection
-      reply.setCookie('tempUser', JSON.stringify(tempUser), {
-        path: '/',
-        httpOnly: true,
-        maxAge: 60 * 60 * 24, // 24 Hour
-        sameSite: 'None', // Allows cross-domain cookies
-        //secure: true // Ensures the cookie is only sent over HTTPS
-      });
-
-    } else {
-      tempUser = JSON.parse(tempUser);
-    }
-
-    request.user = tempUser;
-    return tempUser;
+  
+      // Handle temporary user
+      const tempUser = await getOrCreateTempUser(request, reply, userCollection);
+      setTranslations(request, tempUser.lang);
+      return tempUser;
   });
+  
+  // Helper to get authenticated user
+  async function getAuthenticatedUser(request, userCollection) {
+      const token = request.cookies.token;
+      if (!token) return null;
+  
+      try {
+          const decoded = await jwt.verify(token, process.env.JWT_SECRET);
+          if (decoded && decoded._id) {
+              return await userCollection.findOne({ _id: new fastify.mongo.ObjectId(decoded._id) });
+          }
+      } catch (err) {
+          return null;
+      }
+      return null;
+  }
+  
+  // Helper to get or create temporary user
+  async function getOrCreateTempUser(request, reply, userCollection) {
+      let tempUserId = request.cookies.tempUserId;
+  
+      if (!tempUserId) {
+          const tempUser = {
+              isTemporary: true,
+              role: 'guest',
+              lang: 'ja',
+              createdAt: new Date()
+          };
+          const result = await userCollection.insertOne(tempUser);
+          tempUserId = result.insertedId.toString();
+          reply.setCookie('tempUserId', tempUserId, {
+              path: '/',
+              httpOnly: true,
+              maxAge: 60 * 60 * 24, // 24 Hours
+              sameSite: 'None'
+          });
+          return tempUser;
+      }
+  
+      return await userCollection.findOne({ _id: new fastify.mongo.ObjectId(tempUserId) });
+  }
+  
+  // Helper to set translations
+  function setTranslations(request, lang) {
+      lang = lang || 'ja'; // Default to 'ja'
+      request.translations = fastify.translations[lang] || fastify.translations['ja'];
+  }  
+    
     
     // Routes
     fastify.get('/', async (request, reply) => {
@@ -180,16 +220,18 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
 
     fastify.get('/authenticate',async (request, reply) => {
       const user = await fastify.getUser(request, reply);
+      const translations = request.translations
       if (user.isTemporary || request.query.register ) {
-        return reply.renderWithGtm('authenticate.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' , register:!!request.query.register });
+        return reply.renderWithGtm('authenticate.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' ,translations, register:!!request.query.register });
       } else {
         return reply.redirect('/dashboard')
       }
     });
     fastify.get('/authenticate/mail',async (request, reply) => {
       const user = await fastify.getUser(request, reply);
+      const translations = request.translations
       if (user.isTemporary || request.query.register ) {
-        return reply.renderWithGtm('authenticate-v1.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' , register:!!request.query.register });
+        return reply.renderWithGtm('authenticate-v1.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' , translations, register:!!request.query.register });
       } else {
         return reply.redirect('/dashboard')
       }
@@ -200,8 +242,10 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
       let user = await fastify.getUser(request, reply);
       const userId = user._id;
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+      const translations = request.translations
       return reply.renderWithGtm('plan.hbs', { 
         title: 'プレミアムプランAI画像生成', 
+        translations,
         user, 
         seo: [
           { name: 'description', content: 'Lamixでは、無料でAIグラビアとのチャット中に生成された画像を使って、簡単に投稿を作成することができます。お気に入りの瞬間やクリエイティブな画像をシェアすることで、他のユーザーと楽しさを共有しましょう。画像を選んで投稿に追加するだけで、あなただけのオリジナルコンテンツを簡単に発信できます。' },
@@ -220,13 +264,9 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
       let user = await fastify.getUser(request, reply);
       const chatId = request.params.chatId;
       const userId = user._id;
+      const translations = request.translations
 
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-
-      const lang = user.lang || 'en';
-
-      const translationsPath = path.join(__dirname, 'locales', `${lang}.json`);
-      const translations = JSON.parse(fs.readFileSync(translationsPath, 'utf-8'));
 
       const totalUsers = await db.collection('users').countDocuments({ email: { $exists: true } });
 
@@ -249,10 +289,12 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
         let user = await fastify.getUser(request, reply);
         const userId = user._id;
         user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+        const translations = request.translations
 
         return reply.view('post.hbs', {
           title: 'コミュニティからの最新投稿 | LAMIX | 日本語 | 無料AI画像生成 | 無料AIチャット',
           user,
+          translations,
           seo: [
             { name: 'description', content: 'Lamixでは、無料でAIグラビアとのチャット中に生成された画像を使って、簡単に投稿を作成することができます。お気に入りの瞬間やクリエイティブな画像をシェアすることで、他のユーザーと楽しさを共有しましょう。画像を選んで投稿に追加するだけで、あなただけのオリジナルコンテンツを簡単に発信できます。' },
             { name: 'keywords', content: 'AIグラビア, 無料で画像生成AI, LAMIX, 日本語, AI画像生成, AIアート, AIイラスト, 自動画像生成, クリエイティブAI, 生成系AI, 画像共有, AIコミュニティ, AIツール, 画像編集AI, デジタルアート, テキストから画像生成, AIクリエーション' },
@@ -269,6 +311,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
     fastify.get('/post/:postId', async (request, reply) => {
       try {
         let user = await fastify.getUser(request, reply);
+        const translations = request.translations
         const userId = user._id;
         const postId = request.params.postId;
         
@@ -286,6 +329,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
 
         return reply.renderWithGtm('post.hbs', {
           title: 'コミュニティからの最新投稿 | LAMIX | 日本語 | 無料AI画像生成 | 無料AIチャット',
+          translations,
           mode: process.env.MODE,
           user,
           postUser,
@@ -301,11 +345,13 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
     fastify.get('/character', async (request, reply) => {
       try {
         let user = await fastify.getUser(request, reply);
+        const translations = request.translations
         const userId = user._id;
         user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
         return reply.view('character.hbs', {
           title: 'AIグラビアから送られてくる特別な写真 | LAMIX | 日本語 | 無料AI画像生成 | 無料AIチャット',
+          translations,
           user,
           seo: [
             { name: 'description', content: 'AIチャットしながらAI画像生成できるサイトです。日本語対応で簡単に使え、生成した画像を共有したり、他のユーザーの作品を楽しむことができるコミュニティです。' },
@@ -321,6 +367,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
     });
     fastify.get('/character/:chatId', async (request, reply) => {
       try {
+        const translations = request.translations
         let user = await fastify.getUser(request, reply);
         const userId = user._id;
 
@@ -366,6 +413,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
         // Render the page with chat and image data (image can be null if no imageId was provided)
         return reply.view('character.hbs', {
           title: chat.name+'日本語で無料AI画像生成 | 無料AIチャット',
+          translations,
           chat,
           image,
           user,
@@ -388,12 +436,14 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
     });
     
     fastify.get('/about', async(request, reply) => {
+      const translations = request.translations
       const collectionChats = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
       const chats = await collectionChats.find({
         visibility: { $exists: true, $eq: "public" }
       }).sort({_id:-1}).limit(10).toArray();
       return reply.renderWithGtm('chat.hbs', { 
         title: 'AIグラビア | ラミックスの無料画像生成AI体験', 
+        translations,
         chats,
         seo: [
           { name: 'description', content: 'AIチャットしながらAI画像生成できるサイトです。日本語対応で簡単に使え、生成した画像を共有したり、他のユーザーの作品を楽しむことができるコミュニティです。' },
@@ -424,8 +474,11 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
         const chatsCollection = db.collection('chats');
         const sortedChats = await chatsCollection.find(query).sort({ "updatedAt": -1 }).toArray();
 
+        const translations = request.translations
+
         return reply.renderWithGtm('chat-list', { 
           title: 'LAMIX | AIグラビア | ラミックスの画像生成AI体験', 
+          translations,
           chats: sortedChats, 
           user,
           seo: [
@@ -446,8 +499,10 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
       let user = await fastify.getUser(request, reply);
       const userId = user._id;
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+      const translations = request.translations
       return reply.renderWithGtm('discover.hbs', { 
         title: 'LAMIX | 日本語でAI画像生成 | AIチャット' , 
+        translations,
         user,
         seo: [
           { name: 'description', content: 'AIチャットしながらAI画像生成できるサイトです。日本語対応で簡単に使え、生成した画像を共有したり、他のユーザーの作品を楽しむことができるコミュニティです。' },
@@ -499,7 +554,8 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
         if (isAdmin) {
           template = 'add-chat-admin.hbs'
         }
-        return reply.renderWithGtm(template, { title: 'AIフレンズ  | Powered by Hato,Ltd', chatId, isTemporaryChat, user, prompts});
+        const translations = request.translations
+        return reply.renderWithGtm(template, { title: 'AIフレンズ  | Powered by Hato,Ltd', translations, chatId, isTemporaryChat, user, prompts});
       } catch (error) {
         console.log(error)
         return reply.status(500).send({ error: 'Failed to retrieve chatId' });
@@ -540,7 +596,8 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
         const userId = request.user._id
         const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
         const userData = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
-        return reply.renderWithGtm('/settings', { title: 'AIフレンズ  | Powered by Hato,Ltd', user:userData})
+        const translations = request.translations
+        return reply.renderWithGtm('/settings', { title: 'AIフレンズ  | Powered by Hato,Ltd',translations, user:userData})
       } catch (err) {
         return reply.status(500).send({ error: 'Unable to render the settings' });
       }

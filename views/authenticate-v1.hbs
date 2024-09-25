@@ -87,78 +87,69 @@
         </a>
       </div>
       <div class="col-12 col-md-8 col-lg-6 col-xl-5">
-        <div class="card bg-dark text-white border-0" style="border-radius: 1rem;">
-          <div class="card-body pb-5 text-center">
-            <div class="mb-md-5 mt-md-4 pb-5">
-              <h5 class="fw-bold mb-2 text-uppercase authenticate">{{#if register}}会員登録{{else}}ログイン{{/if}}</h5>
-              <h3 class="text-muted mb-5 header" style="font-size: 16px;">{{#if register}}無料アカウント登録で、<br>AIキャラとの会話をもっと楽しもう!{{else}}ログインして多様なAIキャラと<br>楽しく会話しましょう!{{/if}}</h3>
-              <ul class="nav nav-tabs" id="authTab" role="tablist">
-                <li class="nav-item" role="presentation">
-                  <a class="nav-link {{#unless register}}active{{/unless}}" id="login-tab" data-bs-toggle="tab" href="#login" role="tab" aria-controls="login" aria-selected="true">ログイン</a>
-                </li>
-                <li class="nav-item" role="presentation">
-                  <a class="nav-link {{#if register}}active{{/if}}" id="register-tab" data-bs-toggle="tab" href="#register" role="tab" aria-controls="register" aria-selected="false">登録</a>
-                </li>
-              </ul>
-              <div class="tab-content" id="authTabContent">
-                <div class="tab-pane fade {{#unless register}}show active{{/unless}}" id="login" role="tabpanel" aria-labelledby="login-tab">
-                  <form id="login-form" class="mt-3">
-                    <div data-mdb-input-init class="form-outline form-white mb-4">
-                      <input type="email" id="login-email" name="email" class="form-control form-control-lg" required />
-                      <label class="form-label" for="login-email">メールアドレス</label>
-                    </div>
-                    <div data-mdb-input-init class="form-outline form-white mb-4">
-                      <input type="password" id="login-password" name="password" class="form-control form-control-lg" required />
-                      <label class="form-label" for="login-password">パスワード</label>
-                    </div>
-                    <button type="submit" style="border-radius: 50px;" class="btn btn-light custom-gradient-bg btn-lg px-5 w-100">ログイン</button>
-                  </form>
-                </div>
-                <div class="tab-pane fade {{#if register}}show active{{/if}}" id="register" role="tabpanel" aria-labelledby="register-tab">
-                  <form id="register-form" class="mt-3">
-                    <div data-mdb-input-init class="form-outline form-white mb-4">
-                      <input type="email" id="register-email" name="email" class="form-control form-control-lg" required />
-                      <label class="form-label" for="register-email">メールアドレス</label>
-                    </div>
-                    <div data-mdb-input-init class="form-outline form-white mb-4">
-                      <input type="password" id="register-password" name="password" class="form-control form-control-lg" required />
-                      <label class="form-label" for="register-password">パスワード</label>
-                    </div>
-                    <button type="submit" style="border-radius: 50px;" class="btn btn-light custom-gradient-bg btn-lg px-5 w-100">登録</button>
-                  </form>
-                  <section class="my-3">
-                    <small class="text-white text-center" style="font-size:12px;">お客様のプライバシーは非常に重要であり、提供された情報は意図された目的以外には使用しません。</small>
-                    <div class="p-contact-scroll text-dark" style="height: 200px; overflow-y: scroll; margin-top: 10px; padding: 10px; border: 1px solid #ccc;text-align: start;font-size: 13px;">
-                        <h3>プライバシーポリシー</h3>
-                        <p>お客様のプライバシーを守ることは当社にとって最も重要なことです。以下のポリシーは、当社がどのようにお客様の情報を取り扱うかを説明しています。</p>
-                        <h3>1. 個人情報の収集</h3>
-                        <p>当社は、お客様から提供された個人情報（氏名、メールアドレスなど）を厳重に管理し、無断で第三者に提供することはありません。</p>
-                        <h3>2. 利用目的</h3>
-                        <p>お客様の個人情報は、以下の目的で使用されます：</p>
-                        <ul>
-                            <li>サービスの提供および向上</li>
-                            <li>お客様への連絡</li>
-                            <li>カスタマーサポートの提供</li>
-                        </ul>
-                        <h3>3. データの保存と保護</h3>
-                        <p>当社は、お客様のデータを安全に保存し、不正アクセス、紛失、破壊から保護するための合理的な対策を講じています。</p>
-                        <h3>4. 情報の共有</h3>
-                        <p>お客様の同意がない限り、当社はお客様の個人情報を第三者と共有することはありません。ただし、法令に基づき要求された場合は除きます。</p>
-                        <h3>5. クッキーの使用</h3>
-                        <p>当社のウェブサイトでは、サービス向上のためにクッキーを使用しています。クッキーは、ユーザーのブラウザに保存される小さなテキストファイルで、サイトの利用状況を分析するために使用されます。</p>
-                        <h3>6. お問い合わせ</h3>
-                        <p>プライバシーポリシーに関するご質問やご不明点がございましたら、<a href="https://hatoltd.com/contact/" target="_blank">お問い合わせフォーム</a>よりご連絡ください。</p>
-                        <p>詳細なプライバシーポリシーについては、<a href="https://hatoltd.com/privacy-policy/" target="_blank">こちら</a>をご覧ください。</p>
-                    </div>
-                  </section>
-                </div>
+          <div class="card bg-dark text-white border-0" style="border-radius: 1rem;">
+              <div class="card-body pb-5 text-center">
+                  <div class="mb-md-5 mt-md-4 pb-5">
+                      <h5 class="fw-bold mb-2 text-uppercase authenticate">{{#if register}}{{translations.authMail.register}}{{else}}{{translations.authMail.login}}{{/if}}</h5>
+                      <h3 class="text-muted mb-5 header" style="font-size: 16px;">{{#if register}}{{translations.authMail.registerDescription}}{{else}}{{translations.authMail.loginDescription}}{{/if}}</h3>
+                      <ul class="nav nav-tabs" id="authTab" role="tablist">
+                          <li class="nav-item" role="presentation">
+                              <a class="nav-link {{#unless register}}active{{/unless}}" id="login-tab" data-bs-toggle="tab" href="#login" role="tab" aria-controls="login" aria-selected="true">{{translations.authMail.login}}</a>
+                          </li>
+                          <li class="nav-item" role="presentation">
+                              <a class="nav-link {{#if register}}active{{/if}}" id="register-tab" data-bs-toggle="tab" href="#register" role="tab" aria-controls="register" aria-selected="false">{{translations.authMail.register}}</a>
+                          </li>
+                      </ul>
+                      <div class="tab-content" id="authTabContent">
+                          <div class="tab-pane fade {{#unless register}}show active{{/unless}}" id="login" role="tabpanel" aria-labelledby="login-tab">
+                              <form id="login-form" class="mt-3">
+                                  <div data-mdb-input-init class="form-outline form-white mb-4">
+                                      <input type="email" id="login-email" name="email" class="form-control form-control-lg" required />
+                                      <label class="form-label" for="login-email">{{translations.authMail.email}}</label>
+                                  </div>
+                                  <div data-mdb-input-init class="form-outline form-white mb-4">
+                                      <input type="password" id="login-password" name="password" class="form-control form-control-lg" required />
+                                      <label class="form-label" for="login-password">{{translations.authMail.password}}</label>
+                                  </div>
+                                  <button type="submit" style="border-radius: 50px;" class="btn btn-light custom-gradient-bg btn-lg px-5 w-100">{{translations.authMail.login}}</button>
+                              </form>
+                          </div>
+                          <div class="tab-pane fade {{#if register}}show active{{/if}}" id="register" role="tabpanel" aria-labelledby="register-tab">
+                              <form id="register-form" class="mt-3">
+                                  <div data-mdb-input-init class="form-outline form-white mb-4">
+                                      <input type="email" id="register-email" name="email" class="form-control form-control-lg" required />
+                                      <label class="form-label" for="register-email">{{translations.authMail.email}}</label>
+                                  </div>
+                                  <div data-mdb-input-init class="form-outline form-white mb-4">
+                                      <input type="password" id="register-password" name="password" class="form-control form-control-lg" required />
+                                      <label class="form-label" for="register-password">{{translations.authMail.password}}</label>
+                                  </div>
+                                  <button type="submit" style="border-radius: 50px;" class="btn btn-light custom-gradient-bg btn-lg px-5 w-100">{{translations.authMail.register}}</button>
+                              </form>
+                              <section class="my-3">
+                                  <small class="text-white text-center" style="font-size:12px;">{{translations.authMail.privacyNote}}</small>
+                                  <div class="p-contact-scroll text-muted" style="height: 200px; overflow-y: scroll; margin-top: 10px; padding: 10px; border: 1px solid #ccc;text-align: start;font-size: 13px;">
+                                      <h3>{{translations.authMail.privacyPolicy}}</h3>
+                                      <p>{{translations.authMail.privacyDescription}}</p>
+                                      <h3>{{translations.authMail.dataCollection}}</h3>
+                                      <p>{{translations.authMail.dataUsage}}</p>
+                                      <h3>{{translations.authMail.dataStorage}}</h3>
+                                      <p>{{translations.authMail.dataProtection}}</p>
+                                      <h3>{{translations.authMail.infoSharing}}</h3>
+                                      <p>{{translations.authMail.infoSharingDetails}}</p>
+                                      <h3>{{translations.authMail.cookies}}</h3>
+                                      <p>{{translations.authMail.cookiesDetails}}</p>
+                                      <h3>{{translations.authMail.contact}}</h3>
+                                      <p>{{translations.authMail.contactDetails}}</p>
+                                  </div>
+                              </section>
+                          </div>
+                      </div>
+                  </div>
               </div>
-            </div>
-            <div>
-            </div>
           </div>
-        </div>
       </div>
+
     </div>
   </div>
 </section>
@@ -166,7 +157,8 @@
 <script>
 
 $(document).ready(function() {
-
+  const translations =  {{{json translations}}}
+    console.log(translations)
     $('#register-link').on('click', function() {
         $('#register-tab').tab('show');
         $('.authenticate').text('会員登録');
@@ -241,33 +233,6 @@ $(document).ready(function() {
         });
     });
 });
-
-  function getPrivacyPolicies() {
-      return `
-      <small class="text-muted text-center">私たちもスパムが嫌いです。お客様のプライバシーは非常に重要であり、提供された情報は意図された目的以外には使用しません。</small>
-      <div class="p-contact-scroll" style="height: 200px; overflow-y: scroll; margin-top: 10px; padding: 10px; border: 1px solid #ccc;text-align: start;font-size: 13px;">
-          <h3>プライバシーポリシー</h3>
-          <p>お客様のプライバシーを守ることは当社にとって最も重要なことです。以下のポリシーは、当社がどのようにお客様の情報を取り扱うかを説明しています。</p>
-          <h3>1. 個人情報の収集</h3>
-          <p>当社は、お客様から提供された個人情報（氏名、メールアドレスなど）を厳重に管理し、無断で第三者に提供することはありません。</p>
-          <h3>2. 利用目的</h3>
-          <p>お客様の個人情報は、以下の目的で使用されます：</p>
-          <ul>
-              <li>サービスの提供および向上</li>
-              <li>お客様への連絡</li>
-              <li>カスタマーサポートの提供</li>
-          </ul>
-          <h3>3. データの保存と保護</h3>
-          <p>当社は、お客様のデータを安全に保存し、不正アクセス、紛失、破壊から保護するための合理的な対策を講じています。</p>
-          <h3>4. 情報の共有</h3>
-          <p>お客様の同意がない限り、当社はお客様の個人情報を第三者と共有することはありません。ただし、法令に基づき要求された場合は除きます。</p>
-          <h3>5. クッキーの使用</h3>
-          <p>当社のウェブサイトでは、サービス向上のためにクッキーを使用しています。クッキーは、ユーザーのブラウザに保存される小さなテキストファイルで、サイトの利用状況を分析するために使用されます。</p>
-          <h3>6. お問い合わせ</h3>
-          <p>プライバシーポリシーに関するご質問やご不明点がございましたら、<a href="https://hatoltd.com/contact/" target="_blank">お問い合わせフォーム</a>よりご連絡ください。</p>
-          <p>詳細なプライバシーポリシーについては、<a href="https://hatoltd.com/privacy-policy/" target="_blank">こちら</a>をご覧ください。</p>
-      </div>`;
-  }
 </script>
 </body>
 </html>

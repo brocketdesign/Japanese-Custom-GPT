@@ -1,5 +1,67 @@
 let isTemporary = true
 let subscriptionStatus = false
+
+window.translations = JSON.parse(localStorage.getItem('translations')) || {};
+let currentLang = localStorage.getItem('currentLang') || 'ja';
+
+async function loadTranslations(lang) {
+    if (lang === currentLang && Object.keys(window.translations).length) return window.translations;
+
+    const response = await $.ajax({
+        url: '/api/user/translations',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ lang })
+    });
+
+    if (response.success) {
+        window.translations = response.translations;
+        currentLang = lang;
+        localStorage.setItem('currentLang', lang);
+        localStorage.setItem('translations', JSON.stringify(window.translations));
+    }
+
+    return window.translations;
+}
+
+async function onLanguageChange(lang) {
+    const updateResponse = await $.ajax({
+        url: '/api/user/update-language',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ lang })
+    });
+
+    if (updateResponse.success) {
+        await loadTranslations(lang);
+        $('#languageDropdown').text(getLanguageDisplayName(lang));
+        location.reload();
+    }
+}
+
+function getLanguageDisplayName(lang) {
+    const names = {
+        'ja': '日本語',
+        'en': 'English',
+        'fr': 'Français'
+    };
+    return names[lang] || '日本語';
+}
+
+$(document).ready(function() {
+    $('#languageDropdown').text(getLanguageDisplayName(currentLang));
+    if (Object.keys(window.translations).length === 0) {
+        loadTranslations(currentLang);
+    }
+
+    $('.language-select').on('click', function(e) {
+        e.preventDefault();
+        const selectedLang = $(this).data('lang');
+        if (selectedLang !== currentLang) {
+            onLanguageChange(selectedLang);
+        }
+    });
+});
 $(document).ready(async function() {
     const urlParams = new URLSearchParams(window.location.search);
     const success = urlParams.get('success');
@@ -1539,7 +1601,6 @@ function generateUserPostPagination(currentPage, totalPages, userId, like = fals
 }
 
 window.showRegistrationForm = function(messageId,callback) {
-
     //window.location = "/authenticate?register=true"
     Swal.fire({
       title: '',
@@ -1549,31 +1610,36 @@ window.showRegistrationForm = function(messageId,callback) {
       imageHeight: 'auto',
       position: 'bottom',
       html: `
-        <h2><span class="u-color-grad">無料で</span><br>チャットを続けましょう</h2>
-        <p class="text-muted mb-2 header" style="font-size: 16px;">今すぐ体験を始めよう！</p>
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-md-8">
-                    <div class="card shadow-0 border-0">
-                        <div class="card-body">
-                            <a href="/user/google-auth" class="btn btn-light ico-login-button mb-3">
-                                <img src="/img/google_logo_neutral.png" alt="Google"/>
-                                <span class="gsi-material-button-contents">で続ける</span>
-                            </a>
-                            <a href="/user/line-auth" class="btn btn-light ico-login-button mb-3">
-                                <img src="/img/line_btn_base.png" alt="LINE"/>
-                                <span class="gsi-material-button-contents">で続ける</span>
-                            </a>
-                            <p>または</p>
-                            <a href="/authenticate/mail" class="btn btn-light ico-login-button mb-3 py-2">
-                                <i class="fas fa-envelope me-3"></i>
-                                <span>メールで続ける</span>
-                            </a>
+            <h2>
+                <span class="u-color-grad">${window.translations.RegistrationForm.free}</span><br>
+                ${window.translations.RegistrationForm.chatContinue}
+            </h2>
+            <p class="text-muted mb-2 header" style="font-size: 16px;">
+                ${window.translations.RegistrationForm.startNow}
+            </p>
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="card shadow-0 border-0">
+                            <div class="card-body">
+                                <a href="/user/google-auth" class="btn btn-light ico-login-button mb-3">
+                                    <img src="/img/google_logo_neutral.png" alt="Google"/>
+                                    <span class="gsi-material-button-contents">${window.translations.RegistrationForm.continueWithGoogle}</span>
+                                </a>
+                                <a href="/user/line-auth" class="btn btn-light ico-login-button mb-3">
+                                    <img src="/img/line_btn_base.png" alt="LINE"/>
+                                    <span class="gsi-material-button-contents">${window.translations.RegistrationForm.continueWithLINE}</span>
+                                </a>
+                                <p>${window.translations.RegistrationForm.or}</p>
+                                <a href="/authenticate/mail" class="btn btn-light ico-login-button mb-3 py-2">
+                                    <i class="fas fa-envelope me-3"></i>
+                                    <span>${window.translations.RegistrationForm.continueWithEmail}</span>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
     `,
       showCancelButton: false,

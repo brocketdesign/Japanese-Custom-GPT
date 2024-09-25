@@ -1,5 +1,4 @@
 {
-    "title": "Polyglot.jsによる多言語対応",
     "chatHistory": "チャット履歴",
     "createCharacter": "キャラクター作成",
     "library": "ライブラリー",
@@ -54,6 +53,85 @@
     "confirm": "確認",
     "ok": "OK",
     "welcome": "ようこそ",
-    "welcomeMessage": "私たちのアプリケーションへようこそ。"
+    "welcomeMessage": "私たちのアプリケーションへようこそ。",
+    "info": "情報",
+    "edit": "編集する",
+    "share":"共有する",
+    "delete":"削除する",
+    "sendMessageTo":"にメッセージを送る",
+    "conversationStarter" : {
+      "starter": "Starter",
+      "prompt": "これはウェブアプリケーションのためのプロンプトです。私たちがまったく見知らぬ者同士であるかのように、自然に会話のきっかけを作ってください。",
+      "useTime": "現在の時刻（%{time}）を活用して、タイムリーで親しみやすい挨拶をしてください。",
+      "dontStartWithConfirmation": "確認から始めず、答えから始めてください。"
+    },
+    "loginStarter" : {
+      "starter": "Starter",
+      "registrationPrompt": "これはウェブアプリケーションの登録プロセスを促進するためのプロンプトです。",
+      "inCharacter": "キャラクターになりきって、現在の時刻（%{time}）を活用し、この瞬間にログインまたは登録することがどれほど重要かを強調してください。",
+      "benefits": "登録することで「1日50件までチャットできる」、「キャラクターがあなたに写真を送ることができる」、「新しいキャラクターを作成する」といった素晴らしい機能が今すぐ利用可能であることを、感情を込めて懇願してください。",
+      "directAnswer": "確認や前置きなしで、直接答えから始めてください。"
+    },
+    "login": "ログイン",
+    "loginRegister": "ログイン/会員登録",
+    "enjoyConversations": "無料アカウントで、<br>AIキャラとの会話をもっと楽しもう!",
+    "continueWithGoogle": "で続ける",
+    "continueWithLINE": "で続ける",
+    "or": "または",
+    "continueWithEmail": "メールで続ける",
+    "contactUs": "いつでもこちらからご連絡いただけます",
+    "aboutService": "サービスについて",
+    "termsOfUse": "利用規約",
+    "privacyPolicy": "プライバシー ポリシー",
+    "companyOverview": "会社概要",
+    "blog": "ブログ",
+    "characters": "キャラクター",
+    "RegistrationForm": {
+      "free": "無料で",
+      "chatContinue": "チャットを続けましょう",
+      "startNow": "今すぐ体験を始めよう！",
+      "continueWithGoogle": "Googleで続ける",
+      "continueWithLINE": "LINEで続ける",
+      "continueWithEmail": "メールで続ける",
+      "or": "または"
+    },
+    "discover": {
+      "lamix": "Lamix",
+      "aiChatTitle": "AIキャラクターと<br>楽しくおしゃべりができる。",
+      "aiChat": "AIチャット",
+      "aiImage": "AI画像",
+      "aiGeneration": "AI生成",
+      "description": "Lamixでは、キャラクターとの会話がもっと楽しくなります！お気に入りのキャラクターが、AI技術で生成された魅力的な写真を会話中に送信してくれるだけでなく、特別なフォトアルバムも楽しめます。キャラクターの写真アルバムには、興味深いシーンがたくさん詰まっていて、まるで彼らの世界に飛び込んだかのような体験が待っています。Lamixで、カスタマイズ可能なキャラクターと共に、写真付きのユニークな会話を楽しんでみませんか？",
+      "specialPhotos": "AIグラビアから送られてくる特別な写真",
+      "aiGravureChatDescription": "LamixでAIグラビアとチャットしていると、会話の中で魅力的な写真が次々と送られてきます。AIグラビアが送ってくれる写真は、まるで彼らの世界を垣間見るかのような美しいシーンばかり。まさにその瞬間に引き込まれるような体験を楽しみながら、キャラクターとの特別なひとときをお楽しみください。",
+      "seeAll": "すべてを見る",
+      "activeUsers": "アクティブユーザー",
+      "latestAIGravure": "コミュニティからの最新のAIグラビア",
+      "latestAIGravureDescription": "Lamixでは、キャラクターとの会話がもっと楽しくなります！",
+      "latestPosts": "コミュニティからの最新投稿",
+      "latestPostsDescription": "Lamixでは、AIグラビアとのチャット中に生成された画像を使って、簡単に投稿を作成することができます。お気に入りの瞬間やクリエイティブな画像をシェアすることで、他のユーザーと楽しさを共有しましょう。"
+    },
+    "authMail": {
+      "register": "会員登録",
+      "login": "ログイン",
+      "registerDescription": "無料アカウント登録で、<br>AIキャラとの会話をもっと楽しもう!",
+      "loginDescription": "ログインして多様なAIキャラと<br>楽しく会話しましょう!",
+      "email": "メールアドレス",
+      "password": "パスワード",
+      "privacyNote": "お客様のプライバシーは非常に重要であり、提供された情報は意図された目的以外には使用しません。",
+      "privacyPolicy": "プライバシーポリシー",
+      "privacyDescription": "お客様のプライバシーを守ることは当社にとって最も重要なことです。以下のポリシーは、当社がどのようにお客様の情報を取り扱うかを説明しています。",
+      "dataCollection": "1. 個人情報の収集",
+      "dataUsage": "当社は、お客様から提供された個人情報（氏名、メールアドレスなど）を厳重に管理し、無断で第三者に提供することはありません。",
+      "dataStorage": "3. データの保存と保護",
+      "dataProtection": "当社は、お客様のデータを安全に保存し、不正アクセス、紛失、破壊から保護するための合理的な対策を講じています。",
+      "infoSharing": "4. 情報の共有",
+      "infoSharingDetails": "お客様の同意がない限り、当社はお客様の個人情報を第三者と共有することはありません。ただし、法令に基づき要求された場合は除きます。",
+      "cookies": "5. クッキーの使用",
+      "cookiesDetails": "当社のウェブサイトでは、サービス向上のためにクッキーを使用しています。",
+      "contact": "6. お問い合わせ",
+      "contactDetails": "プライバシーポリシーに関するご質問やご不明点がございましたら、<a href=\"https://hatoltd.com/contact/\" target=\"_blank\">お問い合わせフォーム</a>よりご連絡ください。"
+    }
+    
   }
   

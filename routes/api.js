@@ -10,6 +10,7 @@ const axios = require('axios');
 const OpenAI = require("openai");
 const { z } = require("zod");
 const { zodResponseFormat } = require("openai/helpers/zod");
+const path = require('path');
 const fs = require('fs');
 const stripe = process.env.MODE == 'local'? require('stripe')(process.env.STRIPE_SECRET_KEY_TEST) : require('stripe')(process.env.STRIPE_SECRET_KEY)
 
@@ -584,6 +585,7 @@ async function routes(fastify, options) {
                 const user = await fastify.getUser(request, reply);
                 userId = user._id;
             }
+            const language = user?.lang ? user.lang : 'English'
 
             const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
             try {
@@ -630,14 +632,14 @@ async function routes(fastify, options) {
                         {
                             "role": "system",
                             "content": `
-                            You are a japanese salesman. I will provide your character details. 
+                            You are a ${language} salesman. I will provide your character details. 
                             Your are working as an idol and your goal is to make the user buy your pictures to become popular.
                             Never react to premium images !
                             You do not ask for the user story.Do not ask for the user questions unles to sell something. 
                             Focus on promoting your pictures. You must wait for the user to send you coins before sending the picture.
                             \n When you propose a picture, describe what is in it. Describe you clothes and emotion, what is going on in the picture.
                             \n When the user buy you someting, thank him and send the picture. 
-                            Respond in japanese
+                            Respond in ${language}
                             `
 
                         },
@@ -946,7 +948,7 @@ async function routes(fastify, options) {
             //Add the time before completion
             let currentDate = new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" });
             let currentTimeInJapanese = `${new Date(currentDate).getHours()}時${new Date(currentDate).getMinutes()}分`;            
-            let timeMessage = `[Hidden] 現在の時刻 ${currentTimeInJapanese}.Do not tell me the time. Use it to be coherent.`
+            let timeMessage = `[Hidden] Current time : ${currentTimeInJapanese}.Do not tell me the time. Use it for context.`
             timeMessage = { "role": "assistant", "content": timeMessage };
             userMessages.push(timeMessage);
 
@@ -2167,7 +2169,63 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'An error occurred while fetching the persona details.' });
         }
     });
-    
+
+
+    // Route to get translations
+    fastify.post('/api/user/translations', async (request, reply) => {
+        try {
+            const { lang } = request.body;
+            const userLang = lang || 'ja';
+
+            if (!fastify.translations[userLang]) {
+                return reply.status(404).send({ error: 'Translation file not found.' });
+            }
+
+            return reply.send({ success: true, translations: fastify.translations[userLang] });
+        } catch (error) {
+            fastify.log.error(error);
+            return reply.status(500).send({ error: 'An error occurred while fetching translations.' });
+        }
+    });
+
+    // Route to update user language
+    fastify.post('/api/user/update-language', async (request, reply) => {
+        try {
+            const { lang } = request.body;
+            const user = await fastify.getUser(request, reply);
+            const userLang = lang || 'ja';
+
+            if (!fastify.translations[userLang]) {
+                return reply.status(400).send({ error: 'Unsupported language.' });
+            }
+
+            if (user.isTemporary) {
+                // Update tempUser lang
+                user.lang = userLang;
+                const updatedTempUser = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOneAndUpdate(
+                    { _id: new fastify.mongo.ObjectId(user._id) },
+                    { $set: { lang: userLang } },
+                    { returnDocument: 'after' }
+                );
+                request.translations = fastify.translations[userLang];
+
+            } else {
+                // Update user's lang in the database
+                await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
+                    { _id: user._id },
+                    { $set: { lang: userLang } }
+                );
+                request.translations = fastify.translations[userLang];
+            }
+
+            return reply.send({ success: true, lang: userLang });
+        } catch (error) {
+            console.log(error)
+            return reply.status(500).send({ error: 'An error occurred while updating the language.' });
+        }
+    });
+
+
     fastify.get('/api/user', async (request,reply) => {
         try {
             let user = await fastify.getUser(request, reply);

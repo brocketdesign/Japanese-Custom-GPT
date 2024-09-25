@@ -53,63 +53,61 @@
   </div>
 
   <div class="container">   
-     
-    <div class="mb-5 mt-1">
-        <section class="w-100 px-0 py-2 text-center">
-            <img src="/img/logo.webp" alt="" class="mx-3 mb-3" width="75px">
-            <span class="u-font-manrope u-color-grad">Lamix</span>は、
-            <h3 class="fw-bold mb-1 px-3">AIキャラクターと<br>楽しくおしゃべりができる。</h3>
-            <div class="d-flex px-3 justify-content-center">
-                <button type="button" class="btn btn-sm custom-gradient-bg shadow-0 border-0 mb-1 mx-1 auto-gen">
-                    <i class="fa fa-comment me-2"></i>
-                    AIチャット
-                </button>
-                <button type="button" class="btn btn-sm custom-gradient-bg shadow-0 border-0 mb-1 mx-1 auto-gen">
-                    <i class="fa fa-image me-2"></i>
-                    AI画像
-                </button>
-                <button type="button" class="btn btn-sm custom-gradient-bg shadow-0 border-0 mb-1 mx-1 auto-gen">
-                    <i class="fa fa-magic me-2"></i>
-                    AI生成
-                </button>
-            </div>
-            <p class="py-3 mb-1" style="color: #555;">
-                Lamixでは、キャラクターとの会話がもっと楽しくなります！お気に入りのキャラクターが、AI技術で生成された魅力的な写真を会話中に送信してくれるだけでなく、特別なフォトアルバムも楽しめます。キャラクターの写真アルバムには、興味深いシーンがたくさん詰まっていて、まるで彼らの世界に飛び込んだかのような体験が待っています。Lamixで、カスタマイズ可能なキャラクターと共に、写真付きのユニークな会話を楽しんでみませんか？
-            </p>
-        </section>
-    </div>
-    <hr>
-    <h3 class="my-4 text-start">AIグラビアから送られてくる特別な写真</h3>
-    <p>LamixでAIグラビアとチャットしていると、会話の中で魅力的な写真が次々と送られてきます。AIグラビアが送ってくれる写真は、まるで彼らの世界を垣間見るかのような美しいシーンばかり。まさにその瞬間に引き込まれるような体験を楽しみながら、キャラクターとの特別なひとときをお楽しみください。</p>
-    <div class="container mt-4">
-      <div class="row" id="all-chats-images-gallery"></div>
-    </div>
-    <div class="w-100 text-center">
-      <a href="/character" class="my-4 btn btn-lg text-white fw-bold custom-gradient-bg w-100">すべてを見る</a>
-    </div>
+      <div class="mb-5 mt-1">
+          <section class="w-100 px-0 py-2 text-center">
+              <img src="/img/logo.webp" alt="" class="mx-3 mb-3" width="75px">
+              <span class="u-font-manrope u-color-grad">{{translations.discover.lamix}}</span>は、
+              <h3 class="fw-bold mb-1 px-3">{{translations.discover.aiChatTitle}}</h3>
+              <div class="d-flex px-3 justify-content-center">
+                  <button type="button" class="btn btn-sm custom-gradient-bg shadow-0 border-0 mb-1 mx-1 auto-gen">
+                      <i class="fa fa-comment me-2"></i>
+                      {{translations.discover.aiChat}}
+                  </button>
+                  <button type="button" class="btn btn-sm custom-gradient-bg shadow-0 border-0 mb-1 mx-1 auto-gen">
+                      <i class="fa fa-image me-2"></i>
+                      {{translations.discover.aiImage}}
+                  </button>
+                  <button type="button" class="btn btn-sm custom-gradient-bg shadow-0 border-0 mb-1 mx-1 auto-gen">
+                      <i class="fa fa-magic me-2"></i>
+                      {{translations.discover.aiGeneration}}
+                  </button>
+              </div>
+              <p class="py-3 mb-1" style="color: #555;">
+                  {{translations.discover.description}}
+              </p>
+          </section>
+      </div>
+      <hr>
+      <h3 class="my-4 text-start">{{translations.discover.specialPhotos}}</h3>
+      <p>{{translations.discover.aiGravureChatDescription}}</p>
+      <div class="container mt-4">
+        <div class="row" id="all-chats-images-gallery"></div>
+      </div>
+      <div class="w-100 text-center">
+        <a href="/character" class="my-4 btn btn-lg text-white fw-bold custom-gradient-bg w-100">{{translations.discover.seeAll}}</a>
+      </div>
 
-    <h3>アクティブユーザー</h3>
-    <div id="users-gallery" class="d-flex flex-wrap p-3"></div>
-    <div class="w-100 text-center d-none">
-        <a href="/users/" class="my-4 btn btn-lg text-white fw-bold custom-gradient-bg w-100">すべてを見る</a>
-    </div>
+      <h3>{{translations.discover.activeUsers}}</h3>
+      <div id="users-gallery" class="d-flex flex-wrap p-3"></div>
+      <div class="w-100 text-center d-none">
+          <a href="/users/" class="my-4 btn btn-lg text-white fw-bold custom-gradient-bg w-100">{{translations.discover.seeAll}}</a>
+      </div>
 
-    <h3 class="my-4 text-start">コミュニティからの最新のAIグラビア</h3>
-    <p>Lamixでは、キャラクターとの会話がもっと楽しくなります！お気に入りのキャラクターが、AI技術で生成された魅力的な写真を会話中に送信してくれるだけでなく、特別なフォトアルバムも楽しめます。キャラクターの写真アルバムには、興味深いシーンがたくさん詰まっていて、まるで彼らの世界に飛び込んだかのような体験が待っています。Lamixで、カスタマイズ可能なキャラクターと共に、写真付きのユニークな会話を楽しんでみませんか？</p>
-    <div id="chat-gallery" class="row"></div>
-    <div class="w-100 text-center">
-        <a href="/chat/" class="my-4 btn btn-lg text-white fw-bold custom-gradient-bg w-100">すべてを見る</a>
-    </div>
+      <h3 class="my-4 text-start">{{translations.discover.latestAIGravure}}</h3>
+      <p>{{translations.discover.latestAIGravureDescription}}</p>
+      <div id="chat-gallery" class="row"></div>
+      <div class="w-100 text-center">
+          <a href="/chat/" class="my-4 btn btn-lg text-white fw-bold custom-gradient-bg w-100">{{translations.discover.seeAll}}</a>
+      </div>
 
-
-    <h3 class="my-4 text-start">コミュニティからの最新投稿</h3>
-    <p>Lamixでは、AIグラビアとのチャット中に生成された画像を使って、簡単に投稿を作成することができます。お気に入りの瞬間やクリエイティブな画像をシェアすることで、他のユーザーと楽しさを共有しましょう。画像を選んで投稿に追加するだけで、あなただけのオリジナルコンテンツを簡単に発信できます。</p>
-    <div class="row" id="post-gallery"></div>
-    <div class="w-100 text-center">
-        <a href="/post" class="my-4 btn btn-lg text-white fw-bold custom-gradient-bg w-100">すべてを見る</a>
-    </div>
-
+      <h3 class="my-4 text-start">{{translations.discover.latestPosts}}</h3>
+      <p>{{translations.discover.latestPostsDescription}}</p>
+      <div class="row" id="post-gallery"></div>
+      <div class="w-100 text-center">
+          <a href="/post" class="my-4 btn btn-lg text-white fw-bold custom-gradient-bg w-100">{{translations.discover.seeAll}}</a>
+      </div>
   </div>
+
     
 
 </div>

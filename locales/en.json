@@ -196,7 +196,40 @@
     "like":"Like",
     "backToTop":"Back to Top",
     "next":"Next",
-    "prev":"Previous"
+    "prev":"Previous",
+    "newCharacter": {
+      "stepProgress": "Step",
+      "characterCreationForm": "Character Creation Form",
+      "characterPromptLabel": "Character Prompt",
+      "characterPromptPlaceholder": "Please enter a detailed description of the character...",
+      "enhancedPromptLabel": "AI Enhanced Prompt",
+      "enhancedPromptPlaceholder": "The AI-enhanced prompt will be displayed here...",
+      "generateWithAI": "Generate with AI",
+      "generatedImageLabel": "Generated Character Image",
+      "generatedImageAlt": "Generated Character Image",
+      "nextStep": "Next",
+      "nextStepButtonClass": "",
+      "characterPersonalityTitle": "Set Character Personality",
+      "visibilityLabel": "Visibility Settings",
+      "public": "Public",
+      "private": "Private",
+      "languageLabel": "Language",
+      "japanese": "Japanese",
+      "english": "English",
+      "french": "French",
+      "genderLabel": "Gender",
+      "female": "Female",
+      "male": "Male",
+      "characterDetailsLabel": "Character Details",
+      "characterDetailsPlaceholder": "Please enter the character's details",
+      "namePlaceholder": "Name",
+      "descriptionPlaceholder": "Brief Description",
+      "speechStylePlaceholder": "Speech Style",
+      "markdownInfo": "You can enter details in Markdown format.",
+      "back": "Back",
+      "complete": "Complete",
+      "allFieldsRequired": "All fields are required"
+    }
     
   }
   

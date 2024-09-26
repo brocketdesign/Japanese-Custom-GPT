@@ -2282,7 +2282,7 @@ $(document).ready(async function() {
                     count_proposal = 0;
                 }else{
                     if(count_proposal >= 2){
-                        let message = `[Hidden] Prepare to propose a picture of you.`
+                        let message = `[Hidden] Prepare to propose a picture of you. When you make a proposition, describe the image in detail.`
                         addMessageToChat(chatId, userChatId, 'user', message);
                     }
                 }

@@ -21,6 +21,7 @@
         <table class="table table-striped">
             <thead>
                 <tr>
+                    <th>ID</th>
                     <th>日付</th>
                     <th>メール</th>
                     <th>名前</th>
@@ -31,7 +32,8 @@
             </thead>
             <tbody>
                 {{#each users}}
-                <tr data-user-id="{{this._id}}">
+                <tr data-user-id="{{this._id}}"></tr>
+                    <td>{{this._id}}</td>
                     <td class="jp-d">{{this.createdAt}}</td>
                     <td>{{this.email}}</td>
                     <td>{{this.nickname}}</td>

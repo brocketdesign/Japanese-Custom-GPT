@@ -31,6 +31,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
       //deleteOldRecords(db)
       //deleteUserChatsWithoutMessages(db)
     });
+    //cleanupNonRegisteredUsers(db);
     cron.schedule('0 0 * * *', async () => {
       try {
         await updateCounter(db, 0);

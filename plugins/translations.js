@@ -49,7 +49,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         if (!token) return null;
 
         try {
-            const decoded = await jwt.verify(token, process.env.JWT_SECRET);
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
             if (decoded && decoded._id) {
                 return await userCollection.findOne({ _id: new fastify.mongo.ObjectId(decoded._id) });
             }
@@ -62,14 +62,96 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
 
     // Helper to get or create temporary user
     async function getOrCreateTempUser(request, reply, userCollection) {
+        const mode = process.env.MODE || 'local'; // Default to 'local' if MODE is undefined
         let tempUserId = request.cookies.tempUserId;
+        fastify.log.info(`Mode: ${mode} | tempUserId from cookies: ${tempUserId}`);
 
         if (!tempUserId) {
+            // Check if a temporary user already exists for this session/IP
+            const existingTempUser = await userCollection.findOne({ isTemporary: true, session: getSessionIdentifier(request) });
+            if (existingTempUser) {
+                tempUserId = existingTempUser._id.toString();
+                reply.setCookie('tempUserId', tempUserId, {
+                    path: '/',
+                    httpOnly: true,
+                    maxAge: 60 * 60 * 24, // 24 Hours
+                    sameSite: mode === 'heroku' ? 'None' : 'Lax', // Adjusted based on MODE
+                    secure: mode === 'heroku' // Adjusted based on MODE
+                });
+                fastify.log.info(`Reusing existing temp user with ID: ${tempUserId}`);
+                return existingTempUser;
+            }
+
+            // Create a new temporary user
             const tempUser = {
                 isTemporary: true,
                 role: 'guest',
                 lang: 'ja',
-                createdAt: new Date()
+                createdAt: new Date(),
+                session: getSessionIdentifier(request) // Associate with session
+            };
+            const result = await userCollection.insertOne(tempUser);
+            tempUserId = result.insertedId.toString();
+            fastify.log.info(`Created new temp user with ID: ${tempUserId}`);
+
+            reply.setCookie('tempUserId', tempUserId, {
+                path: '/',
+                httpOnly: true,
+                maxAge: 60 * 60 * 24, // 24 Hours
+                sameSite: mode === 'heroku' ? 'None' : 'Lax',
+                secure: mode === 'heroku'
+            });
+            return tempUser;
+        }
+
+        try {
+            const user = await userCollection.findOne({ _id: new fastify.mongo.ObjectId(tempUserId) });
+            if (user) {
+                return user;
+            } else {
+                // If user not found, create a new one ensuring no duplicates
+                const existingTempUser = await userCollection.findOne({ isTemporary: true, session: getSessionIdentifier(request) });
+                if (existingTempUser) {
+                    tempUserId = existingTempUser._id.toString();
+                    reply.setCookie('tempUserId', tempUserId, {
+                        path: '/',
+                        httpOnly: true,
+                        maxAge: 60 * 60 * 24, // 24 Hours
+                        sameSite: mode === 'heroku' ? 'None' : 'Lax',
+                        secure: mode === 'heroku'
+                    });
+                    fastify.log.info(`Reusing existing temp user with ID: ${tempUserId}`);
+                    return existingTempUser;
+                }
+
+                const tempUser = {
+                    isTemporary: true,
+                    role: 'guest',
+                    lang: 'ja',
+                    createdAt: new Date(),
+                    session: getSessionIdentifier(request)
+                };
+                const result = await userCollection.insertOne(tempUser);
+                tempUserId = result.insertedId.toString();
+                reply.setCookie('tempUserId', tempUserId, {
+                    path: '/',
+                    httpOnly: true,
+                    maxAge: 60 * 60 * 24, // 24 Hours
+                    sameSite: mode === 'heroku' ? 'None' : 'Lax',
+                    secure: mode === 'heroku'
+                });
+                fastify.log.info(`Created new temp user with ID: ${tempUserId}`);
+                return tempUser;
+            }
+        } catch (err) {
+            fastify.log.error('Error fetching temp user:', err);
+            // Optionally handle the error, e.g., create a new temp user
+            const tempUser = {
+                isTemporary: true,
+                role: 'guest',
+                lang: 'ja',
+                createdAt: new Date(),
+                session: getSessionIdentifier(request)
             };
             const result = await userCollection.insertOne(tempUser);
             tempUserId = result.insertedId.toString();
@@ -77,13 +159,18 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
                 path: '/',
                 httpOnly: true,
                 maxAge: 60 * 60 * 24, // 24 Hours
-                sameSite: 'None',
-                secure: true // Ensure cookies are sent over HTTPS
+                sameSite: mode === 'heroku' ? 'None' : 'Lax',
+                secure: mode === 'heroku'
             });
             return tempUser;
         }
+    }
 
-        return await userCollection.findOne({ _id: new fastify.mongo.ObjectId(tempUserId) });
+    // Helper to generate a session identifier (e.g., based on IP and User-Agent)
+    function getSessionIdentifier(request) {
+        const ip = request.ip;
+        const userAgent = request.headers['user-agent'] || 'unknown';
+        return `${ip}-${userAgent}`;
     }
 
     // Helper to set translations

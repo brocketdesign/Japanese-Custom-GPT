@@ -20,7 +20,7 @@ async function routes(fastify, options) {
             const getUniqueUsers = async () => {
                 try {
                     // Get the unique userId's from the chats collection
-                    const userIds = await chatsCollection.distinct('userId');
+                    const userIds = await usersCollection.distinct('_id');
             
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
@@ -45,7 +45,8 @@ async function routes(fastify, options) {
             
             
             const users = await getUniqueUsers()
-            return reply.view('/admin/users',{users,title:'Latest users'})
+            const translations = request.translations
+            return reply.view('/admin/users',{users,title:'Latest users', translations})
         } catch (error) {
             return reply.status(500).send({ error: error.message });
         }
@@ -92,9 +93,11 @@ async function routes(fastify, options) {
             
             const femalePercentage = parseInt((femaleCount / totalUsers) * 100);
             const malePercentage = parseInt((maleCount / totalUsers) * 100);
+            const translations = request.translations
 
             return reply.view('/admin/users',{
                 users,
+                translations,
                 femaleCount, 
                 femalePercentage, 
                 maleCount,

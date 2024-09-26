@@ -134,7 +134,12 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
       }
     });
     
-    //
+    fastify.addHook('onRequest', async (req, reply) => {
+      if (process.env.MODE !== 'local' && req.headers['x-forwarded-proto'] !== 'https') {
+        reply.redirect(`https://${req.headers['host']}${req.raw.url}`);
+      }
+    });
+    
     
     // Routes
     fastify.get('/', async (request, reply) => {

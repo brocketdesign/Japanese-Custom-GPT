@@ -585,6 +585,7 @@ async function routes(fastify, options) {
                 const user = await fastify.getUser(request, reply);
                 userId = user._id;
             }
+            let user = request.user
             const language = user?.lang ? user.lang : 'English'
 
             const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
@@ -745,10 +746,11 @@ async function routes(fastify, options) {
                 }
                 return reply.send({ nextStoryPart: "You chose the path and...", endOfStory: true, userChatId: documentId, chatId, messageCountDoc:newMessageCount,messagesCount:userChatDocument.messagesCount});
             } catch (error) {
-                console.error('Failed to save user choice:', error);
+                console.log('Failed to save user choice:', error);
                 return reply.status(500).send({ error: 'Failed to save user choice' });
             }
           } catch (error) {
+            console.log(error)
             return reply.status(403).send({ error: error.message });
           }
     });

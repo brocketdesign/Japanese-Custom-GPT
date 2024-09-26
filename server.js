@@ -139,7 +139,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
     fastify.get('/', async (request, reply) => {
       const user = await fastify.getUser(request, reply);
       if (user.isTemporary) {
-        return reply.redirect('/discover')
+        return reply.redirect('/chat')
       }else{
         return reply.redirect('/chat')
       }

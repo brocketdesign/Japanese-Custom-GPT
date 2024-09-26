@@ -24,7 +24,6 @@ window.checkImageDescription = function(chatId = null, callback) {
       method: 'GET',
       data: { chatId: chatId },
       success: function(response) {
-          console.log('checkImageDescription Success:', response);
           if (callback) {
               callback(response);
           }

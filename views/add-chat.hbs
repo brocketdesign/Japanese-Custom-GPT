@@ -318,7 +318,8 @@
 <script>
     $(document).ready(function() {
         let currentStep = 1;
-        const translations = `{{{json translations}}}`
+        let translations = window.translations
+
         function showStep(step) {
             $('.step').addClass('d-none');
             $('#step' + step).removeClass('d-none');
@@ -363,7 +364,7 @@
     // Store modified galleries
     const modifiedGalleries = new Set();
     $(document).ready(function() {
-        const translations = `{{{json translations}}}`
+        let translations = window.translations
         $('.dropdown-toggle').each(function(e) {
             new mdb.Dropdown($(this)[0]);
         });

@@ -586,7 +586,7 @@ async function routes(fastify, options) {
                 userId = user._id;
             }
             let user = request.user
-            const language = user?.lang ? user.lang : 'English'
+            const language = user?.lang ? user.lang : 'Japanese'
 
             const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
             try {

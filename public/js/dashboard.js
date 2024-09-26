@@ -146,11 +146,15 @@ $(document).ready(async function() {
             url: '/user/logout',
             type: 'POST',
             success: function(response) {
-
+                // Clear all cookies
                 Object.keys($.cookie()).forEach(function(cookie) {
                     $.removeCookie(cookie, { path: '/' });
                 });
     
+                // **Clear all localStorage data**
+                localStorage.clear();
+    
+                // Redirect to the homepage
                 window.location.href = '/';
             },
             error: function() {
@@ -162,6 +166,7 @@ $(document).ready(async function() {
             }
         });
     });
+    
     
     
     /*
@@ -1652,7 +1657,7 @@ window.showRegistrationForm = function(messageId,callback) {
     `,
       showCancelButton: false,
       showConfirmButton: false,
-      showCloseButton: false,
+      showCloseButton: true,
       allowOutsideClick: false,
       showClass: {
           popup: 'swal2-bottom-slide-in'

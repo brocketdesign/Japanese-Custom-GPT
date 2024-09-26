@@ -330,17 +330,17 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     // Clear all cookies
     const cookies = request.cookies;
     for (const cookieName in cookies) {
-      reply.clearCookie(cookieName, { path: '/' });
+        reply.clearCookie(cookieName, { path: '/' });
     }
-  
+
     // Send response with instructions to clear localStorage
     return reply
-      .send({
-        status: 'ログアウトに成功しました',
-        clearLocalStorage: true
-      });
+        .send({
+            status: 'ログアウトに成功しました',
+            clearLocalStorage: true 
+        });
   });
-  
+
 
   // Keep the old update-info route
    // Configure AWS S3

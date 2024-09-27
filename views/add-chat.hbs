@@ -181,13 +181,14 @@
 <div class="container my-4 px-0">
     <!-- ステップの進行状況を表示 -->
     <div class="progress mb-4 mx-3">
-        <div class="progress-bar" role="progressbar" style="width: 50%;" id="progressBar">ステップ 1/3</div>
+        <div class="progress-bar" role="progressbar" style="width: 50%;" id="progressBar">
+            {{translations.newCharacter.stepProgress}} 1/2 <!-- e.g., "Step 1/3" -->
+        </div>
     </div>
 
     <!-- 1. キャラクター画像 -->
     <div id="step1" class="step">
-    <h4 class="mb-4 text-center">キャラクター作成フォーム</h4>
-
+        <h4 class="mb-4 text-center">{{translations.newCharacter.characterCreationForm}}</h4>
             <!-- Character Creation Form -->
             <div id="characterCreationForm" class="container mt-3">
                 
@@ -235,80 +236,84 @@
                                 <i class="fas fa-magic me-2"></i>AIで生成
                             </button>
                         </div>
+                <!-- Right Column: Generated Image -->
+                <div class="col-lg-6 mb-4 d-flex flex-column align-items-center">
+                    <!-- 3. Generated Image Display -->
+                    <label class="form-label d-block mb-2 text-center">{{translations.newCharacter.generatedImageLabel}}</label>
+                    <div id="imageContainer" class="row mb-4 w-100">
+                        <img
+                            id="generatedImage"
+                            src="/img/default-character.png"
+                            alt="{{translations.newCharacter.generatedImageAlt}}"
+                            class="img-fluid rounded"
+                            style="max-height: 300px; width: 100%; object-fit: contain;"
+                        >
                     </div>
-                    
-                    <!-- Right Column: Generated Image -->
-                    <div class="col-lg-6 mb-4 d-flex flex-column align-items-center">
-                        <!-- 3. Generated Image Display -->
-                        <label class="form-label d-block mb-2 text-center">生成されたキャラクター画像</label>
-                        <div id="imageContainer" class="row mb-4 w-100">
-                            <img
-                                id="generatedImage"
-                                src="/img/default-character.png"
-                                alt="Generated Character Image"
-                                class="img-fluid rounded"
-                                style="max-height: 300px; width: 100%; object-fit: contain;"
-                            >
-                        </div>
-                        <div id="imageUploaderContainer" class="w-100" style="cursor: pointer;"></div>
+                    <div id="imageUploaderContainer" class="w-100" style="cursor: pointer;">
+                        <!-- You can add an image uploader here if needed -->
                     </div>
                 </div>
-                <button type="button" id="nextStep1" class="btn btn-primary w-100 nextStep">次へ</button>
             </div>
-
+            <button type="button" id="nextStep1" class="btn btn-primary w-100 nextStep">
+                {{translations.newCharacter.nextStep}}
+            </button>
+        </div>
     </div>
 
     <!-- 2. キャラクターの性格 -->
     <div id="step2" class="step d-none">
-
         <div class="mb-3 mx-3 row justify-content-between">
-            
-            <h4>キャラクターの性格を設定</h4>
+            <h4>{{translations.newCharacter.characterPersonalityTitle}}</h4>
             <div class="col-auto ps-0">
-                <label for="visibility" class="form-label"><i class="fas fa-eye"></i> 公開設定:</label>
+                <label for="visibility" class="form-label"><i class="fas fa-eye"></i> {{translations.newCharacter.visibilityLabel}}:</label>
                 <select class="form-select w-auto" id="visibility" name="visibility">
-                    <option value="public" selected><i class="fas fa-globe"></i> 公開</option>
-                    <option value="private"><i class="fas fa-lock"></i> 非公開</option>
+                    <option value="public" selected>{{translations.newCharacter.public}}</option>
+                    <option value="private">{{translations.newCharacter.private}}</option>
                 </select>
             </div>
             <div class="col-auto">
-                <label for="language" class="form-label"><i class="fas fa-language"></i> 言語:</label>
+                <label for="language" class="form-label"><i class="fas fa-language"></i> {{translations.newCharacter.languageLabel}}:</label>
                 <select class="form-select w-auto" id="language" name="language">
-                    <option value="japanese" selected><i class="fas fa-flag"></i> 日本語</option>
+                    <option value="japanese" selected><i class="fas fa-flag"></i> {{translations.newCharacter.japanese}}</option>
+                    <option value="english"><i class="fas fa-flag"></i> {{translations.newCharacter.english}}</option>
+                    <option value="french"><i class="fas fa-flag"></i> {{translations.newCharacter.french}}</option>
                 </select>
             </div>
             <div class="col-auto pe-0">
-                <label for="gender" class="form-label"><i class="fas fa-user"></i> 性別:</label>
+                <label for="gender" class="form-label"><i class="fas fa-user"></i> {{translations.newCharacter.genderLabel}}:</label>
                 <select class="form-select w-auto" id="gender" name="gender">
-                    <option value="female" selected><i class="fas fa-female"></i> 女性</option>
-                    <option value="male"><i class="fas fa-male"></i> 男性</option>
+                    <option value="female" selected>{{translations.newCharacter.female}}</option>
+                    <option value="male">{{translations.newCharacter.male}}</option>
                 </select>
             </div>
         </div>
 
         <div id="chatPurpose-container" class="mb-3 mx-3">
-
             <div class="d-flex justify-content-between">
-                <label for="chatPurpose" class="form-label">キャラクターの詳細</label>
+                <label for="chatPurpose" class="form-label">{{translations.newCharacter.characterDetailsLabel}}</label>
             </div>
-            <textarea class="form-control mb-2" id="chatPurpose" name="content" rows="3" placeholder="キャラクターの詳細を記入してください"></textarea>
+            <textarea class="form-control mb-2" id="chatPurpose" name="content" rows="3" placeholder="{{translations.newCharacter.characterDetailsPlaceholder}}"></textarea>
 
-            <input type="text" class="form-control mb-2" id="chatName" name="chatName" placeholder="名前" contenteditable="false" disabled="true" required style="display:none;">
-            <textarea class="form-control mb-2" id="chatDescription" style="display:none;" name="chatDescription" rows="3" placeholder="簡単な説明" disabled="true" required></textarea>
-            <textarea class="d-none form-control" id="chatRule" name="content" rows="5" placeholder="話し方" disabled="true" hidden></textarea>
+            <input type="text" class="form-control mb-2" id="chatName" name="chatName" placeholder="{{translations.newCharacter.namePlaceholder}}" contenteditable="false" disabled="true" required style="display:none;">
+            <textarea class="form-control mb-2" id="chatDescription" style="display:none;" name="chatDescription" rows="3" placeholder="{{translations.newCharacter.descriptionPlaceholder}}" disabled="true" required></textarea>
+            <textarea class="d-none form-control" id="chatRule" name="content" rows="5" placeholder="{{translations.newCharacter.speechStylePlaceholder}}" disabled="true" hidden></textarea>
 
-            <div id="markdownContainer" class="border-0 py-2 px-3 text-start mb-2" style="font-size:15px;background-color: #e9ecef;color: #575a5d; display:none;" contenteditable="false"></div>
+            <div id="markdownContainer" class="border-0 py-2 px-3 text-start mb-2" style="font-size:15px;background-color: #e9ecef;color: #575a5d; display:none;" contenteditable="false">
+                {{translations.newCharacter.markdownInfo}}
+            </div>
        
             <button type="button" id="ai-assist" class="btn btn-lg custom-gradient-bg shadow-0 mb-2 w-100">
                 <i class="fa fa-spinner fa-spin fa-fw fa-hidden me-2" style="display: none;"></i>
-                <i class="fa fa-magic me-2"></i>AIで生成
+                <i class="fa fa-magic me-2"></i>{{translations.newCharacter.generateWithAI}}
             </button>
 
-            <button type="button" id="prevStep2" class="btn btn-secondary w-100 mb-2 prevStep">戻る</button>
-            <button type="submit" id="submitForm" class="btn custom-gradient-bg btn-large w-100">完了</button>     
-
+            <button type="button" id="prevStep2" class="btn btn-secondary w-100 mb-2 {{translations.newCharacter.previousStepButtonClass}}">
+                {{translations.newCharacter.back}}
+            </button>
+            <button type="submit" id="submitForm" class="btn custom-gradient-bg btn-large w-100">
+                {{translations.newCharacter.complete}}
+            </button>     
         </div>
-    
     </div>
 </div>
 
@@ -320,13 +325,14 @@
 <script>
     $(document).ready(function() {
         let currentStep = 1;
-        
+        let translations = window.translations
+
         function showStep(step) {
             $('.step').addClass('d-none');
             $('#step' + step).removeClass('d-none');
             $('#progressBar')
             .css('width', (step * 50) + '%')
-            .text('ステップ '+ step + '/2');
+            .text(translations.newCharacter.stepProgress + step + '/2');
         }
 
         function validateStep(step) {
@@ -343,7 +349,7 @@
                 currentStep++;
                 showStep(currentStep);
             } else {
-                showNotification('すべてのフィールドを入力してください', 'error');
+                showNotification(translations.newCharacter.allFieldsRequired, 'error');
             }
         });
 
@@ -365,6 +371,7 @@
     // Store modified galleries
     const modifiedGalleries = new Set();
     $(document).ready(function() {
+        let translations = window.translations
         $('.dropdown-toggle').each(function(e) {
             new mdb.Dropdown($(this)[0]);
         });
@@ -389,7 +396,7 @@
             $('#chatPurpose-markdownContainer').html('')
             $('#markdownContainer').html('')
             $('#sendForm').hide()
-            $('#sendForm span').html('チャット')
+            $('#sendForm span').html(translations.newCharacter.startChatting)
         })
 
         const urlParams = new URLSearchParams(window.location.search);

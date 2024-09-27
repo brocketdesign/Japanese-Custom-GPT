@@ -587,7 +587,7 @@ async function routes(fastify, options) {
                 userId = user._id;
             }
             let user = request.user
-            const language = user?.lang ? user.lang : 'English'
+            const language = user?.lang ? user.lang : 'Japanese'
 
             const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
             try {
@@ -658,7 +658,7 @@ async function routes(fastify, options) {
 
                                 \nFor example:\n*${chatDocument.name} looks at you with a soft smile, her eyes filled with warmth.* "I am thrusty, would you get me a bottle of water ?" she asks, her voice tender.*\n
 
-                                Respond in ${chatDocument.language} with extra short response. Keep the chat going.
+                                Respond in ${language} with extra short response. Keep the chat going.
                                 
                                 \n ${userDetails}
                             `

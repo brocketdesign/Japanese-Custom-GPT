@@ -21,6 +21,7 @@
         <table class="table table-striped">
             <thead>
                 <tr>
+                    <th>IP</th>
                     <th>日付</th>
                     <th>メール</th>
                     <th>名前</th>
@@ -31,7 +32,8 @@
             </thead>
             <tbody>
                 {{#each users}}
-                <tr data-user-id="{{this._id}}">
+                <tr data-user-id="{{this._id}}"></tr>
+                    <td class="ip-agent">{{this.session}}</td>
                     <td class="jp-d">{{this.createdAt}}</td>
                     <td>{{this.email}}</td>
                     <td>{{this.nickname}}</td>
@@ -121,6 +123,12 @@
                 var japaneseDate = convertToJapaneseDate(originalDate);
                 $(this).text(japaneseDate);
             });
+            $('.ip-agent').each(function() {
+                var original = $(this).text();
+                var newText = original.split('-')[0]
+                $(this).text(newText);
+            });
+            
             $('.delete-user').on('click', function() {
                 var userId = $(this).data('user-id');
                 Swal.fire({

@@ -31,6 +31,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
       //deleteOldRecords(db)
       //deleteUserChatsWithoutMessages(db)
     });
+    //cleanupNonRegisteredUsers(db);
     cron.schedule('0 0 * * *', async () => {
       try {
         await updateCounter(db, 0);
@@ -133,7 +134,12 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
       }
     });
     
-    //
+    fastify.addHook('onRequest', async (req, reply) => {
+      if (process.env.MODE !== 'local' && req.headers['x-forwarded-proto'] !== 'https') {
+        reply.redirect(`https://${req.headers['host']}${req.raw.url}`);
+      }
+    });
+    
     
     // Routes
     fastify.get('/', async (request, reply) => {

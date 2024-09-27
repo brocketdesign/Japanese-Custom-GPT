@@ -194,6 +194,15 @@
                 <div class="row">
                     <!-- Left Column: Prompts and Button -->
                     <div class="col-lg-6 mb-4">
+                        <!-- Image Style Selection -->
+                        <div class="mb-4">
+                            <label for="imageStyle" class="form-label">画像スタイル</label>
+                            <select class="form-select w-auto" id="imageStyle" name="imageStyle">
+                                <option value="anime" selected>アニメ</option>
+                                <option value="realistic">リアリスティック</option>
+                            </select>
+                        </div>
+
                         <!-- 1. Character Prompt Input -->
                         <div class="mb-4">
                             <label for="characterPrompt" class="form-label">キャラクタープロンプト</label>
@@ -495,21 +504,6 @@
                 }
             });
         });
-
-        function getFilesFromGallery(galleryId) {
-            let files = [];
-            $(galleryId).find('.image-uploader input[type="file"]').each(function() {
-                $.each(this.files, function(_, file) {
-                    files.push(file);
-                });
-            });
-            if(files.length == 0){
-                $(galleryId).find('.uploaded-image img').each(function() {
-                    files.push($(this).attr('src'));
-                });
-            }
-            return files;
-        }
         function fetchchatData(chatId, callback) {
             $.ajax({
                 url: `/api/chat-data/${chatId}`,
@@ -519,6 +513,10 @@
                     console.log('Fetched chat data:', chatData);
 
                     // Populate Step 1: キャラクターの外見
+                    if (chatData.imageStyle) {
+                        $('#imageStyle').val(chatData.imageStyle);
+                    }
+
                     if (chatData.characterPrompt) {
                         $('#characterPrompt').val(chatData.characterPrompt);
                         resizeTextarea($('#characterPrompt')[0]);
@@ -590,6 +588,7 @@
             $('#sendForm .fa-spinner').toggleClass('d-none');
 
             const formData = new FormData();
+            formData.append('imageStyle', $('#imageStyle').val());
             formData.append('name', $('#chatName').val());
             formData.append('purpose', $('#chatPurpose').val());
             formData.append('language', $('#language').val());
@@ -628,7 +627,7 @@
         });
         
       
-        function fetchTaskId(enhancedPrompt, aspectRatio, chatId) {
+        function fetchTaskId(enhancedPrompt, aspectRatio, chatId, imageStyle) {
             return $.ajax({
                 url: '/novita/generate-image',
                 method: 'POST',
@@ -636,10 +635,12 @@
                 data: JSON.stringify({
                     prompt: enhancedPrompt,
                     aspectRatio: aspectRatio,
-                    chatId: chatId
+                    chatId: chatId,
+                    imageStyle: imageStyle
                 })
             });
         }
+
         function saveSelectedImage(imageUrl) {
             const chatId = '{{chatId}}'; // Replace with actual chat ID
 
@@ -837,7 +838,6 @@
 
                     // ボタンテキストを「画像を生成中...」に更新
                     $button.html('<i class="fas fa-spinner fa-spin me-2"></i>画像を生成中...');
-
                 
                     const files = $('#imageUploaderContainer')?.find('input[type="file"]')[0]?.files;
                     if (files && files.length > 0) {
@@ -853,8 +853,9 @@
                         reader.readAsDataURL(file);
                         return
                     }
+                    const imageStyle = $('#imageStyle').val();
                     // タスクIDを取得するリクエスト
-                    const taskResponse = await fetchTaskId(enhanceResponse.enhancedPrompt, '9:16', chatId);
+                    const taskResponse = await fetchTaskId(enhanceResponse.enhancedPrompt, '9:16', chatId, imageStyle);
 
                     if (taskResponse && taskResponse.taskId) {
                         showNotification('画像生成タスクを開始しました。ステータスを確認中...', 'info');

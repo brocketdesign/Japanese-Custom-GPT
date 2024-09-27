@@ -126,12 +126,11 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
             </div>
         </div>
     `);
-    console.log('Appending imageResponseContainer to chatContainer.');
+
     $('#chatContainer').append(imageResponseContainer);
     $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
 
     if (!item_id) {
-        console.error('generateImageNovita Error: item_id is required.');
         $('#load-image-container').remove();
         showNotification('無効なアイテムIDです。', 'error');
         return;
@@ -159,8 +158,9 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
         }
 
         const API_ENDPOINT = `${API_URL}/novita/txt2img`;
-        console.log('API_ENDPOINT for image generation:', API_ENDPOINT);
+        //console.log('API_ENDPOINT for image generation:', API_ENDPOINT);
 
+        /*
         console.log('Sending POST request to Novita API with payload:', {
             prompt: prompt,
             aspectRatio: aspectRatio,
@@ -168,6 +168,7 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
             chatId: chatId,
             userChatId: userChatId
         });
+        */
 
         const response = await fetch(API_ENDPOINT, {
             method: 'POST',
@@ -290,13 +291,13 @@ function pollTaskStatus(API_URL, taskId, type, prompt) {
 
 // Fetch Proposal by ID
 function getProposalById(id) {
-  console.log('getProposalById called with id:', id);
+  //console.log('getProposalById called with id:', id);
   return new Promise((resolve, reject) => {
       $.ajax({
           url: `/api/proposal/${id}`,
           method: 'GET',
           success: function(data) {
-              console.log('getProposalById Success:', data);
+              //console.log('getProposalById Success:', data);
               resolve(data);
           },
           error: function(err, status, error) {

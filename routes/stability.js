@@ -339,18 +339,33 @@ async function routes(fastify, options) {
       }
     }
 
-    const default_prompt ={
-      nsfw: {
-        model_name: "novaAnimeXL_ponyV20_461138.safetensors",
-        prompt: `score_9, score_8_up, score_7_up, source_anime,anime,masterpiece, best quality, (ultra-detailed), 1girl,(nsfw),uncensored,panty,breasts,erect nipples,panty,(sexy pose),naughty face,almost naked,nude,nudity, `,
-        negative_prompt: "score_6, score_5, score_4, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye,pussy,vulve,vagin,sex,dick,blurry,signature,username,watermark,jpeg artifacts,normal quality,worst quality,low quality"
+    const default_prompt = {
+      anime: {
+        sfw: {
+          model_name: "novaAnimeXL_ponyV20_461138.safetensors",
+          prompt: `score_9, score_8_up, source_anime, masterpiece, best quality, (ultra-detailed), 1girl, (perfect hands:0.1), (sfw), dressed, clothes, `,
+          negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, nipple, topless, nsfw, naked, nude, sex, worst quality, low quality,`
+        },
+        nsfw: {
+          model_name: "novaAnimeXL_ponyV20_461138.safetensors",
+          prompt: `score_9, score_8_up, source_anime, anime, masterpiece, best quality, (ultra-detailed), 1girl, (nsfw), uncensored, panty, breasts, erect nipples, (sexy pose), naughty face, almost naked, nude, nudity, `,
+          negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, pussy, vulva, vagina, sex, dick, worst quality, low quality,`
+        }
       },
-      sfw: {
-        model_name: "novaAnimeXL_ponyV20_461138.safetensors",
-        prompt: `score_9, score_8_up, score_7_up,source_anime,masterpiece, best quality, (ultra-detailed), 1girl,(perfect hands:0.1),(sfw),dressed,clothes ,`,
-        negative_prompt : "score_6, score_5, score_4, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, nipple,topless,nsfw,naked,pussy,vulve,vagin,,nude,sex,worst quality,low quality,"
+      realistic: {
+        sfw: {
+          model_name: "epicrealismXL_v10_247189.safetensors",
+          prompt: `best quality, masterpiece, photo-realistic, 1girl, japanese, (sfw), dressed, casual attire, natural lighting, `,
+          negative_prompt: `blurry, signature, watermark, jpeg artifacts, low quality, missing fingers, extra digits, fewer digits, bad anatomy, nsfw, nude, sex, `
+        },
+        nsfw: {
+          model_name: "epicrealismXL_v10_247189.safetensors",
+          prompt: `best quality, masterpiece, photo-realistic, 1girl, japanese, (nsfw), nude, sensual pose, intimate gaze, soft lighting, `,
+          negative_prompt: `blurry, signature, watermark, jpeg artifacts, low quality, missing fingers, extra digits, fewer digits, bad anatomy,`
+        }
       }
-    }
+    };
+    
     const params = {
       model_name: "novaAnimeXL_ponyV20_461138.safetensors",
       prompt: '',
@@ -388,29 +403,35 @@ async function routes(fastify, options) {
         const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
         const isSubscribed = user && user.subscriptionStatus === 'active';
   
+        // Fetch imageStyle
+        const chat = await db.collection('chats').findOne({ _id: new ObjectId(chatId) });
+        const imageStyle = chat.imageStyle
+
+        // Select prompts and model based on imageStyle
+        const selectedStyle = default_prompt[imageStyle];
+
         // Prepare tasks
         const tasks = [];
-  
-        // SFW Task
-        const image_request1 = {
-          type: 'sfw',
-          model_name: default_prompt.sfw.model_name,
-          prompt: default_prompt.sfw.prompt + prompt,
-          negative_prompt: default_prompt.sfw.negative_prompt
-        }
-        tasks.push({ ...params, ...image_request1 });
 
-  
+        // SFW Task
+        const image_request_sfw = {
+          type: 'sfw',
+          model_name: selectedStyle.sfw.model_name,
+          prompt: selectedStyle.sfw.prompt + prompt,
+          negative_prompt: selectedStyle.sfw.negative_prompt
+        };
+        tasks.push({ ...params, ...image_request_sfw });
+
         // NSFW Task
-        const image_request2 = {
+        const image_request_nsfw = {
           type: 'nsfw',
-          model_name: default_prompt.nsfw.model_name,
-          prompt: default_prompt.nsfw.prompt + prompt,
-          negative_prompt: default_prompt.nsfw.negative_prompt,
+          model_name: selectedStyle.nsfw.model_name,
+          prompt: selectedStyle.nsfw.prompt + prompt,
+          negative_prompt: selectedStyle.nsfw.negative_prompt,
           blur: !isSubscribed
-        }
-        tasks.push({ ...params, ...image_request2 });
-        
+        };
+
+        tasks.push({ ...params, ...image_request_nsfw });
   
         // Initiate tasks and collect taskIds
         const taskIds = await Promise.all(tasks.map(async (task) => {
@@ -563,32 +584,38 @@ async function routes(fastify, options) {
   }
 
   const GenerateImageSchema = z.object({
-      prompt: z.string().min(10, 'プロンプトは最低でも10文字必要です'),
-      aspectRatio: z.string().optional().default('9:16'),
-      chatId: z.string().regex(/^[0-9a-fA-F]{24}$/, '無効なchatIdです')
+    prompt: z.string().min(10, 'プロンプトは最低でも10文字必要です'),
+    aspectRatio: z.string().optional().default('9:16'),
+    chatId: z.string().regex(/^[0-9a-fA-F]{24}$/, '無効なchatIdです'),
+    imageStyle: z.enum(['anime', 'realistic']).default('anime')
   });
 
   fastify.post('/novita/generate-image', async (request, reply) => {
     try {
       // Validate the request body
-      const { prompt, aspectRatio, chatId } = GenerateImageSchema.parse(request.body);
+      const { prompt, aspectRatio, chatId, imageStyle } = GenerateImageSchema.parse(request.body);
 
       // Retrieve user information (Assuming a getUser method exists)
       const user = await fastify.getUser(request, reply);
       const userId = user._id;
 
-      // Combine user prompt with default SFW prompt
-      const fullPrompt = default_prompt.sfw.prompt + prompt;
-      const negativePrompt = default_prompt.sfw.negative_prompt;
+      // Select prompts and model based on imageStyle
+      const selectedStyle = default_prompt[imageStyle];
 
-      // Create image_request with default prompts
+      // Combine user prompt with default SFW prompt
+      const fullPrompt = selectedStyle.sfw.prompt + prompt;
+      const negativePrompt = selectedStyle.sfw.negative_prompt;
+      const model_name = selectedStyle.sfw.model_name;
+
+      // Create image_request with the selected model and prompts
       const image_request = { 
         ...params, 
         image_num: 4,
         prompt: fullPrompt, 
         negative_prompt: negativePrompt, 
-        aspectRatio: aspectRatio 
-      };      
+        aspectRatio: aspectRatio,
+        model_name: model_name
+      };
 
       // Send request to Novita and get taskId
       const novitaTaskId = await fetchNovitaMagic(image_request);

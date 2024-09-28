@@ -358,13 +358,13 @@ async function routes(fastify, options) {
         sfw: {
           model_name: "chilloutmix_NiPrunedFp32_9174.safetensors",
           prompt: `best quality, masterpiece, photo-realistic, 1girl, beautiful japanese, makeup, (sfw), dressed, clothe on, natural lighting, `,
-          negative_prompt: `blurry, signature, watermark, jpeg artifacts, low quality, missing fingers, extra digits, fewer digits, bad anatomy, nsfw, nude, sex,bad eyes, cgi, airbrushed, plastic, deformed, watermark, topless, worst quality, low quality, `,
+          negative_prompt: `paintings, glossy skin, wet, sketches, (worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)), skin spots, acnes, skin blemishes, age spot, glans,blurry, signature, watermark, jpeg artifacts, low quality, missing fingers, extra digits, fewer digits, bad anatomy, nsfw, nude, sex,bad eyes, cgi, airbrushed, plastic, deformed, watermark, topless, worst quality, low quality, `,
           loras: [{"model_name":"JapaneseDollLikeness_v15_28382.safetensors","strength":0.7}],
         },
         nsfw: {
           model_name: "chilloutmix_NiPrunedFp32_9174.safetensors",
           prompt: `best quality, masterpiece, photo-realistic, 1girl, beautiful japanese, makeup, (nsfw), nude, sensual pose, intimate, `,
-          negative_prompt: `blurry, signature, watermark, jpeg artifacts, low quality, missing fingers, extra digits, fewer digits, bad anatomy,bad eyes, cgi, airbrushed, plastic, deformed, watermark`,
+          negative_prompt: `paintings, glossy skin, wet, sketches, (worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)), skin spots, acnes, skin blemishes, age spot, glans,blurry, signature, watermark, jpeg artifacts, low quality, missing fingers, extra digits, fewer digits, bad anatomy,bad eyes, cgi, airbrushed, plastic, deformed, watermark`,
           loras: [{"model_name":"JapaneseDollLikeness_v15_28382.safetensors","strength":0.7}],
         }
       }

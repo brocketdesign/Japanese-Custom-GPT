@@ -236,6 +236,7 @@
                                 <i class="fas fa-magic me-2"></i>AIで生成
                             </button>
                         </div>
+                    </div>
                 <!-- Right Column: Generated Image -->
                 <div class="col-lg-6 mb-4 d-flex flex-column align-items-center">
                     <!-- 3. Generated Image Display -->
@@ -276,7 +277,6 @@
                 <select class="form-select w-auto" id="language" name="language">
                     <option value="japanese" selected><i class="fas fa-flag"></i> {{translations.newCharacter.japanese}}</option>
                     <option value="english"><i class="fas fa-flag"></i> {{translations.newCharacter.english}}</option>
-                    <option value="french"><i class="fas fa-flag"></i> {{translations.newCharacter.french}}</option>
                 </select>
             </div>
             <div class="col-auto pe-0">
@@ -337,7 +337,7 @@
 
         function validateStep(step) {
             if (step === 1) {
-                return $('.img-thumbnail.select').length > 0;
+                return $('.img-thumbnail.select').length > 0 || $('#generatedImage').attr('src').length > 0;
             } else if (step === 2) {
                 return $('#chatPurpose').val().trim() !== '' && $('#chatName').val().trim() !== '' && $('#chatDescription').val().trim() !== '' && $('#chatRule').val().trim() !== '';
             }

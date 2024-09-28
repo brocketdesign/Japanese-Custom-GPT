@@ -344,24 +344,28 @@ async function routes(fastify, options) {
         sfw: {
           model_name: "novaAnimeXL_ponyV20_461138.safetensors",
           prompt: `score_9, score_8_up, source_anime, masterpiece, best quality, (ultra-detailed), 1girl, (perfect hands:0.1), (sfw), dressed, clothes, `,
-          negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, nipple, topless, nsfw, naked, nude, sex, worst quality, low quality,`
+          negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, nipple, topless, nsfw, naked, nude, sex, worst quality, low quality,`,
+          loras: []
         },
         nsfw: {
           model_name: "novaAnimeXL_ponyV20_461138.safetensors",
           prompt: `score_9, score_8_up, source_anime, anime, masterpiece, best quality, (ultra-detailed), 1girl, (nsfw), uncensored, panty, breasts, erect nipples, (sexy pose), naughty face, almost naked, nude, nudity, `,
-          negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, pussy, vulva, vagina, sex, dick, worst quality, low quality,`
+          negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, pussy, vulva, vagina, sex, dick, worst quality, low quality,`,
+          loras: []
         }
       },
       realistic: {
         sfw: {
-          model_name: "epicrealismXL_v10_247189.safetensors",
-          prompt: `best quality, masterpiece, photo-realistic, 1girl, beautiful japanese, makeup, (sfw), dressed, casual attire, natural lighting, `,
-          negative_prompt: `blurry, signature, watermark, jpeg artifacts, low quality, missing fingers, extra digits, fewer digits, bad anatomy, nsfw, nude, sex,bad eyes, cgi, airbrushed, plastic, deformed, watermark, topless, nsfw, naked, nude, sex, worst quality, low quality, `
+          model_name: "chilloutmix_NiPrunedFp32_9174.safetensors",
+          prompt: `best quality, masterpiece, photo-realistic, 1girl, beautiful japanese, makeup, (sfw), dressed, clothe on, natural lighting, `,
+          negative_prompt: `blurry, signature, watermark, jpeg artifacts, low quality, missing fingers, extra digits, fewer digits, bad anatomy, nsfw, nude, sex,bad eyes, cgi, airbrushed, plastic, deformed, watermark, topless, worst quality, low quality, `,
+          loras: [{"model_name":"JapaneseDollLikeness_v15_28382.safetensors","strength":0.7}],
         },
         nsfw: {
-          model_name: "epicrealismXL_v10_247189.safetensors",
+          model_name: "chilloutmix_NiPrunedFp32_9174.safetensors",
           prompt: `best quality, masterpiece, photo-realistic, 1girl, beautiful japanese, makeup, (nsfw), nude, sensual pose, intimate, `,
-          negative_prompt: `blurry, signature, watermark, jpeg artifacts, low quality, missing fingers, extra digits, fewer digits, bad anatomy,bad eyes, cgi, airbrushed, plastic, deformed, watermark`
+          negative_prompt: `blurry, signature, watermark, jpeg artifacts, low quality, missing fingers, extra digits, fewer digits, bad anatomy,bad eyes, cgi, airbrushed, plastic, deformed, watermark`,
+          loras: [{"model_name":"JapaneseDollLikeness_v15_28382.safetensors","strength":0.7}],
         }
       }
     };
@@ -417,6 +421,7 @@ async function routes(fastify, options) {
         const image_request_sfw = {
           type: 'sfw',
           model_name: selectedStyle.sfw.model_name,
+          loras: selectedStyle.sfw.loras,
           prompt: selectedStyle.sfw.prompt + prompt,
           negative_prompt: selectedStyle.sfw.negative_prompt
         };
@@ -426,6 +431,7 @@ async function routes(fastify, options) {
         const image_request_nsfw = {
           type: 'nsfw',
           model_name: selectedStyle.nsfw.model_name,
+          loras: selectedStyle.nsfw.loras,
           prompt: selectedStyle.nsfw.prompt + prompt,
           negative_prompt: selectedStyle.nsfw.negative_prompt,
           blur: !isSubscribed
@@ -606,6 +612,7 @@ async function routes(fastify, options) {
       const fullPrompt = selectedStyle.sfw.prompt + prompt;
       const negativePrompt = selectedStyle.sfw.negative_prompt;
       const model_name = selectedStyle.sfw.model_name;
+      const loras = selectedStyle.sfw.loras;
 
       // Create image_request with the selected model and prompts
       const image_request = { 
@@ -614,7 +621,8 @@ async function routes(fastify, options) {
         prompt: fullPrompt, 
         negative_prompt: negativePrompt, 
         aspectRatio: aspectRatio,
-        model_name: model_name
+        model_name: model_name,
+        loras: loras,
       };
 
       // Send request to Novita and get taskId

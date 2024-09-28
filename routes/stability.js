@@ -355,13 +355,13 @@ async function routes(fastify, options) {
       realistic: {
         sfw: {
           model_name: "epicrealismXL_v10_247189.safetensors",
-          prompt: `best quality, masterpiece, photo-realistic, 1girl, japanese, (sfw), dressed, casual attire, natural lighting, `,
-          negative_prompt: `blurry, signature, watermark, jpeg artifacts, low quality, missing fingers, extra digits, fewer digits, bad anatomy, nsfw, nude, sex, `
+          prompt: `best quality, masterpiece, photo-realistic, 1girl, beautiful japanese, makeup, (sfw), dressed, casual attire, natural lighting, `,
+          negative_prompt: `blurry, signature, watermark, jpeg artifacts, low quality, missing fingers, extra digits, fewer digits, bad anatomy, nsfw, nude, sex,bad eyes, cgi, airbrushed, plastic, deformed, watermark, topless, nsfw, naked, nude, sex, worst quality, low quality, `
         },
         nsfw: {
           model_name: "epicrealismXL_v10_247189.safetensors",
-          prompt: `best quality, masterpiece, photo-realistic, 1girl, japanese, (nsfw), nude, sensual pose, intimate gaze, soft lighting, `,
-          negative_prompt: `blurry, signature, watermark, jpeg artifacts, low quality, missing fingers, extra digits, fewer digits, bad anatomy,`
+          prompt: `best quality, masterpiece, photo-realistic, 1girl, beautiful japanese, makeup, (nsfw), nude, sensual pose, intimate, `,
+          negative_prompt: `blurry, signature, watermark, jpeg artifacts, low quality, missing fingers, extra digits, fewer digits, bad anatomy,bad eyes, cgi, airbrushed, plastic, deformed, watermark`
         }
       }
     };

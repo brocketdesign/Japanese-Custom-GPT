@@ -1964,7 +1964,7 @@ async function routes(fastify, options) {
           const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
           const chatsCollection = db.collection('chats');
           const usersCollection = db.collection('users');
-      
+
           const query = {
             visibility: { $exists: true, $eq: "public" },
             chatImageUrl: { $exists: true, $ne: '' },
@@ -1979,7 +1979,7 @@ async function routes(fastify, options) {
             { $match: query },
             {
               $group: {
-                _id: "$name",
+                _id: "$chatImageUrl",
                 doc: { $first: "$$ROOT" },
               },
             },

@@ -356,13 +356,13 @@ async function routes(fastify, options) {
       },
       realistic: {
         sfw: {
-          model_name: "majicmixRealistic_v7_134792.safetensors",
+          model_name: "xxmix9realistic_v10_37818.safetensors",
           prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, 1girl, beautiful japanese, makeup, (sfw), dressed, clothe on, natural lighting, `,
           negative_prompt: `paintings, glossy skin, wet, sketches, (worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)), skin spots, acnes, skin blemishes, age spot, glans,blurry, signature, watermark, jpeg artifacts, low quality, missing fingers, extra digits, fewer digits, bad anatomy, nsfw, nude, sex,bad eyes, cgi, airbrushed, plastic, deformed, watermark, topless, worst quality, low quality, `,
           loras: [{"model_name":"more_details_59655.safetensors","strength":0.7}, {"model_name":"JapaneseDollLikeness_v15_28382.safetensors","strength":0.7}],
         },
         nsfw: {
-          model_name: "majicmixRealistic_v7_134792.safetensors",
+          model_name: "xxmix9realistic_v10_37818.safetensors",
           prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, 1girl, beautiful japanese, makeup, (nsfw), nude, sensual pose, intimate, `,
           negative_prompt: `paintings, glossy skin, wet, sketches, (worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)), skin spots, acnes, skin blemishes, age spot, glans,blurry, signature, watermark, jpeg artifacts, low quality, missing fingers, extra digits, fewer digits, bad anatomy,bad eyes, cgi, airbrushed, plastic, deformed, watermark`,
           loras: [{"model_name":"more_details_59655.safetensors","strength":0.7}, {"model_name":"JapaneseDollLikeness_v15_28382.safetensors","strength":0.7}],

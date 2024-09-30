@@ -2177,6 +2177,7 @@ $(document).ready(async function() {
                 handleUserInfo(result.value);
 
                 if(!isTemporary && !subscriptionStatus && !$.cookie('showPremiumPopup')){
+                    return
                     showPopupWithSwiper(function(){
                         $.cookie('showPremiumPopup',true)
                     })

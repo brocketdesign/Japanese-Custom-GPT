@@ -416,7 +416,7 @@ async function routes(fastify, options) {
         const imageStyle = chat.imageStyle
 
         // Select prompts and model based on imageStyle
-        const selectedStyle = default_prompt[imageStyle];
+        const selectedStyle = default_prompt[imageStyle] || default_prompt['anime'];
 
         // Prepare tasks
         const tasks = [];

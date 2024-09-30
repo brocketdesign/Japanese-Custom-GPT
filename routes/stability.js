@@ -423,7 +423,7 @@ async function routes(fastify, options) {
         const image_request_sfw = {
           type: 'sfw',
           model_name: selectedStyle.sfw.model_name,
-          sampler_name: selectedStyle.sfw.model_name || '',
+          sampler_name: selectedStyle.sfw.sampler_name || '',
           loras: selectedStyle.sfw.loras,
           prompt: selectedStyle.sfw.prompt + prompt,
           negative_prompt: selectedStyle.sfw.negative_prompt
@@ -434,7 +434,7 @@ async function routes(fastify, options) {
         const image_request_nsfw = {
           type: 'nsfw',
           model_name: selectedStyle.nsfw.model_name,
-          sampler_name: selectedStyle.nsfw.model_name || '',
+          sampler_name: selectedStyle.nsfw.sampler_name || '',
           loras: selectedStyle.nsfw.loras,
           prompt: selectedStyle.nsfw.prompt + prompt,
           negative_prompt: selectedStyle.nsfw.negative_prompt,

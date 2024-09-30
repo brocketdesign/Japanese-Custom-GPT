@@ -356,15 +356,17 @@ async function routes(fastify, options) {
       },
       realistic: {
         sfw: {
-          model_name: "beautifulRealistic_brav5_44885.safetensors",
+          model_name: "kanpiromix_v20.safetensors",
+          sampler_name: "DPM++ 2M Karras",
           prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, 1girl, beautiful japanese, makeup, (sfw), dressed, clothe on, natural lighting, `,
-          negative_prompt: `paintings, glossy skin, wet, sketches, (worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)), skin spots, acnes, skin blemishes, age spot, glans,blurry, signature, watermark, jpeg artifacts, low quality, missing fingers, extra digits, fewer digits, bad anatomy, nsfw, nude, sex,bad eyes, cgi, airbrushed, plastic, deformed, watermark, topless, worst quality, low quality, `,
+          negative_prompt: `BraV4Neg,paintings,sketches,(worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)),logo, nsfw,nude, topless, worst quality, low quality, `,
           loras: [{"model_name":"more_details_59655.safetensors","strength":0.7}, {"model_name":"JapaneseDollLikeness_v15_28382.safetensors","strength":0.7}],
         },
         nsfw: {
-          model_name: "beautifulRealistic_brav5_44885.safetensors",
+          model_name: "kanpiromix_v20.safetensors",
+          sampler_name: "DPM++ 2M Karras",
           prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, 1girl, beautiful japanese, makeup, (nsfw), nude, sensual pose, intimate, `,
-          negative_prompt: `paintings, glossy skin, wet, sketches, (worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)), skin spots, acnes, skin blemishes, age spot, glans,blurry, signature, watermark, jpeg artifacts, low quality, missing fingers, extra digits, fewer digits, bad anatomy,bad eyes, cgi, airbrushed, plastic, deformed, watermark`,
+          negative_prompt: `BraV4Neg,paintings,sketches,(worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)),logo`,
           loras: [{"model_name":"more_details_59655.safetensors","strength":0.7}, {"model_name":"JapaneseDollLikeness_v15_28382.safetensors","strength":0.7}],
         }
       }
@@ -421,6 +423,7 @@ async function routes(fastify, options) {
         const image_request_sfw = {
           type: 'sfw',
           model_name: selectedStyle.sfw.model_name,
+          sampler_name: selectedStyle.sfw.model_name || '',
           loras: selectedStyle.sfw.loras,
           prompt: selectedStyle.sfw.prompt + prompt,
           negative_prompt: selectedStyle.sfw.negative_prompt
@@ -431,6 +434,7 @@ async function routes(fastify, options) {
         const image_request_nsfw = {
           type: 'nsfw',
           model_name: selectedStyle.nsfw.model_name,
+          sampler_name: selectedStyle.nsfw.model_name || '',
           loras: selectedStyle.nsfw.loras,
           prompt: selectedStyle.nsfw.prompt + prompt,
           negative_prompt: selectedStyle.nsfw.negative_prompt,
@@ -613,6 +617,7 @@ async function routes(fastify, options) {
       const negativePrompt = selectedStyle.sfw.negative_prompt;
       const model_name = selectedStyle.sfw.model_name;
       const loras = selectedStyle.sfw.loras;
+      const sampler_name = selectedStyle.sfw.sampler_name
 
       // Create image_request with the selected model and prompts
       const image_request = { 
@@ -622,6 +627,7 @@ async function routes(fastify, options) {
         negative_prompt: negativePrompt, 
         aspectRatio: aspectRatio,
         model_name: model_name,
+        sampler_name: sampler_name,
         loras: loras,
       };
 

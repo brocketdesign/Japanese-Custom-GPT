@@ -367,7 +367,7 @@ async function routes(fastify, options) {
         nsfw: {
           model_name: "kanpiromix_v20.safetensors",
           sampler_name: "DPM++ 2M Karras",
-          prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, 1girl, beautiful japanese, makeup, (nsfw), nude, sensual pose, intimate, `,
+          prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, 1girl, beautiful japanese, makeup, (nsfw), sexy body,naked, nude, sensual pose, intimate, erotic clothes, very sexy, `,
           negative_prompt: `BraV4Neg,paintings,sketches,(worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)),logo`,
           loras: [{"model_name":"more_details_59655.safetensors","strength":0.7}, {"model_name":"JapaneseDollLikeness_v15_28382.safetensors","strength":0.7}],
         }

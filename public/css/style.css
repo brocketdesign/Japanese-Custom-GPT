@@ -84,7 +84,7 @@ iframe {
   display: none !important;
 }
 .audio-controller {
-  display: none;
+  display: none !important;
   align-items: center;
   color: white;
   border-radius: 20px;

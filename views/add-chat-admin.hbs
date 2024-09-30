@@ -194,6 +194,15 @@
                 <div class="row">
                     <!-- Left Column: Prompts and Button -->
                     <div class="col-lg-6 mb-4">
+                        <!-- Image Style Selection -->
+                        <div class="mb-4">
+                            <label for="imageStyle" class="form-label">画像スタイル</label>
+                            <select class="form-select w-auto" id="imageStyle" name="imageStyle">
+                                <option value="anime" selected>アニメ</option>
+                                <option value="realistic">リアリスティック</option>
+                            </select>
+                        </div>
+
                         <!-- 1. Character Prompt Input -->
                         <div class="mb-4">
                             <label for="characterPrompt" class="form-label">キャラクタープロンプト</label>
@@ -580,7 +589,10 @@
                 dataType: 'json',
                 success: function(chatData) {
                     console.log('Fetched chat data:', chatData);
-
+                    // Populate Step 1: キャラクターの外見
+                    if (chatData.imageStyle) {
+                        $('#imageStyle').val(chatData.imageStyle);
+                    }
                     // Populate Step 1: キャラクターの外見
                     if (chatData.characterPrompt) {
                         $('#characterPrompt').val(chatData.characterPrompt);
@@ -684,6 +696,7 @@
 
             const formData = new FormData();
             formData.append('name', $('#chatName').val());
+            formData.append('imageStyle', $('#imageStyle').val());
             formData.append('purpose', $('#chatPurpose').val());
             formData.append('language', $('#language').val());
             formData.append('gender', $('#gender').val());
@@ -736,7 +749,7 @@
                 }
             });
         });
-        function fetchTaskId(enhancedPrompt, aspectRatio, chatId) {
+        function fetchTaskId(enhancedPrompt, aspectRatio, chatId, imageStyle) {
             return $.ajax({
                 url: '/novita/generate-image',
                 method: 'POST',
@@ -744,7 +757,8 @@
                 data: JSON.stringify({
                     prompt: enhancedPrompt,
                     aspectRatio: aspectRatio,
-                    chatId: chatId
+                    chatId: chatId,
+                    imageStyle: imageStyle // Include the selected image style
                 })
             });
         }
@@ -881,8 +895,16 @@
                     // ボタンテキストを「画像を生成中...」に更新
                     $button.html('<i class="fas fa-spinner fa-spin me-2"></i>画像を生成中...');
 
-                    // タスクIDを取得するリクエスト
-                    const taskResponse = await fetchTaskId(enhanceResponse.enhancedPrompt, '9:16', chatId);
+                    // Retrieve the selected image style
+                    const imageStyle = $('#imageStyle').val();
+
+                    // Request to generate images with the selected style
+                    const taskResponse = await fetchTaskId(
+                        enhanceResponse.enhancedPrompt,
+                        '9:16',
+                        chatId,
+                        imageStyle
+                    );
 
                     if (taskResponse && taskResponse.taskId) {
                         showNotification('画像生成タスクを開始しました。ステータスを確認中...', 'info');

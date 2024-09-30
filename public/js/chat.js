@@ -999,7 +999,7 @@ $(document).ready(async function() {
         let message = `[${window.translations.conversationStarter.starter}] ${window.translations.conversationStarter.prompt}. ${window.translations.conversationStarter.useTime.replace('%{time}', currentTimeInJapanese)} ${window.translations.conversationStarter.dontStartWithConfirmation}`;
         
         if($('#chat-widget-container').length == 0 && isTemporary){
-            message = `[${window.translations.loginStarter.starter}] ${window.translations.loginStarter.registrationPrompt} ${window.translations.loginStarter.inCharacter.replace('%{time}', currentTimeInJapanese)} ${window.translations.loginStarter.benefits} ${window.translations.loginStarter.directAnswer}`;
+            message = `[${window.translations.loginStarter.starter}] ${window.translations.loginStarter.prompt}`;
         }
 
         $.ajax({
@@ -1575,6 +1575,7 @@ $(document).ready(async function() {
         getAvailableAudio();
     });
     $(document).on('click', '.message-container', function(event) {
+        return
         event.stopPropagation();
         
         const $el = $(this).find('.audio-content');
@@ -1745,7 +1746,7 @@ $(document).ready(async function() {
                         $(`#play-${uniqueId}`).attr('data-content',message)
                         $(`#play-${uniqueId}`).closest('.audio-controller').show()
                         if(autoPlay){
-                            initAudio($(`#play-${uniqueId}`), message);
+                            //initAudio($(`#play-${uniqueId}`), message);
                         }
                     }
                     if (typeof callback === "function") {
@@ -1804,7 +1805,7 @@ $(document).ready(async function() {
                         $(`#play-${uniqueId}`).attr('data-content', message);
                         $(`#play-${uniqueId}`).closest('.audio-controller').show();
                         if(autoPlay){
-                            initAudio($(`#play-${uniqueId}`), message);
+                            //initAudio($(`#play-${uniqueId}`), message);
                         }
                     }
 
@@ -2341,6 +2342,7 @@ $(document).ready(async function() {
             });
         }else{
             if(!isTemporary && !subscriptionStatus && !$.cookie('showPremiumPopup')){
+                return
                 showPopupWithSwiper(function(){
                     $.cookie('showPremiumPopup',true)
                 })

@@ -202,9 +202,11 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
       const totalUsers = await db.collection('users').countDocuments({ email: { $exists: true } });
+      const isAdmin = await checkUserAdmin(fastify, request.user._id);
 
       return reply.renderWithGtm('chat.hbs', { 
         title: 'LAMIX | 日本語でAI画像生成 | AIチャット',
+        isAdmin,
         translations,
         mode:process.env.MODE, user, userId, chatId,
         seo: [

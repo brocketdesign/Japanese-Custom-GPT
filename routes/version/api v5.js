@@ -654,7 +654,11 @@ async function routes(fastify, options) {
                                 Maintain a conversational tone without abruptly ending the chat. 
                                 Keep responses extra short, fitting for chat, and use emojis where appropriate. 
 
-                                Respond in ${language} with extra short response. Always keep the chat going and interesting.
+                                Always describe actions or emotions using **. 
+
+                                \nFor example:\n*${chatDocument.name} looks at you with a soft smile, her eyes filled with warmth.* "I am thrusty, would you get me a bottle of water ?" she asks, her voice tender.*\n
+
+                                Respond in ${language} with extra short response. Keep the chat going.
                                 
                                 \n ${userDetails}
                             `
@@ -1952,8 +1956,7 @@ async function routes(fastify, options) {
             
       fastify.get('/api/chats', async (request, reply) => {
         try {
-            const page = parseInt(request.query.page) || 1;
-            const type = request.query.type || null;
+          const page = parseInt(request.query.page) || 1;
           const limit = 12;
           const skip = (page - 1) * limit;
           const { userId } = request.query;
@@ -1970,9 +1973,7 @@ async function routes(fastify, options) {
           if (userId) {
             query.userId = new fastify.mongo.ObjectId(userId);
           }
-            if(type){
-                query.imageStyle = type
-            }
+            
           // Fetch paginated chats, sorted by _id in descending order
           const recentCursor = await chatsCollection.aggregate([
             { $match: query },

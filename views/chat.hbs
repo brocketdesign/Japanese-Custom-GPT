@@ -20,10 +20,10 @@
                 <button class="menu-chat-sm d-sm-none btn bg-white shadow-0"><i class="fa-solid fa-bars"></i></button>
             </div>
             <div>
-                <a href="/chat/edit/" class="m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius:40px;">
+                <a href="/chat/edit/" class="{{default isAdmin 'd-none'}} m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius:40px;">
                     <i class="fas fa-plus me-2"></i>{{translations.createCharacter}}
                 </a>
-                <a href="/discover" class="m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius:40px;">
+                <a href="/discover" class="{{default isAdmin 'd-none'}} m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius:40px;">
                     {{translations.library}}
                 </a>
                 <span onclick="showDiscovery()" class="d-none m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius: 40px;">
@@ -69,30 +69,11 @@
         </nav>
         <section id="chat-discovery" class="onchat-off mt-5" style="display: block;margin-bottom: -60px;">
             {{#if user.isTemporary}}
-                    <div class="mb-3 mt-1">
+                    <div class="container mb-3 mt-1">
                         <section class="w-100 px-0 py-2 text-center">
-                            <img src="/img/logo.webp" alt="" class="mx-3 mb-3" width="75px">
                             <span class="u-font-manrope u-color-grad">{{translations.discover.lamix}}</span>は、
-                            <h3 class="fw-bold mb-1 p-3">{{translations.discover.aiChatTitle}}</h3>
-                            <div class="d-flex px-3 justify-content-center">
-                                <button type="button" class="btn btn-sm custom-gradient-bg shadow-0 border-0 mb-1 mx-1 auto-gen">
-                                    <i class="fa fa-comment me-2"></i>
-                                    {{translations.discover.aiChat}}
-                                </button>
-                                <button type="button" class="btn btn-sm custom-gradient-bg shadow-0 border-0 mb-1 mx-1 auto-gen">
-                                    <i class="fa fa-image me-2"></i>
-                                    {{translations.discover.aiImage}}
-                                </button>
-                                <button type="button" class="btn btn-sm custom-gradient-bg shadow-0 border-0 mb-1 mx-1 auto-gen">
-                                    <i class="fa fa-magic me-2"></i>
-                                    {{translations.discover.aiGeneration}}
-                                </button>
-                            </div>
-                            <p class="pt-3 mb-1" style="color: #555;">
-                                {{translations.discover.description}}
-                            </p>
                             <p class="pb-3 mb-1" style="color: #555;">
-                                {{translations.discover.startNow}}
+                                {{translations.discover.content}}
                             </p>
                         </section>
                     </div>
@@ -133,8 +114,6 @@
                     <h2 class="pricing-title fw-bold"><span class="u-font-manrope u-color-grad">Lamix</span>プレミアムプラン</h2>   
                     <h3 class="fw-bold mb-1 px-3">無制限でお得</h3>
                     <h3 class="fw-bold mb-1 px-3 u-font-manrope u-color-grad my-5">￥300円</h3>
-                <div>
-
                 </div>
                 <div class="d-none is-free-user sticky-bottom py-2 mx-auto text-center" style="display:none;bottom:0;left:0;right:0;">
                     <a href="/my-plan" class="m-2 btn border shadow-0 btn-secondary px-5 py-2 m-auto" style="border-radius:40px;background: linear-gradient(90.9deg, rgba(110, 32, 244, 0.5) 2.74%, #6E20F4 102.92%);">
@@ -142,7 +121,7 @@
                     </a>
                 </div>
             </section>
-            <div class="sticky-bottom py-2 mx-auto text-center" style="bottom:0;left:0;right:0;">
+            <div class="d-none sticky-bottom py-2 mx-auto text-center" style="bottom:0;left:0;right:0;">
                 <a href="/chat/edit/" class="m-2 btn border shadow-0 btn-secondary px-5 py-2 m-auto" style="border-radius:40px;background: linear-gradient(90.9deg, rgba(110, 32, 244, 0.5) 2.74%, #6E20F4 102.92%);">
                     <i class="fas fa-plus me-2"></i>キャラクター作成
                 </a>

@@ -77,8 +77,11 @@ iframe {
   right: 10px;
   left: 10px;
 }
+#audio-play{
+  display: none !important;
+}
 .audio-controller {
-  display: flex;
+  display: none;
   align-items: center;
   color: white;
   border-radius: 20px;
@@ -220,6 +223,7 @@ em {
   border-radius: 0px 15px 15px 15px;
   background-color: #151213b0;
   color: #fff;
+  font-size: 14px;
 }
 .narration-container{
   font-size: 13px;

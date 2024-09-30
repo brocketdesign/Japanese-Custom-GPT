@@ -4,6 +4,9 @@
 .jp-date{
   display: none;
 }
+.persona{
+  display: none;
+}
 img.select {
   border: 2px solid;
 }

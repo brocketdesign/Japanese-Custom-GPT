@@ -977,14 +977,14 @@ window.displayPepopleChat = async function (page = 1) {
                                 ${chat.messagesCount ? `<span class="badge bg-dark message-count"><i class="fas fa-comment-alt me-2"></i>${chat.messagesCount}</span>` : ''}
                             </div>
                         </div>
-                        <div class="card-body bg-transparent border-0 pb-0 text-start">
-                            <div class="row">
+                        <div class="card-body bg-transparent border-0 pb-0 px-0 mx-0 text-start">
+                            <div class="row mx-0 px-0">
                                 <div class="d-none col-auto text-center">
                                     <a href="/character/${chat._id}" style="text-decoration: none;">
                                         <img src="${chat.chatImageUrl || '/img/avatar.png'}" alt="${chat.name}" class="rounded-circle" width="40" height="40">
                                     </a>
                                 </div>
-                                <div class="col-auto ms-2">
+                                <div class="col-auto mx-0 px-0">
                                     <h5 class="card-title character-title mb-0">${chat.name}</h5>
                                     <a href="/character/${chat._id}" class="text-muted" style="text-decoration: none;">
                                         <span style="font-size:12px;">${chat.description}</span>

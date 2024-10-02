@@ -75,7 +75,7 @@ $(document).ready(async function() {
           var scrollPercent = ($(window).scrollTop() / ($(document).height() - $(window).height())) * 100;
           if (scrollPercent >= 60 && !formShown) {
             formShown = true;
-            showRegistrationForm();
+            //showRegistrationForm();
           }
         });
     }

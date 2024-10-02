@@ -145,7 +145,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
     fastify.get('/', async (request, reply) => {
       const user = await fastify.getUser(request, reply);
       if (user.isTemporary) {
-        return reply.redirect('/chat')
+        return reply.redirect('/chat/edit/')
       }else{
         return reply.redirect('/chat')
       }
@@ -450,9 +450,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
       });
     });
 
-    fastify.get('/chat/edit/:chatId', {
-      preHandler: [fastify.authenticate]
-    }, async (request, reply) => {
+    fastify.get('/chat/edit/:chatId', async (request, reply) => {
 
       let user = request.user;
       const userId = user._id;

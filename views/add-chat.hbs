@@ -5,6 +5,13 @@
     {{> dashboard-nav}}
 
     <style>
+    .style-option {
+        width: 75px;
+        cursor:pointer;
+    }
+    .style-option.selected {
+        border: 2px solid #000;
+    }
     .animated.fadeInDown .swal2-image{
         margin:0;
     }
@@ -188,22 +195,31 @@
 
     <!-- 1. キャラクター画像 -->
     <div id="step1" class="step">
-        <h4 class="mb-4 text-center">{{translations.newCharacter.characterCreationForm}}</h4>
+        <h4 class="mb-4 text-start">{{translations.newCharacter.characterCreationForm}}</h4>
             <!-- Character Creation Form -->
             <div id="characterCreationForm" class="container mt-3">
                 
                 <div class="row">
                     <!-- Left Column: Prompts and Button -->
                     <div class="col-lg-6 mb-4">
-                        <!-- Image Style Selection -->
-                        <div class="mb-4">
-                            <label for="imageStyle" class="form-label">画像スタイル</label>
-                            <select class="form-select w-auto" id="imageStyle" name="imageStyle">
-                                <option value="anime" selected>アニメ</option>
-                                <option value="realistic">リアリスティック</option>
-                            </select>
+                        <div class="row mb-4">
+                            <!-- Image Style Selection -->
+                            <div class="col-auto">
+                                <label class="form-label">画像スタイル</label>
+                                <div id="imageStyleSelection">
+                                    <img src="/img/anime.jpeg" alt="アニメ" class="style-option rounded selected" data-value="anime">
+                                    <img src="/img/real.jpeg" alt="リアリスティック" class="style-option rounded" data-value="realistic">
+                                </div>
+                                <input type="hidden" id="imageStyle" name="imageStyle" value="anime">
+                            </div>
+                            <div class="col-auto">
+                                <label for="gender" class="form-label"><i class="fas fa-user"></i> {{translations.newCharacter.genderLabel}}:</label>
+                                <select class="form-select w-auto" id="gender" name="gender">
+                                    <option value="female" selected>{{translations.newCharacter.female}}</option>
+                                    <option value="male">{{translations.newCharacter.male}}</option>
+                                </select>
+                            </div>
                         </div>
-
                         <!-- 1. Character Prompt Input -->
                         <div class="mb-4">
                             <label for="characterPrompt" class="form-label">キャラクタープロンプト</label>
@@ -213,12 +229,12 @@
                                 name="characterPrompt"
                                 rows="4"
                                 maxlength="500"
-                                placeholder="キャラクターの詳細な説明を入力してください..."
+                                placeholder="キャラクターの外見や表情・ポーズを詳細に説明してください。"
                             ></textarea>
                         </div>
                         
                         <!-- 2. Enhanced Prompt Display -->
-                        <div class="mb-4">
+                        <div class="mb-4 d-none">
                             <label for="enhancedPrompt" class="form-label">AI強化プロンプト</label>
                             <textarea
                                 class="form-control"
@@ -255,7 +271,7 @@
                     </div>
                 </div>
             </div>
-            <button type="button" id="nextStep1" class="btn btn-primary w-100 nextStep">
+            <button type="button" id="nextStep1" class="btn btn-secondary w-100 nextStep">
                 {{translations.newCharacter.nextStep}}
             </button>
         </div>
@@ -265,25 +281,18 @@
     <div id="step2" class="step d-none">
         <div class="mb-3 mx-3 row justify-content-between">
             <h4>{{translations.newCharacter.characterPersonalityTitle}}</h4>
-            <div class="col-auto ps-0">
+            <div class="d-none col-auto ps-0">
                 <label for="visibility" class="form-label"><i class="fas fa-eye"></i> {{translations.newCharacter.visibilityLabel}}:</label>
                 <select class="form-select w-auto" id="visibility" name="visibility">
                     <option value="public" selected>{{translations.newCharacter.public}}</option>
                     <option value="private">{{translations.newCharacter.private}}</option>
                 </select>
             </div>
-            <div class="col-auto">
+            <div class="d-none col-auto">
                 <label for="language" class="form-label"><i class="fas fa-language"></i> {{translations.newCharacter.languageLabel}}:</label>
                 <select class="form-select w-auto" id="language" name="language">
                     <option value="japanese" selected><i class="fas fa-flag"></i> {{translations.newCharacter.japanese}}</option>
                     <option value="english"><i class="fas fa-flag"></i> {{translations.newCharacter.english}}</option>
-                </select>
-            </div>
-            <div class="col-auto pe-0">
-                <label for="gender" class="form-label"><i class="fas fa-user"></i> {{translations.newCharacter.genderLabel}}:</label>
-                <select class="form-select w-auto" id="gender" name="gender">
-                    <option value="female" selected>{{translations.newCharacter.female}}</option>
-                    <option value="male">{{translations.newCharacter.male}}</option>
                 </select>
             </div>
         </div>
@@ -307,7 +316,7 @@
                 <i class="fa fa-magic me-2"></i>{{translations.newCharacter.generateWithAI}}
             </button>
 
-            <button type="button" id="prevStep2" class="btn btn-secondary w-100 mb-2 {{translations.newCharacter.previousStepButtonClass}}">
+            <button type="button" id="prevStep2" class="btn btn-secondary w-100 mb-2 prevStep">
                 {{translations.newCharacter.back}}
             </button>
             <button type="submit" id="submitForm" class="btn custom-gradient-bg btn-large w-100">
@@ -337,7 +346,7 @@
 
         function validateStep(step) {
             if (step === 1) {
-                return $('.img-thumbnail.select').length > 0 || $('#generatedImage').attr('src').length > 0;
+                return $('.img-thumbnail.select').length > 0 || $('#generatedImage').attr('src').length > 0 && $('#enhancedPrompt').val().trim() != '';
             } else if (step === 2) {
                 return $('#chatPurpose').val().trim() !== '' && $('#chatName').val().trim() !== '' && $('#chatDescription').val().trim() !== '' && $('#chatRule').val().trim() !== '';
             }
@@ -364,6 +373,12 @@
         $('#characterPrompt').on('input change', function() {
             $('#enhancedPrompt').val('');
         });
+    });
+
+    $('.style-option').click(function(){
+        $('.style-option').removeClass('selected');
+        $(this).addClass('selected');
+        $('#imageStyle').val($(this).data('value'));
     });
 </script>
 <script>
@@ -812,14 +827,20 @@
                 }
             }, POLLING_INTERVAL);
         }
-
         $('#generateButton').on('click', async function() {
+            
+            const isTemporary = user.isTemporary
+            if(isTemporary){
+                showRegistrationForm()
+                return
+            }
             const prompt = $('#characterPrompt').val().trim();
 
             if (!prompt || !chatId) {
                 showNotification('すべてのフィールドを入力してください', 'error');
                 return;
             }
+            const gender = $('#gender').val()
 
             const $button = $(this);
             $button.prop('disabled', true);
@@ -837,7 +858,7 @@
                         url: '/api/enhance-prompt',
                         method: 'POST',
                         contentType: 'application/json',
-                        data: JSON.stringify({ prompt, chatId })
+                        data: JSON.stringify({ prompt, gender, chatId })
                     });
                 }
                 if (enhanceResponse && enhanceResponse.enhancedPrompt) {

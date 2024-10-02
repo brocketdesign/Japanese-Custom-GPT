@@ -20,10 +20,10 @@
                 <button class="menu-chat-sm d-sm-none btn bg-white shadow-0"><i class="fa-solid fa-bars"></i></button>
             </div>
             <div>
-                <a href="/chat/edit/" class="{{default isAdmin 'd-none'}} m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius:40px;">
+                <a href="/chat/edit/" class="{{default isAdmin 'd-inline-block'}} m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius:40px;">
                     <i class="fas fa-plus me-2"></i>{{translations.createCharacter}}
                 </a>
-                <a href="/discover" class="{{default isAdmin 'd-none'}} m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius:40px;">
+                <a href="/discover" class="{{default isAdmin 'd-inline-block'}} m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius:40px;">
                     {{translations.library}}
                 </a>
                 <span onclick="showDiscovery()" class="d-none m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius: 40px;">
@@ -105,10 +105,25 @@
                     </div>
                 </section>
             {{/if}}
+            <!-- Image Style Selection -->
+            <div class="col-auto">
+                <ul class="nav nav-tabs" id="imageStyleTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="realistic-tab" data-style="realistic" type="button" role="tab">リアリスティック</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="anime-tab" data-style="anime" type="button" role="tab">アニメ</button>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Content Section -->
             <section>
                 <div id="chat-gallery" class="row mx-0"></div>
                 <div id="chat-pagination-controls" class="d-flex justify-content-center my-3"></div>
             </section>
+
+
             <section class="d-none is-free-user my-2" style="display: none;">
                 <div class="container text-center">
                     <h2 class="pricing-title fw-bold"><span class="u-font-manrope u-color-grad">Lamix</span>プレミアムプラン</h2>   
@@ -189,7 +204,22 @@
 <script>
 $(document).ready(function() {
     const user = {{{json user}}}
-    displayPepopleChat(1)
+
+    // Load 'realistic' by default
+    displayPeopleChat(1, 'realistic');
+
+    // Handle tab clicks
+    $('#imageStyleTabs button').on('click', function () {
+        $('#chat-gallery').empty()
+        // Remove 'active' class from all tabs
+        $('#imageStyleTabs button').removeClass('active');
+        // Add 'active' class to the clicked tab
+        $(this).addClass('active');
+
+        var style = $(this).data('style');
+        displayPeopleChat(1, style);
+    });
+
     function adjustHeight() {
         const newHeight = $(window).height() * 0.97;
         $('.chat-contain .card-body').height(newHeight);

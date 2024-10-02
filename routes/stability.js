@@ -344,14 +344,14 @@ async function routes(fastify, options) {
         sfw: {
           model_name: "novaAnimeXL_ponyV20_461138.safetensors",
           sampler_name: "Euler a",
-          prompt: `score_9, score_8_up, source_anime, masterpiece, best quality, (ultra-detailed), 1girl, (perfect hands:0.1), (sfw), dressed, clothes, `,
+          prompt: `score_9, score_8_up, source_anime, masterpiece, best quality, (ultra-detailed), (perfect hands:0.1), (sfw), dressed, clothes, `,
           negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, nipple, topless, nsfw, naked, nude, sex, worst quality, low quality,`,
           loras: []
         },
         nsfw: {
           model_name: "novaAnimeXL_ponyV20_461138.safetensors",
           sampler_name: "Euler a",
-          prompt: `score_9, score_8_up, source_anime, anime, masterpiece, best quality, (ultra-detailed), 1girl, (nsfw), uncensored, panty, breasts, erect nipples, (sexy pose), naughty face, almost naked, nude, nudity, `,
+          prompt: `score_9, score_8_up, source_anime, anime, masterpiece, best quality, (ultra-detailed), (nsfw), uncensored, panty, breasts, erect nipples, (sexy pose), naughty face, almost naked, nude, nudity, `,
           negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, pussy, vulva, vagina, sex, dick, worst quality, low quality,`,
           loras: []
         }
@@ -360,14 +360,14 @@ async function routes(fastify, options) {
         sfw: {
           model_name: "kanpiromix_v20.safetensors",
           sampler_name: "DPM++ 2M Karras",
-          prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, 1girl, beautiful japanese, makeup, (sfw), dressed, clothe on, natural lighting, `,
+          prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, (sfw), dressed, clothe on, natural lighting, `,
           negative_prompt: `BraV4Neg,paintings,sketches,(worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)),logo, nsfw,nude, topless, worst quality, low quality, `,
           loras: [{"model_name":"more_details_59655.safetensors","strength":0.7}, {"model_name":"JapaneseDollLikeness_v15_28382.safetensors","strength":0.2}],
         },
         nsfw: {
           model_name: "kanpiromix_v20.safetensors",
           sampler_name: "DPM++ 2M Karras",
-          prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, 1girl, beautiful japanese, makeup, (nsfw), sexy body,naked, boobs,nipple,big breast, nude, sensual pose, intimate, erotic clothes, very sexy, `,
+          prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, (nsfw), sexy body,naked, boobs,nipple,big breast, nude, sensual pose, intimate, erotic clothes, very sexy, `,
           negative_prompt: `BraV4Neg,paintings,sketches,(worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)),logo`,
           loras: [{"model_name":"more_details_59655.safetensors","strength":0.7}, {"model_name":"JapaneseDollLikeness_v15_28382.safetensors","strength":0.7}],
         }

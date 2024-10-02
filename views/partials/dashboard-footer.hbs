@@ -124,22 +124,22 @@ window.fetchMode = async function() {
 
 </script>
 
-<footer class="l-footer p-footer bg-white shadow-0 text-center  onchat-off ">
+<footer class="l-footer p-footer bg-white shadow-0 text-center onchat-off ">
   <div class="container my-5 py-5">
     <div class="row">
       <div class="col-12">
-          <div class="d-flex justify-content-center">
-            <a href="https://x.com/Lamix253843" target="_blank" class="btn btn-dark rounded text-center mb-2 mx-2">
-              <i class="bi bi-twitter-x"></i> 
-            </a>
-            <a href="https://www.instagram.com/aichat_lamix/" target="_blank" class="btn btn-dark rounded text-center mb-2 mx-2">
-              <i class="bi bi-instagram"></i>
-            </a>
+        <nav class="navbar navbar-expand-lg navbar-light shadow-0 py-0 d-flex flex-column">
+          <div class="row">
+              <div class="d-flex justify-content-center">
+                <a href="https://x.com/Lamix253843" target="_blank" class="btn btn-dark rounded text-center mb-2 mx-2">
+                  <i class="bi bi-twitter-x"></i> 
+                </a>
+                <a href="https://www.instagram.com/aichat_lamix/" target="_blank" class="btn btn-dark rounded text-center mb-2 mx-2">
+                  <i class="bi bi-instagram"></i>
+                </a>
+              </div>
+            <p style="color: #555;">{{translations.contactUs}}</p>
           </div>
-        <p style="color: #555;">{{translations.contactUs}}</p>
-      </div>
-      <div class="col-12">
-        <nav class="navbar navbar-expand-lg navbar-light shadow-0 py-0">
           <div class="container-fluid justify-content-center">
             <ul class="navbar-nav d-flex flex-row" style="flex-wrap: inherit;">
               <li class="nav-item m-1">
@@ -165,29 +165,29 @@ window.fetchMode = async function() {
         </nav>
       </div>
       <div class="col-12">
-        <nav class="navbar navbar-expand-lg navbar-light shadow-0 py-0">
+        <nav class="navbar navbar-expand-lg navbar-light shadow-0 py-0 d-flex flex-column">
           <div class="container-fluid justify-content-center">
             <small class="p-footer__copyright" translate="no" lang="en">
               Copyright ©2024 <a href="https://hatoltd.com/" target="_blank">HATO,LTD.</a> All Rights Reserved.
             </small>
           </div>
+          <div class="row mt-2">
+            <!-- Language Dropdown -->
+            <div class="dropdown">
+              <button class="btn btn-secondary dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                {{#if user.lang}}
+                  {{capitalize user.lang}}
+                {{else}}
+                  日本語
+                {{/if}}
+              </button>
+              <ul class="dropdown-menu" aria-labelledby="languageDropdown">
+                <li><a class="dropdown-item language-select" href="#" data-lang="ja">日本語</a></li>
+                <li><a class="dropdown-item language-select" href="#" data-lang="en">English</a></li>
+              </ul>
+            </div>
+          </div>
         </nav>
-      </div>
-      <div class="col-12 mt-2">
-        <!-- Language Dropdown -->
-        <div class="dropdown">
-          <button class="btn btn-secondary dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-            {{#if user.lang}}
-              {{capitalize user.lang}}
-            {{else}}
-              日本語
-            {{/if}}
-          </button>
-          <ul class="dropdown-menu" aria-labelledby="languageDropdown">
-            <li><a class="dropdown-item language-select" href="#" data-lang="ja">日本語</a></li>
-            <li><a class="dropdown-item language-select" href="#" data-lang="en">English</a></li>
-          </ul>
-        </div>
       </div>
     </div>
   </div>

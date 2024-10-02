@@ -1372,10 +1372,10 @@ async function routes(fastify, options) {
     fastify.post('/api/enhance-prompt', async (request, reply) => {
         try {
             // Validate and parse the request body
-            const { prompt, chatId } = EnhancePromptSchema.parse(request.body);
+            const { prompt, gender, chatId } = EnhancePromptSchema.parse(request.body);
 
             // Create the system payload for OpenAI
-            const systemPayload = createSystemPayload(prompt);
+            const systemPayload = createSystemPayload(prompt,gender);
     
             // Initialize OpenAI (ensure you have set your API key in environment variables)
             const openai = new OpenAI({
@@ -1432,15 +1432,15 @@ async function routes(fastify, options) {
     });
 
     // Helper function to create the system payload
-    function createSystemPayload(prompt) {
+    function createSystemPayload(prompt,gender) {
         return [
             {
                 role: "system",
                 content: `
                     You are a Stable Diffusion image prompt generator specializing in upper body character portraits.
-                    Your task is to generate a concise image prompt (under 800 characters) based on the latest character description provided.
+                    Your task is to generate a concise image prompt (under 1000 characters) based on the latest character description provided.
                     The prompt should be a comma-separated list of descriptive keywords in English that accurately depict the character's appearance, emotions, and style.
-                    Focus on attributes such as age, eye color, hair style and color, skin tone, body type, facial expressions, clothing, and any distinctive features.
+                    Focus on attributes such as gender, age, eye color, hair style and color, skin tone, body type, facial expressions, clothing, and any distinctive features.
                     DO NOT form complete sentences; use only relevant keywords.
                     Ensure the prompt is optimized for generating high-quality upper body portraits.
                     Respond EXCLUSIVELY IN ENGLISH!
@@ -1448,7 +1448,7 @@ async function routes(fastify, options) {
             },
             {
                 role: "user",
-                content: `Here is the character description: ${prompt}`
+                content: `The character gender is :${gender}. Here is the character description: ${prompt}`
             }
         ];
     }
@@ -1949,7 +1949,7 @@ async function routes(fastify, options) {
           reply.code(500).send('Internal Server Error');
         }
       });
-            
+      
       fastify.get('/api/chats', async (request, reply) => {
         try {
             const page = parseInt(request.query.page) || 1;

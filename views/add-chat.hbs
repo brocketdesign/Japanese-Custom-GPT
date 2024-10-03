@@ -408,6 +408,8 @@
         $(this).addClass('selected');
         $('#imageStyle').val($(this).data('value'));
     });
+        
+    $('#imageStyle').val($('.style-option.selected').data('value'));
 </script>
 <script>
     

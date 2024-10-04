@@ -238,6 +238,7 @@
             width: 42px;
             height: 1px;
             }.before-after--section-total-step {
+                display: none;
             font-size: 14px;
             line-height: 16px;
             margin-left: 35px;
@@ -401,7 +402,6 @@
 </div>
 {{#if user.isTemporary}}
     <section class="container">
-
         <div class="container row align-items-center h-100 m-auto">
             <div class="col-12 col-md-6 py-5 text-dark" data-animate="animate__slideInLeft">
                 <div class="row mt-3">
@@ -432,8 +432,53 @@
             </div>
         </div>
     </section>
+    <section class=" bg-light ">
+        <div class="container my-4 py-5">
+            <h2 class="display-4 fw-bold text-center mb-3">LAMIXに関するよくある質問</h2>
+            <div class="accordion" id="faqAccordion">
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingOne">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                            AI美女の作り方は？
+                        </button>
+                    </h2>
+                    <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            <p>1.「AI美女を生成」ボタンを押す。</p>
+                            <p>2. あなたが思い描いているAI美女の説明やプロンプトを入力する。</p>
+                            <p>3. AI美女のスタイルを選び、"生成"を押す。</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingTwo">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                            AI美女は無料で作れますか？
+                        </button>
+                    </h2>
+                    <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            <p>はい、メンバー無料登録をするとクレジット（ポイント）が付与されるので、お持ちのクレジット内でAI美女を無料で作ることが出来ます。</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingThree">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                            AI美女とは何ですか？
+                        </button>
+                    </h2>
+                    <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            <p>AIが生成した美しい女性の画像を指します。AI技術を用いて生成された人工的な女性のイメージや、AIが学習した美の基準に基づいて作られた女性の顔の画像を指すことが一般的です。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 {{/if}}
-
+    <style>footer{display: inline !important;}</style>
  {{> dashboard-footer}}
 <link type="text/css" rel="stylesheet" href="/css/image-uploader.css">
 <script type="text/javascript" src="/js/image-uploader.js"></script>

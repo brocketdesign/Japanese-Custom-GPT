@@ -171,22 +171,6 @@ window.fetchMode = async function() {
               Copyright ©2024 <a href="https://hatoltd.com/" target="_blank">HATO,LTD.</a> All Rights Reserved.
             </small>
           </div>
-          <div class="row mt-2">
-            <!-- Language Dropdown -->
-            <div class="dropdown">
-              <button class="btn btn-secondary dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                {{#if user.lang}}
-                  {{capitalize user.lang}}
-                {{else}}
-                  日本語
-                {{/if}}
-              </button>
-              <ul class="dropdown-menu" aria-labelledby="languageDropdown">
-                <li><a class="dropdown-item language-select" href="#" data-lang="ja">日本語</a></li>
-                <li><a class="dropdown-item language-select" href="#" data-lang="en">English</a></li>
-              </ul>
-            </div>
-          </div>
         </nav>
       </div>
     </div>

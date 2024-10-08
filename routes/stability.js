@@ -443,7 +443,7 @@ async function routes(fastify, options) {
         };
 
         tasks.push({ ...params, ...image_request_nsfw });
-        console.log(tasks)
+
         // Initiate tasks and collect taskIds
         const taskIds = await Promise.all(tasks.map(async (task) => {
           console.log(`Request ${task.type} image`)

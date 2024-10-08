@@ -528,15 +528,16 @@
         $('#characterPrompt').on('input change', function() {
             $('#enhancedPrompt').val('');
         });
+
+        $('.style-option').click(function(){
+            $('.style-option').removeClass('selected');
+            $(this).addClass('selected');
+            $('#imageStyle').val($(this).data('value'));
+        });
+        imageStyle = $('.style-option.selected').data('value')
+        $('#imageStyle').val(imageStyle);
     });
 
-    $('.style-option').click(function(){
-        $('.style-option').removeClass('selected');
-        $(this).addClass('selected');
-        $('#imageStyle').val($(this).data('value'));
-    });
-        
-    $('#imageStyle').val($('.style-option.selected').data('value'));
 </script>
 <script>
     
@@ -1038,7 +1039,8 @@
                         reader.readAsDataURL(file);
                         return
                     }
-                    const imageStyle = $('#imageStyle').val();
+
+                    const imageStyle = $('.style-option.selected').data('value')
                     // タスクIDを取得するリクエスト
                     const taskResponse = await fetchTaskId(enhanceResponse.enhancedPrompt, '9:16', chatId, imageStyle);
 

@@ -1366,6 +1366,7 @@ async function routes(fastify, options) {
     // Define the schema for request validation
     const EnhancePromptSchema = z.object({
         prompt: z.string().min(10, 'プロンプトは最低でも10文字必要です'),
+        gender: z.string(),
         chatId: z.string().regex(/^[0-9a-fA-F]{24}$/, '無効なchatIdです') // Validates MongoDB ObjectId
     });
 

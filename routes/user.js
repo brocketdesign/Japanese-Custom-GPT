@@ -550,8 +550,8 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
         isAdmin = true;
       }
   
-      // Fetch the total number of chats created by the user
-      const chatCount = await collectionChat.countDocuments({ userId: new fastify.mongo.ObjectId(userId) });
+      const chatCount = await collectionChat.distinct('chatImageUrl', { userId: new fastify.mongo.ObjectId(userId) });
+      const totalCount = chatCount.length;      
   
       const translations = request.translations
 
@@ -571,7 +571,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
           followerCount: user.followerCount,
           imageLikeCount: user.imageLikeCount,
           postCount: user.postCount,
-          chatCount, // Include the total chat count here
+          chatCount:totalCount, // Include the total chat count here
         },
       });
     } catch (error) {

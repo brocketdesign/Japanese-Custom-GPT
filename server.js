@@ -485,7 +485,7 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
         const isAdmin = await checkUserAdmin(fastify, request.user._id);
         let template = 'add-chat.hbs'
         if (isAdmin) {
-          template = 'add-chat-admin.hbs'
+          //template = 'add-chat-admin.hbs'
         }
         const translations = request.translations
         return reply.renderWithGtm(template, { title: 'AIフレンズ  | Powered by Hato,Ltd', translations, chatId, isTemporaryChat, user, prompts});

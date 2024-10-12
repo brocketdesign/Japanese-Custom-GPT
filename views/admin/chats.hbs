@@ -3,51 +3,104 @@
     {{> dashboard-header}}
 <body>
     {{> dashboard-nav}}
-<!-- Template to List User Chats -->
-<div class="container mt-5">
-    <h2 class="mb-4">Chats for User {{userId}}</h2>
-    <div class="table-responsive">
-        <table class="table table-striped table-bordered table-hover">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Date</th>
-                    <th>Chat</th>
-                </tr>
-            </thead>
-            <tbody>
-                {{#each chats}}
-                <tr>
-                    <td>{{this.name}}</td>
-                    <td class="jp-d">{{this.updatedAt}}</td>
-                    <td>
-                        <a href="/chat/{{this._id}}" class="btn btn-secondary">
-                            <i class="fas fa-external-link-alt"></i>
-                        </a>
-                    </td>
-                </tr>
-                {{/each}}
-            </tbody>
-        </table>
-    </div>
-    <a href="/admin/users" class="btn btn-secondary mt-3" id="back-to-users">Back to Users</a>
-</div>
-</body>
-    {{> dashboard-footer}}
-<script>
-    $(document).ready(function() {
+        <div class="container mt-5">
+            <h2 class="mb-4">Chats for User {{userId}}</h2>
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Date</th>
+                            <th>Chat Preview</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each chats}}
+                        <tr>
+                            <td>{{this.name}}</td>
+                            <td class="jp-d">{{this.updatedAt}}</td>
+                            <td>
+                                <!-- Button to Trigger SweetAlert2 Popup -->
+                                <button 
+                                    class="btn btn-primary btn-view-chat" 
+                                    data-messages='{{json this.messages}}' 
+                                    data-name="{{this.name}}" 
+                                    data-updatedat="{{this.updatedAt}}"
+                                >
+                                    <i class="fas fa-eye"></i> Preview
+                                </button>
+                            </td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+            <a href="/admin/users/registered" class="btn btn-secondary mt-3" id="back-to-users">Back to Users</a>
+        </div>
+    </body>
+        {{> dashboard-footer}}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Include SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $(document).ready(function() {
 
-        function convertToJapaneseDate(dateString) {
-            var options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
-            var date = new Date(dateString);
-            return date.toLocaleDateString('ja-JP', options);
-        }
+            // Function to convert dates to Japanese format
+            function convertToJapaneseDate(dateString) {
+                var options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+                var date = new Date(dateString);
+                return date.toLocaleDateString('ja-JP', options);
+            }
 
-        $('.jp-d').each(function() {
-            var originalDate = $(this).text();
-            var japaneseDate = convertToJapaneseDate(originalDate);
-            $(this).text(japaneseDate);
+            // Convert all dates on the page
+            $('.jp-d').each(function() {
+                var originalDate = $(this).text();
+                var japaneseDate = convertToJapaneseDate(originalDate);
+                $(this).text(japaneseDate);
+            });
+
+            // Handle click event on 'Preview' buttons
+            $('.btn-view-chat').on('click', function() {
+                // Retrieve data attributes
+                var messages = $(this).data('messages');
+                var chatName = $(this).data('name');
+                var updatedAt = $(this).data('updatedat');
+
+                // Build HTML content for the popup
+                var chatContent = `
+                    <h3>Chat Preview: ${chatName}</h3>
+                    <p><strong>Last Updated:</strong> ${convertToJapaneseDate(updatedAt)}</p>
+                    <div style="text-align: left; max-height: 400px; overflow-y: auto;">
+                        ${messages.map(function(message) {
+                            var role = message.role === 'user' ? 'ユーザー' : (message.role === 'assistant' ? 'アシスタント' : 'システム');
+                            // Escape HTML to prevent XSS
+                            var content = $('<div>').text(message.content).html().replace(/\n/g, '<br>');
+                            return `<p><strong>${role}:</strong> ${content}</p>`;
+                        }).join('')}
+                    </div>
+                `;
+
+                // Display SweetAlert2 popup
+                Swal.fire({
+                    title: `チャットプレビュー: ${chatName}`,
+                    html: chatContent,
+                    width: '800px',
+                    showCloseButton: true,
+                    focusConfirm: false,
+                    confirmButtonText: '閉じる',
+                    customClass: {
+                        popup: 'animated fadeInDown'
+                    }
+                });
+            });
+
+            // Helper function to convert date in popup
+            function convertToJapaneseDate(dateString) {
+                var options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+                var date = new Date(dateString);
+                return date.toLocaleDateString('ja-JP', options);
+            }
+
         });
-    });
-
-</script>
+    </script>
+</html>

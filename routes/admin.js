@@ -112,18 +112,47 @@ async function routes(fastify, options) {
         preHandler: [fastify.authenticate]
       }, async (request, reply) => {
         try {
-            const isAdmin = await checkUserAdmin(fastify, request.user._id);
-            if (!isAdmin) {
-                return reply.status(403).send({ error: 'Access denied' });
-            }
-            const userId = new fastify.mongo.ObjectId(request.params.userId)
-            const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-            const chats = await collectionChat.find({userId}).toArray();
-            return reply.view('/admin/chats',{chats})
+          // Check if the user is an admin
+          const isAdmin = await checkUserAdmin(fastify, request.user._id);
+          if (!isAdmin) {
+            return reply.status(403).send({ error: 'Access denied' });
+          }
+      
+          // Convert the userId from the route parameter to ObjectId
+          const userId = new fastify.mongo.ObjectId(request.params.userId);
+      
+          // Access the userChat collection
+          const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+      
+          // Fetch userChat documents
+        const userChats = await collectionChat.find({ userId }).toArray();
+
+        // Extract unique chatIds
+        const chatIds = userChats.map(chat => chat.chatId);
+
+        // Fetch corresponding chat names
+        const collectionChats = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+        const chatsDetails = await collectionChats.find({ _id: { $in: chatIds } }).toArray();
+
+        // Create a map of chatId to chatName
+        const chatMap = {};
+        chatsDetails.forEach(chat => {
+        chatMap[chat._id.toString()] = chat.name;
+        });
+
+        // Attach chatName to each userChat
+        const enrichedChats = userChats.map(chat => ({
+        ...chat,
+        name: chatMap[chat.chatId.toString()] || 'Unknown Chat'
+        }));
+
+        return reply.view('/admin/chats', { chats: enrichedChats });
         } catch (error) {
-            return reply.status(500).send({ error: error.message });
+          console.error('Error fetching chats:', error);
+          return reply.status(500).send({ error: error.message });
         }
-    });
+      });
+      
 
     fastify.get('/admin/users/cleanup', {
         preHandler: [fastify.authenticate]

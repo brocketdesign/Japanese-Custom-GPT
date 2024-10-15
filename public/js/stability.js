@@ -89,15 +89,6 @@ window.generateImageDescriptionBackend = function(imageUrl = null, chatId, callb
 
 // Generate Image using Novita
 window.generateImageNovita = async function(API_URL, userId, chatId, userChatId, item_id, thumbnail, option = {}) {
-    console.log('generateImageNovita called with parameters:', {
-        API_URL,
-        userId,
-        chatId,
-        userChatId,
-        item_id,
-        thumbnail,
-        option
-    });
 
     // Initialize the image loading container with two placeholders
     const imageResponseContainer = $(`
@@ -129,9 +120,7 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
     }
 
     try {
-        console.log('Fetching proposal with item_id:', item_id);
         const proposal = await getProposalById(item_id);
-        console.log('Proposal fetched:', proposal);
 
         const {
             negativePrompt = $('#negativePrompt-input').val(),
@@ -149,18 +138,7 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
             return;
         }
 
-        const API_ENDPOINT = `${API_URL}/novita/txt2img`;
-        //console.log('API_ENDPOINT for image generation:', API_ENDPOINT);
-
-        /*
-        console.log('Sending POST request to Novita API with payload:', {
-            prompt: prompt,
-            aspectRatio: aspectRatio,
-            userId: userId,
-            chatId: chatId,
-            userChatId: userChatId
-        });
-        */
+        const API_ENDPOINT = `${API_URL}/novita/product2img`;
 
         const response = await fetch(API_ENDPOINT, {
             method: 'POST',
@@ -176,8 +154,6 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
             })
         });
 
-        console.log('Fetch response received. Status:', response.status, response.statusText);
-
         if (!response.ok) {
             const errorText = await response.text();
             console.error('Fetch response not ok. Status:', response.status, response.statusText, 'Response text:', errorText);
@@ -185,7 +161,6 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
         }
 
         const data = await response.json();
-        console.log('generateImageNovita Success: Received data from Novita:', data);
 
         const { tasks } = data;
         if (!tasks || !Array.isArray(tasks)) {
@@ -201,8 +176,6 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
                 pollTaskStatus(API_URL, task.taskId, task.type, prompt);
             }
         });        
-
-        console.log('Posting imageDone event.');
 
     } catch (error) {
         console.error('generateImageNovita Error:', error);
@@ -235,7 +208,7 @@ function pollTaskStatus(API_URL, taskId, type, prompt) {
 
             if (statusData.status === 'completed') {
                 clearInterval(intervalId);
-                const { imageId, imageUrl } = statusData.result;
+                const { imageId, imageUrl } = statusData.images[0];
 
                 if (!displayedImageIds.has(imageId)) {
                     // Use the provided generateImage function to display the image
@@ -265,6 +238,9 @@ function pollTaskStatus(API_URL, taskId, type, prompt) {
                 clearInterval(intervalId);
             } else {
                 console.log('タスクはまだ処理中です...');
+                if(type === 'nsfw' ){
+                    window.postMessage({ event: 'imageStart', message: '[Hidden] Image generation is still processing...' }, '*');
+                }
             }
 
             if (attempts >= MAX_ATTEMPTS) {
@@ -317,7 +293,8 @@ window.generateImage = async function(data, prompt) {
   try {
     const user = await fetchUser();
     const subscriptionStatus = user.subscriptionStatus === 'active';
-
+    displayMessage('bot-image', img);
+    /*
     if (imageNsfw && !subscriptionStatus) {
       window.postMessage({ event: 'imageNsfw' }, '*');
       displayMessage('bot-image-nsfw', img);
@@ -325,6 +302,7 @@ window.generateImage = async function(data, prompt) {
     } else {
       displayMessage('bot-image', img);
     }
+    */
 
     if (messCt == 1) {
         setTimeout(() => {
@@ -386,7 +364,7 @@ window.displayAdvancedImageGenerationForm = function(API_URL, userId, chatId, us
                 </div>
                 <!-- NSFW Form Tab Pane -->
                 <div class="tab-pane fade" id="${uniqueId}-nsfw" role="tabpanel" aria-labelledby="${uniqueId}-nsfw-tab">
-                    ${generateNSFWForm(uniqueId)}
+                    ${generateNSFWForm(uniqueId,{ userId, chatId, userChatId })}
                 </div>
             </div>
         </div>
@@ -430,33 +408,44 @@ async function setupFormEventListeners(uniqueId, formType, config) {
 
     // Event listener for selectable options
     $(`${formSelector} .selectable-option`).on('click', function() {
-        const categoryClass = $(this).attr('class').split(' ')[0]; // e.g., 'character-option'
-        $(`${formSelector} .${categoryClass}`).removeClass('selected');
-        $(this).addClass('selected');
+        const categoryClasses = $(this).attr('class').split(' ')[0]
+        $(`${formSelector} .${categoryClasses}`).removeClass('selected').addClass('unselect');
+        $(this).addClass('selected').removeClass('unselect');
     });
+
 
     // Event listener for generate button
     $(`${formSelector} .btn-primary`).on('click', async function() {
-        const selectedCharacter = $(`${formSelector} .character-option.selected`).data('value');
-        const selectedBody = $(`${formSelector} .body-option.selected`).data('value');
-        const selectedPose = $(`${formSelector} .pose-option.selected`).data('value');
-        const selectedAction = $(`${formSelector} .action-option.selected`).data('value');
-        const selectedClothes = $(`${formSelector} .clothes-option.selected`).data('value');
-        const selectedExpression = $(`${formSelector} .expression-option.selected`).data('value');
+        // Get all selected options within the form
+        const selectedOptions = $(`${formSelector} .selectable-option.selected`);
 
-        if (!selectedCharacter || !selectedBody || !selectedPose || !selectedAction || !selectedClothes || !selectedExpression) {
-            showNotification(t['selectAllOptions'], 'error');
+        if (selectedOptions.length < 2) {
+            showNotification(t['selectAtLeastTwoOptions'] || 'Please select at least two options.', 'error');
             return;
         }
 
+        // Generate the prompt from the data-value of the selected options
+        let promptParts = [];
+        selectedOptions.each(function() {
+            const value = $(this).data('value');
+            if (value) {
+                promptParts.push(value);
+            }
+        });
+
+        // Combine the prompt parts into a single prompt string
+        let prompt = promptParts.join(', ');
+
         // Determine the price based on image type
         const price = formType === 'sfw' ? SFW_PRICE : NSFW_PRICE;
-        // Fetch the character description
-        const {imageDescription} = await checkImageDescription(config.chatId);
-        // Create a prompt from the selected elements
-        const prompt = `${imageDescription}, ${selectedCharacter}, ${selectedBody}, ${selectedPose}, ${selectedAction}, ${selectedClothes}, ${selectedExpression}`;
 
-       // Prepare data to send to the backend
+        // Fetch the character description
+        const { imageDescription } = await checkImageDescription(config.chatId);
+
+        // Include imageDescription in the prompt
+        prompt = `${imageDescription}, ${prompt}`;
+
+        // Prepare data to send to the backend
         const requestData = {
             prompt: prompt,
             aspectRatio: '9:16',
@@ -473,7 +462,7 @@ async function setupFormEventListeners(uniqueId, formType, config) {
 
         // Send hidden message to the AI character
         const hiddenMessage = `[Hidden] I just sent you ${price} coins for images about: ${prompt}. 
-        the images are not available yet , I will tell you when they are available.`;
+        The images are not available yet; I will tell you when they are available.`;
         window.postMessage({ event: 'imageStart', message: hiddenMessage }, '*');
 
         // Send request to the backend to generate images
@@ -623,117 +612,99 @@ function generateSFWForm(uniqueId) {
 }
 
 /**
- * Generates the HTML for the NSFW form.
- * @param {string} uniqueId - The unique identifier for the form.
- * @returns {string} - The HTML string for the NSFW form.
+ * Generates the NSFW form by fetching categories from the API and updating the form dynamically.
  */
-function generateNSFWForm(uniqueId) {
+function generateNSFWForm(uniqueId,config) {
+    const { userId, chatId, userChatId } = config
     const t = window.translations.imageForm;
-    return `
-        <div id="${uniqueId}-nsfw-form" class="advanced-image-generation-form">
-            <!-- Since NSFW is not yet implemented, you can add a placeholder or similar fields as needed -->
-            <!-- For demonstration, we'll replicate the SFW form fields -->
-            
-            <!-- Character Selection (Exclusively Female) -->
-            <div class="mb-4">
-                <label class="form-label"><strong>${t['selectCharacter']}</strong></label>
-                <div class="d-flex flex-wrap">
-                    <!-- Only Female Character Options -->
-                    <div class="me-3 mb-3 text-start">
-                        <span class="character-option selectable-option" data-value="young girl character, age 18, short hair">${t['characterGirl']}</span>
-                    </div>
-                    <div class="me-3 mb-3 text-start">
-                        <span class="character-option selectable-option" data-value="adult woman character, age 25-30, long hair">${t['characterWoman']}</span>
-                    </div>
-                    <!-- Add more female character options here if needed -->
-                </div>
+    const formSelector = `#${uniqueId}-nsfw`; // Selector for the NSFW tab pane
+
+    // Placeholder content while data is being fetched
+    $(`${formSelector}`).html(`
+        <div class="text-center my-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">${t['loading']}</span>
             </div>
-            
-            <!-- Body Type Selection -->
-            <div class="mb-4">
-                <label class="form-label"><strong>${t['selectBodyType']}</strong></label>
-                <div class="d-flex flex-wrap">
-                    <div class="me-3 mb-3 text-start">
-                        <span class="body-option selectable-option" data-value="athletic body, toned muscles">${t['bodyAthletic']}</span>
-                    </div>
-                    <div class="me-3 mb-3 text-start">
-                        <span class="body-option selectable-option" data-value="slim body, slender frame">${t['bodySlim']}</span>
-                    </div>
-                    <!-- Add more body options here -->
-                </div>
-            </div>
-            
-            <!-- Pose Selection -->
-            <div class="mb-4">
-                <label class="form-label"><strong>${t['selectPose']}</strong></label>
-                <div class="d-flex flex-wrap">
-                    <div class="me-3 mb-3 text-start">
-                        <span class="pose-option selectable-option" data-value="sitting in meditation pose">${t['poseMeditating']}</span>
-                    </div>
-                    <div class="me-3 mb-3 text-start">
-                        <span class="pose-option selectable-option" data-value="performing a cartwheel">${t['poseCartwheel']}</span>
-                    </div>
-                    <!-- Add more pose options here -->
-                </div>
-            </div>
-            
-            <!-- Action Selection -->
-            <div class="mb-4">
-                <label class="form-label"><strong>${t['selectAction']}</strong></label>
-                <div class="d-flex flex-wrap">
-                    <div class="me-3 mb-3 text-start">
-                        <span class="action-option selectable-option" data-value="singing into a microphone">${t['actionSinging']}</span>
-                    </div>
-                    <div class="me-3 mb-3 text-start">
-                        <span class="action-option selectable-option" data-value="painting a canvas">${t['actionPainting']}</span>
-                    </div>
-                    <!-- Add more action options here -->
-                </div>
-            </div>
-            
-            <!-- Clothes Selection -->
-            <div class="mb-4">
-                <label class="form-label"><strong>${t['selectClothes']}</strong></label>
-                <div class="d-flex flex-wrap">
-                    <div class="me-3 mb-3 text-start">
-                        <span class="clothes-option selectable-option" data-value="wearing a dress">${t['clothesDress']}</span>
-                    </div>
-                    <div class="me-3 mb-3 text-start">
-                        <span class="clothes-option selectable-option" data-value="wearing a suit">${t['clothesSuit']}</span>
-                    </div>
-                    <!-- Add more clothes options here -->
-                </div>
-            </div>
-            
-            <!-- Facial Expression Selection -->
-            <div class="mb-4">
-                <label class="form-label"><strong>${t['selectFacialExpression']}</strong></label>
-                <div class="d-flex flex-wrap">
-                    <div class="me-3 mb-3 text-start">
-                        <span class="expression-option selectable-option" data-value="happy facial expression, smiling">${t['expressionHappy']}</span>
-                    </div>
-                    <div class="me-3 mb-3 text-start">
-                        <span class="expression-option selectable-option" data-value="sad facial expression, frowning">${t['expressionSad']}</span>
-                    </div>
-                    <!-- Add more expression options here -->
-                </div>
-            </div>
-            
-            <!-- Generate Button -->
-            <div class="text-center">
-                <button id="${uniqueId}-generate-btn-nsfw" class="btn btn-primary">${t['generateImages']}</button>
-            </div>
-            
-            <!-- Spinner (Initially Hidden) -->
-            <div id="${uniqueId}-spinner-nsfw" class="spinner" style="display: none; text-align: center; margin-top: 20px;">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">${t['loading']}</span>
-                </div>
-                <div>${t['generatingImages']}</div>
-            </div>
+            <div>${t['loadingCategories']}</div>
         </div>
-    `;
+    `);
+
+    // Fetch categories from the API
+    $.get('/api/categories', function(categories) {
+        // Build the form content
+        let formContent = `
+            <div id="${uniqueId}-nsfw-form" class="advanced-image-generation-form">
+                <!-- Dynamic Categories -->
+                ${buildCategoriesContent(categories)}
+                <!-- Generate Button -->
+                <div class="text-center">
+                    <button id="${uniqueId}-generate-btn-nsfw" class="btn btn-primary">${t['generateImages']}</button>
+                </div>
+                <!-- Spinner (Initially Hidden) -->
+                <div id="${uniqueId}-spinner-nsfw" class="spinner" style="display: none; text-align: center; margin-top: 20px;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">${t['loading']}</span>
+                    </div>
+                    <div>${t['generatingImages']}</div>
+                </div>
+            </div>
+        `;
+
+        // Update the NSFW tab pane with the form content
+        $(`${formSelector}`).html(formContent);
+
+        // Setup event listeners for the dynamically generated content
+        setupFormEventListeners(uniqueId, 'nsfw', { userId, chatId, userChatId });
+    }).fail(function(error) {
+        // Handle errors
+        $(`${formSelector}`).html(`
+            <div class="alert alert-danger" role="alert">
+                ${t['categoriesLoadError']}
+            </div>
+        `);
+    });
 }
+
+/**
+ * Builds the HTML content for categories, subcategories, and tags.
+ */
+function buildCategoriesContent(categories) {
+    let content = '';
+
+    categories.forEach(category => {
+        content += `
+            <div class="mb-4">
+                <label class="form-label"><strong>${category.name_JP || category.name}</strong></label>
+                <div class="d-flex flex-wrap">
+        `;
+
+        // Iterate over subcategories
+        category.subcategories.forEach(subcategory => {
+            content += `
+                <div class="me-3 mb-3 text-start w-100">
+                    <span class="subcategory-option" data-value="${subcategory.name}">${subcategory.name_JP || subcategory.name}</span>
+                </div>
+            `;
+
+            // Iterate over tags within each subcategory
+            subcategory.tags.forEach(tag => {
+                content += `
+                    <div class="me-3 mb-3 text-center">
+                        <span class="tag-option-${category.name} selectable-option" data-value="${tag.name}">${tag.name_JP || tag.name}</span>
+                    </div>
+                `;
+            });
+        });
+
+        content += `
+                </div>
+            </div>
+        `;
+    });
+
+    return content;
+}
+
 
 /**
  * Sets up CSS styles for selectable options.
@@ -756,6 +727,11 @@ function generateNSFWForm(uniqueId) {
             color: #fff;
             border-color: #007bff;
         }
+        .selectable-option.unselect{
+            background-color: #e6e6e6;
+            color: #000;
+            border-color: #fff;
+        }
         /* Optional: Add hover effects */
         .selectable-option:hover {
             background-color: #e6e6e6;
@@ -766,10 +742,6 @@ function generateNSFWForm(uniqueId) {
 
 /**
  * Polls the backend for the status of an image generation task.
- * @param {string} taskId - The unique task identifier.
- * @param {string} chatId - The chat identifier.
- * @param {string} prompt - The prompt used for image generation.
- * @param {function} callback - Callback function to execute after task completion or failure.
  */
 function checkTaskStatus(taskId, chatId, prompt, callback) {
     const POLLING_INTERVAL = 10000; // 10 seconds
@@ -812,7 +784,7 @@ function checkTaskStatus(taskId, chatId, prompt, callback) {
                 }
             } else {
                 console.log('Image generation is still processing...');
-                window.postMessage({ event: 'imageStart', message: 'Image generation is still processing...' }, '*');
+                window.postMessage({ event: 'imageStart', message: '[Hidden] Image generation is still processing...' }, '*');
             }
 
             if (attempts >= MAX_ATTEMPTS) {

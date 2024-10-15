@@ -32,6 +32,35 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
       //deleteUserChatsWithoutMessages(db)
     });
     //cleanupNonRegisteredUsers(db);
+
+    const fs = require('fs');
+const path = require('path');
+
+async function initializeCategoriesCollection(db) {
+  try {
+    // Path to the JSON file
+    const filePath = path.join(__dirname, 'categories.json');
+
+    // Read the JSON file
+    const fileData = fs.readFileSync(filePath, 'utf8');
+
+    // Parse the JSON data
+    const categories = JSON.parse(fileData);
+
+    // Get the collection
+    const collection = db.collection('categories');
+
+    // Optionally clear existing data
+    await collection.deleteMany({});
+
+    // Insert categories into the collection
+    await collection.insertMany(categories);
+
+    console.log('Categories collection initialized.');
+  } catch (err) {
+    console.error('Error initializing categories collection:', err);
+  }
+}
     cron.schedule('0 0 * * *', async () => {
       try {
         await updateCounter(db, 0);

@@ -2242,7 +2242,6 @@ $(document).ready(async function() {
         });
     }
     function checkForPurchaseProposal() {
-        return
         $.ajax({
             url: '/api/check-assistant-proposal',
             type: 'POST',

@@ -309,7 +309,7 @@ async function routes(fastify, options) {
         nsfw: {
           model_name: "novaAnimeXL_ponyV20_461138.safetensors",
           sampler_name: "Euler a",
-          prompt: `score_9, score_8_up, source_anime, anime, masterpiece, best quality, (ultra-detailed), (nsfw), uncensored, panty, breasts, erect nipples, (sexy pose), naughty face, almost naked, nude, nudity, `,
+          prompt: `score_9, score_8_up, source_anime, anime, masterpiece, best quality, (ultra-detailed), (nsfw), uncensored,naked,nudity,body, `,
           negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, pussy, vulva, vagina, sex, dick, worst quality, low quality,`,
           loras: []
         }
@@ -325,7 +325,7 @@ async function routes(fastify, options) {
         nsfw: {
           model_name: "kanpiromix_v20.safetensors",
           sampler_name: "DPM++ 2M Karras",
-          prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, (nsfw), sexy body,naked, boobs,nipple,big breast, nude, sensual pose, nsfw, erotic, very sexy, `,
+          prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, (nsfw),uncensored,naked,nudity,body, `,
           negative_prompt: `BraV4Neg,paintings,sketches,(worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)),logo`,
           loras: [{"model_name":"more_details_59655.safetensors","strength":0.4},{"model_name":"droptop_38945.safetensors","strength":0.4}, {"model_name":"JapaneseDollLikeness_v15_28382.safetensors","strength":0.7}],
         }
@@ -372,6 +372,96 @@ async function routes(fastify, options) {
     } catch (error) {
       console.error('Error fetching image URL:', error);
       return reply.status(500).send({ error: 'An error occurred while fetching the image URL' });
+    }
+  });
+  // Endpoint to initiate txt2img with SFW and NSFW
+  fastify.post('/novita/product2img', async (request, reply) => {
+    const { prompt, aspectRatio, userId, chatId, userChatId } = request.body;
+
+    // Define the schema for validation
+    const Txt2ImgSchema = z.object({
+      prompt: z.string().min(10, 'Prompt must be at least 10 characters long'),
+      aspectRatio: z.string().optional().default('9:16'),
+      userId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid userId'),
+      chatId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid chatId'),
+      userChatId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid userChatId')
+    });
+
+    try {
+      const validated = Txt2ImgSchema.parse(request.body);
+      const { prompt, aspectRatio, userId, chatId, userChatId } = validated;
+
+      // Fetch user subscription status
+      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+      const isSubscribed = user && user.subscriptionStatus === 'active';
+
+      // Fetch imageStyle
+      const chat = await db.collection('chats').findOne({ _id: new ObjectId(chatId) });
+      const imageStyle = chat.imageStyle
+
+      // Select prompts and model based on imageStyle
+      const selectedStyle = default_prompt[imageStyle] || default_prompt['anime'];
+
+      // Prepare tasks
+      const tasks = [];
+
+      // SFW Task
+      const image_request_sfw = {
+        type: 'sfw',
+        model_name: selectedStyle.sfw.model_name,
+        sampler_name: selectedStyle.sfw.sampler_name || '',
+        loras: selectedStyle.sfw.loras,
+        prompt: selectedStyle.sfw.prompt + prompt,
+        negative_prompt: selectedStyle.sfw.negative_prompt
+      };
+      tasks.push({ ...params, ...image_request_sfw });
+
+      // NSFW Task
+      const image_request_nsfw = {
+        type: 'nsfw',
+        model_name: selectedStyle.nsfw.model_name,
+        sampler_name: selectedStyle.nsfw.sampler_name || '',
+        loras: selectedStyle.nsfw.loras,
+        prompt: selectedStyle.nsfw.prompt + prompt,
+        negative_prompt: selectedStyle.nsfw.negative_prompt,
+        blur: !isSubscribed
+      };
+
+      tasks.push({ ...params, ...image_request_nsfw });
+
+      // Initiate tasks and collect taskIds
+      const taskIds = await Promise.all(tasks.map(async (task) => {
+        console.log(`Request ${task.type} image`)
+        console.log(`Should be blurry : ${task.blur}`)
+        // Send request to Novita and get taskId
+        const novitaTaskId = await fetchNovitaMagic(task);
+
+        // Store task details in DB
+        await db.collection('tasks').insertOne({
+          taskId: novitaTaskId,
+          type: task.type,
+          status: 'pending',
+          prompt: prompt, // Original prompt without default
+          negative_prompt: task.negative_prompt,
+          aspectRatio: aspectRatio,
+          userId: new ObjectId(userId),
+          chatId: new ObjectId(chatId),
+          userChatId: new ObjectId(userChatId),
+          blur: task.blur || false,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+
+        return { taskId: novitaTaskId, type: task.type };
+      }));
+
+      // Respond with taskIds
+      reply.send({ tasks: taskIds, message: 'Image generation tasks started. Use the taskIds to check status.' });
+
+    } catch (err) {
+      console.error(err);
+      reply.status(500).send({ error: 'Error initiating image generation.' });
     }
   });
 // Endpoint to initiate txt2img for selected image type
@@ -451,7 +541,7 @@ fastify.post('/novita/txt2img', async (request, reply) => {
 
       // Prepare params
       const requestData = { ...params, ...image_request, image_num: 4 };
-console.log(requestData)
+
       // Send request to Novita and get taskId
       const novitaTaskId = await fetchNovitaMagic(requestData);
 
@@ -493,6 +583,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
       const task = await tasksCollection.findOne({ taskId });
 
       if (!task) {
+
           return reply.status(404).send({ error: 'Task not found.' });
       }
 
@@ -500,7 +591,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
           return reply.send({
               taskId: task.taskId,
               status: task.status,
-              ...(task.status === 'completed' ? { images: task.result.images } : { error: task.error })
+              ...(task.status === 'completed' ? { images: task.result?.images } : { error: task.error })
           });
       }
 
@@ -512,7 +603,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
       }
 
       // Since we no longer need to blur images, we'll use the images as they are
-      let images = result; // `result` is an array of image data { imageId, imageUrl }
+      let images = Array.isArray(result) ? result : [result]; // `result` is an array of image data { imageId, imageUrl }
 
       // Save images to the database
       console.log(`Save images to the database`)
@@ -527,7 +618,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
               null, // blurredImageUrl is null since we're not blurring images
               task.type === 'nsfw' // nsfw flag
           );
-          return { imageId: saveResult.imageId, imageUrl: imageData.imageUrl };
+          return { imageId: saveResult.imageId, imageUrl: imageData.imageUrl};
       }));
 
       // Update the task status to 'completed' and store the result

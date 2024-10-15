@@ -2281,8 +2281,15 @@ async function routes(fastify, options) {
     
         reply.send({ imageUrl });
     });
-    
-        
+    fastify.get('/api/categories', async (req, res) => {
+        try {
+          const categories = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('categories').find().toArray();
+          return res.send(categories);
+        } catch (err) {
+            console.log(err)
+          res.status(500).send('Ahoy! Trouble fetching categories.');
+        }
+      });
 }
 
 module.exports = routes;

@@ -1824,32 +1824,31 @@ async function routes(fastify, options) {
     });
 
     fastify.get('/api/check-image-description', async (request, reply) => {
-        const chatId = new fastify.mongo.ObjectId(request.query.chatId);
-
+        const { chatId } = request.query;
+    
         if (!chatId) {
             return reply.status(400).send({ error: 'chatId parameter is required' });
         }
     
         try {
+            const objectId = new fastify.mongo.ObjectId(chatId);
             const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
             const collection = db.collection('chats');
     
             // Check if the description for the image already exists in the database
-            let chat = await collection.findOne({
-                _id : chatId,
-            });
-
-            imageDescription = chat?.imageDescription
-
+            const chat = await collection.findOne({ _id: objectId });
+            const imageDescription = chat?.imageDescription;
+    
             if (!imageDescription) {
                 return reply.send(false);
             }
     
-            reply.send(imageDescription);
+            return reply.send({ imageDescription });
         } catch (error) {
             reply.status(500).send({ error: 'Internal Server Error', details: error.message });
         }
     });
+    
     fastify.get('/lastMessage/:chatId/:userId', async (request, reply) => {
         const { chatId, userId } = request.params;
         const collectionChatLastMessage = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chatLastMessage');

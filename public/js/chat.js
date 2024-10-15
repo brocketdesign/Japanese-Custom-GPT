@@ -42,6 +42,14 @@ $(document).ready(async function() {
         }
     });
     window.addEventListener('message', function(event) {
+        if (event.data.event === 'imageStart') {
+            const message = event.data.message
+            addMessageToChat(chatId, userChatId, 'user', message,function(){
+                generateCompletion()
+            });
+        }
+    });
+    window.addEventListener('message', function(event) {
         if (event.data.event === 'imageDone') {
             let message = `[Hidden] I received the images. Write a message to inform me of that.`
             addMessageToChat(chatId, userChatId, 'user', message,function(){
@@ -396,7 +404,7 @@ $(document).ready(async function() {
         promptForEmail()
     })
     
-    function handleChatSuccess(data, fetch_reset, fetch_userId) {
+    async function handleChatSuccess(data, fetch_reset, fetch_userId) {
         const chatId = data.chat._id;
         $(document).find(`.chat-list.item[data-id="${chatId}"]`).addClass('active').siblings().removeClass('active');
 
@@ -428,12 +436,10 @@ $(document).ready(async function() {
         if (!isTemporary) {
             //initializeOrUpdateProgress(data?.userChat?.messagesCount || 0, data?.userChat?.nextLevel || 10);
         }
-
-        checkImageDescription(chatId,function(response){
-            if(!response){
-                generateImageDescriptionBackend(thumbnail,chatId)
-            }
-        }) 
+        const {imageDescription} = await checkImageDescription(chatId);
+        if (!imageDescription) {
+            generateImageDescriptionBackend(thumbnail, chatId);
+        }
 
         updateParameters(chatId, fetch_userId);
         showChat();
@@ -455,9 +461,9 @@ $(document).ready(async function() {
         $('#chat-title').text(chatName);
         $('#input-container').show().addClass('d-flex');
         if(user.lang == 'ja'){
-            $('#userMessage').attr('placeholder', `${chatName}${window,translations.sendMessageTo}`);
+            $('#userMessage').attr('placeholder', `${chatName}${window.translations.sendMessageTo}`);
         }else{
-            $('#userMessage').attr('placeholder', `${window,translations.sendMessageTo}${chatName}`);
+            $('#userMessage').attr('placeholder', `${window.translations.sendMessageTo}${chatName}`);
         }
     }
     
@@ -1864,7 +1870,7 @@ $(document).ready(async function() {
             }
         });
     }
-                
+    
     window.displayMessage = function(sender, message, callback) {
         const messageClass = sender === 'user' ? 'user-message' : sender;
         const animationClass = 'animate__animated animate__slideInUp';
@@ -2015,30 +2021,7 @@ $(document).ready(async function() {
             }
         });
     }
-    
-    function addMessageToChat(chatId, userChatId, role, message, callback) {
-        $.ajax({
-            url: '/api/chat/add-message',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({
-                chatId: chatId,
-                userChatId: userChatId,
-                role: role,
-                message: message
-            }),
-            success: function(response) {
-                if(typeof callback == 'function'){
-                    callback(null, response);
-                }
-            },
-            error: function(xhr, status, error) {
-                if(typeof callback == 'function'){
-                    callback(error);
-                }
-            }
-        });
-    }
+  
 
     function handleImageGeneration(buttonSelector, generateImageFunction) {
         $(document).on('click', buttonSelector, function() {
@@ -2064,8 +2047,11 @@ $(document).ready(async function() {
         });
     }
     
-    handleImageGeneration('#novita-gen-button', generateImageNovita);
-    
+    //handleImageGeneration('#novita-gen-button', generateImageNovita);
+    $('#novita-gen-button').on('click',function(){
+        displayAdvancedImageGenerationForm(API_URL, userId, chatId, userChatId, thumbnail)
+    })
+
     // User info popup
         
     function generateRandomNickname() {
@@ -2256,6 +2242,7 @@ $(document).ready(async function() {
         });
     }
     function checkForPurchaseProposal() {
+        return
         $.ajax({
             url: '/api/check-assistant-proposal',
             type: 'POST',
@@ -2641,6 +2628,30 @@ function renderChatDropdown(chat) {
     `;
 
     return dropdownHtml 
+}
+  
+window.addMessageToChat = function(chatId, userChatId, role, message, callback) {
+    $.ajax({
+        url: '/api/chat/add-message',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            chatId: chatId,
+            userChatId: userChatId,
+            role: role,
+            message: message
+        }),
+        success: function(response) {
+            if(typeof callback == 'function'){
+                callback(null, response);
+            }
+        },
+        error: function(xhr, status, error) {
+            if(typeof callback == 'function'){
+                callback(error);
+            }
+        }
+    });
 }
 window.claimDailyBonus = function(callback) {
     const today = new Date().toISOString().split('T')[0];

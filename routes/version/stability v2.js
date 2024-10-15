@@ -224,6 +224,48 @@ async function routes(fastify, options) {
   
 
   
+  fastify.get('/image/:imageId', async (request, reply) => {
+    try {
+      const { imageId } = request.params;
+      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const galleryCollection = db.collection('gallery');
+  
+      const objectId = new fastify.mongo.ObjectId(imageId);
+  
+      const imageDocument = await galleryCollection.findOne({
+        "images._id": objectId
+      }, {
+        projection: { "images.$": 1 }
+      });
+  
+      if (!imageDocument || !imageDocument.images || imageDocument.images.length === 0) {
+        return reply.status(404).send({ error: 'Image not found' });
+      }
+  
+      const imageDetails = imageDocument.images[0];
+
+      let imageUrl = imageDetails.imageUrl;
+      const imagePrompt = imageDetails.prompt;
+  
+      const collectionUser = db.collection('users');
+      let user = await fastify.getUser(request, reply);
+      const userId = new fastify.mongo.ObjectId(user._id);
+      user = await collectionUser.findOne({ _id: userId });
+  
+      let isBlur = false
+      if (imageDetails.isBlurred && user.subscriptionStatus !== 'active') {
+        imageUrl = imageDetails.blurredImageUrl; 
+        isBlur = true
+      }
+  
+      return reply.status(200).send({ imageDetails, imageUrl, imagePrompt, isBlur });
+  
+    } catch (error) {
+      console.error('Error fetching image URL:', error);
+      return reply.status(500).send({ error: 'An error occurred while fetching the image URL' });
+    }
+  });
+  
   // NOVITA
     // Function to trigger the Novita API for text-to-image generation
     async function fetchNovitaMagic(data) {
@@ -346,217 +388,182 @@ async function routes(fastify, options) {
       loras: [],
     }
 
-  fastify.get('/image/:imageId', async (request, reply) => {
-    try {
-      const { imageId } = request.params;
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
-      const galleryCollection = db.collection('gallery');
+    // Endpoint to initiate txt2img with SFW and NSFW
+    fastify.post('/novita/txt2img', async (request, reply) => {
+      const { prompt, aspectRatio, userId, chatId, userChatId } = request.body;
   
-      // Convert the imageId string to a MongoDB ObjectId
-      const objectId = new fastify.mongo.ObjectId(imageId);
-  
-      // Find the image document containing this imageId in the gallery
-      const imageDocument = await galleryCollection.findOne({
-        "images._id": objectId
-      }, {
-        projection: { "images.$": 1 } // Only return the matching image
+      // Define the schema for validation
+      const Txt2ImgSchema = z.object({
+        prompt: z.string().min(10, 'Prompt must be at least 10 characters long'),
+        aspectRatio: z.string().optional().default('9:16'),
+        userId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid userId'),
+        chatId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid chatId'),
+        userChatId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid userChatId')
       });
   
-      if (!imageDocument || !imageDocument.images || imageDocument.images.length === 0) {
-        return reply.status(404).send({ error: 'Image not found' });
-      }
+      try {
+        const validated = Txt2ImgSchema.parse(request.body);
+        const { prompt, aspectRatio, userId, chatId, userChatId } = validated;
   
-      const imageUrl = imageDocument.images[0].imageUrl;
-      const imagePrompt = imageDocument.images[0].prompt
-      return reply.status(200).send({ imageUrl, imagePrompt});
-    } catch (error) {
-      console.error('Error fetching image URL:', error);
-      return reply.status(500).send({ error: 'An error occurred while fetching the image URL' });
-    }
-  });
-// Endpoint to initiate txt2img for selected image type
-fastify.post('/novita/txt2img', async (request, reply) => {
-  const { prompt, aspectRatio, userId, chatId, userChatId, imageType, price } = request.body;
+        // Fetch user subscription status
+        const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+        const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+        const isSubscribed = user && user.subscriptionStatus === 'active';
+  
+        // Fetch imageStyle
+        const chat = await db.collection('chats').findOne({ _id: new ObjectId(chatId) });
+        const imageStyle = chat.imageStyle
 
-  // Define the schema for validation
-  const Txt2ImgSchema = z.object({
-      prompt: z.string().min(10, 'Prompt must be at least 10 characters long'),
-      aspectRatio: z.string().optional().default('9:16'),
-      userId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid userId'),
-      chatId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid chatId'),
-      userChatId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid userChatId'),
-      imageType: z.enum(['sfw', 'nsfw']),
-      price: z.number().positive()
-  });
+        // Select prompts and model based on imageStyle
+        const selectedStyle = default_prompt[imageStyle] || default_prompt['anime'];
 
-  try {
-      const validated = Txt2ImgSchema.parse(request.body);
-      const { prompt, aspectRatio, userId, chatId, userChatId, imageType, price } = validated;
+        // Prepare tasks
+        const tasks = [];
 
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+        // SFW Task
+        const image_request_sfw = {
+          type: 'sfw',
+          model_name: selectedStyle.sfw.model_name,
+          sampler_name: selectedStyle.sfw.sampler_name || '',
+          loras: selectedStyle.sfw.loras,
+          prompt: selectedStyle.sfw.prompt + prompt,
+          negative_prompt: selectedStyle.sfw.negative_prompt
+        };
+        tasks.push({ ...params, ...image_request_sfw });
 
-      // Fetch the user
-      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+        // NSFW Task
+        const image_request_nsfw = {
+          type: 'nsfw',
+          model_name: selectedStyle.nsfw.model_name,
+          sampler_name: selectedStyle.nsfw.sampler_name || '',
+          loras: selectedStyle.nsfw.loras,
+          prompt: selectedStyle.nsfw.prompt + prompt,
+          negative_prompt: selectedStyle.nsfw.negative_prompt,
+          blur: !isSubscribed
+        };
 
-      if (!user) {
-          return reply.code(404).send({ error: 'User not found' });
+        tasks.push({ ...params, ...image_request_nsfw });
+
+        // Initiate tasks and collect taskIds
+        const taskIds = await Promise.all(tasks.map(async (task) => {
+          console.log(`Request ${task.type} image`)
+          console.log(`Should be blurry : ${task.blur}`)
+          // Send request to Novita and get taskId
+          const novitaTaskId = await fetchNovitaMagic(task);
+  
+          // Store task details in DB
+          await db.collection('tasks').insertOne({
+            taskId: novitaTaskId,
+            type: task.type,
+            status: 'pending',
+            prompt: prompt, // Original prompt without default
+            negative_prompt: task.negative_prompt,
+            aspectRatio: aspectRatio,
+            userId: new ObjectId(userId),
+            chatId: new ObjectId(chatId),
+            userChatId: new ObjectId(userChatId),
+            blur: task.blur || false,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+  
+          return { taskId: novitaTaskId, type: task.type };
+        }));
+  
+        // Respond with taskIds
+        reply.send({ tasks: taskIds, message: 'Image generation tasks started. Use the taskIds to check status.' });
+  
+      } catch (err) {
+        console.error(err);
+        reply.status(500).send({ error: 'Error initiating image generation.' });
       }
-
-      let userCoins = user.coins || 0;
-
-      if (userCoins < price) {
-          return reply.code(400).send({ error: 'Insufficient coins', id: 1 });
-      }
-
-      // Deduct coins
-      userCoins -= price;
-      await db.collection('users').updateOne(
-          { _id: new ObjectId(userId) },
-          { $set: { coins: userCoins } }
-      );
-
-      // Fetch user subscription status
-      const isSubscribed = user.subscriptionStatus === 'active';
-
-      // Fetch imageStyle from chat or use default
-      const chat = await db.collection('chats').findOne({ _id: new ObjectId(chatId) });
-      const imageStyle = chat.imageStyle || 'anime';
-
-      // Select prompts and model based on imageStyle
-      const selectedStyle = default_prompt[imageStyle] || default_prompt['anime'];
-
-      // Prepare task based on imageType
-      let image_request;
-      if (imageType === 'sfw') {
-          image_request = {
-              type: 'sfw',
-              model_name: selectedStyle.sfw.model_name,
-              sampler_name: selectedStyle.sfw.sampler_name || '',
-              loras: selectedStyle.sfw.loras,
-              prompt: selectedStyle.sfw.prompt + prompt,
-              negative_prompt: selectedStyle.sfw.negative_prompt,
-              blur: false
-          };
-      } else {
-          image_request = {
-              type: 'nsfw',
-              model_name: selectedStyle.nsfw.model_name,
-              sampler_name: selectedStyle.nsfw.sampler_name || '',
-              loras: selectedStyle.nsfw.loras,
-              prompt: selectedStyle.nsfw.prompt + prompt,
-              negative_prompt: selectedStyle.nsfw.negative_prompt,
-              blur: !isSubscribed
-          };
-      }
-
-      // Prepare params
-      const requestData = { ...params, ...image_request, image_num: 4 };
-console.log(requestData)
-      // Send request to Novita and get taskId
-      const novitaTaskId = await fetchNovitaMagic(requestData);
-
-      // Store task details in DB
-      await db.collection('tasks').insertOne({
-          taskId: novitaTaskId,
-          type: imageType,
-          status: 'pending',
-          prompt: prompt,
-          negative_prompt: image_request.negative_prompt,
-          aspectRatio: aspectRatio,
-          userId: new ObjectId(userId),
-          chatId: new ObjectId(chatId),
-          userChatId: new ObjectId(userChatId),
-          blur: image_request.blur,
-          createdAt: new Date(),
-          updatedAt: new Date()
-      });
-
-      // Respond with taskId
-      reply.send({ taskId: novitaTaskId, message: 'Image generation task started. Use the taskId to check status.' });
-
-  } catch (err) {
-      console.error(err);
-      reply.status(500).send({ error: 'Error initiating image generation.' });
-  }
-});
-
+    });
       /**
    * Endpoint to check the status of a task
    */
-// Endpoint to check the status of a task without blurring images
-fastify.get('/novita/task-status/:taskId', async (request, reply) => {
-  const { taskId } = request.params;
-
-  try {
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
-      const tasksCollection = db.collection('tasks');
-      const task = await tasksCollection.findOne({ taskId });
-
-      if (!task) {
-          return reply.status(404).send({ error: 'Task not found.' });
-      }
-
-      if (['completed', 'failed'].includes(task.status)) {
-          return reply.send({
+      fastify.get('/novita/task-status/:taskId', async (request, reply) => {
+        const { taskId } = request.params;
+        try {
+          const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+          const tasksCollection = db.collection('tasks');
+          const task = await tasksCollection.findOne({ taskId });
+      
+          if (!task) return reply.status(404).send({ error: 'Task not found.' });
+      
+          if (['completed', 'failed'].includes(task.status)) {
+            return reply.send({
               taskId: task.taskId,
               status: task.status,
-              ...(task.status === 'completed' ? { images: task.result.images } : { error: task.error })
-          });
-      }
-
-      // Fetch the result from Novita API
-      const result = await fetchNovitaResult(task.taskId);
-      if (!result) {
-          // Task is still processing
-          return reply.send({ taskId: task.taskId, status: 'processing' });
-      }
-
-      // Since we no longer need to blur images, we'll use the images as they are
-      let images = result; // `result` is an array of image data { imageId, imageUrl }
-
-      // Save images to the database
-      console.log(`Save images to the database`)
-      const savedImages = await Promise.all(images.map(async (imageData) => {
-          const saveResult = await saveImageToDB(
-              task.userId,
-              task.chatId,
-              task.userChatId,
-              task.prompt,
-              imageData.imageUrl,
-              task.aspectRatio,
-              null, // blurredImageUrl is null since we're not blurring images
-              task.type === 'nsfw' // nsfw flag
+              ...(task.status === 'completed' ? { result: task.result } : { error: task.error })
+            });
+          }
+      
+          const result = await fetchNovitaResult(task.taskId);
+          if (!result) return reply.send({ taskId: task.taskId, status: 'processing' });
+      
+          const shouldBlur = task.type === 'nsfw' && task.blur;
+          let imageUrl = result.imageUrl;
+          let blurryImageUrl
+          if (shouldBlur) {
+            try {
+              blurryImageUrl = await createBlurredImage(result.imageUrl, db);
+            } catch (blurError) {
+              await tasksCollection.updateOne(
+                { taskId: task.taskId },
+                { $set: { status: 'failed', error: `Blurring failed: ${blurError.message}`, updatedAt: new Date() } }
+              );
+              return reply.status(500).send({ taskId: task.taskId, status: 'failed', error: `Blurring failed: ${blurError.message}` });
+            }
+          }
+      
+          // Attempt to atomically update the task to completed
+          const updateResult = await tasksCollection.findOneAndUpdate(
+            { taskId: task.taskId, status: { $in: ['pending', 'processing'] } },
+            { $set: { status: 'completed', result: { imageId: result.imageId, imageUrl }, updatedAt: new Date() } },
+            { returnOriginal: false }
           );
-          return { imageId: saveResult.imageId, imageUrl: imageData.imageUrl };
-      }));
+      
+          // If the task was already completed, don't skip saving the image, just retrieve and continue
+          let taskToSave = updateResult.value || (await tasksCollection.findOne({ taskId }));
 
-      // Update the task status to 'completed' and store the result
-      await tasksCollection.updateOne(
-          { taskId: task.taskId },
-          { $set: { status: 'completed', result: { images: savedImages }, updatedAt: new Date() } }
-      );
-
-      // Send the response with the images
-      return reply.send({
-          taskId: task.taskId,
-          status: 'completed',
-          images: savedImages
+          // Save the images to the DB, ensuring this step always occurs
+          const saveResult = await saveImageToDB(
+            taskToSave.userId,
+            taskToSave.chatId,
+            taskToSave.userChatId,
+            taskToSave.prompt,
+            result.imageUrl,
+            taskToSave.aspectRatio,
+            blurryImageUrl,
+            task.type == 'nsfw'
+          );
+          // Send the correct response with the saved image data
+          return reply.send({
+            taskId: taskToSave.taskId,
+            status: 'completed',
+            result: {
+              imageId: saveResult.imageId,
+              imageUrl: shouldBlur ? blurryImageUrl : imageUrl
+            }
+          });
+      
+        } catch (error) {
+          try {
+            const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+            await db.collection('tasks').updateOne(
+              { taskId },
+              { $set: { status: 'failed', error: error.message, updatedAt: new Date() } }
+            );
+          } catch (updateError) {
+            console.error(`Failed to update task status to 'failed': ${updateError.message}`);
+          }
+      
+          return reply.send({ taskId, status: 'failed', error: error.message });
+        }
       });
-
-  } catch (error) {
-      console.error('Error checking task status:', error);
-
-      // Update the task status to 'failed' and store the error message
-      await tasksCollection.updateOne(
-          { taskId: taskId },
-          { $set: { status: 'failed', error: error.message, updatedAt: new Date() } }
-      );
-
-      // Send the error response
-      return reply.send({ taskId: taskId, status: 'failed', error: error.message });
-  }
-});
-
+      
+      
+      
       
   async function saveChatImageToDB(db, chatId, imageUrl) {
     const collectionChats = db.collection('chats'); // Replace 'chats' with your actual collection name

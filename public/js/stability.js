@@ -1,41 +1,33 @@
 // =========================
 // Enhanced Image Generation with Novita
 // =========================
+window.checkImageDescription = async function(chatId = null) {
+    if (!chatId) {
+        console.error('checkImageDescription Error: chatId is required.');
+        return { error: 'Abort' };
+    }
 
-// Check Image Description and Implement Limits for Premium Users
-window.checkImageDescription = function(chatId = null, callback) {
+    const imageDescription = $('#image_description').val();
+
+    if (imageDescription) {
+        console.log('Existing image description found.', imageDescription);
+        return { description: imageDescription };
+    }
+
+    try {
+        const response = await fetch(`/api/check-image-description?chatId=${chatId}`, {
+            method: 'GET',
+        });
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('checkImageDescription Error:', error);
+        return { error: 'Failed to check image description.' };
+    }
+};
+
   
-  if (!chatId) {
-      console.error('checkImageDescription Error: chatId is required.');
-      callback({ error: 'Abort' });
-      return;
-  }
-
-  const imageDescription = $('#image_description').val();
-  
-  if (imageDescription) {
-      console.log('Existing image description found.',imageDescription);
-      callback({ description: imageDescription });
-      return;
-  }
-
-  $.ajax({
-      url: '/api/check-image-description',
-      method: 'GET',
-      data: { chatId: chatId },
-      success: function(response) {
-          if (callback) {
-              callback(response);
-          }
-      },
-      error: function(xhr, status, error) {
-          console.error('checkImageDescription Error:', status, error, xhr);
-          if (callback) {
-              callback({ error: 'Failed to check image description.' });
-          }
-      }
-  });
-}
 
 // Create System Payload for Image Description
 function createSystemPayloadImage(language) {
@@ -345,3 +337,528 @@ window.generateImage = async function(data, prompt) {
     showNotification('ユーザー情報の取得に失敗しました。', 'error');
   }
 };
+
+// Ensure that Bootstrap 5's JavaScript and CSS are included in your project.
+// You can include them via CDN in your HTML file:
+//
+// <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+// <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+/**
+ * Function to display the advanced image generation form with Bootstrap 5 nav tabs for SFW and NSFW.
+ * @param {string} API_URL - The backend API URL for image generation.
+ * @param {string} userId - The ID of the user.
+ * @param {string} chatId - The ID of the chat.
+ * @param {string} userChatId - The user's chat ID.
+ * @param {string} thumbnail - URL of the avatar thumbnail.
+ * @param {function} callback - Optional callback function after form is displayed.
+ */
+const t = window.translations.imageForm;
+
+window.displayAdvancedImageGenerationForm = function(API_URL, userId, chatId, userChatId, thumbnail, callback) {
+    const animationClass = 'animate__animated animate__fadeIn';
+    const uniqueId = `advanced-image-generation-form-${Date.now()}`;
+
+    // Prices for SFW and NSFW images
+    const SFW_PRICE = 35;
+    const NSFW_PRICE = 75;
+
+    // Generate the initial form with Bootstrap 5 nav tabs
+    const initialFormElement = $(`
+        <div id="${uniqueId}-initial" class="advanced-image-generation-initial-form ${animationClass}" style="width: 100%; padding: 20px; background-color: #f9f9f9; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+            <h4 class="mb-4">${t['imageGenerationForm']}</h4>
+
+            <!-- Bootstrap 5 Nav Tabs -->
+            <ul class="nav nav-tabs" id="${uniqueId}-tab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="${uniqueId}-sfw-tab" data-bs-toggle="tab" data-bs-target="#${uniqueId}-sfw" type="button" role="tab" aria-controls="${uniqueId}-sfw" aria-selected="true">${t['sfwImage']} (${SFW_PRICE} ${t['coins']})</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="${uniqueId}-nsfw-tab" data-bs-toggle="tab" data-bs-target="#${uniqueId}-nsfw" type="button" role="tab" aria-controls="${uniqueId}-nsfw" aria-selected="false">${t['nsfwImage']} (${NSFW_PRICE} ${t['coins']})</button>
+                </li>
+            </ul>
+
+            <!-- Tab Panes -->
+            <div class="tab-content" id="${uniqueId}-tabContent">
+                <!-- SFW Form Tab Pane -->
+                <div class="tab-pane fade show active" id="${uniqueId}-sfw" role="tabpanel" aria-labelledby="${uniqueId}-sfw-tab">
+                    ${generateSFWForm(uniqueId)}
+                </div>
+                <!-- NSFW Form Tab Pane -->
+                <div class="tab-pane fade" id="${uniqueId}-nsfw" role="tabpanel" aria-labelledby="${uniqueId}-nsfw-tab">
+                    ${generateNSFWForm(uniqueId)}
+                </div>
+            </div>
+        </div>
+    `).show();
+
+    // Append the initial form to the chat as a single message
+    const messageElement = $(`
+        <div class="d-flex flex-row justify-content-start mb-4 message-container assistant ${animationClass}">
+            <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
+            <div class="ms-3" style="width: 100%;">
+                ${initialFormElement.prop('outerHTML')}
+            </div>
+        </div>
+    `).hide();
+
+    $('#chatContainer').append(messageElement);
+    messageElement.fadeIn();
+
+    // Setup event listeners for both SFW and NSFW forms
+    setupFormEventListeners(uniqueId, 'sfw', { userId, chatId, userChatId });
+    setupFormEventListeners(uniqueId, 'nsfw', { userId, chatId, userChatId });
+
+    if (typeof callback === 'function') {
+        callback();
+    }
+};
+
+/**
+ * Sets up event listeners for a given form (SFW or NSFW).
+ * @param {string} uniqueId - The unique identifier for the form.
+ * @param {string} formType - The type of form ('sfw' or 'nsfw').
+ * @param {object} config - Configuration object containing necessary parameters.
+ */
+async function setupFormEventListeners(uniqueId, formType, config) {
+    const t = window.translations.imageForm;
+    const SFW_PRICE = 35;
+    const NSFW_PRICE = 75;
+
+    // Define selectors based on formType
+    const formSelector = `#${uniqueId}-${formType}-form`;
+
+    // Event listener for selectable options
+    $(`${formSelector} .selectable-option`).on('click', function() {
+        const categoryClass = $(this).attr('class').split(' ')[0]; // e.g., 'character-option'
+        $(`${formSelector} .${categoryClass}`).removeClass('selected');
+        $(this).addClass('selected');
+    });
+
+    // Event listener for generate button
+    $(`${formSelector} .btn-primary`).on('click', async function() {
+        const selectedCharacter = $(`${formSelector} .character-option.selected`).data('value');
+        const selectedBody = $(`${formSelector} .body-option.selected`).data('value');
+        const selectedPose = $(`${formSelector} .pose-option.selected`).data('value');
+        const selectedAction = $(`${formSelector} .action-option.selected`).data('value');
+        const selectedClothes = $(`${formSelector} .clothes-option.selected`).data('value');
+        const selectedExpression = $(`${formSelector} .expression-option.selected`).data('value');
+
+        if (!selectedCharacter || !selectedBody || !selectedPose || !selectedAction || !selectedClothes || !selectedExpression) {
+            showNotification(t['selectAllOptions'], 'error');
+            return;
+        }
+
+        // Determine the price based on image type
+        const price = formType === 'sfw' ? SFW_PRICE : NSFW_PRICE;
+console.log({config})
+        // Fetch the character description
+        const {imageDescription} = await checkImageDescription(config.chatId);
+        // Create a prompt from the selected elements
+        const prompt = `${imageDescription}, ${selectedCharacter}, ${selectedBody}, ${selectedPose}, ${selectedAction}, ${selectedClothes}, ${selectedExpression}`;
+        console.log(prompt)
+return
+        // Prepare data to send to the backend
+        const requestData = {
+            prompt: prompt,
+            aspectRatio: '9:16',
+            userId: config.userId,
+            chatId: config.chatId,
+            userChatId: config.userChatId,
+            imageType: formType,
+            price: price
+        };
+
+        // Show spinner and hide the generate button
+        $(`${formSelector} .btn-primary`).prop('disabled', true).hide();
+        $(`${formSelector} .spinner`).show();
+
+        // Send hidden message to the AI character
+        const hiddenMessage = `[Hidden] I just sent you ${price} coins for images about: ${prompt}. 
+        the images are not available yet , I will tell you when they are available.`;
+        window.postMessage({ event: 'imageStart', message: hiddenMessage }, '*');
+
+        // Send request to the backend to generate images
+        try {
+            const response = await $.ajax({
+                url: '/novita/txt2img',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(requestData)
+            });
+
+            if (!response.taskId) {
+                throw new Error(t['imageGenerationError']);
+            }
+
+            updateCoins();
+
+            // Image generation task started, use task ID to poll for status
+            const taskId = response.taskId;
+            showNotification(t['imageGenerationStarted'], 'success');
+
+            // Use the existing checkTaskStatus function to poll for the task status
+            checkTaskStatus(taskId, config.chatId, prompt, function() {
+                // Hide spinner and show the generate button when done
+                $(`${formSelector} .spinner`).hide();
+                $(`${formSelector} .btn-primary`).prop('disabled', false).show();
+            });
+
+        } catch (error) {
+            console.error('Error generating images:', error);
+            showNotification(error.message || t['imageGenerationError'], 'error');
+            // Hide spinner and show the generate button on error
+            $(`${formSelector} .spinner`).hide();
+            $(`${formSelector} .btn-primary`).prop('disabled', false).show();
+        }
+    });
+}
+
+/**
+ * Generates the HTML for the SFW form.
+ * @param {string} uniqueId - The unique identifier for the form.
+ * @returns {string} - The HTML string for the SFW form.
+ */
+function generateSFWForm(uniqueId) {
+    const t = window.translations.imageForm;
+    return `
+        <div id="${uniqueId}-sfw-form" class="advanced-image-generation-form">
+            <!-- Character Selection (Exclusively Female) -->
+            <div class="mb-4">
+                <label class="form-label"><strong>${t['selectCharacter']}</strong></label>
+                <div class="d-flex flex-wrap">
+                    <!-- Only Female Character Options -->
+                    <div class="me-3 mb-3 text-center">
+                        <span class="character-option selectable-option" data-value="young girl character, age 18">${t['characterGirl']}</span>
+                    </div>
+                    <div class="me-3 mb-3 text-center">
+                        <span class="character-option selectable-option" data-value="adult woman character, age 25-30">${t['characterWoman']}</span>
+                    </div>
+                    <!-- Add more female character options here if needed -->
+                </div>
+            </div>
+            
+            <!-- Body Type Selection -->
+            <div class="mb-4">
+                <label class="form-label"><strong>${t['selectBodyType']}</strong></label>
+                <div class="d-flex flex-wrap">
+                    <div class="me-3 mb-3 text-center">
+                        <span class="body-option selectable-option" data-value="athletic body, toned muscles">${t['bodyAthletic']}</span>
+                    </div>
+                    <div class="me-3 mb-3 text-center">
+                        <span class="body-option selectable-option" data-value="slim body, slender frame">${t['bodySlim']}</span>
+                    </div>
+                    <!-- Add more body options here -->
+                </div>
+            </div>
+            
+            <!-- Pose Selection -->
+            <div class="mb-4">
+                <label class="form-label"><strong>${t['selectPose']}</strong></label>
+                <div class="d-flex flex-wrap">
+                    <div class="me-3 mb-3 text-center">
+                        <span class="pose-option selectable-option" data-value="sitting in meditation pose">${t['poseMeditating']}</span>
+                    </div>
+                    <div class="me-3 mb-3 text-center">
+                        <span class="pose-option selectable-option" data-value="performing a cartwheel">${t['poseCartwheel']}</span>
+                    </div>
+                    <!-- Add more pose options here -->
+                </div>
+            </div>
+            
+            <!-- Action Selection -->
+            <div class="mb-4">
+                <label class="form-label"><strong>${t['selectAction']}</strong></label>
+                <div class="d-flex flex-wrap">
+                    <div class="me-3 mb-3 text-center">
+                        <span class="action-option selectable-option" data-value="singing into a microphone">${t['actionSinging']}</span>
+                    </div>
+                    <div class="me-3 mb-3 text-center">
+                        <span class="action-option selectable-option" data-value="painting a canvas">${t['actionPainting']}</span>
+                    </div>
+                    <!-- Add more action options here -->
+                </div>
+            </div>
+            
+            <!-- Clothes Selection -->
+            <div class="mb-4">
+                <label class="form-label"><strong>${t['selectClothes']}</strong></label>
+                <div class="d-flex flex-wrap">
+                    <div class="me-3 mb-3 text-center">
+                        <span class="clothes-option selectable-option" data-value="wearing a dress">${t['clothesDress']}</span>
+                    </div>
+                    <div class="me-3 mb-3 text-center">
+                        <span class="clothes-option selectable-option" data-value="wearing a suit">${t['clothesSuit']}</span>
+                    </div>
+                    <!-- Add more clothes options here -->
+                </div>
+            </div>
+            
+            <!-- Facial Expression Selection -->
+            <div class="mb-4">
+                <label class="form-label"><strong>${t['selectFacialExpression']}</strong></label>
+                <div class="d-flex flex-wrap">
+                    <div class="me-3 mb-3 text-center">
+                        <span class="expression-option selectable-option" data-value="happy facial expression, smiling">${t['expressionHappy']}</span>
+                    </div>
+                    <div class="me-3 mb-3 text-center">
+                        <span class="expression-option selectable-option" data-value="sad facial expression, frowning">${t['expressionSad']}</span>
+                    </div>
+                    <!-- Add more expression options here -->
+                </div>
+            </div>
+            
+            <!-- Generate Button -->
+            <div class="text-center">
+                <button id="${uniqueId}-generate-btn-sfw" class="btn btn-primary">${t['generateImages']}</button>
+            </div>
+            
+            <!-- Spinner (Initially Hidden) -->
+            <div id="${uniqueId}-spinner-sfw" class="spinner" style="display: none; text-align: center; margin-top: 20px;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">${t['loading']}</span>
+                </div>
+                <div>${t['generatingImages']}</div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Generates the HTML for the NSFW form.
+ * @param {string} uniqueId - The unique identifier for the form.
+ * @returns {string} - The HTML string for the NSFW form.
+ */
+function generateNSFWForm(uniqueId) {
+    const t = window.translations.imageForm;
+    return `
+        <div id="${uniqueId}-nsfw-form" class="advanced-image-generation-form">
+            <h5 class="mb-4">${t['nsfwPlaceholder']}</h5>
+            <!-- Since NSFW is not yet implemented, you can add a placeholder or similar fields as needed -->
+            <!-- For demonstration, we'll replicate the SFW form fields -->
+            
+            <!-- Character Selection (Exclusively Female) -->
+            <div class="mb-4">
+                <label class="form-label"><strong>${t['selectCharacter']}</strong></label>
+                <div class="d-flex flex-wrap">
+                    <!-- Only Female Character Options -->
+                    <div class="me-3 mb-3 text-center">
+                        <span class="character-option selectable-option" data-value="young girl character, age 18, short hair">${t['characterGirl']}</span>
+                    </div>
+                    <div class="me-3 mb-3 text-center">
+                        <span class="character-option selectable-option" data-value="adult woman character, age 25-30, long hair">${t['characterWoman']}</span>
+                    </div>
+                    <!-- Add more female character options here if needed -->
+                </div>
+            </div>
+            
+            <!-- Body Type Selection -->
+            <div class="mb-4">
+                <label class="form-label"><strong>${t['selectBodyType']}</strong></label>
+                <div class="d-flex flex-wrap">
+                    <div class="me-3 mb-3 text-center">
+                        <span class="body-option selectable-option" data-value="athletic body, toned muscles">${t['bodyAthletic']}</span>
+                    </div>
+                    <div class="me-3 mb-3 text-center">
+                        <span class="body-option selectable-option" data-value="slim body, slender frame">${t['bodySlim']}</span>
+                    </div>
+                    <!-- Add more body options here -->
+                </div>
+            </div>
+            
+            <!-- Pose Selection -->
+            <div class="mb-4">
+                <label class="form-label"><strong>${t['selectPose']}</strong></label>
+                <div class="d-flex flex-wrap">
+                    <div class="me-3 mb-3 text-center">
+                        <span class="pose-option selectable-option" data-value="sitting in meditation pose">${t['poseMeditating']}</span>
+                    </div>
+                    <div class="me-3 mb-3 text-center">
+                        <span class="pose-option selectable-option" data-value="performing a cartwheel">${t['poseCartwheel']}</span>
+                    </div>
+                    <!-- Add more pose options here -->
+                </div>
+            </div>
+            
+            <!-- Action Selection -->
+            <div class="mb-4">
+                <label class="form-label"><strong>${t['selectAction']}</strong></label>
+                <div class="d-flex flex-wrap">
+                    <div class="me-3 mb-3 text-center">
+                        <span class="action-option selectable-option" data-value="singing into a microphone">${t['actionSinging']}</span>
+                    </div>
+                    <div class="me-3 mb-3 text-center">
+                        <span class="action-option selectable-option" data-value="painting a canvas">${t['actionPainting']}</span>
+                    </div>
+                    <!-- Add more action options here -->
+                </div>
+            </div>
+            
+            <!-- Clothes Selection -->
+            <div class="mb-4">
+                <label class="form-label"><strong>${t['selectClothes']}</strong></label>
+                <div class="d-flex flex-wrap">
+                    <div class="me-3 mb-3 text-center">
+                        <span class="clothes-option selectable-option" data-value="wearing a dress">${t['clothesDress']}</span>
+                    </div>
+                    <div class="me-3 mb-3 text-center">
+                        <span class="clothes-option selectable-option" data-value="wearing a suit">${t['clothesSuit']}</span>
+                    </div>
+                    <!-- Add more clothes options here -->
+                </div>
+            </div>
+            
+            <!-- Facial Expression Selection -->
+            <div class="mb-4">
+                <label class="form-label"><strong>${t['selectFacialExpression']}</strong></label>
+                <div class="d-flex flex-wrap">
+                    <div class="me-3 mb-3 text-center">
+                        <span class="expression-option selectable-option" data-value="happy facial expression, smiling">${t['expressionHappy']}</span>
+                    </div>
+                    <div class="me-3 mb-3 text-center">
+                        <span class="expression-option selectable-option" data-value="sad facial expression, frowning">${t['expressionSad']}</span>
+                    </div>
+                    <!-- Add more expression options here -->
+                </div>
+            </div>
+            
+            <!-- Generate Button -->
+            <div class="text-center">
+                <button id="${uniqueId}-generate-btn-nsfw" class="btn btn-primary">${t['generateImages']}</button>
+            </div>
+            
+            <!-- Spinner (Initially Hidden) -->
+            <div id="${uniqueId}-spinner-nsfw" class="spinner" style="display: none; text-align: center; margin-top: 20px;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">${t['loading']}</span>
+                </div>
+                <div>${t['generatingImages']}</div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Sets up CSS styles for selectable options.
+ */
+(function setupSelectableOptionStyles() {
+    const styles = `
+        .selectable-option {
+            display: inline-block;
+            padding: 10px 15px;
+            font-size: 18px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .selectable-option.selected {
+            background-color: #007bff;
+            color: #fff;
+            border-color: #007bff;
+        }
+        /* Optional: Add hover effects */
+        .selectable-option:hover {
+            background-color: #e6e6e6;
+        }
+    `;
+    $('<style>').text(styles).appendTo('head');
+})();
+
+/**
+ * Polls the backend for the status of an image generation task.
+ * @param {string} taskId - The unique task identifier.
+ * @param {string} chatId - The chat identifier.
+ * @param {string} prompt - The prompt used for image generation.
+ * @param {function} callback - Callback function to execute after task completion or failure.
+ */
+function checkTaskStatus(taskId, chatId, prompt, callback) {
+    const POLLING_INTERVAL = 10000; // 10 seconds
+    const MAX_ATTEMPTS = 30;
+    let attempts = 0;
+
+    const intervalId = setInterval(async () => {
+        attempts++;
+        try {
+            const statusResponse = await $.ajax({
+                url: `/novita/task-status/${taskId}`,
+                method: 'GET',
+                dataType: 'json'
+            });
+
+            if (statusResponse.status === 'completed') {
+                clearInterval(intervalId);
+                const images = statusResponse.images;
+
+                // Display the generated images
+                displayGeneratedImages(images);
+
+                showNotification(t['imagesGeneratedSuccessfully'], 'success');
+
+                // Send a hidden message to the AI character
+                window.postMessage({ event: 'imageDone' }, '*');
+
+                // Execute callback after completion
+                if (typeof callback === 'function') {
+                    callback();
+                }
+
+            } else if (statusResponse.status === 'failed') {
+                clearInterval(intervalId);
+                showNotification(`${t['imageGenerationFailed']}: ${statusResponse.error}`, 'error');
+
+                // Execute callback on failure
+                if (typeof callback === 'function') {
+                    callback();
+                }
+            } else {
+                console.log('Image generation is still processing...');
+            }
+
+            if (attempts >= MAX_ATTEMPTS) {
+                clearInterval(intervalId);
+                showNotification(t['imageGenerationTimeout'], 'error');
+
+                // Execute callback on timeout
+                if (typeof callback === 'function') {
+                    callback();
+                }
+            }
+
+        } catch (error) {
+            console.error('Error polling task status:', error);
+            clearInterval(intervalId);
+            showNotification(t['imageGenerationError'], 'error');
+
+            // Execute callback on error
+            if (typeof callback === 'function') {
+                callback();
+            }
+        }
+    }, POLLING_INTERVAL);
+}
+
+/**
+ * Displays the generated images in the chat.
+ * @param {Array} images - Array of image objects containing imageUrl and imageId.
+ */
+function displayGeneratedImages(images) {
+    images.forEach(function(imageData) {
+        const imageUrl = imageData.imageUrl;
+        const imageId = imageData.imageId;
+
+        const imgElement = new Image();
+        imgElement.src = imageUrl;
+        imgElement.alt = imageData.prompt || '';
+        imgElement.setAttribute('data-id', imageId);
+        imgElement.setAttribute('class', 'm-auto');
+        imgElement.style.borderRadius = '10px';
+
+        // Determine message class based on NSFW flag if needed
+        const messageClass = 'bot-image'; // Or 'bot-image-nsfw' if you have separate styling
+
+        window.displayMessage(messageClass, imgElement);
+    });
+}

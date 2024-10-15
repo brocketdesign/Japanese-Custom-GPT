@@ -369,7 +369,7 @@ window.displayAdvancedImageGenerationForm = function(API_URL, userId, chatId, us
             <h4 class="mb-4">${t['imageGenerationForm']}</h4>
 
             <!-- Bootstrap 5 Nav Tabs -->
-            <ul class="nav nav-tabs" id="${uniqueId}-tab" role="tablist">
+            <ul class="nav nav-tabs mb-3" id="${uniqueId}-tab" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="${uniqueId}-sfw-tab" data-bs-toggle="tab" data-bs-target="#${uniqueId}-sfw" type="button" role="tab" aria-controls="${uniqueId}-sfw" aria-selected="true">${t['sfwImage']} (${SFW_PRICE} ${t['coins']})</button>
                 </li>
@@ -526,10 +526,10 @@ function generateSFWForm(uniqueId) {
                 <label class="form-label"><strong>${t['selectCharacter']}</strong></label>
                 <div class="d-flex flex-wrap">
                     <!-- Only Female Character Options -->
-                    <div class="me-3 mb-3 text-center">
+                    <div class="me-3 mb-3 text-start">
                         <span class="character-option selectable-option" data-value="young girl character, age 18">${t['characterGirl']}</span>
                     </div>
-                    <div class="me-3 mb-3 text-center">
+                    <div class="me-3 mb-3 text-start">
                         <span class="character-option selectable-option" data-value="adult woman character, age 25-30">${t['characterWoman']}</span>
                     </div>
                     <!-- Add more female character options here if needed -->
@@ -540,10 +540,10 @@ function generateSFWForm(uniqueId) {
             <div class="mb-4">
                 <label class="form-label"><strong>${t['selectBodyType']}</strong></label>
                 <div class="d-flex flex-wrap">
-                    <div class="me-3 mb-3 text-center">
+                    <div class="me-3 mb-3 text-start">
                         <span class="body-option selectable-option" data-value="athletic body, toned muscles">${t['bodyAthletic']}</span>
                     </div>
-                    <div class="me-3 mb-3 text-center">
+                    <div class="me-3 mb-3 text-start">
                         <span class="body-option selectable-option" data-value="slim body, slender frame">${t['bodySlim']}</span>
                     </div>
                     <!-- Add more body options here -->
@@ -554,10 +554,10 @@ function generateSFWForm(uniqueId) {
             <div class="mb-4">
                 <label class="form-label"><strong>${t['selectPose']}</strong></label>
                 <div class="d-flex flex-wrap">
-                    <div class="me-3 mb-3 text-center">
+                    <div class="me-3 mb-3 text-start">
                         <span class="pose-option selectable-option" data-value="sitting in meditation pose">${t['poseMeditating']}</span>
                     </div>
-                    <div class="me-3 mb-3 text-center">
+                    <div class="me-3 mb-3 text-start">
                         <span class="pose-option selectable-option" data-value="performing a cartwheel">${t['poseCartwheel']}</span>
                     </div>
                     <!-- Add more pose options here -->
@@ -568,10 +568,10 @@ function generateSFWForm(uniqueId) {
             <div class="mb-4">
                 <label class="form-label"><strong>${t['selectAction']}</strong></label>
                 <div class="d-flex flex-wrap">
-                    <div class="me-3 mb-3 text-center">
+                    <div class="me-3 mb-3 text-start">
                         <span class="action-option selectable-option" data-value="singing into a microphone">${t['actionSinging']}</span>
                     </div>
-                    <div class="me-3 mb-3 text-center">
+                    <div class="me-3 mb-3 text-start">
                         <span class="action-option selectable-option" data-value="painting a canvas">${t['actionPainting']}</span>
                     </div>
                     <!-- Add more action options here -->
@@ -582,10 +582,10 @@ function generateSFWForm(uniqueId) {
             <div class="mb-4">
                 <label class="form-label"><strong>${t['selectClothes']}</strong></label>
                 <div class="d-flex flex-wrap">
-                    <div class="me-3 mb-3 text-center">
+                    <div class="me-3 mb-3 text-start">
                         <span class="clothes-option selectable-option" data-value="wearing a dress">${t['clothesDress']}</span>
                     </div>
-                    <div class="me-3 mb-3 text-center">
+                    <div class="me-3 mb-3 text-start">
                         <span class="clothes-option selectable-option" data-value="wearing a suit">${t['clothesSuit']}</span>
                     </div>
                     <!-- Add more clothes options here -->
@@ -596,10 +596,10 @@ function generateSFWForm(uniqueId) {
             <div class="mb-4">
                 <label class="form-label"><strong>${t['selectFacialExpression']}</strong></label>
                 <div class="d-flex flex-wrap">
-                    <div class="me-3 mb-3 text-center">
+                    <div class="me-3 mb-3 text-start">
                         <span class="expression-option selectable-option" data-value="happy facial expression, smiling">${t['expressionHappy']}</span>
                     </div>
-                    <div class="me-3 mb-3 text-center">
+                    <div class="me-3 mb-3 text-start">
                         <span class="expression-option selectable-option" data-value="sad facial expression, frowning">${t['expressionSad']}</span>
                     </div>
                     <!-- Add more expression options here -->
@@ -631,7 +631,6 @@ function generateNSFWForm(uniqueId) {
     const t = window.translations.imageForm;
     return `
         <div id="${uniqueId}-nsfw-form" class="advanced-image-generation-form">
-            <h5 class="mb-4">${t['nsfwPlaceholder']}</h5>
             <!-- Since NSFW is not yet implemented, you can add a placeholder or similar fields as needed -->
             <!-- For demonstration, we'll replicate the SFW form fields -->
             
@@ -640,10 +639,10 @@ function generateNSFWForm(uniqueId) {
                 <label class="form-label"><strong>${t['selectCharacter']}</strong></label>
                 <div class="d-flex flex-wrap">
                     <!-- Only Female Character Options -->
-                    <div class="me-3 mb-3 text-center">
+                    <div class="me-3 mb-3 text-start">
                         <span class="character-option selectable-option" data-value="young girl character, age 18, short hair">${t['characterGirl']}</span>
                     </div>
-                    <div class="me-3 mb-3 text-center">
+                    <div class="me-3 mb-3 text-start">
                         <span class="character-option selectable-option" data-value="adult woman character, age 25-30, long hair">${t['characterWoman']}</span>
                     </div>
                     <!-- Add more female character options here if needed -->
@@ -654,10 +653,10 @@ function generateNSFWForm(uniqueId) {
             <div class="mb-4">
                 <label class="form-label"><strong>${t['selectBodyType']}</strong></label>
                 <div class="d-flex flex-wrap">
-                    <div class="me-3 mb-3 text-center">
+                    <div class="me-3 mb-3 text-start">
                         <span class="body-option selectable-option" data-value="athletic body, toned muscles">${t['bodyAthletic']}</span>
                     </div>
-                    <div class="me-3 mb-3 text-center">
+                    <div class="me-3 mb-3 text-start">
                         <span class="body-option selectable-option" data-value="slim body, slender frame">${t['bodySlim']}</span>
                     </div>
                     <!-- Add more body options here -->
@@ -668,10 +667,10 @@ function generateNSFWForm(uniqueId) {
             <div class="mb-4">
                 <label class="form-label"><strong>${t['selectPose']}</strong></label>
                 <div class="d-flex flex-wrap">
-                    <div class="me-3 mb-3 text-center">
+                    <div class="me-3 mb-3 text-start">
                         <span class="pose-option selectable-option" data-value="sitting in meditation pose">${t['poseMeditating']}</span>
                     </div>
-                    <div class="me-3 mb-3 text-center">
+                    <div class="me-3 mb-3 text-start">
                         <span class="pose-option selectable-option" data-value="performing a cartwheel">${t['poseCartwheel']}</span>
                     </div>
                     <!-- Add more pose options here -->
@@ -682,10 +681,10 @@ function generateNSFWForm(uniqueId) {
             <div class="mb-4">
                 <label class="form-label"><strong>${t['selectAction']}</strong></label>
                 <div class="d-flex flex-wrap">
-                    <div class="me-3 mb-3 text-center">
+                    <div class="me-3 mb-3 text-start">
                         <span class="action-option selectable-option" data-value="singing into a microphone">${t['actionSinging']}</span>
                     </div>
-                    <div class="me-3 mb-3 text-center">
+                    <div class="me-3 mb-3 text-start">
                         <span class="action-option selectable-option" data-value="painting a canvas">${t['actionPainting']}</span>
                     </div>
                     <!-- Add more action options here -->
@@ -696,10 +695,10 @@ function generateNSFWForm(uniqueId) {
             <div class="mb-4">
                 <label class="form-label"><strong>${t['selectClothes']}</strong></label>
                 <div class="d-flex flex-wrap">
-                    <div class="me-3 mb-3 text-center">
+                    <div class="me-3 mb-3 text-start">
                         <span class="clothes-option selectable-option" data-value="wearing a dress">${t['clothesDress']}</span>
                     </div>
-                    <div class="me-3 mb-3 text-center">
+                    <div class="me-3 mb-3 text-start">
                         <span class="clothes-option selectable-option" data-value="wearing a suit">${t['clothesSuit']}</span>
                     </div>
                     <!-- Add more clothes options here -->
@@ -710,10 +709,10 @@ function generateNSFWForm(uniqueId) {
             <div class="mb-4">
                 <label class="form-label"><strong>${t['selectFacialExpression']}</strong></label>
                 <div class="d-flex flex-wrap">
-                    <div class="me-3 mb-3 text-center">
+                    <div class="me-3 mb-3 text-start">
                         <span class="expression-option selectable-option" data-value="happy facial expression, smiling">${t['expressionHappy']}</span>
                     </div>
-                    <div class="me-3 mb-3 text-center">
+                    <div class="me-3 mb-3 text-start">
                         <span class="expression-option selectable-option" data-value="sad facial expression, frowning">${t['expressionSad']}</span>
                     </div>
                     <!-- Add more expression options here -->

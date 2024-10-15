@@ -327,7 +327,7 @@ async function routes(fastify, options) {
           sampler_name: "DPM++ 2M Karras",
           prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, (nsfw), sexy body,naked, boobs,nipple,big breast, nude, sensual pose, nsfw, erotic, very sexy, `,
           negative_prompt: `BraV4Neg,paintings,sketches,(worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)),logo`,
-          loras: [{"model_name":"more_details_59655.safetensors","strength":0.4},{"model_name":"droptop_38945.safetensors","strength":0.7}, {"model_name":"JapaneseDollLikeness_v15_28382.safetensors","strength":0.7}],
+          loras: [{"model_name":"more_details_59655.safetensors","strength":0.4},{"model_name":"droptop_38945.safetensors","strength":0.4}, {"model_name":"JapaneseDollLikeness_v15_28382.safetensors","strength":0.7}],
         }
       }
     };

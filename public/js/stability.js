@@ -451,14 +451,12 @@ async function setupFormEventListeners(uniqueId, formType, config) {
 
         // Determine the price based on image type
         const price = formType === 'sfw' ? SFW_PRICE : NSFW_PRICE;
-console.log({config})
         // Fetch the character description
         const {imageDescription} = await checkImageDescription(config.chatId);
         // Create a prompt from the selected elements
         const prompt = `${imageDescription}, ${selectedCharacter}, ${selectedBody}, ${selectedPose}, ${selectedAction}, ${selectedClothes}, ${selectedExpression}`;
-        console.log(prompt)
-return
-        // Prepare data to send to the backend
+
+       // Prepare data to send to the backend
         const requestData = {
             prompt: prompt,
             aspectRatio: '9:16',
@@ -815,6 +813,7 @@ function checkTaskStatus(taskId, chatId, prompt, callback) {
                 }
             } else {
                 console.log('Image generation is still processing...');
+                window.postMessage({ event: 'imageStart', message: 'Image generation is still processing...' }, '*');
             }
 
             if (attempts >= MAX_ATTEMPTS) {

@@ -961,7 +961,7 @@ async function routes(fastify, options) {
             // Gen completion
             let completion = ``
             completion = await fetchOpenAICompletion(userMessages, reply.raw, 300);
-            console.log({isHidden})
+
             // Append the assistant's response to the messages array in the chat document
             const assistantMessage = { "role": "assistant", "content": isHidden? '[Hidden] '+completion:completion };
             userMessages.push(assistantMessage);

@@ -1971,61 +1971,6 @@ $(document).ready(async function() {
             callback();
         }
     };            
-
-    window.buyItem = function(itemId, itemName, itemPrice, item_id, status, userId, chatId, userChatId) {
-    
-        if (status) {
-            initiatePurchase(itemId, itemName, itemPrice, userId, chatId, function(response) {
-                let message;
-                if (response.success) {
-                    const successMessages = [
-                        `${itemName}を購入しました！`,
-                        `${itemName}を${itemPrice}コインで購入しました。`,
-                        `${itemName}を無事に${itemPrice}コインでゲットしました！`,
-                    ];
-                    
-                    let message = successMessages[Math.floor(Math.random() * successMessages.length)];                            
-                    $(`#${itemId} button`).each(function() { $(this).hide() });
-                    updateCoins(response.coins)
-                    displayMessage('user', message, function() {
-                        addMessageToChat(chatId, userChatId, 'user', message, function(error, res) {
-                            if (error) {
-                                console.error('Error adding message:', error);
-                            } else {
-                                thumbnail = thumbnail || localStorage.getItem('thumbnail')
-                                let message = `[Hidden] I did not received the image yet. Wait for mer to see the image. The image is being sent right now.`
-                                addMessageToChat(chatId, userChatId, 'user', message,function(){
-                                    generateCompletion(function(){
-                                        generateImageNovita(API_URL, userId, chatId, userChatId, item_id, thumbnail);
-                                    });
-                                });
-                            }
-                        });
-                    });
-                } else {
-                    showCoinShop()
-                }
-            });
-        } else {
-            const messages = [
-                `${itemName}は今のところ購入されていません。`,
-                `${itemName}をスキップしました。`,
-                `${itemName}を今は手に入れませんでした。`,
-                `${itemName}を今は選択しませんでした。`
-            ];
-            let message = messages[Math.floor(Math.random() * messages.length)];
-            displayMessage('user', message, function() {
-                addMessageToChat(chatId, userChatId, 'user', message, function(error, res) {
-                    if (error) {
-                        console.error('Error adding message:', error);
-                    } else {
-                        console.log('Message added successfully:', res);
-                        generateCompletion();
-                    }
-                });
-            });
-        }
-    }
     
     function initiatePurchase(itemId, itemName, itemPrice, userId, chatId, callback) {
         $.ajax({
@@ -2271,37 +2216,88 @@ $(document).ready(async function() {
             success: function(response) {
                 if (response.length > 0) {
                     response.forEach(item => {
-                        const itemId = `item-${currentStep}-${Date.now()}-${Math.random().toString(36).substring(7)}`; // Generate a unique item ID
+                        const itemId = `item-${currentStep}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
                         const message = `
-                            <div id="${itemId}" class="card bg-transparent text-white border-0">
-                                <div class="card-body-none" style="height:auto !important;">
-                                    <h5 class="card-title" style="font-size: 14px;">${item.name}</h5>
-                                    
-                                    <button class="btn custom-gradient-bg shadow-0 w-100" 
-                                        onclick="buyItem('${itemId}', '${item.name}' ,${item.price}, '${item._id}', true, '${userId}', '${chatId}', '${userChatId}')">
-                                        <span> ${item.price}<span class="mx-1">🪙</span></span>
+                        <div id="${itemId}" class="card bg-transparent text-white border-0">
+                            <div class="card-body-none" style="height:auto !important;">
+                                <h5 class="card-title" style="font-size: 14px;">${item.name}</h5>
+                                <div class="d-flex justify-content-between">
+                                    <button class="btn custom-gradient-bg shadow-0 w-45 me-2" 
+                                        onclick="buyItem('${itemId}', '${item.name}', 35, '${item._id}', true, '${userId}', '${chatId}', '${userChatId}', 'sfw')">
+                                        <span>35<span class="mx-1">🪙</span> ${window.translations.imageForm.sfwImage}</span>
                                     </button>
-                                    <button class="d-none btn btn-outline-danger border-0 shadow-0 rounded-0 position-absolute px-2 py-1" style="font-size: 12px;position: absolute;top: 0;right: 0;" 
-                                        onclick="buyItem('${itemId}','${item.name}' ,${item.price}, '${item._id}', false, '${userId}', '${chatId}', '${userChatId}')">見送る</button>
+                                    <button class="btn custom-gradient-bg danger shadow-0 w-45" 
+                                        onclick="buyItem('${itemId}', '${item.name}', 75, '${item._id}', true, '${userId}', '${chatId}', '${userChatId}', 'nsfw')">
+                                        <span>75<span class="mx-1">🪙</span> ${window.translations.imageForm.nsfwImage}</span>
+                                    </button>
                                 </div>
                             </div>
-                        `;
+                        </div>
+                    `;
+                    
                         displayMessage('assistant', message);
                     });
                     count_proposal = 0;
-                }else{
-                    if(count_proposal >= 2){
-                        let message = `[Hidden] Prepare to propose a picture of you. When you make a proposition, describe the image in detail.`
+                } else {
+                    if (count_proposal >= 2) {
+                        let message = `[Hidden] Prepare to propose a picture of you. When you make a proposition, describe the image in detail.`;
                         addMessageToChat(chatId, userChatId, 'user', message);
                     }
                 }
-                count_proposal ++
+                count_proposal++;
             },
             error: function(xhr, status, error) {
                 console.error('Error checking purchase proposal:', error);
             }
         });
     }
+    
+    window.buyItem = function(itemId, itemName, itemPrice, item_id, status, userId, chatId, userChatId, imageType) {
+        if (status) {
+            initiatePurchase(itemId, itemName, itemPrice, userId, chatId, function(response) {
+                if (response.success) {
+                    const successMessages = [
+                        `${itemName}を購入しました！`,
+                        `${itemName}を${itemPrice}コインで購入しました。`,
+                        `${itemName}を無事に${itemPrice}コインでゲットしました！`,
+                    ];
+                    let message = successMessages[Math.floor(Math.random() * successMessages.length)];
+                    //$(`#${itemId} button`).each(function() { $(this).hide(); });
+                    updateCoins(response.coins);
+                    displayMessage('user', message, function() {
+                        addMessageToChat(chatId, userChatId, 'user', message, function(error, res) {
+                            if (!error) {
+                                let hiddenMessage = `[Hidden] I did not receive the image yet. Wait for me to see the image. The image is being sent right now.`;
+                                addMessageToChat(chatId, userChatId, 'user', hiddenMessage, function() {
+                                    generateCompletion(function() {
+                                        generateImageNovita(API_URL, userId, chatId, userChatId, item_id, thumbnail, imageType);
+                                    });
+                                });
+                            }
+                        });
+                    });
+                } else {
+                    showCoinShop();
+                }
+            });
+        } else {
+            const messages = [
+                `${itemName}は今のところ購入されていません。`,
+                `${itemName}をスキップしました。`,
+                `${itemName}を今は手に入れませんでした。`,
+                `${itemName}を今は選択しませんでした。`
+            ];
+            let message = messages[Math.floor(Math.random() * messages.length)];
+            displayMessage('user', message, function() {
+                addMessageToChat(chatId, userChatId, 'user', message, function(error, res) {
+                    if (!error) {
+                        generateCompletion();
+                    }
+                });
+            });
+        }
+    }
+    
     
     if(!isTemporary && $('#chat-widget-container').length == 0){
         let user = await fetchUser()

@@ -376,94 +376,68 @@ async function routes(fastify, options) {
   });
   // Endpoint to initiate txt2img with SFW and NSFW
   fastify.post('/novita/product2img', async (request, reply) => {
-    const { prompt, aspectRatio, userId, chatId, userChatId } = request.body;
+    const { prompt, aspectRatio, userId, chatId, userChatId, imageType } = request.body;
 
-    // Define the schema for validation
     const Txt2ImgSchema = z.object({
-      prompt: z.string().min(10, 'Prompt must be at least 10 characters long'),
-      aspectRatio: z.string().optional().default('9:16'),
-      userId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid userId'),
-      chatId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid chatId'),
-      userChatId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid userChatId')
+        prompt: z.string().min(10, 'Prompt must be at least 10 characters long'),
+        aspectRatio: z.string().optional().default('9:16'),
+        userId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid userId'),
+        chatId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid chatId'),
+        userChatId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid userChatId'),
+        imageType: z.enum(['sfw', 'nsfw'])
     });
 
     try {
-      const validated = Txt2ImgSchema.parse(request.body);
-      const { prompt, aspectRatio, userId, chatId, userChatId } = validated;
+        const validated = Txt2ImgSchema.parse(request.body);
+        const { prompt, aspectRatio, userId, chatId, userChatId, imageType } = validated;
 
-      // Fetch user subscription status
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
-      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-      const isSubscribed = user && user.subscriptionStatus === 'active';
+        const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+        const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+        const isSubscribed = user && user.subscriptionStatus === 'active';
 
-      // Fetch imageStyle
-      const chat = await db.collection('chats').findOne({ _id: new ObjectId(chatId) });
-      const imageStyle = chat.imageStyle
+        const chat = await db.collection('chats').findOne({ _id: new ObjectId(chatId) });
+        const imageStyle = chat.imageStyle;
 
-      // Select prompts and model based on imageStyle
-      const selectedStyle = default_prompt[imageStyle] || default_prompt['anime'];
+        const selectedStyle = default_prompt[imageStyle] || default_prompt['anime'];
+        const style = selectedStyle[imageType];
 
-      // Prepare tasks
-      const tasks = [];
+        const image_request = {
+            type: imageType,
+            model_name: style.model_name,
+            sampler_name: style.sampler_name || '',
+            loras: style.loras,
+            prompt: style.prompt + prompt,
+            negative_prompt: style.negative_prompt,
+            aspectRatio: aspectRatio,
+            blur: imageType === 'nsfw' && !isSubscribed
+        };
 
-      // SFW Task
-      const image_request_sfw = {
-        type: 'sfw',
-        model_name: selectedStyle.sfw.model_name,
-        sampler_name: selectedStyle.sfw.sampler_name || '',
-        loras: selectedStyle.sfw.loras,
-        prompt: selectedStyle.sfw.prompt + prompt,
-        negative_prompt: selectedStyle.sfw.negative_prompt
-      };
-      tasks.push({ ...params, ...image_request_sfw });
+        const requestData = { ...params, ...image_request };
+        const novitaTaskId = await fetchNovitaMagic(requestData);
 
-      // NSFW Task
-      const image_request_nsfw = {
-        type: 'nsfw',
-        model_name: selectedStyle.nsfw.model_name,
-        sampler_name: selectedStyle.nsfw.sampler_name || '',
-        loras: selectedStyle.nsfw.loras,
-        prompt: selectedStyle.nsfw.prompt + prompt,
-        negative_prompt: selectedStyle.nsfw.negative_prompt,
-        blur: !isSubscribed
-      };
-
-      tasks.push({ ...params, ...image_request_nsfw });
-
-      // Initiate tasks and collect taskIds
-      const taskIds = await Promise.all(tasks.map(async (task) => {
-        console.log(`Request ${task.type} image`)
-        console.log(`Should be blurry : ${task.blur}`)
-        // Send request to Novita and get taskId
-        const novitaTaskId = await fetchNovitaMagic(task);
-
-        // Store task details in DB
         await db.collection('tasks').insertOne({
-          taskId: novitaTaskId,
-          type: task.type,
-          status: 'pending',
-          prompt: prompt, // Original prompt without default
-          negative_prompt: task.negative_prompt,
-          aspectRatio: aspectRatio,
-          userId: new ObjectId(userId),
-          chatId: new ObjectId(chatId),
-          userChatId: new ObjectId(userChatId),
-          blur: task.blur || false,
-          createdAt: new Date(),
-          updatedAt: new Date()
+            taskId: novitaTaskId,
+            type: image_request.type,
+            status: 'pending',
+            prompt: prompt,
+            negative_prompt: image_request.negative_prompt,
+            aspectRatio: aspectRatio,
+            userId: new ObjectId(userId),
+            chatId: new ObjectId(chatId),
+            userChatId: new ObjectId(userChatId),
+            blur: image_request.blur || false,
+            createdAt: new Date(),
+            updatedAt: new Date()
         });
 
-        return { taskId: novitaTaskId, type: task.type };
-      }));
-
-      // Respond with taskIds
-      reply.send({ tasks: taskIds, message: 'Image generation tasks started. Use the taskIds to check status.' });
+        reply.send({ taskId: novitaTaskId, message: 'Image generation task started. Use the taskId to check status.' });
 
     } catch (err) {
-      console.error(err);
-      reply.status(500).send({ error: 'Error initiating image generation.' });
+        console.error(err);
+        reply.status(500).send({ error: 'Error initiating image generation.' });
     }
-  });
+});
+
 // Endpoint to initiate txt2img for selected image type
 fastify.post('/novita/txt2img', async (request, reply) => {
   const { prompt, aspectRatio, userId, chatId, userChatId, imageType, price } = request.body;

@@ -88,19 +88,9 @@ window.generateImageDescriptionBackend = function(imageUrl = null, chatId, callb
 }
 
 // Generate Image using Novita
-window.generateImageNovita = async function(API_URL, userId, chatId, userChatId, item_id, thumbnail, option = {}) {
-
-    // Initialize the image loading container with two placeholders
+window.generateImageNovita = async function(API_URL, userId, chatId, userChatId, item_id, thumbnail, imageType, option = {}) {
     const imageResponseContainer = $(`
         <div id="load-image-container" class="d-flex flex-column justify-content-start">
-            <!-- SFW Image Loader -->
-            <div class="d-flex flex-row justify-content-start mb-4 message-container" style="border-radius: 15px;">
-                <img src="${thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="width: 45px; height: 45px; object-fit: cover; object-position: top;">
-                <div class="d-flex justify-content-center align-items-center px-3">
-                    <img src="/img/image-placeholder.gif" width="50px" alt="loading">
-                </div>
-            </div>
-            <!-- NSFW Image Loader -->
             <div class="d-flex flex-row justify-content-start mb-4 message-container" style="border-radius: 15px;">
                 <img src="${thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="width: 45px; height: 45px; object-fit: cover; object-position: top;">
                 <div class="d-flex justify-content-center align-items-center px-3">
@@ -121,15 +111,12 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
 
     try {
         const proposal = await getProposalById(item_id);
-
         const {
             negativePrompt = $('#negativePrompt-input').val(),
             prompt = proposal.description || $('#prompt-input').val(),
             aspectRatio = '9:16',
             baseFace = null
         } = option;
-
-        //console.log('Parameters after destructuring:', { negativePrompt, prompt, aspectRatio, baseFace });
 
         if (!prompt) {
             console.error('generateImageNovita Error: Prompt is required.');
@@ -142,15 +129,14 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
 
         const response = await fetch(API_ENDPOINT, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 prompt: prompt, 
                 aspectRatio: aspectRatio, 
                 userId: userId, 
                 chatId: chatId, 
-                userChatId: userChatId 
+                userChatId: userChatId,
+                imageType: imageType
             })
         });
 
@@ -161,21 +147,13 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
         }
 
         const data = await response.json();
+        const { taskId } = data;
 
-        const { tasks } = data;
-        if (!tasks || !Array.isArray(tasks)) {
+        if (!taskId) {
             throw new Error('サーバーからタスクが返されませんでした。');
         }
 
-        const polledTaskIds = new Set();
-
-        // Start polling for each task
-        tasks.forEach(task => {
-            if (!polledTaskIds.has(task.taskId)) {
-                polledTaskIds.add(task.taskId);
-                pollTaskStatus(API_URL, task.taskId, task.type, prompt);
-            }
-        });        
+        pollTaskStatus(API_URL, taskId, imageType, prompt);
 
     } catch (error) {
         console.error('generateImageNovita Error:', error);
@@ -185,6 +163,7 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
         showNotification('画像の生成中にエラーが発生しました。', 'error');
     }
 }
+
 const displayedImageIds = new Set();
 
 // Function to poll the task status

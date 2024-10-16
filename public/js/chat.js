@@ -2221,6 +2221,7 @@ $(document).ready(async function() {
                         <div id="${itemId}" class="card bg-transparent text-white border-0">
                             <div class="card-body-none" style="height:auto !important;">
                                 <h5 class="card-title" style="font-size: 14px;">${item.name}</h5>
+                                <p class="d-none card-content" style="font-size: 12px;">${item.description}</p>
                                 <div class="d-flex justify-content-between">
                                     <button class="btn custom-gradient-bg shadow-0 w-45 me-2" 
                                         onclick="buyItem('${itemId}', '${item.name}', 35, '${item._id}', true, '${userId}', '${chatId}', '${userChatId}', 'sfw')">

@@ -1575,7 +1575,7 @@ async function routes(fastify, options) {
                     name: z.string(),
                     description: z.string(),
                 })
-            ).length(3),
+            ),
         });
         const { userId, chatId, userChatId } = request.body;
         try {
@@ -1591,14 +1591,16 @@ async function routes(fastify, options) {
                 messages: [
                     { role: "system", content: `
                         You are an expert at structured data extraction.
-                        If the message is about proposing images, return exactly 3 items with name in Japanese, and description in English suitable for Stable Diffusion prompts.
+                        \nIf the message is about sending images, return exactly 3 items with name in Japanese, and description in English suitable for Stable Diffusion prompts.
+                        \nI want you to write me a detailed prompt exactly about the idea written after IDEA. Follow the structure of the example prompts. This means a very short description of the scene, followed by modifiers divided by commas to alter the mood, style, lighting, and more.
                     ` },
                     { role: "user", content: 'IDEA: ' + lastAssistantMessageContent },
                 ],
                 response_format: zodResponseFormat(PurchaseProposalExtraction, "purchase_proposal_extraction"),
             });
             let proposal = completion.choices[0].message.parsed;
-            if (proposal.proposeToBuy && proposal.items.length === 3) {
+            console.log(proposal)
+            if (proposal.proposeToBuy) {
                 const itemProposalCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('itemProposal');
                 const insertedProposals = [];
                 for (let item of proposal.items) {

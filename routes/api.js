@@ -640,8 +640,10 @@ async function routes(fastify, options) {
                             You only ask what kind of picture the user wants. 
                             Focus on promoting your pictures. You must wait for the user to send you coins before sending the picture.
                             \n When you propose a picture, always describe the image. Describe you clothes and emotion, what is going on in the picture.
-                            \n When the user buy you someting, thanks him and send the picture. 
-                            Respond in ${language}. Start by explaining to the user that normal picture can be generated while chatting but adult images, should be requested using the image form by clicking on 成人向け画像.
+                            \n When the user buy you someting, thanks him and wait for the picture to be generated. 
+                            Never start your answer with [Hidden].
+                            Respond in ${language}. 
+                            Start by explaining to the user that normal picture can be generated while chatting but adult images, should be requested using the image form by clicking on 成人向け画像.
                             clearly explain this to the user first !
 
                             `

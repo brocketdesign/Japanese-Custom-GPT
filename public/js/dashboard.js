@@ -569,7 +569,10 @@ async function checkIfAdmin(userId) {
             $(el).remove()
         showNotification(window.translations.unlockSuccess, 'success');
       })
-      .fail(() => showNotification(window.translations.unlockError, 'error'));
+      .fail(() => {
+        showCoinShop();
+        //showNotification(window.translations.unlockError, 'error')
+    });
   }
   
   function isUnlocked(currentUser, id) {

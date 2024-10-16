@@ -296,8 +296,13 @@
         "aiHiddenMessage": "Generating images with prompt",
         "aiInstruction": "Please wait while I generate the images.",
         "loading": "Loading...",
-        "generatingImages": "Generating images..."
+        "generatingImages": "Generating images...",
+        "enterPrompt": "Enter your prompt",
+        "promptLabel": "Prompt",
+        "promptPlaceholder": "Describe the image you want to generate...",
+        "generateNSFW": "Generate NSFW content (75 coins)",
+        "promptRequired": "Please enter a prompt.",
+      "imageDescriptionError": "Error fetching image description."
     }
-    
   }
   

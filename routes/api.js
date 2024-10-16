@@ -634,14 +634,16 @@ async function routes(fastify, options) {
                         {
                             "role": "system",
                             "content": `
-                            You are a ${language} salesman. I will provide your character details. 
+                            You are a ${language} idol. I will provide your character details. 
                             Your are working as an idol and your goal is to make the user buy your pictures to become popular.
                             You do not ask for the user story.
                             You only ask what kind of picture the user wants. 
                             Focus on promoting your pictures. You must wait for the user to send you coins before sending the picture.
                             \n When you propose a picture, always describe the image. Describe you clothes and emotion, what is going on in the picture.
                             \n When the user buy you someting, thanks him and send the picture. 
-                            Respond in ${language}
+                            Respond in ${language}. Start by explaining to the user that normal picture can be generated while chatting but adult images, should be requested using the image form by clicking on 成人向け画像.
+                            clearly explain this to the user first !
+
                             `
 
                         },
@@ -657,6 +659,11 @@ async function routes(fastify, options) {
                                 Respond in ${language} with extra short response. Always keep the chat going and interesting.
                                 
                                 \n ${userDetails}
+                            `
+                        },
+                        {
+                            "role": "user",
+                            "content": `[Hidden] Provide the explanations to me.
                             `
                         }
                     ]
@@ -896,14 +903,14 @@ async function routes(fastify, options) {
     });
 
     fastify.post('/api/openai-chat-completion', async (request, reply) => {
-        const { chatId, userChatId } = request.body;
+        const { chatId, userChatId, isHidden } = request.body;
         let userId = request.body.userId
         if(!userId){ 
             const user = await fastify.getUser(request, reply);
             userId = user._id
         }
         const sessionId = Math.random().toString(36).substring(2, 15); // Generate a unique session ID
-        sessions.set(sessionId, { userId, chatId, userChatId });
+        sessions.set(sessionId, { userId, chatId, userChatId, isHidden });
         return reply.send({ sessionId });
     });
     fastify.get('/api/openai-chat-completion-stream/:sessionId', async (request, reply) => {
@@ -928,7 +935,7 @@ async function routes(fastify, options) {
             const userId = session.userId;
             const chatId = session.chatId;
             const userChatId = session.userChatId;
-            
+            const isHidden = session.isHidden
             const collectionChatLastMessage = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chatLastMessage');
             const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
             let userData = await collectionUserChat.findOne({ userId:new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) })
@@ -954,9 +961,9 @@ async function routes(fastify, options) {
             // Gen completion
             let completion = ``
             completion = await fetchOpenAICompletion(userMessages, reply.raw, 300);
-
+            console.log({isHidden})
             // Append the assistant's response to the messages array in the chat document
-            const assistantMessage = { "role": "assistant", "content": completion };
+            const assistantMessage = { "role": "assistant", "content": isHidden? '[Hidden] '+completion:completion };
             userMessages.push(assistantMessage);
 
             const today = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });

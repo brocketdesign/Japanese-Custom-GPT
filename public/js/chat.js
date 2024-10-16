@@ -31,6 +31,26 @@ $(document).ready(async function() {
     renderChatList(userId,chatId);
     updateCoins(userCoins)
 
+
+    window.addEventListener('message', function(event) {
+        if (event.data.event === 'displayMessage') {
+            const role = event.data.role
+            const message = event.data.message
+            const completion = event.data.completion
+            displayMessage(role, message, function() {
+                addMessageToChat(chatId, userChatId, role, message, function(error, res) {
+                    if (error) {
+                        console.error('Error adding message:', error);
+                    } else {
+                        console.log('Message added successfully:', res);
+                        if(completion){
+                            generateCompletion();
+                        }
+                    }
+                });
+            });
+        }
+    });
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageFav') {
             const description = event.data.description
@@ -45,7 +65,7 @@ $(document).ready(async function() {
         if (event.data.event === 'imageStart') {
             const message = event.data.message
             addMessageToChat(chatId, userChatId, 'user', message,function(){
-                generateCompletion()
+                generateCompletion(null,true)
             });
         }
     });
@@ -1705,7 +1725,7 @@ $(document).ready(async function() {
         if (!str) { return str; }
         return str.replace(/\*.*?\*/g, '').replace(/"/g, '');
     }                    
-    function generateCompletion(callback){
+    function generateCompletion(callback,isHidden=false){
         
         const apiUrl = API_URL+'/api/openai-chat-completion';
 
@@ -1732,7 +1752,7 @@ $(document).ready(async function() {
             url: apiUrl,
             method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({ userId, chatId, userChatId }),
+            data: JSON.stringify({ userId, chatId, userChatId, isHidden }),
             success: function(response) {
                 const sessionId = response.sessionId;
                 const streamUrl = API_URL+`/api/openai-chat-completion-stream/${sessionId}`;
@@ -2049,7 +2069,8 @@ $(document).ready(async function() {
     
     //handleImageGeneration('#novita-gen-button', generateImageNovita);
     $('#novita-gen-button').on('click',function(){
-        displayAdvancedImageGenerationForm(API_URL, userId, chatId, userChatId, thumbnail)
+        //displayAdvancedImageGenerationForm(API_URL, userId, chatId, userChatId, thumbnail)
+        displayCustomPromptInput(API_URL, userId, chatId, userChatId, thumbnail)
     })
 
     // User info popup

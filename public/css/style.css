@@ -119,9 +119,8 @@ iframe {
   padding: 0;
   width: 100%;
 }
-.gen-idea-container, .album-popup{
+.gen-idea-container, .album-popup, .custom-prompt-container{
   border-radius: 40px 40px 0 0;
-  background: linear-gradient(135deg, #1e1946, #1e1928c2, #24243e);
   width: 100%;
   position: absolute;
   left: 0;
@@ -134,13 +133,13 @@ iframe {
 .gen-idea-container{
   background: linear-gradient(135deg, #1e1946, #1e1928c2, #24243e);
 }
-.gen-idea-container .swal2-close{
+.gen-idea-container .swal2-close, .custom-prompt-container .swal2-close{
   right: 15px;
   border-radius: 50%;
   font-size: 31px;
   top: 10px;
 }
-.gen-idea-container .swal2-close {
+.gen-idea-container .swal2-close, .custom-prompt-container .swal2-close {
   background: #9796963d;
 }
 .gen-idea-container .swal2-close {

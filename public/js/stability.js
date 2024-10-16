@@ -189,7 +189,7 @@ const displayedImageIds = new Set();
 
 // Function to poll the task status
 function pollTaskStatus(API_URL, taskId, type, prompt) {
-    const POLLING_INTERVAL = 10000; // 3 seconds
+    const POLLING_INTERVAL = 30000; // 3 seconds
     const MAX_ATTEMPTS = 60;
     let attempts = 0;
 
@@ -316,11 +316,123 @@ window.generateImage = async function(data, prompt) {
   }
 };
 
-// Ensure that Bootstrap 5's JavaScript and CSS are included in your project.
-// You can include them via CDN in your HTML file:
-//
-// <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-// <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+/**
+ * Displays a SweetAlert2 popup with a textarea for the user to input a custom prompt.
+ * Uses Bootstrap 5 for styling, SweetAlert2 for the modal, and Animate.css for animations.
+ * @param {string} API_URL - The backend API URL for image generation.
+ * @param {string} userId - The ID of the user.
+ * @param {string} chatId - The ID of the chat.
+ * @param {string} userChatId - The user's chat ID.
+ * @param {string} thumbnail - URL of the avatar thumbnail.
+ */
+function displayCustomPromptInput(API_URL, userId, chatId, userChatId, thumbnail) {
+    const t = window.translations.imageForm;
+    const SFW_PRICE = 35;
+    const NSFW_PRICE = 75;
+
+    Swal.fire({
+        title: t['enterPrompt'],
+        html: `
+            <textarea id="customPromptInput" class="form-control" rows="4" placeholder="${t['promptPlaceholder']}"></textarea>
+            <div class="form-check mt-3 text-start">
+                <input class="form-check-input" type="checkbox" value="" id="nsfwCheck">
+                <label class="form-check-label" for="nsfwCheck">
+                    ${t['generateNSFW']}
+                </label>
+            </div>
+        `,
+        showCancelButton: false,
+        showCloseButton: true,
+        confirmButtonText: t['generateImages'],
+        showClass: { popup: 'animate__animated animate__slideInUp animate__faster' },
+        hideClass: { popup: 'animate__animated animate__slideOutDown animate__faster' },
+        position: 'bottom', backdrop: 'rgba(43, 43, 43, 0.2)',
+        customClass: { container: 'p-0', popup: 'custom-prompt-container shadow', closeButton: 'position-absolute' }
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            const prompt = $('#customPromptInput').val().trim();
+            const isNSFW = $('#nsfwCheck').is(':checked');
+
+            if (!prompt) {
+                showNotification(t['promptRequired'], 'error');
+                return;
+            }
+
+            const formType = isNSFW ? 'nsfw' : 'sfw';
+            const price = isNSFW ? NSFW_PRICE : SFW_PRICE;
+
+            let imageDescription = '';
+            try {
+                const descriptionResponse = await checkImageDescription(chatId);
+                imageDescription = descriptionResponse.imageDescription || '';
+            } catch (error) {
+                showNotification(t['imageDescriptionError'], 'error');
+                return;
+            }
+
+            const finalPrompt = imageDescription ? `${imageDescription}, ${prompt}` : prompt;
+
+            showNotification(t['imageGenerationStarted'], 'success');
+
+            const userPromptElement = $(`
+                <div class="d-flex flex-row justify-content-end mb-4 message-container user">
+                    <div class="d-flex flex-column align-items-end">
+                        <div class="bg-primary text-white p-2 rounded" style="max-width: 70%;">
+                            ${prompt}
+                        </div>
+                    </div>
+                </div>
+            `);
+            $('#chatContainer').append(userPromptElement);
+
+            const loaderElement = $(`
+                <div class="d-flex flex-row justify-content-start mb-4 message-container assistant animate__animated animate__fadeIn">
+                    <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="width: 45px; height: 45px; object-fit: cover; object-position: top;">
+                    <div class="d-flex justify-content-center align-items-center px-3">
+                        <img src="/img/image-placeholder.gif" width="50px" alt="loading">
+                    </div>
+                </div>
+            `);
+            $('#chatContainer').append(loaderElement);
+            $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
+
+            const hiddenMessage = `[Hidden] I just sent you ${price} coins for 4 images.I have specified a prompt for the images. The images are not available yet; I will tell you when they are available.`;
+            window.postMessage({ event: 'imageStart', message: hiddenMessage }, '*');
+            //window.postMessage({ event: 'displayMessage', role:'user' message: '', completion : false }, '*');
+            try {
+                const response = await $.ajax({
+                    url: API_URL + '/novita/txt2img',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        prompt: finalPrompt,
+                        aspectRatio: '9:16',
+                        userId: userId,
+                        chatId: chatId,
+                        userChatId: userChatId,
+                        imageType: formType,
+                        price: price
+                    })
+                });
+
+                if (!response.taskId) {
+                    throw new Error(t['imageGenerationError']);
+                }
+
+                updateCoins();
+
+                checkTaskStatus(response.taskId, chatId, finalPrompt, () => {
+                    loaderElement.remove();
+                });
+
+            } catch (error) {
+                console.error('Error generating images:', error);
+                showNotification(error.message || t['imageGenerationError'], 'error');
+                loaderElement.remove();
+            }
+        }
+    });
+}
 
 /**
  * Function to display the advanced image generation form with Bootstrap 5 nav tabs for SFW and NSFW.
@@ -348,22 +460,22 @@ window.displayAdvancedImageGenerationForm = function(API_URL, userId, chatId, us
 
             <!-- Bootstrap 5 Nav Tabs -->
             <ul class="nav nav-tabs mb-3" id="${uniqueId}-tab" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="${uniqueId}-sfw-tab" data-bs-toggle="tab" data-bs-target="#${uniqueId}-sfw" type="button" role="tab" aria-controls="${uniqueId}-sfw" aria-selected="true">${t['sfwImage']} (${SFW_PRICE} ${t['coins']})</button>
+                <li class="d-none nav-item" role="presentation">
+                    <button class="nav-link " id="${uniqueId}-sfw-tab" data-bs-toggle="tab" data-bs-target="#${uniqueId}-sfw" type="button" role="tab" aria-controls="${uniqueId}-sfw" aria-selected="true">${t['sfwImage']} (${SFW_PRICE} ${t['coins']})</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="${uniqueId}-nsfw-tab" data-bs-toggle="tab" data-bs-target="#${uniqueId}-nsfw" type="button" role="tab" aria-controls="${uniqueId}-nsfw" aria-selected="false">${t['nsfwImage']} (${NSFW_PRICE} ${t['coins']})</button>
+                    <button class="nav-link active" id="${uniqueId}-nsfw-tab" data-bs-toggle="tab" data-bs-target="#${uniqueId}-nsfw" type="button" role="tab" aria-controls="${uniqueId}-nsfw" aria-selected="false">${t['nsfwImage']} (${NSFW_PRICE} ${t['coins']})</button>
                 </li>
             </ul>
 
             <!-- Tab Panes -->
             <div class="tab-content" id="${uniqueId}-tabContent">
                 <!-- SFW Form Tab Pane -->
-                <div class="tab-pane fade show active" id="${uniqueId}-sfw" role="tabpanel" aria-labelledby="${uniqueId}-sfw-tab">
+                <div class="d-none tab-pane fade  " id="${uniqueId}-sfw" role="tabpanel" aria-labelledby="${uniqueId}-sfw-tab">
                     ${generateSFWForm(uniqueId)}
                 </div>
                 <!-- NSFW Form Tab Pane -->
-                <div class="tab-pane fade" id="${uniqueId}-nsfw" role="tabpanel" aria-labelledby="${uniqueId}-nsfw-tab">
+                <div class="tab-pane fade show active" id="${uniqueId}-nsfw" role="tabpanel" aria-labelledby="${uniqueId}-nsfw-tab">
                     ${generateNSFWForm(uniqueId,{ userId, chatId, userChatId })}
                 </div>
             </div>
@@ -744,7 +856,7 @@ function buildCategoriesContent(categories) {
  * Polls the backend for the status of an image generation task.
  */
 function checkTaskStatus(taskId, chatId, prompt, callback) {
-    const POLLING_INTERVAL = 10000; // 10 seconds
+    const POLLING_INTERVAL = 30000; // 10 seconds
     const MAX_ATTEMPTS = 30;
     let attempts = 0;
 

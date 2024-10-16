@@ -762,9 +762,6 @@ async function routes(fastify, options) {
         const { itemId, itemName, itemPrice, userId, chatId } = request.body;
     
         try {
-            // Log the incoming request data
-            console.log('Request received:', { itemId, itemName, itemPrice, userId, chatId });
-    
             // Ensure itemPrice is a number
             const price = Number(itemPrice);
             if (isNaN(price) || price <= 0) {
@@ -799,7 +796,6 @@ async function routes(fastify, options) {
             };
     
             const itemResult = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('items').insertOne(newItem);
-            console.log('New item created:', itemResult.insertedId);
     
             // Update buyer's data (deduct coins and add item to purchasedItems)
             await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
@@ -1392,7 +1388,7 @@ async function routes(fastify, options) {
     
             // Make the request to OpenAI
             const completionResponse = await openai.chat.completions.create({
-                model: "gpt-4o-mini",
+                model: "gpt-4o",
                 messages: systemPayload,
                 max_tokens: 300, // Adjust as needed
                 temperature: 0.7, // Adjust creativity
@@ -1445,7 +1441,7 @@ async function routes(fastify, options) {
             {
                 role: "system",
                 content: `
-                    You are a Stable Diffusion image prompt generator specializing in upper body character portraits.
+                    You are a Stable Diffusion image prompt generator specializing in beautiful woman character.
                     Your task is to generate a concise image prompt (under 1000 characters) based on the latest character description provided.
                     The prompt should be a comma-separated list of descriptive keywords in English that accurately depict the character's appearance, emotions, and style.
                     Focus on attributes such as gender, age, eye color, hair style and color, skin tone, body type, facial expressions, clothing, and any distinctive features.
@@ -1569,107 +1565,54 @@ async function routes(fastify, options) {
     });
     
     fastify.post('/api/check-assistant-proposal', async (request, reply) => {
-
         const openai = new OpenAI();
-
         const PurchaseProposalExtraction = z.object({
             proposeToBuy: z.boolean(),
             items: z.array(
                 z.object({
-                name: z.string(),
-                price: z.number(),
-                description: z.string(),
+                    name: z.string(),
+                    description: z.string(),
                 })
-            ),
+            ).length(3),
         });
-
         const { userId, chatId, userChatId } = request.body;
-        
         try {
             const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
             let userData = await collectionUserChat.findOne({ userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
-            
-            if (!userData) {
-                return reply.status(404).send({ error: 'User data not found' });
-            }
-            
-            const userMessages = userData.messages;
-            const lastAssistantMessageContent = userMessages
-            .reverse()
-            .find(message => message.role === 'assistant')
-            .content;
-
-            const result = lastAssistantMessageContent.startsWith("[");
-
-            if(result){
-                return reply.send({proposeToBuy:false})
-            }
-
-            const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-            const chatData = await collectionChat.findOne({_id: new fastify.mongo.ObjectId(chatId) })
-            let characterDescription = chatData?.imageDescription || null
-
-            // Send user messages to OpenAI for parsing to check for purchase proposals
+            if (!userData) return reply.status(404).send({ error: 'User data not found' });
+            const lastAssistantMessageContent = userData.messages.reverse().find(m => m.role === 'assistant').content;
+            if (lastAssistantMessageContent.startsWith("[")) return reply.send({ proposeToBuy: false });
+            const chatData = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats').findOne({ _id: new fastify.mongo.ObjectId(chatId) });
+            let characterDescription = chatData?.imageDescription || null;
             const completion = await openai.beta.chat.completions.parse({
-                model: "gpt-4o-mini",
+                model: "gpt-4o",
                 messages: [
                     { role: "system", content: `
-                        You are an expert at structured data extraction.\n
-                        Verify if the message is about sending, proposing a picture or maybe resend a picture because of an error.\n
-                        About images.
-                        If so return the image name in japanese with a price (between 10 and 50) and a description in english.\n
-
-                        The description will be use in Stable Diffusion.\n
-                        Stable Diffusion is an AI art generation model similar to DALLE-2.\nBelow is a list of prompts that can be used to generate images with Stable Diffusion:
-        
-                        \n- portait of a homer simpson archer shooting arrow at forest monster, front game card, drark, marvel comics, dark, intricate, highly detailed, smooth, artstation, digital illustration by ruan jia and mandy jurgens and artgerm and wayne barlowe and greg rutkowski and zdislav beksinski
-                        \n- pirate, concept art, deep focus, fantasy, intricate, highly detailed, digital painting, artstation, matte, sharp focus, illustration, art by magali villeneuve, chippy, ryan yee, rk post, clint cearley, daniel ljunggren, zoltan boros, gabor szikszai, howard lyon, steve argyle, winona nelson
-                        \n- ghost inside a hunted room, art by lois van baarle and loish and ross tran and rossdraws and sam yang and samdoesarts and artgerm, digital art, highly detailed, intricate, sharp focus, Trending on Artstation HQ, deviantart, unreal engine 5, 4K UHD image
-                        \n- red dead redemption 2, cinematic view, epic sky, detailed, concept art, low angle, high detail, warm lighting, volumetric, godrays, vivid, beautiful, trending on artstation, by jordan grimmer, huge scene, grass, art greg rutkowski
-                        \n- a fantasy style portrait painting of rachel lane / alison brie hybrid in the style of francois boucher oil painting unreal 5 daz. rpg portrait, extremely detailed artgerm greg rutkowski alphonse mucha greg hildebrandt tim hildebrandt
-                        \n- athena, greek goddess, claudia black, art by artgerm and greg rutkowski and magali villeneuve, bronze greek armor, owl crown, d & d, fantasy, intricate, portrait, highly detailed, headshot, digital painting, trending on artstation, concept art, sharp focus, illustration
-                        \n- closeup portrait shot of a large strong female biomechanic woman in a scenic scifi environment, intricate, elegant, highly detailed, centered, digital painting, artstation, concept art, smooth, sharp focus, warframe, illustration, thomas kinkade, tomasz alen kopera, peter mohrbacher, donato giancola, leyendecker, boris vallejo
-                        \n- ultra realistic illustration of steve urkle as the hulk, intricate, elegant, highly detailed, digital painting, artstation, concept art, smooth, sharp focus, illustration, art by artgerm and greg rutkowski and alphonse mucha
-
-                        \nI want you to write me a detailed prompt exactly about the idea written after IDEA. Follow the structure of the example prompts. This means a very short description of the scene, followed by modifiers divided by commas to alter the mood, style, lighting, and more.
-
+                        You are an expert at structured data extraction.
+                        If the message is about proposing images, return exactly 3 items with name in Japanese, and description in English suitable for Stable Diffusion prompts.
                     ` },
-                    { role: "user", content: 'IDEA : '+ lastAssistantMessageContent },
+                    { role: "user", content: 'IDEA: ' + lastAssistantMessageContent },
                 ],
                 response_format: zodResponseFormat(PurchaseProposalExtraction, "purchase_proposal_extraction"),
             });
-
             let proposal = completion.choices[0].message.parsed;
-            if (proposal.proposeToBuy && proposal.items.length > 0) {
-                const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
-                const itemProposalCollection = db.collection('itemProposal');
+            if (proposal.proposeToBuy && proposal.items.length === 3) {
+                const itemProposalCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('itemProposal');
                 const insertedProposals = [];
-          
-                // Loop through all items
                 for (let item of proposal.items) {
-                  if (characterDescription) {
-                    item.description = characterDescription + item.description;
-                  }
-          
-                  // Insert each item into the itemProposal collection and save the full object with inserted _id
-                  const result = await itemProposalCollection.insertOne(item);
-          
-                  // Add the inserted proposal with its _id to the array
-                  insertedProposals.push({
-                    _id: result.insertedId,
-                    proposeToBuy: true,
-                    ...item
-                  });
+                    if (characterDescription) item.description = characterDescription + item.description;
+                    const result = await itemProposalCollection.insertOne(item);
+                    insertedProposals.push({ _id: result.insertedId, proposeToBuy: true, ...item });
                 }
                 return reply.send(insertedProposals);
             }
             return reply.send(proposal);
-            
         } catch (error) {
             console.log(error);
             return reply.status(500).send({ error: 'Error checking assistant proposal' });
         }
     });
+    
     fastify.get('/api/proposal/:id', async (request, reply) => {
         try {
           const db = fastify.mongo.client.db(process.env.MONGODB_NAME);

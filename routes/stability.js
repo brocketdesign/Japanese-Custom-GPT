@@ -514,7 +514,7 @@ fastify.post('/novita/txt2img', async (request, reply) => {
       }
 
       // Prepare params
-      const requestData = { ...params, ...image_request, image_num: 4 };
+      const requestData = { ...params, ...image_request, image_num: 1 };
       console.log(requestData)
       // Send request to Novita and get taskId
       const novitaTaskId = await fetchNovitaMagic(requestData);

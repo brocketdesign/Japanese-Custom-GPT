@@ -2244,6 +2244,63 @@ async function routes(fastify, options) {
           res.status(500).send('Ahoy! Trouble fetching categories.');
         }
       });
+      fastify.post('/api/unlock/:type/:id', async (request, reply) => {
+        try {
+          const { type, id } = request.params;
+          const itemId = new fastify.mongo.ObjectId(id);
+          const user = await fastify.getUser(request, reply);
+          const userId = new fastify.mongo.ObjectId(user._id);
+          const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+          const usersCollection = db.collection('users');
+          
+          let item;
+          let redirect;
+          if (type === 'gallery') {
+            // If type is gallery, find the correct image within the gallery
+            const gallery = await db.collection('gallery').findOne({ 'images._id': itemId });
+            if (!gallery) return reply.code(404).send({ error: 'Gallery not found' });
+            item = gallery.images.find(img => img._id.equals(itemId));
+            redirect = `/character/${gallery.chatId}?imageId=${itemId}`
+          } else {
+            // For other types, just find by _id directly
+            item = await db.collection(type).findOne({ _id: itemId });
+            redirect = `/post/${itemId}`
+          }
+      
+          if (!item) return reply.code(404).send({ error: 'Item not found' });
+      
+          const cost = item.unlockCost || 10;
+          if (user.coins < cost) return reply.code(400).send({ error: 'Insufficient coins' });
+      
+          // Deduct coins and add unlocked item to user's unlockedItems
+          await usersCollection.updateOne(
+            { _id: userId },
+            { $inc: { coins: -cost }, $addToSet: { unlockedItems: itemId } }
+          );
+      
+          const unlockedCollection = db.collection(`unlocked_${type}`);
+          await unlockedCollection.insertOne({ userId, itemId, unlockedAt: new Date() });
+      
+          reply.send({ item,redirect, message: 'Item unlocked successfully' });
+        } catch (err) {
+          reply.code(500).send('Internal Server Error');
+        }
+      });      
+
+    fastify.get('/api/is-unlocked/:type/:id', async (request, reply) => {
+        try {
+            const { type, id } = request.params;
+            const itemId = new fastify.mongo.ObjectId(id);
+            const user = await fastify.getUser(request, reply);
+            const userId = new fastify.mongo.ObjectId(user._id);
+            const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+            const usersCollection = db.collection('users');
+            const userDoc = await usersCollection.findOne({ _id: userId, unlockedItems: itemId });
+            reply.send({ unlocked: !!userDoc });
+        } catch (err) {
+            reply.code(500).send('Internal Server Error');
+        }
+    });
 }
 
 module.exports = routes;

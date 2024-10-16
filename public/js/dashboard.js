@@ -556,7 +556,26 @@ async function checkIfAdmin(userId) {
       return false;
     }
   }
-
+  function unlockImage(id, type, el) {
+    $.post(`/api/unlock/${type}/${id}`)
+      .done((response) => {
+        console.log(response)
+        const imageUrl = response.item.image ? response.item.image.imageUrl : response.item.imageUrl
+        const prompt = response.item.image ? response.item.image.prompt : response.item.prompt
+        $(el).before(`
+            <a href="${response.redirect}" class="text-muted text-decoration-none">
+                <img src="${imageUrl}" alt="${prompt}" class="card-img-top">
+            </a>`)
+            $(el).remove()
+        showNotification(window.translations.unlockSuccess, 'success');
+      })
+      .fail(() => showNotification(window.translations.unlockError, 'error'));
+  }
+  
+  function isUnlocked(currentUser, id) {
+    return currentUser.unlockedItems.includes(id)
+  }
+  
 // Helper function to scroll to the top
 function scrollToTop() {
     $('html, body').animate({ scrollTop: 0 }, 'slow');
@@ -1064,7 +1083,8 @@ window.loadAllUserPosts = async function (page = 1) {
       success: function (data) {
         let galleryHtml = '';
         data.posts.forEach(item => {
-            let isBlur = item?.post?.nsfw && !subscriptionStatus; 
+            const unlockedItem = isUnlocked(currentUser, item._id)
+            let isBlur = unlockedItem ? false : item?.post?.nsfw && !subscriptionStatus 
             const isLiked = item?.post?.likedBy?.some(id => id.toString() === currentUserId.toString());
 
             galleryHtml += `
@@ -1079,7 +1099,7 @@ window.loadAllUserPosts = async function (page = 1) {
                     </a>
                   </div>
                   ${isBlur ? `
-                  <div type="button" onclick=showPremiumPopup()>
+                  <div type="button" onclick=unlockImage('${item.post.postId}','posts',this)>
                     <img src="${imagePlaceholder()}" class="card-img-top" style="object-fit: cover;">
                   </div>
                   ` : `
@@ -1190,7 +1210,8 @@ window.loadAllChatImages = async function (page = 1) {
       success: function (data) {
         let chatGalleryHtml = '';
         data.images.forEach(item => {
-            let isBlur = item?.nsfw && !subscriptionStatus;
+            const unlockedItem = isUnlocked(currentUser, item._id)
+            let isBlur = unlockedItem ? false : item?.nsfw && !subscriptionStatus 
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             chatGalleryHtml += `
                 <div class="col-12 col-md-3 col-lg-2 mb-2">
@@ -1204,7 +1225,7 @@ window.loadAllChatImages = async function (page = 1) {
                             </a>
                         </div>
                         ${isBlur ? `
-                        <div type="button" onclick=showPremiumPopup()>
+                        <div type="button" onclick=unlockImage('${item._id}','gallery',this)>
                             <img src="${imagePlaceholder()}" class="card-img-top" style="object-fit: cover;">
                         </div>
                         ` : `
@@ -1297,7 +1318,8 @@ window.loadChatImages = async function (chatId, page = 1) {
       success: function (data) {
         let chatGalleryHtml = '';
         data.images.forEach(item => {
-            let isBlur = item?.nsfw && !subscriptionStatus;
+            const unlockedItem = isUnlocked(currentUser, item._id)
+            let isBlur = unlockedItem ? false : item?.nsfw && !subscriptionStatus 
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             chatGalleryHtml += `
                 <div class="col-12 col-md-6 col-lg-4 mb-2">
@@ -1311,7 +1333,7 @@ window.loadChatImages = async function (chatId, page = 1) {
                             </a>
                         </div>
                         ${isBlur ? `
-                        <div type="button" onclick=showPremiumPopup()>
+                        <div type="button" onclick=unlockImage('${item._id}','gallery',this)>
                             <img src="${imagePlaceholder()}" class="card-img-top" style="object-fit: cover;">
                             <div class="d-none card-body p-2">
                                 <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
@@ -1414,7 +1436,8 @@ window.loadUserImages = async function (userId, page = 1) {
       success: function (data) {
         let galleryHtml = '';
         data.images.forEach(item => {
-            let isBlur = item?.nsfw && !subscriptionStatus 
+            const unlockedItem = isUnlocked(currentUser, item._id)
+            let isBlur = unlockedItem ? false : item?.nsfw && !subscriptionStatus 
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             galleryHtml += `
                 <div class="col-12 col-md-6 col-lg-4 mb-2">
@@ -1428,7 +1451,7 @@ window.loadUserImages = async function (userId, page = 1) {
                         </a>
                     </div>
                     ${isBlur ? `
-                    <div type="button" onclick=showPremiumPopup()>
+                    <div type="button" onclick=unlockImage('${item._id}','gallery',this)>
                         <img src="${imagePlaceholder()}" class="card-img-top" style="object-fit: cover;">
                     </div>
                     ` : `
@@ -1512,7 +1535,8 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
       success: function (data) {
         let galleryHtml = '';
         data.posts.forEach(item => {
-            let isBlur = item?.image?.nsfw && !subscriptionStatus 
+            const unlockedItem = isUnlocked(currentUser, item._id)
+            let isBlur = unlockedItem ? false : item?.image?.nsfw && !subscriptionStatus 
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             galleryHtml += `
                 <div class="col-12 col-md-6 col-lg-4 mb-2">
@@ -1526,7 +1550,7 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
                         </a>
                     </div>
                     ${isBlur ? `
-                    <div type="button" onclick=showPremiumPopup()>
+                    <div type="button" onclick=unlockImage('${item._id}','posts',this)>
                         <img src="${imagePlaceholder()}" class="card-img-top" style="object-fit: cover;">
                     </div>
                     ` : `

@@ -368,7 +368,8 @@ async function initializeCategoriesCollection(db) {
     
           if (imageDoc.length > 0) {
             image = imageDoc[0].image;
-            isBlur = image?.nsfw && !subscriptionStatus;
+            const unlockedItem = user.unlockedItems.map(id => id.toString()).includes(imageId.toString());
+            isBlur = unlockedItem ? false : image?.nsfw && !subscriptionStatus;
           } else {
             return reply.code(404).send({ error: 'Image not found' });
           }

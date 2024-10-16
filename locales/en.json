@@ -1,4 +1,6 @@
 {
+    "unlockSuccess": "Unlocked successfully",
+    "unlockError": "Error unlocking",
     "chatHistory": "Chat History",
     "createCharacter": "Create Character",
     "library": "Library",

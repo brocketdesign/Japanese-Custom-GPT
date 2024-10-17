@@ -576,7 +576,7 @@ async function checkIfAdmin(userId) {
   }
   
   function isUnlocked(currentUser, id) {
-    return currentUser.unlockedItems.includes(id)
+    return currentUser?.unlockedItems?.includes(id)
   }
   
 // Helper function to scroll to the top

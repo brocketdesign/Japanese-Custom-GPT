@@ -1,12 +1,19 @@
- <nav class="navbar navbar-expand-lg navbar-white bg-white">
-     <div class="container-fluid">
-        <a class="navbar-brand d-flex flex-row" href="/dashboard">
-            <img src="/img/logo.webp" alt="" class="mx-3" width="40px">
-            <span class="u-font-manrope u-color-grad">Lamix</span>
-        </a>
-        <!-- Avatar -->
-        <div class="nav-item dropdown mx-2">
-            {{> dashboard-avatar}}
+ <nav class="navbar navbar-expand-lg navbar-white bg-transparent shadow-0">
+    <div class="container-fluid">
+        <div class="d-flex align-items-center justify-content-center m-auto">
+            <div class="d-flex flex-row" style="cursor:pointer" onclick="window.location='/'">
+                <img src="/img/logo.webp" alt="" class="mx-3" width="40px">
+                <span class="d-none">LAMIXボット</span>
+            </div>  
+            <div>
+                <div class="navbar-collapse" id="navbarNav" style="position: absolute;right: 20px;top: 10px;">
+                    <ul class="navbar-nav ms-auto mb-lg-0">
+                        <li class="nav-item dropdown">
+                            {{> dashboard-avatar}}
+                        </li>
+                    </ul>
+                </div>
+            </div>     
         </div>
     </div>
 </nav>

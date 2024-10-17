@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const aws = require('aws-sdk');
 const crypto = require('crypto');
 const axios = require('axios');
-const { checkLimits, checkUserAdmin } = require('../models/tool');
+const { checkLimits, checkUserAdmin, getUserData } = require('../models/tool');
 
 async function routes(fastify, options) {
   
@@ -523,9 +523,9 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       console.log(error)
     }
   });
+
   fastify.get('/user/:userId', async (request, reply) => {
     const { userId } = request.params;
-  
     const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
     const collectionChat = db.collection('chats');
     const collectionUser = db.collection('users');
@@ -535,50 +535,25 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       const currentUserId = currentUser._id;
       currentUser = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(currentUserId) });
   
-      const user = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(userId) });
+      const userData = await getUserData(userId, collectionUser, collectionChat, currentUser);
+      if (!userData) return reply.status(404).send({ error: 'User not found' });
   
-      if (!user) {
-        return reply.status(404).send({ error: 'User not found' });
-      }
-  
-      // Check if current user is following the target user
-      const isFollowing = currentUser.following && currentUser.following.some(followingId => followingId.toString() === user._id.toString());
-  
-      let isAdmin = false;
-  
-      if (currentUserId.toString() === userId) {
-        isAdmin = true;
-      }
-  
-      const chatCount = await collectionChat.distinct('chatImageUrl', { userId: new fastify.mongo.ObjectId(userId) });
-      const totalCount = chatCount.length;      
-  
-      const translations = request.translations
+      const isAdmin = currentUserId.toString() === userId;
+      const translations = request.translations;
 
       return reply.view('/user-profile.hbs', {
-        title: `${user.nickname}さんのプロフィール`,
+        title: `${userData.nickname}さんのプロフィール`,
         translations,
         isAdmin,
         user: currentUser,
-        userData: {
-          _id: user._id,
-          profileUrl: user.profileUrl,
-          nickname: user.nickname,
-          bio: user.bio,
-          coins: user.coins,
-          follow: isFollowing,
-          followCount: user.followCount,
-          followerCount: user.followerCount,
-          imageLikeCount: user.imageLikeCount,
-          postCount: user.postCount,
-          chatCount:totalCount, // Include the total chat count here
-        },
+        userData,
       });
     } catch (error) {
       console.log(error);
       return reply.status(500).send({ error: 'An error occurred' });
     }
   });
+  
   
   fastify.get('/user/chat-data/:userId', async (request, reply) => {
     const { userId } = request.params;

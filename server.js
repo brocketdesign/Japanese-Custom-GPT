@@ -19,7 +19,7 @@ const {
   deleteOldRecords, 
   deleteUserChatsWithoutMessages,
  } = require('./models/cleanupNonRegisteredUsers');
- const  { checkUserAdmin } = require('./models/tool')
+ const  { checkUserAdmin, getUserData } = require('./models/tool')
 
 mongodb.MongoClient.connect(process.env.MONGODB_URI)
   .then((client) => {
@@ -172,8 +172,14 @@ async function initializeCategoriesCollection(db) {
     
     // Routes
     fastify.get('/', async (request, reply) => {
-      const user = await fastify.getUser(request, reply);
-      if (user.isTemporary) {
+      let user = await fastify.getUser(request, reply);
+      const userId = user._id;
+      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const collectionChat = db.collection('chats');
+      user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+      let chatCount = await collectionChat.distinct('chatImageUrl', { userId: new fastify.mongo.ObjectId(userId) });
+      chatCount = chatCount.length
+      if (user.isTemporary || chatCount == 0) {
         return reply.redirect('/chat/edit/')
       }else{
         return reply.redirect('/chat')
@@ -227,9 +233,14 @@ async function initializeCategoriesCollection(db) {
       const chatId = request.params.chatId;
       const userId = user._id;
       const translations = request.translations
-
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-
+      
+      const collectionChat = db.collection('chats');
+      const collectionUser = db.collection('users');
+    
+      const userData = await getUserData(userId, collectionUser, collectionChat, user);
+      if (!userData) return reply.status(404).send({ error: 'User not found' });
+      
       const totalUsers = await db.collection('users').countDocuments({ email: { $exists: true } });
       const isAdmin = await checkUserAdmin(fastify, request.user._id);
 
@@ -238,6 +249,7 @@ async function initializeCategoriesCollection(db) {
         isAdmin,
         translations,
         mode:process.env.MODE, user, userId, chatId,
+        userData,
         seo: [
           { name: 'description', content: 'Lamixでは、無料でAIグラビアとのチャット中に生成された画像を使って、簡単に投稿を作成することができます。お気に入りの瞬間やクリエイティブな画像をシェアすることで、他のユーザーと楽しさを共有しましょう。画像を選んで投稿に追加するだけで、あなただけのオリジナルコンテンツを簡単に発信できます。' },
           { name: 'keywords', content: 'AIグラビア, 無料で画像生成AI, LAMIX, 日本語, AI画像生成, AIアート, AIイラスト, 自動画像生成, クリエイティブAI, 生成系AI, 画像共有, AIコミュニティ, AIツール, 画像編集AI, デジタルアート, テキストから画像生成, AIクリエーション' },
@@ -542,9 +554,9 @@ async function initializeCategoriesCollection(db) {
       try {
         const userId = new fastify.mongo.ObjectId(request.user._id)
         const chatsCollection = db.collection('chats');
-        const chats = await chatsCollection.find({ userId }).toArray();
+        const chats = await await chatsCollection.distinct('chatImageUrl', { userId: new fastify.mongo.ObjectId(userId) });
         if(chats.length == 0){
-          return reply.redirect('/chat/')
+          return reply.redirect('/chat/edit/')
         }else{
           return reply.redirect('/chat/')
         }

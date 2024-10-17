@@ -301,7 +301,28 @@ const createBlurredImage = async (imageUrl, db) => {
         throw new Error('Failed to process the image.');
     }
 };
-
+async function getUserData(userId, collectionUser, collectionChat, currentUser) {
+    const user = await collectionUser.findOne({ _id: new ObjectId(userId) });
+    if (!user) return null;
+  
+    const isFollowing = currentUser.following && currentUser.following.some(followingId => followingId.toString() === user._id.toString());
+    const chatCount = await collectionChat.distinct('chatImageUrl', { userId: new ObjectId(userId) });
+  
+    return {
+      _id: user._id,
+      profileUrl: user.profileUrl,
+      nickname: user.nickname,
+      bio: user.bio,
+      coins: user.coins,
+      follow: isFollowing,
+      followCount: user.followCount,
+      followerCount: user.followerCount,
+      imageLikeCount: user.imageLikeCount,
+      postCount: user.postCount,
+      chatCount: chatCount.length,
+    };
+  };
+  
 
   module.exports = { getCounter, 
     updateCounter, 
@@ -311,5 +332,6 @@ const createBlurredImage = async (imageUrl, db) => {
     checkUserAdmin, 
     convertImageUrlToBase64,
     createBlurredImage,
-    deleteObjectFromUrl
+    deleteObjectFromUrl,
+    getUserData
 }

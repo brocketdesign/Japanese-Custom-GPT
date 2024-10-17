@@ -164,7 +164,7 @@
                   </p>
                 </div>
               </div>
-              <span class="btn btn-light me-2">
+              <span class="btn btn-light me-2"  onclick="showCoinShop(this)">
                 <span>🪙</span>
                 <span class="user-coins fw-bold">{{userData.coins}}</span>
               </span>
@@ -192,7 +192,8 @@
         </form>
       </div>
     </div>
-
+</section>
+<section>
     <div class="col-12 mt-4">
         <ul class="nav nav-tabs mb-2" id="characterTabs" role="tablist">
             <li class="nav-item" role="presentation">
@@ -208,7 +209,7 @@
                 <button class="nav-link" id="user-chat-tab" data-bs-toggle="tab" data-bs-target="#user-chat" type="button" role="tab" aria-controls="user-chat" aria-selected="false">{{translations.tabs.characters}}</button>
             </li>
         </ul>
-        <div class="tab-content">
+        <div class="tab-content mx-3">
             <div class="tab-pane fade show active" id="post" role="tabpanel" aria-labelledby="post-tab">
               <div id="user-posts-gallery" class="row g-3"></div>
               <div id="pagination-controls" class="d-flex justify-content-center my-3"></div>

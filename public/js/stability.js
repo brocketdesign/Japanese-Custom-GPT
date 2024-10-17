@@ -310,9 +310,8 @@ function displayCustomPromptInput(API_URL, userId, chatId, userChatId, thumbnail
     const NSFW_PRICE = 75;
 
     Swal.fire({
-        title: t['enterPrompt'],
         html: `
-            <textarea id="customPromptInput" class="form-control" rows="4" placeholder="${t['promptPlaceholder']}"></textarea>
+            <textarea id="customPromptInput" class="form-control mt-5" rows="4" placeholder="${t['promptPlaceholder']}"></textarea>
             <div class="form-check mt-3 text-start">
                 <input class="form-check-input" type="checkbox" value="" id="nsfwCheck">
                 <label class="form-check-label" for="nsfwCheck">

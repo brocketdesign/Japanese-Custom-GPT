@@ -167,7 +167,11 @@
                 </div>
             </section>
             <div class="sticky-bottom py-2 mx-auto text-center" style="bottom:0;left:0;right:0;">
-                <a href="/chat/edit/" class="m-2 btn border shadow-0 btn-secondary px-5 py-2 m-auto" style="border-radius:40px;background: linear-gradient(90.9deg, rgba(110, 32, 244, 0.5) 2.74%, #6E20F4 102.92%);">
+
+                <a href="/discover" class="{{default isAdmin 'd-inline-block'}} m-2 btn px-4 py-2 border border-dark shadow btn-light" style="border-radius:40px;">
+                    <i class="bi bi-compass me-2"></i>{{translations.library}}
+                </a>
+                <a href="/chat/edit/" class="m-2 btn border border-dark shadow btn-secondary px-5 py-2 m-auto" style="border-radius:40px;background:linear-gradient(90.9deg, rgb(222, 202, 255) 2.74%, #6E20F4 102.92%);">
                     <i class="fas fa-plus me-2"></i>キャラクター作成
                 </a>
             </div>

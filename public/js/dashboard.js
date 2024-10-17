@@ -557,9 +557,9 @@ async function checkIfAdmin(userId) {
     }
   }
   function unlockImage(id, type, el) {
+    showRegistrationForm()
     $.post(`/api/unlock/${type}/${id}`)
       .done((response) => {
-        console.log(response)
         const imageUrl = response.item.image ? response.item.image.imageUrl : response.item.imageUrl
         const prompt = response.item.image ? response.item.image.prompt : response.item.prompt
         $(el).before(`
@@ -1080,6 +1080,7 @@ window.loadAllUserPosts = async function (page = 1) {
     const currentUserId = currentUser._id;
     const subscriptionStatus = currentUser.subscriptionStatus === 'active';
     const isAdmin = await checkIfAdmin(currentUserId);    
+    const isTemporary = !!currentUser?.isTemporary
     $.ajax({
       url: `/user/posts?page=${page}`,
       method: 'GET',
@@ -1102,7 +1103,7 @@ window.loadAllUserPosts = async function (page = 1) {
                     </a>
                   </div>
                   ${isBlur ? `
-                  <div type="button" onclick=unlockImage('${item.post.postId}','posts',this)>
+                  <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item.post.postId}','posts',this)`}>
                     <img src="${imagePlaceholder()}" class="card-img-top" style="object-fit: cover;">
                   </div>
                   ` : `
@@ -1228,7 +1229,7 @@ window.loadAllChatImages = async function (page = 1) {
                             </a>
                         </div>
                         ${isBlur ? `
-                        <div type="button" onclick=unlockImage('${item._id}','gallery',this)>
+                        <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item._id}','gallery',this)`}>
                             <img src="${imagePlaceholder()}" class="card-img-top" style="object-fit: cover;">
                         </div>
                         ` : `
@@ -1314,6 +1315,7 @@ window.loadChatImages = async function (chatId, page = 1) {
     const currentUser = await fetchUser();
     const currentUserId = currentUser._id;
     const subscriptionStatus = currentUser.subscriptionStatus === 'active';
+    const isTemporary = !!currentUser?.isTemporary
 
     $.ajax({
       url: `/chat/${chatId}/images?page=${page}`,
@@ -1336,7 +1338,7 @@ window.loadChatImages = async function (chatId, page = 1) {
                             </a>
                         </div>
                         ${isBlur ? `
-                        <div type="button" onclick=unlockImage('${item._id}','gallery',this)>
+                        <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item._id}','gallery',this)`}>
                             <img src="${imagePlaceholder()}" class="card-img-top" style="object-fit: cover;">
                             <div class="d-none card-body p-2">
                                 <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
@@ -1433,6 +1435,7 @@ window.loadUserImages = async function (userId, page = 1) {
     const currentUser = await fetchUser();
     const currentUserId = currentUser._id
     const subscriptionStatus = currentUser.subscriptionStatus == 'active'
+    const isTemporary = !!currentUser?.isTemporary
     $.ajax({
       url: `/user/${userId}/liked-images?page=${page}`,
       method: 'GET',
@@ -1454,7 +1457,7 @@ window.loadUserImages = async function (userId, page = 1) {
                         </a>
                     </div>
                     ${isBlur ? `
-                    <div type="button" onclick=unlockImage('${item._id}','gallery',this)>
+                    <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item._id}','gallery',this)`}>
                         <img src="${imagePlaceholder()}" class="card-img-top" style="object-fit: cover;">
                     </div>
                     ` : `
@@ -1532,6 +1535,7 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
     const currentUser = await fetchUser();
     const currentUserId = currentUser._id
     const subscriptionStatus = currentUser.subscriptionStatus == 'active'
+    const isTemporary = !!currentUser?.isTemporary
     $.ajax({
       url: `/user/${userId}/posts?page=${page}&like=${like}`,
       method: 'GET',
@@ -1553,7 +1557,7 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
                         </a>
                     </div>
                     ${isBlur ? `
-                    <div type="button" onclick=unlockImage('${item._id}','posts',this)>
+                    <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item._id}','posts',this)`}>
                         <img src="${imagePlaceholder()}" class="card-img-top" style="object-fit: cover;">
                     </div>
                     ` : `

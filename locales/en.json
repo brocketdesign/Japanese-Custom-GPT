@@ -167,6 +167,7 @@
     "tabs": {
       "posts": "Posts",
       "likedPosts": "Liked Posts",
+      "liked": "Liked",
       "likedAIImages": "Liked AI Images",
       "characters": "Characters"
     },

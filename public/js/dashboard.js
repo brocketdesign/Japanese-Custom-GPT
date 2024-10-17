@@ -557,7 +557,6 @@ async function checkIfAdmin(userId) {
     }
   }
   function unlockImage(id, type, el) {
-    showRegistrationForm()
     $.post(`/api/unlock/${type}/${id}`)
       .done((response) => {
         const imageUrl = response.item.image ? response.item.image.imageUrl : response.item.imageUrl
@@ -1093,7 +1092,7 @@ window.loadAllUserPosts = async function (page = 1) {
 
             galleryHtml += `
               <div class="col-12 col-md-3 col-lg-2 mb-2">
-                <div class="card">
+                <div class="card shadow-0">
                   <div class="d-flex align-items-center p-2">
                     <a href="/user/${item.userId}">
                       <img src="${item.profilePicture}" alt="${item.userName}" class="rounded-circle me-2" width="40" height="40">
@@ -1104,7 +1103,7 @@ window.loadAllUserPosts = async function (page = 1) {
                   </div>
                   ${isBlur ? `
                   <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item.post.postId}','posts',this)`}>
-                    <img src="${imagePlaceholder()}" class="card-img-top" style="object-fit: cover;">
+                    <img src="${item.post.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
                   </div>
                   ` : `
                   <a href="/post/${item.post.postId}" class="text-muted text-decoration-none">
@@ -1219,7 +1218,7 @@ window.loadAllChatImages = async function (page = 1) {
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             chatGalleryHtml += `
                 <div class="col-12 col-md-3 col-lg-2 mb-2">
-                    <div class="card">
+                    <div class="card shadow-0">
                         <div class="d-flex align-items-center p-2">
                             <a href="/character/${item.chatId}?imageId=${item._id}">
                                 <img src="${item?.thumbnail}" alt="${item?.prompt}" class="rounded-circle me-2" width="40" height="40">
@@ -1230,7 +1229,7 @@ window.loadAllChatImages = async function (page = 1) {
                         </div>
                         ${isBlur ? `
                         <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item._id}','gallery',this)`}>
-                            <img src="${imagePlaceholder()}" class="card-img-top" style="object-fit: cover;">
+                            <img src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
                         </div>
                         ` : `
                         <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
@@ -1328,7 +1327,7 @@ window.loadChatImages = async function (chatId, page = 1) {
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             chatGalleryHtml += `
                 <div class="col-12 col-md-6 col-lg-4 mb-2">
-                    <div class="card">
+                    <div class="card shadow-0">
                         <div class="d-flex align-items-center p-2">
                             <a href="/character/${item.chatId}?imageId=${item._id}">
                                 <img src="${item?.thumbnail}" alt="${item?.chatName}" class="rounded-circle me-2" width="40" height="40">
@@ -1339,7 +1338,7 @@ window.loadChatImages = async function (chatId, page = 1) {
                         </div>
                         ${isBlur ? `
                         <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item._id}','gallery',this)`}>
-                            <img src="${imagePlaceholder()}" class="card-img-top" style="object-fit: cover;">
+                            <img src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
                             <div class="d-none card-body p-2">
                                 <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
                             </div>
@@ -1458,7 +1457,7 @@ window.loadUserImages = async function (userId, page = 1) {
                     </div>
                     ${isBlur ? `
                     <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item._id}','gallery',this)`}>
-                        <img src="${imagePlaceholder()}" class="card-img-top" style="object-fit: cover;">
+                        <img src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
                     </div>
                     ` : `
                     <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
@@ -1558,7 +1557,7 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
                     </div>
                     ${isBlur ? `
                     <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item._id}','posts',this)`}>
-                        <img src="${imagePlaceholder()}" class="card-img-top" style="object-fit: cover;">
+                        <img src="${item.image.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
                     </div>
                     ` : `
                     <a href="/post/${item._id}" class="text-muted text-decoration-none">

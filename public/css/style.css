@@ -7,6 +7,10 @@
 .persona{
   display: none;
 }
+.img-blur {
+  filter: blur(15px);
+  clip-path: inset(0);
+}
 img.select {
   border: 2px solid;
 }

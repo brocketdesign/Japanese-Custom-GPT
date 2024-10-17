@@ -133,15 +133,15 @@
               <h2>{{userData.nickname}}</h2>
               </a>
               <div class="d-flex flex-wrap justify-content-center text-center">
-                <div class="mx-2">
+                <div class="mx-2 posts-tab" type="button">
                   <h6 class="fw-bold">{{default userData.postCount 0}}</h6>
                   <p class="text-muted small"><i class="bi bi-grid-fill"></i> {{translations.profile.posts}}</p>
                 </div>
-                <div class="mx-2">
+                <div class="mx-2 likes-tab" type="button">
                   <h6 class="fw-bold">{{default userData.imageLikeCount 0}}</h6>
                   <p class="text-muted small"><i class="bi bi-heart-fill"></i> {{translations.profile.likes}}</p>
                 </div>
-                <div class="mx-2">
+                <div class="mx-2 characters-tab" type="button">
                   <h6 class="fw-bold">{{default userData.chatCount 0}}</h6>
                   <p class="text-muted small">
                     <i class="bi bi-chat-dots-fill"></i> {{translations.profile.characters}}
@@ -203,7 +203,7 @@
                 <button class="nav-link" id="post-like-tab" data-bs-toggle="tab" data-bs-target="#post-like" type="button" role="tab" aria-controls="post-like" aria-selected="true">{{translations.tabs.likedPosts}}</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="image-tab" data-bs-toggle="tab" data-bs-target="#image" type="button" role="tab" aria-controls="image" aria-selected="false">{{translations.tabs.likedAIImages}}</button>
+                <button class="nav-link" id="image-tab" data-bs-toggle="tab" data-bs-target="#image" type="button" role="tab" aria-controls="image" aria-selected="false">{{translations.tabs.liked}}</button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="user-chat-tab" data-bs-toggle="tab" data-bs-target="#user-chat" type="button" role="tab" aria-controls="user-chat" aria-selected="false">{{translations.tabs.characters}}</button>
@@ -437,14 +437,29 @@
 
   $(document).ready(function () {
     loadUserPosts(userId, 1);
+    $('#post-tab').on('shown.bs.tab', function (e) {
+        loadUserPosts(userId, 1);
+    });
+    $('.posts-tab').on('click',function(){
+      $('#post-tab').click()
+    })
+
     $('#post-like-tab').on('shown.bs.tab', function (e) {
         loadUserPosts(userId, 1, true);
     });
+
     $('#image-tab').on('shown.bs.tab', function (e) {
         loadUserImages(userId, 1);
     });
+    $('.likes-tab').on('click',function(){
+       $('#image-tab').click()
+    })
+
     $('#user-chat-tab').on('shown.bs.tab', function (e) {
         displayUserChats(userId,1)
     });
+    $('.characters-tab').on('click',function(){
+      $('#user-chat-tab').click()
+    })
   });
 </script>

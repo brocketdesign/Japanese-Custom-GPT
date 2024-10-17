@@ -12,9 +12,9 @@
     <!-- Chat Image Section -->
     {{#if image}}
     <div class="col-lg-8 mb-4">
-      <div class="card">
+      <div class="card border-0 shadow-0">
         <img src="{{#if isBlur}}{{imagePlaceholder }}{{else}}{{image.imageUrl}}{{/if}}" class="card-img-top" alt="{{image.prompt}}" style="max-height:400px;width:auto;object-fit:contain;">
-        <div class="card-body">
+        <div class="card-body border mt-3">
           <h5 class="card-title d-none">{{image.prompt}}</h5>
           <p class="card-text">{{image.comment}}</p>
           <p class="text-muted"><span class="jp-date">{{image.createdAt}}</span></p>
@@ -31,7 +31,7 @@
     {{#if chat}}
     <!-- Chat Profile Section -->
     <div class="col-lg-4 mb-4">
-      <div class="card">
+      <div class="card border shadow-0">
         <div class="card-body text-center">
           <div class="chat-profile mt-4">
             <div class="row mx-0 mb-3">
@@ -65,9 +65,9 @@
 
   <!-- Other Images Section -->
   {{#if chatId}}
-  <div class="container mb-5">
+  <div class="container mb-5 px-0">
     <div class="row mx-0">
-      <div class="col-12 mt-4">
+      <div class="col-12 mt-4 px-0">
         <h4>他の画像</h4>
         <hr>
         <div class="container-none">

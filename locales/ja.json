@@ -167,6 +167,7 @@
   "tabs": {
     "posts": "投稿一覧",
     "likedPosts": "いいねした投稿",
+    "liked": "いいね",
     "likedAIImages": "いいねしたAI画像",
     "characters": "キャラ"
   },

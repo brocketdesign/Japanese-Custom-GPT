@@ -71,7 +71,7 @@
       <h3 class="my-4 text-start">{{translations.discover.latestAIGravure}}</h3>
       <p>{{translations.discover.latestAIGravureDescription}}</p>
       <div id="chat-gallery" class="row"></div>
-      <div class="w-100 text-center">
+      <div class="d-none w-100 text-center">
           <a href="/chat/" class="my-4 btn btn-lg text-white fw-bold custom-gradient-bg w-100">{{translations.discover.seeAll}}</a>
       </div>
 
@@ -103,7 +103,7 @@
 </script>
 <script>
   $(document).ready(function () {
-    displayPeopleChat(1,'anime');
+    //displayPeopleChat(1,'anime');
     loadAllChatImages(1);
     loadAllUserPosts(1)
     loadUsers(1)

@@ -309,8 +309,8 @@ async function routes(fastify, options) {
         nsfw: {
           model_name: "novaAnimeXL_ponyV20_461138.safetensors",
           sampler_name: "Euler a",
-          prompt: `score_9, score_8_up, source_anime, anime, masterpiece, best quality, (ultra-detailed), (nsfw), uncensored,naked,nudity,sexy body,breast,nipple,pussy, `,
-          negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, worst quality, low quality,`,
+          prompt: `score_9, score_8_up, source_anime, anime, masterpiece, best quality, (ultra-detailed), (nsfw), uncensored,naked,nudity,sexy body,breast,nipple, `,
+          negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, worst quality, low quality, pussy,`,
           loras: []
         }
       },
@@ -325,8 +325,8 @@ async function routes(fastify, options) {
         nsfw: {
           model_name: "kanpiromix_v20.safetensors",
           sampler_name: "DPM++ 2M Karras",
-          prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, (nsfw),uncensored,naked,nudity,body,breast,nipple,pussy, `,
-          negative_prompt: `BraV4Neg,paintings,sketches,(worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)),logo`,
+          prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, (nsfw),uncensored,naked,nudity,body,breast,nipple, `,
+          negative_prompt: `BraV4Neg,paintings,sketches,(worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)),logo,pussy,`,
           loras: [{"model_name":"more_details_59655.safetensors","strength":0.4},{"model_name":"droptop_38945.safetensors","strength":0.4}, {"model_name":"JapaneseDollLikeness_v15_28382.safetensors","strength":0.7}],
         }
       }

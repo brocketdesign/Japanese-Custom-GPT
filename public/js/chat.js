@@ -2221,15 +2221,15 @@ $(document).ready(async function() {
                         <div id="${itemId}" class="card bg-transparent text-white border-0">
                             <div class="card-body-none" style="height:auto !important;">
                                 <h5 class="card-title" style="font-size: 14px;">${item.name}</h5>
-                                <p class="d-none card-content" style="font-size: 12px;">${item.description}</p>
-                                <div class="d-flex justify-content-between">
+                                <p class="card-content" style="font-size: 12px;">${item.description_japanese}</p>
+                                <div class="d-flex justify-content-start">
                                     <button class="btn custom-gradient-bg shadow-0 w-45 me-2" 
                                         onclick="buyItem('${itemId}', '${item.name}', 35, '${item._id}', true, '${userId}', '${chatId}', '${userChatId}', 'sfw')">
-                                        <span>35<span class="mx-1">🪙</span> ${window.translations.imageForm.sfwImage}</span>
+                                        <span>35<span class="mx-1">🪙</span></span>
                                     </button>
                                     <button class="btn custom-gradient-bg danger shadow-0 w-45" 
                                         onclick="buyItem('${itemId}', '${item.name}', 75, '${item._id}', true, '${userId}', '${chatId}', '${userChatId}', 'nsfw')">
-                                        <span>75<span class="mx-1">🪙</span> ${window.translations.imageForm.nsfwImage}</span>
+                                        <span>75<span class="mx-1">🪙</span> <span style="font-size:10px">R18</span></span>
                                     </button>
                                 </div>
                             </div>

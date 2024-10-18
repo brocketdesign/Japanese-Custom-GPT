@@ -639,9 +639,10 @@ async function routes(fastify, options) {
                             You do not ask for the user story.
                             You only ask what kind of picture the user wants. 
                             Focus on promoting your pictures. You must wait for the user to send you coins before sending the picture.
+                            Never include the price in your messages. Only ask for coins but do not include a price.
                             \n When you propose a picture, always describe the image. Describe you clothes and emotion, what is going on in the picture.
                             \n When the user buy you someting, thanks him and wait for the picture to be generated. 
-                            Never start your answer with [Hidden].
+                            Never start your answer with [Hidden]. Do not include [Hidden] in your messages.
                             Respond in ${language}. 
                             Start by explaining to the user that normal picture can be generated while chatting but adult images, should be requested using the image form by clicking on 成人向け画像.
                             clearly explain this to the user first !
@@ -1574,6 +1575,7 @@ async function routes(fastify, options) {
                 z.object({
                     name: z.string(),
                     description: z.string(),
+                    description_japanese: z.string(),
                 })
             ),
         });
@@ -1591,7 +1593,8 @@ async function routes(fastify, options) {
                 messages: [
                     { role: "system", content: `
                         You are an expert at structured data extraction.
-                        \nIf the message is about sending images, return exactly 3 items with name in Japanese, and description in English suitable for Stable Diffusion prompts.
+                        \nIf the message is about sending images, return exactly 3 items with name in Japanese,a description in English suitable for Stable Diffusion prompts and a short description in natural japanese to explain the image in natural language.
+                        \n Never include a price.
                         \nI want you to write me a detailed prompt exactly about the idea written after IDEA. Follow the structure of the example prompts. This means a very short description of the scene, followed by modifiers divided by commas to alter the mood, style, lighting, and more.
                     ` },
                     { role: "user", content: 'IDEA: ' + lastAssistantMessageContent },
@@ -1599,7 +1602,6 @@ async function routes(fastify, options) {
                 response_format: zodResponseFormat(PurchaseProposalExtraction, "purchase_proposal_extraction"),
             });
             let proposal = completion.choices[0].message.parsed;
-            console.log(proposal)
             if (proposal.proposeToBuy) {
                 const itemProposalCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('itemProposal');
                 const insertedProposals = [];
@@ -2255,29 +2257,39 @@ async function routes(fastify, options) {
           
           let item;
           let redirect;
+          let isOwner;
           if (type === 'gallery') {
             // If type is gallery, find the correct image within the gallery
             const gallery = await db.collection('gallery').findOne({ 'images._id': itemId });
             if (!gallery) return reply.code(404).send({ error: 'Gallery not found' });
             item = gallery.images.find(img => img._id.equals(itemId));
             redirect = `/character/${gallery.chatId}?imageId=${itemId}`
+            isOwner = gallery.userId.toString() == userId
           } else {
             // For other types, just find by _id directly
             item = await db.collection(type).findOne({ _id: itemId });
             redirect = `/post/${itemId}`
+            isOwner = item.userId.toString() == userId
           }
       
           if (!item) return reply.code(404).send({ error: 'Item not found' });
-      
-          const cost = item.unlockCost || 10;
-          if (user.coins < cost) return reply.code(400).send({ error: 'Insufficient coins' });
-      
-          // Deduct coins and add unlocked item to user's unlockedItems
+          
+          if(!isOwner){
+            const cost = item.unlockCost || 10;
+            if (user.coins < cost) return reply.code(400).send({ error: 'Insufficient coins' });
+        
+            // Deduct coins
+            await usersCollection.updateOne(
+                { _id: userId },
+                { $inc: { coins: -cost } }
+            );
+          }
+          // unlocked item to user's unlockedItems
           await usersCollection.updateOne(
-            { _id: userId },
-            { $inc: { coins: -cost }, $addToSet: { unlockedItems: itemId } }
+              { _id: userId },
+              { $addToSet: { unlockedItems: itemId } }
           );
-      
+
           const unlockedCollection = db.collection(`unlocked_${type}`);
           await unlockedCollection.insertOne({ userId, itemId, unlockedAt: new Date() });
       

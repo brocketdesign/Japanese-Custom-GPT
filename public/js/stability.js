@@ -355,7 +355,7 @@ function displayCustomPromptInput(API_URL, userId, chatId, userChatId, thumbnail
             const userPromptElement = $(`
                 <div class="d-flex flex-row justify-content-end mb-4 message-container user">
                     <div class="d-flex flex-column align-items-end">
-                        <div class="bg-primary text-white p-2 rounded" style="max-width: 70%;">
+                        <div class="text-start p-2 rounded" style="border-radius: 15px; background-color: #fbfbfbdb;">
                             ${prompt}
                         </div>
                     </div>

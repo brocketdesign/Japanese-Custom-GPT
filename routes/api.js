@@ -1206,20 +1206,22 @@ async function routes(fastify, options) {
             .slice(-2) // Get the last two messages
             .map(msg => msg.content)
             .join("\n");
+            console.log(chatData.purpose)
             // Create the system and user prompts
             const narrationPrompt = [
                 {
                     role: "system",
-                    content: `You are an AI assistant helping formulate responses. 
-                    Provide 3 short, engaging suggestions in ${language} for the user to choose from. 
-                    Each suggestion should be a single sentence from the user's perspective, and should not include any content that implies it is from an assistant. 
+                    content: `You an helpful assistant. 
+                    Provide 3 short image description in ${language} in relation witht the character. 
+                    Be creative and fun.
                     Format the suggestions as a JSON array.`
                 },
                 {
                     role: "user",
                     content: `
-                    Here is the conversation transcript: ` + filteredMessages + `What could I answer ? ${persona ? `I am ${persona.name}, ${persona.description}, ${persona.prompt ? persona.prompt:''}. Your suggestions should reflect my personnality.` : ''}
-                    \nRespond with a JSON array containin the suggestions in plain text. Do not add extra ponctuations.`
+                    Here is the character description : ${chatData.purpose} and
+                    here is the conversation transcript: ${filteredMessages}
+                    \nRespond with a JSON array containin the images description in plain text. Do not add extra ponctuations.`
                 }
             ];            
             

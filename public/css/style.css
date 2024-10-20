@@ -641,4 +641,7 @@ nav.navbar.move {
   nav.navbar.move {
       margin-left: 0px;
   }
+  #navbarNav .navbar-nav {
+    padding-top: 0!important;
+  }
 }

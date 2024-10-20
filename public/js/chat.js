@@ -712,6 +712,7 @@ $(document).ready(async function() {
 
     
     function thankUserAndAddCoins(callback) {
+        return
         const customPrompt = {
             systemContent: "あなたの役割は、ユーザーに感謝の気持ちを伝えるキャラクターとして行動することです。今回は、ログインしてくれたユーザーに、再び戻ってきてくれたことへの感謝を伝え、100コインをプレゼントする旨を優しく伝えてください。",
             userContent: "ユーザーが再度ログインしました。心からの感謝とともに、100コインをプレゼントする短いメッセージを伝えてください。",

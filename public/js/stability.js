@@ -320,7 +320,7 @@ function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isN
 
             const finalPrompt = imageDescription ? `${imageDescription}, ${prompt}` : prompt;
 
-            showNotification(t['imageGenerationStarted'], 'success');
+            //showNotification(t['imageGenerationStarted'], 'success');
 
             // Display the choice and cost in the user message
             const typeText = isNSFWChecked ? 'NSFW' : 'SFW';

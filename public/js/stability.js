@@ -338,21 +338,15 @@ function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isN
                     </div>
                 </div>
             `);
-            $('#chatContainer').append(userPromptElement);
+            //$('#chatContainer').append(userPromptElement);
 
-            const loaderElement = $(`
-                <div class="d-flex flex-row justify-content-start mb-4 message-container assistant animate__animated animate__fadeIn">
-                    <img src="${thumbnail || '/img/default-avatar.png'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="width: 45px; height: 45px; object-fit: cover; object-position: top;">
-                    <div class="d-flex justify-content-center align-items-center px-3">
-                        <img src="/img/image-placeholder.gif" width="50px" alt="loading">
-                    </div>
-                </div>
-            `);
-            $('#chatContainer').append(loaderElement);
+
+            window.postMessage({ event: 'displayMessage', role:'user', message: userMessage, completion : false , image : true}, '*');
+            //const hiddenMessage = `[Hidden] The image is currently being generated; I will tell you when it is available. Your answer must not start with [Hidden] .`;
+            //window.postMessage({ event: 'imageStart', message: hiddenMessage }, '*');
+
             $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
 
-            const hiddenMessage = `[Hidden] I just sent you ${price} coins for an image : ${prompt_title}. The image is currently being generated; I will tell you when it is available. Your answer must not start with [Hidden] .`;
-            window.postMessage({ event: 'imageStart', message: hiddenMessage }, '*');
 
             try {
                 const response = await $.ajax({

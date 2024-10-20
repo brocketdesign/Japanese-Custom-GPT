@@ -37,6 +37,7 @@ $(document).ready(async function() {
             const role = event.data.role
             const message = event.data.message
             const completion = event.data.completion
+            const image = event.data.image
             displayMessage(role, message, function() {
                 addMessageToChat(chatId, userChatId, role, message, function(error, res) {
                     if (error) {
@@ -45,6 +46,17 @@ $(document).ready(async function() {
                         console.log('Message added successfully:', res);
                         if(completion){
                             generateCompletion();
+                        }
+                        if(image){
+                            const loaderElement = $(`
+                                <div class="d-flex flex-row justify-content-start mb-4 message-container assistant animate__animated animate__fadeIn">
+                                    <img src="${thumbnail || '/img/default-avatar.png'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="width: 45px; height: 45px; object-fit: cover; object-position: top;">
+                                    <div class="d-flex justify-content-center align-items-center px-3">
+                                        <img src="/img/image-placeholder.gif" width="50px" alt="loading">
+                                    </div>
+                                </div>
+                            `);
+                            $('#chatContainer').append(loaderElement);
                         }
                     }
                 });
@@ -2018,7 +2030,21 @@ $(document).ready(async function() {
         //displayAdvancedImageGenerationForm(API_URL, userId, chatId, userChatId, thumbnail)
         displayCustomPromptInput(API_URL, userId, chatId, userChatId, thumbnail)
     })
-
+    // Check if the tooltip has already been shown in the session
+    if (!sessionStorage.getItem('tooltipShown')) {
+        $('#userMessage').one('input', function() {
+            // Show tooltip
+            $('#showPrompts').tooltip('show');
+            
+            // Set sessionStorage flag to ensure it's only shown once
+            sessionStorage.setItem('tooltipShown', 'true');
+            
+            // Hide tooltip after 3 seconds
+            setTimeout(function() {
+                $('#showPrompts').tooltip('hide');
+            }, 3000); // Hide after 3 seconds
+        });
+    }
     // User info popup
         
     function generateRandomNickname() {

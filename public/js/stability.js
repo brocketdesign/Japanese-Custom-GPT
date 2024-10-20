@@ -340,8 +340,8 @@ function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isN
             `);
             //$('#chatContainer').append(userPromptElement);
 
-
-            window.postMessage({ event: 'displayMessage', role:'user', message: userMessage, completion : false , image : true}, '*');
+            const messageId = new Date().getTime().toString(36) + Math.random().toString(36).substring(2);
+            window.postMessage({ event: 'displayMessage', role:'user', message: userMessage, completion : false , image : true, messageId }, '*');
             //const hiddenMessage = `[Hidden] The image is currently being generated; I will tell you when it is available. Your answer must not start with [Hidden] .`;
             //window.postMessage({ event: 'imageStart', message: hiddenMessage }, '*');
 
@@ -371,11 +371,11 @@ function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isN
                 updateCoins();
 
                 checkTaskStatus(response.taskId, chatId, finalPrompt, () => {
-                    loaderElement.remove();
+                    $(`#${messageId}`).remove();
                 });
             } catch (error) {
                 showNotification(error.message || t['imageGenerationError'], 'error');
-                loaderElement.remove();
+                $(`#${messageId}`).remove();
             }
         },
         error: function(xhr) {

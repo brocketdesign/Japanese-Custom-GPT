@@ -34,10 +34,7 @@ $(document).ready(async function() {
 
     window.addEventListener('message', function(event) {
         if (event.data.event === 'displayMessage') {
-            const role = event.data.role
-            const message = event.data.message
-            const completion = event.data.completion
-            const image = event.data.image
+            const { role, message, completion, image, messageId } = event.data
             displayMessage(role, message, function() {
                 addMessageToChat(chatId, userChatId, role, message, function(error, res) {
                     if (error) {
@@ -49,7 +46,7 @@ $(document).ready(async function() {
                         }
                         if(image){
                             const loaderElement = $(`
-                                <div class="d-flex flex-row justify-content-start mb-4 message-container assistant animate__animated animate__fadeIn">
+                                <div id="${messageId}" class="d-flex flex-row justify-content-start mb-4 message-container assistant animate__animated animate__fadeIn">
                                     <img src="${thumbnail || '/img/default-avatar.png'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="width: 45px; height: 45px; object-fit: cover; object-position: top;">
                                     <div class="d-flex justify-content-center align-items-center px-3">
                                         <img src="/img/image-placeholder.gif" width="50px" alt="loading">

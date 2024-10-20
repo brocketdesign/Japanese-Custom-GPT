@@ -2207,6 +2207,69 @@ $(document).ready(async function() {
             }
         });
     }
+
+    $('#showPrompts').on('click', function() {
+        $.ajax({
+            url: '/api/prompts',
+            type: 'GET',
+            success: function(prompts) {
+                const header = `<p style="font-size:16x;" class="text-start mb-0 pb-0">画像を生成するためのポーズを選んでください。</p>
+                <p style="font-size:12px;" class="text-start mb-2">必要に応じて、<strong>成人向け画像 (NSFW)</strong> オプションを有効にできます。（75🪙）</p>
+                `
+                var promptHtml = '<div class="row scroll-horizontal">';
+                prompts.forEach(function(prompt) {
+                    promptHtml += `
+                        <div class="col-auto my-3" type="button">
+                            <div class="card prompt-card bg-transparent shadow-0" data-id="${prompt._id}">
+                                <img src="${prompt.image}" class="card-img-top" alt="${prompt.title}" style="height:100px;object-fit:contain;">
+                                <div class="card-body p-2">
+                                    <p class="card-text text-center" style="font-size:14px;">${prompt.title}</p>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+                promptHtml += '</div>';
+    
+                // Add NSFW checkbox styled like a button
+                const switchType = `
+                <div class="form-check text-start mt-3 ps-0">
+                    <input type="checkbox" class="btn-check" id="nsfwCheckbox" autocomplete="off">
+                    <label class="btn btn-outline-danger btn-sm rounded" for="nsfwCheckbox">
+                        ${window.translations.imageForm.nsfwImage}
+                    </label>
+                </div>
+                `;
+
+    
+                Swal.fire({
+                    html: header+switchType+promptHtml,
+                    showClass: { popup: 'animate__animated animate__slideInUp animate__faster' },
+                    hideClass: { popup: 'animate__animated animate__slideOutDown animate__faster' },
+                    position: 'bottom',
+                    backdrop: 'rgba(43, 43, 43, 0.2)',
+                    showCloseButton: true,
+                    showConfirmButton: false,
+                    customClass: {
+                        container: 'p-0',
+                        popup: 'custom-prompt-container shadow',
+                        closeButton: 'position-absolute'
+                    },
+                    didOpen: () => {
+                        $('.prompt-card').on('click', function() {
+                            var id = $(this).data('id');
+                            var isNSFWChecked = $('#nsfwCheckbox').is(':checked');
+                            Swal.close();
+                            controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isNSFWChecked);
+                        });
+                    }
+                });
+            },
+            error: function(xhr) {
+                alert('プロンプトの取得中にエラーが発生しました。');
+            }
+        });
+    });
+    
     function checkForPurchaseProposal() {
         $.ajax({
             url: '/api/check-assistant-proposal',

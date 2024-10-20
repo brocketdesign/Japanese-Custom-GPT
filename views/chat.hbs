@@ -197,7 +197,7 @@
                                 <div class="d-flex pe-2">
                                     <button class="d-none btn btn-dark border-light shadow-0 mx-1 my-1 img-gen-button" id="stability-gen-button-none" style="display:none;background-image:url('/img/sd.jpg')"><i class="fa fa-spinner fa-spin fa-fw fa-hidden" style="display: none;"></i><i class="far fa-image"></i></button>
                                     <button class="d-none btn btn-dark border-light shadow-0 mx-1 my-1 img-gen-button" id="novita-gen-button-none" style="display:none;background-image:url('/img/novita.jpg')"><i class="fa fa-spinner fa-spin fa-fw fa-hidden" style="display: none;"></i><i class="far fa-image"></i></button>
-                                    <button type="button" class="btn btn-md custom-gradient-bg danger shadow-0 border-0 mb-2 mx-1 auto-gen" id="novita-gen-button" style="display: none;">
+                                    <button type="button" class="d-none btn btn-md custom-gradient-bg danger shadow-0 border-0 mb-2 mx-1 auto-gen" id="novita-gen-button" style="display: none;">
                                         <div class="d-flex">
                                             <i class="fa fa-spinner fa-spin fa-fw fa-hidden" style="display: none;"></i>
                                             <i class="fa fa-image me-2"></i>
@@ -217,7 +217,8 @@
                             </div>
 
                             <div id="input-container" class="d-flex w-100">
-                                <button id="gen-ideas" class="btn btn-light px-4 border-0">💡</button>
+                                <button id="gen-ideas" class="d-none btn btn-light px-4 border-0">💡</button>
+                                <button id="showPrompts" class="btn custom-gradient-bg px-4 border-0"> <i class="bi bi-image"></i> </button>
                                 <textarea id="userMessage" class="form-control py-3 border-0" placeholder="チャットしよう"></textarea>
                                 <button id="sendMessage" class="btn btn-light px-4 border-0"><i class="fas fa-paper-plane"></i></button>
                             </div>
@@ -355,6 +356,7 @@ $(document).ready(function() {
             Cookies.set('sidebarState', 'expanded', { expires: 7 });
         }
     });
+
     $(document).on('click', '#gen-ideas', function() {
         const isTemporary = $('body').attr('data-temporary-user') === 'true';
         if($('#chat-widget-container').length == 0 && isTemporary){

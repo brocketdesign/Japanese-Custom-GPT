@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ja">
+{{> dashboard-header}}
+<body>
+{{> dashboard-nav}}
+
+<div class="container mt-4">
+  <h1 class="mb-4">プロンプト管理</h1>
+  <button id="newPromptBtn" class="btn btn-primary">New Prompt</button>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>画像</th>
+        <th>タイトル</th>
+        <th>プロンプト</th>
+        <th>アクション</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each prompts}}
+      <tr data-id="{{this._id}}">
+        <td><img src="{{this.image}}" alt="{{this.title}}" class="img-thumbnail" style="width: 100px;"></td>
+        <td>{{this.title}}</td>
+        <td>{{this.prompt}}</td>
+        <td>
+          <button class="btn btn-info btn-sm preview-btn" data-id="{{this._id}}">プレビュー</button>
+          <button class="btn btn-warning btn-sm edit-btn" data-id="{{this._id}}">編集</button>
+          <button class="btn btn-danger btn-sm delete-btn" data-id="{{this._id}}">削除</button>
+        </td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>
+
+<div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5">プロンプトプレビュー</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
+      </div>
+      <div class="modal-body">
+        <img id="previewImage" src="" alt="" class="img-fluid mb-3">
+        <h5 id="previewTitle"></h5>
+        <p id="previewPrompt"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="editForm" enctype="multipart/form-data">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5">プロンプト編集</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="editId" name="id">
+          <div class="mb-3">
+            <label for="editTitle" class="form-label">タイトル</label>
+            <input type="text" class="form-control" id="editTitle" name="title" required>
+          </div>
+          <div class="mb-3">
+            <label for="editPrompt" class="form-label">プロンプト</label>
+            <textarea class="form-control" id="editPrompt" name="prompt" rows="3" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="editImage" class="form-label">画像をアップロード</label>
+            <input type="file" class="form-control" id="editImage" name="image" accept="image/*">
+          </div>
+          <div class="mb-3">
+            <label for="editNsfw" class="form-label">NSFW</label>
+            <input type="checkbox" id="editNsfw" name="nsfw">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+          <button type="submit" class="btn btn-primary">保存</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+{{> dashboard-footer}}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  $(document).ready(function() {
+    $('.preview-btn').on('click', function() {
+      var id = $(this).data('id');
+      $.ajax({
+        url: '/api/prompts/' + id,
+        type: 'GET',
+        success: function(data) {
+          $('#previewImage').attr('src', data.image);
+          $('#previewTitle').text(data.title);
+          $('#previewPrompt').text(data.prompt);
+          var previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+          previewModal.show();
+        },
+        error: function() {
+          showNotification('プレビューの取得中にエラーが発生しました。','error');
+        }
+      });
+    });
+
+    $('#newPromptBtn').on('click', function() {
+      Swal.fire({
+        title: '新しいプロンプトを作成する',
+        html:
+          '<form id="newPromptForm" enctype="multipart/form-data">' +
+            '<div class="mb-3">' +
+              '<label for="newTitle" class="form-label">タイトル</label>' +
+              '<input type="text" class="form-control" id="newTitle" name="title" required>' +
+            '</div>' +
+            '<div class="mb-3">' +
+              '<label for="newPrompt" class="form-label">プロンプト</label>' +
+              '<textarea class="form-control" id="newPrompt" name="prompt" rows="3" required></textarea>' +
+            '</div>' +
+            '<div class="mb-3">' +
+              '<label for="newImage" class="form-label">画像をアップロード</label>' +
+              '<input type="file" class="form-control" id="newImage" name="image" accept="image/*" required>' +
+            '</div>' +
+            '<div class="mb-3">' +
+              '<label for="newNsfw" class="form-label">NSFW</label>' +
+              '<input type="checkbox" id="newNsfw" name="nsfw">' +
+            '</div>' +
+          '</form>',
+        showCancelButton: true,
+        confirmButtonText: '保存',
+        cancelButtonText: 'キャンセル',
+        preConfirm: () => {
+          const form = $('#newPromptForm')[0];
+          if (!form.checkValidity()) {
+            Swal.showValidationMessage('全ての必須フィールドを入力してください。');
+          }
+          return new FormData(form);
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          var formData = result.value;
+          $.ajax({
+            url: '/api/prompts/create',
+            type: 'POST',
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function() {
+              Swal.fire('成功', 'プロンプトが作成されました。', 'success').then(() => {
+                location.reload();
+              });
+            },
+            error: function() {
+              Swal.fire('エラー', 'プロンプトの作成中にエラーが発生しました。', 'error');
+            }
+          });
+        }
+      });
+    });
+
+    $('.edit-btn').on('click', function() {
+      var id = $(this).data('id');
+      $.ajax({
+        url: '/api/prompts/' + id,
+        type: 'GET',
+        success: function(data) {
+          $('#editId').val(data._id);
+          $('#editTitle').val(data.title);
+          $('#editPrompt').val(data.prompt);
+          $('#editNsfw').prop('checked', data.nsfw || false);
+          var editModal = new bootstrap.Modal(document.getElementById('editModal'));
+          editModal.show();
+        },
+        error: function() {
+          showNotification('編集データの取得中にエラーが発生しました。','error');
+        }
+      });
+    });
+
+    $('#editForm').on('submit', function(e) {
+      e.preventDefault();
+      var id = $('#editId').val();
+      var formData = new FormData(this);
+      $.ajax({
+        url: '/api/prompts/' + id,
+        type: 'PUT',
+        data: formData,
+        contentType: false,
+        processData: false,
+        success: function() {
+          showNotification('プロンプトが更新されました。','success');
+          location.reload();
+        },
+        error: function() {
+          showNotification('プロンプトの更新中にエラーが発生しました。','error');
+        }
+      });
+    });
+
+    $('.delete-btn').on('click', function() {
+      if (!confirm('本当にこのプロンプトを削除しますか？')) return;
+      var id = $(this).data('id');
+      $.ajax({
+        url: '/api/prompts/' + id,
+        type: 'DELETE',
+        success: function() {
+          showNotification('プロンプトが削除されました。','success');
+          location.reload();
+        },
+        error: function() {
+          showNotification('プロンプトの削除中にエラーが発生しました。','error');
+        }
+      });
+    });
+  });
+</script>
+</body>
+</html>

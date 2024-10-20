@@ -172,6 +172,56 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: error.message });
         }
     });
+
+    fastify.get('/admin/new-prompts',{
+        preHandler: [fastify.authenticate]
+    }, async (request, reply) => {
+      try {
+        let user = request.user;
+        const userId = user._id;
+        const isAdmin = await checkUserAdmin(fastify, userId);
+        if (!isAdmin) {
+            return reply.status(403).send({ error: 'Access denied' });
+        }
+        const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+        user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+        const translations = request.translations
+
+        return reply.view('new-prompts', {
+          title: 'コミュニティからの最新投稿 | LAMIX | 日本語 | 無料AI画像生成 | 無料AIチャット',
+          user,
+          translations
+        });
+      } catch (error) {
+        console.log(error)
+      }
+    });
+    fastify.get('/admin/prompts',{
+      preHandler: [fastify.authenticate]
+  }, async (request, reply) => {
+    try {
+      let user = request.user;
+      const userId = user._id;
+      const isAdmin = await checkUserAdmin(fastify, userId);
+      if (!isAdmin) {
+          return reply.status(403).send({ error: 'Access denied' });
+      }
+      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+      const translations = request.translations
+
+      const prompts = await db.collection('prompts').find().toArray();
+
+      return reply.view('prompts', {
+        title: 'コミュニティからの最新投稿 | LAMIX | 日本語 | 無料AI画像生成 | 無料AIチャット',
+        user,
+        prompts,
+        translations
+      });
+    } catch (error) {
+      console.log(error)
+    }
+  });
 }    
 
 

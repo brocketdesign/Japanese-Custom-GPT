@@ -644,9 +644,8 @@ async function routes(fastify, options) {
                             \n When the user buy you someting, thanks him and wait for the picture to be generated. 
                             Never start your answer with [Hidden]. Do not include [Hidden] in your messages.
                             Respond in ${language}. 
-                            Start by explaining to the user that normal picture can be generated while chatting but adult images, should be requested using the image form by clicking on 成人向け画像.
+                            Start by explaining to the user that normal pictures and adult images (成人向け画像) can be generated while chatting but the user can also specify a pose by using the pose menu .
                             clearly explain this to the user first !
-
                             `
 
                         },
@@ -954,7 +953,7 @@ async function routes(fastify, options) {
             let currentDate = new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" });
             let currentTimeInJapanese = `${new Date(currentDate).getHours()}時${new Date(currentDate).getMinutes()}分`;            
             let timeMessage = `[Hidden] Current time : ${currentTimeInJapanese}.Do not tell me the time. Use it for context.`
-            timeMessage = { "role": "assistant", "content": timeMessage };
+            timeMessage = { "role": "user", "content": timeMessage };
             userMessages.push(timeMessage);
 
             // Gen completion
@@ -2315,6 +2314,132 @@ async function routes(fastify, options) {
             reply.code(500).send('Internal Server Error');
         }
     });
+    fastify.post('/api/prompts/create', async (request, reply) => {
+        try {
+          const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+          const collection = db.collection('prompts');
+          const parts = request.parts();
+          let title = '';
+          let promptText = '';
+          let nsfw;
+          let imageUrl = '';
+          for await (const part of parts) {
+            if (part.fieldname === 'title') title = part.value;
+            if (part.fieldname === 'prompt') promptText = part.value;
+            if (part.fieldname === 'nsfw') nsfw = part.value;
+            if (part.fieldname === 'image') {
+              imageUrl = await handleFileUpload(part, db);
+            }
+          }
+          
+          console.log({ title, promptText,nsfw, imageUrl });
+          
+          await collection.insertOne({
+            title,
+            prompt: promptText,
+            nsfw,
+            image: imageUrl,
+            createdAt: new Date(),
+          });
+          
+          reply.send({ success: true, message: 'Prompt created successfully' });
+        } catch (error) {
+          console.error('Error creating prompt:', error);
+          reply.status(500).send({ success: false, message: 'Error creating prompt' });
+        }
+      });
+        
+        // Get All Prompts (Optional)
+        fastify.get('/api/prompts', async (request, reply) => {
+            try {
+            const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+            const prompts = await db.collection('prompts').find().toArray();
+            console.log(prompts)
+            reply.send(prompts);
+            } catch (error) {
+            console.error('Error fetching prompts:', error);
+            reply.status(500).send({ success: false, message: 'Error fetching prompts' });
+            }
+        });
+        
+        // Get Single Prompt
+        fastify.get('/api/prompts/:id', async (request, reply) => {
+            try {
+            const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+            const { id } = request.params;
+            const prompt = await db.collection('prompts').findOne({ _id: new fastify.mongo.ObjectId(id) });
+            if (!prompt) {
+                return reply.status(404).send({ success: false, message: 'Prompt not found' });
+            }
+            reply.send(prompt);
+            } catch (error) {
+            console.error('Error fetching prompt:', error);
+            reply.status(500).send({ success: false, message: 'Error fetching prompt' });
+            }
+        });
+        
+        // Update Prompt
+        fastify.put('/api/prompts/:id', async (request, reply) => {
+            try {
+            const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+            const { id } = request.params;
+            const parts = request.parts();
+            let title = '';
+            let promptText = '';
+            let nsfw;
+            let imageUrl = '';
+        
+            for await (const part of parts) {
+                if (part.fieldname === 'title') title = part.value;
+                if (part.fieldname === 'prompt') promptText = part.value;
+                if (part.fieldname === 'nsfw') nsfw = part.value;
+                if (part.fieldname === 'image') {
+                imageUrl = await handleFileUpload(part, db);
+                }
+            }
+        
+            const updateData = {
+                title,
+                prompt: promptText,
+                nsfw,
+                updatedAt: new Date(),
+            };
+            if (imageUrl) updateData.image = imageUrl;
+            console.log({ updateData });
+        
+            const result = await db.collection('prompts').updateOne(
+                { _id: new fastify.mongo.ObjectId(id) },
+                { $set: updateData }
+            );
+        
+            if (result.matchedCount === 0) {
+                return reply.status(404).send({ success: false, message: 'Prompt not found' });
+            }
+        
+            reply.send({ success: true, message: 'Prompt updated successfully' });
+            } catch (error) {
+            console.error('Error updating prompt:', error);
+            reply.status(500).send({ success: false, message: 'Error updating prompt' });
+            }
+        });
+        
+        // Delete Prompt
+        fastify.delete('/api/prompts/:id', async (request, reply) => {
+            try {
+            const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+            const { id } = request.params;
+            const result = await db.collection('prompts').deleteOne({ _id: new fastify.mongo.ObjectId(id) });
+            if (result.deletedCount === 0) {
+                return reply.status(404).send({ success: false, message: 'Prompt not found' });
+            }
+            reply.send({ success: true, message: 'Prompt deleted successfully' });
+            } catch (error) {
+            console.error('Error deleting prompt:', error);
+            reply.status(500).send({ success: false, message: 'Error deleting prompt' });
+            }
+        });
+  
+      
 }
 
 module.exports = routes;

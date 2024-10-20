@@ -294,6 +294,101 @@ window.generateImage = async function(data, prompt) {
     showNotification('ユーザー情報の取得に失敗しました。', 'error');
   }
 };
+function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isNSFWChecked) {
+    const t = window.translations.imageForm;
+    const SFW_PRICE = 35;
+    const NSFW_PRICE = 75;
+
+    $.ajax({
+        url: '/api/prompts/' + id,
+        type: 'GET',
+        success: async function(promptData) {
+            const prompt_title = promptData.title;
+            const prompt = promptData.prompt;
+
+            const formType = isNSFWChecked ? 'nsfw' : 'sfw';
+            const price = isNSFWChecked ? NSFW_PRICE : SFW_PRICE;
+
+            let imageDescription = '';
+            try {
+                const descriptionResponse = await checkImageDescription(chatId);
+                imageDescription = descriptionResponse.imageDescription || '';
+            } catch (error) {
+                showNotification(t['imageDescriptionError'], 'error');
+                return;
+            }
+
+            const finalPrompt = imageDescription ? `${imageDescription}, ${prompt}` : prompt;
+
+            showNotification(t['imageGenerationStarted'], 'success');
+
+            // Display the choice and cost in the user message
+            const typeText = isNSFWChecked ? 'NSFW' : 'SFW';
+            const userMessage = t['imagePurchaseMessage']
+                .replace('{type}', typeText)
+                .replace('{price}', price)
+                .replace('{prompt_title}', prompt_title);
+
+            const userPromptElement = $(`
+                <div class="d-flex flex-row justify-content-end mb-4 message-container user">
+                    <div class="d-flex flex-column align-items-end">
+                        <div class="text-start p-2 rounded" style="border-radius: 15px; background-color: #fbfbfbdb;">
+                            ${userMessage}
+                        </div>
+                    </div>
+                </div>
+            `);
+            $('#chatContainer').append(userPromptElement);
+
+            const loaderElement = $(`
+                <div class="d-flex flex-row justify-content-start mb-4 message-container assistant animate__animated animate__fadeIn">
+                    <img src="${thumbnail || '/img/default-avatar.png'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="width: 45px; height: 45px; object-fit: cover; object-position: top;">
+                    <div class="d-flex justify-content-center align-items-center px-3">
+                        <img src="/img/image-placeholder.gif" width="50px" alt="loading">
+                    </div>
+                </div>
+            `);
+            $('#chatContainer').append(loaderElement);
+            $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
+
+            const hiddenMessage = `[Hidden] I just sent you ${price} coins for an image : ${prompt_title}. The image is currently being generated; I will tell you when it is available. Your answer must not start with [Hidden] .`;
+            window.postMessage({ event: 'imageStart', message: hiddenMessage }, '*');
+
+            try {
+                const response = await $.ajax({
+                    url: API_URL + '/novita/txt2img',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        prompt: finalPrompt,
+                        aspectRatio: '9:16',
+                        userId: userId,
+                        chatId: chatId,
+                        userChatId: userChatId,
+                        imageType: formType,
+                        price: price
+                    })
+                });
+
+                if (!response.taskId) {
+                    throw new Error(t['imageGenerationError']);
+                }
+
+                updateCoins();
+
+                checkTaskStatus(response.taskId, chatId, finalPrompt, () => {
+                    loaderElement.remove();
+                });
+            } catch (error) {
+                showNotification(error.message || t['imageGenerationError'], 'error');
+                loaderElement.remove();
+            }
+        },
+        error: function(xhr) {
+            showNotification('プロンプトの取得中にエラーが発生しました。', 'error');
+        }
+    });
+}
 
 /**
  * Displays a SweetAlert2 popup with a textarea for the user to input a custom prompt.
@@ -374,7 +469,7 @@ function displayCustomPromptInput(API_URL, userId, chatId, userChatId, thumbnail
             $('#chatContainer').append(loaderElement);
             $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
 
-            const hiddenMessage = `[Hidden] I just sent you ${price} coins for 4 images.I have specified a prompt for the images. The images are not available yet; I will tell you when they are available.`;
+            const hiddenMessage = `[Hidden] I just sent you ${price} coins for an image.I have specified a prompt for the images. The images are not available yet; I will tell you when they are available. Your answer must not start with [Hidden] .`;
             window.postMessage({ event: 'imageStart', message: hiddenMessage }, '*');
             //window.postMessage({ event: 'displayMessage', role:'user' message: '', completion : false }, '*');
             try {

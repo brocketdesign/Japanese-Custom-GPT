@@ -40,7 +40,6 @@ $(document).ready(async function() {
                     if (error) {
                         console.error('Error adding message:', error);
                     } else {
-                        console.log('Message added successfully:', res);
                         if(completion){
                             generateCompletion();
                         }
@@ -1314,7 +1313,7 @@ $(document).ready(async function() {
         return inputString;
     }
     
-    function getImageTools(imageId,isLiked = false, description = false){
+    function getImageTools(imageId, isLiked = false, description = false){
         description = sanitizeString(description);
         return `
             <div class="bg-white py-2 rounded mt-1 d-flex justify-content-between">
@@ -1338,7 +1337,7 @@ $(document).ready(async function() {
                 success: function(response) {
                     let isBlur = response.isBlur
                     if (response.imageUrl) {
-                        const isLiked = response?.imageDetails?.likedBy?.some(id => id.toString() === userId.toString());
+                        const isLiked = response?.likedBy?.some(id => id.toString() === userId.toString());
                         const messageHtml = `
                         <div id="container-${designStep}">
                             <div class="d-flex flex-row justify-content-start mb-4 message-container ${isBlur ? 'unlock-nsfw':''}">

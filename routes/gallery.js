@@ -12,7 +12,7 @@ async function routes(fastify, options) {
       const galleryCollection = db.collection('gallery');
       const imagesLikesCollection = db.collection('images_likes');
       const usersCollection = db.collection('users'); // Collection to update user's imageLikeCount
-  
+
       if (action === 'like') {
         // Check if the user already liked the image
         const existingLike = await imagesLikesCollection.findOne({ imageId, userId });

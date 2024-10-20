@@ -366,9 +366,12 @@ async function routes(fastify, options) {
         return reply.status(404).send({ error: 'Image not found' });
       }
   
-      const imageUrl = imageDocument.images[0].imageUrl;
-      const imagePrompt = imageDocument.images[0].prompt
-      return reply.status(200).send({ imageUrl, imagePrompt});
+      const image = imageDocument.images[0];
+      const imageUrl = image.imageUrl;
+      const imagePrompt = image.prompt;
+      const likedBy = image.likedBy || [];
+  
+      return reply.status(200).send({ imageUrl, imagePrompt, likedBy });
     } catch (error) {
       console.error('Error fetching image URL:', error);
       return reply.status(500).send({ error: 'An error occurred while fetching the image URL' });

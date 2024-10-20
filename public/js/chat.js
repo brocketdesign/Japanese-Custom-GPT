@@ -2213,13 +2213,13 @@ $(document).ready(async function() {
             url: '/api/prompts',
             type: 'GET',
             success: function(prompts) {
-                const header = `<p style="font-size:16x;" class="text-start mb-0 pb-0">画像を生成するためのポーズを選んでください。</p>
-                <p style="font-size:12px;" class="text-start mb-2">必要に応じて、<strong>成人向け画像 (NSFW)</strong> オプションを有効にできます。（75🪙）</p>
+                const header = `<p style="font-size:16x;" class="px-3 text-start mt-3 mb-0 pb-0">画像を生成するためのポーズを選んでください。</p>
+                <p style="font-size:12px;" class="text-start mb-2 px-3">必要に応じて、<strong>成人向け画像 (NSFW)</strong> オプションを有効にできます。（75🪙）</p>
                 `
-                var promptHtml = '<div class="row scroll-horizontal">';
+                var promptHtml = '<div class="d-flex scroll-horizontal bg-light px-2">';
                 prompts.forEach(function(prompt) {
                     promptHtml += `
-                        <div class="col-auto my-3" type="button">
+                        <div class="col-4 my-3" type="button">
                             <div class="card prompt-card bg-transparent shadow-0" data-id="${prompt._id}">
                                 <img src="${prompt.image}" class="card-img-top" alt="${prompt.title}" style="height:100px;object-fit:contain;">
                                 <div class="card-body p-2">
@@ -2232,7 +2232,7 @@ $(document).ready(async function() {
     
                 // Add NSFW checkbox styled like a button
                 const switchType = `
-                <div class="form-check text-start mt-3 ps-0">
+                <div class="form-check text-start my-3 ps-3">
                     <input type="checkbox" class="btn-check" id="nsfwCheckbox" autocomplete="off">
                     <label class="btn btn-outline-danger btn-sm rounded" for="nsfwCheckbox">
                         ${window.translations.imageForm.nsfwImage}
@@ -2251,6 +2251,7 @@ $(document).ready(async function() {
                     showConfirmButton: false,
                     customClass: {
                         container: 'p-0',
+                        htmlContainer: 'p-0',
                         popup: 'custom-prompt-container shadow',
                         closeButton: 'position-absolute'
                     },

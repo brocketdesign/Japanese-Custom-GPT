@@ -1314,7 +1314,7 @@ $(document).ready(async function() {
                 </span>
                 <span class="badge bg-white text-secondary comment-badge" data-id="${imageId}" 
                 style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
-                <i class="bi bi-send me-2"></i>シェアする
+                <i class="bi bi-share"></i>
                 </span>
             </div>
         `
@@ -2214,12 +2214,12 @@ $(document).ready(async function() {
             type: 'GET',
             success: function(prompts) {
                 const header = `<p style="font-size:16x;" class="px-3 text-start mt-3 mb-0 pb-0">画像を生成するためのポーズを選んでください。</p>
-                <p style="font-size:12px;" class="text-start mb-2 px-3">必要に応じて、<strong>成人向け画像 (NSFW)</strong> オプションを有効にできます。（75🪙）</p>
+                <p style="font-size:12px;" class="text-start mb-2 px-3">必要に応じて、<strong>成人向け画像 (NSFW)</strong> オプションを有効にできます。（20🪙）</p>
                 `
-                var promptHtml = '<div class="d-flex scroll-horizontal bg-light px-2">';
+                var promptHtml = '<div class="row bg-light px-2 mx-0" style="height:160px;overflow-y:scroll">';
                 prompts.forEach(function(prompt) {
                     promptHtml += `
-                        <div class="col-4 my-3" type="button">
+                        <div class="col-4 col-sm-3 col-lg-1 my-3" type="button">
                             <div class="card prompt-card bg-transparent shadow-0" data-id="${prompt._id}">
                                 <img src="${prompt.image}" class="card-img-top" alt="${prompt.title}" style="height:100px;object-fit:contain;">
                                 <div class="card-body p-2">
@@ -2256,6 +2256,10 @@ $(document).ready(async function() {
                         closeButton: 'position-absolute'
                     },
                     didOpen: () => {
+                        if(isTemporary){
+                            showRegistrationForm()
+                            return
+                        }
                         $('.prompt-card').on('click', function() {
                             var id = $(this).data('id');
                             var isNSFWChecked = $('#nsfwCheckbox').is(':checked');
@@ -2272,6 +2276,7 @@ $(document).ready(async function() {
     });
     
     function checkForPurchaseProposal() {
+        return
         $.ajax({
             url: '/api/check-assistant-proposal',
             type: 'POST',

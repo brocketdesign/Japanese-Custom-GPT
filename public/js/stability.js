@@ -296,8 +296,8 @@ window.generateImage = async function(data, prompt) {
 };
 function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isNSFWChecked) {
     const t = window.translations.imageForm;
-    const SFW_PRICE = 35;
-    const NSFW_PRICE = 75;
+    const SFW_PRICE = 10;
+    const NSFW_PRICE = 20;
 
     $.ajax({
         url: '/api/prompts/' + id,
@@ -401,8 +401,8 @@ function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isN
  */
 function displayCustomPromptInput(API_URL, userId, chatId, userChatId, thumbnail) {
     const t = window.translations.imageForm;
-    const SFW_PRICE = 35;
-    const NSFW_PRICE = 75;
+    const SFW_PRICE = 10;
+    const NSFW_PRICE = 20;
 
     Swal.fire({
         html: `

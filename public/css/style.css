@@ -24,7 +24,9 @@ img.select {
 #chat-users-gallery::-webkit-scrollbar {
   height: 8px;
 }
-
+.swal2-custom-popup{
+  border-radius: 50px;
+}
 #chat-users-gallery::-webkit-scrollbar-thumb {
   background-color: rgba(0,0,0,0.2);
   border-radius: 4px;

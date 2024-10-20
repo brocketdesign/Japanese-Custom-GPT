@@ -303,7 +303,7 @@
         "enterPrompt": "Enter your prompt",
         "promptLabel": "Prompt",
         "promptPlaceholder": "Describe the image you want to generate...",
-        "generateNSFW": "Generate NSFW content (75 coins)",
+        "generateNSFW": "Generate NSFW content (20 coins)",
         "promptRequired": "Please enter a prompt.",
         "imageDescriptionError": "Error fetching image description.",
         "imagePurchaseMessage": "I bought a {type} image for {price} coins. {prompt_title}"

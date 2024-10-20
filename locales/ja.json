@@ -281,7 +281,7 @@
       "enterPrompt": "プロンプトを入力してください",
       "promptLabel": "プロンプト",
       "promptPlaceholder": "生成したい画像の説明を入力してください...",
-      "generateNSFW": "成人向け画像を生成する（75コイン）",
+      "generateNSFW": "成人向け画像を生成する（20コイン）",
       "promptRequired": "プロンプトを入力してください。",
       "imageDescriptionError": "画像説明の取得に失敗しました。",
       "imagePurchaseMessage": "{prompt_title}の{price}コインで{type}画像を購入しました。"

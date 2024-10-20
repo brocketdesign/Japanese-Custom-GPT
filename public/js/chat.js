@@ -2220,7 +2220,6 @@ $(document).ready(async function() {
             }
         } else {
             // Fetch data from server and save to local storage
-            console.log('check prompt')
             $.ajax({
                 url: '/api/prompts',
                 type: 'GET',

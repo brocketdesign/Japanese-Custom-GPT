@@ -1796,7 +1796,7 @@ async function routes(fastify, options) {
             const chat = await collection.findOne({ _id: objectId });
             const imageDescription = chat?.imageDescription;
     
-            if (!imageDescription) {
+            if (!imageDescription || imageDescription.includes('sorry')) {
                 return reply.send(false);
             }
     
@@ -2404,7 +2404,6 @@ async function routes(fastify, options) {
                 updatedAt: new Date(),
             };
             if (imageUrl) updateData.image = imageUrl;
-            console.log({ updateData });
         
             const result = await db.collection('prompts').updateOne(
                 { _id: new fastify.mongo.ObjectId(id) },

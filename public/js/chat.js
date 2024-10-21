@@ -47,7 +47,7 @@ $(document).ready(async function() {
                             const loaderElement = $(`
                                 <div id="${messageId}" class="d-flex flex-row justify-content-start mb-4 message-container assistant animate__animated animate__fadeIn">
                                     <img src="${thumbnail || '/img/default-avatar.png'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="width: 45px; height: 45px; object-fit: cover; object-position: top;">
-                                    <div class="d-flex justify-content-center align-items-center px-3">
+                                    <div class="load d-flex justify-content-center align-items-center px-3">
                                         <img src="/img/image-placeholder.gif" width="50px" alt="loading">
                                     </div>
                                 </div>
@@ -1935,6 +1935,23 @@ $(document).ready(async function() {
                 </div>      
             `).hide();
             $('#chatContainer').append(messageElement);
+            messageElement.addClass(animationClass).fadeIn();
+        } 
+
+        else if (messageClass.startsWith('new-image-') && message instanceof HTMLElement) {
+            const imageId = message.getAttribute('data-id');
+            const description = message.getAttribute('alt');
+            const messageId = messageClass.split('new-image-')[1]
+            messageElement = $(`
+                    <div class="ms-3 position-relative">
+                        <div class="text-start assistant-image-box">
+                            ${message.outerHTML}
+                        </div>
+                        ${getImageTools(imageId,false,description)}
+                    </div>  
+            `).hide();
+            $(`#${messageId}`).find('.load').remove()
+            $(`#${messageId}`).append(messageElement);
             messageElement.addClass(animationClass).fadeIn();
         } 
     

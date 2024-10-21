@@ -320,14 +320,14 @@ async function routes(fastify, options) {
           sampler_name: "DPM++ 2M Karras",
           prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, (sfw), dressed, clothe on, natural lighting, `,
           negative_prompt: `BraV4Neg,paintings,sketches,(worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)),logo, nsfw,nude, topless, worst quality, low quality, `,
-          loras: [{"model_name":"more_details_59655.safetensors","strength":0.4}, {"model_name":"JapaneseDollLikeness_v15_28382.safetensors","strength":0.2}],
+          loras: [{"model_name":"more_details_59655.safetensors","strength":0.2},{ model_name: 'JapaneseDollLikeness_v15_28382.safetensors', strength: 0.7 }],
         },
         nsfw: {
           model_name: "kanpiromix_v20.safetensors",
           sampler_name: "DPM++ 2M Karras",
           prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, (nsfw),uncensored,naked,nudity,body,breast,nipple, `,
           negative_prompt: `BraV4Neg,paintings,sketches,(worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)),logo,`,
-          loras: [{"model_name":"more_details_59655.safetensors","strength":0.4},{"model_name":"droptop_38945.safetensors","strength":0.4}, {"model_name":"JapaneseDollLikeness_v15_28382.safetensors","strength":0.7}],
+          loras: [{"model_name":"more_details_59655.safetensors","strength":0.2},{ model_name: 'JapaneseDollLikeness_v15_28382.safetensors', strength: 0.7 }],
         }
       }
     };
@@ -595,7 +595,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
               null, // blurredImageUrl is null since we're not blurring images
               task.type === 'nsfw' // nsfw flag
           );
-          return { imageId: saveResult.imageId, imageUrl: imageData.imageUrl};
+          return { imageId: saveResult.imageId, imageUrl: imageData.imageUrl, prompt:task.prompt};
       }));
 
       // Update the task status to 'completed' and store the result

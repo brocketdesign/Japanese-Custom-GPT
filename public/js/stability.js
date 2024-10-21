@@ -18,7 +18,6 @@ window.checkImageDescription = async function(chatId = null) {
         const response = await fetch(`/api/check-image-description?chatId=${chatId}`, {
             method: 'GET',
         });
-
         const data = await response.json();
         return data;
     } catch (error) {
@@ -328,26 +327,7 @@ function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isN
                 .replace('{type}', typeText)
                 .replace('{price}', price)
                 .replace('{prompt_title}', prompt_title);
-
-            const userPromptElement = $(`
-                <div class="d-flex flex-row justify-content-end mb-4 message-container user">
-                    <div class="d-flex flex-column align-items-end">
-                        <div class="text-start p-2 rounded" style="border-radius: 15px; background-color: #fbfbfbdb;">
-                            ${userMessage}
-                        </div>
-                    </div>
-                </div>
-            `);
-            //$('#chatContainer').append(userPromptElement);
-
-            const messageId = new Date().getTime().toString(36) + Math.random().toString(36).substring(2);
-            window.postMessage({ event: 'displayMessage', role:'user', message: userMessage, completion : false , image : true, messageId }, '*');
-            //const hiddenMessage = `[Hidden] The image is currently being generated; I will tell you when it is available. Your answer must not start with [Hidden] .`;
-            //window.postMessage({ event: 'imageStart', message: hiddenMessage }, '*');
-
-            $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
-
-
+          
             try {
                 const response = await $.ajax({
                     url: API_URL + '/novita/txt2img',
@@ -370,8 +350,13 @@ function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isN
 
                 updateCoins();
 
-                checkTaskStatus(response.taskId, chatId, finalPrompt, () => {
-                    $(`#${messageId}`).remove();
+                const messageId = `image-${response.taskId}`;
+                window.postMessage({ event: 'displayMessage', role:'user', message: userMessage, completion : false , image : true, messageId }, '*');
+                $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
+    
+                checkTaskStatus(response.taskId, chatId, finalPrompt, (images) => {
+                    displayGeneratedImages(images,messageId);
+                    window.postMessage({ event: 'imageDone' }, '*');
                 });
             } catch (error) {
                 showNotification(error.message || t['imageGenerationError'], 'error');
@@ -940,17 +925,9 @@ function checkTaskStatus(taskId, chatId, prompt, callback) {
                 clearInterval(intervalId);
                 const images = statusResponse.images;
 
-                // Display the generated images
-                displayGeneratedImages(images);
-
-                //showNotification(t['imagesGeneratedSuccessfully'], 'success');
-
-                // Send a hidden message to the AI character
-                window.postMessage({ event: 'imageDone' }, '*');
-
                 // Execute callback after completion
                 if (typeof callback === 'function') {
-                    callback();
+                    callback(images);
                 }
 
             } else if (statusResponse.status === 'failed') {
@@ -993,7 +970,7 @@ function checkTaskStatus(taskId, chatId, prompt, callback) {
  * Displays the generated images in the chat.
  * @param {Array} images - Array of image objects containing imageUrl and imageId.
  */
-function displayGeneratedImages(images) {
+function displayGeneratedImages(images,messageId) {
     images.forEach(function(imageData) {
         const imageUrl = imageData.imageUrl;
         const imageId = imageData.imageId;
@@ -1006,7 +983,7 @@ function displayGeneratedImages(images) {
         imgElement.style.borderRadius = '10px';
 
         // Determine message class based on NSFW flag if needed
-        const messageClass = 'bot-image'; // Or 'bot-image-nsfw' if you have separate styling
+        const messageClass = 'new-image-'+messageId; // Or 'bot-image-nsfw' if you have separate styling
 
         window.displayMessage(messageClass, imgElement);
     });

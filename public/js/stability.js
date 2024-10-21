@@ -943,7 +943,7 @@ function checkTaskStatus(taskId, chatId, prompt, callback) {
                 // Display the generated images
                 displayGeneratedImages(images);
 
-                showNotification(t['imagesGeneratedSuccessfully'], 'success');
+                //showNotification(t['imagesGeneratedSuccessfully'], 'success');
 
                 // Send a hidden message to the AI character
                 window.postMessage({ event: 'imageDone' }, '*');

@@ -579,6 +579,21 @@ nav.navbar.move {
 .user-chat:hover{
   background-color: #f8f9fa;
 }
+.prompt-card.selected {
+  border: 2px solid #bd6bf7;
+  box-shadow: 0 8px 16px rgba(0, 123, 255, 0.3);
+  background-color: #fff;
+  transition: all 0.3s ease;
+}
+
+.prompt-card.selected img {
+  opacity: 0.9;
+}
+
+.prompt-card.selected p {
+  font-weight: bold;
+  color: #bd6bf7;
+}
 
 .chat-list .thumb {
   margin-right: 0px;

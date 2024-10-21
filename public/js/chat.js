@@ -2261,67 +2261,106 @@ $(document).ready(async function() {
     // On page load, ensure prompts data is loaded
     getPromptsData()
 
-    // Click handler for #showPrompts
-    $('#showPrompts').on('click', function() {
-        getPromptsData(function(prompts) {
-            // Render the prompts
-            const header = `<p style="font-size:16x;" class="px-3 text-start mt-3 mb-0 pb-0">画像を生成するためのポーズを選んでください。</p>
-            <p style="font-size:12px;" class="text-start mb-2 px-3">必要に応じて、<strong>成人向け画像 (NSFW)</strong> オプションを有効にできます。（20🪙）</p>
-            `;
-            var promptHtml = '<div class="row bg-light px-2 mx-0" style="height:160px;overflow-y:scroll">';
-            prompts.forEach(function(prompt) {
-                promptHtml += `
-                    <div class="col-4 col-sm-3 col-lg-1 my-3" type="button">
-                        <div class="card prompt-card bg-transparent shadow-0" data-id="${prompt._id}" data-nsfw="${prompt.nsfw == 'on'}">
-                            <img src="${prompt.image}" class="card-img-top" alt="${prompt.title}" style="height:100px;object-fit:contain;">
-                            <div class="card-body p-2">
-                                <p class="card-text text-center" style="font-size:14px;">${prompt.title}</p>
-                            </div>
-                        </div>
-                    </div>`;
-            });
-            promptHtml += '</div>';
+ // Click handler for #showPrompts
+$('#showPrompts').on('click', function() {
+    getPromptsData(function(prompts) {
+        const header = `<p style="font-size:16x;" class="px-3 text-start mt-3 mb-0 pb-0">画像を生成するためのポーズを選んでください。</p>
+        <p style="font-size:12px;" class="text-start mb-2 px-3">必要に応じて、<strong>成人向け画像 (NSFW)</strong> オプションを有効にできます。（20🪙）</p>`;
+        renderPopup(prompts, header);
+    });
+});
 
-            // Add NSFW checkbox styled like a button
-            const switchType = `
-            <div class="form-check text-start my-3 ps-3">
-                <input type="checkbox" class="btn-check" id="nsfwCheckbox" autocomplete="off">
-                <label class="btn btn-outline-danger btn-sm rounded" for="nsfwCheckbox">
-                    ${window.translations.imageForm.nsfwImage}
-                </label>
-            </div>
-            `;
+function renderPopup(prompts, header) {
+    const nsfwEnabled = sessionStorage.getItem('nsfwEnabled') === 'true';
+    renderSwalPopup(header, prompts, nsfwEnabled);
+}
 
-            Swal.fire({
-                html: header + switchType + promptHtml,
-                showClass: { popup: 'animate__animated animate__slideInUp animate__faster' },
-                hideClass: { popup: 'animate__animated animate__slideOutDown animate__faster' },
-                position: 'bottom',
-                backdrop: 'rgba(43, 43, 43, 0.2)',
-                showCloseButton: true,
-                showConfirmButton: false,
-                customClass: {
-                    container: 'p-0',
-                    htmlContainer: 'p-0',
-                    popup: 'custom-prompt-container shadow',
-                    closeButton: 'position-absolute'
-                },
-                didOpen: () => {
-                    if (isTemporary) {
-                        showRegistrationForm();
-                        return;
-                    }
-                    $('.prompt-card').on('click', function() {
-                        var id = $(this).data('id');
-                        var isNSFWChecked = $('#nsfwCheckbox').is(':checked');
-                        Swal.close();
-                        controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isNSFWChecked);
-                    });
-                }
+function renderSwalPopup(header, prompts, nsfwEnabled) {
+    const switchType = `<div class="form-check text-start my-3 ps-3">
+        <input type="checkbox" class="btn-check" id="nsfwCheckbox" autocomplete="off" ${nsfwEnabled ? 'checked' : ''}>
+        <label class="btn btn-outline-danger btn-sm rounded" for="nsfwCheckbox">
+            ${window.translations.imageForm.nsfwImage}
+        </label>
+    </div>`;
+    const promptHtml = generatePromptHtml(prompts, nsfwEnabled);
+
+    Swal.fire({
+        html: header + switchType + promptHtml,
+        showClass: { popup: 'animate__animated animate__slideInUp animate__faster' },
+        hideClass: { popup: 'animate__animated animate__slideOutDown animate__faster' },
+        position: 'bottom',
+        backdrop: 'rgba(43, 43, 43, 0.2)',
+        showCloseButton: true,
+        showConfirmButton: false,
+        customClass: {
+            container: 'p-0',
+            htmlContainer: 'p-0',
+            popup: 'custom-prompt-container shadow',
+            closeButton: 'position-absolute'
+        },
+        didOpen: () => {
+            if (isTemporary) {
+                showRegistrationForm();
+                return;
+            }
+
+            $('#nsfwCheckbox').on('change', function() {
+                sessionStorage.setItem('nsfwEnabled', $(this).is(':checked'));
+                updatePromptContent(prompts, header);
             });
-        });
+
+            attachPromptCardEvents();
+        }
+    });
+}
+
+function generatePromptHtml(prompts, nsfwEnabled) {
+    let promptHtml = '<div class="row px-2 mx-0" style="height:160px;overflow-y:scroll">';
+    prompts.forEach(function(prompt) {
+        if (nsfwEnabled || prompt.nsfw != 'on') {
+            promptHtml += `<div class="col-4 col-sm-3 col-lg-1 my-3" type="button">
+                <div class="card prompt-card shadow-0" data-id="${prompt._id}" data-nsfw="${prompt.nsfw == 'on'}">
+                    <img src="${prompt.image}" class="card-img-top" alt="${prompt.title}" style="height:100px;object-fit:contain;">
+                    <div class="card-body p-2">
+                        <p class="card-text text-center" style="font-size:14px;">${prompt.title}</p>
+                    </div>
+                </div>
+            </div>`;
+        }
+    });
+    return promptHtml + '</div>';
+}
+
+function updatePromptContent(prompts, header) {
+    const nsfwEnabled = $('#nsfwCheckbox').is(':checked');
+    const switchType = `<div class="form-check text-start my-3 ps-3">
+        <input type="checkbox" class="btn-check" id="nsfwCheckbox" autocomplete="off" ${nsfwEnabled ? 'checked' : ''}>
+        <label class="btn btn-outline-danger btn-sm rounded" for="nsfwCheckbox">
+            ${window.translations.imageForm.nsfwImage}
+        </label>
+    </div>`;
+    const updatedPromptHtml = generatePromptHtml(prompts, nsfwEnabled);
+
+    $('.swal2-html-container').html(header + switchType + updatedPromptHtml);
+    
+    $('#nsfwCheckbox').on('change', function() {
+        sessionStorage.setItem('nsfwEnabled', $(this).is(':checked'));
+        updatePromptContent(prompts, header);
     });
 
+    attachPromptCardEvents();
+}
+
+function attachPromptCardEvents() {
+    $('.prompt-card').off('click').on('click', function() {
+        $('.prompt-card').removeClass('selected'); // Remove 'selected' class from all prompt cards
+        $(this).addClass('selected'); // Add visual feedback when clicked
+
+        var id = $(this).data('id');
+        var isNSFWChecked = $('#nsfwCheckbox').is(':checked');
+        controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isNSFWChecked);
+    });
+}
     function checkForPurchaseProposal() {
         return
         $.ajax({

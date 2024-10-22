@@ -2395,11 +2395,11 @@ function attachPromptCardEvents() {
                                 <p class="card-content" style="font-size: 12px;">${item.description_japanese}</p>
                                 <div class="d-flex justify-content-start">
                                     <button class="btn custom-gradient-bg shadow-0 w-45 me-2" 
-                                        onclick="buyItem('${itemId}', '${item.name}', 35, '${item._id}', true, '${userId}', '${chatId}', '${userChatId}', 'sfw')">
+                                        onclick="buyItem('${itemId}', '${item.name}', 10, '${item._id}', true, '${userId}', '${chatId}', '${userChatId}', 'sfw')">
                                         <span>35<span class="mx-1">🪙</span></span>
                                     </button>
                                     <button class="btn custom-gradient-bg danger shadow-0 w-45" 
-                                        onclick="buyItem('${itemId}', '${item.name}', 75, '${item._id}', true, '${userId}', '${chatId}', '${userChatId}', 'nsfw')">
+                                        onclick="buyItem('${itemId}', '${item.name}', 20, '${item._id}', true, '${userId}', '${chatId}', '${userChatId}', 'nsfw')">
                                         <span>75<span class="mx-1">🪙</span> <span style="font-size:10px">R18</span></span>
                                     </button>
                                 </div>

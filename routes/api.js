@@ -13,7 +13,7 @@ const { zodResponseFormat } = require("openai/helpers/zod");
 const path = require('path');
 const fs = require('fs');
 const stripe = process.env.MODE == 'local'? require('stripe')(process.env.STRIPE_SECRET_KEY_TEST) : require('stripe')(process.env.STRIPE_SECRET_KEY)
-
+const sharp = require('sharp');
 async function routes(fastify, options) {
 
     fastify.post('/api/add-chat', async (request, reply) => {
@@ -2237,6 +2237,17 @@ async function routes(fastify, options) {
         }
     
         reply.send({ imageUrl });
+    });
+
+    fastify.get('/blur-image', async (request, reply) => {
+    const imageUrl = request.query.url;
+    try {
+        const response = await axios({ url: imageUrl, responseType: 'arraybuffer' });
+        const blurredImage = await sharp(response.data).blur(25).toBuffer();
+        reply.type('image/jpeg').send(blurredImage);
+    } catch {
+        reply.status(500).send('Error processing image');
+    }
     });
     fastify.get('/api/categories', async (req, res) => {
         try {

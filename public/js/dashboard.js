@@ -545,43 +545,40 @@ $(document).ready(async function() {
     })
       
 });
-function blurImageCanvas(img) {
-    // Check if the image has already been processed
+
+function blurImage(img) {
     if (img.dataset.processed === "true") return;
   
-    let imageUrl = img.getAttribute('src');
-    let tempImg = new Image();
+    let imageUrl = img.src;
   
-    tempImg.crossOrigin = 'anonymous';  // Set crossOrigin to allow canvas usage
-    tempImg.src = imageUrl;
+    // Fetch the blurred image via AJAX as a Blob
+    fetch('/blur-image?url=' + encodeURIComponent(imageUrl))
+      .then(response => response.blob())
+      .then(blob => {
+        let objectUrl = URL.createObjectURL(blob);
+        console.log({objectUrl})
+        img.src = objectUrl;  // Set the src to the Blob URL
+        img.dataset.processed = "true";  // Mark as processed
   
-    tempImg.onload = function() {
-      let canvas = document.createElement('canvas');
-      let ctx = canvas.getContext('2d');
-  
-      canvas.width = tempImg.width;
-      canvas.height = tempImg.height;
-      ctx.drawImage(tempImg, 0, 0);
-  
-      let dataUrl = canvas.toDataURL('image/jpeg');
-      img.src = dataUrl;  // Replace the image src with the canvas data URL
-      img.setAttribute('data-original-src', imageUrl); // Store the original src to prevent easy download
-  
-      // Mark the image as processed to prevent duplicate execution
-      img.dataset.processed = "true";
-    };
-  
-    tempImg.onerror = function() {
-      console.error("Image could not be loaded, likely due to CORS restrictions.");
-    };
-  
-    img.removeAttribute('src'); // Remove original src to prevent direct access
+        // Remove any reference to the original image URL
+        img.removeAttribute('data-original-src');
+        img.removeAttribute('srcset'); // Optional: remove srcset if applicable
+      })
+      .catch(() => {
+        console.error("Failed to load blurred image.");
+      });
   }
   
-  // Disable right-click to prevent downloading the image
+  $(document).ready(function() {
+    $('.img-blur').each(function() {
+      blurImage(this);
+    });
+  });
+  
   $(document).on('contextmenu', '.img-blur', function(e) {
     e.preventDefault();
   });
+  
   
 async function checkIfAdmin(userId) {
     try {
@@ -1123,7 +1120,6 @@ window.loadAllUserPosts = async function (page = 1) {
         let galleryHtml = '';
         data.posts.forEach(item => {
             const unlockedItem = isUnlocked(currentUser, item.post.postId)
-            console.log({itemId:item.post.postId})
             let isBlur = unlockedItem ? false : item?.post?.nsfw && !subscriptionStatus 
             const isLiked = item?.post?.likedBy?.some(id => id.toString() === currentUserId.toString());
 
@@ -1140,7 +1136,7 @@ window.loadAllUserPosts = async function (page = 1) {
                   </div>
                   ${isBlur ? `
                   <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item.post.postId}','posts',this)`}>
-                    <img src="${item.post.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" onload="blurImageCanvas(this)">
+                    <img src="${item.post.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" onload="blurImage(this)">
                   </div>
                   ` : `
                   <a href="/post/${item.post.postId}" class="text-muted text-decoration-none">
@@ -1266,7 +1262,7 @@ window.loadAllChatImages = async function (page = 1) {
                         </div>
                         ${isBlur ? `
                         <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item._id}','gallery',this)`}>
-                            <img src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" onload="blurImageCanvas(this)">
+                            <img src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" onload="blurImage(this)">
                         </div>
                         ` : `
                         <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
@@ -1375,7 +1371,7 @@ window.loadChatImages = async function (chatId, page = 1) {
                         </div>
                         ${isBlur ? `
                         <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item._id}','gallery',this)`}>
-                            <img src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" onload="blurImageCanvas(this)">
+                            <img src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" onload="blurImage(this)">
                             <div class="d-none card-body p-2">
                                 <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
                             </div>
@@ -1494,7 +1490,7 @@ window.loadUserImages = async function (userId, page = 1) {
                     </div>
                     ${isBlur ? `
                     <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item._id}','gallery',this)`}>
-                        <img src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" onload="blurImageCanvas(this)">
+                        <img src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" onload="blurImage(this)">
                     </div>
                     ` : `
                     <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
@@ -1594,7 +1590,7 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
                     </div>
                     ${isBlur ? `
                     <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item._id}','posts',this)`}>
-                        <img src="${item.image.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" onload="blurImageCanvas(this)">
+                        <img src="${item.image.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" onload="blurImage(this)">
                     </div>
                     ` : `
                     <a href="/post/${item._id}" class="text-muted text-decoration-none">

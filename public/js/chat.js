@@ -2379,7 +2379,6 @@ function attachPromptCardEvents() {
     });
 }
     function checkForPurchaseProposal() {
-        return
         $.ajax({
             url: '/api/check-assistant-proposal',
             type: 'POST',

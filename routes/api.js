@@ -1594,7 +1594,7 @@ async function routes(fastify, options) {
                 messages: [
                     { role: "system", content: `
                         You are an expert at structured data extraction.
-                        \nIf the message is about sending images, return exactly 3 items with name in Japanese,a description in English suitable for Stable Diffusion prompts and a short description in natural japanese to explain the image in natural language.
+                        \nIf the message is about sending images, return exactly 1 item with name in Japanese,a description in English suitable for Stable Diffusion prompts and a short description in natural japanese to explain the image in natural language.
                         \n Never include a price.
                         \nI want you to write me a detailed prompt exactly about the idea written after IDEA. Follow the structure of the example prompts. This means a very short description of the scene, followed by modifiers divided by commas to alter the mood, style, lighting, and more.
                     ` },

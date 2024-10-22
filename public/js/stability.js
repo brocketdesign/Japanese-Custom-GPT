@@ -327,7 +327,8 @@ function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isN
                 .replace('{type}', typeText)
                 .replace('{price}', price)
                 .replace('{prompt_title}', prompt_title);
-          
+            
+            let messageId
             try {
                 const response = await $.ajax({
                     url: API_URL + '/novita/txt2img',
@@ -350,7 +351,7 @@ function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isN
 
                 updateCoins();
 
-                const messageId = `image-${response.taskId}`;
+                messageId = `image-${response.taskId}`;
                 window.postMessage({ event: 'displayMessage', role:'user', message: userMessage, completion : false , image : true, messageId }, '*');
                 $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
     

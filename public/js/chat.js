@@ -2432,11 +2432,11 @@ function attachPromptCardEvents() {
                                 <div class="d-flex justify-content-start">
                                     <button class="btn custom-gradient-bg shadow-0 w-45 me-2" 
                                         onclick="buyItem('${itemId}', '${item.name}', 10, '${item._id}', true, '${userId}', '${chatId}', '${userChatId}', 'sfw')">
-                                        <span>35<span class="mx-1">🪙</span></span>
+                                        <span>10<span class="mx-1">🪙</span></span>
                                     </button>
                                     <button class="btn custom-gradient-bg danger shadow-0 w-45" 
                                         onclick="buyItem('${itemId}', '${item.name}', 20, '${item._id}', true, '${userId}', '${chatId}', '${userChatId}', 'nsfw')">
-                                        <span>75<span class="mx-1">🪙</span> <span style="font-size:10px">R18</span></span>
+                                        <span>20<span class="mx-1">🪙</span> <span style="font-size:10px">R18</span></span>
                                     </button>
                                 </div>
                             </div>

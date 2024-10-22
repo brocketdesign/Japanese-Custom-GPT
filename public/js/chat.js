@@ -2391,8 +2391,8 @@ function attachPromptCardEvents() {
                         const message = `
                         <div id="${itemId}" class="card bg-transparent text-white border-0">
                             <div class="card-body-none" style="height:auto !important;">
-                                <h5 class="card-title" style="font-size: 14px;">${item.name}</h5>
-                                <p class="card-content" style="font-size: 12px;">${item.description_japanese}</p>
+                                <h5 class="card-title mb-0 pb-0" style="font-size: 14px;">${item.name}</h5>
+                                <p class="card-content mb-1" style="font-size: 12px;">${item.description_japanese}</p>
                                 <div class="d-flex justify-content-start">
                                     <button class="btn custom-gradient-bg shadow-0 w-45 me-2" 
                                         onclick="buyItem('${itemId}', '${item.name}', 10, '${item._id}', true, '${userId}', '${chatId}', '${userChatId}', 'sfw')">

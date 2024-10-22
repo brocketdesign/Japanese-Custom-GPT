@@ -543,10 +543,46 @@ $(document).ready(async function() {
         const chatImage = $(this).data('image');
         window.location='/chat/'+chatId
     })
-
+      
 });
-
-
+function blurImageCanvas(img) {
+    // Check if the image has already been processed
+    if (img.dataset.processed === "true") return;
+  
+    let imageUrl = img.getAttribute('src');
+    let tempImg = new Image();
+  
+    tempImg.crossOrigin = 'anonymous';  // Set crossOrigin to allow canvas usage
+    tempImg.src = imageUrl;
+  
+    tempImg.onload = function() {
+      let canvas = document.createElement('canvas');
+      let ctx = canvas.getContext('2d');
+  
+      canvas.width = tempImg.width;
+      canvas.height = tempImg.height;
+      ctx.drawImage(tempImg, 0, 0);
+  
+      let dataUrl = canvas.toDataURL('image/jpeg');
+      img.src = dataUrl;  // Replace the image src with the canvas data URL
+      img.setAttribute('data-original-src', imageUrl); // Store the original src to prevent easy download
+  
+      // Mark the image as processed to prevent duplicate execution
+      img.dataset.processed = "true";
+    };
+  
+    tempImg.onerror = function() {
+      console.error("Image could not be loaded, likely due to CORS restrictions.");
+    };
+  
+    img.removeAttribute('src'); // Remove original src to prevent direct access
+  }
+  
+  // Disable right-click to prevent downloading the image
+  $(document).on('contextmenu', '.img-blur', function(e) {
+    e.preventDefault();
+  });
+  
 async function checkIfAdmin(userId) {
     try {
       const response = await $.get(`/user/is-admin/${userId}`);
@@ -1086,7 +1122,8 @@ window.loadAllUserPosts = async function (page = 1) {
       success: function (data) {
         let galleryHtml = '';
         data.posts.forEach(item => {
-            const unlockedItem = isUnlocked(currentUser, item._id)
+            const unlockedItem = isUnlocked(currentUser, item.post.postId)
+            console.log({itemId:item.post.postId})
             let isBlur = unlockedItem ? false : item?.post?.nsfw && !subscriptionStatus 
             const isLiked = item?.post?.likedBy?.some(id => id.toString() === currentUserId.toString());
 
@@ -1103,7 +1140,7 @@ window.loadAllUserPosts = async function (page = 1) {
                   </div>
                   ${isBlur ? `
                   <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item.post.postId}','posts',this)`}>
-                    <img src="${item.post.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
+                    <img src="${item.post.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" onload="blurImageCanvas(this)">
                   </div>
                   ` : `
                   <a href="/post/${item.post.postId}" class="text-muted text-decoration-none">
@@ -1229,7 +1266,7 @@ window.loadAllChatImages = async function (page = 1) {
                         </div>
                         ${isBlur ? `
                         <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item._id}','gallery',this)`}>
-                            <img src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
+                            <img src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" onload="blurImageCanvas(this)">
                         </div>
                         ` : `
                         <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
@@ -1338,7 +1375,7 @@ window.loadChatImages = async function (chatId, page = 1) {
                         </div>
                         ${isBlur ? `
                         <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item._id}','gallery',this)`}>
-                            <img src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
+                            <img src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" onload="blurImageCanvas(this)">
                             <div class="d-none card-body p-2">
                                 <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
                             </div>
@@ -1457,7 +1494,7 @@ window.loadUserImages = async function (userId, page = 1) {
                     </div>
                     ${isBlur ? `
                     <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item._id}','gallery',this)`}>
-                        <img src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
+                        <img src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" onload="blurImageCanvas(this)">
                     </div>
                     ` : `
                     <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
@@ -1557,7 +1594,7 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
                     </div>
                     ${isBlur ? `
                     <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item._id}','posts',this)`}>
-                        <img src="${item.image.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
+                        <img src="${item.image.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" onload="blurImageCanvas(this)">
                     </div>
                     ` : `
                     <a href="/post/${item._id}" class="text-muted text-decoration-none">

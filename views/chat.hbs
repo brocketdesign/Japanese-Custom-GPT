@@ -179,7 +179,7 @@
         <div class="container chat-contain px-0 onchat-on">
             <div id="chat-container" class="card shadow-0 border-0 rounded-0" style="background-position: top center;background-repeat: no-repeat;">
                 <div class="card-body text-center py-0 container" style="min-height:250px;overflow-y:hidden;display: flex;flex-direction: column;">
-                    <div id="chat-recommend" class="text-white rounded d-flex align-items-center justify-content-start" style="margin-top: 70px !important;margin-bottom:10px">
+                    <div id="chat-recommend" class="text-white rounded d-flex align-items-center justify-content-start scroll-horizontal" style="margin-top: 70px !important;margin-bottom:10px;min-height: 70px;">
                         <div class="characters" style="display: flex;flex-direction: row;overflow-x: scroll;"></div>
                     </div>
                     <div style="flex-grow:1;height: 100%;overflow: scroll;">
@@ -502,7 +502,7 @@ $(document).ready(function() {
             return $(this).attr('src');
         }).get();
 
-        const clickedImageUrl = $(this).find('img').attr('src');
+        const clickedImageUrl = $(this).find('img').attr('src') || $(this).attr('data-src');
         const initialSlideIndex = images.indexOf(clickedImageUrl);
 
         let slides = '';

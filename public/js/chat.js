@@ -640,6 +640,24 @@ $(document).ready(async function() {
             displayAlbum(album)
         });
         $('#chat-recommend').append(card);
+    }    
+    function displayImagesThumb(){
+        const images = $('.assistant-image-box img').map(function() {
+            return $(this).attr('src');
+        }).get();
+
+        images.forEach(imageUrl => {
+            displayImageThumb(imageUrl)
+        });
+    }
+    function displayImageThumb(imageUrl){
+        var card = $(`
+            <div class="assistant-image-box card custom-card bg-transparent shadow-0 border-0 px-1 mx-1 col-auto" style="cursor:pointer;" data-src="${imageUrl}">
+                <div style="background-image:url(${imageUrl});border:4px solid white;" class="card-img-top rounded-avatar position-relative m-auto shadow">
+                </div>
+            </div>
+        `);
+        $('#chat-recommend').append(card);
     }
 
         async function displayAlbum(album) {
@@ -1294,6 +1312,7 @@ $(document).ready(async function() {
                 chatContainer.append($(messageHtml).hide().fadeIn());
             }
         }
+        displayImagesThumb();
         $('#chatContainer').animate({
             scrollTop: $('#chatContainer').prop("scrollHeight")
         }, 500);
@@ -1923,6 +1942,7 @@ $(document).ready(async function() {
         else if (messageClass === 'bot-image' && message instanceof HTMLElement) {
             const imageId = message.getAttribute('data-id');
             const description = message.getAttribute('alt');
+            const imageUrl = message.getAttribute('src');
             messageElement = $(`
                 <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass}">
                     <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
@@ -1936,11 +1956,13 @@ $(document).ready(async function() {
             `).hide();
             $('#chatContainer').append(messageElement);
             messageElement.addClass(animationClass).fadeIn();
+            displayImageThumb(imageUrl)
         } 
 
         else if (messageClass.startsWith('new-image-') && message instanceof HTMLElement) {
             const imageId = message.getAttribute('data-id');
             const description = message.getAttribute('alt');
+            const imageUrl = message.getAttribute('src');
             const messageId = messageClass.split('new-image-')[1]
             messageElement = $(`
                     <div class="ms-3 position-relative">
@@ -1953,6 +1975,7 @@ $(document).ready(async function() {
             $(`#${messageId}`).find('.load').remove()
             $(`#${messageId}`).append(messageElement);
             messageElement.addClass(animationClass).fadeIn();
+            displayImageThumb(imageUrl)
         } 
     
         else if (messageClass === 'bot-image-nsfw'&& message instanceof HTMLElement) {
@@ -2330,23 +2353,36 @@ function renderSwalPopup(header, prompts, nsfwEnabled) {
         }
     });
 }
-
 function generatePromptHtml(prompts, nsfwEnabled) {
-    let promptHtml = '<div class="row px-2 mx-0" style="height:160px;overflow-y:scroll">';
+    let promptHtml = `
+        <div class="row px-2 mx-0" style="
+            max-height: 60vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
+        ">
+    `;
+    
     prompts.forEach(function(prompt) {
-        if (nsfwEnabled || prompt.nsfw != 'on') {
-            promptHtml += `<div class="col-4 col-sm-3 col-lg-1 my-3" type="button">
-                <div class="card prompt-card shadow-0" data-id="${prompt._id}" data-nsfw="${prompt.nsfw == 'on'}">
-                    <img src="${prompt.image}" class="card-img-top" alt="${prompt.title}" style="height:100px;object-fit:contain;">
-                    <div class="card-body p-2">
-                        <p class="card-text text-center" style="font-size:14px;">${prompt.title}</p>
+        if (nsfwEnabled || prompt.nsfw !== 'on') {
+            promptHtml += `
+                <div class="col-4 col-sm-3 col-lg-2 my-2">
+                    <div class="card prompt-card shadow-0" data-id="${prompt._id}" data-nsfw="${prompt.nsfw === 'on'}" style="cursor: pointer;">
+                        <img src="${prompt.image}" class="card-img-top" alt="${prompt.title}" style="height:80px; object-fit:contain; width:100%;">
+                        <div class="card-body p-1">
+                            <p class="card-text text-center" style="font-size:12px; margin-bottom:0;">
+                                ${prompt.title}
+                            </p>
+                        </div>
                     </div>
                 </div>
-            </div>`;
+            `;
         }
     });
+    
     return promptHtml + '</div>';
 }
+
 
 function updatePromptContent(prompts, header) {
     const nsfwEnabled = $('#nsfwCheckbox').is(':checked');

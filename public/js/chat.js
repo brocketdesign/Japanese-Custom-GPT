@@ -79,7 +79,7 @@ $(document).ready(async function() {
     });
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageDone') {
-            let message = `[Hidden] I received the images. Write a message to inform me of that.`
+            let message = `[Hidden] I received the images. Write a message to inform me of that. Do not include [Hidden] in your response.`
             addMessageToChat(chatId, userChatId, 'user', message,function(){
                 generateCompletion()
             });

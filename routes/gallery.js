@@ -212,6 +212,7 @@ async function routes(fastify, options) {
           const chat = chats.find(c => c._id.equals(doc.chatId));
           return {
             ...image,
+            userId: chat?.userId,
             chatId: chat?._id,
             chatName: chat ? chat.name : 'Unknown Chat',
             thumbnail: chat?.thumbnail || chat?.thumbnailUrl || '/img/default-thumbnail.png'

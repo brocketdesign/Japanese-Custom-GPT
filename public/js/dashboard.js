@@ -546,35 +546,41 @@ $(document).ready(async function() {
       
 });
 
-function blurImage(img) {
-    if (img.dataset.processed === "true") return;
-  
-    let imageUrl = img.src;
-  
-    // Fetch the blurred image via AJAX as a Blob
-    fetch('/blur-image?url=' + encodeURIComponent(imageUrl))
-      .then(response => response.blob())
-      .then(blob => {
-        let objectUrl = URL.createObjectURL(blob);
-        console.log({objectUrl})
-        img.src = objectUrl;  // Set the src to the Blob URL
-        img.dataset.processed = "true";  // Mark as processed
-  
-        // Remove any reference to the original image URL
-        img.removeAttribute('data-original-src');
-        img.removeAttribute('srcset'); // Optional: remove srcset if applicable
-      })
-      .catch(() => {
-        console.error("Failed to load blurred image.");
-      });
-  }
-  
-  $(document).ready(function() {
-    $('.img-blur').each(function() {
-      blurImage(this);
+window.blurImage = function(img) {
+    if ($(img).data('processed') === "true") return;
+    let imageUrl = $(img).data('src');
+    fetchBlurredImage(img, imageUrl);
+}
+
+function fetchBlurredImage(img, imageUrl) {
+    $.ajax({
+        url: '/blur-image?url=' + encodeURIComponent(imageUrl),
+        method: 'GET',
+        xhrFields: { responseType: 'blob' },
+        success: function(blob) { handleImageSuccess(img, blob, imageUrl); },
+        error: function() { console.error("Failed to load blurred image."); }
     });
-  });
-  
+}
+
+function handleImageSuccess(img, blob, imageUrl) {
+    let objectUrl = URL.createObjectURL(blob);
+    $(img).attr('src', objectUrl).data('processed', "true").removeAttr('data-original-src').removeAttr('srcset');
+    createOverlay(img, imageUrl);
+}
+
+function createOverlay(img, imageUrl) {
+    let overlay = $('<div></div>').addClass('d-flex flex-column align-items-center justify-content-center animate__animated animate__fadeIn').css({
+        position: 'absolute', top: '0', left: '0', width: '100%', height: '100%', 'background-color': 'rgba(19, 19, 19, 0.19)', color: 'white'
+    });
+    let buttonElement = $('<button></button>').text(window.translations['blurButton'] || 'View Image').addClass('btn btn-sm btn-outline-light mt-3 animate__animated animate__pulse').css({'font-size': '14px', 'border-radius':'50px', cursor: 'pointer'}).on('click', function() {
+        $(img).attr('src', imageUrl);
+        overlay.remove();
+    });
+    let textElement = $('<div></div>').text('(20🪙)').addClass('fw-bold').css({'font-size': '12px', 'text-shadow': '0 0 5px black'});
+    overlay.append(buttonElement, textElement);
+    $(img).wrap('<div style="position: relative; display: inline-block;"></div>').after(overlay);
+}
+
   $(document).on('contextmenu', '.img-blur', function(e) {
     e.preventDefault();
   });
@@ -607,8 +613,8 @@ async function checkIfAdmin(userId) {
     });
   }
   
-  function isUnlocked(currentUser, id) {
-    return currentUser?.unlockedItems?.includes(id)
+  function isUnlocked(currentUser, id, ownerId) {
+    return currentUser?.unlockedItems?.includes(id) || currentUser._id == ownerId
   }
   
 // Helper function to scroll to the top
@@ -1119,7 +1125,7 @@ window.loadAllUserPosts = async function (page = 1) {
       success: function (data) {
         let galleryHtml = '';
         data.posts.forEach(item => {
-            const unlockedItem = isUnlocked(currentUser, item.post.postId)
+            const unlockedItem = isUnlocked(currentUser, item.post.postId, item.userId)
             let isBlur = unlockedItem ? false : item?.post?.nsfw && !subscriptionStatus 
             const isLiked = item?.post?.likedBy?.some(id => id.toString() === currentUserId.toString());
 
@@ -1136,7 +1142,7 @@ window.loadAllUserPosts = async function (page = 1) {
                   </div>
                   ${isBlur ? `
                   <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item.post.postId}','posts',this)`}>
-                    <img src="${item.post.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" onload="blurImage(this)">
+                    <img data-src="${item.post.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
                   </div>
                   ` : `
                   <a href="/post/${item.post.postId}" class="text-muted text-decoration-none">
@@ -1168,6 +1174,10 @@ window.loadAllUserPosts = async function (page = 1) {
         if($('#user-posts-pagination-controls').length > 0){
             generateUserPostsPagination(data.page, data.totalPages);
         }
+
+        $(document).find('.img-blur').each(function() {
+            blurImage(this);
+        });
       },
       error: function (err) {
         console.error('Failed to load posts', err);
@@ -1246,7 +1256,7 @@ window.loadAllChatImages = async function (page = 1) {
       success: function (data) {
         let chatGalleryHtml = '';
         data.images.forEach(item => {
-            const unlockedItem = isUnlocked(currentUser, item._id)
+            const unlockedItem = isUnlocked(currentUser, item._id,item.userId)
             let isBlur = unlockedItem ? false : item?.nsfw && !subscriptionStatus 
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             chatGalleryHtml += `
@@ -1262,7 +1272,7 @@ window.loadAllChatImages = async function (page = 1) {
                         </div>
                         ${isBlur ? `
                         <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item._id}','gallery',this)`}>
-                            <img src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" onload="blurImage(this)">
+                            <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" >
                         </div>
                         ` : `
                         <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
@@ -1287,6 +1297,10 @@ window.loadAllChatImages = async function (page = 1) {
         if($('#all-chats-images-pagination-controls').length > 0){
             generateAllChatsImagePagination(data.page, data.totalPages);
         }
+
+        $(document).find('.img-blur').each(function() {
+            blurImage(this);
+        });
       },
       error: function (err) {
         console.error('Failed to load images', err);
@@ -1355,7 +1369,7 @@ window.loadChatImages = async function (chatId, page = 1) {
       success: function (data) {
         let chatGalleryHtml = '';
         data.images.forEach(item => {
-            const unlockedItem = isUnlocked(currentUser, item._id)
+            const unlockedItem = isUnlocked(currentUser, item._id, item.userId)
             let isBlur = unlockedItem ? false : item?.nsfw && !subscriptionStatus 
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             chatGalleryHtml += `
@@ -1371,7 +1385,7 @@ window.loadChatImages = async function (chatId, page = 1) {
                         </div>
                         ${isBlur ? `
                         <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item._id}','gallery',this)`}>
-                            <img src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" onload="blurImage(this)">
+                            <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" >
                             <div class="d-none card-body p-2">
                                 <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
                             </div>
@@ -1396,6 +1410,10 @@ window.loadChatImages = async function (chatId, page = 1) {
         if($('#chat-images-pagination-controls').length > 0){
             generateChatImagePagination(data.page, data.totalPages, chatId);
         }
+
+        $(document).find('.img-blur').each(function() {
+            blurImage(this);
+        });
       },
       error: function (err) {
         console.error('Failed to load images', err);
@@ -1474,7 +1492,7 @@ window.loadUserImages = async function (userId, page = 1) {
       success: function (data) {
         let galleryHtml = '';
         data.images.forEach(item => {
-            const unlockedItem = isUnlocked(currentUser, item._id)
+            const unlockedItem = isUnlocked(currentUser, item._id, item.userId)
             let isBlur = unlockedItem ? false : item?.nsfw && !subscriptionStatus 
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             galleryHtml += `
@@ -1490,7 +1508,7 @@ window.loadUserImages = async function (userId, page = 1) {
                     </div>
                     ${isBlur ? `
                     <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item._id}','gallery',this)`}>
-                        <img src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" onload="blurImage(this)">
+                        <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" >
                     </div>
                     ` : `
                     <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
@@ -1512,6 +1530,10 @@ window.loadUserImages = async function (userId, page = 1) {
         if($('#images-pagination-controls').length > 0){
             generateImagePagination(data.page, data.totalPages, userId);
         }
+
+        $(document).find('.img-blur').each(function() {
+            blurImage(this);
+        });
       },
       error: function (err) {
         console.error('Failed to load images', err);
@@ -1574,7 +1596,7 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
       success: function (data) {
         let galleryHtml = '';
         data.posts.forEach(item => {
-            const unlockedItem = isUnlocked(currentUser, item._id)
+            const unlockedItem = isUnlocked(currentUser, item._id, item.userId)
             let isBlur = unlockedItem ? false : item?.image?.nsfw && !subscriptionStatus 
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             galleryHtml += `
@@ -1590,7 +1612,7 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
                     </div>
                     ${isBlur ? `
                     <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item._id}','posts',this)`}>
-                        <img src="${item.image.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" onload="blurImage(this)">
+                        <img data-src="${item.image.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" >
                     </div>
                     ` : `
                     <a href="/post/${item._id}" class="text-muted text-decoration-none">
@@ -1623,6 +1645,10 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
         if($(`#${pageContainerId}`).length > 0){
             generateUserPostPagination(data.page, data.totalPages, userId);
         }
+
+        $(document).find('.img-blur').each(function() {
+            blurImage(this);
+        });
       },
       error: function (err) {
         console.log('Failed to load posts', err);

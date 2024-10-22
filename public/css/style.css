@@ -8,7 +8,7 @@
   display: none;
 }
 .img-blur {
-
+  filter: blur(5px);
   clip-path: inset(0);
 }
 img.select {

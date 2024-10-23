@@ -322,7 +322,27 @@ async function getUserData(userId, collectionUser, collectionChat, currentUser) 
       chatCount: chatCount.length,
     };
   };
+  async function initializeImageStyle() {
+    try {
+      const db = fastify.mongo.client.db(process.env.MONGODB_NAME); // Use fastify's MongoDB connection
+      const chatsCollection = db.collection('chats');
   
+      // Filter for chats where 'imageStyle' does not exist or is an empty string
+      const filter = { 
+        $or: [
+          { imageStyle: { $exists: false } }, 
+          { imageStyle: '' }
+        ]
+      };
+      const update = { $set: { imageStyle: 'anime' } };
+  
+      // Update all matching documents
+      const result = await chatsCollection.updateMany(filter, update);
+      console.log(`Updated ${result.modifiedCount} chats with 'imageStyle' set to 'anime'.`);
+    } catch (err) {
+      console.error('An error occurred while initializing imageStyle:', err);
+    }
+  }
 
   module.exports = { getCounter, 
     updateCounter, 

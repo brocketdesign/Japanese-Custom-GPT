@@ -1907,6 +1907,7 @@ async function routes(fastify, options) {
           reply.code(500).send('Internal Server Error');
         }
       });
+
       
       fastify.get('/api/chats', async (request, reply) => {
         try {
@@ -1931,7 +1932,8 @@ async function routes(fastify, options) {
             if(type){
                 query.imageStyle = type
             }
-            
+            const test = await chatsCollection.findOne({_id: new ObjectId('6718d5332729574add22523f')})
+            console.log(test)
           // Fetch paginated chats, sorted by _id in descending order
           const recentCursor = await chatsCollection.aggregate([
             { $match: query },

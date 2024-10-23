@@ -780,7 +780,7 @@
             $('#sendForm .fa-spinner').toggleClass('d-none');
 
             const formData = new FormData();
-            formData.append('imageStyle', $('#imageStyle').val());
+            formData.append('imageStyle', $('#imageStyle').val().trim() || 'anime');
             formData.append('name', $('#chatName').val());
             formData.append('purpose', $('#chatPurpose').val());
             formData.append('language', $('#language').val());

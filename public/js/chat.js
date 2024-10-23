@@ -3035,7 +3035,7 @@ window.renderChatList = function(userId,chatId) {
                                     <span class="text-muted" style="font-size:12px"></span>${window.translations.newChat}</span>
                                 </button>
                             </li>
-                            <li>
+                            <li class="d-none">
                                 <span data-id="${chat._id}" class="dropdown-item text-danger delete-chat" style="cursor:pointer">
                                     <i class="fas fa-trash me-2"></i> 
                                     <span class="text-muted" style="font-size:12px"></span>${window.translations.delete}</span>

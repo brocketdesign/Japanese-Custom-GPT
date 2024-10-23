@@ -360,8 +360,9 @@ function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isN
                     window.postMessage({ event: 'imageDone' }, '*');
                 });
             } catch (error) {
-                showNotification(error.message || t['imageGenerationError'], 'error');
                 $(`#${messageId}`).remove();
+                showCoinShop();
+                return
             }
         },
         error: function(xhr) {

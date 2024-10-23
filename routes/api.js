@@ -14,6 +14,7 @@ const path = require('path');
 const fs = require('fs');
 const stripe = process.env.MODE == 'local'? require('stripe')(process.env.STRIPE_SECRET_KEY_TEST) : require('stripe')(process.env.STRIPE_SECRET_KEY)
 const sharp = require('sharp');
+const { chat } = require('googleapis/build/src/apis/chat');
 async function routes(fastify, options) {
 
     fastify.post('/api/add-chat', async (request, reply) => {
@@ -1930,6 +1931,7 @@ async function routes(fastify, options) {
             if(type){
                 query.imageStyle = type
             }
+            
           // Fetch paginated chats, sorted by _id in descending order
           const recentCursor = await chatsCollection.aggregate([
             { $match: query },

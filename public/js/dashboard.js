@@ -1014,7 +1014,7 @@ window.displayPeopleChat = async function (page = 1,type) {
                         `;
                     }
                 }
-
+console.log(chat)
                 // Render chat
                 htmlContent += `
                 <div class="col-12 col-sm-4 col-lg-3 mb-2">
@@ -1046,7 +1046,10 @@ window.displayPeopleChat = async function (page = 1,type) {
                                 </div>
                                 <div class="col-auto mx-0 px-0">
                                     <button class="btn btn-outline-secondary redirectToChat w-100 mb-2" data-id="${chat._id}"> <i class="bi bi-chat-dots me-2"></i> ${window.translations.startChatting}</button>
-                                    <h5 class="card-title character-title mb-0">${chat.name}</h5>
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <h5 class="card-title character-title mb-0">${chat.name}</h5>
+                                        <a href="/user/${chat.userId}" class="text-muted" style="font-size:12px;">${chat.nickname}</a>
+                                    </div>
                                     <a href="/character/${chat._id}" class="text-muted" style="text-decoration: none;">
                                         <span style="font-size:12px;">${chat.description}</span>
                                     </a>

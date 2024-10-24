@@ -827,6 +827,7 @@ async function routes(fastify, options) {
             const chatOwnerId = chat.userId;
             console.log(`Chat owner found: ${chatOwnerId}`);
     
+            /*
             // Update seller's (chat owner's) coins if the buyer is not the seller
             if (chatOwnerId.toString() !== userId.toString()) {
                 console.log(`Crediting ${price} coins to chat owner ${chatOwnerId}`);
@@ -837,6 +838,7 @@ async function routes(fastify, options) {
             } else {
                 console.log('Buyer is the chat owner, no credit given to themselves.');
             }
+            */
     
             reply.send({ success: true, coins: userCoins });
         } catch (error) {

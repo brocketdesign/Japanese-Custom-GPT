@@ -317,7 +317,7 @@ function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isN
                 return;
             }
 
-            const finalPrompt = imageDescription ? `${imageDescription}, ${prompt}` : prompt;
+            const finalPrompt = imageDescription ? `${prompt},${imageDescription}` : prompt;
 
             //showNotification(t['imageGenerationStarted'], 'success');
 

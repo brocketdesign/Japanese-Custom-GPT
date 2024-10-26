@@ -2366,7 +2366,7 @@ async function routes(fastify, options) {
         fastify.get('/api/prompts', async (request, reply) => {
             try {
             const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
-            const prompts = await db.collection('prompts').find().toArray();
+            const prompts = await db.collection('prompts').find({}).toArray();
             reply.send(prompts);
             } catch (error) {
             console.error('Error fetching prompts:', error);

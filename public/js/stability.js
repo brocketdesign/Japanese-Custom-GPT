@@ -357,7 +357,7 @@ function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isN
     
                 checkTaskStatus(response.taskId, chatId, finalPrompt, (images) => {
                     displayGeneratedImages(images,messageId);
-                    window.postMessage({ event: 'imageDone' }, '*');
+                    window.postMessage({ event: 'imageDone', prompt: prompt }, '*');
                 });
             } catch (error) {
                 $(`#${messageId}`).remove();

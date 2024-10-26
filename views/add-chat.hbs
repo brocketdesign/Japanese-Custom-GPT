@@ -317,7 +317,7 @@
                                 name="characterPrompt"
                                 rows="4"
                                 maxlength="500"
-                                placeholder="キャラクターの外見や表情・ポーズを詳細に説明してください。"
+                                placeholder="キャラクターの外見の特徴を書いてください。例：女性、ブロンドヘア、ロングヘア、黒のワンピースを着ている、カフェでコーヒーを飲んでいる"
                             ></textarea>
                         </div>
                         
@@ -339,6 +339,7 @@
                             <button type="button" id="generateButton" class="btn custom-gradient-bg btn-lg text-white">
                                 <i class="fas fa-magic me-2"></i>AIで生成
                             </button>
+                            <span class="w-100 text-center genexp" style="font-size: 12px;;">ただいま画像を4枚生成しています。1分ほどお待ちください。</span>
                         </div>
                     </div>
                 <!-- Right Column: Generated Image -->
@@ -967,6 +968,7 @@
                         $('#characterPrompt').prop('disabled', false);
                         $('#generateButton').prop('disabled', false);
                         $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+                        $('.genexp').fadeOut()
 
                     } else if (statusResponse.status === 'failed') {
                         clearInterval(intervalId);
@@ -974,6 +976,7 @@
                         $('#characterPrompt').prop('disabled', false);
                         $('#generateButton').prop('disabled', false);
                         $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+                        $('.genexp').fadeOut()
                     } else {
                         console.log('タスクはまだ処理中です...');
                     }
@@ -984,6 +987,7 @@
                         $('#characterPrompt').prop('disabled', false);
                         $('#generateButton').prop('disabled', false);
                         $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+                        $('.genexp').fadeOut()
                     }
 
                 } catch (error) {
@@ -993,6 +997,7 @@
                     $('#characterPrompt').prop('disabled', false);
                     $('#generateButton').prop('disabled', false);
                     $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+                    $('.genexp').fadeOut()
 
                 }
             }, POLLING_INTERVAL);
@@ -1036,7 +1041,8 @@
 
                     // ボタンテキストを「画像を生成中...」に更新
                     $button.html('<i class="fas fa-spinner fa-spin me-2"></i>画像を生成中...');
-                
+                    $('.genexp').fadeIn()
+
                     const files = $('#imageUploaderContainer')?.find('input[type="file"]')[0]?.files;
                     if (files && files.length > 0) {
                         const file = files[0];
@@ -1116,6 +1122,7 @@
                     $('#characterPrompt').prop('disabled', false);
                     $('#generateButton').prop('disabled', false);
                     $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+                    $('.genexp').fadeOut()
                 }
                 
             });

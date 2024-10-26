@@ -2,14 +2,14 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
 const { createParser } = require('eventsource-parser');
 const axios = require('axios');
 
-const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'gpt-4o-mini' ) => {
+const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'meta-llama/llama-3.1-70b-instruct') => {
     try {
         let response = await fetch(
-            "https://api.openai.com/v1/chat/completions",
+            "https://api.novita.ai/v3/openai/chat/completions",
             {
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+                    "Authorization": `Bearer ${process.env.NOVITA_API_KEY}`
                 },
                 method: "POST",
                 body: JSON.stringify({
@@ -26,28 +26,19 @@ const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'gp
             }
         );
 
-        //console.log("Response status:", response.status);
-        //console.log("Response status text:", response.statusText);
-
         if (!response.ok) {
             console.error("Response body:", await response.text());
         }
 
         let fullCompletion = "";
-        let chunkIndex = 0;
         const parser = createParser((event) => {
             try {
-                if (event.type === 'event') {
-                    if (event.data !== "[DONE]") {
-                        const content = JSON.parse(event.data).choices[0].delta?.content || "";
-                        fullCompletion += content;
-                        res.write(`data: ${JSON.stringify({ content })}\n\n`);
-                        //res.flush();
-                        chunkIndex++;
-                    }
+                if (event.type === 'event' && event.data !== "[DONE]") {
+                    const content = JSON.parse(event.data).choices[0].delta?.content || "";
+                    fullCompletion += content;
+                    res.write(`data: ${JSON.stringify({ content })}\n\n`);
                 }
             } catch (error) {
-                console.log(error);
                 console.error("Error in parser:", error);
                 console.error("Event causing error:", event);
             }
@@ -60,10 +51,11 @@ const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'gp
         return fullCompletion;
 
     } catch (error) {
-        console.error("Error fetching OpenAI completion:", error);
+        console.error("Error fetching completion:", error);
         throw error;
     }
 };
+
 const fetchOpenAINarration = async (messages, res, maxToken = 1000, language) => {
     try {
         // Prepare the prompt specifically for generating narration

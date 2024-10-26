@@ -1204,7 +1204,7 @@ async function routes(fastify, options) {
             .slice(-2) // Get the last two messages
             .map(msg => msg.content)
             .join("\n");
-
+            console.log(chatData.purpose)
             // Create the system and user prompts
             const narrationPrompt = [
                 {
@@ -1584,80 +1584,35 @@ async function routes(fastify, options) {
             const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
             let userData = await collectionUserChat.findOne({ userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
             if (!userData) return reply.status(404).send({ error: 'User data not found' });
-
-            const messages = userData.messages.reverse();
-            const lastAssistantMessage = messages.find(m => m.role === 'assistant' && !m.content.startsWith("["));
-            const lastUserMessage = messages.find(m => m.role === 'user' && !m.content.startsWith("["));
-
-            if (!lastAssistantMessage || !lastUserMessage) return reply.status(400).send({ error: 'Insufficient messages' });
-
+            const lastAssistantMessageContent = userData.messages.reverse().find(m => m.role === 'assistant').content;
+            if (lastAssistantMessageContent.startsWith("[")) return reply.send({ proposeToBuy: false });
             const chatData = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats').findOne({ _id: new fastify.mongo.ObjectId(chatId) });
             let characterDescription = chatData?.imageDescription || null;
-
-            let response = await fetch("https://api.novita.ai/v3/openai/chat/completions", {
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${process.env.NOVITA_API_KEY}`
-                },
-                method: "POST",
-                body: JSON.stringify({
-                    model: "meta-llama/llama-3.1-70b-instruct",
-                    messages: [
-                        {
-                            role: "system",
-                            content: `
-                                You are an expert at structured data extraction.
-                                You must respond with a JSON object following this exact structure:
-                                {
-                                    "proposeToBuy": boolean,
-                                    "items": [
-                                        {
-                                            "name": "string (item name in Japanese)",
-                                            "description": "string (description in English suitable for Stable Diffusion prompts)",
-                                            "description_japanese": "string (short description in natural Japanese)"
-                                        }
-                                    ]
-                                }
-
-                                proposeToBuy must be true if you describe an image, false if not.
-                                If the message is about sending images, return exactly 1 item with the fields as specified above. Never include a price. Write a detailed prompt about the idea provided.
-                            `
-                        },
-                        { role: "user", content: lastUserMessage.content },
-                        { role: "assistant", content: lastAssistantMessage.content },
-                    ],
-                    temperature: 0.85,
-                    top_p: 0.95,
-                    frequency_penalty: 0,
-                    presence_penalty: 0,
-                    max_tokens: 512,
-                    stream: false,
-                    n: 1,
-                }),
+            const completion = await openai.beta.chat.completions.parse({
+                model: "gpt-4o",
+                messages: [
+                    { role: "system", content: `
+                        You are an expert at structured data extraction.
+                        \nIf the message is about sending images, return exactly 1 item with name in Japanese,a description in English suitable for Stable Diffusion prompts and a short description in natural japanese to explain the image in natural language.
+                        \n Never include a price.
+                        \nI want you to write me a detailed prompt exactly about the idea written after IDEA. Follow the structure of the example prompts. This means a very short description of the scene, followed by modifiers divided by commas to alter the mood, style, lighting, and more.
+                    ` },
+                    { role: "user", content: 'IDEA: ' + lastAssistantMessageContent },
+                ],
+                response_format: zodResponseFormat(PurchaseProposalExtraction, "purchase_proposal_extraction"),
             });
-
-            if (!response.ok) {
-                console.error("Response body:", await response.text());
-                return reply.status(500).send({ error: 'Error generating image description' });
-            }
-
-            let completion = await response.json();
-            let proposalText = completion.choices[0].message.content;
-
-            const parsedProposal = PurchaseProposalExtraction.parse(JSON.parse(proposalText));
-
-            if (parsedProposal.proposeToBuy) {
+            let proposal = completion.choices[0].message.parsed;
+            if (proposal.proposeToBuy) {
                 const itemProposalCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('itemProposal');
                 const insertedProposals = [];
-                for (let item of parsedProposal.items) {
+                for (let item of proposal.items) {
                     if (characterDescription) item.description = characterDescription + item.description;
                     const result = await itemProposalCollection.insertOne(item);
                     insertedProposals.push({ _id: result.insertedId, proposeToBuy: true, ...item });
                 }
                 return reply.send(insertedProposals);
             }
-            return reply.send(parsedProposal);
-
+            return reply.send(proposal);
         } catch (error) {
             console.log(error);
             return reply.status(500).send({ error: 'Error checking assistant proposal' });

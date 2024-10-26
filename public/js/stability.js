@@ -326,7 +326,7 @@ function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isN
             const userMessage = t['imagePurchaseMessage']
                 .replace('{type}', typeText)
                 .replace('{price}', price)
-                .replace('{prompt_title}', prompt_title);
+                .replace('{prompt_title}', prompt_title) || `${prompt_title}の${price}コインで${type}画像を購入しました。`;
             
             let messageId
             try {

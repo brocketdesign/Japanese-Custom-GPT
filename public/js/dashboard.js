@@ -1014,7 +1014,7 @@ window.displayPeopleChat = async function (page = 1,type) {
                         `;
                     }
                 }
-console.log(chat)
+                
                 // Render chat
                 htmlContent += `
                 <div class="col-12 col-sm-4 col-lg-3 mb-2">

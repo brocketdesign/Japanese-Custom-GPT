@@ -982,7 +982,7 @@ function generateUserChatsPagination(userId, currentPage, totalPages) {
 }
 
 
-window.displayPeopleChat = async function (page = 1,type,query) {
+window.displayPeopleChat = async function (page = 1,type,query = false) {
     const currentUser = await fetchUser();
     const currentUserId = currentUser._id;
     

@@ -8,12 +8,27 @@
 
 </style>
 <div class="container mt-4">
+    <!-- SEO Section -->
+  <div class="row mx-0 {{#if user.isTemporary}}{{else}}d-none{{/if}}">
+    <h1>{{title}}</h1>
+    <span>{{chat.characterPrompt}}</span>
+    <h3>{{chat.name}}ちゃんはどんな人？</h3>
+    <hr>
+    <p>{{chat.purpose}}</p>
+    <p>{{chat.rule}}</p>
+  </div>
   <div class="row mx-0">
     <!-- Chat Image Section -->
     {{#if image}}
     <div class="col-lg-8 mb-4">
       <div class="card border-0 shadow-0">
-        <img src="{{#if isBlur}}{{imagePlaceholder }}{{else}}{{image.imageUrl}}{{/if}}" class="card-img-top" alt="{{image.prompt}}" style="max-height:400px;width:auto;object-fit:contain;">
+        {{#if isBlur}}
+          <div type="button" class="text-center" onclick={{#if user.isTemporary}}'showRegistrationForm()'{{else}}'unlockImage('{{image._id}}',"gallery",this)'{{/if}}>
+            <img data-src="{{image.imageUrl}}" class="card-img-top img-blur" alt="{{image.prompt}}" style="max-height:400px;width:auto;object-fit:contain;">
+          </div>
+        {{else}}
+            <img src="{{image.imageUrl}}" class="card-img-top" alt="{{image.prompt}}" style="max-height:400px;width:auto;object-fit:contain;">
+        {{/if}}
         <div class="card-body border mt-3">
           <h5 class="card-title d-none">{{image.prompt}}</h5>
           <p class="card-text">{{image.comment}}</p>

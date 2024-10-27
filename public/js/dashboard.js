@@ -564,7 +564,7 @@ function fetchBlurredImage(img, imageUrl) {
 
 function handleImageSuccess(img, blob, imageUrl) {
     let objectUrl = URL.createObjectURL(blob);
-    $(img).attr('src', objectUrl).data('processed', "true").removeAttr('data-original-src').removeAttr('srcset');
+    $(img).attr('src', objectUrl).data('processed', "true").removeAttr('data-original-src').removeAttr('data-src').removeAttr('srcset');
     createOverlay(img, imageUrl);
 }
 
@@ -572,9 +572,9 @@ function createOverlay(img, imageUrl) {
     let overlay = $('<div></div>').addClass('d-flex flex-column align-items-center justify-content-center animate__animated animate__fadeIn').css({
         position: 'absolute', top: '0', left: '0', width: '100%', height: '100%', 'background-color': 'rgba(19, 19, 19, 0.19)', color: 'white'
     });
-    let buttonElement = $('<button></button>').text(window.translations['blurButton'] || 'View Image').addClass('btn btn-sm btn-outline-light mt-3 animate__animated animate__pulse').css({'font-size': '14px', 'border-radius':'50px', cursor: 'pointer'}).on('click', function() {
-        $(img).attr('src', imageUrl);
-        overlay.remove();
+    let buttonElement = $('<button></button>').text(window.translations['blurButton'] || '画像を見る').addClass('btn btn-sm btn-outline-light mt-3 animate__animated animate__pulse').css({'font-size': '14px', 'border-radius':'50px', cursor: 'pointer'}).on('click', function() {
+        //$(img).attr('src', imageUrl);
+        //overlay.remove();
     });
     let textElement = $('<div></div>').text('(20🪙)').addClass('fw-bold').css({'font-size': '12px', 'text-shadow': '0 0 5px black'});
     overlay.append(buttonElement, textElement);

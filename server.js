@@ -311,6 +311,13 @@ async function initializeCategoriesCollection(db) {
           postUser,
           userId,
           post,
+          seo: [
+            { name: 'description', content: 'AIチャットしながらAI画像生成できるサイトです。日本語対応で簡単に使え、生成した画像を共有したり、他のユーザーの作品を楽しむことができるコミュニティです。' },
+            { name: 'keywords', content: 'AIグラビア, 無料画像生成AI, LAMIX, 日本語, AI画像生成, AIアート, AIイラスト, 自動画像生成, クリエイティブAI, 生成系AI, 画像共有, AIコミュニティ, AIツール, 画像編集AI, デジタルアート, テキストから画像生成, AIクリエーション, AIアート, AIイラスト, 自動画像生成, クリエイティブAI, 生成系AI, 画像共有, AIコミュニティ, AIツール, 画像編集AI, デジタルアート, テキストから画像生成, AIクリエーション' },
+            { property: 'og:title', content: 'LAMIX | AIグラビア | ラミックスの画像生成AI体験' },
+            { property: 'og:description', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成, AIアート, AIイラスト, 自動画像生成, クリエイティブAI, 生成系AI, 画像共有, AIコミュニティ, AIツール, 画像編集AI, デジタルアート, テキストから画像生成, AIクリエーション' },
+            { property: 'og:image', content: '/img/share.png' },
+          ]
         });
       } catch (err) {
         console.log(err);
@@ -360,7 +367,7 @@ async function initializeCategoriesCollection(db) {
 
         // Fetch chat profile data
         const chat = await chatsCollection.findOne({ _id: chatId });
-    
+
         if (!chat) {
           return reply.code(404).send({ error: 'Chat not found' });
         }
@@ -386,10 +393,10 @@ async function initializeCategoriesCollection(db) {
             return reply.code(404).send({ error: 'Image not found' });
           }
         }
-
+        console.log({isBlur})
         // Render the page with chat and image data (image can be null if no imageId was provided)
         return reply.view('character.hbs', {
-          title: chat.name+'日本語で無料AI画像生成 | 無料AIチャット',
+          title: chat.name+'とAIチャットしながら無料AI画像生成を楽しもう',
           translations,
           chat,
           image,
@@ -398,8 +405,8 @@ async function initializeCategoriesCollection(db) {
           isBlur,
           seo: [
             { name: 'description', content: '無料AIチャットしながら無料AI画像生成できるサイトです。日本語対応で簡単に使え、生成した画像を共有したり、他のユーザーの作品を楽しむことができるコミュニティです。' },
-            { name: 'keywords', content: 'AIグラビア,AIチャット, 画像生成AI, LAMIX, 日本語, AI画像生成' },
-            { property: 'og:title', content: 'LAMIX | AIグラビア | ラミックスの画像生成AI体験' },
+            { name: 'keywords', content: 'AIグラビア,AIチャット, 画像生成AI, LAMIX, 日本語, AI画像生成'+chat.characterPrompt },
+            { property: 'og:title', content: chat.name+'とAIチャットしながら無料AI画像生成を楽しもう' },
             { property: 'og:description', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成, AIアート, AIイラスト, 自動画像生成, クリエイティブAI, 生成系AI, 画像共有, AIコミュニティ, AIツール, 画像編集AI, デジタルアート, テキストから画像生成, AIクリエーション' },
             { property: 'og:image', content: '/img/share.png' },
             { property: 'og:url', content: `https://app.lamix.jp/chat/${chatId}` }

@@ -123,6 +123,11 @@
     </style>
     <div class="container mt-4">
       <!-- Row for User Profile and Post Content -->
+      <!-- SEO Section -->
+    <div class="row mx-0 {{#if user.isTemporary}}{{else}}d-none{{/if}}">
+      <h1>{{title}}</h1>
+      <p>AIチャットしながらAI画像生成できるサイトです。日本語対応で簡単に使え、生成した画像を共有したり、他のユーザーの作品を楽しむことができるコミュニティです。</p>
+    </div>
       <div class="row mx-0">
 
         <!-- Post Content Section -->

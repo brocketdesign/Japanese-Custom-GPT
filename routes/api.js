@@ -2035,11 +2035,11 @@ async function routes(fastify, options) {
         }
       });
 
-      
       fastify.get('/api/chats', async (request, reply) => {
         try {
-            const page = parseInt(request.query.page) || 1;
-            const type = request.query.type || null;
+          const page = parseInt(request.query.page) || 1;
+          const type = request.query.type || null;
+          const searchQuery = request.query.q || null;
           const limit = 12;
           const skip = (page - 1) * limit;
           const { userId } = request.query;
@@ -2047,7 +2047,7 @@ async function routes(fastify, options) {
           const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
           const chatsCollection = db.collection('chats');
           const usersCollection = db.collection('users');
-
+      
           const query = {
             visibility: { $exists: true, $eq: "public" },
             chatImageUrl: { $exists: true, $ne: '' },
@@ -2056,12 +2056,15 @@ async function routes(fastify, options) {
           if (userId) {
             query.userId = new fastify.mongo.ObjectId(userId);
           }
-            if(type){
-                query.imageStyle = type
-            }
-            const test = await chatsCollection.findOne({_id: new ObjectId('6718d5332729574add22523f')})
-            console.log(test)
-          // Fetch paginated chats, sorted by _id in descending order
+      
+          if (type) {
+            query.imageStyle = type;
+          }
+      
+          if (searchQuery) {
+            query.tags = { $in: [new RegExp(searchQuery, 'i')] };
+          }
+
           const recentCursor = await chatsCollection.aggregate([
             { $match: query },
             {
@@ -2090,15 +2093,13 @@ async function routes(fastify, options) {
               };
             })
           );
-
-          // Get total count of chats for pagination
+      
           const totalChatsCount = await chatsCollection.countDocuments(query);
           let totalPages = Math.ceil(totalChatsCount / limit);
           if (recentCursor.length < limit) {
             totalPages = page;
           }
-          
-          // Send paginated response
+      
           reply.send({
             recent: recentWithUser,
             page,
@@ -2109,6 +2110,8 @@ async function routes(fastify, options) {
           reply.code(500).send('Internal Server Error');
         }
       });
+      
+      
       
       
     fastify.get('/api/user-data', async (request, reply) => {
@@ -2578,7 +2581,21 @@ async function routes(fastify, options) {
             reply.status(500).send({ success: false, message: 'Error deleting prompt' });
             }
         });
-  
+
+        fastify.get('/api/tags', async (request, reply) => {
+            const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+            const tagsCollection = db.collection('tags');
+            const chatsCollection = db.collection('chats');
+            let tags = await tagsCollection.find().toArray();
+            if (!tags.length) {
+                tags = await chatsCollection.distinct('tags');
+                tags = tags.flat().filter(Boolean);
+                await tagsCollection.insertMany(tags.map(tag => ({ name: tag })));
+            } else {
+                tags = tags.map(tag => tag.name);
+            }
+            reply.send({ tags });
+        });
       
 }
 

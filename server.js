@@ -419,6 +419,40 @@ async function initializeCategoriesCollection(db) {
       }
     });
     
+    fastify.get('/search', async (request, reply) => {
+      try {
+        let user = request.user;
+        const userId = user._id;
+        const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+        user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+        const translations = request.translations;
+        const query = request.query.q || null;
+        const imageStyle = request.query.imageStyle || 'anime'
+        let seoTitle = 'コミュニティからの最新投稿 | LAMIX';
+        let seoDescription = 'Lamixでは、無料でAIグラビアとのチャット中に生成された画像を使って、簡単に投稿を作成することができます。';
+        if (query) {
+          seoTitle = `${query} に関する検索結果 | LAMIX`;
+          seoDescription = `${query} の検索結果を表示しています。Lamixでお気に入りの画像を見つけましょう。`;
+        }
+        return reply.view('search.hbs', {
+          title: seoTitle,
+          user,
+          translations,
+          query,
+          imageStyle,
+          seo: [
+            { name: 'description', content: seoDescription },
+            { name: 'keywords', content: `${query ? query + ', ' : ''}AIグラビア, 無料で画像生成AI, LAMIX, 日本語, AI画像生成, AIアート` },
+            { property: 'og:title', content: seoTitle },
+            { property: 'og:description', content: seoDescription },
+            { property: 'og:image', content: '/img/share.png' },
+          ],
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    });
+    
     fastify.get('/about', async(request, reply) => {
       const translations = request.translations
       const collectionChats = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');

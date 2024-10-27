@@ -343,7 +343,17 @@ async function getUserData(userId, collectionUser, collectionChat, currentUser) 
       console.error('An error occurred while initializing imageStyle:', err);
     }
   }
-
+  async function addTags(tags, db) {
+    const tagsCollection = db.collection('tags');
+    const bulkOps = tags.map(tag => ({
+      updateOne: {
+        filter: { name: tag },
+        update: { $setOnInsert: { name: tag } },
+        upsert: true
+      }
+    }));
+    await tagsCollection.bulkWrite(bulkOps);
+  };
   module.exports = { getCounter, 
     updateCounter, 
     handleFileUpload, 
@@ -353,5 +363,6 @@ async function getUserData(userId, collectionUser, collectionChat, currentUser) 
     convertImageUrlToBase64,
     createBlurredImage,
     deleteObjectFromUrl,
-    getUserData
+    getUserData,
+    addTags
 }

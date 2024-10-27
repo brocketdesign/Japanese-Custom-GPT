@@ -982,12 +982,12 @@ function generateUserChatsPagination(userId, currentPage, totalPages) {
 }
 
 
-window.displayPeopleChat = async function (page = 1,type) {
+window.displayPeopleChat = async function (page = 1,type,query) {
     const currentUser = await fetchUser();
     const currentUserId = currentUser._id;
     
     try {
-        const response = await fetch(`/api/chats?page=${page}&type=${type}`);
+        const response = await fetch(`/api/chats?page=${page}&type=${type}&q=${query}`);
         const data = await response.json();
 
         let recentChats = data.recent || [];

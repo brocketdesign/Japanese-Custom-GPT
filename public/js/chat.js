@@ -567,8 +567,10 @@ $(document).ready(async function() {
     }
     
     function displayInitialChatInterface(chat) {
+        displayStarter(chat);
+        return
         selectPersona(() => {
-            //displayStarter(chat);
+            displayStarter(chat);
         });
     }
     

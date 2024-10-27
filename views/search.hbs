@@ -56,10 +56,8 @@
             $('#chat-gallery').empty()
             displayPeopleChat(1, $(this).data('value'), query);
         });
-        console.log({query})
         if(query && query.trim() != ''){
             $(`.style-option[data-value="${imageStyle}"]`).click()
-            displayPeopleChat(1, imageStyle, query);
         }
             displayTags()
     });

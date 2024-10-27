@@ -2039,7 +2039,7 @@ async function routes(fastify, options) {
         try {
           const page = parseInt(request.query.page) || 1;
           const type = request.query.type || null;
-          const searchQuery = request.query.q || null;
+          const searchQuery = request.query.q != 'false' || null;
           const limit = 12;
           const skip = (page - 1) * limit;
           const { userId } = request.query;

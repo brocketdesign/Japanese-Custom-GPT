@@ -43,7 +43,7 @@ $(document).ready(async function() {
                         if(completion){
                             generateCompletion();
                         }
-                        if(image){
+                        if(image && messageId){
                             const loaderElement = $(`
                                 <div id="${messageId}" class="d-flex flex-row justify-content-start mb-4 message-container assistant animate__animated animate__fadeIn">
                                     <img src="${thumbnail || '/img/default-avatar.png'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="width: 45px; height: 45px; object-fit: cover; object-position: top;">
@@ -56,6 +56,19 @@ $(document).ready(async function() {
                         }
                     }
                 });
+            });
+        }
+    });
+    window.addEventListener('message', function(event) {
+        if (event.data.event === 'addMessageToChat') {
+            const message = event.data.message
+            const role = event.data.role || 'user'
+            const completion = event.data.completion
+            if(!message)return
+            addMessageToChat(chatId, userChatId, role, message,function(){
+                if(completion){
+                    generateCompletion()
+                }
             });
         }
     });
@@ -80,6 +93,7 @@ $(document).ready(async function() {
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageDone') {
             const prompt = event.data.prompt
+            console.log({prompt})
             let message = `[Hidden] I received the images. The image is about : ${prompt}. \n Write a message to inform me of that.  \n Do not include [Hidden] in your response.`
             addMessageToChat(chatId, userChatId, 'user', message,function(){
                 generateCompletion()
@@ -554,7 +568,7 @@ $(document).ready(async function() {
     
     function displayInitialChatInterface(chat) {
         selectPersona(() => {
-            displayStarter(chat);
+            //displayStarter(chat);
         });
     }
     
@@ -2476,12 +2490,7 @@ function attachPromptCardEvents() {
                     displayMessage('user', message, function() {
                         addMessageToChat(chatId, userChatId, 'user', message, function(error, res) {
                             if (!error) {
-                                let hiddenMessage = `[Hidden] I did not receive the image yet. Wait for me to see the image. The image is being sent right now.`;
-                                addMessageToChat(chatId, userChatId, 'user', hiddenMessage, function() {
-                                    generateCompletion(function() {
-                                        generateImageNovita(API_URL, userId, chatId, userChatId, item_id, thumbnail, imageType);
-                                    });
-                                });
+                                generateImageNovita(API_URL, userId, chatId, userChatId, item_id, thumbnail, imageType);
                             }
                         });
                     });

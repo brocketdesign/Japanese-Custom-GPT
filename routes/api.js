@@ -518,7 +518,6 @@ async function routes(fastify, options) {
     fastify.get('/api/chat-data/:chatId',async (request, reply) => {
         const chatId = request.params.chatId
         const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-
         try{
             const chat = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
             chat.mode = process.env.MODE
@@ -944,7 +943,7 @@ async function routes(fastify, options) {
 
             //Add the time before completion
             let currentDate = new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" });
-            let currentTimeInJapanese = `${new Date(currentDate).getHours()}時${new Date(currentDate).getMinutes()}分`;            
+            let currentTimeInJapanese = currentDate.toLocaleString('ja-JP', { weekday: 'long', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' });
             let timeMessage = `[Hidden] Current time : ${currentTimeInJapanese}.Do not tell me the time. Use it for context.`
             timeMessage = { "role": "user", "content": timeMessage };
             userMessages.push(timeMessage);
@@ -1561,102 +1560,155 @@ async function routes(fastify, options) {
         }
     });
     
-    fastify.post('/api/check-assistant-proposal', async (request, reply) => {
-        const openai = new OpenAI();
-        const PurchaseProposalExtraction = z.object({
-            proposeToBuy: z.boolean(),
-            items: z.array(
-                z.object({
-                    name: z.string(),
-                    description: z.string(),
-                    description_japanese: z.string(),
-                })
-            ),
+    const PurchaseProposalExtraction = z.object({
+        items: z.array(
+            z.object({
+                name: z.string().nonempty(),
+                description: z.string(),
+                description_japanese: z.string(),
+            })
+        ),
+    });
+    
+    async function fetchUserData(fastify, userId, userChatId) {
+        const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+        return await collectionUserChat.findOne({ userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
+    }
+    
+    async function fetchChatData(fastify, chatId) {
+        const collectionChats = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+        return await collectionChats.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
+    }
+    
+    async function checkMessageRelevance(lastMessages) {
+        const response = await fetch("https://api.novita.ai/v3/openai/chat/completions", {
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${process.env.NOVITA_API_KEY}`
+            },
+            method: "POST",
+            body: JSON.stringify({
+                model: "meta-llama/llama-3.1-70b-instruct",
+                messages: [
+                    {
+                        role: "system",
+                        content: `Determine if the following conversation is about sending images or coins. Respond with {"isRelevant": true} or {"isRelevant": false}.`
+                    },
+                    { role: "user", content: `Analyze the following messages: \n${lastMessages.map(m => m.content).join('\n')}` },
+                ],
+                temperature: 0,
+                max_tokens: 10,
+                stream: false,
+                n: 1,
+            }),
         });
+    
+        if (!response.ok) throw new Error('Error checking message relevance');
+        const data = await response.json();
+        return JSON.parse(data.choices[0].message.content).isRelevant;
+    }
+    
+    async function generateItemDescription(lastMessages) {
+        const response = await fetch("https://api.novita.ai/v3/openai/chat/completions", {
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${process.env.NOVITA_API_KEY}`
+            },
+            method: "POST",
+            body: JSON.stringify({
+                model: "meta-llama/llama-3.1-70b-instruct",
+                messages: [
+                    {
+                        role: "system",
+                        content: `
+                            You are an expert at structured data extraction. 
+                            \nYou must respond with a JSON object in plain text following this exact structure and provide all fields:
+                            {
+                                "items": [
+                                    {
+                                        "name": "string (create an image name in Japanese)",
+                                        "description": "string (image description in English suitable for Stable Diffusion prompts)",
+                                        "description_japanese": "string (create an image short description in natural Japanese)"
+                                    }
+                                ]
+                            }
+                        `
+                    },
+                    { role: "user", content: `Analyze the following messages and return the last relevant image name (create one in japanese), description and description_japanese (create one in japanese): \n${lastMessages.map(m => m.content).join('\n')}\n Only one image.` },
+                ],
+                temperature: 0.85,
+                top_p: 0.95,
+                frequency_penalty: 0,
+                presence_penalty: 0,
+                max_tokens: 512,
+                stream: false,
+                n: 1,
+            }),
+        });
+    
+        if (!response.ok) throw new Error('Error generating image description');
+        const data = await response.json();
+        console.log(data.choices[0].message.content)
+        return JSON.parse(data.choices[0].message.content);
+    }
+    
+    async function insertProposals(fastify, parsedProposal, characterDescription) {
+        const itemProposalCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('itemProposal');
+        const insertedProposals = [];
+        for (const item of parsedProposal.items) {
+            if (characterDescription) item.description = characterDescription + item.description;
+            const result = await itemProposalCollection.insertOne(item);
+            insertedProposals.push({ _id: result.insertedId, proposeToBuy: true, ...item });
+        }
+        return insertedProposals;
+    }
+    fastify.post('/api/check-assistant-proposal', async (request, reply) => {
         const { userId, chatId, userChatId } = request.body;
+    
         try {
-            const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-            let userData = await collectionUserChat.findOne({ userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
+            const userData = await fetchUserData(fastify, userId, userChatId);
             if (!userData) return reply.status(404).send({ error: 'User data not found' });
-
-            const messages = userData.messages.reverse();
-            const lastAssistantMessage = messages.find(m => m.role === 'assistant' && !m.content.startsWith("["));
-            const lastUserMessage = messages.find(m => m.role === 'user' && !m.content.startsWith("["));
-
-            if (!lastAssistantMessage || !lastUserMessage) return reply.status(400).send({ error: 'Insufficient messages' });
-
-            const chatData = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats').findOne({ _id: new fastify.mongo.ObjectId(chatId) });
-            let characterDescription = chatData?.imageDescription || null;
-
-            let response = await fetch("https://api.novita.ai/v3/openai/chat/completions", {
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${process.env.NOVITA_API_KEY}`
-                },
-                method: "POST",
-                body: JSON.stringify({
-                    model: "meta-llama/llama-3.1-70b-instruct",
-                    messages: [
-                        {
-                            role: "system",
-                            content: `
-                                You are an expert at structured data extraction.
-                                You must respond with a JSON object following this exact structure:
-                                {
-                                    "proposeToBuy": boolean,
-                                    "items": [
-                                        {
-                                            "name": "string (item name in Japanese)",
-                                            "description": "string (description in English suitable for Stable Diffusion prompts)",
-                                            "description_japanese": "string (short description in natural Japanese)"
-                                        }
-                                    ]
-                                }
-
-                                proposeToBuy must be true if you describe an image, false if not.
-                                If the message is about sending images, return exactly 1 item with the fields as specified above. Never include a price. Write a detailed prompt about the idea provided.
-                            `
-                        },
-                        { role: "user", content: lastUserMessage.content },
-                        { role: "assistant", content: lastAssistantMessage.content },
-                    ],
-                    temperature: 0.85,
-                    top_p: 0.95,
-                    frequency_penalty: 0,
-                    presence_penalty: 0,
-                    max_tokens: 512,
-                    stream: false,
-                    n: 1,
-                }),
-            });
-
-            if (!response.ok) {
-                console.error("Response body:", await response.text());
-                return reply.status(500).send({ error: 'Error generating image description' });
-            }
-
-            let completion = await response.json();
-            let proposalText = completion.choices[0].message.content;
-
-            const parsedProposal = PurchaseProposalExtraction.parse(JSON.parse(proposalText));
-
-            if (parsedProposal.proposeToBuy) {
-                const itemProposalCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('itemProposal');
-                const insertedProposals = [];
-                for (let item of parsedProposal.items) {
-                    if (characterDescription) item.description = characterDescription + item.description;
-                    const result = await itemProposalCollection.insertOne(item);
-                    insertedProposals.push({ _id: result.insertedId, proposeToBuy: true, ...item });
+    
+            const lastMessages = [...userData.messages].reverse().filter(m => !m.content.startsWith("[")).slice(0, 5);
+            if (lastMessages.length < 2) return reply.status(400).send({ error: 'Insufficient messages' });
+    
+            const chatData = await fetchChatData(fastify, chatId);
+            const characterDescription = chatData?.imageDescription || null;
+    
+            const isRelevant = await checkMessageRelevance(lastMessages);
+            console.log({isRelevant})
+            if (!isRelevant) return reply.send({ proposeToBuy: false });
+    
+            let proposalText;
+            let parsedProposal;
+            let attempts = 0;
+    
+            // Retry block for generating proposalText and parsing proposal
+            while (attempts < 3) {
+                try {
+                    proposalText = await generateItemDescription(lastMessages);
+                    console.log(proposalText);
+                    parsedProposal = PurchaseProposalExtraction.parse(proposalText);
+                    break; // exit loop if no error occurs
+                } catch (error) {
+                    attempts++;
+                    console.log(`Attempt ${attempts} failed:`, error);
+                    if (attempts >= 3) {
+                        return reply.status(500).send({ error: 'Failed to generate or parse proposal after 3 attempts' });
+                    }
                 }
-                return reply.send(insertedProposals);
             }
-            return reply.send(parsedProposal);
-
+    
+            const insertedProposals = await insertProposals(fastify, parsedProposal, characterDescription);
+            return reply.send(insertedProposals);
+    
         } catch (error) {
             console.log(error);
             return reply.status(500).send({ error: 'Error checking assistant proposal' });
         }
     });
+    
+    
     
     fastify.get('/api/proposal/:id', async (request, reply) => {
         try {
@@ -1776,7 +1828,6 @@ async function routes(fastify, options) {
                     { $set: {imageDescription} },
                 );
                 if (result.modifiedCount > 0) {
-                    console.log({imageDescription})
                     console.log(`Image description updated`)
                   } else {
                     console.log(`Error Image description could not be upddated`)

@@ -124,6 +124,9 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
             return;
         }
 
+        let userMessage = `[Hidden] I did not receive the image yet. Wait for me to see the image. The image is being sent right now. Here is the description: ${prompt}. \n respond in your character language exclusively.`;
+        window.postMessage({ event: 'addMessageToChat', role:'user', message: userMessage, completion:true}, '*');
+
         const API_ENDPOINT = `${API_URL}/novita/product2img`;
 
         const response = await fetch(API_ENDPOINT, {
@@ -284,7 +287,7 @@ window.generateImage = async function(data, prompt) {
 
     if (messCt == 1) {
         setTimeout(() => {
-            window.postMessage({ event: 'imageDone' }, '*');
+            window.postMessage({ event: 'imageDone', prompt }, '*');
         }, 1000);
     }else{
         messCt = messCt < 1 ? messCt + 1 : messCt

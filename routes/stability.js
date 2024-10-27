@@ -417,6 +417,7 @@ async function routes(fastify, options) {
         };
 
         const requestData = { ...params, ...image_request };
+        console.log(requestData)
         const novitaTaskId = await fetchNovitaMagic(requestData);
 
         await db.collection('tasks').insertOne({

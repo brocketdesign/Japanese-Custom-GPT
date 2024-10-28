@@ -28,7 +28,7 @@ $(document).ready(async function() {
     let language = 'japanese'
 
     $('body').attr('data-temporary-user',isTemporary)
-    renderChatList(userId,chatId);
+    displayChatList(userId,chatId);
     updateCoins(userCoins)
 
 
@@ -460,7 +460,7 @@ $(document).ready(async function() {
     
         setupChatData(data.chat);
         setupChatInterface(data.chat, data.character);
-        renderChatList(fetch_userId,chatId);
+        updateCurrentChat(chatId);
 
         if (!isNew) {
             displayExistingChat(data.userChat, data.character);
@@ -1101,7 +1101,7 @@ $(document).ready(async function() {
                 userChatId = response.userChatId
                 chatId = response.chatId
                 isNew = false;
-                renderChatList(userId,chatId);
+                updateCurrentChat(chatId);
                 $(`#starter-${uniqueId}`).remove()
                 
                 generateCompletion(function(){
@@ -2977,96 +2977,165 @@ window.getUserChatHistory = async function(chatId, userId) {
     }
     return null;
 }
-window.renderChatList = function(userId,chatId) {
-
-    if($(document).find('#chat-list').length == 0 || $('#chat-widget-container').length > 0){
-        return
+function displayChatList(userId, reset) {
+    if ($('#chat-list').length === 0 || $('#chat-widget-container').length > 0) {
+        return;
     }
 
-    $.ajax({
-        type: 'GET',
-        url: '/api/chat-list/'+userId, // replace with your API endpoint
-        success: function(data) {
-            data.sort(function(a, b) {
-                if (!chatId) return 0; // No sorting if chatId is undefined
-                return (b._id === chatId) - (a._id === chatId);
-            });            
-            var chatListHtml = '';
-            $('#user-chat-count').html(`(${data.length})`)
-            $.each(data, function(index, chat) {
-                chatListHtml += `
-                    <div class="${chatId && chat._id === chatId ? 'active' : ''} chat-list item user-chat d-flex align-items-center justify-content-between p-1 mx-2 rounded bg-transparent" 
-                    data-id="${chat._id}" data-userid="${chat.userId}" >
-                    <div class="d-flex align-items-center w-100">
-                        <div class="user-chat-content" style="flex: 1;display: flex;align-items: center;">
-                            <div class="thumb align-items-center text-center justify-content-center d-flex flex-column col-3 p-1" >
-                                <img class="img-fluid" src="${chat.thumbnailUrl || chat.chatImageUrl || '/img/logo.webp'}" alt="">
-                            </div>
-                            <div class="chat-list-details ps-2">
-                            <div class="chat-list-info">
-                                <div class="chat-list-title">
+    var chatsPerPage = 10;
+    var chatListData = JSON.parse(localStorage.getItem('chatList')) || [];
+    var currentChatIndex = parseInt(localStorage.getItem('currentChatIndex')) || 0;
+
+    function fetchChatData() {
+        $.ajax({
+            type: 'GET',
+            url: '/api/chat-list/' + userId,
+            success: function(data) {
+                localStorage.setItem('chatList', JSON.stringify(data));
+                localStorage.setItem('currentChatIndex', 0);
+                chatListData = data;
+                currentChatIndex = 0;
+                displayChats();
+            },
+            error: function(xhr, status, error) {}
+        });
+    }
+
+    function displayChats() {
+        var chatsToRender = chatListData.slice(currentChatIndex, currentChatIndex + chatsPerPage);
+
+        chatsToRender.forEach(function(chat) {
+            var chatHtml = constructChatItemHtml(chat, false);
+            $('#chat-list').append(chatHtml);
+        });
+
+        enableToggleDropdown();
+
+        currentChatIndex += chatsPerPage;
+        localStorage.setItem('currentChatIndex', currentChatIndex);
+
+        updateChatCount(chatListData.length);
+        checkShowMoreButton();
+    }
+
+    function updateChatCount(count) {
+        $('#user-chat-count').html('(' + count + ')');
+    }
+
+    function checkShowMoreButton() {
+        $('#show-more-chats').remove();
+        if (chatListData.length > currentChatIndex) {
+            $('#chat-list').append('<button id="show-more-chats">Show More</button>');
+            $('#show-more-chats').on('click', function() {
+                $(this).remove();
+                displayChats();
+            });
+        }
+    }
+
+    if (reset || chatListData.length === 0) {
+        fetchChatData();
+    } else {
+        displayChats();
+    }
+}
+
+function updateCurrentChat(chatId) {
+    var chatListData = JSON.parse(localStorage.getItem('chatList')) || [];
+
+    var currentChat = chatListData.find(function(chat) {
+        return chat._id === chatId;
+    });
+
+    if (!currentChat) {
+        return;
+    }
+
+    $('#chat-list').find('.chat-list.item').removeClass('active');
+    $('#chat-list').find('.chat-list.item[data-id="' + chatId + '"]').remove();
+
+    chatListData = chatListData.filter(function(chat) {
+        return chat._id !== chatId;
+    });
+
+    localStorage.setItem('chatList', JSON.stringify(chatListData));
+
+    var chatHtml = constructChatItemHtml(currentChat, true);
+    $('#chat-list').prepend(chatHtml);
+
+    enableToggleDropdown();
+}
+
+function constructChatItemHtml(chat, isActive) {
+    return `
+        <div class="${isActive ? 'active' : ''} chat-list item user-chat d-flex align-items-center justify-content-between p-1 mx-2 rounded bg-transparent" 
+            data-id="${chat._id}" data-userid="${chat.userId}">
+            <div class="d-flex align-items-center w-100">
+                <div class="user-chat-content d-flex align-items-center flex-1">
+                    <div class="thumb d-flex align-items-center justify-content-center col-3 p-1">
+                        <img class="img-fluid" src="${chat.thumbnailUrl || chat.chatImageUrl || '/img/logo.webp'}" alt="">
+                    </div>
+                    <div class="chat-list-details ps-2">
+                        <div class="chat-list-info">
+                            <div class="chat-list-title">
                                 <h6 class="mb-0 online-text" style="font-size: 14px;">${chat.name}</h6>
-                                <span class="text-muted one-line ${chat.lastMessage ? '':'d-none' }" style="font-size:11px;">${chat.lastMessage ? chat.lastMessage.content :'d-none' }</span>
-                                </div>
+                                <span class="text-muted one-line ${chat.lastMessage ? '' : 'd-none'}" style="font-size:11px;">
+                                    ${chat.lastMessage ? chat.lastMessage.content : ''}
+                                </span>
                             </div>
                         </div>
                     </div>
-                    <div class="d-flex align-items-center">
-                        <!-- Dropdown -->
-                        <div class="dropdown pe-2">
-                            <button class="btn border-0 shadow-0 dropdown-toggle ms-2 " type="button" id="dropdownMenuButton_${chat._id}" data-mdb-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-ellipsis-v text-secondary"></i>
-                            </button>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="dropdown pe-2">
+                        <button class="btn border-0 shadow-0 dropdown-toggle ms-2" type="button" id="dropdownMenuButton_${chat._id}" data-mdb-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v text-secondary"></i>
+                        </button>
                         <ul class="dropdown-menu dropdown-menu-end chat-option-menu bg-light shadow rounded mx-3" aria-labelledby="dropdownMenuButton_${chat._id}">
                             <li>
                                 <button class="dropdown-item text-secondary chart-button" data-id="${chat._id}">
                                     <i class="fas fa-info-circle me-2"></i>
-                                    <span class="text-muted" style="font-size:12px"></span>${window.translations.info}</span>
+                                    <span class="text-muted" style="font-size:12px;">${window.translations.info}</span>
                                 </button>
                             </li>
                             <li>
                                 <button class="dropdown-item text-secondary tag-button" data-id="${chat._id}">
-                                    <i class="fas fa-share me-2"></i> 
-                                    <span class="text-muted" style="font-size:12px"></span>${window.translations.share}</span>
+                                    <i class="fas fa-share me-2"></i>
+                                    <span class="text-muted" style="font-size:12px;">${window.translations.share}</span>
                                 </button>
                             </li>
                             <li>
                                 <a href="/chat/edit/${chat._id}" class="dropdown-item text-secondary">
-                                    <i class="far fa-edit me-2"></i> 
-                                    <span class="text-muted" style="font-size:12px"></span>${window.translations.edit}</span>
+                                    <i class="far fa-edit me-2"></i>
+                                    <span class="text-muted" style="font-size:12px;">${window.translations.edit}</span>
                                 </a>
                             </li>
                             <li>
-                                <button class="dropdown-item text-secondary history-chat" data-id="${chat._id}" data-user="${userId}">
+                                <button class="dropdown-item text-secondary history-chat" data-id="${chat._id}" data-user="${chat.userId}">
                                     <i class="fas fa-history me-2"></i>
-                                    <span class="text-muted" style="font-size:12px"></span>${window.translations.chatHistory}</span>
+                                    <span class="text-muted" style="font-size:12px;">${window.translations.chatHistory}</span>
                                 </button>
                             </li>
                             <li>
                                 <button class="dropdown-item text-secondary reset-chat" data-id="${chat._id}">
-                                <i class="fas fa-plus-square me-2"></i>
-                                    <span class="text-muted" style="font-size:12px"></span>${window.translations.newChat}</span>
+                                    <i class="fas fa-plus-square me-2"></i>
+                                    <span class="text-muted" style="font-size:12px;">${window.translations.newChat}</span>
                                 </button>
                             </li>
                             <li class="d-none">
                                 <span data-id="${chat._id}" class="dropdown-item text-danger delete-chat" style="cursor:pointer">
-                                    <i class="fas fa-trash me-2"></i> 
-                                    <span class="text-muted" style="font-size:12px"></span>${window.translations.delete}</span>
+                                    <i class="fas fa-trash me-2"></i>
+                                    <span class="text-muted" style="font-size:12px;">${window.translations.delete}</span>
                                 </span>
                             </li>
                         </ul>
-                        </div>
-                        <!-- End of Dropdown -->
-                    </div>
                     </div>
                 </div>
-                `;
-            });
-            $('#chat-list').html($(chatListHtml).hide().fadeIn());
-            enableToggleDropdown();
-        }
-    });
+            </div>
+        </div>
+    `;
 }
+
 window.updateCoins = function(userCoins = null) {
         let API_URL = localStorage.getItem('API_URL')
         $.ajax({

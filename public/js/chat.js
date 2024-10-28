@@ -2289,31 +2289,32 @@ $(document).ready(async function() {
     }
 
    // Function to get prompts data
-    function getPromptsData(callback) {
-        var promptsData = localStorage.getItem('promptsData');
-        if (promptsData) {
-            // Data is in local storage
-            var prompts = JSON.parse(promptsData);
-            if (typeof callback === 'function') {
-                callback(prompts);
-            }
-        } else {
-            // Fetch data from server and save to local storage
-            $.ajax({
-                url: '/api/prompts',
-                type: 'GET',
-                success: function(prompts) {
-                    localStorage.setItem('promptsData', JSON.stringify(prompts));
-                    if (typeof callback === 'function') {
-                        callback(prompts);
-                    }
-                },
-                error: function(xhr) {
-                    console.error('Error fetching prompts data on page load.');
-                }
-            });
+   function getPromptsData(callback) {
+    var promptsData = sessionStorage.getItem('promptsData');
+    if (promptsData) {
+        // Data is in session storage
+        var prompts = JSON.parse(promptsData);
+        if (typeof callback === 'function') {
+            callback(prompts);
         }
+    } else {
+        // Fetch data from server and save to session storage
+        $.ajax({
+            url: '/api/prompts',
+            type: 'GET',
+            success: function(prompts) {
+                sessionStorage.setItem('promptsData', JSON.stringify(prompts));
+                if (typeof callback === 'function') {
+                    callback(prompts);
+                }
+            },
+            error: function(xhr) {
+                console.error('Error fetching prompts data on page load.');
+            }
+        });
     }
+}
+
 
     // On page load, ensure prompts data is loaded
     getPromptsData()

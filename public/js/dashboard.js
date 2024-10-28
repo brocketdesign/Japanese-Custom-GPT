@@ -2,7 +2,13 @@ window.translations = JSON.parse(localStorage.getItem('translations')) || {};
 let currentLang = localStorage.getItem('currentLang') || 'ja';
 
 async function loadTranslations(lang) {
-    if (lang === currentLang && Object.keys(window.translations).length) return window.translations;
+    const sessionLang = sessionStorage.getItem('currentLang');
+    const sessionTranslations = sessionStorage.getItem('translations');
+
+    if (lang === sessionLang && sessionTranslations) {
+        window.translations = JSON.parse(sessionTranslations);
+        return window.translations;
+    }
 
     const response = await $.ajax({
         url: '/api/user/translations',
@@ -13,13 +19,13 @@ async function loadTranslations(lang) {
 
     if (response.success) {
         window.translations = response.translations;
-        currentLang = lang;
-        localStorage.setItem('currentLang', lang);
-        localStorage.setItem('translations', JSON.stringify(window.translations));
+        sessionStorage.setItem('currentLang', lang);
+        sessionStorage.setItem('translations', JSON.stringify(window.translations));
     }
 
     return window.translations;
 }
+
 
 async function onLanguageChange(lang) {
     const updateResponse = await $.ajax({

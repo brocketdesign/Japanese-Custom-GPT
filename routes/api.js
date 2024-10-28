@@ -2055,7 +2055,7 @@ async function routes(fastify, options) {
         try {
           const page = parseInt(request.query.page) || 1;
           const type = request.query.type || null;
-          const searchQuery = request.query.q != 'false' || null;
+          const searchQuery = request.query.q != 'false' ? request.query.q  : null;
           const limit = 12;
           const skip = (page - 1) * limit;
           const { userId } = request.query;
@@ -2080,7 +2080,7 @@ async function routes(fastify, options) {
           if (searchQuery) {
             query.tags = { $in: [new RegExp(searchQuery, 'i')] };
           }
-
+          
           const recentCursor = await chatsCollection.aggregate([
             { $match: query },
             {

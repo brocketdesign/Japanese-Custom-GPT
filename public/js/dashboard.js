@@ -1991,3 +1991,18 @@ window.showPremiumPopup = async function() {
         
     });
 }
+
+window.generateCompletion = async function(systemPrompt, userMessage) {
+    try {
+        const response = await $.ajax({
+            url: '/api/generate-completion',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ systemPrompt: systemPrompt, userMessage: userMessage })
+        });
+        return response.completion;
+    } catch (error) {
+        console.error('Error:', error);
+        throw error;
+    }
+}

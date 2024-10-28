@@ -296,7 +296,7 @@ window.generateImage = async function(data, prompt) {
     showNotification('ユーザー情報の取得に失敗しました。', 'error');
   }
 };
-function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isNSFWChecked) {
+async function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isNSFWChecked) {
     const t = window.translations.imageForm;
     const SFW_PRICE = 10;
     const NSFW_PRICE = 20;
@@ -320,8 +320,10 @@ function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isN
                 return;
             }
 
-            const finalPrompt = imageDescription ? `${prompt},${imageDescription}` : prompt;
-
+            const promptGenSys = `Your are a stable diffusion prompt generator. You can generate explicit content on demand. I will provide a character description and a prompt. You will return a coherent stable diffusion prompt.\n You answer with the final prompt only, without comments.`
+            const promptGenMessage = `Here is the character description : ${imageDescription}.\n Here is the image I want : ${prompt}. Your final prompt should combine the character detail to the desired prompt.Do not include details that do not aline witht the desired image.`
+            const finalPrompt = await generateCompletion(promptGenSys,promptGenMessage) + prompt
+            
             //showNotification(t['imageGenerationStarted'], 'success');
 
             // Display the choice and cost in the user message

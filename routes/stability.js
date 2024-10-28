@@ -303,14 +303,14 @@ async function routes(fastify, options) {
           model_name: "novaAnimeXL_ponyV20_461138.safetensors",
           sampler_name: "Euler a",
           prompt: `score_9, score_8_up, source_anime, masterpiece, best quality, (ultra-detailed), (perfect hands:0.1), (sfw), dressed, clothes, `,
-          negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, nipple, topless, nsfw, naked, nude, sex, worst quality, low quality,young,child,`,
+          negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, nipple, topless, nsfw, naked, nude, sex, worst quality, low quality,young,child,dick,man`,
           loras: []
         },
         nsfw: {
           model_name: "novaAnimeXL_ponyV20_461138.safetensors",
           sampler_name: "Euler a",
           prompt: `score_9, score_8_up, source_anime, anime, masterpiece, best quality, (ultra-detailed), (nsfw), uncensored,naked,nudity,sexy body,breast,nipple, `,
-          negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, worst quality, low quality,young,child,`,
+          negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, worst quality, low quality,young,child,dick,man`,
           loras: []
         }
       },
@@ -319,14 +319,14 @@ async function routes(fastify, options) {
           model_name: "kanpiromix_v20.safetensors",
           sampler_name: "DPM++ 2M Karras",
           prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, (sfw), dressed, clothe on, natural lighting, `,
-          negative_prompt: `BraV4Neg,paintings,sketches,(worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)),logo, nsfw,nude, topless, worst quality, low quality,disform,weird body,multiple hands,young,child, `,
+          negative_prompt: `BraV4Neg,paintings,sketches,(worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)),logo, nsfw,nude, topless, worst quality, low quality,disform,weird body,multiple hands,young,child,dick,man `,
           loras: [{"model_name":"more_details_59655.safetensors","strength":0.2},{ model_name: 'JapaneseDollLikeness_v15_28382.safetensors', strength: 0.7 },{"model_name":"PerfectFullBreasts-fCV3_59759.safetensors","strength":0.7}],
         },
         nsfw: {
           model_name: "kanpiromix_v20.safetensors",
           sampler_name: "DPM++ 2M Karras",
           prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, (nsfw),uncensored,naked,nudity,body,breast,nipple, `,
-          negative_prompt: `BraV4Neg,paintings,sketches,(worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)),logo,disform,weird body,multiple hands,young,child,`,
+          negative_prompt: `BraV4Neg,paintings,sketches,(worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)),logo,disform,weird body,multiple hands,young,child,dick,man`,
           loras: [{"model_name":"more_details_59655.safetensors","strength":0.2},{ model_name: 'JapaneseDollLikeness_v15_28382.safetensors', strength: 0.7 },{"model_name":"PerfectFullBreasts-fCV3_59759.safetensors","strength":0.7}],
         }
       }

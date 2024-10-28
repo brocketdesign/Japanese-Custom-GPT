@@ -55,7 +55,32 @@ const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'me
         throw error;
     }
 };
-
+async function generateCompletion(systemPrompt, userMessage) {
+    const response = await fetch("https://api.novita.ai/v3/openai/chat/completions", {
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${process.env.NOVITA_API_KEY}`
+        },
+        method: "POST",
+        body: JSON.stringify({
+            model: "meta-llama/llama-3.1-70b-instruct",
+            messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: userMessage },
+            ],
+            temperature: 0.85,
+            top_p: 0.95,
+            frequency_penalty: 0,
+            presence_penalty: 0,
+            max_tokens: 512,
+            stream: false,
+            n: 1,
+        }),
+    });
+    if (!response.ok) throw new Error('Error generating completion');
+    const data = await response.json();
+    return data.choices[0].message.content;
+}
 const fetchOpenAINarration = async (messages, res, maxToken = 1000, language) => {
     try {
         // Prepare the prompt specifically for generating narration
@@ -293,4 +318,4 @@ const fetchOpenAICustomResponse = async (customPrompt, messages, res, maxToken =
 };
 
 
-  module.exports = {fetchOpenAICompletion,moduleCompletion,fetchOpenAINarration, fetchNewAPICompletion, fetchOpenAICustomResponse}
+  module.exports = {fetchOpenAICompletion,moduleCompletion,generateCompletion,fetchOpenAINarration, fetchNewAPICompletion, fetchOpenAICustomResponse}

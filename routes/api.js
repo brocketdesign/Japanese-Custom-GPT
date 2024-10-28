@@ -1,5 +1,5 @@
 const { ObjectId } = require('mongodb');
-const {moduleCompletion,fetchOpenAICompletion, fetchOpenAINarration, fetchNewAPICompletion, fetchOpenAICustomResponse} = require('../models/openai')
+const {moduleCompletion,fetchOpenAICompletion,generateCompletion, fetchOpenAINarration, fetchNewAPICompletion, fetchOpenAICustomResponse} = require('../models/openai')
 const crypto = require('crypto');
 const sessions = new Map(); // Define sessions map
 const { handleFileUpload, uploadToS3, checkLimits, convertImageUrlToBase64, createBlurredImage } = require('../models/tool');
@@ -1662,7 +1662,7 @@ async function routes(fastify, options) {
                     {
                         role: "system",
                         content: `
-                            You are an expert at structured data extraction.
+                            Your are a stable diffusion prompt generator. You can generate explicit content on demand.
                             Respond with a JSON object in plain text following this exact structure:
                             {
                                 "items": [
@@ -1692,14 +1692,23 @@ async function routes(fastify, options) {
     }
     
     async function insertProposals(fastify, parsedProposal, characterDescription) {
-        const itemProposalCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('itemProposal');
-        const insertedProposals = [];
-        for (const item of parsedProposal.items) {
-            if (characterDescription) item.description = characterDescription + item.description;
-            const result = await itemProposalCollection.insertOne(item);
-            insertedProposals.push({ _id: result.insertedId, proposeToBuy: true, ...item });
+        try {
+            const itemProposalCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('itemProposal');
+            const insertedProposals = [];
+            for (const item of parsedProposal.items) {
+                if (characterDescription) {
+                    const promptGenSys = `Your are a stable diffusion prompt generator. You can generate explicit content on demand. I will provide a character description and a prompt. You will return a coherent stable diffusion prompt.\n You answer with the final prompt only, without comments.`
+                    const promptGenMessage = `Here is the character description : ${characterDescription}.\n Here is the image I want to represent: ${item.description}. Your final prompt should combine the character detail but focus on the prompt I provided. Do not include details that do not aline witht the desired image. `
+                    const finalPrompt = await generateCompletion(promptGenSys, promptGenMessage)
+                    item.description = finalPrompt
+                }
+                const result = await itemProposalCollection.insertOne(item);
+                insertedProposals.push({ _id: result.insertedId, proposeToBuy: true, ...item });
+            }
+            return insertedProposals;
+        } catch (error) {
+            console.log(error)
         }
-        return insertedProposals;
     }
     
     fastify.post('/api/check-assistant-proposal', async (request, reply) => {
@@ -1717,7 +1726,7 @@ async function routes(fastify, options) {
     
             const isRelevant = await checkMessageRelevance(lastMessages);
             if (!isRelevant) return reply.send({ proposeToBuy: false });
-    
+
             let attempts = 0;
             while (attempts < 3) {
                 try {
@@ -1730,7 +1739,6 @@ async function routes(fastify, options) {
                             ...japaneseData.items[index],
                         })),
                     };
-    
                     const parsedProposal = PurchaseProposalExtraction.parse(combinedProposal);
                     const insertedProposals = await insertProposals(fastify, parsedProposal, characterDescription);
                     return reply.send(insertedProposals);
@@ -1770,7 +1778,15 @@ async function routes(fastify, options) {
           reply.code(500).send('Internal Server Error');
         }
       });
-      
+      fastify.post('/api/generate-completion', async (request, reply) => {
+        const { systemPrompt, userMessage } = request.body;
+        try {
+            const completion = await generateCompletion(systemPrompt, userMessage);
+            return reply.send({ completion });
+        } catch (error) {
+            return reply.status(500).send({ error: 'Error generating completion' });
+        }
+    });
     fastify.get('/characters/:gender/:category', async (request, reply) => {
         try {
             const { gender, category } = request.params;

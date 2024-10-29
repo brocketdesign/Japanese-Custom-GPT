@@ -510,7 +510,7 @@ async function routes(fastify, options) {
     });
     fastify.get('/api/chat-list/:id', async (request, reply) => {
         try {
-            let userId = request.params.id;
+            const userId = request.user._id;
     
             if (!userId) {
                 const user = await fastify.getUser(request, reply);

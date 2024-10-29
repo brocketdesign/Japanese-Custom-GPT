@@ -28,7 +28,7 @@ $(document).ready(async function() {
     let language = 'japanese'
 
     $('body').attr('data-temporary-user',isTemporary)
-    displayChatList(userId,chatId);
+    displayChatList(true);
     updateCoins(userCoins)
 
 
@@ -3095,7 +3095,7 @@ window.getUserChatHistory = async function(chatId) {
     return null;
 }
 
-function displayChatList(userId, reset) {
+function displayChatList(reset) {
     if ($('#chat-list').length === 0 || $('#chat-widget-container').length > 0) {
         return;
     }
@@ -3107,7 +3107,7 @@ function displayChatList(userId, reset) {
     function fetchChatListData() {
         $.ajax({
             type: 'GET',
-            url: '/api/chat-list/' + userId,
+            url: '/api/chat-list/',
             success: function(data) {
                 localStorage.setItem('chatList', JSON.stringify(data));
                 localStorage.setItem('currentChatIndex', 0);
@@ -3123,7 +3123,7 @@ function displayChatList(userId, reset) {
         var chatsToRender = chatListData.slice(currentChatIndex, currentChatIndex + chatsPerPage);
 
         chatsToRender.forEach(function(chat) {
-            var chatHtml = constructChatItemHtml(userId, chat, false);
+            var chatHtml = constructChatItemHtml(chat, false);
             $('#chat-list').append(chatHtml);
         });
 
@@ -3178,16 +3178,16 @@ function updateCurrentChat(chatId,userId) {
 
     localStorage.setItem('chatList', JSON.stringify(chatListData));
 
-    var chatHtml = constructChatItemHtml(userId, currentChat, true);
+    var chatHtml = constructChatItemHtml(currentChat, true);
     $('#chat-list').prepend(chatHtml);
 
     enableToggleDropdown();
 }
 
-function constructChatItemHtml(userId, chat, isActive) {
+function constructChatItemHtml(chat, isActive) {
     return `
         <div class="${isActive ? 'active' : ''} chat-list item user-chat d-flex align-items-center justify-content-between p-1 mx-2 rounded bg-transparent" 
-            data-id="${chat._id}" data-userid="${userId}">
+            data-id="${chat._id}">
             <div class="d-flex align-items-center w-100">
                 <div class="user-chat-content d-flex align-items-center flex-1">
                     <div class="thumb d-flex align-items-center justify-content-center col-3 p-1">

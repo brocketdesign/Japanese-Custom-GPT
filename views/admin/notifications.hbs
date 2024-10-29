@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ja">
+    {{> dashboard-header}}
+<body>
+    {{> dashboard-nav}}
+    <div class="container mt-5">
+        <div class="d-flex justify-content-between mb-3">
+            <h2>Manage Notifications</h2>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">Create Notification</button>
+        </div>
+        <table class="table table-bordered table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Message</th>
+                    <th>Type</th>
+                    <th>Created At</th>
+                    <th>Viewed By</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="notificationsTable">
+                {{#each notifications}}
+                <tr data-id="{{this._id}}">
+                    <td>{{this.message}}</td>
+                    <td>{{this.type}}</td>
+                    <td>{{this.createdAt}}</td>
+                    <td>{{this.viewedCount}}</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning edit-btn">Edit</button>
+                        <button class="btn btn-sm btn-danger delete-btn">Delete</button>
+                    </td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Create Modal -->
+    <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <form id="createForm">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="createModalLabel">Create Notification</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                  <div class="mb-3">
+                      <label class="form-label">User ID (leave 'all' for all users)</label>
+                      <input type="text" class="form-control" name="userId" required>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">Message</label>
+                      <input type="text" class="form-control" name="message" required>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">Type</label>
+                      <select class="form-select" name="type">
+                          <option value="info">Info</option>
+                          <option value="warning">Warning</option>
+                          <option value="error">Error</option>
+                      </select>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">Data (JSON)</label>
+                      <textarea class="form-control" name="data"></textarea>
+                  </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary">Create</button>
+              </div>
+            </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <form id="editForm">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel">Edit Notification</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                  <input type="hidden" name="id">
+                  <div class="mb-3">
+                      <label class="form-label">Message</label>
+                      <input type="text" class="form-control" name="message" required>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">Type</label>
+                      <select class="form-select" name="type">
+                          <option value="info">Info</option>
+                          <option value="warning">Warning</option>
+                          <option value="error">Error</option>
+                      </select>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">Data (JSON)</label>
+                      <textarea class="form-control" name="data"></textarea>
+                  </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-warning">Update</button>
+              </div>
+            </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const showNotification = (message, icon) => {
+            Swal.fire({ icon, title: message, timer: 2000, showConfirmButton: false });
+        };
+
+        document.getElementById('createForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const data = {
+                userId: form.userId.value,
+                message: form.message.value,
+                type: form.type.value,
+                data: form.data.value ? JSON.parse(form.data.value) : {}
+            };
+            try {
+                const res = await fetch('/notifications', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (res.ok) {
+                    showNotification('Notification created', 'success');
+                    location.reload();
+                } else {
+                    const err = await res.json();
+                    showNotification(err.error, 'error');
+                }
+            } catch {
+                showNotification('Error creating notification', 'error');
+            }
+        });
+
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const tr = e.target.closest('tr');
+                const id = tr.getAttribute('data-id');
+                const res = await fetch(`/notifications/${id}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+                    const form = document.getElementById('editForm');
+                    form.id.value = data._id;
+                    form.message.value = data.message;
+                    form.type.value = data.type;
+                    form.data.value = JSON.stringify(data.data);
+                    editModal.show();
+                } else {
+                    showNotification('Failed to fetch notification', 'error');
+                }
+            });
+        });
+
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const id = form.id.value;
+            const data = {
+                message: form.message.value,
+                type: form.type.value,
+                data: form.data.value ? JSON.parse(form.data.value) : {}
+            };
+            try {
+                const res = await fetch(`/notifications/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (res.ok) {
+                    showNotification('Notification updated', 'success');
+                    location.reload();
+                } else {
+                    const err = await res.json();
+                    showNotification(err.error, 'error');
+                }
+            } catch {
+                showNotification('Error updating notification', 'error');
+            }
+        });
+
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tr = e.target.closest('tr');
+                const id = tr.getAttribute('data-id');
+                Swal.fire({
+                    title: 'Are you sure?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Delete'
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        const res = await fetch(`/notifications/${id}`, { method: 'DELETE' });
+                        if (res.ok) {
+                            showNotification('Notification deleted', 'success');
+                            tr.remove();
+                        } else {
+                            const err = await res.json();
+                            showNotification(err.error, 'error');
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+{{> dashboard-footer}}
+</html>

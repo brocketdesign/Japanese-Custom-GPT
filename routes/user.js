@@ -831,7 +831,32 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       return reply.status(500).send({ error: err.message });
     }
   });
+  
+  fastify.get('/users/:userId/notifications', async (request, reply) => {
+    const user = await fastify.getUser(request, reply);
+    const targetUserId = new ObjectId(request.params.userId);
+    const isAdmin = await checkUserAdmin(fastify, user._id);
 
+    if (!isAdmin && user._id.toString() !== targetUserId.toString()) {
+      return reply.status(403).send({ error: 'Access denied' });
+    }
+
+    const viewed = request.query.viewed;
+    const filter = { userId: targetUserId };
+    if (viewed !== undefined) {
+      filter.viewed = viewed === 'true';
+    }
+
+    const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+    const notificationsCollection = db.collection('notifications');
+
+    const notifications = await notificationsCollection
+      .find(filter)
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    reply.send(notifications);
+  });
   
 }
 

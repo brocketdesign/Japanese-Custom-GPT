@@ -5,6 +5,36 @@ const  { checkUserAdmin } = require('../models/tool')
 const cleanupNonRegisteredUsers = require('../models/cleanupNonRegisteredUsers');
 async function routes(fastify, options) {
 
+  fastify.get('/admin/notifications', async (request, reply) => {
+    const user = await fastify.getUser(request, reply);
+    const isAdmin = await checkUserAdmin(fastify, user._id);
+    if (!isAdmin) return reply.status(403).send({ error: 'Access denied' });
+
+    const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+    const notificationsCollection = db.collection('notifications');
+
+    const notifications = await notificationsCollection.aggregate([
+      {
+        $group: {
+          _id: {_id:"$_id", message: "$message", type: "$type", createdAt: "$createdAt" },
+          viewedCount: { $sum: { $cond: ["$viewed", 1, 0] } },
+          total: { $sum: 1 }
+        }
+      },
+      { $sort: { "_id.createdAt": -1 } }
+    ]).toArray();
+
+    const formattedNotifications = notifications.map(n => ({
+      _id: n._id._id,
+      message: n._id.message,
+      type: n._id.type,
+      createdAt: n._id.createdAt.toISOString().split('T')[0],
+      viewedCount: n.viewedCount
+    }));
+    console.log({formattedNotifications})
+    return reply.view('/admin/notifications', { notifications: formattedNotifications });
+  });
+
 
     fastify.get('/admin/users', {
         preHandler: [fastify.authenticate]

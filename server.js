@@ -143,6 +143,7 @@ async function initializeCategoriesCollection(db) {
     fastify.register(require('./routes/admin'));
     fastify.register(require('./routes/post'));
     fastify.register(require('./routes/gallery'));
+    fastify.register(require('./routes/notifications'));
  
     // Authentication decorator
     fastify.decorate('authenticate', async function (request, reply) {

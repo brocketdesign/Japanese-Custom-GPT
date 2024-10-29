@@ -312,6 +312,11 @@
       "imageDescriptionError": "Error fetching image description.",
       "imagePurchaseMessage": "I bought a {type} image for {price} coins. {prompt_title}",
       "imagePurchaseMessageStart": "I bought a {type} image for {price} coins."
+  },
+  "notifications" :{
+    "viewedMarked":"Notification marked as viewed",
+    "viewed":"Mark as Viewed",
+    "nothing" : "No new notification"
   }
 }
   

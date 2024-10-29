@@ -290,6 +290,11 @@
       "imageDescriptionError": "画像説明の取得に失敗しました。",
       "imagePurchaseMessage": "{prompt_title}の{price}コインで{type}画像を購入しました。",
       "imagePurchaseMessageStart": "{price}コインで{type}画像を購入しました。"
+  },
+  "notifications" :{
+    "viewedMarked":"通知が確認済みとしてマークされました",
+    "viewed":"確認済み",
+    "nothing" : "新しい通知はありません"
   }
   
 }

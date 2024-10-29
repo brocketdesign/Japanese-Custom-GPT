@@ -392,10 +392,11 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to retrieve chat' });
         }
     });
-    fastify.post('/api/chat-history/:chatId', async (request, reply) => {
+    fastify.get('/api/chat-history/:chatId', async (request, reply) => {
         try {
             const chatId = request.params.chatId;
-            const userId = request.body.userId;
+            const userId = request.user._id;
+
             if (!chatId || !userId) {
                 return reply.status(400).send({ error: 'Chat ID and User ID are required' });
             }

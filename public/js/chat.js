@@ -174,15 +174,10 @@ $(document).ready(async function() {
     }
 
     window.fetchChatData = async function(fetch_chatId, fetch_userId, fetch_reset, callback) {
-        const lastUserChat = await getUserChatHistory(fetch_chatId, fetch_userId);
+        const lastUserChat = await getUserChatHistory(fetch_chatId);
 
         fetch_chatId = lastUserChat ?.chatId || fetch_chatId
         const newUserChatId = lastUserChat ?._id || userChatId;
-
-        if(newUserChatId == userChatId){
-            callback()
-            return
-        }
         userChatId = newUserChatId
 
         if (fetch_reset) {
@@ -2896,7 +2891,7 @@ $(document).find('#register-form').on('submit', function(event) {
         }
     });
 });
-function displayUserChatHistory(userChat,userId) {
+function displayUserChatHistory(userChat) {
 
     const chatHistoryContainer = $('#chat-history');
     chatHistoryContainer.empty();
@@ -2914,7 +2909,7 @@ function displayUserChatHistory(userChat,userId) {
         const userChatListGroup = $('<ul class="list-group list-group-flush"></ul>');
         const userChats = userChat.filter(chat =>!chat.isWidget);
         userChats.forEach(chat => {
-            const listItem = $(`<li class="list-group-item user-chat-history bg-transparent d-flex align-items-center justify-content-between" data-id="${chat.chatId}" data-chat="${chat._id}" data-user="${userId}"></li>`);
+            const listItem = $(`<li class="list-group-item user-chat-history bg-transparent d-flex align-items-center justify-content-between" data-id="${chat.chatId}" data-chat="${chat._id}" ></li>`);
             listItem.css('cursor', 'pointer');
 
             const small = $('<small class="text-secondary"></small>');
@@ -2946,7 +2941,7 @@ function displayUserChatHistory(userChat,userId) {
         const widgetChatListGroup = $('<ul class="list-group list-group-flush"></ul>');
         const widgetChats = userChat.filter(chat => chat.isWidget);
         widgetChats.forEach(chat => {
-            const listItem = $(`<li class="list-group-item user-chat-history bg-transparent d-flex align-items-center justify-content-between" data-id="${chat.chatId}" data-chat="${chat._id}" data-user="${userId}"></li>`);
+            const listItem = $(`<li class="list-group-item user-chat-history bg-transparent d-flex align-items-center justify-content-between" data-id="${chat.chatId}" data-chat="${chat._id}" ></li>`);
             listItem.css('cursor', 'pointer');
 
             const small = $('<small class="text-secondary"></small>');
@@ -3084,18 +3079,12 @@ window.updatePersona = function(personaId,isAdding,callback,callbackError){
         }
     });
 }
-window.getUserChatHistory = async function(chatId, userId) {
+window.getUserChatHistory = async function(chatId) {
     try {
-        
-        const response = await $.ajax({
-            url: `/api/chat-history/${chatId}`,
-            type: 'POST',
-            data: JSON.stringify({ userId: userId }),
-            contentType: 'application/json',
-            dataType: 'json'
-        });
-        displayUserChatHistory(response,userId);
-        const lastChat = response.find(chat => !chat.isWidget);
+        const response = await fetch(`/api/chat-history/${chatId}`);
+        const data = await response.json();
+        displayUserChatHistory(data);
+        const lastChat = data.find(chat => !chat.isWidget);
         if (lastChat) {
             const userChatId = lastChat._id;
             localStorage.setItem('userChatId', userChatId);
@@ -3106,6 +3095,7 @@ window.getUserChatHistory = async function(chatId, userId) {
     }
     return null;
 }
+
 function displayChatList(userId, reset) {
     if ($('#chat-list').length === 0 || $('#chat-widget-container').length > 0) {
         return;
@@ -3240,7 +3230,7 @@ function constructChatItemHtml(userId, chat, isActive) {
                                 </a>
                             </li>
                             <li>
-                                <button class="dropdown-item text-secondary history-chat" data-id="${chat._id}" data-user="${userId}">
+                                <button class="dropdown-item text-secondary history-chat" data-id="${chat._id}" >
                                     <i class="fas fa-history me-2"></i>
                                     <span class="text-muted" style="font-size:12px;">${window.translations.chatHistory}</span>
                                 </button>

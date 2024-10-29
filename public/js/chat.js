@@ -174,20 +174,26 @@ $(document).ready(async function() {
     }
 
     window.fetchChatData = async function(fetch_chatId, fetch_userId, fetch_reset, callback) {
-        $('#chatContainer').empty();
-        $('#startButtonContained').remove();
-        $('#chat-recommend').empty();
-        
         const lastUserChat = await getUserChatHistory(fetch_chatId, fetch_userId);
 
         fetch_chatId = lastUserChat ?.chatId || fetch_chatId
-        userChatId = lastUserChat ?._id || userChatId;
+        const newUserChatId = lastUserChat ?._id || userChatId;
+
+        if(newUserChatId == userChatId){
+            callback()
+            return
+        }
+        userChatId = newUserChatId
 
         if (fetch_reset) {
             currentStep = 0;
         }
     
         count_proposal = 0;
+        
+        $('#chatContainer').empty();
+        $('#startButtonContained').remove();
+        $('#chat-recommend').empty();
         
         postChatData(fetch_chatId, fetch_userId, userChatId, fetch_reset, callback);
     }
@@ -268,6 +274,9 @@ $(document).ready(async function() {
     })
     $(document).on('click','.user-chat-history', function(){
         //const selectUser = $(this).data('user')
+        if(userChatId == $(this).data('chat')){
+            return
+        }
         chatId = $(this).data('id')
         userChatId = $(this).data('chat')
         postChatData(chatId, userId, userChatId, null, null) 
@@ -280,8 +289,6 @@ $(document).ready(async function() {
         const chatImageUrl = $this.find('img').attr('src');
         $this.closest('.chat-list.item').addClass('active').siblings().removeClass('active');
         $('#chat-container').css('background-image', `url(${chatImageUrl})`);
-        $('#chatContainer').empty();
-        $('#chat-recommend').empty()
         
         fetchChatData(selectChatId, userId, null, function() {
             $this.removeClass('loading');
@@ -3108,7 +3115,7 @@ function displayChatList(userId, reset) {
     var chatListData = JSON.parse(localStorage.getItem('chatList')) || [];
     var currentChatIndex = parseInt(localStorage.getItem('currentChatIndex')) || 0;
 
-    function fetchChatData() {
+    function fetchChatListData() {
         $.ajax({
             type: 'GET',
             url: '/api/chat-list/' + userId,
@@ -3156,7 +3163,7 @@ function displayChatList(userId, reset) {
     }
 
     if (reset || chatListData.length === 0) {
-        fetchChatData();
+        fetchChatListData();
     } else {
         displayChats();
     }

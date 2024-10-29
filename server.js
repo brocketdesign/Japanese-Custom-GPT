@@ -231,6 +231,7 @@ async function initializeCategoriesCollection(db) {
     fastify.get('/chat/:chatId', async (request, reply) => {
       let user = request.user;
       const chatId = request.params.chatId;
+      const imageType = request.query.type || false
       const userId = user._id;
       const translations = request.translations
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
@@ -247,6 +248,7 @@ async function initializeCategoriesCollection(db) {
       return reply.renderWithGtm('chat.hbs', { 
         title: 'LAMIX | 日本語でAI画像生成 | AIチャット',
         isAdmin,
+        imageType,
         translations,
         mode:process.env.MODE, user, userId, chatId,
         userData,

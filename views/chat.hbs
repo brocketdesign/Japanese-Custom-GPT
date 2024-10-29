@@ -243,8 +243,9 @@
 $(document).ready(function() {
     const user = {{{json user}}}
 
-    // Load 'realistic' by default
-    displayPeopleChat(1, 'realistic');
+    let imageType = `{{imageType}}` != 'false' ? `{{imageType}}` : false
+    imageType = imageType ? imageType : localStorage.getItem('imageType')
+    imageType = imageType ? imageType : 'realistic'
 
     // Handle tab clicks
     $('#imageStyleTabs button').on('click', function () {
@@ -255,9 +256,10 @@ $(document).ready(function() {
         $(this).addClass('active');
 
         var style = $(this).data('style');
+        localStorage.setItem('imageType',style)
         displayPeopleChat(1, style);
     });
-
+    $(`#imageStyleTabs button[data-style="${imageType}"]`).click()
     function adjustHeight() {
         const newHeight = $(window).height() * 0.97;
         $('.chat-contain .card-body').height(newHeight);

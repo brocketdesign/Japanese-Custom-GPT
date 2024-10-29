@@ -2904,7 +2904,7 @@ function displayUserChatHistory(userChat) {
         // User chat history
         const userChatHeader = $('<div class="card-header"></div>');
         userChatHeader.text('チャット履歴');
-        userChatCard.append(userChatHeader);
+        //userChatCard.append(userChatHeader);
 
         const userChatListGroup = $('<ul class="list-group list-group-flush"></ul>');
         const userChats = userChat.filter(chat =>!chat.isWidget);
@@ -2933,6 +2933,8 @@ function displayUserChatHistory(userChat) {
 
         userChatCard.append(userChatListGroup);
 
+        chatHistoryContainer.append(userChatCard);
+        
         // Widget chat history
         const widgetChatHeader = $('<div class="card-header"></div>');
         widgetChatHeader.text('ウィジェットチャット履歴');
@@ -2955,11 +2957,8 @@ function displayUserChatHistory(userChat) {
             widgetChatListGroup.append(listItem);
         });
 
-        widgetChatCard.append(widgetChatListGroup);
-
-        // Append both cards to the container
-        chatHistoryContainer.append(userChatCard);
-        chatHistoryContainer.append(widgetChatCard);
+        //widgetChatCard.append(widgetChatListGroup);
+        //chatHistoryContainer.append(widgetChatCard);
 
         enableToggleDropdown()
     }

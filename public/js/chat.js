@@ -1063,8 +1063,8 @@ $(document).ready(async function() {
                     </div>
                     <div id="response-${uniqueId}" class="choice-container" ></div>
                 </div>`);
-            $('#chatContainer').append(botResponseContainer);
-            $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
+            //$('#chatContainer').append(botResponseContainer);
+            //$('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
         }
         let currentDate = new Date();
         let currentTimeInJapanese = `${currentDate.getHours()}時${currentDate.getMinutes()}分`;
@@ -1105,7 +1105,7 @@ $(document).ready(async function() {
                 chatId = response.chatId
                 isNew = false;
                 updateCurrentChat(chatId,userId);
-                $(`#starter-${uniqueId}`).remove()
+                //$(`#starter-${uniqueId}`).remove()
                 
                 generateCompletion(function(){
                     $('.auto-gen').each(function(){$(this).show()})
@@ -3143,7 +3143,7 @@ function displayChatList(reset) {
     function checkShowMoreButton() {
         $('#show-more-chats').remove();
         if (chatListData.length > currentChatIndex) {
-            $('#chat-list').append('<button id="show-more-chats">Show More</button>');
+            $('#chat-list').append('<button id="show-more-chats" class="btn shadow-0 w-100"><i class="bi bi-three-dots"></i></button>');
             $('#show-more-chats').on('click', function() {
                 $(this).remove();
                 displayChats();

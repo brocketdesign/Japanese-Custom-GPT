@@ -31,12 +31,38 @@ const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'me
         }
 
         let fullCompletion = "";
+        let insideBrackets = false;
+        let bracketContent = "";
+
         const parser = createParser((event) => {
             try {
                 if (event.type === 'event' && event.data !== "[DONE]") {
                     const content = JSON.parse(event.data).choices[0].delta?.content || "";
-                    fullCompletion += content;
-                    res.write(`data: ${JSON.stringify({ content })}\n\n`);
+
+                    for (let i = 0; i < content.length; i++) {
+                        let char = content[i];
+                        if (!insideBrackets) {
+                            if (char === '[') {
+                                insideBrackets = true;
+                                bracketContent = "";
+                            } else {
+                                fullCompletion += char;
+                                res.write(
+                                    `data: ${JSON.stringify({ type: 'text', content: char })}\n\n`
+                                );
+                            }
+                        } else {
+                            if (char === ']') {
+                                insideBrackets = false;
+                        
+                                res.write(
+                                    `data: ${JSON.stringify({ type: 'trigger', command: bracketContent })}\n\n`
+                                );
+                            } else {
+                                bracketContent += char;
+                            }
+                        }
+                    }
                 }
             } catch (error) {
                 console.error("Error in parser:", error);
@@ -55,6 +81,7 @@ const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'me
         throw error;
     }
 };
+
 async function generateCompletion(systemPrompt, userMessage) {
     const response = await fetch("https://api.novita.ai/v3/openai/chat/completions", {
         headers: {

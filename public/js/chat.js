@@ -1275,8 +1275,8 @@ $(document).ready(async function() {
             let chatMessage = userChat[i];
     
             if (chatMessage.role === "user") {
-                const isStarter = chatMessage.content.startsWith("[Starter]") || chatMessage.content.startsWith("Invent a situation") || chatMessage.content.startsWith("Here is your character description");
-                const isHidden = chatMessage.content.startsWith("[Hidden]");
+                const isStarter = chatMessage?.content?.startsWith("[Starter]") || chatMessage?.content?.startsWith("Invent a situation") || chatMessage?.content?.startsWith("Here is your character description");
+                const isHidden = chatMessage?.content?.startsWith("[Hidden]");
                 if (!isStarter && !isHidden) {
                     messageHtml = `
                         <div class="d-flex flex-row justify-content-end mb-4 message-container">
@@ -1806,8 +1806,12 @@ $(document).ready(async function() {
 
                 eventSource.onmessage = function(event) {
                     const data = JSON.parse(event.data);
-                    markdownContent += data.content;
-                    $(`#completion-${uniqueId}`).html(marked.parse(markdownContent));
+                    if (data.type === 'text') {
+                        markdownContent += data.content;
+                        $(`#completion-${uniqueId}`).html(marked.parse(markdownContent));
+                    } else if (data.type === 'trigger') {
+                        handleTrigger(data.command);
+                    }
                 };
 
                 eventSource.onerror = function(error) {
@@ -1935,7 +1939,24 @@ $(document).ready(async function() {
             }
         });
     }
-    
+    const handleTrigger = (command) => {
+        switch (command) {
+            case 'image_sfw':
+                showPaymentImage('sfw');
+                break;
+            case 'image_nsfw':
+                showPaymentImage('nsfw');
+                break;
+            case '画像_sfw':
+                showPaymentImage('sfw');
+                break;
+            case '画像_nsfw':
+                showPaymentImage('nsfw');
+                break;
+            default:
+                console.warn(`Unhandled trigger command: ${command}`);
+        }
+    };
     window.displayMessage = function(sender, message, callback) {
         const messageClass = sender === 'user' ? 'user-message' : sender;
         const animationClass = 'animate__animated animate__slideInUp';
@@ -2052,7 +2073,27 @@ $(document).ready(async function() {
             }
         });
     }
-  
+    async function initiatePurchaseImage(price, type, userId, chatId) {
+        return new Promise((resolve, reject) => {
+            $.ajax({
+                url: '/api/purchaseImage',
+                method: 'POST',
+                data: { price, type, userId, chatId },
+                success: function(response) {
+                    resolve(response);
+                },
+                error: function(response) {
+                    if(parseInt(response.responseJSON?.id) == 1 ){
+                        showCoinShop();
+                        return
+                    }else{
+                        console.error('Error during purchase request:', response);
+                        reject({ success: false, error: response });
+                    }
+                }
+            });
+        });
+    }
 
     function handleImageGeneration(buttonSelector, generateImageFunction) {
         $(document).on('click', buttonSelector, function() {
@@ -2432,7 +2473,27 @@ function attachPromptCardEvents() {
         controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isNSFWChecked);
     });
 }
+
+function showPaymentImage(type) {
+    const messageId = `msg_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const message = `
+    <div id="${messageId}" class="d-flex justify-content-start">
+        ${type == 'sfw' ? `
+        <button class="btn custom-gradient-bg shadow-0 w-45 me-2" 
+            onclick="buyImage('${messageId}','10', 'sfw')">
+            <span>10<span class="mx-1">🪙</span></span>
+        </button>` : `
+        <button class="btn custom-gradient-bg danger shadow-0 w-45" 
+            onclick="buyImage('${messageId}','20', 'nsfw')">
+            <span>20<span class="mx-1">🪙</span> <span style="font-size:10px">R18</span></span>
+        </button>`}
+    </div>
+    `;
+    displayMessage('assistant', message);
+}
+
     function checkForPurchaseProposal() {
+        return
         $.ajax({
             url: '/api/check-assistant-proposal',
             type: 'POST',
@@ -2466,7 +2527,7 @@ function attachPromptCardEvents() {
                     count_proposal = 0;
                 } else {
                     if (count_proposal >= 2) {
-                        let message = `[Hidden] Prepare to propose a picture of you. When you make a proposition, describe the image in detail.`;
+                        let message = `[Hidden] Prepare to propose a picture of you. When you make a proposition, use this [image] in your message. `;
                         addMessageToChat(chatId, userChatId, 'user', message);
                     }
                 }
@@ -2477,7 +2538,49 @@ function attachPromptCardEvents() {
             }
         });
     }
-    
+    async function generateItemData() {
+        return new Promise((resolve, reject) => {
+            $.ajax({
+                url: '/api/gen-item-data',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ userId, chatId, userChatId }),
+                success: function(response) {
+                    if (response.length > 0) {
+                        resolve(response);
+                    } else {
+                        resolve([]); // or handle an empty response differently if needed
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error checking purchase proposal:', error);
+                    reject(error);
+                }
+            });
+        });
+    }
+    window.buyImage = async function(messageId,price,type){
+        const response = await initiatePurchaseImage(price,type, userId, chatId)
+        if (response.success) {
+            updateCoins(response.coins);
+            let message = window.translations.imageForm.imagePurchaseMessageStart || `{price}コインで{type}画像を購入しました`
+            message = message
+            .replace('{price}',price)
+            .replace('{type}',type == 'nsfw' ? window.translations.imageForm.nsfwImage : window.translations.imageForm.sfwImage)
+            displayMessage('user', message, function() {
+                addMessageToChat(chatId, userChatId, 'user', message);
+            });
+            const hiddenMessage = `I bought a ${type} image. The image generation process is starting now. It may take a minute or so to complte.Tell ne to wait.`
+            addMessageToChat(chatId, userChatId, 'user', hiddenMessage, function(){
+                generateCompletion()
+            });
+        } else {
+            showCoinShop();
+            return
+        }
+        const item = await generateItemData()
+        generateImageNovita(API_URL, userId, chatId, userChatId, item[0]._id, thumbnail, type);
+    }
     window.buyItem = function(itemId, itemName, itemPrice, item_id, status, userId, chatId, userChatId, imageType) {
         if (status) {
             initiatePurchase(itemId, itemName, itemPrice, userId, chatId, function(response) {

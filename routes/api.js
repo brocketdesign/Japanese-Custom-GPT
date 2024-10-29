@@ -301,17 +301,13 @@ async function routes(fastify, options) {
         };
     
         try {
+            
             let userChatDocument = await collectionUserChat.findOne({
-                $or: [
-                    { userId },
-                    { userId: new fastify.mongo.ObjectId(userId) }
-                ],
+                userId: new fastify.mongo.ObjectId(userId),
                 _id: new fastify.mongo.ObjectId(userChatId),
-                $or: [
-                    { chatId },
-                    { chatId: new fastify.mongo.ObjectId(chatId) }
-                ]
+                chatId: new fastify.mongo.ObjectId(chatId)
             });
+            
             if (userChatDocument) {
                 response.userChat = userChatDocument;
                 response.isNew = false;
@@ -406,30 +402,12 @@ async function routes(fastify, options) {
             const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
             const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
 
-            const existingChatDocument = await collectionChat.find({
-                userId: new fastify.mongo.ObjectId(userId),
-                baseId: new fastify.mongo.ObjectId(chatId),
-            }).toArray();
-
-            const chatIds = [
-                ...existingChatDocument.flatMap(chat => [chat._id.toString(), new fastify.mongo.ObjectId(chat._id)])
-            ];
+            
             let userChat = await collectionUserChat.find({
                 $and: [
-                  { 
-                    $or: [
-                        { chatId },
-                        { chatId: new fastify.mongo.ObjectId(chatId) },
-                        { chatId: {$in : chatIds } },
-                    ]
-                  },
-                  { 
-                    $or: [
-                      { userId },
-                      { userId: new fastify.mongo.ObjectId(userId) }
-                    ]
-                  },
-                  { $expr: { $gte: [ { $size: "$messages" }, 1 ] } }
+                    { chatId: new fastify.mongo.ObjectId(chatId) },
+                    { userId: new fastify.mongo.ObjectId(userId) },
+                    { $expr: { $gte: [ { $size: "$messages" }, 1 ] } }
                 ]
                 
             }).sort({ _id: -1 }).toArray();
@@ -700,6 +678,7 @@ async function routes(fastify, options) {
                 let result;
                 let documentId;
                 // Remove the _id field from the userChatDocument to avoid attempting to update it
+
                 const { _id, ...updateFields } = userChatDocument;
         
                 if (!isNew) {

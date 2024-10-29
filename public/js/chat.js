@@ -193,6 +193,7 @@ $(document).ready(async function() {
     }
     
     function postChatData(fetch_chatId, fetch_userId, userChatId, fetch_reset, callback) {
+        
         $('#chatContainer').empty();
         $('#startButtonContained').remove();
         $('#chat-recommend').empty();
@@ -1101,7 +1102,7 @@ $(document).ready(async function() {
                 userChatId = response.userChatId
                 chatId = response.chatId
                 isNew = false;
-                updateCurrentChat(chatId);
+                updateCurrentChat(chatId,userId);
                 $(`#starter-${uniqueId}`).remove()
                 
                 generateCompletion(function(){
@@ -2888,7 +2889,7 @@ $(document).find('#register-form').on('submit', function(event) {
         }
     });
 });
-function displayUserChatHistory(userChat) {
+function displayUserChatHistory(userChat,userId) {
 
     const chatHistoryContainer = $('#chat-history');
     chatHistoryContainer.empty();
@@ -2906,7 +2907,7 @@ function displayUserChatHistory(userChat) {
         const userChatListGroup = $('<ul class="list-group list-group-flush"></ul>');
         const userChats = userChat.filter(chat =>!chat.isWidget);
         userChats.forEach(chat => {
-            const listItem = $(`<li class="list-group-item user-chat-history bg-transparent d-flex align-items-center justify-content-between" data-id="${chat.chatId}" data-chat="${chat._id}" data-user="${chat.userId}"></li>`);
+            const listItem = $(`<li class="list-group-item user-chat-history bg-transparent d-flex align-items-center justify-content-between" data-id="${chat.chatId}" data-chat="${chat._id}" data-user="${userId}"></li>`);
             listItem.css('cursor', 'pointer');
 
             const small = $('<small class="text-secondary"></small>');
@@ -2938,7 +2939,7 @@ function displayUserChatHistory(userChat) {
         const widgetChatListGroup = $('<ul class="list-group list-group-flush"></ul>');
         const widgetChats = userChat.filter(chat => chat.isWidget);
         widgetChats.forEach(chat => {
-            const listItem = $(`<li class="list-group-item user-chat-history bg-transparent d-flex align-items-center justify-content-between" data-id="${chat.chatId}" data-chat="${chat._id}" data-user="${chat.userId}"></li>`);
+            const listItem = $(`<li class="list-group-item user-chat-history bg-transparent d-flex align-items-center justify-content-between" data-id="${chat.chatId}" data-chat="${chat._id}" data-user="${userId}"></li>`);
             listItem.css('cursor', 'pointer');
 
             const small = $('<small class="text-secondary"></small>');
@@ -3078,6 +3079,7 @@ window.updatePersona = function(personaId,isAdding,callback,callbackError){
 }
 window.getUserChatHistory = async function(chatId, userId) {
     try {
+        
         const response = await $.ajax({
             url: `/api/chat-history/${chatId}`,
             type: 'POST',
@@ -3085,7 +3087,7 @@ window.getUserChatHistory = async function(chatId, userId) {
             contentType: 'application/json',
             dataType: 'json'
         });
-        displayUserChatHistory(response);
+        displayUserChatHistory(response,userId);
         const lastChat = response.find(chat => !chat.isWidget);
         if (lastChat) {
             const userChatId = lastChat._id;
@@ -3125,7 +3127,7 @@ function displayChatList(userId, reset) {
         var chatsToRender = chatListData.slice(currentChatIndex, currentChatIndex + chatsPerPage);
 
         chatsToRender.forEach(function(chat) {
-            var chatHtml = constructChatItemHtml(chat, false);
+            var chatHtml = constructChatItemHtml(userId, chat, false);
             $('#chat-list').append(chatHtml);
         });
 
@@ -3160,7 +3162,7 @@ function displayChatList(userId, reset) {
     }
 }
 
-function updateCurrentChat(chatId) {
+function updateCurrentChat(chatId,userId) {
     var chatListData = JSON.parse(localStorage.getItem('chatList')) || [];
 
     var currentChat = chatListData.find(function(chat) {
@@ -3180,16 +3182,16 @@ function updateCurrentChat(chatId) {
 
     localStorage.setItem('chatList', JSON.stringify(chatListData));
 
-    var chatHtml = constructChatItemHtml(currentChat, true);
+    var chatHtml = constructChatItemHtml(userId, currentChat, true);
     $('#chat-list').prepend(chatHtml);
 
     enableToggleDropdown();
 }
 
-function constructChatItemHtml(chat, isActive) {
+function constructChatItemHtml(userId, chat, isActive) {
     return `
         <div class="${isActive ? 'active' : ''} chat-list item user-chat d-flex align-items-center justify-content-between p-1 mx-2 rounded bg-transparent" 
-            data-id="${chat._id}" data-userid="${chat.userId}">
+            data-id="${chat._id}" data-userid="${userId}">
             <div class="d-flex align-items-center w-100">
                 <div class="user-chat-content d-flex align-items-center flex-1">
                     <div class="thumb d-flex align-items-center justify-content-center col-3 p-1">
@@ -3231,7 +3233,7 @@ function constructChatItemHtml(chat, isActive) {
                                 </a>
                             </li>
                             <li>
-                                <button class="dropdown-item text-secondary history-chat" data-id="${chat._id}" data-user="${chat.userId}">
+                                <button class="dropdown-item text-secondary history-chat" data-id="${chat._id}" data-user="${userId}">
                                     <i class="fas fa-history me-2"></i>
                                     <span class="text-muted" style="font-size:12px;">${window.translations.chatHistory}</span>
                                 </button>

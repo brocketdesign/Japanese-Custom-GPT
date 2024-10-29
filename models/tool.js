@@ -99,7 +99,7 @@ async function checkLimits(fastify,userId) {
     const messageIdeasCountDoc = await messageIdeasCountCollection.findOne({ userId: new fastify.mongo.ObjectId(userId), date: today });
 
     const isTemporary = user.isTemporary;
-    let messageLimit = isTemporary ? 10 : 50;
+    let messageLimit = isTemporary ? 10 : '無制限';
     let chatLimit = isTemporary ? 1 : '無制限';
     let imageLimit = isTemporary ? 1 : '無制限';
     let messageIdeasLimit = isTemporary ? 3 : 10;

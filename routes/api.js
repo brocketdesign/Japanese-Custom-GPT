@@ -843,7 +843,7 @@ async function routes(fastify, options) {
     
             userCoins -= imagePrice;
     
-            console.log(`User ${userId} has ${userCoins} coins left after purchasing image of type ${type}`);
+            console.log(`User ${userId} has ${userCoins} coins left after purchasing image of type ${type} for ${imagePrice} coins`);
     
             await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
                 { _id: new fastify.mongo.ObjectId(userId) },

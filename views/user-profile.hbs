@@ -438,6 +438,7 @@
   $(document).ready(function () {
     loadUserPosts(userId, 1);
     $('#post-tab').on('shown.bs.tab', function (e) {
+      $('#user-posts-gallery').empty()
         loadUserPosts(userId, 1);
     });
     $('.posts-tab').on('click',function(){
@@ -445,10 +446,12 @@
     })
 
     $('#post-like-tab').on('shown.bs.tab', function (e) {
+      $('#user-posts-like').empty()
         loadUserPosts(userId, 1, true);
     });
 
     $('#image-tab').on('shown.bs.tab', function (e) {
+      $('#user-images-gallery').empty()
         loadUserImages(userId, 1);
     });
     $('.likes-tab').on('click',function(){
@@ -456,6 +459,7 @@
     })
 
     $('#user-chat-tab').on('shown.bs.tab', function (e) {
+      $('#user-chat-gallery').empty()
         displayUserChats(userId,1)
     });
     $('.characters-tab').on('click',function(){

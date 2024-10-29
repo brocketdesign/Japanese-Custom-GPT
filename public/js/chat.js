@@ -1957,6 +1957,21 @@ $(document).ready(async function() {
                 console.warn(`Unhandled trigger command: ${command}`);
         }
     };
+    function displayImageLoader(){
+        const imageResponseContainer = $(`
+            <div id="load-image-container" class="d-flex flex-column justify-content-start">
+                <div class="d-flex flex-row justify-content-start mb-4 message-container" style="border-radius: 15px;">
+                    <img src="${thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="width: 45px; height: 45px; object-fit: cover; object-position: top;">
+                    <div class="d-flex justify-content-center align-items-center px-3">
+                        <img src="/img/image-placeholder.gif" width="50px" alt="loading">
+                    </div>
+                </div>
+            </div>
+        `);
+    
+        $('#chatContainer').append(imageResponseContainer);
+        $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
+    }
     window.displayMessage = function(sender, message, callback) {
         const messageClass = sender === 'user' ? 'user-message' : sender;
         const animationClass = 'animate__animated animate__slideInUp';
@@ -2570,9 +2585,11 @@ function showPaymentImage(type) {
             displayMessage('user', message, function() {
                 addMessageToChat(chatId, userChatId, 'user', message);
             });
-            const hiddenMessage = `I bought a ${type} image. The image generation process is starting now. It may take a minute or so to complte.Tell ne to wait.`
+            const hiddenMessage = `[Hidden] I bought a ${type} image. The image generation process is starting now. It may take a minute or so to complte.Tell ne to wait.`
             addMessageToChat(chatId, userChatId, 'user', hiddenMessage, function(){
-                generateCompletion()
+                generateCompletion(function(){
+                    displayImageLoader()
+                })
             });
         } else {
             showCoinShop();

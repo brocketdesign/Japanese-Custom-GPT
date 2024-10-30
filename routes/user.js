@@ -618,6 +618,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
   fastify.post('/user/:userId/follow-toggle', async (request, reply) => {
     const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
     const usersCollection = db.collection('users');
+    const translations = request.translations
     
     let currentUser = await fastify.getUser(request, reply);
     const currentUserId = new fastify.mongo.ObjectId(currentUser._id);
@@ -634,6 +635,12 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
           { _id: targetUserId },
           { $addToSet: { followers: currentUserId }, $inc: { followerCount: 1 } }
         );
+
+
+        // Create a notification for the target user
+        const message = `${currentUser.nickname} ${translations.startFollow} `;
+        await fastify.createNotification(targetUserId, message, 'info', { followerId: currentUserId });
+
         reply.send({ message: 'フォローしました！' });
       } else {
         // Check current follow count before decrementing

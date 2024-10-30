@@ -43,7 +43,8 @@
   <script>
     $(document).ready(function() {
       const query = '{{query}}';
-      const imageStyle = '{{imageStyle}}'
+      const imageStyle = '{{imageStyle}}';
+      const data = {{{json data}}} || [];
         $('.style-option').click(function(){
             $('.style-option').removeClass('selected');
             $(this).addClass('selected');
@@ -54,7 +55,7 @@
             history.pushState(null, '', newUrl);
 
             $('#chat-gallery').empty()
-            displayPeopleChat(1, $(this).data('value'), query);
+            displayPeopleChat(1, $(this).data('value'), query, data);
         });
         if(query && query.trim() != ''){
             $(`.style-option[data-value="${imageStyle}"]`).click()

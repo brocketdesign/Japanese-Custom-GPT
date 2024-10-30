@@ -170,6 +170,21 @@ async function initializeCategoriesCollection(db) {
       }
     });
     
+  fastify.decorate('createNotification', async (userId, message, type, data) => {
+    const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+    const notificationsCollection = db.collection('notifications');
+
+    const notification = {
+      userId: new fastify.mongo.ObjectId(userId),
+      message,
+      type: type || 'info',
+      data: data || {},
+      viewed: false,
+      createdAt: new Date(),
+    };
+
+    await notificationsCollection.insertOne(notification);
+  });
     
     // Routes
     fastify.get('/', async (request, reply) => {
@@ -429,18 +444,33 @@ async function initializeCategoriesCollection(db) {
         const userId = user._id;
         const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
         user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+    
         const translations = request.translations;
+        const page = request.query.page || 1;
         const query = request.query.q || null;
-        const imageStyle = request.query.imageStyle || 'anime'
+        const imageStyle = request.query.imageStyle || 'anime';
+    
+        // Ensure the fetch URL is absolute. Adjust the base URL as needed.
+        const baseUrl = `${request.protocol}://${request.hostname}`;
+        const response = await fetch(`${baseUrl}/api/chats?page=${page}&type=${imageStyle}&q=${encodeURIComponent(query)}`);
+
+        if (!response.ok) {
+          console.log(`Failed to fetch chats: ${response.statusText}`);
+        }
+    
+        const data = await response.json();
+
         let seoTitle = 'コミュニティからの最新投稿 | LAMIX';
         let seoDescription = 'Lamixでは、無料でAIグラビアとのチャット中に生成された画像を使って、簡単に投稿を作成することができます。';
         if (query) {
           seoTitle = `${query} に関する検索結果 | LAMIX`;
           seoDescription = `${query} の検索結果を表示しています。Lamixでお気に入りの画像を見つけましょう。`;
         }
+        
         return reply.view('search.hbs', {
           title: seoTitle,
           user,
+          data,
           translations,
           query,
           imageStyle,
@@ -453,9 +483,12 @@ async function initializeCategoriesCollection(db) {
           ],
         });
       } catch (error) {
-        console.log(error);
+        console.error(error);
+        // Send an error response to the client
+        return reply.status(500).send({ error: 'Internal Server Error' });
       }
     });
+    
     
     fastify.get('/about', async(request, reply) => {
       const translations = request.translations

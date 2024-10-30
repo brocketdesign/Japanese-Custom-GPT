@@ -9,7 +9,7 @@ const { promisify } = require('util');
 const fs = require('fs').promises;
 const path = require('path');
 
-const adminEmails = ['japanclassicstore@gmail.com','didier@line.com','e2@gmail.com','hotta.yuki@hatoltd.com']; // Add your admin emails here
+const adminEmails = ['japanclassicstore@gmail.com','didier@line.com','didier@hatoltd.com','e2@gmail.com','hotta.yuki@hatoltd.com']; // Add your admin emails here
 
 async function checkUserAdmin(fastify, userId) {
     const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');

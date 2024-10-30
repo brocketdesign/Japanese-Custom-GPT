@@ -988,14 +988,18 @@ function generateUserChatsPagination(userId, currentPage, totalPages) {
 }
 
 
-window.displayPeopleChat = async function (page = 1,type,query = false) {
+window.displayPeopleChat = async function (page = 1,type,query = false, preLoadedData) {
     const currentUser = await fetchUser();
     const currentUserId = currentUser._id;
     
     try {
-        const response = await fetch(`/api/chats?page=${page}&type=${type}&q=${query}`);
-        const data = await response.json();
-
+        let data
+        if(preLoadedData && preLoadedData.length > 0){
+            data = preLoadedData
+        }else{
+            const response = await fetch(`/api/chats?page=${page}&type=${type}&q=${query}`);
+            data = await response.json();
+        }
         let recentChats = data.recent || [];
         let htmlContent = '';
 
@@ -1070,13 +1074,13 @@ window.displayPeopleChat = async function (page = 1,type,query = false) {
         // Update the gallery HTML
         $('#chat-gallery').append(htmlContent);
         if($('#chat-pagination-controls').length > 0){      
-            generateChatsPagination(data.page, data.totalPages, type);
+            generateChatsPagination(data.page, data.totalPages, type, query);
         }
     } catch (err) {
         console.error('Failed to load chats', err);
     }
 };
-function generateChatsPagination(currentPage, totalPages, type) {
+function generateChatsPagination(currentPage, totalPages, type, query) {
     let paginationHtml = '';
     const sidePagesToShow = 2;
     let pagesShown = new Set();
@@ -1098,7 +1102,7 @@ function generateChatsPagination(currentPage, totalPages, type) {
     }
 
     if (totalPages > 1) {
-        paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="displayPeopleChat(${currentPage - 1},${type})">${window.translations.prev}</button>`;
+        paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="displayPeopleChat(${currentPage - 1},'${type}','${query}')">${window.translations.prev}</button>`;
 
         if (currentPage > sidePagesToShow + 1) {
             paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="displayPeopleChat(1,${type})">1</button>`;
@@ -1109,15 +1113,15 @@ function generateChatsPagination(currentPage, totalPages, type) {
         let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
 
         for (let i = startPage; i <= endPage; i++) {
-            paginationHtml += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="displayPeopleChat(${i},${type})">${i}</button>`;
+            paginationHtml += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="displayPeopleChat(${i},'${type}','${query}')">${i}</button>`;
         }
 
         if (currentPage < totalPages - sidePagesToShow - 1) {
             if (currentPage < totalPages - sidePagesToShow - 2) paginationHtml += `<span class="mx-1">...</span>`;
-            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="displayPeopleChat(${totalPages},${type})">${totalPages}</button>`;
+            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="displayPeopleChat(${totalPages},'${type}','${query}')">${totalPages}</button>`;
         }
 
-        paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="displayPeopleChat(${currentPage + 1},${type})">${window.translations.next}</button>`;
+        paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="displayPeopleChat(${currentPage + 1},'${type}','${query}')">${window.translations.next}</button>`;
     }
 
     $('#chat-pagination-controls').html(paginationHtml);

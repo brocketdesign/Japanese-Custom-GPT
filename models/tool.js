@@ -306,8 +306,8 @@ async function getUserData(userId, collectionUser, collectionChat, currentUser) 
     if (!user) return null;
   
     const isFollowing = currentUser.following && currentUser.following.some(followingId => followingId.toString() === user._id.toString());
-    const chatCount = await collectionChat.distinct('chatImageUrl', { userId: new ObjectId(userId) });
-  
+    const chatCount = await collectionChat.distinct('chatImageUrl', { userId: new ObjectId(userId),isTemporary: false });
+ 
     return {
       _id: user._id,
       profileUrl: user.profileUrl,

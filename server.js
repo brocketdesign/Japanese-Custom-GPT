@@ -180,6 +180,7 @@ async function initializeCategoriesCollection(db) {
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
       let chatCount = await collectionChat.distinct('chatImageUrl', { userId: new fastify.mongo.ObjectId(userId) });
       chatCount = chatCount.length
+      return reply.redirect('/chat')
       if (user.isTemporary || chatCount == 0) {
         return reply.redirect('/chat/edit/')
       }else{
@@ -599,6 +600,7 @@ async function initializeCategoriesCollection(db) {
         const userId = new fastify.mongo.ObjectId(request.user._id)
         const chatsCollection = db.collection('chats');
         const chats = await await chatsCollection.distinct('chatImageUrl', { userId: new fastify.mongo.ObjectId(userId) });
+        return reply.redirect('/chat/')
         if(chats.length == 0){
           return reply.redirect('/chat/edit/')
         }else{

@@ -33,7 +33,7 @@ async function routes(fastify, options) {
       createdAt: n._id.createdAt,
       viewedCount: n.viewedCount
     }));
-    console.log({formattedNotifications})
+
     return reply.view('/admin/notifications', { notifications: formattedNotifications });
   });
 

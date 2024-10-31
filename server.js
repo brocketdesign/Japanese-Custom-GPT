@@ -196,6 +196,7 @@ async function initializeCategoriesCollection(db) {
       let chatCount = await collectionChat.distinct('chatImageUrl', { userId: new fastify.mongo.ObjectId(userId) });
       chatCount = chatCount.length
 
+      return reply.redirect('/chat')
       if (user.isTemporary || chatCount == 0) {
         return reply.redirect('/chat/edit/')
       }else{

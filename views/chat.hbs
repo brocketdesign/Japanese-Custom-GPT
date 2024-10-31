@@ -48,7 +48,7 @@
                     </div>  
                     <div>
                         <div class="navbar-collapse" id="navbarNav" style="position: absolute;right: 20px;top: 10px;">
-                            <ul class="navbar-nav ms-auto mb-lg-0">
+                            <ul class="navbar-nav ms-auto flex-row mb-lg-0">
                                 {{#if user.isTemporary}}
                                 {{else}}
                                 <li class="nav-item btn btn-light onchat-on me-2" onclick="showCoinShop(this)">
@@ -56,9 +56,7 @@
                                     <span class="user-coins fw-bold"></span>
                                 </li>
                                 {{/if}}
-                                <li class="nav-item dropdown onchat-off">
-                                    {{> dashboard-avatar}}
-                                </li>
+                                {{> dashboard-avatar}}
                             </ul>
                         </div>
                     </div>     

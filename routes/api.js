@@ -1053,6 +1053,7 @@ async function routes(fastify, options) {
             timeMessage = { "role": "user", "content": timeMessage };
             userMessages.push(timeMessage);
             userMessagesForCompletion.push(timeMessage);
+            
             //Add user coins
             let coinsMessage = `[Hidden] The correct number of coins I own is : ${userCoins}.Use it for context.`
             coinsMessage = { "role": "user", "content": coinsMessage };

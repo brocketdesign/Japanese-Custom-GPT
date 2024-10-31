@@ -660,10 +660,12 @@ async function routes(fastify, options) {
                 }
         
                 // Add the new user message to the chat document
-                userChatDocument.messages.push({ "role": "user", "content": message });
+                if(message){
+                    userChatDocument.messages.push({ "role": "user", "content": message });
+                }
                 userChatDocument.updatedAt = today;
 
-                if (!message.match(/^\[[^\]]+\].*/)) {
+                if (!message?.match(/^\[[^\]]+\].*/)) {
                     // Increment the progress (should add levels nextLevel)
                     userChatDocument.messagesCount = (userChatDocument.messagesCount ?? 0) + 1
 
@@ -971,6 +973,7 @@ async function routes(fastify, options) {
             const isHidden = session.isHidden
             const collectionChatLastMessage = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chatLastMessage');
             const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+            const userInfo = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
             let userData = await collectionUserChat.findOne({ userId:new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) })
 
             if (!userData) {
@@ -982,8 +985,7 @@ async function routes(fastify, options) {
             let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
             const chatname = chatDocument.name
 
-            const userCoins = userData.coins;
-            console.log({userCoins})
+            const userCoins = userInfo.coins;
             const userMessages = userData.messages;
 
             //Add the time before completion

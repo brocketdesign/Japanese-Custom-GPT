@@ -570,7 +570,7 @@ $(document).ready(async function() {
     }
     
     function displayInitialChatInterface(chat) {
-        generateCompletion()
+        displayStarter(chat);
         return
         selectPersona(() => {
             displayStarter(chat);
@@ -1069,8 +1069,8 @@ $(document).ready(async function() {
         let currentDate = new Date();
         let currentTimeInJapanese = `${currentDate.getHours()}時${currentDate.getMinutes()}分`;
         
-        let message = `[${window.translations.conversationStarter.starter}] ${window.translations.conversationStarter.prompt}. ${window.translations.conversationStarter.useTime.replace('%{time}', currentTimeInJapanese)} ${window.translations.conversationStarter.dontStartWithConfirmation}. Also include in your message that I have ${userCoins}. `;
-        
+        //let message = `[${window.translations.conversationStarter.starter}] ${window.translations.conversationStarter.prompt}. ${window.translations.conversationStarter.useTime.replace('%{time}', currentTimeInJapanese)} ${window.translations.conversationStarter.dontStartWithConfirmation}. Also include in your message that I have ${userCoins}. `;
+        let message = null
         if($('#chat-widget-container').length == 0 && isTemporary){
             message = `[${window.translations.loginStarter.starter}] ${window.translations.loginStarter.prompt}`;
         }
@@ -2602,7 +2602,7 @@ function showPaymentImage(type) {
             displayMessage('user', message, function() {
                 addMessageToChat(chatId, userChatId, 'user', message);
             });
-            const hiddenMessage = `[Hidden] I bought a ${type} image. The image generation process is starting now. It may take a minute or so to complte.Tell ne to wait.`
+            const hiddenMessage = `[Hidden] I bought a ${type} image for ${price} coins. The image generation process is starting now. It may take a minute or so to complte.Thanks me and tell me to wait.`
             addMessageToChat(chatId, userChatId, 'user', hiddenMessage, function(){
                 generateCompletion(function(){
                     displayImageLoader()
@@ -3276,7 +3276,7 @@ window.updateCoins = function(userCoins = null, callback) {
             success: function(response) {
                 const userCoins = response.user.coins;
                 $('.user-coins').each(function(){$(this).html(userCoins)})
-                callback(userCoins)
+                if(typeof callback == 'function') { callback(userCoins) }
             }
         });
         return

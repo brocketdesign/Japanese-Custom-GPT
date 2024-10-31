@@ -1039,7 +1039,8 @@ async function routes(fastify, options) {
             const chatname = chatDocument.name
 
             const userCoins = userInfo.coins;
-            const userMessages = userData.messages.filter(msg => !msg.content.startsWith('[Image]'));
+            const userMessages = userData.messages
+            const userMessagesForCompletion = userData.messages.filter(msg => !msg.content.startsWith('[Image]'));
 
             // Add instructions
             const functionMess = { "role": "user", "content": aiInstructionsShort };
@@ -1051,15 +1052,16 @@ async function routes(fastify, options) {
             let timeMessage = `[Hidden] Current time : ${currentTimeInJapanese}.Do not tell me the time. Use it for context.`
             timeMessage = { "role": "user", "content": timeMessage };
             userMessages.push(timeMessage);
-
+            userMessagesForCompletion.push(timeMessage);
             //Add user coins
             let coinsMessage = `[Hidden] The correct number of coins I own is : ${userCoins}.Use it for context.`
             coinsMessage = { "role": "user", "content": coinsMessage };
             userMessages.push(coinsMessage);
+            userMessagesForCompletion.push(coinsMessage);
 
             // Gen completion
             let completion = ``
-            completion = await fetchOpenAICompletion(userMessages, reply.raw, 300);
+            completion = await fetchOpenAICompletion(userMessagesForCompletion, reply.raw, 300);
 
             // Append the assistant's response to the messages array in the chat document
             const assistantMessage = { "role": "assistant", "content": isHidden? '[Hidden] '+completion:completion };

@@ -413,7 +413,6 @@ async function initializeCategoriesCollection(db) {
             return reply.code(404).send({ error: 'Image not found' });
           }
         }
-        console.log({isBlur})
         // Render the page with chat and image data (image can be null if no imageId was provided)
         return reply.view('character.hbs', {
           title: chat.name+'とAIチャットしながら無料AI画像生成を楽しもう',

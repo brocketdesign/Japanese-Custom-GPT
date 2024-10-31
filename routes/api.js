@@ -1039,7 +1039,7 @@ async function routes(fastify, options) {
             const chatname = chatDocument.name
 
             const userCoins = userInfo.coins;
-            const userMessages = userData.messages;
+            const userMessages = userData.messages.filter(msg => !msg.content.startsWith('[Image]'));
 
             // Add instructions
             const functionMess = { "role": "user", "content": aiInstructionsShort };
@@ -1717,7 +1717,7 @@ async function routes(fastify, options) {
         return JSON.parse(data.choices[0].message.content).isRelevant;
     }
     
-    async function generateEnglishDescription(lastMessages) {
+    async function generateEnglishDescription(lastMessages,type) {
         const response = await fetch("https://api.novita.ai/v3/openai/chat/completions", {
             headers: {
                 "Content-Type": "application/json",
@@ -1741,7 +1741,7 @@ async function routes(fastify, options) {
                             }
                         `
                     },
-                    { role: "user", content: `Analyze the following messages and return the last relevant image description in English:\n${lastMessages.map(m => m.content).join('\n')}\n Only one image.` },
+                    { role: "user", content: `Analyze the following messages and return the last relevant image description in English:\n${lastMessages.map(m => m.content).join('\n')}\n Only one image. Provide details, for a ${type} image. ${type == 'nsfw'?' Detail the position, body part to show, be explicit, add details':''}` },
                 ],
                 temperature: 0.85,
                 top_p: 0.95,
@@ -1758,7 +1758,7 @@ async function routes(fastify, options) {
         return JSON.parse(data.choices[0].message.content);
     }
     
-    async function generateJapaneseNameAndDescription(lastMessages) {
+    async function generateJapaneseNameAndDescription(lastMessages,type) {
         const response = await fetch("https://api.novita.ai/v3/openai/chat/completions", {
             headers: {
                 "Content-Type": "application/json",
@@ -1783,7 +1783,7 @@ async function routes(fastify, options) {
                             }
                         `
                     },
-                    { role: "user", content: `Analyze the following messages and return the last relevant image name and description in Japanese:\n${lastMessages.map(m => m.content).join('\n')}\n Only one image.` },
+                    { role: "user", content: `Analyze the following messages and return the last relevant image name and description in Japanese:\n${lastMessages.map(m => m.content).join('\n')}\n Only one image. It must be a ${type} image.` },
                 ],
                 temperature: 0.85,
                 top_p: 0.95,
@@ -1864,7 +1864,7 @@ async function routes(fastify, options) {
         }
     });
     fastify.post('/api/gen-item-data', async (request, reply) => {
-        const { userId, chatId, userChatId } = request.body;
+        const { userId, chatId, userChatId, type } = request.body;
     
         try {
             const userData = await fetchUserData(fastify, userId, userChatId);
@@ -1879,8 +1879,8 @@ async function routes(fastify, options) {
             let attempts = 0;
             while (attempts < 3) {
                 try {
-                    const englishDescription = await generateEnglishDescription(lastMessages);
-                    const japaneseData = await generateJapaneseNameAndDescription(lastMessages);
+                    const englishDescription = await generateEnglishDescription(lastMessages,type);
+                    const japaneseData = await generateJapaneseNameAndDescription(lastMessages,type);
     
                     const combinedProposal = {
                         items: englishDescription.items.map((item, index) => ({
@@ -1889,6 +1889,7 @@ async function routes(fastify, options) {
                         })),
                     };
                     const parsedProposal = PurchaseProposalExtraction.parse(combinedProposal);
+                    console.log(parsedProposal)
                     const insertedProposals = await insertProposals(fastify, parsedProposal, characterDescription);
                     return reply.send(insertedProposals);
                 } catch (error) {

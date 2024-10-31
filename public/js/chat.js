@@ -2569,13 +2569,13 @@ function showPaymentImage(type) {
             }
         });
     }
-    async function generateItemData() {
+    async function generateItemData(type) {
         return new Promise((resolve, reject) => {
             $.ajax({
                 url: '/api/gen-item-data',
                 type: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({ userId, chatId, userChatId }),
+                data: JSON.stringify({ userId, chatId, userChatId, type }),
                 success: function(response) {
                     if (response.length > 0) {
                         resolve(response);
@@ -2611,7 +2611,7 @@ function showPaymentImage(type) {
             showCoinShop();
             return
         }
-        const item = await generateItemData()
+        const item = await generateItemData(type)
         generateImageNovita(API_URL, userId, chatId, userChatId, item[0]._id, thumbnail, type);
     }
     window.buyItem = function(itemId, itemName, itemPrice, item_id, status, userId, chatId, userChatId, imageType) {

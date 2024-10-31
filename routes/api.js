@@ -660,6 +660,7 @@ async function routes(fastify, options) {
                         updatedAt: today
                     };
                     const userDetails = `${!user.isTemporary ? `My name is ${persona ? persona.name : user.nickname}, I am a ${persona ? persona.gender : user.gender}, I was born on ${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日. ${persona ? `\nAbout me: ${persona.description}` : ''}${persona && persona.prompt ? `\n ${persona.prompt}` : ''}` : ''}`
+                    const messStarter = `${!user.isTemporary ? `[Hidden] Start the conversation by greeting me warmly and informing me that I have ${userCoins} coins left. Do not start with a confirmation; begin directly with the greeting and the coin information.` : `[Hidden] Start the conversation by greeting. Do not start with a confirmation; begin directly with the greeting and ask me to login.`}`
                     const systemMessages = [
                         {
                             "role": "system",
@@ -694,7 +695,7 @@ async function routes(fastify, options) {
                         },
                         {
                             "role": "user",
-                            "content": `[Hidden] Start the conversation by greeting me warmly and informing me that I have ${userCoins} coins left. Do not start with a confirmation; begin directly with the greeting and the coin information.`
+                            "content": messStarter
                         }
                     ]
                     userChatDocument.messages = systemMessages

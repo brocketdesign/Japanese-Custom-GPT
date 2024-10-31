@@ -1071,7 +1071,7 @@ $(document).ready(async function() {
         //let message = `[${window.translations.conversationStarter.starter}] ${window.translations.conversationStarter.prompt}. ${window.translations.conversationStarter.useTime.replace('%{time}', currentTimeInJapanese)} ${window.translations.conversationStarter.dontStartWithConfirmation}. Also include in your message that I have ${userCoins}. `;
         let message = null
         if($('#chat-widget-container').length == 0 && isTemporary){
-            message = `[${window.translations.loginStarter.starter}] ${window.translations.loginStarter.prompt}`;
+            //message = `[${window.translations.loginStarter.starter}] ${window.translations.loginStarter.prompt}`;
         }
 
         $.ajax({

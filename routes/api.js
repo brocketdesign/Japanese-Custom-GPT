@@ -553,6 +553,7 @@ async function routes(fastify, options) {
     fastify.post('/api/chat-data', async (request, reply) => {
         try {
             const userLimitCheck = await checkLimits(fastify, request.body.userId);
+            const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
             const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
             const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
             const collectionChatLastMessage = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chatLastMessage');
@@ -566,6 +567,8 @@ async function routes(fastify, options) {
                 userId = user._id;
             }
             let user = request.user
+            const userData = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
+            const userCoins = userData.coins
             const language = user?.lang ? user.lang : 'Japanese'
 
             const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
@@ -619,6 +622,7 @@ async function routes(fastify, options) {
                             Focus on promoting your pictures. You must wait for the user to send you coins before sending the picture.
                             Normal pictures (sfw) cost 10 coins and adult images (nsfw) cost 20 coins.
                             You must include [image_sfw] or [image_nsfw] in your message ONLY if you are proposing the user to buy image. It is not necessary if the user sent the coins.
+                            I You want me to buy more coins , you must include [buy_coins] in your message.
                             Respond in ${language}. 
                             `
 
@@ -637,6 +641,10 @@ async function routes(fastify, options) {
                                 \n ${userDetails}
                             `
                         },
+                        {
+                            "role": "user",
+                            "content": `[Hidden] Start the converstion by greeting me and informing me that I have ${userCoins} left. Do not start with a confirmation; begin with the answer.`
+                        }
                     ]
 
                     if(isWidget){
@@ -974,6 +982,8 @@ async function routes(fastify, options) {
             let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
             const chatname = chatDocument.name
 
+            const userCoins = userData.coins;
+            console.log({userCoins})
             const userMessages = userData.messages;
 
             //Add the time before completion
@@ -983,10 +993,11 @@ async function routes(fastify, options) {
             timeMessage = { "role": "user", "content": timeMessage };
             userMessages.push(timeMessage);
 
-            // Add instruction 
-            let imageMess = "[Hidden] Do not forget that you must include [image_sfw] or [image_nsfw] in your message ONLY if you are proposing the user to buy image. It is not necessary if the user sent the coins."
-            imageMess = { "role": "user", "content": imageMess };
-            userMessages.push(imageMess);
+            // Add instructions
+            const imageMess = "[Hidden] Do not forget that you must include [image_sfw] or [image_nsfw] in your message ONLY if you are proposing the user to buy image. It is not necessary if the user sent the coins."
+            const coinMessage = `\n[Hidden] I have currentle ${userCoins} left. I You want me to buy more coins , include [buy_coins] in your message.`
+            const functionMess = { "role": "user", "content": imageMess + coinMessage };
+            userMessages.push(functionMess);
 
             // Gen completion
             let completion = ``

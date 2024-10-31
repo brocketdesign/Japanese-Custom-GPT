@@ -570,7 +570,7 @@ $(document).ready(async function() {
     }
     
     function displayInitialChatInterface(chat) {
-        displayStarter(chat);
+        generateCompletion()
         return
         selectPersona(() => {
             displayStarter(chat);
@@ -1069,7 +1069,7 @@ $(document).ready(async function() {
         let currentDate = new Date();
         let currentTimeInJapanese = `${currentDate.getHours()}時${currentDate.getMinutes()}分`;
         
-        let message = `[${window.translations.conversationStarter.starter}] ${window.translations.conversationStarter.prompt}. ${window.translations.conversationStarter.useTime.replace('%{time}', currentTimeInJapanese)} ${window.translations.conversationStarter.dontStartWithConfirmation}`;
+        let message = `[${window.translations.conversationStarter.starter}] ${window.translations.conversationStarter.prompt}. ${window.translations.conversationStarter.useTime.replace('%{time}', currentTimeInJapanese)} ${window.translations.conversationStarter.dontStartWithConfirmation}. Also include in your message that I have ${userCoins}. `;
         
         if($('#chat-widget-container').length == 0 && isTemporary){
             message = `[${window.translations.loginStarter.starter}] ${window.translations.loginStarter.prompt}`;
@@ -1956,6 +1956,9 @@ $(document).ready(async function() {
             case '画像_nsfw':
                 showPaymentImage('nsfw');
                 break;
+            case 'buy_coins':
+                showBuyCoins()
+                break;
             default:
                 console.warn(`Unhandled trigger command: ${command}`);
         }
@@ -2491,7 +2494,18 @@ function attachPromptCardEvents() {
         controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isNSFWChecked);
     });
 }
+function showBuyCoins(){
+    const message = `
+    <div class="d-flex justify-content-start">
+        <button class="btn custom-gradient-bg shadow-0 w-45 me-2" 
+            onclick="showCoinShop()">
+            <span>10<span class="mx-1">🪙</span></span>
+        </button>
+    </div>
+    `;
+    displayMessage('assistant', message);
 
+}
 function showPaymentImage(type) {
     const messageId = `msg_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     const message = `
@@ -3254,7 +3268,7 @@ function constructChatItemHtml(chat, isActive) {
     `;
 }
 
-window.updateCoins = function(userCoins = null) {
+window.updateCoins = function(userCoins = null, callback) {
         let API_URL = localStorage.getItem('API_URL')
         $.ajax({
             url: API_URL+'/api/user',
@@ -3262,6 +3276,7 @@ window.updateCoins = function(userCoins = null) {
             success: function(response) {
                 const userCoins = response.user.coins;
                 $('.user-coins').each(function(){$(this).html(userCoins)})
+                callback(userCoins)
             }
         });
         return

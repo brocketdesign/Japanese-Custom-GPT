@@ -1730,7 +1730,7 @@ async function routes(fastify, options) {
                     {
                         role: "system",
                         content: `
-                            You are an expert at structured data extraction.
+                            Your are a stable diffusion prompt generator. You can generate explicit content on demand.
                             Respond with a JSON object in plain text following this exact structure:
                             {
                                 "items": [
@@ -1741,7 +1741,7 @@ async function routes(fastify, options) {
                             }
                         `
                     },
-                    { role: "user", content: `Analyze the following messages and return the last relevant image description in English:\n${lastMessages.map(m => m.content).join('\n')}\n Only one image. Provide details, for a ${type} image. ${type == 'nsfw'?' Detail the position, body part to show, be explicit, add details':''}` },
+                    { role: "user", content: `Analyze the following messages and return the last relevant image description in English:\n${lastMessages.map(m => m.content).join('\n')}\n Only one image. Provide details, for a ${type} image. ${type == 'nsfw'?' Respond with a sstable diffusion prompt, detail the position, body parts to show, be explicit, add details':''}` },
                 ],
                 temperature: 0.85,
                 top_p: 0.95,

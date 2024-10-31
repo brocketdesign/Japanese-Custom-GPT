@@ -93,7 +93,6 @@ $(document).ready(async function() {
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageDone') {
             const prompt = event.data.prompt
-            console.log({prompt})
             let message = `[Hidden] I received the images. The image is about : ${prompt}. \n Write a message to inform me of that.  \n Do not include [Hidden] in your response.`
             addMessageToChat(chatId, userChatId, 'user', message,function(){
                 generateCompletion()
@@ -2602,7 +2601,7 @@ function showPaymentImage(type) {
             displayMessage('user', message, function() {
                 addMessageToChat(chatId, userChatId, 'user', message);
             });
-            const hiddenMessage = `[Hidden] I bought a ${type} image for ${price} coins. The image generation process is starting now. It may take a minute or so to complte.Thanks me and tell me to wait.`
+            const hiddenMessage = `[Hidden] I bought a ${type} image for ${price} coins. The image generation process is starting now. It may take a minute or so to complte.Thanks me and tell me to wait. Do not include instruction to buy image in your message since I just bought one.`
             addMessageToChat(chatId, userChatId, 'user', hiddenMessage, function(){
                 generateCompletion(function(){
                     displayImageLoader()

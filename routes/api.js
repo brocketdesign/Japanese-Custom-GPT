@@ -1042,7 +1042,7 @@ async function routes(fastify, options) {
 
             // Add instructions
             const functionMess = { "role": "user", "content": aiInstructionsShort };
-            userMessages.push(functionMess);
+            //userMessages.push(functionMess);
 
             //Add the time before completion
             let currentDate = new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" });

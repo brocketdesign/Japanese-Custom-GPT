@@ -11,8 +11,10 @@
         <table class="table table-bordered table-hover">
             <thead class="table-dark">
                 <tr>
+                    <th>Title</th>
                     <th>Message</th>
                     <th>Type</th>
+                    <th>Sticky</th>
                     <th>Created At</th>
                     <th>Viewed By</th>
                     <th>Actions</th>
@@ -21,8 +23,10 @@
             <tbody id="notificationsTable">
                 {{#each notifications}}
                 <tr data-id="{{this._id}}">
+                    <td>{{this.title}}</td>
                     <td>{{this.message}}</td>
                     <td>{{this.type}}</td>
+                    <td>{{#if this.sticky}}Yes{{else}}No{{/if}}</td>
                     <td>{{this.createdAt}}</td>
                     <td>{{this.viewedCount}}</td>
                     <td>
@@ -47,7 +51,11 @@
               <div class="modal-body">
                   <div class="mb-3">
                       <label class="form-label">User ID (leave 'all' for all users)</label>
-                      <input type="text" class="form-control" name="userId" required>
+                      <input type="text" class="form-control" name="userId">
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">Title</label>
+                      <input type="text" class="form-control" name="title" required>
                   </div>
                   <div class="mb-3">
                       <label class="form-label">Message</label>
@@ -64,6 +72,10 @@
                   <div class="mb-3">
                       <label class="form-label">Data (JSON)</label>
                       <textarea class="form-control" name="data"></textarea>
+                  </div>
+                  <div class="mb-3 form-check">
+                      <input type="checkbox" class="form-check-input" id="stickyCheckbox" name="sticky">
+                      <label class="form-check-label" for="stickyCheckbox">Sticky Notification</label>
                   </div>
               </div>
               <div class="modal-footer">
@@ -87,6 +99,10 @@
               <div class="modal-body">
                   <input type="hidden" name="id">
                   <div class="mb-3">
+                      <label class="form-label">Title</label>
+                      <input type="text" class="form-control" name="title" required>
+                  </div>
+                  <div class="mb-3">
                       <label class="form-label">Message</label>
                       <input type="text" class="form-control" name="message" required>
                   </div>
@@ -101,6 +117,10 @@
                   <div class="mb-3">
                       <label class="form-label">Data (JSON)</label>
                       <textarea class="form-control" name="data"></textarea>
+                  </div>
+                  <div class="mb-3 form-check">
+                      <input type="checkbox" class="form-check-input" id="editStickyCheckbox" name="sticky">
+                      <label class="form-check-label" for="editStickyCheckbox">Sticky Notification</label>
                   </div>
               </div>
               <div class="modal-footer">
@@ -124,9 +144,11 @@
             const form = e.target;
             const data = {
                 userId: form.userId.value,
+                title: form.title.value,
                 message: form.message.value,
                 type: form.type.value,
-                data: form.data.value ? JSON.parse(form.data.value) : {}
+                data: form.data.value ? JSON.parse(form.data.value) : {},
+                sticky: form.sticky.checked
             };
             try {
                 const res = await fetch('/notifications', {
@@ -156,9 +178,11 @@
                     const editModal = new bootstrap.Modal(document.getElementById('editModal'));
                     const form = document.getElementById('editForm');
                     form.id.value = data._id;
+                    form.title.value = data.title || '';
                     form.message.value = data.message;
                     form.type.value = data.type;
-                    form.data.value = JSON.stringify(data.data);
+                    form.data.value = data.data ? JSON.stringify(data.data) : '';
+                    form.sticky.checked = data.sticky || false;
                     editModal.show();
                 } else {
                     showNotification('Failed to fetch notification', 'error');
@@ -171,9 +195,11 @@
             const form = e.target;
             const id = form.id.value;
             const data = {
+                title: form.title.value,
                 message: form.message.value,
                 type: form.type.value,
-                data: form.data.value ? JSON.parse(form.data.value) : {}
+                data: form.data.value ? JSON.parse(form.data.value) : {},
+                sticky: form.sticky.checked
             };
             try {
                 const res = await fetch(`/notifications/${id}`, {
@@ -215,6 +241,16 @@
                     }
                 });
             });
+        });
+
+        document.getElementById('stickyCheckbox').addEventListener('change', function() {
+            const userIdField = document.querySelector('input[name="userId"]');
+            if (this.checked) {
+                userIdField.value = '';
+                userIdField.disabled = true;
+            } else {
+                userIdField.disabled = false;
+            }
         });
     </script>
 </body>

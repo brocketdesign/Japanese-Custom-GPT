@@ -849,10 +849,16 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     }
 
     const viewed = request.query.viewed;
-    const filter = { userId: targetUserId };
+    const orConditions = [
+        { userId: targetUserId },
+        { sticky: true, dismissedBy: { $ne: targetUserId } }
+    ];
+
     if (viewed !== undefined) {
-      filter.viewed = viewed === 'true';
+        orConditions[0].viewed = viewed === 'true';
     }
+
+    const filter = { $or: orConditions };
 
     const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
     const notificationsCollection = db.collection('notifications');
@@ -864,7 +870,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
 
     reply.send(notifications);
   });
-  
 }
+
 
 module.exports = routes;

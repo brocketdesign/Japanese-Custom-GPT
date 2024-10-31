@@ -2018,7 +2018,6 @@ function getUnviewedNotifications(userId) {
         dataType: 'json'
     });
 }
-
 window.displayNotifications = function(userId) {
     getUnviewedNotifications(userId)
         .done(function(notifications) {
@@ -2028,40 +2027,44 @@ window.displayNotifications = function(userId) {
                 dropdown.append(`<li class="dropdown-item">${window.translations.notifications.nothing}</li>`);
             } else {
                 notifications.forEach(n => {
-                    dropdown.append(`<li type="button" class="dropdown-item clickable" data-id="${n._id}">${n.message}</li>`);
+                    dropdown.append(`<li type="button" class="dropdown-item clickable" data-id="${n._id}" data-type="${n.type}" data-title="${n.title}" data-message="${n.message}">${n.title.slice(0.20) || n.message.slice(0.20)}</li>`);
                 });
             }
 
             $('.clickable').on('click', function() {
                 const notificationId = $(this).data('id');
-                const message = $(this).text();
+                const title = $(this).data('title');
+                const type = $(this).data('type');
+                const message = $(this).data('message');
 
                 Swal.fire({
-                    title: 'Notification',
+                    title: title || 'Notification',
                     text: message,
-                    icon: 'info',
-                    showCancelButton: true,
-                    confirmButtonText: window.translations.notifications.viewed,
-                    cancelButtonText: 'Close'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            url: `/notifications/${notificationId}/viewed`,
-                            method: 'PUT',
-                            success: function() {
-                                showNotification(window.translations.notifications.viewedMarked, 'success');
-                                // Optionally remove the notification from the dropdown
-                                $(`.dropdown-item[data-id="${notificationId}"]`).remove();
-                                if ($('.notifications-menu').children().length === 0) {
-                                    $('.notifications-menu').append('<li class="dropdown-item">No new notifications</li>');
-                                }
-                                updateNotificationCount(userId);
-                            },
-                            error: function() {
-                                showNotification('Failed to mark as viewed', 'error');
-                            }
-                        });
+                    icon: type,
+                    showCancelButton: false,
+                    showConfirmButton: false,
+                    showCloseButton: true,
+                    showClass: {
+                        popup: 'animate__animated animate__fadeIn'
+                    },
+                    hideClass: {
+                        popup: 'animate__animated animate__fadeOut'
                     }
+                }).then(() => {
+                    $.ajax({
+                        url: `/notifications/${notificationId}/viewed`,
+                        method: 'PUT',
+                        success: function() {
+                            $(`.dropdown-item[data-id="${notificationId}"]`).remove();
+                            if ($('.notifications-menu').children().length === 0) {
+                                $('.notifications-menu').append('<li class="dropdown-item">No new notifications</li>');
+                            }
+                            updateNotificationCount(userId);
+                        },
+                        error: function() {
+                            showNotification('Failed to mark as viewed', 'error');
+                        }
+                    });
                 });
             });
         })
@@ -2069,6 +2072,7 @@ window.displayNotifications = function(userId) {
             showNotification('Failed to load notifications', 'error');
         });
 }
+
 
 $('#notificationIcon').on('click', function() {
     const userId = $(this).data('userid');

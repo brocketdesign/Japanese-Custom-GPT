@@ -16,7 +16,7 @@ async function routes(fastify, options) {
     const notifications = await notificationsCollection.aggregate([
       {
         $group: {
-          _id: {_id:"$_id", message: "$message", type: "$type", createdAt: "$createdAt" },
+          _id: {_id:"$_id", title: "$title", message: "$message", type: "$type", sticky: "$sticky", createdAt: "$createdAt" },
           viewedCount: { $sum: { $cond: ["$viewed", 1, 0] } },
           total: { $sum: 1 }
         }
@@ -26,9 +26,11 @@ async function routes(fastify, options) {
 
     const formattedNotifications = notifications.map(n => ({
       _id: n._id._id,
+      title : n._id.title,
       message: n._id.message,
       type: n._id.type,
-      createdAt: n._id.createdAt.toISOString().split('T')[0],
+      sticky : n._id.sticky,
+      createdAt: n._id.createdAt,
       viewedCount: n.viewedCount
     }));
     console.log({formattedNotifications})

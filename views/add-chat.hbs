@@ -261,6 +261,8 @@
         </div>
     </section>
 {{/if}}
+{{#if user.isTemporary}}
+{{else}}
 <div class="container position-relative rounded shadow p-3 my-4 px-0">
     <h4 class="container mb-4 text-center stepTitle">{{translations.newCharacter.characterCreationForm}}</h4>
     
@@ -404,6 +406,8 @@
         </div>
     </div>
 </div>
+{{/if}}
+
 {{#if user.isTemporary}}
     <section class="container">
         <div class="container row align-items-center h-100 m-auto">

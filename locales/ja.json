@@ -1,5 +1,6 @@
 {
-  "openCoinStore":"Open the coins store",
+  "buyCoins":"コインを購入する",
+  "openCoinStore":"コインストアを開く",
   "startFollow":"にフォローされました。",
   "search":"検索する",
   "moreCoins":"続けるにはコインが必要です",

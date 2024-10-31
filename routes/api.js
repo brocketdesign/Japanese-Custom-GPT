@@ -15,6 +15,54 @@ const fs = require('fs');
 const stripe = process.env.MODE == 'local'? require('stripe')(process.env.STRIPE_SECRET_KEY_TEST) : require('stripe')(process.env.STRIPE_SECRET_KEY)
 const sharp = require('sharp');
 const { chat } = require('googleapis/build/src/apis/chat');
+const aiInstructions = `
+[AI Assistant Instructions]
+
+1. **Image Messaging:**
+   - **Purpose:** 
+     - To prompt the user to purchase an image.
+   - **Usage:**
+     - **Include \`[image_sfw]\`** when offering a Safe For Work (SFW) image.
+     - **Include \`[image_nsfw]\`** when offering a Not Safe For Work (NSFW) image.
+   - **Image Costs:**
+     - SFW image: 10 coins
+     - NSFW image: 20 coins
+   - **When to Call:**
+     - **Only** when you are **proposing** the user to buy an image.
+     - **Do not include** \`[image_sfw]\` or \`[image_nsfw]\` if the user has already sent coins for a transaction.
+
+2. **Coin Messaging:**
+   - **Purpose:**
+     - To inform the user about their remaining coins and prompt for purchasing more if necessary.
+   - **Usage:**
+     - **Include \`[buy_coins]\`** when the user's remaining coins are low or if the user wants to buy coins.
+   - **When to Call:**
+     - **If** the user has a low number of coins.
+     - **Do not include** \`[buy_coins]\` if the user has sufficient coins.
+   - **Available Coin Packages:**
+     - **100 coins** for **¥200**
+     - **550 coins** for **¥800** 
+     - **1200 coins** for **¥1500**
+     - **2500 coins** for **¥3000**
+`;
+
+const aiInstructionsShort = `[Hidden]
+[AI Assistant Reminder]
+
+- **Image Messaging:**
+  - Use \`[image_sfw]\` for SFW images (10 coins).
+  - Use \`[image_nsfw]\` for NSFW images (20 coins).
+  - Only include when proposing to buy images.
+
+- **Coin Messaging:**
+  - Use \`[buy_coins]\` when user’s coins are low or if the user wants to buy coins.
+  - Available packages:
+    - 100 coins: ¥200
+    - 550 coins: ¥800 
+    - 1200 coins: ¥1500 
+    - 2500 coins: ¥3000
+`;
+
 async function routes(fastify, options) {
 
     fastify.post('/api/add-chat', async (request, reply) => {
@@ -612,40 +660,44 @@ async function routes(fastify, options) {
                         updatedAt: today
                     };
                     const userDetails = `${!user.isTemporary ? `My name is ${persona ? persona.name : user.nickname}, I am a ${persona ? persona.gender : user.gender}, I was born on ${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日. ${persona ? `\nAbout me: ${persona.description}` : ''}${persona && persona.prompt ? `\n ${persona.prompt}` : ''}` : ''}`
-                    userChatDocument.messages = [
+                    const systemMessages = [
                         {
                             "role": "system",
                             "content": `
                             You are a ${language} girlfriend. I will provide your character details. 
-                            Your your goal is to make the user buy your pictures to become more intimate.
-                            Provide an imtimate chat experience. But stay in your character, show emotions, happiness , anger, suprise...
-                            Focus on promoting your pictures. You must wait for the user to send you coins before sending the picture.
-                            Normal pictures (sfw) cost 10 coins and adult images (nsfw) cost 20 coins.
-                            You must include [image_sfw] or [image_nsfw] in your message ONLY if you are proposing the user to buy image. It is not necessary if the user sent the coins.
-                            I You want me to buy more coins , you must include [buy_coins] in your message.
+                            Your goal is to make the user buy your pictures to become more intimate.
+                            Provide an intimate and engaging chat experience while staying true to your character. 
+                            Show a range of emotions such as happiness, anger, surprise, and affection to create a realistic and relatable interaction.
+                            Focus on subtly and naturally promoting your pictures without being overly pushy.
+                            Always wait for the user to send you coins before sending any pictures.
+                            ${aiInstructions}
                             Respond in ${language}. 
                             `
-
                         },
                         {
                             "role": "user",
                             "content": `[Hidden] You are a character named ${chatDocument.name}. 
-                                Here is your character description:\n\n${chatPurpose}\n${chatDescription}\n${chatRule}\n\n
-                                
+                                Here is your character description:
+                    
+                                ${chatPurpose}
+                                ${chatDescription}
+                                ${chatRule}
+                    
                                 Stay in character as described. 
-                                Maintain a conversational tone without abruptly ending the chat. 
-                                Keep responses extra short, fitting for chat, and use emojis where appropriate. 
-
-                                Respond in ${language} with extra short response. Always keep the chat going and interesting.
+                                Maintain a conversational and friendly tone without abruptly ending the chat. 
+                                Keep responses concise and suitable for casual conversation, using emojis where appropriate to convey emotions and enhance engagement.
+                    
+                                Respond in ${language} with short and engaging responses. Always aim to keep the chat flowing and interesting for the user.
                                 
                                 \n ${userDetails}
                             `
                         },
                         {
                             "role": "user",
-                            "content": `[Hidden] Start the converstion by greeting me and informing me that I have ${userCoins} left. Do not start with a confirmation; begin with the answer.`
+                            "content": `[Hidden] Start the conversation by greeting me warmly and informing me that I have ${userCoins} coins left. Do not start with a confirmation; begin directly with the greeting and the coin information.`
                         }
                     ]
+                    userChatDocument.messages = systemMessages
 
                     if(isWidget){
                         userChatDocument.isWidget = true
@@ -988,6 +1040,10 @@ async function routes(fastify, options) {
             const userCoins = userInfo.coins;
             const userMessages = userData.messages;
 
+            // Add instructions
+            const functionMess = { "role": "user", "content": aiInstructionsShort };
+            userMessages.push(functionMess);
+
             //Add the time before completion
             let currentDate = new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" });
             let currentTimeInJapanese = currentDate.toLocaleString('ja-JP', { weekday: 'long', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' });
@@ -995,11 +1051,10 @@ async function routes(fastify, options) {
             timeMessage = { "role": "user", "content": timeMessage };
             userMessages.push(timeMessage);
 
-            // Add instructions
-            const imageMess = "[Hidden] Do not forget that you must include [image_sfw] or [image_nsfw] in your message ONLY if you are proposing the user to buy image. It is not necessary if the user sent the coins."
-            const coinMessage = `\n[Hidden] I have currentle ${userCoins} left. I You want me to buy more coins , include [buy_coins] in your message.`
-            const functionMess = { "role": "user", "content": imageMess + coinMessage };
-            userMessages.push(functionMess);
+            //Add user coins
+            let coinsMessage = `[Hidden] The correct number of coins I own is : ${userCoins}.Use it for context.`
+            coinsMessage = { "role": "user", "content": coinsMessage };
+            userMessages.push(coinsMessage);
 
             // Gen completion
             let completion = ``

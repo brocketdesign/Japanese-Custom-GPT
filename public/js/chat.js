@@ -2499,7 +2499,7 @@ function showBuyCoins(){
     <div class="d-flex justify-content-start">
         <button class="btn custom-gradient-bg shadow-0 w-45 me-2" 
             onclick="showCoinShop()">
-            <span>10<span class="mx-1">🪙</span></span>
+            <span>${window.translations.buyCoins || 'コインを購入する'}</span>
         </button>
     </div>
     `;

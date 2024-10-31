@@ -490,7 +490,8 @@ fastify.post('/user/daily-bonus-coins', async (request, reply) => {
 
 
   fastify.post('/plan/create-checkout-session', async (request, reply) => {
-      const { buttonId, userId} = request.body;
+      const { buttonId, userId } = request.body;
+      console.log({ buttonId, userId })
       const frontEnd = process.env.MODE === 'local' 
       ? 'http://localhost:3000' 
       : `https://${request.headers.host}`;

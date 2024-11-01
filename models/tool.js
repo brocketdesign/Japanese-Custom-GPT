@@ -302,26 +302,31 @@ const createBlurredImage = async (imageUrl, db) => {
     }
 };
 async function getUserData(userId, collectionUser, collectionChat, currentUser) {
-    const user = await collectionUser.findOne({ _id: new ObjectId(userId) });
-    if (!user) return null;
+    try {
+        const user = await collectionUser.findOne({ _id: new ObjectId(userId) });
+        if (!user) return null;
 
-    const isFollowing = currentUser?.following && currentUser?.following.some(followingId => followingId.toString() === user._id.toString());
-    const chatCount = await collectionChat.distinct('chatImageUrl', { userId: new ObjectId(userId),isTemporary: false });
- 
-    return {
-      _id: user._id,
-      profileUrl: user.profileUrl,
-      nickname: user.nickname,
-      bio: user.bio,
-      coins: user.coins,
-      follow: isFollowing,
-      followCount: user.followCount,
-      followerCount: user.followerCount,
-      imageLikeCount: user.imageLikeCount,
-      postCount: user.postCount,
-      chatCount: chatCount.length,
-    };
-  };
+        const isFollowing = currentUser?.following && currentUser?.following.some(followingId => followingId.toString() === user._id.toString());
+        const chatCount = await collectionChat.distinct('chatImageUrl', { userId: new ObjectId(userId), isTemporary: false });
+
+        return {
+            _id: user._id,
+            profileUrl: user.profileUrl,
+            nickname: user.nickname,
+            bio: user.bio,
+            coins: user.coins,
+            follow: isFollowing,
+            followCount: user.followCount,
+            followerCount: user.followerCount,
+            imageLikeCount: user.imageLikeCount,
+            postCount: user.postCount,
+            chatCount: chatCount.length,
+        };
+    } catch (error) {
+        console.error("Error fetching user data:", error);
+    }
+}
+
   async function initializeImageStyle() {
     try {
       const db = fastify.mongo.client.db(process.env.MONGODB_NAME); // Use fastify's MongoDB connection

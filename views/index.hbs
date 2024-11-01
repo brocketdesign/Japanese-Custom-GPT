@@ -1,653 +1,343 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{title}}</title>
-    <link rel="icon" href="/img/logo.webp" type="image/webp">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link rel="stylesheet" href="/css/style.css">
-</head>
+   {{> dashboard-header}}
 <body>
-<nav class="navbar navbar-light bg-transparent py-1 sticky-top" style="border-bottom: 1px solid rgba(210, 184, 255, 0.2);">
-  <div class="container-fluid justify-content-between">
-    <a class="navbar-brand d-flex flex-row align-items-center bg-white px-5 py-2" href="/">
-      <img src="/img/logo.webp" alt="" class="logo">
-      <span class="brand-name ms-3">LAMIX</span>
-    </a>
-    <a href="#quizSection" class="btn btn-gradient-3d-orange">無料診断</a>
-  </div>
-</nav>
+    {{> dashboard-nav}}
 
-<div class="image-container">
-    <img src="/img/bg-{{variant}}.png" alt="Background Image">
-    <!-- Content inside the div will be centered -->
-    <div class="content">
-        <!-- Your content here -->
-    </div>
-</div>
-
-<div class="p-fv">
-
-    <div style="padding-top:10px;">
-        <p class="text-center display-6 p-fv-copy__top fw-bold ">AIで無料診断！</p>
-        <p class="text-center display-3 p-fv-copy__middle fw-bold mb-5">新しい未来を見つけよう</p>
-        <div class="text-center w-100">
-            <span class="p-fv-copy__bottom">あなたの隠れた才能を引き出す<br>AIが導く驚きの可能性</span>
-        </div>
-    </div>
-
-    <div  id="quizSection" class="text-center pt-5">
-        <i class="fas fa-chevron-down" style="font-size: 36px;"></i>
-        <i class="fas fa-chevron-down" style="font-size: 36px;"></i>
-        <i class="fas fa-chevron-down" style="font-size: 36px;"></i>
-    </div>
-    <div class="container mt-4">
-        <div id="chat-container" class="card my-5">
-            <div class="d-flex justify-content-between card-header text-center bg-dark text-white">
-                <div>LAMIXチャット</div>
-                <div class="d-flex align-items-center">
-                    <div class="count me-2"></div><i class="fas fa-comment"></i>
-                </div>
-            </div>
-            <div class="card-body text-center py-5 shadow" style="min-height:250px;height: 75vh;overflow-y: auto;">
-                <h5 class="card-title d-none">Card Title</h5>
-                <div id="chatContainer">
-                </div>
-            </div>
-            <div class="card-footer text-muted text-center d-none">
-                フッターコンテンツ
-            </div>
-        </div>
-        <div id="lastchance"></div>
-    </div>
-    </div>
-
-    <section class="p-best mb-5">
-      <div class="c-section-inner">
-        <h2 class="c-section-title u-tal">
-          未来への一歩は、<br>
-          <span class="u-font-manrope u-color-grad">Lamix</span>から始まる！
-          <div class="p-best-illust">
-            <span><img src="/img/robot.png" alt="" class="u-rocketman" style="max-width: 30vw;"></span>
-          </div>
-        </h2>
-        <ul class="p-best__lists" style="list-style: none;padding: 0;">
-            <li class="p-best__list u-border-grad">
-            <div class="p-best__listInner u-border-grad--bg">
-                <div class="p-best__title--flex">
-                <img src="/img/icon03.svg" alt="">
-                <h3 class="p-best__title"><span class="u-color-grad">Employee</span><span class="p-best__title--sub">サラリーマン</span></h3>
-                </div>
-                <p class="p-best__text">
-                E（Employee）はサラリーマンを指します。給与を得るために働き、時間をお金に交換します。安定した収入が得られる反面、時間の自由度は低く、収入の上限も決まっています。定期的な収入を望む方に適していますが、収入の増加には限界があります。
-                </p>
-            </div>
-            </li>
-
-            <li class="p-best__list u-border-grad">
-            <div class="p-best__listInner u-border-grad--bg">
-                <div class="p-best__title--flex">
-                <img src="/img/icon03.svg" alt="">
-                <h3 class="p-best__title"><span class="u-color-grad">Self-employed</span><span class="p-best__title--sub">起業</span></h3>
-                </div>
-                <p class="p-best__text">
-                S（Self-employed）は起業家やフリーランスを指します。自分のスキルや時間を使って収入を得ます。自由度が高い反面、安定した収入を得ることが難しく、全ての責任が自身にかかります。成功すれば大きな収入を得られる可能性があります。
-                </p>
-            </div>
-            </li>
-
-            <li class="p-best__list u-border-grad">
-            <div class="p-best__listInner u-border-grad--bg">
-                <div class="p-best__title--flex">
-                <img src="/img/icon03.svg" alt="">
-                <h3 class="p-best__title"><span class="u-color-grad">Business Owner</span><span class="p-best__title--sub">副業</span></h3>
-                </div>
-                <p class="p-best__text">
-                B（Business Owner）は副業や企業のオーナーを指します。システムや他の人々を活用して収入を得ます。自分が働かなくても収入が得られる仕組みを構築することで、時間の自由度が増し、収入の上限も広がります。リスクは高いが成功すれば大きなリターンが期待できます。
-                </p>
-            </div>
-            </li>
-
-            <li class="p-best__list u-border-grad">
-            <div class="p-best__listInner u-border-grad--bg">
-                <div class="p-best__title--flex">
-                <img src="/img/icon03.svg" alt="">
-                <h3 class="p-best__title"><span class="u-color-grad">Investor</span><span class="p-best__title--sub">投資</span></h3>
-                </div>
-                <p class="p-best__text">
-                I（Investor）は投資家を指します。資産を使って収入を得る方法です。株式や不動産などに投資することで、リターンを得ることができます。リスクはありますが、成功すれば大きな利益を生む可能性があります。資産を増やしながら、時間の自由を手に入れることが目標となります。
-                </p>
-            </div>
-            </li>
-
-
-        </ul>
-        <div class="text-center mt-4">
-          <a href="#quizSection" class="btn btn-gradient-radius"><span>LAMIXチャットに戻る</span></a>
-        </div>
-      </div>
-    </section>
-
-<footer class="l-footer p-footer">
-    <div class="c-section-inner">
-      <div class="p-footer__logo">
-        <a href="https://hatoltd.com/" target="_blank"><img src="/img/hato.png" alt=""></a>
-      </div>
-      <div class="p-footer-flex">
-        <p class="p-footer__leftText">〒530-0001<br>
-           大阪府大阪市北区梅田1丁目2番2号大阪駅前第2ビル12-12
-        </p>
-        <small class="p-footer__copyright" translate="no" lang="en">
-          Copyright ©2024 HATO,LTD. All Rights Reserved.
-        </small>
-      </div>
-    </div>
-    <!-- /.c-section-inner -->
-  </footer>
-<script src="/js/quiz.js"></script>
-<script>
-var userId
-var userIp
-$(document).ready(function() {
-    // Function to hash the IP address to generate a unique ID
-    function hashIP(ip) {
-        let hash = 0, i, chr;
-        if (ip.length === 0) return hash;
-        for (i = 0; i < ip.length; i++) {
-            chr = ip.charCodeAt(i);
-            hash = ((hash << 5) - hash) + chr;
-            hash |= 0; // Convert to 32bit integer
-        }
-        return hash;
+    <style>
+    .style-option {
+        width: 75px;
+        cursor:pointer;
+    }
+    .style-option.selected {
+        border: 2px solid #000;
+    }
+    .animated.fadeInDown .swal2-image{
+        margin:0;
+    }
+    .animated.fadeInDown .swal2-close{
+        border:0;
+    }
+    /* Custom animation for sliding in from the bottom */
+    .swal2-bottom-slide-in {
+        animation: bottom-slide-in 0.5s;
     }
 
-    // Function to fetch the user's IP address using an API
-    function fetchUserIP(callback) {
-        $.getJSON('https://api.ipify.org?format=json', function(data) {
-            userIp = data.ip;
-            userId = hashIP(userIp); 
-            if (callback) {
-                callback(userId,userIp); // Call the callback function with userID
-            }
-        });
-    } 
+    .swal2-bottom-slide-out {
+        animation: bottom-slide-out 0.5s;
+    }
 
-    // Fetch the user's IP address and generate a unique ID
-    fetchUserIP(function(new_userId,userIp) {
-        // Now you can use the userID variable or id parameter here
-        const variant = "{{variant}}";
-        const storyId = "{{storyId}}";
-        let currentStep = 0;
-        let totalSteps = 0;
-        let storyData = {};
-        let feedback = false
-
-        sendCustomData({action: 'viewpage'});
-        sendCustomData({action: 'a/b', variant: variant});
-        fetchStoryData(storyId); // Fetch the initial story data when the page loads
-        
-        window.choosePath = function(choiceId) {
-            if (currentStep === totalSteps - 1) {
-                hideOtherChoice(choiceId,currentStep + 1,function(){
-                    displayConclusion(choiceId,function(){
-                        generateCompletion($('#generateCompetion'));
-                        //$('#unlock-result').css('visibility','initial')
-                    });
-                })
-
-            } else {
-                currentStep++;
-                hideOtherChoice(choiceId,currentStep,function(){
-                    updateStoryContent(choiceId);
-                })
-            }
-            $.ajax({
-                url: '/api/data',
-                type: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                data: JSON.stringify({ choice: choiceId, userId: userId, userIp: userIp, storyId:storyId }),
-                success: function(response) {
-                    
-                },
-                error: function(error) {
-                    console.log(error.statusText);
-                }
-            });
-        };
-
-        $(document).on('click','#unlock-result',function(){
-
-            sendCustomData({action:'unlock-result'})
-            promptForEmail()
-        })
-        function fetchStoryData(storyId) {
-            $.ajax({
-                url: `/api/story/${storyId}`,
-                type: 'GET',
-                dataType: 'json',
-                success: function(data) {
-                    storyData = data.content.story;
-                    totalSteps = Object.keys(storyData).length;
-                    storyName = data.name
-
-                    $('h1').text(storyName)
-                    displayStep(storyData, currentStep);
-                },
-                error: function(xhr, status, error) {
-                    Swal.fire({
-                        title: 'エラー!',
-                        text: 'ストーリーの読み込みに失敗しました: ' + error,
-                        icon: 'error',
-                        confirmButtonText: 'Ok',
-                        showCancelButton: true,
-                        cancelButtonText: '一覧を見る'
-                    }).then((result) => {
-                        if (result.dismiss === Swal.DismissReason.cancel) {
-                            window.location.href = '/stories';
-                        }
-                    });
-
-                }
-            });
+    @keyframes bottom-slide-in {
+        0% {
+            transform: translateY(100%);
+            opacity: 0;
         }
-
-        function displayStep(storyData, currentStep) {
-            const step = storyData[`step${currentStep + 1}`];
-            $(`.card-header .count`).text(`${currentStep + 1}/${totalSteps}`)
-            $('#chatContainer').append(`
-            <div id="container-${currentStep}">
-                <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
-                    <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
-                    <div id="message-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
-                </div>
-                
-                <div id="response-${currentStep}"></div>
-            </div>`)
-            step.choices.forEach((choice, index) => {
-                const button = $(`<button class="btn btn-flat-border my-2" data-id="${choice.choiceId}" onclick="choosePath('${choice.choiceId}')">${choice.choiceText}</button>`);
-                button.css('opacity',0)
-                $(`#response-${currentStep}`).append(button);
-            });
-            appendHeadlineCharacterByCharacter($(`#message-${currentStep}`), step.introduction,function(){
-                $(`#response-${currentStep} button`).each(function(){
-                    $(this).css('opacity',1)
-                })
-            })
+        100% {
+            transform: translateY(0);
+            opacity: 1;
         }
+    }
 
-        function updateStoryContent(choiceId) {
-            const previousStep = storyData[`step${currentStep}`]; // Previous step where the choice was made
-            const choice = previousStep.choices.find(c => c.choiceId === choiceId);
-            $(`.card-header .count`).text(`${currentStep + 1}/${totalSteps}`)
-            $('#chatContainer').append(`
-            <div id="container-${currentStep}">
-
-                <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
-                    <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
-                    <div id="result-${currentStep - 1}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
-                </div>
-                
-                <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
-                    <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
-                    <div id="message-${currentStep}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
-                </div>
-
-                <div id="response-${currentStep}"></div>
-            </div>`)
-
-            if (currentStep < totalSteps) {
-
-                const nextStep = storyData[`step${currentStep + 1}`];
-                nextStep.choices.forEach(choice => {
-                    const button = $(`<button class="btn btn-flat-border my-2" data-id="${choice.choiceId}" onclick="choosePath('${choice.choiceId}')">${choice.choiceText}</button>`)
-                    button.css('opacity',0)
-                    $(`#response-${currentStep}`).append(button);
-                });
-
-                $(`#result-${currentStep - 1}`).closest('.message-container').animate({ opacity: 1 }, 1000, function() { 
-
-                    appendHeadlineCharacterByCharacter($(`#result-${currentStep - 1}`),choice.result,function(){
-                        appendHeadlineCharacterByCharacter($(`#message-${currentStep}`), nextStep.introduction,function(){
-                            $(`#response-${currentStep} button`).each(function(){
-                                $(this).css('opacity',1)
-                            })
-                        });
-                    })
-                    
-                })
-
-
-            }
+    @keyframes bottom-slide-out {
+        0% {
+            transform: translateY(0);
+            opacity: 1;
         }
+        100% {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+    }
+    .custom-gradient-bg {
+        background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        transition: color 0.3s ease-in-out;
+    }
 
-        function displayConclusion(choiceId,callback) {
-            const previousStep = storyData[`step${currentStep + 1}`]; // Previous step where the choice was made      
-            const choice = previousStep.choices.find(c => c.choiceId === choiceId);
-            const lastStep = storyData[`step${currentStep + 1}`];
+    .custom-gradient-bg::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 300%;
+        height: 300%;
+        background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 80%);
+        transform: translate(-50%, -50%) scale(0);
+        transition: transform 0.5s ease-in-out;
+        z-index: 0;
+    }
 
-            $('#chatContainer').append(`
-            <div id="container-${currentStep}">
-                <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
-                    <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
-                    <div id="result-${currentStep + 1}" class="p-3 ms-3 text-start" style="border-radius: 15px; background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
-                </div>
-                <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
-                    <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
-                    <div id="response-${currentStep + 1}" class="p-3 ms-3 text-start" style="border-radius: 15px;   background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
-                </div>
-                <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
-                    <img src="/img/logo.webp" alt="avatar 1" style="min-width: 45px; width: 45px; height: 100%; border-radius: 15%;">
-                    <div>
-                        <div id="generateCompetion" class="p-3 ms-3 text-start blur-text" style="border-radius: 15px; background: linear-gradient(90.9deg, rgba(247, 243, 255, 0.5) 2.74%, #B894F9 102.92%);"></div>
-                        <button id="unlock-result" class="btn btn-gradient-3d-orange m-4 d-none" style="visibility:hidden;">無料で結果を見る</button>
+    .custom-gradient-bg:hover::before {
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    .custom-gradient-bg:hover {
+        color: #fff;
+    }
+    #chatImage{
+        width: 100px;
+        height: 100px; 
+        object-fit:cover;
+        object-position:top;
+    }
+    #chatImage.on{
+        width: auto !important;
+        height: 270px !important;
+    }
+    .btn-gradient-radius {
+        display: inline-block;
+        padding: 7px 20px;
+        border-radius: 25px;
+        text-decoration: none;
+        color: #FFF;
+        background-image: linear-gradient(45deg, #FFC107 0%, #ff8b5f 100%);
+        transition: .4s;
+        font-size: 21px;
+    }
+    label{
+        font-size: 14px;
+        color: #aaaaaa;
+    }
+    #sendMessage,
+    #chatInput .load {
+        border-left: 0 !important;
+        border-radius: 0px 30px 30px 0px !important;
+        box-shadow: none;
+    }
+    #userMessage {
+        border-radius: 30px 0px 0px 30px !important;
+        background-color: #f8f9fa;
+    }
+    #userMessage:focus {
+        outline: none;
+        box-shadow: none; /* If there is a box shadow applied on focus */
+    }
+    .button-group{
+        top:0;
+        right: 15px;
+    }
+    .scroll-container {
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+    }
+    .scroll-container > * {
+      flex: 0 0 auto;
+      width: auto;
+    }
+    .card-text.template{
+        font-size: 12px;
+    }
+    /*Custom css*/
+    label{
+        font-size: 12px;
+        color: #8d8b8b;
+    }
+    .avatar-xl img {
+        width: 110px;
+    }
+    .rounded-circle {
+        border-radius: 50%;
+    }
+    .rounded-circle.on {
+        border-radius: 15px !important;
+    }
+    img {
+        vertical-align: middle;
+        border-style: none;
+    }
+    .text-muted {
+        color: #aeb0b4 !important;
+    }
+    .text-muted {
+        font-weight: 300;
+    }
+    .form-control {
+        display: block;
+        width: 100%;
+        height: calc(1.5em + 0.75rem + 2px);
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #4d5154;
+        background-color: #ffffff;
+        background-clip: padding-box;
+        border: 1px solid #eef0f3;
+        border-radius: 0.25rem;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+
+    #markdownContainer {
+        margin-bottom: 20px;
+        padding: 20px;
+        border: 1px solid #eef0f3;
+        border-radius: 4px;
+    }
+    .auto-gen{
+        font-size: 10px;
+        border-radius: 50px;
+    }
+    </style>
+
+{{#if user.isTemporary}}
+    <section>
+        <div id="intro" class="bg-image shadow-1-strong">
+            <div style="background-image:url(/img/pc_lg02_rotate.jpg);">
+                <div class="container row align-items-center h-100 m-auto">
+                    <div class="col-12 col-md-6 py-5 text-dark" data-animate="animate__slideInLeft">
+                        <h1 class="mb-3 fw-bold text-dark text-start" id="headline-container" > 
+                            <p class="u-color-grad" style="font-size: 54px;"><img src="/img/logo.webp" alt="" class="me-2" width="40px">Lamix</p>
+                            <p>画像生成：文字から理想のAI美女をカンタン生成</p>
+                        </h1>
+                            <p class="generate-text" id="headline"></p>
+                        <div class="text-start">
+                            簡単な手順でテキストまたは画像からAI美女を生成します。
+                        </div>
+                        <div class="text-center d-flex flex-column justify-content-start align-items-start mt-3">
+                            <a href="/authenticate" class="btn custom-gradient-bg text-white btn-lg m-2 px-5 py-3 mb-3 cta-button" role="button" style="border-radius: 50px;">
+                                AI美女を生成
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6" data-animate="animate__slideInRight">
+                        <div class="container p-3 text-center">
+                            <img src="/img/lp-b-1.png" class="rounded" style="width:100%;">
+                        </div>
                     </div>
                 </div>
-            </div>`)
-            $(`#result-${currentStep + 1}`).closest('.message-container').animate({ opacity: 1 }, 1000, function() { 
-                appendHeadlineCharacterByCharacter($(`#result-${currentStep + 1}`),choice.result,function(){
-                    appendHeadlineCharacterByCharacter($(`#response-${currentStep + 1}`), previousStep.conclusion,function(){                        
-                        appendHeadlineCharacterByCharacter($(`#generateCompetion`),'',function(){
-                            callback()
-                        });
-                    });  
-                })
-            })
-        }
-        function blurredText(){
-            return `オンラインビジネスを始めるには、まずビジネスアイデアを具体化し、ターゲット市場を調査します。次に、ビジネスプランを作成し、必要な資金を確保します。ウェブサイトやオンラインショップを設立し、商品やサービスを提供します。`
-        }
-        function hideOtherChoice(choiceId, currentStep, callback) {
-
-            $(`#response-${currentStep - 1} button`).each(function() {
-                const currentId = $(this).data('id')
-                if(choiceId == currentId){
-                    const response = $(this).text()
-                    $(`#response-${currentStep - 1}`).remove()
-                    $(`#container-${currentStep - 1}`).append(`
-                        <div class="d-flex flex-row justify-content-end mb-4 message-container" style="opacity:0;">
-                            <div id="response-${currentStep - 1}" class="p-3 me-3 border" style="border-radius: 15px; background-color: #fbfbfb;">${response}</div>
-                        </div>
-                    `)
-                    $(`#response-${currentStep - 1}`).closest('.message-container').animate({ opacity: 1 }, 1000,function(){
-                        callback()
-                    })
-                }
-                $(this).remove()
-            });
-        }
-
-
-        function showCongratulations() {
-            return Swal.fire({
-                title: 'おめでとうございます！',
-                text: '私たちは最新のAIを使用してあなたの応答を分析しています。',
-                icon: 'success',
-                showConfirmButton: false,
-                timer: 3000 // Show for 2 seconds
-            });
-        }
-
-        function showLoadingAnimation() {
-            return Swal.fire({
-                title: '分析中...',
-                html: '最新のAIを使用して応答を分析しています。',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-        }
-        function getPrivacyPolicies() {
-            return `
-            <small class="text-muted text-center">私たちもスパムが嫌いです。お客様のプライバシーは非常に重要であり、提供された情報は意図された目的以外には使用しません。</small>
-            <div class="p-contact-scroll" style="height: 200px; overflow-y: scroll; margin-top: 10px; padding: 10px; border: 1px solid #ccc;text-align: start;font-size: 13px;">
-                <h3>プライバシーポリシー</h3>
-                <p>お客様のプライバシーを守ることは当社にとって最も重要なことです。以下のポリシーは、当社がどのようにお客様の情報を取り扱うかを説明しています。</p>
-                <h3>1. 個人情報の収集</h3>
-                <p>当社は、お客様から提供された個人情報（氏名、メールアドレスなど）を厳重に管理し、無断で第三者に提供することはありません。</p>
-                <h3>2. 利用目的</h3>
-                <p>お客様の個人情報は、以下の目的で使用されます：</p>
-                <ul>
-                    <li>サービスの提供および向上</li>
-                    <li>お客様への連絡</li>
-                    <li>カスタマーサポートの提供</li>
-                </ul>
-                <h3>3. データの保存と保護</h3>
-                <p>当社は、お客様のデータを安全に保存し、不正アクセス、紛失、破壊から保護するための合理的な対策を講じています。</p>
-                <h3>4. 情報の共有</h3>
-                <p>お客様の同意がない限り、当社はお客様の個人情報を第三者と共有することはありません。ただし、法令に基づき要求された場合は除きます。</p>
-                <h3>5. クッキーの使用</h3>
-                <p>当社のウェブサイトでは、サービス向上のためにクッキーを使用しています。クッキーは、ユーザーのブラウザに保存される小さなテキストファイルで、サイトの利用状況を分析するために使用されます。</p>
-                <h3>6. お問い合わせ</h3>
-                <p>プライバシーポリシーに関するご質問やご不明点がございましたら、<a href="https://hatoltd.com/contact/" target="_blank">お問い合わせフォーム</a>よりご連絡ください。</p>
-                <p>詳細なプライバシーポリシーについては、<a href="https://hatoltd.com/privacy-policy/" target="_blank">こちら</a>をご覧ください。</p>
-            </div>`;
-        }
-        function promptForEmail(lastchance = false) {
-            return Swal.fire({
-                title: 'おめでとうございます！',
-                html: `
-                    <span style="font-size:16px">リッチマインドになるための具体的なアドバイスを含む診断結果を確認するには、<br>以下にメールアドレスを入力してください。<br>あなたのマインドセットを向上させるための貴重なフィードバックをお届けします！</span>
-                    <div class="input-group mt-3">
-                        <div class="input-group-text">
-                            <i class="fas fa-envelope"></i>
-                        </div>
-                        <input type="email" id="swal-input1" class="form-control" placeholder="メールアドレスを入力してください">
-                    </div>
-                `,
-                showCancelButton: false,
-                showCloseButton: true,
-                confirmButtonText: '結果を見る',
-                customClass: {
-                    confirmButton: 'btn-gradient-3d-orange'
-                },
-                allowOutsideClick: !lastchance,
-                footer: getPrivacyPolicies(),
-                preConfirm: () => {
-                    const email = $('#swal-input1').val();
-                    return new Promise((resolve, reject) => {
-                        $.ajax({
-                            url: '/api/submit-email',
-                            type: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            data: JSON.stringify({ email, userId: userId, userIp: userIp }),
-                            success: function(response) {
-                                resolve(response);
-                            },
-                            error: function(error) {
-                                reject(error.statusText);
-                            }
-                        });
-                    }).catch(error => {
-                        Swal.showValidationMessage(
-                            `メールアドレスをもう一度ご確認ください。`
-                        );
-                    });
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire('送信完了', 'あなたのメールアドレスが正常に送信されました。', 'success');
-                    generateCompletion($('#generateCompetion'));
-                    return true;
-                } else {
-                    if(feedback){
-                        return false;
-                    }
-                    feedback = true;
-                    Swal.fire({
-                        title: '残念です',
-                        icon: 'info',
-                        showCancelButton: false,
-                        showConfirmButton: false,
-                        html:
-                            '<button id="go-back" class="swal2-confirm swal2-styled" style="position: absolute; top: 10px; left: 10px;"><i class="fas fa-arrow-left"></i> 戻る</button>' +
-                            '<p>なぜ結果を見たくなかったのですか？</p>' +
-                            '<button id="option1" class="swal2-confirm swal2-styled">結果に価値を感じない</button>' +
-                            '<button id="option2" class="swal2-confirm swal2-styled">プライバシーの心配</button>' +
-                            '<button id="option3" class="swal2-confirm swal2-styled">メールを共有したくない</button>',
-                        allowOutsideClick: false
-                    });
-
-                    $('#go-back').on('click', function() {
-                        promptForEmail(lastchance);
-                    });
-
-                    return false;
-                }
-            });
-        }
-
-
-
-        $(document).on('click', '#option1', function() {
-            sendFeedback('結果に価値を感じない');
-        });
-
-        $(document).on('click', '#option2', function() {
-            sendFeedback('プライバシーの心配');
-        });
-
-        $(document).on('click', '#option3', function() {
-            sendFeedback('メールを共有したくない');
-        });
-
-        function sendFeedback(choice) {
-            $.ajax({
-                url: '/api/feedback',
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ reason: choice, userId: userId }),
-                success: function(response) {
-                    Swal.fire('ありがとうございました', 'フィードバックを送信しました。', 'success');
-                    //lastchance()
-                },
-                error: function(xhr, status, error) {
-                    Swal.fire('エラー', 'フィードバックの送信中にエラーが発生しました。', 'error');
-                }
-            });
-        }
-
-        function lastchance(){
-            var timer = 59;
-            $('#chat-container').hide()
-            $('#lastchance').html(`
-                <div style="text-align: center;">
-                    <p id="title" class="display-6">最後のチャンス</p>
-                    <p id="description">すぐに行動しないと、診断結果が消えてしまいます。</p>
-                    <p id="timer" class="display-3 fw-bold">${timer}s</p>
-                    <button id="resultButton" class="btn-gradient-3d-orange my-4" style="font-size: 26px;">無料で結果を取得</button>
-                </div>
-            `);
-            
-            var countdown = setInterval(function() {
-                if (timer > 0) {
-                    timer--;
-                    $('#timer').text(`${timer}s`);
-                } else {
-                    clearInterval(countdown);
-                }
-            }, 1000);
-            
-            $('#resultButton').click(function() {
-                sendCustomData({action:'lastCHance resultButton'})
-                promptForEmail(true);
-            });
-        }
-        
-        function generateCompletion($element){
-            
-            const apiUrl = '/api/openai-completion';
-  
-            $.ajax({
-                url: apiUrl,
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ userId: userId }),
-                success: function(response) {
-                    const sessionId = response.sessionId;
-                    const streamUrl = `/api/openai-completion-stream/${sessionId}`;
-                    const eventSource = new EventSource(streamUrl);
-                    sendCustomData({action:'generateCompletion',sessionId})
-                    let markdownContent = "";
-
-                    eventSource.onmessage = function(event) {
-                        const data = JSON.parse(event.data);
-                        markdownContent += data.content;
-
-                        //$('#unlock-result').hide()
-                        if($element){
-                            $element.removeClass('blur-text')
-                            $element.html(marked.parse(markdownContent));
-                        }
-
-                    };
-
-                    eventSource.onerror = function(error) {
-                        console.log('EventSource failed.');
-                        eventSource.close();
-                    };
-                },
-                error: function(error) {
-                    console.error('Error:', error);
-                }
-            });
-        }
-        function sendCustomData(customData){
-            $.ajax({
-                url: '/api/custom-data',
-                type: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                data: JSON.stringify({ userId: userId, customData: customData }),
-                success: function(response) {
-                    
-                },
-                error: function(error) {
-                    console.log(error.statusText);
-                }
-            });
-        }
-        let maxScrollHeight = 0;
-        let lastTriggeredHeight = 0;
-        const viewportHeight = $(window).height();
-        const updateInterval = viewportHeight * 0.05; // 5% of the viewport height
-
-        function maxScroll() {
-            const currentScrollHeight = $(window).scrollTop();
-            const documentHeight = $(document).height();
-            const windowHeight = $(window).height();
-            const scrollPercentage = (currentScrollHeight / (documentHeight - windowHeight)) * 100;
-
-            if (currentScrollHeight > maxScrollHeight) {
-                maxScrollHeight = currentScrollHeight;
-                if (Math.abs(currentScrollHeight - lastTriggeredHeight) >= updateInterval) {
-                    sendCustomData({
-                        action: 'scroll',
-                        value: maxScrollHeight,
-                        scrollPercentage: scrollPercentage.toFixed(2)
-                    });
-                    lastTriggeredHeight = currentScrollHeight;
-                }
+            </div>
+        </div>
+    </section>
+    <section class="container">
+        <style>
+            .before-after--section-step-container {
+                position: relative;
+            }.before-after--section-symbol {
+            position: absolute;
+            left: 29px;
+            top: 65px;
+            width: 100px;
+            height: 2px;
+            -webkit-transform: rotate(-50deg);
+            transform: rotate(-50deg);
+            background-color: #212529;
+            }.before-after--section-step {
+            font-weight: 700;
+            font-size: 22px;
+            line-height: 26px;
             }
-
- 
-        }
-
-        $(window).on('scroll', function() {
-            maxScroll();
-        });
-    });
-});
-</script>
-</body>
-</html>
+            .before-after--section-symbol {
+            left: 8px;
+            top: 25px;
+            width: 42px;
+            height: 1px;
+            }.before-after--section-total-step {
+                display: none;
+            font-size: 14px;
+            line-height: 16px;
+            margin-left: 35px;
+            }
+        </style>
+        <div class="container row mt-3">
+            <div class="col-auto my-3">
+                <div class="before-after--section-step-container">
+                    <div style="display: flex;">
+                        <div class="before-after--section-step u-color-grad">01</div>
+                    </div>
+                    <div class="before-after--section-symbol"></div>
+                    <div class="before-after--section-total-step">05</div>
+                </div>
+            </div>
+            <div class="col-auto">
+                <h2 class="display-4 fw-bold">文字からAI美女の作成</h2>
+                <p>テキストを入力するだけで簡単に理想のAI美女や美少女を作成。リアルな美女からアニメ風の美女まで、年齢、髪型、肌の色、服装など、あらゆるAI美女を作りあげることができます。</p>
+            </div>
+        </div>
+    </section>
+{{/if}}
+{{#if user.isTemporary}}
+    <section class="container">
+        <div class="container row align-items-center h-100 m-auto">
+            <div class="col-12 col-md-6 py-5 text-dark" data-animate="animate__slideInLeft">
+                <div class="row mt-3">
+                    <div class="col-auto my-3">
+                        <div class="before-after--section-step-container">
+                            <div style="display: flex;">
+                                <div class="before-after--section-step u-color-grad">02</div>
+                            </div>
+                            <div class="before-after--section-symbol"></div>
+                            <div class="before-after--section-total-step">05</div>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <h2 class="display-4 fw-bold">AI美女とチャット</h2>
+                        <p>AIの美しい女性と会話しながら、さまざまな場面で画像生成を楽しめる！もしかして恋しちゃうかも？</p>
+                        <div class="text-center d-flex flex-column justify-content-start align-items-start mt-3">
+                            <a href="/authenticate" class="btn custom-gradient-bg text-white btn-lg m-2 px-5 py-3 mb-3 cta-button" role="button" style="border-radius: 50px;">
+                                AI美女とチャットする
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6" data-animate="animate__slideInRight">
+                <div class="container p-3 text-center">
+                    <img src="/img/lp-b-2.png" class="rounded" style="width:100%;">
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class=" bg-light ">
+        <div class="container my-4 py-5">
+            <h2 class="display-4 fw-bold text-center mb-3">LAMIXに関するよくある質問</h2>
+            <div class="accordion" id="faqAccordion">
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingOne">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                            AI美女の作り方は？
+                        </button>
+                    </h2>
+                    <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            <p>1.「AI美女を生成」ボタンを押す。</p>
+                            <p>2. あなたが思い描いているAI美女の説明やプロンプトを入力する。</p>
+                            <p>3. AI美女のスタイルを選び、"生成"を押す。</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingTwo">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                            AI美女は無料で作れますか？
+                        </button>
+                    </h2>
+                    <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            <p>はい、メンバー無料登録をするとクレジット（ポイント）が付与されるので、お持ちのクレジット内でAI美女を無料で作ることが出来ます。</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingThree">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                            AI美女とは何ですか？
+                        </button>
+                    </h2>
+                    <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            <p>AIが生成した美しい女性の画像を指します。AI技術を用いて生成された人工的な女性のイメージや、AIが学習した美の基準に基づいて作られた女性の顔の画像を指すことが一般的です。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{{/if}}
+    <style>footer{display: inline !important;}</style>
+ {{> dashboard-footer}}

@@ -193,11 +193,25 @@ async function initializeCategoriesCollection(db) {
       const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
       const collectionChat = db.collection('chats');
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+
       let chatCount = await collectionChat.distinct('chatImageUrl', { userId: new fastify.mongo.ObjectId(userId) });
       chatCount = chatCount.length
 
+      const translations = request.translations
       if (user.isTemporary) {
-        return reply.redirect('/chat/edit/')
+        return reply.renderWithGtm('index.hbs', { 
+          title: 'AIフレンズ  | Powered by Hato,Ltd' ,
+          translations, 
+          user,
+          seo: [
+            { name: 'description', content: 'Lamixでは、無料でAIグラビアとのチャット中に生成された画像を使って、簡単に投稿を作成することができます。お気に入りの瞬間やクリエイティブな画像をシェアすることで、他のユーザーと楽しさを共有しましょう。画像を選んで投稿に追加するだけで、あなただけのオリジナルコンテンツを簡単に発信できます。' },
+            { name: 'keywords', content: 'AIグラビア, 無料で画像生成AI, Hato Ltd, 日本語, AI画像生成' },
+            { property: 'og:title', content: 'プレミアムプランAI画像生成 | LAMIX | AIグラビア | ラミックスの画像生成AI体験' },
+            { property: 'og:description', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成, AIアート, AIイラスト, 自動画像生成, クリエイティブAI, 生成系AI, 画像共有, AIコミュニティ, AIツール, 画像編集AI, デジタルアート, テキストから画像生成, AIクリエーション' },
+            { property: 'og:image', content: '/img/share.png' },
+            { property: 'og:url', content: 'https://app.lamix.jp/chat/' }
+          ]
+        });
       }else{
         return reply.redirect('/chat')
       }

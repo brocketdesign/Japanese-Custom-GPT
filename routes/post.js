@@ -7,7 +7,7 @@ async function routes(fastify, options) {
       const user = await fastify.getUser(request, reply);
       const userId = new fastify.mongo.ObjectId(user._id);
   
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db
       const galleryCollection = db.collection('gallery');
       const postsCollection = db.collection('posts');
       const usersCollection = db.collection('users');
@@ -60,7 +60,7 @@ async function routes(fastify, options) {
         return reply.code(400).send({ message: 'Invalid value for nsfw. Must be a boolean.' });
       }
   
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db
       const postsCollection = db.collection('posts');
   
       // Update the nsfw attribute of the post
@@ -83,7 +83,7 @@ async function routes(fastify, options) {
   fastify.get('/posts/:id', async (request, reply) => {
     try {
       const postId = new fastify.mongo.ObjectId(request.params.id);
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db
       const postsCollection = db.collection('posts');
   
       const post = await postsCollection.findOne({ _id: postId });
@@ -104,7 +104,7 @@ async function routes(fastify, options) {
       const limit = 12; // Number of posts per page
       const skip = (page - 1) * limit;
   
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db
       const postsCollection = db.collection('posts');
       const usersCollection = db.collection('users');
       const chatsCollection = db.collection('chats');
@@ -177,7 +177,7 @@ async function routes(fastify, options) {
       const currentUser = await fastify.getUser(request, reply);
       const currentUserId = new fastify.mongo.ObjectId(currentUser._id);
   
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db
       const usersCollection = db.collection('users');
       const postsCollection = db.collection('posts');
       const likesCollection = db.collection('posts_likes');
@@ -260,7 +260,7 @@ async function routes(fastify, options) {
       const user = await fastify.getUser(request, reply);
       const userId = new fastify.mongo.ObjectId(user._id);
   
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db
       const postsCollection = db.collection('posts');
   
       const commentData = {
@@ -291,7 +291,7 @@ async function routes(fastify, options) {
       const user = await fastify.getUser(request, reply);
       const userId = new fastify.mongo.ObjectId(user._id);
       
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db
       const postsCollection = db.collection('posts');
   
       const result = await postsCollection.updateOne(
@@ -316,7 +316,7 @@ async function routes(fastify, options) {
       const user = await fastify.getUser(request, reply); // Assuming you have a method to get the user
       const userId = new fastify.mongo.ObjectId(user._id);
   
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db
       const postsCollection = db.collection('posts');
       const likesCollection = db.collection('posts_likes');
   

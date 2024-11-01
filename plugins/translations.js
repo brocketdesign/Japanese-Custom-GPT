@@ -28,7 +28,6 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         // Try to get authenticated user by token
         const user = await getAuthenticatedUser(request, userCollection);
         if (user) {
-            console.log(user)
             return user;
         }
         // Handle temporary user

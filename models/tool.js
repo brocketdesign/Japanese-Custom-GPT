@@ -12,7 +12,7 @@ const path = require('path');
 const adminEmails = ['japanclassicstore@gmail.com','didier@line.com','didier@hatoltd.com','e2@gmail.com','hotta.yuki@hatoltd.com']; // Add your admin emails here
 
 async function checkUserAdmin(fastify, userId) {
-    const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+    const usersCollection = fastify.mongo.db.collection('users');
     const user = await usersCollection.findOne({_id: new ObjectId(userId)});
     if (!user) {
         throw new Error('User not found');
@@ -83,19 +83,19 @@ const isValidUrl = (string) => {
 async function checkLimits(fastify,userId) {
     const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
 
-    const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+    const userDataCollection = fastify.mongo.db.collection('users');
     const user = await userDataCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
-    const messageCountCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageCount');
+    const messageCountCollection = fastify.mongo.db.collection('MessageCount');
     const messageCountDoc = await messageCountCollection.findOne({ userId: new fastify.mongo.ObjectId(userId), date: today });
 
-    const chatCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+    const chatCollection = fastify.mongo.db.collection('chats');
     const chatCount = await chatCollection.countDocuments({ userId: new fastify.mongo.ObjectId(userId) });
 
-    const imageCountCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('ImageCount');
+    const imageCountCollection = fastify.mongo.db.collection('ImageCount');
     const imageCountDoc = await imageCountCollection.findOne({ userId: new fastify.mongo.ObjectId(userId), date: today });
 
-    const messageIdeasCountCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageIdeasCount');
+    const messageIdeasCountCollection = fastify.mongo.db.collection('MessageIdeasCount');
     const messageIdeasCountDoc = await messageIdeasCountCollection.findOne({ userId: new fastify.mongo.ObjectId(userId), date: today });
 
     const isTemporary = user.isTemporary;
@@ -105,7 +105,7 @@ async function checkLimits(fastify,userId) {
     let messageIdeasLimit = isTemporary ? 3 : 10;
 
     if (!isTemporary) {
-        const existingSubscription = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').findOne({
+        const existingSubscription = await fastify.mongo.db.collection('subscriptions').findOne({
             _id: new fastify.mongo.ObjectId(userId),
             subscriptionStatus: 'active',
         });
@@ -113,7 +113,7 @@ async function checkLimits(fastify,userId) {
         if (false && existingSubscription) {
             const billingCycle = existingSubscription.billingCycle;
             const currentPlanId = existingSubscription.currentPlanId;
-            const plansFromDb = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('plans').findOne();
+            const plansFromDb = await fastify.mongo.db.collection('plans').findOne();
             const plans = plansFromDb.plans;
             const plan = plans.find((plan) => plan[`${billingCycle}_id`] === currentPlanId);
 
@@ -329,7 +329,7 @@ async function getUserData(userId, collectionUser, collectionChat, currentUser) 
 
   async function initializeImageStyle() {
     try {
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME); // Use fastify's MongoDB connection
+      const db = fastify.mongo.db; // Use fastify's MongoDB connection
       const chatsCollection = db.collection('chats');
   
       // Filter for chats where 'imageStyle' does not exist or is an empty string

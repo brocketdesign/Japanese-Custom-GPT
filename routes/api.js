@@ -67,7 +67,7 @@ async function routes(fastify, options) {
 
     fastify.post('/api/add-chat', async (request, reply) => {
         try {
-            const db = await fastify.mongo.client.db(process.env.MONGODB_NAME)
+            const db = await fastify.mongo.db
             const parts = request.parts();
             let chatData = {};
             const user = await fastify.getUser(request, reply);
@@ -133,7 +133,7 @@ async function routes(fastify, options) {
             }
     
             chatData.userId = userId;
-            const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+            const collection = fastify.mongo.db.collection('chats');
             const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
             const options = { timeZone: 'Asia/Tokyo', year: 'numeric', month: 'long', day: 'numeric', weekday: 'long', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false };
             chatData.updatedAt = new Date(dateObj);
@@ -212,7 +212,7 @@ async function routes(fastify, options) {
 
     async function generateAndSaveTags(description, chatId) {
         const openai = new OpenAI();
-        const tagsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('tags');
+        const tagsCollection = fastify.mongo.db.collection('tags');
         const existingTags = await tagsCollection.find({}).limit(20).toArray();
         const tagsPrompt = [
             {
@@ -253,7 +253,7 @@ async function routes(fastify, options) {
                 return reply.status(400).send({ error: 'chatId and galleryIndex are required' });
             }
     
-            const db = await fastify.mongo.client.db(process.env.MONGODB_NAME);
+            const db = await fastify.mongo.db;
             const collection = db.collection('chats');
             const user = await fastify.getUser(request, reply);
             const userId = new fastify.mongo.ObjectId(user._id);
@@ -299,7 +299,7 @@ async function routes(fastify, options) {
             const userId = new fastify.mongo.ObjectId(user._id);
 
             // Access the MongoDB collection
-            const chatCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+            const chatCollection = fastify.mongo.db.collection('chats');
             const story = await chatCollection.findOne(
                 { 
                     _id: new fastify.mongo.ObjectId(chatId),
@@ -340,9 +340,9 @@ async function routes(fastify, options) {
     });
     fastify.post('/api/chat/', async (request, reply) => {
         let { userId, chatId, userChatId } = request.body;
-        const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-        const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-        const collectionCharacters = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('characters');
+        const collection = fastify.mongo.db.collection('chats');
+        const collectionUserChat = fastify.mongo.db.collection('userChat');
+        const collectionCharacters = fastify.mongo.db.collection('characters');
     
         let response = {
             isNew: true,
@@ -393,9 +393,9 @@ async function routes(fastify, options) {
     });
     fastify.post('/api/chat-analyze/', async (request, reply) => {
         const {chatId,userId} = request.body;
-        const collectionUser = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
-        const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-        const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+        const collectionUser = fastify.mongo.db.collection('users');
+        const collectionChat = fastify.mongo.db.collection('chats');
+        const collectionUserChat = fastify.mongo.db.collection('userChat');
 
         let response = {}
         try {
@@ -448,8 +448,8 @@ async function routes(fastify, options) {
             if (!chatId || !userId) {
                 return reply.status(400).send({ error: 'Chat ID and User ID are required' });
             }
-            const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-            const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+            const collectionUserChat = fastify.mongo.db.collection('userChat');
+            const collectionChat = fastify.mongo.db.collection('chats');
 
             
             let userChat = await collectionUserChat.find({
@@ -474,7 +474,7 @@ async function routes(fastify, options) {
     fastify.post('/api/chat-category/:category', async (request, reply) => {
         try {
           const category = request.params.category;
-          const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+          const chatsCollection = fastify.mongo.db.collection('chats');
       
           const chatByCategory = await chatsCollection.find({
             visibility: { $exists: true, $eq: "public" },
@@ -503,7 +503,7 @@ async function routes(fastify, options) {
           throw new Error('Invalid Chat ID');
         }
     
-        const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+        const collectionUserChat = fastify.mongo.db.collection('userChat');
         const userChat = await collectionUserChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
     
         if (!userChat) {
@@ -520,7 +520,7 @@ async function routes(fastify, options) {
 
         const serverUserId = parseInt(userId) || 'user_' + Date.now();
     
-        const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
+        const collection = fastify.mongo.db.collection('userData');
     
         const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
         const query = { userId: serverUserId };
@@ -544,7 +544,7 @@ async function routes(fastify, options) {
     });
     fastify.get('/api/chat-data/:chatId',async (request, reply) => {
         const chatId = request.params.chatId
-        const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+        const collectionChat = fastify.mongo.db.collection('chats');
         try{
             const chat = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
             chat.mode = process.env.MODE
@@ -565,9 +565,9 @@ async function routes(fastify, options) {
                 userId = user._id;
             }
     
-            const userChatCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-            const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-            const chatLastMessageCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chatLastMessage');
+            const userChatCollection = fastify.mongo.db.collection('userChat');
+            const chatsCollection = fastify.mongo.db.collection('chats');
+            const chatLastMessageCollection = fastify.mongo.db.collection('chatLastMessage');
     
             // Fetch chatIds from userChat collection
             const userChats = await userChatCollection.find({
@@ -601,11 +601,11 @@ async function routes(fastify, options) {
     fastify.post('/api/chat-data', async (request, reply) => {
         try {
             const userLimitCheck = await checkLimits(fastify, request.body.userId);
-            const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
-            const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-            const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-            const collectionChatLastMessage = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chatLastMessage');
-            const collectionMessageCount = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageCount');
+            const usersCollection = fastify.mongo.db.collection('users');
+            const collectionChat = fastify.mongo.db.collection('chats');
+            const collectionUserChat = fastify.mongo.db.collection('userChat');
+            const collectionChatLastMessage = fastify.mongo.db.collection('chatLastMessage');
+            const collectionMessageCount = fastify.mongo.db.collection('MessageCount');
 
             let { currentStep, message, chatId, userChatId, isNew, isWidget } = request.body;
             let userId = request.body.userId
@@ -626,7 +626,7 @@ async function routes(fastify, options) {
                         return user.persona;
                     } else if (user.personas && user.personas.length > 0) {
                         const selectedPersona = user.personas[0];
-                        const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+                        const collection = fastify.mongo.db.collection('users');
                         await collection.updateOne(
                             { _id: new fastify.mongo.ObjectId(user._id) },
                             { $set: { persona: selectedPersona } }
@@ -639,7 +639,7 @@ async function routes(fastify, options) {
                 
                 let userChatDocument = await collectionUserChat.findOne({ userId : new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
                 let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
-                const user = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+                const user = await fastify.mongo.db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
                 let personaId = await getUserPersona(user)
                 const persona  = personaId ? await collectionChat.findOne({_id: new fastify.mongo.ObjectId(personaId)}) : false
 
@@ -804,7 +804,7 @@ async function routes(fastify, options) {
             }
     
             // Fetch the buyer (user making the purchase)
-            const user = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+            const user = await fastify.mongo.db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
     
             if (!user) {
                 console.log('User not found:', userId);
@@ -830,10 +830,10 @@ async function routes(fastify, options) {
                 userId: userId
             };
     
-            const itemResult = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('items').insertOne(newItem);
+            const itemResult = await fastify.mongo.db.collection('items').insertOne(newItem);
     
             // Update buyer's data (deduct coins and add item to purchasedItems)
-            await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
+            await fastify.mongo.db.collection('users').updateOne(
                 { _id: new fastify.mongo.ObjectId(userId) },
                 {
                     $set: { coins: userCoins },
@@ -849,7 +849,7 @@ async function routes(fastify, options) {
             console.log(`User ${userId} updated with new coin balance and purchased item`);
     
             // Fetch the chat info to get the seller (chat owner)
-            const chat = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats').findOne({ _id: new fastify.mongo.ObjectId(chatId) });
+            const chat = await fastify.mongo.db.collection('chats').findOne({ _id: new fastify.mongo.ObjectId(chatId) });
     
             if (!chat) {
                 console.log('Chat not found:', chatId);
@@ -863,7 +863,7 @@ async function routes(fastify, options) {
             // Update seller's (chat owner's) coins if the buyer is not the seller
             if (chatOwnerId.toString() !== userId.toString()) {
                 console.log(`Crediting ${price} coins to chat owner ${chatOwnerId}`);
-                await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
+                await fastify.mongo.db.collection('users').updateOne(
                     { _id: new fastify.mongo.ObjectId(chatOwnerId) },
                     { $inc: { coins: price } }  // Credit seller with itemPrice
                 );
@@ -891,7 +891,7 @@ async function routes(fastify, options) {
                 return reply.code(400).send({ error: 'Invalid image type' });
             }
     
-            const user = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+            const user = await fastify.mongo.db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
     
             if (!user) {
                 console.log('User not found:', userId);
@@ -909,7 +909,7 @@ async function routes(fastify, options) {
     
             console.log(`User ${userId} has ${userCoins} coins left after purchasing image of type ${type} for ${imagePrice} coins`);
     
-            await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
+            await fastify.mongo.db.collection('users').updateOne(
                 { _id: new fastify.mongo.ObjectId(userId) },
                 { $set: { coins: userCoins } }
             );
@@ -922,7 +922,7 @@ async function routes(fastify, options) {
                 chatId: chatId
             };
     
-            await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('imagePurchases').insertOne(newImagePurchase);
+            await fastify.mongo.db.collection('imagePurchases').insertOne(newImagePurchase);
     
             console.log(`User ${userId} purchased an image of type ${type}`);
     
@@ -937,7 +937,7 @@ async function routes(fastify, options) {
     fastify.post('/api/submit-email', async (request, reply) => {
         const { email, userId } = request.body;
     
-        const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
+        const collection = fastify.mongo.db.collection('userData');
     
         const userObj = await collection.findOne({ userId });
     
@@ -973,7 +973,7 @@ async function routes(fastify, options) {
             return reply.status(400).send({ error: 'UserId and reason are required' });
         }
     
-        const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
+        const collection = fastify.mongo.db.collection('userData');
     
         const query = { userId: userId };
         const update = { $set: { reason: reason } };
@@ -1024,9 +1024,9 @@ async function routes(fastify, options) {
             const chatId = session.chatId;
             const userChatId = session.userChatId;
             const isHidden = session.isHidden
-            const collectionChatLastMessage = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chatLastMessage');
-            const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-            const userInfo = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+            const collectionChatLastMessage = fastify.mongo.db.collection('chatLastMessage');
+            const collectionUserChat = fastify.mongo.db.collection('userChat');
+            const userInfo = await fastify.mongo.db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
             let userData = await collectionUserChat.findOne({ userId:new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) })
 
             if (!userData) {
@@ -1034,7 +1034,7 @@ async function routes(fastify, options) {
                 return reply.status(404).send({ error: 'User data not found' });
             }
 
-            const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');                
+            const collectionChat = fastify.mongo.db.collection('chats');                
             let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
             const chatname = chatDocument.name
 
@@ -1135,14 +1135,14 @@ async function routes(fastify, options) {
             const isNarration = session.isNarration;
             const role = session.role || 'Narrator';
             
-            const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+            const collectionUserChat = fastify.mongo.db.collection('userChat');
             let userData = await collectionUserChat.findOne({ userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
     
             if (!userData) {
                 reply.raw.end(); // End the stream before sending the response
                 return reply.status(404).send({ error: 'User data not found' });
             }
-            const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+            const collectionChat = fastify.mongo.db.collection('chats');
             let chatData = await collectionUserChat.findOne({ _id: new fastify.mongo.ObjectId(chatId)});
             let language = 'japanese'
             if(chatData){
@@ -1183,10 +1183,10 @@ async function routes(fastify, options) {
         if (userLimitCheck.limitIds?.includes(3)) {
             return reply.status(403).send(userLimitCheck);
         }
-        const collectionCharacters = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('characters');
-        const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-        const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-        const collectionImageCount = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('ImageCount');
+        const collectionCharacters = fastify.mongo.db.collection('characters');
+        const collectionChat = fastify.mongo.db.collection('chats');
+        const userDataCollection = fastify.mongo.db.collection('userChat');
+        const collectionImageCount = fastify.mongo.db.collection('ImageCount');
         const { chatId, userChatId, character } = request.body;    
         try {
 
@@ -1274,7 +1274,7 @@ async function routes(fastify, options) {
             const user = await fastify.getUser(request, reply);
             userId = user._id;
         }
-        const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+        const userDataCollection = fastify.mongo.db.collection('userChat');
         const { userChatId, chatId } = request.body;
     
         try {
@@ -1295,7 +1295,7 @@ async function routes(fastify, options) {
                 return reply.status(403).send(userLimitCheck);
             }
     
-            const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+            const collectionChat = fastify.mongo.db.collection('chats');
             let chatData = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
             let language = 'japanese';
             if (chatData) {
@@ -1338,7 +1338,7 @@ async function routes(fastify, options) {
             const parsedCompletion = completion.choices[0].message.parsed.answers;
 
             // Increment the message ideas count after successful completion
-            const collectionMessageIdeasCount = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('MessageIdeasCount');
+            const collectionMessageIdeasCount = fastify.mongo.db.collection('MessageIdeasCount');
             const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
     
             let newMessageIdeasCount;
@@ -1391,7 +1391,7 @@ async function routes(fastify, options) {
             const userId = session.userId;
             const chatId = session.chatId;
     
-            const userDataCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
+            const userDataCollection = fastify.mongo.db.collection('userData');
             let userData = isNewObjectId(userId) ? await userDataCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) }) : await userDataCollection.findOne({ userId: parseInt(userId) });
     
             if (!userData) {
@@ -1401,7 +1401,7 @@ async function routes(fastify, options) {
     
             const userObjectId = userData._id;
     
-            const chatCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+            const chatCollection = fastify.mongo.db.collection('userChat');
             const chatData = await chatCollection.findOne({ userId: userObjectId, chatId });
     
             if (!chatData) {
@@ -1508,7 +1508,7 @@ async function routes(fastify, options) {
             const enhancedPrompt = completionResponse.choices[0].message.content.trim();
     
             // Access MongoDB and update the chat document
-            const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+            const db = fastify.mongo.db;
             const collectionChats = db.collection('chats'); // Replace 'chats' with your actual collection name
     
             // Convert chatId string to ObjectId
@@ -1601,7 +1601,7 @@ async function routes(fastify, options) {
         try {
             const { userId, chatId, userChatId, customPrompt } = session;
 
-            const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+            const collectionUserChat = fastify.mongo.db.collection('userChat');
             let userData = await collectionUserChat.findOne({ userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
 
             if (!userData) {
@@ -1611,7 +1611,7 @@ async function routes(fastify, options) {
             
             const userMessages = userData.messages;
 
-            const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+            const collectionChat = fastify.mongo.db.collection('chats');
             let chatData = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
             let language = 'japanese';
             if (chatData) {
@@ -1645,7 +1645,7 @@ async function routes(fastify, options) {
         const { chatId, userChatId, role, message } = request.body;
     
         try {
-            const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+            const collectionUserChat = fastify.mongo.db.collection('userChat');
             let userData = await collectionUserChat.findOne({ _id: new fastify.mongo.ObjectId(userChatId) });
     
             if (!userData) {
@@ -1683,12 +1683,12 @@ async function routes(fastify, options) {
     });
     
     async function fetchUserData(fastify, userId, userChatId) {
-        const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+        const collectionUserChat = fastify.mongo.db.collection('userChat');
         return await collectionUserChat.findOne({ userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
     }
     
     async function fetchChatData(fastify, chatId) {
-        const collectionChats = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+        const collectionChats = fastify.mongo.db.collection('chats');
         return await collectionChats.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
     }
     
@@ -1805,7 +1805,7 @@ async function routes(fastify, options) {
     
     async function insertProposals(fastify, parsedProposal, characterDescription) {
         try {
-            const itemProposalCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('itemProposal');
+            const itemProposalCollection = fastify.mongo.db.collection('itemProposal');
             const insertedProposals = [];
             for (const item of parsedProposal.items) {
                 if (characterDescription) {
@@ -1912,7 +1912,7 @@ async function routes(fastify, options) {
     
     fastify.get('/api/proposal/:id', async (request, reply) => {
         try {
-          const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+          const db = fastify.mongo.db;
           const itemProposalCollection = db.collection('itemProposal');
           
           const proposalId = new fastify.mongo.ObjectId(request.params.id); // Convert the id to ObjectId
@@ -1943,7 +1943,7 @@ async function routes(fastify, options) {
     fastify.get('/characters/:gender/:category', async (request, reply) => {
         try {
             const { gender, category } = request.params;
-            const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('characters');
+            const collection = fastify.mongo.db.collection('characters');
     
             const page = parseInt(request.query.page, 10) || 1;
             const elementsPerPage = 10;
@@ -1966,7 +1966,7 @@ async function routes(fastify, options) {
     });
     fastify.get('/characters/categories', async (request, reply) => {
         try {
-            const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('characters');
+            const collection = fastify.mongo.db.collection('characters');
     
             const categories = await collection.aggregate([
                 {
@@ -2028,7 +2028,7 @@ async function routes(fastify, options) {
             try {
                 const imageDescription = await moduleCompletion(messages);
 
-                const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+                const db = fastify.mongo.db;
                 const collectionChat = db.collection('chats');
 
                 const result = await collectionChat.updateOne(
@@ -2086,7 +2086,7 @@ async function routes(fastify, options) {
     
         try {
             const objectId = new fastify.mongo.ObjectId(chatId);
-            const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+            const db = fastify.mongo.db;
             const collection = db.collection('chats');
     
             // Check if the description for the image already exists in the database
@@ -2105,7 +2105,7 @@ async function routes(fastify, options) {
     
     fastify.get('/lastMessage/:chatId/:userId', async (request, reply) => {
         const { chatId, userId } = request.params;
-        const collectionChatLastMessage = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chatLastMessage');
+        const collectionChatLastMessage = fastify.mongo.db.collection('chatLastMessage');
         
         const result = await collectionChatLastMessage.findOne(
             { chatId: new fastify.mongo.ObjectId(chatId), userId: new fastify.mongo.ObjectId(userId) },
@@ -2122,7 +2122,7 @@ async function routes(fastify, options) {
     fastify.post('/api/update-log-success', async (request, reply) => {
         try {
             const { userId, userChatId } = request.body;
-            const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+            const collectionUserChat = fastify.mongo.db.collection('userChat');
     
             const result = await collectionUserChat.updateOne(
                 { userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) },
@@ -2142,7 +2142,7 @@ async function routes(fastify, options) {
       
     fastify.get('/api/user-generated-images', async (request, reply) => {
         try {
-          const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+          const db = fastify.mongo.db;
           const galleryCollection = db.collection('gallery');
           const usersCollection = db.collection('users');
           const chatsCollection = db.collection('chats');
@@ -2213,7 +2213,7 @@ async function routes(fastify, options) {
           const skip = (page - 1) * limit;
           const { userId } = request.query;
       
-          const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+          const db = fastify.mongo.db;
           const chatsCollection = db.collection('chats');
           const usersCollection = db.collection('users');
       
@@ -2288,7 +2288,7 @@ async function routes(fastify, options) {
             return reply.send([]);
         }
         const { userId, query, date } = request.query;
-        const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
+        const collection = fastify.mongo.db.collection('userData');
 
         try {
             if (userId) {
@@ -2346,7 +2346,7 @@ async function routes(fastify, options) {
             const { personaId, action } = request.body;
             const user = await fastify.getUser(request, reply);
             const userId = user._id;
-            const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+            const collection = fastify.mongo.db.collection('users');
     
             if (action === 'add') {
                 const userDoc = await collection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
@@ -2385,8 +2385,8 @@ async function routes(fastify, options) {
             const { personaId } = request.body;
             const user = await fastify.getUser(request, reply);
             const userId = user._id;
-            const userCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
-            const chatCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+            const userCollection = fastify.mongo.db.collection('users');
+            const chatCollection = fastify.mongo.db.collection('chats');
     
             // Update the user's persona
             await userCollection.updateOne(
@@ -2411,8 +2411,8 @@ async function routes(fastify, options) {
         try {
             const user = await fastify.getUser(request, reply);
             const userId = user._id;
-            const userCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
-            const chatCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+            const userCollection = fastify.mongo.db.collection('users');
+            const chatCollection = fastify.mongo.db.collection('chats');
     
             // Fetch user details
             const userDetails = await userCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
@@ -2464,7 +2464,7 @@ async function routes(fastify, options) {
             if (user.isTemporary) {
                 // Update tempUser lang
                 user.lang = userLang;
-                const updatedTempUser = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOneAndUpdate(
+                const updatedTempUser = await fastify.mongo.db.collection('users').findOneAndUpdate(
                     { _id: new fastify.mongo.ObjectId(user._id) },
                     { $set: { lang: userLang } },
                     { returnDocument: 'after' }
@@ -2473,7 +2473,7 @@ async function routes(fastify, options) {
 
             } else {
                 // Update user's lang in the database
-                await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
+                await fastify.mongo.db.collection('users').updateOne(
                     { _id: user._id },
                     { $set: { lang: userLang } }
                 );
@@ -2493,7 +2493,7 @@ async function routes(fastify, options) {
             let user = request.user;
             const userId = user._id;
             if (userId && !user.isTemporary){
-                const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+                const collection = fastify.mongo.db.collection('users');
                 user = await collection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
             }
             return reply.send({user})
@@ -2527,7 +2527,7 @@ async function routes(fastify, options) {
         }
     }
     fastify.post('/api/upload-image', async function (request, reply) {
-        const db = await fastify.mongo.client.db(process.env.MONGODB_NAME);
+        const db = await fastify.mongo.db;
         const parts = request.parts();
         let imageUrl = null;
         
@@ -2556,7 +2556,7 @@ async function routes(fastify, options) {
     });
     fastify.get('/api/categories', async (req, res) => {
         try {
-          const categories = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('categories').find().toArray();
+          const categories = await fastify.mongo.db.collection('categories').find().toArray();
           return res.send(categories);
         } catch (err) {
             console.log(err)
@@ -2569,7 +2569,7 @@ async function routes(fastify, options) {
           const itemId = new fastify.mongo.ObjectId(id);
           const user = await fastify.getUser(request, reply);
           const userId = new fastify.mongo.ObjectId(user._id);
-          const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+          const db = fastify.mongo.db;
           const usersCollection = db.collection('users');
           
           let item;
@@ -2622,7 +2622,7 @@ async function routes(fastify, options) {
             const itemId = new fastify.mongo.ObjectId(id);
             const user = await fastify.getUser(request, reply);
             const userId = new fastify.mongo.ObjectId(user._id);
-            const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+            const db = fastify.mongo.db;
             const usersCollection = db.collection('users');
             const userDoc = await usersCollection.findOne({ _id: userId, unlockedItems: itemId });
             reply.send({ unlocked: !!userDoc });
@@ -2632,7 +2632,7 @@ async function routes(fastify, options) {
     });
     fastify.post('/api/prompts/create', async (request, reply) => {
         try {
-          const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+          const db = fastify.mongo.db;
           const collection = db.collection('prompts');
           const parts = request.parts();
           let title = '';
@@ -2668,7 +2668,7 @@ async function routes(fastify, options) {
         // Get All Prompts (Optional)
         fastify.get('/api/prompts', async (request, reply) => {
             try {
-            const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+            const db = fastify.mongo.db;
             const prompts = await db.collection('prompts').find({}).toArray();
             reply.send(prompts);
             } catch (error) {
@@ -2680,7 +2680,7 @@ async function routes(fastify, options) {
         // Get Single Prompt
         fastify.get('/api/prompts/:id', async (request, reply) => {
             try {
-            const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+            const db = fastify.mongo.db;
             const { id } = request.params;
             const prompt = await db.collection('prompts').findOne({ _id: new fastify.mongo.ObjectId(id) });
             if (!prompt) {
@@ -2696,7 +2696,7 @@ async function routes(fastify, options) {
         // Update Prompt
         fastify.put('/api/prompts/:id', async (request, reply) => {
             try {
-            const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+            const db = fastify.mongo.db;
             const { id } = request.params;
             const parts = request.parts();
             let title = '';
@@ -2740,7 +2740,7 @@ async function routes(fastify, options) {
         // Delete Prompt
         fastify.delete('/api/prompts/:id', async (request, reply) => {
             try {
-            const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+            const db = fastify.mongo.db;
             const { id } = request.params;
             const result = await db.collection('prompts').deleteOne({ _id: new fastify.mongo.ObjectId(id) });
             if (result.deletedCount === 0) {
@@ -2754,7 +2754,7 @@ async function routes(fastify, options) {
         });
 
         fastify.get('/api/tags', async (request, reply) => {
-            const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+            const db = fastify.mongo.db;
             const tagsCollection = db.collection('tags');
             const chatsCollection = db.collection('chats');
             let tags = await tagsCollection.find().toArray();

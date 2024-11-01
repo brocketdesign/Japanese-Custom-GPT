@@ -147,7 +147,7 @@ async function routes(fastify, options) {
 
   async function saveImageToDB(userId, chatId, userChatId, prompt, imageUrl, aspectRatio, blurredImageUrl = null, nsfw = false) {
     try {
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db
       const chatsGalleryCollection = db.collection('gallery');
   
       // Check if the image has already been saved for this task
@@ -350,7 +350,7 @@ async function routes(fastify, options) {
   fastify.get('/image/:imageId', async (request, reply) => {
     try {
       const { imageId } = request.params;
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db
       const galleryCollection = db.collection('gallery');
   
       // Convert the imageId string to a MongoDB ObjectId
@@ -395,7 +395,7 @@ async function routes(fastify, options) {
         const validated = Txt2ImgSchema.parse(request.body);
         const { prompt, aspectRatio, userId, chatId, userChatId, imageType } = validated;
 
-        const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+        const db = fastify.mongo.db
         const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
         const isSubscribed = user && user.subscriptionStatus === 'active';
 
@@ -462,7 +462,7 @@ fastify.post('/novita/txt2img', async (request, reply) => {
       const validated = Txt2ImgSchema.parse(request.body);
       const { prompt, aspectRatio, userId, chatId, userChatId, imageType, price } = validated;
 
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db
 
       // Fetch the user
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
@@ -557,7 +557,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
   const { taskId } = request.params;
 
   try {
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db
       const tasksCollection = db.collection('tasks');
       const task = await tasksCollection.findOne({ taskId });
 
@@ -699,7 +699,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
       const novitaTaskId = await fetchNovitaMagic(image_request);
 
       // Store task details in DB
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db
       await db.collection('tasks').insertOne({
         taskId: novitaTaskId,
         type: 'sfw',
@@ -725,7 +725,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
     const { taskId } = request.params;
 
     try {
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db
       const task = await db.collection('tasks').findOne({ taskId });
 
       if (!task) {
@@ -781,7 +781,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
       console.error('タスクステータス確認エラー:', error);
 
       // Update task as failed
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db
       await db.collection('tasks').updateOne(
         { taskId },
         { 
@@ -808,7 +808,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
     }
   
     try {
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db
       await saveChatImageToDB(db, chatId, imageUrl);
   
       return reply.status(200).send({ message: 'Image saved successfully' });
@@ -822,7 +822,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
       const { taskId } = request.params;
 
       try {
-          const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+          const db = fastify.mongo.db
           const task = await db.collection('tasks').findOne({ taskId });
 
           if (!task) {
@@ -878,7 +878,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
           console.error('タスクステータス確認エラー:', error);
 
           // Update task as failed
-          const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+          const db = fastify.mongo.db
           await db.collection('tasks').updateOne(
               { taskId },
               { 
@@ -961,7 +961,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
         const novitaTaskId = await fetchNovitaImg2ImgMagic(novitaRequestData);
 
         // Store task details in DB
-        const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+        const db = fastify.mongo.db
         await db.collection('tasks').insertOne({
             taskId: novitaTaskId,
             type: 'img2img',

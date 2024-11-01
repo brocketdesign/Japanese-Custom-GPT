@@ -10,7 +10,7 @@ async function routes(fastify, options) {
     const isAdmin = await checkUserAdmin(fastify, user._id);
     if (!isAdmin) return reply.status(403).send({ error: 'Access denied' });
 
-    const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+    const db = fastify.mongo.db;
     const notificationsCollection = db.collection('notifications');
 
     const notifications = await notificationsCollection.aggregate([
@@ -46,8 +46,8 @@ async function routes(fastify, options) {
             if (!isAdmin) {
                 return reply.status(403).send({ error: 'Access denied' });
             }
-            const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
-            const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+            const usersCollection = fastify.mongo.db.collection('users');
+            const chatsCollection = fastify.mongo.db.collection('userChat');
             
             const getUniqueUsers = async () => {
                 try {
@@ -92,9 +92,9 @@ async function routes(fastify, options) {
             return reply.status(403).send({ error: 'Access denied' });
           }
           const userId = request.params.id;
-          const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+          const usersCollection = fastify.mongo.db.collection('users');
 
-          const userDataStoryCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userData');
+          const userDataStoryCollection = fastify.mongo.db.collection('userData');
 
           const result = await usersCollection.deleteOne({ _id: new ObjectId(userId) });
           if (result.deletedCount === 0) {
@@ -114,7 +114,7 @@ async function routes(fastify, options) {
                 return reply.status(403).send({ error: 'Access denied' });
             }
 
-            const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');        
+            const usersCollection = fastify.mongo.db.collection('users');        
             
             const users =  await usersCollection.find({
                 email: { $exists: true }
@@ -154,7 +154,7 @@ async function routes(fastify, options) {
           const userId = new fastify.mongo.ObjectId(request.params.userId);
       
           // Access the userChat collection
-          const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
+          const collectionChat = fastify.mongo.db.collection('userChat');
       
           // Fetch userChat documents
         const userChats = await collectionChat.find({ userId }).toArray();
@@ -163,7 +163,7 @@ async function routes(fastify, options) {
         const chatIds = userChats.map(chat => chat.chatId);
 
         // Fetch corresponding chat names
-        const collectionChats = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+        const collectionChats = fastify.mongo.db.collection('chats');
         const chatsDetails = await collectionChats.find({ _id: { $in: chatIds } }).toArray();
 
         // Create a map of chatId to chatName
@@ -195,7 +195,7 @@ async function routes(fastify, options) {
                 return reply.status(403).send({ error: 'Access denied' });
             }
     
-            const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+            const db = fastify.mongo.db;
             const resultMessage = await cleanupNonRegisteredUsers(db);
     
             return reply.send({ message: resultMessage });
@@ -215,7 +215,7 @@ async function routes(fastify, options) {
         if (!isAdmin) {
             return reply.status(403).send({ error: 'Access denied' });
         }
-        const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+        const db = fastify.mongo.db;
         user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
         const translations = request.translations
 
@@ -238,7 +238,7 @@ async function routes(fastify, options) {
       if (!isAdmin) {
           return reply.status(403).send({ error: 'Access denied' });
       }
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db;
       user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
       const translations = request.translations
 

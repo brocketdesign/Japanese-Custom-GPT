@@ -10,7 +10,7 @@ async function routes(fastify, options) {
 
       const { userId, title, message, type, data, sticky } = request.body;
 
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db;
       const notificationsCollection = db.collection('notifications');
 
       let notifications = [];
@@ -68,7 +68,7 @@ async function routes(fastify, options) {
       const user = await fastify.getUser(request, reply);
       const userId = new fastify.mongo.ObjectId(user._id);
 
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db;
       const notificationsCollection = db.collection('notifications');
 
       const userNotifications = await notificationsCollection.find({ userId }).toArray();
@@ -95,7 +95,7 @@ async function routes(fastify, options) {
       const userId = new fastify.mongo.ObjectId(user._id);
       const notificationId = new fastify.mongo.ObjectId(request.params.id);
 
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db;
       const notificationsCollection = db.collection('notifications');
 
       const notification = await notificationsCollection.findOne({ _id: notificationId });
@@ -132,7 +132,7 @@ async function routes(fastify, options) {
 
       const notificationId = new fastify.mongo.ObjectId(request.params.id);
 
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db;
       const notificationsCollection = db.collection('notifications');
 
       const result = await notificationsCollection.findOne({ _id: notificationId });
@@ -153,7 +153,7 @@ async function routes(fastify, options) {
       const notificationId = new fastify.mongo.ObjectId(request.params.id);
       const { title, message, type, data, sticky } = request.body;
 
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db;
       const notificationsCollection = db.collection('notifications');
 
       const update = {};
@@ -185,7 +185,7 @@ async function routes(fastify, options) {
 
       const notificationId = new fastify.mongo.ObjectId(request.params.id);
 
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db;
       const notificationsCollection = db.collection('notifications');
 
       const result = await notificationsCollection.deleteOne({ _id: notificationId });

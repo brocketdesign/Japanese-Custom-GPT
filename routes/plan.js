@@ -53,10 +53,10 @@ async function routes(fastify, options) {
   fastify.get('/plan/list', async (request, reply) => {
     const user = await fastify.getUser(request, reply);
   
-    await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('plans').deleteMany({});
-    await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('plans').insertOne({ plans });
+    await fastify.mongo.db.collection('plans').deleteMany({});
+    await fastify.mongo.db.collection('plans').insertOne({ plans });
     
-    const plansFromDb = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('plans').findOne();
+    const plansFromDb = await fastify.mongo.db.collection('plans').findOne();
     return reply.send(plansFromDb);
   });
   fastify.post('/plan/subscribe', async (request, reply) => {
@@ -70,7 +70,7 @@ async function routes(fastify, options) {
       const userId = user._id;
   
       // Fetch the user from the database using their ObjectId
-      user = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({
+      user = await fastify.mongo.db.collection('users').findOne({
         _id: new fastify.mongo.ObjectId(userId),
       });
   
@@ -92,7 +92,7 @@ async function routes(fastify, options) {
       const planPriceId = plan[`${billingCycle}_id`];
   
       // Check if the user already has an active subscription for this plan
-      let existingSubscription = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').findOne({
+      let existingSubscription = await fastify.mongo.db.collection('subscriptions').findOne({
         _id: new fastify.mongo.ObjectId(userId),
         currentPlanId: planPriceId,
         subscriptionStatus: 'active',
@@ -100,7 +100,7 @@ async function routes(fastify, options) {
       if (existingSubscription) {
         return reply.status(400).send({ error: 'You already have an active subscription for this plan.' });
       }
-      existingSubscription = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').findOne({
+      existingSubscription = await fastify.mongo.db.collection('subscriptions').findOne({
         _id: new fastify.mongo.ObjectId(userId),
         subscriptionStatus: 'active', 
       });
@@ -163,7 +163,7 @@ async function routes(fastify, options) {
       }
   
       // Find the user in your database
-      const user = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({
+      const user = await fastify.mongo.db.collection('users').findOne({
         email: session.customer_email,
       });
   
@@ -183,7 +183,7 @@ async function routes(fastify, options) {
       const premiumYearlyId = process.env.MODE == 'local' ? process.env.STRIPE_PREMIUM_YEARLY_TEST : process.env.STRIPE_PREMIUM_YEARLY;
 
       // Update the user's subscription status and details in your database
-      await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').updateOne(
+      await fastify.mongo.db.collection('subscriptions').updateOne(
         { _id: new fastify.mongo.ObjectId(user._id) },
         {
           $set: {
@@ -198,7 +198,7 @@ async function routes(fastify, options) {
         },
         { upsert: true } 
       );
-      await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
+      await fastify.mongo.db.collection('users').updateOne(
         { _id: new fastify.mongo.ObjectId(user._id) },
         {
           $set: { 
@@ -210,7 +210,7 @@ async function routes(fastify, options) {
       );
       if((subscription.items.data[0].price.id === premiumMonthlyId || subscription.items.data[0].price.id === premiumYearlyId)){
         // Add 1000 coins to the user's account
-        await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
+        await fastify.mongo.db.collection('users').updateOne(
           { _id: new fastify.mongo.ObjectId(user._id) },
           {
             $inc: { coins: 1000 }
@@ -246,7 +246,7 @@ async function routes(fastify, options) {
 
   fastify.post('/plan/cancel', async (request, reply) => {
     try {
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME)
+      const db = fastify.mongo.db;
       // Retrieve user
       let user = request.user;
       if (!user) {
@@ -273,7 +273,7 @@ async function routes(fastify, options) {
       await stripe.subscriptions.cancel(stripeSubscription.id);
   
       // Update MongoDB subscription status
-      const updateResult = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').updateOne(
+      const updateResult = await fastify.mongo.db.collection('subscriptions').updateOne(
         { 
           _id: new fastify.mongo.ObjectId(user._id),
         },
@@ -292,7 +292,7 @@ async function routes(fastify, options) {
         return reply.status(500).send({ error: 'サブスクリプションの更新に失敗しました' }); // Failed to update subscription
       }
 
-      await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
+      await fastify.mongo.db.collection('users').updateOne(
         { 
           _id: new fastify.mongo.ObjectId(user._id),
         },
@@ -315,7 +315,7 @@ async function routes(fastify, options) {
   
   fastify.post('/plan/upgrade', async (request, reply) => {
     try {
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME)
+      const db = fastify.mongo.db;
       let user = request.user;
       const userId = user._id;
       userSubscription = await db.collection('subscriptions').findOne({ _id: new fastify.mongo.ObjectId(userId) });
@@ -351,7 +351,7 @@ async function routes(fastify, options) {
           ],
         });
       // Update the user's subscription status and details in your database
-      await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').updateOne(
+      await fastify.mongo.db.collection('subscriptions').updateOne(
         { _id: new fastify.mongo.ObjectId(userId) },
         {
           $set: {
@@ -383,7 +383,7 @@ async function routes(fastify, options) {
 
             
             // Check if the session has already been processed
-            const user = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+            const user = await fastify.mongo.db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
             if (user.processedSessions && user.processedSessions.includes(sessionId)) {
                 return reply.code(400).send({ error: 'Session already processed' });
@@ -393,7 +393,7 @@ async function routes(fastify, options) {
 
             if (coinsToAdd > 0) {
                 // Update the user's coins
-                await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
+                await fastify.mongo.db.collection('users').updateOne(
                     { _id: new fastify.mongo.ObjectId(userId) },
                     {
                         $inc: { coins: coinsToAdd },
@@ -441,7 +441,7 @@ async function routes(fastify, options) {
 
         if (coinsToAdd > 0) {
             // Update the user's coins
-            await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
+            await fastify.mongo.db.collection('users').updateOne(
                 { _id: new fastify.mongo.ObjectId(userId) },
                 { $inc: { coins: coinsToAdd } }
             );
@@ -459,7 +459,7 @@ fastify.post('/user/daily-bonus-coins', async (request, reply) => {
   try {
       let user = request.user;
       const userId = user._id;
-      user = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+      user = await fastify.mongo.db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
       const today = new Date();
       today.setHours(0, 0, 0, 0); // Reset the time to midnight to compare dates
@@ -473,7 +473,7 @@ fastify.post('/user/daily-bonus-coins', async (request, reply) => {
       }
 
       // Add 10 coins to the user and update the lastDailyBonus date
-      await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').updateOne(
+      await fastify.mongo.db.collection('users').updateOne(
           { _id: new fastify.mongo.ObjectId(userId) },
           {
               $inc: { coins: 100 },
@@ -496,7 +496,7 @@ fastify.post('/user/daily-bonus-coins', async (request, reply) => {
       ? 'http://localhost:3000' 
       : `https://${request.headers.host}`;
 
-      const user = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({
+      const user = await fastify.mongo.db.collection('users').findOne({
         _id: new fastify.mongo.ObjectId(userId),
       });
   
@@ -556,7 +556,7 @@ fastify.post('/user/daily-bonus-coins', async (request, reply) => {
       ? 'http://localhost:3000' 
       : `https://${request.headers.host}`;
 
-    const user = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({
+    const user = await fastify.mongo.db.collection('users').findOne({
         _id: new fastify.mongo.ObjectId(userId),
     });
 
@@ -606,7 +606,7 @@ fastify.post('/plan/update-clients', async (request, reply) => {
           const priceId = session.metadata.priceId;
 
           // Check if the session has already been processed
-          const existingClient = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('clients').findOne({
+          const existingClient = await fastify.mongo.db.collection('clients').findOne({
               chatId: chatId,
               priceId: priceId,
               clients: userId
@@ -617,7 +617,7 @@ fastify.post('/plan/update-clients', async (request, reply) => {
           }
 
           // Update the clients collection
-          await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('clients').updateOne(
+          await fastify.mongo.db.collection('clients').updateOne(
               { chatId: chatId, priceId: priceId },
               {
                   $setOnInsert: {
@@ -647,14 +647,14 @@ fastify.post('/album/check-client', async (request, reply) => {
 
   try {
     // Check if the user is a client
-    const client = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('clients').findOne({
+    const client = await fastify.mongo.db.collection('clients').findOne({
       chatId: chatId,
       priceId: priceId,
       clients: userId
     });
 
     // Check if the user is subscribed
-    const user = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users').findOne({
+    const user = await fastify.mongo.db.collection('users').findOne({
       _id: new fastify.mongo.ObjectId(userId)
     });
 

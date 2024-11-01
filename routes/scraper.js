@@ -54,7 +54,7 @@ async function routes(fastify, options) {
       }
       const puppeteer = require('puppeteer');
     
-      const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+      const collection = fastify.mongo.db.collection('chats');
     
       async function scrapeZetaAi() {
         const browser = await puppeteer.launch({
@@ -114,7 +114,7 @@ async function routes(fastify, options) {
       if (!isAdmin) {
           return reply.status(403).send({ error: 'Access denied' });
       }
-      const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+      const collection = fastify.mongo.db.collection('chats');
     
       async function updateImages() {
         const characters = await collection.find({ scrap: true, ext: 'gohiai' }).toArray();
@@ -155,7 +155,7 @@ async function routes(fastify, options) {
       if (!isAdmin) {
           return reply.status(403).send({ error: 'Access denied' });
       }
-        const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+        const collection = fastify.mongo.db.collection('chats');
     
         async function scrapeGohiai() {
           const response = await axios.get('https://www.gohiai.com/ja-jp/ai-explore/pt_HEYXw0PF2PVU7Uz8fkzY');
@@ -227,7 +227,7 @@ async function routes(fastify, options) {
         if (!isAdmin) {
             return reply.status(403).send({ error: 'Access denied' });
         }
-        const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+        const collection = fastify.mongo.db.collection('chats');
     
         async function scrapesynclubaichat() {
           const response = await axios.get('https://api.synclubaichat.com/aichat/h5/merror/commonlist?is_guest=1&language=ja&device=web_desktop&product=aichat&sys_lang=en-US&country=&referrer=&zone=9&languageV2=en&uuid=&app_version=1.5.1&ts=1723428680&sign=e8d93192deb4c7d4ff9f604ce96c121f');
@@ -306,8 +306,8 @@ async function routes(fastify, options) {
         if (!isAdmin) {
             return reply.status(403).send({ error: 'Access denied' });
         }
-        const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
-        const tagsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('tags');
+        const chatsCollection = fastify.mongo.db.collection('chats');
+        const tagsCollection = fastify.mongo.db.collection('tags');
     
         const chats = await chatsCollection.find({}).toArray();
     
@@ -333,7 +333,7 @@ async function routes(fastify, options) {
             return reply.status(403).send({ error: 'Access denied' });
         }
         try {
-          const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('characters');
+          const collection = fastify.mongo.db.collection('characters');
           const nsfw = request.query.nsfw || 'Soft' //(None, Soft, Mature, X)
           const page = parseInt(request.query.page, 10) || 0; // Convert the page to an integer and default to 0 if not provided
           const civit_checkpoint = request.query.checkpoint
@@ -417,7 +417,7 @@ fastify.get('/scraper/civitai/categories', async (request, reply) => {
   if (!isAdmin) {
       return reply.status(403).send({ error: 'Access denied' });
   }
-    const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('categories');
+    const collection = fastify.mongo.db.collection('categories');
     const nsfw = request.query.nsfw || false
     const categories = await collection.aggregate([
       { 
@@ -477,7 +477,7 @@ fastify.get('/scraper/download-images', async (request, reply) => {
       return reply.status(403).send({ error: 'Access denied' });
   }
   try {
-      const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+      const collection = fastify.mongo.db.collection('chats');
       const characters = await collection.find({ ext: 'synclubaichat' }).toArray();
 
       const baseDownloadDirectory = path.join(__dirname, '../public/download');
@@ -528,7 +528,7 @@ fastify.get('/scraper/upload-images', async (request, reply) => {
       return reply.status(403).send({ error: 'Access denied' });
   }
   try {
-      const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+      const collection = fastify.mongo.db.collection('chats');
       const uploadDirectory = path.join(__dirname, '../public/upload/male'); // Same as download directory
 
       const files = fs.readdirSync(uploadDirectory);
@@ -575,7 +575,7 @@ fastify.get('/scraper/create-characters', async (request, reply) => {
       return reply.status(403).send({ error: 'Access denied' });
   }
   try {
-      const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('characters');
+      const collection = fastify.mongo.db.collection('characters');
       const baseDirectory = path.join(__dirname, '../public/upload');
 
       const categories = fs.readdirSync(baseDirectory);

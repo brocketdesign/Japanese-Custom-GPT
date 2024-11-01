@@ -8,7 +8,7 @@ async function routes(fastify, options) {
       const user = await fastify.getUser(request, reply);
       const userId = new fastify.mongo.ObjectId(user._id);
 
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db;
       const galleryCollection = db.collection('gallery');
       const imagesLikesCollection = db.collection('images_likes');
       const usersCollection = db.collection('users'); // Collection to update user's imageLikeCount
@@ -107,7 +107,7 @@ async function routes(fastify, options) {
       const limit = 12; // Number of images per page
       const skip = (page - 1) * limit;
   
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db;
       const imagesLikesCollection = db.collection('images_likes');
       const chatsGalleryCollection = db.collection('gallery');
       const chatsCollection = db.collection('chats');
@@ -178,7 +178,7 @@ async function routes(fastify, options) {
       const limit = 12; // Number of images per page
       const skip = (page - 1) * limit;
   
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db;
       const chatsGalleryCollection = db.collection('gallery');
       const chatsCollection = db.collection('chats');
   
@@ -254,7 +254,7 @@ async function routes(fastify, options) {
       const limit = 12; // Number of images per page
       const skip = (page - 1) * limit;
   
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db;
       const chatsGalleryCollection = db.collection('gallery');
       const chatsCollection = db.collection('chats');
   
@@ -327,7 +327,7 @@ async function routes(fastify, options) {
       const limit = 20; // Number of users per page
       const skip = (page - 1) * limit;
   
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db;
       const userChatCollection = db.collection('userChat');
       const usersCollection = db.collection('users');
       const chatsCollection = db.collection('chats');
@@ -402,7 +402,7 @@ async function routes(fastify, options) {
         return reply.code(400).send({ error: 'Invalid NSFW value. It must be a boolean.' });
       }
   
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db;
       const galleryCollection = db.collection('gallery');
   
       // Update the nsfw field of the specific image in the gallery

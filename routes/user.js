@@ -17,7 +17,7 @@ async function routes(fastify, options) {
         return reply.status(400).send({ error: 'ユーザー名とパスワードは必須です' });
       }
   
-      const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+      const usersCollection = fastify.mongo.db.collection('users');
       
       // Check if the user already exists
       const user = await usersCollection.findOne({ email });
@@ -49,8 +49,8 @@ async function routes(fastify, options) {
 
       // Transfer temp chat to new user
       const userId = newUser._id
-      const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-      const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+      const collectionUserChat = fastify.mongo.db.collection('userChat');
+      const collectionChat = fastify.mongo.db.collection('chats');
 
       const updateUserId = async (collectionChat, collectionUserChat, userId, tempUserId) => {
     
@@ -86,7 +86,7 @@ async function routes(fastify, options) {
 
   fastify.post('/user/login', async (request, reply) => {
     const { email, password } = request.body;
-    const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+    const usersCollection = fastify.mongo.db.collection('users');
     
     const user = await usersCollection.findOne({ email });
     if (!user || !(await bcrypt.compare(password, user.password))) {
@@ -146,7 +146,7 @@ fastify.get('/user/google-auth/callback', async (request, reply) => {
     const userInfo = userInfoResponse.data;
     const email = userInfo.email;
     const googleId = userInfo.sub; // Get the Google ID from the user info response
-    const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+    const usersCollection = fastify.mongo.db.collection('users');
 
     // Check if the user already exists
     const user = await usersCollection.findOne({ email });
@@ -166,8 +166,8 @@ fastify.get('/user/google-auth/callback', async (request, reply) => {
       });
       const userId = result.insertedId;
       // Transfer temp chat to new user
-      const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-      const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+      const collectionUserChat = fastify.mongo.db.collection('userChat');
+      const collectionChat = fastify.mongo.db.collection('chats');
 
       const updateUserId = async (collectionChat, collectionUserChat, userId, tempUserId) => {
     
@@ -263,7 +263,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     const userId = decodedIdToken.sub;
     const email = decodedIdToken.email;  // Get the email from the decoded ID token
 
-    const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+    const usersCollection = fastify.mongo.db.collection('users');
 
     // Check if the user already exists
     const user = await usersCollection.findOne({ userId });
@@ -284,8 +284,8 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       const newUserId = result.insertedId;
       // Transfer temp chat to new user
       const userId = newUserId
-      const collectionUserChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('userChat');
-      const collectionChat = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+      const collectionUserChat = fastify.mongo.db.collection('userChat');
+      const collectionChat = fastify.mongo.db.collection('chats');
 
       const updateUserId = async (collectionChat, collectionUserChat, userId, tempUserId) => {
     
@@ -422,7 +422,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       const userId = decoded._id;
   
       // Access the MongoDB collection
-      const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+      const usersCollection = fastify.mongo.db.collection('users');
   
       // Construct the data object to update in the database
       const updateData = {};
@@ -469,7 +469,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const userId = decoded._id;
 
-      const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+      const usersCollection = fastify.mongo.db.collection('users');
 
       const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
 
@@ -502,7 +502,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
         return reply.send({error:`Plan not founded`})
       }
       // Fetch the user from the database using their ObjectId
-      existingSubscription = await fastify.mongo.client.db(process.env.MONGODB_NAME).collection('subscriptions').findOne({
+      existingSubscription = await fastify.mongo.db.collection('subscriptions').findOne({
         _id: new fastify.mongo.ObjectId(userId),
         subscriptionStatus: 'active',
       });
@@ -526,7 +526,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
 
   fastify.get('/user/:userId', async (request, reply) => {
     const { userId } = request.params;
-    const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+    const db = fastify.mongo.db
     const collectionChat = db.collection('chats');
     const collectionUser = db.collection('users');
   
@@ -534,7 +534,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       let currentUser = await fastify.getUser(request, reply);
       const currentUserId = currentUser._id;
       currentUser = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(currentUserId) });
-  
+
       const userData = await getUserData(userId, collectionUser, collectionChat, currentUser);
       if (!userData) return reply.status(404).send({ error: 'User not found' });
   
@@ -557,7 +557,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
   
   fastify.get('/user/chat-data/:userId', async (request, reply) => {
     const { userId } = request.params;
-    const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+    const db = fastify.mongo.db
     const collectionChat = db.collection('chats');
     const collectionUser = db.collection('users');
   
@@ -616,7 +616,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     }
   });
   fastify.post('/user/:userId/follow-toggle', async (request, reply) => {
-    const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+    const db = fastify.mongo.db
     const usersCollection = db.collection('users');
     const translations = request.translations
     
@@ -675,7 +675,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       const limit = 12; // Number of users per page
       const skip = (page - 1) * limit;
   
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db
       const usersCollection = db.collection('users');
   
       // Find the user and either get their followers or following list
@@ -724,7 +724,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       let currentUser = await fastify.getUser(request, reply);
       const currentUserId = currentUser._id;
   
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db
       currentUser = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(currentUserId) });
   
       const { userId } = request.params;
@@ -797,7 +797,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       const limit = 5;
       const skip = (page - 1) * limit;
   
-      const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+      const db = fastify.mongo.db
       const usersCollection = db.collection('users');
   
       const usersCursor = await usersCollection
@@ -864,7 +864,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
 
     const filter = { $or: orConditions };
 
-    const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
+    const db = fastify.mongo.db
     const notificationsCollection = db.collection('notifications');
 
     const notifications = await notificationsCollection

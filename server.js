@@ -196,8 +196,7 @@ async function initializeCategoriesCollection(db) {
       let chatCount = await collectionChat.distinct('chatImageUrl', { userId: new fastify.mongo.ObjectId(userId) });
       chatCount = chatCount.length
 
-      return reply.redirect('/chat')
-      if (user.isTemporary || chatCount == 0) {
+      if (user.isTemporary) {
         return reply.redirect('/chat/edit/')
       }else{
         return reply.redirect('/chat')
@@ -263,7 +262,10 @@ async function initializeCategoriesCollection(db) {
       const totalUsers = await db.collection('users').countDocuments({ email: { $exists: true } });
       const isAdmin = await checkUserAdmin(fastify, request.user._id);
 
-      return reply.renderWithGtm('chat.hbs', { 
+      if (user.isTemporary) {
+        return reply.redirect('/authenticate')
+      }
+        return reply.renderWithGtm('chat.hbs', { 
         title: 'LAMIX | 日本語でAI画像生成 | AIチャット',
         isAdmin,
         imageType,

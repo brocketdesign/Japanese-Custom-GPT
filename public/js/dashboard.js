@@ -1129,6 +1129,7 @@ function generateChatsPagination(currentPage, totalPages, type, query) {
 
 window.loadAllUserPosts = async function (page = 1) {
     const currentUser = await fetchUser();
+    console.log(currentUser)
     const currentUserId = currentUser._id;
     const subscriptionStatus = currentUser.subscriptionStatus === 'active';
     const isAdmin = await checkIfAdmin(currentUserId);    

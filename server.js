@@ -18,6 +18,8 @@ const {
   cleanupNonRegisteredUsers,
   deleteOldRecords, 
   deleteUserChatsWithoutMessages,
+  deleteTemporaryChats,
+  TemporaryChats
  } = require('./models/cleanupNonRegisteredUsers');
  const  { checkUserAdmin, getUserData } = require('./models/tool')
 
@@ -27,11 +29,11 @@ mongodb.MongoClient.connect(process.env.MONGODB_URI)
 
     // Schedule the cleanup to run every day at midnight
     cron.schedule('0 0 * * *', () => {
-      //cleanupNonRegisteredUsers(db);
       //deleteOldRecords(db)
       //deleteUserChatsWithoutMessages(db)
+      cleanupNonRegisteredUsers(db);
+      deleteTemporaryChats(db)
     });
-    //cleanupNonRegisteredUsers(db);
 
     const fs = require('fs');
 const path = require('path');
@@ -192,8 +194,9 @@ async function initializeCategoriesCollection(db) {
       const userId = user._id;
       const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
       const collectionChat = db.collection('chats');
-      user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-
+      if(userId && !user.isTemporary){
+        user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+      }
       let chatCount = await collectionChat.distinct('chatImageUrl', { userId: new fastify.mongo.ObjectId(userId) });
       chatCount = chatCount.length
 
@@ -256,10 +259,10 @@ async function initializeCategoriesCollection(db) {
         ]
       });      
     }); 
-    fastify.get('/chat', (request, reply) => {
+    fastify.get('/chat', { preHandler: [fastify.authenticate] }, (request, reply) => {
       reply.redirect('/chat/')
     });
-    fastify.get('/chat/:chatId', async (request, reply) => {
+    fastify.get('/chat/:chatId', { preHandler: [fastify.authenticate] }, async (request, reply) => {
       let user = request.user;
       const chatId = request.params.chatId;
       const imageType = request.query.type || false
@@ -300,7 +303,7 @@ async function initializeCategoriesCollection(db) {
       try {
         let user = request.user;
         const userId = user._id;
-        user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+        if(userId) user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
         const translations = request.translations
 
         return reply.view('post.hbs', {
@@ -397,10 +400,12 @@ async function initializeCategoriesCollection(db) {
         const db = fastify.mongo.client.db(process.env.MONGODB_NAME);
         const chatsCollection = db.collection('chats');
         const galleryCollection = db.collection('gallery');
-
-        user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-        const subscriptionStatus = user.subscriptionStatus === 'active';
-
+        
+        let subscriptionStatus = false
+        if(!user.isTemporary && userId){
+          user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+          subscriptionStatus = user.subscriptionStatus === 'active';
+        }
         // Fetch chat profile data
         const chat = await chatsCollection.findOne({ _id: chatId });
 
@@ -526,7 +531,7 @@ async function initializeCategoriesCollection(db) {
         ]
       });
     });
-    fastify.get('/chat/list/:id', async (request, reply) => {
+    fastify.get('/chat/list/:id', { preHandler: [fastify.authenticate] }, async (request, reply) => {
       try {
         const userId = new fastify.mongo.ObjectId(request.params.id);
         const user = await db.collection('users').findOne({ _id: userId });
@@ -586,36 +591,44 @@ async function initializeCategoriesCollection(db) {
       });
     });
 
-    fastify.get('/chat/edit/:chatId', async (request, reply) => {
-
-      let user = request.user;
-      const userId = user._id;
-      user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-
-      const isSubscribed = user.subscriptionStatus === 'active';
-      if(!isSubscribed){
-        //return reply.redirect('/my-plan');
-      }
-
-      let chatId = request.params.chatId 
-      const chatImage = request.query.chatImage
-      //Must have an image 
-      if(!chatId && !chatImage){
-        //return reply.redirect('/discover')
-      }
-
+    fastify.get('/chat/edit/:chatId', { preHandler: [fastify.authenticate] }, async (request, reply) => {
       try {
-        const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
-        const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
 
         let user = request.user;
         const userId = user._id;
+        user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+
+        const isSubscribed = user.subscriptionStatus === 'active';
+        if(!isSubscribed){
+          //return reply.redirect('/my-plan');
+        }
+
+        let chatId = request.params.chatId 
+        const chatImage = request.query.chatImage
+        //Must have an image 
+        if(!chatId && !chatImage){
+          //return reply.redirect('/discover')
+        }
+
+        const usersCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+        const chatsCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('chats');
+
         user = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
         const isTemporaryChat = request.params.chatId ? false : true
-        if(isTemporaryChat){
-          chatId = new fastify.mongo.ObjectId()
-          await chatsCollection.insertOne({userId:new fastify.mongo.ObjectId(userId), _id : chatId, isTemporary:true})
+        
+        try {
+          if (isTemporaryChat) {
+            await chatsCollection.insertOne({
+              userId: new fastify.mongo.ObjectId(userId),
+              _id: new fastify.mongo.ObjectId(),
+              isTemporary: true,
+            });
+          }
+        } catch (error) {
+          console.error("Error inserting document:", error);
         }
+        
+
         const prompts = await fs.readFileSync('./models/girl_char.md', 'utf8');
 
         const isAdmin = await checkUserAdmin(fastify, request.user._id);
@@ -624,12 +637,14 @@ async function initializeCategoriesCollection(db) {
           //template = 'add-chat-admin.hbs'
         }
         const translations = request.translations
+
         return reply.renderWithGtm(template, { title: 'AIフレンズ  | Powered by Hato,Ltd', translations, chatId, isTemporaryChat, user, prompts});
       } catch (error) {
         console.log(error)
         return reply.status(500).send({ error: 'Failed to retrieve chatId' });
       }
     });
+
     fastify.get('/users', (request, reply) => {
       if (process.env.MODE == 'local') {
         reply.renderWithGtm('user-list.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' });

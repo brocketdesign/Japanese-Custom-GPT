@@ -22,7 +22,6 @@ async function cleanupNonRegisteredUsers(db) {
         console.log(`Non-registered users found: ${nonRegisteredUsers.length}`);
 
         const userIds = nonRegisteredUsers.map(user => user._id);
-        console.log(`User IDs to delete: ${userIds}`);
 
         // Delete non-registered users and their related data
         if (userIds.length > 0) {
@@ -42,7 +41,7 @@ async function cleanupNonRegisteredUsers(db) {
         const allUserIds = await usersCollection.distinct('_id');
         console.log(`All user IDs: ${allUserIds.length}`);
         
-        
+        /*
         console.log('Deleting orphaned records...');
         await Promise.all([
             collectionChat.deleteMany({ userId: { $nin: allUserIds, $exists: true } }),
@@ -51,7 +50,7 @@ async function cleanupNonRegisteredUsers(db) {
         ]);
 
         console.log('Orphaned records deleted.');
-        
+        */
         return `${userIds.length} non-registered users and orphaned data deleted.`;
     } catch (error) {
         console.error(`Cleanup failed: ${error.message}`);
@@ -352,6 +351,48 @@ async function cleanUpDatabase(db) {
     }
   }
   
+  async function deleteTemporaryChats(db) {
+    try {
+      const chatsCollection = db.collection("chats");
+      const tempCollectionName = "chats_temp";
+      const tempChatsCollection = db.collection(tempCollectionName);
+  
+      console.log("Starting the process to remove temporary chats.");
+  
+      // Drop temp collections if they already exist
+      const collections = await db.listCollections().toArray();
+      const collectionNames = collections.map(col => col.name);
+  
+      if (collectionNames.includes(tempCollectionName)) {
+        console.log(`Dropping existing temporary collection: ${tempCollectionName}`);
+        await tempChatsCollection.drop();
+      }
+  
+      // Copy non-temporary chats to the temporary collection
+      console.log("Copying non-temporary chats to temporary collection.");
+      await chatsCollection.aggregate([
+        { $match: { isTemporary: { $ne: true } } },
+        { $out: tempCollectionName }
+      ]).toArray();
+      console.log("Non-temporary chats copied to temporary collection.");
+  
+      // Drop the original chats collection
+      console.log("Dropping original chats collection.");
+      await chatsCollection.drop();
+      console.log("Original chats collection dropped.");
+  
+      // Rename the temporary collection back to 'chats'
+      console.log("Renaming temporary collection back to 'chats'.");
+      await tempChatsCollection.rename('chats');
+      console.log("Process completed: Temporary chats removed, and collection updated.");
+  
+    } catch (error) {
+      console.error("Error during temporary chat removal process:", error);
+    }
+  }
+  
+  
+  
   
   
 
@@ -365,5 +406,6 @@ module.exports = {
     cleanUpDatabase,
     updateAllUsersImageLikeCount,
     initializeAllUsersPostCount,
-    updateImageCount
+    updateImageCount,
+    deleteTemporaryChats,
 }

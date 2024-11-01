@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const fastifyPlugin = require('fastify-plugin');
+const { ObjectId } = require('mongodb');
 
 module.exports = fastifyPlugin(async function (fastify, opts) {
     // 1. Load all translation files at startup
@@ -27,9 +28,9 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         // Try to get authenticated user by token
         const user = await getAuthenticatedUser(request, userCollection);
         if (user) {
+            console.log(user)
             return user;
         }
-
         // Handle temporary user
         const tempUser = await getOrCreateTempUser(request, reply, userCollection);
         return tempUser;
@@ -60,111 +61,35 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         return null;
     }
 
-    // Helper to get or create temporary user
-    async function getOrCreateTempUser(request, reply, userCollection) {
-        const mode = process.env.MODE || 'local'; // Default to 'local' if MODE is undefined
-        let tempUserId = request.cookies.tempUserId;
-        fastify.log.info(`Mode: ${mode} | tempUserId from cookies: ${tempUserId}`);
-
-        if (!tempUserId) {
-            // Check if a temporary user already exists for this session/IP
-            const existingTempUser = await userCollection.findOne({ isTemporary: true, session: getSessionIdentifier(request) });
-            if (existingTempUser) {
-                tempUserId = existingTempUser._id.toString();
-                reply.setCookie('tempUserId', tempUserId, {
-                    path: '/',
-                    httpOnly: true,
-                    maxAge: 60 * 60 * 24, // 24 Hours
-                    sameSite: mode === 'heroku' ? 'None' : 'Lax', // Adjusted based on MODE
-                    secure: mode === 'heroku' // Adjusted based on MODE
-                });
-                fastify.log.info(`Reusing existing temp user with ID: ${tempUserId}`);
-                return existingTempUser;
-            }
-
-            // Create a new temporary user
-            const tempUser = {
-                isTemporary: true,
-                role: 'guest',
-                lang: 'ja',
-                createdAt: new Date(),
-                session: getSessionIdentifier(request) // Associate with session
-            };
-            const result = await userCollection.insertOne(tempUser);
-            tempUserId = result.insertedId.toString();
-            fastify.log.info(`Created new temp user with ID: ${tempUserId}`);
-
-            reply.setCookie('tempUserId', tempUserId, {
-                path: '/',
-                httpOnly: true,
-                maxAge: 60 * 60 * 24, // 24 Hours
-                sameSite: mode === 'heroku' ? 'None' : 'Lax',
-                secure: mode === 'heroku'
-            });
-            return tempUser;
-        }
-
-        try {
-            const user = await userCollection.findOne({ _id: new fastify.mongo.ObjectId(tempUserId) });
-            if (user) {
-                return user;
-            } else {
-                // If user not found, create a new one ensuring no duplicates
-                const existingTempUser = await userCollection.findOne({ isTemporary: true, session: getSessionIdentifier(request) });
-                if (existingTempUser) {
-                    tempUserId = existingTempUser._id.toString();
-                    reply.setCookie('tempUserId', tempUserId, {
-                        path: '/',
-                        httpOnly: true,
-                        maxAge: 60 * 60 * 24, // 24 Hours
-                        sameSite: mode === 'heroku' ? 'None' : 'Lax',
-                        secure: mode === 'heroku'
-                    });
-                    fastify.log.info(`Reusing existing temp user with ID: ${tempUserId}`);
-                    return existingTempUser;
-                }
-
-                const tempUser = {
-                    isTemporary: true,
-                    role: 'guest',
-                    lang: 'ja',
-                    createdAt: new Date(),
-                    session: getSessionIdentifier(request)
-                };
-                const result = await userCollection.insertOne(tempUser);
-                tempUserId = result.insertedId.toString();
-                reply.setCookie('tempUserId', tempUserId, {
-                    path: '/',
-                    httpOnly: true,
-                    maxAge: 60 * 60 * 24, // 24 Hours
-                    sameSite: mode === 'heroku' ? 'None' : 'Lax',
-                    secure: mode === 'heroku'
-                });
-                fastify.log.info(`Created new temp user with ID: ${tempUserId}`);
-                return tempUser;
-            }
-        } catch (err) {
-            fastify.log.error('Error fetching temp user:', err);
-            // Optionally handle the error, e.g., create a new temp user
-            const tempUser = {
+    async function getOrCreateTempUser(request, reply) {
+        const mode = process.env.MODE || 'local';
+        let tempUser = request.cookies.tempUser;
+    
+        if (!tempUser) {
+            const tempUserId = new ObjectId().toString();
+            tempUser = {
+                _id: tempUserId,
                 isTemporary: true,
                 role: 'guest',
                 lang: 'ja',
                 createdAt: new Date(),
                 session: getSessionIdentifier(request)
             };
-            const result = await userCollection.insertOne(tempUser);
-            tempUserId = result.insertedId.toString();
-            reply.setCookie('tempUserId', tempUserId, {
+    
+            reply.setCookie('tempUser', JSON.stringify(tempUser), {
                 path: '/',
                 httpOnly: true,
-                maxAge: 60 * 60 * 24, // 24 Hours
+                maxAge: 60 * 60 * 24,
                 sameSite: mode === 'heroku' ? 'None' : 'Lax',
                 secure: mode === 'heroku'
             });
-            return tempUser;
+        } else {
+            tempUser = JSON.parse(tempUser);
         }
+    
+        return tempUser;
     }
+    
 
     // Helper to generate a session identifier (e.g., based on IP and User-Agent)
     function getSessionIdentifier(request) {

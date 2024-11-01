@@ -832,6 +832,10 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
   
   fastify.get('/user/is-admin/:userId', async (req, reply) => {
     try {
+      let user = req.user;
+      if (user.isTemporary){
+        return reply.send({ isAdmin : false });
+      }
       const isAdmin = await checkUserAdmin(fastify, req.params.userId);
       return reply.send({ isAdmin });
     } catch (err) {

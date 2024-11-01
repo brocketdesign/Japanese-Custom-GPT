@@ -2492,8 +2492,10 @@ async function routes(fastify, options) {
         try {
             let user = request.user;
             const userId = user._id;
-            const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
-            user = await collection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
+            if (userId && !user.isTemporary){
+                const collection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+                user = await collection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
+            }
             return reply.send({user})
         } catch (error) {
             console.log(error)

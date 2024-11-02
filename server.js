@@ -276,7 +276,7 @@ fastify.get('/post', async (request, reply) => {
     const db = fastify.mongo.db;
     let user = request.user;
     const userId = user._id;
-    if (userId) user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+    if (!user.isTemporary && userId) user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
     const translations = request.translations;
     return reply.view('post.hbs', {
       title: 'コミュニティからの最新投稿 | LAMIX | 日本語 | 無料AI画像生成 | 無料AIチャット',
@@ -303,7 +303,7 @@ fastify.get('/post/:postId', async (request, reply) => {
     const userId = user._id;
     const postId = request.params.postId;
 
-    user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+    if (!user.isTemporary && userId) user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
     const post = await db.collection('posts').findOne({ _id: new fastify.mongo.ObjectId(postId) });
 
     if (!post) {

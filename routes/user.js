@@ -532,8 +532,8 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
   
     try {
       let currentUser = await fastify.getUser(request, reply);
-      const currentUserId = currentUser._id;
-      if (!currentUser.isTemporary && currentUserId) currentUser = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(currentUserId) });
+      const currentUserId = currentUser?._id;
+      if (!currentUser?.isTemporary && currentUserId) currentUser = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(currentUserId) });
 
       const userData = await getUserData(userId, collectionUser, collectionChat, currentUser);
       if (!userData) return reply.status(404).send({ error: 'User not found' });
@@ -563,8 +563,8 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
   
     try {
       let currentUser = await fastify.getUser(request, reply)
-      const currentUserId = currentUser._id
-      if (!currentUser.isTemporary && currentUserId) await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(currrentUserId) });
+      const currentUserId = currentUser?._id
+      if (!currentUser?.isTemporary && currentUserId) await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(currrentUserId) });
       const user = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(userId) });
       if (!user) return reply.status(404).send({ error: 'User not found' });
   
@@ -583,7 +583,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
   
       const chatQuery = {
         $or: [{ userId }, { userId: new fastify.mongo.ObjectId(userId) }],
-        visibility: currentUser._id.toString() === userId ? { $in: ["public", "private"] } : "public"
+        visibility: currentUser?._id.toString() === userId ? { $in: ["public", "private"] } : "public"
       };
   
       const userChats = await collectionChat.find(chatQuery).sort({_id:-1}).toArray();
@@ -593,7 +593,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       ]);
   
       return reply.send({
-        isAdmin: currentUser._id.toString() === userId,
+        isAdmin: currentUser?._id.toString() === userId,
         user: currentUser,
         userData: {
           profileUrl: user.profileUrl,
@@ -623,7 +623,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     const translations = request.translations
     
     let currentUser = await fastify.getUser(request, reply);
-    const currentUserId = new fastify.mongo.ObjectId(currentUser._id);
+    const currentUserId = new fastify.mongo.ObjectId(currentUser?._id);
     const targetUserId = new fastify.mongo.ObjectId(request.params.userId);
     const action = request.body.action == 'true';
 
@@ -640,7 +640,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
 
 
         // Create a notification for the target user
-        const message = `${currentUser.nickname} ${translations.startFollow} `;
+        const message = `${currentUser?.nickname} ${translations.startFollow} `;
         await fastify.createNotification(targetUserId, message, 'info', { followerId: currentUserId });
 
         reply.send({ message: 'フォローしました！' });
@@ -724,10 +724,10 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     try {
       // Get current user
       let currentUser = await fastify.getUser(request, reply);
-      const currentUserId = currentUser._id;
+      const currentUserId = currentUser?._id;
   
       const db = fastify.mongo.db
-      if (!currentUser.isTemporary && currentUserId) currentUser = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(currentUserId) });
+      if (!currentUser?.isTemporary && currentUserId) currentUser = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(currentUserId) });
   
       const { userId } = request.params;
       const type = request.query.type || 'followers'; // Default to 'followers' if type not provided
@@ -757,7 +757,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
         profilePicture: user.profileUrl || '/img/avatar.png',
       }));
 
-      const isFollowing = currentUser.following && currentUser.following.some(followingId => followingId.toString() === user._id.toString());
+      const isFollowing = currentUser?.following && currentUser?.following.some(followingId => followingId.toString() === user._id.toString());
       const isFollowedBy = user.following && user.following.some(followingId => followingId.toString() === currentUserId.toString());
       const title = `${user.nickname} の${type === 'followers' ? 'フォロワー' : 'フォロー中'}リスト`;
 
@@ -765,13 +765,13 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
         title,
         currentUser: {
           userId: currentUserId,
-          userName: currentUser.nickname,
-          profilePicture: currentUser.profileUrl || '/img/avatar.png',
-          postCount: currentUser.postCount || 0,
-          imageLikeCount: currentUser.imageLikeCount || 0,
-          followCount: currentUser.followCount || 0,
-          followerCount: currentUser.followerCount || 0,
-          coins: currentUser.coins || 0,
+          userName: currentUser?.nickname,
+          profilePicture: currentUser?.profileUrl || '/img/avatar.png',
+          postCount: currentUser?.postCount || 0,
+          imageLikeCount: currentUser?.imageLikeCount || 0,
+          followCount: currentUser?.followCount || 0,
+          followerCount: currentUser?.followerCount || 0,
+          coins: currentUser?.coins || 0,
         },
         requestedUser: {
           userId: userId,

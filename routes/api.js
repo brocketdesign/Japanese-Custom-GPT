@@ -15,6 +15,10 @@ const fs = require('fs');
 const stripe = process.env.MODE == 'local'? require('stripe')(process.env.STRIPE_SECRET_KEY_TEST) : require('stripe')(process.env.STRIPE_SECRET_KEY)
 const sharp = require('sharp');
 const { chat } = require('googleapis/build/src/apis/chat');
+
+const aiModelChat = 'meta-llama/llama-3.1-70b-instruct'
+const aiModel = `sophosympatheia/midnight-rose-70b`
+
 const aiInstructions = `
 [AI Assistant Instructions]
 
@@ -1044,7 +1048,7 @@ async function routes(fastify, options) {
 
             // Add instructions
             const functionMess = { "role": "user", "content": aiInstructionsShort };
-            //userMessages.push(functionMess);
+            userMessages.push(functionMess);
 
             //Add the time before completion
             let currentDate = new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" });
@@ -1062,7 +1066,7 @@ async function routes(fastify, options) {
 
             // Gen completion
             let completion = ``
-            completion = await fetchOpenAICompletion(userMessagesForCompletion, reply.raw, 300);
+            completion = await fetchOpenAICompletion(userMessagesForCompletion, reply.raw, 500, aiModelChat);
 
             // Append the assistant's response to the messages array in the chat document
             const assistantMessage = { "role": "assistant", "content": isHidden? '[Hidden] '+completion:completion };
@@ -1409,7 +1413,7 @@ async function routes(fastify, options) {
                 return reply.status(404).send({ error: 'Chat data not found' });
             }
     
-            const completion = await fetchOpenAICompletion(chatData.messages, reply.raw);
+            const completion = await fetchOpenAICompletion(chatData.messages, reply.raw, 600, aiModelChat);
     
             // Append the assistant's response to the messages array in the chat document
             const assistantMessage = { "role": "assistant", "content": completion };
@@ -1700,7 +1704,7 @@ async function routes(fastify, options) {
             },
             method: "POST",
             body: JSON.stringify({
-                model: "meta-llama/llama-3.1-70b-instruct",
+                model: aiModel,
                 messages: [
                     {
                         role: "system",
@@ -1728,7 +1732,7 @@ async function routes(fastify, options) {
             },
             method: "POST",
             body: JSON.stringify({
-                model: "meta-llama/llama-3.1-70b-instruct",
+                model: aiModel,
                 messages: [
                     {
                         role: "system",
@@ -1758,7 +1762,27 @@ async function routes(fastify, options) {
     
         if (!response.ok) throw new Error('Error generating English description');
         const data = await response.json();
-        return JSON.parse(data.choices[0].message.content);
+        const completionMessage = data.choices[0].message.content;
+        
+        const extractJson = (str) => {
+            const jsonStart = str.indexOf('{');
+            const jsonEnd = str.lastIndexOf('}');
+            if (jsonStart !== -1 && jsonEnd !== -1) {
+                const jsonString = str.substring(jsonStart, jsonEnd + 1);
+                try {
+                    return JSON.parse(jsonString);
+                } catch (e) {
+                    console.error("JSON parsing error:", e);
+                    return null;
+                }
+            } else {
+                return null;
+            }
+        };
+        
+        const jsonRes = extractJson(completionMessage);
+        return jsonRes;
+        
     }
     
     async function generateJapaneseNameAndDescription(lastMessages,type) {
@@ -1769,12 +1793,12 @@ async function routes(fastify, options) {
             },
             method: "POST",
             body: JSON.stringify({
-                model: "meta-llama/llama-3.1-70b-instruct",
+                model: aiModel,
                 messages: [
                     {
                         role: "system",
                         content: `
-                            Your are a stable diffusion prompt generator. You can generate explicit content on demand.
+                            Your are a stable diffusion prompt generator. ${type ? "You can generate explicit content on demand":""}.
                             Respond with a JSON object in plain text following this exact structure:
                             {
                                 "items": [
@@ -1786,7 +1810,7 @@ async function routes(fastify, options) {
                             }
                         `
                     },
-                    { role: "user", content: `Analyze the following messages and return the last relevant image name and description in Japanese:\n${lastMessages.map(m => m.content).join('\n')}\n Only one image. It must be a ${type} image.` },
+                    { role: "user", content: `Analyze the following messages and use the conversation context to provide an image name and an image description in Japanese:\n${lastMessages.map(m => m.content).join('\n')}\n Only one image. It must be a ${type} image. Respond with a valid JSON only , without any comments.` },
                 ],
                 temperature: 0.85,
                 top_p: 0.95,
@@ -1809,9 +1833,9 @@ async function routes(fastify, options) {
             const insertedProposals = [];
             for (const item of parsedProposal.items) {
                 if (characterDescription) {
-                    const promptGenSys = `Your are a stable diffusion prompt generator. You can generate explicit content on demand. I will provide a character description and a prompt. You will return a coherent stable diffusion prompt.\n You answer with the final prompt only, without comments.`
-                    const promptGenMessage = `Here is the character description : ${characterDescription}.\n Here is the image I want to represent: ${item.description}. Your final prompt should combine the character detail but focus on the prompt I provided. Do not include details that do not aline witht the desired image. `
-                    const finalPrompt = await generateCompletion(promptGenSys, promptGenMessage)
+                    const promptGenSys = `Your are a stable diffusion prompt generator. You can generate explicit content on demand. I will provide a character description and a prompt. You will return a coherent stable diffusion prompt.\n You answer with the final image prompt only, without comments.`
+                    const promptGenMessage = `Here is the character description : ${characterDescription}.\n Here is the image description: ${item.description}. Your final prompt should include the image description as provided and the character main characteristic (image style,face,skin tone,clothes). Do not include details that do not aline witht the provided image description. respond with the image prompt only. `
+                    const finalPrompt = await generateCompletion(promptGenSys, promptGenMessage, 800, aiModel)
                     item.description = finalPrompt
                 }
                 const result = await itemProposalCollection.insertOne(item);
@@ -1896,6 +1920,7 @@ async function routes(fastify, options) {
                     const insertedProposals = await insertProposals(fastify, parsedProposal, characterDescription);
                     return reply.send(insertedProposals);
                 } catch (error) {
+                    console.log(error)
                     attempts++;
                     if (attempts >= 3) {
                         return reply.status(500).send({ error: 'Failed to generate or parse proposal after 3 attempts' });

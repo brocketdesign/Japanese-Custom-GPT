@@ -82,7 +82,7 @@ const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'me
     }
 };
 
-async function generateCompletion(systemPrompt, userMessage) {
+async function generateCompletion(systemPrompt, userMessage, maxToken = 1000, aiModel =`meta-llama/llama-3.1-70b-instruct`) {
     const response = await fetch("https://api.novita.ai/v3/openai/chat/completions", {
         headers: {
             "Content-Type": "application/json",
@@ -90,7 +90,7 @@ async function generateCompletion(systemPrompt, userMessage) {
         },
         method: "POST",
         body: JSON.stringify({
-            model: "meta-llama/llama-3.1-70b-instruct",
+            model: aiModel,
             messages: [
                 { role: "system", content: systemPrompt },
                 { role: "user", content: userMessage },
@@ -99,7 +99,7 @@ async function generateCompletion(systemPrompt, userMessage) {
             top_p: 0.95,
             frequency_penalty: 0,
             presence_penalty: 0,
-            max_tokens: 512,
+            max_tokens: maxToken,
             stream: false,
             n: 1,
         }),

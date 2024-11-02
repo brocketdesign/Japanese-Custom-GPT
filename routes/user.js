@@ -533,7 +533,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     try {
       let currentUser = await fastify.getUser(request, reply);
       const currentUserId = currentUser._id;
-      currentUser = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(currentUserId) });
+      if (!currentUser.isTemporary && currentUserId) currentUser = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(currentUserId) });
 
       const userData = await getUserData(userId, collectionUser, collectionChat, currentUser);
       if (!userData) return reply.status(404).send({ error: 'User not found' });
@@ -562,7 +562,9 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     const collectionUser = db.collection('users');
   
     try {
-      const currentUser = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId((await fastify.getUser(request, reply))._id) });
+      let currentUser = await fastify.getUser(request, reply)
+      const currentUserId = currentUser._id
+      if (!currentUser.isTemporary && currentUserId) await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(currrentUserId) });
       const user = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(userId) });
       if (!user) return reply.status(404).send({ error: 'User not found' });
   
@@ -725,7 +727,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       const currentUserId = currentUser._id;
   
       const db = fastify.mongo.db
-      currentUser = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(currentUserId) });
+      if (!currentUser.isTemporary && currentUserId) currentUser = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(currentUserId) });
   
       const { userId } = request.params;
       const type = request.query.type || 'followers'; // Default to 'followers' if type not provided

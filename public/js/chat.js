@@ -2144,21 +2144,6 @@ $(document).ready(async function() {
         //displayAdvancedImageGenerationForm(API_URL, userId, chatId, userChatId, thumbnail)
         displayCustomPromptInput(API_URL, userId, chatId, userChatId, thumbnail)
     })
-    // Check if the tooltip has already been shown in the session
-    if (!sessionStorage.getItem('tooltipShown')) {
-        $('#userMessage').one('input', function() {
-            // Show tooltip
-            $('#showPrompts').tooltip('show');
-            
-            // Set sessionStorage flag to ensure it's only shown once
-            sessionStorage.setItem('tooltipShown', 'true');
-            
-            // Hide tooltip after 3 seconds
-            setTimeout(function() {
-                $('#showPrompts').tooltip('hide');
-            }, 3000); // Hide after 3 seconds
-        });
-    }
     // User info popup
         
     function generateRandomNickname() {
@@ -2301,7 +2286,7 @@ $(document).ready(async function() {
             
         });
     }
-    
+
     if(!isTemporary && $('#chat-widget-container').length == 0){
         let user = await fetchUser()
     
@@ -2313,16 +2298,9 @@ $(document).ready(async function() {
         
         if (!userNickname || !userBirthYear || !userBirthMonth || !userBirthDay || !userGender) {
             showPopupUserInfo();
-        } else {
-            if(!isTemporary && !subscriptionStatus && !$.cookie('showPremiumPopup')){
-                return
-                showPopupWithSwiper(function(){
-                   // $.cookie('showPremiumPopup',true)
-                })
-            }
         }
     }
-    
+
     function showPopupWithSwiper(callback) {
         Swal.fire({
             html: `
@@ -2368,246 +2346,195 @@ $(document).ready(async function() {
                 if (callback) callback();
             }
         });
-    }  function _showPopupWithSwiper(callback) {
-        Swal.fire({
-            html: `
-                <div class="swiper-container">
-                    <div class="swiper-wrapper">
-                        <div class="swiper-slide">
-                            <a href="/my-plan">
-                            <img src="/img/sales/1.jpg" alt="Image 1" style="width: 100%;">
-                            </a>
-                        </div>
-                        <div class="swiper-slide">
-                            <a href="/my-plan">
-                            <img src="/img/sales/2.jpg" alt="Image 2" style="width: 100%;">
-                            </a>
-                        </div>
-                        <div class="swiper-slide">
-                            <a href="/my-plan">
-                            <img src="/img/sales/3.jpg" alt="Image 3" style="width: 100%;">
-                            </a>
-                        </div>
-                        <div class="swiper-slide">
-                            <a href="/my-plan">
-                            <img src="/img/sales/4.jpg" alt="Image 3" style="width: 100%;">
-                            </a>
-                        </div>
-                        <div class="swiper-slide">
-                            <a href="/my-plan">
-                            <img src="/img/sales/5.jpg" alt="Image 3" style="width: 100%;">
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <div style="bottom: -50px;left:0;right:0;z-index: 100;" class="mx-auto position-absolute w-100">
-                    <a href="/my-plan" class="btn btn-lg custom-gradient-bg text-white fw-bold" style="border-radius:50px;"><i class="far fa-star me-2"></i>プレミアムプランを試す</a>
-                    <span id="closeButton" style="opacity:0" class="text-muted mx-auto w-100 d-block mt-1">検討する</span>
-                </div>
-            `,
-            focusConfirm: false,
-            showConfirmButton: false,
-            allowOutsideClick: false,
-            showCancelButton: false,
-            customClass: {
-                confirmButton: 'bg-secondary px-5', htmlContainer:'position-relative overflow-visible'
-            },
-            showClass: {
-                popup: 'bg-transparent animate__animated animate__fadeIn'
-            },
-            hideClass: {
-                popup: 'animate__animated animate__fadeOut'
-            },
-            didOpen: () => {
-                new Swiper('.swiper-container', {
-                    slidesPerView: 1,
-                    loop: false,
-                    spaceBetween: 20,
-                });
-                document.getElementById('closeButton').addEventListener('click', () => {
-                    Swal.close();
-                });
-                setTimeout(() => {
-                    $('#closeButton').animate({ opacity: 1 }, 'slow');
-                }, 3000);
-                if (callback) callback();
-            }
-        });
-    }
+    }  
 
    // Function to get prompts data
    function getPromptsData(callback) {
-    var promptsData = sessionStorage.getItem('promptsData');
-    if (promptsData) {
-        // Data is in session storage
-        var prompts = JSON.parse(promptsData);
-        if (typeof callback === 'function') {
-            callback(prompts);
-        }
-    } else {
-        // Fetch data from server and save to session storage
-        $.ajax({
-            url: '/api/prompts',
-            type: 'GET',
-            success: function(prompts) {
-                sessionStorage.setItem('promptsData', JSON.stringify(prompts));
-                if (typeof callback === 'function') {
-                    callback(prompts);
-                }
-            },
-            error: function(xhr) {
-                console.error('Error fetching prompts data on page load.');
+        var promptsData = sessionStorage.getItem('promptsData');
+        if (promptsData) {
+            // Data is in session storage
+            var prompts = JSON.parse(promptsData);
+            if (typeof callback === 'function') {
+                callback(prompts);
             }
-        });
+        } else {
+            // Fetch data from server and save to session storage
+            $.ajax({
+                url: '/api/prompts',
+                type: 'GET',
+                success: function(prompts) {
+                    sessionStorage.setItem('promptsData', JSON.stringify(prompts));
+                    if (typeof callback === 'function') {
+                        callback(prompts);
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Error fetching prompts data on page load.');
+                }
+            });
+        }
     }
-}
-
 
     // On page load, ensure prompts data is loaded
     getPromptsData()
+    // Check if the tooltip has already been shown in the session
+    if (!sessionStorage.getItem('tooltipShown')) {
+        $('#userMessage').one('input', function() {
+            // Show tooltip
+            $('#showPrompts').tooltip('show');
+            
+            // Set sessionStorage flag to ensure it's only shown once
+            sessionStorage.setItem('tooltipShown', 'true');
+            
+            // Hide tooltip after 3 seconds
+            setTimeout(function() {
+                $('#showPrompts').tooltip('hide');
+            }, 3000); // Hide after 3 seconds
+        });
+    }
 
- // Click handler for #showPrompts
-$('#showPrompts').on('click', function() {
-    getPromptsData(function(prompts) {
-        const header = `<p style="font-size:16x;" class="px-3 text-start mt-3 mb-0 pb-0">画像を生成するためのポーズを選んでください。</p>
-        <p style="font-size:12px;" class="text-start mb-2 px-3">必要に応じて、<strong>成人向け画像 (NSFW)</strong> オプションを有効にできます。（20🪙）</p>`;
-        renderPopup(prompts, header);
+    // Click handler for #showPrompts
+    $(document).on('click','#showPrompts', function() {
+        getPromptsData(function(prompts) {
+            const header = `<p style="font-size:16px;" class="px-3 text-start mt-3 mb-0 pb-0">画像を生成するためのポーズを選んでください。</p>
+            <p style="font-size:12px;" class="text-start mb-2 px-3">必要に応じて、<strong>成人向け画像 (NSFW)</strong> オプションを有効にできます。（20🪙）</p>`;
+            renderPopup(prompts, header);
+        });
     });
-});
 
-function renderPopup(prompts, header) {
-    const nsfwEnabled = sessionStorage.getItem('nsfwEnabled') === 'true';
-    renderSwalPopup(header, prompts, nsfwEnabled);
-}
+    function renderPopup(prompts, header) {
+        const nsfwEnabled = sessionStorage.getItem('nsfwEnabled') === 'true';
+        renderSwalPopup(header, prompts, nsfwEnabled);
+    }
 
-function renderSwalPopup(header, prompts, nsfwEnabled) {
-    const switchType = `<div class="form-check text-start my-3 ps-3">
-        <input type="checkbox" class="btn-check" id="nsfwCheckbox" autocomplete="off" ${nsfwEnabled ? 'checked' : ''}>
-        <label class="btn btn-outline-danger btn-sm rounded" for="nsfwCheckbox">
-            ${window.translations.imageForm.nsfwImage}
-        </label>
-    </div>`;
-    const promptHtml = generatePromptHtml(prompts, nsfwEnabled);
+    function renderSwalPopup(header, prompts, nsfwEnabled) {
+        const switchType = `<div class="form-check text-start my-3 ps-3">
+            <input type="checkbox" class="btn-check" id="nsfwCheckbox" autocomplete="off" ${nsfwEnabled ? 'checked' : ''}>
+            <label class="btn btn-outline-danger btn-sm rounded" for="nsfwCheckbox">
+                ${window.translations.imageForm.nsfwImage}
+            </label>
+        </div>`;
+        const promptHtml = generatePromptHtml(prompts, nsfwEnabled);
 
-    Swal.fire({
-        html: header + switchType + promptHtml,
-        showClass: { popup: 'animate__animated animate__slideInUp animate__faster' },
-        hideClass: { popup: 'animate__animated animate__slideOutDown animate__faster' },
-        position: 'bottom',
-        backdrop: 'rgba(43, 43, 43, 0.2)',
-        showCloseButton: true,
-        showConfirmButton: false,
-        customClass: {
-            container: 'p-0',
-            htmlContainer: 'p-0',
-            popup: 'custom-prompt-container shadow',
-            closeButton: 'position-absolute'
-        },
-        didOpen: () => {
-            if (isTemporary) {
-                showRegistrationForm();
-                return;
+        Swal.fire({
+            html: header + switchType + promptHtml,
+            showClass: { popup: 'animate__animated animate__slideInUp animate__faster' },
+            hideClass: { popup: 'animate__animated animate__slideOutDown animate__faster' },
+            position: 'bottom',
+            backdrop: 'rgba(43, 43, 43, 0.2)',
+            showCloseButton: true,
+            showConfirmButton: false,
+            customClass: {
+                container: 'p-0',
+                htmlContainer: 'p-0',
+                popup: 'custom-prompt-container shadow',
+                closeButton: 'position-absolute'
+            },
+            didOpen: () => {
+                if (isTemporary) {
+                    showRegistrationForm();
+                    return;
+                }
+
+                $('#nsfwCheckbox').on('change', function() {
+                    sessionStorage.setItem('nsfwEnabled', $(this).is(':checked'));
+                    updatePromptContent(prompts, header);
+                });
+
+                attachPromptCardEvents();
             }
-
-            $('#nsfwCheckbox').on('change', function() {
-                sessionStorage.setItem('nsfwEnabled', $(this).is(':checked'));
-                updatePromptContent(prompts, header);
-            });
-
-            attachPromptCardEvents();
-        }
-    });
-}
-function generatePromptHtml(prompts, nsfwEnabled) {
-    let promptHtml = `
-        <div class="row px-2 mx-0" style="
-            max-height: 60vh;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            touch-action: pan-y;
-        ">
-    `;
-    
-    prompts.forEach(function(prompt) {
-        if (nsfwEnabled || prompt.nsfw !== 'on') {
-            promptHtml += `
-                <div class="col-4 col-sm-3 col-lg-2 my-2">
-                    <div class="card prompt-card shadow-0" data-id="${prompt._id}" data-nsfw="${prompt.nsfw === 'on'}" style="cursor: pointer;">
-                        <img src="${prompt.image}" class="card-img-top" alt="${prompt.title}" style="height:80px; object-fit:contain; width:100%;">
-                        <div class="card-body p-1">
-                            <p class="card-text text-center" style="font-size:12px; margin-bottom:0;">
-                                ${prompt.title}
-                            </p>
+        });
+    }
+    function generatePromptHtml(prompts, nsfwEnabled) {
+        let promptHtml = `
+            <div class="row px-2 mx-0" style="
+                max-height: 60vh;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                touch-action: pan-y;
+            ">
+        `;
+        
+        prompts.forEach(function(prompt) {
+            if (nsfwEnabled || prompt.nsfw !== 'on') {
+                promptHtml += `
+                    <div class="col-4 col-sm-3 col-lg-2 my-2">
+                        <div class="card prompt-card shadow-0" data-id="${prompt._id}" data-nsfw="${prompt.nsfw === 'on'}" style="cursor: pointer;">
+                            <img src="${prompt.image}" class="card-img-top" alt="${prompt.title}" style="height:80px; object-fit:contain; width:100%;">
+                            <div class="card-body p-1">
+                                <p class="card-text text-center" style="font-size:12px; margin-bottom:0;">
+                                    ${prompt.title}
+                                </p>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
-        }
-    });
-    
-    return promptHtml + '</div>';
-}
+                `;
+            }
+        });
+        
+        return promptHtml + '</div>';
+    }
 
 
-function updatePromptContent(prompts, header) {
-    const nsfwEnabled = $('#nsfwCheckbox').is(':checked');
-    const switchType = `<div class="form-check text-start my-3 ps-3">
-        <input type="checkbox" class="btn-check" id="nsfwCheckbox" autocomplete="off" ${nsfwEnabled ? 'checked' : ''}>
-        <label class="btn btn-outline-danger btn-sm rounded" for="nsfwCheckbox">
-            ${window.translations.imageForm.nsfwImage}
-        </label>
-    </div>`;
-    const updatedPromptHtml = generatePromptHtml(prompts, nsfwEnabled);
+    function updatePromptContent(prompts, header) {
+        const nsfwEnabled = $('#nsfwCheckbox').is(':checked');
+        const switchType = `<div class="form-check text-start my-3 ps-3">
+            <input type="checkbox" class="btn-check" id="nsfwCheckbox" autocomplete="off" ${nsfwEnabled ? 'checked' : ''}>
+            <label class="btn btn-outline-danger btn-sm rounded" for="nsfwCheckbox">
+                ${window.translations.imageForm.nsfwImage}
+            </label>
+        </div>`;
+        const updatedPromptHtml = generatePromptHtml(prompts, nsfwEnabled);
 
-    $('.swal2-html-container').html(header + switchType + updatedPromptHtml);
-    
-    $('#nsfwCheckbox').on('change', function() {
-        sessionStorage.setItem('nsfwEnabled', $(this).is(':checked'));
-        updatePromptContent(prompts, header);
-    });
+        $('.swal2-html-container').html(header + switchType + updatedPromptHtml);
+        
+        $('#nsfwCheckbox').on('change', function() {
+            sessionStorage.setItem('nsfwEnabled', $(this).is(':checked'));
+            updatePromptContent(prompts, header);
+        });
 
-    attachPromptCardEvents();
-}
+        attachPromptCardEvents();
+    }
 
-function attachPromptCardEvents() {
-    $('.prompt-card').off('click').on('click', function() {
-        $('.prompt-card').removeClass('selected'); // Remove 'selected' class from all prompt cards
-        $(this).addClass('selected'); // Add visual feedback when clicked
+    function attachPromptCardEvents() {
+        $('.prompt-card').off('click').on('click', function() {
+            $('.prompt-card').removeClass('selected'); // Remove 'selected' class from all prompt cards
+            $(this).addClass('selected'); // Add visual feedback when clicked
 
-        var id = $(this).data('id');
-        var isNSFWChecked = $('#nsfwCheckbox').is(':checked');
-        controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isNSFWChecked);
-    });
-}
-function showBuyCoins(){
-    const message = `
-    <div class="d-flex justify-content-start">
-        <button class="btn custom-gradient-bg shadow-0 w-45 me-2" 
-            onclick="showCoinShop()">
-            <span>${window.translations.buyCoins || 'コインを購入する'}</span>
-        </button>
-    </div>
-    `;
-    displayMessage('assistant', message);
+            var id = $(this).data('id');
+            var isNSFWChecked = $('#nsfwCheckbox').is(':checked');
+            controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isNSFWChecked);
+        });
+    }
+    function showBuyCoins(){
+        const message = `
+        <div class="d-flex justify-content-start">
+            <button class="btn custom-gradient-bg shadow-0 w-45 me-2" 
+                onclick="showCoinShop()">
+                <span>${window.translations.buyCoins || 'コインを購入する'}</span>
+            </button>
+        </div>
+        `;
+        displayMessage('assistant', message);
 
-}
-function showPaymentImage(type) {
-    const messageId = `msg_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-    const message = `
-    <div id="${messageId}" class="d-flex justify-content-start">
-        ${type == 'sfw' ? `
-        <button class="btn custom-gradient-bg shadow-0 w-45 me-2" 
-            onclick="buyImage('${messageId}','10', 'sfw')">
-            <span>10<span class="mx-1">🪙</span></span>
-        </button>` : `
-        <button class="btn custom-gradient-bg danger shadow-0 w-45" 
-            onclick="buyImage('${messageId}','20', 'nsfw')">
-            <span>20<span class="mx-1">🪙</span> <span style="font-size:10px">R18</span></span>
-        </button>`}
-    </div>
-    `;
-    displayMessage('assistant', message);
-}
+    }
+    function showPaymentImage(type) {
+        const messageId = `msg_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+        const message = `
+        <div id="${messageId}" class="d-flex justify-content-start">
+            ${type == 'sfw' ? `
+            <button class="btn custom-gradient-bg shadow-0 w-45 me-2" 
+                onclick="buyImage('${messageId}','10', 'sfw')">
+                <span>10<span class="mx-1">🪙</span></span>
+            </button>` : `
+            <button class="btn custom-gradient-bg danger shadow-0 w-45" 
+                onclick="buyImage('${messageId}','20', 'nsfw')">
+                <span>20<span class="mx-1">🪙</span> <span style="font-size:10px">R18</span></span>
+            </button>`}
+        </div>
+        `;
+        displayMessage('assistant', message);
+    }
 
     function checkForPurchaseProposal() {
         return

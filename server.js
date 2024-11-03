@@ -573,7 +573,7 @@ fastify.get('/chat/edit/:chatId', { preHandler: [fastify.authenticate] }, async 
     //   return reply.redirect('/my-plan');
     // }
 
-    const chatId = request.params.chatId;
+    let chatId = request.params.chatId;
     const chatImage = request.query.chatImage;
     // if (!chatId && !chatImage) {
     //   return reply.redirect('/discover');
@@ -586,9 +586,10 @@ fastify.get('/chat/edit/:chatId', { preHandler: [fastify.authenticate] }, async 
     const isTemporaryChat = !request.params.chatId;
 
     if (isTemporaryChat) {
+      chatId = new fastify.mongo.ObjectId()
       await chatsCollection.insertOne({
         userId: new fastify.mongo.ObjectId(userId),
-        _id: new fastify.mongo.ObjectId(),
+        _id: chatId,
         isTemporary: true,
       });
     }

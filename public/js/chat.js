@@ -2318,7 +2318,7 @@ $(document).ready(async function() {
         if (!userNickname || !userBirthYear || !userBirthMonth || !userBirthDay || !userGender) {
             showPopupUserInfo();
         } else {
-            if(!isTemporary && subscriptionStatus && !$.cookie('showPremiumPopup')){
+            if(!isTemporary && !subscriptionStatus && !$.cookie('showPremiumPopup')){
                 showPopupWithSwiper(function(){
                    // $.cookie('showPremiumPopup',true)
                 })

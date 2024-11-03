@@ -575,16 +575,16 @@ async function routes(fastify, options) {
             // Fetch chatIds from userChat collection
             const userChats = await userChatCollection.find({
                 userId: new fastify.mongo.ObjectId(userId)
-            }).toArray();
-    
+            }).sort({ updatedAt: -1 }).toArray();
+
             const chatIds = userChats.map(userChat => new fastify.mongo.ObjectId(userChat.chatId));
     
             // Fetch chats based on chatIds
             const chats = await chatsCollection.find({
                 _id: { $in: chatIds },
                 name: { $exists: true }
-            }).sort({ latestChatDate: -1 }).toArray();
-    
+            }).sort({ updatedAt: -1 }).toArray();
+
             // For each chat, fetch the last message
             for (let chat of chats) {
                 const lastMessage = await chatLastMessageCollection.findOne(

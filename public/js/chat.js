@@ -28,7 +28,7 @@ $(document).ready(async function() {
     let language = 'japanese'
 
     $('body').attr('data-temporary-user',isTemporary)
-    displayChatList(true);
+    displayChatList();
     updateCoins(userCoins)
 
 
@@ -3101,10 +3101,6 @@ function displayChatList(reset) {
         });
 
         enableToggleDropdown();
-
-        currentChatIndex += chatsPerPage;
-        localStorage.setItem('currentChatIndex', currentChatIndex);
-
         updateChatCount(chatListData.length);
         checkShowMoreButton();
     }
@@ -3119,41 +3115,54 @@ function displayChatList(reset) {
             $('#chat-list').append('<button id="show-more-chats" class="btn shadow-0 w-100"><i class="bi bi-three-dots"></i></button>');
             $('#show-more-chats').on('click', function() {
                 $(this).remove();
+                currentChatIndex += chatsPerPage;
                 displayChats();
+
             });
         }
     }
 
     if (reset || chatListData.length === 0) {
+        console.log('fetchChatListData')
         fetchChatListData();
     } else {
         displayChats();
     }
 }
+function updateCurrentChat(chatId, userId) {
+    let chatListData = JSON.parse(localStorage.getItem('chatList')) || [];
+    let currentChat = chatListData.find(chat => chat._id === chatId);
 
-function updateCurrentChat(chatId,userId) {
-    var chatListData = JSON.parse(localStorage.getItem('chatList')) || [];
-
-    var currentChat = chatListData.find(function(chat) {
-        return chat._id === chatId;
-    });
-
-    if (!currentChat) {
-        return;
+    if (currentChat) {
+        updateChatListDisplay(currentChat);
+    } else {
+        fetchChatDataInfo(chatId);
     }
+}
 
-    $('#chat-list').find('.chat-list.item').removeClass('active');
-    $('#chat-list').find('.chat-list.item[data-id="' + chatId + '"]').remove();
-
-    chatListData = chatListData.filter(function(chat) {
-        return chat._id !== chatId;
+function fetchChatDataInfo(chatId) {
+    $.ajax({
+        type: 'GET',
+        url: `/api/chat-data/${chatId}`,
+        success: function(data) {
+            updateChatListDisplay(data);
+        },
+        error: function(xhr, status, error) {}
     });
+}
 
+function updateChatListDisplay(currentChat) {
+    let chatListData = JSON.parse(localStorage.getItem('chatList')) || [];
+    chatListData = chatListData.filter(chat => chat._id !== currentChat._id);
+    chatListData.unshift(currentChat);
+    chatListData.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
     localStorage.setItem('chatList', JSON.stringify(chatListData));
 
-    var chatHtml = constructChatItemHtml(currentChat, true);
-    $('#chat-list').prepend(chatHtml);
+    $('#chat-list').find('.chat-list.item').removeClass('active');
+    $('#chat-list').find(`.chat-list.item[data-id="${currentChat._id}"]`).remove();
 
+    let chatHtml = constructChatItemHtml(currentChat, true);
+    $('#chat-list').prepend(chatHtml);
     enableToggleDropdown();
 }
 

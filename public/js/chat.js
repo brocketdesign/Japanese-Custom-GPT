@@ -2317,10 +2317,77 @@ $(document).ready(async function() {
         
         if (!userNickname || !userBirthYear || !userBirthMonth || !userBirthDay || !userGender) {
             showPopupUserInfo();
-        } 
+        } else {
+            if(!isTemporary && subscriptionStatus && !$.cookie('showPremiumPopup')){
+                showPopupWithSwiper(function(){
+                   // $.cookie('showPremiumPopup',true)
+                })
+            }
+        }
     }
     
     function showPopupWithSwiper(callback) {
+        Swal.fire({
+            html: `
+                <div class="swiper-container">
+                    <div class="swiper-wrapper">
+                        <div class="swiper-slide">
+                            <a href="/my-plan">
+                            <img src="/img/sales/1.jpg" alt="Image 1" style="width: 100%;">
+                            </a>
+                        </div>
+                        <div class="swiper-slide">
+                            <a href="/my-plan">
+                            <img src="/img/sales/2.jpg" alt="Image 2" style="width: 100%;">
+                            </a>
+                        </div>
+                        <div class="swiper-slide">
+                            <a href="/my-plan">
+                            <img src="/img/sales/3.jpg" alt="Image 3" style="width: 100%;">
+                            </a>
+                        </div>
+                        <div class="swiper-slide">
+                            <a href="/my-plan">
+                            <img src="/img/sales/4.jpg" alt="Image 3" style="width: 100%;">
+                            </a>
+                        </div>
+                        <div class="swiper-slide">
+                            <a href="/my-plan">
+                            <img src="/img/sales/5.jpg" alt="Image 3" style="width: 100%;">
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div style="bottom: -50px;left:0;right:0;z-index: 100;" class="mx-auto position-absolute w-100">
+                    <button id="closeButton" class="btn btn-lg custom-gradient-bg text-white fw-bold" style="border-radius:50px;">チャットしましょう</button>
+                </div>
+            `,
+            focusConfirm: false,
+            showConfirmButton: false,
+            allowOutsideClick: false,
+            showCancelButton: false,
+            customClass: {
+                confirmButton: 'bg-secondary px-5', htmlContainer:'position-relative overflow-visible'
+            },
+            showClass: {
+                popup: 'bg-transparent animate__animated animate__fadeIn'
+            },
+            hideClass: {
+                popup: 'animate__animated animate__fadeOut'
+            },
+            didOpen: () => {
+                new Swiper('.swiper-container', {
+                    slidesPerView: 1,
+                    loop: false,
+                    spaceBetween: 20,
+                });
+                document.getElementById('closeButton').addEventListener('click', () => {
+                    Swal.close();
+                });
+                if (callback) callback();
+            }
+        });
+    }  function _showPopupWithSwiper(callback) {
         Swal.fire({
             html: `
                 <div class="swiper-container">

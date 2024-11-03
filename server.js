@@ -632,6 +632,7 @@ fastify.get('/dashboard', { preHandler: [fastify.authenticate] }, async (request
     const chatsCollection = db.collection('chats');
     const chats = await chatsCollection.distinct('chatImageUrl', { userId });
 
+    return reply.redirect('/chat/');
     if (chats.length === 0) {
       return reply.redirect('/chat/edit/');
     } else {

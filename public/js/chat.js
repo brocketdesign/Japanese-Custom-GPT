@@ -2294,13 +2294,9 @@ $(document).ready(async function() {
         }).then((result) => {
             if (result.isConfirmed) {
                 handleUserInfo(result.value);
-    
-                if(!isTemporary && !subscriptionStatus && !$.cookie('showPremiumPopup')){
-                    return
-                    showPopupWithSwiper(function(){
-                        $.cookie('showPremiumPopup',true)
-                    })
-                }
+                showPopupWithSwiper(function(){
+                    $.cookie('showPremiumPopup',true)
+                })
             }
             
         });
@@ -2315,10 +2311,11 @@ $(document).ready(async function() {
         const userBirthMonth = user?.birthDate?.month ?? '';
         const userBirthDay = user?.birthDate?.day ?? '';
         
-        if (!userNickname || !userBirthYear || !userBirthMonth || !userBirthDay || !userGender) {
+        if (true || !userNickname || !userBirthYear || !userBirthMonth || !userBirthDay || !userGender) {
             showPopupUserInfo();
         } else {
             if(!isTemporary && !subscriptionStatus && !$.cookie('showPremiumPopup')){
+                return
                 showPopupWithSwiper(function(){
                    // $.cookie('showPremiumPopup',true)
                 })
@@ -2332,29 +2329,13 @@ $(document).ready(async function() {
                 <div class="swiper-container">
                     <div class="swiper-wrapper">
                         <div class="swiper-slide">
-                            <a href="/my-plan">
-                            <img src="/img/sales/1.jpg" alt="Image 1" style="width: 100%;">
-                            </a>
+                            <img src="/img/coins-slide-1.png" alt="Image 1" style="width: 100%;">
                         </div>
                         <div class="swiper-slide">
-                            <a href="/my-plan">
-                            <img src="/img/sales/2.jpg" alt="Image 2" style="width: 100%;">
-                            </a>
+                            <img src="/img/coins-slide-2.png" alt="Image 2" style="width: 100%;">
                         </div>
                         <div class="swiper-slide">
-                            <a href="/my-plan">
-                            <img src="/img/sales/3.jpg" alt="Image 3" style="width: 100%;">
-                            </a>
-                        </div>
-                        <div class="swiper-slide">
-                            <a href="/my-plan">
-                            <img src="/img/sales/4.jpg" alt="Image 3" style="width: 100%;">
-                            </a>
-                        </div>
-                        <div class="swiper-slide">
-                            <a href="/my-plan">
-                            <img src="/img/sales/5.jpg" alt="Image 3" style="width: 100%;">
-                            </a>
+                            <img src="/img/coins-slide-3.png" alt="Image 3" style="width: 100%;">
                         </div>
                     </div>
                 </div>

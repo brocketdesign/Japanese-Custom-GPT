@@ -595,7 +595,7 @@ fastify.get('/chat/edit/:chatId', { preHandler: [fastify.authenticate] }, async 
 
     const prompts = fs.readFileSync('./models/girl_char.md', 'utf8');
     const isAdmin = await checkUserAdmin(fastify, request.user._id);
-    const template = isAdmin ? 'add-chat-admin.hbs' : 'add-chat.hbs';
+    const template = 'add-chat.hbs' //isAdmin ? 'add-chat-admin.hbs' : 'add-chat.hbs';
     const translations = request.translations;
 
     return reply.renderWithGtm(template, {

@@ -2168,45 +2168,37 @@ $(document).ready(async function() {
     }
     function UserInfoForm(){
         return `
-                <div class="row mb-3">    
-                    <div class="col-9">
-                        <div class="form-group mb-3 text-start">
-                            <label for="nickname" class="form-label">
-                                <span class="small text-white" style="font-size:12px">ニックネーム</span>
-                                <span class="small text-muted" style="font-size:10px">キャラクターに呼んでほしい名前</span>
-                            </label>
-                            <div class="input-group">
-                                <input id="nickname" type="text" class="form-control form-control-sm" placeholder="ニックネームを入力">
-                            </div>
-                        </div>                        
-                    </div>        
-                    <div class="col-3 text-start">
-                        <label for="gender" class="form-label text-white" style="font-size:12px"><i class="fas fa-user"></i> 性別</label>
-                        <select class="form-select w-auto" id="gender" name="gender">
-                            <option value="female" selected><i class="fas fa-female"></i> 女性</option>
-                            <option value="male"><i class="fas fa-male"></i> 男性</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="row text-start">
-                    <label for="birthdate" class="form-label text-white" style="font-size:12px">生年月日</label>
-                    <div class="d-flex">
-                        <select class="form-control me-2" id="birthYear" name="birthYear" style="cursor:pointer;">
-                            <option value="" selected>年</option>
-                        </select>
-        
-                        <select class="form-control me-2" id="birthMonth" name="birthMonth" style="cursor:pointer;">
-                            <option value="" selected>月</option>
-                        </select>
-        
-                        <select class="form-control" id="birthDay" name="birthDay" style="cursor:pointer;">
-                            <option value="" selected>日</option>
-                        </select>
-                    </div>
-                </div>
-            `
+            <div class="text-center mb-3">
+                <h3 class="mt-3">ご登録ありがとうございます！</h3>
+                <p style="font-size:14px;color:#aaa;">よりパーソナライズされたチャット体験のために、以下の情報をご提供ください。</p>
+            </div>
+            <div class="form-group mb-3 text-start">
+                <label for="nickname" class="form-label">
+                    <span class="small" style="font-size:12px">ニックネーム</span>
+                    <span class="small text-muted" style="font-size:10px">キャラクターに呼んでほしい名前</span>
+                </label>
+                <input id="nickname" type="text" class="form-control form-control-sm" placeholder="ニックネームを入力">
+            </div>
+            <div class="form-group mb-3 text-start">
+                <label for="gender" class="form-label" style="font-size:12px">性別</label>
+                <select class="form-select" id="gender" name="gender">
+                    <option value="female" selected>女性</option>
+                    <option value="male">男性</option>
+                </select>
+            </div>
+            <div class="form-group mb-3 text-start">
+                <label for="birthdate" class="form-label" style="font-size:12px">生年月日</label>
+                <input id="birthdate" type="text" class="form-control" placeholder="生年月日を選択" autocomplete="off">
+            </div>
+            <div class="form-check text-start mb-3">
+                <input class="form-check-input" type="checkbox" value="" id="ageVerification">
+                <label class="form-check-label" for="ageVerification">
+                    私は18歳以上です
+                </label>
+            </div>
+        `
     }
+    
     function handleUserInfo(value,callback){
         const { nickname, birthYear, birthMonth, birthDay, gender } = value;
         const formData = new FormData();
@@ -2223,7 +2215,6 @@ $(document).ready(async function() {
             contentType: false,
             data: formData,
             success: function(response) {
-                //showNotification('情報が更新されました。','success')
                 if(typeof callback == 'function'){callback()}
             },
             error: function() {
@@ -2232,54 +2223,101 @@ $(document).ready(async function() {
             }
         });
     }
-
+    
     function showPopupUserInfo(callback) {
         Swal.fire({
             html: UserInfoForm(),
             focusConfirm: false,
-            confirmButtonText: '送信',
+            confirmButtonText: window.translations.setting.saveUserInfo || '送信',
             allowOutsideClick: false,
             showCancelButton: false,
             customClass: {
-                confirmButton: 'bg-secondary px-5'
+                confirmButton: 'bg-secondary px-5',
+                popup: 'bg-white border-top-custom-gradient rounded shadow',
+                confirmButton : 'btn btn-md custom-gradient-bg shadow-0 border-0'
             },
-                showClass: {
-                    popup: 'custom-gradient-bg-no-animation animate__animated animate__fadeIn'
+            showClass: {
+                popup: 'animate__animated animate__fadeIn'
             },
-                hideClass: {
-                    popup: 'animate__animated animate__fadeOut'
+            hideClass: {
+                popup: 'animate__animated animate__fadeOut'
             },
-                didOpen: () => {
-                    if (callback) callback();
+            didOpen: () => {
+                flatpickr("#birthdate", {
+                    locale: "ja",
+                    dateFormat: "Y年m月d日",
+                    maxDate: new Date(),
+                    defaultDate: new Date(new Date().setFullYear(new Date().getFullYear() - 18)),
+                });
+                if (callback) callback();
             },
             preConfirm: () => {
                 const nickname = $('#nickname').val();
-                const birthYear = $('#birthYear').val();
-                const birthMonth = $('#birthMonth').val();
-                const birthDay = $('#birthDay').val();
-                const gender = $('#gender').val()
-
-                if (!nickname || !birthYear || !birthMonth || !birthDay || !gender)  {
+                const birthdate = $('#birthdate').val();
+                const gender = $('#gender').val();
+                const ageVerified = $('#ageVerification').is(':checked');
+    
+                if (!nickname || !birthdate || !gender)  {
                     Swal.showValidationMessage('すべてのフィールドを入力してください');
                     return false;
                 }
-
+    
+                if (!ageVerified) {
+                    Swal.showValidationMessage('18歳以上であることを確認してください');
+                    return false;
+                }
+    
+                const dateParts = birthdate.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+                if (!dateParts) {
+                    Swal.showValidationMessage('有効な生年月日を選択してください');
+                    return false;
+                }
+                const birthYear = dateParts[1];
+                const birthMonth = dateParts[2];
+                const birthDay = dateParts[3];
+    
+                const today = new Date();
+                const birthDate = new Date(birthYear, birthMonth - 1, birthDay);
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const m = today.getMonth() - birthDate.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+    
+                if (age < 18) {
+                    Swal.showValidationMessage('18歳以上である必要があります');
+                    return false;
+                }
+    
                 return { nickname, birthYear, birthMonth, birthDay, gender };
             }
         }).then((result) => {
             if (result.isConfirmed) {
                 handleUserInfo(result.value);
-
+    
                 if(!isTemporary && !subscriptionStatus && !$.cookie('showPremiumPopup')){
                     return
                     showPopupWithSwiper(function(){
                         $.cookie('showPremiumPopup',true)
                     })
-                    //showPremiumPopup()
                 }
             }
             
         });
+    }
+    
+    if(!isTemporary && $('#chat-widget-container').length == 0){
+        let user = await fetchUser()
+    
+        const userNickname = user?.nickname ?? '';
+        const userGender = user?.gender ?? '';
+        const userBirthYear = user?.birthDate?.year ?? '';
+        const userBirthMonth = user?.birthDate?.month ?? '';
+        const userBirthDay = user?.birthDate?.day ?? '';
+        
+        if (!userNickname || !userBirthYear || !userBirthMonth || !userBirthDay || !userGender) {
+            showPopupUserInfo();
+        } 
     }
     
     function showPopupWithSwiper(callback) {
@@ -2656,60 +2694,7 @@ function showPaymentImage(type) {
     }
     
     
-    if(!isTemporary && $('#chat-widget-container').length == 0){
-        let user = await fetchUser()
 
-        const userNickname = user?.nickname ?? '';
-        const userGender = user?.gender ?? '';
-        const userBirthYear = user?.birthDate?.year ?? '';
-        const userBirthMonth = user?.birthDate?.month ?? '';
-        const userBirthDay = user?.birthDate?.day ?? '';
-        
-        if (!userNickname || !userBirthYear || !userBirthMonth || !userBirthDay || !userGender) {
-            showPopupUserInfo(function(callback){
-                var currentYear = new Date().getFullYear() - 15;
-                var startYear = 1900; 
-                for (var year = currentYear; year >= startYear; year--) {
-                    $('#birthYear').append($('<option>', {
-                        value: year,
-                        text: year + '年'
-                    }));
-                }
-                for (var month = 1; month <= 12; month++) {
-                    $('#birthMonth').append($('<option>', {
-                        value: month,
-                        text: month + '月'
-                    }));
-                }
-                function populateDays(month, year) {
-                    $('#birthDay').empty().append($('<option>', {
-                        value: '',
-                        text: '日'
-                    }));
-
-                    var daysInMonth = new Date(year, month, 0).getDate();
-                    for (var day = 1; day <= daysInMonth; day++) {
-                        $('#birthDay').append($('<option>', {
-                            value: day,
-                            text: day + '日'
-                        }));
-                    }
-                }
-                populateDays($('#birthMonth').val(), $('#birthYear').val());
-                $('#birthMonth, #birthYear').change(function() {
-                    populateDays($('#birthMonth').val(), $('#birthYear').val());
-                });
-            });
-        }else{
-            if(!isTemporary && !subscriptionStatus && !$.cookie('showPremiumPopup')){
-                return
-                showPopupWithSwiper(function(){
-                    $.cookie('showPremiumPopup',true)
-                })
-                //showPremiumPopup()
-            }
-        }
-    }
 
     // Fetch the user's IP address and generate a unique ID
    

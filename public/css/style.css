@@ -175,6 +175,23 @@ em {
 .isLoading .fa-spin{
   display: inherit !important;
 }
+.border-top-custom-gradient {
+  position: relative;
+  border-top: 0 solid transparent;
+}
+
+.border-top-custom-gradient::before {
+  border-radius:4px 4px 0px 0px;
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
+  z-index: 1;
+}
+
 .custom-gradient-bg-no-animation{
   background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
 }
@@ -211,6 +228,7 @@ em {
 
 .custom-gradient-bg:hover {
   color: #fff;
+  background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%) !important;
 }
 .chatbot-info-card {
   height: 80vh;

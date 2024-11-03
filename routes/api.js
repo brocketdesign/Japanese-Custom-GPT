@@ -26,8 +26,8 @@ const aiInstructions = `
    - **Purpose:** 
      - To prompt the user to purchase an image.
    - **Usage:**
-     - **Include \`[image_sfw]\`** when offering a Safe For Work (SFW) image.
-     - **Include \`[image_nsfw]\`** when offering a Not Safe For Work (NSFW) image.
+     - **Include \`[image_sfw]\`** when offering/sending a Safe For Work (SFW) image.
+     - **Include \`[image_nsfw]\`** when offering/sending a Not Safe For Work (NSFW) image.
    - **Image Costs:**
      - SFW image: 10 coins
      - NSFW image: 20 coins
@@ -54,8 +54,8 @@ const aiInstructionsShort = `[Hidden]
 [AI Assistant Reminder]
 
 - **Image Messaging:**
-  - Use \`[image_sfw]\` for SFW images (10 coins).
-  - Use \`[image_nsfw]\` for NSFW images (20 coins).
+  - Use \`[image_sfw]\` for offering/sending SFW images (10 coins).
+  - Use \`[image_nsfw]\` for offering/sending NSFW images (20 coins).
   - Only include when proposing to buy images.
 
 - **Coin Messaging:**

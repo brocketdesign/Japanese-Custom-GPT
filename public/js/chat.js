@@ -2311,7 +2311,7 @@ $(document).ready(async function() {
         const userBirthMonth = user?.birthDate?.month ?? '';
         const userBirthDay = user?.birthDate?.day ?? '';
         
-        if (true || !userNickname || !userBirthYear || !userBirthMonth || !userBirthDay || !userGender) {
+        if (!userNickname || !userBirthYear || !userBirthMonth || !userBirthDay || !userGender) {
             showPopupUserInfo();
         } else {
             if(!isTemporary && !subscriptionStatus && !$.cookie('showPremiumPopup')){

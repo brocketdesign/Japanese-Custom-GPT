@@ -221,6 +221,9 @@ em {
 .custom-gradient-bg.danger {
   background: linear-gradient(90.9deg, #F9B8FF 2.74%, #FF4040 102.92%) !important;
 }
+.custom-gradient-bg.danger:hover {
+  background: linear-gradient(90.9deg, #F9B8FF 2.74%, #FF4040 102.92%) !important;
+}
 
 .custom-gradient-bg:hover::before {
   transform: translate(-50%, -50%) scale(1);

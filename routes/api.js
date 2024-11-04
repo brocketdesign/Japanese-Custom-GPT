@@ -594,7 +594,7 @@ async function routes(fastify, options) {
                 chat.lastMessage = lastMessage ? lastMessage.lastMessage : null;
             }
     
-            return reply.send(chats);
+            return reply.send({chats,userId});
         } catch (error) {
             console.log(error);
             return reply.code(500).send({ error: 'An error occurred' });

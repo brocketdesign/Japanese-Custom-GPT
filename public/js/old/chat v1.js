@@ -390,6 +390,25 @@ $(document).ready(async function() {
                     isWidget : $('#chat-widget-container').length > 0
                 }),
                 success: function(response) {
+                    /*
+                    const messageCountDoc = response.messageCountDoc
+                    if(messageCountDoc.limit){
+                        let limitMess = messageCountDoc.limit == '無制限' ? messageCountDoc.limit : `${parseInt(messageCountDoc.count)}/${messageCountDoc.limit}`
+                        $('#message-number')
+                        .html(`
+                            <span class="badge bg-dark" style="color: rgb(165 164 164);opacity:0.8;font-size: 12px;">
+                                <i class="fa fa-comment me-1"></i>${limitMess}
+                            </span>
+                        `)
+                        .hide()
+                    }*/
+                    if(!isTemporary && $('#chat-widget-container').length == 0 ){
+                        const nextLevel = response.nextLevel || 10
+                        const messagesCount = response.messagesCount || 0
+                        initializeOrUpdateProgress(messagesCount,nextLevel)
+                    }
+
+                        
                     userChatId = response.userChatId
                     chatId = response.chatId
                     if(currentStep < totalSteps){
@@ -457,6 +476,9 @@ $(document).ready(async function() {
             $('#galleries-open').hide();
         }
     
+        if (!isTemporary) {
+            //initializeOrUpdateProgress(data?.userChat?.messagesCount || 0, data?.userChat?.nextLevel || 10);
+        }
         const {imageDescription} = await checkImageDescription(chatId);
         if (!imageDescription) {
             generateImageDescriptionBackend(thumbnail, chatId);
@@ -518,6 +540,31 @@ $(document).ready(async function() {
         const today = new Date().toISOString().split('T')[0];
         if (userChat.log_success) {
             displayThankMessage();
+            $.cookie('dailyBonusClaimed', today, { expires: 1 });
+        }else if ($.cookie('dailyBonusClaimed') != today && !isTemporary) {
+            thankUserAndAddCoins(function(response){
+                if(!response){return}
+                updateCoins()
+                return
+                let message = `[Hidden] Tell me that you will send me a picture of you.Do not answer this message. Act as if it was oyour idea.`
+                addMessageToChat(chatId, userChatId, 'user', message,function(){
+                    generateCompletion(function(){
+                        checkImageDescription(thumbnail,function(response){
+                            if(!response){
+                                generateImageDescriptionBackend(thumbnail,function(){
+                                    generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
+                                        generateImageNovita(API_URL, userId, chatId, userChatId, character, thumbnail, { prompt });
+                                    });
+                                })
+                            }else{
+                                generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
+                                    generateImageNovita(API_URL, userId, chatId, userChatId, character, thumbnail, { prompt });
+                                });
+                            }
+                        }) 
+                    })
+                });
+            })
         }
 
         if($('#chat-widget-container').length == 0 && isTemporary){
@@ -527,6 +574,10 @@ $(document).ready(async function() {
     
     function displayInitialChatInterface(chat) {
         displayStarter(chat);
+        return
+        selectPersona(() => {
+            displayStarter(chat);
+        });
     }
     
     function displayGalleries(thumbnail, galleries, blurred_galleries, chatId, fetch_userId) {
@@ -707,6 +758,29 @@ $(document).ready(async function() {
                 console.error('Error displaying album:', error);
             }
         }
+
+    
+    function thankUserAndAddCoins(callback) {
+        return
+        const customPrompt = {
+            systemContent: "あなたの役割は、ユーザーに感謝の気持ちを伝えるキャラクターとして行動することです。今回は、ログインしてくれたユーザーに、再び戻ってきてくれたことへの感謝を伝え、100コインをプレゼントする旨を優しく伝えてください。",
+            userContent: "ユーザーが再度ログインしました。心からの感謝とともに、100コインをプレゼントする短いメッセージを伝えてください。",
+            temperature: 0.7,
+            top_p: 0.9,
+            frequency_penalty: 0,
+            presence_penalty: 0
+        };
+
+        claimDailyBonus(function(response){
+            if(response){
+                generateCustomCompletion(customPrompt, function() {
+                    if(typeof callback == 'function'){callback(response)}
+                });
+            }else{
+                if(typeof callback == 'function'){callback(response)}
+            }
+        });
+    }
 
     function displayThankMessage(){
         const customPrompt = {
@@ -1573,9 +1647,8 @@ $(document).ready(async function() {
     $(document).on('click', function() {
         getAvailableAudio();
     });
-
-    /*
     $(document).on('click', '.message-container', function(event) {
+        return
         event.stopPropagation();
         
         const $el = $(this).find('.audio-content');
@@ -1596,7 +1669,7 @@ $(document).ready(async function() {
         
         initAudio($el, message);
     });
-    */
+    
     
     $(document).on('click', '.audio-controller .audio-content', function(event) {
         event.stopPropagation();
@@ -2463,6 +2536,52 @@ $(document).ready(async function() {
         displayMessage('assistant', message);
     }
 
+    function checkForPurchaseProposal() {
+        return
+        $.ajax({
+            url: '/api/check-assistant-proposal',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ userId, chatId, userChatId }),
+            success: function(response) {
+                if (response.length > 0) {
+                    response.forEach(item => {
+                        const itemId = `item-${currentStep}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+                        const message = `
+                        <div id="${itemId}" class="card bg-transparent text-white border-0">
+                            <div class="card-body-none" style="height:auto !important;">
+                                <h5 class="card-title mb-0 pb-0" style="font-size: 14px;">${item.name}</h5>
+                                <p class="card-content mb-1" style="font-size: 12px;">${item.description_japanese}</p>
+                                <div class="d-flex justify-content-start">
+                                    <button class="btn custom-gradient-bg shadow-0 w-45 me-2" 
+                                        onclick="buyItem('${itemId}', '${item.name}', 10, '${item._id}', true, '${userId}', '${chatId}', '${userChatId}', 'sfw')">
+                                        <span>10<span class="mx-1">🪙</span></span>
+                                    </button>
+                                    <button class="btn custom-gradient-bg danger shadow-0 w-45" 
+                                        onclick="buyItem('${itemId}', '${item.name}', 20, '${item._id}', true, '${userId}', '${chatId}', '${userChatId}', 'nsfw')">
+                                        <span>20<span class="mx-1">🪙</span> <span style="font-size:10px">R18</span></span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                        displayMessage('assistant', message);
+                    });
+                    count_proposal = 0;
+                } else {
+                    if (count_proposal >= 2) {
+                        let message = `[Hidden] Prepare to propose a picture of you. When you make a proposition, use this [image] in your message. `;
+                        addMessageToChat(chatId, userChatId, 'user', message);
+                    }
+                }
+                count_proposal++;
+            },
+            error: function(xhr, status, error) {
+                console.error('Error checking purchase proposal:', error);
+            }
+        });
+    }
     async function generateItemData(type) {
         return new Promise((resolve, reject) => {
             $.ajax({
@@ -2592,6 +2711,28 @@ $(document).ready(async function() {
 
     }
 
+    function clearContentFromEnd($element, callback) {
+        $element.html('')
+        if (typeof callback === 'function') {
+            callback();
+        }
+        /*
+        let currentContent = $element.text();
+
+        let clearIntervalID = setInterval(function() {
+            if (currentContent.length > 0) {
+                currentContent = currentContent.substring(0, currentContent.length - 1);
+                $element.text(currentContent);
+            } else {
+                clearInterval(clearIntervalID);
+                if (typeof callback === 'function') {
+                    callback();
+                }
+            }
+        }, 25); // This duration can be adjusted as per your requirement
+        */
+    }
+
     // Parse the URL and get query parameters
     const urlParams = new URLSearchParams(window.location.search);
 
@@ -2606,6 +2747,39 @@ $(document).ready(async function() {
         });
     }
 });
+
+function initializeOrUpdateProgress(messagesCount, maxMessages) {
+    return
+    // Check if the heart SVG is already initialized
+    if ($('#progress-container svg').length === 0) {
+        // If not initialized, create the SVG and elements
+        const svgContent = `
+            <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 100%;">
+                <!-- Background Heart -->
+                <path id="heart-background" fill="white" stroke="black" stroke-width="5" d="
+                    M140 20C73 20 20 74 20 140c0 135 136 170 228 303 88-132 229-173 229-303 0-66-54-120-120-120-48 0-90 28-109 69-19-41-60-69-108-69z" />
+                
+                <!-- GIF Container -->
+                <image id="heart-gif" x="0" y="500" width="500" height="500" xlink:href="/img/wave.png" clip-path="url(#fill-mask)" />
+                
+                <!-- Mask for GIF -->
+                <clipPath id="fill-mask">
+                    <path d="
+                        M140 20C73 20 20 74 20 140c0 135 136 170 228 303 88-132 229-173 229-303 0-66-54-120-120-120-48 0-90 28-109 69-19-41-60-69-108-69z" />
+                </clipPath>
+            </svg>
+            <span id="progress-label" style="position: absolute; width: 100%; text-align: center; top: 45%; left: 50%; transform: translate(-50%, -50%); color: #111; font-weight: bold; font-size: 12px;">
+                0/100
+            </span>
+        `;
+        
+        // Append the SVG content to the container
+        $('#progress-container').html(svgContent);
+    }
+
+    // Update the progress
+    updateProgress(messagesCount, maxMessages);
+}
 
 function updateProgress(messagesCount, maxMessages) {
     if(messagesCount>maxMessages){return}
@@ -3075,6 +3249,9 @@ window.updateCoins = function(userCoins = null, callback) {
                 if(typeof callback == 'function') { callback(userCoins) }
             }
         });
+        return
+    
+    $('.user-coins').each(function(){$(this).html(userCoins)})
 }
 window.resetChatUrl = function() {
     var currentUrl = window.location.href;

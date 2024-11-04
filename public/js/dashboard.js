@@ -159,6 +159,7 @@ $(document).ready(async function() {
     
                 // **Clear all localStorage data**
                 localStorage.clear();
+                sessionStorage.clear();
     
                 // Redirect to the homepage
                 window.location.href = '/';

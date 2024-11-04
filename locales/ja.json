@@ -1,11 +1,12 @@
 {
+  "album":"アルバム",
   "buyCoins":"コインを購入する",
   "openCoinStore":"コインストアを開く",
   "startFollow":"にフォローされました。",
   "search":"検索する",
   "moreCoins":"続けるにはコインが必要です",
   "blurButton" : "画像を解除する",
-  "generateImage": "画像生成はこちらをクリック",
+  "generateImage": "画像生成",
   "unlockSuccess": "正常に解除されました",
   "unlockError": "解除中にエラーが発生しました",
   "chatHistory": "チャット履歴",

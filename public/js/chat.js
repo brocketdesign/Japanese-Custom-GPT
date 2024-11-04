@@ -510,6 +510,13 @@ $(document).ready(async function() {
         }else{
             $('#userMessage').attr('placeholder', `${window.translations.sendMessageTo}${chatName}`);
         }
+        const albumLink = $(`<a href="/character/${chat._id}"></a>`)
+        albumLink.attr('data-bs-toggle', 'tooltip');
+        albumLink.attr('title', `${window.translations.album || 'アルバム'}`);
+        albumLink.addClass('btn btn-light shadow-0 border')
+        albumLink.append('<i class="bi bi-images"></i>')
+        new bootstrap.Tooltip(albumLink[0]);
+        $('#chat-recommend').append(albumLink)
     }
     
     function determineChatGender(chat) {
@@ -672,7 +679,7 @@ $(document).ready(async function() {
     function displayImageThumb(imageUrl){
         var card = $(`
             <div class="assistant-image-box card custom-card bg-transparent shadow-0 border-0 px-1 mx-1 col-auto" style="cursor:pointer;" data-src="${imageUrl}">
-                <div style="background-image:url(${imageUrl});border:4px solid white;" class="card-img-top rounded-avatar position-relative m-auto shadow">
+                <div style="background-image:url(${imageUrl});border:4px solid white;" class="card-img-top rounded-avatar position-relative m-auto">
                 </div>
             </div>
         `);

@@ -906,7 +906,7 @@ window.displayUserChats = async function(userId, page = 1) {
                         <div class="position-absolute text-end" style="top:10px;right:10px">
                             <a href="/character/${chat._id}">
                                 <div class="gallery" style="color: rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
-                                    <span class="badge bg-dark"><i class="far fa-image me-1"></i>${chat.imageCount || 0}</span>
+                                    <span class="btn btn-dark"><i class="far fa-image me-1"></i><span style="font-size:12px;">${chat.imageCount || 0}</span></span>
                                 </div>
                             </a>
                             ${galleryIco}
@@ -1019,7 +1019,7 @@ window.displayPeopleChat = async function (page = 1,type,query = false, preLoade
                     if(image_count > 0){
                         galleryIco = `
                             <div class="gallery" style="color: rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
-                                <span class="badge bg-dark"><i class="far fa-images me-1"></i>${image_count}</span>
+                                <span class="btn btn-dark"><i class="far fa-images me-1"></i><span style="font-size:12px;">${image_count}</span></span>
                             </div>
                         `;
                     }
@@ -1040,7 +1040,7 @@ window.displayPeopleChat = async function (page = 1,type,query = false, preLoade
                                 </div>
                                 <a href="/character/${chat._id}">
                                     <div class="gallery" style="color: rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
-                                        <span class="badge bg-dark"><i class="far fa-image me-1"></i>${chat.imageCount || 0}</span>
+                                        <span class="btn btn-dark"><i class="far fa-image me-1"></i><span style="font-size:12px;">${chat.imageCount || 0}</span></span>
                                     </div>
                                 </a>
                                 ${galleryIco}

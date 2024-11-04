@@ -761,8 +761,9 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       const isFollowedBy = user.following && user.following.some(followingId => followingId.toString() === currentUserId.toString());
       const title = `${user.nickname} の${type === 'followers' ? 'フォロワー' : 'フォロー中'}リスト`;
 
+      const translations = request.translations;
       return reply.view('follower.hbs', {
-        title,
+        title,translations,
         currentUser: {
           userId: currentUserId,
           userName: currentUser?.nickname,

@@ -493,11 +493,14 @@ width: auto;
 .content.collapsed {
   margin-left: 0;
 }
-nav.navbar {
+nav.navbar,.sticky-bottom {
   margin-left: 0;
   transition: margin-left 0.3s ease;
 }
 nav.navbar.move {
+  margin-left: 260px;
+}
+.sticky-bottom.move {
   margin-left: 260px;
 }
 .choice-container {

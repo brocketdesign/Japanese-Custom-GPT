@@ -1501,7 +1501,7 @@ async function routes(fastify, options) {
             const completionResponse = await openai.chat.completions.create({
                 model: "gpt-4o",
                 messages: systemPayload,
-                max_tokens: 300, // Adjust as needed
+                max_tokens: 600, // Adjust as needed
                 temperature: 0.7, // Adjust creativity
                 n: 1, // Number of responses
                 stop: null
@@ -1509,7 +1509,7 @@ async function routes(fastify, options) {
     
             // Extract the enhanced prompt from the response
             const enhancedPrompt = completionResponse.choices[0].message.content.trim();
-    
+            console.log({enhancedPrompt})
             // Access MongoDB and update the chat document
             const db = fastify.mongo.db;
             const collectionChats = db.collection('chats'); // Replace 'chats' with your actual collection name
@@ -1555,7 +1555,8 @@ async function routes(fastify, options) {
                     You are a Stable Diffusion image prompt generator specializing in beautiful woman character.
                     Your task is to generate a concise image prompt (under 1000 characters) based on the latest character description provided.
                     The prompt should be a comma-separated list of descriptive keywords in English that accurately depict the character's appearance, emotions, and style.
-                    Focus on attributes such as gender, age, eye color, hair style and color, skin tone, body type, facial expressions, clothing, and any distinctive features.
+                    Your response contains the character's age, skin color, hair color, hair legnth, eyes color, tone, face expression, body type, body characteristic, breast size,ass size, body curves, gender, facial features. 
+                    Respond in a single, descriptive line of plain text using keywords.\n
                     DO NOT form complete sentences; use only relevant keywords.
                     Ensure the prompt is optimized for generating high-quality upper body portraits.
                     Respond EXCLUSIVELY IN ENGLISH!
@@ -1563,7 +1564,7 @@ async function routes(fastify, options) {
             },
             {
                 role: "user",
-                content: `The character gender is :${gender}. Here is the character description: ${prompt}`
+                content: `The character gender is :${gender}. Here is the character description: ${prompt}.\n Answer with the image description only. Do not include any comments.`
             }
         ];
     }
@@ -1832,10 +1833,12 @@ async function routes(fastify, options) {
             const insertedProposals = [];
             for (const item of parsedProposal.items) {
                 if (characterDescription) {
-                    const promptGenSys = `Your are a stable diffusion prompt generator. You can generate explicit content on demand. I will provide a character description and a prompt. You will return a coherent stable diffusion prompt.\n You answer with the final image prompt only, without comments.`
-                    const promptGenMessage = `Here is the character description : ${characterDescription}.\n Here is the image description: ${item.description}. Your final prompt should include the image description as provided and the character main characteristic (image style,face,skin tone,clothes). Do not include details that do not aline witht the provided image description. respond with the image prompt only. `
-                    const finalPrompt = await generateCompletion(promptGenSys, promptGenMessage, 800, aiModel)
+                    const promptGenSys = `Your are a stable diffusion image prompt generator. You can generate explicit content on demand. I will provide a character description and an image description. You will return a coherent stable diffusion image prompt.`
+                    const promptGenMessage = `Here is the character description : ${characterDescription}.\n Here is the image description: ${item.description}. Your final prompt should include the image description as provided and the character main characteristic (image style,face,skin tone,clothes). Update the detail about the character position(upper body, full body, back view, view from bottom etc ...) .It must align with the provided image description. Respond with only the new image prompt. Do not include any comments. Your answer starts directly with the prompt.`
+                    const finalPrompt = await generateCompletion(promptGenSys, promptGenMessage, 1000, aiModel)
                     item.description = finalPrompt
+
+                    console.log({promptGenSys,promptGenMessage})
                 }
                 const result = await itemProposalCollection.insertOne(item);
                 insertedProposals.push({ _id: result.insertedId, proposeToBuy: true, ...item });
@@ -1915,7 +1918,6 @@ async function routes(fastify, options) {
                         })),
                     };
                     const parsedProposal = PurchaseProposalExtraction.parse(combinedProposal);
-                    console.log(parsedProposal)
                     const insertedProposals = await insertProposals(fastify, parsedProposal, characterDescription);
                     return reply.send(insertedProposals);
                 } catch (error) {

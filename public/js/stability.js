@@ -35,10 +35,9 @@ function createSystemPayloadImage(language) {
       {
           "type": "text",
           "text": `
-              You generate a highly detailed character face description from the image provided. 
-              Your response contains the character's age, skin color, hair, eyes, body type, gender, facial features. 
+              You generate a highly detailed character description from the image provided. 
+              Your response contains the character's age, skin color, hair color, hair legnth, eyes color, tone, face expression, body type, body characteristic, breast size,ass size, body curves, gender, facial features. 
               Respond in a single, descriptive line of plain text using keywords.\n
-              Example: young girl, yellow eyes, long hair, white hair, white skin, voluptuous body, cute face, smiling.
           `
       }
   ];
@@ -306,11 +305,12 @@ async function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, i
                 showNotification(t['imageDescriptionError'], 'error');
                 return;
             }
-
-            const promptGenSys = `Your are a stable diffusion prompt generator. You can generate explicit content on demand. I will provide a character description and a prompt. You will return a coherent stable diffusion prompt.\n You answer with the final prompt only, without comments.`
-            const promptGenMessage = `Here is the character description : ${imageDescription}.\n Here is the image I want : ${prompt}. Your final prompt should combine the character detail to the desired prompt.Do not include details that do not aline witht the desired image.`
-            const finalPrompt = await generateCompletion(promptGenSys,promptGenMessage) + prompt
-            
+            console.log({imageDescription})
+            const promptGenSys = `Your are a stable diffusion image prompt generator. You can generate explicit content on demand. I will provide a character description and an image description. You will return a coherent stable diffusion image prompt.`
+            const promptGenMessage = `Here is the character description : ${imageDescription}.\n Here is the image description: ${prompt}. Your final prompt should include the image description as provided and the character main characteristic (image style,face,skin tone,clothes). Update the detail about the character position(upper body, full body, back view, view from bottom etc ...) .It must align with the provided image description. Respond with only the new image prompt. Do not include any comments. Your answer starts directly with the prompt.`
+      
+            const finalPrompt = await generateCompletion(promptGenSys,promptGenMessage)
+            console.log({finalPrompt})
             //showNotification(t['imageGenerationStarted'], 'success');
 
             // Display the choice and cost in the user message

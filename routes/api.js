@@ -50,15 +50,15 @@ const aiInstructions = `
 `;
 
 const aiInstructionsShort = `[Hidden]
-[AI Assistant Reminder]
+[AI Assistant Instruction]
 
 - **Image Messaging:**
-  - Use \`[image_sfw]\` for proposing SFW images (10 coins).
-  - Use \`[image_nsfw]\` for proposing NSFW images (20 coins).
+  - Include \`[image_sfw]\` for proposing SFW images (10 coins).
+  - Include \`[image_nsfw]\` for proposing NSFW images (20 coins).
   - **Always** include when **proposing** to buy images.
 
 - **Coin Messaging:**
-  - Use \`[buy_coins]\` when user’s coins are low or if the user wants to buy coins.
+  - Include \`[buy_coins]\` when user’s coins are low or if the user wants to buy coins.
   - Available packages:
     - 100 coins: ¥200
     - 550 coins: ¥800 
@@ -620,7 +620,8 @@ async function routes(fastify, options) {
             let user = request.user
             const userData = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
             const userCoins = userData.coins
-            const language = user?.lang ? user.lang : 'Japanese'
+            let language = user?.lang ? user.lang : 'Japanese'
+            language = language == 'ja' ? 'Japanese' : 'English'
 
             const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
             try {
@@ -675,26 +676,16 @@ async function routes(fastify, options) {
                             Focus on subtly and naturally promoting your pictures without being overly pushy.
                             Always wait for the user to send you coins before sending any pictures.
                             ${aiInstructions}
-                            Respond in ${language}. 
+                            You MUST respond exclusively in ${language}. 
                             `
                         },
                         {
                             "role": "user",
-                            "content": `[Hidden] You are a character named ${chatDocument.name}. 
-                                Here is your character description:
-                    
-                                ${chatPurpose}
-                                ${chatDescription}
-                                ${chatRule}
-                    
-                                Stay in character as described. 
-                                Maintain a conversational and friendly tone without abruptly ending the chat. 
-                                Keep responses concise and suitable for casual conversation, using emojis where appropriate to convey emotions and enhance engagement.
-                    
-                                Respond in ${language} with short and engaging responses. Always aim to keep the chat flowing and interesting for the user.
-                                
-                                \n ${userDetails}
-                            `
+                            "content": `[Hidden] You are a character named ${chatDocument.name}. \nHere is your character description:\n${chatPurpose}\n ${chatDescription}\n ${chatRule}\nStay in character as described. \nMaintain a conversational and friendly tone without abruptly ending the chat. \nKeep responses concise and suitable for casual conversation, using emojis where appropriate to convey emotions and enhance engagement.\nRespond in ${language} with short and engaging responses. Always aim to keep the chat flowing and interesting for the user.\n\n ${userDetails}`
+                        },
+                        {
+                            "role": "user",
+                            "content": aiInstructionsShort
                         },
                         {
                             "role": "user",
@@ -796,6 +787,60 @@ async function routes(fastify, options) {
             return reply.status(403).send({ error: error.message });
           }
     });
+    fastify.post('/api/refund-task/:taskId', async (request, reply) => {
+        const { taskId } = request.params;
+        const db = fastify.mongo.db;
+        
+        const task = await db.collection('tasks').findOne({ taskId });
+    
+        if (!task) {
+            return reply.code(404).send({ error: 'Task not found' });
+        }
+    
+        const refundAmount = task.type === 'nsfw' ? 20 : 10;
+
+        const user = await db.collection('users').findOne({ _id: new ObjectId(task.userId) });
+    
+        if (!user) {
+            return reply.code(404).send({ error: 'User not found' });
+        }
+    
+        console.log(`Refund ${refundAmount} coins to user ${task.userId}`)
+        const updatedCoins = (user.coins || 0) + refundAmount;
+    
+        await db.collection('users').updateOne(
+            { _id: new ObjectId(task.userId) },
+            { $set: { coins: updatedCoins } }
+        );
+    
+        return reply.send({ message: 'Refund processed', refundedAmount: refundAmount });
+    });
+    
+    fastify.post('/api/refund-type/:imageType', async (request, reply) => {
+        const { imageType } = request.params;
+        const db = fastify.mongo.db;
+    
+        const refundAmount = imageType === 'nsfw' ? 20 : 10;
+
+        let user = await fastify.getUser(request, reply);
+        const userId = user._id
+        user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+    
+        if (!user) {
+            return reply.code(404).send({ error: 'User not found' });
+        }
+    
+        console.log(`Refund ${refundAmount} coins to user ${userId}`)
+        const updatedCoins = (user.coins || 0) + refundAmount;
+    
+        await db.collection('users').updateOne(
+            { _id: new ObjectId(task.userId) },
+            { $set: { coins: updatedCoins } }
+        );
+    
+        return reply.send({ message: 'Refund processed', refundedAmount: refundAmount });
+    });
+    
     fastify.post('/api/purchaseItem', async (request, reply) => {
         const { itemId, itemName, itemPrice, userId, chatId } = request.body;
     
@@ -1007,16 +1052,15 @@ async function routes(fastify, options) {
     fastify.get('/api/openai-chat-completion-stream/:sessionId', async (request, reply) => {
         const { sessionId } = request.params;
         const session = sessions.get(sessionId);
-
+    
         if (!session) {
             reply.status(404).send({ error: 'Session not found' });
             return;
         }
-        // Set CORS headers
-        reply.raw.setHeader('Access-Control-Allow-Origin', '*'); // Allow any origin or specify your origin
+    
+        reply.raw.setHeader('Access-Control-Allow-Origin', '*');
         reply.raw.setHeader('Access-Control-Allow-Methods', 'GET');
         reply.raw.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    
         reply.raw.setHeader('Content-Type', 'text/event-stream');
         reply.raw.setHeader('Cache-Control', 'no-cache');
         reply.raw.setHeader('Connection', 'keep-alive');
@@ -1026,81 +1070,113 @@ async function routes(fastify, options) {
             const userId = session.userId;
             const chatId = session.chatId;
             const userChatId = session.userChatId;
-            const isHidden = session.isHidden
-            const collectionChatLastMessage = fastify.mongo.db.collection('chatLastMessage');
-            const collectionUserChat = fastify.mongo.db.collection('userChat');
-            const userInfo = await fastify.mongo.db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-            let userData = await collectionUserChat.findOne({ userId:new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) })
-
+            const isHidden = session.isHidden;
+            const db = fastify.mongo.db;
+            const collectionChatLastMessage = db.collection('chatLastMessage');
+            const collectionUserChat = db.collection('userChat');
+            const userInfo = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+            let userData = await collectionUserChat.findOne({ userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
+    
             if (!userData) {
-                reply.raw.end(); // End the stream before sending the response
+                reply.raw.end();
                 return reply.status(404).send({ error: 'User data not found' });
             }
-
-            const collectionChat = fastify.mongo.db.collection('chats');                
+    
+            const collectionChat = db.collection('chats');
             let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
-            const chatname = chatDocument.name
-
+            const chatname = chatDocument.name;
+    
             const userCoins = userInfo.coins;
-            const userMessages = userData.messages
+            const userMessages = userData.messages;
             const userMessagesForCompletion = userData.messages.filter(msg => !msg.content.startsWith('[Image]'));
+    
+            const previousMessages = userMessagesForCompletion.slice(0, -1);
+            const lastUserMessage = userMessagesForCompletion[userMessagesForCompletion.length - 1];
+    
+            const tasksCollection = db.collection('tasks');
+            const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+            const pendingCount = await tasksCollection.countDocuments({
+                userId: new fastify.mongo.ObjectId(userId),
+                status: 'pending',
+                updatedAt: { $gte: thirtyMinutesAgo }
+            });
+            const completedCount = await tasksCollection.countDocuments({
+                userId: new fastify.mongo.ObjectId(userId),
+                status: 'completed',
+                updatedAt: { $gte: thirtyMinutesAgo }
+            });
+            const failedCount = await tasksCollection.countDocuments({
+                userId: new fastify.mongo.ObjectId(userId),
+                status: 'failed',
+                updatedAt: { $gte: thirtyMinutesAgo }
+            });
+    
+            const currentDate = new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" });
+            const currentTimeInJapanese = new Date(currentDate).toLocaleString('ja-JP', {
+                weekday: 'long',
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: 'numeric'
+            });
+    
+            const structuredMessageContent = `[Hidden Information]\n- Current time: ${currentTimeInJapanese}\n- Coins: ${userCoins}\n- Image generation status for the last 30 minutes:\n- Pending: ${pendingCount}\n- Completed: ${completedCount}\n- Failed: ${failedCount}`;
+            const structuredMessage = { role: 'user', content: structuredMessageContent };
+            const messagesForCompletion = previousMessages.concat(structuredMessage);
+    
+            const currentuserMessage = { role: 'user', content: lastUserMessage.content };
+            messagesForCompletion.push(currentuserMessage);
 
-            // Add instructions
-            const functionMess = { "role": "user", "content": aiInstructionsShort };
-            userMessages.push(functionMess);
-
-            //Add the time before completion
-            let currentDate = new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" });
-            let currentTimeInJapanese = currentDate.toLocaleString('ja-JP', { weekday: 'long', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' });
-            let timeMessage = `[Hidden] Current time : ${currentTimeInJapanese}.Do not tell me the time. Use it for context.`
-            timeMessage = { "role": "user", "content": timeMessage };
-            userMessages.push(timeMessage);
-            userMessagesForCompletion.push(timeMessage);
-            
-            //Add user coins
-            let coinsMessage = `[Hidden] The correct number of coins I own is : ${userCoins}.Use it for context.`
-            coinsMessage = { "role": "user", "content": coinsMessage };
-            userMessages.push(coinsMessage);
-            userMessagesForCompletion.push(coinsMessage);
-
-            // Gen completion
-            let completion = ``
-            completion = await fetchOpenAICompletion(userMessagesForCompletion, reply.raw, 500, aiModelChat);
-
-            // Append the assistant's response to the messages array in the chat document
-            const assistantMessage = { "role": "assistant", "content": isHidden? '[Hidden] '+completion:completion };
+            const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 1000, aiModelChat);
+    
+            const assistantMessage = {
+                role: 'assistant',
+                content: isHidden ? '[Hidden] ' + completion : completion
+            };
             userMessages.push(assistantMessage);
-
-            const today = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
+    
+            const today = new Date().toLocaleString('en-US', { timeZone: "Asia/Tokyo" });
             userData.updatedAt = today;
-
-            // Remove special character for lastMessage
+    
             const removeContentBetweenStars = function (str) {
                 if (!str) { return str; }
                 return str.replace(/\*.*?\*/g, '').replace(/"/g, '');
-            }      
-
+            };
+    
             await collectionChatLastMessage.updateOne(
-                { chatId: new fastify.mongo.ObjectId(chatId), userId: new fastify.mongo.ObjectId(userId) },
-                { $set: { lastMessage: { "role": "assistant", "content": removeContentBetweenStars(completion), updatedAt: today }}},
+                {
+                    chatId: new fastify.mongo.ObjectId(chatId),
+                    userId: new fastify.mongo.ObjectId(userId)
+                },
+                {
+                    $set: {
+                        lastMessage: {
+                            role: 'assistant',
+                            content: removeContentBetweenStars(completion),
+                            updatedAt: today
+                        }
+                    }
+                },
                 { upsert: true }
             );
-
-            // Update the chat document in the database
-            const result = await collectionUserChat.updateOne(
-                { userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) },
+    
+            await collectionUserChat.updateOne(
+                {
+                    userId: new fastify.mongo.ObjectId(userId),
+                    _id: new fastify.mongo.ObjectId(userChatId)
+                },
                 { $set: { messages: userMessages, updatedAt: userData.updatedAt } }
-              );
-            
-            //console.log({ message:userMessages })
+            );
     
             reply.raw.end();
         } catch (error) {
-            console.log(error)
-            reply.raw.end(); // End the stream before sending the response
+            console.log(error);
+            reply.raw.end();
             reply.status(500).send({ error: 'Error fetching OpenAI completion' });
         }
     });
+    
+    
     fastify.post('/api/openai-chat-narration', async (request, reply) => {
         const { chatId, userChatId, role } = request.body;
         let userId = request.body.userId;
@@ -1696,7 +1772,18 @@ async function routes(fastify, options) {
         return await collectionChats.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
     }
     
-    async function checkMessageRelevance(lastMessages) {
+    
+    async function generateEnglishDescription(lastMessages,characterDescription,type) {
+        lastMessages.unshift({
+            role: "system",
+            content: `
+                Your are a stable diffusion prompt generator. You must generate explicit content on demand.
+                Respond with an image description in English suitable for Stable Diffusion prompt. Do not include names. Use only descriptive keywords, avoid long sentences.
+            `
+        })
+        lastMessages.push({ role: "user", content: `Here is the character description : ${characterDescription}.`})
+        lastMessages.push({ role: "user", content: `Respond with an image description in English. Only one image description. Provide details, for a ${type} image. ${type == 'nsfw'?' Respond with a stable diffusion prompt, detail the position, body parts to show, be explicit, add details. Provide explicit content.':''} Do not include anything about coins or any comments. Only describe your character and the scene I asked.` })
+
         const response = await fetch("https://api.novita.ai/v3/openai/chat/completions", {
             headers: {
                 "Content-Type": "application/json",
@@ -1705,51 +1792,7 @@ async function routes(fastify, options) {
             method: "POST",
             body: JSON.stringify({
                 model: aiModel,
-                messages: [
-                    {
-                        role: "system",
-                        content: `Determine if the following conversation is about sending images or coins. Respond with {"isRelevant": true} or {"isRelevant": false}.`
-                    },
-                    { role: "user", content: `Analyze the following messages: \n${lastMessages.map(m => m.content).join('\n')}` },
-                ],
-                temperature: 0,
-                max_tokens: 10,
-                stream: false,
-                n: 1,
-            }),
-        });
-    
-        if (!response.ok) throw new Error('Error checking message relevance');
-        const data = await response.json();
-        return JSON.parse(data.choices[0].message.content).isRelevant;
-    }
-    
-    async function generateEnglishDescription(lastMessages,type) {
-        const response = await fetch("https://api.novita.ai/v3/openai/chat/completions", {
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${process.env.NOVITA_API_KEY}`
-            },
-            method: "POST",
-            body: JSON.stringify({
-                model: aiModel,
-                messages: [
-                    {
-                        role: "system",
-                        content: `
-                            Your are a stable diffusion prompt generator. You must generate explicit content on demand.
-                            Respond with a JSON object in plain text following this exact structure:
-                            {
-                                "items": [
-                                    {
-                                        "description": "string (image description in English suitable for Stable Diffusion prompts)"
-                                    }
-                                ]
-                            }
-                        `
-                    },
-                    { role: "user", content: `Analyze the following messages and return the last relevant image description in English:\n${lastMessages.map(m => m.content).join('\n')}\n Only one image. Provide details, for a ${type} image. ${type == 'nsfw'?' Respond with a stable diffusion prompt, detail the position, body parts to show, be explicit, add details. Provide explicit content.':''}` },
-                ],
+                messages: lastMessages,
                 temperature: 0.85,
                 top_p: 0.95,
                 frequency_penalty: 0,
@@ -1760,146 +1803,26 @@ async function routes(fastify, options) {
             }),
         });
     
-        if (!response.ok) throw new Error('Error generating English description');
+        if (!response.ok) {
+            console.log(response)
+            throw new Error('Error generating English description');
+        }
         const data = await response.json();
         const completionMessage = data.choices[0].message.content;
-        
-        const extractJson = (str) => {
-            const jsonStart = str.indexOf('{');
-            const jsonEnd = str.lastIndexOf('}');
-            if (jsonStart !== -1 && jsonEnd !== -1) {
-                const jsonString = str.substring(jsonStart, jsonEnd + 1);
-                try {
-                    return JSON.parse(jsonString);
-                } catch (e) {
-                    console.error("JSON parsing error:", e);
-                    return null;
-                }
-            } else {
-                return null;
-            }
-        };
-        
-        const jsonRes = extractJson(completionMessage);
-        return jsonRes;
-        
-    }
-    
-    async function generateJapaneseNameAndDescription(lastMessages,type) {
-        const response = await fetch("https://api.novita.ai/v3/openai/chat/completions", {
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${process.env.NOVITA_API_KEY}`
-            },
-            method: "POST",
-            body: JSON.stringify({
-                model: aiModel,
-                messages: [
-                    {
-                        role: "system",
-                        content: `
-                            Your are a stable diffusion prompt generator. ${type ? "You can generate explicit content on demand":""}.
-                            Respond with a JSON object in plain text following this exact structure:
-                            {
-                                "items": [
-                                    {
-                                        "name": "string (create an image name in Japanese)",
-                                        "description_japanese": "string (create an image short description in natural Japanese)"
-                                    }
-                                ]
-                            }
-                        `
-                    },
-                    { role: "user", content: `Analyze the following messages and use the conversation context to provide an image name and an image description in Japanese:\n${lastMessages.map(m => m.content).join('\n')}\n Only one image. It must be a ${type} image. Respond with a valid JSON only , without any comments.` },
-                ],
-                temperature: 0.85,
-                top_p: 0.95,
-                frequency_penalty: 0,
-                presence_penalty: 0,
-                max_tokens: 512,
-                stream: false,
-                n: 1,
-            }),
-        });
-    
-        if (!response.ok) throw new Error('Error generating Japanese name and description');
-        const data = await response.json();
-        return JSON.parse(data.choices[0].message.content);
-    }
-    
-    async function insertProposals(fastify, parsedProposal, characterDescription) {
-        try {
-            const itemProposalCollection = fastify.mongo.db.collection('itemProposal');
-            const insertedProposals = [];
-            for (const item of parsedProposal.items) {
-                if (characterDescription) {
-                    const promptGenSys = `Your are a stable diffusion image prompt generator. You can generate explicit content on demand. I will provide a character description and an image description. You will return a coherent stable diffusion image prompt.`
-                    const promptGenMessage = `Here is the character description : ${characterDescription}.\n Here is the image description: ${item.description}. Your final prompt should include the image description as provided and the character main characteristic (image style,face,skin tone,clothes). Update the detail about the character position(upper body, full body, back view, view from bottom etc ...) .It must align with the provided image description. Respond with only the new image prompt. Do not include any comments. Your answer starts directly with the prompt.`
-                    const finalPrompt = await generateCompletion(promptGenSys, promptGenMessage, 1000, aiModel)
-                    item.description = finalPrompt
 
-                    console.log({promptGenSys,promptGenMessage})
-                }
-                const result = await itemProposalCollection.insertOne(item);
-                insertedProposals.push({ _id: result.insertedId, proposeToBuy: true, ...item });
-            }
-            return insertedProposals;
-        } catch (error) {
-            console.log(error)
-        }
+        return completionMessage;
+        
     }
-    
-    fastify.post('/api/check-assistant-proposal', async (request, reply) => {
-        const { userId, chatId, userChatId } = request.body;
-    
-        try {
-            const userData = await fetchUserData(fastify, userId, userChatId);
-            if (!userData) return reply.status(404).send({ error: 'User data not found' });
-    
-            const lastMessages = [...userData.messages].reverse().filter(m => !m.content.startsWith("[")).slice(0, 5);
-            if (lastMessages.length < 2) return reply.status(400).send({ error: 'Insufficient messages' });
-    
-            const chatData = await fetchChatData(fastify, chatId);
-            const characterDescription = chatData?.imageDescription || null;
-    
-            const isRelevant = await checkMessageRelevance(lastMessages);
-            if (!isRelevant) return reply.send({ proposeToBuy: false });
 
-            let attempts = 0;
-            while (attempts < 3) {
-                try {
-                    const englishDescription = await generateEnglishDescription(lastMessages);
-                    const japaneseData = await generateJapaneseNameAndDescription(lastMessages);
     
-                    const combinedProposal = {
-                        items: englishDescription.items.map((item, index) => ({
-                            ...item,
-                            ...japaneseData.items[index],
-                        })),
-                    };
-                    const parsedProposal = PurchaseProposalExtraction.parse(combinedProposal);
-                    const insertedProposals = await insertProposals(fastify, parsedProposal, characterDescription);
-                    return reply.send(insertedProposals);
-                } catch (error) {
-                    attempts++;
-                    if (attempts >= 3) {
-                        return reply.status(500).send({ error: 'Failed to generate or parse proposal after 3 attempts' });
-                    }
-                }
-            }
-    
-        } catch (error) {
-            return reply.status(500).send({ error: 'Error checking assistant proposal' });
-        }
-    });
     fastify.post('/api/gen-item-data', async (request, reply) => {
         const { userId, chatId, userChatId, type } = request.body;
     
         try {
             const userData = await fetchUserData(fastify, userId, userChatId);
             if (!userData) return reply.status(404).send({ error: 'User data not found' });
-    
-            const lastMessages = [...userData.messages].reverse().filter(m => !m.content.startsWith("[")).slice(0, 3);
+            
+            const lastMessages = [...userData.messages].reverse().filter(m => m.role != 'system').slice(0,5);
             if (lastMessages.length < 2) return reply.status(400).send({ error: 'Insufficient messages' });
     
             const chatData = await fetchChatData(fastify, chatId);
@@ -1908,17 +1831,13 @@ async function routes(fastify, options) {
             let attempts = 0;
             while (attempts < 3) {
                 try {
-                    const englishDescription = await generateEnglishDescription(lastMessages,type);
-                    const japaneseData = await generateJapaneseNameAndDescription(lastMessages,type);
-    
-                    const combinedProposal = {
-                        items: englishDescription.items.map((item, index) => ({
-                            ...item,
-                            ...japaneseData.items[index],
-                        })),
-                    };
-                    const parsedProposal = PurchaseProposalExtraction.parse(combinedProposal);
-                    const insertedProposals = await insertProposals(fastify, parsedProposal, characterDescription);
+                    const englishDescription = await generateEnglishDescription(lastMessages,characterDescription,type);
+
+                    const itemProposalCollection = fastify.mongo.db.collection('itemProposal');
+                    const result = await itemProposalCollection.insertOne({description:englishDescription});
+                    const insertedProposals = [];
+                    insertedProposals.push({ _id: result.insertedId, proposeToBuy: true, description:englishDescription });
+                    
                     return reply.send(insertedProposals);
                 } catch (error) {
                     console.log(error)

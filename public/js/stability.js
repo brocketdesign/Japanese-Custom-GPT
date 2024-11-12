@@ -42,7 +42,21 @@ function createSystemPayloadImage(language) {
       }
   ];
 }
-
+window.refundUser = function(taskId,imageType){
+    window.postMessage({ event: 'imageError' }, '*');
+    const apiUrl = taskId ? '/api/refund-task/'+taskId : '/api/refund-type/'+imageType
+    $.ajax({
+        url: apiUrl,
+        method: 'POST',
+        success: function(response) {
+            console.log('Refund Success:', response);
+            updateCoins();
+        },
+        error: function(xhr, status, error) {
+            console.error('Refund Error:', status, error, xhr);
+        }
+    });
+}
 // Generate Image Description Backend using Novita
 window.generateImageDescriptionBackend = function(imageUrl = null, chatId, callback) {
   console.log('generateImageDescriptionBackend called with imageUrl:', imageUrl, 'chatId:', chatId);
@@ -62,7 +76,7 @@ window.generateImageDescriptionBackend = function(imageUrl = null, chatId, callb
   const system = createSystemPayloadImage(language);
   console.log('System payload for image description:', system);
   
-  const apiUrl = '/api/openai-image-description'; // Verify if this is the correct Novita endpoint
+  const apiUrl = '/api/openai-image-description';
   console.log('API URL for image description:', apiUrl);
 
   $.ajax({
@@ -89,8 +103,9 @@ window.generateImageDescriptionBackend = function(imageUrl = null, chatId, callb
 window.generateImageNovita = async function(API_URL, userId, chatId, userChatId, item_id, thumbnail, imageType, option = {}) {
 
     if (!item_id) {
-        $('#load-image-container').remove();
+        $(`#load-image-container-${item_id}`).remove();
         showNotification('無効なアイテムIDです。', 'error');
+        refundUser(null,imageType)
         return;
     }
 
@@ -106,7 +121,8 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
         if (!prompt) {
             console.error('generateImageNovita Error: Prompt is required.');
             showNotification('画像生成に必要なプロンプトがありません。', 'error');
-            $('#load-image-container').remove();
+            $(`#load-image-container-${item_id}`).remove();
+            refundUser(null,imageType)
             return;
         }
 
@@ -130,7 +146,7 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('Fetch response not ok. Status:', response.status, response.statusText, 'Response text:', errorText);
+            refundUser(null,imageType)
             throw new Error(`ネットワークエラー (${response.status} ${response.statusText}): ${errorText}`);
         }
 
@@ -138,25 +154,24 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
         const { taskId } = data;
 
         if (!taskId) {
+            refundUser(taskId,imageType)
             throw new Error('サーバーからタスクが返されませんでした。');
         }
 
-        pollTaskStatus(API_URL, taskId, imageType, prompt);
+        pollTaskStatus(API_URL, taskId, imageType, prompt, item_id);
 
     } catch (error) {
         console.error('generateImageNovita Error:', error);
         console.log(`画像生成エラー: ${error.message}`);
-        window.postMessage({ event: 'imageError', error: error.message }, '*');
-        $('#load-image-container').remove();
+        refundUser(null,imageType)
+        $(`#load-image-container-${item_id}`).remove();
         showNotification('画像の生成中にエラーが発生しました。', 'error');
     }
 }
 
 const displayedImageIds = new Set();
-
-// Function to poll the task status
-function pollTaskStatus(API_URL, taskId, type, prompt) {
-    const POLLING_INTERVAL = 30000; // 3 seconds
+function pollTaskStatus(API_URL, taskId, type, prompt, item_id, callback) {
+    const POLLING_INTERVAL = 30000; // 30 seconds
     const MAX_ATTEMPTS = 60;
     let attempts = 0;
 
@@ -166,19 +181,18 @@ function pollTaskStatus(API_URL, taskId, type, prompt) {
             const statusResponse = await fetch(`${API_URL}/novita/task-status/${taskId}`);
             
             if (!statusResponse.ok) {
+                refundUser(taskId);
                 const errorText = await statusResponse.text();
                 throw new Error(`ステータスチェックに失敗しました: ${errorText}`);
             }
 
             const statusData = await statusResponse.json();
-            //console.log(`Polling task status for ${type}:`, statusData);
 
             if (statusData.status === 'completed') {
                 clearInterval(intervalId);
                 const { imageId, imageUrl } = statusData.images[0];
 
                 if (!displayedImageIds.has(imageId)) {
-                    // Use the provided generateImage function to display the image
                     generateImage({
                         url: imageUrl,
                         id: imageId,
@@ -186,43 +200,49 @@ function pollTaskStatus(API_URL, taskId, type, prompt) {
                         nsfw: type === 'nsfw'
                     }, prompt);
 
-                    // Add imageId to the set
                     displayedImageIds.add(imageId);
 
                     showNotification(`${type.toUpperCase()} 画像が正常に生成されました。`, 'success');
-                    if(type === 'nsfw' ){
-                        $('#load-image-container').find('.message-container').last().remove();
-                    } else {
-                        $('#load-image-container').find('.message-container').first().remove();
+                    
+                    $(`#load-image-container-${item_id}`).remove();
+
+                    if (typeof callback === 'function') {
+                        callback(null, statusData.images);
                     }
-                    if($('#load-image-container').find('.message-container').length == 0){
-                        $('#load-image-container').remove()
-                    }
+                    
                 } else {
                     console.log(`Image ${imageId} has already been displayed.`);
                 }
             } else if (statusData.status === 'failed') {
+                refundUser(taskId);
                 clearInterval(intervalId);
-            } else {
-                console.log('タスクはまだ処理中です...');
-                if(type === 'nsfw' ){
-                    window.postMessage({ event: 'imageStart', message: '[Hidden] Image generation is still processing...' }, '*');
+
+                if (typeof callback === 'function') {
+                    callback(new Error('Image generation failed'));
                 }
             }
 
             if (attempts >= MAX_ATTEMPTS) {
                 clearInterval(intervalId);
                 showNotification('画像の生成がタイムアウトしました。再試行してください。', 'error');
+                refundUser(taskId);
+
+                if (typeof callback === 'function') {
+                    callback(new Error('Image generation timed out'));
+                }
             }
 
         } catch (error) {
             console.error(`Error polling task status for ${type}:`, error);
+            refundUser(taskId);
             clearInterval(intervalId);
+
+            if (typeof callback === 'function') {
+                callback(error);
+            }
         }
     }, POLLING_INTERVAL);
 }
-
-
 
 // Fetch Proposal by ID
 function getProposalById(id) {
@@ -343,22 +363,30 @@ async function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, i
 
                 updateCoins();
 
-                messageId = `image-${response.taskId}`;
-                window.postMessage({ event: 'displayMessage', role:'user', message: userMessage, completion : false , image : true, messageId }, '*');
+                messageId = `${response.taskId}`;
+                updateLoaderWithId(messageId);
+                window.postMessage({ event: 'displayMessage', role:'user', message: userMessage, completion : false , image : false, messageId: false }, '*');
                 $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
     
                 checkTaskStatus(response.taskId, chatId, finalPrompt, (images) => {
+                    $(`#load-image-container-${messageId}`).remove();
                     displayGeneratedImages(images,messageId);
                     window.postMessage({ event: 'imageDone', prompt: prompt }, '*');
                 });
             } catch (error) {
+                console.log(error)
                 $(`#${messageId}`).remove();
-                showCoinShop();
+                if(error.id = 1){
+                    window.postMessage({ event: 'imageError', error:  error.message }, '*');
+                    showCoinShop();
+                    return
+                }
                 return
             }
         },
         error: function(xhr) {
             showNotification('プロンプトの取得中にエラーが発生しました。', 'error');
+            refundUser(taskId)
         }
     });
 }
@@ -633,6 +661,7 @@ async function setupFormEventListeners(uniqueId, formType, config) {
             });
 
             if (!response.taskId) {
+                refundUser(taskId)
                 throw new Error(t['imageGenerationError']);
             }
 
@@ -643,11 +672,14 @@ async function setupFormEventListeners(uniqueId, formType, config) {
             showNotification(t['imageGenerationStarted'], 'success');
 
             // Use the existing checkTaskStatus function to poll for the task status
-            checkTaskStatus(taskId, config.chatId, prompt, function() {
-                // Hide spinner and show the generate button when done
-                $(`${formSelector} .spinner`).hide();
-                $(`${formSelector} .btn-primary`).prop('disabled', false).show();
+            checkTaskStatus(response.taskId, chatId, finalPrompt, (images) => {
+                $(`#load-image-container-${messageId}`).remove();
+                if (images) {
+                    displayGeneratedImages(images, messageId);
+                    window.postMessage({ event: 'imageDone', prompt: prompt }, '*' );
+                }
             });
+            
 
         } catch (error) {
             console.error('Error generating images:', error);
@@ -927,21 +959,20 @@ function checkTaskStatus(taskId, chatId, prompt, callback) {
             } else if (statusResponse.status === 'failed') {
                 clearInterval(intervalId);
                 showNotification(`${t['imageGenerationFailed']}: ${statusResponse.error}`, 'error');
-
-                // Execute callback on failure
+                window.postMessage({ event: 'imageError', error: statusResponse.error }, '*');
+                refundUser(taskId);
                 if (typeof callback === 'function') {
                     callback();
                 }
             } else {
                 console.log('Image generation is still processing...');
-                window.postMessage({ event: 'imageStart', message: '[Hidden] Image generation is still processing...' }, '*');
             }
 
             if (attempts >= MAX_ATTEMPTS) {
                 clearInterval(intervalId);
                 showNotification(t['imageGenerationTimeout'], 'error');
-
-                // Execute callback on timeout
+                window.postMessage({ event: 'imageError', error: 'image Generation Timeout' }, '*');
+                refundUser(taskId);
                 if (typeof callback === 'function') {
                     callback();
                 }
@@ -951,7 +982,7 @@ function checkTaskStatus(taskId, chatId, prompt, callback) {
             console.error('Error polling task status:', error);
             clearInterval(intervalId);
             showNotification(t['imageGenerationError'], 'error');
-
+            refundUser(taskId);            
             // Execute callback on error
             if (typeof callback === 'function') {
                 callback();
@@ -976,8 +1007,7 @@ function displayGeneratedImages(images,messageId) {
         imgElement.setAttribute('class', 'm-auto');
         imgElement.style.borderRadius = '10px';
 
-        // Determine message class based on NSFW flag if needed
-        const messageClass = 'new-image-'+messageId; // Or 'bot-image-nsfw' if you have separate styling
+        const messageClass = 'bot-image' //'new-image-'+messageId; // Or 'bot-image-nsfw' if you have separate styling
 
         window.displayMessage(messageClass, imgElement);
     });

@@ -474,7 +474,7 @@ fastify.post('/novita/txt2img', async (request, reply) => {
       let userCoins = user.coins || 0;
 
       if (userCoins < price) {
-          return reply.code(400).send({ error: 'Insufficient coins', id: 1 });
+          return reply.code(400).send({ message: 'Insufficient coins', id: 1 });
       }
 
       // Deduct coins
@@ -548,7 +548,21 @@ fastify.post('/novita/txt2img', async (request, reply) => {
       reply.status(500).send({ error: 'Error initiating image generation.' });
   }
 });
-
+fastify.get('/novita/tasks', async (request, reply) => {
+  const { status, userId } = request.query;
+  try {
+    const db = fastify.mongo.db;
+    const tasksCollection = db.collection('tasks');
+    const query = {};
+    if (status) query.status = status;
+    if (userId) query.userId = userId;
+    const tasks = await tasksCollection.find(query).toArray();
+    return reply.send(tasks);
+  } catch (error) {
+    console.error('Error fetching tasks:', error);
+    return reply.status(500).send({ error: 'Internal Server Error' });
+  }
+});
       /**
    * Endpoint to check the status of a task
    */

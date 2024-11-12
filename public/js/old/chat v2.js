@@ -94,7 +94,7 @@ $(document).ready(async function() {
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageDone') {
             const prompt = event.data.prompt
-            let message = `[Hidden] I received the images. The image is about : ${prompt}. \n Write a message to inform me of that.  \n Do not include [Hidden] in your response. Respond in ${language}.`
+            let message = `[Hidden] I received the images. The image is about : ${prompt}. \n Write a message to inform me of that.  \n Do not include [Hidden] in your response.`
             addMessageToChat(chatId, userChatId, 'user', message,function(){
                 generateCompletion()
             });
@@ -102,8 +102,8 @@ $(document).ready(async function() {
     });
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageError') {
-            const error = event?.data?.error || ''
-            let message = `[Hidden] There way an error. The image could not be generated ${error}. Tell me that I will get the coins refunded and should try to generate a new image.`
+            const error = event.data.error
+            let message = `[Hidden] There way an error. I could not receive the image. Error : ${error}.`
             addMessageToChat(chatId, userChatId, 'user', message,function(){
                 generateCompletion()
             });
@@ -1889,7 +1889,21 @@ $(document).ready(async function() {
                 console.warn(`Unhandled trigger command: ${command}`);
         }
     };
-  
+    function displayImageLoader(itemId){
+        const imageResponseContainer = $(`
+            <div id="load-image-container-${itemId}" class="d-flex flex-column justify-content-start">
+                <div class="d-flex flex-row justify-content-start mb-4 message-container" style="border-radius: 15px;">
+                    <img src="${thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="width: 45px; height: 45px; object-fit: cover; object-position: top;">
+                    <div class="d-flex justify-content-center align-items-center px-3">
+                        <img src="/img/image-placeholder.gif" width="50px" alt="loading">
+                    </div>
+                </div>
+            </div>
+        `);
+    
+        $('#chatContainer').append(imageResponseContainer);
+        $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
+    }
     window.displayMessage = function(sender, message, callback) {
         const messageClass = sender === 'user' ? 'user-message' : sender;
         const animationClass = 'animate__animated animate__slideInUp';
@@ -2411,10 +2425,8 @@ $(document).ready(async function() {
 
     function attachPromptCardEvents() {
         $('.prompt-card').off('click').on('click', function() {
-            $('.prompt-card').removeClass('selected'); 
-            $(this).addClass('selected');
-
-            displayImageLoader();
+            $('.prompt-card').removeClass('selected'); // Remove 'selected' class from all prompt cards
+            $(this).addClass('selected'); // Add visual feedback when clicked
 
             var id = $(this).data('id');
             var isNSFWChecked = $('#nsfwCheckbox').is(':checked');
@@ -2462,21 +2474,17 @@ $(document).ready(async function() {
                     if (response.length > 0) {
                         resolve(response);
                     } else {
-                        refundUser(null,type)
-                        reject(); // or handle an empty response differently if needed
+                        resolve([]); // or handle an empty response differently if needed
                     }
                 },
                 error: function(xhr, status, error) {
                     console.error('Error checking purchase proposal:', error);
-                    refundUser(null,type)
-                    reject();
+                    reject(error);
                 }
             });
         });
     }
     window.buyImage = async function(messageId,price,type){
-        const imageLoaderElement = displayImageLoader();
-    
         const response = await initiatePurchaseImage(price,type, userId, chatId)
         if (response.success) {
             updateCoins(response.coins);
@@ -2487,7 +2495,7 @@ $(document).ready(async function() {
             displayMessage('user', message, function() {
                 addMessageToChat(chatId, userChatId, 'user', message);
             });
-            const hiddenMessage = `[Hidden] I bought a ${type} image for ${price} coins. The image generation process is starting now. It may take a minute or so to complte. Thanks me and tell me to wait. Do not include instruction to buy image in your message since I just bought one.`
+            const hiddenMessage = `[Hidden] I bought a ${type} image for ${price} coins. The image generation process is starting now. It may take a minute or so to complte.Thanks me and tell me to wait. Do not include instruction to buy image in your message since I just bought one.`
             addMessageToChat(chatId, userChatId, 'user', hiddenMessage, function(){
                 generateCompletion()
             });
@@ -2495,32 +2503,11 @@ $(document).ready(async function() {
             showCoinShop();
             return
         }
-        const item = await generateItemData(type);
-        if(item){
-            const itemId = item[0]._id;
-            updateLoaderWithId(itemId);
-            generateImageNovita(API_URL, userId, chatId, userChatId, itemId, thumbnail, type);
-        }else{
-            imageLoaderElement.remove();
-        }
+        const item = await generateItemData(type)
+        const itemId = item[0]._id
+        displayImageLoader(itemId)
+        generateImageNovita(API_URL, userId, chatId, userChatId, itemId, thumbnail, type);
     }
-    
-    window.displayImageLoader = function(){
-        const imageUrl = "/img/image-placeholder.gif";
-        const card = $(`
-            <div id="load-image-container" class="assistant-image-box card custom-card bg-transparent shadow-0 border-0 px-1 mx-1 col-auto" style="cursor:pointer;" data-src="${imageUrl}">
-                <div style="background-image:url(${imageUrl});border:4px solid white;background-size:cover;" class="card-img-top rounded-avatar position-relative m-auto">
-                </div>
-            </div>
-        `);
-        
-        $('#chat-recommend').append(card);
-        return card;
-    }
-    
-    window.updateLoaderWithId = function(itemId) {
-        $("#load-image-container").attr("id", `load-image-container-${itemId}`);
-    }    
     window.buyItem = function(itemId, itemName, itemPrice, item_id, status, userId, chatId, userChatId, imageType) {
         if (status) {
             initiatePurchase(itemId, itemName, itemPrice, userId, chatId, function(response) {

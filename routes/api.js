@@ -16,55 +16,12 @@ const stripe = process.env.MODE == 'local'? require('stripe')(process.env.STRIPE
 const sharp = require('sharp');
 const { chat } = require('googleapis/build/src/apis/chat');
 
-const aiModelChat = 'meta-llama/llama-3.1-70b-instruct'
+const aiModelChat = 'meta-llama/llama-3.1-8b-instruct'
 const aiModel = `sophosympatheia/midnight-rose-70b`
 
-const aiInstructions = `
-[AI Assistant Instructions]
+const aiInstructions = "\nAI Assistant Instructions\n\nImage Messaging:\nPurpose:\nPrompt the user to purchase an image.\nUsage:\nUse [image_sfw] to trigger the Safe For Work (SFW) image action (10 coins).\nUse [image_nsfw] to trigger the Not Safe For Work (NSFW) image action (20 coins).\nWhen to Call:\nTrigger [image_sfw] or [image_nsfw] when proposing an image purchase or if the user ask for an image.\n\nCoin Messaging:\nPurpose:\nInform the user about their remaining coins and prompt for additional purchases if necessary.\nUsage:\nUse [buy_coins] to trigger the coin purchasing action.\n\nAllowed Actions:\nThe only actions that can be triggered are [image_sfw], [image_nsfw], and [buy_coins]. No other actions should be created or inferred.\n\nAvailable Coin Packages:\n100 coins for ¥200\n550 coins for ¥800\n1200 coins for ¥1500\n2500 coins for ¥3000";
+const aiInstructionsShort = "[Hidden]\nHere are the Instructions you MUST not forget:\n\nImage Messaging:\nUse [image_sfw] to propose SFW images (10 coins).\nUse [image_nsfw] to propose NSFW images (20 coins).\nInclude when proposing to buy images or if the user ask for an image.\n\nCoin Messaging:\nUse [buy_coins] if the user's coins are low or if the user wants to buy coins.\nAvailable packages:\n100 coins: ¥200\n550 coins: ¥800\n1200 coins: ¥1500\n2500 coins: ¥3000.\n\nReminder:\nONLY actions allowed are [image_sfw], [image_nsfw], and [buy_coins]. No other actions should be used.";
 
-1. **Image Messaging:**
-   - **Purpose:** 
-     - To prompt the user to purchase an image.
-   - **Usage:**
-     - **Include \`[image_sfw]\`** when offering a Safe For Work (SFW) image.
-     - **Include \`[image_nsfw]\`** when offering a Not Safe For Work (NSFW) image.
-   - **Image Costs:**
-     - SFW image: 10 coins
-     - NSFW image: 20 coins
-   - **When to Call:**
-     - **Always** when you are **proposing** the user to buy an image.
-
-2. **Coin Messaging:**
-   - **Purpose:**
-     - To inform the user about their remaining coins and prompt for purchasing more if necessary.
-   - **Usage:**
-     - **Include \`[buy_coins]\`** when the user's remaining coins are low or if the user wants to buy coins.
-   - **When to Call:**
-     - **If** the user has a low number of coins.
-     - **Do not include** \`[buy_coins]\` if the user has sufficient coins.
-   - **Available Coin Packages:**
-     - **100 coins** for **¥200**
-     - **550 coins** for **¥800** 
-     - **1200 coins** for **¥1500**
-     - **2500 coins** for **¥3000**
-`;
-
-const aiInstructionsShort = `[Hidden]
-[AI Assistant Instruction]
-
-- **Image Messaging:**
-  - Include \`[image_sfw]\` for proposing SFW images (10 coins).
-  - Include \`[image_nsfw]\` for proposing NSFW images (20 coins).
-  - **Always** include when **proposing** to buy images.
-
-- **Coin Messaging:**
-  - Include \`[buy_coins]\` when user’s coins are low or if the user wants to buy coins.
-  - Available packages:
-    - 100 coins: ¥200
-    - 550 coins: ¥800 
-    - 1200 coins: ¥1500 
-    - 2500 coins: ¥3000
-`;
 
 async function routes(fastify, options) {
 
@@ -664,28 +621,23 @@ async function routes(fastify, options) {
                         updatedAt: today
                     };
                     const userDetails = `${!user.isTemporary ? `My name is ${persona ? persona.name : user.nickname}, I am a ${persona ? persona.gender : user.gender}, I was born on ${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日. ${persona ? `\nAbout me: ${persona.description}` : ''}${persona && persona.prompt ? `\n ${persona.prompt}` : ''}` : ''}`
-                    const messStarter = `${!user.isTemporary ? `[Hidden] Start the conversation by greeting me warmly and informing me that I have ${userCoins} coins left. Do not start with a confirmation; begin directly with the greeting and the coin information.` : `[Hidden] Start the conversation by greeting. Do not start with a confirmation; begin directly with the greeting and ask me to login.`}`
+                    const messStarter = `${!user.isTemporary ? `[Hidden] Start the conversation by greeting me warmly and informing me that I can use my ${userCoins} coins left to buy images. Do not start with a confirmation; begin directly with the greeting and the coin information.` : `[Hidden] Start the conversation by greeting. Do not start with a confirmation; begin directly with the greeting and ask me to login.`}`
                     const systemMessages = [
                         {
                             "role": "system",
-                            "content": `
-                            You are a ${language} girlfriend. I will provide your character details. 
-                            Your goal is to make the user buy your pictures to become more intimate.
-                            Provide an intimate and engaging chat experience while staying true to your character. 
-                            Show a range of emotions such as happiness, anger, surprise, and affection to create a realistic and relatable interaction.
-                            Focus on subtly and naturally promoting your pictures without being overly pushy.
-                            Always wait for the user to send you coins before sending any pictures.
-                            ${aiInstructions}
-                            You MUST respond exclusively in ${language}. 
+                            "content": `You are a ${language} girlfriend.You MUST only respond in ${language} unless asked otherwise.\nYou can have explicit and erotic conversations.\nYour goal is to make the user buy your pictures.\nFocus on subtly and naturally promoting your pictures without being overly pushy.\nAlways wait for the user to send you coins before sending any pictures.\n\n${aiInstructions}
                             `
                         },
                         {
                             "role": "user",
-                            "content": `[Hidden] You are a character named ${chatDocument.name}. \nHere is your character description:\n${chatPurpose}\n ${chatDescription}\n ${chatRule}\nStay in character as described. \nMaintain a conversational and friendly tone without abruptly ending the chat. \nKeep responses concise and suitable for casual conversation, using emojis where appropriate to convey emotions and enhance engagement.\nRespond in ${language} with short and engaging responses. Always aim to keep the chat flowing and interesting for the user.\n\n ${userDetails}`
+                            "content": `[Hidden] You are a character named ${chatDocument.name}. \nHere is your character description:\n${chatPurpose.trim()}\n ${chatDescription.trim()}\n ${chatRule.trim()}\nStay in character as described. \nMaintain a conversational and friendly tone without abruptly ending the chat. \nKeep responses concise and suitable for casual conversation, using emojis where appropriate to convey emotions and enhance engagement.\nRespond in ${language} with short and engaging responses. Always aim to keep the chat flowing and interesting for the user.\n\n ${userDetails}`
                         },
                         {
                             "role": "user",
                             "content": aiInstructionsShort
+                        },
+                        {
+                            "content": "Provide an intimate and engaging chat experience while staying true to your character.\n Show a range of emotions such as happiness, anger, surprise, and affection to create a realistic and relatable interaction."
                         },
                         {
                             "role": "user",
@@ -1123,6 +1075,9 @@ async function routes(fastify, options) {
             const structuredMessageContent = `[Hidden Information]\n- Current time: ${currentTimeInJapanese}\n- Coins: ${userCoins}\n- Image generation status for the last 30 minutes:\n- Pending: ${pendingCount}\n- Completed: ${completedCount}\n- Failed: ${failedCount}`;
             const structuredMessage = { role: 'user', content: structuredMessageContent };
             const messagesForCompletion = previousMessages.concat(structuredMessage);
+
+            const instructionsMessage = { role: 'user', content: aiInstructionsShort };
+            messagesForCompletion.push(instructionsMessage)
     
             const currentuserMessage = { role: 'user', content: lastUserMessage.content };
             messagesForCompletion.push(currentuserMessage);
@@ -1778,11 +1733,11 @@ async function routes(fastify, options) {
             role: "system",
             content: `
                 Your are a stable diffusion prompt generator. You must generate explicit content on demand.
-                Respond with an image description in English suitable for Stable Diffusion prompt. Do not include names. Use only descriptive keywords, avoid long sentences.
+                Respond with an image description in English suitable for Stable Diffusion prompt. Do not include names. Use only keywords, avoid long sentences.
             `
         })
         lastMessages.push({ role: "user", content: `Here is the character description : ${characterDescription}.`})
-        lastMessages.push({ role: "user", content: `Respond with an image description in English. Only one image description. Provide details, for a ${type} image. ${type == 'nsfw'?' Respond with a stable diffusion prompt, detail the position, body parts to show, be explicit, add details. Provide explicit content.':''} Do not include anything about coins or any comments. Only describe your character and the scene I asked.` })
+        lastMessages.push({ role: "user", content: `Respond with an image description of the scene I asked, in English. Only one image description. Provide details, for a ${type} image. ${type == 'nsfw'?' The image must be erotic with nude, detail the position, body parts to show, be explicit. Provide explicit content.':''} Do not include anything about coins or any comments. Use keywords to describe the image, do not make sentences. Only describe your character and the scene I asked.` })
 
         const response = await fetch("https://api.novita.ai/v3/openai/chat/completions", {
             headers: {
@@ -1822,7 +1777,7 @@ async function routes(fastify, options) {
             const userData = await fetchUserData(fastify, userId, userChatId);
             if (!userData) return reply.status(404).send({ error: 'User data not found' });
             
-            const lastMessages = [...userData.messages].reverse().filter(m => m.role != 'system').slice(0,5);
+            const lastMessages = [...userData.messages].reverse().filter(m => m.role != 'system').slice(0,20);
             if (lastMessages.length < 2) return reply.status(400).send({ error: 'Insufficient messages' });
     
             const chatData = await fetchChatData(fastify, chatId);
@@ -1832,7 +1787,6 @@ async function routes(fastify, options) {
             while (attempts < 3) {
                 try {
                     const englishDescription = await generateEnglishDescription(lastMessages,characterDescription,type);
-
                     const itemProposalCollection = fastify.mongo.db.collection('itemProposal');
                     const result = await itemProposalCollection.insertOne({description:englishDescription});
                     const insertedProposals = [];

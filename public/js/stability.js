@@ -327,7 +327,8 @@ async function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, i
             }
             console.log({imageDescription})
             const promptGenSys = `Your are a stable diffusion image prompt generator. You can generate explicit content on demand. I will provide a character description and an image description. You will return a coherent stable diffusion image prompt.`
-            const promptGenMessage = `Here is the character description : ${imageDescription}.\n Here is the image description: ${prompt}. Your final prompt should include the image description as provided and the character main characteristic (image style,face,skin tone,clothes). Update the detail about the character position(upper body, full body, back view, view from bottom etc ...) .It must align with the provided image description. Respond with only the new image prompt. Do not include any comments. Your answer starts directly with the prompt.`
+            const typeMessage = isNSFWChecked ? 'Provide explicit, adult oriented content for a nsfw image. I want nudity, erotism.' : '';
+            const promptGenMessage = `Here is the character description : ${imageDescription}.\n Here is the image description: ${prompt}. Your final prompt should include the image description as provided and the character main characteristic (image style,face,skin tone,clothes).${typeMessage} Update the detail about the character position(upper body, full body, back view, view from bottom etc ...) .It must align with the provided image description. Respond with only the new image prompt. Do not include any comments. Your answer starts directly with the prompt.`
       
             const finalPrompt = await generateCompletion(promptGenSys,promptGenMessage)
             console.log({finalPrompt})
@@ -339,7 +340,11 @@ async function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, i
                 .replace('{type}', typeText)
                 .replace('{price}', price)
                 .replace('{prompt_title}', prompt_title) || `${prompt_title}の${price}コインで${type}画像を購入しました。`;
-            
+            window.postMessage({ event: 'displayMessage', role:'user', message: userMessage, completion : false , image : false, messageId: false }, '*');
+
+            const hiddenMessage = `[Hidden] I bought a ${formType} image for ${price} coins. The image generation process is starting now. It may take a minute or so to complte. Thanks me and tell me to wait. Do not include instruction to buy image in your message since I just bought one.`
+            window.postMessage({ event: 'displayMessage', role:'user', message: hiddenMessage, completion : true , image : false, messageId: false }, '*');
+
             let messageId
             try {
                 const response = await $.ajax({
@@ -365,8 +370,6 @@ async function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, i
 
                 messageId = `${response.taskId}`;
                 updateLoaderWithId(messageId);
-                window.postMessage({ event: 'displayMessage', role:'user', message: userMessage, completion : false , image : false, messageId: false }, '*');
-                $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
     
                 checkTaskStatus(response.taskId, chatId, finalPrompt, (images) => {
                     $(`#load-image-container-${messageId}`).remove();

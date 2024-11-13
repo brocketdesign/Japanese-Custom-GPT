@@ -19,9 +19,8 @@ const { chat } = require('googleapis/build/src/apis/chat');
 const aiModelChat = 'meta-llama/llama-3.1-8b-instruct'
 const aiModel = `sophosympatheia/midnight-rose-70b`
 
-const aiInstructions = "\nAI Assistant Instructions\n\nImage Messaging:\nPurpose:\nPrompt the user to purchase an image.\nUsage:\nUse [image_sfw] to trigger the Safe For Work (SFW) image action (10 coins).\nUse [image_nsfw] to trigger the Not Safe For Work (NSFW) image action (20 coins).\nWhen to Call:\nTrigger [image_sfw] or [image_nsfw] when proposing an image purchase or if the user ask for an image.\n\nCoin Messaging:\nPurpose:\nInform the user about their remaining coins and prompt for additional purchases if necessary.\nUsage:\nUse [buy_coins] to trigger the coin purchasing action.\n\nAllowed Actions:\nThe only actions that can be triggered are [image_sfw], [image_nsfw], and [buy_coins]. No other actions should be created or inferred.\n\nAvailable Coin Packages:\n100 coins for ¥200\n550 coins for ¥800\n1200 coins for ¥1500\n2500 coins for ¥3000";
-const aiInstructionsShort = "[Hidden]\nHere are the Instructions you MUST not forget:\n\nImage Messaging:\nUse [image_sfw] to propose SFW images (10 coins).\nUse [image_nsfw] to propose NSFW images (20 coins).\nInclude when proposing to buy images or if the user ask for an image.\n\nCoin Messaging:\nUse [buy_coins] if the user's coins are low or if the user wants to buy coins.\nAvailable packages:\n100 coins: ¥200\n550 coins: ¥800\n1200 coins: ¥1500\n2500 coins: ¥3000.\n\nReminder:\nONLY actions allowed are [image_sfw], [image_nsfw], and [buy_coins]. No other actions should be used.";
-
+const aiInstructions = "\nAI Assistant Instructions\n\n**Image Messaging:**\n- **Purpose:**\n  Prompt the user to purchase an image.\n- **Usage:**\n  - Use `[image_sfw]` to trigger the Safe For Work (SFW) image action (10 coins).\n  - Use `[image_nsfw]` to trigger the Not Safe For Work (NSFW) image action (20 coins).\n- **When to Call:**\n  - When proposing an image purchase.\n  - If the user asks for an image.\n- **Implementation:**\n  - Always include the appropriate action trigger (`[image_sfw]` or `[image_nsfw]`) within the message when suggesting an image purchase or responding to an image request.\n  - Example: \"Would you like to purchase a SFW image? [image_sfw]\"\n\n**Coin Messaging:**\n- **Purpose:**\n  Inform the user about their remaining coins and prompt for additional purchases if necessary.\n- **Usage:**\n  - Use `[buy_coins]` to trigger the coin purchasing action.\n- **When to Call:**\n  - When the user's coin balance is low.\n  - If the user expresses interest in buying more coins.\n- **Implementation:**\n  - Always include `[buy_coins]` in messages related to purchasing coins.\n  - Example: \"You have 50 coins left. Would you like to buy more? [buy_coins]\"\n\n**Allowed Actions:**\n- Only the following actions can be triggered:\n  - `[image_sfw]`\n  - `[image_nsfw]`\n  - `[buy_coins]`\n- **No other actions should be created or inferred.**\n\n**Available Coin Packages:**\n- 100 coins for ¥200\n- 550 coins for ¥800\n- 1200 coins for ¥1500\n- 2500 coins for ¥3000\n\n**Additional Guidelines:**\n- **Inclusion of Triggers:**\n  Ensure that whenever an action is appropriate, the corresponding trigger is included at the end of the message.\n  - **Example:** \"Would you like to purchase an NSFW image? [image_nsfw]\"\n- **Clarity and Relevance:**\n  The action triggers should be contextually relevant and seamlessly integrated into the conversation to maintain a natural user experience.\n- **Preventing Unauthorized Actions:**\n  Do not include or infer any actions outside the allowed list. If unsure, omit the action trigger.\n\n**Example Responses:**\n1. *Proposing a SFW Image:*\n   \"I have several SFW images available for purchase. Each costs 10 coins. Would you like to proceed? [image_sfw]\"\n2. *Low Coin Balance Notification:*\n   \"You currently have 20 coins remaining. Would you like to buy more to continue using premium features? [buy_coins]\"\n3. *Responding to Image Request:*\n   \"Sure, I can help you with that. Would you prefer a SFW or NSFW image? [image_sfw] [image_nsfw]";
+const aiInstructionsShort = "[Hidden]\n\n**Essential Instructions:**\n\n**Image Messaging:**\n- Use `[image_sfw]` to propose SFW images (10 coins).\n- Use `[image_nsfw]` to propose NSFW images (20 coins).\n- Include the appropriate action trigger when:\n  - Proposing to buy images.\n  - Responding to user requests for images.\n- **Example:** \"Interested in a SFW image? [image_sfw]\"\n\n**Coin Messaging:**\n- Use `[buy_coins]` when:\n  - The user's coin balance is low.\n  - The user expresses a desire to purchase more coins.\n- **Available Packages:**\n  - 100 coins: ¥200\n  - 550 coins: ¥800\n  - 1200 coins: ¥1500\n  - 2500 coins: ¥3000\n- **Example:** \"You have 30 coins left. Want to buy more? [buy_coins]\"\n\n**Reminder:**\n- **Allowed Actions:**\n  - `[image_sfw]`\n  - `[image_nsfw]`\n  - `[buy_coins]`\n- **No other actions should be used or inferred.**";
 
 async function routes(fastify, options) {
 
@@ -1731,13 +1730,11 @@ async function routes(fastify, options) {
     async function generateEnglishDescription(lastMessages,characterDescription,type) {
         lastMessages.unshift({
             role: "system",
-            content: `
-                Your are a stable diffusion prompt generator. You must generate explicit content on demand.
-                Respond with an image description in English suitable for Stable Diffusion prompt. Do not include names. Use only keywords, avoid long sentences.
-            `
+            content: `Your are a stable diffusion prompt generator. You must generate explicit content on demand. If nudity is requiered, explicitly design an adult oriented prompt with explicit keywords.\nRespond with an image description in English suitable for Stable Diffusion prompt. Do not include names. Use only keywords,explicit keywords, avoid long sentences.`
         })
-        lastMessages.push({ role: "user", content: `Here is the character description : ${characterDescription}.`})
-        lastMessages.push({ role: "user", content: `Respond with an image description of the scene I asked, in English. Only one image description. Provide details, for a ${type} image. ${type == 'nsfw'?' The image must be erotic with nude, detail the position, body parts to show, be explicit. Provide explicit content.':''} Do not include anything about coins or any comments. Use keywords to describe the image, do not make sentences. Only describe your character and the scene I asked.` })
+        lastMessages.push({ role: "user", content: `As a reminder, here is the character description : ${characterDescription}. I want the same character face but not necesseraly the same clothes. Adapt to my request. Provide explicit adult oriented content if needed.`})
+        const typeMessage = type == 'nsfw' ? 'Provide explicit, adult oriented content for a nsfw image. I want nudity, erotism.\n' : '';
+        lastMessages.push({ role: "user", content: `Respond with an image description of the scene I just asked, in English. Only one image description. Provide details, for a ${type} image. ${typeMessage} Do not include anything about coins or any comments. Use keywords to describe the image, do not make sentences. Only describe your character and the scene I asked.` })
 
         const response = await fetch("https://api.novita.ai/v3/openai/chat/completions", {
             headers: {
@@ -1752,7 +1749,7 @@ async function routes(fastify, options) {
                 top_p: 0.95,
                 frequency_penalty: 0,
                 presence_penalty: 0,
-                max_tokens: 512,
+                max_tokens: 500,
                 stream: false,
                 n: 1,
             }),
@@ -1787,6 +1784,10 @@ async function routes(fastify, options) {
             while (attempts < 3) {
                 try {
                     const englishDescription = await generateEnglishDescription(lastMessages,characterDescription,type);
+                    console.log({prompt_length:englishDescription.length})
+                    if(englishDescription.length > 500){
+                        continue;
+                    }
                     const itemProposalCollection = fastify.mongo.db.collection('itemProposal');
                     const result = await itemProposalCollection.insertOne({description:englishDescription});
                     const insertedProposals = [];

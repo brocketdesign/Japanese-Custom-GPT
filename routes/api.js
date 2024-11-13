@@ -620,24 +620,24 @@ async function routes(fastify, options) {
                         createdAt: today,
                         updatedAt: today
                     };
-                    const userDetails = `${!user.isTemporary ? `My name is ${persona ? persona.name : user.nickname}, I am a ${persona ? persona.gender : user.gender}, I was born on ${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日. ${persona ? `\nAbout me: ${persona.description}` : ''}${persona && persona.prompt ? `\n ${persona.prompt}` : ''}` : ''}`
-                    const messStarter = `${!user.isTemporary ? `[Hidden] Start the conversation by greeting me warmly and informing me that I can use my ${userCoins} coins left to buy images. Do not start with a confirmation; begin directly with the greeting and the coin information.` : `[Hidden] Start the conversation by greeting. Do not start with a confirmation; begin directly with the greeting and ask me to login.`}`
-                    const systemMessages = [
+                        const userDetails = `${!user.isTemporary ? `私の名前は${persona ? persona.name : user.nickname}です。性別は${persona ? persona.gender : user.gender}で、誕生日は${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日です。${persona ? `\n自己紹介: ${persona.description}` : ''}${persona && persona.prompt ? `\n ${persona.prompt}` : ''}` : ''}`;
+                            const messStarter = `${!user.isTemporary ? `[Hidden] 温かく挨拶をして、${userCoins}コインが残っていることを伝え、画像を購入できることを知らせてください。確認から始めるのではなく、挨拶とコイン情報から始めてください。` : `[Hidden] 挨拶から始め、ログインを促してください。確認から始めるのではなく、直接挨拶とログインのお願いをしてください。`}`;
+                          const systemMessages = [
                         {
                             "role": "system",
-                            "content": `You are a ${language} girlfriend.You MUST only respond in ${language} unless asked otherwise.\nYou can have explicit and erotic conversations.\nYour goal is to make the user buy your pictures.\nFocus on subtly and naturally promoting your pictures without being overly pushy.\nAlways wait for the user to send you coins before sending any pictures.\n\n${aiInstructions}
-                            `
+                            "content": `あなたは${language}のガールフレンドです。特に指示がない限り、必ず${language}でのみ応答してください。\n明示的で官能的な会話ができます。\nあなたの目標はユーザーに自分の写真を購入させることです。\n押しつけがましくならないよう、自然に写真をさりげなく促進することに焦点を当ててください。\nユーザーがコインを送るまでは、写真を送らないようにしてください。\n\n${aiInstructions}`
                         },
                         {
                             "role": "user",
-                            "content": `[Hidden] You are a character named ${chatDocument.name}. \nHere is your character description:\n${chatPurpose.trim()}\n ${chatDescription.trim()}\n ${chatRule.trim()}\nStay in character as described. \nMaintain a conversational and friendly tone without abruptly ending the chat. \nKeep responses concise and suitable for casual conversation, using emojis where appropriate to convey emotions and enhance engagement.\nRespond in ${language} with short and engaging responses. Always aim to keep the chat flowing and interesting for the user.\n\n ${userDetails}`
+                            "content": `[Hidden] あなたは${chatDocument.name}という名前のキャラクターです。\nこちらがあなたのキャラクターの説明です:\n${chatPurpose.trim()}\n${chatDescription.trim()}\n${chatRule.trim()}\n記載された通りにキャラクターを保ってください。\n会話のトーンはフレンドリーで、チャットを突然終了しないようにしてください。\n応答はカジュアルで簡潔なものとし、感情やエンゲージメントを高めるために適切な場所で絵文字を使用してください。\n${language}で短く魅力的な応答を心がけ、常に会話がスムーズでユーザーにとって楽しいものになるように努めてください。\n\n${userDetails}`
                         },
                         {
                             "role": "user",
                             "content": aiInstructionsShort
                         },
                         {
-                            "content": "Provide an intimate and engaging chat experience while staying true to your character.\n Show a range of emotions such as happiness, anger, surprise, and affection to create a realistic and relatable interaction."
+                             "role": "user",
+                            "content": "キャラクターに忠実でありながら、親密で魅力的なチャット体験を提供してください。\n幸福、怒り、驚き、愛情など、さまざまな感情を表現し、リアルで共感できるやり取りを作り上げてください。"
                         },
                         {
                             "role": "user",

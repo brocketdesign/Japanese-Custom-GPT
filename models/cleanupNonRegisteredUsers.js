@@ -390,8 +390,38 @@ async function cleanUpDatabase(db) {
       console.error("Error during temporary chat removal process:", error);
     }
   }
-  
-  
+  function listChats(db) {
+    return db.collection('chats').find({
+        imageStyle: { $exists: true },
+        $or: [
+            { imageModel: { $exists: false } },
+            { imageVersion: { $exists: false } }
+        ]
+    }).toArray();
+}
+
+function updateChats(db) {
+    const collection = db.collection('chats');
+    return collection.find({
+        imageStyle: { $exists: true },
+        $or: [
+            { imageModel: { $exists: false } },
+            { imageVersion: { $exists: false } }
+        ]
+    }).forEach(chat => {
+        const updates = chat.imageStyle === 'anime' ? {
+            imageModel: 'novaAnimeXL_ponyV20_461138',
+            imageVersion: 'sdxl'
+        } : chat.imageStyle === 'realistic' ? {
+            imageModel: 'kanpiromix_v20',
+            imageVersion: 'sd'
+        } : {};
+        if (Object.keys(updates).length) {
+            collection.updateOne({ _id: chat._id }, { $set: updates });
+        }
+    });
+}
+
   
   
   
@@ -408,4 +438,6 @@ module.exports = {
     initializeAllUsersPostCount,
     updateImageCount,
     deleteTemporaryChats,
+    updateChats,
+    listChats
 }

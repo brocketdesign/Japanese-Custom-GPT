@@ -207,10 +207,13 @@
                             <div class="col-auto">
                                 <label class="form-label">画像スタイル</label>
                                 <div id="imageStyleSelection">
-                                    <img src="/img/anime.jpeg" alt="アニメ" class="style-option rounded selected" data-value="anime">
-                                    <img src="/img/real.jpeg" alt="リアリスティック" class="style-option rounded" data-value="realistic">
+                                    <img src="/img/anime.jpeg" alt="アニメ" class="style-option rounded selected" data-style="anime" data-model="novaAnimeXL_ponyV20_461138" data-version="sdxl">
+                                    <img src="/img/real.jpeg" alt="リアリスティック" class="style-option rounded" data-style="realistic" data-model="kanpiromix_v20" data-version="sd">
+                                    <img src="/img/real-2.jpeg" alt="リアリスティック" class="style-option rounded" data-style="realistic" data-model="ponyRealism_v22MainVAE_822476" data-version="sdxl">
                                 </div>
                                 <input type="hidden" id="imageStyle" name="imageStyle" value="anime">
+                                <input type="hidden" id="imageModel" name="imageModel" value="novaAnimeXL_ponyV20_461138">
+                                <input type="hidden" id="imageVersion" name="imageVersion" value="sdxl">
                             </div>
                             <div class="d-none col-auto">
                                 <label for="gender" class="form-label"><i class="fas fa-user"></i> {{translations.newCharacter.genderLabel}}:</label>
@@ -379,14 +382,26 @@
         $('#characterPrompt').on('input change', function() {
             $('#enhancedPrompt').val('');
         });
-
         $('.style-option').click(function(){
             $('.style-option').removeClass('selected');
             $(this).addClass('selected');
-            $('#imageStyle').val($(this).data('value'));
+            const style = $(this).data('style')
+            const model = $(this).data('model')
+            const version = $(this).data('version')
+            $('#imageStyle').val(style);
+            $('#imageModel').val(model);
+            $('#imageVersion').val(version);
+            
         });
-        imageStyle = $('.style-option.selected').data('value')
+
+        imageStyle = $('.style-option.selected').data('style')
         $('#imageStyle').val(imageStyle);
+
+        imageModel = $('.style-option.selected').data('model')
+        $('#imageModel').val(imageModel);
+
+        imageVersion = $('.style-option.selected').data('version')
+        $('#imageVersion').val(imageVersion);
     });
 
 </script>
@@ -547,6 +562,12 @@
                     if (chatData.imageStyle) {
                         $('#imageStyle').val(chatData.imageStyle);
                     }
+                    if (chatData.imageModel) {
+                        $('#imageModel').val(chatData.imageModel);
+                    }
+                    if (chatData.imageVersion) {
+                        $('#imageVersion').val(chatData.imageVersion);
+                    }
 
                     if (chatData.characterPrompt) {
                         $('#characterPrompt').val(chatData.characterPrompt);
@@ -620,6 +641,8 @@
 
             const formData = new FormData();
             formData.append('imageStyle', $('#imageStyle').val().trim() || 'anime');
+            formData.append('imageModel', $('#imageModel').val().trim() || 'novaAnimeXL_ponyV20_461138');
+            formData.append('imageVersion', $('#imageVersion').val().trim() || 'sdxl');
             formData.append('name', $('#chatName').val());
             formData.append('purpose', $('#chatPurpose').val());
             formData.append('language', $('#language').val());
@@ -658,7 +681,7 @@
         });
         
       
-        function fetchTaskId(enhancedPrompt, aspectRatio, chatId, imageStyle) {
+        function fetchTaskId(enhancedPrompt, aspectRatio, chatId, imageStyle, imageModel) {
             return $.ajax({
                 url: '/novita/generate-image',
                 method: 'POST',
@@ -667,7 +690,8 @@
                     prompt: enhancedPrompt,
                     aspectRatio: aspectRatio,
                     chatId: chatId,
-                    imageStyle: imageStyle
+                    imageStyle,
+                    imageModel
                 })
             });
         }
@@ -896,9 +920,10 @@
                         return
                     }
 
-                    const imageStyle = $('.style-option.selected').data('value')
+                    const imageStyle = $('.style-option.selected').data('style')
+                    const imageModel = $('.style-option.selected').data('model')
                     // タスクIDを取得するリクエスト
-                    const taskResponse = await fetchTaskId(enhanceResponse.enhancedPrompt, '9:16', chatId, imageStyle);
+                    const taskResponse = await fetchTaskId(enhanceResponse.enhancedPrompt, '9:16', chatId, imageStyle, imageModel);
 
                     if (taskResponse && taskResponse.taskId) {
                         showNotification('画像生成タスクを開始しました。ステータスを確認中...', 'info');

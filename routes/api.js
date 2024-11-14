@@ -39,6 +39,8 @@ async function routes(fastify, options) {
                 switch (part.fieldname) {
                     case 'name':
                     case 'imageStyle':
+                    case 'imageModel':
+                    case 'imageVersion':
                     case 'purpose':
                     case 'language':
                     case 'gender':
@@ -1761,7 +1763,7 @@ async function routes(fastify, options) {
             throw new Error('Error generating English description');
         }
         const data = await response.json();
-        const completionMessage = data.choices[0].message.content;
+        const completionMessage = data.choices[0].message.content.trim();
 
         return completionMessage;
         
@@ -1786,7 +1788,7 @@ async function routes(fastify, options) {
                 try {
                     const englishDescription = await generateEnglishDescription(lastMessages,characterDescription,type);
                     console.log({prompt_length:englishDescription.length})
-                    if(englishDescription.length > 500){
+                    if(englishDescription.length > 1000){
                         continue;
                     }
                     const itemProposalCollection = fastify.mongo.db.collection('itemProposal');

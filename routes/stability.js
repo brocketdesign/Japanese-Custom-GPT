@@ -298,32 +298,28 @@ async function routes(fastify, options) {
     }
 
     const default_prompt = {
-      anime: {
+      sdxl: {
         sfw: {
-          model_name: "novaAnimeXL_ponyV20_461138.safetensors",
           sampler_name: "Euler a",
-          prompt: `score_9, score_8_up, source_anime, masterpiece, best quality, (ultra-detailed), (perfect hands:0.1), (sfw), dressed, clothes, `,
+          prompt: `score_9, score_8_up, masterpiece, best quality, (ultra-detailed), (perfect hands:0.1), (sfw), dressed, clothes, `,
           negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, nipple, topless, nsfw, naked, nude, sex, worst quality, low quality,young,child,dick,man`,
           loras: []
         },
         nsfw: {
-          model_name: "novaAnimeXL_ponyV20_461138.safetensors",
           sampler_name: "Euler a",
-          prompt: `score_9, score_8_up, source_anime, anime, masterpiece, best quality, (ultra-detailed), (nsfw), uncensored, `,
+          prompt: `score_9, score_8_up, masterpiece, best quality, (ultra-detailed), (nsfw), uncensored, `,
           negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, worst quality, low quality,young,child,dick,man`,
           loras: []
         }
       },
-      realistic: {
+      sd: {
         sfw: {
-          model_name: "kanpiromix_v20.safetensors",
           sampler_name: "DPM++ 2M Karras",
           prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, (sfw), dressed, clothe on, natural lighting, `,
           negative_prompt: `BraV4Neg,paintings,sketches,(worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)),logo, nsfw,nude, topless, worst quality, low quality,disform,weird body,multiple hands,young,child,dick,man `,
           loras: [{"model_name":"more_details_59655.safetensors","strength":0.2},{ model_name: 'JapaneseDollLikeness_v15_28382.safetensors', strength: 0.7 },{"model_name":"PerfectFullBreasts-fCV3_59759.safetensors","strength":0.7}],
         },
         nsfw: {
-          model_name: "kanpiromix_v20.safetensors",
           sampler_name: "DPM++ 2M Karras",
           prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, (nsfw),uncensored, `,
           negative_prompt: `BraV4Neg,paintings,sketches,(worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)),logo,disform,weird body,multiple hands,young,child,dick,man`,
@@ -400,14 +396,16 @@ async function routes(fastify, options) {
         const isSubscribed = user && user.subscriptionStatus === 'active';
 
         const chat = await db.collection('chats').findOne({ _id: new ObjectId(chatId) });
-        const imageStyle = chat.imageStyle;
+        const imageVersion = chat.imageVersion;
 
-        const selectedStyle = default_prompt[imageStyle] || default_prompt['anime'];
+        const selectedStyle = default_prompt[imageVersion] || default_prompt['sdxl'];
         const style = selectedStyle[imageType];
+
+        const imageModel = chat.imageModel || 'novaAnimeXL_ponyV20_461138';
 
         const image_request = {
             type: imageType,
-            model_name: style.model_name,
+            model_name: imageModel + '.safetensors',
             sampler_name: style.sampler_name || '',
             loras: style.loras,
             prompt: style.prompt + prompt,
@@ -487,19 +485,21 @@ fastify.post('/novita/txt2img', async (request, reply) => {
       // Fetch user subscription status
       const isSubscribed = user.subscriptionStatus === 'active';
 
-      // Fetch imageStyle from chat or use default
+      // Fetch imageVersion from chat or use default
       const chat = await db.collection('chats').findOne({ _id: new ObjectId(chatId) });
-      const imageStyle = chat.imageStyle || 'anime';
+      const imageVersion = chat.imageVersion || 'sdxl';
 
       // Select prompts and model based on imageStyle
-      const selectedStyle = default_prompt[imageStyle] || default_prompt['anime'];
+      const selectedStyle = default_prompt[imageVersion] || default_prompt['sdxl'];
+
+      const imageModel = chat.imageModel || 'novaAnimeXL_ponyV20_461138';
 
       // Prepare task based on imageType
       let image_request;
       if (imageType === 'sfw') {
           image_request = {
               type: 'sfw',
-              model_name: selectedStyle.sfw.model_name,
+              model_name: imageModel + '.safetensors',
               sampler_name: selectedStyle.sfw.sampler_name || '',
               loras: selectedStyle.sfw.loras,
               prompt: selectedStyle.sfw.prompt + prompt,
@@ -509,7 +509,7 @@ fastify.post('/novita/txt2img', async (request, reply) => {
       } else {
           image_request = {
               type: 'nsfw',
-              model_name: selectedStyle.nsfw.model_name,
+              model_name: imageModel + '.safetensors',
               sampler_name: selectedStyle.nsfw.sampler_name || '',
               loras: selectedStyle.nsfw.loras,
               prompt: selectedStyle.nsfw.prompt + prompt,
@@ -675,7 +675,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
     prompt: z.string().min(10, 'プロンプトは最低でも10文字必要です'),
     aspectRatio: z.string().optional().default('9:16'),
     chatId: z.string().regex(/^[0-9a-fA-F]{24}$/, '無効なchatIdです'),
-    imageStyle: z.enum(['anime', 'realistic']).default('anime')
+    imageStyle: z.enum(['sdxl', 'sd']).default('sdxl')
   });
 
   fastify.post('/novita/generate-image', async (request, reply) => {

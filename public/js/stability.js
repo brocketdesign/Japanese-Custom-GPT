@@ -343,7 +343,7 @@ async function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, i
             window.postMessage({ event: 'displayMessage', role:'user', message: userMessage, completion : false , image : false, messageId: false }, '*');
 
             const hiddenMessage = `[Hidden] I bought a ${formType} image for ${price} coins. The image generation process is starting now. It may take a minute or so to complte. Thanks me and tell me to wait. Do not include instruction to buy image in your message since I just bought one.`
-            window.postMessage({ event: 'displayMessage', role:'user', message: hiddenMessage, completion : true , image : false, messageId: false }, '*');
+            window.postMessage({ event: 'imageStart', message: hiddenMessage}, '*');
 
             let messageId
             try {

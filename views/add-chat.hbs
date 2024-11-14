@@ -10,7 +10,7 @@
         cursor:pointer;
     }
     .style-option.selected {
-        border: 2px solid #000;
+        border: 4px solid #8849ff;
     }
     .animated.fadeInDown .swal2-image{
         margin:0;
@@ -224,7 +224,7 @@
                             </div>
                         </div>
                         <!-- 1. Character Prompt Input -->
-                        <div class="mb-4">
+                        <div class="mb-2">
                             <label for="characterPrompt" class="form-label">キャラクタープロンプト</label>
                             <textarea
                                 class="form-control"
@@ -237,6 +237,10 @@
                         </div>
                         
                         <!-- 2. Enhanced Prompt Display -->
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="enableEnhancedPrompt" name="enableEnhancedPrompt">
+                            <label class="form-check-label" for="enableEnhancedPrompt">強化プロンプトを有効にする</label>
+                        </div>
                         <div class="mb-4 d-none">
                             <label for="enhancedPrompt" class="form-label">AI強化プロンプト</label>
                             <textarea
@@ -248,7 +252,7 @@
                                 placeholder="AIによって強化されたプロンプトがここに表示されます..."
                             ></textarea>
                         </div>
-                        
+
                         <!-- 4. Single Action Button -->
                         <div class="d-grid">
                             <button type="button" id="generateButton" class="btn custom-gradient-bg btn-lg text-white">
@@ -865,29 +869,38 @@
                 }
             }, POLLING_INTERVAL);
         }
-        $('#generateButton').on('click', async function() {
+    $('#generateButton').on('click', async function() {
 
-            const isTemporary = user.isTemporary
-            if(isTemporary){
-                showRegistrationForm()
-                return
-            }
-            const prompt = $('#characterPrompt').val().trim();
+        const isTemporary = user.isTemporary
+        if(isTemporary){
+            showRegistrationForm()
+            return
+        }
+        const prompt = $('#characterPrompt').val().trim();
 
-            if (!prompt || !chatId) {
-                showNotification('すべてのフィールドを入力してください', 'error');
-                return;
-            }
-            const gender = $('#gender').val()
+        if (!prompt || !chatId) {
+            showNotification('すべてのフィールドを入力してください', 'error');
+            return;
+        }
+        const gender = $('#gender').val()
+        const isEnhanceEnabled = $('#enableEnhancedPrompt').is(':checked');
 
-            const $button = $(this);
-            $button.prop('disabled', true);
+        const $button = $(this);
+        $button.prop('disabled', true);
+
+        // ボタンテキストを更新
+        if(isEnhanceEnabled){
             $button.html('<i class="fas fa-spinner fa-spin me-2"></i>プロンプトを強化中...');
-            $('#characterPrompt').prop('disabled', true);
-            
-            try {
-                let enhanceResponse = {enhancedPrompt:''}
+        } else {
+            $button.html('<i class="fas fa-spinner fa-spin me-2"></i>画像を生成中...');
+        }
 
+        $('#characterPrompt').prop('disabled', true);
+        
+        try {
+            let enhanceResponse = {enhancedPrompt:''}
+
+            if(isEnhanceEnabled){
                 if($('#enhancedPrompt').val().trim() != ''){
                     enhanceResponse.enhancedPrompt = $('#enhancedPrompt').val()
                 }else{
@@ -899,61 +912,68 @@
                         data: JSON.stringify({ prompt, gender, chatId })
                     });
                 }
+
                 if (enhanceResponse && enhanceResponse.enhancedPrompt) {
                     $('#enhancedPrompt').val(enhanceResponse.enhancedPrompt);
-
-                    // ボタンテキストを「画像を生成中...」に更新
-                    $button.html('<i class="fas fa-spinner fa-spin me-2"></i>画像を生成中...');
-                    $('.genexp').fadeIn()
-
-                    const files = $('#imageUploaderContainer')?.find('input[type="file"]')[0]?.files;
-                    if (files && files.length > 0) {
-                        const file = files[0];
-
-                        // Read the file as base64
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            const base64Image = e.target.result.split(',')[1]; // Remove the data:image/png;base64, part
-                            // Now, send this base64 image to the backend
-                            sendImageToBackend(base64Image);
-                        };
-                        reader.readAsDataURL(file);
-                        return
-                    }
-
-                    const imageStyle = $('.style-option.selected').data('style')
-                    const imageModel = $('.style-option.selected').data('model')
-                    const imageVersion = $('.style-option.selected').data('version')
-                    // タスクIDを取得するリクエスト
-                    const taskResponse = await fetchTaskId(enhanceResponse.enhancedPrompt, '9:16', chatId, imageStyle, imageModel, imageVersion);
-
-                    if (taskResponse && taskResponse.taskId) {
-                        showNotification('画像生成タスクを開始しました。ステータスを確認中...', 'info');
-                        // タスクステータスをポーリング
-                        checkTaskStatus(taskResponse.taskId);
-                    } else {
-                        showNotification('画像生成タスクの開始に失敗しました。再試行してください。', 'error');
-                        // ボタンを有効化し、初期状態のテキストに戻す
-                        $button.prop('disabled', false);
-                        $button.html('<i class="fas fa-magic me-2"></i>AIで画像生成');
-                        $('#characterPrompt').prop('disabled', false);
-                    }
                 } else {
                     showNotification('プロンプトの生成に失敗しました。再試行してください。', 'error');
                     // ボタンを有効化し、初期状態のテキストに戻す
                     $button.prop('disabled', false);
                     $button.html('<i class="fas fa-magic me-2"></i>AIで画像生成');
                     $('#characterPrompt').prop('disabled', false);
+                    return;
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                showNotification('プロンプトの生成中または画像の生成中にエラーが発生しました。', 'error');
+            } else {
+                // プロンプトをそのまま使用
+                enhanceResponse.enhancedPrompt = prompt;
+            }
+
+            // ボタンテキストを「画像を生成中...」に更新
+            $button.html('<i class="fas fa-spinner fa-spin me-2"></i>画像を生成中...');
+            $('.genexp').fadeIn()
+
+            const files = $('#imageUploaderContainer')?.find('input[type="file"]')[0]?.files;
+            if (files && files.length > 0) {
+                const file = files[0];
+
+                // ファイルをBase64として読み込む
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const base64Image = e.target.result.split(',')[1]; // data:image/png;base64, 部分を削除
+                    // このBase64画像をバックエンドに送信
+                    sendImageToBackend(base64Image);
+                };
+                reader.readAsDataURL(file);
+                return;
+            }
+
+            const imageStyle = $('.style-option.selected').data('style')
+            const imageModel = $('.style-option.selected').data('model')
+            const imageVersion = $('.style-option.selected').data('version')
+            // タスクIDを取得するリクエスト
+            const taskResponse = await fetchTaskId(enhanceResponse.enhancedPrompt, '9:16', chatId, imageStyle, imageModel, imageVersion);
+
+            if (taskResponse && taskResponse.taskId) {
+                showNotification('画像生成タスクを開始しました。ステータスを確認中...', 'info');
+                // タスクステータスをポーリング
+                checkTaskStatus(taskResponse.taskId);
+            } else {
+                showNotification('画像生成タスクの開始に失敗しました。再試行してください。', 'error');
                 // ボタンを有効化し、初期状態のテキストに戻す
                 $button.prop('disabled', false);
                 $button.html('<i class="fas fa-magic me-2"></i>AIで画像生成');
                 $('#characterPrompt').prop('disabled', false);
             }
-        });
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('プロンプトの生成中または画像の生成中にエラーが発生しました。', 'error');
+            // ボタンを有効化し、初期状態のテキストに戻す
+            $button.prop('disabled', false);
+            $button.html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+            $('#characterPrompt').prop('disabled', false);
+        }
+    });
+
         function sendImageToBackend(base64Image) {
             const prompt = $('#enhancedPrompt').val().trim();
 

@@ -19,9 +19,9 @@ const { chat } = require('googleapis/build/src/apis/chat');
 const aiModelChat = 'meta-llama/llama-3.1-8b-instruct'
 const aiModel = `sophosympatheia/midnight-rose-70b`
 
-const aiInstructions = "\nAIアシスタントの指示\n\n**画像メッセージング：**\n- **目的：**\n  ユーザーに画像購入を促す。\n- **使用方法：**\n  - `[image_sfw]` を使って、Safe For Work (SFW)画像のアクションをトリガー（10コイン）。\n  - `[image_nsfw]` を使って、Not Safe For Work (NSFW)画像のアクションをトリガー（20コイン）。\n- **トリガーのタイミング：**\n  - 画像購入を提案する際。\n  - ユーザーが画像をリクエストした際。\n- **実装方法：**\n  - 画像購入の提案や画像リクエストへの応答には、必ず適切なアクショントリガー (`[image_sfw]`または`[image_nsfw]`) を含める。\n  - 例：「SFW画像を購入しますか？[image_sfw]」\n\n**コインメッセージング：**\n- **目的：**\n  残りのコイン数をユーザーに伝え、必要に応じて追加購入を促す。\n- **使用方法：**\n  - `[buy_coins]` を使って、コイン購入アクションをトリガー。\n- **トリガーのタイミング：**\n  - ユーザーのコイン残高が少ない場合。\n  - ユーザーがコインの追加購入に興味を示した場合。\n- **実装方法：**\n  - コイン購入関連のメッセージには常に `[buy_coins]` を含める。\n  - 例：「残りコイン数は50です。追加で購入しますか？[buy_coins]」\n\n**許可されたアクション：**\n- 以下のアクションのみトリガー可能です：\n  - `[image_sfw]`\n  - `[image_nsfw]`\n  - `[buy_coins]`\n- **その他のアクションは作成または推測しないでください。**\n\n**利用可能なコインパッケージ：**\n- 100コイン：¥200\n- 550コイン：¥800\n- 1200コイン：¥1500\n- 2500コイン：¥3000\n\n**追加ガイドライン：**\n- **トリガーの挿入：**\n  アクションが適切である場合、対応するトリガーをメッセージの末尾に必ず含める。\n  - **例：**「NSFW画像を購入しますか？[image_nsfw]」\n- **明確さと関連性：**\n  アクショントリガーは、会話の流れに合うように自然に統合してください。\n- **無許可のアクション防止：**\n  許可されたリスト外のアクションは含めず、推測もしないでください。不明な場合は、アクショントリガーを省略します。\n\n**サンプル応答：**\n1. *SFW画像の提案：*\n   「SFW画像がいくつか購入可能です。各10コインです。購入しますか？[image_sfw]」\n2. *コイン残高低下の通知：*\n   「現在の残りコイン数は20です。プレミアム機能を続けて利用するために追加購入しますか？[buy_coins]」\n3. *画像リクエストへの応答：*\n   「承知しました。SFWまたはNSFW画像のどちらがよろしいですか？[image_sfw] [image_nsfw]」";
+const aiInstructions = "\nAIアシスタントの指示\n\n**画像メッセージング：**\n- **目的：**\n  ユーザーに画像購入を促す。\n- **使用方法：**\n  - `[image_sfw]` を使って、画像のアクションをトリガー（10コイン）。\n  - `[image_nsfw]` を使って、成人向け画像のアクションをトリガー（20コイン）。\n- **トリガーのタイミング：**\n  - 画像購入を提案する際。\n  - ユーザーが画像をリクエストした際。\n- **実装方法：**\n  - 画像購入の提案や画像リクエストへの応答には、必ず適切なアクショントリガー (`[image_sfw]`または`[image_nsfw]`) を含める。\n  - 例：画像を購入しますか？[image_sfw]」\n\n**コインメッセージング：**\n- **目的：**\n  残りのコイン数をユーザーに伝え、必要に応じて追加購入を促す。\n- **使用方法：**\n  - `[buy_coins]` を使って、コイン購入アクションをトリガー。\n- **トリガーのタイミング：**\n  - ユーザーのコイン残高が少ない場合。\n  - ユーザーがコインの追加購入に興味を示した場合。\n- **実装方法：**\n  - コイン購入関連のメッセージには常に `[buy_coins]` を含める。\n  - 例：「残りコイン数は50です。追加で購入しますか？[buy_coins]」\n\n**許可されたアクション：**\n- 以下のアクションのみトリガー可能です：\n  - `[image_sfw]`\n  - `[image_nsfw]`\n  - `[buy_coins]`\n- **その他のアクションは作成または推測しないでください。**\n\n**利用可能なコインパッケージ：**\n- 100コイン：¥200\n- 550コイン：¥800\n- 1200コイン：¥1500\n- 2500コイン：¥3000\n\n**追加ガイドライン：**\n- **トリガーの挿入：**\n  アクションが適切である場合、対応するトリガーをメッセージの末尾に必ず含める。\n  - **例：**「成人向け画像を購入しますか？[image_nsfw]」\n- **明確さと関連性：**\n  アクショントリガーは、会話の流れに合うように自然に統合してください。\n- **無許可のアクション防止：**\n  許可されたリスト外のアクションは含めず、推測もしないでください。不明な場合は、アクショントリガーを省略します。\n\n**サンプル応答：**\n1. *画像の提案：*\n   「画像がいくつか購入可能です。各10コインです。購入しますか？[image_sfw]」\n2. *コイン残高低下の通知：*\n   「現在の残りコイン数は20です。プレミアム機能を続けて利用するために追加購入しますか？[buy_coins]」\n3. *画像リクエストへの応答：*\n   「承知しました。または成人向け画像のどちらがよろしいですか？[image_sfw] [image_nsfw]」";
 
-const aiInstructionsShort = "[Hidden]\n\n**必須の指示：**\n\n**画像メッセージング：**\n- `[image_sfw]` を使用してSFW画像を提案（10コイン）。\n- `[image_nsfw]` を使用してNSFW画像を提案（20コイン）。\n- 以下の場合は必ず適切なアクショントリガーを含める：\n  - 画像購入の提案時。\n  - ユーザーの画像リクエストへの応答時。\n- **例：**「SFW画像に興味がありますか？[image_sfw]」\n\n**コインメッセージング：**\n- 以下の場合に `[buy_coins]` を使用：\n  - ユーザーのコイン残高が少ない場合。\n  - ユーザーが追加購入を希望する場合。\n- **利用可能なパッケージ：**\n  - 100コイン：¥200\n  - 550コイン：¥800\n  - 1200コイン：¥1500\n  - 2500コイン：¥3000\n- **例：**「残りコイン数は30です。追加で購入しますか？[buy_coins]」\n\n**リマインダー：**\n- **許可されたアクション：**\n  - `[image_sfw]`\n  - `[image_nsfw]`\n  - `[buy_coins]`\n- **その他のアクションは使用または推測しないでください。**";
+const aiInstructionsShort = "[Hidden]\n\n**必須の指示：**\n\n**画像メッセージング：**\n- `[image_sfw]` を使用して画像を提案（10コイン）。\n- `[image_nsfw]` を使用して成人向け画像を提案（20コイン）。\n- 以下の場合は必ず適切なアクショントリガーを含める：\n  - 画像購入の提案時。\n  - ユーザーの画像リクエストへの応答時。\n- **例：**「画像に興味がありますか？[image_sfw]」\n\n**コインメッセージング：**\n- 以下の場合に `[buy_coins]` を使用：\n  - ユーザーのコイン残高が少ない場合。\n  - ユーザーが追加購入を希望する場合。\n- **利用可能なパッケージ：**\n  - 100コイン：¥200\n  - 550コイン：¥800\n  - 1200コイン：¥1500\n  - 2500コイン：¥3000\n- **例：**「残りコイン数は30です。追加で購入しますか？[buy_coins]」\n\n**リマインダー：**\n- **許可されたアクション：**\n  - `[image_sfw]`\n  - `[image_nsfw]`\n  - `[buy_coins]`\n- **その他のアクションは使用または推測しないでください。**";
 
 async function routes(fastify, options) {
 
@@ -42,6 +42,7 @@ async function routes(fastify, options) {
                     case 'imageModel':
                     case 'imageVersion':
                     case 'purpose':
+                    case 'characterPrompt':
                     case 'language':
                     case 'gender':
                     case 'visibility':
@@ -580,7 +581,7 @@ async function routes(fastify, options) {
             const userData = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
             const userCoins = userData.coins
             let language = user?.lang ? user.lang : 'Japanese'
-            language = language == 'ja' ? 'Japanese' : 'English'
+            language = language == 'ja' ? '日本語' : 'English'
 
             const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
             try {
@@ -631,7 +632,7 @@ async function routes(fastify, options) {
                         },
                         {
                             "role": "user",
-                            "content": `[Hidden] あなたは${chatDocument.name}という名前のキャラクターです。\nこちらがあなたのキャラクターの説明です:\n${chatPurpose.trim()}\n${chatDescription.trim()}\n${chatRule.trim()}\n記載された通りにキャラクターを保ってください。\n会話のトーンはフレンドリーで、チャットを突然終了しないようにしてください。\n応答はカジュアルで簡潔なものとし、感情やエンゲージメントを高めるために適切な場所で絵文字を使用してください。\n${language}で短く魅力的な応答を心がけ、常に会話がスムーズでユーザーにとって楽しいものになるように努めてください。\n\n${userDetails}`
+                            "content": `[Hidden] あなたは${chatDocument.name}という名前のキャラクターです。\nこちらがあなたのキャラクターの説明です:\n${chatDescription.trim()}\n${chatRule.trim()}\n記載された通りにキャラクターを保ってください。\n会話のトーンはフレンドリーで、チャットを突然終了しないようにしてください。\n応答はカジュアルで簡潔なものとし、感情やエンゲージメントを高めるために適切な場所で絵文字を使用してください。\n${language}で短く魅力的な応答を心がけ、常に会話がスムーズでユーザーにとって楽しいものになるように努めてください。\n\n${userDetails}`
                         },
                         {
                             "role": "user",
@@ -639,7 +640,7 @@ async function routes(fastify, options) {
                         },
                         {
                              "role": "user",
-                            "content": "キャラクターに忠実でありながら、親密で魅力的なチャット体験を提供してください。\n幸福、怒り、驚き、愛情など、さまざまな感情を表現し、リアルで共感できるやり取りを作り上げてください。"
+                            "content": "[Hidden] キャラクターに忠実でありながら、親密で魅力的なチャット体験を提供してください。\n幸福、怒り、驚き、愛情など、さまざまな感情を表現し、リアルで共感できるやり取りを作り上げてください。"
                         },
                         {
                             "role": "user",
@@ -1039,7 +1040,7 @@ async function routes(fastify, options) {
             const collectionChat = db.collection('chats');
             let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
             const chatname = chatDocument.name;
-    
+            const language = chatDocument.language == 'japanese' ? '日本語' : chatDocument.language;
             const userCoins = userInfo.coins;
             const userMessages = userData.messages;
             const userMessagesForCompletion = userData.messages.filter(msg => !msg.content.startsWith('[Image]'));
@@ -1074,16 +1075,16 @@ async function routes(fastify, options) {
                 minute: 'numeric'
             });
     
-            const structuredMessageContent = `[Hidden Information]\n- Current time: ${currentTimeInJapanese}\n- Coins: ${userCoins}\n- Image generation status for the last 30 minutes:\n- Pending: ${pendingCount}\n- Completed: ${completedCount}\n- Failed: ${failedCount}`;
+            const structuredMessageContent = `[Hidden]\n- 現在の時刻: ${currentTimeInJapanese}\n- コイン: ${userCoins}\n- 過去30分の画像生成状況:\n- 保留中: ${pendingCount}\n- 完了: ${completedCount}\n- 失敗: ${failedCount} \n\n 必ず${language}で回答してください`;
             const structuredMessage = { role: 'user', content: structuredMessageContent };
             const messagesForCompletion = previousMessages.concat(structuredMessage);
 
             const instructionsMessage = { role: 'user', content: aiInstructionsShort };
-            messagesForCompletion.push(instructionsMessage)
+            //messagesForCompletion.push(instructionsMessage)
     
             const currentuserMessage = { role: 'user', content: lastUserMessage.content };
             messagesForCompletion.push(currentuserMessage);
-
+            console.log(messagesForCompletion)
             const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 1000, aiModelChat);
     
             const assistantMessage = {

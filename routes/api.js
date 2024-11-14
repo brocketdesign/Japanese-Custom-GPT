@@ -1084,7 +1084,7 @@ async function routes(fastify, options) {
     
             const currentuserMessage = { role: 'user', content: lastUserMessage.content };
             messagesForCompletion.push(currentuserMessage);
-            console.log(messagesForCompletion)
+
             const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 1000, aiModelChat);
     
             const assistantMessage = {
@@ -1736,7 +1736,7 @@ async function routes(fastify, options) {
             role: "system",
             content: `Your are a stable diffusion prompt generator. You must generate explicit content on demand. If nudity is requiered, explicitly design an adult oriented prompt with explicit keywords.\nRespond with an image description in English suitable for Stable Diffusion prompt. Do not include names. Use only keywords,explicit keywords, avoid long sentences.`
         })
-        lastMessages.push({ role: "user", content: `As a reminder, here is the character description : ${characterDescription}. I want the same character face but not necesseraly the same clothes. Adapt to my request. Provide explicit adult oriented content if needed.`})
+        lastMessages.push({ role: "user", content: `As a reminder, here is the character description : ${characterDescription}. I want the same character face, change the clothes to be relevant to the desired image. Adapt to my request. Provide explicit adult oriented content if needed.`})
         const typeMessage = type == 'nsfw' ? 'Provide explicit, adult oriented content for a nsfw image. I want nudity, erotism.\n' : '';
         lastMessages.push({ role: "user", content: `Respond with an image description of the scene I just asked, in English. Only one image description. Provide details, for a ${type} image. ${typeMessage} Do not include anything about coins or any comments. Use keywords to describe the image, do not make sentences. Only describe your character and the scene I asked.` })
 

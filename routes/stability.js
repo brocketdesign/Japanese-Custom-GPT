@@ -243,13 +243,13 @@ async function routes(fastify, options) {
         });
   
         if (response.status !== 200) {
-          throw new Error(`Error: ${response.status} - ${response.data}`);
+          throw new Error(`Error - ${response.data}`);
         }
   
         return response.data.task_id;
       } catch (error) {
         console.error('Error fetching Novita image:', error.message);
-        throw error;
+        throw '';
       }
     }
   
@@ -303,12 +303,16 @@ async function routes(fastify, options) {
           sampler_name: "Euler a",
           prompt: `score_9, score_8_up, masterpiece, best quality, (ultra-detailed), (perfect hands:0.1), (sfw), dressed, clothes, `,
           negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, nipple, topless, nsfw, naked, nude, sex, worst quality, low quality,young,child,dick,man`,
+          width: 832,
+          height: 1216,
           loras: []
         },
         nsfw: {
           sampler_name: "Euler a",
           prompt: `score_9, score_8_up, masterpiece, best quality, (ultra-detailed), (nsfw), uncensored, `,
           negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, worst quality, low quality,young,child,dick,man`,
+          width: 832,
+          height: 1216,
           loras: []
         }
       },
@@ -411,6 +415,8 @@ async function routes(fastify, options) {
             prompt: style.prompt + prompt,
             negative_prompt: style.negative_prompt,
             aspectRatio: aspectRatio,
+            width: style.width || params.width,
+            height: style.height || params.height,
             blur: imageType === 'nsfw' && !isSubscribed
         };
 
@@ -504,6 +510,8 @@ fastify.post('/novita/txt2img', async (request, reply) => {
               loras: selectedStyle.sfw.loras,
               prompt: selectedStyle.sfw.prompt + prompt,
               negative_prompt: selectedStyle.sfw.negative_prompt,
+              width: selectedStyle.width || params.width,
+              height: selectedStyle.height || params.height,
               blur: false
           };
       } else {
@@ -514,6 +522,8 @@ fastify.post('/novita/txt2img', async (request, reply) => {
               loras: selectedStyle.nsfw.loras,
               prompt: selectedStyle.nsfw.prompt + prompt,
               negative_prompt: selectedStyle.nsfw.negative_prompt,
+              width: selectedStyle.width || params.width,
+              height: selectedStyle.height || params.height,
               blur: !isSubscribed
           };
       }
@@ -675,25 +685,26 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
     prompt: z.string().min(10, 'プロンプトは最低でも10文字必要です'),
     aspectRatio: z.string().optional().default('9:16'),
     chatId: z.string().regex(/^[0-9a-fA-F]{24}$/, '無効なchatIdです'),
-    imageStyle: z.enum(['sdxl', 'sd']).default('sdxl')
+    imageModel: z.string().default('novaAnimeXL_ponyV20_461138'),
+    imageVersion: z.enum(['sdxl', 'sd']).default('sdxl')
   });
 
   fastify.post('/novita/generate-image', async (request, reply) => {
     try {
       // Validate the request body
-      const { prompt, aspectRatio, chatId, imageStyle } = GenerateImageSchema.parse(request.body);
+      const { prompt, aspectRatio, chatId, imageStyle, imageModel, imageVersion } = GenerateImageSchema.parse(request.body);
 
       // Retrieve user information (Assuming a getUser method exists)
       const user = await fastify.getUser(request, reply);
       const userId = user._id;
 
       // Select prompts and model based on imageStyle
-      const selectedStyle = default_prompt[imageStyle];
+      const selectedStyle = default_prompt[imageVersion];
 
       // Combine user prompt with default SFW prompt
       const fullPrompt = selectedStyle.sfw.prompt + prompt;
       const negativePrompt = selectedStyle.sfw.negative_prompt;
-      const model_name = selectedStyle.sfw.model_name;
+      const model_name = imageModel;
       const loras = selectedStyle.sfw.loras;
       const sampler_name = selectedStyle.sfw.sampler_name
 
@@ -704,11 +715,13 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
         prompt: fullPrompt, 
         negative_prompt: negativePrompt, 
         aspectRatio: aspectRatio,
-        model_name: model_name,
+        model_name: model_name + '.safetensors',
         sampler_name: sampler_name,
+        width: selectedStyle.sfw.width || params.width,
+        height: selectedStyle.sfw.height || params.height,
         loras: loras,
       };
-
+      console.log(image_request)
       // Send request to Novita and get taskId
       const novitaTaskId = await fetchNovitaMagic(image_request);
 

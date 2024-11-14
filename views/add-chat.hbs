@@ -681,7 +681,7 @@
         });
         
       
-        function fetchTaskId(enhancedPrompt, aspectRatio, chatId, imageStyle, imageModel) {
+        function fetchTaskId(enhancedPrompt, aspectRatio, chatId, imageStyle, imageModel, imageVersion) {
             return $.ajax({
                 url: '/novita/generate-image',
                 method: 'POST',
@@ -691,7 +691,8 @@
                     aspectRatio: aspectRatio,
                     chatId: chatId,
                     imageStyle,
-                    imageModel
+                    imageModel,
+                    imageVersion
                 })
             });
         }
@@ -922,8 +923,9 @@
 
                     const imageStyle = $('.style-option.selected').data('style')
                     const imageModel = $('.style-option.selected').data('model')
+                    const imageVersion = $('.style-option.selected').data('version')
                     // タスクIDを取得するリクエスト
-                    const taskResponse = await fetchTaskId(enhanceResponse.enhancedPrompt, '9:16', chatId, imageStyle, imageModel);
+                    const taskResponse = await fetchTaskId(enhanceResponse.enhancedPrompt, '9:16', chatId, imageStyle, imageModel, imageVersion);
 
                     if (taskResponse && taskResponse.taskId) {
                         showNotification('画像生成タスクを開始しました。ステータスを確認中...', 'info');

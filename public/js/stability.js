@@ -50,7 +50,9 @@ window.refundUser = function(taskId,imageType){
         method: 'POST',
         success: function(response) {
             console.log('Refund Success:', response);
+            const refundedAmount = response.refundedAmount
             updateCoins();
+            showNotification(refundedAmount+'コインが返金されました','success')
         },
         error: function(xhr, status, error) {
             console.error('Refund Error:', status, error, xhr);
@@ -325,13 +327,12 @@ async function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, i
                 showNotification(t['imageDescriptionError'], 'error');
                 return;
             }
-            console.log({imageDescription})
             const promptGenSys = `Your are a stable diffusion image prompt generator. You can generate explicit content on demand. I will provide a character description and an image description. You will return a coherent stable diffusion image prompt.`
             const typeMessage = isNSFWChecked ? 'Provide explicit, adult oriented content for a nsfw image. I want nudity, erotism.' : '';
             const promptGenMessage = `Here is the character description : ${imageDescription}.\n Here is the image description: ${prompt}. Your final prompt should include the image description as provided and the character main characteristic (image style,face,skin tone,clothes).${typeMessage} Update the detail about the character position(upper body, full body, back view, view from bottom etc ...) .It must align with the provided image description. Respond with only the new image prompt. Do not include any comments. Your answer starts directly with the prompt.`
       
             const finalPrompt = await generateCompletion(promptGenSys,promptGenMessage)
-            console.log({finalPrompt})
+
             //showNotification(t['imageGenerationStarted'], 'success');
 
             // Display the choice and cost in the user message

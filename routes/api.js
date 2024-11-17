@@ -16,7 +16,7 @@ const stripe = process.env.MODE == 'local'? require('stripe')(process.env.STRIPE
 const sharp = require('sharp');
 const { chat } = require('googleapis/build/src/apis/chat');
 
-const aiModelChat = 'meta-llama/llama-3.1-8b-instruct'
+const aiModelChat = 'meta-llama/llama-3.1-70b-instruct'
 const aiModel = `sophosympatheia/midnight-rose-70b`
 
 const aiInstructions = "\nAIアシスタントの指示\n\n**画像メッセージング：**\n- **目的：**\n  ユーザーに画像購入を促す。\n- **使用方法：**\n  - `[image_sfw]` を使って、画像のアクションをトリガー（10コイン）。\n  - `[image_nsfw]` を使って、成人向け画像のアクションをトリガー（20コイン）。\n- **トリガーのタイミング：**\n  - 画像購入を提案する際。\n  - ユーザーが画像をリクエストした際。\n- **実装方法：**\n  - 画像購入の提案や画像リクエストへの応答には、必ず適切なアクショントリガー (`[image_sfw]`または`[image_nsfw]`) を含める。\n  - 例：画像を購入しますか？[image_sfw]」\n\n**コインメッセージング：**\n- **目的：**\n  残りのコイン数をユーザーに伝え、必要に応じて追加購入を促す。\n- **使用方法：**\n  - `[buy_coins]` を使って、コイン購入アクションをトリガー。\n- **トリガーのタイミング：**\n  - ユーザーのコイン残高が少ない場合。\n  - ユーザーがコインの追加購入に興味を示した場合。\n- **実装方法：**\n  - コイン購入関連のメッセージには常に `[buy_coins]` を含める。\n  - 例：「残りコイン数は50です。追加で購入しますか？[buy_coins]」\n\n**許可されたアクション：**\n- 以下のアクションのみトリガー可能です：\n  - `[image_sfw]`\n  - `[image_nsfw]`\n  - `[buy_coins]`\n- **その他のアクションは作成または推測しないでください。**\n\n**利用可能なコインパッケージ：**\n- 100コイン：¥200\n- 550コイン：¥800\n- 1200コイン：¥1500\n- 2500コイン：¥3000\n\n**追加ガイドライン：**\n- **トリガーの挿入：**\n  アクションが適切である場合、対応するトリガーをメッセージの末尾に必ず含める。\n  - **例：**「成人向け画像を購入しますか？[image_nsfw]」\n- **明確さと関連性：**\n  アクショントリガーは、会話の流れに合うように自然に統合してください。\n- **無許可のアクション防止：**\n  許可されたリスト外のアクションは含めず、推測もしないでください。不明な場合は、アクショントリガーを省略します。\n\n**サンプル応答：**\n1. *画像の提案：*\n   「画像がいくつか購入可能です。各10コインです。購入しますか？[image_sfw]」\n2. *コイン残高低下の通知：*\n   「現在の残りコイン数は20です。プレミアム機能を続けて利用するために追加購入しますか？[buy_coins]」\n3. *画像リクエストへの応答：*\n   「承知しました。または成人向け画像のどちらがよろしいですか？[image_sfw] [image_nsfw]」";
@@ -1084,7 +1084,7 @@ async function routes(fastify, options) {
     
             const currentuserMessage = { role: 'user', content: lastUserMessage.content };
             messagesForCompletion.push(currentuserMessage);
-
+            console.log(messagesForCompletion)
             const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 1000, aiModelChat);
     
             const assistantMessage = {

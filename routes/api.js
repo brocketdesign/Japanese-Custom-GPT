@@ -1084,7 +1084,7 @@ async function routes(fastify, options) {
     
             const currentuserMessage = { role: 'user', content: lastUserMessage.content };
             messagesForCompletion.push(currentuserMessage);
-            console.log(messagesForCompletion)
+
             const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 1000, aiModelChat);
     
             const assistantMessage = {

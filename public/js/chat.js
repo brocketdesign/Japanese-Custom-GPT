@@ -2192,9 +2192,7 @@ $(document).ready(async function() {
         }).then((result) => {
             if (result.isConfirmed) {
                 handleUserInfo(result.value);
-                showPopupWithSwiper(function(){
-                    $.cookie('showPremiumPopup',true)
-                })
+                window.location = '/my-plan'
             }
             
         });
@@ -2211,7 +2209,13 @@ $(document).ready(async function() {
         
         if (!userNickname || !userBirthYear || !userBirthMonth || !userBirthDay || !userGender) {
             showPopupUserInfo();
+            return
         }
+        const subscriptionStatus = user?.subscriptionStatus == 'active'
+        if(!subscriptionStatus){
+                window.location = '/my-plan'
+        }
+
     }
 
     function showPopupWithSwiper(callback) {

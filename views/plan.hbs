@@ -257,7 +257,47 @@
     <div class="d-none hero">
         <img data-src="https://lamix.hatoltd.com/img/login-bg-862c043f.png">
     </div>
-    <div class="pricing-container">
+
+    <div class="container">   
+
+      <h3 class="my-4 text-start">#可愛い</h3>
+      <div class="container mt-4">
+        <div class="row all-chats-images-gallery" data-query="young"></div>
+      </div>
+
+      <h3 class="my-4 text-start">#笑顔</h3>
+      <div class="container mt-4">
+        <div class="row all-chats-images-gallery" data-query="smiling"></div>
+      </div>
+
+      <h3 class="my-4 text-start">#M字開脚</h3>
+      <div class="container mt-4">
+        <div class="row all-chats-images-gallery" data-query="open legs"></div>
+      </div>
+
+      <h3 class="my-4 text-start">#巨乳</h3>
+      <div class="container mt-4">
+        <div class="row all-chats-images-gallery" data-query="huge breast"></div>
+      </div>
+
+      <h3 class="my-4 text-start">#四つん這い</h3>
+      <div class="container mt-4">
+        <div class="row all-chats-images-gallery" data-query="crawling"></div>
+      </div>
+
+      <h3 class="my-4 text-start">#モロだし</h3>
+      <div class="container mt-4">
+        <div class="row all-chats-images-gallery" data-query="spread pussy"></div>
+      </div>
+
+      <h3 class="my-4 text-start">#お尻を突き出す</h3>
+      <div class="container mt-4">
+        <div class="row all-chats-images-gallery" data-query="butt hole"></div>
+      </div>
+
+    </div>
+    
+    <div id="pricing-container" class="pricing-container">
         <h1 class="pricing-title fw-bold"><span class="u-font-manrope u-color-grad">Lamix</span>プレミアム</h1>
         <p class="pricing-description">
             チャット、画像生成、メッセージ提案機能すべてが無制限で利用可能です。新機能への早期アクセスや複数選択肢のチャット表示機能も備わっており、外部ウェブサイトへのチャット埋め込みも可能です。このプランで、AIと共に新しい可能性を無限に発見しましょう。
@@ -276,15 +316,9 @@
         </div>
         <span style="font-size: 12px;">安心・安全な決済方法: <a href="https://stripe.com/jp/resources/more/secure-payment-systems-explained" target="_blank"><img src="/img/stripe-logo.png" style="height: 30px;width: auto;"></a>を使用しています</span>
     </div>
-
-    <div class="contact-sns text-start py-5">
-        <span class="contact-title p-fv-copy__middle fw-bold " style="font-size: 16px;">Contact</span>
-        <h2 class="contact-title">連絡方法</h2>
-        <p class="contact-description">
-            お問い合わせは、メールにて受け付けております。<br>
-            メールでのお問い合わせは、contact @hatoltd.comまでどうぞ。
-        </p>
-    </div>
+<style>
+  footer{display: inline !important;}
+</style>
   {{> dashboard-footer}}
 <script src="https://js.stripe.com/v3/"></script>
 <script>
@@ -292,6 +326,7 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById("plan-switch").checked = true; 
 });
 $(document).ready(function() {
+  searchImages();
   let plans = [];
   let stripe
   if(window.location.href.indexOf('https://') >= 0){

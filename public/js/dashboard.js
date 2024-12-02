@@ -1289,13 +1289,13 @@ window.resultImageSearch = async function (page = 1,query) {
             let isBlur = unlockedItem ? false : item?.nsfw && !subscriptionStatus 
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             chatGalleryHtml += `
-                <div class="col-12 col-md-3 col-lg-2 mb-2">
+                <div class="col-6 col-md-3 col-lg-2 mb-2">
                     <div class="card shadow-0">
                         <div class="d-flex align-items-center p-2">
-                            <a href="/character/${item.chatId}?imageId=${item._id}">
+                            <a onclick="scrollToPlan()" data-href="/character/${item.chatId}?imageId=${item._id}">
                                 <img src="${item?.thumbnail}" alt="${item?.prompt}" class="rounded-circle me-2" width="40" height="40">
                             </a>
-                            <a href="/character/${item.chatId}?imageId=${item._id}" class="text-decoration-none text-dark">
+                            <a onclick="scrollToPlan()" data-href="/character/${item.chatId}?imageId=${item._id}" class="text-decoration-none text-dark">
                                 <strong>${item?.chatName}</strong>
                             </a>
                         </div>
@@ -1304,11 +1304,11 @@ window.resultImageSearch = async function (page = 1,query) {
                             <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" >
                         </div>
                         ` : `
-                        <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
+                        <a onclick="scrollToPlan()" data-href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
                             <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
                         </a>
                         <div class="d-none card-body p-2 d-flex align-items-center justify-content-between">
-                            <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
+                            <a onclick="scrollToPlan()" data-href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
                             <button class="btn btn-light image-nsfw-toggle ${!isAdmin?'d-none':''}" data-id="${item._id}">
                                 <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill':'bi-eye-fill'}"></i> 
                             </button>

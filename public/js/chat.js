@@ -2423,6 +2423,8 @@ $(document).ready(async function() {
             var id = $(this).data('id');
             var isNSFWChecked = $('#nsfwCheckbox').is(':checked');
             controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isNSFWChecked);
+
+            Swal.close();
         });
     }
     function showBuyCoins(){

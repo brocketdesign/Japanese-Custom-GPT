@@ -52,7 +52,6 @@ function getLanguageDisplayName(lang) {
 }
 
 $(document).ready(function() {
-    $('#languageDropdown').text(getLanguageDisplayName(currentLang));
     if (Object.keys(window.translations).length === 0) {
         loadTranslations(currentLang);
     }
@@ -75,6 +74,11 @@ $(document).ready(async function() {
     const userId = user._id
     isTemporary = !!user?.isTemporary
     subscriptionStatus = user.subscriptionStatus == 'active'  
+
+    const userLang = user.lang
+    currentLang = userLang ? userLang : currentLang
+    $('#languageDropdown').text(getLanguageDisplayName(currentLang));
+
     if(isTemporary){
         let formShown = false;
         $(document).scroll(function() {
@@ -376,7 +380,6 @@ $(document).ready(async function() {
     
             // Show success notification in Japanese
             if (action === 'like') {
-                showNotification('いいねしました！', 'success');
                 $this.find('.ct').text(parseInt($this.find('.ct').text()) + 1);
                 window.postMessage({ event: 'imageFav' ,description}, '*');
             } else {
@@ -615,8 +618,6 @@ async function checkIfAdmin(userId) {
         showNotification(window.translations.unlockSuccess, 'success');
       })
       .fail(() => {
-        showCoinShop();
-        //showNotification(window.translations.unlockError, 'error')
     });
   }
   
@@ -1870,102 +1871,7 @@ function initializePersonaStats(personas) {
     }
 }
 
-window.showCoinShop = function(el){
-    if(el && $(el).hasClass('open')){
-       return
-    }
-    if(el && !$(el).hasClass('open')){
-        $(el).addClass('open')
-    }
-    Swal.fire({
-        position: 'center',
-        html: `
-            <div class="container text-center">
-                <div class="row justify-content-center">
-                    <div class="col-12 mb-3">
-                        <div class="p-3 rounded d-flex justify-content-between custom-gradient-bg">
-                            <span class="fw-bold text-white">保有コイン</span>
-                            <div>
-                                <span>🪙</span>
-                                <span class="fw-bold text-white float-end user-coins ms-2">0</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6 my-3">
-                        <div class="card bg-dark text-white">
-                            <div class="card-body p-2 d-flex flex-column">
-                                <img src="/img/coins-1.png" alt="Coin" class="mb-2 m-auto" style="width: 100px;">
-                                <h6>100コイン</h6>
-                                <p class="text-muted small mb-2" style="font-size:12px;">手頃なパッケージ</p>
-                                <button id="coins-set1" class="buycoin btn custom-gradient-bg w-100">¥200</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6 my-3">
-                        <div class="card bg-dark text-white">
-                            <div class="card-body p-2 d-flex flex-column">
-                                <img src="/img/coins-2.png" alt="Coin" class="mb-2 m-auto" style="width: 100px;">
-                                <h6>550コイン</h6>
-                                <p class="text-muted small mb-2" style="font-size:12px;">無料150枚付き</p>
-                                <button id="coins-set2"  class="buycoin btn custom-gradient-bg w-100">¥800</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6 mb-3">
-                        <div class="card bg-dark text-white">
-                            <div class="card-body p-2 d-flex flex-column">
-                                <img src="/img/coins-3.png" alt="Coin" class="mb-2 m-auto" style="width: 100px;">
-                                <h6>1200コイン</h6>
-                                <p class="text-muted small mb-2" style="font-size:12px;">無料450枚付き</p>
-                                <button id="coins-set3"  class="buycoin btn custom-gradient-bg w-100">¥1500</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6 mb-3">
-                        <div class="card bg-dark text-white">
-                            <div class="card-body p-2 d-flex flex-column">
-                                <img src="/img/coins-4.png" alt="Coin" class="mb-2 m-auto" style="width: 100px;">
-                                <h6>2500コイン</h6>
-                                <p class="text-muted small mb-2" style="font-size:12px;">無料1000枚付き</p>
-                                <button id="coins-set4"  class="buycoin btn custom-gradient-bg w-100">¥3000</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <span style="font-size: 12px;">安心・安全な決済方法: <a href="https://stripe.com/jp/resources/more/secure-payment-systems-explained" target="_blank"><img src="/img/stripe-logo.png" style="height: 30px;width: auto;"></a>を使用しています</span>
-            </div>
-        `,
-        showCancelButton: false,
-        showConfirmButton: false,
-        showCloseButton: true,
-        allowOutsideClick: false,
-        backdrop:false,
-        customClass: {
-            popup: 'swal2-card',
-            content: 'p-0'
-        },
-        showClass: {
-            popup: 'bg-light animate__animated animate__fadeInDown'
-        },
-        hideClass: {
-            popup: 'bg-light animate__animated animate__fadeOutUp'
-        },
-        didOpen: () => {
-            window.postMessage({ event: 'updateCoins' }, '*');
-            $(document).on('click','.buycoin', function() {
-                const buttonId = this.id;
-                initiateCheckout(buttonId);
-            });
-        },
-        willClose: () => {
 
-                if(el){
-                    $(el).removeClass('open')
-                }
-        }
-    });
-    
-}
 window.showPremiumPopup = async function() {
     const user = await fetchUser();
     const isTemporary = !!user?.isTemporary
@@ -2175,7 +2081,7 @@ function updateNotificationCount(userId) {
             }
         }
     }).fail(function() {
-        console.error('Failed to load notification count');
+        
     });
 }
 

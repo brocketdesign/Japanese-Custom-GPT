@@ -15,7 +15,6 @@ $(document).ready(async function() {
     let chatId = getIdFromUrl(window.location.href) || getIdFromUrl($.cookie('redirect_url'))||$(`#lamix-chat-widget`).data('id');
     let userChatId
     const userId = user._id
-    let userCoins = user.coins
     let persona
     let currentStep = 0;
     let totalSteps = 0;
@@ -30,9 +29,6 @@ $(document).ready(async function() {
     $('body').attr('data-temporary-user',isTemporary)
 
     displayChatList(null,userId);
-    updateCoins(userCoins)
-
-
     window.addEventListener('message', function(event) {
         if (event.data.event === 'displayMessage') {
             const { role, message, completion, image, messageId } = event.data
@@ -992,18 +988,11 @@ $(document).ready(async function() {
                     </div>
                     <div id="response-${uniqueId}" class="choice-container" ></div>
                 </div>`);
-            //$('#chatContainer').append(botResponseContainer);
-            //$('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
         }
         let currentDate = new Date();
         let currentTimeInJapanese = `${currentDate.getHours()}時${currentDate.getMinutes()}分`;
         
-        //let message = `[${window.translations.conversationStarter.starter}] ${window.translations.conversationStarter.prompt}. ${window.translations.conversationStarter.useTime.replace('%{time}', currentTimeInJapanese)} ${window.translations.conversationStarter.dontStartWithConfirmation}. Also include in your message that I have ${userCoins}. `;
         let message = null
-        if($('#chat-widget-container').length == 0 && isTemporary){
-            //message = `[${window.translations.loginStarter.starter}] ${window.translations.loginStarter.prompt}`;
-        }
-
         $.ajax({
             url: API_URL+'/api/chat-data',
             type: 'POST',
@@ -2006,23 +1995,18 @@ $(document).ready(async function() {
             }
         });
     }
-    async function initiatePurchaseImage(price, type, userId, chatId) {
+    async function initiatePurchaseImage(type, userId, chatId) {
         return new Promise((resolve, reject) => {
             $.ajax({
                 url: '/api/purchaseImage',
                 method: 'POST',
-                data: { price, type, userId, chatId },
+                data: { type, userId, chatId },
                 success: function(response) {
                     resolve(response);
                 },
                 error: function(response) {
-                    if(parseInt(response.responseJSON?.id) == 1 ){
-                        showCoinShop();
-                        return
-                    }else{
-                        console.error('Error during purchase request:', response);
-                        reject({ success: false, error: response });
-                    }
+                    console.error('Error during purchase request:', response);
+                    reject({ success: false, error: response });
                 }
             });
         });
@@ -2313,8 +2297,7 @@ $(document).ready(async function() {
     // Click handler for #showPrompts
     $(document).on('click','#showPrompts', function() {
         getPromptsData(function(prompts) {
-            const header = `<p style="font-size:16px;" class="px-3 text-start mt-3 mb-0 pb-0">画像を生成するためのポーズを選んでください。</p>
-            <p style="font-size:12px;" class="text-start mb-2 px-3">必要に応じて、<strong>成人向け画像 (NSFW)</strong> オプションを有効にできます。（20🪙）</p>`;
+            const header = `<p style="font-size:16px;" class="px-3 text-start mt-3 mb-0 pb-0">画像を生成するためのポーズを選んでください。</p>`;
             renderPopup(prompts, header);
         });
     });
@@ -2427,30 +2410,18 @@ $(document).ready(async function() {
             Swal.close();
         });
     }
-    function showBuyCoins(){
-        const message = `
-        <div class="d-flex justify-content-start">
-            <button class="btn custom-gradient-bg shadow-0 w-45 me-2" 
-                onclick="showCoinShop()">
-                <span>${window.translations.buyCoins || 'コインを購入する'}</span>
-            </button>
-        </div>
-        `;
-        displayMessage('assistant', message);
-
-    }
     function showPaymentImage(type) {
         const messageId = `msg_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
         const message = `
         <div id="${messageId}" class="d-flex justify-content-start">
             ${type == 'sfw' ? `
             <button class="btn custom-gradient-bg shadow-0 w-45 me-2" 
-                onclick="buyImage('${messageId}','10', 'sfw')">
-                <span>10<span class="mx-1">🪙</span></span>
+                onclick="buyImage('${messageId}', 'sfw')">
+                <span>画像を生成する</span>
             </button>` : `
             <button class="btn custom-gradient-bg danger shadow-0 w-45" 
-                onclick="buyImage('${messageId}','20', 'nsfw')">
-                <span>20<span class="mx-1">🪙</span> <span style="font-size:10px">R18</span></span>
+                onclick="buyImage('${messageId}', 'nsfw')">
+                <span>成人向け画像を生成する</span>
             </button>`}
         </div>
         `;
@@ -2480,27 +2451,22 @@ $(document).ready(async function() {
             });
         });
     }
-    window.buyImage = async function(messageId,price,type){
+    window.buyImage = async function(messageId,type){
         const imageLoaderElement = displayImageLoader();
     
-        const response = await initiatePurchaseImage(price,type, userId, chatId)
+        const response = await initiatePurchaseImage(type, userId, chatId)
         if (response.success) {
-            updateCoins(response.coins);
-            let message = window.translations.imageForm.imagePurchaseMessageStart || `{price}コインで{type}画像を購入しました`
+            let message = window.translations.imageForm.imagePurchaseMessageStart || `{type}画像を購入しました`
             message = message
-            .replace('{price}',price)
             .replace('{type}',type == 'nsfw' ? window.translations.imageForm.nsfwImage : window.translations.imageForm.sfwImage)
             displayMessage('user', message, function() {
                 addMessageToChat(chatId, userChatId, 'user', message);
             });
-            const hiddenMessage = `[Hidden] I bought a ${type} image for ${price} coins. The image generation process is starting now. It may take a minute or so to complte. Thanks me and tell me to wait. Do not include instruction to buy image in your message since I just bought one.`
+            const hiddenMessage = `[Hidden] I bought a ${type} image. The image generation process is starting now. It may take a minute or so to complte. Thanks me and tell me to wait. Do not include instruction to buy image in your message since I just bought one.`
             addMessageToChat(chatId, userChatId, 'user', hiddenMessage, function(){
                 generateCompletion()
             });
-        } else {
-            showCoinShop();
-            return
-        }
+        } 
         const item = await generateItemData(type);
         if(item){
             const itemId = item[0]._id;
@@ -2537,8 +2503,6 @@ $(document).ready(async function() {
                         `${itemName}を無事に${itemPrice}コインでゲットしました！`,
                     ];
                     let message = successMessages[Math.floor(Math.random() * successMessages.length)];
-                    //$(`#${itemId} button`).each(function() { $(this).hide(); });
-                    updateCoins(response.coins);
                     displayMessage('user', message, function() {
                         addMessageToChat(chatId, userChatId, 'user', message, function(error, res) {
                             if (!error) {
@@ -2546,9 +2510,7 @@ $(document).ready(async function() {
                             }
                         });
                     });
-                } else {
-                    showCoinShop();
-                }
+                } 
             });
         } else {
             const messages = [
@@ -3083,18 +3045,6 @@ function constructChatItemHtml(chat, isActive) {
     `;
 }
 
-window.updateCoins = function(userCoins = null, callback) {
-        let API_URL = localStorage.getItem('API_URL')
-        $.ajax({
-            url: API_URL+'/api/user',
-            method: 'GET',
-            success: function(response) {
-                const userCoins = response.user.coins;
-                $('.user-coins').each(function(){$(this).html(userCoins)})
-                if(typeof callback == 'function') { callback(userCoins) }
-            }
-        });
-}
 window.resetChatUrl = function() {
     var currentUrl = window.location.href;
     var urlParts = currentUrl.split('/');

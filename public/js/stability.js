@@ -51,7 +51,6 @@ window.refundUser = function(taskId,imageType){
         success: function(response) {
             console.log('Refund Success:', response);
             const refundedAmount = response.refundedAmount
-            updateCoins();
             showNotification(refundedAmount+'コインが返金されました','success')
         },
         error: function(xhr, status, error) {
@@ -107,7 +106,6 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
     if (!item_id) {
         $(`#load-image-container-${item_id}`).remove();
         showNotification('無効なアイテムIDです。', 'error');
-        refundUser(null,imageType)
         return;
     }
 
@@ -124,7 +122,6 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
             console.error('generateImageNovita Error: Prompt is required.');
             showNotification('画像生成に必要なプロンプトがありません。', 'error');
             $(`#load-image-container-${item_id}`).remove();
-            refundUser(null,imageType)
             return;
         }
 
@@ -148,7 +145,6 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
 
         if (!response.ok) {
             const errorText = await response.text();
-            refundUser(null,imageType)
             throw new Error(`ネットワークエラー (${response.status} ${response.statusText}): ${errorText}`);
         }
 
@@ -156,7 +152,6 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
         const { taskId } = data;
 
         if (!taskId) {
-            refundUser(taskId,imageType)
             throw new Error('サーバーからタスクが返されませんでした。');
         }
 
@@ -165,7 +160,6 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
     } catch (error) {
         console.error('generateImageNovita Error:', error);
         console.log(`画像生成エラー: ${error.message}`);
-        refundUser(null,imageType)
         $(`#load-image-container-${item_id}`).remove();
         showNotification('画像の生成中にエラーが発生しました。', 'error');
     }
@@ -183,7 +177,6 @@ function pollTaskStatus(API_URL, taskId, type, prompt, item_id, callback) {
             const statusResponse = await fetch(`${API_URL}/novita/task-status/${taskId}`);
             
             if (!statusResponse.ok) {
-                refundUser(taskId);
                 const errorText = await statusResponse.text();
                 throw new Error(`ステータスチェックに失敗しました: ${errorText}`);
             }
@@ -216,7 +209,6 @@ function pollTaskStatus(API_URL, taskId, type, prompt, item_id, callback) {
                     console.log(`Image ${imageId} has already been displayed.`);
                 }
             } else if (statusData.status === 'failed') {
-                refundUser(taskId);
                 clearInterval(intervalId);
 
                 if (typeof callback === 'function') {
@@ -227,7 +219,6 @@ function pollTaskStatus(API_URL, taskId, type, prompt, item_id, callback) {
             if (attempts >= MAX_ATTEMPTS) {
                 clearInterval(intervalId);
                 showNotification('画像の生成がタイムアウトしました。再試行してください。', 'error');
-                refundUser(taskId);
 
                 if (typeof callback === 'function') {
                     callback(new Error('Image generation timed out'));
@@ -236,7 +227,6 @@ function pollTaskStatus(API_URL, taskId, type, prompt, item_id, callback) {
 
         } catch (error) {
             console.error(`Error polling task status for ${type}:`, error);
-            refundUser(taskId);
             clearInterval(intervalId);
 
             if (typeof callback === 'function') {
@@ -317,7 +307,6 @@ async function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, i
             const prompt = promptData.prompt;
 
             const formType = isNSFWChecked ? 'nsfw' : 'sfw';
-            const price = isNSFWChecked ? NSFW_PRICE : SFW_PRICE;
 
             let imageDescription = '';
             try {
@@ -339,11 +328,10 @@ async function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, i
             const typeText = isNSFWChecked ? 'NSFW' : 'SFW';
             const userMessage = t['imagePurchaseMessage']
                 .replace('{type}', typeText)
-                .replace('{price}', price)
-                .replace('{prompt_title}', prompt_title) || `${prompt_title}の${price}コインで${type}画像を購入しました。`;
+                .replace('{prompt_title}', prompt_title) || `${prompt_title}で${type}画像を購入しました。`;
             window.postMessage({ event: 'displayMessage', role:'user', message: userMessage, completion : false , image : false, messageId: false }, '*');
 
-            const hiddenMessage = `[Hidden] I bought a ${formType} image for ${price} coins. The image generation process is starting now. It may take a minute or so to complte. Thanks me and tell me to wait. Do not include instruction to buy image in your message since I just bought one.`
+            const hiddenMessage = `[Hidden] I bought a ${formType} image. The image generation process is starting now. It may take a minute or so to complte. Thanks me and tell me to wait. Do not include instruction to buy image in your message since I just bought one.`
             window.postMessage({ event: 'imageStart', message: hiddenMessage}, '*');
 
             let messageId
@@ -359,15 +347,12 @@ async function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, i
                         chatId: chatId,
                         userChatId: userChatId,
                         imageType: formType,
-                        price: price
                     })
                 });
 
                 if (!response.taskId) {
                     throw new Error(t['imageGenerationError']);
                 }
-
-                updateCoins();
 
                 messageId = `${response.taskId}`;
                 updateLoaderWithId(messageId);
@@ -382,7 +367,6 @@ async function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, i
                 $(`#${messageId}`).remove();
                 if(error.id = 1){
                     window.postMessage({ event: 'imageError', error:  error.message }, '*');
-                    showCoinShop();
                     return
                 }
                 return
@@ -390,7 +374,6 @@ async function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, i
         },
         error: function(xhr) {
             showNotification('プロンプトの取得中にエラーが発生しました。', 'error');
-            refundUser(taskId)
         }
     });
 }
@@ -474,7 +457,7 @@ function displayCustomPromptInput(API_URL, userId, chatId, userChatId, thumbnail
             $('#chatContainer').append(loaderElement);
             $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
 
-            const hiddenMessage = `[Hidden] I just sent you ${price} coins for an image.I have specified a prompt for the images. The images are not available yet; I will tell you when they are available. Your answer must not start with [Hidden] .`;
+            const hiddenMessage = `[Hidden] I just ask for an image.I have specified a prompt for the images. The images are not available yet; I will tell you when they are available. Your answer must not start with [Hidden] .`;
             window.postMessage({ event: 'imageStart', message: hiddenMessage }, '*');
             //window.postMessage({ event: 'displayMessage', role:'user' message: '', completion : false }, '*');
             try {
@@ -496,8 +479,6 @@ function displayCustomPromptInput(API_URL, userId, chatId, userChatId, thumbnail
                 if (!response.taskId) {
                     throw new Error(t['imageGenerationError']);
                 }
-
-                updateCoins();
 
                 checkTaskStatus(response.taskId, chatId, finalPrompt, () => {
                     loaderElement.remove();
@@ -645,14 +626,14 @@ async function setupFormEventListeners(uniqueId, formType, config) {
             imageType: formType,
             price: price
         };
-
+        
         // Show spinner and hide the generate button
         $(`${formSelector} .btn-primary`).prop('disabled', true).hide();
         $(`${formSelector} .spinner`).show();
 
         // Send hidden message to the AI character
-        const hiddenMessage = `[Hidden] I just sent you ${price} coins for images about: ${prompt}. 
-        The images are not available yet; I will tell you when they are available.`;
+        const hiddenMessage = `[Hidden] I just ask you for an image about: ${prompt}. 
+        The image is not available yet; I will tell you when they are available.`;
         window.postMessage({ event: 'imageStart', message: hiddenMessage }, '*');
 
         // Send request to the backend to generate images
@@ -665,11 +646,8 @@ async function setupFormEventListeners(uniqueId, formType, config) {
             });
 
             if (!response.taskId) {
-                refundUser(taskId)
                 throw new Error(t['imageGenerationError']);
             }
-
-            updateCoins();
 
             // Image generation task started, use task ID to poll for status
             const taskId = response.taskId;
@@ -964,7 +942,6 @@ function checkTaskStatus(taskId, chatId, prompt, callback) {
                 clearInterval(intervalId);
                 showNotification(`${t['imageGenerationFailed']}: ${statusResponse.error}`, 'error');
                 window.postMessage({ event: 'imageError', error: statusResponse.error }, '*');
-                refundUser(taskId);
                 if (typeof callback === 'function') {
                     callback();
                 }
@@ -976,7 +953,6 @@ function checkTaskStatus(taskId, chatId, prompt, callback) {
                 clearInterval(intervalId);
                 showNotification(t['imageGenerationTimeout'], 'error');
                 window.postMessage({ event: 'imageError', error: 'image Generation Timeout' }, '*');
-                refundUser(taskId);
                 if (typeof callback === 'function') {
                     callback();
                 }
@@ -986,7 +962,6 @@ function checkTaskStatus(taskId, chatId, prompt, callback) {
             console.error('Error polling task status:', error);
             clearInterval(intervalId);
             showNotification(t['imageGenerationError'], 'error');
-            refundUser(taskId);            
             // Execute callback on error
             if (typeof callback === 'function') {
                 callback();

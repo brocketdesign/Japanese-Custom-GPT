@@ -422,6 +422,7 @@ async function routes(fastify, options) {
 
         const requestData = { ...params, ...image_request };
         console.log(requestData)
+
         const novitaTaskId = await fetchNovitaMagic(requestData);
 
         await db.collection('tasks').insertOne({
@@ -449,7 +450,7 @@ async function routes(fastify, options) {
 
 // Endpoint to initiate txt2img for selected image type
 fastify.post('/novita/txt2img', async (request, reply) => {
-  const { prompt, aspectRatio, userId, chatId, userChatId, imageType, price } = request.body;
+  const { prompt, aspectRatio, userId, chatId, userChatId, imageType } = request.body;
 
   // Define the schema for validation
   const Txt2ImgSchema = z.object({
@@ -459,12 +460,11 @@ fastify.post('/novita/txt2img', async (request, reply) => {
       chatId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid chatId'),
       userChatId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid userChatId'),
       imageType: z.enum(['sfw', 'nsfw']),
-      price: z.number().positive()
   });
 
   try {
       const validated = Txt2ImgSchema.parse(request.body);
-      const { prompt, aspectRatio, userId, chatId, userChatId, imageType, price } = validated;
+      const { prompt, aspectRatio, userId, chatId, userChatId, imageType } = validated;
 
       const db = fastify.mongo.db
 
@@ -474,19 +474,6 @@ fastify.post('/novita/txt2img', async (request, reply) => {
       if (!user) {
           return reply.code(404).send({ error: 'User not found' });
       }
-
-      let userCoins = user.coins || 0;
-
-      if (userCoins < price) {
-          return reply.code(400).send({ message: 'Insufficient coins', id: 1 });
-      }
-
-      // Deduct coins
-      userCoins -= price;
-      await db.collection('users').updateOne(
-          { _id: new ObjectId(userId) },
-          { $set: { coins: userCoins } }
-      );
 
       // Fetch user subscription status
       const isSubscribed = user.subscriptionStatus === 'active';
@@ -530,7 +517,8 @@ fastify.post('/novita/txt2img', async (request, reply) => {
 
       // Prepare params
       const requestData = { ...params, ...image_request, image_num: 1 };
-      console.log(requestData)
+      console.log(requestData);
+
       // Send request to Novita and get taskId
       const novitaTaskId = await fetchNovitaMagic(requestData);
 

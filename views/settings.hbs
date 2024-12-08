@@ -122,7 +122,7 @@ img {
                   <!-- Language Dropdown -->
                   <label for="lang" class="form-label"><i class="fas fa-user"></i> {{translations.setting.language}}:</label>
                   <div class="dropdown">
-                    <button class="btn btn-secondary dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <button data-user-lang="{{user.lang}}" class="btn btn-secondary dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                       {{#if user.lang}}
                         {{capitalize user.lang}}
                       {{else}}

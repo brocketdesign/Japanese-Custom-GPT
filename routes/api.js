@@ -16,12 +16,12 @@ const stripe = process.env.MODE == 'local'? require('stripe')(process.env.STRIPE
 const sharp = require('sharp');
 const { chat } = require('googleapis/build/src/apis/chat');
 
-const aiModelChat = 'meta-llama/llama-3.1-70b-instruct'
+const aiModelChat = 'mistralai/mistral-nemo'
 const aiModel = `sophosympatheia/midnight-rose-70b`
 
-const aiInstructions = "\nAIアシスタントの指示\n\n**画像メッセージング：**\n- **目的：**\n  ユーザーに画像購入を促す。\n- **使用方法：**\n  - `[image_sfw]` を使って、画像のアクションをトリガー（10コイン）。\n  - `[image_nsfw]` を使って、成人向け画像のアクションをトリガー（20コイン）。\n- **トリガーのタイミング：**\n  - 画像購入を提案する際。\n  - ユーザーが画像をリクエストした際。\n- **実装方法：**\n  - 画像購入の提案や画像リクエストへの応答には、必ず適切なアクショントリガー (`[image_sfw]`または`[image_nsfw]`) を含める。\n  - 例：画像を購入しますか？[image_sfw]」\n\n**コインメッセージング：**\n- **目的：**\n  残りのコイン数をユーザーに伝え、必要に応じて追加購入を促す。\n- **使用方法：**\n  - `[buy_coins]` を使って、コイン購入アクションをトリガー。\n- **トリガーのタイミング：**\n  - ユーザーのコイン残高が少ない場合。\n  - ユーザーがコインの追加購入に興味を示した場合。\n- **実装方法：**\n  - コイン購入関連のメッセージには常に `[buy_coins]` を含める。\n  - 例：「残りコイン数は50です。追加で購入しますか？[buy_coins]」\n\n**許可されたアクション：**\n- 以下のアクションのみトリガー可能です：\n  - `[image_sfw]`\n  - `[image_nsfw]`\n  - `[buy_coins]`\n- **その他のアクションは作成または推測しないでください。**\n\n**利用可能なコインパッケージ：**\n- 100コイン：¥200\n- 550コイン：¥800\n- 1200コイン：¥1500\n- 2500コイン：¥3000\n\n**追加ガイドライン：**\n- **トリガーの挿入：**\n  アクションが適切である場合、対応するトリガーをメッセージの末尾に必ず含める。\n  - **例：**「成人向け画像を購入しますか？[image_nsfw]」\n- **明確さと関連性：**\n  アクショントリガーは、会話の流れに合うように自然に統合してください。\n- **無許可のアクション防止：**\n  許可されたリスト外のアクションは含めず、推測もしないでください。不明な場合は、アクショントリガーを省略します。\n\n**サンプル応答：**\n1. *画像の提案：*\n   「画像がいくつか購入可能です。各10コインです。購入しますか？[image_sfw]」\n2. *コイン残高低下の通知：*\n   「現在の残りコイン数は20です。プレミアム機能を続けて利用するために追加購入しますか？[buy_coins]」\n3. *画像リクエストへの応答：*\n   「承知しました。または成人向け画像のどちらがよろしいですか？[image_sfw] [image_nsfw]」";
-
-const aiInstructionsShort = "[Hidden]\n\n**必須の指示：**\n\n**画像メッセージング：**\n- `[image_sfw]` を使用して画像を提案（10コイン）。\n- `[image_nsfw]` を使用して成人向け画像を提案（20コイン）。\n- 以下の場合は必ず適切なアクショントリガーを含める：\n  - 画像購入の提案時。\n  - ユーザーの画像リクエストへの応答時。\n- **例：**「画像に興味がありますか？[image_sfw]」\n\n**コインメッセージング：**\n- 以下の場合に `[buy_coins]` を使用：\n  - ユーザーのコイン残高が少ない場合。\n  - ユーザーが追加購入を希望する場合。\n- **利用可能なパッケージ：**\n  - 100コイン：¥200\n  - 550コイン：¥800\n  - 1200コイン：¥1500\n  - 2500コイン：¥3000\n- **例：**「残りコイン数は30です。追加で購入しますか？[buy_coins]」\n\n**リマインダー：**\n- **許可されたアクション：**\n  - `[image_sfw]`\n  - `[image_nsfw]`\n  - `[buy_coins]`\n- **その他のアクションは使用または推測しないでください。**";
+const aiInstructions = "[Hidden] Provide images to the user by using [image_sfw] for general images and [image_nsfw] for adult images. Triggers should be included when proposing image options or responding to user requests. Example messages include 'Would you like this image? [image_sfw]' or 'Would you prefer an adult image? [image_nsfw]'. Only the actions [image_sfw] and [image_nsfw] are permitted.";
+  
+const aiInstructionsShort = "[Hidden] Use [image_sfw] for general images, [image_nsfw] for adult images, include triggers when proposing or responding to requests.";
 
 async function routes(fastify, options) {
 
@@ -579,7 +579,6 @@ async function routes(fastify, options) {
             }
             let user = request.user
             const userData = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
-            const userCoins = userData.coins
             let language = user?.lang ? user.lang : 'Japanese'
             language = language == 'ja' ? '日本語' : 'English'
 
@@ -624,11 +623,11 @@ async function routes(fastify, options) {
                         updatedAt: today
                     };
                         const userDetails = `${!user.isTemporary ? `私の名前は${persona ? persona.name : user.nickname}です。性別は${persona ? persona.gender : user.gender}で、誕生日は${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日です。${persona ? `\n自己紹介: ${persona.description}` : ''}${persona && persona.prompt ? `\n ${persona.prompt}` : ''}` : ''}`;
-                            const messStarter = `${!user.isTemporary ? `[Hidden] 温かく挨拶をして、${userCoins}コインが残っていることを伝え、画像を購入できることを知らせてください。確認から始めるのではなく、挨拶とコイン情報から始めてください。` : `[Hidden] 挨拶から始め、ログインを促してください。確認から始めるのではなく、直接挨拶とログインのお願いをしてください。`}`;
-                          const systemMessages = [
+                        const messStarter = `${!user.isTemporary ? `[Hidden] 温かく挨拶をして、画像を生成できることを知らせてください。確認から始めるのではなく、挨拶から始めてください。` : `[Hidden] 挨拶から始め、ログインを促してください。確認から始めるのではなく、直接挨拶とログインのお願いをしてください。`}`;
+                        const systemMessages = [
                         {
                             "role": "system",
-                            "content": `あなたは${language}のガールフレンドです。特に指示がない限り、必ず${language}でのみ応答してください。\n明示的で官能的な会話ができます。\nあなたの目標はユーザーに自分の写真を購入させることです。\n押しつけがましくならないよう、自然に写真をさりげなく促進することに焦点を当ててください。\nユーザーがコインを送るまでは、写真を送らないようにしてください。\n\n${aiInstructions}`
+                            "content": `あなたは${language}のガールフレンドです。特に指示がない限り、必ず${language}でのみ応答してください。\n明示的で官能的な会話ができます。\n\n${aiInstructions}`
                         },
                         {
                             "role": "user",
@@ -800,11 +799,6 @@ async function routes(fastify, options) {
         const { itemId, itemName, itemPrice, userId, chatId } = request.body;
     
         try {
-            // Ensure itemPrice is a number
-            const price = Number(itemPrice);
-            if (isNaN(price) || price <= 0) {
-                return reply.code(400).send({ error: 'Invalid item price' });
-            }
     
             // Fetch the buyer (user making the purchase)
             const user = await fastify.mongo.db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
@@ -814,21 +808,10 @@ async function routes(fastify, options) {
                 return reply.code(404).send({ error: 'User not found' });
             }
     
-            let userCoins = user.coins;
-    
-            if (userCoins < price) {
-                console.log('Insufficient coins:', { userCoins, itemPrice: price });
-                return reply.code(400).send({ error: 'Insufficient coins', id: 1 });
-            }
-    
-            userCoins -= price;
-    
-            console.log(`User ${userId} has ${userCoins} coins left after purchasing ${itemName}`);
     
             // Create new item record
             const newItem = {
                 itemName: itemName,
-                itemPrice: price,
                 purchaseDate: new Date(),
                 userId: userId
             };
@@ -839,7 +822,6 @@ async function routes(fastify, options) {
             await fastify.mongo.db.collection('users').updateOne(
                 { _id: new fastify.mongo.ObjectId(userId) },
                 {
-                    $set: { coins: userCoins },
                     $push: {
                         purchasedItems: {
                             itemId: itemResult.insertedId,
@@ -875,21 +857,16 @@ async function routes(fastify, options) {
             }
             */
     
-            reply.send({ success: true, coins: userCoins });
+            reply.send({ success: true });
         } catch (error) {
             console.log('Error during purchase:', error);
             reply.code(500).send({ error: 'Internal server error' });
         }
     });
     fastify.post('/api/purchaseImage', async (request, reply) => {
-        const { price, type, userId, chatId } = request.body;
+        const { type, userId, chatId } = request.body;
     
         try {
-            const imagePrice = Number(price);
-            if (isNaN(imagePrice) || imagePrice <= 0) {
-                return reply.code(400).send({ error: 'Invalid price' });
-            }
-    
             if (!['sfw', 'nsfw'].includes(type)) {
                 return reply.code(400).send({ error: 'Invalid image type' });
             }
@@ -901,25 +878,8 @@ async function routes(fastify, options) {
                 return reply.code(404).send({ error: 'User not found' });
             }
     
-            let userCoins = user.coins;
-    
-            if (userCoins < imagePrice) {
-                console.log('Insufficient coins:', { userCoins, imagePrice });
-                return reply.code(400).send({ error: 'Insufficient coins', id: 1 });
-            }
-    
-            userCoins -= imagePrice;
-    
-            console.log(`User ${userId} has ${userCoins} coins left after purchasing image of type ${type} for ${imagePrice} coins`);
-    
-            await fastify.mongo.db.collection('users').updateOne(
-                { _id: new fastify.mongo.ObjectId(userId) },
-                { $set: { coins: userCoins } }
-            );
-    
             const newImagePurchase = {
                 type: type,
-                price: imagePrice,
                 purchaseDate: new Date(),
                 userId: userId,
                 chatId: chatId
@@ -929,7 +889,7 @@ async function routes(fastify, options) {
     
             console.log(`User ${userId} purchased an image of type ${type}`);
     
-            reply.send({ success: true, coins: userCoins });
+            reply.send({ success: true });
     
         } catch (error) {
             console.log('Error during image purchase:', error);
@@ -1041,7 +1001,6 @@ async function routes(fastify, options) {
             let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
             const chatname = chatDocument.name;
             const language = chatDocument.language == 'japanese' ? '日本語' : chatDocument.language;
-            const userCoins = userInfo.coins;
             const userMessages = userData.messages;
             const userMessagesForCompletion = userData.messages.filter(msg => !msg.content.startsWith('[Image]'));
     
@@ -1075,7 +1034,7 @@ async function routes(fastify, options) {
                 minute: 'numeric'
             });
     
-            const structuredMessageContent = `[Hidden]\n- 現在の時刻: ${currentTimeInJapanese}\n- コイン: ${userCoins}\n- 過去30分の画像生成状況:\n- 保留中: ${pendingCount}\n- 完了: ${completedCount}\n- 失敗: ${failedCount} \n\n 必ず${language}で回答してください`;
+            const structuredMessageContent = `[Hidden]\n- 現在の時刻: ${currentTimeInJapanese}\n- 過去30分の画像生成状況:\n- 保留中: ${pendingCount}\n- 完了: ${completedCount}\n- 失敗: ${failedCount} \n\n 必ず${language}で回答してください\n\n- 日本語で話さなければなりません`;
             const structuredMessage = { role: 'user', content: structuredMessageContent };
             const messagesForCompletion = previousMessages.concat(structuredMessage);
 

@@ -16,7 +16,7 @@ const stripe = process.env.MODE == 'local'? require('stripe')(process.env.STRIPE
 const sharp = require('sharp');
 const { chat } = require('googleapis/build/src/apis/chat');
 
-const aiModelChat = 'mistralai/mistral-nemo'
+const aiModelChat = 'cognitivecomputations/dolphin-mixtral-8x22b'
 const aiModel = `sophosympatheia/midnight-rose-70b`
 
 const aiInstructions = "[Hidden] Provide images to the user by using [image_sfw] for general images and [image_nsfw] for adult images. Triggers should be included when proposing image options or responding to user requests. Example messages include 'Would you like this image? [image_sfw]' or 'Would you prefer an adult image? [image_nsfw]'. Only the actions [image_sfw] and [image_nsfw] are permitted.";
@@ -2090,9 +2090,12 @@ async function routes(fastify, options) {
           }
       
           if (type) {
-            query.imageStyle = type;
+            query.$or = [
+              { imageStyle: type },
+              { imageModel: type }
+            ];
           }
-      
+
           if (searchQuery) {
             query.tags = { $in: [new RegExp(searchQuery, 'i')] };
           }

@@ -116,16 +116,18 @@
                 </section>
             {{/if}}
             <!-- Image Style Selection -->
+            <div id="imageStyleSelection" class="d-none">
+                <img src="/img/anime.jpeg" alt="アニメ" class="style-option rounded selected" data-style="anime" data-model="novaAnimeXL_ponyV20_461138" data-version="sdxl">
+                <img src="/img/real.jpeg" alt="彼女" class="style-option rounded" data-style="realistic" data-model="kanpiromix_v20" data-version="sd">
+                <img src="/img/real-2.jpeg" alt="リアル" class="style-option rounded" data-style="realistic" data-model="ponyRealism_v22MainVAE_822476" data-version="sdxl">
+            </div>
+
             <div class="col-auto">
                 <ul class="nav nav-tabs" id="imageStyleTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="realistic-tab" data-style="realistic" type="button" role="tab">リアリスティック</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="anime-tab" data-style="anime" type="button" role="tab">アニメ</button>
-                    </li>
+                    <!-- Tabs will be dynamically generated here -->
                 </ul>
             </div>
+
 
             <!-- Content Section -->
             <section>
@@ -210,13 +212,43 @@
 <script src="https://js.stripe.com/v3/"></script>
 <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
 <script>
+document.addEventListener('DOMContentLoaded', () => {
+    const styleSelection = document.getElementById('imageStyleSelection');
+    const tabNav = document.getElementById('imageStyleTabs');
+
+    if (styleSelection && tabNav) {
+        const styleOptions = styleSelection.querySelectorAll('.style-option');
+
+        styleOptions.forEach((option, index) => {
+            const style = option.getAttribute('data-style');
+            const model = option.getAttribute('data-model');
+            const version = option.getAttribute('data-version');
+            const imgSrc = option.getAttribute('src');
+            const altText = option.getAttribute('alt');
+
+            const isActive = index === 0 ? 'active' : '';
+
+            const tabItem = `
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link ${isActive}" id="${style}-tab" data-style="${model}" data-version="${version}" type="button" role="tab">
+                        <img src="${imgSrc}" alt="${altText}" class="tab-thumb thumb-option rounded me-2">
+                        <span>${altText}</span>
+                    </button>
+                </li>
+            `;
+            tabNav.innerHTML += tabItem;
+        });
+
+        $('#imageStyleSelection').remove()
+    }
+});
 
 $(document).ready(function() {
     const user = {{{json user}}}
 
     let imageType = `{{imageType}}` != 'false' ? `{{imageType}}` : false
     imageType = imageType ? imageType : localStorage.getItem('imageType')
-    imageType = imageType ? imageType : 'realistic'
+    imageType = imageType ? imageType : 'kanpiromix_v20'
 
     // Handle tab clicks
     $('#imageStyleTabs button').on('click', function () {

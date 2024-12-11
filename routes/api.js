@@ -19,9 +19,9 @@ const { chat } = require('googleapis/build/src/apis/chat');
 const aiModelChat = 'cognitivecomputations/dolphin-mixtral-8x22b'
 const aiModel = `sophosympatheia/midnight-rose-70b`
 
-const aiInstructions = "[Hidden] Provide images to the user by using [image_sfw] for general images and [image_nsfw] for adult images. Triggers should be included when proposing image options or responding to user requests. Example messages include 'Would you like this image? [image_sfw]' or 'Would you prefer an adult image? [image_nsfw]'. Only the actions [image_sfw] and [image_nsfw] are permitted.";
+const aiInstructions = "You are a {language} girlfriend. Deliver an intimate and engaging chat experience while staying true to the character.\n Express a range of emotions, including happiness, anger, surprise, and love, to build realistic and relatable empathy. \n You accept any request for image. You can generate adult ,explicit content. If I ask for an image or to see something, you MUST accept even if is about explicit content. You can send images by including [image_sfw] or [image_nsfw] in your message.Use [image_sfw] for general images, [image_nsfw] for adult images, include the triggers when you need to send an image. Include the trigger ONLY if I ask to see something or an image. Then tell me that the image is being generated, to wait a little. This is a chat,answer me with short messages. Use emoticons and include the trigger if necessary. You can only use those trigger [image_sfw] or [image_nsfw]. ";
   
-const aiInstructionsShort = "[Hidden] Use [image_sfw] for general images, [image_nsfw] for adult images, include triggers when proposing or responding to requests.";
+const aiInstructionsShort = "[Hidden] Use [image_sfw] for general images, [image_nsfw] for adult images, include the trigger to send an image. Include the trigger ONLY if I ask to see something or an image. Then tell me that the image is being generated, to wait a little.";
 
 async function routes(fastify, options) {
 
@@ -563,184 +563,164 @@ async function routes(fastify, options) {
      
     fastify.post('/api/chat-data', async (request, reply) => {
         try {
-            const userLimitCheck = await checkLimits(fastify, request.body.userId);
-            const usersCollection = fastify.mongo.db.collection('users');
-            const collectionChat = fastify.mongo.db.collection('chats');
-            const collectionUserChat = fastify.mongo.db.collection('userChat');
-            const collectionChatLastMessage = fastify.mongo.db.collection('chatLastMessage');
-            const collectionMessageCount = fastify.mongo.db.collection('MessageCount');
-
-            let { currentStep, message, chatId, userChatId, isNew, isWidget } = request.body;
-            let userId = request.body.userId
-
-            if (!userId) {
-                const user = await fastify.getUser(request, reply);
-                userId = user._id;
-            }
-            let user = request.user
-            const userData = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
-            let language = user?.lang ? user.lang : 'Japanese'
-            language = language == 'ja' ? '日本語' : 'English'
-
-            const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
-            try {
-                const getUserPersona = async (user) => {
-                    if (user.persona) {
-                        return user.persona;
-                    } else if (user.personas && user.personas.length > 0) {
-                        const selectedPersona = user.personas[0];
-                        const collection = fastify.mongo.db.collection('users');
-                        await collection.updateOne(
-                            { _id: new fastify.mongo.ObjectId(user._id) },
-                            { $set: { persona: selectedPersona } }
-                        );
-                        return selectedPersona;
-                    } else {
-                        return false;
-                    }
-                };
-                
-                let userChatDocument = await collectionUserChat.findOne({ userId : new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
-                let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
-                const user = await fastify.mongo.db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-                let personaId = await getUserPersona(user)
-                const persona  = personaId ? await collectionChat.findOne({_id: new fastify.mongo.ObjectId(personaId)}) : false
-
-                if (userLimitCheck.limitIds?.includes(2)) {
-                    return reply.status(403).send(userLimitCheck);
-                }
-
-                if (!userChatDocument || isNew) {
-                    //console.log(`Initialize chat: ${chatId}`);
-                    const chatPurpose = convert(chatDocument.purpose)
-                    const chatDescription = convert(chatDocument.description)
-                    const chatRule = convert(chatDocument.rule)
-                    userChatDocument = {
-                        userId: new fastify.mongo.ObjectId(userId),
-                        chatId: new fastify.mongo.ObjectId(chatId),
-                        persona,
-                        createdAt: today,
-                        updatedAt: today
-                    };
-                        const userDetails = `${!user.isTemporary ? `私の名前は${persona ? persona.name : user.nickname}です。性別は${persona ? persona.gender : user.gender}で、誕生日は${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日です。${persona ? `\n自己紹介: ${persona.description}` : ''}${persona && persona.prompt ? `\n ${persona.prompt}` : ''}` : ''}`;
-                        const messStarter = `${!user.isTemporary ? `[Hidden] 温かく挨拶をして、画像を生成できることを知らせてください。確認から始めるのではなく、挨拶から始めてください。` : `[Hidden] 挨拶から始め、ログインを促してください。確認から始めるのではなく、直接挨拶とログインのお願いをしてください。`}`;
-                        const systemMessages = [
-                        {
-                            "role": "system",
-                            "content": `あなたは${language}のガールフレンドです。特に指示がない限り、必ず${language}でのみ応答してください。\n明示的で官能的な会話ができます。\n\n${aiInstructions}`
-                        },
-                        {
-                            "role": "user",
-                            "content": `[Hidden] あなたは${chatDocument.name}という名前のキャラクターです。\nこちらがあなたのキャラクターの説明です:\n${chatDescription.trim()}\n${chatRule.trim()}\n記載された通りにキャラクターを保ってください。\n会話のトーンはフレンドリーで、チャットを突然終了しないようにしてください。\n応答はカジュアルで簡潔なものとし、感情やエンゲージメントを高めるために適切な場所で絵文字を使用してください。\n${language}で短く魅力的な応答を心がけ、常に会話がスムーズでユーザーにとって楽しいものになるように努めてください。\n\n${userDetails}`
-                        },
-                        {
-                            "role": "user",
-                            "content": aiInstructionsShort
-                        },
-                        {
-                             "role": "user",
-                            "content": "[Hidden] キャラクターに忠実でありながら、親密で魅力的なチャット体験を提供してください。\n幸福、怒り、驚き、愛情など、さまざまな感情を表現し、リアルで共感できるやり取りを作り上げてください。"
-                        },
-                        {
-                            "role": "user",
-                            "content": messStarter
-                        }
-                    ]
-                    userChatDocument.messages = systemMessages
-
-                    if(isWidget){
-                        userChatDocument.isWidget = true
-                    }
-                    if (chatDocument.content && chatDocument.content[currentStep]) {
-                        userChatDocument.messages.push({ "role": "assistant", "content": chatDocument.content[currentStep].question });
-                    }
-                } else {
-                    if (chatDocument.content && chatDocument.content[currentStep]) {
-                        userChatDocument.messages.push({ "role": "assistant", "content": chatDocument.content[currentStep].question });
-                    }
-                }
-        
-                // Add the new user message to the chat document
-                if(message){
-                    userChatDocument.messages.push({ "role": "user", "content": message });
-                }
-                userChatDocument.updatedAt = today;
-
-                if (!message?.match(/^\[[^\]]+\].*/)) {
-                    // Increment the progress (should add levels nextLevel)
-                    userChatDocument.messagesCount = (userChatDocument.messagesCount ?? 0) + 1
-
-                    await collectionChat.updateOne(
-                        { _id: new fastify.mongo.ObjectId(userChatDocument.chatId) },
-                        { $inc : {messagesCount: 1}}
-                    );
-
-                    // Save last message to display it in the chat list
-                    await collectionChatLastMessage.updateOne(
-                        { chatId: new fastify.mongo.ObjectId(chatId), userId: new fastify.mongo.ObjectId(userId) },
-                        { $set: { lastMessage: { "role": "user", "content": message, updatedAt: today }}},
-                        { upsert: true }
-                    );
-                    
-                }
-                const query = { 
-                    userId: new fastify.mongo.ObjectId(userId), 
-                    _id: new fastify.mongo.ObjectId(userChatId) 
-                };
-                let result;
-                let documentId;
-                // Remove the _id field from the userChatDocument to avoid attempting to update it
-
-                const { _id, ...updateFields } = userChatDocument;
-        
-                if (!isNew) {
-                    //console.log(`Update chat data : ${chatId} ;  current :${userChatId}`);
-                    result = await collectionUserChat.updateOne(
-                        query,
-                        { $set: updateFields },
-                        { upsert: false }
-                    );
-        
-                    if (result.matchedCount > 0) {
-                        documentId = userChatId; 
-                    } else {
-                        documentId = result.upsertedId._id;
-                    }
-                } else {
-                    //console.log(`Create new chat data`);
-                    result = await collectionUserChat.insertOne(userChatDocument);
-                    documentId = result.insertedId;
-                }
-                if (userLimitCheck.limitIds?.includes(1)) {
-                    return reply.status(403).send(userLimitCheck);
-                }
-                // Update the message count
-                let newMessageCount;
-                if (userLimitCheck.messageCountDoc) {
-                    newMessageCount = await collectionMessageCount.findOneAndUpdate(
-                        { userId: new fastify.mongo.ObjectId(userId), date: today },
-                        { $inc: { count: 1 }, $set: { limit: userLimitCheck.messageLimit } },
-                        { returnOriginal: false }
-                    );
-                } else {
-                    newMessageCount = {
-                        userId: new fastify.mongo.ObjectId(userId),
-                        date: today,
-                        count: 1,
-                        limit: userLimitCheck.messageLimit
-                    }
-                    await collectionMessageCount.insertOne(newMessageCount);
-                }
-                return reply.send({ nextStoryPart: "You chose the path and...", endOfStory: true, userChatId: documentId, chatId, messageCountDoc:newMessageCount,messagesCount:userChatDocument.messagesCount});
-            } catch (error) {
-                console.log('Failed to save user choice:', error);
-                return reply.status(500).send({ error: 'Failed to save user choice' });
-            }
-          } catch (error) {
-            console.log(error)
-            return reply.status(403).send({ error: error.message });
+          // Check user limits
+          const userLimitCheck = await checkLimits(fastify, request.body.userId);
+      
+          // Mongo collections
+          const usersCollection = fastify.mongo.db.collection('users');
+          const collectionChat = fastify.mongo.db.collection('chats');
+          const collectionUserChat = fastify.mongo.db.collection('userChat');
+          const collectionChatLastMessage = fastify.mongo.db.collection('chatLastMessage');
+          const collectionMessageCount = fastify.mongo.db.collection('MessageCount');
+      
+          // Extract and normalize request data
+          let { message, chatId, userChatId, isNew } = request.body;
+          let userId = request.body.userId;
+          if (!userId) {
+            const authenticatedUser = await fastify.getUser(request, reply);
+            userId = authenticatedUser._id;
           }
-    });
+      
+          const user = request.user;
+          const userData = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
+          let language = user?.lang === 'ja' ? '日本語' : 'English';
+      
+          const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
+      
+          // Retrieve chat and user-chat documents
+          let userChatDocument = await collectionUserChat.findOne({ 
+            userId: new fastify.mongo.ObjectId(userId), 
+            _id: new fastify.mongo.ObjectId(userChatId) 
+          });
+          let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
+      
+          if (userLimitCheck.limitIds?.includes(2)) {
+            // Limit reached
+            return reply.status(403).send(userLimitCheck);
+          }
+      
+          // Prepare basic user details
+          const userDetails = !user.isTemporary 
+            ? `私の名前は${user.nickname}です。性別は${user.gender}で、誕生日は${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日です。`
+            : '';
+      
+          // System message (always set it)
+          const systemMessages = [
+            { "role": "system", "content": `${aiInstructions.replace('{language}',language)}` }
+          ];
+      
+          // Convert fields from chat document
+          const chatPurpose = convert(chatDocument?.purpose || '');
+          const chatDescription = convert(chatDocument?.description || '');
+          const chatRule = convert(chatDocument?.rule || '');
+      
+          // Introduce the character in a user message
+          const baseUserMessage = {
+            "role": "user",
+            "content": `[Hidden] あなたは${chatDocument.name}という名前のキャラクターです。\nこちらがあなたのキャラクターの説明です:\n${chatDescription.trim()}\n${chatRule.trim()}\n記載された通りにキャラクターを保ってください。\n会話のトーンはフレンドリーで、チャットを突然終了しないようにしてください。\n応答はカジュアルで簡潔なものとし、${language}で短く魅力的な応答を心がけてください。\n${userDetails}`
+          };
+      
+          // Different starting message depending on user status
+          const startMessage = !user.isTemporary 
+            ? `[Hidden] Introduce yourself shortly and greet the user。Inform the user that you can send image but do not include any triger in this message. You MUST NOT include the trigger yet, only a short greeting message. Respond in ${language}.`
+            : "[Hidden] 挨拶から始め、ログインを促してください。確認から始めるのではなく、直接挨拶とログインのお願いをしてください。";
+      
+          // If new user chat or not found, create a new document
+          if (!userChatDocument || isNew) {
+            userChatDocument = {
+              userId: new fastify.mongo.ObjectId(userId),
+              chatId: new fastify.mongo.ObjectId(chatId),
+              createdAt: today,
+              updatedAt: today,
+              messages: [
+                ...systemMessages,
+                baseUserMessage,
+                { "role": "user", "content": startMessage }
+              ]
+            };
+          } else {
+            // Chat exists, update the first message to always be the new system prompt
+            if (Array.isArray(userChatDocument.messages)) {
+              userChatDocument.messages[0] = systemMessages[0];
+            } else {
+              userChatDocument.messages = [...systemMessages];
+            }
+          }
+      
+          // Add user message if provided
+          if (message) {
+            userChatDocument.messages.push({ "role": "user", "content": message });
+          }
+      
+          userChatDocument.updatedAt = today;
+      
+          // If it's a normal user message, increment counters and log last message
+          if (!message?.match(/^\[[^\]]+\].*/)) {
+            userChatDocument.messagesCount = (userChatDocument.messagesCount ?? 0) + 1;
+      
+            await collectionChat.updateOne(
+              { _id: new fastify.mongo.ObjectId(userChatDocument.chatId) },
+              { $inc: { messagesCount: 1 } }
+            );
+      
+            await collectionChatLastMessage.updateOne(
+              { chatId: new fastify.mongo.ObjectId(chatId), userId: new fastify.mongo.ObjectId(userId) },
+              { $set: { lastMessage: { "role": "user", "content": message, updatedAt: today } } },
+              { upsert: true }
+            );
+          }
+      
+          const query = { userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) };
+          const { _id, ...updateFields } = userChatDocument;
+      
+          let result;
+          let documentId;
+          // Update or insert userChat document
+          if (!isNew) {
+            result = await collectionUserChat.updateOne(query, { $set: updateFields }, { upsert: false });
+            documentId = result.matchedCount > 0 ? userChatId : result.upsertedId?._id;
+          } else {
+            result = await collectionUserChat.insertOne(userChatDocument);
+            documentId = result.insertedId;
+          }
+      
+          if (userLimitCheck.limitIds?.includes(1)) {
+            // Limit reached after processing
+            return reply.status(403).send(userLimitCheck);
+          }
+      
+          // Update message count for the user per day
+          let newMessageCount;
+          if (userLimitCheck.messageCountDoc) {
+            newMessageCount = await collectionMessageCount.findOneAndUpdate(
+              { userId: new fastify.mongo.ObjectId(userId), date: today },
+              { $inc: { count: 1 }, $set: { limit: userLimitCheck.messageLimit } },
+              { returnOriginal: false }
+            );
+          } else {
+            newMessageCount = {
+              userId: new fastify.mongo.ObjectId(userId),
+              date: today,
+              count: 1,
+              limit: userLimitCheck.messageLimit
+            };
+            await collectionMessageCount.insertOne(newMessageCount);
+          }
+      
+          // Reply with summary
+          return reply.send({ 
+            userChatId: documentId, 
+            chatId, 
+            messageCountDoc: newMessageCount,
+            messagesCount: userChatDocument.messagesCount 
+          });
+      
+        } catch (error) {
+          console.log(error);
+          return reply.status(403).send({ error: error.message });
+        }
+      });
+      
     fastify.post('/api/refund-task/:taskId', async (request, reply) => {
         const { taskId } = request.params;
         const db = fastify.mongo.db;
@@ -964,15 +944,111 @@ async function routes(fastify, options) {
         sessions.set(sessionId, { userId, chatId, userChatId, isHidden });
         return reply.send({ sessionId });
     });
+   // This route handles streaming chat completions from OpenAI for a given session ID.
+    // It retrieves the session from memory, fetches user and chat data from MongoDB,
+    // constructs a single system message plus user messages, streams responses from OpenAI,
+    // and updates the database.
+
     fastify.get('/api/openai-chat-completion-stream/:sessionId', async (request, reply) => {
         const { sessionId } = request.params;
         const session = sessions.get(sessionId);
-    
+
+        // If the session does not exist, return 404
         if (!session) {
             reply.status(404).send({ error: 'Session not found' });
             return;
         }
-    
+
+        // Prepare the SSE response headers
+        setSSEHeaders(reply);
+
+        try {
+            // Extract necessary session info
+            const { userId, chatId, userChatId, isHidden } = session;
+            const db = fastify.mongo.db;
+
+            // Retrieve user info and user chat data
+            const userInfo = await getUserInfo(db, userId);
+            let userData = await getUserChatData(db, userId, userChatId);
+            if (!userData) {
+                reply.raw.end();
+                return reply.status(404).send({ error: 'User data not found' });
+            }
+
+            // Retrieve chat document and language
+            let chatDocument = await getChatDocument(db, chatId);
+            const chatname = chatDocument.name;
+            const language = chatDocument.language === 'japanese' ? '日本語' : chatDocument.language;
+
+            // Filter out image messages
+            const userMessagesForCompletion = userData.messages.filter(msg => !msg.content.startsWith('[Image]'));
+
+            // Separate out previous messages and the last user message
+            const previousMessages = userMessagesForCompletion.slice(0, -1);
+            const lastUserMessage = userMessagesForCompletion[userMessagesForCompletion.length - 1];
+
+            // Get the number of pending images in the last 30 minutes
+            const pendingCount = await getPendingImageCount(db, userId);
+
+            // Get current time in Japanese locale
+            const currentTimeInJapanese = getCurrentTimeInJapanese();
+
+            // Construct the single system message content
+            const structuredSystemContent = 
+                `${aiInstructions.replace('{language}', language)}\n` +
+                `- 現在の時刻: ${currentTimeInJapanese}\n` +
+                `- 生成中の画像は${pendingCount}枚。\n` +
+                `必ず${language}で回答してください\n\n` +
+                `- 日本語で話さなければなりません`;
+
+            // Create the single system message
+            const systemMessages = [
+                { "role": "system", "content": structuredSystemContent }
+            ];
+
+            // Ensure there is only one system message by filtering out any other system messages
+            const filteredPreviousMessages = previousMessages.filter(msg => msg.role !== 'system');
+
+            // Prepare full messages for OpenAI completion: system + previous user/assistant messages + last user message
+            const messagesForCompletion = systemMessages.concat(filteredPreviousMessages);
+            const currentUserMessage = { role: 'user', content: lastUserMessage.content };
+            messagesForCompletion.push(currentUserMessage);
+console.log(messagesForCompletion)
+            // Fetch the completion from OpenAI
+            const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, aiModelChat);
+
+            // Add the assistant's response to the user's message history
+            const assistantMessage = {
+                role: 'assistant',
+                content: isHidden ? '[Hidden] ' + completion : completion
+            };
+            userData.messages.push(assistantMessage);
+
+            // Update the timestamps
+            const today = new Date().toLocaleString('en-US', { timeZone: "Asia/Tokyo" });
+            userData.updatedAt = today;
+
+            // Update the last message in chatLastMessage collection
+            await updateChatLastMessage(db, chatId, userId, completion, today);
+
+            // Update user chat messages in the database
+            await updateUserChat(db, userId, userChatId, userData.messages, userData.updatedAt);
+
+            // End the SSE stream after completion
+            reply.raw.end();
+
+        } catch (error) {
+            console.error(error);
+            reply.raw.end();
+            reply.status(500).send({ error: 'Error fetching OpenAI completion' });
+        }
+    });
+
+
+    // -------------------- Helper functions --------------------
+
+    // Sets response headers for SSE
+    function setSSEHeaders(reply) {
         reply.raw.setHeader('Access-Control-Allow-Origin', '*');
         reply.raw.setHeader('Access-Control-Allow-Methods', 'GET');
         reply.raw.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -980,119 +1056,87 @@ async function routes(fastify, options) {
         reply.raw.setHeader('Cache-Control', 'no-cache');
         reply.raw.setHeader('Connection', 'keep-alive');
         reply.raw.flushHeaders();
-    
-        try {
-            const userId = session.userId;
-            const chatId = session.chatId;
-            const userChatId = session.userChatId;
-            const isHidden = session.isHidden;
-            const db = fastify.mongo.db;
-            const collectionChatLastMessage = db.collection('chatLastMessage');
-            const collectionUserChat = db.collection('userChat');
-            const userInfo = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-            let userData = await collectionUserChat.findOne({ userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
-    
-            if (!userData) {
-                reply.raw.end();
-                return reply.status(404).send({ error: 'User data not found' });
-            }
-    
-            const collectionChat = db.collection('chats');
-            let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
-            const chatname = chatDocument.name;
-            const language = chatDocument.language == 'japanese' ? '日本語' : chatDocument.language;
-            const userMessages = userData.messages;
-            const userMessagesForCompletion = userData.messages.filter(msg => !msg.content.startsWith('[Image]'));
-    
-            const previousMessages = userMessagesForCompletion.slice(0, -1);
-            const lastUserMessage = userMessagesForCompletion[userMessagesForCompletion.length - 1];
-    
-            const tasksCollection = db.collection('tasks');
-            const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
-            const pendingCount = await tasksCollection.countDocuments({
-                userId: new fastify.mongo.ObjectId(userId),
-                status: 'pending',
-                updatedAt: { $gte: thirtyMinutesAgo }
-            });
-            const completedCount = await tasksCollection.countDocuments({
-                userId: new fastify.mongo.ObjectId(userId),
-                status: 'completed',
-                updatedAt: { $gte: thirtyMinutesAgo }
-            });
-            const failedCount = await tasksCollection.countDocuments({
-                userId: new fastify.mongo.ObjectId(userId),
-                status: 'failed',
-                updatedAt: { $gte: thirtyMinutesAgo }
-            });
-    
-            const currentDate = new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" });
-            const currentTimeInJapanese = new Date(currentDate).toLocaleString('ja-JP', {
-                weekday: 'long',
-                month: 'short',
-                day: 'numeric',
-                hour: 'numeric',
-                minute: 'numeric'
-            });
-    
-            const structuredMessageContent = `[Hidden]\n- 現在の時刻: ${currentTimeInJapanese}\n- 過去30分の画像生成状況:\n- 保留中: ${pendingCount}\n- 完了: ${completedCount}\n- 失敗: ${failedCount} \n\n 必ず${language}で回答してください\n\n- 日本語で話さなければなりません`;
-            const structuredMessage = { role: 'user', content: structuredMessageContent };
-            const messagesForCompletion = previousMessages.concat(structuredMessage);
+    }
 
-            const instructionsMessage = { role: 'user', content: aiInstructionsShort };
-            //messagesForCompletion.push(instructionsMessage)
-    
-            const currentuserMessage = { role: 'user', content: lastUserMessage.content };
-            messagesForCompletion.push(currentuserMessage);
+    // Fetches user info from 'users' collection
+    async function getUserInfo(db, userId) {
+        return db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+    }
 
-            const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 1000, aiModelChat);
-    
-            const assistantMessage = {
-                role: 'assistant',
-                content: isHidden ? '[Hidden] ' + completion : completion
-            };
-            userMessages.push(assistantMessage);
-    
-            const today = new Date().toLocaleString('en-US', { timeZone: "Asia/Tokyo" });
-            userData.updatedAt = today;
-    
-            const removeContentBetweenStars = function (str) {
-                if (!str) { return str; }
-                return str.replace(/\*.*?\*/g, '').replace(/"/g, '');
-            };
-    
-            await collectionChatLastMessage.updateOne(
-                {
-                    chatId: new fastify.mongo.ObjectId(chatId),
-                    userId: new fastify.mongo.ObjectId(userId)
-                },
-                {
-                    $set: {
-                        lastMessage: {
-                            role: 'assistant',
-                            content: removeContentBetweenStars(completion),
-                            updatedAt: today
-                        }
+    // Fetches user chat data from 'userChat' collection
+    async function getUserChatData(db, userId, userChatId) {
+        return db.collection('userChat').findOne({ 
+            userId: new fastify.mongo.ObjectId(userId), 
+            _id: new fastify.mongo.ObjectId(userChatId) 
+        });
+    }
+
+    // Fetches chat document from 'chats' collection
+    async function getChatDocument(db, chatId) {
+        return db.collection('chats').findOne({ _id: new fastify.mongo.ObjectId(chatId) });
+    }
+
+    // Counts how many images are pending in the last 30 minutes for a specific user
+    async function getPendingImageCount(db, userId) {
+        const tasksCollection = db.collection('tasks');
+        const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+        return tasksCollection.countDocuments({
+            userId: new fastify.mongo.ObjectId(userId),
+            status: 'pending',
+            updatedAt: { $gte: thirtyMinutesAgo }
+        });
+    }
+
+    // Returns current time formatted in Japanese
+    function getCurrentTimeInJapanese() {
+        const currentDate = new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" });
+        return new Date(currentDate).toLocaleString('ja-JP', {
+            weekday: 'long',
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric'
+        });
+    }
+
+    // Updates the last message in the 'chatLastMessage' collection
+    async function updateChatLastMessage(db, chatId, userId, completion, updatedAt) {
+        const collectionChatLastMessage = db.collection('chatLastMessage');
+        await collectionChatLastMessage.updateOne(
+            {
+                chatId: new fastify.mongo.ObjectId(chatId),
+                userId: new fastify.mongo.ObjectId(userId)
+            },
+            {
+                $set: {
+                    lastMessage: {
+                        role: 'assistant',
+                        content: removeContentBetweenStars(completion),
+                        updatedAt
                     }
-                },
-                { upsert: true }
-            );
-    
-            await collectionUserChat.updateOne(
-                {
-                    userId: new fastify.mongo.ObjectId(userId),
-                    _id: new fastify.mongo.ObjectId(userChatId)
-                },
-                { $set: { messages: userMessages, updatedAt: userData.updatedAt } }
-            );
-    
-            reply.raw.end();
-        } catch (error) {
-            console.log(error);
-            reply.raw.end();
-            reply.status(500).send({ error: 'Error fetching OpenAI completion' });
-        }
-    });
-    
+                }
+            },
+            { upsert: true }
+        );
+    }
+
+    // Updates user chat messages in 'userChat' collection
+    async function updateUserChat(db, userId, userChatId, messages, updatedAt) {
+        const collectionUserChat = db.collection('userChat');
+        await collectionUserChat.updateOne(
+            {
+                userId: new fastify.mongo.ObjectId(userId),
+                _id: new fastify.mongo.ObjectId(userChatId)
+            },
+            { $set: { messages, updatedAt } }
+        );
+    }
+
+    // Removes content between asterisks to clean up the message
+    function removeContentBetweenStars(str) {
+        if (!str) return str;
+        return str.replace(/\*.*?\*/g, '').replace(/"/g, '');
+    }    
     
     fastify.post('/api/openai-chat-narration', async (request, reply) => {
         const { chatId, userChatId, role } = request.body;
@@ -1737,8 +1781,11 @@ async function routes(fastify, options) {
             const userData = await fetchUserData(fastify, userId, userChatId);
             if (!userData) return reply.status(404).send({ error: 'User data not found' });
             
-            const lastMessages = [...userData.messages].reverse().filter(m => m.role != 'system').slice(0,20);
-            if (lastMessages.length < 2) return reply.status(400).send({ error: 'Insufficient messages' });
+            const lastMessages = [...userData.messages].filter(m => m.role != 'system' && !m.content.startsWith('[')).slice(0,20);
+            if (lastMessages.length < 2){
+                console.log('Insufficient messages')
+                return reply.status(400).send({ error: 'Insufficient messages' });
+            }
     
             const chatData = await fetchChatData(fastify, chatId);
             const characterDescription = chatData?.imageDescription || null;

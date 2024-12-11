@@ -123,7 +123,7 @@
             </div>
 
             <div class="col-auto">
-                <ul class="nav nav-tabs" id="imageStyleTabs" role="tablist">
+                <ul class="nav nav-tabs justify-content-center" style="overflow-x: scroll; flex-wrap: nowrap;" id="imageStyleTabs" role="tablist">
                     <!-- Tabs will be dynamically generated here -->
                 </ul>
             </div>
@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <li class="nav-item" role="presentation">
                     <button class="nav-link ${isActive}" id="${style}-tab" data-style="${model}" data-version="${version}" type="button" role="tab">
                         <img src="${imgSrc}" alt="${altText}" class="tab-thumb thumb-option rounded me-2">
-                        <span>${altText}</span>
+                        <span class="d-none">${altText}</span>
                     </button>
                 </li>
             `;

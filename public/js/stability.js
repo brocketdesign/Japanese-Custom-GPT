@@ -50,8 +50,6 @@ window.refundUser = function(taskId,imageType){
         method: 'POST',
         success: function(response) {
             console.log('Refund Success:', response);
-            const refundedAmount = response.refundedAmount
-            showNotification(refundedAmount+'コインが返金されました','success')
         },
         error: function(xhr, status, error) {
             console.error('Refund Error:', status, error, xhr);
@@ -60,13 +58,10 @@ window.refundUser = function(taskId,imageType){
 }
 // Generate Image Description Backend using Novita
 window.generateImageDescriptionBackend = function(imageUrl = null, chatId, callback) {
-  console.log('generateImageDescriptionBackend called with imageUrl:', imageUrl, 'chatId:', chatId);
   
   imageUrl = imageUrl ? imageUrl : $('#chatImageUrl').val();
-  console.log('Final imageUrl after DOM retrieval:', imageUrl);
   
   const language = $('#language').val() || 'japanese';
-  console.log('Language selected:', language);
 
   if (!imageUrl && !chatId) {
       console.error('generateImageDescriptionBackend Error: Image URL or chatId must be provided.');
@@ -75,10 +70,8 @@ window.generateImageDescriptionBackend = function(imageUrl = null, chatId, callb
   }
 
   const system = createSystemPayloadImage(language);
-  console.log('System payload for image description:', system);
   
   const apiUrl = '/api/openai-image-description';
-  console.log('API URL for image description:', apiUrl);
 
   $.ajax({
       url: apiUrl,
@@ -86,7 +79,6 @@ window.generateImageDescriptionBackend = function(imageUrl = null, chatId, callb
       contentType: 'application/json',
       data: JSON.stringify({ system, imageUrl, chatId }),
       success: function(response) {
-          console.log('generateImageDescriptionBackend Success:', response);
           if (callback) {
               callback(response);
           }

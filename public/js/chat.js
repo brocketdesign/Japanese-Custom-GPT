@@ -73,7 +73,7 @@ $(document).ready(async function() {
         if (event.data.event === 'imageFav') {
             const description = event.data.description
             if(!description)return
-            let message = `[Hidden] I liked one of your picture. That one : ${description}. Thanks me and comment about the moment you took the picture.`
+            let message = `[Hidden] I liked one of your picture. That one : ${description}. Provide a short answer to thank me. Do not include any trigger in your answer. Respond in ${language}.`
             addMessageToChat(chatId, userChatId, 'user', message,function(){
                 generateCompletion()
             });
@@ -90,7 +90,7 @@ $(document).ready(async function() {
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageDone') {
             const prompt = event.data.prompt
-            let message = `[Hidden] I received the images. The image is about : ${prompt}. \n Write a message to inform me of that.  \n Do not include [Hidden] in your response. Respond in ${language}.`
+            let message = `[Hidden] I received the images. The image is about : ${prompt}. \n Write a short message to tell me which image has been sent, and ask me what I think of it.  \n Do not include [Hidden] in your response. Respond in ${language}.`
             addMessageToChat(chatId, userChatId, 'user', message,function(){
                 generateCompletion()
             });
@@ -99,7 +99,7 @@ $(document).ready(async function() {
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageError') {
             const error = event?.data?.error || ''
-            let message = `[Hidden] There way an error. The image could not be generated ${error}. Tell me that I will get the coins refunded and should try to generate a new image.`
+            let message = `[Hidden] There way an error. The image could not be generated ${error}.`
             addMessageToChat(chatId, userChatId, 'user', message,function(){
                 generateCompletion()
             });
@@ -1860,19 +1860,10 @@ $(document).ready(async function() {
     const handleTrigger = (command) => {
         switch (command) {
             case 'image_sfw':
-                showPaymentImage('sfw');
+                buyImage('sfw');
                 break;
             case 'image_nsfw':
-                showPaymentImage('nsfw');
-                break;
-            case '画像_sfw':
-                showPaymentImage('sfw');
-                break;
-            case '画像_nsfw':
-                showPaymentImage('nsfw');
-                break;
-            case 'buy_coins':
-                showBuyCoins()
+                buyImage('nsfw');
                 break;
             default:
                 console.warn(`Unhandled trigger command: ${command}`);
@@ -2297,18 +2288,18 @@ $(document).ready(async function() {
     // Click handler for #showPrompts
     $(document).on('click','#showPrompts', function() {
         getPromptsData(function(prompts) {
-            const header = `<p style="font-size:16px;" class="px-3 text-start mt-3 mb-0 pb-0">画像を生成するためのポーズを選んでください。</p>`;
+            const header = `<p style="font-size:16px;" class="px-3 text-start my-3  pb-0">画像を生成するためのポーズを選んでください。</p>`;
             renderPopup(prompts, header);
         });
     });
 
     function renderPopup(prompts, header) {
-        const nsfwEnabled = sessionStorage.getItem('nsfwEnabled') === 'true';
+        const nsfwEnabled = true || sessionStorage.getItem('nsfwEnabled') === 'true';
         renderSwalPopup(header, prompts, nsfwEnabled);
     }
 
     function renderSwalPopup(header, prompts, nsfwEnabled) {
-        const switchType = `<div class="form-check text-start my-3 ps-3">
+        const switchType = `<div class="form-check text-start my-3 ps-3 d-none">
             <input type="checkbox" class="btn-check" id="nsfwCheckbox" autocomplete="off" ${nsfwEnabled ? 'checked' : ''}>
             <label class="btn btn-outline-danger btn-sm rounded" for="nsfwCheckbox">
                 ${window.translations.imageForm.nsfwImage}
@@ -2410,25 +2401,25 @@ $(document).ready(async function() {
             Swal.close();
         });
     }
-    function showPaymentImage(type) {
-        const messageId = `msg_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-        const message = `
-        <div id="${messageId}" class="d-flex justify-content-start">
-            ${type == 'sfw' ? `
-            <button class="btn custom-gradient-bg shadow-0 w-45 me-2" 
-                onclick="buyImage('${messageId}', 'sfw')">
-                <span>画像を生成する</span>
-            </button>` : `
-            <button class="btn custom-gradient-bg danger shadow-0 w-45" 
-                onclick="buyImage('${messageId}', 'nsfw')">
-                <span>成人向け画像を生成する</span>
-            </button>`}
-        </div>
-        `;
-        displayMessage('assistant', message);
-    }
-
-    async function generateItemData(type) {
+    window.buyImage = function(type) {
+        const imageLoaderElement = displayImageLoader();
+        initiatePurchaseImage(type, userId, chatId);
+        generateItemData(type)
+            .then((item) => {
+                if (item && item.length > 0) {
+                    const itemId = item[0]._id;
+                    updateLoaderWithId(itemId);
+                    generateImageNovita(API_URL, userId, chatId, userChatId, itemId, thumbnail, type);
+                } else {
+                    imageLoaderElement.remove();
+                }
+            })
+            .catch((error) => {
+                imageLoaderElement.remove();
+            });
+    };
+    
+    function generateItemData(type) {
         return new Promise((resolve, reject) => {
             $.ajax({
                 url: '/api/gen-item-data',
@@ -2439,43 +2430,16 @@ $(document).ready(async function() {
                     if (response.length > 0) {
                         resolve(response);
                     } else {
-                        refundUser(null,type)
-                        reject(); // or handle an empty response differently if needed
+                        reject('Empty response');
                     }
                 },
                 error: function(xhr, status, error) {
                     console.error('Error checking purchase proposal:', error);
-                    refundUser(null,type)
-                    reject();
+                    reject(error);
                 }
             });
         });
-    }
-    window.buyImage = async function(messageId,type){
-        const imageLoaderElement = displayImageLoader();
-    
-        const response = await initiatePurchaseImage(type, userId, chatId)
-        if (response.success) {
-            let message = window.translations.imageForm.imagePurchaseMessageStart || `{type}画像を購入しました`
-            message = message
-            .replace('{type}',type == 'nsfw' ? window.translations.imageForm.nsfwImage : window.translations.imageForm.sfwImage)
-            displayMessage('user', message, function() {
-                addMessageToChat(chatId, userChatId, 'user', message);
-            });
-            const hiddenMessage = `[Hidden] I bought a ${type} image. The image generation process is starting now. It may take a minute or so to complte. Thanks me and tell me to wait. Do not include instruction to buy image in your message since I just bought one.`
-            addMessageToChat(chatId, userChatId, 'user', hiddenMessage, function(){
-                generateCompletion()
-            });
-        } 
-        const item = await generateItemData(type);
-        if(item){
-            const itemId = item[0]._id;
-            updateLoaderWithId(itemId);
-            generateImageNovita(API_URL, userId, chatId, userChatId, itemId, thumbnail, type);
-        }else{
-            imageLoaderElement.remove();
-        }
-    }
+    }    
     
     window.displayImageLoader = function(){
         const imageUrl = "/img/image-placeholder.gif";

@@ -1031,7 +1031,7 @@ async function routes(fastify, options) {
             const messagesForCompletion = systemMessages.concat(filteredPreviousMessages);
             const currentUserMessage = { role: 'user', content: lastUserMessage.content };
             messagesForCompletion.push(currentUserMessage);
-console.log(messagesForCompletion)
+
             // Fetch the completion from OpenAI
             const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, aiModelChat);
 

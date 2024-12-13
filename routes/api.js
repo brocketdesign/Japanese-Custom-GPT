@@ -601,10 +601,10 @@ async function routes(fastify, options) {
       
           // Prepare basic user details
           const userDetails = !user.isTemporary 
-            ? `私の名前は${user.nickname}です。性別は${user.gender}で、誕生日は${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日です。`
+            ? `私の名前は${user.nickname}です。性別は${user.gender}で、誕生日は${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日です。${user.bio ? user.bio : ''}`
             : '';
-      
-          // System message (always set it)
+
+            // System message (always set it)
           const systemMessages = [
             { "role": "system", "content": `${aiInstructions.replace('{language}',language)}` }
           ];
@@ -615,15 +615,12 @@ async function routes(fastify, options) {
           const chatRule = convert(chatDocument?.rule || '');
       
           // Introduce the character in a user message
-          const baseUserMessage = {
-            "role": "user",
-            "content": `[Hidden] あなたは${chatDocument.name}という名前のキャラクターです。\nこちらがあなたのキャラクターの説明です:\n${chatDescription.trim()}\n${chatRule.trim()}\n記載された通りにキャラクターを保ってください。\n会話のトーンはフレンドリーで、チャットを突然終了しないようにしてください。\n応答はカジュアルで簡潔なものとし、${language}で短く魅力的な応答を心がけてください。\n${userDetails}`,
-            "name": "master"
-          };
-      
+          const baseUserMessage = `あなたは${chatDocument.name}という名前のキャラクターです。\nこちらがあなたのキャラクターの説明です:\n${chatDescription.trim()}\n${chatRule.trim()}\n記載された通りにキャラクターを保ってください。\n会話のトーンはフレンドリーで、チャットを突然終了しないようにしてください。\n応答はカジュアルで簡潔なものとし、${language}で短く魅力的な応答を心がけてください。\n${userDetails}`;
+          systemMessages[0].content += baseUserMessage
+
           // Different starting message depending on user status
           const startMessage = !user.isTemporary 
-            ? `[Hidden] Introduce yourself shortly and greet the user。Inform the user that you can send image but do not include any triger in this message. You MUST NOT include the trigger yet, only a short greeting message. Respond in ${language} with a simple message, as you will do in a normal chat.`
+            ? `[Hidden] Introduce yourself shortly and greet the user。Inform the user that you can send image but do not include any triger in this message. You MUST NOT include the trigger yet, only a short greeting message. Respond in ${language}. You must provide a simple message only, do not include any instructions.`
             : "[Hidden] 挨拶から始め、ログインを促してください。確認から始めるのではなく、直接挨拶とログインのお願いをしてください。";
       
           // If new user chat or not found, create a new document
@@ -635,7 +632,6 @@ async function routes(fastify, options) {
               updatedAt: today,
               messages: [
                 ...systemMessages,
-                baseUserMessage,
                 { "role": "user", "content": startMessage,"name": "master" }
               ]
             };
@@ -994,8 +990,24 @@ async function routes(fastify, options) {
             // Get current time in Japanese locale
             const currentTimeInJapanese = getCurrentTimeInJapanese();
 
+            const user = request.user;
+            
+            // Prepare basic user details
+            const userDetails = !user.isTemporary 
+            ? `私の名前は${user.nickname}です。性別は${user.gender}で、誕生日は${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日です。${user.bio ? user.bio : ''}`
+            : '';
+
+            // Convert fields from chat document
+            const chatPurpose = convert(chatDocument?.purpose || '');
+            const chatDescription = convert(chatDocument?.description || '');
+            const chatRule = convert(chatDocument?.rule || '');
+
+            // Introduce the character in a user message
+            const baseUserMessage = `あなたは${chatDocument.name}という名前のキャラクターです。\nこちらがあなたのキャラクターの説明です:\n${chatDescription.trim()}\n${chatRule.trim()}\n記載された通りにキャラクターを保ってください。\n会話のトーンはフレンドリーで、チャットを突然終了しないようにしてください。\n応答はカジュアルで簡潔なものとし、${language}で短く魅力的な応答を心がけてください。\n${userDetails}`;
+
             // Construct the single system message content
             const structuredSystemContent = 
+                baseUserMessage +
                 `${aiInstructions.replace('{language}', language)}\n` +
                 `- 現在の時刻: ${currentTimeInJapanese}\n` +
                 `- 生成中の画像は${pendingCount}枚。\n` +

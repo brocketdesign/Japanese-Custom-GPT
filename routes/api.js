@@ -617,12 +617,13 @@ async function routes(fastify, options) {
           // Introduce the character in a user message
           const baseUserMessage = {
             "role": "user",
-            "content": `[Hidden] あなたは${chatDocument.name}という名前のキャラクターです。\nこちらがあなたのキャラクターの説明です:\n${chatDescription.trim()}\n${chatRule.trim()}\n記載された通りにキャラクターを保ってください。\n会話のトーンはフレンドリーで、チャットを突然終了しないようにしてください。\n応答はカジュアルで簡潔なものとし、${language}で短く魅力的な応答を心がけてください。\n${userDetails}`
+            "content": `[Hidden] あなたは${chatDocument.name}という名前のキャラクターです。\nこちらがあなたのキャラクターの説明です:\n${chatDescription.trim()}\n${chatRule.trim()}\n記載された通りにキャラクターを保ってください。\n会話のトーンはフレンドリーで、チャットを突然終了しないようにしてください。\n応答はカジュアルで簡潔なものとし、${language}で短く魅力的な応答を心がけてください。\n${userDetails}`,
+            "name": "master"
           };
       
           // Different starting message depending on user status
           const startMessage = !user.isTemporary 
-            ? `[Hidden] Introduce yourself shortly and greet the user。Inform the user that you can send image but do not include any triger in this message. You MUST NOT include the trigger yet, only a short greeting message. Respond in ${language}.`
+            ? `[Hidden] Introduce yourself shortly and greet the user。Inform the user that you can send image but do not include any triger in this message. You MUST NOT include the trigger yet, only a short greeting message. Respond in ${language} with a simple message, as you will do in a normal chat.`
             : "[Hidden] 挨拶から始め、ログインを促してください。確認から始めるのではなく、直接挨拶とログインのお願いをしてください。";
       
           // If new user chat or not found, create a new document
@@ -635,7 +636,7 @@ async function routes(fastify, options) {
               messages: [
                 ...systemMessages,
                 baseUserMessage,
-                { "role": "user", "content": startMessage }
+                { "role": "user", "content": startMessage,"name": "master" }
               ]
             };
           } else {
@@ -1693,7 +1694,10 @@ console.log(messagesForCompletion)
                 return reply.status(404).send({ error: 'User data not found' });
             }
     
-            const newMessage = { role: role, content: message };
+            let newMessage = { role: role, content: message };
+            if (message.startsWith('[Hidden]')) {
+                newMessage.name = 'master';
+            }            
             userData.messages.push(newMessage);
             userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
     

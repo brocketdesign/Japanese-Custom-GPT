@@ -74,7 +74,7 @@ $(document).ready(async function() {
             const description = event.data.description
             if(!description)return
             let message = `[Hidden] I liked one of your picture. That one : ${description}. Provide a short answer to thank me. Do not include any trigger in your answer. Respond in ${language}.`
-            addMessageToChat(chatId, userChatId, 'user', message,function(){
+            addMessageToChat(chatId, userChatId, 'user', message, function(){
                 generateCompletion()
             });
         }

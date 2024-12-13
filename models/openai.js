@@ -33,6 +33,7 @@ const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'me
         let fullCompletion = "";
         let insideBrackets = false;
         let bracketContent = "";
+        let triggerSent = false;
 
         const parser = createParser((event) => {
             try {
@@ -47,17 +48,15 @@ const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'me
                                 bracketContent = "";
                             } else {
                                 fullCompletion += char;
-                                res.write(
-                                    `data: ${JSON.stringify({ type: 'text', content: char })}\n\n`
-                                );
+                                res.write(`data: ${JSON.stringify({ type: 'text', content: char })}\n\n`);
                             }
                         } else {
                             if (char === ']') {
                                 insideBrackets = false;
-                        
-                                res.write(
-                                    `data: ${JSON.stringify({ type: 'trigger', command: bracketContent })}\n\n`
-                                );
+                                if (!triggerSent) {
+                                    res.write(`data: ${JSON.stringify({ type: 'trigger', command: bracketContent })}\n\n`);
+                                    triggerSent = true;
+                                }
                             } else {
                                 bracketContent += char;
                             }
@@ -81,6 +80,7 @@ const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'me
         throw error;
     }
 };
+
 
 async function generateCompletion(systemPrompt, userMessage, maxToken = 1000, aiModel =`meta-llama/llama-3.1-70b-instruct`) {
     const response = await fetch("https://api.novita.ai/v3/openai/chat/completions", {

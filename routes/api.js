@@ -1020,7 +1020,12 @@ async function routes(fastify, options) {
             ];
 
             // Ensure there is only one system message by filtering out any other system messages
-            const filteredPreviousMessages = previousMessages.filter(msg => msg.role !== 'system');
+            const filteredPreviousMessages = previousMessages
+            .filter(msg => msg.role !== 'system') // Keep messages where role is not 'system'
+            .filter((msg, _, arr) => 
+                msg.name !== 'master' || arr.findIndex(m => m.name === 'master') === arr.lastIndexOf(m => m.name === 'master')
+            );
+
 
             // Prepare full messages for OpenAI completion: system + previous user/assistant messages + last user message
             const messagesForCompletion = systemMessages.concat(filteredPreviousMessages);
@@ -1707,9 +1712,11 @@ console.log(messagesForCompletion)
             }
     
             let newMessage = { role: role, content: message };
+
             if (message.startsWith('[Hidden]')) {
                 newMessage.name = 'master';
             }            
+
             userData.messages.push(newMessage);
             userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
     

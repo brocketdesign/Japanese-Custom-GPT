@@ -117,7 +117,7 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
             return;
         }
 
-        let userMessage = `[Hidden] I did not receive the image yet. Wait for me to see the image. The image is being sent right now. Here is the description: ${prompt}. \n respond in your character language exclusively.`;
+        let userMessage = `I did not receive the image yet. Wait for me to see the image. The image is being sent right now. Here is the description: ${prompt}. \n respond in your character language exclusively.`;
         //window.postMessage({ event: 'addMessageToChat', role:'user', message: userMessage, completion:true}, '*');
 
         const API_ENDPOINT = `${API_URL}/novita/product2img`;
@@ -323,7 +323,7 @@ async function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, i
                 .replace('{prompt_title}', prompt_title) || `${prompt_title}で${type}画像をリクエストしました。`;
             window.postMessage({ event: 'displayMessage', role:'user', message: userMessage, completion : false , image : false, messageId: false }, '*');
 
-            const hiddenMessage = `[Hidden] I bought a ${formType} image. The image generation process is starting now. It may take a minute or so to complte. Thanks me and tell me to wait. Do not include instruction to buy image in your message since I just bought one.`
+            const hiddenMessage = `I bought a ${formType} image. The image generation process is starting now. It may take a minute or so to complte. Thanks me and tell me to wait. Do not include instruction to buy image in your message since I just bought one.`
             window.postMessage({ event: 'imageStart', message: hiddenMessage}, '*');
 
             let messageId
@@ -449,7 +449,7 @@ function displayCustomPromptInput(API_URL, userId, chatId, userChatId, thumbnail
             $('#chatContainer').append(loaderElement);
             $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
 
-            const hiddenMessage = `[Hidden] I just ask for an image.I have specified a prompt for the images. The images are not available yet; I will tell you when they are available. Your answer must not start with [Hidden] .`;
+            const hiddenMessage = `I just ask for an image.I have specified a prompt for the images. The images are not available yet; I will tell you when they are available .`;
             window.postMessage({ event: 'imageStart', message: hiddenMessage }, '*');
             //window.postMessage({ event: 'displayMessage', role:'user' message: '', completion : false }, '*');
             try {
@@ -624,7 +624,7 @@ async function setupFormEventListeners(uniqueId, formType, config) {
         $(`${formSelector} .spinner`).show();
 
         // Send hidden message to the AI character
-        const hiddenMessage = `[Hidden] I just ask you for an image about: ${prompt}. 
+        const hiddenMessage = `I just ask you for an image about: ${prompt}. 
         The image is not available yet; I will tell you when they are available.`;
         window.postMessage({ event: 'imageStart', message: hiddenMessage }, '*');
 

@@ -73,7 +73,7 @@ $(document).ready(async function() {
         if (event.data.event === 'imageFav') {
             const description = event.data.description
             if(!description)return
-            let message = `[Hidden] I liked one of your picture. Provide a short answer to thank me. Respond in ${language}.`
+            let message = `I liked one of your picture. Provide a short answer to thank me. Respond in ${language}.`
             addMessageToChat(chatId, userChatId, 'user', message, function(){
                 generateCompletion()
             });
@@ -90,7 +90,7 @@ $(document).ready(async function() {
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageDone') {
             const prompt = event.data.prompt
-            let message = `[Hidden] I received an image from you. Ask me what I think of it.  \n Do not include [Hidden] in your response. Respond in ${language}.`
+            let message = `I received an image from you. Ask me what I think of it.  \n Respond in ${language}.`
             addMessageToChat(chatId, userChatId, 'user', message,function(){
                 generateCompletion()
             });
@@ -99,7 +99,7 @@ $(document).ready(async function() {
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageError') {
             const error = event?.data?.error || ''
-            let message = `[Hidden] There way an error. The image could not be generated ${error}.`
+            let message = `There way an error. The image could not be generated ${error}.`
             addMessageToChat(chatId, userChatId, 'user', message,function(){
                 generateCompletion()
             });
@@ -107,7 +107,7 @@ $(document).ready(async function() {
     });
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageNsfw') {
-            let message = `[Hidden] Tell me that I can unlock more personal and attractive images if I subscribe to the premium plan which is 300 JPY per month if I pay yearly. is not that cheap ?! It is to celebrate the lauching of this app, ラミックス ! Plus I get 1000 coins to enjoy plenty of pictures of you. \n Provide a new message every time.`
+            let message = `Tell me that I can unlock more personal and attractive images if I subscribe to the premium plan which is 300 JPY per month if I pay yearly. is not that cheap ?! It is to celebrate the lauching of this app, ラミックス ! Plus I get 1000 coins to enjoy plenty of pictures of you. \n Provide a new message every time.`
             addMessageToChat(chatId, userChatId, 'user', message,function(){
                 generateCompletion(function(){
                     const message = `
@@ -1085,7 +1085,7 @@ $(document).ready(async function() {
         if(userChat[1].role === "user"){
             let userMessage = userChat[2];
             const isStarter = userMessage.content.startsWith("[Starter]") || userMessage.content.startsWith("Invent a situation");
-            const isHidden = userMessage.content.startsWith("[Hidden]");
+            const isHidden = userMessage.content.startsWith("[Hidden]") || userMessage.name == 'master';
             if(!isStarter && !isHidden){
                 let messageHtml = `
                     <div class="d-flex flex-row justify-content-end mb-4 message-container">
@@ -1154,7 +1154,7 @@ $(document).ready(async function() {
                 // Check if the next message is a user message and display it
                 if (i + 1 < userChat.length && userChat[i + 1].role === "user") {
                     let userMessage = userChat[i + 1];
-                    const isHidden = userMessage.content.startsWith("[Hidden]");
+                    const isHidden = userMessage.content.startsWith("[Hidden]") || userMessage.name == 'master';
                     const isStarter = userMessage.content.startsWith("[Starter]") || userMessage.content.startsWith("Invent a situation");
                     if(!isStarter && !isHidden){
                         messageHtml += `
@@ -1195,7 +1195,7 @@ $(document).ready(async function() {
     
             if (chatMessage.role === "user") {
                 const isStarter = chatMessage?.content?.startsWith("[Starter]") || chatMessage?.content?.startsWith("Invent a situation") || chatMessage?.content?.startsWith("Here is your character description");
-                const isHidden = chatMessage?.content?.startsWith("[Hidden]");
+                const isHidden = chatMessage?.content?.startsWith("[Hidden]") || userMessage.name == 'master';
                 if (!isStarter && !isHidden) {
                     messageHtml = `
                         <div class="d-flex flex-row justify-content-end mb-4 message-container">
@@ -1224,7 +1224,7 @@ $(document).ready(async function() {
                     const imageId = chatMessage.content.replace("[Image]", "").trim();
                     messageHtml = await getImageUrlById(imageId, designStep, thumbnail); // Fetch and display image
                 } else {
-                    const isHidden = chatMessage.content.startsWith("[Hidden]");
+                    const isHidden = chatMessage.content.startsWith("[Hidden]") || userMessage.name == 'master';
                     if (chatMessage.content && !isHidden) {
                         let message = removeContentBetweenStars(chatMessage.content);
                         messageHtml = `

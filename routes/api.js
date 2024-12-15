@@ -619,8 +619,8 @@ async function routes(fastify, options) {
 
           // Different starting message depending on user status
           const startMessage = !user.isTemporary 
-            ? `[Hidden] Introduce yourself shortly and greet the user。Inform me that you can send image. Ask me if I have a request. Respond in ${language}.`
-            : "[Hidden] 挨拶から始め、ログインを促してください。確認から始めるのではなく、直接挨拶とログインのお願いをしてください。";
+            ? `Introduce yourself shortly and greet the user。Inform me that you can send image. Ask me if I have a request. Respond in ${language}.`
+            : "挨拶から始め、ログインを促してください。確認から始めるのではなく、直接挨拶とログインのお願いをしてください。";
       
           // If new user chat or not found, create a new document
           if (!userChatDocument || isNew) {
@@ -1040,10 +1040,8 @@ async function routes(fastify, options) {
 
             // Prepare full messages for OpenAI completion: system + previous user/assistant messages + last user message
             const messagesForCompletion = systemMessages.concat(filteredPreviousMessages);
-            const currentUserMessage = { role: 'user', content: lastUserMessage.content };
-            if (lastUserMessage.content.startsWith('[Hidden]')) {
-                currentUserMessage.name = 'master';
-              }
+            const currentUserMessage = { role: 'user', content: lastUserMessage.content, name:lastUserMessage.name };
+console.log({currentUserMessage})
               messagesForCompletion.push(currentUserMessage);
               console.log(messagesForCompletion);
               
@@ -1058,7 +1056,7 @@ async function routes(fastify, options) {
             // Add the assistant's response to the user's message history
             const assistantMessage = {
                 role: 'assistant',
-                content: isHidden ? '[Hidden] ' + completion : completion
+                content: completion
             };
             userData.messages.push(assistantMessage);
 
@@ -1311,7 +1309,7 @@ async function routes(fastify, options) {
                     ` + 
                     userMessages
                     .map(msg => 
-                        msg.role !== 'system' && !msg.content.startsWith('[Hidden]') && !msg.content.startsWith('[Starter]') && !msg.content.startsWith('[Image]')
+                        msg.role !== 'system' && msg.name !== 'master' && !msg.content.startsWith('[Image]')
                             ? `${msg.content.replace('[Narrator]', '')}` 
                             : ''
                     )
@@ -1626,11 +1624,7 @@ async function routes(fastify, options) {
                 return reply.status(404).send({ error: 'User data not found' });
             }
     
-            let newMessage = { role: role, content: message };
-
-            if (message.startsWith('[Hidden]')) {
-                newMessage.name = 'master';
-            }            
+            let newMessage = { role: role, content: message, name: 'master' };        
 
             userData.messages.push(newMessage);
             userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });

@@ -1,8 +1,11 @@
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 const { createParser } = require('eventsource-parser');
 const axios = require('axios');
+const { OpenAI } = require("openai");
+const { z } = require("zod");
+const { zodResponseFormat } = require("openai/helpers/zod");
 
-const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'meta-llama/llama-3.1-70b-instruct') => {
+const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'meta-llama/llama-3.1-70b-instruct',genImage) => {
     try {
         let response = await fetch(
             "https://api.novita.ai/v3/openai/chat/completions",
@@ -31,44 +34,26 @@ const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'me
         }
 
         let fullCompletion = "";
-        let insideBrackets = false;
-        let bracketContent = "";
         let triggerSent = false;
 
         const parser = createParser((event) => {
-            try {
-                if (event.type === 'event' && event.data !== "[DONE]") {
-                    const content = JSON.parse(event.data).choices[0].delta?.content || "";
-
-                    for (let i = 0; i < content.length; i++) {
-                        let char = content[i];
-                        if (!insideBrackets) {
-                            if (char === '[') {
-                                insideBrackets = true;
-                                bracketContent = "";
-                            } else {
-                                fullCompletion += char;
-                                res.write(`data: ${JSON.stringify({ type: 'text', content: char })}\n\n`);
-                            }
-                        } else {
-                            if (char === ']') {
-                                insideBrackets = false;
-                                if (!triggerSent) {
-                                    res.write(`data: ${JSON.stringify({ type: 'trigger', command: bracketContent })}\n\n`);
-                                    triggerSent = true;
-                                }
-                            } else {
-                                bracketContent += char;
-                            }
-                        }
-                    }
+            if (event.type === 'event' && event.data !== "[DONE]") {
+                const content = JSON.parse(event.data).choices[0].delta?.content || "";
+                for (let i = 0; i < content.length; i++) {
+                    const char = content[i];
+                    fullCompletion += char;
+                    res.write(`data: ${JSON.stringify({ type: 'text', content: char })}\n\n`);
                 }
-            } catch (error) {
-                console.error("Error in parser:", error);
-                console.error("Event causing error:", event);
+                if (genImage?.image_request && !triggerSent) {
+                    res.write(`data: ${JSON.stringify({ 
+                      type: 'trigger', 
+                      command: genImage.underwear ? 'image_sfw' : (genImage.nsfw ? 'image_nsfw' : 'image_sfw') 
+                    })}\n\n`);
+                    triggerSent = true;
+                  }                  
             }
         });
-
+        
         for await (const chunk of response.body) {
             parser.feed(new TextDecoder('utf-8').decode(chunk));
         }
@@ -221,6 +206,45 @@ const moduleCompletion = async (messages) => {
 
 }
 
+// Define the schema for the response format
+const formatSchema = z.object({
+    nsfw: z.boolean(),
+    image_request: z.boolean(),
+    underwear: z.boolean()
+  });
+  
+  const checkImageRequest = async (messages) => {
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  
+    // Define the system prompt
+    const systemPrompt = `
+      Analyze the conversation to determine:
+      1. If the content involves NSFW (Not Safe For Work) topics, specifically nudity (not including underwear), return 'nsfw: true'. Otherwise, 'nsfw: false'.
+      2. If underwear is involved instead of full nudity, return 'underwear: true'. Otherwise, 'underwear: false'.
+      3. If the user is requesting or discussing image generation, return 'image_request: true' or 'image_request: false'.
+      Ensure the response is structured as:
+      { "nsfw": boolean, "image_request": boolean, "underwear": boolean }
+    `;
+  
+    const updatedMessages = [
+      { role: "system", content: systemPrompt },
+      ...messages
+    ];
+  
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: updatedMessages,
+      response_format: zodResponseFormat(formatSchema, "myResponse"),
+      max_tokens: 600,
+      temperature: 1,
+      top_p: 0.95,
+      frequency_penalty: 0.75,
+      presence_penalty: 0.75,
+    });
+  
+    return JSON.parse(response.choices[0].message.content);
+  };
+  
 async function fetchNewAPICompletion(userMessages, rawReply, chatname, timeout = 30000) {
     // Convert userMessages to the required format
     const context = userMessages
@@ -345,4 +369,8 @@ const fetchOpenAICustomResponse = async (customPrompt, messages, res, maxToken =
 };
 
 
-  module.exports = {fetchOpenAICompletion,moduleCompletion,generateCompletion,fetchOpenAINarration, fetchNewAPICompletion, fetchOpenAICustomResponse}
+  module.exports = {
+    fetchOpenAICompletion,moduleCompletion,generateCompletion,fetchOpenAINarration, 
+    fetchNewAPICompletion, fetchOpenAICustomResponse,
+    checkImageRequest
+}

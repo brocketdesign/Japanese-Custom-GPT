@@ -73,7 +73,7 @@ $(document).ready(async function() {
         if (event.data.event === 'imageFav') {
             const description = event.data.description
             if(!description)return
-            let message = `[Hidden] I liked one of your picture. That one : ${description}. Provide a short answer to thank me. Do not include any trigger in your answer. Respond in ${language}.`
+            let message = `[Hidden] I liked one of your picture. Provide a short answer to thank me. Respond in ${language}.`
             addMessageToChat(chatId, userChatId, 'user', message, function(){
                 generateCompletion()
             });
@@ -90,7 +90,7 @@ $(document).ready(async function() {
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageDone') {
             const prompt = event.data.prompt
-            let message = `[Hidden] I received the images. The image is about : ${prompt}. \n Write a short message to tell me which image has been sent, and ask me what I think of it.  \n Do not include [Hidden] in your response. Respond in ${language}.`
+            let message = `[Hidden] I received an image from you. Ask me what I think of it.  \n Do not include [Hidden] in your response. Respond in ${language}.`
             addMessageToChat(chatId, userChatId, 'user', message,function(){
                 generateCompletion()
             });
@@ -978,12 +978,12 @@ $(document).ready(async function() {
             const botResponseContainer = $(`
                 <div id="starter-${uniqueId}" class="starter-on">
                     <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
-                        <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
+                        <img src="${ thumbnail ? thumbnail : '/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
                         <div class="audio-controller" style="display:none">
                             <button id="play-${uniqueId}" class="audio-content badge bg-dark">►</button>
                         </div>
                         <div id="completion-${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">
-                            <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
+                            <img src="/img/load-dot.gif" width="50px">
                         </div>
                     </div>
                     <div id="response-${uniqueId}" class="choice-container" ></div>
@@ -1092,7 +1092,7 @@ $(document).ready(async function() {
                         <div id="response-1" class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
                             ${marked.parse(userMessage.content)}
                         </div>
-                        ${persona ? `<img src="${persona.chatImageUrl || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">`:''}
+                        ${persona ? `<img src="${persona.chatImageUrl || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">`:''}
                     </div>
                 </div>
                 `;
@@ -1138,7 +1138,7 @@ $(document).ready(async function() {
                         messageHtml += `
                             <div id="container-${designStep}">
                                 <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
-                                    <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+                                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
                                     <div class="audio-controller">
                                         <button id="play-${designStep}" class="audio-content badge bg-dark" data-content="${message}">►</button>
                                     </div>
@@ -1162,7 +1162,7 @@ $(document).ready(async function() {
                                 <div id="response-${designStep}" class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
                                     ${marked.parse(userMessage.content)}
                                 </div>
-                                ${persona ? `<img src="${persona.chatImageUrl || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">`:''}
+                                ${persona ? `<img src="${persona.chatImageUrl || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">`:''}
                             </div>
                         </div>
                         `;
@@ -1202,7 +1202,7 @@ $(document).ready(async function() {
                             <div class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
                                 ${marked.parse(chatMessage.content)}
                             </div>
-                            ${persona ? `<img src="${persona.chatImageUrl || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">` : ''}
+                            ${persona ? `<img src="${persona.chatImageUrl || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">` : ''}
                         </div>
                     `;
                 }
@@ -1230,7 +1230,7 @@ $(document).ready(async function() {
                         messageHtml = `
                             <div id="container-${designStep}">
                                 <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
-                                    <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+                                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
                                     <div class="audio-controller">
                                         <button id="play-${designStep}" class="audio-content badge bg-dark" data-content="${message}">►</button>
                                     </div>
@@ -1296,7 +1296,7 @@ $(document).ready(async function() {
                         const messageHtml = `
                         <div id="container-${designStep}">
                             <div class="d-flex flex-row justify-content-start mb-4 message-container ${isBlur ? 'unlock-nsfw':''}">
-                                <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
+                                <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
                                 <div class="ms-3 position-relative">
                                     <div class="ps-3 text-start assistant-image-box">
                                         <img id="image-${imageId}" data-id="${imageId}" src="${response.imageUrl}" alt="${response.imagePrompt}">
@@ -1395,7 +1395,7 @@ $(document).ready(async function() {
         $('#chatContainer').append(`
         <div id="container-${currentStep}">
             <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
-                <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+                <img src="${ thumbnail ? thumbnail : '/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
                 <div id="message-${currentStep}" class="p-3 ms-3 text-start assistant-chat-box"></div>
             </div>
             <div id="response-${currentStep}" class="choice-container" ></div>
@@ -1422,7 +1422,7 @@ $(document).ready(async function() {
             $('#chatContainer').append(`
             <div id="container-${currentStep}">
                 <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
-                    <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+                    <img src="${ thumbnail ? thumbnail : '/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
                     <div id="message-${currentStep}" class="p-3 ms-3 text-start assistant-chat-box"></div>
                 </div>
                 <div id="response-${currentStep}" class="choice-container" ></div>
@@ -1699,12 +1699,12 @@ $(document).ready(async function() {
         const botResponseContainer = $(`
             <div id="container-${uniqueId}">
                 <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
-                    <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
+                    <img src="${ thumbnail ? thumbnail : '/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
                     <div class="audio-controller" style="display:none">
                         <button id="play-${uniqueId}" class="audio-content badge bg-dark">►</button>
                     </div>
                     <div id="completion-${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">
-                        <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
+                        <img src="/img/load-dot.gif" width="50px">
                     </div>
                 </div>
             </div>`).hide();
@@ -1762,12 +1762,12 @@ $(document).ready(async function() {
         const botResponseContainer = $(`
             <div id="container-${uniqueId}">
                 <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
-                    <img src="${ thumbnail ? thumbnail : 'https://lamix.hatoltd.com/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
+                    <img src="${ thumbnail ? thumbnail : '/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
                     <div class="audio-controller" style="display:none">
                         <button id="play-${uniqueId}" class="audio-content badge bg-dark">►</button>
                     </div>
                     <div id="completion-${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">
-                        <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
+                        <img src="/img/load-dot.gif" width="50px">
                     </div>
                 </div>
             </div>`).hide();
@@ -1820,7 +1820,7 @@ $(document).ready(async function() {
         const narratorResponseContainer = $(`
             <div id="narrator-container-${currentStep}" class="d-flex flex-row justify-content-start message-container">
                 <div id="narration-${currentStep}" class="p-3 ms-3 text-start narration-container" style="border-radius: 15px;">
-                    <img src="https://lamix.hatoltd.com/img/load-dot.gif" width="50px">
+                    <img src="/img/load-dot.gif" width="50px">
                 </div>
             </div>
         `);
@@ -1882,7 +1882,7 @@ $(document).ready(async function() {
                         <div class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
                             <span>${message}</span>
                         </div>
-                        ${persona ? `<img src="${persona.chatImageUrl || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">` : ''}
+                        ${persona ? `<img src="${persona.chatImageUrl || '/img/logo.webp'}" alt="avatar" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">` : ''}
                     </div>
                 `).hide();
                 $('#chatContainer').append(messageElement);
@@ -1896,7 +1896,7 @@ $(document).ready(async function() {
             const imageUrl = message.getAttribute('src');
             messageElement = $(`
                 <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass}">
-                    <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
+                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
                     <div class="ms-3 position-relative">
                         <div class="text-start assistant-image-box">
                             ${message.outerHTML}
@@ -1932,7 +1932,7 @@ $(document).ready(async function() {
         else if (messageClass === 'bot-image-nsfw'&& message instanceof HTMLElement) {
             messageElement = $(`
                 <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass} unlock-nsfw" style="position: relative;">
-                    <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
+                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
                     <div class="ms-3 position-relative">
                         <div class="text-start assistant-image-box">
                             ${message.outerHTML}
@@ -1953,7 +1953,7 @@ $(document).ready(async function() {
             const uniqueId = `completion-${currentStep}-${Date.now()}`;
             messageElement = $(`
                 <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container ${animationClass}">
-                    <img src="${thumbnail || 'https://lamix.hatoltd.com/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top; cursor:pointer;">
+                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top; cursor:pointer;">
                     <div id="${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">
                         ${message}
                     </div>

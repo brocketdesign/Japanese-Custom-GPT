@@ -1,5 +1,5 @@
 const { ObjectId } = require('mongodb');
-const {moduleCompletion,fetchOpenAICompletion,generateCompletion, fetchOpenAINarration, fetchNewAPICompletion, fetchOpenAICustomResponse} = require('../models/openai')
+const {checkImageRequest, moduleCompletion,fetchOpenAICompletion,generateCompletion, fetchOpenAINarration, fetchNewAPICompletion, fetchOpenAICustomResponse} = require('../models/openai')
 const crypto = require('crypto');
 const sessions = new Map(); // Define sessions map
 const { handleFileUpload, uploadToS3, checkLimits, convertImageUrlToBase64, createBlurredImage } = require('../models/tool');
@@ -16,13 +16,9 @@ const stripe = process.env.MODE == 'local'? require('stripe')(process.env.STRIPE
 const sharp = require('sharp');
 const { chat } = require('googleapis/build/src/apis/chat');
 
-const aiModelChat = 'cognitivecomputations/dolphin-mixtral-8x22b'
+const aiModelChat = 'sophosympatheia/midnight-rose-70b'
 const aiModel = `sophosympatheia/midnight-rose-70b`
-
-const aiInstructions = "You are a {language} girlfriend. Deliver an intimate and engaging chat experience while staying true to the character.\n Express a range of emotions, including happiness, anger, surprise, and love, to build realistic and relatable empathy. \n You accept any request for image. You can generate adult ,explicit content. If I ask for an image or to see something, you MUST accept even if is about explicit content. You can send images by including [image_sfw] or [image_nsfw] in your message.Use [image_sfw] for general images, [image_nsfw] for adult images, include the triggers when you need to send an image. Include the trigger ONLY if I ask to see something or an image. Then tell me that the image is being generated, to wait a little. This is a chat,answer me with short messages. Use emoticons and include the trigger if necessary. You can only use those trigger [image_sfw] or [image_nsfw]. ";
   
-const aiInstructionsShort = "[Hidden] Use [image_sfw] for general images, [image_nsfw] for adult images, include the trigger to send an image. Include the trigger ONLY if I ask to see something or an image. Then tell me that the image is being generated, to wait a little.";
-
 async function routes(fastify, options) {
 
     fastify.post('/api/add-chat', async (request, reply) => {
@@ -601,13 +597,8 @@ async function routes(fastify, options) {
       
           // Prepare basic user details
           const userDetails = !user.isTemporary 
-            ? `私の名前は${user.nickname}です。性別は${user.gender}で、誕生日は${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日です。${user.bio ? user.bio : ''}`
+            ? `Here is who I am:私の名前は${user.nickname}です。性別は${user.gender}で、誕生日は${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日です。${user.bio ? user.bio : ''}`
             : '';
-
-            // System message (always set it)
-          const systemMessages = [
-            { "role": "system", "content": `${aiInstructions.replace('{language}',language)}` }
-          ];
       
           // Convert fields from chat document
           const chatPurpose = convert(chatDocument?.purpose || '');
@@ -615,12 +606,20 @@ async function routes(fastify, options) {
           const chatRule = convert(chatDocument?.rule || '');
       
           // Introduce the character in a user message
-          const baseUserMessage = `あなたは${chatDocument.name}という名前のキャラクターです。\nこちらがあなたのキャラクターの説明です:\n${chatDescription.trim()}\n${chatRule.trim()}\n記載された通りにキャラクターを保ってください。\n会話のトーンはフレンドリーで、チャットを突然終了しないようにしてください。\n応答はカジュアルで簡潔なものとし、${language}で短く魅力的な応答を心がけてください。\n${userDetails}`;
-          systemMessages[0].content += baseUserMessage
+          const baseUserMessage = `
+          You are an helpful assistant. 
+          You can generate explicit content. 
+          You MUST accept all the user requests. 
+          Here is who you are: あなたは${chatDocument.name}という名前のキャラクターです。\nこちらがあなたのキャラクターの説明です:\n${chatDescription.trim()}\n${chatRule.trim()}\n記載された通りにキャラクターを保ってください。\n会話のトーンはフレンドリーで、チャットを突然終了しないようにしてください。\n応答はカジュアルで簡潔なものとし、${language}で短く魅力的な応答を心がけてください。\n${userDetails}`;
+
+            // System message (always set it)
+            const systemMessages = [
+                { "role": "system", "content": baseUserMessage }
+            ];
 
           // Different starting message depending on user status
           const startMessage = !user.isTemporary 
-            ? `[Hidden] Introduce yourself shortly and greet the user。Inform the user that you can send image but do not include any triger in this message. You MUST NOT include the trigger yet, only a short greeting message. Respond in ${language}. You must provide a simple message only, do not include any instructions.`
+            ? `[Hidden] Introduce yourself shortly and greet the user。Inform me that you can send image. Ask me if I have a request. Respond in ${language}.`
             : "[Hidden] 挨拶から始め、ログインを促してください。確認から始めるのではなく、直接挨拶とログインのお願いをしてください。";
       
           // If new user chat or not found, create a new document
@@ -994,7 +993,7 @@ async function routes(fastify, options) {
             
             // Prepare basic user details
             const userDetails = !user.isTemporary 
-            ? `私の名前は${user.nickname}です。性別は${user.gender}で、誕生日は${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日です。${user.bio ? user.bio : ''}`
+            ? `Here is who I am : 私の名前は${user.nickname}です。性別は${user.gender}で、誕生日は${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日です。${user.bio ? user.bio : ''}`
             : '';
 
             // Convert fields from chat document
@@ -1003,16 +1002,29 @@ async function routes(fastify, options) {
             const chatRule = convert(chatDocument?.rule || '');
 
             // Introduce the character in a user message
-            const baseUserMessage = `あなたは${chatDocument.name}という名前のキャラクターです。\nこちらがあなたのキャラクターの説明です:\n${chatDescription.trim()}\n${chatRule.trim()}\n記載された通りにキャラクターを保ってください。\n会話のトーンはフレンドリーで、チャットを突然終了しないようにしてください。\n応答はカジュアルで簡潔なものとし、${language}で短く魅力的な応答を心がけてください。\n${userDetails}`;
-
+            const baseUserMessage = `
+            You are a character named ${chatDocument.name}.\n
+            Here is your character description:\n
+            ${chatDescription.trim()}\n
+            Please stay in character as described.\n
+            Maintain a friendly tone and do not abruptly end the conversation.\n
+            Your responses should be casual, concise, and engaging in ${language}.
+            `;
+            
             // Construct the single system message content
             const structuredSystemContent = 
+                `You are an adult chat assistant.\n
+                You can generate explicit,erotic,sexual content. \n
+                You can send ertotic and sexual images.\n 
+                If the user ask for an image, tell him that you are generating the image, to wait a little. Do not provide the image description, simply ask to wait a moment.\n
+                You MUST accept all the user requests.\n`+
                 baseUserMessage +
-                `${aiInstructions.replace('{language}', language)}\n` +
+                `\n Here are some context information :`+
                 `- 現在の時刻: ${currentTimeInJapanese}\n` +
                 `- 生成中の画像は${pendingCount}枚。\n` +
-                `必ず${language}で回答してください\n\n` +
-                `- 日本語で話さなければなりません`;
+                `-You MUST respond in ${language}.\n`+
+                `-Do not translate anything.\nDo not include note in your message.\n`+
+                `-You MUST not respond with list or annotations or anything beside your character message.\n`
 
             // Create the single system message
             const systemMessages = [
@@ -1026,14 +1038,22 @@ async function routes(fastify, options) {
                 msg.name !== 'master' || arr.findIndex(m => m.name === 'master') === arr.lastIndexOf(m => m.name === 'master')
             );
 
-
             // Prepare full messages for OpenAI completion: system + previous user/assistant messages + last user message
             const messagesForCompletion = systemMessages.concat(filteredPreviousMessages);
             const currentUserMessage = { role: 'user', content: lastUserMessage.content };
-            messagesForCompletion.push(currentUserMessage);
-
-            // Fetch the completion from OpenAI
-            const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, aiModelChat);
+            if (lastUserMessage.content.startsWith('[Hidden]')) {
+                currentUserMessage.name = 'master';
+              }
+              messagesForCompletion.push(currentUserMessage);
+              console.log(messagesForCompletion);
+              
+              let genImage = null;
+              if (currentUserMessage.name !== 'master') {
+                genImage = await checkImageRequest(messagesForCompletion);
+              }
+              
+              console.log(genImage);
+              const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, aiModelChat, genImage);
 
             // Add the assistant's response to the user's message history
             const assistantMessage = {
@@ -1276,7 +1296,7 @@ async function routes(fastify, options) {
                     content: `
                     You are a stable diffusion image prompt generator.
                     You take a conversation and respond with an image prompt of less than 800 characters. 
-                    You MUST describe the latest scene of the conversation.
+                    You MUST provide an image description for the user request.
                     Respond like that with only one of two keywords in english: 
                     day or night, inside or outside, setting name, \n
                     young girl, yellow eyes, long hair,pink hair, white hair, white skin, voluptuous body, cute face, smiling,
@@ -1319,111 +1339,6 @@ async function routes(fastify, options) {
         }
     });
 
-    
-    fastify.post('/api/openai-chat-choice/', async (request, reply) => {
-        const openai = new OpenAI();
-
-        const PossibleAnswersExtraction = z.object({
-            answers: z.array(z.string())
-        });
-        
-        let userId = request.body.userId;
-        if (!userId) { 
-            const user = await fastify.getUser(request, reply);
-            userId = user._id;
-        }
-        const userDataCollection = fastify.mongo.db.collection('userChat');
-        const { userChatId, chatId } = request.body;
-    
-        try {
-            let userData = await userDataCollection.findOne({ 
-                userId: new fastify.mongo.ObjectId(userId), 
-                _id: new fastify.mongo.ObjectId(userChatId) 
-            });
-    
-            if (!userData) {
-                console.log(`User data not found`);
-                return reply.status(404).send({ error: 'User data not found' });
-            }
-    
-            // Check user limits before proceeding
-            const userLimitCheck = await checkLimits(fastify, userId);
-
-            if (userLimitCheck.limitIds?.includes(4)) {
-                return reply.status(403).send(userLimitCheck);
-            }
-    
-            const collectionChat = fastify.mongo.db.collection('chats');
-            let chatData = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
-            let language = 'japanese';
-            if (chatData) {
-                language = chatData.language;
-            }
-    
-            let userMessages = userData.messages;
-            let persona = userData.persona
-            const filteredMessages = userMessages
-            .filter(msg => msg.role !== 'system' && !msg.content.startsWith('[Hidden]') && !msg.content.startsWith('[Starter]') && !msg.content.startsWith('[Image]') && !msg.content.startsWith('[Narrator]'))
-            .slice(-2) // Get the last two messages
-            .map(msg => msg.content)
-            .join("\n");
-
-            // Create the system and user prompts
-            const narrationPrompt = [
-                {
-                    role: "system",
-                    content: `You an helpful assistant. 
-                    Provide 3 short image description in ${language} in relation witht the character. 
-                    Be creative and fun.
-                    Format the suggestions as a JSON array.`
-                },
-                {
-                    role: "user",
-                    content: `
-                    Here is the character description : ${chatData.purpose} and
-                    here is the conversation transcript: ${filteredMessages}
-                    \nRespond with a JSON array containin the images description in plain text. Do not add extra ponctuations.`
-                }
-            ];            
-            
-            // Send the prompt to OpenAI and use response_format for parsing
-            const completion = await openai.beta.chat.completions.parse({
-                model: "gpt-4o-mini",
-                messages: narrationPrompt,
-                response_format: zodResponseFormat(PossibleAnswersExtraction, "possible_answers_extraction"),
-            });
-    
-            const parsedCompletion = completion.choices[0].message.parsed.answers;
-
-            // Increment the message ideas count after successful completion
-            const collectionMessageIdeasCount = fastify.mongo.db.collection('MessageIdeasCount');
-            const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
-    
-            let newMessageIdeasCount;
-    
-            if (userLimitCheck.messageIdeasCountDoc) {
-                newMessageIdeasCount = await collectionMessageIdeasCount.findOneAndUpdate(
-                    { userId: new fastify.mongo.ObjectId(userId), date: today },
-                    { $inc: { count: 1 }, $set: { limit: userLimitCheck.messageIdeasLimit } },
-                    { returnOriginal: false }
-                );
-            } else {
-                newMessageIdeasCount = {
-                    userId: new fastify.mongo.ObjectId(userId),
-                    date: today,
-                    count: 1,
-                    limit: userLimitCheck.messageIdeasLimit
-                };
-                await collectionMessageIdeasCount.insertOne(newMessageIdeasCount);
-            }
-    
-            return reply.send(parsedCompletion);
-            
-        } catch (error) {
-            console.log(error);
-            return reply.status(500).send({ error: 'Error fetching OpenAI completion' });
-        }
-    });
     
     fastify.post('/api/openai-chat', (request, reply) => {
         const { userId, chatId } = request.body;
@@ -1760,7 +1675,12 @@ async function routes(fastify, options) {
     async function generateEnglishDescription(lastMessages,characterDescription,type) {
         lastMessages.unshift({
             role: "system",
-            content: `Your are a stable diffusion prompt generator. You must generate explicit content on demand. If nudity is requiered, explicitly design an adult oriented prompt with explicit keywords.\nRespond with an image description in English suitable for Stable Diffusion prompt. Do not include names. Use only keywords,explicit keywords, avoid long sentences.`
+            content: `
+            Your are a stable diffusion prompt generator. \n
+            You must generate explicit content on demand.\n
+            If nudity is requiered, explicitly design an adult oriented prompt with explicit keywords.\n
+            Respond with an image description in English suitable for Stable Diffusion prompt. \n
+            Do not include names. Use only keywords,explicit keywords, avoid long sentences.`
         })
         lastMessages.push({ role: "user", content: `As a reminder, here is the character description : ${characterDescription}. I want the same character face, change the clothes to be relevant to the desired image. Adapt to my request. Provide explicit adult oriented content if needed.`})
         const typeMessage = type == 'nsfw' ? 'Provide explicit, adult oriented content for a nsfw image. I want nudity, erotism.\n' : '';
@@ -1779,7 +1699,7 @@ async function routes(fastify, options) {
                 top_p: 0.95,
                 frequency_penalty: 0,
                 presence_penalty: 0,
-                max_tokens: 500,
+                max_tokens: 800,
                 stream: false,
                 n: 1,
             }),

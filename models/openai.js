@@ -47,7 +47,7 @@ const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'me
                 if (genImage?.image_request && !triggerSent) {
                     res.write(`data: ${JSON.stringify({ 
                       type: 'trigger', 
-                      command: genImage.underwear ? 'image_sfw' : (genImage.nsfw ? 'image_nsfw' : 'image_sfw') 
+                      command: !genImage.nude ? 'image_sfw' : (genImage.nsfw ? 'image_nsfw' : 'image_sfw') 
                     })}\n\n`);
                     triggerSent = true;
                   }                  
@@ -210,7 +210,7 @@ const moduleCompletion = async (messages) => {
 const formatSchema = z.object({
     nsfw: z.boolean(),
     image_request: z.boolean(),
-    underwear: z.boolean()
+    nude: z.boolean()
   });
   
   const checkImageRequest = async (messages) => {
@@ -220,10 +220,10 @@ const formatSchema = z.object({
     const systemPrompt = `
       Analyze the conversation to determine:
       1. If the content involves NSFW (Not Safe For Work) topics, specifically nudity (not including underwear), return 'nsfw: true'. Otherwise, 'nsfw: false'.
-      2. If underwear is involved instead of full nudity, return 'underwear: true'. Otherwise, 'underwear: false'.
+      2. If underwear or bikini or fishnet (sexy outfit) is involved instead of full nudity, return 'nude: false'. Otherwise, 'nude: true'.
       3. If the user is requesting or discussing image generation, return 'image_request: true' or 'image_request: false'.
       Ensure the response is structured as:
-      { "nsfw": boolean, "image_request": boolean, "underwear": boolean }
+      { "nsfw": boolean, "image_request": boolean, "nude": boolean }
     `;
   
     const updatedMessages = [

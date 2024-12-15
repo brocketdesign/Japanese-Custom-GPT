@@ -2294,12 +2294,12 @@ $(document).ready(async function() {
     });
 
     function renderPopup(prompts, header) {
-        const nsfwEnabled = true || sessionStorage.getItem('nsfwEnabled') === 'true';
+        const nsfwEnabled = sessionStorage.getItem('nsfwEnabled') === 'true';
         renderSwalPopup(header, prompts, nsfwEnabled);
     }
 
     function renderSwalPopup(header, prompts, nsfwEnabled) {
-        const switchType = `<div class="form-check text-start my-3 ps-3 d-none">
+        const switchType = `<div class="form-check text-start my-3 ps-3">
             <input type="checkbox" class="btn-check" id="nsfwCheckbox" autocomplete="off" ${nsfwEnabled ? 'checked' : ''}>
             <label class="btn btn-outline-danger btn-sm rounded" for="nsfwCheckbox">
                 ${window.translations.imageForm.nsfwImage}

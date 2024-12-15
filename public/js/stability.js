@@ -320,7 +320,7 @@ async function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, i
             const typeText = isNSFWChecked ? 'NSFW' : 'SFW';
             const userMessage = t['imagePurchaseMessage']
                 .replace('{type}', typeText)
-                .replace('{prompt_title}', prompt_title) || `${prompt_title}で${type}画像を購入しました。`;
+                .replace('{prompt_title}', prompt_title) || `${prompt_title}で${type}画像をリクエストしました。`;
             window.postMessage({ event: 'displayMessage', role:'user', message: userMessage, completion : false , image : false, messageId: false }, '*');
 
             const hiddenMessage = `[Hidden] I bought a ${formType} image. The image generation process is starting now. It may take a minute or so to complte. Thanks me and tell me to wait. Do not include instruction to buy image in your message since I just bought one.`

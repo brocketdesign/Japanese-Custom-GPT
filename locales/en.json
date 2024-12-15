@@ -314,7 +314,7 @@
       "generateNSFW": "Generate NSFW content (20 coins)",
       "promptRequired": "Please enter a prompt.",
       "imageDescriptionError": "Error fetching image description.",
-      "imagePurchaseMessage": "I bought a {type} image. {prompt_title}",
+      "imagePurchaseMessage": "I asked for a {type} image. {prompt_title}",
       "imagePurchaseMessageStart": "I bought a {type} image."
   },
   "notifications" :{

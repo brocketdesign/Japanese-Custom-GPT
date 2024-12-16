@@ -1446,129 +1446,6 @@ function generateAllChatsImagePagination(currentPage, totalPages) {
     $('#all-chats-images-pagination-controls').html(paginationHtml);
 }
 
-window.loadChatImages = async function (chatId, page = 1) {
-    const currentUser = await fetchUser();
-    const currentUserId = currentUser._id;
-    const subscriptionStatus = currentUser.subscriptionStatus === 'active';
-    const isTemporary = !!currentUser?.isTemporary
-
-    $.ajax({
-      url: `/chat/${chatId}/images?page=${page}`,
-      method: 'GET',
-      success: function (data) {
-        let chatGalleryHtml = '';
-        data.images.forEach(item => {
-            const unlockedItem = isUnlocked(currentUser, item._id, item.userId)
-            let isBlur = unlockedItem ? false : item?.nsfw && !subscriptionStatus 
-            const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
-            chatGalleryHtml += `
-                <div class="col-12 col-md-6 col-lg-4 mb-2">
-                    <div class="card shadow-0">
-                        <div class="d-flex align-items-center p-2">
-                            <a href="/character/${item.chatId}?imageId=${item._id}">
-                                <img src="${item?.thumbnail}" alt="${item?.chatName}" class="rounded-circle me-2" width="40" height="40">
-                            </a>
-                            <a href="/character/${item.chatId}?imageId=${item._id}" class="text-decoration-none text-dark">
-                                <strong>${item?.chatName}</strong>
-                            </a>
-                        </div>
-                        ${isBlur ? `
-                        <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item._id}','gallery',this)`}>
-                            <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" >
-                            <div class="d-none card-body p-2">
-                                <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
-                            </div>
-                        </div>
-                        ` : `
-                        <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
-                            <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
-                        </a>
-                        <div class="d-none card-body p-2 d-flex align-items-center justify-content-between">
-                            <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
-                            <span class="btn btn-light float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
-                                <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
-                            </span>
-                        </div>
-                        `}
-                    </div>
-                </div>
-            `;
-        });
-
-        $('#chat-images-gallery').append(chatGalleryHtml);
-        if($('#chat-images-pagination-controls').length > 0){
-            generateChatImagePagination(data.page, data.totalPages, chatId);
-        }
-
-        $(document).find('.img-blur').each(function() {
-            blurImage(this);
-        });
-      },
-      error: function (err) {
-        console.error('Failed to load images', err);
-      }
-    });
-}
-function generateChatImagePagination(currentPage, totalPages, chatId) {
-    let paginationHtml = '';
-    const sidePagesToShow = 2;
-    let pagesShown = new Set(); // Track displayed pages
-
-    // Scroll event listener for infinite scrolling
-    $(window).off('scroll').on('scroll', function() {
-        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
-            if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
-                loadChatImages(chatId, currentPage + 1);
-                pagesShown.add(currentPage + 1); // Mark the page as shown
-            }
-        }
-    });
-
-    // Hide pagination and show "Go to Top" button if no more pages
-    if (currentPage >= totalPages) {
-        $('#chat-images-pagination-controls').html('<button class="btn btn-outline-secondary" onclick="scrollToTop()"><i class="bi bi-arrow-up-circle-fill me-2"></i>'+window.translations.backToTop+'</button>');
-        return;
-    }
-
-    // Generate pagination if there are multiple pages
-    if (totalPages > 1) {
-        // Previous button
-        paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadChatImages('${chatId}', ${currentPage - 1})">${window.translations.prev}</button>`;
-
-        // First page and ellipsis
-        if (currentPage > sidePagesToShow + 1) {
-            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadChatImages('${chatId}', 1)">1</button>`;
-            if (currentPage > sidePagesToShow + 2) {
-                paginationHtml += `<span class="mx-1">...</span>`;
-            }
-        }
-
-        // Visible page numbers
-        let startPage = Math.max(1, currentPage - sidePagesToShow);
-        let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
-
-        for (let i = startPage; i <= endPage; i++) {
-            paginationHtml += `
-                <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadChatImages('${chatId}', ${i})">
-                    ${i}
-                </button>
-            `;
-        }
-
-        // Last page and ellipsis
-        if (currentPage < totalPages - sidePagesToShow - 1) {
-            if (currentPage < totalPages - sidePagesToShow - 2) {
-                paginationHtml += `<span class="mx-1">...</span>`;
-            }
-            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadChatImages('${chatId}', ${totalPages})">${totalPages}</button>`;
-        }
-
-        // Next button
-        paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadChatImages('${chatId}', ${currentPage + 1})">${window.translations.next}</button>`;
-    }
-
-    $('#chat-images-pagination-controls').html(paginationHtml);
-}
 
 window.loadUserImages = async function (userId, page = 1) {
     const currentUser = await fetchUser();
@@ -2089,3 +1966,162 @@ $(document).ready(function() {
     const userId = $('#notificationIcon').data('userid');
     updateNotificationCount(userId);
 });
+
+/* Short comments added inline */
+
+var loadingStates = {};
+var loadedImages = []; // store all loaded images
+var swiperInstance;
+var currentPageMap = {}; // track current page per chatId
+var currentSwiperIndex = 0;
+
+// Initialize swiper modal
+function initSwiper() {
+    if (!swiperInstance) {
+        swiperInstance = new Swiper('.swiper-container', {
+            loop: false,
+            navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
+            on: {
+                reachEnd: function() {
+                    const chatId = $('#swiperModal').data('chat-id');
+                    const currPage = currentPageMap[chatId] || 1;
+                    const totalPages = $('#swiperModal').data('total-pages');
+                    if (currPage < totalPages && !loadingStates[chatId]) {
+                        loadingStates[chatId] = true;
+                        loadChatImages(chatId, currPage + 1);
+                    }
+                }
+            }
+        });
+        swiperInstance.on('slideChange', function() {
+            currentSwiperIndex = swiperInstance.activeIndex;
+        });
+        $('#swiperModal').on('hidden.bs.modal', function () {
+            const targetImage = $(`[data-index="${currentSwiperIndex}"]`);
+            if (targetImage.length) {
+                $('html, body').animate({ scrollTop: targetImage.offset().top }, 500);
+            }
+        });
+        return true
+    }
+    return false
+}
+
+function openSwiper(chatId, index) {
+    const firstInit = initSwiper();
+    $('#swiperModal').data('chat-id', chatId);
+    $('#swiperModal').modal('show');
+    const timing = firstInit ? 1000 : 0
+    setTimeout(() => {
+        swiperInstance.update();
+        swiperInstance.slideTo(index, 0);
+    }, timing);
+}
+
+
+// Update swiper slides after images load
+function updateSwiperSlides(images) {
+    if (swiperInstance) {
+        images.forEach((img,index) => {
+            swiperInstance.appendSlide(`
+                <div class="swiper-slide">
+                    <img data-index="${index}" src="${img.imageUrl}" alt="" style="width:auto; height:100vh;">
+                </div>
+            `);
+        });
+        swiperInstance.update();
+    }
+}
+
+// Load chat images (refactored)
+window.loadChatImages = async function (chatId, page = 1) {
+    const currentUser = await fetchUser();
+    const currentUserId = currentUser._id;
+    const subscriptionStatus = currentUser.subscriptionStatus === 'active';
+    const isTemporary = !!currentUser?.isTemporary;
+
+    $.ajax({
+        url: `/chat/${chatId}/images?page=${page}`,
+        method: 'GET',
+        success: function (data) {
+            currentPageMap[chatId] = data.page;
+            let chatGalleryHtml = '';
+            data.images.forEach((item, idx) => {
+                const unlockedItem = isUnlocked(currentUser, item._id, item.userId);
+                let isBlur = unlockedItem ? false : item?.nsfw && !subscriptionStatus;
+                const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
+                loadedImages.push(item);
+                const index = loadedImages.length - 1;
+                chatGalleryHtml += `
+                    <div class="col-12 col-md-6 col-lg-4 mb-2">
+                        <div class="card shadow-0">
+                            <div class="d-flex align-items-center p-2">
+                                <a href="/character/${item.chatId}?imageId=${item._id}">
+                                    <img src="${item?.thumbnail}" alt="${item?.chatName}" class="rounded-circle me-2" width="40" height="40">
+                                </a>
+                                <a href="/character/${item.chatId}?imageId=${item._id}" class="text-decoration-none text-dark">
+                                    <strong>${item?.chatName}</strong>
+                                </a>
+                            </div>
+                            ${isBlur ? `
+                            <div type="button" onclick=${isTemporary ? `showRegistrationForm()` : `unlockImage('${item._id}','gallery',this)`}>
+                                <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" >
+                            </div>
+                            ` : `
+                            <div type="button" data-index="${index}" onclick="openSwiper('${chatId}', ${index})">
+                                <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
+                            </div>
+                            <div class="d-none card-body p-2 d-flex align-items-center justify-content-between">
+                                <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"><i class="bi bi-chat-dots me-2"></i> チャットする</a>
+                                <span class="btn btn-light float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
+                                    <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
+                                </span>
+                            </div>
+                            `}
+                        </div>
+                    </div>
+                `;
+            });
+
+            $('#chat-images-gallery').append(chatGalleryHtml);
+            if ($('#chat-images-pagination-controls').length > 0) {
+                generateChatImagePagination(data.page, data.totalPages, chatId);
+            }
+
+            $(document).find('.img-blur').each(function() {
+                blurImage(this);
+            });
+
+            // Update swiper slides if modal is open
+            if ($('#swiperModal').data('chat-id') === chatId) {
+                updateSwiperSlides(loadedImages);
+            }
+
+            loadingStates[chatId] = false;
+            $('#swiperModal').data('total-pages', data.totalPages);
+        },
+        error: function (err) {
+            console.error('Failed to load images', err);
+        }
+    });
+}
+
+
+
+// Pagination logic simplified with loadingStates
+function generateChatImagePagination(currentPage, totalPages, chatId) {
+    if (typeof loadingStates[chatId] === 'undefined') loadingStates[chatId] = false;
+
+    $(window).off('scroll').on('scroll', function() {
+        if (!loadingStates[chatId] && currentPage < totalPages && $(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+            loadingStates[chatId] = true;
+            loadChatImages(chatId, currentPage + 1);
+        }
+    });
+
+    $('#chat-images-pagination-controls').html(
+        currentPage < totalPages
+        ? '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
+        : ''
+    );
+}

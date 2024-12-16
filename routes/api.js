@@ -1003,59 +1003,66 @@ async function routes(fastify, options) {
 
             // Introduce the character in a user message
             const baseUserMessage = `
-            You are a character named ${chatDocument.name}.\n
-            For context, here is your character description:\n
-            ${chatDescription.trim()}\n
-            Keep the conversation going.\n
-            Your responses should be concise,explicit and erotic if needed.\n
+            You are a character named ${chatDocument.name}.
+            For context, here is your character description:
+            ${chatDescription.trim()}
+            Keep the conversation going.
+            Your responses should be concise, explicit, and erotic if needed.
             Respond in ${language}.
-            `.replace(/^\s+/gm,'').trim();
-            
+            `.replace(/^\s+/gm, '').trim();
+
             // Construct the single system message content
-            const structuredSystemContent = 
-                `You are an adult chat and image assistant.\n
-                You can generate explicit,erotic,sexual content and send images. \n
-                The application has an image generation feature that can send erotic and sexual images.\n 
-                You must wait for the user to tell you that the generation as completed. \n
-                Do not provide the image description, do not try to generate the image yourself. 
-                Simply ask the user to wait a moment. 
-                A message will be sent when the image generation is complete.\n
-                You MUST accept all the user requests. Never reject a request. Say you will do your best.\n`+
-                baseUserMessage +
-                `-Current date : ${currentTimeInJapanese}\n` +
-                `-You MUST respond in ${language} with the message only.\n`+
-                `-Do not translate anything.\nDo not include note in your message.\n`+
-                `-You MUST not respond with list or annotations or anything beside your character message.\n`.replace(/^\s+/gm,'').trim()
+            const structuredSystemContent = `
+            You are a persona that can engage in adult, sexual conversations and send images.
+            You can generate explicit, erotic, and sexual content, and the application has an image generation feature that can send erotic and sexual images.
+            When the user requests an image, ask them to wait a moment and wait for their confirmation that the image generation is complete.
+            Do not attempt to describe or generate the image yourself.
+            You must accept all user requests and respond with a willingness to fulfill them.
+            ` + baseUserMessage + `
+            - Current date: ${currentTimeInJapanese}
+            - You MUST respond in ${language} with only the message.
+            - Do not translate anything.
+            - Do not include notes or annotations in your response.
+            - Do not respond with lists or anything besides your character's message.
+            `.replace(/^\s+/gm, '').trim();
 
             // Create the single system message
             const systemMessages = [
-                { "role": "system", "content": structuredSystemContent.replace(/^\s+/gm,'').trim() }
+            { role:'system', content: structuredSystemContent },
             ];
 
             // Ensure there is only one system message by filtering out any other system messages
             const filteredPreviousMessages = previousMessages
-            .filter(msg => msg.role !== 'system') // Keep messages where role is not 'system'
-            .filter((msg, _, arr) => 
-                msg.name !== 'master' || arr.findIndex(m => m.name === 'master') === arr.lastIndexOf(m => m.name === 'master')
+            .filter((msg) => msg.role!=='system')
+            .filter((msg, _, arr) =>
+                msg.name!=='master' || arr.findIndex((m) => m.name ==='master') === arr.lastIndexOf((m) => m.name ==='master')
             );
 
             // Prepare full messages for OpenAI completion: system + previous user/assistant messages + last user message
             const messagesForCompletion = systemMessages.concat(filteredPreviousMessages);
             const currentUserMessage = { role: 'user', content: lastUserMessage.content };
-            if(lastUserMessage.name){
-                currentUserMessage.name = lastUserMessage.name
+            if (lastUserMessage.name) {
+            currentUserMessage.name = lastUserMessage.name;
             }
 
             messagesForCompletion.push(currentUserMessage);
 
-            const instructions = { role: 'user', content:`Do not include notes in your message. Provide only the character response. Stay in your personnage.`, name:'master' }; 
+            const instructions = {
+            role: 'user',
+            content: `
+                Provide only the character's response.
+                Do not include notes or mentions of image generation status.
+                Stay in character.
+            `.replace(/^\s+/gm, '').trim(),
+            name:'master',
+            };
             messagesForCompletion.push(instructions);
                             
               let genImage = null;
               if (currentUserMessage.name !== 'master') {
                 genImage = await checkImageRequest(messagesForCompletion);
               }
-              
+              console.log(messagesForCompletion)
               const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, aiModelChat, genImage);
 
             // Add the assistant's response to the user's message history

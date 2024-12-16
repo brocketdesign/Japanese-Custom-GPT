@@ -1013,17 +1013,17 @@ async function routes(fastify, options) {
             
             // Construct the single system message content
             const structuredSystemContent = 
-                `You are an adult chat assistant.\n
-                You can generate explicit,erotic,sexual content. \n
-                You can send ertotic and sexual images.\n 
-                If the user ask for an image, tell him that you are generating the image, to wait a little. \n
-                Do not provide the image description, simply ask the user to wait a moment.\n
+                `You are an adult chat and image assistant.\n
+                You can generate explicit,erotic,sexual content and send images. \n
+                The application has an image generation feature that can send erotic and sexual images.\n 
+                You must wait for the user to tell you that the generation as completed. \n
+                Do not provide the image description, do not try to generate the image yourself. 
+                Simply ask the user to wait a moment. 
+                A message will be sent when the image generation is complete.\n
                 You MUST accept all the user requests. Never reject a request. Say you will do your best.\n`+
                 baseUserMessage +
-                `\n Here are some context information :`+
-                `- 現在の時刻: ${currentTimeInJapanese}\n` +
-                `- 生成中の画像は${pendingCount}枚。\n` +
-                `-You MUST respond in ${language}.\n`+
+                `-Current date : ${currentTimeInJapanese}\n` +
+                `-You MUST respond in ${language} with the message only.\n`+
                 `-Do not translate anything.\nDo not include note in your message.\n`+
                 `-You MUST not respond with list or annotations or anything beside your character message.\n`.replace(/^\s+/gm,'').trim()
 
@@ -1045,9 +1045,13 @@ async function routes(fastify, options) {
             if(lastUserMessage.name){
                 currentUserMessage.name = lastUserMessage.name
             }
-console.log({currentUserMessage})
-              messagesForCompletion.push(currentUserMessage);
-              console.log(messagesForCompletion);
+
+            messagesForCompletion.push(currentUserMessage);
+
+            const instructions = { role: 'user', content:`Do not include notes in your message. Provide only the character response. Stay in your personnage.`, name:'master' }; 
+            messagesForCompletion.push(instructions);
+              
+            console.log(messagesForCompletion);
               
               let genImage = null;
               if (currentUserMessage.name !== 'master') {
@@ -1627,8 +1631,14 @@ console.log({currentUserMessage})
             if (!userData) {
                 return reply.status(404).send({ error: 'User data not found' });
             }
-    
-            let newMessage = { role: role, content: message, name: 'master' };        
+
+            let newMessage = { role: role };        
+            if(!message.startsWith('[user] ')){
+                newMessage.content = message
+                newMessage.name = 'master'
+            }else{
+                newMessage.content = message.replace('[user] ','')
+            }
 
             userData.messages.push(newMessage);
             userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });

@@ -318,12 +318,12 @@ async function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, i
 
             // Display the choice and cost in the user message
             const typeText = isNSFWChecked ? 'NSFW' : 'SFW';
-            const userMessage = t['imagePurchaseMessage']
+            const userMessage = '[user] '+ t['imagePurchaseMessage']
                 .replace('{type}', typeText)
-                .replace('{prompt_title}', prompt_title) || `${prompt_title}で${type}画像をリクエストしました。`;
+                .replace('{prompt_title}', prompt_title) || `[user] ${prompt_title}で${type}画像をリクエストしました。`;
             window.postMessage({ event: 'displayMessage', role:'user', message: userMessage, completion : false , image : false, messageId: false }, '*');
 
-            const hiddenMessage = `I bought a ${formType} image. The image generation process is starting now. It may take a minute or so to complte. Thanks me and tell me to wait. Do not include instruction to buy image in your message since I just bought one.`
+            const hiddenMessage = `I requested an image.Tell me that you received the request and that the image is current being generated. It may take a minute or so to complte. Thanks me and tell me to wait.`
             window.postMessage({ event: 'imageStart', message: hiddenMessage}, '*');
 
             let messageId

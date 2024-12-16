@@ -1073,113 +1073,6 @@ $(document).ready(async function() {
         });
     }
     
-    async function displayChatWithStep(userChat,persona) {
-        $('#progress-container').show();
-        $('#stability-gen-button').show();
-        $('.auto-gen').each(function(){$(this).show()});
-        $('#audio-play').show();
-    
-        let chatContainer = $('#chatContainer');
-        chatContainer.empty();
-    
-        if(userChat[1].role === "user"){
-            let userMessage = userChat[2];
-            const isStarter = userMessage.content.startsWith("[Starter]") || userMessage.content.startsWith("Invent a situation");
-            const isHidden = userMessage.content.startsWith("[Hidden]") || userMessage.name == 'master';
-            if(!isStarter && !isHidden){
-                let messageHtml = `
-                    <div class="d-flex flex-row justify-content-end mb-4 message-container">
-                        <div id="response-1" class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
-                            ${marked.parse(userMessage.content)}
-                        </div>
-                        ${persona ? `<img src="${persona.chatImageUrl || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">`:''}
-                    </div>
-                </div>
-                `;
-                chatContainer.append($(messageHtml).hide().fadeIn());
-            }
-        }
-    
-        for (let i = 1; i < userChat.length; i++) {
-            // Skip system messages
-            if (userChat[i].role === "system") {
-                continue;
-            }
-    
-            currentStep = Math.floor(i / 2) + 1;
-            let messageHtml = '';
-            if (userChat[i].role === "assistant") {
-                let assistantMessage = userChat[i];
-                let designStep = currentStep - 1;
-    
-                // Check if the message is a narrator message
-                const isNarratorMessage = assistantMessage?.content?.startsWith("[Narrator]") || false;
-                const isImage = assistantMessage?.content?.startsWith("[Image]") || false;
-                if (isNarratorMessage) {
-                    // Remove the [Narrator] tag for display
-                    const narrationContent = assistantMessage.content.replace("[Narrator]", "").trim();
-    
-                    // Create a narrator message box
-                    messageHtml += `
-                        <div id="narrator-container-${designStep}" class="d-flex flex-row justify-content-start message-container">
-                            <div id="narration-${designStep}" class="p-3 ms-3 text-start narration-container" style="border-radius: 15px;">
-                                ${marked.parse(narrationContent)}
-                            </div>
-                        </div>
-                    `;
-                } else if (isImage) {
-                    const imageId = assistantMessage.content.replace("[Image]", "").trim();
-                    
-                    messageHtml += await getImageUrlById(imageId, designStep, thumbnail); // Wait for the image URL and HTML
-    
-                } else {
-                    if(assistantMessage.content){
-                        let message = removeContentBetweenStars(assistantMessage.content);
-                        messageHtml += `
-                            <div id="container-${designStep}">
-                                <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
-                                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
-                                    <div class="audio-controller">
-                                        <button id="play-${designStep}" class="audio-content badge bg-dark" data-content="${message}">►</button>
-                                    </div>
-                                    <div id="message-${designStep}" class="p-3 ms-3 text-start assistant-chat-box">
-                                        ${marked.parse(assistantMessage.content)}
-                                    </div>
-                                </div>
-                        `;
-                    }
-    
-                }
-    
-                // Check if the next message is a user message and display it
-                if (i + 1 < userChat.length && userChat[i + 1].role === "user") {
-                    let userMessage = userChat[i + 1];
-                    const isHidden = userMessage.content.startsWith("[Hidden]") || userMessage.name == 'master';
-                    const isStarter = userMessage.content.startsWith("[Starter]") || userMessage.content.startsWith("Invent a situation");
-                    if(!isStarter && !isHidden){
-                        messageHtml += `
-                            <div class="d-flex flex-row justify-content-end mb-4 message-container">
-                                <div id="response-${designStep}" class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
-                                    ${marked.parse(userMessage.content)}
-                                </div>
-                                ${persona ? `<img src="${persona.chatImageUrl || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">`:''}
-                            </div>
-                        </div>
-                        `;
-                    }
-    
-                    i++; 
-                } else {
-                    messageHtml += `
-                        <div id="response-${designStep}" class="choice-container d-none"></div>
-                    </div>
-                    `;
-                }
-    
-                chatContainer.append($(messageHtml).hide().fadeIn());
-            }
-        }
-    }
     async function displayChat(userChat, persona) {
         $('#progress-container').show();
         $('#stability-gen-button').show();
@@ -1195,7 +1088,7 @@ $(document).ready(async function() {
     
             if (chatMessage.role === "user") {
                 const isStarter = chatMessage?.content?.startsWith("[Starter]") || chatMessage?.content?.startsWith("Invent a situation") || chatMessage?.content?.startsWith("Here is your character description");
-                const isHidden = chatMessage?.content?.startsWith("[Hidden]") || userMessage.name == 'master';
+                const isHidden = chatMessage?.content?.startsWith("[Hidden]") || chatMessage?.name === 'master';
                 if (!isStarter && !isHidden) {
                     messageHtml = `
                         <div class="d-flex flex-row justify-content-end mb-4 message-container">
@@ -1224,7 +1117,7 @@ $(document).ready(async function() {
                     const imageId = chatMessage.content.replace("[Image]", "").trim();
                     messageHtml = await getImageUrlById(imageId, designStep, thumbnail); // Fetch and display image
                 } else {
-                    const isHidden = chatMessage.content.startsWith("[Hidden]") || userMessage.name == 'master';
+                    const isHidden = chatMessage.content.startsWith("[Hidden]") || chatMessage.name === 'master';
                     if (chatMessage.content && !isHidden) {
                         let message = removeContentBetweenStars(chatMessage.content);
                         messageHtml = `
@@ -1877,6 +1770,7 @@ $(document).ready(async function() {
     
         if (messageClass === 'user-message') {
             if (typeof message === 'string' && message.trim() !== '') {
+                message = message.replace('[Hidden]','').replace('[user] ','')
                 messageElement = $(`
                     <div class="d-flex flex-row justify-content-end mb-4 message-container ${messageClass} ${animationClass}">
                         <div class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">

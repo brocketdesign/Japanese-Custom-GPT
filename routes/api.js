@@ -1050,15 +1050,12 @@ async function routes(fastify, options) {
 
             const instructions = { role: 'user', content:`Do not include notes in your message. Provide only the character response. Stay in your personnage.`, name:'master' }; 
             messagesForCompletion.push(instructions);
-              
-            console.log(messagesForCompletion);
-              
+                            
               let genImage = null;
               if (currentUserMessage.name !== 'master') {
                 genImage = await checkImageRequest(messagesForCompletion);
               }
               
-              console.log(genImage);
               const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, aiModelChat, genImage);
 
             // Add the assistant's response to the user's message history

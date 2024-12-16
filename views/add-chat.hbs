@@ -205,7 +205,7 @@
                         <div class="row mb-4">
                             <!-- Image Style Selection -->
                             <div class="col-auto">
-                                <label class="form-label">画像スタイル</label>
+                                <label class="form-label">{{translations.newCharacter.image_style}}</label>
                                 <div id="imageStyleSelection">
                                     <img src="/img/anime.jpeg" alt="アニメ" class="style-option rounded selected" data-style="anime" data-model="novaAnimeXL_ponyV20_461138" data-version="sdxl">
                                     <img src="/img/real.jpeg" alt="リアリスティック" class="style-option rounded" data-style="realistic" data-model="kanpiromix_v20" data-version="sd">
@@ -225,21 +225,21 @@
                         </div>
                         <!-- 1. Character Prompt Input -->
                         <div class="mb-2">
-                            <label for="characterPrompt" class="form-label">キャラクタープロンプト</label>
+                            <label for="characterPrompt" class="form-label">{{translations.newCharacter.character_prompt}}</label>
                             <textarea
                                 class="form-control"
                                 id="characterPrompt"
                                 name="characterPrompt"
                                 rows="4"
                                 maxlength="500"
-                                placeholder="キャラクターの外見の特徴を書いてください。例：女性、ブロンドヘア、ロングヘア、黒のワンピースを着ている、カフェでコーヒーを飲んでいる"
+                                placeholder="{{translations.newCharacter.character_appearance_description}}"
                             ></textarea>
                         </div>
                         
                         <!-- 2. Enhanced Prompt Display -->
                         <div class="form-check mb-3">
                             <input type="checkbox" class="form-check-input" id="enableEnhancedPrompt" name="enableEnhancedPrompt">
-                            <label class="form-check-label" for="enableEnhancedPrompt">強化プロンプトを有効にする</label>
+                            <label class="form-check-label" for="enableEnhancedPrompt">{{translations.newCharacter.enable_enhanced_prompt}}</label>
                         </div>
                         <div class="mb-4 d-none">
                             <label for="enhancedPrompt" class="form-label">AI強化プロンプト</label>
@@ -256,9 +256,9 @@
                         <!-- 4. Single Action Button -->
                         <div class="d-grid">
                             <button type="button" id="generateButton" class="btn custom-gradient-bg btn-lg text-white">
-                                <i class="fas fa-magic me-2"></i>AIで生成
+                                <i class="fas fa-magic me-2"></i>{{translations.newCharacter.generate_with_AI}}
                             </button>
-                            <span class="w-100 text-center genexp" style="font-size: 12px;display:none;">ただいま画像を4枚生成しています。1分ほどお待ちください。</span>
+                            <span class="w-100 text-center text-muted genexp" style="font-size: 12px;display:none;">{{translations.newCharacter.image_generation_message}}</span>
                         </div>
                     </div>
                 <!-- Right Column: Generated Image -->
@@ -383,6 +383,9 @@
         showStep(currentStep);
     });
     $(document).ready(function() {
+        let currentLang = localStorage.getItem('currentLang') || 'ja';
+        $('#language').val(currentLang == 'en' ? 'english' : 'japanese')
+        console.log($('#language').val())
         $('#characterPrompt').on('input change', function() {
             $('#enhancedPrompt').val('');
         });
@@ -832,7 +835,7 @@
                         // Display the generated images for selection
                         displayGeneratedImages(imageUrls);
 
-                        showNotification('画像が正常に生成されました。', 'success');
+                        showNotification(translations.newCharacter.image_generated_successfully, 'success');
                         $('#characterPrompt').prop('disabled', false);
                         $('#generateButton').prop('disabled', false);
                         $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
@@ -891,9 +894,9 @@
 
         // ボタンテキストを更新
         if(isEnhanceEnabled){
-            $button.html('<i class="fas fa-spinner fa-spin me-2"></i>プロンプトを強化中...');
+            $button.html(`<i class="fas fa-spinner fa-spin me-2"></i>${translations.newCharacter.enhancing_prompt}`);
         } else {
-            $button.html('<i class="fas fa-spinner fa-spin me-2"></i>画像を生成中...');
+            $button.html(`<i class="fas fa-spinner fa-spin me-2"></i>${translations.newCharacter.generatingImages}`);
         }
 
         $('#characterPrompt').prop('disabled', true);
@@ -920,7 +923,7 @@
                     showNotification('プロンプトの生成に失敗しました。再試行してください。', 'error');
                     // ボタンを有効化し、初期状態のテキストに戻す
                     $button.prop('disabled', false);
-                    $button.html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+                    $button.html(`<i class="fas fa-magic me-2"></i>${translations.newCharacter.generate_with_AI}`);
                     $('#characterPrompt').prop('disabled', false);
                     return;
                 }
@@ -930,7 +933,7 @@
             }
 
             // ボタンテキストを「画像を生成中...」に更新
-            $button.html('<i class="fas fa-spinner fa-spin me-2"></i>画像を生成中...');
+            $button.html(`<i class="fas fa-spinner fa-spin me-2"></i>${translations.newCharacter.generatingImages}`);
             $('.genexp').fadeIn()
 
             const files = $('#imageUploaderContainer')?.find('input[type="file"]')[0]?.files;
@@ -955,11 +958,11 @@
             const taskResponse = await fetchTaskId(enhanceResponse.enhancedPrompt, '9:16', chatId, imageStyle, imageModel, imageVersion);
 
             if (taskResponse && taskResponse.taskId) {
-                showNotification('画像生成タスクを開始しました。ステータスを確認中...', 'info');
+                showNotification(translations.newCharacter.image_generation_start, 'info');
                 // タスクステータスをポーリング
                 checkTaskStatus(taskResponse.taskId);
             } else {
-                showNotification('画像生成タスクの開始に失敗しました。再試行してください。', 'error');
+                showNotification(translations.newCharacter.image_generation_failure, 'error');
                 // ボタンを有効化し、初期状態のテキストに戻す
                 $button.prop('disabled', false);
                 $button.html('<i class="fas fa-magic me-2"></i>AIで画像生成');
@@ -967,7 +970,7 @@
             }
         } catch (error) {
             console.error('Error:', error);
-            showNotification('プロンプトの生成中または画像の生成中にエラーが発生しました。', 'error');
+            showNotification(translations.newCharacter.generation_error, 'error');
             // ボタンを有効化し、初期状態のテキストに戻す
             $button.prop('disabled', false);
             $button.html('<i class="fas fa-magic me-2"></i>AIで画像生成');

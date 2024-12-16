@@ -84,7 +84,7 @@
                                 </a>
               </a>
               <div class="d-flex flex-wrap justify-content-center text-center">
-                <div class="mx-2">
+                <div class="mx-2 d-none">
                   <h6 class="fw-bold">{{default userData.postCount 0}}</h6>
                   <p class="text-muted small"><i class="bi bi-grid-fill"></i> {{translations.profile.posts}}</p>
                 </div>
@@ -469,13 +469,14 @@ $(document).ready(function() {
                             <div class="card-body">
                                 <h5 class="card-title">${response.chat.name}</h5>
                                 <p class="card-text text-muted" style="font-size: 16px;">${response.chat.description}</p>
-                                <p class="card-text text-muted d-none" style="font-size: 14px;">作成者: ${response.author}</p>
+                                <p class="card-text text-muted" style="font-size: 16px;">${response.chat.rule}</p>
+                                <p class="card-text text-muted d-none" style="font-size: 14px;">${response.author}</p>
                                 <div class="d-flex justify-content-between mb-3">
                                     <div class="card-text text-center w-100 d-none" style="flex-direction: column;"><span class="w-100">${response.chat.rating ? response.chat.rating : '...'}</span><span class="text-muted" style="font-size: 12px;">評価</span></div>
-                                    <div class="card-text text-center d-flex w-100" style="flex-direction: column;" ><span class="w-100">${response.chat.category ? response.chat.category : '...'}</span><span class="text-muted" style="font-size: 12px;">カテゴリー</span></div>
-                                    <div class="card-text text-center d-flex w-100" style="flex-direction: column;" ><span class="w-100">${response.total ? response.total : '0'}</span><span class="text-muted" style="font-size: 12px;">会話の合計</span></div>
+                                    <div class="card-text text-center w-100 d-none" style="flex-direction: column;" ><span class="w-100">${response.chat.category ? response.chat.category : '...'}</span><span class="text-muted" style="font-size: 12px;">カテゴリー</span></div>
+                                    <div class="card-text text-center w-100 d-none" style="flex-direction: column;" ><span class="w-100">${response.total ? response.total : '0'}</span><span class="text-muted" style="font-size: 12px;">会話の合計</span></div>
                                 </div>
-                                <a href="/chat/${response.chat._id}" class="btn btn-dark w-100 my-4" style="border-radius:50px;">チャットを始める</a>
+                                <a href="/chat/${response.chat._id}" class="btn btn-dark w-100 my-4" style="border-radius:50px;">${translations.startChat}</a>
                             </div>
                         </div>
                     `,
@@ -493,7 +494,7 @@ $(document).ready(function() {
                     },
                     customClass: {
                         popup: 'animated fadeInDown chatbot-info-card',
-                        image: 'swal-image analyze'
+                        image: 'swal-image analyze mb-3'
                     }
                 });
             })

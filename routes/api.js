@@ -59,7 +59,7 @@ async function routes(fastify, options) {
                             const [galleryIndex, galleryField] = part.fieldname.split('_').slice(1);
                             if (!galleries[galleryIndex]) galleries[galleryIndex] = {};
                             if (!blurred_galleries[galleryIndex]) blurred_galleries[galleryIndex] = {};
-                            console.log({galleryIndex})
+
                             if (galleryField === 'Images[]') {
                                 imageCount++;
                                 console.log(`Processed ${imageCount} images`);
@@ -1417,15 +1417,16 @@ async function routes(fastify, options) {
 
         const user = await fastify.getUser(request, reply);
         const userId = user._id;
-    
+        let language = user?.lang === 'ja' ? '日本語' : 'English';
+        console.log({language})
+
         const CharacterDescriptionSchema = z.object({
             name: z.string(),
             short_desc: z.string(),
             long_desc: z.string()
         });
 
-        const examplePrompts = await fs.readFileSync('./models/girl_char.md', 'utf8');
-        const systemPayload = createSystemPayloadChatRule(examplePrompts,prompt,gender);  // You can change "English" to any language you need
+        const systemPayload = createSystemPayloadChatRule(prompt,gender,language);  // You can change "English" to any language you need
 
         const openai = new OpenAI();
         const completionResponse = await openai.beta.chat.completions.parse({
@@ -1439,24 +1440,23 @@ async function routes(fastify, options) {
         reply.send({ name, short_desc, long_desc });
     });
     
-    function createSystemPayloadChatRule(examplePrompts, prompt, gender) {
+    function createSystemPayloadChatRule(prompt, gender, language) {
         return [
             {
                 "role": "system",
-                "content": `あなたは有用なアシスタントです。
-                日本語の創造的なアニメキャラクターの説明を生成します。
-                以下は例です：${examplePrompts}
-                name: 実際の日本人の名前と苗字をふりがななしで記入してください。キャラクターの性別と説明に合致する必要があります。
-                short_desc: キャラクターの性格を反映した自己紹介文を2行で記述してください。
-                long_desc: 例を参考にし、創造的に記述してください。これはエンターテインメント目的です。必ずすべて日本語で回答してください。
-                `
+                "content": `You are a helpful assistant.
+                You will generate creative anime character descriptions in ${language}.
+                name: Please enter the actual ${language} name and surname without furigana. It should match the character's gender and description.
+                short_desc: Write a self-introduction that reflects the character's personality in 2 lines.
+                long_desc: Refer to the examples and write creatively. This is for entertainment purposes. Please respond entirely in ${language}.`
             },            
             {
                 role: "user",
-                content: `キャラクターの性別は${gender}です。\n以下の情報をご確認ください: ${prompt}`
+                content: `The character's gender is ${gender}.\nPlease review the following information: ${prompt}`
             },
         ];
     }
+    
     // Define the schema for request validation
     const EnhancePromptSchema = z.object({
         prompt: z.string().min(10, 'プロンプトは最低でも10文字必要です'),

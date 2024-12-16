@@ -38,6 +38,7 @@ async function onLanguageChange(lang) {
     if (updateResponse.success) {
         await loadTranslations(lang);
         $('#languageDropdown').text(getLanguageDisplayName(lang));
+        localStorage.setItem('currentLang','en')
         location.reload();
     }
 }
@@ -1082,53 +1083,6 @@ window.displayPeopleChat = async function (page = 1,type,query = false, preLoade
         console.error('Failed to load chats', err);
     }
 };
-function generateChatsPagination(currentPage, totalPages, type, query) {
-    let paginationHtml = '';
-    const sidePagesToShow = 2;
-    let pagesShown = new Set();
-
-    // Scroll event listener for infinite scroll
-    $(window).off('scroll').on('scroll', function() {
-        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
-            if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
-                displayPeopleChat(currentPage + 1, type);
-                pagesShown.add(currentPage + 1);
-            }
-        }
-    });
-
-    if (currentPage >= totalPages) {
-        // Hide pagination and show "Go to Top" button in Japanese
-        $('#chat-pagination-controls').html('<button class="btn btn-outline-secondary" onclick="scrollToTop()"><i class="bi bi-arrow-up-circle-fill me-2"></i>'+window.translations.backToTop+'</button>');
-        return;
-    }
-
-    if (totalPages > 1) {
-        paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="displayPeopleChat(${currentPage - 1},'${type}','${query}')">${window.translations.prev}</button>`;
-
-        if (currentPage > sidePagesToShow + 1) {
-            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="displayPeopleChat(1,${type})">1</button>`;
-            if (currentPage > sidePagesToShow + 2) paginationHtml += `<span class="mx-1">...</span>`;
-        }
-
-        let startPage = Math.max(1, currentPage - sidePagesToShow);
-        let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
-
-        for (let i = startPage; i <= endPage; i++) {
-            paginationHtml += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="displayPeopleChat(${i},'${type}','${query}')">${i}</button>`;
-        }
-
-        if (currentPage < totalPages - sidePagesToShow - 1) {
-            if (currentPage < totalPages - sidePagesToShow - 2) paginationHtml += `<span class="mx-1">...</span>`;
-            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="displayPeopleChat(${totalPages},'${type}','${query}')">${totalPages}</button>`;
-        }
-
-        paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="displayPeopleChat(${currentPage + 1},'${type}','${query}')">${window.translations.next}</button>`;
-    }
-
-    $('#chat-pagination-controls').html(paginationHtml);
-}
-
 window.loadAllUserPosts = async function (page = 1) {
     const currentUser = await fetchUser();
     console.log(currentUser)
@@ -2123,5 +2077,22 @@ function generateChatImagePagination(currentPage, totalPages, chatId) {
         currentPage < totalPages
         ? '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
         : ''
+    );
+}
+
+function generateChatsPagination(currentPage, totalPages, type, query) {
+    if (typeof loadingStates[type+query] === 'undefined') loadingStates[type+query] = false;
+
+    $(window).off('scroll').on('scroll', function() {
+        if (!loadingStates[type+query] && currentPage < totalPages && $(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+            loadingStates[type+query] = true;
+            displayPeopleChat(currentPage + 1, type, query);
+        }
+    });
+
+    $('#chat-pagination-controls').html(
+        currentPage < totalPages
+        ? '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
+        : '<button class="btn btn-outline-secondary" onclick="scrollToTop()"><i class="bi bi-arrow-up-circle-fill me-2"></i>'+window.translations.backToTop+'</button>'
     );
 }

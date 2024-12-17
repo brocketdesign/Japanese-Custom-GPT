@@ -381,6 +381,7 @@
 
 
         $('.nextStep').click(function() {
+            console.log({currentStep})
             if (validateStep(currentStep)) {
                 currentStep++;
                 showStep(currentStep);

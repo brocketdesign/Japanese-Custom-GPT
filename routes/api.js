@@ -1,5 +1,8 @@
 const { ObjectId } = require('mongodb');
-const {checkImageRequest, moduleCompletion,fetchOpenAICompletion,generateCompletion, fetchOpenAINarration, fetchNewAPICompletion, fetchOpenAICustomResponse} = require('../models/openai')
+const {
+    describeCharacterFromImage,
+    checkImageRequest, 
+    moduleCompletion,fetchOpenAICompletion,generateCompletion, fetchOpenAICustomResponse} = require('../models/openai')
 const crypto = require('crypto');
 const sessions = new Map(); // Define sessions map
 const { handleFileUpload, uploadToS3, checkLimits, convertImageUrlToBase64, createBlurredImage } = require('../models/tool');
@@ -1037,14 +1040,16 @@ async function routes(fastify, options) {
             content: `
                 Provide only the character's response.
                 Do not include notes or mentions of image generation status.
-                Stay in character.
+                Do not describe a scene or an image.
+                Provide a short answer that correspond at a chat.
+                Stay in your character.
             `.replace(/^\s+/gm, '').trim(),
             name:'master',
             };
             messagesForCompletion.push(instructions);
                             
               let genImage = null;
-              if (currentUserMessage.name !== 'master') {
+              if (currentUserMessage.name !== 'master' && currentUserMessage.name !== 'context') {
                 genImage = await checkImageRequest(messagesForCompletion);
               }
 
@@ -1171,79 +1176,6 @@ async function routes(fastify, options) {
         return str.replace(/\*.*?\*/g, '').replace(/"/g, '');
     }    
     
-    fastify.post('/api/openai-chat-narration', async (request, reply) => {
-        const { chatId, userChatId, role } = request.body;
-        let userId = request.body.userId;
-        if (!userId) { 
-            const user = await fastify.getUser(request, reply);
-            userId = user._id;
-        }
-        const sessionId = Math.random().toString(36).substring(2, 15); // Generate a unique session ID
-        sessions.set(sessionId, { userId, chatId, userChatId, isNarration: true, role }); // Indicate this is a narration session
-        return reply.send({ sessionId });
-    });
-    fastify.get('/api/openai-chat-narration-stream/:sessionId', async (request, reply) => {
-        const { sessionId } = request.params;
-        const session = sessions.get(sessionId);
-    
-        if (!session) {
-            reply.status(404).send({ error: 'Session not found' });
-            return;
-        }
-    
-        // Set CORS headers
-        reply.raw.setHeader('Access-Control-Allow-Origin', '*'); // Allow any origin or specify your origin
-        reply.raw.setHeader('Access-Control-Allow-Methods', 'GET');
-        reply.raw.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    
-        reply.raw.setHeader('Content-Type', 'text/event-stream');
-        reply.raw.setHeader('Cache-Control', 'no-cache');
-        reply.raw.setHeader('Connection', 'keep-alive');
-        reply.raw.flushHeaders();
-    
-        try {
-            const userId = session.userId;
-            const chatId = session.chatId;
-            const userChatId = session.userChatId;
-            const isNarration = session.isNarration;
-            const role = session.role || 'Narrator';
-            
-            const collectionUserChat = fastify.mongo.db.collection('userChat');
-            let userData = await collectionUserChat.findOne({ userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
-    
-            if (!userData) {
-                reply.raw.end(); // End the stream before sending the response
-                return reply.status(404).send({ error: 'User data not found' });
-            }
-            const collectionChat = fastify.mongo.db.collection('chats');
-            let chatData = await collectionUserChat.findOne({ _id: new fastify.mongo.ObjectId(chatId)});
-            let language = 'japanese'
-            if(chatData){
-                language = chatData.language
-            }
-            const userMessages = userData.messages;
-    
-            // Generate the narration context
-            const narrationCompletion = await fetchOpenAINarration(userMessages, reply.raw, 300, language);
-    
-            // Append the narrator's response to the messages array in the chat document
-            const narratorMessage = { "role": "assistant", "content": `[${role}] ${narrationCompletion}` };
-            userMessages.push(narratorMessage);
-            userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-    
-            // Update the chat document in the database
-            const result = await collectionUserChat.updateOne(
-                { userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) },
-                { $set: { messages: userMessages, updatedAt: userData.updatedAt } }
-            );
-    
-            reply.raw.end();
-        } catch (error) {
-            console.log(error);
-            reply.raw.end(); // End the stream before sending the response
-            reply.status(500).send({ error: 'Error fetching OpenAI narration' });
-        }
-    });
     fastify.post('/api/openai-chat-image-completion/', async (request, reply) => {
         let userId = request.body.userId
         if(!userId){ 
@@ -1562,82 +1494,6 @@ async function routes(fastify, options) {
         ];
     }
     
-    // POST Route to create a session with a custom prompt
-    fastify.post('/api/openai-custom-chat', async (request, reply) => {
-        const { chatId, userChatId, role, customPrompt } = request.body;
-        let userId = request.body.userId;
-        if (!userId) { 
-            const user = await fastify.getUser(request, reply);
-            userId = user._id;
-        }
-        const sessionId = Math.random().toString(36).substring(2, 15); // Generate a unique session ID
-        sessions.set(sessionId, { userId, chatId, userChatId, role, customPrompt }); // Save custom prompt
-        return reply.send({ sessionId });
-    });
-
-    // GET Route to fetch the response for the custom prompt
-    fastify.get('/api/openai-custom-chat-stream/:sessionId', async (request, reply) => {
-        const { sessionId } = request.params;
-        const session = sessions.get(sessionId);
-        
-        if (!session) {
-            reply.status(404).send({ error: 'Session not found' });
-            return;
-        }
-
-        // Set CORS headers
-        reply.raw.setHeader('Access-Control-Allow-Origin', '*');
-        reply.raw.setHeader('Access-Control-Allow-Methods', 'GET');
-        reply.raw.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-        reply.raw.setHeader('Content-Type', 'text/event-stream');
-        reply.raw.setHeader('Cache-Control', 'no-cache');
-        reply.raw.setHeader('Connection', 'keep-alive');
-        reply.raw.flushHeaders();
-
-        try {
-            const { userId, chatId, userChatId, customPrompt } = session;
-
-            const collectionUserChat = fastify.mongo.db.collection('userChat');
-            let userData = await collectionUserChat.findOne({ userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
-
-            if (!userData) {
-                reply.raw.end(); // End the stream before sending the response
-                return reply.status(404).send({ error: 'User data not found' });
-            }
-            
-            const userMessages = userData.messages;
-
-            const collectionChat = fastify.mongo.db.collection('chats');
-            let chatData = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
-            let language = 'japanese';
-            if (chatData) {
-                language = chatData.language;
-            }
-            let chatName = chatData.name
-
-            customPrompt.systemContent = `あなたは[${chatName}]というキャラクターです。${customPrompt.systemContent} ${language}で送ってください。`
-            // Generate the custom prompt completion
-            const customCompletion = await fetchOpenAICustomResponse(customPrompt, userMessages, reply.raw);
-
-            // Append the custom response to the messages array in the chat document
-            const customMessage = { "role": "assistant", "content": `${session.role ? `[${session.role}]` : ''} ${customCompletion}` };
-            userMessages.push(customMessage);
-            userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-
-            // Update the chat document in the database
-            const result = await collectionUserChat.updateOne(
-                { userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) },
-                { $set: { messages: userMessages, updatedAt: userData.updatedAt } }
-            );
-
-            reply.raw.end();
-        } catch (error) {
-            console.log(error);
-            reply.raw.end(); // End the stream before sending the response
-            reply.status(500).send({ error: 'Error fetching custom OpenAI response' });
-        }
-    });
     fastify.post('/api/chat/add-message', async (request, reply) => {
         const { chatId, userChatId, role, message } = request.body;
     
@@ -1655,6 +1511,7 @@ async function routes(fastify, options) {
                 newMessage.name = 'master'
             }else{
                 newMessage.content = message.replace('[user] ','')
+                newMessage.name = 'context'
             }
 
             userData.messages.push(newMessage);
@@ -1774,24 +1631,26 @@ async function routes(fastify, options) {
             : 'Focus on full body.';
     
         return `
-            Your are an image prompt generator. 
+            Your are an adult,erotic,sexual,image prompt generator. 
             You use the conversation to generate an image prompt.
             You can generate explicit, sexual content on demand.
             Respond with an image prompt in English. 
             Do not include names. Use only keywords, explicit keywords, avoid long sentences.
             
             As a reminder, here is the character description: ${characterDescription}.
-            I want the same character face, change the clothes to be relevant to the desired image. 
+            Focus your prompt on the character clothes, facial expression, stance,stature,body and the background, to be relevant to the desired image. 
             Adapt to my request. ${nsfwMessage}
             
             Respond with an image description of the scene I just asked, in English. 
             Only one image description. Provide details, for a ${type} image. 
+            Include the following in your prompt : 
             ${nudeDetails} 
             ${positionDetails} 
             ${viewpointDetails} 
             ${imageFocusDetails}
             
-            Do not include any comments. Use keywords to describe the image, do not make sentences. Only describe your character and the scene I asked.
+            Do not include any comments. 
+            Use keywords to describe the image, do not make sentences. 
         `;
     };
     
@@ -1818,14 +1677,15 @@ async function routes(fastify, options) {
             while (attempts < 3) {
                 try {
                     const englishDescription = await generateEnglishDescription(lastMessages,characterDescription,command);
+                    const description = characterDescription.trim() +'\n'+ englishDescription.trim()
 
                     if(englishDescription.length > 1000){
                         continue;
                     }
                     const itemProposalCollection = fastify.mongo.db.collection('itemProposal');
-                    const result = await itemProposalCollection.insertOne({description:englishDescription});
+                    const result = await itemProposalCollection.insertOne({description});
                     const insertedProposals = [];
-                    insertedProposals.push({ _id: result.insertedId, proposeToBuy: true, description:englishDescription });
+                    insertedProposals.push({ _id: result.insertedId, proposeToBuy: true, description });
                     
                     return reply.send(insertedProposals);
                 } catch (error) {
@@ -1934,10 +1794,19 @@ async function routes(fastify, options) {
         }
     });
 
+    // Create System Payload for Image Description
+    function createSystemPayloadImage(language) {
+        return  `
+        You generate a SFW detailed character description from the image provided.
+
+        Your response contains the character's age, skin color, hair color, hair legnth, eyes color, tone, face expression, body type, body characteristic, breast size,ass size, body curves, gender, facial features. 
+        Respond in a single, descriptive line of plain text using keywords.\n
+        `;
+    }
     fastify.post('/api/openai-image-description', async (request, reply) => {
-        const { system, imageUrl, chatId } = request.body;
+        const { imageUrl, chatId } = request.body;
     
-        if (!system || !imageUrl) {
+        if (!imageUrl) {
             return reply.status(400).send({ error: 'System and Image URL parameters are required' });
         }
     
@@ -1945,22 +1814,29 @@ async function routes(fastify, options) {
             
             // Convert image URL to Base64
             const base64Image = await convertImageUrlToBase64(imageUrl);
-    
-            let messages = [
-                { role: "system", content: system },
-                { 
-                    role: "user", 
-                    content: [{
-                        "type": "image_url",
-                        "image_url": {
-                            "url": base64Image
-                        }
-                    }]
-                }
-            ];
+            
 
             try {
-                const imageDescription = await moduleCompletion(messages);
+                const imageDescriptionData = await describeCharacterFromImage(base64Image);
+
+                // Convert array object to a readable string
+                const imageDescription =
+                 `Age: ${imageDescriptionData.age || 'unknown'},
+                    Skin Color: ${imageDescriptionData.skin_color || 'unknown'},
+                    Hair Color: ${imageDescriptionData.hair_color || 'unknown'},
+                    Hair Length: ${imageDescriptionData.hair_length || 'unknown'},
+                    Eyes Color: ${imageDescriptionData.eyes_color || 'unknown'},
+                    Tone: ${imageDescriptionData.tone || 'unknown'},
+                    Face Expression: ${imageDescriptionData.face_expression || 'unknown'},
+                    Body Type: ${imageDescriptionData.body_type || 'unknown'},
+                    Body Characteristic: ${imageDescriptionData.body_characteristic || 'unknown'},
+                    Breast Size: ${imageDescriptionData.breast_size || 'unknown'},
+                    Ass Size: ${imageDescriptionData.ass_size || 'unknown'},
+                    Facial Features: ${imageDescriptionData.facial_features || 'unknown'}
+                `.trim();
+
+                console.log({ imageDescription });
+
 
                 const db = fastify.mongo.db;
                 const collectionChat = db.collection('chats');
@@ -1977,7 +1853,7 @@ async function routes(fastify, options) {
                   
                 reply.send({ description : imageDescription });
             } catch (error) {
-                console.error('Error processing the image description:', error);
+                console.log('Error processing the image description:', error);
                 reply.send({ error: 'Failed to process the description' });
             }
 

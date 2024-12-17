@@ -1,4 +1,5 @@
 {
+  "select_pose_for_image_generation": "Please select a pose for image generation.",
   "album":"album",
   "buyCoins":"Buy coins",
   "openCoinStore":"Open the coins store",

@@ -26,21 +26,7 @@ window.checkImageDescription = async function(chatId = null) {
     }
 };
 
-  
 
-// Create System Payload for Image Description
-function createSystemPayloadImage(language) {
-  return [
-      {
-          "type": "text",
-          "text": `
-              You generate a highly detailed character description from the image provided. 
-              Your response contains the character's age, skin color, hair color, hair legnth, eyes color, tone, face expression, body type, body characteristic, breast size,ass size, body curves, gender, facial features. 
-              Respond in a single, descriptive line of plain text using keywords.\n
-          `
-      }
-  ];
-}
 window.refundUser = function(taskId,imageType){
     window.postMessage({ event: 'imageError' }, '*');
     const apiUrl = taskId ? '/api/refund-task/'+taskId : '/api/refund-type/'+imageType
@@ -68,15 +54,13 @@ window.generateImageDescriptionBackend = function(imageUrl = null, chatId, callb
       return;
   }
 
-  const system = createSystemPayloadImage(language);
-  
   const apiUrl = '/api/openai-image-description';
 
   $.ajax({
       url: apiUrl,
       method: 'POST',
       contentType: 'application/json',
-      data: JSON.stringify({ system, imageUrl, chatId }),
+      data: JSON.stringify({ imageUrl, chatId }),
       success: function(response) {
           if (callback) {
                 console.log(`generateImageDescriptionBackend`,response)
@@ -315,14 +299,6 @@ async function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, i
             const finalPrompt = await generateCompletion(promptGenSys,promptGenMessage)
 
             //showNotification(t['imageGenerationStarted'], 'success');
-
-            // Display the choice and cost in the user message
-            const typeText = isNSFWChecked ? 'NSFW' : 'SFW';
-            const userMessage = '[user] '+ t['imagePurchaseMessage']
-                .replace('{type}', typeText)
-                .replace('{prompt_title}', prompt_title) || `[user] ${prompt_title}で${type}画像をリクエストしました。`;
-            window.postMessage({ event: 'displayMessage', role:'user', message: userMessage, completion : false , image : false, messageId: false }, '*');
-
             const hiddenMessage = `I requested an image.Tell me that you received the request and that the image is current being generated. It may take a minute or so to complte. Thanks me and tell me to wait.`
             window.postMessage({ event: 'imageStart', message: hiddenMessage}, '*');
 

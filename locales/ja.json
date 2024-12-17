@@ -1,4 +1,5 @@
 {
+  "select_pose_for_image_generation": "画像を生成するためのポーズを選んでください。",
   "album":"アルバム",
   "buyCoins":"コインをリクエストする",
   "openCoinStore":"コインストアを開く",

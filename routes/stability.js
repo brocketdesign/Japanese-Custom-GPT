@@ -421,7 +421,7 @@ async function routes(fastify, options) {
         };
 
         const requestData = { ...params, ...image_request };
-        console.log(requestData)
+        console.log(requestData.prompt)
 
         const novitaTaskId = await fetchNovitaMagic(requestData);
 
@@ -517,7 +517,7 @@ fastify.post('/novita/txt2img', async (request, reply) => {
 
       // Prepare params
       const requestData = { ...params, ...image_request, image_num: 1 };
-      console.log(requestData);
+      console.log(requestData.prompt);
 
       // Send request to Novita and get taskId
       const novitaTaskId = await fetchNovitaMagic(requestData);

@@ -94,79 +94,6 @@ async function generateCompletion(systemPrompt, userMessage, maxToken = 1000, ai
     const data = await response.json();
     return data.choices[0].message.content;
 }
-const fetchOpenAINarration = async (messages, res, maxToken = 1000, language) => {
-    try {
-        // Prepare the prompt specifically for generating narration
-        const narrationPrompt = [
-            { 
-                role: "system", 
-                content: `You are a commentator.
-                YOU DO NOT WRITE THE CHARACTER ANSWER.
-                You respond in ${language}.` 
-            },
-            { 
-                role: "user", 
-                content: `I will provide a conversation, comment on the expression of the character who is about to answer.
-                    Your response is short, clear and in ${language}. You provide ONLY a short comment.
-                    Use the conversation transcript provided below:
-                ` + messages.map(msg => msg.role != 'system' ? `${msg.content.replace('[Narrator]','')}`: '').join("\n") 
-            }
-        ];
-        let response = await fetch(
-            "https://api.openai.com/v1/chat/completions",
-            {
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
-                },
-                method: "POST",
-                body: JSON.stringify({
-                    model: 'gpt-4o-mini',
-                    messages: narrationPrompt, // Use the narration prompt
-                    temperature: 0.75,
-                    top_p: 0.95,
-                    frequency_penalty: 0,
-                    presence_penalty: 0,
-                    max_tokens: maxToken,
-                    stream: true,
-                    n: 1,
-                }),
-            }
-        );
-
-        if (!response.ok) {
-            console.error("Response body:", await response.text());
-            throw new Error("Failed to fetch narration completion");
-        }
-
-        let fullNarration = "";
-        const parser = createParser((event) => {
-            try {
-                if (event.type === 'event') {
-                    if (event.data !== "[DONE]") {
-                        const content = JSON.parse(event.data).choices[0].delta?.content || "";
-                        fullNarration += content;
-                        res.write(`data: ${JSON.stringify({ content: `${content}` })}\n\n`);
-                    }
-                }
-            } catch (error) {
-                console.log(error);
-                console.error("Error in parser:", error);
-                console.error("Event causing error:", event);
-            }
-        });
-
-        for await (const chunk of response.body) {
-            parser.feed(new TextDecoder('utf-8').decode(chunk));
-        }
-
-        return fullNarration;
-
-    } catch (error) {
-        console.error("Error fetching OpenAI narration:", error);
-        throw error;
-    }
-};
 
 const moduleCompletion = async (messages) => {
   const { OpenAI } = require("openai");
@@ -207,62 +134,6 @@ const moduleCompletion = async (messages) => {
 
 }
 
-// Define the schema for the response format
-const formatSchema = z.object({
-    nsfw: z.boolean(),
-    image_request: z.boolean(),
-    nude: z.boolean(),
-    nude_type: z.enum(['none', 'top', 'bottom', 'full']).optional(),
-    image_focus: z.enum(['upper_body', 'full_body']).optional(),
-    position: z.enum(['standing', 'sitting', 'squat']).optional(),
-    viewpoint: z.enum(['front', 'back', 'side']).optional()
-  });
-  
-  
-  const checkImageRequest = async (messages) => {
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  
-    // Define the system prompt
-    const systemPrompt = `
-        Analyze the conversation:
-        1. nsfw: true if nudity (not underwear) is involved, else false.
-        2. nude: true if full nude requested, else false.
-        3. image_request: true if user requests image generation, else false.
-        4. nude_type: 'none','top','bottom','full' if applicable.
-        5. image_focus: 'upper_body' or 'full_body'.
-        6. position: 'standing','sitting','squat' if specified.
-        7. viewpoint: 'front','back','side' if specified.
-        
-        Return:
-        {
-        "nsfw": boolean,
-        "image_request": boolean,
-        "nude": boolean,
-        "nude_type": "none|top|bottom|full",
-        "image_focus": "upper_body|full_body",
-        "position": "standing|sitting|squat",
-        "viewpoint": "front|back|side"
-        }
-    `;
-    
-    const updatedMessages = [
-        { role: "system", content: systemPrompt },
-        ...messages
-    ];
-  
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: updatedMessages,
-      response_format: zodResponseFormat(formatSchema, "myResponse"),
-      max_tokens: 600,
-      temperature: 1,
-      top_p: 0.95,
-      frequency_penalty: 0.75,
-      presence_penalty: 0.75,
-    });
-  
-    return JSON.parse(response.choices[0].message.content);
-  };
   
 async function fetchNewAPICompletion(userMessages, rawReply, chatname, timeout = 30000) {
     // Convert userMessages to the required format
@@ -323,73 +194,163 @@ async function fetchNewAPICompletion(userMessages, rawReply, chatname, timeout =
     }
 }
 
-// Function to fetch custom OpenAI response
-const fetchOpenAICustomResponse = async (customPrompt, messages, res, maxToken = 1000) => {
-    try {
-        const fullPrompt = [
-            { role: "system", content: customPrompt.systemContent },
-            { role: "user", content: customPrompt.userContent + messages.map(msg => msg.role != 'system' ? `${msg.content}` : '').join("\n") }
-        ];
 
-        let response = await fetch(
-            "https://api.openai.com/v1/chat/completions",
-            {
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
-                },
-                method: "POST",
-                body: JSON.stringify({
-                    model: 'gpt-4o-mini',
-                    messages: fullPrompt,
-                    temperature: customPrompt.temperature || 0.75,
-                    top_p: customPrompt.top_p || 0.95,
-                    frequency_penalty: customPrompt.frequency_penalty || 0,
-                    presence_penalty: customPrompt.presence_penalty || 0,
-                    max_tokens: maxToken,
-                    stream: true,
-                    n: 1,
-                }),
-            }
-        );
-
-        if (!response.ok) {
-            console.error("Response body:", await response.text());
-            throw new Error("Failed to fetch custom OpenAI response");
-        }
-
-        let fullResponse = "";
-        const parser = createParser((event) => {
-            try {
-                if (event.type === 'event') {
-                    if (event.data !== "[DONE]") {
-                        const content = JSON.parse(event.data).choices[0].delta?.content || "";
-                        fullResponse += content;
-                        res.write(`data: ${JSON.stringify({ content: `${content}` })}\n\n`);
-                    }
-                }
-            } catch (error) {
-                console.log(error);
-                console.error("Error in parser:", error);
-                console.error("Event causing error:", event);
-            }
+// Define the schema for the response format
+const formatSchema = z.object({
+    nsfw: z.boolean(),
+    image_request: z.boolean(),
+    nude: z.boolean(),
+    nude_type: z.enum(['none', 'top', 'bottom', 'full']).optional(),
+    image_focus: z.enum(['upper_body', 'full_body']).optional(),
+    position: z.enum(['standing', 'sitting', 'squat']).optional(),
+    viewpoint: z.enum(['front', 'back', 'side']).optional()
+  });
+  
+    
+// Define the system prompt
+const systemPrompt = `
+    Analyze the conversation:
+    1. nsfw: true if nudity (not underwear) is involved, else false.
+    2. nude: true if full nude requested, else false.
+    3. image_request: true if user requests image generation, else false.
+    4. nude_type: 'none','top','bottom','full' if applicable.
+    5. image_focus: 'upper_body' or 'full_body'.
+    6. position: 'standing','sitting','squat' if specified.
+    7. viewpoint: 'front','back','side' if specified.
+    
+    Return:
+    {
+    "nsfw": boolean,
+    "image_request": boolean,
+    "nude": boolean,
+    "nude_type": "none|top|bottom|full",
+    "image_focus": "upper_body|full_body",
+    "position": "standing|sitting|squat",
+    "viewpoint": "front|back|side"
+    }
+`;
+const checkImageRequest = async (messages) => {
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    
+    const updatedMessages = [
+      { role: "system", content: systemPrompt },
+      ...messages
+    ];
+  
+    let attempts = 0;
+    const maxAttempts = 3;
+  
+    while (attempts < maxAttempts) {
+      try {
+        const response = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: updatedMessages,
+          response_format: zodResponseFormat(formatSchema, "myResponse"),
+          max_tokens: 600,
+          temperature: 1,
+          top_p: 0.95,
+          frequency_penalty: 0.75,
+          presence_penalty: 0.75,
         });
-
-        for await (const chunk of response.body) {
-            parser.feed(new TextDecoder('utf-8').decode(chunk));
+  
+        return JSON.parse(response.choices[0].message.content);
+      } catch (error) {
+        attempts++;
+        console.error(`Parsing error (Attempt ${attempts}/${maxAttempts}):`, error.message || error);
+  
+        if (attempts >= maxAttempts) {
+          throw new Error("Failed to parse response after 3 attempts.");
         }
+      }
+    }
+  };
+  
 
-        return fullResponse;
+// Zod schema to ensure the response format is correct
+const characterDescriptionSchema = z.object({
+  age: z.string(),
+  skin_color: z.string(),
+  hair_color: z.string(),
+  hair_length: z.string(),
+  eyes_color: z.string(),
+  tone: z.string(), // tone of skin, mood, etc.
+  face_expression: z.string(),
+  body_type: z.string(),
+  body_characteristic: z.string(),
+  breast_size: z.string(),
+  ass_size: z.string(),
+  facial_features: z.string()
+});
+
+
+const system = `
+You are a highly detailed image analysis assistant. You will receive an image as input in Base64 format. 
+Your job is to describe the principal physical properties of the character in the image as a JSON object. 
+
+Focus on the following properties for the character:
+- age (approximate age range or impression, if not possible ,teen, young, mature, old)
+- skin_color
+- hair_color
+- hair_length
+- eyes_color
+- tone (overall vibe, e.g., "soft", "intense", "delicate")
+- face_expression (e.g. "smiling", "serious", "neutral")
+- body_type (e.g. "slim", "athletic", "curvy", "voluptuous")
+- body_characteristic (any distinctive body marks or features)
+- breast_size (slim,medium,large,massive)
+- ass_size (small,medium,large,massive)
+- facial_features (notable facial features)
+
+Please return your final answer strictly as a JSON object matching the schema without any comment, start with the bracket {. 
+If some attributes are unclear or not visible, make your best guess.
+`;
+
+async function describeCharacterFromImage(base64Image) {
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+  let messages = [
+    { role: "system", content: system },
+    { 
+      role: "user", 
+      content: JSON.stringify([{
+        "type": "image_url",
+        "image_url": { "url": base64Image }
+      }])
+    }
+  ];
+
+  let attempts = 0;
+  const maxAttempts = 3;
+
+  while (attempts < maxAttempts) {
+    try {
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages,
+        max_tokens: 1000,
+        temperature: 1,
+        top_p: 0.95,
+        frequency_penalty: 0.75,
+        presence_penalty: 0.75
+      });
+
+      // Validate and parse the response
+      return JSON.parse(response.choices[0].message.content);
 
     } catch (error) {
-        console.error("Error fetching custom OpenAI response:", error);
-        throw error;
+      attempts++;
+      console.error(`Parsing error (Attempt ${attempts}/${maxAttempts}):`, error.message || error);
+
+      if (attempts >= maxAttempts) {
+        throw new Error("Failed to parse response after 3 attempts.");
+      }
     }
-};
+  }
+}
 
 
   module.exports = {
-    fetchOpenAICompletion,moduleCompletion,generateCompletion,fetchOpenAINarration, 
-    fetchNewAPICompletion, fetchOpenAICustomResponse,
-    checkImageRequest
+    fetchOpenAICompletion,moduleCompletion,generateCompletion, 
+    fetchNewAPICompletion,
+    checkImageRequest,describeCharacterFromImage
 }

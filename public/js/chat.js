@@ -456,7 +456,9 @@ $(document).ready(async function() {
         }
     
         const {imageDescription} = await checkImageDescription(chatId);
+
         if (!imageDescription) {
+            console.log('Image description was not founded. Generating a new one ...')
             generateImageDescriptionBackend(thumbnail, chatId);
         }
 
@@ -1647,67 +1649,7 @@ $(document).ready(async function() {
             }
         });
     }
-    function generateCustomCompletion(customPrompt, callback) {
-        const apiUrl = API_URL + '/api/openai-custom-chat';
-    
-        hideOtherChoice(false, currentStep);
-        // Initialize the bot response container
-        const animationClass = 'animate__animated animate__slideInUp';
-        const uniqueId = `${currentStep}-${Date.now()}`;
-        const botResponseContainer = $(`
-            <div id="container-${uniqueId}">
-                <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
-                    <img src="${ thumbnail ? thumbnail : '/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
-                    <div class="audio-controller" style="display:none">
-                        <button id="play-${uniqueId}" class="audio-content badge bg-dark">►</button>
-                    </div>
-                    <div id="completion-${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">
-                        <img src="/img/load-dot.gif" width="50px">
-                    </div>
-                </div>
-            </div>`).hide();
-        $('#chatContainer').append(botResponseContainer);
-        botResponseContainer.addClass(animationClass).fadeIn();
-        $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
-        $.ajax({
-            url: apiUrl,
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ userId, chatId, userChatId, customPrompt }),
-            success: function(response) {
-                const sessionId = response.sessionId;
-                const streamUrl = API_URL + `/api/openai-custom-chat-stream/${sessionId}`;
-                const eventSource = new EventSource(streamUrl);
-                let markdownContent = "";
-    
-                eventSource.onmessage = function(event) {
-                    const data = JSON.parse(event.data);
-                    markdownContent += data.content;
-                    $(`#completion-${uniqueId}`).html(marked.parse(markdownContent));
-                };
-    
-                eventSource.onerror = function(error) {
-                    eventSource.close();
-                    let message = removeContentBetweenStars(markdownContent);
-                    if(language != 'english'){
-                        $(`#play-${uniqueId}`).attr('data-content', message);
-                        $(`#play-${uniqueId}`).closest('.audio-controller').show();
-                        if(autoPlay){
-                            //initAudio($(`#play-${uniqueId}`), message);
-                        }
-                    }
-
-                    if (typeof callback === "function") {
-                        callback();
-                    }
-                };
-            },
-            error: function(error) {
-                console.error('Error:', error);
-                $(`#container-${uniqueId}`).remove()
-            },
-        });
-    }            
+       
     function generateNarration(callback) {
         const apiUrl = API_URL + '/api/openai-chat-narration';
                 
@@ -2182,7 +2124,7 @@ $(document).ready(async function() {
     // Click handler for #showPrompts
     $(document).on('click','#showPrompts', function() {
         getPromptsData(function(prompts) {
-            const header = `<p style="font-size:16px;" class="px-3 text-start my-3  pb-0">画像を生成するためのポーズを選んでください。</p>`;
+            const header = `<p style="font-size:16px;" class="px-3 text-start my-3  pb-0">${window.translations.select_pose_for_image_generation}</p>`;
             renderPopup(prompts, header);
         });
     });
@@ -2290,6 +2232,17 @@ $(document).ready(async function() {
 
             var id = $(this).data('id');
             var isNSFWChecked = $('#nsfwCheckbox').is(':checked');
+
+            // Display the choice and cost in the user message
+            const typeText = isNSFWChecked ? 'NSFW' : 'SFW';
+            const prompt_title = $(this).find('.card-text').text()
+
+            const userMessage = '[user] '+ window.translations['imageForm']['imagePurchaseMessage']
+                .replace('{type}', typeText)
+                .replace('{prompt_title}', prompt_title) || `[user] ${prompt_title}で${type}画像をリクエストしました。`;
+            window.postMessage({ event: 'displayMessage', role:'user', message: userMessage, completion : false , image : false, messageId: false }, '*');
+
+
             controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isNSFWChecked);
 
             Swal.close();

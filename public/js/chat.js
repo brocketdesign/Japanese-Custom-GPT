@@ -92,7 +92,7 @@ $(document).ready(async function() {
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageDone') {
             const prompt = event.data.prompt
-            let message = `I received an image from you. Ask me what I think of it.  \n Respond in ${language}.`
+            let message = `I received an image from you. Ask me what I think of it. \n Respond in ${language} with the shortest answer possible.`
             addMessageToChat(chatId, userChatId, 'user', message,function(){
                 generateCompletion()
             });

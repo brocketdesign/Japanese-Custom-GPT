@@ -248,6 +248,7 @@ async function routes(fastify, options) {
   
         return response.data.task_id;
       } catch (error) {
+        console.log(error)
         console.error('Error fetching Novita image:', error.message);
         throw '';
       }

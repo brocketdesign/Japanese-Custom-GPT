@@ -234,7 +234,7 @@ const checkImageRequest = async (messages) => {
     
     const updatedMessages = [
       { role: "system", content: systemPrompt },
-      ...messages
+      messages
     ];
   
     let attempts = 0;

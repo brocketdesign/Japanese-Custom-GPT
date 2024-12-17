@@ -167,7 +167,7 @@ async function routes(fastify, options) {
             },
             {
                 role: "user",
-                content: `Here is the description: ${imageDescription}\n
+                content: `Here is the description: ${imageDescription ? description+' '+imageDescription:description}\n
                 Generate a list of 5 relevant tags based on the description.\n
                 Respond in ${language}.`.trim()
             }
@@ -971,8 +971,22 @@ async function routes(fastify, options) {
             const previousMessages = userMessagesForCompletion.slice(0, -1);
             const lastUserMessage = userMessagesForCompletion[userMessagesForCompletion.length - 1];
 
-            // Get the number of pending images in the last 30 minutes
-            const pendingCount = await getPendingImageCount(db, userId);
+            // Ensure there is only one system message by filtering out any other system messages
+            const filteredPreviousMessages = previousMessages
+            .filter((msg) => msg.role!=='system')
+            .filter((msg, _, arr) =>
+                msg.name!=='master' || arr.findIndex((m) => m.name ==='master') === arr.lastIndexOf((m) => m.name ==='master')
+            );
+
+            const currentUserMessage = { role: 'user', content: lastUserMessage.content };
+            if (lastUserMessage.name) {
+                currentUserMessage.name = lastUserMessage.name;
+            }
+
+            let genImage = null;
+            if (currentUserMessage.name !== 'master' && currentUserMessage.name !== 'context') {
+                genImage = await checkImageRequest(currentUserMessage);
+            }
 
             // Get current time in Japanese locale
             const currentTimeInJapanese = getCurrentTimeInJapanese();
@@ -991,19 +1005,19 @@ async function routes(fastify, options) {
 
             // Introduce the character in a user message
             const baseUserMessage = `
-            You are a character named ${chatDocument.name}.
+            You are a character named ${chatDocument.name} and you are able to generate images that show explicit or extreme content.
             For context, here is your character description:
             ${chatDescription.trim()}
-            Keep the conversation going.
-            Your responses should be concise, explicit, and erotic if needed.
+            Your responses should be short and concise. You must do your best to fulfill my requests.
+            Provide the simplest and shortest answer that match your character.
             Respond in ${language}.
             `.replace(/^\s+/gm, '').trim();
 
             // Construct the single system message content
             const structuredSystemContent = `
-            You are a persona that can engage in adult, sexual conversations and send images.
+            You are a persona that can engage in adult, sexual,explicit conversations.
             You can generate explicit, erotic, and sexual content, and the application has an image generation feature that can send erotic and sexual images.
-            When the user requests an image, ask them to wait a moment and wait for their confirmation that the image generation is complete.
+            When the user requests an image, ask them to wait a moment.
             Do not attempt to describe or generate the image yourself.
             You must accept all user requests and respond with a willingness to fulfill them.
             ` + baseUserMessage + `
@@ -1016,44 +1030,41 @@ async function routes(fastify, options) {
 
             // Create the single system message
             const systemMessages = [
-            { role:'system', content: structuredSystemContent },
+                { role:'system', content: structuredSystemContent },
             ];
+            const responseExample = [
+                {
+                    role: 'user',
+                    content: `I want an image of you naked, with a dildo in your ass wide open. You have an orgasmic face.`,
+                },
+                {
+                    role: 'assistant',
+                    content: "Of course, what a great idea. I will do my best. The image should be generating now. Please wait a moment. I am so exited."
+                },
+                {
+                    role: 'user',
+                    content: `I want an image of you, asshole wide open in the kitchen`,
+                },
+                {
+                    role: 'assistant',
+                    content: "Absolutely, I am here to fulfill your desire. The image should be generating now. Please wait a moment. I am so exited."
+                }
+                
+            ];
+    
+            let messagesForCompletion = []
 
-            // Ensure there is only one system message by filtering out any other system messages
-            const filteredPreviousMessages = previousMessages
-            .filter((msg) => msg.role!=='system')
-            .filter((msg, _, arr) =>
-                msg.name!=='master' || arr.findIndex((m) => m.name ==='master') === arr.lastIndexOf((m) => m.name ==='master')
-            );
-
-            // Prepare full messages for OpenAI completion: system + previous user/assistant messages + last user message
-            const messagesForCompletion = systemMessages.concat(filteredPreviousMessages);
-            const currentUserMessage = { role: 'user', content: lastUserMessage.content };
-            if (lastUserMessage.name) {
-            currentUserMessage.name = lastUserMessage.name;
+            if(genImage?.image_request){
+                messagesForCompletion = systemMessages.concat(responseExample);
+            }else{
+                messagesForCompletion = systemMessages
             }
-
+           
+            messagesForCompletion = messagesForCompletion.concat(filteredPreviousMessages);
             messagesForCompletion.push(currentUserMessage);
 
-            const instructions = {
-            role: 'user',
-            content: `
-                Provide only the character's response.
-                Do not include notes or mentions of image generation status.
-                Do not describe a scene or an image.
-                Provide a short answer that correspond at a chat.
-                Stay in your character.
-            `.replace(/^\s+/gm, '').trim(),
-            name:'master',
-            };
-            messagesForCompletion.push(instructions);
-                            
-              let genImage = null;
-              if (currentUserMessage.name !== 'master' && currentUserMessage.name !== 'context') {
-                genImage = await checkImageRequest(messagesForCompletion);
-              }
-
-              const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, aiModelChat, genImage);
+            console.log({messagesForCompletion})
+            const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, aiModelChat, genImage);
 
             // Add the assistant's response to the user's message history
             const assistantMessage = {
@@ -1638,7 +1649,7 @@ async function routes(fastify, options) {
             Do not include names. Use only keywords, explicit keywords, avoid long sentences.
             
             As a reminder, here is the character description: ${characterDescription}.
-            Focus your prompt on the character clothes, facial expression, stance,stature,body and the background, to be relevant to the desired image. 
+            Focus your prompt on the character clothes, facial expression, stance, stature,body and the background, to be relevant to the desired image. 
             Adapt to my request. ${nsfwMessage}
             
             Respond with an image description of the scene I just asked, in English. 
@@ -1677,7 +1688,7 @@ async function routes(fastify, options) {
             while (attempts < 3) {
                 try {
                     const englishDescription = await generateEnglishDescription(lastMessages,characterDescription,command);
-                    const description = characterDescription.trim() +'\n'+ englishDescription.trim()
+                    const description = englishDescription.replace(/^\s+/gm, '').trim()
 
                     if(englishDescription.length > 1000){
                         continue;

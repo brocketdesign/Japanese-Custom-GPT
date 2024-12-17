@@ -825,7 +825,7 @@ async function routes(fastify, options) {
         const { userId, chatId } = request.body;
         let command = JSON.parse(request.body.command);
 
-        try {
+         try {
     
             const user = await fastify.mongo.db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
     

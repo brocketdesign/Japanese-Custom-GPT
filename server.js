@@ -4,6 +4,7 @@ const cron = require('node-cron');
 const jwt = require('jsonwebtoken');
 const path = require('path');
 const fs = require('fs');
+const ip = require('ip');
 const handlebars = require('handlebars');
 const fastifyMultipart = require('@fastify/multipart');
 const translationsPlugin = require('./plugins/translations');
@@ -667,7 +668,7 @@ const start = async () => {
   try {
     const port = process.env.PORT || 3000;
     await fastify.listen(port, '0.0.0.0');
-    fastify.log.info(`server listening on ${port}`);
+    console.log(`Fastify running → PORT http://${ip.address()}:${port}`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

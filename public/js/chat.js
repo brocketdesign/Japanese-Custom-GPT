@@ -1,6 +1,9 @@
 const audioCache = new Map();
 const audioPool = [];
 
+let language = localStorage.getItem('currentLang') || 'ja';
+$('#language').val(language == 'en' ? 'english' : 'japanese')
+
 $(document).ready(async function() {
     let autoPlay = localStorage.getItem('audioAutoPlay') === 'true';
     $('#audio-icon').addClass(autoPlay ? 'fa-volume-up' : 'fa-volume-mute');
@@ -24,7 +27,6 @@ $(document).ready(async function() {
     let feedback = false
     let thumbnail = false
     let isTemporary = !!user.isTemporary
-    let language = 'japanese'
 
     $('body').attr('data-temporary-user',isTemporary)
 
@@ -1621,7 +1623,7 @@ $(document).ready(async function() {
                         markdownContent += data.content;
                         $(`#completion-${uniqueId}`).html(marked.parse(markdownContent));
                     } else if (data.type === 'trigger') {
-                        handleTrigger(data.command);
+                        handleTrigger(data);
                     }
                 };
 
@@ -1750,16 +1752,13 @@ $(document).ready(async function() {
             }
         });
     }
-    const handleTrigger = (command) => {
-        switch (command) {
-            case 'image_sfw':
-                buyImage('sfw');
-                break;
-            case 'image_nsfw':
-                buyImage('nsfw');
+    const handleTrigger = (data) => {
+        switch (data.name) {
+            case 'image_request':
+                imageRequest(data.command);
                 break;
             default:
-                console.warn(`Unhandled trigger command: ${command}`);
+                console.warn(`Unhandled trigger command: ${data.name}`);
         }
     };
   
@@ -1880,12 +1879,13 @@ $(document).ready(async function() {
             }
         });
     }
-    async function initiatePurchaseImage(type, userId, chatId) {
+    async function saveImageRequest(command, userId, chatId) {
+
         return new Promise((resolve, reject) => {
             $.ajax({
                 url: '/api/purchaseImage',
                 method: 'POST',
-                data: { type, userId, chatId },
+                data: { command: JSON.stringify(command), userId, chatId },
                 success: function(response) {
                     resolve(response);
                 },
@@ -2295,14 +2295,15 @@ $(document).ready(async function() {
             Swal.close();
         });
     }
-    window.buyImage = function(type) {
+    window.imageRequest = function(command){
         const imageLoaderElement = displayImageLoader();
-        initiatePurchaseImage(type, userId, chatId);
-        generateItemData(type)
+        saveImageRequest(command, userId, chatId);
+        generateItemData(command)
             .then((item) => {
                 if (item && item.length > 0) {
                     const itemId = item[0]._id;
                     updateLoaderWithId(itemId);
+                    let type = command.nsfw ? 'nsfw' : 'sfw'
                     generateImageNovita(API_URL, userId, chatId, userChatId, itemId, thumbnail, type);
                 } else {
                     imageLoaderElement.remove();
@@ -2311,15 +2312,16 @@ $(document).ready(async function() {
             .catch((error) => {
                 imageLoaderElement.remove();
             });
+
     };
     
-    function generateItemData(type) {
+    function generateItemData(command) {
         return new Promise((resolve, reject) => {
             $.ajax({
                 url: '/api/gen-item-data',
                 type: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({ userId, chatId, userChatId, type }),
+                data: JSON.stringify({ userId, chatId, userChatId, command }),
                 success: function(response) {
                     if (response.length > 0) {
                         resolve(response);

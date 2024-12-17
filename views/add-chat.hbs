@@ -186,16 +186,11 @@
     </style>
 
 <div class="container position-relative rounded shadow p-3 my-4 px-0">
-    <h4 class="container mb-4 text-center stepTitle">{{translations.newCharacter.characterCreationForm}}</h4>
     
-    <!-- ステップの進行状況を表示 -->
-    <div class="progress mb-4 mx-3">
-        <div class="progress-bar" role="progressbar" style="width: 50%;background-color: #6c757d;" id="progressBar">
-            {{translations.newCharacter.stepProgress}} 1/2 <!-- e.g., "Step 1/3" -->
-        </div>
-    </div>
     <!-- 1. キャラクター画像 -->
     <div id="step1" class="step">
+            <h4 class="container mb-4 text-center stepTitle">{{translations.newCharacter.characterCreationForm}}</h4>
+
             <!-- Character Creation Form -->
             <div id="characterCreationForm" class="container mt-3">
                 
@@ -287,6 +282,7 @@
 
     <!-- 2. キャラクターの性格 -->
     <div id="step2" class="step d-none">
+        <h4 class="container mb-4 text-center stepTitle">{{translations.newCharacter.characterPersonalityTitle}}</h4>
         <div class="mb-3 mx-3 row justify-content-between">
             <div class="d-none col-auto ps-0">
                 <label for="visibility" class="form-label"><i class="fas fa-eye"></i> {{translations.newCharacter.visibilityLabel}}:</label>
@@ -348,23 +344,41 @@
         let translations = window.translations
 
         function showStep(step) {
-            $('.step').addClass('d-none');
-            $('#step' + step).removeClass('d-none');
-            $('#progressBar')
-            .css('width', (step * 50) + '%')
-            .text(translations.newCharacter.stepProgress + step + '/2');
-            $('.stepTitle').text(step===1?translations.newCharacter.characterCreationForm:translations.newCharacter.characterPersonalityTitle)
-
+            $(`#nextStep${step}`).addClass('d-none');
+            $(`#step${step +1}`).removeClass('d-none')
         }
 
-        function validateStep(step) {
-            if (step === 1) {
-                return $('.img-thumbnail.select').length > 0 || $('#generatedImage').attr('src').length > 0 && $('#enhancedPrompt').val().trim() != '';
-            } else if (step === 2) {
-                return $('#chatPurpose').val().trim() !== '' && $('#chatName').val().trim() !== '' && $('#chatDescription').val().trim() !== '' && $('#chatRule').val().trim() !== '';
+    function validateStep(step) {
+        if (step === 1) {
+            if ($('.img-thumbnail.select').length === 0) {
+                console.log('Validation failed: No image thumbnail selected.');
             }
-            return true;
+            return (
+                $('.img-thumbnail.select').length > 0
+            );
+        } else if (step === 2) {
+            if ($('#chatPurpose').val().trim() === '') {
+                console.log('Validation failed: Chat purpose is empty.');
+            }
+            if ($('#chatName').val().trim() === '') {
+                console.log('Validation failed: Chat name is empty.');
+            }
+            if ($('#chatDescription').val().trim() === '') {
+                console.log('Validation failed: Chat description is empty.');
+            }
+            if ($('#chatRule').val().trim() === '') {
+                console.log('Validation failed: Chat rule is empty.');
+            }
+            return (
+                $('#chatPurpose').val().trim() !== '' &&
+                $('#chatName').val().trim() !== '' &&
+                $('#chatDescription').val().trim() !== '' &&
+                $('#chatRule').val().trim() !== ''
+            );
         }
+        return true;
+    }
+
 
         $('.nextStep').click(function() {
             if (validateStep(currentStep)) {
@@ -385,7 +399,6 @@
     $(document).ready(function() {
         let currentLang = localStorage.getItem('currentLang') || 'ja';
         $('#language').val(currentLang == 'en' ? 'english' : 'japanese')
-        console.log($('#language').val())
         $('#characterPrompt').on('input change', function() {
             $('#enhancedPrompt').val('');
         });
@@ -717,10 +730,10 @@
                     chatId: chatId
                 },
                 success: function(response) {
-                    showNotification('画像が保存されました。', 'success');
+                    showNotification(translations.imageForm.image_saved, 'success');
                 },
                 error: function(error) {
-                    showNotification('画像の保存に失敗しました。', 'error');
+                    showNotification(translations.imageForm.image_save_failed, 'error');
                 }
             });
         }
@@ -883,7 +896,7 @@
         const prompt = $('#characterPrompt').val().trim();
 
         if (!prompt || !chatId) {
-            showNotification('すべてのフィールドを入力してください', 'error');
+            showNotification(translations.newCharacter.allFieldsRequired, 'error');
             return;
         }
         const gender = $('#gender').val()
@@ -896,7 +909,7 @@
         if(isEnhanceEnabled){
             $button.html(`<i class="fas fa-spinner fa-spin me-2"></i>${translations.newCharacter.enhancing_prompt}`);
         } else {
-            $button.html(`<i class="fas fa-spinner fa-spin me-2"></i>${translations.newCharacter.generatingImages}`);
+            $button.html(`<i class="fas fa-spinner fa-spin me-2"></i>${translations.imageForm.generatingImages}`);
         }
 
         $('#characterPrompt').prop('disabled', true);
@@ -933,7 +946,7 @@
             }
 
             // ボタンテキストを「画像を生成中...」に更新
-            $button.html(`<i class="fas fa-spinner fa-spin me-2"></i>${translations.newCharacter.generatingImages}`);
+            $button.html(`<i class="fas fa-spinner fa-spin me-2"></i>${translations.imageForm.generatingImages}`);
             $('.genexp').fadeIn()
 
             const files = $('#imageUploaderContainer')?.find('input[type="file"]')[0]?.files;
@@ -1051,8 +1064,6 @@
             let prompt = $('#chatPurpose').val().trim();
             let gender = $('#gender').val()
 
-            prompt = prompt + '\n YOU MUST respond in japanese'
-              console.log({prompt})
             if(prompt.length == 0){
                 return
             } 
@@ -1063,7 +1074,6 @@
                 contentType: 'application/json',
                 data: JSON.stringify({ prompt, gender}),
                 success: function(response) {
-                    console.log(response)
                     const  { name, short_desc, long_desc } = response
                     $('#markdownContainer').show()
                     $('#chatDescription').show()

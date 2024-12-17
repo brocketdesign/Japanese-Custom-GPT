@@ -261,6 +261,8 @@
   "aiHiddenMessage": "I received the images",
   "aiInstruction": "私に感謝して、その写真を撮った時のことをコメントしてください。",
   "imageForm": {
+      "image_save_failed": "画像の保存に失敗しました。",
+      "image_saved": "画像が保存されました。",
       "imageGenerationError": "画像の生成中にエラーが発生しました。",
       "imageGenerationForm": "画像生成フォーム",
       "selectImageType": "画像の種類を選択",

@@ -68,7 +68,7 @@
   "edit": "Edit",
   "share":"Share",
   "delete":"Delete",
-  "sendMessageTo":"Send a message to",
+  "sendMessageTo":"Send a message to ",
   "conversationStarter" : {
     "starter": "Starter",
     "prompt": "This is a prompt for a web application. Please naturally initiate a conversation as if we were complete strangers.",
@@ -284,6 +284,8 @@
   "aiHiddenMessage": "I received the images.",
   "aiInstruction": "Thank me and comment about the moment you took the picture.",
   "imageForm": {
+      "image_save_failed": "Failed to save the image.",
+      "image_saved": "The image has been saved.",
       "imageGenerationForm": "Image Generation Form",
       "selectImageType": "Select Image Type",
       "sfwImage": "SFW Image",

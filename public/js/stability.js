@@ -30,7 +30,6 @@ window.checkImageDescription = async function(chatId = null) {
 
 // Create System Payload for Image Description
 function createSystemPayloadImage(language) {
-  console.log('createSystemPayloadImage called with language:', language);
   return [
       {
           "type": "text",
@@ -80,6 +79,7 @@ window.generateImageDescriptionBackend = function(imageUrl = null, chatId, callb
       data: JSON.stringify({ system, imageUrl, chatId }),
       success: function(response) {
           if (callback) {
+                console.log(`generateImageDescriptionBackend`,response)
               callback(response);
           }
       },

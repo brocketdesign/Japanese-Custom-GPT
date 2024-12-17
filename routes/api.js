@@ -150,9 +150,13 @@ async function routes(fastify, options) {
 
     async function generateAndSaveTags(description, chatId, language) {
         const openai = new OpenAI();
-        //const tagsCollection = fastify.mongo.db.collection('tags');
+        const tagsCollection = fastify.mongo.db.collection('tags');
         //let existingTags = await tagsCollection.find({}).limit(20).toArray();
         //existingTags = existingTags.map(tag => tag.name).join(', ')
+        const collectionChats = fastify.mongo.db.collection('chats');
+        const chat = await collectionChats.findOne( { _id: chatId } );
+        const imageDescription = chat.imageDescription
+
         const tagsPrompt = [
             {
                 role: "system",
@@ -160,12 +164,12 @@ async function routes(fastify, options) {
             },
             {
                 role: "user",
-                content: `Here is the description: ${description}\n
+                content: `Here is the description: ${imageDescription}\n
                 Generate a list of 5 relevant tags based on the description.\n
                 Respond in ${language}.`.trim()
             }
         ];
-        console.log({tagsPrompt})
+
         const PossibleAnswersExtraction = z.object({
             answers: z.array(z.string())
         });

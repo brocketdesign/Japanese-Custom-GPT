@@ -344,6 +344,7 @@
         let translations = window.translations
 
         function showStep(step) {
+            console.log(`show step ${step}`)
             $(`#nextStep${step}`).addClass('d-none');
             $(`#step${step +1}`).removeClass('d-none')
         }
@@ -383,8 +384,8 @@
         $('.nextStep').click(function() {
             console.log({currentStep})
             if (validateStep(currentStep)) {
-                currentStep++;
                 showStep(currentStep);
+                currentStep++;
             } else {
                 showNotification(translations.newCharacter.allFieldsRequired, 'error');
             }
@@ -595,6 +596,10 @@
                         resizeTextarea($('#characterPrompt')[0]);
                     }
 
+                    if (chatData.enhancedPrompt && chatData.enhancedPrompt !== '') {
+                        $('#enhancedPrompt').val(chatData.enhancedPrompt);
+                    }
+
                     if (chatData.imageDescription) {
                       $('#enhancedPrompt').val(chatData.imageDescription);
                     }
@@ -667,6 +672,7 @@
             formData.append('name', $('#chatName').val());
             formData.append('purpose', $('#chatPurpose').val());
             formData.append('characterPrompt', $('#characterPrompt').val());
+            formData.append('enhancedPrompt', $('#enhancedPrompt').val());
             formData.append('language', $('#language').val());
             formData.append('gender', $('#gender').val());
             formData.append('description', $('#chatDescription').val());

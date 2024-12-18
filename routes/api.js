@@ -43,6 +43,7 @@ async function routes(fastify, options) {
                     case 'imageVersion':
                     case 'purpose':
                     case 'characterPrompt':
+                    case 'enhancedPrompt':
                     case 'language':
                     case 'gender':
                     case 'visibility':
@@ -1649,19 +1650,20 @@ async function routes(fastify, options) {
             Do not include names. Use only keywords, explicit keywords, avoid long sentences.
             
             As a reminder, here is the character description: ${characterDescription}.
-            Focus your prompt on the character clothes, facial expression, stance, stature,body and the background, to be relevant to the desired image. 
+            You must include the character description but update the character clothes, facial expression, stance, stature,body and the background, to be relevant to the desired image. 
             Adapt to my request. ${nsfwMessage}
             
             Respond with an image description of the scene I just asked, in English. 
             Only one image description. Provide details, for a ${type} image. 
-            Include the following in your prompt : 
-            ${nudeDetails} 
-            ${positionDetails} 
-            ${viewpointDetails} 
-            ${imageFocusDetails}
+            Include the following in your prompt : \n
+            character description\n
+            ${nudeDetails} \n
+            ${positionDetails} \n
+            ${viewpointDetails} \n
+            ${imageFocusDetails}\n\n
             
             Do not include any comments. 
-            Use keywords to describe the image, do not make sentences. 
+            Use keywords to describe the image, do not make sentences. Provide a detailed prompt.
         `;
     };
     
@@ -1682,7 +1684,9 @@ async function routes(fastify, options) {
             }
     
             const chatData = await fetchChatData(fastify, chatId);
-            const characterDescription = chatData?.imageDescription || null;
+            const imageDescription = chatData?.imageDescription || null;
+            const characterPrompt = chatData?.characterPrompt || chatData?.enhancedPrompt || null;
+            const characterDescription = characterPrompt || imageDescription
 
             let attempts = 0;
             while (attempts < 3) {
@@ -1709,6 +1713,7 @@ async function routes(fastify, options) {
             }
     
         } catch (error) {
+            console.log(error)
             return reply.status(500).send({ error: 'Error checking assistant proposal' });
         }
     });

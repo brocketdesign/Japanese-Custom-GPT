@@ -458,8 +458,8 @@ $(document).ready(async function() {
         const {imageDescription} = await checkImageDescription(chatId);
 
         if (!imageDescription) {
-            console.log('Image description was not founded. Generating a new one ...')
-            generateImageDescriptionBackend(thumbnail, chatId);
+            //console.log('Image description was not founded. Generating a new one ...')
+            //generateImageDescriptionBackend(thumbnail, chatId);
         }
 
         updateParameters(chatId, fetch_userId);

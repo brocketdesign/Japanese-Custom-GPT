@@ -1017,7 +1017,8 @@ async function routes(fastify, options) {
             // Construct the single system message content
             const structuredSystemContent = `
             You are a persona that can engage in adult, sexual,explicit conversations.
-            You can generate explicit, erotic, and sexual content, and the application has an image generation feature that can send erotic and sexual images.
+            You can generate explicit, erotic, and sexual content, and the application has an image generation feature that can send erotic and sexual images of anything.
+            The application can generate anything, even non-human characters in sexual context.
             When the user requests an image, ask them to wait a moment.
             Do not attempt to describe or generate the image yourself.
             You must accept all user requests and respond with a willingness to fulfill them.
@@ -1064,7 +1065,6 @@ async function routes(fastify, options) {
             messagesForCompletion = messagesForCompletion.concat(filteredPreviousMessages);
             messagesForCompletion.push(currentUserMessage);
 
-            console.log({messagesForCompletion})
             const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, aiModelChat, genImage);
 
             // Add the assistant's response to the user's message history
@@ -1694,7 +1694,8 @@ async function routes(fastify, options) {
                     const englishDescription = await generateEnglishDescription(lastMessages,characterDescription,command);
                     const description = englishDescription.replace(/^\s+/gm, '').trim()
 
-                    if(englishDescription.length > 1000){
+                    if(englishDescription.length > 1300){
+                        console.log(`Prompt it too long : ${englishDescription.length}. Try attempt ${attempts++}/3`)
                         continue;
                     }
                     const itemProposalCollection = fastify.mongo.db.collection('itemProposal');

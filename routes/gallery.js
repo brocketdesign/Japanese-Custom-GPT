@@ -174,7 +174,10 @@ async function routes(fastify, options) {
   });
   fastify.get('/chats/images/search', async (request, reply) => {
     try {
+      let language = 'japanese'
       const queryStr = request.query.query || '';
+      const styleStr = request.query.style || 'anime';
+      console.log({styleStr})
       const page = parseInt(request.query.page) || 1;
       const limit = 12;
       const skip = (page - 1) * limit;
@@ -193,18 +196,18 @@ async function routes(fastify, options) {
           },
           { $sort: { _id: -1 } },
           { $skip: skip },
-          { $limit: limit },
+          { $limit: 50 },
           { $project: { _id: 0, image: '$images', chatId: 1 } },
         ])
         .toArray();
-  
+        
       const chatIds = allChatImagesDocs.map((doc) => doc.chatId);
   
       const chats = await chatsCollection
-        .find({ _id: { $in: chatIds } })
+        .find({ _id: { $in: chatIds }, imageStyle:styleStr, language })
         .toArray();
-  
-      const imagesWithChatData = allChatImagesDocs
+
+        const imagesWithChatData = allChatImagesDocs
         .filter((doc) => chats.find((c) => c._id.equals(doc.chatId)))
         .map((doc) => {
           const image = doc.image;
@@ -216,8 +219,9 @@ async function routes(fastify, options) {
             chatName: chat ? chat.name : 'Unknown Chat',
             thumbnail:
               chat?.thumbnail || chat?.thumbnailUrl || '/img/default-thumbnail.png',
-          };
-        });
+          }
+        })
+        .slice(0, limit);
   
       const totalImagesCount = await chatsGalleryCollection
         .aggregate([

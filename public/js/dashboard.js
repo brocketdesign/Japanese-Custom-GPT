@@ -1225,17 +1225,17 @@ window.searchImages = async function () {
     $(`.all-chats-images-gallery`).each(function(){
         const container = $(this)
         const query = container.attr('data-query')
-        console.log({query})
-        resultImageSearch(1,query)
+        const style = container.attr('data-style')
+        resultImageSearch(1,query,style)
     })
 }
-window.resultImageSearch = async function (page = 1,query) {
+window.resultImageSearch = async function (page = 1,query,style = 'anime') {
     const currentUser = await fetchUser();
     const currentUserId = currentUser._id;
     const subscriptionStatus = currentUser.subscriptionStatus === 'active';
     const isAdmin = await checkIfAdmin(currentUserId);    
     $.ajax({
-      url: `/chats/images/search?page=${page}&query=${query}`,
+      url: `/chats/images/search?page=${page}&query=${query}&style=${style}`,
       method: 'GET',
       success: function (data) {
         let chatGalleryHtml = '';

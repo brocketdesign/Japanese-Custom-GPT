@@ -203,7 +203,7 @@ $(document).ready(async function() {
     $('#sendMessage').on('click', function() {
         sendMessage();
         $('#userMessage').val('');  
-        //$('#userMessage').attr('placeholder', 'チャットしよう'); 
+        //$('#userMessage').attr('placeholder', window.translations.sendMessage); 
         setTimeout(() => {
             resizeTextarea($('#userMessage')[0]);
         }, 500);
@@ -216,7 +216,7 @@ $(document).ready(async function() {
             sendMessage();
             setTimeout(() => {
                 $('#userMessage').val('');  
-                $('#userMessage').attr('placeholder', 'チャットしよう'); 
+                $('#userMessage').attr('placeholder', window.translations.sendMessage); 
                 resizeTextarea($('#userMessage')[0]);
             }, 500);
         }
@@ -1146,7 +1146,7 @@ $(document).ready(async function() {
                     </span>
                     <span class="badge bg-white text-secondary txt2img regen-img" data-description="${description}" data-nsfw="${nsfw}" data-id="${imageId}" 
                     style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
-                        <i class="bi bi-clockwise"></i>
+                        <i class="bi bi-arrow-clockwise"></i>
                     </span>
                 </div>
                 <span class="badge bg-white text-secondary comment-badge" data-id="${imageId}" 
@@ -2095,7 +2095,7 @@ $(document).ready(async function() {
 
         $(this).addClass('spin')
 
-        const imageNsfw = $(this).data('nsfw') ? 'nsfw' : 'sfw'
+        const imageNsfw = $(this).attr('data-nsfw') == 'true' ? 'nsfw' : 'sfw'
         const imageId = $(this).data('id')
         const imageDescription = $(this).data('description')
 

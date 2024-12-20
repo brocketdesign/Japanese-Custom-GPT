@@ -198,7 +198,9 @@ window.txt2ImageNovita = async function(API_URL, userId, chatId, userChatId, ima
             throw new Error('サーバーからタスクが返されませんでした。');
         }
 
-        pollTaskStatus(API_URL, taskId, imageType, prompt, imageId);
+        pollTaskStatus(API_URL, taskId, imageType, prompt, imageId, function(){
+            $(`.txt2img[data-id=${imageId}]`).removeClass('spin');
+        });
 
     } catch (error) {
         console.error('generateImageNovita Error:', error);
@@ -265,7 +267,9 @@ window.img2ImageNovita = async function(API_URL, userId, chatId, userChatId, ima
             throw new Error('サーバーからタスクが返されませんでした。');
         }
 
-        pollTaskStatus(API_URL, taskId, imageType, prompt, imageId);
+        pollTaskStatus(API_URL, taskId, imageType, prompt, imageId, function(){
+            $(`.img2img[data-id=${imageId}]`).removeClass('spin')
+        });
 
     } catch (error) {
         console.error('generateImageNovita Error:', error);
@@ -311,7 +315,6 @@ function pollTaskStatus(API_URL, taskId, type, prompt, item_id, callback) {
                     showNotification(`${type.toUpperCase()} 画像が正常に生成されました。`, 'success');
                     
                     $(`#load-image-container-${item_id}`).remove();
-                    $(`.${item_id}`).removeClass('spin')
 
                     if (typeof callback === 'function') {
                         callback(null, statusData.images);

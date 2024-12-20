@@ -401,6 +401,8 @@
     $(document).ready(function() {
         let currentLang = localStorage.getItem('currentLang') || 'ja';
         $('#language').val(currentLang == 'en' ? 'english' : 'japanese')
+        console.log({currentLang})
+        
         $('#characterPrompt').on('input change', function() {
             $('#enhancedPrompt').val('');
         });
@@ -798,7 +800,7 @@
                         // Enable buttons and reset text
                         $('#characterPrompt').prop('disabled', false);
                         $('#generateButton').prop('disabled', false);
-                        $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+                        $('#generateButton').html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
 
                     } else if (statusResponse.status === 'failed') {
                         clearInterval(intervalId);
@@ -807,7 +809,7 @@
                         // Enable buttons and reset text
                         $('#characterPrompt').prop('disabled', false);
                         $('#generateButton').prop('disabled', false);
-                        $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+                        $('#generateButton').html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
                     } else {
                         console.log('タスクはまだ処理中です...');
                     }
@@ -819,7 +821,7 @@
                         // Enable buttons and reset text
                         $('#characterPrompt').prop('disabled', false);
                         $('#generateButton').prop('disabled', false);
-                        $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+                        $('#generateButton').html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
                     }
 
                 } catch (error) {
@@ -830,7 +832,7 @@
                     // Enable buttons and reset text
                     $('#characterPrompt').prop('disabled', false);
                     $('#generateButton').prop('disabled', false);
-                    $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+                    $('#generateButton').html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
                 }
             }, POLLING_INTERVAL);
         }
@@ -858,7 +860,7 @@
                         showNotification(translations.newCharacter.image_generated_successfully, 'success');
                         $('#characterPrompt').prop('disabled', false);
                         $('#generateButton').prop('disabled', false);
-                        $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+                        $('#generateButton').html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
                         $('.genexp').fadeOut()
 
                     } else if (statusResponse.status === 'failed') {
@@ -866,7 +868,7 @@
                         showNotification(`画像の生成に失敗しました: ${statusResponse.error}`, 'error');
                         $('#characterPrompt').prop('disabled', false);
                         $('#generateButton').prop('disabled', false);
-                        $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+                        $('#generateButton').html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
                         $('.genexp').fadeOut()
                     } else {
                         console.log('タスクはまだ処理中です...');
@@ -877,7 +879,7 @@
                         showNotification('画像の生成がタイムアウトしました。再試行してください。', 'error');
                         $('#characterPrompt').prop('disabled', false);
                         $('#generateButton').prop('disabled', false);
-                        $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+                        $('#generateButton').html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
                         $('.genexp').fadeOut()
                     }
 
@@ -887,7 +889,7 @@
                     showNotification('画像の生成中にエラーが発生しました。', 'error');
                     $('#characterPrompt').prop('disabled', false);
                     $('#generateButton').prop('disabled', false);
-                    $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+                    $('#generateButton').html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
                     $('.genexp').fadeOut()
 
                 }
@@ -985,7 +987,7 @@
                 showNotification(translations.newCharacter.image_generation_failure, 'error');
                 // ボタンを有効化し、初期状態のテキストに戻す
                 $button.prop('disabled', false);
-                $button.html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+                $button.html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
                 $('#characterPrompt').prop('disabled', false);
             }
         } catch (error) {
@@ -993,7 +995,7 @@
             showNotification(translations.newCharacter.generation_error, 'error');
             // ボタンを有効化し、初期状態のテキストに戻す
             $button.prop('disabled', false);
-            $button.html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+            $button.html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
             $('#characterPrompt').prop('disabled', false);
         }
     });
@@ -1030,7 +1032,7 @@
                     showNotification('画像生成タスクの開始に失敗しました。再試行してください。', 'error');
                     $('#characterPrompt').prop('disabled', false);
                     $('#generateButton').prop('disabled', false);
-                    $('#generateButton').html('<i class="fas fa-magic me-2"></i>AIで画像生成');
+                    $('#generateButton').html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
                     $('.genexp').fadeOut()
                 }
                 

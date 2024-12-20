@@ -1131,7 +1131,7 @@ $(document).ready(async function() {
         return inputString;
     }
     
-    function getImageTools(imageId, isLiked = false, description = false, nsfw = false){
+    function getImageTools(imageId, isLiked = false, description = false, nsfw = false, imageUrl = false){
         description = sanitizeString(description);
         return `
             <div class="bg-white py-2 rounded mt-1 d-flex justify-content-between">
@@ -1140,9 +1140,13 @@ $(document).ready(async function() {
                     style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
                         <i class="bi bi-heart-fill"></i>
                     </span>
-                    <span class="badge bg-white text-secondary img2img" data-description="${description}" data-nsfw="${nsfw}" data-id="${imageId}" 
+                    <span class="badge bg-white text-secondary img2img regen-img d-none" data-nsfw="${nsfw}" data-id="${imageId}" 
                     style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
                         <i class="bi bi-arrow-clockwise"></i>
+                    </span>
+                    <span class="badge bg-white text-secondary txt2img regen-img" data-description="${description}" data-nsfw="${nsfw}" data-id="${imageId}" 
+                    style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
+                        <i class="bi bi-clockwise"></i>
                     </span>
                 </div>
                 <span class="badge bg-white text-secondary comment-badge" data-id="${imageId}" 
@@ -1170,7 +1174,7 @@ $(document).ready(async function() {
                                     <div class="ps-3 text-start assistant-image-box">
                                         <img id="image-${imageId}" data-id="${imageId}" src="${response.imageUrl}" alt="${response.imagePrompt}">
                                     </div>
-                                    ${!isBlur ? getImageTools(imageId,isLiked,response.imagePrompt,response.nsfw) :''}
+                                    ${!isBlur ? getImageTools(imageId,isLiked,response.imagePrompt,response.nsfw,response.imageUrl) :''}
                                     ${isBlur ? `
                                     <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
                                         <span type="button" class="badge bg-danger text-white" style="padding: 5px; border-radius: 5px;">
@@ -1709,7 +1713,7 @@ $(document).ready(async function() {
                         <div class="text-start assistant-image-box">
                             ${message.outerHTML}
                         </div>
-                        ${getImageTools(imageId,false,description,imageNsfw)}
+                        ${getImageTools(imageId,false,description,imageNsfw,imageUrl)}
                     </div>
                 </div>      
             `).hide();
@@ -1729,7 +1733,7 @@ $(document).ready(async function() {
                         <div class="text-start assistant-image-box">
                             ${message.outerHTML}
                         </div>
-                        ${getImageTools(imageId,false,description,imageNsfw)}
+                        ${getImageTools(imageId,false,description,imageNsfw,imageUrl)}
                     </div>  
             `).hide();
             $(`#${messageId}`).find('.load').remove()
@@ -2053,7 +2057,7 @@ $(document).ready(async function() {
 
             const userMessage = '[user] '+ window.translations['imageForm']['imagePurchaseMessage']
                 .replace('{type}', typeText)
-                .replace('{prompt_title}', prompt_title) || `[user] ${prompt_title}で${type}画像をリクエストしました。`;
+                .replace('{prompt_title}', '') || `[user] ${type}画像をリクエストしました。`;
             window.postMessage({ event: 'displayMessage', role:'user', message: userMessage, completion : false , image : false, messageId: false }, '*');
 
 
@@ -2082,7 +2086,7 @@ $(document).ready(async function() {
 
     };
     
-    $(document).on('click', '.img2img', function () {
+    $(document).on('click', '.regen-img', function () {
 
         if($(this).hasClass('spin')){
             showNotification(window.translations.image_generation_processing,'warning')
@@ -2098,7 +2102,12 @@ $(document).ready(async function() {
         const imageLoaderElement = displayImageLoader();
         updateLoaderWithId(imageId);
 
-        reGenerateImageNovita(API_URL, userId, chatId, userChatId, imageId, thumbnail, imageNsfw, {prompt:imageDescription})
+        if($(this).hasClass('img2img')){
+            img2ImageNovita(API_URL, userId, chatId, userChatId, imageId, thumbnail, imageNsfw, {prompt:imageDescription})
+        }
+        if($(this).hasClass('txt2img')){
+            txt2ImageNovita(API_URL, userId, chatId, userChatId, imageId, thumbnail, imageNsfw, {prompt:imageDescription})
+        }
     });
     
     function generateItemData(command) {

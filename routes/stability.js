@@ -5,7 +5,7 @@ const FormData = require('form-data');
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const { createHash } = require('crypto');
 const stringSimilarity = require('string-similarity'); 
-const { createBlurredImage } = require('../models/tool')
+const { createBlurredImage, convertImageUrlToBase64 } = require('../models/tool')
 const { z } = require("zod");
 
 async function routes(fastify, options) {
@@ -340,46 +340,63 @@ async function routes(fastify, options) {
       width: 832,
       height: 1216,
       sampler_name: "Euler a",
-      guidance_scale: 10,
+      guidance_scale: 7.5,
       steps: 30,
       image_num: 1,
       clip_skip: 0,
+      strength: 0.9,
       seed: -1,
       loras: [],
     }
 
-  fastify.get('/image/:imageId', async (request, reply) => {
-    try {
-      const { imageId } = request.params;
-      const db = fastify.mongo.db
-      const galleryCollection = db.collection('gallery');
+    fastify.get('/image/:imageId', async (request, reply) => {
+      try {
+          const { imageId } = request.params;
+          const db = fastify.mongo.db;
+          const galleryCollection = db.collection('gallery');
+          const chatsCollection = db.collection('chats');
   
-      // Convert the imageId string to a MongoDB ObjectId
-      const objectId = new fastify.mongo.ObjectId(imageId);
+          // Convert the imageId string to a MongoDB ObjectId
+          const objectId = new fastify.mongo.ObjectId(imageId);
   
-      // Find the image document containing this imageId in the gallery
-      const imageDocument = await galleryCollection.findOne({
-        "images._id": objectId
-      }, {
-        projection: { "images.$": 1 } // Only return the matching image
-      });
+          // Find the image document containing this imageId in the gallery
+          const imageDocument = await galleryCollection.findOne(
+              { "images._id": objectId },
+              { projection: { "images.$": 1, chatId: 1 } } // Include matching image and chatId
+          );
   
-      if (!imageDocument || !imageDocument.images || imageDocument.images.length === 0) {
-        return reply.status(404).send({ error: 'Image not found' });
+          if (!imageDocument || !imageDocument.images || imageDocument.images.length === 0) {
+              return reply.status(404).send({ error: 'Image not found' });
+          }
+  
+          const image = imageDocument.images[0];
+          const { imageUrl, prompt: imagePrompt, nsfw, likedBy = [] } = image;
+          const { chatId } = imageDocument;
+  
+          let imageModel = null;
+          let imageStyle = null;
+          let imageVersion = null;
+  
+          // If chatId exists, fetch additional chat-related info
+          if (chatId) {
+              const chatData = await chatsCollection.findOne(
+                  { _id: chatId },
+                  { projection: { imageModel: 1, imageStyle: 1, imageVersion: 1,  } }
+              );
+
+              imageModel = chatData?.imageModel || null;
+              imageStyle = chatData?.imageStyle || null;
+              imageVersion = chatData?.imageVersion || null;
+          }
+  
+          return reply.status(200).send({ imageUrl, imagePrompt, likedBy, nsfw, imageModel, imageStyle, imageVersion });
+      } catch (error) {
+          console.error('Error fetching image details:', error);
+          return reply.status(500).send({ error: 'An error occurred while fetching the image details' });
       }
-  
-      const image = imageDocument.images[0];
-      const imageUrl = image.imageUrl;
-      const imagePrompt = image.prompt;
-      const nsfw = image.nsfw;
-      const likedBy = image.likedBy || [];
-  
-      return reply.status(200).send({ imageUrl, imagePrompt, likedBy, nsfw });
-    } catch (error) {
-      console.error('Error fetching image URL:', error);
-      return reply.status(500).send({ error: 'An error occurred while fetching the image URL' });
-    }
   });
+  
+
   // Endpoint to initiate txt2img with SFW and NSFW
   fastify.post('/novita/product2img', async (request, reply) => {
     const { prompt, aspectRatio, userId, chatId, userChatId, imageType } = request.body;
@@ -941,10 +958,29 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
           throw error;
       }
   }
-    
-  fastify.post('/novita/img2img', async (request, reply) => {
-    const { image_base64, prompt, aspectRatio, userId, chatId } = request.body;
 
+  async function getImageData(request, imageId) {
+    try {
+      const baseUrl = `${request.headers['x-forwarded-proto'] || 'http'}://${request.headers.host}`;
+      const response = await fetch(`${baseUrl}/image/${imageId}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching image data:', error);
+      throw error;
+    }
+  }
+  
+  fastify.post('/novita/img2img', async (request, reply) => {
+    const { imageId, aspectRatio, userId, chatId, userChatId, imageType } = request.body;
+
+    const imageData = await getImageData(request,imageId)
+
+    const image_base64 = await convertImageUrlToBase64(imageData.imageUrl)
+    const finalRequest = { image_base64, prompt: imageData.imagePrompt, aspectRatio, userId, chatId, userChatId, imageType }
+    
     // Define the schema for validation
     const Img2ImgSchema = z.object({
         image_base64: z.string().nonempty('Image is required'),
@@ -955,39 +991,41 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
     });
 
     try {
-        const validated = Img2ImgSchema.parse(request.body);
+        const validated = Img2ImgSchema.parse(finalRequest);
+
+        const selectedStyle = default_prompt[imageData.imageVersion] || default_prompt['sdxl'];
+        const style = selectedStyle[imageType];
+        const imageModel = imageData.imageModel || 'novaAnimeXL_ponyV20_461138';
 
         // Prepare the request data for the Novita API
-        const novitaRequestData = {
-            model_name: default_prompt.sfw.model_name,
-            image_base64: validated.image_base64,
-            prompt: default_prompt.sfw.prompt + validated.prompt,
-            negative_prompt: default_prompt.sfw.negative_prompt,
-            width: 768,
-            height: 1024,
-            sampler_name: "Euler a",
-            guidance_scale: 7,
-            steps: 30,
-            image_num: 4,
-            clip_skip: 0,
-            seed: -1,
-            loras: [],
+        const image_request = {
+          type: imageType,
+          model_name: imageModel + '.safetensors',
+          sampler_name: style.sampler_name || '',
+          loras: style.loras,
+          image_base64: validated.image_base64,
+          prompt:validated.prompt,
+          negative_prompt: style.negative_prompt,
+          width: style.width || params.width,
+          height: style.height || params.height,
         };
         
-        // Send request to Novita API and get taskId
-        const novitaTaskId = await fetchNovitaImg2ImgMagic(novitaRequestData);
+        const requestData = { ...params, ...image_request };
+        console.log({prompt:requestData.prompt})
+        const novitaTaskId = await fetchNovitaImg2ImgMagic(requestData);
 
         // Store task details in DB
         const db = fastify.mongo.db
         await db.collection('tasks').insertOne({
             taskId: novitaTaskId,
-            type: 'img2img',
+            type: image_request.type,
             status: 'pending',
-            prompt: validated.prompt,
-            negative_prompt: default_prompt.sfw.negative_prompt,
-            aspectRatio: validated.aspectRatio,
-            userId: new ObjectId(validated.userId),
-            chatId: new ObjectId(validated.chatId),
+            prompt: image_request.prompt,
+            negative_prompt: image_request.negative_prompt,
+            aspectRatio: aspectRatio,
+            userId: new fastify.mongo.ObjectId(userId),
+            chatId: new fastify.mongo.ObjectId(chatId),
+            userChatId: new fastify.mongo.ObjectId(userChatId),
             createdAt: new Date(),
             updatedAt: new Date()
         });

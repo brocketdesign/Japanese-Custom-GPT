@@ -45,7 +45,7 @@
     </style>
 <div class="px-0">
 
-  <div class="swiper-container" style="overflow: hidden;">
+  <div class="swiper-container d-none" style="overflow: hidden;">
     <div class="swiper-wrapper">
       <div class="swiper-slide"><img src="/img/banner1.png" alt="Banner 1" width="100%"></div>
       <div class="swiper-slide"><img src="/img/banner2.png" alt="Banner 2" width="100%"></div>
@@ -71,14 +71,14 @@
       <h3 class="my-4 text-start">{{translations.discover.latestAIGravure}}</h3>
       <p>{{translations.discover.latestAIGravureDescription}}</p>
       <div id="chat-gallery" class="row"></div>
-      <div class="d-none w-100 text-center">
+      <div class="d-none w-100 text-center d-none">
           <a href="/chat/" class="my-4 btn btn-lg text-white fw-bold custom-gradient-bg w-100">{{translations.discover.seeAll}}</a>
       </div>
 
       <h3 class="my-4 text-start">{{translations.discover.latestPosts}}</h3>
       <p>{{translations.discover.latestPostsDescription}}</p>
       <div class="row" id="post-gallery"></div>
-      <div class="w-100 text-center">
+      <div class="w-100 text-center d-none">
           <a href="/post" class="my-4 btn btn-lg text-white fw-bold custom-gradient-bg w-100">{{translations.discover.seeAll}}</a>
       </div>
   </div>
@@ -106,8 +106,8 @@
   $(document).ready(function () {
     //displayPeopleChat(1,'anime');
     loadAllChatImages(1);
-    loadAllUserPosts(1)
-    loadUsers(1)
+    //loadAllUserPosts(1)
+    //loadUsers(1)
     $(document).on('click', '.redirectToChat', function(){
       const chatId = $(this).data('id');
       window.location = `/chat/${chatId}`

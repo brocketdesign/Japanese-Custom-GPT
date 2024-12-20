@@ -257,7 +257,7 @@ fastify.get('/chat/:chatId', { preHandler: [fastify.authenticate] }, async (requ
   if(!subscriptionStatus){
     return reply.redirect('/my-plan');
   }
-  
+
   return reply.renderWithGtm('chat.hbs', {
     title: 'LAMIX | 日本語でAI画像生成 | AIチャット',
     isAdmin,

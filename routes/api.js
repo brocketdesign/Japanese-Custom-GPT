@@ -963,7 +963,7 @@ async function routes(fastify, options) {
             // Retrieve chat document and language
             let chatDocument = await getChatDocument(db, chatId);
             const chatname = chatDocument.name;
-            const language = chatDocument.language === 'japanese' ? '日本語' : chatDocument.language;
+            const language = userInfo.lang == 'en' ? 'english' : 'japanese'//|| chatDocument.language === 'japanese' ? '日本語' : chatDocument.language;
 
             // Filter out image messages
             const userMessagesForCompletion = userData.messages.filter(msg => !msg.content.startsWith('[Image]'));
@@ -1058,6 +1058,7 @@ async function routes(fastify, options) {
 
             if(genImage?.image_request){
                 messagesForCompletion = systemMessages.concat(responseExample);
+                messagesForCompletion.push({role:'user', content:'The application has started generating my image request.', name:'master'})
             }else{
                 messagesForCompletion = systemMessages
             }

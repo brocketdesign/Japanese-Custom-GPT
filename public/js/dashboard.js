@@ -1077,7 +1077,7 @@ window.displayPeopleChat = async function (page = 1,type,query = false, preLoade
         // Update the gallery HTML
         $('#chat-gallery').append(htmlContent);
         if($('#chat-pagination-controls').length > 0){      
-            generateChatsPagination(data.page, data.totalPages, type, query);
+            generateChatsPagination(data.totalPages, type, query);
         }
     } catch (err) {
         console.error('Failed to load chats', err);
@@ -1154,66 +1154,6 @@ window.loadAllUserPosts = async function (page = 1) {
         console.error('Failed to load posts', err);
       }
     });
-}
-function generateUserPostsPagination(currentPage, totalPages) {
-    let paginationHtml = '';
-    const sidePagesToShow = 2;
-    let pagesShown = new Set();
-
-    // Scroll event listener for infinite scroll
-    $(window).off('scroll').on('scroll', function() {
-        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
-            if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
-                loadAllUserPosts(currentPage + 1);
-                pagesShown.add(currentPage + 1);
-            }
-        }
-    });
-
-    // Check if the current page is the last page
-    if (currentPage >= totalPages) {
-        $('#user-posts-pagination-controls').html('<button class="btn btn-outline-secondary" onclick="scrollToTop()"><i class="bi bi-arrow-up-circle-fill me-2"></i>'+window.translations.backToTop+'</button>');
-        return;
-    }
-
-    // Generate pagination buttons if more than one page
-    if (totalPages > 1) {
-        // Previous button
-        paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadAllUserPosts(${currentPage - 1})">${window.translations.prev}</button>`;
-
-        // First page and ellipsis
-        if (currentPage > sidePagesToShow + 1) {
-            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadAllUserPosts(1)">1</button>`;
-            if (currentPage > sidePagesToShow + 2) {
-                paginationHtml += `<span class="mx-1">...</span>`;
-            }
-        }
-
-        // Visible page numbers
-        let startPage = Math.max(1, currentPage - sidePagesToShow);
-        let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
-
-        for (let i = startPage; i <= endPage; i++) {
-            paginationHtml += `
-                <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadAllUserPosts(${i})">
-                    ${i}
-                </button>
-            `;
-        }
-
-        // Last page and ellipsis
-        if (currentPage < totalPages - sidePagesToShow - 1) {
-            if (currentPage < totalPages - sidePagesToShow - 2) {
-                paginationHtml += `<span class="mx-1">...</span>`;
-            }
-            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadAllUserPosts(${totalPages})">${totalPages}</button>`;
-        }
-
-        // Next button
-        paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadAllUserPosts(${currentPage + 1})">${window.translations.next}</button>`;
-    }
-
-    $('#user-posts-pagination-controls').html(paginationHtml);
 }
 function scrollToPlan() {
     $('html, body').animate({
@@ -1338,7 +1278,7 @@ window.loadAllChatImages = async function (page = 1) {
 
         $('#all-chats-images-gallery').append(chatGalleryHtml);
         if($('#all-chats-images-pagination-controls').length > 0){
-            generateAllChatsImagePagination(data.page, data.totalPages);
+            generateAllChatsImagePagination(data.totalPages);
         }
 
         $(document).find('.img-blur').each(function() {
@@ -1350,55 +1290,7 @@ window.loadAllChatImages = async function (page = 1) {
       }
     });
 }
-function generateAllChatsImagePagination(currentPage, totalPages) {
-    let paginationHtml = '';
-    const maxPagesToShow = 5;
-    const sidePagesToShow = 2;
-    let pagesShown = new Set(); // Track the pages already displayed
 
-    // Scroll event listener for infinite scroll
-    $(window).off('scroll').on('scroll', function() {
-        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
-            if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
-                loadAllChatImages(currentPage + 1);
-                pagesShown.add(currentPage + 1);
-            }
-        }
-    });
-
-    if (totalPages > 1) {
-        paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadAllChatImages(${currentPage - 1})">${window.translations.prev}</button>`;
-
-        if (currentPage > sidePagesToShow + 1) {
-            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadAllChatImages(1)">1</button>`;
-            if (currentPage > sidePagesToShow + 2) {
-                paginationHtml += `<span class="mx-1">...</span>`;
-            }
-        }
-
-        let startPage = Math.max(1, currentPage - sidePagesToShow);
-        let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
-
-        for (let i = startPage; i <= endPage; i++) {
-            paginationHtml += `
-              <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadAllChatImages(${i})">
-                ${i}
-              </button>
-            `;
-        }
-
-        if (currentPage < totalPages - sidePagesToShow - 1) {
-            if (currentPage < totalPages - sidePagesToShow - 2) {
-                paginationHtml += `<span class="mx-1">...</span>`;
-            }
-            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadAllChatImages(${totalPages})">${totalPages}</button>`;
-        }
-
-        paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadAllChatImages(${currentPage + 1})">${window.translations.next}</button>`;
-    }
-
-    $('#all-chats-images-pagination-controls').html(paginationHtml);
-}
 
 
 window.loadUserImages = async function (userId, page = 1) {
@@ -1459,50 +1351,6 @@ window.loadUserImages = async function (userId, page = 1) {
         console.error('Failed to load images', err);
       }
     });
-}
-function generateImagePagination(currentPage, totalPages, userId) {
-    let paginationHtml = '';
-    const sidePagesToShow = 2;
-    let pagesShown = new Set();
-
-    $(window).off('scroll').on('scroll', function() {
-        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
-            if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
-                loadUserImages(userId, currentPage + 1);
-                pagesShown.add(currentPage + 1);
-            }
-        }
-    });
-
-    if (currentPage >= totalPages) {
-        $('#images-pagination-controls').html('<button class="btn btn-outline-secondary" onclick="scrollToTop()"><i class="bi bi-arrow-up-circle-fill me-2"></i>'+window.translations.backToTop+'</button>');
-        return;
-    }
-
-    if (totalPages > 1) {
-        paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadUserImages('${userId}', ${currentPage - 1})">${window.translations.prev}</button>`;
-
-        if (currentPage > sidePagesToShow + 1) {
-            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadUserImages('${userId}', 1)">1</button>`;
-            if (currentPage > sidePagesToShow + 2) paginationHtml += `<span class="mx-1">...</span>`;
-        }
-
-        let startPage = Math.max(1, currentPage - sidePagesToShow);
-        let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
-
-        for (let i = startPage; i <= endPage; i++) {
-            paginationHtml += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadUserImages('${userId}', ${i})">${i}</button>`;
-        }
-
-        if (currentPage < totalPages - sidePagesToShow - 1) {
-            if (currentPage < totalPages - sidePagesToShow - 2) paginationHtml += `<span class="mx-1">...</span>`;
-            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadUserImages('${userId}', ${totalPages})">${totalPages}</button>`;
-        }
-
-        paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadUserImages('${userId}', ${currentPage + 1})">${window.translations.next}</button>`;
-    }
-
-    $('#images-pagination-controls').html(paginationHtml);
 }
 
 window.loadUserPosts = async function (userId, page = 1, like = false) {
@@ -1574,52 +1422,6 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
         console.log('Failed to load posts', err);
       }
     });
-}
-function generateUserPostPagination(currentPage, totalPages, userId, like = false) {
-    let paginationHtml = '';
-    const sidePagesToShow = 2;
-    let pagesShown = new Set();
-
-    $(window).off('scroll').on('scroll', function() {
-        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
-            if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
-                loadUserPosts(userId, currentPage + 1);
-                pagesShown.add(currentPage + 1);
-            }
-        }
-    });
-
-    if (currentPage >= totalPages) {
-        const containerId = like ? 'posts-like-pagination-controls' : 'pagination-controls';
-        $(`#${containerId}`).html('<button class="btn btn-outline-secondary" onclick="scrollToTop()"><i class="bi bi-arrow-up-circle-fill me-2"></i>'+window.translations.backToTop+'</button>');
-        return;
-    }
-
-    if (totalPages > 1) {
-        paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadUserPosts('${userId}', ${currentPage - 1})">${window.translations.prev}</button>`;
-
-        if (currentPage > sidePagesToShow + 1) {
-            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadUserPosts('${userId}', 1)">1</button>`;
-            if (currentPage > sidePagesToShow + 2) paginationHtml += `<span class="mx-1">...</span>`;
-        }
-
-        let startPage = Math.max(1, currentPage - sidePagesToShow);
-        let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
-
-        for (let i = startPage; i <= endPage; i++) {
-            paginationHtml += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadUserPosts('${userId}', ${i})">${i}</button>`;
-        }
-
-        if (currentPage < totalPages - sidePagesToShow - 1) {
-            if (currentPage < totalPages - sidePagesToShow - 2) paginationHtml += `<span class="mx-1">...</span>`;
-            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadUserPosts('${userId}', ${totalPages})">${totalPages}</button>`;
-        }
-
-        paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadUserPosts('${userId}', ${currentPage + 1})">${window.translations.next}</button>`;
-    }
-
-    const containerId = like ? 'posts-like-pagination-controls' : 'pagination-controls';
-    $(`#${containerId}`).html(paginationHtml);
 }
 
 window.showRegistrationForm = function(messageId,callback) {
@@ -2063,36 +1865,206 @@ window.loadChatImages = async function (chatId, page = 1) {
 
 
 // Pagination logic simplified with loadingStates
-function generateChatImagePagination(currentPage, totalPages, chatId) {
+function generateUserPostsPagination(totalPages) {
+    if (typeof loadingStates === 'undefined') loadingStates = {};
+    if (typeof currentPageMap === 'undefined') currentPageMap = {};
+
+    if (typeof loadingStates['userPosts'] === 'undefined') loadingStates['userPosts'] = false;
+    if (typeof currentPageMap['userPosts'] === 'undefined') currentPageMap['userPosts'] = 1;
+
+    $(window).off('scroll').on('scroll', function() {
+        if (!loadingStates['userPosts'] && currentPageMap['userPosts'] < totalPages && $(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+            loadingStates['userPosts'] = true;
+            loadAllUserPosts(currentPageMap['userPosts'] + 1).then(() => {
+                currentPageMap['userPosts']++;
+                loadingStates['userPosts'] = false;
+            }).catch(() => {
+                loadingStates['userPosts'] = false;
+            });
+        }
+    });
+
+    if (currentPageMap['userPosts'] >= totalPages) {
+        $('#user-posts-pagination-controls').html(
+            '<button class="btn btn-outline-secondary" onclick="scrollToTop()">' +
+            '<i class="bi bi-arrow-up-circle-fill me-2"></i>' + window.translations.backToTop +
+            '</button>'
+        );
+    } else {
+        $('#user-posts-pagination-controls').html(
+            '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
+        );
+    }
+}
+
+function generateImagePagination(totalPages, userId) {
+    if (typeof loadingStates === 'undefined') loadingStates = {}; // Ensure the loadingStates object exists
+    if (typeof currentPageMap === 'undefined') currentPageMap = {}; // Ensure the currentPageMap object exists
+
+    if (typeof loadingStates[userId] === 'undefined') loadingStates[userId] = false;
+    if (typeof currentPageMap[userId] === 'undefined') currentPageMap[userId] = 1; // Initialize the current page for the userId
+
+    // Scroll event listener for infinite scroll
+    $(window).off('scroll').on('scroll', function() {
+        if (!loadingStates[userId] && currentPageMap[userId] < totalPages && $(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+            loadingStates[userId] = true;
+            loadUserImages(userId, currentPageMap[userId] + 1).then(() => {
+                currentPageMap[userId]++; // Increment the page after successful loading
+                loadingStates[userId] = false; // Reset the loading state
+            }).catch(() => {
+                // Handle errors if needed
+                loadingStates[userId] = false;
+            });
+        }
+    });
+
+    // Display spinner if more pages are available, otherwise show a back-to-top button
+    if (currentPageMap[userId] >= totalPages) {
+        $('#images-pagination-controls').html(
+            '<button class="btn btn-outline-secondary" onclick="scrollToTop()">' +
+            '<i class="bi bi-arrow-up-circle-fill me-2"></i>' + window.translations.backToTop +
+            '</button>'
+        );
+    } else {
+        $('#images-pagination-controls').html(
+            '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
+        );
+    }
+}
+
+
+function generateUserPostsPagination(userId, totalPages) {
+    if (typeof loadingStates === 'undefined') loadingStates = {}; // Ensure the loadingStates object exists
+    if (typeof currentPageMap === 'undefined') currentPageMap = {}; // Ensure the currentPageMap object exists
+
+    if (typeof loadingStates[userId] === 'undefined') loadingStates[userId] = false;
+    if (typeof currentPageMap[userId] === 'undefined') currentPageMap[userId] = 1; // Initialize the current page for the user
+
+    // Scroll event listener for infinite scroll
+    $(window).off('scroll').on('scroll', function() {
+        if (!loadingStates[userId] && currentPageMap[userId] < totalPages && $(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+            loadingStates[userId] = true;
+            loadAllUserPosts(currentPageMap[userId] + 1).then(() => {
+                currentPageMap[userId]++; // Increment the page after successful loading
+                loadingStates[userId] = false; // Reset the loading state
+            }).catch(() => {
+                // Handle errors if needed
+                loadingStates[userId] = false;
+            });
+        }
+    });
+
+    // Display spinner if more pages are available, otherwise show a back-to-top button
+    if (currentPageMap[userId] >= totalPages) {
+        $('#user-posts-pagination-controls').html(
+            '<button class="btn btn-outline-secondary" onclick="scrollToTop()">' +
+            '<i class="bi bi-arrow-up-circle-fill me-2"></i>' + window.translations.backToTop +
+            '</button>'
+        );
+    } else {
+        $('#user-posts-pagination-controls').html(
+            '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
+        );
+    }
+}
+
+
+function generateAllChatsImagePagination(totalPages) {
+    if (typeof loadingStates === 'undefined') loadingStates = {}; // Ensure the loadingStates object exists
+    if (typeof currentPageMap === 'undefined') currentPageMap = {}; // Ensure the currentPageMap object exists
+
+    if (typeof loadingStates['allChats'] === 'undefined') loadingStates['allChats'] = false;
+    if (typeof currentPageMap['allChats'] === 'undefined') currentPageMap['allChats'] = 1; // Initialize the current page for all chats
+
+    // Scroll event listener for infinite scroll
+    $(window).off('scroll').on('scroll', function() {
+        if (!loadingStates['allChats'] && currentPageMap['allChats'] < totalPages && $(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+            loadingStates['allChats'] = true;
+            loadAllChatImages(currentPageMap['allChats'] + 1).then(() => {
+                currentPageMap['allChats']++; // Increment the page after successful loading
+                loadingStates['allChats'] = false; // Reset the loading state
+            }).catch(() => {
+                // Handle errors if needed
+                loadingStates['allChats'] = false;
+            });
+        }
+    });
+
+    // Display spinner if more pages are available, otherwise clear the pagination controls
+    if (currentPageMap['allChats'] >= totalPages) {
+        $('#all-chats-images-pagination-controls').html(''); // Clear controls if no more pages
+    } else {
+        $('#all-chats-images-pagination-controls').html(
+            '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
+        );
+    }
+}
+
+function generateChatImagePagination(totalPages, chatId) {
+    if (typeof loadingStates === 'undefined') loadingStates = {}; // Ensure the loadingStates object exists
+    if (typeof currentPageMap === 'undefined') currentPageMap = {}; // Ensure the currentPageMap object exists
+
     if (typeof loadingStates[chatId] === 'undefined') loadingStates[chatId] = false;
+    if (typeof currentPageMap[chatId] === 'undefined') currentPageMap[chatId] = 1; // Initialize the current page for the chatId
 
+    // Scroll event listener for infinite scroll
     $(window).off('scroll').on('scroll', function() {
-        if (!loadingStates[chatId] && currentPage < totalPages && $(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+        if (!loadingStates[chatId] && currentPageMap[chatId] < totalPages && $(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
             loadingStates[chatId] = true;
-            loadChatImages(chatId, currentPage + 1);
+            loadChatImages(chatId, currentPageMap[chatId] + 1).then(() => {
+                currentPageMap[chatId]++; // Increment the page after successful loading
+                loadingStates[chatId] = false; // Reset the loading state
+            }).catch(() => {
+                // Handle errors if needed
+                loadingStates[chatId] = false;
+            });
         }
     });
 
-    $('#chat-images-pagination-controls').html(
-        currentPage < totalPages
-        ? '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
-        : ''
-    );
+    // Display spinner if more pages are available, otherwise clear the pagination controls
+    if (currentPageMap[chatId] >= totalPages) {
+        $('#chat-images-pagination-controls').html(''); // Clear controls if no more pages
+    } else {
+        $('#chat-images-pagination-controls').html(
+            '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
+        );
+    }
 }
 
-function generateChatsPagination(currentPage, totalPages, type, query) {
-    if (typeof loadingStates[type+query] === 'undefined') loadingStates[type+query] = false;
+function generateChatsPagination(totalPages, type, query) {
+    if (typeof loadingStates === 'undefined') loadingStates = {}; // Ensure the loadingStates object exists
+    if (typeof currentPageMap === 'undefined') currentPageMap = {}; // Ensure the currentPageMap object exists
 
+    const key = type + query;
+
+    if (typeof loadingStates[key] === 'undefined') loadingStates[key] = false;
+    if (typeof currentPageMap[key] === 'undefined') currentPageMap[key] = 1; // Initialize the current page for the type and query
+
+    // Scroll event listener for infinite scroll
     $(window).off('scroll').on('scroll', function() {
-        if (!loadingStates[type+query] && currentPage < totalPages && $(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
-            loadingStates[type+query] = true;
-            displayPeopleChat(currentPage + 1, type, query);
+        if (!loadingStates[key] && currentPageMap[key] < totalPages && $(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+            loadingStates[key] = true;
+            displayPeopleChat(currentPageMap[key] + 1, type, query).then(() => {
+                currentPageMap[key]++; // Increment the page after successful loading
+                loadingStates[key] = false; // Reset the loading state
+            }).catch(() => {
+                // Handle errors if needed
+                loadingStates[key] = false;
+            });
         }
     });
 
-    $('#chat-pagination-controls').html(
-        currentPage < totalPages
-        ? '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
-        : '<button class="btn btn-outline-secondary" onclick="scrollToTop()"><i class="bi bi-arrow-up-circle-fill me-2"></i>'+window.translations.backToTop+'</button>'
-    );
+    // Display spinner if more pages are available, otherwise show a back-to-top button
+    if (currentPageMap[key] >= totalPages) {
+        $('#chat-pagination-controls').html(
+            '<button class="btn btn-outline-secondary" onclick="scrollToTop()">' +
+            '<i class="bi bi-arrow-up-circle-fill me-2"></i>' + window.translations.backToTop +
+            '</button>'
+        );
+    } else {
+        $('#chat-pagination-controls').html(
+            '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
+        );
+    }
 }
+

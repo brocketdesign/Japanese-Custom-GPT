@@ -1979,7 +1979,7 @@ function updateSwiperSlides(images) {
         images.forEach((img,index) => {
             swiperInstance.appendSlide(`
                 <div class="swiper-slide">
-                    <img data-index="${index}" src="${img.imageUrl}" alt="" style="width:auto; height:100vh;">
+                    <img data-index="${index}" src="${img.imageUrl}" alt="" style="width:auto; height:100vh;object-fit:contain;">
                 </div>
             `);
         });

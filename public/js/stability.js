@@ -389,7 +389,7 @@ window.generateImage = async function(data, prompt) {
   try {
     const user = await fetchUser();
     const subscriptionStatus = user.subscriptionStatus === 'active';
-    displayMessage('bot-image', img,data.userChatId);
+    displayMessage('bot-image', img, data.userChatId);
     /*
     if (imageNsfw && !subscriptionStatus) {
       window.postMessage({ event: 'imageNsfw' }, '*');
@@ -402,7 +402,7 @@ window.generateImage = async function(data, prompt) {
 
     if (messCt == 1) {
         setTimeout(() => {
-            window.postMessage({ event: 'imageDone', prompt }, '*');
+            window.postMessage({ event: 'imageDone', prompt, userChatId:data.userChatId }, '*');
         }, 1000);
     }else{
         messCt = messCt < 1 ? messCt + 1 : messCt

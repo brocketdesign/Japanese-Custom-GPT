@@ -96,6 +96,8 @@ $(document).ready(async function() {
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageDone') {
             const prompt = event.data.prompt
+            const origineUserChatId = event.data.userChatId
+            if(origineUserChatId != userChatId) return;
             let message = `I received an image from you. Ask me what I think of it. \n Respond in ${language} with the shortest answer possible.`
             addMessageToChat(chatId, userChatId, 'user', message,function(){
                 generateCompletion()
@@ -1684,7 +1686,7 @@ $(document).ready(async function() {
         const messageClass = sender === 'user' ? 'user-message' : sender;
         const animationClass = 'animate__animated animate__slideInUp';
         let messageElement;
-        console.log({userChatId,origineUserChatId,test:userChatId != origineUserChatId})
+
         if(userChatId != origineUserChatId) return;
 
         if (messageClass === 'user-message') {

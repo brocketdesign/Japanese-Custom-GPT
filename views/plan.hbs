@@ -386,7 +386,7 @@ $(document).ready(function () {
     }
 
     // Start the notification loop
-    showNextNotification();
+    setTimeout(showNextNotification, Math.random() * (20000 - 10000) + 10000);
 });
 
 

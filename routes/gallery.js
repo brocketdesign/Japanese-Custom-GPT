@@ -177,7 +177,6 @@ async function routes(fastify, options) {
       let language = 'japanese'
       const queryStr = request.query.query || '';
       const styleStr = request.query.style || 'anime';
-      console.log({styleStr})
       const page = parseInt(request.query.page) || 1;
       const limit = 12;
       const skip = (page - 1) * limit;

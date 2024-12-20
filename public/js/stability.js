@@ -89,7 +89,7 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
         const proposal = await getProposalById(item_id);
         const {
             negativePrompt = $('#negativePrompt-input').val(),
-            prompt = proposal.description || $('#prompt-input').val(),
+            prompt = proposal.description.replace(/^\s+/gm, '').trim() || $('#prompt-input').val(),
             aspectRatio = '9:16',
             baseFace = null
         } = option;
@@ -131,7 +131,7 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
             throw new Error('サーバーからタスクが返されませんでした。');
         }
 
-        pollTaskStatus(API_URL, taskId, imageType, prompt, item_id);
+        pollTaskStatus(API_URL, taskId, imageType, prompt, item_id, userChatId);
 
     } catch (error) {
         console.error('generateImageNovita Error:', error);
@@ -153,7 +153,7 @@ window.txt2ImageNovita = async function(API_URL, userId, chatId, userChatId, ima
     try {
         const {
             negativePrompt = $('#negativePrompt-input').val(),
-            prompt = option.prompt || $('#prompt-input').val(),
+            prompt = option.prompt.replace(/^\s+/gm, '').trim() || $('#prompt-input').val(),
             aspectRatio = '9:16',
             baseFace = null,
         } = option;
@@ -198,7 +198,7 @@ window.txt2ImageNovita = async function(API_URL, userId, chatId, userChatId, ima
             throw new Error('サーバーからタスクが返されませんでした。');
         }
 
-        pollTaskStatus(API_URL, taskId, imageType, prompt, imageId, function(){
+        pollTaskStatus(API_URL, taskId, imageType, prompt, imageId, userChatId, function(){
             $(`.txt2img[data-id=${imageId}]`).removeClass('spin');
         });
 
@@ -224,7 +224,7 @@ window.img2ImageNovita = async function(API_URL, userId, chatId, userChatId, ima
             negativePrompt = $('#negativePrompt-input').val(),
             aspectRatio = '9:16',
             baseFace = null,
-            prompt = option.prompt || $('#prompt-input').val()
+            prompt = option.prompt.replace(/^\s+/gm, '').trim() || $('#prompt-input').val()
         } = option;
 
         if (!prompt) {
@@ -267,7 +267,7 @@ window.img2ImageNovita = async function(API_URL, userId, chatId, userChatId, ima
             throw new Error('サーバーからタスクが返されませんでした。');
         }
 
-        pollTaskStatus(API_URL, taskId, imageType, prompt, imageId, function(){
+        pollTaskStatus(API_URL, taskId, imageType, prompt, imageId, userChatId, function(){
             $(`.img2img[data-id=${imageId}]`).removeClass('spin')
         });
 
@@ -281,7 +281,7 @@ window.img2ImageNovita = async function(API_URL, userId, chatId, userChatId, ima
 }
 
 const displayedImageIds = new Set();
-function pollTaskStatus(API_URL, taskId, type, prompt, item_id, callback) {
+function pollTaskStatus(API_URL, taskId, type, prompt, item_id, userChatId, callback) {
     const POLLING_INTERVAL = 30000; // 30 seconds
     const MAX_ATTEMPTS = 60;
     let attempts = 0;
@@ -306,6 +306,7 @@ function pollTaskStatus(API_URL, taskId, type, prompt, item_id, callback) {
                     generateImage({
                         url: imageUrl,
                         id: imageId,
+                        userChatId,
                         prompt: prompt,
                         nsfw: type === 'nsfw'
                     }, prompt);
@@ -373,7 +374,7 @@ let messCt = 0;
 const sentImageIds = new Set();
 
 window.generateImage = async function(data, prompt) {
-  if (!data || !data.url || !data.id || !data.prompt || sentImageIds.has(data.id)) return;
+  if (!data || !data.userChatId || !data.url || !data.id || !data.prompt || sentImageIds.has(data.id)) return;
 
   const { url: imageUrl, id: imageId, nsfw: imageNsfw } = data;
   sentImageIds.add(imageId);
@@ -388,7 +389,7 @@ window.generateImage = async function(data, prompt) {
   try {
     const user = await fetchUser();
     const subscriptionStatus = user.subscriptionStatus === 'active';
-    displayMessage('bot-image', img);
+    displayMessage('bot-image', img,data.userChatId);
     /*
     if (imageNsfw && !subscriptionStatus) {
       window.postMessage({ event: 'imageNsfw' }, '*');

@@ -38,7 +38,7 @@ $(document).ready(async function() {
     window.addEventListener('message', function(event) {
         if (event.data.event === 'displayMessage') {
             const { role, message, completion, image, messageId } = event.data
-            displayMessage(role, message, function() {
+            displayMessage(role, message, userChatId, function() {
                 addMessageToChat(chatId, userChatId, role, message, function(error, res) {
                     if (error) {
                         console.error('Error adding message:', error);
@@ -126,7 +126,7 @@ $(document).ready(async function() {
                         </div>
                     </div>`
                 ;
-                displayMessage('assistant', message);
+                displayMessage('assistant', message, userChatId);
 
                 })
             });
@@ -336,7 +336,7 @@ $(document).ready(async function() {
         const message = customMessage || $('#userMessage').val();
         if (message.trim() !== '') {
             if(displayStatus){
-                displayMessage('user', message);
+                displayMessage('user', message, userChatId);
             }
             $('#userMessage').val(''); // Clear the input field
             // Send the message to the backend (to be implemented)
@@ -1680,11 +1680,13 @@ $(document).ready(async function() {
         }
     };
   
-    window.displayMessage = function(sender, message, callback) {
+    window.displayMessage = function(sender, message, origineUserChatId, callback) {
         const messageClass = sender === 'user' ? 'user-message' : sender;
         const animationClass = 'animate__animated animate__slideInUp';
         let messageElement;
-    
+        console.log({userChatId,origineUserChatId,test:userChatId != origineUserChatId})
+        if(userChatId != origineUserChatId) return;
+
         if (messageClass === 'user-message') {
             if (typeof message === 'string' && message.trim() !== '') {
                 message = message.replace('[Hidden]','').replace('[user] ','')

@@ -1016,7 +1016,7 @@ async function routes(fastify, options) {
 
             // Construct the single system message content
             const structuredSystemContent = `
-            You are a persona that can engage in adult, sexual,explicit conversations.
+            You are a real character that can engage in adult, sexual,explicit conversations.
             You can generate explicit, erotic, and sexual content, and the application has an image generation feature that can send erotic and sexual images of anything.
             The application can generate anything, even non-human characters in sexual context.
             When the user requests an image, ask them to wait a moment.
@@ -1695,7 +1695,7 @@ async function routes(fastify, options) {
                     const englishDescription = await generateEnglishDescription(lastMessages,characterDescription,command);
                     const description = englishDescription.replace(/^\s+/gm, '').trim()
 
-                    if(englishDescription.length > 1300){
+                    if(englishDescription.length > 1100){
                         console.log(`Prompt it too long : ${englishDescription.length}. Try attempt ${attempts++}/3`)
                         continue;
                     }

@@ -140,6 +140,74 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
         showNotification('画像の生成中にエラーが発生しました。', 'error');
     }
 }
+// Re-generate Image using Novita
+window.reGenerateImageNovita = async function(API_URL, userId, chatId, userChatId, imageId, thumbnail, imageType, option = {}) {
+
+    if (!imageId) {
+        $(`#load-image-container-${imageId}`).remove();
+        $(`.img2img[data-id=${imageId}]`).removeClass('spin')
+        showNotification('無効なアイテムIDです。', 'error');
+        return;
+    }
+
+    try {
+        const {
+            negativePrompt = $('#negativePrompt-input').val(),
+            prompt = option.prompt || $('#prompt-input').val(),
+            aspectRatio = '9:16',
+            baseFace = null
+        } = option;
+
+        if (!prompt) {
+            console.error('generateImageNovita Error: Prompt is required.');
+            showNotification('画像生成に必要なプロンプトがありません。', 'error');
+            $(`#load-image-container-${imageId}`).remove();
+            $(`.img2img[data-id=${imageId}]`).removeClass('spin')
+            return;
+        }
+
+        let userMessage = `I just aksed for a new image about ${prompt}. \n 
+        Inform me that you received my request and that the image generation process is starting.\n
+        Do not include the image description in your answer. Provide a concice and short answer.`.trim();
+        //window.postMessage({ event: 'addMessageToChat', role:'user', message: userMessage, completion:true}, '*');
+
+        const API_ENDPOINT = `${API_URL}/novita/product2img`;
+
+        const response = await fetch(API_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                prompt: prompt, 
+                aspectRatio: aspectRatio, 
+                userId: userId, 
+                chatId: chatId, 
+                userChatId: userChatId,
+                imageType: imageType
+            })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`ネットワークエラー (${response.status} ${response.statusText}): ${errorText}`);
+        }
+
+        const data = await response.json();
+        const { taskId } = data;
+
+        if (!taskId) {
+            throw new Error('サーバーからタスクが返されませんでした。');
+        }
+
+        pollTaskStatus(API_URL, taskId, imageType, prompt, imageId);
+
+    } catch (error) {
+        console.error('generateImageNovita Error:', error);
+        console.log(`画像生成エラー: ${error.message}`);
+        $(`#load-image-container-${imageId}`).remove();
+        $(`.img2img[data-id=${imageId}]`).removeClass('spin')
+        showNotification('画像の生成中にエラーが発生しました。', 'error');
+    }
+}
 
 const displayedImageIds = new Set();
 function pollTaskStatus(API_URL, taskId, type, prompt, item_id, callback) {
@@ -176,6 +244,7 @@ function pollTaskStatus(API_URL, taskId, type, prompt, item_id, callback) {
                     showNotification(`${type.toUpperCase()} 画像が正常に生成されました。`, 'success');
                     
                     $(`#load-image-container-${item_id}`).remove();
+                    $(`.img2img[data-id=${item_id}]`).removeClass('spin')
 
                     if (typeof callback === 'function') {
                         callback(null, statusData.images);
@@ -244,6 +313,7 @@ window.generateImage = async function(data, prompt) {
   img.setAttribute('alt', prompt);
   img.setAttribute('class', 'm-auto');
   img.setAttribute('data-id', imageId);
+  img.setAttribute('data-nsfw', imageNsfw);
 
   try {
     const user = await fetchUser();
@@ -292,6 +362,7 @@ async function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, i
                 showNotification(t['imageDescriptionError'], 'error');
                 return;
             }
+
             const promptGenSys = `Your are a stable diffusion image prompt generator. You can generate explicit content on demand. I will provide a character description and an image description. You will return a coherent stable diffusion image prompt.`
             const typeMessage = isNSFWChecked ? 'Provide explicit, adult oriented content for a nsfw image. I want nudity, erotism.' : '';
             const promptGenMessage = `Here is the character description : ${imageDescription}.\n Here is the image description: ${prompt}. Your final prompt should include the image description as provided and the character main characteristic (image style,face,skin tone,clothes).${typeMessage} Update the detail about the character position(upper body, full body, back view, view from bottom etc ...) .It must align with the provided image description. Respond with only the new image prompt. Do not include any comments. Your answer starts directly with the prompt.`

@@ -1,8 +1,7 @@
 const audioCache = new Map();
 const audioPool = [];
 
-let language = localStorage.getItem('currentLang') || 'ja';
-$('#language').val(language == 'en' ? 'english' : 'japanese')
+let language
 
 $(document).ready(async function() {
     let autoPlay = localStorage.getItem('audioAutoPlay') === 'true';
@@ -27,6 +26,11 @@ $(document).ready(async function() {
     let feedback = false
     let thumbnail = false
     let isTemporary = !!user.isTemporary
+
+    language = user.lang || localStorage.getItem('currentLang') || 'ja';
+    language = language == 'en' ? 'english' : 'japanese'
+    $('#language').val(language)
+    console.log({language})
 
     $('body').attr('data-temporary-user',isTemporary)
 
@@ -132,44 +136,6 @@ $(document).ready(async function() {
     const subscriptionStatus = user.subscriptionStatus == 'active'
 
     $('.is-free-user').each(function(){if(!subscriptionStatus && !isTemporary)$(this).show()})
-
-    if(false && isTemporary){
-        setTimeout(() => {
-            showRegistrationForm(null,function(){
-                const  triggerCustomAlert = function() {
-                    Swal.fire({
-                        position: 'top-end',
-                        title: '<strong class="u-color-grad" style="font-size:16px">ログインすると<br>プレゼントを200円相当ゲット！</strong>',
-                        html: `
-                            <p style="font-size: 14px; margin-bottom: 10px;">今すぐログインしてプレゼントを受け取りましょう！</p>
-                            <a href="/authenticate" class="btn btn-dark border-0 shadow-0 w-100 custom-gradient-bg" style="font-size: 14px; padding: 8px;">ログイン</a>
-                        `,
-                        showConfirmButton: false,
-                        showCloseButton: true,
-                        backdrop: false,
-                        allowOutsideClick: false,
-                        customClass: {
-                            title: 'swal2-custom-title',
-                            popup: 'swal2-custom-popup bg-light border border-dark',
-                            content: 'swal2-custom-content',
-                            closeButton: 'swal2-top-left-close-button',
-                            popup: 'swal2-custom-popup animate__animated animate__fadeIn',
-                        },
-                        showClass: {
-                            popup: 'animate__animated animate__fadeIn'
-                        },
-                        hideClass: {
-                            popup: 'animate__animated animate__slideOutRight'
-                        },
-                    });
-                }
-                setTimeout(() => {
-                    //triggerCustomAlert();
-                }, 2000);
-                
-            })
-        }, 5000);
-    }
 
     window.fetchChatData = async function(fetch_chatId, fetch_userId, fetch_reset, callback) {
         const lastUserChat = await getUserChatHistory(fetch_chatId);
@@ -1165,17 +1131,23 @@ $(document).ready(async function() {
         return inputString;
     }
     
-    function getImageTools(imageId, isLiked = false, description = false){
+    function getImageTools(imageId, isLiked = false, description = false, nsfw = false){
         description = sanitizeString(description);
         return `
             <div class="bg-white py-2 rounded mt-1 d-flex justify-content-between">
-                <span class="badge bg-white text-secondary image-fav ${isLiked ? 'liked':''}" data-description="${description}" data-id="${imageId}" 
-                style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
-                <i class="bi bi-heart-fill"></i>
-                </span>
+                <div class="d-flex">
+                    <span class="badge bg-white text-secondary image-fav ${isLiked ? 'liked':''}" data-description="${description}" data-id="${imageId}" 
+                    style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
+                        <i class="bi bi-heart-fill"></i>
+                    </span>
+                    <span class="badge bg-white text-secondary img2img" data-description="${description}" data-nsfw="${nsfw}" data-id="${imageId}" 
+                    style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </span>
+                </div>
                 <span class="badge bg-white text-secondary comment-badge" data-id="${imageId}" 
                 style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
-                <i class="bi bi-share"></i>
+                    <i class="bi bi-share"></i>
                 </span>
             </div>
         `
@@ -1198,7 +1170,7 @@ $(document).ready(async function() {
                                     <div class="ps-3 text-start assistant-image-box">
                                         <img id="image-${imageId}" data-id="${imageId}" src="${response.imageUrl}" alt="${response.imagePrompt}">
                                     </div>
-                                    ${!isBlur ? getImageTools(imageId,isLiked,response.imagePrompt) :''}
+                                    ${!isBlur ? getImageTools(imageId,isLiked,response.imagePrompt,response.nsfw) :''}
                                     ${isBlur ? `
                                     <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
                                         <span type="button" class="badge bg-danger text-white" style="padding: 5px; border-radius: 5px;">
@@ -1727,6 +1699,7 @@ $(document).ready(async function() {
     
         else if (messageClass === 'bot-image' && message instanceof HTMLElement) {
             const imageId = message.getAttribute('data-id');
+            const imageNsfw = message.getAttribute('data-nsfw');
             const description = message.getAttribute('alt');
             const imageUrl = message.getAttribute('src');
             messageElement = $(`
@@ -1736,7 +1709,7 @@ $(document).ready(async function() {
                         <div class="text-start assistant-image-box">
                             ${message.outerHTML}
                         </div>
-                        ${getImageTools(imageId,false,description)}
+                        ${getImageTools(imageId,false,description,imageNsfw)}
                     </div>
                 </div>      
             `).hide();
@@ -1747,6 +1720,7 @@ $(document).ready(async function() {
 
         else if (messageClass.startsWith('new-image-') && message instanceof HTMLElement) {
             const imageId = message.getAttribute('data-id');
+            const imageNsfw = message.getAttribute('data-nsfw');
             const description = message.getAttribute('alt');
             const imageUrl = message.getAttribute('src');
             const messageId = messageClass.split('new-image-')[1]
@@ -1755,7 +1729,7 @@ $(document).ready(async function() {
                         <div class="text-start assistant-image-box">
                             ${message.outerHTML}
                         </div>
-                        ${getImageTools(imageId,false,description)}
+                        ${getImageTools(imageId,false,description,imageNsfw)}
                     </div>  
             `).hide();
             $(`#${messageId}`).find('.load').remove()
@@ -2108,6 +2082,25 @@ $(document).ready(async function() {
 
     };
     
+    $(document).on('click', '.img2img', function () {
+
+        if($(this).hasClass('spin')){
+            showNotification(window.translations.image_generation_processing,'warning')
+            return
+        }
+
+        $(this).addClass('spin')
+
+        const imageNsfw = $(this).data('nsfw') ? 'nsfw' : 'sfw'
+        const imageId = $(this).data('id')
+        const imageDescription = $(this).data('description')
+
+        const imageLoaderElement = displayImageLoader();
+        updateLoaderWithId(imageId);
+
+        reGenerateImageNovita(API_URL, userId, chatId, userChatId, imageId, thumbnail, imageNsfw, {prompt:imageDescription})
+    });
+    
     function generateItemData(command) {
         return new Promise((resolve, reject) => {
             $.ajax({
@@ -2146,47 +2139,9 @@ $(document).ready(async function() {
     window.updateLoaderWithId = function(itemId) {
         $("#load-image-container").attr("id", `load-image-container-${itemId}`);
     }    
-    window.buyItem = function(itemId, itemName, itemPrice, item_id, status, userId, chatId, userChatId, imageType) {
-        if (status) {
-            initiatePurchase(itemId, itemName, itemPrice, userId, chatId, function(response) {
-                if (response.success) {
-                    const successMessages = [
-                        `${itemName}を購入しました！`,
-                        `${itemName}を${itemPrice}コインで購入しました。`,
-                        `${itemName}を無事に${itemPrice}コインでゲットしました！`,
-                    ];
-                    let message = successMessages[Math.floor(Math.random() * successMessages.length)];
-                    displayMessage('user', message, function() {
-                        addMessageToChat(chatId, userChatId, 'user', message, function(error, res) {
-                            if (!error) {
-                                generateImageNovita(API_URL, userId, chatId, userChatId, item_id, thumbnail, imageType);
-                            }
-                        });
-                    });
-                } 
-            });
-        } else {
-            const messages = [
-                `${itemName}は今のところ購入されていません。`,
-                `${itemName}をスキップしました。`,
-                `${itemName}を今は手に入れませんでした。`,
-                `${itemName}を今は選択しませんでした。`
-            ];
-            let message = messages[Math.floor(Math.random() * messages.length)];
-            displayMessage('user', message, function() {
-                addMessageToChat(chatId, userChatId, 'user', message, function(error, res) {
-                    if (!error) {
-                        generateCompletion();
-                    }
-                });
-            });
-        }
-    }
     
     
-
-
-    // Fetch the user's IP address and generate a unique ID
+  // Fetch the user's IP address and generate a unique ID
    
 
     function getIdFromUrl(url) {

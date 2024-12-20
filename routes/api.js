@@ -1917,14 +1917,17 @@ async function routes(fastify, options) {
             const collection = db.collection('chats');
     
             // Check if the description for the image already exists in the database
-            const chat = await collection.findOne({ _id: objectId });
-            const imageDescription = chat?.imageDescription;
+            const chatData = await collection.findOne({ _id: objectId });
+            
+            const imageDescription = chatData?.imageDescription || null;
+            const characterPrompt = chatData?.characterPrompt || chatData?.enhancedPrompt || null;
+            const characterDescription = characterPrompt || imageDescription
     
-            if (!imageDescription || imageDescription.includes('sorry')) {
+            if (!characterDescription || characterDescription.includes('sorry')) {
                 return reply.send(false);
             }
     
-            return reply.send({ imageDescription });
+            return reply.send({ imageDescription:characterDescription });
         } catch (error) {
             reply.status(500).send({ error: 'Internal Server Error', details: error.message });
         }

@@ -371,9 +371,10 @@ async function routes(fastify, options) {
       const image = imageDocument.images[0];
       const imageUrl = image.imageUrl;
       const imagePrompt = image.prompt;
+      const nsfw = image.nsfw;
       const likedBy = image.likedBy || [];
   
-      return reply.status(200).send({ imageUrl, imagePrompt, likedBy });
+      return reply.status(200).send({ imageUrl, imagePrompt, likedBy, nsfw });
     } catch (error) {
       console.error('Error fetching image URL:', error);
       return reply.status(500).send({ error: 'An error occurred while fetching the image URL' });
@@ -422,7 +423,7 @@ async function routes(fastify, options) {
         };
 
         const requestData = { ...params, ...image_request };
-        console.log(requestData.prompt)
+        console.log({prompt:requestData.prompt})
 
         const novitaTaskId = await fetchNovitaMagic(requestData);
 
@@ -518,7 +519,7 @@ fastify.post('/novita/txt2img', async (request, reply) => {
 
       // Prepare params
       const requestData = { ...params, ...image_request, image_num: 1 };
-      console.log(requestData.prompt);
+      console.log({prompt:requestData.prompt});
 
       // Send request to Novita and get taskId
       const novitaTaskId = await fetchNovitaMagic(requestData);

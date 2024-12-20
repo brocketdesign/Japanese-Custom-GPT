@@ -310,6 +310,19 @@ em {
 .animated.fadeInDown .swal2-close{
   border:0;
 }
+.spin i {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Custom animation for sliding in from the bottom */
 .swal2-bottom-slide-in {
   animation: bottom-slide-in 0.5s;

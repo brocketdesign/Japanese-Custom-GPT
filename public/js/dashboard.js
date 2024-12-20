@@ -394,7 +394,7 @@ $(document).ready(async function() {
           }
         });
     });
-
+    
       $(document).on('click', '.post-visible', function () {
 
         const isTemporary = !!user.isTemporary;

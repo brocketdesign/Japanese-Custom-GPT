@@ -69,6 +69,7 @@ const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'me
 
 
 async function generateCompletion(systemPrompt, userMessage, maxToken = 1000, aiModel =`meta-llama/llama-3.1-70b-instruct`) {
+  console.log({systemPrompt,userMessage,aiModel})
     const response = await fetch("https://api.novita.ai/v3/openai/chat/completions", {
         headers: {
             "Content-Type": "application/json",

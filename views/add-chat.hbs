@@ -345,7 +345,6 @@
         let translations = window.translations
 
         function showStep(step) {
-            console.log(`show step ${step}`)
             $(`#nextStep${step}`).addClass('d-none');
             $(`#step${step +1}`).removeClass('d-none')
         }
@@ -383,7 +382,6 @@
 
 
         $('.nextStep').click(function() {
-            console.log({currentStep})
             if (validateStep(currentStep)) {
                 showStep(currentStep);
                 currentStep++;

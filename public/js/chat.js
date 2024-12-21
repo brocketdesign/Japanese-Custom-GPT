@@ -154,7 +154,7 @@ $(document).ready(async function() {
         $('#chatContainer').empty();
         $('#startButtonContained').remove();
         $('#chat-recommend').empty();
-        
+
         postChatData(fetch_chatId, fetch_userId, userChatId, fetch_reset, callback);
     }
     
@@ -420,13 +420,6 @@ $(document).ready(async function() {
             displayGalleries(thumbnail, data.chat.galleries, data.chat.blurred_galleries, chatId, fetch_userId);
         }else{
             $('#galleries-open').hide();
-        }
-    
-        const {imageDescription} = await checkImageDescription(chatId);
-
-        if (!imageDescription) {
-            //console.log('Image description was not founded. Generating a new one ...')
-            //generateImageDescriptionBackend(thumbnail, chatId);
         }
 
         updateParameters(chatId, fetch_userId);
@@ -1382,7 +1375,7 @@ $(document).ready(async function() {
         let messageElement;
 
         let currentUserChatId = sessionStorage.getItem('userChatId')
-        if(currentUserChatId != origineUserChatId) return;
+        if(origineUserChatId && currentUserChatId != origineUserChatId) return;
 
         if (messageClass === 'user-message') {
             if (typeof message === 'string' && message.trim() !== '') {
@@ -1405,7 +1398,7 @@ $(document).ready(async function() {
             const imageNsfw = message.getAttribute('data-nsfw');
             const description = message.getAttribute('alt');
             const imageUrl = message.getAttribute('src');
-            console.log({imageId,imageNsfw,description,imageUrl})
+            
             messageElement = $(`
                 <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass}">
                     <img src="${thumbnail || '/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
@@ -1685,7 +1678,7 @@ $(document).ready(async function() {
 
 
             controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isNSFWChecked);
-
+            updateLoaderWithId(id)
             Swal.close();
         });
     }

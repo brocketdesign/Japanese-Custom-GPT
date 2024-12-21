@@ -1067,7 +1067,11 @@ async function routes(fastify, options) {
 
             if(genImage?.image_request){
                 messagesForCompletion = systemMessages.concat(responseExample);
-                messagesForCompletion.push({role:'user', content:'The application has started generating my image request.', name:'master'})
+                messagesForCompletion.push({
+                    role:'user', 
+                    content:`The application has started generating my image request.Provide a concise answer in ${language} only.`, 
+                    name:'master'
+                })
             }else{
                 messagesForCompletion = systemMessages
             }

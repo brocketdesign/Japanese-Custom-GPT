@@ -338,6 +338,7 @@ $(document).ready(async function() {
         const message = customMessage || $('#userMessage').val();
         if (message.trim() !== '') {
             if(displayStatus){
+                console.log({message})
                 displayMessage('user', message, userChatId);
             }
             $('#userMessage').val(''); // Clear the input field
@@ -1344,42 +1345,6 @@ $(document).ready(async function() {
         })
     }
 
-    function generateChoice(){
-        const apiUrl = API_URL+'/api/openai-chat-choice/'
-
-        $.ajax({
-            url: apiUrl,
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ userId, chatId }),
-            success: function(response) {
-                const cleanResponse = cleanJsonArray(response)
-
-                cleanResponse.forEach(choice => {
-                    const button = $(`<button class="btn btn-outline-secondary m-1" onclick="sendMessage('${choice}')">${choice}</button>`)
-                    $(`#response-${currentStep}`).append(button);
-                });
-            },
-            error: function(error) {
-                console.error('Error:', error);
-            }
-        });
-    }
-    function cleanJsonArray(jsonString) {
-        // Remove all characters before the first '{'
-        let start = jsonString.indexOf('[');
-        if (start !== -1) {
-            jsonString = jsonString.substring(start);
-        }
-
-        // Remove all characters after the last '}'
-        let end = jsonString.lastIndexOf(']');
-        if (end !== -1) {
-            jsonString = jsonString.substring(0, end + 1);
-        }
-
-        return JSON.parse(jsonString);
-    }
     let audioPermissionGranted = true;
 
     function requestAudioPermission() {

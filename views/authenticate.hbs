@@ -7,6 +7,7 @@
     <link rel="icon" href="/img/logo.webp" type="image/webp">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
     <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -62,21 +63,22 @@
               <h3 class="text-muted mb-5 header" style="font-size: 16px;">
                 {{translations.enjoyConversations}}
               </h3>
-              <div class="container">
-                <a href="/user/google-auth" class="btn btn-light ico-login-button mb-3 d-flex justify-content-center">
-                  <img src="/img/google_logo_neutral.png" alt="Google"/>
-                  <span class="gsi-material-button-contents">{{translations.continueWithGoogle}}</span>
-                </a>
-                <a href="/user/line-auth" class="btn btn-light ico-login-button mb-3 d-flex justify-content-center">
-                  <img src="/img/line_btn_base.png" alt="LINE"/>
-                  <span class="gsi-material-button-contents">{{translations.continueWithLINE}}</span>
-                </a>
-                <p>{{translations.or}}</p>
-                <a href="/authenticate/mail" class="btn btn-light google-login-button mb-3 py-2 w-100">
-                  <i class="fas fa-envelope me-3"></i>
-                  <span>{{translations.continueWithEmail}}</span>
-                </a>
-              </div>
+<div class="container" data-animate="animate__fadeInUp" data-delay="animate__delay-1s">
+    <a href="/user/google-auth" class="btn btn-light ico-login-button mb-3 d-flex justify-content-center" data-animate="animate__fadeInUp" data-delay="animate__delay-2s">
+        <img src="/img/google_logo_neutral.png" alt="Google"/>
+        <span class="gsi-material-button-contents">{{translations.continueWithGoogle}}</span>
+    </a>
+    <a href="/user/line-auth" class="btn btn-light ico-login-button mb-3 d-flex justify-content-center" data-animate="animate__fadeInUp" data-delay="animate__delay-3s">
+        <img src="/img/line_btn_base.png" alt="LINE"/>
+        <span class="gsi-material-button-contents">{{translations.continueWithLINE}}</span>
+    </a>
+    <p data-animate="animate__fadeInUp" data-delay="animate__delay-4s">{{translations.or}}</p>
+    <a href="/authenticate/mail" class="btn btn-light google-login-button mb-3 py-2 w-100" data-animate="animate__fadeInUp" data-delay="animate__delay-5s">
+        <i class="fas fa-envelope me-3"></i>
+        <span>{{translations.continueWithEmail}}</span>
+    </a>
+</div>
+
             </div>
           </div>
         </div>
@@ -85,6 +87,5 @@
   </div>
 </section>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
-
 </body>
 </html>

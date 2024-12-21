@@ -200,7 +200,10 @@ em {
   position: relative;
   border-top: 0 solid transparent;
 }
-
+.new-chat{display: none;}
+.hidden {
+  opacity: 0;
+}
 .border-top-custom-gradient::before {
   border-radius:4px 4px 0px 0px;
   content: "";

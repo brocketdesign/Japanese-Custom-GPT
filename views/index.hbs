@@ -186,34 +186,41 @@
     </style>
 
 {{#if user.isTemporary}}
-    <section>
-        <div id="intro" class="bg-image shadow-1-strong">
-            <div style="background-image:url(/img/pc_lg02_rotate.jpg);">
-                <div class="container row align-items-center h-100 m-auto">
-                    <div class="col-12 col-md-6 py-5 text-dark" data-animate="animate__slideInLeft">
-                        <h1 class="mb-3 fw-bold text-dark text-start" id="headline-container" > 
-                            <p class="u-color-grad" style="font-size: 54px;"><img src="/img/logo.webp" alt="" class="me-2" width="40px">Lamix</p>
-                            <p>画像生成：文字から理想のAI美女をカンタン生成</p>
-                        </h1>
-                            <p class="generate-text" id="headline"></p>
-                        <div class="text-start">
-                            簡単な手順でテキストまたは画像からAI美女を生成します。
+<section>
+    <div id="intro" class="bg-image shadow-1-strong" data-animate="animate__fadeIn" >
+        <div style="background-image:url(/img/pc_lg02_rotate.jpg);" data-animate="animate__zoomIn" >
+            <div class="container row align-items-center h-100 m-auto">
+                <div class="col-12 col-md-6 py-5 text-dark">
+                    <h1 class="mb-3 fw-bold text-dark text-start" id="headline-container"> 
+                        <div class="container d-flex  align-items-center text-start">
+                            <img src="/img/logo.webp" alt="" class="me-2" width="40px" height="40px" data-animate="animate__rotateIn" data-delay="animate__delay-1s">
+                            <span class="u-color-grad" style="font-size: 54px;" data-animate="animate__fadeIn" data-delay="animate__delay-1s">
+                                Lamix
+                            </span>
                         </div>
-                        <div class="text-center d-flex flex-column justify-content-start align-items-start mt-3">
-                            <a href="/authenticate" class="btn custom-gradient-bg text-white btn-lg m-2 px-5 py-3 mb-3 cta-button" role="button" style="border-radius: 50px;">
-                                AI美女を生成
-                            </a>
-                        </div>
+
+                        <p data-animate="animate__fadeInUp" data-delay="animate__delay-2s">画像生成：文字から理想のAI美女をカンタン生成</p>
+                    </h1>
+                    <div class="text-start" data-animate="animate__fadeInUp" data-delay="animate__delay-3s">
+                        簡単な手順でテキストまたは画像からAI美女を生成します。
                     </div>
-                    <div class="col-12 col-sm-6" data-animate="animate__slideInRight">
-                        <div class="container p-3 text-center">
-                            <img src="/img/lp-b-1.png" class="rounded" style="width:100%;">
-                        </div>
+                    <div class="text-center d-flex flex-column justify-content-start align-items-start mt-3" data-animate="animate__fadeIn"  data-delay="animate__delay-4s">
+                        <a href="/authenticate" class="btn custom-gradient-bg text-white btn-lg m-2 px-5 py-3 mb-3 cta-button" role="button" style="border-radius: 50px;" data-animate="animate__pulse animate__infinite" >
+                            AI美女を生成
+                        </a>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6" data-animate="animate__zoomIn"  data-delay="animate__delay-4s">
+                    <div class="container p-3 text-center">
+                        <img src="/img/lp-b-1.png" class="rounded" style="width:100%;">
                     </div>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
+</section>
+
+
     <section class="container">
         <style>
             .before-after--section-step-container {
@@ -244,55 +251,54 @@
             margin-left: 35px;
             }
         </style>
-        <div class="container row mt-3">
-            <div class="col-auto my-3">
-                <div class="before-after--section-step-container">
-                    <div style="display: flex;">
-                        <div class="before-after--section-step u-color-grad">01</div>
-                    </div>
-                    <div class="before-after--section-symbol"></div>
-                    <div class="before-after--section-total-step">05</div>
-                </div>
+<div class="container row mt-3">
+    <div class="col-auto my-3" data-animate="animate__fadeInRight" >
+        <div class="before-after--section-step-container">
+            <div style="display: flex;">
+                <div class="before-after--section-step u-color-grad">01</div>
             </div>
-            <div class="col-auto">
-                <h2 class="display-4 fw-bold">文字からAI美女の作成</h2>
-                <p>テキストを入力するだけで簡単に理想のAI美女や美少女を作成。リアルな美女からアニメ風の美女まで、年齢、髪型、肌の色、服装など、あらゆるAI美女を作りあげることができます。</p>
-            </div>
+            <div class="before-after--section-symbol" data-animate="animate__zoomIn" data-delay="animate__delay-1s"></div>
         </div>
+    </div>
+    <div class="col-auto">
+        <h2 class="display-4 fw-bold" data-animate="animate__fadeInRight" data-delay="animate__delay-1s">文字からAI美女の作成</h2>
+        <p data-animate="animate__fadeInRight" data-delay="animate__delay-2s">テキストを入力するだけで簡単に理想のAI美女や美少女を作成。リアルな美女からアニメ風の美女まで、年齢、髪型、肌の色、服装など、あらゆるAI美女を作りあげることができます。</p>
+    </div>
+</div>
+
     </section>
 {{/if}}
 {{#if user.isTemporary}}
-    <section class="container">
-        <div class="container row align-items-center h-100 m-auto">
-            <div class="col-12 col-md-6 py-5 text-dark" data-animate="animate__slideInLeft">
-                <div class="row mt-3">
-                    <div class="col-auto my-3">
-                        <div class="before-after--section-step-container">
-                            <div style="display: flex;">
-                                <div class="before-after--section-step u-color-grad">02</div>
-                            </div>
-                            <div class="before-after--section-symbol"></div>
-                            <div class="before-after--section-total-step">05</div>
+ <section class="container">
+    <div class="container row align-items-center h-100 m-auto">
+        <div class="col-12 col-md-6 py-5 text-dark" data-animate="animate__fadeInRight" >
+            <div class="row mt-3">
+                <div class="col-auto my-3">
+                    <div class="before-after--section-step-container">
+                        <div style="display: flex;">
+                            <div class="before-after--section-step u-color-grad">02</div>
                         </div>
-                    </div>
-                    <div class="col-auto">
-                        <h2 class="display-4 fw-bold">AI美女とチャット</h2>
-                        <p>AIの美しい女性と会話しながら、さまざまな場面で画像生成を楽しめる！もしかして恋しちゃうかも？</p>
-                        <div class="text-center d-flex flex-column justify-content-start align-items-start mt-3">
-                            <a href="/authenticate" class="btn custom-gradient-bg text-white btn-lg m-2 px-5 py-3 mb-3 cta-button" role="button" style="border-radius: 50px;">
-                                AI美女とチャットする
-                            </a>
-                        </div>
+                        <div class="before-after--section-symbol" data-animate="animate__zoomIn" data-delay="animate__delay-1s"></div>
                     </div>
                 </div>
-            </div>
-            <div class="col-12 col-sm-6" data-animate="animate__slideInRight">
-                <div class="container p-3 text-center">
-                    <img src="/img/lp-b-2.png" class="rounded" style="width:100%;">
+                <div class="col-auto">
+                    <h2 class="display-4 fw-bold" data-animate="animate__fadeInRight" data-delay="animate__delay-1s">AI美女とチャット</h2>
+                    <p data-animate="animate__fadeInRight" data-delay="animate__delay-2s">AIの美しい女性と会話しながら、さまざまな場面で画像生成を楽しめる！もしかして恋しちゃうかも？</p>
+                    <div class="text-center d-flex flex-column justify-content-start align-items-start mt-3" data-animate="animate__fadeIn" data-delay="animate__delay-3s">
+                        <a href="/authenticate" class="btn custom-gradient-bg text-white btn-lg m-2 px-5 py-3 mb-3 cta-button" role="button" style="border-radius: 50px;" data-animate="animate__pulse animate__infinite" >
+                            AI美女とチャットする
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
-    </section>
+        <div class="col-12 col-sm-6" data-animate="animate__slideInRight" >
+            <div class="container p-3 text-center">
+                <img src="/img/lp-b-2.png" class="rounded" style="width:100%;">
+            </div>
+        </div>
+    </div>
+</section>
     <section class=" bg-light ">
         <div class="container my-4 py-5">
             <h2 class="display-4 fw-bold text-center mb-3">LAMIXに関するよくある質問</h2>

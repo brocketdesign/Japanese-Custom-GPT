@@ -1031,7 +1031,7 @@ async function routes(fastify, options) {
 
             // Separate out previous messages and the last user message
             const previousMessages = userMessagesForCompletion.slice(0, -1);
-            const lastUserMessage = userMessagesForCompletion[userMessagesForCompletion.length - 1];
+            const lastUserMessage = userData.messages[userData.messages.length - 1];
 
             const currentUserMessage = { role: 'user', content: lastUserMessage.content };
             if (lastUserMessage.name) {
@@ -1113,9 +1113,9 @@ async function routes(fastify, options) {
                 messagesForCompletion = systemMessages
             }
            
-            messagesForCompletion = messagesForCompletion.concat(filteredPreviousMessages);
+            messagesForCompletion = messagesForCompletion.concat(userMessagesForCompletion);
             messagesForCompletion.push(currentUserMessage);
-
+console.log({messagesForCompletion})
             const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, aiModelChat, genImage);
 
             // Add the assistant's response to the user's message history

@@ -141,8 +141,10 @@ $(document).ready(async function() {
         const lastUserChat = await getUserChatHistory(fetch_chatId);
 
         fetch_chatId = lastUserChat ?.chatId || fetch_chatId
-        const newUserChatId = lastUserChat ?._id || userChatId;
-        userChatId = newUserChatId
+        $('.new-chat').data('id',fetch_chatId).fadeIn()
+        sessionStorage.setItem('lastChatId', fetch_chatId);
+
+        userChatId = lastUserChat ?._id || userChatId;
         sessionStorage.setItem('userChatId', userChatId);
         
         if (fetch_reset) {
@@ -228,7 +230,7 @@ $(document).ready(async function() {
         element.style.height = (element.scrollHeight - 20 ) + 'px';  
     }
 
-    $(document).on('click','.reset-chat', function(){
+    $(document).on('click','.reset-chat,.new-chat', function(){
         chatId = $(this).data('id')
         fetchChatData(chatId, userId, true) ;
     })
@@ -1375,7 +1377,8 @@ $(document).ready(async function() {
         let messageElement;
 
         let currentUserChatId = sessionStorage.getItem('userChatId')
-        if(origineUserChatId && currentUserChatId != origineUserChatId) return;
+        console.log({currentUserChatId,origineUserChatId})
+        if(currentUserChatId && origineUserChatId && currentUserChatId != origineUserChatId) return;
 
         if (messageClass === 'user-message') {
             if (typeof message === 'string' && message.trim() !== '') {

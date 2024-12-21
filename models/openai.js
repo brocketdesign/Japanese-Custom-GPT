@@ -235,16 +235,16 @@ const checkImageRequest = async (messages) => {
     
     const updatedMessages = [
       { role: "system", content: systemPrompt },
-      messages
+      ...messages
     ];
-  
+
     let attempts = 0;
     const maxAttempts = 3;
   
     while (attempts < maxAttempts) {
       try {
         const response = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
+          model: 'gpt-4o',
           messages: updatedMessages,
           response_format: zodResponseFormat(formatSchema, "myResponse"),
           max_tokens: 600,
@@ -253,7 +253,7 @@ const checkImageRequest = async (messages) => {
           frequency_penalty: 0.75,
           presence_penalty: 0.75,
         });
-  
+
         return JSON.parse(response.choices[0].message.content);
       } catch (error) {
         attempts++;

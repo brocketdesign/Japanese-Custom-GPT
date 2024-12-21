@@ -15,7 +15,8 @@ $(document).ready(async function() {
     const user = await fetchUser();
 
     let chatId = getIdFromUrl(window.location.href) || getIdFromUrl($.cookie('redirect_url'))||$(`#lamix-chat-widget`).data('id');
-    let userChatId
+    let userChatId = sessionStorage.getItem('userChatId');
+    console.log(userChatId);
     const userId = user._id
     let persona
     let currentStep = 0;
@@ -144,7 +145,8 @@ $(document).ready(async function() {
         fetch_chatId = lastUserChat ?.chatId || fetch_chatId
         const newUserChatId = lastUserChat ?._id || userChatId;
         userChatId = newUserChatId
-
+        sessionStorage.setItem('userChatId', userChatId);
+        
         if (fetch_reset) {
             currentStep = 0;
         }

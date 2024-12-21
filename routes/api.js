@@ -1703,7 +1703,7 @@ async function routes(fastify, options) {
             const characterDescription = characterPrompt || imageDescription
 
             let attempts = 0;
-            while (attempts < 3) {
+            while (attempts < 5) {
                 try {
                     const englishDescription = await generateEnglishDescription(lastMessages,characterDescription,command);
                     const description = englishDescription.replace(/^\s+/gm, '').trim()

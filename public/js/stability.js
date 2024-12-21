@@ -441,7 +441,8 @@ async function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, i
             const finalPrompt = await generateCompletion(promptGenSys,promptGenMessage)
 
             //showNotification(t['imageGenerationStarted'], 'success');
-            const hiddenMessage = `I requested an image.Tell me that you received the request and that the image is current being generated. It may take a minute or so to complte. Thanks me and tell me to wait.`
+            const language = getLanguageName(localStorage.getItem('currentLang'))
+            const hiddenMessage = `I requested an image.Tell me that you received the request and that the image is current being generated. It may take a minute or so to complte. Thanks me and tell me to wait. You must respond like your character would and exclusively in ${language}. Your answer mut be concise.`
             window.postMessage({ event: 'imageStart', message: hiddenMessage}, '*');
 
             let messageId

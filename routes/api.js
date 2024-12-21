@@ -1100,7 +1100,6 @@ async function routes(fastify, options) {
             if(genImage?.image_request){
 
                 const chatTemplate = getChatTemplate(language);
-                console.log(chatTemplate);
 
                 messagesForCompletion = systemMessages.concat(chatTemplate);
                 messagesForCompletion.push({
@@ -1658,7 +1657,7 @@ async function routes(fastify, options) {
                 top_p: 0.95,
                 frequency_penalty: 0,
                 presence_penalty: 0,
-                max_tokens: 700,
+                max_tokens: 600,
                 stream: false,
                 n: 1,
             }),
@@ -1680,19 +1679,19 @@ async function routes(fastify, options) {
             : '';
     
         const nudeDetails = command.nude 
-            ? `Nudity focus: ${command.nude_type}.` 
+            ? `${command.nude_type}` 
             : 'No nudity focus.';
     
         const positionDetails = command.position 
-            ? `Position: ${command.position}.` 
+            ? `${command.position}.` 
             : 'Default pose.';
     
         const viewpointDetails = command.viewpoint 
-            ? `Viewpoint: ${command.viewpoint} view.` 
+            ? `${command.viewpoint} view` 
             : 'Front view.';
     
         const imageFocusDetails = command.image_focus 
-            ? `Image focus: ${command.image_focus}.` 
+            ? `${command.image_focus}` 
             : 'Focus on full body.';
     
         return `
@@ -1704,17 +1703,12 @@ async function routes(fastify, options) {
             
             As a reminder, here is the character description: ${characterDescription}.
             You must include the character description but update the character clothes, facial expression, stance, stature,body and the background, to be relevant to the desired image. 
-            Adapt to my request. ${nsfwMessage}
+            Adapt to my request. ${nsfwMessage}\n\n
             
             Respond with an image description of the scene I just asked, in English. 
             Only one image description. Provide details, for a ${type} image. 
             Include the following in your prompt : \n
-            character description\n
-            ${nudeDetails} \n
-            ${positionDetails} \n
-            ${viewpointDetails} \n
-            ${imageFocusDetails}\n\n
-            
+            ${nudeDetails}, ${positionDetails} , ${viewpointDetails} , ${imageFocusDetails}\n\n
             Do not include any comments. 
             Use keywords to describe the image, do not make sentences. Provide a detailed prompt.
         `;
@@ -1739,26 +1733,12 @@ async function routes(fastify, options) {
           const characterPrompt = chatData?.characterPrompt || chatData?.enhancedPrompt || null;
           const characterDescription = characterPrompt || imageDescription;
       
-          let attempts = 0;
-          let finalDescription = '';
-          while (attempts < 3) {
-            try {
-              const englishDescription = await generateEnglishDescription(lastMessages, characterDescription, command);
-              if (englishDescription.length <= 1000) {
-                finalDescription = englishDescription.trim();
-                break;
-              }
-              console.log(`Prompt too long: ${englishDescription.length}. Attempt ${attempts + 1}/5`);
-            } catch (error) {
-              console.log(error);
-            }
-            attempts++;
-          }
-      
-          if (!finalDescription) {
-            const englishDescriptionFallback = await generateEnglishDescription(lastMessages, characterDescription, command);
-            finalDescription = englishDescriptionFallback.slice(0, 1000).trim();
-          }
+        let finalDescription = '';
+        const englishDescriptionFallback = await generateEnglishDescription(lastMessages, characterDescription, command);
+        function processString(input) {
+            return [...new Set(input.slice(0, 900).split(',').map(s => s.trim()))].join(', ');
+        }
+        finalDescription = processString(englishDescriptionFallback);
       
           const itemProposalCollection = fastify.mongo.db.collection('itemProposal');
           const result = await itemProposalCollection.insertOne({ description: finalDescription });

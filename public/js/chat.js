@@ -1375,6 +1375,7 @@ $(document).ready(async function() {
         let messageElement;
 
         let currentUserChatId = sessionStorage.getItem('userChatId')
+        console.log({origineUserChatId,currentUserChatId})
         if(origineUserChatId && currentUserChatId != origineUserChatId) return;
 
         if (messageClass === 'user-message') {

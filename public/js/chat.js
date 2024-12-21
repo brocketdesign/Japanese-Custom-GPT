@@ -144,6 +144,7 @@ $(document).ready(async function() {
         fetch_chatId = lastUserChat ?.chatId || fetch_chatId
         const newUserChatId = lastUserChat ?._id || userChatId;
         userChatId = newUserChatId
+        console.log({userChatId})
         sessionStorage.setItem('userChatId', userChatId);
         
         if (fetch_reset) {

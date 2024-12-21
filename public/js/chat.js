@@ -1628,51 +1628,7 @@ $(document).ready(async function() {
             }
         });
     }
-       
-    function generateNarration(callback) {
-        const apiUrl = API_URL + '/api/openai-chat-narration';
-                
-        // Initialize the narrator response container
-        const narratorResponseContainer = $(`
-            <div id="narrator-container-${currentStep}" class="d-flex flex-row justify-content-start message-container">
-                <div id="narration-${currentStep}" class="p-3 ms-3 text-start narration-container" style="border-radius: 15px;">
-                    <img src="/img/load-dot.gif" width="50px">
-                </div>
-            </div>
-        `);
-    
-        $('#chatContainer').append(narratorResponseContainer);
-        $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
-    
-        $.ajax({
-            url: apiUrl,
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ userId, chatId, userChatId }),
-            success: function(response) {
-                const sessionId = response.sessionId;
-                const streamUrl = API_URL + `/api/openai-chat-narration-stream/${sessionId}`;
-                const eventSource = new EventSource(streamUrl);
-                let narrationContent = "";
-    
-                eventSource.onmessage = function(event) {
-                    const data = JSON.parse(event.data);
-                    narrationContent += data.content;
-                    $(`#narration-${currentStep}`).html(marked.parse(narrationContent));
-                };
-    
-                eventSource.onerror = function(error) {
-                    eventSource.close();
-                    if (typeof callback === "function") {
-                        callback();
-                    }
-                };
-            },
-            error: function(error) {
-                console.error('Error:', error);
-            }
-        });
-    }
+
     const handleTrigger = (data) => {
         switch (data.name) {
             case 'image_request':
@@ -1687,7 +1643,9 @@ $(document).ready(async function() {
         const messageClass = sender === 'user' ? 'user-message' : sender;
         const animationClass = 'animate__animated animate__slideInUp';
         let messageElement;
+
         let currentUserChatId = sessionStorage.getItem('userChatId')
+        console.log({currentUserChatId,origineUserChatId,test:currentUserChatId != origineUserChatId})
         if(currentUserChatId != origineUserChatId) return;
 
         if (messageClass === 'user-message') {
@@ -1711,6 +1669,7 @@ $(document).ready(async function() {
             const imageNsfw = message.getAttribute('data-nsfw');
             const description = message.getAttribute('alt');
             const imageUrl = message.getAttribute('src');
+            console.log({imageId,imageNsfw,description,imageUrl})
             messageElement = $(`
                 <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass}">
                     <img src="${thumbnail || '/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">

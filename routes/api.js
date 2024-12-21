@@ -1021,18 +1021,17 @@ async function routes(fastify, options) {
             const language = getLanguageName(userInfo.lang) //|| chatDocument.language === 'japanese' ? '日本語' : chatDocument.language;
 
             // Filter out image messages
-            const userMessagesForCompletion = userData.messages.filter(msg => !msg.content.startsWith('[Image]'));
-
-            // Separate out previous messages and the last user message
-            const previousMessages = userMessagesForCompletion.slice(0, -1);
-            const lastUserMessage = userMessagesForCompletion[userMessagesForCompletion.length - 1];
-
             // Ensure there is only one system message by filtering out any other system messages
-            const filteredPreviousMessages = previousMessages
+            const userMessagesForCompletion = userData.messages
+            .filter(msg => !msg.content.startsWith('[Image]'))
             .filter((msg) => msg.role!=='system')
             .filter((msg, _, arr) =>
                 msg.name!=='master' || arr.findIndex((m) => m.name ==='master') === arr.lastIndexOf((m) => m.name ==='master')
             );
+
+            // Separate out previous messages and the last user message
+            const previousMessages = userMessagesForCompletion.slice(0, -1);
+            const lastUserMessage = userMessagesForCompletion[userMessagesForCompletion.length - 1];
 
             const currentUserMessage = { role: 'user', content: lastUserMessage.content };
             if (lastUserMessage.name) {
@@ -1041,7 +1040,7 @@ async function routes(fastify, options) {
 
             let genImage = null;
             if (currentUserMessage.name !== 'master' && currentUserMessage.name !== 'context') {
-                genImage = await checkImageRequest(currentUserMessage);
+                genImage = await checkImageRequest(userMessagesForCompletion);
             }
 
             // Get current time in Japanese locale

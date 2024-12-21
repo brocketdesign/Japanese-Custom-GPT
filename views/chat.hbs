@@ -269,7 +269,9 @@ $(document).ready(function() {
         if (style && model) {
                 $(`#imageStyleTabs`).find(`#${style}-${model}-tab`).click()
         } 
-    } 
+    } else {
+        $(`#imageStyleTabs`).find(`.nav-link`).eq(0).click()
+    }
     
     function adjustHeight() {
         const newHeight = $(window).height() * 0.97;

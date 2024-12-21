@@ -1708,7 +1708,7 @@ async function routes(fastify, options) {
                     const englishDescription = await generateEnglishDescription(lastMessages,characterDescription,command);
                     const description = englishDescription.replace(/^\s+/gm, '').trim()
 
-                    if(englishDescription.length > 1100){
+                    if(englishDescription.length > 1000){
                         console.log(`Prompt it too long : ${englishDescription.length}. Try attempt ${attempts++}/3`)
                         continue;
                     }

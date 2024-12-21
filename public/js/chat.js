@@ -29,8 +29,7 @@ $(document).ready(async function() {
 
     language = getLanguageName(user.lang) || getLanguageName(localStorage.getItem('currentLang')) || getLanguageName('ja');
     $('#language').val(language)
-    console.log({language})
-
+    
     $('body').attr('data-temporary-user',isTemporary)
 
     displayChatList(null,userId);

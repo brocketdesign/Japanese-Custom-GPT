@@ -431,7 +431,7 @@ async function routes(fastify, options) {
             model_name: imageModel + '.safetensors',
             sampler_name: style.sampler_name || '',
             loras: style.loras,
-            prompt: style.prompt + prompt,
+            prompt: (style.prompt + prompt).replace(/^\s+/gm, '').trim(),
             negative_prompt: style.negative_prompt,
             aspectRatio: aspectRatio,
             width: style.width || params.width,
@@ -448,7 +448,7 @@ async function routes(fastify, options) {
             taskId: novitaTaskId,
             type: image_request.type,
             status: 'pending',
-            prompt: prompt,
+            prompt: prompt.replace(/^\s+/gm, '').trim(),
             negative_prompt: image_request.negative_prompt,
             aspectRatio: aspectRatio,
             userId: new ObjectId(userId),
@@ -514,7 +514,7 @@ fastify.post('/novita/txt2img', async (request, reply) => {
               model_name: imageModel + '.safetensors',
               sampler_name: selectedStyle.sfw.sampler_name || '',
               loras: selectedStyle.sfw.loras,
-              prompt: selectedStyle.sfw.prompt + prompt,
+              prompt: (selectedStyle.sfw.prompt + prompt).replace(/^\s+/gm, '').trim(),
               negative_prompt: selectedStyle.sfw.negative_prompt,
               width: selectedStyle.width || params.width,
               height: selectedStyle.height || params.height,
@@ -616,7 +616,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
       let images = Array.isArray(result) ? result : [result]; // `result` is an array of image data { imageId, imageUrl }
 
       // Save images to the database
-      console.log(`Save images to the database`)
+      console.log(`Image created with success. Saving in the database.`)
       const savedImages = await Promise.all(images.map(async (imageData) => {
           const saveResult = await saveImageToDB(
               task.userId,

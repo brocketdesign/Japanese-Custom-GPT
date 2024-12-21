@@ -77,7 +77,7 @@ $(document).ready(async function() {
         if (event.data.event === 'imageFav') {
             const description = event.data.description
             if(!description)return
-            let message = `I liked one of your picture. Provide a short answer to thank me. Respond in ${language}.`
+            let message = `I liked one of your picture. Provide a short answer to thank me, stay in your character. Respond in ${language} only.`
             addMessageToChat(chatId, userChatId, 'user', message, function(){
                 generateCompletion()
             });
@@ -1516,83 +1516,6 @@ $(document).ready(async function() {
             });
         });
     }
-
-    function handleImageGeneration(buttonSelector, generateImageFunction) {
-        $(document).on('click', buttonSelector, function() {
-            if($(buttonSelector).hasClass('isLoading')){
-                return;
-            }
-            
-            if ($('#chat-widget-container').length == 0 && isTemporary) {
-                showRegistrationForm();
-                return;
-            }
-
-            $(buttonSelector).addClass('isLoading');
-            const API_URL = localStorage.getItem('API_URL');
-            const userId = $(this).attr('data-user-id');
-            const chatId = $(this).attr('data-chat-id');
-            const userChatId = $(this).attr('data-user-chat-id');
-            const thumbnail = $(this).attr('data-thumbnail');
-            const character = JSON.parse($(this).attr('data-character'));
-            generateImagePromt(API_URL, userId, chatId, userChatId, thumbnail, character, function(prompt) {
-                generateImageFunction(API_URL, userId, chatId, userChatId, character, { prompt });
-            });
-        });
-    }
-    
-    //handleImageGeneration('#novita-gen-button', generateImageNovita);
-    $('#novita-gen-button').on('click',function(){
-        //displayAdvancedImageGenerationForm(API_URL, userId, chatId, userChatId, thumbnail)
-        displayCustomPromptInput(API_URL, userId, chatId, userChatId, thumbnail)
-    })
-
-    function showPopupWithSwiper(callback) {
-        Swal.fire({
-            html: `
-                <div class="swiper-container">
-                    <div class="swiper-wrapper">
-                        <div class="swiper-slide">
-                            <img src="/img/coins-slide-1.png" alt="Image 1" style="width: 100%;">
-                        </div>
-                        <div class="swiper-slide">
-                            <img src="/img/coins-slide-2.png" alt="Image 2" style="width: 100%;">
-                        </div>
-                        <div class="swiper-slide">
-                            <img src="/img/coins-slide-3.png" alt="Image 3" style="width: 100%;">
-                        </div>
-                    </div>
-                </div>
-                <div style="bottom: -50px;left:0;right:0;z-index: 100;" class="mx-auto position-absolute w-100">
-                    <button id="closeButton" class="btn btn-lg custom-gradient-bg text-white fw-bold" style="border-radius:50px;">チャットしましょう</button>
-                </div>
-            `,
-            focusConfirm: false,
-            showConfirmButton: false,
-            allowOutsideClick: false,
-            showCancelButton: false,
-            customClass: {
-                confirmButton: 'bg-secondary px-5', htmlContainer:'position-relative overflow-visible'
-            },
-            showClass: {
-                popup: 'bg-transparent animate__animated animate__fadeIn'
-            },
-            hideClass: {
-                popup: 'animate__animated animate__fadeOut'
-            },
-            didOpen: () => {
-                new Swiper('.swiper-container', {
-                    slidesPerView: 1,
-                    loop: false,
-                    spaceBetween: 20,
-                });
-                document.getElementById('closeButton').addEventListener('click', () => {
-                    Swal.close();
-                });
-                if (callback) callback();
-            }
-        });
-    }  
 
    // Function to get prompts data
    function getPromptsData(callback) {

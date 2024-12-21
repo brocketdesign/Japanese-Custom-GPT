@@ -1655,7 +1655,7 @@ async function routes(fastify, options) {
                 top_p: 0.95,
                 frequency_penalty: 0,
                 presence_penalty: 0,
-                max_tokens: 800,
+                max_tokens: 700,
                 stream: false,
                 n: 1,
             }),
@@ -1719,58 +1719,54 @@ async function routes(fastify, options) {
     
     fastify.post('/api/gen-item-data', async (request, reply) => {
         const { userId, chatId, userChatId, command } = request.body;
-    
         try {
-            const userData = await fetchUserData(fastify, userId, userChatId);
-            if (!userData) return reply.status(404).send({ error: 'User data not found' });
-            
-            const lastMessages = [...userData.messages]
-            .slice(-5) // Get the last 5 messages
-            .filter(m => m.role != 'system' && m.name != 'master' && !m.content.startsWith('['));        
-            
-            if (lastMessages.length < 2){
-                console.log('Insufficient messages')
-                return reply.status(400).send({ error: 'Insufficient messages' });
+          const userData = await fetchUserData(fastify, userId, userChatId);
+          if (!userData) return reply.status(404).send({ error: 'User data not found' });
+      
+          const lastMessages = [...userData.messages]
+            .slice(-5)
+            .filter(m => m.role != 'system' && m.name != 'master' && !m.content.startsWith('['));
+          if (lastMessages.length < 2) {
+            console.log('Insufficient messages');
+            return reply.status(400).send({ error: 'Insufficient messages' });
+          }
+      
+          const chatData = await fetchChatData(fastify, chatId);
+          const imageDescription = chatData?.imageDescription || null;
+          const characterPrompt = chatData?.characterPrompt || chatData?.enhancedPrompt || null;
+          const characterDescription = characterPrompt || imageDescription;
+      
+          let attempts = 0;
+          let finalDescription = '';
+          while (attempts < 3) {
+            try {
+              const englishDescription = await generateEnglishDescription(lastMessages, characterDescription, command);
+              if (englishDescription.length <= 1000) {
+                finalDescription = englishDescription.trim();
+                break;
+              }
+              console.log(`Prompt too long: ${englishDescription.length}. Attempt ${attempts + 1}/5`);
+            } catch (error) {
+              console.log(error);
             }
-    
-            const chatData = await fetchChatData(fastify, chatId);
-            const imageDescription = chatData?.imageDescription || null;
-            const characterPrompt = chatData?.characterPrompt || chatData?.enhancedPrompt || null;
-            const characterDescription = characterPrompt || imageDescription
-
-            let attempts = 0;
-            while (attempts < 5) {
-                try {
-                    const englishDescription = await generateEnglishDescription(lastMessages,characterDescription,command);
-                    const description = englishDescription.replace(/^\s+/gm, '').trim()
-
-                    if(englishDescription.length > 1000){
-                        console.log(`Prompt it too long : ${englishDescription.length}. Try attempt ${attempts++}/3`)
-                        continue;
-                    }
-                    const itemProposalCollection = fastify.mongo.db.collection('itemProposal');
-                    const result = await itemProposalCollection.insertOne({description});
-                    const insertedProposals = [];
-                    insertedProposals.push({ _id: result.insertedId, proposeToBuy: true, description });
-                    
-                    return reply.send(insertedProposals);
-                } catch (error) {
-                    console.log(error)
-                    attempts++;
-                    if (attempts >= 3) {
-                        return reply.status(500).send({ error: 'Failed to generate or parse proposal after 3 attempts' });
-                    }
-                }
-            }
-    
+            attempts++;
+          }
+      
+          if (!finalDescription) {
+            const englishDescriptionFallback = await generateEnglishDescription(lastMessages, characterDescription, command);
+            finalDescription = englishDescriptionFallback.slice(0, 1000).trim();
+          }
+      
+          const itemProposalCollection = fastify.mongo.db.collection('itemProposal');
+          const result = await itemProposalCollection.insertOne({ description: finalDescription });
+          return reply.send([{ _id: result.insertedId, proposeToBuy: true, description: finalDescription }]);
+      
         } catch (error) {
-            console.log(error)
-            return reply.status(500).send({ error: 'Error checking assistant proposal' });
+          console.log(error);
+          return reply.status(500).send({ error: 'Error checking assistant proposal' });
         }
-    });
-    
-    
-    
+      });
+      
     fastify.get('/api/proposal/:id', async (request, reply) => {
         try {
           const db = fastify.mongo.db;

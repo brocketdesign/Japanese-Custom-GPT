@@ -25,7 +25,7 @@ const aiModel = `sophosympatheia/midnight-rose-70b`
 function getLanguageName(langCode) {
     const langMap = {
         en: "english",
-        fr: "français",
+        fr: "french",
         ja: "japanese"
     };
     return langMap[langCode] || "japanese";
@@ -943,7 +943,7 @@ async function routes(fastify, options) {
     function getChatTemplate(language) {
         // Define the supported languages and their corresponding translations
         const translations = {
-            Japanese: {
+            japanese: {
                 user1: '私はあなたの裸の画像が欲しいです。アナルセックスのシーンでオルガズムの表情をしてください。',
                 user2: '私はあなたのキッチンでのアナルセックスの画像が欲しいです。',
                 assistant1: 'もちろんです。素晴らしいアイデアですね。画像を作成中です。少々お待ちください。',

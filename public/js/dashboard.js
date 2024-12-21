@@ -1864,7 +1864,7 @@ window.loadChatImages = async function (chatId, page = 1) {
 window.getLanguageName = function(langCode) {
     const langMap = {
         en: "english",
-        fr: "français",
+        fr: "french",
         ja: "japanese"
     };
     return langMap[langCode] || "japanese";

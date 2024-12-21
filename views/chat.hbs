@@ -250,8 +250,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 $(document).ready(function() {
     const user = {{{json user}}}
-    const chatNav = localStorage.getItem('chat-nav');
-    const [style, model] = chatNav.split('-');
 
     // Handle tab clicks
     $('#imageStyleTabs button').on('click', function () {
@@ -264,8 +262,15 @@ $(document).ready(function() {
         localStorage.setItem('chat-nav',`${style}-${model}`)
         displayPeopleChat(1, {imageStyle:style,imageModel:model});
     });
-    $(`#imageStyleTabs`).find(`#${style}-${model}-tab`).click()
+    const chatNav = localStorage.getItem('chat-nav');
 
+    if (chatNav) {
+        const [style, model] = chatNav.split('-');
+        if (style && model) {
+                $(`#imageStyleTabs`).find(`#${style}-${model}-tab`).click()
+        } 
+    } 
+    
     function adjustHeight() {
         const newHeight = $(window).height() * 0.97;
         $('.chat-contain .card-body').height(newHeight);

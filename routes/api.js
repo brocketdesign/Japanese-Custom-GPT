@@ -28,7 +28,7 @@ function getLanguageName(langCode) {
         fr: "français",
         ja: "日本語"
     };
-    return langMap[langCode] || "Unknown Language";
+    return langMap[langCode] || "japanese";
 }
 
 async function routes(fastify, options) {

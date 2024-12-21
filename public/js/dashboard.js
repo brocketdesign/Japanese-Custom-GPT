@@ -1867,7 +1867,7 @@ window.getLanguageName = function(langCode) {
         fr: "Français",
         ja: "日本語"
     };
-    return langMap[langCode] || "Unknown Language";
+    return langMap[langCode] || "japanese";
 }
 
 

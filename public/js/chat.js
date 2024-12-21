@@ -16,7 +16,6 @@ $(document).ready(async function() {
 
     let chatId = getIdFromUrl(window.location.href) || getIdFromUrl($.cookie('redirect_url'))||$(`#lamix-chat-widget`).data('id');
     let userChatId = sessionStorage.getItem('userChatId');
-    console.log(userChatId);
     const userId = user._id
     let persona
     let currentStep = 0;

@@ -2052,7 +2052,7 @@ function generateChatsPagination(totalPages, option) {
     $(window).off('scroll').on('scroll', function() {
         if (!loadingStates[key] && currentPageMap[key] < totalPages && $(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
             loadingStates[key] = true;
-            displayPeopleChat(currentPageMap[key] + 1, type, query).then(() => {
+            displayPeopleChat(currentPageMap[key] + 1, option).then(() => {
                 currentPageMap[key]++; // Increment the page after successful loading
                 loadingStates[key] = false; // Reset the loading state
             }).catch(() => {

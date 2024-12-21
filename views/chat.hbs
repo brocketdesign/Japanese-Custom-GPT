@@ -317,6 +317,7 @@ $(document).ready(function() {
         $('nav.navbar').addClass('move');
         $('#overlay').show()
     }
+
     $('#menu-chat').on('click', function(){
 
         $('.sidebar-history').addClass('hidden');
@@ -345,6 +346,7 @@ $(document).ready(function() {
             Cookies.set('sidebarState', 'expanded', { expires: 7 });
         }
     });
+
     $(document).on('click','.history-chat', function(){
         const chatId = $(this).data('id')
         const userId = $(this).data('user')
@@ -358,11 +360,13 @@ $(document).ready(function() {
         $('#overlay').toggle()
         $('.content').toggleClass('noscroll');
     })
+
     $('.menu-chat-sm').on('click', function(){
         $('.sidebar').toggleClass('hidden');
         $('#overlay').toggle()
         $('.content').toggleClass('noscroll');
     });
+
     $('#overlay').on('click', function(){
         $('#overlay').toggle()
         $('.sidebar').toggleClass('hidden');
@@ -376,6 +380,10 @@ $(document).ready(function() {
         }
     });
 
+    $(document).on('click','.dropdown-menu',function(){
+        $('#overlay').click()
+    })
+    
     $(document).on('click', '#gen-ideas', function() {
         const isTemporary = $('body').attr('data-temporary-user') === 'true';
         if($('#chat-widget-container').length == 0 && isTemporary){

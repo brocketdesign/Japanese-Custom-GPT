@@ -456,12 +456,14 @@ fastify.get('/search', async (request, reply) => {
 
     const data = await response.json();
 
-    let seoTitle = 'コミュニティからの最新投稿 | LAMIX';
-    let seoDescription = 'Lamixでは、無料でAIグラビアとのチャット中に生成された画像を使って、簡単に投稿を作成することができます。';
+    let seoTitle = translations.seo_title_default; 
+    let seoDescription = translations.seo_description_default;
+    
     if (query) {
-      seoTitle = `${query} に関する検索結果 | LAMIX`;
-      seoDescription = `${query} の検索結果を表示しています。Lamixでお気に入りの画像を見つけましょう。`;
+      seoTitle = translations.seo_title_query.replace('${query}', query);
+      seoDescription = translations.seo_description_query.replace('${query}', query);
     }
+    
 
     return reply.view('search.hbs', {
       title: seoTitle,

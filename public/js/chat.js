@@ -27,8 +27,7 @@ $(document).ready(async function() {
     let thumbnail = false
     let isTemporary = !!user.isTemporary
 
-    language = user.lang || localStorage.getItem('currentLang') || 'ja';
-    language = language == 'en' ? 'english' : 'japanese'
+    language = getLanguageName(user.lang) || getLanguageName(localStorage.getItem('currentLang')) || getLanguageName('ja');
     $('#language').val(language)
     console.log({language})
 

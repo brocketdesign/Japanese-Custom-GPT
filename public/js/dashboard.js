@@ -991,16 +991,16 @@ function generateUserChatsPagination(userId, currentPage, totalPages) {
 }
 
 
-window.displayPeopleChat = async function (page = 1,type,query = false, preLoadedData) {
+window.displayPeopleChat = async function (page = 1, option, preLoadedData) {
     const currentUser = await fetchUser();
     const currentUserId = currentUser._id;
-    
+    const {imageStyle, imageModel, query = false} = option
     try {
         let data
         if(preLoadedData && preLoadedData.length > 0){
             data = preLoadedData
         }else{
-            const response = await fetch(`/api/chats?page=${page}&type=${type}&q=${query}`);
+            const response = await fetch(`/api/chats?page=${page}&style=${imageStyle}&model=${imageModel}&q=${query}`);
             data = await response.json();
         }
         let recentChats = data.recent || [];
@@ -1077,7 +1077,7 @@ window.displayPeopleChat = async function (page = 1,type,query = false, preLoade
         // Update the gallery HTML
         $('#chat-gallery').append(htmlContent);
         if($('#chat-pagination-controls').length > 0){      
-            generateChatsPagination(data.totalPages, type, query);
+            generateChatsPagination(data.totalPages, option);
         }
     } catch (err) {
         console.error('Failed to load chats', err);
@@ -1861,7 +1861,14 @@ window.loadChatImages = async function (chatId, page = 1) {
         }
     });
 }
-
+window.getLanguageName = function(langCode) {
+    const langMap = {
+        en: "English",
+        fr: "Français",
+        ja: "日本語"
+    };
+    return langMap[langCode] || "Unknown Language";
+}
 
 
 // Pagination logic simplified with loadingStates
@@ -2031,11 +2038,12 @@ function generateChatImagePagination(totalPages, chatId) {
     }
 }
 
-function generateChatsPagination(totalPages, type, query) {
+function generateChatsPagination(totalPages, option) {
     if (typeof loadingStates === 'undefined') loadingStates = {}; // Ensure the loadingStates object exists
     if (typeof currentPageMap === 'undefined') currentPageMap = {}; // Ensure the currentPageMap object exists
 
-    const key = type + query;
+    const {imageStyle, imageModel, query = false} = option
+    const key = imageStyle + imageModel + query;
 
     if (typeof loadingStates[key] === 'undefined') loadingStates[key] = false;
     if (typeof currentPageMap[key] === 'undefined') currentPageMap[key] = 1; // Initialize the current page for the type and query

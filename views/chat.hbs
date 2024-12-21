@@ -235,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const tabItem = `
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link ${isActive}" id="${style}-tab" data-style="${model}" data-version="${version}" type="button" role="tab">
+                    <button class="nav-link ${isActive}" id="${style}-${model}-tab" data-style="${style}" data-model="${model}" data-version="${version}" type="button" role="tab">
                         <img src="${imgSrc}" alt="${altText}" class="tab-thumb thumb-option rounded me-2">
                         <span class="d-none">${altText}</span>
                     </button>
@@ -250,24 +250,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
 $(document).ready(function() {
     const user = {{{json user}}}
-
-    let imageType = `{{imageType}}` != 'false' ? `{{imageType}}` : false
-    imageType = imageType ? imageType : localStorage.getItem('imageType')
-    imageType = imageType ? imageType : 'kanpiromix_v20'
+    const chatNav = localStorage.getItem('chat-nav');
+    const [style, model] = chatNav.split('-');
 
     // Handle tab clicks
     $('#imageStyleTabs button').on('click', function () {
         $('#chat-gallery').empty()
-        // Remove 'active' class from all tabs
         $('#imageStyleTabs button').removeClass('active');
-        // Add 'active' class to the clicked tab
         $(this).addClass('active');
 
         var style = $(this).data('style');
-        localStorage.setItem('imageType',style)
-        displayPeopleChat(1, style);
+        var model = $(this).data('model');
+        localStorage.setItem('chat-nav',`${style}-${model}`)
+        displayPeopleChat(1, {imageStyle:style,imageModel:model});
     });
-    $(`#imageStyleTabs button[data-style="${imageType}"]`).click()
+    $(`#imageStyleTabs`).find(`#${style}-${model}-tab`).click()
+
     function adjustHeight() {
         const newHeight = $(window).height() * 0.97;
         $('.chat-contain .card-body').height(newHeight);

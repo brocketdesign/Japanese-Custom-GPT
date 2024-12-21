@@ -22,6 +22,15 @@ const { chat } = require('googleapis/build/src/apis/chat');
 const aiModelChat = 'sophosympatheia/midnight-rose-70b'
 const aiModel = `sophosympatheia/midnight-rose-70b`
   
+function getLanguageName(langCode) {
+    const langMap = {
+        en: "english",
+        fr: "français",
+        ja: "日本語"
+    };
+    return langMap[langCode] || "Unknown Language";
+}
+
 async function routes(fastify, options) {
 
     fastify.post('/api/add-chat', async (request, reply) => {
@@ -31,7 +40,7 @@ async function routes(fastify, options) {
             let chatData = {};
             const user = await fastify.getUser(request, reply);
             const userId = new fastify.mongo.ObjectId(user._id);
-            let language = user?.lang === 'ja' ? '日本語' : 'English';
+            let language = getLanguageName(user?.lang);
             let galleries = [];
             let blurred_galleries = [];
             let imageCount = 0;
@@ -569,7 +578,7 @@ async function routes(fastify, options) {
       
           const user = request.user;
           const userData = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
-          let language = user?.lang === 'ja' ? '日本語' : 'English';
+          let language = getLanguageName(user?.lang);
       
           const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
       
@@ -963,7 +972,7 @@ async function routes(fastify, options) {
             // Retrieve chat document and language
             let chatDocument = await getChatDocument(db, chatId);
             const chatname = chatDocument.name;
-            const language = userInfo.lang == 'en' ? 'english' : 'japanese'//|| chatDocument.language === 'japanese' ? '日本語' : chatDocument.language;
+            const language = getLanguageName(userInfo.lang) //|| chatDocument.language === 'japanese' ? '日本語' : chatDocument.language;
 
             // Filter out image messages
             const userMessagesForCompletion = userData.messages.filter(msg => !msg.content.startsWith('[Image]'));
@@ -1357,7 +1366,7 @@ async function routes(fastify, options) {
             }
     
             const userId = user._id;
-            let language = user?.lang === 'ja' ? '日本語' : 'English';
+            let language = getLanguageName(user?.lang);
     
             // Define schema
             const CharacterDescriptionSchema = z.object({
@@ -2037,12 +2046,13 @@ async function routes(fastify, options) {
 
       fastify.get('/api/chats', async (request, reply) => {
         try {
-            const user = request.user;
-            let language = user?.lang === 'ja' ? 'japanese' : 'english';
-        
+          const user = request.user;
+          let language = getLanguageName(user?.lang);
           const page = parseInt(request.query.page) || 1;
-          const type = request.query.type || null;
-          const searchQuery = request.query.q != 'false' ? request.query.q  : null;
+          const style = request.query.style || null;
+          const model = request.query.model || null;
+          const searchQuery = request.query.q !== 'false' ? request.query.q : null;
+      
           const limit = 12;
           const skip = (page - 1) * limit;
           const { userId } = request.query;
@@ -2050,7 +2060,7 @@ async function routes(fastify, options) {
           const db = fastify.mongo.db;
           const chatsCollection = db.collection('chats');
           const usersCollection = db.collection('users');
-
+      
           const query = {
             visibility: { $exists: true, $eq: "public" },
             chatImageUrl: { $exists: true, $ne: '' },
@@ -2061,29 +2071,30 @@ async function routes(fastify, options) {
             query.userId = new fastify.mongo.ObjectId(userId);
           }
       
-          if (type) {
+          if (style) {
+            query.imageStyle = style;
+          }
+      
+          if (model) {
+            query.imageModel = model;
+          }
+      
+          if (searchQuery) {
             query.$or = [
-              { imageStyle: type },
-              { imageModel: type }
+              { tags: { $regex: searchQuery, $options: 'i' } },
+              { characterPrompt: { $regex: searchQuery, $options: 'i' } },
+              { enhancedPrompt: { $regex: searchQuery, $options: 'i' } },
+              { imageDescription: { $regex: searchQuery, $options: 'i' } }
             ];
           }
 
-          if (searchQuery) {
-            query.tags = { $in: [new RegExp(searchQuery, 'i')] };
-          }
-          
           const recentCursor = await chatsCollection.aggregate([
             { $match: query },
-            {
-              $group: {
-                _id: "$chatImageUrl",
-                doc: { $first: "$$ROOT" },
-              },
-            },
+            { $group: { _id: "$chatImageUrl", doc: { $first: "$$ROOT" } } },
             { $replaceRoot: { newRoot: "$doc" } },
             { $sort: { _id: -1 } },
             { $skip: skip },
-            { $limit: limit },
+            { $limit: limit }
           ]).toArray();
       
           if (!recentCursor.length) {
@@ -2096,7 +2107,7 @@ async function routes(fastify, options) {
               return {
                 ...chat,
                 nickname: user ? user.nickname : null,
-                profileUrl: user ? user.profileUrl : null,
+                profileUrl: user ? user.profileUrl : null
               };
             })
           );
@@ -2106,20 +2117,17 @@ async function routes(fastify, options) {
           if (recentCursor.length < limit) {
             totalPages = page;
           }
-
+      
           reply.send({
             recent: recentWithUser,
             page,
-            totalPages,
+            totalPages
           });
         } catch (err) {
           console.log("Error: ", err);
           reply.code(500).send('Internal Server Error');
         }
       });
-      
-      
-      
       
     fastify.get('/api/user-data', async (request, reply) => {
         if (process.env.MODE != 'local') {
@@ -2590,21 +2598,31 @@ async function routes(fastify, options) {
             reply.status(500).send({ success: false, message: 'Error deleting prompt' });
             }
         });
-
         fastify.get('/api/tags', async (request, reply) => {
             const db = fastify.mongo.db;
+            const user = request.user;
+            let language = getLanguageName(user?.lang);
             const tagsCollection = db.collection('tags');
             const chatsCollection = db.collection('chats');
-            let tags = await tagsCollection.find().toArray();
+        
+            let tags = await tagsCollection.find({ language }).toArray();
+        console.log({tags})
             if (!tags.length) {
-                tags = await chatsCollection.distinct('tags');
-                tags = tags.flat().filter(Boolean);
-                await tagsCollection.insertMany(tags.map(tag => ({ name: tag })));
+                // If no tags are found for the specific language, fetch from chats
+                let tagsFromChats = await chatsCollection.distinct('tags', { language });
+                tagsFromChats = tagsFromChats.flat().filter(Boolean);
+        
+                // Insert tags into the tagsCollection for future use
+                await tagsCollection.insertMany(tagsFromChats.map(tag => ({ name: tag, language })));
+                
+                tags = tagsFromChats;
             } else {
                 tags = tags.map(tag => tag.name);
             }
+        
             reply.send({ tags });
         });
+        
       
 }
 

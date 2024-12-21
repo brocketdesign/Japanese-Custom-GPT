@@ -14,48 +14,53 @@
   </style>
   <section class="container my-5">                            
     <p class="u-color-grad" style="font-size: 54px;"><img src="/img/logo.webp" alt="" class="me-2" width="40px">Lamix</p>
-    <span class="text-muted">AIキャラクターと会話しよう！</span>
-    <h3>無料のAIチャットと画像生成サイト</h3>
+    <span class="text-muted">{{translations.ai_character_conversation}}</span>
+    <h3>{{translations.free_ai_chat_and_image_generation}}</h3>
     <hr>
     <h1 class="mb-4">{{title}}</h1>
     <form id="search-form" action="/search" method="get" class="row g-3">
         <div class="col-md-4">
             <div class="input-group">
-                <input type="text" name="q" value="{{query}}" class="form-control" placeholder="検索ワードを入力してください">
-                <button type="submit" class="btn btn-primary">検索</button>
+                <input type="text" name="q" value="{{query}}" class="form-control" placeholder="{{translations.search_placeholder}}">
+                <button type="submit" class="btn btn-primary">{{translations.search_button}}</button>
             </div>
         </div>
         <div class="col-md-12">
-            <label class="form-label">画像スタイル</label>
+            <label class="form-label">{{translations.image_style}}</label>
             <div id="imageStyleSelection" class="d-flex">
-                <img src="/img/anime.jpeg" alt="アニメ" class="style-option rounded me-2 selected" data-value="anime">
-                <img src="/img/real.jpeg" alt="リアリスティック" class="style-option rounded" data-value="realistic">
+                <img src="/img/anime.jpeg" alt="{{translations.anime}}" class="style-option rounded me-2 selected" data-model="novaAnimeXL_ponyV20_461138" data-value="anime">
+                <img src="/img/real.jpeg" alt="{{translations.realistic}}" class="style-option me-2 rounded" data-model="kanpiromix_v20" data-value="realistic">
+                <img src="/img/real-2.jpeg" alt="{{translations.realistic}}" class="style-option me-2 rounded" data-model="ponyRealism_v22MainVAE_822476" data-value="realistic" data-version="sdxl">
             </div>
             <input type="hidden" id="imageStyle" name="imageStyle" value="anime">
+            <input type="hidden" id="imageModel" name="imageModel" value="novaAnimeXL_ponyV20_461138">
         </div>
     </form>
     <div id="chat-gallery" class="row mx-0 mt-4"></div>
     <div id="chat-pagination-controls" class="d-flex justify-content-center my-3"></div>
-    <h3>タグでAIキャラを検索する</h3>
+    <h3>{{translations.search_ai_character_by_tag}}</h3>
     <div id="tags-container"></div>
-  </section>
+</section>
+
   {{> dashboard-footer}}
   <script>
     $(document).ready(function() {
       const query = '{{query}}';
       const imageStyle = '{{imageStyle}}';
+      const imageModel = '{{imageModel}}'
       const data = {{{json data}}} || [];
         $('.style-option').click(function(){
             $('.style-option').removeClass('selected');
             $(this).addClass('selected');
             $('#imageStyle').val($(this).data('value'));
-
+            $('#imageModel').val($(this).data('model'));
+            
             // Update the history state
-            const newUrl = `/search?q=${encodeURIComponent(query)}&imageStyle=${$(this).data('value')}`;
+            const newUrl = `/search?query=${encodeURIComponent(query)}&imageStyle=${$(this).data('value')}&imageModel=${$(this).data('model')}`;
             history.pushState(null, '', newUrl);
 
             $('#chat-gallery').empty()
-            displayPeopleChat(1, $(this).data('value'), query, data);
+            displayPeopleChat(1, { imageStyle:$(this).data('value'), imageModel:$(this).data('model'), query }, data);
         });
         if(query && query.trim() != ''){
             $(`.style-option[data-value="${imageStyle}"]`).click()

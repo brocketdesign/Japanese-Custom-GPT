@@ -2084,6 +2084,7 @@ async function routes(fastify, options) {
       });
 
       fastify.get('/api/chats', async (request, reply) => {
+          
         try {
           const user = request.user;
           let language = getLanguageName(user?.lang);

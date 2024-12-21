@@ -1687,8 +1687,8 @@ $(document).ready(async function() {
         const messageClass = sender === 'user' ? 'user-message' : sender;
         const animationClass = 'animate__animated animate__slideInUp';
         let messageElement;
-
-        if(userChatId != origineUserChatId) return;
+        let currentUserChatId = sessionStorage.getItem('userChatId')
+        if(currentUserChatId != origineUserChatId) return;
 
         if (messageClass === 'user-message') {
             if (typeof message === 'string' && message.trim() !== '') {

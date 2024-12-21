@@ -296,6 +296,7 @@
                 <select class="form-select w-auto" id="language" name="language">
                     <option value="japanese" selected><i class="fas fa-flag"></i> {{translations.newCharacter.japanese}}</option>
                     <option value="english"><i class="fas fa-flag"></i> {{translations.newCharacter.english}}</option>
+                    <option value="français"><i class="fas fa-flag"></i> {{translations.newCharacter.french}}</option>
                 </select>
             </div>
         </div>
@@ -399,13 +400,13 @@
         //showStep(currentStep);
     });
     $(document).ready(function() {
-        let currentLang = localStorage.getItem('currentLang') || 'ja';
-        $('#language').val(currentLang == 'en' ? 'english' : 'japanese')
-        console.log({currentLang})
-        
+        let currentLang = getLanguageName(localStorage.getItem('currentLang')) || getLanguageName('ja');        
+        $('#language').val(currentLang)
+
         $('#characterPrompt').on('input change', function() {
             $('#enhancedPrompt').val('');
         });
+        
         $('.style-option').click(function(){
             $('.style-option').removeClass('selected');
             $(this).addClass('selected');

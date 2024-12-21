@@ -144,7 +144,6 @@ $(document).ready(async function() {
         fetch_chatId = lastUserChat ?.chatId || fetch_chatId
         const newUserChatId = lastUserChat ?._id || userChatId;
         userChatId = newUserChatId
-        console.log({userChatId})
         sessionStorage.setItem('userChatId', userChatId);
         
         if (fetch_reset) {
@@ -339,7 +338,6 @@ $(document).ready(async function() {
         const message = customMessage || $('#userMessage').val();
         if (message.trim() !== '') {
             if(displayStatus){
-                console.log({message})
                 displayMessage('user', message, userChatId);
             }
             $('#userMessage').val(''); // Clear the input field
@@ -1610,7 +1608,6 @@ $(document).ready(async function() {
         let messageElement;
 
         let currentUserChatId = sessionStorage.getItem('userChatId')
-        console.log({currentUserChatId,origineUserChatId,test:currentUserChatId != origineUserChatId})
         if(currentUserChatId != origineUserChatId) return;
 
         if (messageClass === 'user-message') {

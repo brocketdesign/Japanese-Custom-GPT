@@ -2056,7 +2056,7 @@ async function routes(fastify, options) {
           const style = request.query.style || null;
           const model = request.query.model || null;
           const searchQuery = request.query.q !== 'false' ? request.query.q : null;
-        console.log({language})
+
           const limit = 12;
           const skip = (page - 1) * limit;
           const { userId } = request.query;

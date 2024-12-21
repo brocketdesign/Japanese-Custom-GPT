@@ -380,10 +380,10 @@ $(document).ready(function() {
         }
     });
 
-    $(document).on('click','.dropdown-menu',function(){
+    $(document).on('click','.user-chat-content .dropdown-menu',function(){
         $('#overlay').click()
     })
-    
+
     $(document).on('click', '#gen-ideas', function() {
         const isTemporary = $('body').attr('data-temporary-user') === 'true';
         if($('#chat-widget-container').length == 0 && isTemporary){

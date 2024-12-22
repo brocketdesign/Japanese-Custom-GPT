@@ -166,7 +166,7 @@ fastify.get('/', async (request, reply) => {
   const translations = request.translations;
   if (user.isTemporary) {
     return reply.renderWithGtm('index.hbs', {
-      title: 'AIフレンズ  | Powered by Hato,Ltd',
+      title: 'AIフレンズ',
       translations,
       user,
       seo: [
@@ -188,7 +188,7 @@ fastify.get('/authenticate', async (request, reply) => {
   const translations = request.translations;
   if (user.isTemporary || request.query.register) {
     return reply.renderWithGtm('authenticate.hbs', {
-      title: 'AIフレンズ  | Powered by Hato,Ltd',
+      title: 'AIフレンズ',
       translations,
       register: !!request.query.register,
     });
@@ -202,7 +202,7 @@ fastify.get('/authenticate/mail', async (request, reply) => {
   const translations = request.translations;
   if (user.isTemporary || request.query.register) {
     return reply.renderWithGtm('authenticate-v1.hbs', {
-      title: 'AIフレンズ  | Powered by Hato,Ltd',
+      title: 'AIフレンズ',
       translations,
       register: !!request.query.register,
     });
@@ -609,7 +609,7 @@ fastify.get('/chat/edit/:chatId', { preHandler: [fastify.authenticate] }, async 
     const translations = request.translations;
 
     return reply.renderWithGtm(template, {
-      title: 'AIフレンズ  | Powered by Hato,Ltd',
+      title: 'AIフレンズ',
       translations,
       chatId,
       isTemporaryChat,
@@ -624,7 +624,7 @@ fastify.get('/chat/edit/:chatId', { preHandler: [fastify.authenticate] }, async 
 
 fastify.get('/users', (request, reply) => {
   if (process.env.MODE === 'local') {
-    reply.renderWithGtm('user-list.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd' });
+    reply.renderWithGtm('user-list.hbs', { title: 'AIフレンズ' });
   } else {
     reply.redirect('/');
   }
@@ -632,7 +632,7 @@ fastify.get('/users', (request, reply) => {
 
 fastify.get('/generate/:userid', (request, reply) => {
   const userId = request.params.userid;
-  reply.renderWithGtm('generate.hbs', { title: 'AIフレンズ  | Powered by Hato,Ltd', userId });
+  reply.renderWithGtm('generate.hbs', { title: 'AIフレンズ', userId });
 });
 
 fastify.get('/dashboard', { preHandler: [fastify.authenticate] }, async (request, reply) => {
@@ -665,9 +665,9 @@ fastify.get('/settings', { preHandler: [fastify.authenticate] }, async (request,
     if(!subscriptionStatus){
       return reply.redirect('/my-plan');
     }
-    
+
     return reply.renderWithGtm('/settings', {
-      title: 'AIフレンズ  | Powered by Hato,Ltd',
+      title: 'AIフレンズ',
       translations,
       user: userData,
     });

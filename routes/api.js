@@ -19,7 +19,7 @@ const stripe = process.env.MODE == 'local'? require('stripe')(process.env.STRIPE
 const sharp = require('sharp');
 const { chat } = require('googleapis/build/src/apis/chat');
 
-const aiModelChat = 'sophosympatheia/midnight-rose-70b'
+const aiModelChat = 'meta-llama/llama-3.1-70b-instruct'
 const aiModel = `sophosympatheia/midnight-rose-70b`
   
 function getLanguageName(langCode) {
@@ -1115,7 +1115,7 @@ async function routes(fastify, options) {
            
             messagesForCompletion = messagesForCompletion.concat(userMessagesForCompletion);
             messagesForCompletion.push(currentUserMessage);
-console.log({messagesForCompletion})
+
             const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, aiModelChat, genImage);
 
             // Add the assistant's response to the user's message history

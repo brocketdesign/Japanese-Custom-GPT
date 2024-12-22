@@ -147,16 +147,11 @@ $(document).ready(async function() {
 
         userChatId = lastUserChat ?._id || userChatId;
         sessionStorage.setItem('userChatId', userChatId);
-        
-        if (fetch_reset) {
-            currentStep = 0;
-        }
-    
+        $('#chatContainer').attr('data-id',userChatId)
+
         count_proposal = 0;
         
         $('#chatContainer').empty();
-        $('#chatContainer').attr('data-id',userChatId)
-
         $('#startButtonContained').remove();
         $('#chat-recommend').empty();
 
@@ -261,9 +256,12 @@ $(document).ready(async function() {
     });
         
 
-    function updateParameters(newchatId, newuserId){
-        chatId = newchatId
+    function updateParameters(newchatId, newuserId,userChatId){
+        
         localStorage.setItem('chatId', chatId);
+        sessionStorage.setItem('userChatId', userChatId);
+        $('#chatContainer').attr('data-id',userChatId)
+
         var currentUrl = window.location.href;
         var urlParts = currentUrl.split('/');
         urlParts[urlParts.length - 1] = newchatId;
@@ -299,34 +297,6 @@ $(document).ready(async function() {
             $(this).attr('href','/chat/edit/'+newchatId)
         })
     }
-    window.choosePath = function(userResponse) {
-        currentStep++;
-        hideOtherChoice(userResponse,currentStep)
-        $.ajax({
-            url: API_URL+'/api/chat-data',
-            type: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            data: JSON.stringify({ 
-                currentStep:currentStep-1, 
-                message:userResponse, 
-                userId, 
-                chatId, 
-                userChatId, 
-                isNew ,
-                isWidget : $('#chat-widget-container').length > 0
-            }),
-            success: function(response) {
-                userChatId = response.userChatId
-                isNew = false
-                updatechatContent(userResponse);
-            },
-            error: function(error) {
-                console.log(error.statusText);
-            }
-        });
-    };
     window.sendMessage = function(customMessage,displayStatus = true) {
         if($('#chat-widget-container').length == 0 && isTemporary){
             showRegistrationForm()
@@ -759,8 +729,8 @@ $(document).ready(async function() {
                 userChatId = response.userChatId
                 chatId = response.chatId
                 isNew = false;
+
                 updateCurrentChat(chatId,userId);
-                //$(`#starter-${uniqueId}`).remove()
                 
                 generateCompletion(function(){
                     $('.auto-gen').each(function(){$(this).show()})
@@ -772,7 +742,7 @@ $(document).ready(async function() {
                     }                
                 })
 
-                updateParameters(chatId,userId)
+                updateParameters(chatId,userId,userChatId)
 
                 if(isTemporary){
                     const redirectUrl = window.location.pathname
@@ -811,6 +781,7 @@ $(document).ready(async function() {
     }
     
     async function displayChat(userChat, persona) {
+
         $('#progress-container').show();
         $('#stability-gen-button').show();
         $('.auto-gen').each(function() { $(this).show(); });
@@ -1730,6 +1701,8 @@ $(document).ready(async function() {
         `);
         
         $('#chat-recommend').append(card);
+        $('#chat-recommend').scrollLeft($('#chat-recommend')[0].scrollWidth);
+
         return card;
     }
     

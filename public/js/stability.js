@@ -99,8 +99,8 @@ async function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, i
             let imageDescriptionResponse = await checkImageDescription(chatId)
             const imageDescription = imageDescriptionResponse.imageDescription
 
-            prompt = imageDescription + prompt
-
+            prompt = imageDescription +', '+ prompt
+            console.log({prompt})
             txt2ImageNovita(API_URL, userId, chatId, userChatId, imageId, thumbnail, imageNsfw, {prompt})
         },
         error: function(xhr) {

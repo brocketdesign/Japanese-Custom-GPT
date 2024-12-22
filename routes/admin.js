@@ -3,6 +3,30 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const  { checkUserAdmin } = require('../models/tool')
 const cleanupNonRegisteredUsers = require('../models/cleanupNonRegisteredUsers');
+const axios = require('axios');
+const hbs = require('handlebars');
+
+const fetchModels = async (query = '', cursor = '') => {
+  try {
+    const url = `https://api.novita.ai/v3/model?filter.visibility=public&pagination.limit=10${
+      cursor ? `&pagination.cursor=${cursor}` : ''
+    }${query ? `&filter.querystring=${encodeURIComponent(query)}` : ''}`;
+
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bearer ${process.env.NOVITA_API_KEY}`,
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching models:', error.message);
+    return { models: [], pagination: {} };
+  }
+};
+
+module.exports = { fetchModels };
+
 async function routes(fastify, options) {
 
   fastify.get('/admin/notifications', async (request, reply) => {
@@ -254,6 +278,83 @@ async function routes(fastify, options) {
       console.log(error)
     }
   });
+
+const fetchModels = async (query = '', cursor = '') => {
+
+  try {
+    const url = `https://api.novita.ai/v3/model?filter.visibility=public&pagination.limit=12${
+      cursor ? `&pagination.cursor=${cursor}` : ''
+    }${query ? `&filter.query=${encodeURIComponent(query)}` : ''}`;
+
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bearer ${process.env.NOVITA_API_KEY}`,
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching models:', error.message);
+    return { models: [], pagination: {} };
+  }
+};
+
+// Updated Handlebars template for the model cards
+const modelCardTemplate = hbs.compile(`
+  {{#each models}}
+    <div class="col-md-3 mb-3 animate__animated animate__fadeIn">
+      <div class="card rounded h-100 position-relative">
+        <div class="card-img-container" style="height: 400px; overflow: hidden;">
+          <img src="{{cover_url}}" class="card-img-top w-100" alt="{{name}}" style="object-fit: cover; height: 100%;" />
+        </div>
+        <div class="card-body d-flex justify-content-between position-absolute w-100 py-2 text-white" style="bottom: 0; background-color: rgba(0, 0, 0, 0.25);">
+          <h5 class="card-title text-truncate">{{name}}</h5>
+          <div class="mt-auto">
+            <i class="bi bi-info-circle" data-bs-toggle="modal" data-bs-target="#infoModal-{{id}}" style="cursor: pointer;"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="infoModal-{{id}}" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">{{name}}</h5>
+          </div>
+          <div class="modal-body">
+            <p><strong>Hash:</strong> {{hash_sha256}}</p>
+            <p><strong>Base Model:</strong> {{base_model}}</p>
+            <p><strong>Model Name:</strong> {{model_name}}</p>
+            <p><strong>Tags:</strong> {{tags}}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  {{/each}}
+`);
+
+  
+  fastify.post('/admin/models', async (request, reply) => {
+    const { cursor, search } = request.query;
+    const data = await fetchModels(search, cursor);
+    console.log(data)
+    const html = modelCardTemplate({ models: data.models });
+    return reply.code(200).send({ html, pagination: data.pagination });
+  });
+
+  fastify.get('/admin/models', async (req, res) => {
+    const { cursor, search } = req.query;
+  
+    // Fetch models using the parameters if provided
+    const data = await fetchModels(search, cursor);
+  
+    // Render the page with the models data
+    return res.view('/admin/models', {
+      models: data.models,
+      pagination: data.pagination,
+    });
+  });
+  
 }    
 
 

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Models Gallery</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+</head>
+<body>
+    <style>
+.card-img-container {
+  height: 400px; /* Fixed height for image container */
+  overflow: hidden;
+  position: relative;
+}
+
+.card-img-container img {
+  transition: transform 0.3s ease; /* Smooth transition for zoom */
+  object-fit: cover;
+  height: 100%;
+  width: 100%;
+}
+
+.card-img-container:hover img {
+  transform: scale(1.1); /* Slight zoom on hover */
+}
+
+
+</style>
+<div class="container py-5">
+  <div class="text-center mb-4">
+    <h1 class="display-5">Models Gallery</h1>
+    <p class="lead">Explore public models with infinite scroll</p>
+  </div>
+  <div class="row mb-4">
+    <div class="col-md-6 offset-md-3">
+      <div class="input-group">
+        <input id="searchInput" type="text" class="form-control" placeholder="Search models...">
+        <button id="searchBtn" class="btn btn-primary" type="button">
+          <i class="bi bi-search"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="model-gallery" class="row">
+    {{#each models}}
+      <div class="col-md-3 mb-3 animate__animated animate__fadeIn">
+        <div class="card">
+          <img src="{{cover_url}}" class="card-img-top" alt="{{name}}" />
+          <div class="card-body">
+            <h5 class="card-title">{{name}}</h5>
+            <i class="bi bi-info-circle" data-bs-toggle="modal" data-bs-target="#infoModal-{{id}}"></i>
+          </div>
+        </div>
+      </div>
+      <div class="modal fade" id="infoModal-{{id}}" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">{{name}}</h5>
+            </div>
+            <div class="modal-body">
+              <p>Hash: {{hash_sha256}}</p>
+              <p>Base Model: {{base_model}}</p>
+              <p>Model Name: {{model_name}}</p>
+              <p>Tags: {{tags}}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    {{/each}}
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+$(document).ready(function(){
+    let loading = false;
+    let nextCursor = '{{pagination.next_cursor}}';
+
+    // Initialize search input from URL query parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialSearch = urlParams.get('search') || '';
+    $('#searchInput').val(initialSearch);
+
+    // If there's an initial search query, load the results
+    if (initialSearch) {
+        loadModels('', initialSearch);
+    }
+
+    function loadModels(cursor, searchTerm) {
+        let url = '/admin/models?';
+        if (cursor) url += 'cursor=' + cursor;
+        if (searchTerm) url += '&search=' + encodeURIComponent(searchTerm);
+
+        $.post(url, function(res) {
+        if (cursor) {
+            $('#model-gallery').append(res.html); // Append results for infinite scroll
+        } else {
+            $('#model-gallery').html(res.html); // Replace results for new search
+        }
+        nextCursor = res.pagination.next_cursor;
+        loading = false;
+        });
+    }
+
+
+  // Handle infinite scrolling
+  $(window).on('scroll', function() {
+    if (!loading && $(window).scrollTop() + $(window).height() + 50 >= $(document).height()) {
+      loading = true;
+      if (nextCursor) loadModels(nextCursor, $('#searchInput').val());
+    }
+  });
+
+  // Handle search by clicking the search button
+  $('#searchBtn').on('click', function() {
+    performSearch($('#searchInput').val());
+  });
+
+  // Handle search by pressing "Enter"
+  $('#searchInput').on('keypress', function(e) {
+    if (e.which === 13) { // Enter key
+      performSearch($(this).val());
+    }
+  });
+
+  // Perform the search and update the navigation history
+  function performSearch(searchTerm) {
+    $('#model-gallery').empty(); // Clear existing results
+    nextCursor = ''; // Reset the cursor
+    loadModels('', searchTerm); // Load new results
+
+    // Update the URL in the browser history
+    const newUrl = new URL(window.location.href);
+    if (searchTerm) {
+      newUrl.searchParams.set('search', searchTerm);
+    } else {
+      newUrl.searchParams.delete('search');
+    }
+    history.pushState({}, '', newUrl); // Push the updated URL to the navigation history
+  }
+
+  // Handle back/forward navigation
+  window.onpopstate = function() {
+    const searchTerm = new URL(window.location.href).searchParams.get('search') || '';
+    $('#searchInput').val(searchTerm);
+    performSearch(searchTerm);
+  };
+});
+
+</script>
+</body>
+</html>

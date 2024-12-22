@@ -1,4 +1,5 @@
 const { ObjectId } = require('mongodb');
+const { getLanguageName } = require('../models/tool');
 
 async function routes(fastify, options) {
   fastify.post('/gallery/:imageId/like-toggle', async (request, reply) => {
@@ -174,7 +175,8 @@ async function routes(fastify, options) {
   });
   fastify.get('/chats/images/search', async (request, reply) => {
     try {
-      let language = 'japanese'
+      const user = request.user;
+      let language = getLanguageName(user?.lang);
       const queryStr = request.query.query || '';
       const styleStr = request.query.style || 'anime';
       const page = parseInt(request.query.page) || 1;
@@ -256,6 +258,9 @@ async function routes(fastify, options) {
   
   fastify.get('/chats/images', async (request, reply) => {
     try {
+
+      const user = request.user;
+      let language = getLanguageName(user?.lang);
       const page = parseInt(request.query.page) || 1;
       const limit = 12; // Number of images per page
       const skip = (page - 1) * limit;
@@ -275,15 +280,13 @@ async function routes(fastify, options) {
         { $project: { _id: 0, image: '$images', chatId: 1 } }
       ])
       .toArray();
-    
-    
 
       // Extract chatIds from the images
       const chatIds = allChatImagesDocs.map(doc => doc.chatId);
 
       // Fetch the chat data with a non-null thumbnail from the chats collection
       const chats = await chatsCollection
-        .find({ _id: { $in: chatIds } })
+        .find({ _id: { $in: chatIds }, language })
         .toArray();
 
         // Map the chat data to the images

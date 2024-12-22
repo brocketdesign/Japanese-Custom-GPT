@@ -359,6 +359,14 @@ async function getUserData(userId, collectionUser, collectionChat, currentUser) 
     }));
     await tagsCollection.bulkWrite(bulkOps);
   };
+  function getLanguageName(langCode) {
+    const langMap = {
+        en: "english",
+        fr: "french",
+        ja: "japanese"
+    };
+    return langMap[langCode] || "japanese";
+}
   module.exports = { getCounter, 
     updateCounter, 
     handleFileUpload, 
@@ -369,5 +377,6 @@ async function getUserData(userId, collectionUser, collectionChat, currentUser) 
     createBlurredImage,
     deleteObjectFromUrl,
     getUserData,
-    addTags
+    addTags,
+    getLanguageName
 }

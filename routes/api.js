@@ -2,10 +2,14 @@ const { ObjectId } = require('mongodb');
 const {
     describeCharacterFromImage,
     checkImageRequest, 
-    moduleCompletion,fetchOpenAICompletion,generateCompletion, fetchOpenAICustomResponse} = require('../models/openai')
+    moduleCompletion,
+    fetchOpenAICompletion,
+    generateCompletion, 
+    fetchOpenAICustomResponse
+} = require('../models/openai')
 const crypto = require('crypto');
 const sessions = new Map(); // Define sessions map
-const { handleFileUpload, uploadToS3, checkLimits, convertImageUrlToBase64, createBlurredImage } = require('../models/tool');
+const { getLanguageName, handleFileUpload, uploadToS3, checkLimits, convertImageUrlToBase64, createBlurredImage } = require('../models/tool');
 const {sendMail, getRefreshToken} = require('../models/mailer');
 const { createHash } = require('crypto');
 const { convert } = require('html-to-text');
@@ -22,14 +26,7 @@ const { chat } = require('googleapis/build/src/apis/chat');
 const aiModelChat = 'meta-llama/llama-3.1-70b-instruct'
 const aiModel = `sophosympatheia/midnight-rose-70b`
   
-function getLanguageName(langCode) {
-    const langMap = {
-        en: "english",
-        fr: "french",
-        ja: "japanese"
-    };
-    return langMap[langCode] || "japanese";
-}
+
 
 async function routes(fastify, options) {
 

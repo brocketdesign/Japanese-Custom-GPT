@@ -97,8 +97,7 @@ $(document).ready(async function() {
             const prompt = event.data.prompt
             const origineUserChatId = event.data.userChatId
             if(origineUserChatId != userChatId) return;
-            let message = `I received an image from you about : ${prompt}. Ask me what I think of it. \n Respond in ${language} with the shortest answer possible.`
-            console.log(`ImageDone: ${message}`)
+            let message = `I received an image from you about : ${prompt}. Provide a short comment and ask me what I think of it. \n Respond in ${language} with the shortest answer possible.`
             addMessageToChat(chatId, userChatId, 'user', message,function(){
                 generateCompletion()
             });

@@ -146,8 +146,10 @@ iframe {
   padding: 0;
   width: 100%;
 }
-.gen-idea-container, .album-popup, .custom-prompt-container{
+.gen-idea-container, .album-popup{
   border-radius: 40px 40px 0 0;
+}
+.gen-idea-container, .album-popup, .custom-prompt-container{
   width: 100%;
   position: absolute;
   left: 0;

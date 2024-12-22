@@ -38,6 +38,7 @@ $(document).ready(async function() {
             const { role, message, completion, image, messageId } = event.data
             displayMessage(role, message, userChatId, function() {
                 addMessageToChat(chatId, userChatId, role, message, function(error, res) {
+                    const messageContainer = $(`#chatContainer[data-id=${userChatId}]`)
                     if (error) {
                         console.error('Error adding message:', error);
                     } else {
@@ -53,7 +54,7 @@ $(document).ready(async function() {
                                     </div>
                                 </div>
                             `);
-                            $('#chatContainer').append(loaderElement);
+                            messageContainer.append(loaderElement);
                         }
                     }
                 });
@@ -154,6 +155,8 @@ $(document).ready(async function() {
         count_proposal = 0;
         
         $('#chatContainer').empty();
+        $('#chatContainer').attr('data-id',userChatId)
+
         $('#startButtonContained').remove();
         $('#chat-recommend').empty();
 
@@ -359,13 +362,8 @@ $(document).ready(async function() {
                 success: function(response) {
                     userChatId = response.userChatId
                     chatId = response.chatId
-                    if(currentStep < totalSteps){
-                        displayStep(chatData, currentStep);
-                        isNew = false
-                    }else{
-                        generateCompletion()
-                        isNew = false
-                    }
+                    generateCompletion()
+                    isNew = false
                 },
                 error: function(error) {
                     if (error.status === 403) {
@@ -412,8 +410,6 @@ $(document).ready(async function() {
 
         if (!isNew) {
             displayExistingChat(data.userChat, data.character);
-        } else if (data.chat.content && data.chat.content.length > 0) {
-            displayStep(data.chat.content, currentStep);
         } else {
             displayInitialChatInterface(data.chat);
         }
@@ -1034,30 +1030,6 @@ $(document).ready(async function() {
     $(document).on('click','.unlock-nsfw',function(){
         showUpgradePopup('unlock-nsfw');
     })
-    function displayStep(chatData, currentStep) {
-        const step = chatData[currentStep];
-        $('#chatContainer').append(`
-        <div id="container-${currentStep}">
-            <div class="d-flex flex-row justify-content-start mb-4 message-container" style="opacity:0;">
-                <img src="${ thumbnail ? thumbnail : '/img/logo.webp' }" alt="avatar 1" class="rounded-circle" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
-                <div id="message-${currentStep}" class="p-3 ms-3 text-start assistant-chat-box"></div>
-            </div>
-            <div id="response-${currentStep}" class="choice-container" ></div>
-        </div>`)
-        step.responses.forEach((response, index) => {
-            if(response.trim() != '' ){
-                const button = $(`<button class="btn btn-outline-secondary m-1" onclick="choosePath('${response}')">${response}</button>`);
-                button.css('opacity',0)
-                $(`#response-${currentStep}`).append(button);
-            }
-        });
-        appendHeadlineCharacterByCharacter($(`#message-${currentStep}`), step.question,function(){
-            $(`#response-${currentStep} button`).each(function(){
-                $(this).css('opacity',1)
-            })
-        })
-    }
-
     function updatechatContent(response) {
         const previousStep = chatData[currentStep-1]; // Previous step where the choice was made
 
@@ -1372,13 +1344,10 @@ $(document).ready(async function() {
     };
   
     window.displayMessage = function(sender, message, origineUserChatId, callback) {
+        const messageContainer = $(`#chatContainer[data-id=${origineUserChatId}]`)
         const messageClass = sender === 'user' ? 'user-message' : sender;
         const animationClass = 'animate__animated animate__slideInUp';
         let messageElement;
-
-        let currentUserChatId = sessionStorage.getItem('userChatId')
-        console.log({currentUserChatId,origineUserChatId})
-        if(currentUserChatId && origineUserChatId && currentUserChatId != origineUserChatId) return;
 
         if (messageClass === 'user-message') {
             if (typeof message === 'string' && message.trim() !== '') {
@@ -1391,7 +1360,7 @@ $(document).ready(async function() {
                         ${persona ? `<img src="${persona.chatImageUrl || '/img/logo.webp'}" alt="avatar" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">` : ''}
                     </div>
                 `).hide();
-                $('#chatContainer').append(messageElement);
+                messageContainer.append(messageElement);
                 messageElement.addClass(animationClass).fadeIn();
             }
         } 
@@ -1413,7 +1382,7 @@ $(document).ready(async function() {
                     </div>
                 </div>      
             `).hide();
-            $('#chatContainer').append(messageElement);
+            messageContainer.append(messageElement);
             messageElement.addClass(animationClass).fadeIn();
             displayImageThumb(imageUrl)
         } 
@@ -1454,7 +1423,7 @@ $(document).ready(async function() {
                     </div>
                 </div>   
             `).hide();
-            $('#chatContainer').append(messageElement);
+            messageContainer.append(messageElement);
             messageElement.addClass(animationClass).fadeIn();
         } 
     
@@ -1468,12 +1437,12 @@ $(document).ready(async function() {
                     </div>
                 </div>
             `).hide();
-            $('#chatContainer').append(messageElement);
+            messageContainer.append(messageElement);
             messageElement.show().addClass(animationClass);
         }
     
-        $('#chatContainer').animate({
-            scrollTop: $('#chatContainer').prop("scrollHeight")
+        messageContainer.animate({
+            scrollTop: messageContainer.prop("scrollHeight")
         }, 500); 
     
         if (typeof callback === 'function') {

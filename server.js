@@ -577,10 +577,10 @@ fastify.get('/chat/edit/:chatId', { preHandler: [fastify.authenticate] }, async 
     const userId = user._id;
     user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
-    const isSubscribed = user.subscriptionStatus === 'active';
-    // if (!isSubscribed) {
-    //   return reply.redirect('/my-plan');
-    // }
+    const subscriptionStatus = user?.subscriptionStatus == 'active'
+    if(!subscriptionStatus){
+      return reply.redirect('/my-plan');
+    }
 
     let chatId = request.params.chatId;
     const chatImage = request.query.chatImage;
@@ -661,6 +661,11 @@ fastify.get('/settings', { preHandler: [fastify.authenticate] }, async (request,
     const userData = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
     const translations = request.translations;
 
+    const subscriptionStatus = userData?.subscriptionStatus == 'active'
+    if(!subscriptionStatus){
+      return reply.redirect('/my-plan');
+    }
+    
     return reply.renderWithGtm('/settings', {
       title: 'AIフレンズ  | Powered by Hato,Ltd',
       translations,

@@ -538,6 +538,11 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       const userData = await getUserData(userId, collectionUser, collectionChat, currentUser);
       if (!userData) return reply.status(404).send({ error: 'User not found' });
   
+      const subscriptionStatus = userData?.subscriptionStatus == 'active'
+      if(!subscriptionStatus){
+        return reply.redirect('/my-plan');
+      }
+
       const isAdmin = currentUserId.toString() === userId;
       const translations = request.translations;
 

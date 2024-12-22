@@ -339,7 +339,7 @@ function getProposalById(id) {
       });
   });
 }
-let messCt = 0;
+
 const sentImageIds = new Set();
 
 window.generateImage = async function(data, prompt) {
@@ -359,14 +359,7 @@ window.generateImage = async function(data, prompt) {
     const user = await fetchUser();
     const subscriptionStatus = user.subscriptionStatus === 'active';
     displayMessage('bot-image', img, data.userChatId);
-
-    if (messCt == 1) {
-        setTimeout(() => {
-            window.postMessage({ event: 'imageDone', prompt, userChatId:data.userChatId }, '*');
-        }, 1000);
-    }else{
-        messCt = messCt < 1 ? messCt + 1 : messCt
-    }
+    window.postMessage({ event: 'imageDone', prompt, userChatId:data.userChatId }, '*');
   } catch (error) {
     showNotification('ユーザー情報の取得に失敗しました。', 'error');
   }

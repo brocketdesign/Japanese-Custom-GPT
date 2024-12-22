@@ -302,9 +302,9 @@ const fetchModels = async (query = '', cursor = '') => {
 // Updated Handlebars template for the model cards
 const modelCardTemplate = hbs.compile(`
   {{#each models}}
-    <div class="col-md-3 mb-3 animate__animated animate__fadeIn">
-      <div class="card rounded h-100 position-relative">
-        <div class="card-img-container" style="height: 400px; overflow: hidden;">
+    <div class="col-md-4 mb-3 animate__animated animate__fadeIn">
+      <div class="card border-0 h-100 position-relative">
+        <div class="card-img-container" style="overflow: hidden;">
           <img src="{{cover_url}}" class="card-img-top w-100" alt="{{name}}" style="object-fit: cover; height: 100%;" />
         </div>
         <div class="card-body d-flex justify-content-between position-absolute w-100 py-2 text-white" style="bottom: 0; background-color: rgba(0, 0, 0, 0.25);">
@@ -337,22 +337,14 @@ const modelCardTemplate = hbs.compile(`
   fastify.post('/admin/models', async (request, reply) => {
     const { cursor, search } = request.query;
     const data = await fetchModels(search, cursor);
-    console.log(data)
     const html = modelCardTemplate({ models: data.models });
     return reply.code(200).send({ html, pagination: data.pagination });
   });
 
   fastify.get('/admin/models', async (req, res) => {
-    const { cursor, search } = req.query;
-  
-    // Fetch models using the parameters if provided
-    const data = await fetchModels(search, cursor);
   
     // Render the page with the models data
-    return res.view('/admin/models', {
-      models: data.models,
-      pagination: data.pagination,
-    });
+    return res.view('/admin/models');
   });
   
 }    

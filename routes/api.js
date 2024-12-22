@@ -1709,7 +1709,7 @@ async function routes(fastify, options) {
             Include the following in your prompt : \n
             ${nudeDetails}, ${positionDetails} , ${viewpointDetails} , ${imageFocusDetails}\n\n
             Do not include any comments. 
-            Use keywords to describe the image, do not make sentences. Provide a detailed prompt.
+            Use keywords to describe the image, do not make sentences. Provide a detailed prompt in englsih only.
         `;
     };
     
@@ -1734,6 +1734,7 @@ async function routes(fastify, options) {
       
         let finalDescription = '';
         const englishDescriptionFallback = await generateEnglishDescription(lastMessages, characterDescription, command);
+
         function processString(input) {
             return [...new Set(input.slice(0, 900).split(',').map(s => s.trim()))].join(', ');
         }

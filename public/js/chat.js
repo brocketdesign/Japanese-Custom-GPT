@@ -383,7 +383,7 @@ $(document).ready(async function() {
                         }
                     } else {
                         console.error('Error:', error);
-                        displayMessage('bot', 'An error occurred while sending the message.');
+                        displayMessage('bot', 'An error occurred while sending the message.',userChatId);
                     }
                 }                        
             });
@@ -479,7 +479,7 @@ $(document).ready(async function() {
         }
 
         if($('#chat-widget-container').length == 0 && isTemporary){
-            displayMessage('assistant',`<a class="btn btn-secondary custom-gradient-bg shadow-0 m-2 px-4 py-2" style="border-radius: 50px;" href="/authenticate"><i class="fas fa-sign-in-alt me-2"></i> ログイン</a>`)
+            displayMessage('assistant',`<a class="btn btn-secondary custom-gradient-bg shadow-0 m-2 px-4 py-2" style="border-radius: 50px;" href="/authenticate"><i class="fas fa-sign-in-alt me-2"></i> ログイン</a>`,userChatId)
         }
     }
     
@@ -768,7 +768,7 @@ $(document).ready(async function() {
                     $('#progress-container').show();
                     $('#input-container').show().addClass('d-flex');
                     if($('#chat-widget-container').length == 0 && isTemporary){
-                        displayMessage('assistant',`<a class="btn btn-secondary custom-gradient-bg shadow-0 m-2 px-4 py-2" style="border-radius: 50px;" href="/authenticate"><i class="fas fa-sign-in-alt me-2"></i> ${window.translations.login}</a>`)
+                        displayMessage('assistant',`<a class="btn btn-secondary custom-gradient-bg shadow-0 m-2 px-4 py-2" style="border-radius: 50px;" href="/authenticate"><i class="fas fa-sign-in-alt me-2"></i> ${window.translations.login}</a>`,userChatId)
                     }                
                 })
 
@@ -804,7 +804,7 @@ $(document).ready(async function() {
                     }
                 } else {
                     console.error('Error:', error);
-                    displayMessage('bot', 'An error occurred while sending the message.');
+                    displayMessage('bot', 'An error occurred while sending the message.',userChatId);
                 }
             }                    
         });

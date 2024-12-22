@@ -359,15 +359,6 @@ window.generateImage = async function(data, prompt) {
     const user = await fetchUser();
     const subscriptionStatus = user.subscriptionStatus === 'active';
     displayMessage('bot-image', img, data.userChatId);
-    /*
-    if (imageNsfw && !subscriptionStatus) {
-      window.postMessage({ event: 'imageNsfw' }, '*');
-      displayMessage('bot-image-nsfw', img);
-      showNotification('この画像はNSFWコンテンツです。サブスクリプションが必要です。', 'warning');
-    } else {
-      displayMessage('bot-image', img);
-    }
-    */
 
     if (messCt == 1) {
         setTimeout(() => {

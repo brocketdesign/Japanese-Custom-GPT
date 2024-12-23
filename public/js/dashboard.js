@@ -366,7 +366,6 @@ $(document).ready(async function() {
         if (isTemporary) { showRegistrationForm(); return; }
     
         const $this = $(this);
-        const description = $(this).data('description') == 'false' ? false : $(this).data('description')
         const imageId = $(this).data('id');
         const isLiked = $(this).hasClass('liked'); // Check if already liked
     
@@ -382,7 +381,7 @@ $(document).ready(async function() {
             // Show success notification in Japanese
             if (action === 'like') {
                 $this.find('.ct').text(parseInt($this.find('.ct').text()) + 1);
-                window.postMessage({ event: 'imageFav' ,description}, '*');
+                window.postMessage({ event: 'imageFav' , imageId}, '*');
             } else {
                 showNotification('いいねを取り消しました！', 'success');
                 $this.find('.ct').text(parseInt($this.find('.ct').text()) - 1);

@@ -45,9 +45,6 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
             return;
         }
 
-        let userMessage = `I did not receive the image yet. Wait for me to see the image. The image is being sent right now. Here is the description: ${prompt}. \n respond in your character language exclusively.`;
-        //window.postMessage({ event: 'addMessageToChat', role:'user', message: userMessage, completion:true}, '*');
-
         const API_ENDPOINT = `${API_URL}/novita/product2img`;
 
         const response = await fetch(API_ENDPOINT, {
@@ -99,8 +96,8 @@ async function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, i
             let imageDescriptionResponse = await checkImageDescription(chatId)
             const imageDescription = imageDescriptionResponse.imageDescription
 
+            console.log({imageDescription,prompt})
             prompt = imageDescription +', '+ prompt
-            console.log({prompt})
             txt2ImageNovita(API_URL, userId, chatId, userChatId, imageId, thumbnail, imageNsfw, {prompt})
         },
         error: function(xhr) {
@@ -135,10 +132,7 @@ window.txt2ImageNovita = async function(API_URL, userId, chatId, userChatId, ima
             return;
         }
 
-        let userMessage = `I just aksed for a new image about ${prompt}. \n 
-        Inform me that you received my request and that the image generation process is starting.\n
-        Do not include the image description in your answer. Provide a concice and short answer.`.trim();
-        //window.postMessage({ event: 'addMessageToChat', role:'user', message: userMessage, completion:true}, '*');
+        window.postMessage({ event: 'imageStart', prompt }, '*');
 
         const API_ENDPOINT = `${API_URL}/novita/txt2img`;
 
@@ -204,10 +198,7 @@ window.img2ImageNovita = async function(API_URL, userId, chatId, userChatId, ima
             return;
         }
 
-        let userMessage = `I just aksed for a new image about ${prompt}. \n 
-        Inform me that you received my request and that the image generation process is starting.\n
-        Do not include the image description in your answer. Provide a concice and short answer.`.trim();
-        //window.postMessage({ event: 'addMessageToChat', role:'user', message: userMessage, completion:true}, '*');
+        window.postMessage({ event: 'imageStart', prompt}, '*');
 
         const API_ENDPOINT = `${API_URL}/novita/img2img`;
 

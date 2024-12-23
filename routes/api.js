@@ -1297,6 +1297,28 @@ async function routes(fastify, options) {
             reply.status(500).send({ error: 'Error fetching OpenAI completion' });
         }
     });
+    async function findImageId(db, chatId, imageId) {
+        try {
+            const galleryCollection = db.collection('gallery');
+            const imageDoc = await galleryCollection
+              .aggregate([
+                { $match: { chatId: new ObjectId(chatId) } },
+                { $unwind: '$images' },
+                { $match: { 'images._id': new ObjectId(imageId) } },
+                { $project: { image: '$images', _id: 0 } },
+              ])
+              .toArray();
+
+            if (imageDoc.length > 0) {
+                return imageDoc[0].image;
+            }
+            return null;
+        } catch (error) {
+            console.error('Error finding image:', error);
+            throw error;
+        }
+    }
+    
     fastify.post('/api/chat/add-message', async (request, reply) => {
         const { chatId, userChatId, role, message } = request.body;
 
@@ -1312,9 +1334,23 @@ async function routes(fastify, options) {
             if(message.startsWith('[master]')){
                 newMessage.content = message.replace('[master]','')
                 newMessage.name = 'master'
-            } else if(message.startsWith('[context]')){
+            } else if (message.startsWith('[context]')){
                 newMessage.content = message.replace('[context]','')
                 newMessage.name = 'context'
+            } else if (message.startsWith('[imageStart]')){
+                const prompt = message.replace('[imageStart]','').trim()
+                newMessage.content =  `I just aksed for a new image about ${prompt}. \n 
+                Inform me that you received my request and that the image generation process is starting.\n
+                Do not include the image description in your answer. Provide a concice and short answer.\n
+                Stay in your character, keep the same tone as before.`.replace(/^\s+/gm, '').trim();
+                newMessage.name = 'master'
+            } else if (message.startsWith('[imageFav]')){
+                const imageId = message.replace('[imageFav]','').trim()
+                const imageData = await findImageId(fastify.mongo.db,chatId,imageId)
+                newMessage.content =  `I liked one of your picture. The one about: ${imageData.prompt}\n
+                 Provide a short answer to thank me, stay in your character. 
+                 `.replace(/^\s+/gm, '').trim();
+                newMessage.name = 'master'
             } else {
                 newMessage.content = message
             }    

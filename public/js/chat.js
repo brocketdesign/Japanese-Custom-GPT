@@ -76,9 +76,9 @@ $(document).ready(async function() {
     });
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageFav') {
-            const description = event.data.description
-            if(!description)return
-            let message = `[master] I liked one of your picture. Provide a short answer to thank me, stay in your character. Respond in ${language} only.`
+            const imageId = event.data.imageId
+            if(!imageId)return
+            let message = `[imageFav] ${imageId}`
             addMessageToChat(chatId, userChatId, 'user', message, function(){
                 generateCompletion()
             });
@@ -86,8 +86,8 @@ $(document).ready(async function() {
     });
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageStart') {
-            const message = '[master]' + event.data.message
-            addMessageToChat(chatId, userChatId, 'user', message,function(){
+            const message = '[imageStart]'+prompt
+            addMessageToChat(chatId, userChatId, 'user', message, function(){
                 generateCompletion(null,true)
             });
         }
@@ -785,7 +785,7 @@ $(document).ready(async function() {
         return `
             <div class="bg-white py-2 rounded mt-1 d-flex justify-content-between">
                 <div class="d-flex">
-                    <span class="badge bg-white text-secondary image-fav ${isLiked ? 'liked':''}" data-description="${description}" data-id="${imageId}" 
+                    <span class="badge bg-white text-secondary image-fav ${isLiked ? 'liked':''}" data-id="${imageId}" 
                     style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
                         <i class="bi bi-heart-fill"></i>
                     </span>

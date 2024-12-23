@@ -121,7 +121,7 @@ window.setApiUrlAndMode = async function() {
     if (!mode || !API_URL) {
         mode = await fetchMode();
         API_URL = (mode !== 'local' && !window.location.origin.includes('lamix')) 
-            ? 'https://app.lamix.jp' 
+            ? 'https://chat.lamixapp.com' 
             : window.location.origin;
 
         localStorage.setItem('MODE', mode);

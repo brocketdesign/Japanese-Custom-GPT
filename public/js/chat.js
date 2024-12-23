@@ -78,7 +78,7 @@ $(document).ready(async function() {
         if (event.data.event === 'imageFav') {
             const description = event.data.description
             if(!description)return
-            let message = `I liked one of your picture. Provide a short answer to thank me, stay in your character. Respond in ${language} only.`
+            let message = `[master] I liked one of your picture. Provide a short answer to thank me, stay in your character. Respond in ${language} only.`
             addMessageToChat(chatId, userChatId, 'user', message, function(){
                 generateCompletion()
             });
@@ -86,7 +86,7 @@ $(document).ready(async function() {
     });
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageStart') {
-            const message = event.data.message
+            const message = '[master]' + event.data.message
             addMessageToChat(chatId, userChatId, 'user', message,function(){
                 generateCompletion(null,true)
             });
@@ -97,7 +97,7 @@ $(document).ready(async function() {
             const prompt = event.data.prompt
             const origineUserChatId = event.data.userChatId
             if(origineUserChatId != userChatId) return;
-            let message = `I received an image from you about : ${prompt}. Provide a short comment and ask me what I think of it. \n Respond in ${language} with the shortest answer possible.`
+            let message = `[master] I received an image from you about : ${prompt}. Provide a short comment and ask me what I think of it. \n Respond in ${language}.`
             addMessageToChat(chatId, userChatId, 'user', message,function(){
                 generateCompletion()
             });
@@ -106,7 +106,7 @@ $(document).ready(async function() {
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageError') {
             const error = event?.data?.error || ''
-            let message = `There way an error. The image could not be generated ${error}.`
+            let message = `[master] There way an error. The image could not be generated ${error}.`
             addMessageToChat(chatId, userChatId, 'user', message,function(){
                 generateCompletion()
             });
@@ -114,7 +114,7 @@ $(document).ready(async function() {
     });
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageNsfw') {
-            let message = `Tell me that I can unlock more personal and attractive images if I subscribe to the premium plan which is 300 JPY per month if I pay yearly. is not that cheap ?! It is to celebrate the lauching of this app, ラミックス ! Plus I get 1000 coins to enjoy plenty of pictures of you. \n Provide a new message every time.`
+            let message = `[master] Tell me that I can unlock more personal and attractive images if I subscribe to the premium plan which is 300 JPY per month if I pay yearly. is not that cheap ?! It is to celebrate the lauching of this app, ラミックス ! Plus I get 1000 coins to enjoy plenty of pictures of you. \n Provide a new message every time.`
             addMessageToChat(chatId, userChatId, 'user', message,function(){
                 generateCompletion(function(){
                     const message = `
@@ -204,7 +204,6 @@ $(document).ready(async function() {
     $('#sendMessage').on('click', function() {
         sendMessage();
         $('#userMessage').val('');  
-        //$('#userMessage').attr('placeholder', window.translations.sendMessage); 
         setTimeout(() => {
             resizeTextarea($('#userMessage')[0]);
         }, 500);
@@ -256,7 +255,7 @@ $(document).ready(async function() {
     });
         
 
-    function updateParameters(newchatId, newuserId,userChatId){
+    function updateParameters(newchatId, newuserId, userChatId){
         
         localStorage.setItem('chatId', chatId);
         sessionStorage.setItem('userChatId', userChatId);
@@ -297,7 +296,7 @@ $(document).ready(async function() {
             $(this).attr('href','/chat/edit/'+newchatId)
         })
     }
-    window.sendMessage = function(customMessage,displayStatus = true) {
+    window.sendMessage = function(customMessage, displayStatus = true) {
         if($('#chat-widget-container').length == 0 && isTemporary){
             showRegistrationForm()
             return
@@ -308,54 +307,15 @@ $(document).ready(async function() {
         $('#gen-ideas').removeClass('done')
         Swal.close();
 
-        currentStep ++
         const message = customMessage || $('#userMessage').val();
         if (message.trim() !== '') {
             if(displayStatus){
                 displayMessage('user', message, userChatId);
             }
             $('#userMessage').val(''); // Clear the input field
-            // Send the message to the backend (to be implemented)
-            $.ajax({
-                url: API_URL+'/api/chat-data', // Backend endpoint to handle the message
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ 
-                    currentStep:currentStep-1, 
-                    message, 
-                    userId, 
-                    chatId, 
-                    userChatId, 
-                    isNew ,
-                    isWidget : $('#chat-widget-container').length > 0
-                }),
-                success: function(response) {
-                    userChatId = response.userChatId
-                    chatId = response.chatId
-                    generateCompletion()
-                    isNew = false
-                },
-                error: function(error) {
-                    if (error.status === 403) {
-                        var limitIds = error.responseJSON?.limitIds || [];
-                
-                        if ($('#chat-widget-container').length == 0 && isTemporary) {
-                            showRegistrationForm();
-                            return;
-                        }
-                        if (limitIds.includes(1) && $('#chat-widget-container').length == 0) {
-                            showUpgradePopup('chat-message');
-                            return;
-                        }
-                        if (limitIds.includes(2)) {
-                            showUpgradePopup('chat-character');
-                            return;
-                        }
-                    } else {
-                        console.error('Error:', error);
-                        displayMessage('bot', 'An error occurred while sending the message.',userChatId);
-                    }
-                }                        
+            // Send the message to the backend
+            addMessageToChat(chatId, userChatId, 'user', message, function(){
+                generateCompletion(null,true)
             });
         }
     }
@@ -701,81 +661,32 @@ $(document).ready(async function() {
         
         let message = null
         $.ajax({
-            url: API_URL+'/api/chat-data',
+            url: API_URL+'/api/init-chat',
             type: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             data: JSON.stringify({ 
-                currentStep: 0, 
                 message,
-                userId: userId,
-                chatId: chatId, 
-                isNew: true ,
-                isWidget : $('#chat-widget-container').length > 0
+                userId,
+                chatId, 
+                isNew: true
             }),
             success: function(response) {
-                const messageCountDoc = response.messageCountDoc
-                if(messageCountDoc.limit && !isTemporary){
-                    let limitMess = messageCountDoc.limit == '無制限' ? messageCountDoc.limit : `${parseInt(messageCountDoc.count)}/${messageCountDoc.limit}`
-                    $('#message-number')
-                    .html(`
-                        <span class="badge bg-dark" style="color: rgb(165 164 164);opacity:0.8;font-size: 12px;">
-                            <i class="fa fa-comment me-1"></i>${limitMess}
-                        </span>
-                    `)
-                    .hide()
-                }
+
                 userChatId = response.userChatId
                 chatId = response.chatId
                 isNew = false;
+                
+                generateCompletion();
 
                 updateCurrentChat(chatId,userId);
-                
-                generateCompletion(function(){
-                    $('.auto-gen').each(function(){$(this).show()})
-                    $('#audio-play').show();
-                    $('#progress-container').show();
-                    $('#input-container').show().addClass('d-flex');
-                    if($('#chat-widget-container').length == 0 && isTemporary){
-                        displayMessage('assistant',`<a class="btn btn-secondary custom-gradient-bg shadow-0 m-2 px-4 py-2" style="border-radius: 50px;" href="/authenticate"><i class="fas fa-sign-in-alt me-2"></i> ${window.translations.login}</a>`,userChatId)
-                    }                
-                })
 
                 updateParameters(chatId,userId,userChatId)
 
-                if(isTemporary){
-                    const redirectUrl = window.location.pathname
-                    $.cookie('redirect_url', redirectUrl);
-                }
-
             },
             error: function(xhr, status, error)  {
-                $('#startButtonContained').show();
-                $('#introChat').show();
-                $(`#starter-${uniqueId}`).remove()
-                if (xhr.responseJSON) {
-                    var errorStatus = xhr.status;
-                    if (errorStatus === 403) {
-                        var limitIds = xhr.responseJSON.limitIds || [];
-            
-                        if ($('#chat-widget-container').length == 0 && isTemporary) {
-                            showRegistrationForm(limitIds);
-                            return;
-                        }
-                        if (limitIds.includes(1) && $('#chat-widget-container').length == 0) {
-                            showUpgradePopup('chat-message');
-                            return;
-                        } 
-                        if (limitIds.includes(2)) {
-                            showUpgradePopup('chat-character');
-                            return;
-                        }
-                    }
-                } else {
-                    console.error('Error:', error);
-                    displayMessage('bot', 'An error occurred while sending the message.',userChatId);
-                }
+                console.error('Error:', error);
+                displayMessage('bot', 'An error occurred while sending the message.',userChatId);
+                
             }                    
         });
     }
@@ -1322,7 +1233,7 @@ $(document).ready(async function() {
 
         if (messageClass === 'user-message') {
             if (typeof message === 'string' && message.trim() !== '') {
-                message = message.replace('[Hidden]','').replace('[user] ','')
+                message = message.replace('[Hidden]','').replace('[user] ','').replace('[context] ','')
                 messageElement = $(`
                     <div class="d-flex flex-row justify-content-end mb-4 message-container ${messageClass} ${animationClass}">
                         <div class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
@@ -1614,9 +1525,9 @@ $(document).ready(async function() {
             const typeText = isNSFWChecked ? 'NSFW' : 'SFW';
             const prompt_title = $(this).find('.card-text').text()
 
-            const userMessage = '[user] '+ window.translations['imageForm']['imagePurchaseMessage']
+            const userMessage = '[context] '+ window.translations['imageForm']['imagePurchaseMessage']
                 .replace('{type}', typeText)
-                .replace('{prompt_title}', '') || `[user] ${type}画像をリクエストしました。`;
+                .replace('{prompt_title}', '') || `[context] ${type}画像をリクエストしました。`;
             window.postMessage({ event: 'displayMessage', role:'user', message: userMessage, completion : false , image : false, messageId: false }, '*');
 
 
@@ -2134,7 +2045,9 @@ function fetchChatDataInfo(chatId) {
         success: function(data) {
             updateChatListDisplay(data);
         },
-        error: function(xhr, status, error) {}
+        error: function(xhr, status, error) {
+            console.log(error)
+        }
     });
 }
 

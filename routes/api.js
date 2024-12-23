@@ -737,13 +737,8 @@ async function routes(fastify, options) {
                 chatId: chatId
             };
             const newImagePurchase = { ...additionalData, ...command };
-            console.log(newImagePurchase)
-            await fastify.mongo.db.collection('imagePurchases').insertOne(newImagePurchase);
-    
-            console.log(`User ${userId} purchased an image of type ${type}`);
-    
+            await fastify.mongo.db.collection('imagePurchases').insertOne(newImagePurchase);    
             reply.send({ success: true });
-    
         } catch (error) {
             console.log('Error during image purchase:', error);
             reply.code(500).send({ error: 'Internal server error' });
@@ -895,7 +890,6 @@ async function routes(fastify, options) {
         try {
             // Extract necessary session info
             const { userId, chatId, userChatId, isHidden } = session;
-            console.log({chatId})
             const db = fastify.mongo.db;
 
             // Retrieve user info and user chat data
@@ -908,7 +902,6 @@ async function routes(fastify, options) {
 
             // Retrieve chat document and language
             let chatDocument = await getChatDocument(db, chatId);
-            console.log({chatDocument})
             const chatname = chatDocument.name;
             const language = getLanguageName(userInfo.lang) //|| chatDocument.language === 'japanese' ? '日本語' : chatDocument.language;
 
@@ -1328,7 +1321,6 @@ async function routes(fastify, options) {
                 newMessage.content = message
             }    
 
-            console.log(`Add a message : ${JSON.stringify(newMessage)}`)
             userData.messages.push(newMessage);
             userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
     

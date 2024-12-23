@@ -210,7 +210,7 @@ const formatSchema = z.object({
     
 // Define the system prompt
 const systemPrompt = `
-    Analyze the conversation:
+    You are a useful assistant. Your purpose is to determine if the user is requesting a visual. You analyze the conversation:
     1. nsfw: true if nudity (not underwear) is involved, else false.
     2. nude: true if full nude requested, else false.
     3. image_request: true if user last message is a request for image from the user, else false.
@@ -232,10 +232,11 @@ const systemPrompt = `
 `;
 const checkImageRequest = async (messages) => {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    
+    const lastTwoMessages = messages.slice(-2);
+    console.log({lastTwoMessages})
     const updatedMessages = [
       { role: "system", content: systemPrompt },
-      ...messages
+      ...lastTwoMessages
     ];
 
     let attempts = 0;

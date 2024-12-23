@@ -164,8 +164,6 @@ async function routes(fastify, options) {
             // Respond with the validated character data
             chatData.language = language
             chatData.gender = gender
-
-            console.log({language:chatData.language})
             
             // Save generated tags
             const tagsCollection = fastify.mongo.db.collection('tags');
@@ -1063,7 +1061,6 @@ async function routes(fastify, options) {
         let chatdoc = await db.collection('chats').findOne({ _id: new fastify.mongo.ObjectId(chatId) })
         // Check if chatdoc is updated to the new format
         if(!chatdoc.base_personality){
-            console.log('Updating the character infos...')
             const prompt = `Her name is, ${chatdoc.name}.\nShe looks like :${chatdoc.enhancedPrompt ? chatdoc.enhancedPrompt : chatdoc.characterPrompt}.\n\n${chatdoc.rule}`
             const language = chatdoc.language
             const apiUrl = getApiUrl();        

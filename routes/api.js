@@ -1060,7 +1060,7 @@ async function routes(fastify, options) {
     async function getChatDocument(db, chatId) {
         let chatdoc = await db.collection('chats').findOne({ _id: new fastify.mongo.ObjectId(chatId) })
         // Check if chatdoc is updated to the new format
-        if(!chatdoc.base_personality){
+        if(!chatdoc?.base_personality){
             const prompt = `Her name is, ${chatdoc.name}.\nShe looks like :${chatdoc.enhancedPrompt ? chatdoc.enhancedPrompt : chatdoc.characterPrompt}.\n\n${chatdoc.rule}`
             const language = chatdoc.language
             const apiUrl = getApiUrl();        

@@ -145,10 +145,8 @@ async function routes(fastify, options) {
 
             const userId = user._id;
             const language = request.body.language ? request.body.language : getLanguageName(user?.lang);
-            console.log({language,ulanguage:user?.lang})
             // Prepare payload
             const systemPayload = createSystemPayloadChatRule(prompt, gender, language);
-            console.log({systemPayload})
             // Interact with OpenAI API
             const openai = new OpenAI();
             const completionResponse = await openai.chat.completions.create({
@@ -167,8 +165,8 @@ async function routes(fastify, options) {
             chatData.language = language
             chatData.gender = gender
 
-            console.log(chatData)
-            return
+            console.log({language:chatData.language})
+            
             // Save generated tags
             const tagsCollection = fastify.mongo.db.collection('tags');
             const generatedTags = chatData.tags

@@ -659,7 +659,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
 });
 
       
-  async function saveChatImageToDB(db, chatId, imageUrl) {
+  async function saveChatImageToDB(db, chatId, imageUrl, characterPrompt, enhancedPrompt, imageStyle, imageModel, imageVersion) {
     const collectionChats = db.collection('chats'); // Replace 'chats' with your actual collection name
 
     // Convert chatId string to ObjectId
@@ -676,7 +676,11 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
         { 
             $set: { 
                 chatImageUrl: imageUrl,
-                thumbnail: imageUrl
+                characterPrompt, 
+                enhancedPrompt, 
+                imageStyle, 
+                imageModel, 
+                imageVersion
             } 
         }
     );
@@ -835,7 +839,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
     }
   });
   fastify.post('/novita/save-image', async (request, reply) => {
-    const { imageUrl, chatId } = request.body;
+    const { imageUrl, chatId, characterPrompt, enhancedPrompt, imageStyle, imageModel, imageVersion } = request.body;
   
     if (!imageUrl || !chatId) {
       return reply.status(400).send({ error: 'imageId, imageUrl, and chatId are required' });
@@ -843,7 +847,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
   
     try {
       const db = fastify.mongo.db
-      await saveChatImageToDB(db, chatId, imageUrl);
+      await saveChatImageToDB(db, chatId, imageUrl, characterPrompt, enhancedPrompt, imageStyle, imageModel, imageVersion);
   
       return reply.status(200).send({ message: 'Image saved successfully' });
   

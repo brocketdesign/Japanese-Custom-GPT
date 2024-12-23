@@ -30,223 +30,6 @@ const aiModel = `sophosympatheia/midnight-rose-70b`
 
 async function routes(fastify, options) {
 
-    fastify.post('/api/add-chat', async (request, reply) => {
-        try {
-            const db = await fastify.mongo.db
-            const parts = request.parts();
-            let chatData = {};
-            const user = await fastify.getUser(request, reply);
-            const userId = new fastify.mongo.ObjectId(user._id);
-            let language = getLanguageName(user?.lang);
-            let galleries = [];
-            let blurred_galleries = [];
-            let imageCount = 0;
-            for await (const part of parts) {
-                switch (part.fieldname) {
-                    case 'name':
-                    case 'imageStyle':
-                    case 'imageModel':
-                    case 'imageVersion':
-                    case 'purpose':
-                    case 'characterPrompt':
-                    case 'enhancedPrompt':
-                    case 'language':
-                    case 'gender':
-                    case 'visibility':
-                    case 'isAutoGen':
-                    case 'rule':
-                    case 'description':
-                    case 'chatId':
-                        chatData[part.fieldname] = part.value;
-                        break;
-                    case 'chatImageUrl':
-                        chatData.chatImageUrl = await handleFileUpload(part,db);
-                        break;
-                    case 'thumbnail':
-                        chatData.thumbnailUrl = await handleFileUpload(part,db);
-                        break;
-                    default:                      
-                        break;
-                }
-            }
-
-            if (!chatData.name) {
-                return reply.status(400).send({ error: 'Missing name or content for the chat' });
-            }
-    
-            if (chatData.chatImageUrl && !chatData.thumbnailUrl) {
-                chatData.thumbnailUrl = chatData.chatImageUrl;
-            } else if (chatData.thumbnailUrl && !chatData.chatImageUrl) {
-                chatData.chatImageUrl = chatData.thumbnailUrl;
-            }
-    
-            chatData.userId = userId;
-            const collection = fastify.mongo.db.collection('chats');
-            const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-            const options = { timeZone: 'Asia/Tokyo', year: 'numeric', month: 'long', day: 'numeric', weekday: 'long', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false };
-            chatData.updatedAt = new Date(dateObj);
-            chatData.dateStrJP = new Date(dateObj).toLocaleDateString('ja-JP', options);
-            chatData.isTemporary = false;
-    
-            const chatId = chatData.chatId ? new fastify.mongo.ObjectId(chatData.chatId) : null;
-    
-            try {
-                if (chatId) {
-                    const existingChat = await collection.findOne({ _id: chatId });
-                    if (existingChat && existingChat.userId.toString() === userId.toString()) {
-                        chatData.tags = await generateAndSaveTags(chatData.description, chatId, language);
-                    
-                        // Merge existing gallery data with new data, preserving existing images if no new ones are provided
-                            existingChat.galleries = existingChat.galleries || []; // Ensure it exists
-                            galleries.forEach((newGallery, index) => {
-                                // If the current gallery already exists, merge the images
-                                if (existingChat.galleries[index]) {
-                                    existingChat.galleries[index].images = existingChat.galleries[index].images || [];
-                                    existingChat.galleries[index].images = [
-                                        ...existingChat.galleries[index].images, 
-                                        ...(newGallery.images || [])
-                                    ];
-                                    delete newGallery.images;
-                                    Object.assign(existingChat.galleries[index], newGallery); // Merge other gallery data
-                                } else {
-                                    existingChat.galleries[index] = newGallery; // Add new gallery
-                                }
-                            });
-                        
-                    
-                            existingChat.blurred_galleries = existingChat.blurred_galleries || []; // Ensure it exists
-                            blurred_galleries.forEach((newBlurredGallery, index) => {
-                                // If the current blurred gallery already exists, merge the images
-                                if (existingChat.blurred_galleries[index]) {
-                                    existingChat.blurred_galleries[index].images = existingChat.blurred_galleries[index].images || [];
-                                    existingChat.blurred_galleries[index].images = [
-                                        ...existingChat.blurred_galleries[index].images, 
-                                        ...(newBlurredGallery.images || [])
-                                    ];
-                                    delete newBlurredGallery.images;
-                                    Object.assign(existingChat.blurred_galleries[index], newBlurredGallery); // Merge other gallery data
-                                } else {
-                                    existingChat.blurred_galleries[index] = newBlurredGallery; // Add new blurred gallery
-                                }
-                            });
-                        
-                    
-                        // Update the chat data, including merged galleries and other chatData fields
-                        const updateData = { ...chatData, galleries: existingChat.galleries, blurred_galleries: existingChat.blurred_galleries };
-                    
-                        await collection.updateOne({ _id: chatId }, { $set: updateData });
-                        console.log(`Chat updated successfully`);
-                        return reply.send({ message: 'Chat updated successfully', chatId });
-                    }
-                    else {
-                        return reply.status(403).send({ error: 'Unauthorized to update this chat' });
-                    }
-                } else {
-                    chatData.createdAt = new Date(dateObj);
-                    const result = await collection.insertOne(chatData);
-                    chatData.tags = await generateAndSaveTags(chatData.description, result.insertedId, language);
-                    console.log(`Chat added successfully`)
-                    return reply.send({ message: 'Chat added successfully', chatId: result.insertedId });
-                }
-            } catch (error) {
-                console.log('Failed to add or update the Chat:', error);
-                return reply.status(500).send({ error: 'Failed to add or update the Chat' });
-            }
-        } catch (error) {
-            console.log('Error handling chat data:', error);
-            return reply.status(500).send({ error: 'Internal server error' });
-        }
-    });
-
-    async function generateAndSaveTags(description, chatId, language) {
-        const openai = new OpenAI();
-        const tagsCollection = fastify.mongo.db.collection('tags');
-        //let existingTags = await tagsCollection.find({}).limit(20).toArray();
-        //existingTags = existingTags.map(tag => tag.name).join(', ')
-        const collectionChats = fastify.mongo.db.collection('chats');
-        const chat = await collectionChats.findOne( { _id: chatId } );
-        const imageDescription = chat.imageDescription
-
-        const tagsPrompt = [
-            {
-                role: "system",
-                content: `You are an AI assistant that generates tags for a personna description. The purpose it to find similar character later.`.trim()
-            },
-            {
-                role: "user",
-                content: `Here is the description: ${imageDescription ? description+' '+imageDescription:description}\n
-                Generate a list of 5 relevant tags based on the description.\n
-                Respond in ${language}.`.trim()
-            }
-        ];
-
-        const PossibleAnswersExtraction = z.object({
-            answers: z.array(z.string())
-        });
-        const tagsCompletion = await openai.beta.chat.completions.parse({
-            model: "gpt-4o-mini",
-            messages: tagsPrompt,
-            response_format: zodResponseFormat(PossibleAnswersExtraction, "possible_answers_extraction"),
-        });
-
-        const generatedTags = tagsCompletion.choices[0].message.parsed.answers;
-
-        for (const tag of generatedTags) {
-            await tagsCollection.updateOne(
-                { name: tag },
-                { $set: { name: tag, language }, $addToSet: { chatIds: chatId } },
-                { upsert: true }
-            );
-        }
-        console.log(generatedTags)
-        return generatedTags;
-    }
-    fastify.post('/api/reset-gallery', async (request, reply) => {
-        try {
-            const { chatId, galleryIndex } = request.body;
-            if (!chatId || galleryIndex === undefined) {
-                return reply.status(400).send({ error: 'chatId and galleryIndex are required' });
-            }
-    
-            const db = await fastify.mongo.db;
-            const collection = db.collection('chats');
-            const user = await fastify.getUser(request, reply);
-            const userId = new fastify.mongo.ObjectId(user._id);
-            const chatObjectId = new fastify.mongo.ObjectId(chatId);
-    
-            const existingChat = await collection.findOne({ _id: chatObjectId });
-            if (!existingChat || existingChat.userId.toString() !== userId.toString()) {
-                return reply.status(403).send({ error: 'Unauthorized to reset this gallery' });
-            }
-    
-            if (existingChat.galleries && existingChat.galleries[galleryIndex]) {
-                existingChat.galleries[galleryIndex] = {
-                    name: '',
-                    description: '',
-                    images: []
-                };
-            }
-    
-            if (existingChat.blurred_galleries && existingChat.blurred_galleries[galleryIndex]) {
-                existingChat.blurred_galleries[galleryIndex] = {
-                    name: '',
-                    description: '',
-                    images: []
-                };
-            }
-    
-            await collection.updateOne(
-                { _id: chatObjectId },
-                { $set: { galleries: existingChat.galleries, blurred_galleries: existingChat.blurred_galleries } }
-            );
-    
-            return reply.send({ success: true });
-        } catch (error) {
-            console.log('Error resetting gallery:', error);
-            return reply.status(500).send({ error: 'Failed to reset gallery' });
-        }
-    });
-    
     fastify.delete('/api/delete-chat/:id', async (request, reply) => {
         try {
             const chatId = request.params.id;
@@ -265,23 +48,6 @@ async function routes(fastify, options) {
             if (!story) {
                 return reply.status(404).send({ error: 'Story not found' });
             }
-    
-            // Delete the thumbnail from S3 if it exists
-            /*
-            if (story.thumbnailUrl) {
-                const thumbnailKey = story.thumbnailUrl.split('/').pop();
-    
-                try {
-                    await s3.deleteObject({
-                        Bucket: process.env.AWS_S3_BUCKET_NAME,
-                        Key: thumbnailKey,
-                    }).promise();
-                } catch (error) {
-                    console.error('Failed to delete thumbnail from S3:', error);
-                    return reply.status(500).send({ error: 'Failed to delete thumbnail from S3' });
-                }
-            }
-            */
     
             // Delete the story from MongoDB
             await chatCollection.deleteOne({ _id: new fastify.mongo.ObjectId(chatId) });
@@ -1388,79 +1154,118 @@ async function routes(fastify, options) {
             reply.raw.end(); // End the stream before sending the response
             reply.status(500).send({ error: 'Error fetching OpenAI completion' });
         }
+            });
+    const characterSchema = z.object({
+        name: z.string(),
+        short_intro: z.string(),
+        base_personality: z.object({
+            traits: z.array(z.string()),
+            preferences: z.array(z.string()),
+            expression_style: z.object({
+                tone: z.string(),
+                vocabulary: z.string(),
+                unique_feature: z.string(),
+            }),
+            story: z.string(), 
+        }),
+        tags:z.array(z.string()),
+        first_message: z.string(), // Adding "first_message" field
     });
+
+    function createSystemPayloadChatRule(prompt, gender, language) {
+        return [
+            {
+                role: "system",
+                content: `You are a helpful assistant.
+                You will generate creative character descriptions in ${language}.
+                name: Please enter the actual ${language} name and surname without furigana. It should match the character's gender and description.
+                short_intro: Write a self-introduction that reflects the character's personality in 2 sentences.
+                base_personality: Define the character's traits, preferences, and expression style. Include a short story describing their personality and background.
+                first_message: Provide the character's first conversational message that reflects their personality.
+                tags: A list of 5 tags to help find similar character.
+                Please respond entirely in ${language}.`
+            },
+            {
+                role: "user",
+                content: `The character's gender is ${gender}.
+                Please review the following information: ${prompt}`
+            },
+        ];
+    }
+
     fastify.post('/api/openai-chat-creation', async (request, reply) => {
         try {
             // Validate request body
-            const { prompt, gender } = request.body;
-            if (!prompt || !gender) {
+            const { chatId, prompt, gender } = request.body;
+
+            if (!chatId || !prompt || !gender) {
                 return reply.status(400).send({ error: 'Invalid request body. "prompt" and "gender" are required.' });
             }
-    
+
             // Fetch user data
             const user = await fastify.getUser(request, reply);
             if (!user) {
                 return reply.status(404).send({ error: 'User not found.' });
             }
-    
+
             const userId = user._id;
-            let language = getLanguageName(user?.lang);
-    
-            // Define schema
-            const CharacterDescriptionSchema = z.object({
-                name: z.string(),
-                short_desc: z.string(),
-                long_desc: z.string()
-            });
-    
+            const language = getLanguageName(user?.lang);
+
             // Prepare payload
             const systemPayload = createSystemPayloadChatRule(prompt, gender, language);
-    
+
             // Interact with OpenAI API
             const openai = new OpenAI();
-            const completionResponse = await openai.beta.chat.completions.parse({
+            const completionResponse = await openai.chat.completions.create({
                 model: "gpt-4o",
                 messages: systemPayload,
-                response_format: zodResponseFormat(CharacterDescriptionSchema, "character_description_extraction"),
+                response_format: zodResponseFormat(characterSchema, "character_data"),
             });
-    
-            // Validate API response
+
             if (!completionResponse.choices || completionResponse.choices.length === 0) {
                 return reply.status(500).send({ error: 'Invalid response from OpenAI API.' });
             }
-    
-            const { name, short_desc, long_desc } = completionResponse.choices[0].message.parsed;
-    
-            reply.send({ name, short_desc, long_desc });
-        } catch (err) {
-            // Handle specific errors
-            if (err instanceof z.ZodError) {
-                return reply.status(400).send({ error: 'Validation error in response data.', details: err.errors });
+
+            const chatData = completionResponse.choices[0].message.parsed
+
+            // Save generated tags
+            const tagsCollection = fastify.mongo.db.collection('tags');
+            const generatedTags = chatData.tags
+            for (const tag of generatedTags) {
+                await tagsCollection.updateOne(
+                    { name: tag },
+                    { $set: { name: tag, language }, $addToSet: { chatIds: chatId } },
+                    { upsert: true }
+                );
             }
-    
-            // General error handling
-            console.error(err); // Log the error for debugging
+
+            // Respond with the validated character data
+            chatData.language = language
+            chatData.gender = gender
+            console.log(chatData)
+
+            const collectionChats = fastify.mongo.db.collection('chats');
+            const updateResult = await collectionChats.updateOne(
+                { _id: new fastify.mongo.ObjectId(chatId) },
+                { 
+                    $set: chatData
+                }
+            );
+
+            if (updateResult.matchedCount === 0) {
+                throw new Error('指定されたチャットが見つかりませんでした。');
+            }
+
+            reply.send(chatData);
+        } catch (err) {
+            if (err instanceof z.ZodError) {
+            return reply.status(400).send({ error: 'Validation error in response data.', details: err.errors });
+            }
+
+            console.error(err);
             reply.status(500).send({ error: 'An unexpected error occurred.', details: err.message });
         }
     });
-    
-    
-    function createSystemPayloadChatRule(prompt, gender, language) {
-        return [
-            {
-                "role": "system",
-                "content": `You are a helpful assistant.
-                You will generate creative character descriptions in ${language}.
-                name: Please enter the actual ${language} name and surname without furigana. It should match the character's gender and description.
-                short_desc: Write a self-introduction that reflects the character's personality in 2 lines.
-                long_desc: You must provide an extensive explaination of the character personnality, way of talking and background. Please respond entirely in ${language}.`
-            },            
-            {
-                role: "user",
-                content: `The character's gender is ${gender}.\nPlease review the following information: ${prompt}`
-            },
-        ];
-    }
     
     // Define the schema for request validation
     const EnhancePromptSchema = z.object({

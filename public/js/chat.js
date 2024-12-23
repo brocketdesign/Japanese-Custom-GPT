@@ -125,8 +125,6 @@ $(document).ready(async function() {
         sessionStorage.setItem('lastChatId', fetch_chatId);
 
         userChatId = lastUserChat ?._id || userChatId;
-        sessionStorage.setItem('userChatId', userChatId);
-        $('#chatContainer').attr('data-id',userChatId)
 
         count_proposal = 0;
         
@@ -149,7 +147,7 @@ $(document).ready(async function() {
             contentType: 'application/json',
             data: JSON.stringify({ userId: fetch_userId, chatId: fetch_chatId, userChatId }),
             success: function(data) {
-                handleChatSuccess(data, fetch_reset, fetch_userId);
+                handleChatSuccess(data, fetch_reset, fetch_userId, userChatId);
             },
             error: function(xhr, status, error) {
                 showDiscovery();
@@ -235,10 +233,12 @@ $(document).ready(async function() {
         
 
     function updateParameters(newchatId, newuserId, userChatId){
-        
-        localStorage.setItem('chatId', chatId);
-        sessionStorage.setItem('userChatId', userChatId);
-        $('#chatContainer').attr('data-id',userChatId)
+
+        if(chatId){ localStorage.setItem('chatId', chatId);}
+        if(userChatId){
+            sessionStorage.setItem('userChatId', userChatId);
+            $('#chatContainer').attr('data-id',userChatId)
+        }
 
         var currentUrl = window.location.href;
         var urlParts = currentUrl.split('/');
@@ -302,7 +302,7 @@ $(document).ready(async function() {
         promptForEmail()
     })
     
-    async function handleChatSuccess(data, fetch_reset, fetch_userId) {
+    async function handleChatSuccess(data, fetch_reset, fetch_userId, userChatId) {
         const chatId = data.chat._id;
         $(document).find(`.chat-list.item[data-id="${chatId}"]`).addClass('active').siblings().removeClass('active');
 
@@ -329,7 +329,7 @@ $(document).ready(async function() {
             $('#galleries-open').hide();
         }
 
-        updateParameters(chatId, fetch_userId);
+        updateParameters(chatId, fetch_userId, userChatId);
         showChat();
     }
     

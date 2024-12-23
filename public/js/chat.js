@@ -337,7 +337,7 @@ $(document).ready(async function() {
         chatData = chat.content || [];
         totalSteps = chatData.length;
         chatName = chat.name;
-        thumbnail = chat.thumbnailUrl || chat.chatImageUrl;
+        thumbnail = chat.chatImageUrl;
         localStorage.setItem('thumbnail',thumbnail)
     }
     
@@ -2050,7 +2050,7 @@ function constructChatItemHtml(chat, isActive) {
             <div class="d-flex align-items-center w-100">
                 <div class="user-chat-content d-flex align-items-center flex-1">
                     <div class="thumb d-flex align-items-center justify-content-center col-3 p-1">
-                        <img class="img-fluid" src="${chat.thumbnailUrl || chat.chatImageUrl || '/img/logo.webp'}" alt="">
+                        <img class="img-fluid" src="${chat.chatImageUrl || '/img/logo.webp'}" alt="">
                     </div>
                     <div class="chat-list-details ps-2">
                         <div class="chat-list-info">

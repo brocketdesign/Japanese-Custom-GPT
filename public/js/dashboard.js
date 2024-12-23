@@ -1840,7 +1840,7 @@ window.loadChatImages = async function (chatId, page = 1) {
 
             $('#chat-images-gallery').append(chatGalleryHtml);
             if ($('#chat-images-pagination-controls').length > 0) {
-                generateChatImagePagination(data.page, data.totalPages, chatId);
+                generateChatImagePagination(data.totalPages, chatId);
             }
 
             $(document).find('.img-blur').each(function() {

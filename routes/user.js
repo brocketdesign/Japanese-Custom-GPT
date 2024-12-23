@@ -385,7 +385,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
             Prefix: profileHash,
           }).promise();
         } catch (error) {
-          console.error('Failed to list objects in S3:', error);
+          console.log('Failed to list objects in S3:', error);
           return reply.status(500).send({ error: 'Failed to check existing profile images' });
         }
   
@@ -404,7 +404,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
             const uploadResult = await s3.upload(params).promise();
             profileUrl = uploadResult.Location;
           } catch (error) {
-            console.error('Failed to upload profile image:', error);
+            console.log('Failed to upload profile image:', error);
             return reply.status(500).send({ error: 'Failed to upload profile image' });
           }
         }
@@ -446,12 +446,12 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       );
   
       if (updateResult.modifiedCount === 0) {
-        return reply.status(500).send({ error: 'ユーザー情報の更新に失敗しました' });
+        //return reply.status(500).send({ error: 'ユーザー情報の更新に失敗しました' });
       }
   
       return reply.send({ status: 'ユーザー情報が正常に更新されました' });
     } catch (err) {
-      fastify.log.error(err);
+      console.log(err);
       return reply.status(500).send({ error: 'サーバーエラーが発生しました' });
     }
   });

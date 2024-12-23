@@ -86,7 +86,8 @@ $(document).ready(async function() {
     });
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageStart') {
-            const message = '[imageStart]'+prompt
+            const prompt = event.data.prompt
+            const message = '[imageStart]'+ prompt
             addMessageToChat(chatId, userChatId, 'user', message, function(){
                 generateCompletion(null,true)
             });
@@ -95,10 +96,8 @@ $(document).ready(async function() {
     window.addEventListener('message', function(event) {
         if (event.data.event === 'imageDone') {
             const prompt = event.data.prompt
-            const origineUserChatId = event.data.userChatId
-            if(origineUserChatId != userChatId) return;
-            let message = `[master] I received an image from you about : ${prompt}. Provide a short comment and ask me what I think of it. \n Respond in ${language}.`
-            addMessageToChat(chatId, userChatId, 'user', message,function(){
+            const message = '[imageDone]'+ prompt
+            addMessageToChat(chatId, userChatId, 'user', message, function(){
                 generateCompletion()
             });
         }
@@ -112,27 +111,7 @@ $(document).ready(async function() {
             });
         }
     });
-    window.addEventListener('message', function(event) {
-        if (event.data.event === 'imageNsfw') {
-            let message = `[master] Tell me that I can unlock more personal and attractive images if I subscribe to the premium plan which is 300 JPY per month if I pay yearly. is not that cheap ?! It is to celebrate the lauching of this app, ラミックス ! Plus I get 1000 coins to enjoy plenty of pictures of you. \n Provide a new message every time.`
-            addMessageToChat(chatId, userChatId, 'user', message,function(){
-                generateCompletion(function(){
-                    const message = `
-                    <div class="card bg-transparent text-white border-0">
-                        <div class="card-body-none" style="height:auto !important;">
-                            <button class="btn custom-gradient-bg shadow-0 w-100" 
-                                onclick="window.location.href='/my-plan'">
-                                <span>プレミアムプランを確認</span>
-                            </button>
-                        </div>
-                    </div>`
-                ;
-                displayMessage('assistant', message, userChatId);
 
-                })
-            });
-        }
-    });
     let count_proposal = 0
     const subscriptionStatus = user.subscriptionStatus == 'active'
 
@@ -1525,9 +1504,7 @@ $(document).ready(async function() {
             const typeText = isNSFWChecked ? 'NSFW' : 'SFW';
             const prompt_title = $(this).find('.card-text').text()
 
-            const userMessage = '[context] '+ window.translations['imageForm']['imagePurchaseMessage']
-                .replace('{type}', typeText)
-                .replace('{prompt_title}', '') || `[context] ${type}画像をリクエストしました。`;
+            const userMessage = '[context] '+ window.translations['asked_for_new_image'];
             window.postMessage({ event: 'displayMessage', role:'user', message: userMessage, completion : false , image : false, messageId: false }, '*');
 
 

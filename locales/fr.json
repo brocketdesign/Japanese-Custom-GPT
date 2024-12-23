@@ -1,4 +1,5 @@
 {
+  "asked_for_new_image": "J'ai demandé une nouvelle image",
   "seo_title_default": "Derniers posts de la communauté | LAMIX",
   "seo_description_default": "Avec Lamix, vous pouvez facilement créer des posts en utilisant des images générées lors d'une discussion avec l'IA Gravure, gratuitement.",
   "seo_title_query": "Résultats de recherche pour ${query} | LAMIX",

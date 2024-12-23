@@ -921,7 +921,7 @@ async function routes(fastify, options) {
 
             const currentUserMessage = { role: 'user', content: lastUserMessage.content };
             if (lastUserMessage.name) { currentUserMessage.name = lastUserMessage.name; }
-
+            console.log({currentUserMessage})
             let genImage = null;
             if (currentUserMessage.name !== 'master' && currentUserMessage.name !== 'context') {
                 genImage = await checkImageRequest(userMessagesForCompletion);
@@ -1337,6 +1337,13 @@ async function routes(fastify, options) {
             } else if (message.startsWith('[context]')){
                 newMessage.content = message.replace('[context]','')
                 newMessage.name = 'context'
+            } else if (message.startsWith('[imageDone]')) {
+                const prompt = message.replace('[imageDone]','').trim()
+                newMessage.content =  `I just received your image about : ${prompt}. \n 
+                Provide a short comment and ask me what I think of it.\n
+                Stay in your character, keep the same tone as before.`.replace(/^\s+/gm, '').trim();
+                newMessage.name = 'master'
+                
             } else if (message.startsWith('[imageStart]')){
                 const prompt = message.replace('[imageStart]','').trim()
                 newMessage.content =  `I just aksed for a new image about ${prompt}. \n 

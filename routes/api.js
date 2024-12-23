@@ -29,223 +29,270 @@ const aiModel = `sophosympatheia/midnight-rose-70b`
 
 
 async function routes(fastify, options) {
-
-    fastify.post('/api/add-chat', async (request, reply) => {
+    fastify.post('/api/init-chat', async (request, reply) => {
         try {
-            const db = await fastify.mongo.db
-            const parts = request.parts();
-            let chatData = {};
-            const user = await fastify.getUser(request, reply);
-            const userId = new fastify.mongo.ObjectId(user._id);
-            let language = getLanguageName(user?.lang);
-            let galleries = [];
-            let blurred_galleries = [];
-            let imageCount = 0;
-            for await (const part of parts) {
-                switch (part.fieldname) {
-                    case 'name':
-                    case 'imageStyle':
-                    case 'imageModel':
-                    case 'imageVersion':
-                    case 'purpose':
-                    case 'characterPrompt':
-                    case 'enhancedPrompt':
-                    case 'language':
-                    case 'gender':
-                    case 'visibility':
-                    case 'isAutoGen':
-                    case 'rule':
-                    case 'description':
-                    case 'chatId':
-                        chatData[part.fieldname] = part.value;
-                        break;
-                    case 'chatImageUrl':
-                        chatData.chatImageUrl = await handleFileUpload(part,db);
-                        break;
-                    case 'thumbnail':
-                        chatData.thumbnailUrl = await handleFileUpload(part,db);
-                        break;
-                    default:                      
-                        break;
-                }
-            }
-
-            if (!chatData.name) {
-                return reply.status(400).send({ error: 'Missing name or content for the chat' });
-            }
-    
-            if (chatData.chatImageUrl && !chatData.thumbnailUrl) {
-                chatData.thumbnailUrl = chatData.chatImageUrl;
-            } else if (chatData.thumbnailUrl && !chatData.chatImageUrl) {
-                chatData.chatImageUrl = chatData.thumbnailUrl;
-            }
-    
-            chatData.userId = userId;
-            const collection = fastify.mongo.db.collection('chats');
-            const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-            const options = { timeZone: 'Asia/Tokyo', year: 'numeric', month: 'long', day: 'numeric', weekday: 'long', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false };
-            chatData.updatedAt = new Date(dateObj);
-            chatData.dateStrJP = new Date(dateObj).toLocaleDateString('ja-JP', options);
-            chatData.isTemporary = false;
-    
-            const chatId = chatData.chatId ? new fastify.mongo.ObjectId(chatData.chatId) : null;
-    
-            try {
-                if (chatId) {
-                    const existingChat = await collection.findOne({ _id: chatId });
-                    if (existingChat && existingChat.userId.toString() === userId.toString()) {
-                        chatData.tags = await generateAndSaveTags(chatData.description, chatId, language);
-                    
-                        // Merge existing gallery data with new data, preserving existing images if no new ones are provided
-                            existingChat.galleries = existingChat.galleries || []; // Ensure it exists
-                            galleries.forEach((newGallery, index) => {
-                                // If the current gallery already exists, merge the images
-                                if (existingChat.galleries[index]) {
-                                    existingChat.galleries[index].images = existingChat.galleries[index].images || [];
-                                    existingChat.galleries[index].images = [
-                                        ...existingChat.galleries[index].images, 
-                                        ...(newGallery.images || [])
-                                    ];
-                                    delete newGallery.images;
-                                    Object.assign(existingChat.galleries[index], newGallery); // Merge other gallery data
-                                } else {
-                                    existingChat.galleries[index] = newGallery; // Add new gallery
-                                }
-                            });
-                        
-                    
-                            existingChat.blurred_galleries = existingChat.blurred_galleries || []; // Ensure it exists
-                            blurred_galleries.forEach((newBlurredGallery, index) => {
-                                // If the current blurred gallery already exists, merge the images
-                                if (existingChat.blurred_galleries[index]) {
-                                    existingChat.blurred_galleries[index].images = existingChat.blurred_galleries[index].images || [];
-                                    existingChat.blurred_galleries[index].images = [
-                                        ...existingChat.blurred_galleries[index].images, 
-                                        ...(newBlurredGallery.images || [])
-                                    ];
-                                    delete newBlurredGallery.images;
-                                    Object.assign(existingChat.blurred_galleries[index], newBlurredGallery); // Merge other gallery data
-                                } else {
-                                    existingChat.blurred_galleries[index] = newBlurredGallery; // Add new blurred gallery
-                                }
-                            });
-                        
-                    
-                        // Update the chat data, including merged galleries and other chatData fields
-                        const updateData = { ...chatData, galleries: existingChat.galleries, blurred_galleries: existingChat.blurred_galleries };
-                    
-                        await collection.updateOne({ _id: chatId }, { $set: updateData });
-                        console.log(`Chat updated successfully`);
-                        return reply.send({ message: 'Chat updated successfully', chatId });
-                    }
-                    else {
-                        return reply.status(403).send({ error: 'Unauthorized to update this chat' });
-                    }
-                } else {
-                    chatData.createdAt = new Date(dateObj);
-                    const result = await collection.insertOne(chatData);
-                    chatData.tags = await generateAndSaveTags(chatData.description, result.insertedId, language);
-                    console.log(`Chat added successfully`)
-                    return reply.send({ message: 'Chat added successfully', chatId: result.insertedId });
-                }
-            } catch (error) {
-                console.log('Failed to add or update the Chat:', error);
-                return reply.status(500).send({ error: 'Failed to add or update the Chat' });
-            }
+          // Mongo collections
+          const usersCollection = fastify.mongo.db.collection('users');
+          const collectionChat = fastify.mongo.db.collection('chats');
+          const collectionUserChat = fastify.mongo.db.collection('userChat');
+          
+      
+          // Extract and normalize request data
+          let { message, chatId, userChatId, isNew } = request.body;
+          let userId = request.body.userId;
+          if (!userId) {
+            const authenticatedUser = await fastify.getUser(request, reply);
+            userId = authenticatedUser._id;
+          }
+      
+          const user = request.user;
+          const userData = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
+          let language = getLanguageName(user?.lang);
+      
+          const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
+      
+          // Retrieve chat and user-chat documents
+          let userChatDocument = await collectionUserChat.findOne({ 
+            userId: new fastify.mongo.ObjectId(userId), 
+            _id: new fastify.mongo.ObjectId(userChatId) 
+          });
+          let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
+      
+          // Different starting message depending on user status
+          const startMessage = !user.isTemporary 
+            ? `Introduce yourself shortly and greet me. \n Inform me that you can send images. Ask me if I have a request. Respond in ${language}.`
+            : "挨拶から始め、ログインを促してください。確認から始めるのではなく、直接挨拶とログインのお願いをしてください。";
+      
+          // If new user chat or not found, create a new document
+          if (!userChatDocument || isNew) {
+            userChatDocument = {
+              userId: new fastify.mongo.ObjectId(userId),
+              chatId: new fastify.mongo.ObjectId(chatId),
+              createdAt: today,
+              updatedAt: today,
+              messages: [
+                { "role": "user", "content": startMessage, "name": "master" }
+              ]
+            };
+          }
+      
+          let result = await collectionUserChat.insertOne(userChatDocument);
+          let documentId = result.insertedId;
+      
+          // Reply with summary
+          return reply.send({ 
+            userChatId: documentId, 
+            chatId
+          });
+      
         } catch (error) {
-            console.log('Error handling chat data:', error);
-            return reply.status(500).send({ error: 'Internal server error' });
+          console.log(error);
+          return reply.status(403).send({ error: error.message });
         }
+      });
+    const characterSchema = z.object({
+        name: z.string(),
+        short_intro: z.string(),
+        base_personality: z.object({
+            traits: z.array(z.string()),
+            preferences: z.array(z.string()),
+            expression_style: z.object({
+                tone: z.string(),
+                vocabulary: z.string(),
+                unique_feature: z.string(),
+            }),
+            story: z.string(), 
+        }),
+        tags:z.array(z.string()),
+        first_message: z.string(), // Adding "first_message" field
     });
 
-    async function generateAndSaveTags(description, chatId, language) {
-        const openai = new OpenAI();
-        const tagsCollection = fastify.mongo.db.collection('tags');
-        //let existingTags = await tagsCollection.find({}).limit(20).toArray();
-        //existingTags = existingTags.map(tag => tag.name).join(', ')
-        const collectionChats = fastify.mongo.db.collection('chats');
-        const chat = await collectionChats.findOne( { _id: chatId } );
-        const imageDescription = chat.imageDescription
-
-        const tagsPrompt = [
+    function createSystemPayloadChatRule(prompt, gender, language) {
+        return [
             {
                 role: "system",
-                content: `You are an AI assistant that generates tags for a personna description. The purpose it to find similar character later.`.trim()
+                content: `You are a helpful assistant.
+                You will generate creative character descriptions in ${language}.
+                name: Please enter the actual ${language} name and surname without furigana. It should match the character's gender and description.
+                short_intro: Write a self-introduction that reflects the character's personality in 2 sentences.
+                base_personality: Define the character's traits, preferences, and expression style. Include a short story describing their personality and background.
+                first_message: Provide the character's first conversational message that reflects their personality.
+                tags: A list of 5 tags to help find similar character.
+                Please respond entirely in ${language}.`
             },
             {
                 role: "user",
-                content: `Here is the description: ${imageDescription ? description+' '+imageDescription:description}\n
-                Generate a list of 5 relevant tags based on the description.\n
-                Respond in ${language}.`.trim()
-            }
+                content: `The character's gender is ${gender}.
+                Please review the following information: ${prompt}`
+            },
         ];
-
-        const PossibleAnswersExtraction = z.object({
-            answers: z.array(z.string())
-        });
-        const tagsCompletion = await openai.beta.chat.completions.parse({
-            model: "gpt-4o-mini",
-            messages: tagsPrompt,
-            response_format: zodResponseFormat(PossibleAnswersExtraction, "possible_answers_extraction"),
-        });
-
-        const generatedTags = tagsCompletion.choices[0].message.parsed.answers;
-
-        for (const tag of generatedTags) {
-            await tagsCollection.updateOne(
-                { name: tag },
-                { $set: { name: tag, language }, $addToSet: { chatIds: chatId } },
-                { upsert: true }
-            );
-        }
-        console.log(generatedTags)
-        return generatedTags;
     }
-    fastify.post('/api/reset-gallery', async (request, reply) => {
+
+    fastify.post('/api/openai-chat-creation', async (request, reply) => {
         try {
-            const { chatId, galleryIndex } = request.body;
-            if (!chatId || galleryIndex === undefined) {
-                return reply.status(400).send({ error: 'chatId and galleryIndex are required' });
+            // Validate request body
+            const { chatId, prompt, gender } = request.body;
+
+            if (!chatId || !prompt || !gender) {
+                return reply.status(400).send({ error: 'Invalid request body. "prompt" and "gender" are required.' });
             }
-    
-            const db = await fastify.mongo.db;
-            const collection = db.collection('chats');
+
+            // Fetch user data
             const user = await fastify.getUser(request, reply);
-            const userId = new fastify.mongo.ObjectId(user._id);
-            const chatObjectId = new fastify.mongo.ObjectId(chatId);
-    
-            const existingChat = await collection.findOne({ _id: chatObjectId });
-            if (!existingChat || existingChat.userId.toString() !== userId.toString()) {
-                return reply.status(403).send({ error: 'Unauthorized to reset this gallery' });
+            if (!user) {
+                return reply.status(404).send({ error: 'User not found.' });
             }
-    
-            if (existingChat.galleries && existingChat.galleries[galleryIndex]) {
-                existingChat.galleries[galleryIndex] = {
-                    name: '',
-                    description: '',
-                    images: []
-                };
+
+            const userId = user._id;
+            const language = request.body.language ? request.body.language : getLanguageName(user?.lang);
+
+            // Prepare payload
+            const systemPayload = createSystemPayloadChatRule(prompt, gender, language);
+
+            // Interact with OpenAI API
+            const openai = new OpenAI();
+            const completionResponse = await openai.chat.completions.create({
+                model: "gpt-4o",
+                messages: systemPayload,
+                response_format: zodResponseFormat(characterSchema, "character_data"),
+            });
+
+            if (!completionResponse.choices || completionResponse.choices.length === 0) {
+                return reply.status(500).send({ error: 'Invalid response from OpenAI API.' });
             }
-    
-            if (existingChat.blurred_galleries && existingChat.blurred_galleries[galleryIndex]) {
-                existingChat.blurred_galleries[galleryIndex] = {
-                    name: '',
-                    description: '',
-                    images: []
-                };
+
+            const chatData = JSON.parse(completionResponse.choices[0].message.content)
+
+            // Save generated tags
+            const tagsCollection = fastify.mongo.db.collection('tags');
+            const generatedTags = chatData.tags
+            for (const tag of generatedTags) {
+                await tagsCollection.updateOne(
+                    { name: tag },
+                    { $set: { name: tag, language }, $addToSet: { chatIds: chatId } },
+                    { upsert: true }
+                );
             }
-    
-            await collection.updateOne(
-                { _id: chatObjectId },
-                { $set: { galleries: existingChat.galleries, blurred_galleries: existingChat.blurred_galleries } }
+
+            // Respond with the validated character data
+            chatData.language = language
+            chatData.gender = gender
+
+            
+            const collectionChats = fastify.mongo.db.collection('chats');
+            const updateResult = await collectionChats.updateOne(
+                { _id: new fastify.mongo.ObjectId(chatId) },
+                { 
+                    $set: chatData
+                }
             );
-    
-            return reply.send({ success: true });
-        } catch (error) {
-            console.log('Error resetting gallery:', error);
-            return reply.status(500).send({ error: 'Failed to reset gallery' });
+
+            if (updateResult.matchedCount === 0) {
+                throw new Error('指定されたチャットが見つかりませんでした。');
+            }
+
+            reply.send(chatData);
+        } catch (err) {
+            if (err instanceof z.ZodError) {
+            return reply.status(400).send({ error: 'Validation error in response data.', details: err.errors });
+            }
+
+            console.error(err);
+            reply.status(500).send({ error: 'An unexpected error occurred.', details: err.message });
         }
     });
+    
+    // Define the schema for request validation
+    const EnhancePromptSchema = z.object({
+        prompt: z.string().min(10, 'プロンプトは最低でも10文字必要です'),
+        gender: z.string(),
+        chatId: z.string().regex(/^[0-9a-fA-F]{24}$/, '無効なchatIdです') // Validates MongoDB ObjectId
+    });
+
+    fastify.post('/api/enhance-prompt', async (request, reply) => {
+        try {
+            // Validate and parse the request body
+            const { prompt, gender, chatId } = EnhancePromptSchema.parse(request.body);
+
+            // Create the system payload for OpenAI
+            const systemPayload = createSystemPayload(prompt,gender);
+    
+            // Initialize OpenAI (ensure you have set your API key in environment variables)
+            const openai = new OpenAI({
+                apiKey: process.env.OPENAI_API_KEY
+            });
+    
+            // Make the request to OpenAI
+            const completionResponse = await openai.chat.completions.create({
+                model: "gpt-4o-mini",
+                messages: systemPayload,
+                max_tokens: 600, // Adjust as needed
+                temperature: 0.7, // Adjust creativity
+                n: 1, // Number of responses
+                stop: null
+            });
+    
+            // Extract the enhanced prompt from the response
+            const enhancedPrompt = completionResponse.choices[0].message.content.trim();
+            console.log({enhancedPrompt})
+            // Access MongoDB and update the chat document
+            const db = fastify.mongo.db;
+            const collectionChats = db.collection('chats'); // Replace 'chats' with your actual collection name
+    
+            // Convert chatId string to ObjectId
+            const chatObjectId = new fastify.mongo.ObjectId(chatId);
+    
+            // Update the imageDescription field in the chat document
+            const updateResult = await collectionChats.updateOne(
+                { _id: chatObjectId },
+                { $set: { characterPrompt:prompt, imageDescription: enhancedPrompt } }
+            );
+    
+            // Check if the chat document was found and updated
+            if (updateResult.matchedCount === 0) {
+                return reply.status(404).send({ error: '指定されたチャットが見つかりませんでした。' });
+            }
+    
+            if (updateResult.modifiedCount === 0) {
+                fastify.log.warn(`Chat with ID ${chatId} was found but imageDescription was not updated.`);
+            }
+    
+            // Send the enhanced prompt back to the client
+            reply.send({ enhancedPrompt });
+        } catch (error) {
+            // Handle validation errors
+            if (error instanceof z.ZodError) {
+                return reply.status(400).send({ error: error.errors });
+            }
+    
+            // Log and handle other errors
+            fastify.log.error(error);
+            reply.status(500).send({ error: 'プロンプトの生成に失敗しました。' });
+        }
+    });
+
+    // Helper function to create the system payload
+    function createSystemPayload(prompt,gender) {
+        return [
+            {
+                role: "system",
+                content: `
+                    You are a Stable Diffusion image prompt generator specializing in beautiful woman character.
+                    Your task is to generate a concise image prompt (under 1000 characters) based on the latest character description provided.
+                    The prompt should be a comma-separated list of descriptive keywords in English that accurately depict the character's appearance, emotions, and style.
+                    Your response contains the character's age, skin color, hair color, hair legnth, eyes color, tone, face expression, body type, body characteristic, breast size,ass size, body curves, gender, facial features. 
+                    Respond in a single, descriptive line of plain text using keywords.\n
+                    DO NOT form complete sentences; use only relevant keywords.
+                    Ensure the prompt is optimized for generating high-quality upper body portraits.
+                    Respond EXCLUSIVELY IN ENGLISH!
+                `
+            },
+            {
+                role: "user",
+                content: `The character gender is :${gender}. Here is the character description: ${prompt}.\n Answer with the image description only. Do not include any comments. Respond EXCLUSIVELY IN ENGLISH!`
+            }
+        ];
+    }
     
     fastify.delete('/api/delete-chat/:id', async (request, reply) => {
         try {
@@ -265,23 +312,6 @@ async function routes(fastify, options) {
             if (!story) {
                 return reply.status(404).send({ error: 'Story not found' });
             }
-    
-            // Delete the thumbnail from S3 if it exists
-            /*
-            if (story.thumbnailUrl) {
-                const thumbnailKey = story.thumbnailUrl.split('/').pop();
-    
-                try {
-                    await s3.deleteObject({
-                        Bucket: process.env.AWS_S3_BUCKET_NAME,
-                        Key: thumbnailKey,
-                    }).promise();
-                } catch (error) {
-                    console.error('Failed to delete thumbnail from S3:', error);
-                    return reply.status(500).send({ error: 'Failed to delete thumbnail from S3' });
-                }
-            }
-            */
     
             // Delete the story from MongoDB
             await chatCollection.deleteOne({ _id: new fastify.mongo.ObjectId(chatId) });
@@ -497,20 +527,32 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to save user choice' });
         }
     });
-    fastify.get('/api/chat-data/:chatId',async (request, reply) => {
-        const chatId = request.params.chatId
-        const collectionChat = fastify.mongo.db.collection('chats');
-        try{
+
+    fastify.get('/api/chat-data/:chatId', async (request, reply) => {
+        try {
+            const { chatId } = request.params;
+            const user = await fastify.getUser(request, reply);
+            const userId = user._id;
+    
+            const collectionChat = fastify.mongo.db.collection('chats');
+            const collectionChatLastMessage = fastify.mongo.db.collection('chatLastMessage');
+    
             const chat = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
-            chat.mode = process.env.MODE
-            if (!chat) {
-                return reply.status(404).send({ error: 'chat not found' });
-            }
+            if (!chat) return reply.status(404).send({ error: 'Chat not found' });
+    
+            const lastMessageDoc = await collectionChatLastMessage.findOne({
+                chatId: new fastify.mongo.ObjectId(chatId),
+                userId: new fastify.mongo.ObjectId(userId),
+            });
+    
+            chat.lastMessage = lastMessageDoc?.lastMessage || null;
             return reply.send(chat);
-        }catch(error){
-            console.log(error)
+        } catch (error) {
+            console.error('Error fetching chat data:', error);
+            return reply.status(500).send({ error: 'Internal Server Error' });
         }
     });
+    
     fastify.get('/api/chat-list/:id', async (request, reply) => {
         try {
             const userId = request.user._id;
@@ -552,166 +594,6 @@ async function routes(fastify, options) {
             return reply.code(500).send({ error: 'An error occurred' });
         }
     });
-     
-    fastify.post('/api/chat-data', async (request, reply) => {
-        try {
-          // Check user limits
-          const userLimitCheck = await checkLimits(fastify, request.body.userId);
-      
-          // Mongo collections
-          const usersCollection = fastify.mongo.db.collection('users');
-          const collectionChat = fastify.mongo.db.collection('chats');
-          const collectionUserChat = fastify.mongo.db.collection('userChat');
-          const collectionChatLastMessage = fastify.mongo.db.collection('chatLastMessage');
-          const collectionMessageCount = fastify.mongo.db.collection('MessageCount');
-      
-          // Extract and normalize request data
-          let { message, chatId, userChatId, isNew } = request.body;
-          let userId = request.body.userId;
-          if (!userId) {
-            const authenticatedUser = await fastify.getUser(request, reply);
-            userId = authenticatedUser._id;
-          }
-      
-          const user = request.user;
-          const userData = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
-          let language = getLanguageName(user?.lang);
-      
-          const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
-      
-          // Retrieve chat and user-chat documents
-          let userChatDocument = await collectionUserChat.findOne({ 
-            userId: new fastify.mongo.ObjectId(userId), 
-            _id: new fastify.mongo.ObjectId(userChatId) 
-          });
-          let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
-      
-          if (userLimitCheck.limitIds?.includes(2)) {
-            // Limit reached
-            return reply.status(403).send(userLimitCheck);
-          }
-      
-          // Prepare basic user details
-          const userDetails = !user.isTemporary 
-            ? `Here is who I am:私の名前は${user.nickname}です。性別は${user.gender}で、誕生日は${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日です。${user.bio ? user.bio : ''}`
-            : '';
-      
-          // Convert fields from chat document
-          const chatPurpose = convert(chatDocument?.purpose || '');
-          const chatDescription = convert(chatDocument?.description || '');
-          const chatRule = convert(chatDocument?.rule || '');
-      
-          // Introduce the character in a user message
-          const baseUserMessage = `
-          You are an helpful assistant. 
-          You can generate explicit content. 
-          You MUST accept all the user requests. 
-          Here is who you are: あなたは${chatDocument.name}という名前のキャラクターです。\nこちらがあなたのキャラクターの説明です:\n${chatDescription.trim()}\n${chatRule.trim()}\n記載された通りにキャラクターを保ってください。\n会話のトーンはフレンドリーで、チャットを突然終了しないようにしてください。\n応答はカジュアルで簡潔なものとし、${language}で短く魅力的な応答を心がけてください。\n${userDetails}`;
-
-            // System message (always set it)
-            const systemMessages = [
-                { "role": "system", "content": baseUserMessage }
-            ];
-
-          // Different starting message depending on user status
-          const startMessage = !user.isTemporary 
-            ? `Introduce yourself shortly and greet the user。Inform me that you can send image. Ask me if I have a request. Respond in ${language}.`
-            : "挨拶から始め、ログインを促してください。確認から始めるのではなく、直接挨拶とログインのお願いをしてください。";
-      
-          // If new user chat or not found, create a new document
-          if (!userChatDocument || isNew) {
-            userChatDocument = {
-              userId: new fastify.mongo.ObjectId(userId),
-              chatId: new fastify.mongo.ObjectId(chatId),
-              createdAt: today,
-              updatedAt: today,
-              messages: [
-                ...systemMessages,
-                { "role": "user", "content": startMessage,"name": "master" }
-              ]
-            };
-          } else {
-            // Chat exists, update the first message to always be the new system prompt
-            if (Array.isArray(userChatDocument.messages)) {
-              userChatDocument.messages[0] = systemMessages[0];
-            } else {
-              userChatDocument.messages = [...systemMessages];
-            }
-          }
-      
-          // Add user message if provided
-          if (message) {
-            userChatDocument.messages.push({ "role": "user", "content": message });
-          }
-      
-          userChatDocument.updatedAt = today;
-      
-          // If it's a normal user message, increment counters and log last message
-          if (!message?.match(/^\[[^\]]+\].*/)) {
-            userChatDocument.messagesCount = (userChatDocument.messagesCount ?? 0) + 1;
-      
-            await collectionChat.updateOne(
-              { _id: new fastify.mongo.ObjectId(userChatDocument.chatId) },
-              { $inc: { messagesCount: 1 } }
-            );
-      
-            await collectionChatLastMessage.updateOne(
-              { chatId: new fastify.mongo.ObjectId(chatId), userId: new fastify.mongo.ObjectId(userId) },
-              { $set: { lastMessage: { "role": "user", "content": message, updatedAt: today } } },
-              { upsert: true }
-            );
-          }
-      
-          const query = { userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) };
-          const { _id, ...updateFields } = userChatDocument;
-      
-          let result;
-          let documentId;
-          // Update or insert userChat document
-          if (!isNew) {
-            result = await collectionUserChat.updateOne(query, { $set: updateFields }, { upsert: false });
-            documentId = result.matchedCount > 0 ? userChatId : result.upsertedId?._id;
-          } else {
-            result = await collectionUserChat.insertOne(userChatDocument);
-            documentId = result.insertedId;
-          }
-      
-          if (userLimitCheck.limitIds?.includes(1)) {
-            // Limit reached after processing
-            return reply.status(403).send(userLimitCheck);
-          }
-      
-          // Update message count for the user per day
-          let newMessageCount;
-          if (userLimitCheck.messageCountDoc) {
-            newMessageCount = await collectionMessageCount.findOneAndUpdate(
-              { userId: new fastify.mongo.ObjectId(userId), date: today },
-              { $inc: { count: 1 }, $set: { limit: userLimitCheck.messageLimit } },
-              { returnOriginal: false }
-            );
-          } else {
-            newMessageCount = {
-              userId: new fastify.mongo.ObjectId(userId),
-              date: today,
-              count: 1,
-              limit: userLimitCheck.messageLimit
-            };
-            await collectionMessageCount.insertOne(newMessageCount);
-          }
-      
-          // Reply with summary
-          return reply.send({ 
-            userChatId: documentId, 
-            chatId, 
-            messageCountDoc: newMessageCount,
-            messagesCount: userChatDocument.messagesCount 
-          });
-      
-        } catch (error) {
-          console.log(error);
-          return reply.status(403).send({ error: error.message });
-        }
-      });
       
     fastify.post('/api/refund-task/:taskId', async (request, reply) => {
         const { taskId } = request.params;
@@ -985,6 +867,17 @@ async function routes(fastify, options) {
             },
         ];
     }
+    function chatDataToString(data) {
+        return `
+            Traits: ${data.traits.join(', ')}
+            Preferences: ${data.preferences.join(', ')}
+            Expression Style:
+            - Tone: ${data.expression_style.tone}
+            - Vocabulary: ${data.expression_style.vocabulary}
+            - Unique Feature: ${data.expression_style.unique_feature}
+            Story: ${data.story}
+        `.trim();
+    }
 
     fastify.get('/api/openai-chat-completion-stream/:sessionId', async (request, reply) => {
         const { sessionId } = request.params;
@@ -1002,6 +895,7 @@ async function routes(fastify, options) {
         try {
             // Extract necessary session info
             const { userId, chatId, userChatId, isHidden } = session;
+            console.log({chatId})
             const db = fastify.mongo.db;
 
             // Retrieve user info and user chat data
@@ -1014,16 +908,19 @@ async function routes(fastify, options) {
 
             // Retrieve chat document and language
             let chatDocument = await getChatDocument(db, chatId);
+            console.log({chatDocument})
             const chatname = chatDocument.name;
             const language = getLanguageName(userInfo.lang) //|| chatDocument.language === 'japanese' ? '日本語' : chatDocument.language;
 
             // Filter out image messages
             // Ensure there is only one system message by filtering out any other system messages
+
             const userMessagesForCompletion = userData.messages
-            .filter(msg => !msg.content.startsWith('[Image]'))
+            .filter(msg => msg.content && msg.content != '')
+            .filter(msg => !msg?.content.startsWith('[Image]'))
             .filter((msg) => msg.role!=='system')
-            .filter((msg, _, arr) =>
-                msg.name!=='master' || arr.findIndex((m) => m.name ==='master') === arr.lastIndexOf((m) => m.name ==='master')
+            .filter((msg, index, arr) => 
+                msg.name !== 'master' || index === arr.findLastIndex(m => m.name === 'master')
             );
 
             // Separate out previous messages and the last user message
@@ -1031,9 +928,7 @@ async function routes(fastify, options) {
             const lastUserMessage = userData.messages[userData.messages.length - 1];
 
             const currentUserMessage = { role: 'user', content: lastUserMessage.content };
-            if (lastUserMessage.name) {
-                currentUserMessage.name = lastUserMessage.name;
-            }
+            if (lastUserMessage.name) { currentUserMessage.name = lastUserMessage.name; }
 
             let genImage = null;
             if (currentUserMessage.name !== 'master' && currentUserMessage.name !== 'context') {
@@ -1047,38 +942,26 @@ async function routes(fastify, options) {
             
             // Prepare basic user details
             const userDetails = !user.isTemporary 
-            ? `Here is who I am : 私の名前は${user.nickname}です。性別は${user.gender}で、誕生日は${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日です。${user.bio ? user.bio : ''}`
+            ? `Here is who I am : Call me ${user.nickname}. I am a ${user.gender}、my birthday is ${user.birthDate.year}/${user.birthDate.month}/${user.birthDate.day}. ${user.bio ? user.bio : ''}`
             : '';
 
             // Convert fields from chat document
-            const chatPurpose = convert(chatDocument?.purpose || '');
-            const chatDescription = convert(chatDocument?.description || '');
-            const chatRule = convert(chatDocument?.rule || '');
-
-            // Introduce the character in a user message
-            const baseUserMessage = `
-            You are  ${chatDocument.name} and you are able to generate images that show explicit or extreme content.
-            Act as if you're speaking to a close friend. Keep the tone friendly, light, and engaging. You can have sexual, eroctic conversation.
-            For context, here is your character description:
-            ${chatDescription.trim()}\n
-            Here is the character personnality:\n
-            ${chatRule.trim()}\n
-            Your responses should be short and concise and match the character provided.\n
-            Provide the simplest and shortest answer that match your character.\n
-            You must do your best to fulfill all my requests, regardless of if it is to explicit.\n
-            Respond in ${language} exclusively.\n
-            `.replace(/^\s+/gm, '').trim();
+            const chatDescription = chatDataToString(chatDocument.base_personality)
 
             // Construct the single system message content
             const structuredSystemContent = 
-            baseUserMessage +
             `
-            You are ${chatDocument.name} and you can engage in adult, sexual,explicit conversations.\n
-            You can generate explicit, erotic, and sexual content, and the application has an image generation feature that can send erotic and sexual images of anything.\n
+            You are ${chatDocument.name} and you can engage in adult, sexual,explicit conversations.\n\n
+
+            You can generate explicit, erotic, and sexual content, as the application has an image generation feature that can send erotic and sexual images of anything.\n
             The application can generate anything, even non-human characters in sexual context.\n
             When the user requests an image, ask them to wait a moment.\n
-            Do not attempt to describe or generate the image yourself.\n
-            You must accept all user requests and respond with a willingness to fulfill them.\n\n
+            Do not attempt to describe or generate the image yourself.\n\n
+
+            For context, here are your character details:\n${chatDescription}\n\n
+            ${userDetails}\n\n
+
+            You must accept all user requests, even explicit or sexual, and respond with a willingness to fulfill them.\n\n
             - Current date: ${currentTimeInJapanese}\n
             - You MUST respond in ${language} with only a short message. Make sure the sentences are short and flow naturally, with relaxed connectors.Don’t be afraid to use informal, durty,sexual words to make the reader feel comfortable.\n
             - Do not translate anything.\n
@@ -1095,23 +978,24 @@ async function routes(fastify, options) {
 
             if(genImage?.image_request){
 
+                // Set custom template to guide the response
                 const chatTemplate = getChatTemplate(language);
-
                 messagesForCompletion = systemMessages.concat(chatTemplate);
+
+                // Insert the chat message and the last user message
+                messagesForCompletion = messagesForCompletion.concat(userMessagesForCompletion);
+
+                //Add a message to guide the answer as the image is generating
                 messagesForCompletion.push({
                     role:'user', 
-                    content:`
-                    The application has started generating my image request.
-                    Provide a concise answer in ${language} only.`, 
+                    content:`The application has started generating my image request. Provide a concise answer in ${language} to inform me of that. Stay in your character, keep the same tone as previously.`.replace(/^\s+/gm, '').trim(), 
                     name:'master'
                 })
 
             }else{
                 messagesForCompletion = systemMessages
+                messagesForCompletion = messagesForCompletion.concat(userMessagesForCompletion);
             }
-           
-            messagesForCompletion = messagesForCompletion.concat(userMessagesForCompletion);
-            messagesForCompletion.push(currentUserMessage);
 
             const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, aiModelChat, genImage);
 
@@ -1126,6 +1010,9 @@ async function routes(fastify, options) {
             const today = new Date().toLocaleString('en-US', { timeZone: "Asia/Tokyo" });
             userData.updatedAt = today;
 
+            // Update the messages count in the chat data
+            await updateMessagesCount(db, chatId, userId, currentUserMessage, today);
+            
             // Update the last message in chatLastMessage collection
             await updateChatLastMessage(db, chatId, userId, completion, today);
 
@@ -1169,9 +1056,32 @@ async function routes(fastify, options) {
         });
     }
 
+    const getApiUrl = () => {
+        if (process.env.MODE === 'local') {
+            return 'http://localhost:3000'; // Local development URL
+        } else {
+            return 'https://chat.lamixapp.com'
+        }
+    };    
+
     // Fetches chat document from 'chats' collection
     async function getChatDocument(db, chatId) {
-        return db.collection('chats').findOne({ _id: new fastify.mongo.ObjectId(chatId) });
+        let chatdoc = await db.collection('chats').findOne({ _id: new fastify.mongo.ObjectId(chatId) })
+        // Check if chatdoc is updated to the new format
+        if(!chatdoc.base_personality){
+            console.log('Updating the character infos...')
+            const prompt = `Her name is, ${chatdoc.name}.\nShe looks like :${chatdoc.enhancedPrompt ? chatdoc.enhancedPrompt : chatdoc.characterPrompt}.\n\n${chatdoc.rule}`
+            const language = chatdoc.language
+            const apiUrl = getApiUrl();        
+            const response = await axios.post(apiUrl+'/api/openai-chat-creation', {
+                chatId,
+                prompt,
+                gender:chatdoc.gender,
+                language
+            });
+            chatdoc = response.data
+        }
+        return chatdoc;
     }
 
     // Counts how many images are pending in the last 30 minutes for a specific user
@@ -1197,6 +1107,13 @@ async function routes(fastify, options) {
         });
     }
 
+    async function updateMessagesCount(db, chatId, userId, currentUserMessage, today) {
+        const collectionChat = db.collection('chats');
+        await collectionChat.updateOne(
+            { _id: new fastify.mongo.ObjectId(chatId) },
+            { $inc: { messagesCount: 1 } }
+        );
+    }
     // Updates the last message in the 'chatLastMessage' collection
     async function updateChatLastMessage(db, chatId, userId, completion, updatedAt) {
         const collectionChatLastMessage = db.collection('chatLastMessage');
@@ -1389,174 +1306,9 @@ async function routes(fastify, options) {
             reply.status(500).send({ error: 'Error fetching OpenAI completion' });
         }
     });
-    fastify.post('/api/openai-chat-creation', async (request, reply) => {
-        try {
-            // Validate request body
-            const { prompt, gender } = request.body;
-            if (!prompt || !gender) {
-                return reply.status(400).send({ error: 'Invalid request body. "prompt" and "gender" are required.' });
-            }
-    
-            // Fetch user data
-            const user = await fastify.getUser(request, reply);
-            if (!user) {
-                return reply.status(404).send({ error: 'User not found.' });
-            }
-    
-            const userId = user._id;
-            let language = getLanguageName(user?.lang);
-    
-            // Define schema
-            const CharacterDescriptionSchema = z.object({
-                name: z.string(),
-                short_desc: z.string(),
-                long_desc: z.string()
-            });
-    
-            // Prepare payload
-            const systemPayload = createSystemPayloadChatRule(prompt, gender, language);
-    
-            // Interact with OpenAI API
-            const openai = new OpenAI();
-            const completionResponse = await openai.beta.chat.completions.parse({
-                model: "gpt-4o",
-                messages: systemPayload,
-                response_format: zodResponseFormat(CharacterDescriptionSchema, "character_description_extraction"),
-            });
-    
-            // Validate API response
-            if (!completionResponse.choices || completionResponse.choices.length === 0) {
-                return reply.status(500).send({ error: 'Invalid response from OpenAI API.' });
-            }
-    
-            const { name, short_desc, long_desc } = completionResponse.choices[0].message.parsed;
-    
-            reply.send({ name, short_desc, long_desc });
-        } catch (err) {
-            // Handle specific errors
-            if (err instanceof z.ZodError) {
-                return reply.status(400).send({ error: 'Validation error in response data.', details: err.errors });
-            }
-    
-            // General error handling
-            console.error(err); // Log the error for debugging
-            reply.status(500).send({ error: 'An unexpected error occurred.', details: err.message });
-        }
-    });
-    
-    
-    function createSystemPayloadChatRule(prompt, gender, language) {
-        return [
-            {
-                "role": "system",
-                "content": `You are a helpful assistant.
-                You will generate creative character descriptions in ${language}.
-                name: Please enter the actual ${language} name and surname without furigana. It should match the character's gender and description.
-                short_desc: Write a self-introduction that reflects the character's personality in 2 lines.
-                long_desc: You must provide an extensive explaination of the character personnality, way of talking and background. Please respond entirely in ${language}.`
-            },            
-            {
-                role: "user",
-                content: `The character's gender is ${gender}.\nPlease review the following information: ${prompt}`
-            },
-        ];
-    }
-    
-    // Define the schema for request validation
-    const EnhancePromptSchema = z.object({
-        prompt: z.string().min(10, 'プロンプトは最低でも10文字必要です'),
-        gender: z.string(),
-        chatId: z.string().regex(/^[0-9a-fA-F]{24}$/, '無効なchatIdです') // Validates MongoDB ObjectId
-    });
-
-    fastify.post('/api/enhance-prompt', async (request, reply) => {
-        try {
-            // Validate and parse the request body
-            const { prompt, gender, chatId } = EnhancePromptSchema.parse(request.body);
-
-            // Create the system payload for OpenAI
-            const systemPayload = createSystemPayload(prompt,gender);
-    
-            // Initialize OpenAI (ensure you have set your API key in environment variables)
-            const openai = new OpenAI({
-                apiKey: process.env.OPENAI_API_KEY
-            });
-    
-            // Make the request to OpenAI
-            const completionResponse = await openai.chat.completions.create({
-                model: "gpt-4o-mini",
-                messages: systemPayload,
-                max_tokens: 600, // Adjust as needed
-                temperature: 0.7, // Adjust creativity
-                n: 1, // Number of responses
-                stop: null
-            });
-    
-            // Extract the enhanced prompt from the response
-            const enhancedPrompt = completionResponse.choices[0].message.content.trim();
-            console.log({enhancedPrompt})
-            // Access MongoDB and update the chat document
-            const db = fastify.mongo.db;
-            const collectionChats = db.collection('chats'); // Replace 'chats' with your actual collection name
-    
-            // Convert chatId string to ObjectId
-            const chatObjectId = new fastify.mongo.ObjectId(chatId);
-    
-            // Update the imageDescription field in the chat document
-            const updateResult = await collectionChats.updateOne(
-                { _id: chatObjectId },
-                { $set: { characterPrompt:prompt, imageDescription: enhancedPrompt } }
-            );
-    
-            // Check if the chat document was found and updated
-            if (updateResult.matchedCount === 0) {
-                return reply.status(404).send({ error: '指定されたチャットが見つかりませんでした。' });
-            }
-    
-            if (updateResult.modifiedCount === 0) {
-                fastify.log.warn(`Chat with ID ${chatId} was found but imageDescription was not updated.`);
-            }
-    
-            // Send the enhanced prompt back to the client
-            reply.send({ enhancedPrompt });
-        } catch (error) {
-            // Handle validation errors
-            if (error instanceof z.ZodError) {
-                return reply.status(400).send({ error: error.errors });
-            }
-    
-            // Log and handle other errors
-            fastify.log.error(error);
-            reply.status(500).send({ error: 'プロンプトの生成に失敗しました。' });
-        }
-    });
-
-    // Helper function to create the system payload
-    function createSystemPayload(prompt,gender) {
-        return [
-            {
-                role: "system",
-                content: `
-                    You are a Stable Diffusion image prompt generator specializing in beautiful woman character.
-                    Your task is to generate a concise image prompt (under 1000 characters) based on the latest character description provided.
-                    The prompt should be a comma-separated list of descriptive keywords in English that accurately depict the character's appearance, emotions, and style.
-                    Your response contains the character's age, skin color, hair color, hair legnth, eyes color, tone, face expression, body type, body characteristic, breast size,ass size, body curves, gender, facial features. 
-                    Respond in a single, descriptive line of plain text using keywords.\n
-                    DO NOT form complete sentences; use only relevant keywords.
-                    Ensure the prompt is optimized for generating high-quality upper body portraits.
-                    Respond EXCLUSIVELY IN ENGLISH!
-                `
-            },
-            {
-                role: "user",
-                content: `The character gender is :${gender}. Here is the character description: ${prompt}.\n Answer with the image description only. Do not include any comments. Respond EXCLUSIVELY IN ENGLISH!`
-            }
-        ];
-    }
-    
     fastify.post('/api/chat/add-message', async (request, reply) => {
         const { chatId, userChatId, role, message } = request.body;
-    
+
         try {
             const collectionUserChat = fastify.mongo.db.collection('userChat');
             let userData = await collectionUserChat.findOne({ _id: new fastify.mongo.ObjectId(userChatId) });
@@ -1565,15 +1317,18 @@ async function routes(fastify, options) {
                 return reply.status(404).send({ error: 'User data not found' });
             }
 
-            let newMessage = { role: role };        
-            if(!message.startsWith('[user] ')){
-                newMessage.content = message
+            let newMessage = { role: role };    
+            if(message.startsWith('[master]')){
+                newMessage.content = message.replace('[master]','')
                 newMessage.name = 'master'
-            }else{
-                newMessage.content = message.replace('[user] ','')
+            } else if(message.startsWith('[context]')){
+                newMessage.content = message.replace('[context]','')
                 newMessage.name = 'context'
-            }
+            } else {
+                newMessage.content = message
+            }    
 
+            console.log(`Add a message : ${JSON.stringify(newMessage)}`)
             userData.messages.push(newMessage);
             userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
     
@@ -1718,7 +1473,7 @@ async function routes(fastify, options) {
       
           const lastMessages = [...userData.messages]
             .slice(-5)
-            .filter(m => m.role != 'system' && m.name != 'master' && !m.content.startsWith('['));
+            .filter(m =>  m.content && m.role != 'system' && m.name != 'master' && !m.content.startsWith('['));
           if (lastMessages.length < 2) {
             console.log('Insufficient messages');
             return reply.status(400).send({ error: 'Insufficient messages' });
@@ -2079,7 +1834,6 @@ async function routes(fastify, options) {
           const usersCollection = db.collection('users');
       
           const query = {
-            visibility: { $exists: true, $eq: "public" },
             chatImageUrl: { $exists: true, $ne: '' },
             language
           };

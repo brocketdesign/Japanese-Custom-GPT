@@ -283,23 +283,6 @@
     <!-- 2. キャラクターの性格 -->
     <div id="step2" class="step d-none">
         <h4 class="container mb-4 text-center stepTitle">{{translations.newCharacter.characterPersonalityTitle}}</h4>
-        <div class="mb-3 mx-3 row justify-content-between">
-            <div class="d-none col-auto ps-0">
-                <label for="visibility" class="form-label"><i class="fas fa-eye"></i> {{translations.newCharacter.visibilityLabel}}:</label>
-                <select class="form-select w-auto" id="visibility" name="visibility">
-                    <option value="public" selected>{{translations.newCharacter.public}}</option>
-                    <option value="private">{{translations.newCharacter.private}}</option>
-                </select>
-            </div>
-            <div class="d-none col-auto">
-                <label for="language" class="form-label"><i class="fas fa-language"></i> {{translations.newCharacter.languageLabel}}:</label>
-                <select class="form-select w-auto" id="language" name="language">
-                    <option value="japanese" selected><i class="fas fa-flag"></i> {{translations.newCharacter.japanese}}</option>
-                    <option value="english"><i class="fas fa-flag"></i> {{translations.newCharacter.english}}</option>
-                    <option value="french"><i class="fas fa-flag"></i> {{translations.newCharacter.french}}</option>
-                </select>
-            </div>
-        </div>
 
         <div id="chatPurpose-container" class="mb-3 mx-3">
             <div class="d-flex justify-content-between">
@@ -309,24 +292,14 @@
 
             <input type="text" class="form-control mb-2" id="chatName" name="chatName" placeholder="{{translations.newCharacter.namePlaceholder}}" contenteditable="false" disabled="true" required style="display:none;">
             <textarea class="form-control mb-2" id="chatDescription" style="display:none;" name="chatDescription" rows="3" placeholder="{{translations.newCharacter.descriptionPlaceholder}}" disabled="true" required></textarea>
-            <textarea class="d-none form-control" id="chatRule" name="content" rows="5" placeholder="{{translations.newCharacter.speechStylePlaceholder}}" disabled="true" hidden></textarea>
+            <textarea class="form-control mb-2" id="chatStory" style="display:none;" name="chatStory" rows="5" placeholder="" disabled="true"></textarea>
 
-            <div id="markdownContainer" class="border-0 py-2 px-3 text-start mb-2" style="font-size:15px;background-color: #e9ecef;color: #575a5d; display:none;" contenteditable="false">
-                {{translations.newCharacter.markdownInfo}}
-            </div>
-       
             <button type="button" id="ai-assist" class="btn btn-lg custom-gradient-bg shadow-0 mb-2 w-100">
                 <i class="fa fa-spinner fa-spin fa-fw fa-hidden me-2" style="display: none;"></i>
                 <i class="fa fa-magic me-2"></i>{{translations.newCharacter.generateWithAI}}
             </button>
 
-            <button type="button" id="prevStep2" 
-            class="btn btn-white text-secondary shadow-0 mb-2 prevStep position-absolute"
-            style="top:10px;left:10px;">
-               <i class="bi bi-chevron-left"></i>
-            </button>
-
-            <button type="submit" id="submitForm" class="btn btn-secondary btn-large w-100">
+            <button type="button" id="submitForm" class="btn btn-secondary btn-large w-100">
                 {{translations.newCharacter.complete}}
             </button>     
         </div>
@@ -354,8 +327,12 @@
             if ($('.img-thumbnail.select').length === 0) {
                 console.log('Validation failed: No image thumbnail selected.');
             }
+            if(!$('#generatedImage').attr('src') || $('#generatedImage').attr('src') == ''){
+                console.log('Validation failed: No image generatedImage.');
+            }
             return (
-                $('.img-thumbnail.select').length > 0
+                $('.img-thumbnail.select').length > 0 ||
+                $('#generatedImage').attr('src') != ''
             );
         } else if (step === 2) {
             if ($('#chatPurpose').val().trim() === '') {
@@ -367,14 +344,10 @@
             if ($('#chatDescription').val().trim() === '') {
                 console.log('Validation failed: Chat description is empty.');
             }
-            if ($('#chatRule').val().trim() === '') {
-                console.log('Validation failed: Chat rule is empty.');
-            }
             return (
                 $('#chatPurpose').val().trim() !== '' &&
                 $('#chatName').val().trim() !== '' &&
-                $('#chatDescription').val().trim() !== '' &&
-                $('#chatRule').val().trim() !== ''
+                $('#chatDescription').val().trim() !== ''
             );
         }
         return true;
@@ -544,36 +517,7 @@
             }
         }
 
-        $(document).on('click', '.resetGallery', function() {
-
-            const galleryWrapper = $(this).closest('.imageGalleryWrapper');
-            const galleryIndex = galleryWrapper.index(); 
-
-            galleryWrapper.find('input[type="text"]').val('');
-            galleryWrapper.find('textarea').val('');
-
-            const galleryId = galleryWrapper.find('div[id^="imageGallery-"]').attr('id');
-            const uploader = $(`#${galleryId}`).data('imageUploader'); 
-            
-            if (uploader) {
-                uploader.reset();
-            }
-
-            $.ajax({
-                url: '/api/reset-gallery',
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ chatId, galleryIndex }),
-                success: function(response) {
-                    showNotification('ギャラリーがリセットされました。', 'success');
-                },
-                error: function(error) {
-                    console.error('ギャラリーリセットエラー:', error);
-                    showNotification('ギャラリーのリセットに失敗しました。', 'error');
-                }
-            });
-        });
-        function fetchchatData(chatId, callback) {
+     function fetchchatData(chatId, callback) {
             $.ajax({
                 url: `/api/chat-data/${chatId}`,
                 type: 'GET',
@@ -609,11 +553,6 @@
                         $('#generatedImage').attr('src', chatData.chatImageUrl).show().addClass('on');
                     }
 
-                    // Populate Step 2: キャラクターの性格
-                    if (chatData.visibility) {
-                        $('#visibility').val(chatData.visibility);
-                    }
-
                     if (chatData.language) {
                         $('#language').val(chatData.language);
                     }
@@ -637,9 +576,9 @@
                         resizeTextarea($('#chatDescription')[0]);
                     }
 
-                    if (chatData.rule) {
-                        $('#chatRule').val(chatData.rule);
-                        $('#markdownContainer').html(marked.parse(chatData.rule)).show();
+                    if (chatData.base_personality.story) {
+                        $('#chatStory').val(chatData.base_personality.story).show();
+                        resizeTextarea($('#chatStory')[0]);
                     }
 
                     // Callback if provided
@@ -654,59 +593,11 @@
             });
         }
 
-        /*
-        $('#imageUploaderContainer').imageUploader({
-            maxSize: 2 * 1024 * 1024, // 2MB
-            maxFiles: 1
-        });
-        */
-
         // Form Submission
         $('#submitForm').on('click', function(e) {
             e.preventDefault();
             $('#sendForm .fa-spinner').toggleClass('d-none');
-
-            const formData = new FormData();
-            formData.append('imageStyle', $('#imageStyle').val().trim() || 'anime');
-            formData.append('imageModel', $('#imageModel').val().trim() || 'novaAnimeXL_ponyV20_461138');
-            formData.append('imageVersion', $('#imageVersion').val().trim() || 'sdxl');
-            formData.append('name', $('#chatName').val());
-            formData.append('purpose', $('#chatPurpose').val());
-            formData.append('characterPrompt', $('#characterPrompt').val());
-            formData.append('enhancedPrompt', $('#enhancedPrompt').val());
-            formData.append('language', $('#language').val());
-            formData.append('gender', $('#gender').val());
-            formData.append('description', $('#chatDescription').val());
-            formData.append('rule', $('#chatRule').val());
-            formData.append('visibility', $('#visibility').val());
-            formData.append('isAutoGen', isAutoGen);
-
-            if (chatId) {
-                formData.append('chatId', chatId);
-            }
-            
-            $.ajax({
-                url: '/api/add-chat',
-                type: 'POST',
-                processData: false,
-                contentType: false,
-                data: formData,
-                success: function(response) {
-                    console.log('Success:', response);
-                    $('#sendForm .fa-spinner').toggleClass('d-none');
-                    const { chatId } = response;
-                    window.location = '/chat/' + chatId;
-                },
-                error: function(error) {
-                    console.log('Error:', error);
-                    $('#sendForm .fa-spinner').toggleClass('d-none');
-                    Swal.fire(
-                        'エラー!',
-                        'チャットの追加に失敗しました: ' + error.responseJSON.error,
-                        'error'
-                    );
-                }
-            });
+            window.location = '/chat/' + chatId;
         });
         
       
@@ -726,7 +617,7 @@
             });
         }
 
-        function saveSelectedImage(imageUrl) {
+        function saveSelectedImage(imageUrl, characterPrompt, enhancedPrompt, imageStyle, imageModel, imageVersion) {
             const chatId = '{{chatId}}'; // Replace with actual chat ID
 
             $.ajax({
@@ -734,8 +625,13 @@
                 method: 'POST',
                 dataType: 'json',
                 data: {
-                    imageUrl: imageUrl,
-                    chatId: chatId
+                    characterPrompt, 
+                    enhancedPrompt, 
+                    imageStyle, 
+                    imageModel, 
+                    imageVersion,
+                    imageUrl,
+                    chatId
                 },
                 success: function(response) {
                     showNotification(translations.imageForm.image_saved, 'success');
@@ -746,12 +642,13 @@
             });
         }
 
-        function displayGeneratedImages(imageUrls) {
+        function displayGeneratedImages(imageUrls, characterPrompt, enhancedPrompt, imageStyle, imageModel, imageVersion) {
             // Clear the container
             $('#imageContainer').empty();
 
             // For each image URL, create an image element and append to the container
             imageUrls.forEach(function(data) {
+                console.log(data)
                 const url = data.imageUrl
                 const colDiv = $('<div>').addClass('col-12 col-md-6 mb-3');
                 const imgElement = $('<img>')
@@ -767,7 +664,7 @@
                     $(this).addClass('select')
                     
                     // Save the selected image (you can implement this function)
-                    saveSelectedImage(url);
+                    saveSelectedImage(url, characterPrompt, enhancedPrompt, imageStyle, imageModel, imageVersion);
                 });
 
                 colDiv.append(imgElement);
@@ -775,7 +672,7 @@
             });
         }
 
-        function checkTaskStatus(taskId) {
+        function checkTaskStatus(taskId, characterPrompt, enhancedPrompt, imageStyle, imageModel, imageVersion) {
             const POLLING_INTERVAL = 10000; // 3 seconds
             const MAX_ATTEMPTS = 30; // up to 90 seconds
             let attempts = 0;
@@ -793,7 +690,7 @@
                         clearInterval(intervalId);
                         const { imageUrls } = statusResponse.result;
 
-                        displayGeneratedImages(imageUrls)
+                        displayGeneratedImages(imageUrls, characterPrompt, enhancedPrompt, imageStyle, imageModel, imageVersion)
 
                         showNotification('画像が正常に生成されました。', 'success');
                         // Enable buttons and reset text
@@ -901,7 +798,7 @@
             showRegistrationForm()
             return
         }
-        const prompt = $('#characterPrompt').val().trim();
+        const prompt = characterPrompt = $('#characterPrompt').val().trim();
 
         if (!prompt || !chatId) {
             showNotification(translations.newCharacter.allFieldsRequired, 'error');
@@ -975,13 +872,14 @@
             const imageStyle = $('.style-option.selected').data('style')
             const imageModel = $('.style-option.selected').data('model')
             const imageVersion = $('.style-option.selected').data('version')
+
             // タスクIDを取得するリクエスト
             const taskResponse = await fetchTaskId(enhanceResponse.enhancedPrompt, '9:16', chatId, imageStyle, imageModel, imageVersion);
 
             if (taskResponse && taskResponse.taskId) {
                 showNotification(translations.newCharacter.image_generation_start, 'info');
                 // タスクステータスをポーリング
-                checkTaskStatus(taskResponse.taskId);
+                checkTaskStatus(taskResponse.taskId,characterPrompt, enhanceResponse.enhancedPrompt, imageStyle, imageModel, imageVersion);
             } else {
                 showNotification(translations.newCharacter.image_generation_failure, 'error');
                 // ボタンを有効化し、初期状態のテキストに戻す
@@ -1068,7 +966,8 @@
         function generateCompletion(callback) {
 
             const apiUrl = '/api/openai-chat-creation';
-
+        
+            let chatId = '{{chatId}}';
             let prompt = $('#chatPurpose').val().trim();
             let gender = $('#gender').val()
 
@@ -1080,19 +979,15 @@
                 url: apiUrl,
                 method: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({ prompt, gender}),
+                data: JSON.stringify({ chatId, prompt, gender}),
                 success: function(response) {
-                    const  { name, short_desc, long_desc } = response
-                    $('#markdownContainer').show()
-                    $('#chatDescription').show()
-                    $('#chatName').show()
+                    console.log(response)
+                    showInput();
 
-                    $('#chatDescription').val(short_desc)
+                    $('#chatName').val(response.name);
+                    $('#chatDescription').val(response.short_intro);
+                    $('#chatStory').val(response.base_personality.story);
 
-                    $('#markdownContainer').html(marked.parse(long_desc));
-                    $('#chatRule').val(long_desc)
-
-                    $('#chatName').val(name)
                     updateButtonText()
 
                     if (typeof callback === 'function') {
@@ -1107,7 +1002,14 @@
             });
         }
 
-
+        function showInput(){
+            $('#markdownContainer').show()
+            $('#chatDescription').show()
+            $('#chatStory').show()
+            $('#chatName').show()
+            resizeTextarea($('#chatDescription')[0]);
+            resizeTextarea($('#chatStory')[0]);
+        }
 
         // Helper function to create the message payload
         function createMessagePayload(base64Image) {

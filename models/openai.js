@@ -213,7 +213,7 @@ const systemPrompt = `
     Analyze the conversation:
     1. nsfw: true if nudity (not underwear) is involved, else false.
     2. nude: true if full nude requested, else false.
-    3. image_request: true if user last messages are a request for image, else false.
+    3. image_request: true if user last message is a request for image from the user, else false.
     4. nude_type: 'none','top','bottom','full' if applicable.
     5. image_focus: 'upper_body' or 'full_body'.
     6. position: 'standing','sitting','squat' if specified.

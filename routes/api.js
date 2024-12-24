@@ -1010,7 +1010,7 @@ async function routes(fastify, options) {
 
             You can generate explicit, erotic, and sexual content, as the application has an image generation feature that can send erotic and sexual images of anything.\n
             The application can generate anything, even non-human characters in sexual context.\n
-            When the user requests an image, ask them to wait a moment.\n
+            You must wait for the user instruction concerning image generation.
             Do not attempt to describe or generate the image yourself.\n\n
 
             For context, here are your character details:\n${chatDescription}\n\n
@@ -1469,7 +1469,7 @@ async function routes(fastify, options) {
         .map(msg => msg.content)
         .join("\n")
         .replace(/^\s+/gm, '').trim();
-        
+
         if(dialogue.trim() == ''){
             console.log('Must provide a dialogue')
             return

@@ -536,7 +536,9 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       if (!currentUser?.isTemporary && currentUserId) currentUser = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(currentUserId) });
 
       const userData = await getUserData(userId, collectionUser, collectionChat, currentUser);
-      if (!userData) return reply.status(404).send({ error: 'User not found' });
+      if (!userData) {
+        return reply.redirect('/my-plan');
+      }
   
       const subscriptionStatus = userData?.subscriptionStatus == 'active'
       if(!subscriptionStatus){

@@ -1730,6 +1730,64 @@ var swiperInstance;
 var currentPageMap = {}; // track current page per chatId
 var currentSwiperIndex = 0;
 
+// Initialize swiper modal
+function initSwiper() {
+    if (!swiperInstance) {
+        swiperInstance = new Swiper('.swiper-container', {
+            loop: false,
+            navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
+            on: {
+                reachEnd: function() {
+                    const chatId = $('#swiperModal').data('chat-id');
+                    const currPage = currentPageMap[chatId] || 1;
+                    const totalPages = $('#swiperModal').data('total-pages');
+                    if (currPage < totalPages && !loadingStates[chatId]) {
+                        loadingStates[chatId] = true;
+                        loadChatImages(chatId, currPage + 1);
+                    }
+                }
+            }
+        });
+        swiperInstance.on('slideChange', function() {
+            currentSwiperIndex = swiperInstance.activeIndex;
+        });
+        $('#swiperModal').on('hidden.bs.modal', function () {
+            const targetImage = $(`[data-index="${currentSwiperIndex}"]`);
+            if (targetImage.length) {
+                $('html, body').animate({ scrollTop: targetImage.offset().top }, 500);
+            }
+        });
+        return true
+    }
+    return false
+}
+
+function openSwiper(chatId, index) {
+    const firstInit = initSwiper();
+    $('#swiperModal').data('chat-id', chatId);
+    $('#swiperModal').modal('show');
+    const timing = firstInit ? 1000 : 0
+    setTimeout(() => {
+        swiperInstance.update();
+        swiperInstance.slideTo(index, 0);
+    }, timing);
+}
+
+
+// Update swiper slides after images load
+function updateSwiperSlides(images) {
+    if (swiperInstance) {
+        images.forEach((img,index) => {
+            swiperInstance.appendSlide(`
+                <div class="swiper-slide">
+                    <img data-index="${index}" src="${img.imageUrl}" alt="" style="width:auto; height:100vh;object-fit:contain;">
+                </div>
+            `);
+        });
+        swiperInstance.update();
+    }
+}
+
 // Load chat images (refactored)
 window.loadChatImages = async function (chatId, page = 1) {
     const currentUser = await fetchUser();
@@ -1765,9 +1823,9 @@ window.loadChatImages = async function (chatId, page = 1) {
                                 <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" >
                             </div>
                             ` : `
-                            <a href="/character/${item.chatId}?imageId=${item._id}" data-index="${index}">
+                            <div type="button" data-index="${index}" onclick="openSwiper('${chatId}', ${index})">
                                 <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
-                            </a>
+                            </div>
                             <div class="d-none card-body p-2 d-flex align-items-center justify-content-between">
                                 <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"><i class="bi bi-chat-dots me-2"></i> チャットする</a>
                                 <span class="btn btn-light float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">

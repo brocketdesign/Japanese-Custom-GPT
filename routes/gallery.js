@@ -276,7 +276,7 @@ async function routes(fastify, options) {
         { $match: { 'images.imageUrl': { $exists: true, $ne: null } } },
         { $sort: { _id: -1 } },  // Sort by newest first
         { $skip: skip },                        // Skip for pagination
-        { $limit: limit },                      // Limit the results to the page size
+        { $limit: 50 },                      // Limit the results to the page size
         { $project: { _id: 0, image: '$images', chatId: 1 } }
       ])
       .toArray();
@@ -302,7 +302,8 @@ async function routes(fastify, options) {
             chatName: chat ? chat.name : 'Unknown Chat',
             thumbnail: chat?.thumbnail || chat?.thumbnailUrl || '/img/default-thumbnail.png'
           };
-        });
+        })
+        .slice(0, limit);
   
         // Get the total count of images matching the filtering condition
         const totalImagesCount = await chatsGalleryCollection

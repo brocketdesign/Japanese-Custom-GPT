@@ -300,7 +300,7 @@ $(document).ready(function(){
         });
     }
     const user = {{{json user}}};
-    if(!user.isTemporary && $('#chat-widget-container').length == 0){
+    if(user && !user.isTemporary && $('#chat-widget-container').length == 0){
 
         const userNickname = user?.nickname ?? '';
         const userGender = user?.gender ?? '';

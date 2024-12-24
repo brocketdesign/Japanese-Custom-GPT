@@ -4,19 +4,14 @@ const audioPool = [];
 let language
 
 $(document).ready(async function() {
-    let autoPlay = localStorage.getItem('audioAutoPlay') === 'true';
-    $('#audio-icon').addClass(autoPlay ? 'fa-volume-up' : 'fa-volume-mute');
-    $('#audio-play').click(function() {
-        autoPlay = !autoPlay;
-        localStorage.setItem('audioAutoPlay', autoPlay);
-        $('#audio-icon').toggleClass('fa-volume-up fa-volume-mute');
-    });
     const { API_URL, MODE } = await window.setApiUrlAndMode();
     const user = await fetchUser();
 
-    let chatId = getIdFromUrl(window.location.href) || getIdFromUrl($.cookie('redirect_url'))||$(`#lamix-chat-widget`).data('id');
+    let chatId = getIdFromUrl(window.location.href) || getIdFromUrl($.cookie('redirect_url')) || $(`#lamix-chat-widget`).data('id');
     let userChatId = sessionStorage.getItem('userChatId');
     const userId = user._id
+    sessionStorage.setItem('userId',userId);
+
     let persona
     let currentStep = 0;
     let totalSteps = 0;
@@ -1130,7 +1125,6 @@ $(document).ready(async function() {
         return str.replace(/\*.*?\*/g, '').replace(/"/g, '');
     }                    
     function generateCompletion(callback,isHidden=false){
-        
         const apiUrl = API_URL+'/api/openai-chat-completion';
 
         hideOtherChoice(false, currentStep)
@@ -1152,6 +1146,7 @@ $(document).ready(async function() {
         $('#chatContainer').append(botResponseContainer);
         botResponseContainer.addClass(animationClass).fadeIn();
         $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
+        
         $.ajax({
             url: apiUrl,
             method: 'POST',

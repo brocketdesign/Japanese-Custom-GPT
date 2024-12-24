@@ -1058,7 +1058,9 @@ async function routes(fastify, options) {
 
     // Fetches chat document from 'chats' collection
     async function getChatDocument(db, chatId) {
-        let chatdoc = await db.collection('chats').findOne({ _id: new fastify.mongo.ObjectId(chatId) })
+        console.log({chatId})
+        let chatdoc = await db.collection('chats').findOne({ _id: new fastify.mongo.ObjectId(chatId)})
+        console.log(chatdoc)
         // Check if chatdoc is updated to the new format
         if(!chatdoc?.base_personality){
             const prompt = `Her name is, ${chatdoc.name}.\nShe looks like :${chatdoc.enhancedPrompt ? chatdoc.enhancedPrompt : chatdoc.characterPrompt}.\n\n${chatdoc.rule}`

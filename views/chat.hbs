@@ -735,32 +735,6 @@ function initiateCheckout(buttonId) {
         }
     });
 }
-function initiateAlbumCheckout(priceId,chatId) {
-    const user = {{{json user}}}
-    if(user.isTemporary){
-        showRegistrationForm()
-        return
-    }
-    const userId = user._id
-    let stripe
-    if(window.location.href.indexOf('https://') >= 0){
-        stripe = Stripe('pk_live_51PjtRbE5sP7DA1XvCkdmezori9qPGoO21y7yKSVvgkQVyrhWZfHAUkNsjPMnbwpPlp4zzoYsRjn79Ad7XN7HTHcc00UjBA9adF'); // Use your publishable key here
-    }else{
-        stripe = Stripe('pk_test_51PjtRbE5sP7DA1XvD68v7X7Qj7pG6ZJpQmvuNodJjxc7MbH1ss2Te2gahFAS9nms4pbmEdMYdfCPxFDWHBbu9CxR003ikTnRES'); // Use your publishable key here
-    }
-    $.ajax({
-        url: '/album/create-checkout-session',
-        method: 'POST',
-        data: { priceId, userId, chatId },
-        success: function(session) {
-            return stripe.redirectToCheckout({ sessionId: session.id });
-        },
-        error: function(xhr, status, error) {
-            console.error('Error creating Stripe checkout session:', error);
-        }
-    });
-}
-
     function renderCircleGrid(cardInfos,container){
         cardInfos.forEach(function(item) {
             var card = $(`

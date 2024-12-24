@@ -126,13 +126,15 @@ $(document).ready(async function() {
     $('.is-free-user').each(function(){if(!subscriptionStatus && !isTemporary)$(this).show()})
 
     window.fetchChatData = async function(fetch_chatId, fetch_userId, fetch_reset, callback) {
+        
         const lastUserChat = await getUserChatHistory(fetch_chatId);
-
         fetch_chatId = lastUserChat ?.chatId || fetch_chatId
+        chatId = fetch_chatId
+        userChatId = lastUserChat ?._id || userChatId;
+
         $('.new-chat').data('id',fetch_chatId).fadeIn()
         sessionStorage.setItem('lastChatId', fetch_chatId);
 
-        userChatId = lastUserChat ?._id || userChatId;
 
         count_proposal = 0;
         
@@ -311,7 +313,6 @@ $(document).ready(async function() {
     })
     
     async function handleChatSuccess(data, fetch_reset, fetch_userId, userChatId) {
-        const chatId = data.chat._id;
         $(document).find(`.chat-list.item[data-id="${chatId}"]`).addClass('active').siblings().removeClass('active');
 
         isNew = fetch_reset || data.isNew;

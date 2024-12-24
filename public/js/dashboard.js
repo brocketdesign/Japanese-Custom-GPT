@@ -1063,7 +1063,7 @@ window.displayPeopleChat = async function (page = 1, option, preLoadedData) {
                                         <a href="/user/${chat.userId}" class="text-muted" style="font-size:12px;">${chat.nickname}</a>
                                     </div>
                                     <a href="/character/${chat._id}" class="text-muted" style="text-decoration: none;">
-                                        <span style="font-size:12px;">${chat.description}</span>
+                                        <span style="font-size:12px;">${chat?.first_message || chat.description}</span>
                                     </a>
                                 </div>
                             </div>

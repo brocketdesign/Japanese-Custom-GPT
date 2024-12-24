@@ -31,7 +31,7 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
 
     try {
         const proposal = await getProposalById(item_id);
-        const {
+        let {
             negativePrompt = $('#negativePrompt-input').val(),
             prompt = proposal.description.replace(/^\s+/gm, '').trim() || $('#prompt-input').val(),
             aspectRatio = '9:16',
@@ -44,6 +44,12 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
             $(`#load-image-container-${item_id}`).remove();
             return;
         }
+
+
+        let imageDescriptionResponse = await checkImageDescription(chatId)
+        const imageDescription = imageDescriptionResponse.imageDescription
+
+        prompt = imageDescription +', '+ prompt
 
         const API_ENDPOINT = `${API_URL}/novita/product2img`;
 

@@ -1121,9 +1121,7 @@ async function routes(fastify, options) {
 
     // Fetches chat document from 'chats' collection
     async function getChatDocument(db, chatId) {
-        console.log({chatId})
         let chatdoc = await db.collection('chats').findOne({ _id: new fastify.mongo.ObjectId(chatId)})
-        console.log(chatdoc)
         // Check if chatdoc is updated to the new format
         if(!chatdoc?.base_personality){
             const prompt = `Her name is, ${chatdoc.name}.\nShe looks like :${chatdoc.enhancedPrompt ? chatdoc.enhancedPrompt : chatdoc.characterPrompt}.\n\n${chatdoc.rule}`
@@ -1475,7 +1473,9 @@ async function routes(fastify, options) {
         }).join("\n");
 
         // Create a new user message with the dialogue
-        const newUserMessage = `Use the following conversation to come up with the desired prompt:\n\n${dialogue}`;
+        const newUserMessage = `
+        Use the following conversation to come up with the desired prompt:\n\n${dialogue}.\n
+        `;
 
         // Insert the new user message into lastMessages
         const newMessages = [
@@ -1552,7 +1552,7 @@ async function routes(fastify, options) {
             
             Respond with an image description of the scene I just asked, in English. 
             Only one image description. Provide details, for a ${type} image. 
-            Include the following in your prompt : \n
+            Your prompt must match the following requirements : \n
             ${nudeDetails}, ${positionDetails} , ${viewpointDetails} , ${imageFocusDetails}\n\n
             Do not include any comments. 
             Use keywords to describe the image, do not make sentences. Provide a detailed prompt in englsih only.

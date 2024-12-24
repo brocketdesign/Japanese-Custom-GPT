@@ -3,11 +3,23 @@ const audioPool = [];
 
 let language
 
+function getIdFromUrl(url) {
+    if(!url){return null}
+    var regex = /\/chat\/([a-zA-Z0-9]+)/;
+    var match = url.match(regex);
+    if (match && match[1]) {
+        return match[1];
+    } else {
+        return null;
+    }
+}
+
+let chatId = getIdFromUrl(window.location.href) || sessionStorage.getItem('lastChatId') || getIdFromUrl($.cookie('redirect_url')) || $(`#lamix-chat-widget`).data('id');
+
 $(document).ready(async function() {
     const { API_URL, MODE } = await window.setApiUrlAndMode();
     const user = await fetchUser();
 
-    let chatId = getIdFromUrl(window.location.href) || getIdFromUrl($.cookie('redirect_url')) || $(`#lamix-chat-widget`).data('id');
     let userChatId = sessionStorage.getItem('userChatId');
     const userId = user._id
     sessionStorage.setItem('userId',userId);
@@ -27,6 +39,7 @@ $(document).ready(async function() {
 
     $('body').attr('data-temporary-user',isTemporary)
 
+    initializeAudio();
     displayChatList(null,userId);
     window.addEventListener('message', function(event) {
         if (event.data.event === 'displayMessage') {
@@ -620,7 +633,7 @@ $(document).ready(async function() {
                 <div id="starter-${uniqueId}" class="starter-on">
                     <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
                         <img src="${ thumbnail ? thumbnail : '/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
-                        <div class="audio-controller" style="display:none">
+                        <div class="audio-controller">
                             <button id="play-${uniqueId}" class="audio-content badge bg-dark">►</button>
                         </div>
                         <div id="completion-${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">
@@ -999,7 +1012,7 @@ $(document).ready(async function() {
         getAvailableAudio();
     });
 
-    /*
+    
     $(document).on('click', '.message-container', function(event) {
         event.stopPropagation();
         
@@ -1021,7 +1034,7 @@ $(document).ready(async function() {
         
         initAudio($el, message);
     });
-    */
+    
     
     $(document).on('click', '.audio-controller .audio-content', function(event) {
         event.stopPropagation();
@@ -1060,6 +1073,9 @@ $(document).ready(async function() {
     }
     
     function getVoiceUrl(message) {
+        if(language != 'japanese'){
+            return `/api/txt2speech?message=${message}&language=${language}&chatId=${chatId}`
+        }
         const baseUrl = 'https://api.synclubaichat.com/aichat/h5/tts/msg2Audio';
         const params = `?device=web_desktop&product=aichat&sys_lang=en-US&country=&referrer=&zone=9&languageV2=ja&uuid=&app_version=1.6.4&message=${encodeURIComponent(message)}&voice_actor=default_voice`;
         return $('#chat-container').attr('data-genre') == 'male' 
@@ -1135,7 +1151,7 @@ $(document).ready(async function() {
             <div id="container-${uniqueId}">
                 <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
                     <img src="${ thumbnail ? thumbnail : '/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
-                    <div class="audio-controller" style="display:none">
+                    <div class="audio-controller">
                         <button id="play-${uniqueId}" class="audio-content badge bg-dark">►</button>
                     </div>
                     <div id="completion-${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">
@@ -1171,12 +1187,12 @@ $(document).ready(async function() {
                 eventSource.onerror = function(error) {
                     eventSource.close();
                     let message = removeContentBetweenStars(markdownContent)
-                    if(language != 'english'){
-                        $(`#play-${uniqueId}`).attr('data-content',message)
-                        $(`#play-${uniqueId}`).closest('.audio-controller').show()
-                        if(autoPlay){
-                            //initAudio($(`#play-${uniqueId}`), message);
-                        }
+                    $(`#play-${uniqueId}`).attr('data-content',message)
+                    $(`#play-${uniqueId}`).closest('.audio-controller').show()
+
+                    let autoPlay = localStorage.getItem('audioAutoPlay') === 'true';
+                    if(autoPlay){
+                        initAudio($(`#play-${uniqueId}`), message);
                     }
                     if (typeof callback === "function") {
                         callback();
@@ -1288,6 +1304,9 @@ $(document).ready(async function() {
             messageElement = $(`
                 <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container ${animationClass}">
                     <img src="${thumbnail || '/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top; cursor:pointer;">
+                    <div class="audio-controller">
+                        <button id="play-${uniqueId}" class="audio-content badge bg-dark" data-content="${message}">►</button>
+                    </div>
                     <div id="${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">
                         ${message}
                     </div>
@@ -1596,17 +1615,6 @@ $(document).ready(async function() {
     
   // Fetch the user's IP address and generate a unique ID
    
-
-    function getIdFromUrl(url) {
-        if(!url){return null}
-        var regex = /\/chat\/([a-zA-Z0-9]+)/;
-        var match = url.match(regex);
-        if (match && match[1]) {
-            return match[1];
-        } else {
-            return null;
-        }
-    }
 
     function appendHeadlineCharacterByCharacter($element, headline, callback) {
         let index = 0;
@@ -2146,4 +2154,14 @@ window.showChat = function() {
         'pointer-events': '',
         'visibility': ''
     }); 
+}
+
+function initializeAudio(){
+    let autoPlay = localStorage.getItem('audioAutoPlay') === 'true';
+    $('#audio-icon').addClass(autoPlay ? 'fa-volume-up' : 'fa-volume-mute');
+    $('#audio-play').click(function() {
+        autoPlay = !autoPlay;
+        localStorage.setItem('audioAutoPlay', autoPlay);
+        $('#audio-icon').toggleClass('fa-volume-up fa-volume-mute');
+    });
 }

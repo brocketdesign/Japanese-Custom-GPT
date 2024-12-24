@@ -375,6 +375,69 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to retrieve chat or character' });
         }
     });
+
+    fastify.post('/api/chat/add-message', async (request, reply) => {
+        const { chatId, userChatId, role, message } = request.body;
+
+        try {
+            const collectionUserChat = fastify.mongo.db.collection('userChat');
+            let userData = await collectionUserChat.findOne({ _id: new fastify.mongo.ObjectId(userChatId) });
+    
+            if (!userData) {
+                return reply.status(404).send({ error: 'User data not found' });
+            }
+
+            let newMessage = { role: role };    
+            if(message.startsWith('[master]')){
+                newMessage.content = message.replace('[master]','')
+                newMessage.name = 'master'
+            } else if (message.startsWith('[context]')){
+                newMessage.content = message.replace('[context]','')
+                newMessage.name = 'context'
+            } else if (message.startsWith('[imageDone]')) {
+                const prompt = message.replace('[imageDone]','').trim()
+                newMessage.content =  `I just received your image about : ${prompt}. \n 
+                Provide a short comment and ask me what I think of it.\n
+                Stay in your character, keep the same tone as before.`.replace(/^\s+/gm, '').trim();
+                newMessage.name = 'master'
+                
+            } else if (message.startsWith('[imageStart]')){
+                const prompt = message.replace('[imageStart]','').trim()
+                newMessage.content =  `I just aksed for a new image about ${prompt}. \n 
+                Inform me that you received my request and that the image generation process is starting.\n
+                Do not include the image description in your answer. Provide a concice and short answer.\n
+                Stay in your character, keep the same tone as before.`.replace(/^\s+/gm, '').trim();
+                newMessage.name = 'master'
+            } else if (message.startsWith('[imageFav]')){
+                const imageId = message.replace('[imageFav]','').trim()
+                const imageData = await findImageId(fastify.mongo.db,chatId,imageId)
+                newMessage.content =  `I liked one of your picture. The one about: ${imageData.prompt}\n
+                 Provide a short answer to thank me, stay in your character. 
+                 `.replace(/^\s+/gm, '').trim();
+                newMessage.name = 'master'
+            } else {
+                newMessage.content = message
+            }    
+
+            userData.messages.push(newMessage);
+            userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
+    
+            const result = await collectionUserChat.updateOne(
+                { _id: new fastify.mongo.ObjectId(userChatId) },
+                { $set: { messages: userData.messages, updatedAt: userData.updatedAt } }
+            );
+    
+            if (result.modifiedCount === 1) {
+                reply.send({ success: true, message: 'Message added successfully' });
+            } else {
+                reply.status(500).send({ error: 'Failed to add message' });
+            }
+        } catch (error) {
+            console.log(error);
+            reply.status(500).send({ error: 'Error adding message to chat' });
+        }
+    });
+
     fastify.post('/api/chat-analyze/', async (request, reply) => {
         const {chatId,userId} = request.body;
         const collectionUser = fastify.mongo.db.collection('users');
@@ -1321,68 +1384,64 @@ async function routes(fastify, options) {
         }
     }
     
-    fastify.post('/api/chat/add-message', async (request, reply) => {
-        const { chatId, userChatId, role, message } = request.body;
-
+    fastify.post('/api/txt2speech', async (request, reply) => {
         try {
-            const collectionUserChat = fastify.mongo.db.collection('userChat');
-            let userData = await collectionUserChat.findOne({ _id: new fastify.mongo.ObjectId(userChatId) });
-    
-            if (!userData) {
-                return reply.status(404).send({ error: 'User data not found' });
+            const { message, language, chatId } = request.query;
+        
+            if (!message) {
+            return reply.status(400).send({
+                errno: 1,
+                message: "Message parameter is required."
+            });
             }
-
-            let newMessage = { role: role };    
-            if(message.startsWith('[master]')){
-                newMessage.content = message.replace('[master]','')
-                newMessage.name = 'master'
-            } else if (message.startsWith('[context]')){
-                newMessage.content = message.replace('[context]','')
-                newMessage.name = 'context'
-            } else if (message.startsWith('[imageDone]')) {
-                const prompt = message.replace('[imageDone]','').trim()
-                newMessage.content =  `I just received your image about : ${prompt}. \n 
-                Provide a short comment and ask me what I think of it.\n
-                Stay in your character, keep the same tone as before.`.replace(/^\s+/gm, '').trim();
-                newMessage.name = 'master'
-                
-            } else if (message.startsWith('[imageStart]')){
-                const prompt = message.replace('[imageStart]','').trim()
-                newMessage.content =  `I just aksed for a new image about ${prompt}. \n 
-                Inform me that you received my request and that the image generation process is starting.\n
-                Do not include the image description in your answer. Provide a concice and short answer.\n
-                Stay in your character, keep the same tone as before.`.replace(/^\s+/gm, '').trim();
-                newMessage.name = 'master'
-            } else if (message.startsWith('[imageFav]')){
-                const imageId = message.replace('[imageFav]','').trim()
-                const imageData = await findImageId(fastify.mongo.db,chatId,imageId)
-                newMessage.content =  `I liked one of your picture. The one about: ${imageData.prompt}\n
-                 Provide a short answer to thank me, stay in your character. 
-                 `.replace(/^\s+/gm, '').trim();
-                newMessage.name = 'master'
-            } else {
-                newMessage.content = message
-            }    
-
-            userData.messages.push(newMessage);
-            userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-    
-            const result = await collectionUserChat.updateOne(
-                { _id: new fastify.mongo.ObjectId(userChatId) },
-                { $set: { messages: userData.messages, updatedAt: userData.updatedAt } }
-            );
-    
-            if (result.modifiedCount === 1) {
-                reply.send({ success: true, message: 'Message added successfully' });
-            } else {
-                reply.status(500).send({ error: 'Failed to add message' });
-            }
+        
+            console.log({ message, language, chatId });
+        
+            // Initialize OpenAI (ensure you have set your API key in environment variables)
+            const openai = new OpenAI({
+                apiKey: process.env.OPENAI_API_KEY
+            });
+        
+            const mp3 = await openai.audio.speech.create({
+                model: "tts-1",
+                voice: "nova",
+                input: message
+            });
+        
+            const buffer = Buffer.from(await mp3.arrayBuffer());
+            const filename = `speech-${Date.now()}.mp3`;
+            const filePath = path.join(process.cwd(), "public", "audio", filename);
+        
+            await fs.promises.writeFile(filePath, buffer);
+        
+            return reply.send({
+                errno: 0,
+                data: {
+                audio_url: `/audio/${filename}`
+                }
+            });
         } catch (error) {
-            console.log(error);
-            reply.status(500).send({ error: 'Error adding message to chat' });
+            console.error("Error in /api/txt2speech:", error);
+        
+            // Handle OpenAI-specific errors
+            if (error.response && error.response.data) {
+                return reply.status(500).send({
+                errno: 2,
+                message: "Error generating speech from OpenAI.",
+                details: error.response.data
+                });
+            }
+      
+            // Handle general errors
+            return reply.status(500).send({
+                errno: 3,
+                message: "Internal server error.",
+                details: error.message
+            });
         }
-    });
-    
+      });
+      
+
     const PurchaseProposalExtraction = z.object({
         items: z.array(
             z.object({

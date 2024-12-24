@@ -96,7 +96,6 @@ async function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, i
             let imageDescriptionResponse = await checkImageDescription(chatId)
             const imageDescription = imageDescriptionResponse.imageDescription
 
-            console.log({imageDescription,prompt})
             prompt = imageDescription +', '+ prompt
             txt2ImageNovita(API_URL, userId, chatId, userChatId, imageId, thumbnail, imageNsfw, {prompt})
         },

@@ -45,12 +45,6 @@ window.generateImageNovita = async function(API_URL, userId, chatId, userChatId,
             return;
         }
 
-
-        let imageDescriptionResponse = await checkImageDescription(chatId)
-        const imageDescription = imageDescriptionResponse.imageDescription
-
-        prompt = imageDescription +', '+ prompt
-
         const API_ENDPOINT = `${API_URL}/novita/product2img`;
 
         const response = await fetch(API_ENDPOINT, {

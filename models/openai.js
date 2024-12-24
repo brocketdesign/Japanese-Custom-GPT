@@ -232,8 +232,12 @@ const systemPrompt = `
 `;
 const checkImageRequest = async (messages) => {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const lastTwoMessages = messages.slice(-2);
+    // Get the last user messages
+    const lastTwoMessages = messages
+    .filter((msg) => msg.role !== 'assistant')
+    .slice(-2);
     console.log({lastTwoMessages})
+    
     const updatedMessages = [
       { role: "system", content: systemPrompt },
       ...lastTwoMessages

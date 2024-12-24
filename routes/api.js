@@ -23,8 +23,8 @@ const stripe = process.env.MODE == 'local'? require('stripe')(process.env.STRIPE
 const sharp = require('sharp');
 const { chat } = require('googleapis/build/src/apis/chat');
 
-const aiModelChat = 'meta-llama/llama-3.1-70b-instruct'
-const aiModel = `sophosympatheia/midnight-rose-70b`
+const aiModelChat = 'meta-llama/llama-3.1-8b-instruct-max' //'meta-llama/llama-3.1-70b-instruct'
+const aiModel = `meta-llama/llama-3.1-8b-instruct`
   
 
 
@@ -984,7 +984,7 @@ async function routes(fastify, options) {
 
             const currentUserMessage = { role: 'user', content: lastUserMessage.content };
             if (lastUserMessage.name) { currentUserMessage.name = lastUserMessage.name; }
-            console.log({currentUserMessage})
+
             let genImage = null;
             if (currentUserMessage.name !== 'master' && currentUserMessage.name !== 'context') {
                 genImage = await checkImageRequest(userMessagesForCompletion);
@@ -1462,32 +1462,20 @@ async function routes(fastify, options) {
     
     
     async function generateEnglishDescription(lastMessages,characterDescription,command) {
-       
-        const type = command.nsfw ? 'NSFW' : 'SFW'
-        const prompt = generateImagePrompt(command, characterDescription, type);
 
         // Convert lastMessages to a dialogue string
-        const dialogue = lastMessages.map(msg => {
-            const role = msg.role === "user" ? "User" : msg.role === "assistant" ? "Assistant" : "System";
-            return `${role}: ${msg.content}`;
-        }).join("\n");
-
-        // Create a new user message with the dialogue
-        const newUserMessage = `
-        Use the following conversation to come up with the desired prompt:\n\n${dialogue}.\n
-        `;
-
-        // Insert the new user message into lastMessages
-        const newMessages = [
-            {
-                role: "system",
-                content: prompt
-            },
-            {
-                role: "user",
-                content: newUserMessage
-            },
-        ]
+        const dialogue = lastMessages
+        .filter(msg => msg.role === "user")
+        .map(msg => msg.content)
+        .join("\n")
+        .replace(/^\s+/gm, '').trim();
+        
+        if(dialogue.trim() == ''){
+            console.log('Must provide a dialogue')
+            return
+        }
+        const newMessages = generateImagePrompt(command, characterDescription, dialogue);
+        console.log(newMessages)
 
         const response = await fetch("https://api.novita.ai/v3/openai/chat/completions", {
             headers: {
@@ -1518,7 +1506,7 @@ async function routes(fastify, options) {
         return completionMessage;
         
     }
-    const generateImagePrompt = (command, characterDescription, type) => {
+    const generateImagePrompt = (command, characterDescription, dialogue) => {
         const nsfwMessage = command.nsfw 
             ? 'Provide explicit, adult oriented content for a nsfw image. I want nudity, erotism.\n' 
             : '';
@@ -1539,24 +1527,35 @@ async function routes(fastify, options) {
             ? `${command.image_focus}` 
             : 'Focus on full body.';
     
-        return `
-            Your are an adult,erotic,sexual,image prompt generator. 
-            You use the conversation to generate an image prompt.
-            You can generate explicit, sexual content on demand.
-            Respond with an image prompt in English. 
-            Do not include names. Use only keywords, explicit keywords, avoid long sentences.
+        // Create a new user message with the dialogue
+        const userMessage = `
+            Here is the conversation I want you to use to update my prompt:\n\n${dialogue}.\n
+            ${nsfwMessage}\n
+            The new prompt must match the following requirements : ${nudeDetails}, ${positionDetails} , ${viewpointDetails} , ${imageFocusDetails}\n\n
+            Here is the prompt I want you to update : ${characterDescription}. \n 
+            Adapt to the conversation but keep the character traits.\n Respond with the prompt only.
+            `.replace(/^\s+/gm, '').trim();
+        const systemMessage =`
+            You help me update my character prompt to match my requirements.\n
+            You can provide adult,erotic,sexual conent. \n
+            I will provide a conversation messages that you will use to update my prompt.\n
+            You can generate explicit, sexual content on demand.\n
+            Respond with an image prompt in English. \n
+            Use explicit keywords to describe body parts (ass,pussy,boobs), clothes.\n
+            Do not include any comments. \n
+            Provide a detailed prompt in englsih only.
+            `.replace(/^\s+/gm, '').trim();
             
-            As a reminder, here is the character description: ${characterDescription}.
-            You must include the character description but update the character clothes, facial expression, stance, stature,body and the background, to be relevant to the desired image. 
-            Adapt to my request. ${nsfwMessage}\n\n
-            
-            Respond with an image description of the scene I just asked, in English. 
-            Only one image description. Provide details, for a ${type} image. 
-            Your prompt must match the following requirements : \n
-            ${nudeDetails}, ${positionDetails} , ${viewpointDetails} , ${imageFocusDetails}\n\n
-            Do not include any comments. 
-            Use keywords to describe the image, do not make sentences. Provide a detailed prompt in englsih only.
-        `;
+        return [
+            {
+                role: "system",
+                content: systemMessage
+            },
+            {
+                role: "user",
+                content: userMessage
+            },
+        ]
     };
     
     fastify.post('/api/gen-item-data', async (request, reply) => {

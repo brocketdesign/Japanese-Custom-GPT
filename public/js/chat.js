@@ -39,7 +39,6 @@ $(document).ready(async function() {
 
     $('body').attr('data-temporary-user',isTemporary)
 
-    initializeAudio();
     displayChatList(null,userId);
     window.addEventListener('message', function(event) {
         if (event.data.event === 'displayMessage') {
@@ -809,7 +808,7 @@ $(document).ready(async function() {
                                 <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
                                 <div class="ms-3 position-relative">
                                     <div class="ps-3 text-start assistant-image-box">
-                                        <img id="image-${imageId}" data-id="${imageId}" src="${response.imageUrl}" alt="${response.imagePrompt}">
+                                        <img id="image-${imageId}" src="${response.imageUrl}" alt="${response.imagePrompt}">
                                     </div>
                                     ${!isBlur ? getImageTools(imageId,isLiked,response.imagePrompt,response.nsfw,response.imageUrl) :''}
                                     ${isBlur ? `
@@ -1033,7 +1032,7 @@ $(document).ready(async function() {
             }
         })();
         
-        initAudio($el, message);
+        //initAudio($el, message);
     });
     
     
@@ -1193,7 +1192,7 @@ $(document).ready(async function() {
 
                     let autoPlay = localStorage.getItem('audioAutoPlay') === 'true';
                     if(autoPlay){
-                        initAudio($(`#play-${uniqueId}`), message);
+                        //initAudio($(`#play-${uniqueId}`), message);
                     }
                     if (typeof callback === "function") {
                         callback();
@@ -1248,7 +1247,7 @@ $(document).ready(async function() {
                 <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass}">
                     <img src="${thumbnail || '/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
                     <div class="ms-3 position-relative">
-                        <div class="text-start assistant-image-box">
+                        <div class="text-start assistant-image-box" data-id="${imageId}">
                             ${message.outerHTML}
                         </div>
                         ${getImageTools(imageId,false,description,imageNsfw,imageUrl)}
@@ -1268,7 +1267,7 @@ $(document).ready(async function() {
             const messageId = messageClass.split('new-image-')[1]
             messageElement = $(`
                     <div class="ms-3 position-relative">
-                        <div class="text-start assistant-image-box">
+                        <div class="text-start assistant-image-box" data-id="${imageId}">
                             ${message.outerHTML}
                         </div>
                         ${getImageTools(imageId,false,description,imageNsfw,imageUrl)}
@@ -1510,7 +1509,7 @@ $(document).ready(async function() {
             $('.prompt-card').removeClass('selected'); 
             $(this).addClass('selected');
 
-            displayImageLoader();
+            const randomId = displayAndUpdateImageLoader();
 
             var id = $(this).data('id');
             var isNSFWChecked = $('#nsfwCheckbox').is(':checked');
@@ -1524,18 +1523,22 @@ $(document).ready(async function() {
 
 
             controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isNSFWChecked);
-            updateLoaderWithId(id)
+            displayAndUpdateImageLoader(id,randomId)
             Swal.close();
         });
     }
     window.imageRequest = function(command){
-        const imageLoaderElement = displayImageLoader();
+        
+        const randomId = displayAndUpdateImageLoader();
+        addIconToLastUserMessage();
+
         saveImageRequest(command, userId, chatId);
         generateItemData(command)
             .then((item) => {
                 if (item && item.length > 0) {
                     const itemId = item[0]._id;
-                    updateLoaderWithId(itemId);
+                    displayAndUpdateImageLoader(itemId,randomId);
+                    addIconToLastUserMessage(itemId);
                     let type = command.nsfw ? 'nsfw' : 'sfw'
                     generateImageNovita(API_URL, userId, chatId, userChatId, itemId, thumbnail, type);
                 } else {
@@ -1561,8 +1564,8 @@ $(document).ready(async function() {
         const imageId = $(this).data('id')
         const imageDescription = $(this).data('description')
 
-        const imageLoaderElement = displayImageLoader();
-        updateLoaderWithId(imageId);
+        const randomId = displayAndUpdateImageLoader();
+        displayAndUpdateImageLoader(imageId,randomId);
 
         if($(this).hasClass('img2img')){
             img2ImageNovita(API_URL, userId, chatId, userChatId, imageId, thumbnail, imageNsfw, {prompt:imageDescription})
@@ -1593,26 +1596,52 @@ $(document).ready(async function() {
             });
         });
     }    
-    
-    window.displayImageLoader = function(){
-        const imageUrl = "/img/image-placeholder.gif";
-        const card = $(`
-            <div id="load-image-container" class="assistant-image-box card custom-card bg-transparent shadow-0 border-0 px-1 mx-1 col-auto" style="cursor:pointer;" data-src="${imageUrl}">
-                <div style="background-image:url(${imageUrl});border:4px solid white;background-size:cover;" class="card-img-top rounded-avatar position-relative m-auto">
-                </div>
-            </div>
-        `);
-        
-        $('#chat-recommend').append(card);
-        $('#chat-recommend').scrollLeft($('#chat-recommend')[0].scrollWidth);
 
-        return card;
+    function addIconToLastUserMessage(itemId = false) {
+        if(!itemId){
+            const lastUserMessage = $('.message-container.user-message:last'); // Select the last user message
+            if (lastUserMessage.length) {
+                // Add the icon if not already added
+                if (!lastUserMessage.find('.message-icon').length) {
+                    lastUserMessage.css('position', 'relative'); // Ensure the container has relative positioning
+                    lastUserMessage.append(`
+                        <i class="bi bi-image message-icon" style="position: absolute; top: 5px; right: 5px;"></i>
+                    `);
+                }
+            }
+        }
     }
     
-    window.updateLoaderWithId = function(itemId) {
-        $("#load-image-container").attr("id", `load-image-container-${itemId}`);
-    }    
+    window.displayAndUpdateImageLoader = function (imageId = null, randomId = null) {
+        const imageUrl = "/img/image-placeholder.gif";
     
+        if (!imageId && !randomId) {
+            const newRandomId = Math.random().toString(36).substr(2, 9);
+            const card = $(`
+                <div id="load-image-container-${newRandomId}" class="assistant-image-box card custom-card bg-transparent shadow-0 border-0 px-1 mx-1 col-auto" style="cursor:pointer;" data-src="${imageUrl}">
+                    <div style="background-image:url(${imageUrl});border:4px solid white;background-size:cover;" class="card-img-top rounded-avatar position-relative m-auto">
+                    </div>
+                </div>
+            `);
+            $('#chat-recommend').append(card);
+            $('#chat-recommend').scrollLeft($('#chat-recommend')[0].scrollWidth);
+            return newRandomId;
+        } else if (imageId && randomId) {
+            $(`#load-image-container-${randomId}`).attr("id", `load-image-container-${imageId}`);
+            return $(`#load-image-container-${imageId}`);
+        } else if (imageId) {
+            const element = $(`#load-image-container-${imageId}`);
+            if (element.length) {
+                return element; // Return if the loader already exists with the imageId
+            } else {
+                throw new Error(`No loader found with id load-image-container-${imageId}`);
+            }
+        } else {
+            throw new Error("Invalid parameters: Either imageId or randomId must be provided.");
+        }
+    };
+    
+
     
   // Fetch the user's IP address and generate a unique ID
    

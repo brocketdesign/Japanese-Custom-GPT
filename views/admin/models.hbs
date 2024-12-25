@@ -24,26 +24,48 @@
 
 </style>
 <section>
-<div class="container py-5">
-  <div class="text-center mb-4">
-    <h1 class="display-5 text-white">Models Gallery</h1>
-    <p class="lead text-white">Explore public models with infinite scroll</p>
-  </div>
-  <div class="row mb-4">
-    <div class="col-md-6 offset-md-3">
-      <div class="input-group">
-        <input id="searchInput" type="text" class="form-control" placeholder="Search models...">
-        <button id="searchBtn" class="btn btn-primary" type="button">
-          <i class="bi bi-search"></i>
-        </button>
+  <div class="container py-5">
+    <div class="text-center mb-4">
+      <h1 class="display-5 text-white">Models Gallery</h1>
+      <p class="lead text-white">Explore public models with infinite scroll</p>
+    </div>
+
+    <div class="row mb-4">
+      <div class="col-md-6 offset-md-3">
+        <div class="input-group">
+          <input id="searchInput" type="text" class="form-control" placeholder="Search models...">
+          <button id="searchBtn" class="btn btn-primary" type="button">
+            <i class="bi bi-search"></i>
+          </button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div id="model-gallery" class="row">
+    {{!-- Active Models Horizontal Scroll --}}
+    <h4 class="text-white mb-2">Active Models</h4>
+    <div id="active-models" class="d-flex flex-row flex-nowrap overflow-auto mb-4">
+      {{#each models}}
+      <div class="card me-2" style="min-width: 200px;">
+        <img src="{{image}}" class="card-img-top" alt="{{model}}" style="height:400px; object-fit:cover;">
+        <div class="card-body text-white" style="background-color: rgba(0,0,0,0.25);">
+          <h5 class="card-title text-truncate">{{model}}</h5>
+          <div class="form-check form-switch">
+            <input class="form-check-input model-switch" type="checkbox" checked
+              data-model-id="{{modelId}}"
+              data-model="{{model}}"
+              data-style="{{style}}"
+              data-version="{{version}}">
+          </div>
+        </div>
+      </div>
+      {{/each}}
+    </div>
+
+    {{!-- Infinite Scroll Gallery --}}
+    <div id="model-gallery" class="row"></div>
   </div>
-</div>
 </section>
+
 
 {{> dashboard-footer}}
 <script>
@@ -120,6 +142,22 @@ $(document).ready(function(){
     $('#searchInput').val(searchTerm);
     performSearch(searchTerm);
   };
+
+  $(document).on('change', '.model-switch', function() {
+    const modelId = $(this).data('model-id');
+    const model = $(this).data('model');
+    const style = $(this).data('style');
+    const image = $(this).data('image');
+    const version = $(this).data('version');
+    console.log({modelId})
+    const url = $(this).is(':checked') ? '/admin/models/add' : '/admin/models/remove';
+    
+    $.post(url, { modelId, model, style, version, image }, function(res) {
+      window.showNotification(res.message, "success");
+    });
+  });
+
+
 });
 
 </script>

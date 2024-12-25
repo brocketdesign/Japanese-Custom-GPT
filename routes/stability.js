@@ -428,7 +428,7 @@ async function routes(fastify, options) {
 
         const image_request = {
             type: imageType,
-            model_name: imageModel + '.safetensors',
+            model_name: imageModel,
             sampler_name: style.sampler_name || '',
             loras: style.loras,
             prompt: (style.prompt + prompt).replace(/^\s+/gm, '').trim(),
@@ -440,7 +440,7 @@ async function routes(fastify, options) {
         };
 
         const requestData = { ...params, ...image_request };
-        console.log({prompt:requestData.prompt})
+        console.log({model_name:requestData.model_name,prompt:requestData.prompt})
 
         const novitaTaskId = await fetchNovitaMagic(requestData);
 
@@ -511,7 +511,7 @@ fastify.post('/novita/txt2img', async (request, reply) => {
       if (imageType === 'sfw') {
           image_request = {
               type: 'sfw',
-              model_name: imageModel + '.safetensors',
+              model_name: imageModel,
               sampler_name: selectedStyle.sfw.sampler_name || '',
               loras: selectedStyle.sfw.loras,
               prompt: (selectedStyle.sfw.prompt + prompt).replace(/^\s+/gm, '').trim(),
@@ -523,7 +523,7 @@ fastify.post('/novita/txt2img', async (request, reply) => {
       } else {
           image_request = {
               type: 'nsfw',
-              model_name: imageModel + '.safetensors',
+              model_name: imageModel,
               sampler_name: selectedStyle.nsfw.sampler_name || '',
               loras: selectedStyle.nsfw.loras,
               prompt: selectedStyle.nsfw.prompt + prompt,
@@ -536,7 +536,7 @@ fastify.post('/novita/txt2img', async (request, reply) => {
 
       // Prepare params
       const requestData = { ...params, ...image_request, image_num: 1 };
-      console.log({prompt:requestData.prompt});
+      console.log({model_name:requestData.model_name,prompt:requestData.prompt});
 
       // Send request to Novita and get taskId
       const novitaTaskId = await fetchNovitaMagic(requestData);
@@ -726,7 +726,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
         prompt: fullPrompt, 
         negative_prompt: negativePrompt, 
         aspectRatio: aspectRatio,
-        model_name: model_name + '.safetensors',
+        model_name: model_name,
         sampler_name: sampler_name,
         width: selectedStyle.sfw.width || params.width,
         height: selectedStyle.sfw.height || params.height,
@@ -1004,7 +1004,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
         // Prepare the request data for the Novita API
         const image_request = {
           type: imageType,
-          model_name: imageModel + '.safetensors',
+          model_name: imageModel,
           sampler_name: style.sampler_name || '',
           loras: style.loras,
           image_base64: validated.image_base64,
@@ -1015,7 +1015,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
         };
         
         const requestData = { ...params, ...image_request };
-        console.log({prompt:requestData.prompt})
+        console.log({model_name:requestData.model_name,prompt:requestData.prompt})
         const novitaTaskId = await fetchNovitaImg2ImgMagic(requestData);
 
         // Store task details in DB

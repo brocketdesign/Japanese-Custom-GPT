@@ -378,7 +378,28 @@
             $('#enhancedPrompt').val('');
         });
         
-        $('.style-option').click(function(){
+        function fetchAndAppendModels() {
+            $.get('/api/models', function(response) {
+                if (response.success) {
+                $('#imageStyleSelection').empty(); // Clear existing content
+                response.models.forEach(model => {
+                    const modelElement = `
+                    <img src="${model.image}" alt="${model.style}" 
+                        class="style-option rounded" 
+                        data-style="${model.style}" 
+                        data-model="${model.model}" 
+                        data-version="${model.version}">
+                    `;
+                    $('#imageStyleSelection').append(modelElement);
+                });
+                } else {
+                window.showNotification('Failed to fetch models', 'error');
+                }
+            });
+        }
+        fetchAndAppendModels();
+
+        $(document).on('click','.style-option',function(){
             $('.style-option').removeClass('selected');
             $(this).addClass('selected');
             const style = $(this).data('style')
@@ -407,6 +428,8 @@
     const modifiedGalleries = new Set();
     $(document).ready(function() {
         let translations = window.translations
+        
+
         $('.dropdown-toggle').each(function(e) {
             new mdb.Dropdown($(this)[0]);
         });

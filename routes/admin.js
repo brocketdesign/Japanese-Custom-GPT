@@ -282,7 +282,7 @@ async function routes(fastify, options) {
 const fetchModels = async (query = '', cursor = '') => {
 
   try {
-    const url = `https://api.novita.ai/v3/model?filter.visibility=public&pagination.limit=12${
+    const url = `https://api.novita.ai/v3/model?filter.visibility=public&filter.types=checkpoint&filter.is_sdxl=true&pagination.limit=12${
       cursor ? `&pagination.cursor=${cursor}` : ''
     }${query ? `&filter.query=${encodeURIComponent(query)}` : ''}`;
 
@@ -292,27 +292,37 @@ const fetchModels = async (query = '', cursor = '') => {
       },
     });
 
-    return response.data;
+    response.data.models = response.data.models.map(model => ({
+      ...model,
+      base_model: model.is_sdxl ? 'sdxl' : 'sd'
+    }));
+
+    return  response.data;
+    
   } catch (error) {
     console.error('Error fetching models:', error.message);
     return { models: [], pagination: {} };
   }
 };
+
 const modelCardTemplate = hbs.compile(`
   {{#each models}}
     <div class="col-md-4 mb-3 animate__animated animate__fadeIn">
       <div class="card border-0 h-100 position-relative">
         <div class="card-img-container" style="overflow: hidden;">
-          <img src="{{cover_url}}" class="card-img-top w-100" alt="{{name}}" style="object-fit: cover; height: 100%;" />
+          <img src="{{cover_url}}" class="card-img-top w-100" alt="{{model_name}}" style="object-fit: cover; height: 100%;" />
         </div>
-        <div class="card-body d-flex justify-content-between align-items-center position-absolute w-100 py-2 text-white" style="bottom: 0; background-color: rgba(0, 0, 0, 0.25);">
-          <h5 class="card-title text-truncate">{{name}}</h5>
-          <div>
-            <label class="form-switch">
-              <input type="checkbox" class="model-switch" data-id="{{id}}" {{#if is_in_database}}checked{{/if}}>
-              <span class="form-switch-indicator"></span>
-            </label>
+        <div class="card-body d-flex justify-content-between position-absolute w-100 py-2 text-white" style="bottom: 0; background-color: rgba(0, 0, 0, 0.25);">
+          <h5 class="card-title text-truncate">{{model_name}}</h5>
+          <div class="form-check form-switch">
+            <input class="form-check-input model-switch" type="checkbox" 
+              data-model-id="{{id}}" 
+              data-model="{{sd_name}}"
+              data-style="{{tags.[0]}}" 
+              data-version="{{base_model}}"
+              data-image="{{cover_url}}">
           </div>
+          <i class="bi bi-info-circle" data-bs-toggle="modal" data-bs-target="#infoModal-{{id}}" style="cursor: pointer;"></i>
         </div>
       </div>
     </div>
@@ -333,20 +343,36 @@ const modelCardTemplate = hbs.compile(`
     </div>
   {{/each}}
 `);
-
-
   
   fastify.post('/admin/models', async (request, reply) => {
     const { cursor, search } = request.query;
     const data = await fetchModels(search, cursor);
-    const html = modelCardTemplate({ models: data.models });
+    const html = modelCardTemplate({ models:data.models });
     return reply.code(200).send({ html, pagination: data.pagination });
   });
 
+  // Add model to the database
+  fastify.post('/admin/models/add', async (req, reply) => {
+    const { modelId, model, style, version, image } = req.body;
+    const db = fastify.mongo.db;
+    await db.collection('myModels').insertOne({ modelId, model, style, version, image });
+    reply.send({ success: true, message: 'Model added successfully.' });
+  });
+
+  // Remove model from the database
+  fastify.post('/admin/models/remove', async (req, reply) => {
+    const { modelId } = req.body;
+    const db = fastify.mongo.db;
+    console.log({modelId})
+    await db.collection('myModels').deleteOne({ modelId });
+    reply.send({ success: true, message: 'Model removed successfully.' });
+  });
+
   fastify.get('/admin/models', async (req, res) => {
-  
-    // Render the page with the models data
-    return res.view('/admin/models');
+    let user = req.user;
+    const db = fastify.mongo.db;
+    const models = await db.collection('myModels').find({}).toArray();
+    return res.view('/admin/models',{user,models});
   });
   
 }    

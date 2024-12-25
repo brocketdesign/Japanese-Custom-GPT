@@ -696,14 +696,14 @@ $(document).ready(async function() {
                 const isStarter = chatMessage?.content?.startsWith("[Starter]") || chatMessage?.content?.startsWith("Invent a situation") || chatMessage?.content?.startsWith("Here is your character description");
                 const isHidden = chatMessage?.content?.startsWith("[Hidden]") || chatMessage?.name === 'master';
                 const image_request = chatMessage.image_request
-                console.log({image_request})
                 if (!isStarter && !isHidden) {
                     messageHtml = `
-                        <div class="d-flex flex-row justify-content-end mb-4 message-container">
+                        <div class="d-flex flex-row justify-content-end mb-4 message-container" style="position: relative;">
                             <div class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
                                 ${marked.parse(chatMessage.content)}
                             </div>
                             ${persona ? `<img src="${persona.chatImageUrl || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">` : ''}
+                            ${image_request ? `<i class="bi bi-image message-icon" style="position: absolute; top: 0; right: 25px;"></i>` : ''}
                         </div>
                     `;
                 }

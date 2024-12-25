@@ -2436,8 +2436,22 @@ async function routes(fastify, options) {
         
             reply.send({ tags });
         });
-        
-      
+
+        fastify.get('/api/models', async (req, reply) => {
+            const { id } = req.query;
+          
+            try {
+                const db = fastify.mongo.db;
+                const query = id ? { modelId: id } : {};
+                const models = await db.collection('myModels').find(query).toArray();
+                return reply.send({ success: true, models });
+            } catch (error) {
+                console.log(errir)
+              return reply.code(500).send({ success: false, message: 'Error fetching models', error });
+            }
+        });
+          
+          
 }
 
 module.exports = routes;

@@ -258,80 +258,64 @@ async function routes(fastify, options) {
   
   fastify.get('/chats/images', async (request, reply) => {
     try {
-
       const user = request.user;
       let language = getLanguageName(user?.lang);
       const page = parseInt(request.query.page) || 1;
-      const limit = 12; // Number of images per page
+      const limit = 12;
       const skip = (page - 1) * limit;
   
       const db = fastify.mongo.db;
       const chatsGalleryCollection = db.collection('gallery');
       const chatsCollection = db.collection('chats');
   
-      // Find and paginate images across all chats where thumbnail exists
-      const allChatImagesDocs = await chatsGalleryCollection
-      .aggregate([
-        { $unwind: '$images' },           
-        { $match: { 'images.imageUrl': { $exists: true, $ne: null } } },
-        { $sort: { _id: -1 } },  // Sort by newest first
-        { $skip: skip },                        // Skip for pagination
-        { $limit: 50 },                      // Limit the results to the page size
-        { $project: { _id: 0, image: '$images', chatId: 1 } }
-      ])
-      .toArray();
-
-      // Extract chatIds from the images
-      const chatIds = allChatImagesDocs.map(doc => doc.chatId);
-
-      // Fetch the chat data with a non-null thumbnail from the chats collection
-      const chats = await chatsCollection
-        .find({ _id: { $in: chatIds }, language })
-        .toArray();
-
-        // Map the chat data to the images
-      const imagesWithChatData = allChatImagesDocs
-        .filter(doc => chats.find(c => c._id.equals(doc.chatId)))  // Filter images with valid thumbnail
-        .map(doc => {
-          const image = doc.image;
-          const chat = chats.find(c => c._id.equals(doc.chatId));
-          return {
-            ...image,
-            userId: chat?.userId,
-            chatId: chat?._id,
-            chatName: chat ? chat.name : 'Unknown Chat',
-            thumbnail: chat?.thumbnail || chat?.thumbnailUrl || '/img/default-thumbnail.png'
-          };
-        })
-        .slice(0, limit);
+      const chatIds = await chatsCollection
+        .find({ language })
+        .project({ _id: 1 })
+        .toArray()
+        .then(chats => chats.map(c => c._id));
   
-        // Get the total count of images matching the filtering condition
-        const totalImagesCount = await chatsGalleryCollection
-          .aggregate([
-            { $unwind: '$images' },
-            { $match: { 'images.imageUrl': { $exists: true, $ne: null } } },
-            { $count: 'total' }
-          ])
-          .toArray();
-          
-        const totalImages = totalImagesCount.length > 0 ? totalImagesCount[0].total : 0;
-        const totalPages = Math.ceil(totalImages / limit);
+      const [allChatImagesDocs, totalCountDocs] = await Promise.all([
+        chatsGalleryCollection.aggregate([
+          { $unwind: '$images' },
+          { $match: { 'images.imageUrl': { $exists: true, $ne: null }, chatId: { $in: chatIds } } },
+          { $sort: { _id: -1 } },
+          { $skip: skip },
+          { $limit: limit },
+          { $project: { _id: 0, image: '$images', chatId: 1 } }
+        ]).toArray(),
+        chatsGalleryCollection.aggregate([
+          { $unwind: '$images' },
+          { $match: { 'images.imageUrl': { $exists: true, $ne: null }, chatId: { $in: chatIds } } },
+          { $count: 'total' }
+        ]).toArray()
+      ]);
   
-      if (totalImagesCount === 0) {
+      const totalImages = totalCountDocs.length ? totalCountDocs[0].total : 0;
+      if (!totalImages) {
         return reply.code(404).send({ images: [], page, totalPages: 0 });
       }
-
-      // Send the paginated images response
-      reply.send({
-        images: imagesWithChatData,
-        page,
-        totalPages
+      const totalPages = Math.ceil(totalImages / limit);
+  
+      const chatsData = await chatsCollection
+        .find({ _id: { $in: chatIds } })
+        .toArray();
+  
+      const images = allChatImagesDocs.map(doc => {
+        const chat = chatsData.find(c => c._id.equals(doc.chatId));
+        return {
+          ...doc.image,
+          chatId: doc.chatId,
+          chatName: chat?.name,
+          thumbnail: chat?.thumbnail || chat?.thumbnailUrl || '/img/default-thumbnail.png'
+        };
       });
+  
+      reply.send({ images, page, totalPages });
     } catch (err) {
-      console.error(err);
       reply.code(500).send('Internal Server Error');
     }
   });
+  
   
   fastify.get('/chat/:chatId/images', async (request, reply) => {
     try {

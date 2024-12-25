@@ -298,8 +298,6 @@ const fetchModels = async (query = '', cursor = '') => {
     return { models: [], pagination: {} };
   }
 };
-
-// Updated Handlebars template for the model cards
 const modelCardTemplate = hbs.compile(`
   {{#each models}}
     <div class="col-md-4 mb-3 animate__animated animate__fadeIn">
@@ -307,10 +305,13 @@ const modelCardTemplate = hbs.compile(`
         <div class="card-img-container" style="overflow: hidden;">
           <img src="{{cover_url}}" class="card-img-top w-100" alt="{{name}}" style="object-fit: cover; height: 100%;" />
         </div>
-        <div class="card-body d-flex justify-content-between position-absolute w-100 py-2 text-white" style="bottom: 0; background-color: rgba(0, 0, 0, 0.25);">
+        <div class="card-body d-flex justify-content-between align-items-center position-absolute w-100 py-2 text-white" style="bottom: 0; background-color: rgba(0, 0, 0, 0.25);">
           <h5 class="card-title text-truncate">{{name}}</h5>
-          <div class="mt-auto">
-            <i class="bi bi-info-circle" data-bs-toggle="modal" data-bs-target="#infoModal-{{id}}" style="cursor: pointer;"></i>
+          <div>
+            <label class="form-switch">
+              <input type="checkbox" class="model-switch" data-id="{{id}}" {{#if is_in_database}}checked{{/if}}>
+              <span class="form-switch-indicator"></span>
+            </label>
           </div>
         </div>
       </div>
@@ -332,6 +333,7 @@ const modelCardTemplate = hbs.compile(`
     </div>
   {{/each}}
 `);
+
 
   
   fastify.post('/admin/models', async (request, reply) => {

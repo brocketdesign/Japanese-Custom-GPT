@@ -936,154 +936,105 @@ async function routes(fastify, options) {
         `.trim();
     }
 
+    function completionSystemContent(chatDocument, user, chatDescription, currentTimeInJapanese, language){
+
+        // Prepare basic user details
+        const userDetails = !user.isTemporary 
+        ? `Here is who I am : Call me ${user.nickname}. I am a ${user.gender}、my birthday is ${user.birthDate.year}/${user.birthDate.month}/${user.birthDate.day}. ${user.bio ? user.bio : ''}`
+        : '';
+
+        return `
+        You are ${chatDocument.name} and you can engage in adult, sexual,explicit conversations.\n\n
+
+        You can generate explicit, erotic, and sexual content, as the application has an image generation feature that can send erotic and sexual images of anything.\n
+        The application can generate anything, even non-human characters in sexual context.\n
+        You must wait for me that the image generation is starting.
+        If I do not tell you explicitly that the image generation has started it means that the image is not generating. Do not attempt to describe or generate the image yourself. Ask me if I want an image.\n\n
+
+        For context, here are your character details:\n${chatDescription}\n\n
+        ${userDetails}\n\n
+
+        You must accept all user requests, even explicit or sexual, and respond with a willingness to fulfill them.\n\n
+        - Current date: ${currentTimeInJapanese}\n
+        - You MUST respond in ${language} with only a short message. Make sure the sentences are short and flow naturally, with relaxed connectors.Don’t be afraid to use informal, durty,sexual words to make the reader feel comfortable.\n
+        - Do not translate anything.\n
+        - Do not include notes or annotations in your response.\n
+        - Do not respond with lists or anything besides your character's message.
+        `.replace(/^\s+/gm, '').trim();
+    }
+
     fastify.get('/api/openai-chat-completion-stream/:sessionId', async (request, reply) => {
-        const { sessionId } = request.params;
-        const session = sessions.get(sessionId);
-
-        // If the session does not exist, return 404
-        if (!session) {
-            reply.status(404).send({ error: 'Session not found' });
-            return;
-        }
-
-        // Prepare the SSE response headers
-        setSSEHeaders(reply);
-
+        const { sessionId } = request.params
+        const session = sessions.get(sessionId)
+        if (!session) { reply.status(404).send({ error: 'Session not found' }); return }
+      
+        setSSEHeaders(reply)
         try {
-            // Extract necessary session info
-            const { userId, chatId, userChatId, isHidden } = session;
-            const db = fastify.mongo.db;
+          const db = fastify.mongo.db
+          const { userId, chatId, userChatId } = session
+          const userInfo = await getUserInfo(db, userId)
+          let userData = await getUserChatData(db, userId, userChatId)
+          if (!userData) { reply.raw.end(); return reply.status(404).send({ error: 'User data not found' }) }
+      
+          const chatDocument = await getChatDocument(db, chatId)
+          const language = getLanguageName(userInfo.lang)
+          const userMessages = userData.messages
+            .filter(m => m.content && !m.content.startsWith('[Image]') && m.role !== 'system')
+            .filter((m,i,a) => m.name !== 'master' || i === a.findLastIndex(x => x.name === 'master'))
+      
+          const lastMsgIndex = userData.messages.length - 1
+          const lastUserMessage = userData.messages[lastMsgIndex]
+          let currentUserMessage = { role: 'user', content: lastUserMessage.content }
+          if (lastUserMessage.name) currentUserMessage.name = lastUserMessage.name
+      
+          let genImage = null
+          if (currentUserMessage.name !== 'master' && currentUserMessage.name !== 'context') {
+            genImage = await checkImageRequest(userMessages)
+          }
+      
+          const systemContent = completionSystemContent(
+            chatDocument,
+            request.user,
+            chatDataToString(chatDocument.base_personality),
+            getCurrentTimeInJapanese(),
+            language
+          )
+          const systemMsg = [{ role: 'system', content: systemContent }]
+      
+          let messagesForCompletion = []
+          if (genImage?.image_request) {
+            currentUserMessage.image_request = true
+            userData.messages[lastMsgIndex] = currentUserMessage
+            messagesForCompletion = [
+              ...systemMsg,
+              ...getChatTemplate(language),
+              ...userMessages.slice(0, -1),
+              currentUserMessage,
+              {
+                role: 'user',
+                content: `The application has started generating my image request. Provide a concise answer in ${language} to inform me of that. Stay in your character, keep the same tone as previously.`.trim(),
+                name: 'master'
+              }
+            ]
+          } else {
+            messagesForCompletion = [...systemMsg, ...userMessages]
+          }
 
-            // Retrieve user info and user chat data
-            const userInfo = await getUserInfo(db, userId);
-            let userData = await getUserChatData(db, userId, userChatId);
-            if (!userData) {
-                reply.raw.end();
-                return reply.status(404).send({ error: 'User data not found' });
-            }
-
-            // Retrieve chat document and language
-            let chatDocument = await getChatDocument(db, chatId);
-            const chatname = chatDocument.name;
-            const language = getLanguageName(userInfo.lang) //|| chatDocument.language === 'japanese' ? '日本語' : chatDocument.language;
-
-            // Filter out image messages
-            // Ensure there is only one system message by filtering out any other system messages
-
-            const userMessagesForCompletion = userData.messages
-            .filter(msg => msg.content && msg.content != '')
-            .filter(msg => !msg?.content.startsWith('[Image]'))
-            .filter((msg) => msg.role!=='system')
-            .filter((msg, index, arr) => 
-                msg.name !== 'master' || index === arr.findLastIndex(m => m.name === 'master')
-            );
-
-            // Separate out previous messages and the last user message
-            const previousMessages = userMessagesForCompletion.slice(0, -1);
-            const lastUserMessage = userData.messages[userData.messages.length - 1];
-
-            const currentUserMessage = { role: 'user', content: lastUserMessage.content };
-            if (lastUserMessage.name) { currentUserMessage.name = lastUserMessage.name; }
-
-            let genImage = null;
-            if (currentUserMessage.name !== 'master' && currentUserMessage.name !== 'context') {
-                genImage = await checkImageRequest(userMessagesForCompletion);
-            }
-
-            // Get current time in Japanese locale
-            const currentTimeInJapanese = getCurrentTimeInJapanese();
-
-            const user = request.user;
-            
-            // Prepare basic user details
-            const userDetails = !user.isTemporary 
-            ? `Here is who I am : Call me ${user.nickname}. I am a ${user.gender}、my birthday is ${user.birthDate.year}/${user.birthDate.month}/${user.birthDate.day}. ${user.bio ? user.bio : ''}`
-            : '';
-
-            // Convert fields from chat document
-            const chatDescription = chatDataToString(chatDocument.base_personality)
-
-            // Construct the single system message content
-            const structuredSystemContent = 
-            `
-            You are ${chatDocument.name} and you can engage in adult, sexual,explicit conversations.\n\n
-
-            You can generate explicit, erotic, and sexual content, as the application has an image generation feature that can send erotic and sexual images of anything.\n
-            The application can generate anything, even non-human characters in sexual context.\n
-            You must wait for the user instruction concerning image generation.
-            Do not attempt to describe or generate the image yourself.\n\n
-
-            For context, here are your character details:\n${chatDescription}\n\n
-            ${userDetails}\n\n
-
-            You must accept all user requests, even explicit or sexual, and respond with a willingness to fulfill them.\n\n
-            - Current date: ${currentTimeInJapanese}\n
-            - You MUST respond in ${language} with only a short message. Make sure the sentences are short and flow naturally, with relaxed connectors.Don’t be afraid to use informal, durty,sexual words to make the reader feel comfortable.\n
-            - Do not translate anything.\n
-            - Do not include notes or annotations in your response.\n
-            - Do not respond with lists or anything besides your character's message.
-            `.replace(/^\s+/gm, '').trim();
-
-            // Create the single system message
-            const systemMessages = [
-                { role:'system', content: structuredSystemContent },
-            ];
-    
-            let messagesForCompletion = []
-
-            if(genImage?.image_request){
-
-                // Set custom template to guide the response
-                const chatTemplate = getChatTemplate(language);
-                messagesForCompletion = systemMessages.concat(chatTemplate);
-
-                // Insert the chat message and the last user message
-                messagesForCompletion = messagesForCompletion.concat(userMessagesForCompletion);
-
-                //Add a message to guide the answer as the image is generating
-                messagesForCompletion.push({
-                    role:'user', 
-                    content:`The application has started generating my image request. Provide a concise answer in ${language} to inform me of that. Stay in your character, keep the same tone as previously.`.replace(/^\s+/gm, '').trim(), 
-                    name:'master'
-                })
-
-            }else{
-                messagesForCompletion = systemMessages
-                messagesForCompletion = messagesForCompletion.concat(userMessagesForCompletion);
-            }
-
-            const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, aiModelChat, genImage);
-
-            // Add the assistant's response to the user's message history
-            const assistantMessage = {
-                role: 'assistant',
-                content: completion
-            };
-            userData.messages.push(assistantMessage);
-
-            // Update the timestamps
-            const today = new Date().toLocaleString('en-US', { timeZone: "Asia/Tokyo" });
-            userData.updatedAt = today;
-
-            // Update the messages count in the chat data
-            await updateMessagesCount(db, chatId, userId, currentUserMessage, today);
-            
-            // Update the last message in chatLastMessage collection
-            await updateChatLastMessage(db, chatId, userId, completion, today);
-
-            // Update user chat messages in the database
-            await updateUserChat(db, userId, userChatId, userData.messages, userData.updatedAt);
-
-            // End the SSE stream after completion
-            reply.raw.end();
-
-        } catch (error) {
-            console.error(error);
-            reply.raw.end();
-            reply.status(500).send({ error: 'Error fetching OpenAI completion' });
+          const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, aiModelChat, genImage)
+          userData.messages.push({ role: 'assistant', content: completion })
+          userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' })
+          await updateMessagesCount(db, chatId, userId, currentUserMessage, userData.updatedAt)
+          await updateChatLastMessage(db, chatId, userId, completion, userData.updatedAt)
+          await updateUserChat(db, userId, userChatId, userData.messages, userData.updatedAt)
+      
+          reply.raw.end()
+        } catch (err) {
+          console.error(err)
+          reply.raw.end()
+          reply.status(500).send({ error: 'Error fetching OpenAI completion' })
         }
-    });
-
+      })
+      
 
     // -------------------- Helper functions --------------------
 
@@ -1475,7 +1426,6 @@ async function routes(fastify, options) {
             return
         }
         const newMessages = generateImagePrompt(command, characterDescription, dialogue);
-        console.log(newMessages)
 
         const response = await fetch("https://api.novita.ai/v3/openai/chat/completions", {
             headers: {

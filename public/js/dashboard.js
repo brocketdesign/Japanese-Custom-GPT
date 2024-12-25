@@ -1246,7 +1246,7 @@ window.loadAllChatImages = async function (page = 1) {
                     <div class="card shadow-0">
                         <div class="d-flex align-items-center p-2">
                             <a href="/character/${item.chatId}?imageId=${item._id}">
-                                <img src="${item?.thumbnail}" alt="${item?.prompt}" class="rounded-circle me-2" width="40" height="40">
+                                <img src="${item?.imageUrl}" alt="${item?.prompt}" class="rounded-circle me-2" width="40" height="40">
                             </a>
                             <a href="/character/${item.chatId}?imageId=${item._id}" class="text-decoration-none text-dark">
                                 <strong>${item?.chatName}</strong>
@@ -1289,8 +1289,6 @@ window.loadAllChatImages = async function (page = 1) {
       }
     });
 }
-
-
 
 window.loadUserImages = async function (userId, page = 1) {
     const currentUser = await fetchUser();
@@ -1754,7 +1752,7 @@ window.loadChatImages = async function (chatId, page = 1) {
                         <div class="card shadow-0">
                             <div class="d-flex align-items-center p-2">
                                 <a href="/character/${item.chatId}?imageId=${item._id}">
-                                    <img src="${item?.thumbnail}" alt="${item?.chatName}" class="rounded-circle me-2" width="40" height="40">
+                                    <img src="${item?.imageUrl}" alt="${item?.chatName}" class="rounded-circle me-2" width="40" height="40">
                                 </a>
                                 <a href="/character/${item.chatId}?imageId=${item._id}" class="text-decoration-none text-dark">
                                     <strong>${item?.chatName}</strong>
@@ -1918,6 +1916,7 @@ function generateUserPostsPagination(userId, totalPages) {
 
 
 function generateAllChatsImagePagination(totalPages) {
+
     if (typeof loadingStates === 'undefined') loadingStates = {}; // Ensure the loadingStates object exists
     if (typeof currentPageMap === 'undefined') currentPageMap = {}; // Ensure the currentPageMap object exists
 

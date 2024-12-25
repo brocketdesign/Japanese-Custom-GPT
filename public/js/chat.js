@@ -695,6 +695,8 @@ $(document).ready(async function() {
             if (chatMessage.role === "user") {
                 const isStarter = chatMessage?.content?.startsWith("[Starter]") || chatMessage?.content?.startsWith("Invent a situation") || chatMessage?.content?.startsWith("Here is your character description");
                 const isHidden = chatMessage?.content?.startsWith("[Hidden]") || chatMessage?.name === 'master';
+                const image_request = chatMessage.image_request
+                console.log({image_request})
                 if (!isStarter && !isHidden) {
                     messageHtml = `
                         <div class="d-flex flex-row justify-content-end mb-4 message-container">
@@ -1605,7 +1607,7 @@ $(document).ready(async function() {
                 if (!lastUserMessage.find('.message-icon').length) {
                     lastUserMessage.css('position', 'relative'); // Ensure the container has relative positioning
                     lastUserMessage.append(`
-                        <i class="bi bi-image message-icon" style="position: absolute; top: 5px; right: 5px;"></i>
+                        <i class="bi bi-image message-icon" style="position: absolute; top: 0px; right: 25px;"></i>
                     `);
                 }
             }

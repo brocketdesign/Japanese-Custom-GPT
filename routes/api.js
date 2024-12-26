@@ -1890,9 +1890,9 @@ async function routes(fastify, options) {
           }
       
           if (model) {
-            query.imageModel = model;
+            query.imageModel = model.replace('.safetensors','');
           }
-      
+      console.log(query)
           if (searchQuery) {
             query.$or = [
               { tags: { $regex: searchQuery, $options: 'i' } },
@@ -2420,7 +2420,7 @@ async function routes(fastify, options) {
             const chatsCollection = db.collection('chats');
         
             let tags = await tagsCollection.find({ language }).toArray();
-        console.log({tags})
+
             if (!tags.length) {
                 // If no tags are found for the specific language, fetch from chats
                 let tagsFromChats = await chatsCollection.distinct('tags', { language });

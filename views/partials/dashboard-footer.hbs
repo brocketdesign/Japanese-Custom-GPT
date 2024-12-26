@@ -69,7 +69,80 @@ if (!window.translations ||!window.currentLang) {
     const lang = window.currentLang || user.lang
     loadTranslations(lang);
 }
+window.fetchAndAppendModels = function() {
+    $.get('/api/models', function(response) {
+        if (response.success) {
+        //$('#imageStyleSelection').empty(); // Clear existing content
+        response.models.forEach(model => {
+            const modelElement = `
+            <img src="${model.image}" alt="${model.style}" 
+                class="style-option rounded me-2" 
+                data-style="${model.style}" 
+                data-model="${model.model}" 
+                data-version="${model.version}">
+            `;
+            $('#imageStyleSelection').append(modelElement);
+        });
+        if($('#imageStyleTabs').length > 0){
+            showNavTabs();
+        }
+        } else {
+        window.showNotification('Failed to fetch models', 'error');
+        }
+    });
+};
+function showNavTabs(){
+    const styleSelection = document.getElementById('imageStyleSelection');
+    const tabNav = document.getElementById('imageStyleTabs');
 
+    if (styleSelection && tabNav) {
+        const styleOptions = styleSelection.querySelectorAll('.style-option');
+
+        styleOptions.forEach((option, index) => {
+            const style = option.getAttribute('data-style');
+            const model = option.getAttribute('data-model');
+            const version = option.getAttribute('data-version');
+            const imgSrc = option.getAttribute('src');
+            const altText = option.getAttribute('alt');
+
+            const isActive = index === 0 ? 'active' : '';
+
+            const tabItem = `
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link ${isActive}" id="${style}-${model}-tab" data-style="${style}" data-model="${model}" data-version="${version}" type="button" role="tab">
+                        <img src="${imgSrc}" alt="${altText}" class="tab-thumb thumb-option rounded me-2">
+                        <span class="d-none">${altText}</span>
+                    </button>
+                </li>
+            `;
+            tabNav.innerHTML += tabItem;
+        });
+
+        $('#imageStyleSelection').remove()
+    }
+
+    // Handle tab clicks
+    $('#imageStyleTabs button').on('click', function () {
+        $('#chat-gallery').empty()
+        $('#imageStyleTabs button').removeClass('active');
+        $(this).addClass('active');
+
+        var style = $(this).data('style');
+        var model = $(this).data('model');
+        localStorage.setItem('chat-nav',`${style}-${model}`)
+        displayPeopleChat(1, {imageStyle:style,imageModel:model});
+    });
+    const chatNav = localStorage.getItem('chat-nav');
+
+    if (chatNav) {
+        const [style, model] = chatNav.split('-');
+        if (style && model) {
+                $(`#imageStyleTabs`).find(`#${style}-${model}-tab`).click()
+        } 
+    } else {
+        $(`#imageStyleTabs`).find(`.nav-link`).eq(0).click()
+    }
+}
 window.updatePlanStatus = function(user){
   $.get('/user/plan/'+user._id,function(data){
       let message = `<span class="ms-1">&#x1F381;</span>`;
@@ -108,6 +181,7 @@ window.updatePlanStatus = function(user){
       })
   })
 }
+
 window.showNotification = function(message, icon) {
     Swal.fire({
         position: 'top',
@@ -171,6 +245,7 @@ window.fetchMode = async function() {
 
 $(document).ready(function(){
 
+    fetchAndAppendModels();
 // User info popup
         
     function generateRandomNickname() {

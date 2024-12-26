@@ -428,7 +428,7 @@ async function routes(fastify, options) {
 
         const image_request = {
             type: imageType,
-            model_name: imageModel,
+            model_name: imageModel.replace('.safetensors','') + '.safetensors',
             sampler_name: style.sampler_name || '',
             loras: style.loras,
             prompt: (style.prompt + prompt).replace(/^\s+/gm, '').trim(),
@@ -511,7 +511,7 @@ fastify.post('/novita/txt2img', async (request, reply) => {
       if (imageType === 'sfw') {
           image_request = {
               type: 'sfw',
-              model_name: imageModel,
+              model_name: imageModel.replace('.safetensors','') + '.safetensors',
               sampler_name: selectedStyle.sfw.sampler_name || '',
               loras: selectedStyle.sfw.loras,
               prompt: (selectedStyle.sfw.prompt + prompt).replace(/^\s+/gm, '').trim(),
@@ -523,7 +523,7 @@ fastify.post('/novita/txt2img', async (request, reply) => {
       } else {
           image_request = {
               type: 'nsfw',
-              model_name: imageModel,
+              model_name: imageModel.replace('.safetensors','') + '.safetensors',
               sampler_name: selectedStyle.nsfw.sampler_name || '',
               loras: selectedStyle.nsfw.loras,
               prompt: selectedStyle.nsfw.prompt + prompt,
@@ -715,7 +715,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
       // Combine user prompt with default SFW prompt
       const fullPrompt = selectedStyle.sfw.prompt + prompt;
       const negativePrompt = selectedStyle.sfw.negative_prompt;
-      const model_name = imageModel;
+      const model_name = imageModel.replace('.safetensors','') + '.safetensors';
       const loras = selectedStyle.sfw.loras;
       const sampler_name = selectedStyle.sfw.sampler_name
 
@@ -999,7 +999,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
 
         const selectedStyle = default_prompt[imageData.imageVersion] || default_prompt['sdxl'];
         const style = selectedStyle[imageType];
-        const imageModel = imageData.imageModel || 'novaAnimeXL_ponyV20_461138';
+        const imageModel = imageData.imageModel.replace('.safetensors','') + '.safetensors' || 'novaAnimeXL_ponyV20_461138.safetensors';
 
         // Prepare the request data for the Novita API
         const image_request = {

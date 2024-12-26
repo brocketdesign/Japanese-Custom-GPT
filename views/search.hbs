@@ -52,7 +52,7 @@
       const imageStyle = '{{imageStyle}}';
       const imageModel = '{{imageModel}}'
       const data = {{{json data}}} || [];
-        $('.style-option').click(function(){
+        $(document).on('click','.style-option',function(){
             $('.style-option').removeClass('selected');
             $(this).addClass('selected');
             $('#imageStyle').val($(this).data('value'));

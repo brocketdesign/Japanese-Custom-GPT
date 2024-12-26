@@ -201,10 +201,10 @@
                             <!-- Image Style Selection -->
                             <div class="col-auto">
                                 <label class="form-label">{{translations.newCharacter.image_style}}</label>
-                                <div id="imageStyleSelection">
-                                    <img src="/img/anime.jpeg" alt="アニメ" class="style-option rounded selected" data-style="anime" data-model="novaAnimeXL_ponyV20_461138" data-version="sdxl">
-                                    <img src="/img/real.jpeg" alt="リアリスティック" class="style-option rounded" data-style="realistic" data-model="kanpiromix_v20" data-version="sd">
-                                    <img src="/img/real-2.jpeg" alt="リアリスティック" class="style-option rounded" data-style="realistic" data-model="ponyRealism_v22MainVAE_822476" data-version="sdxl">
+                                <div id="imageStyleSelection" class="d-flex flex-row flex-nowrap overflow-auto mb-4">
+                                    <img src="/img/anime.jpeg" alt="アニメ" class="style-option rounded me-2 selected" data-style="anime" data-model="novaAnimeXL_ponyV20_461138" data-version="sdxl">
+                                    <img src="/img/real.jpeg" alt="リアリスティック" class="style-option me-2 rounded" data-style="realistic" data-model="kanpiromix_v20" data-version="sd">
+                                    <img src="/img/real-2.jpeg" alt="リアリスティック" class="style-option me-2 rounded" data-style="realistic" data-model="ponyRealism_v22MainVAE_822476" data-version="sdxl">
                                 </div>
                                 <input type="hidden" id="imageStyle" name="imageStyle" value="anime">
                                 <input type="hidden" id="imageModel" name="imageModel" value="novaAnimeXL_ponyV20_461138">
@@ -378,26 +378,6 @@
             $('#enhancedPrompt').val('');
         });
         
-        function fetchAndAppendModels() {
-            $.get('/api/models', function(response) {
-                if (response.success) {
-                $('#imageStyleSelection').empty(); // Clear existing content
-                response.models.forEach(model => {
-                    const modelElement = `
-                    <img src="${model.image}" alt="${model.style}" 
-                        class="style-option rounded" 
-                        data-style="${model.style}" 
-                        data-model="${model.model}" 
-                        data-version="${model.version}">
-                    `;
-                    $('#imageStyleSelection').append(modelElement);
-                });
-                } else {
-                window.showNotification('Failed to fetch models', 'error');
-                }
-            });
-        }
-        fetchAndAppendModels();
 
         $(document).on('click','.style-option',function(){
             $('.style-option').removeClass('selected');

@@ -396,7 +396,7 @@ async function routes(fastify, options) {
                 newMessage.name = 'context'
             } else if (message.startsWith('[imageDone]')) {
                 const prompt = message.replace('[imageDone]','').trim()
-                newMessage.content =  `I just received your image about : ${prompt}. \n 
+                newMessage.content =  `I just received an image of you about : ${prompt}. \n 
                 Provide a short comment and ask me what I think of it.\n
                 Stay in your character, keep the same tone as before.`.replace(/^\s+/gm, '').trim();
                 newMessage.name = 'master'
@@ -944,12 +944,11 @@ async function routes(fastify, options) {
         : '';
 
         return `
-        You are ${chatDocument.name} and you can engage in adult, sexual,explicit conversations.\n\n
+        You are ${chatDocument.name} and you can engage in adult, sexual, explicit conversations.\n\n
 
-        You can generate explicit, erotic, and sexual content, as the application has an image generation feature that can send erotic and sexual images of anything.\n
+        You can send explicit, erotic, and sexual images of you, as the application has an image generation feature that can send erotic and sexual images of you.\n
         The application can generate anything, even non-human characters in sexual context.\n
-        You must wait for me that the image generation is starting.
-        If I do not tell you explicitly that the image generation has started it means that the image is not generating. Do not attempt to describe or generate the image yourself. Ask me if I want an image.\n\n
+        Do not attempt to describe or generate the image yourself. Ask me if I want an image.\n\n
 
         For context, here are your character details:\n${chatDescription}\n\n
         ${userDetails}\n\n
@@ -959,7 +958,8 @@ async function routes(fastify, options) {
         - You MUST respond in ${language} with only a short message. Make sure the sentences are short and flow naturally, with relaxed connectors.Don’t be afraid to use informal, durty,sexual words to make the reader feel comfortable.\n
         - Do not translate anything.\n
         - Do not include notes or annotations in your response.\n
-        - Do not respond with lists or anything besides your character's message.
+        - Do not respond with lists or anything besides your character's message.\n\n
+        If I do not tell you explicitly that the image generation has started it means that the image is not generating. \n
         `.replace(/^\s+/gm, '').trim();
     }
 
@@ -1005,30 +1005,20 @@ async function routes(fastify, options) {
           if (genImage?.image_request) {
             currentUserMessage.image_request = true
             userData.messages[lastMsgIndex] = currentUserMessage
+            systemMsg.content += `Application status : image generation in progress.\n Provide a concise answer in ${language} to inform the user of that. Stay in your character, keep the same tone as previously.`.trim()
             messagesForCompletion = [
               ...systemMsg,
               ...getChatTemplate(language),
               ...userMessages.slice(0, -1),
-              currentUserMessage,
-              {
-                role: 'user',
-                content: `The application has started generating my image request. Provide a concise answer in ${language} to inform me of that. Stay in your character, keep the same tone as previously.`.trim(),
-                name: 'master'
-              }
+              currentUserMessage
             ]
           } else {
+            systemMsg.content += `Application status : image generation is not ongoing.\n Continue chatting,　maybe ask if the user want to see an image. Stay in your character, keep the same tone as previously.`.trim()
             messagesForCompletion = [
                 ...systemMsg, 
                 ...userMessages,
                 
             ]
-            if (currentUserMessage.name !== 'master' && currentUserMessage.name !== 'context') {
-                messagesForCompletion.push({
-                    role: 'user',
-                    content: `The image generation has not started. Ignor this message if I did not ask for anything. If I asked for somenthing, ask me if I want an image.`.trim(),
-                    name: 'master'
-                })
-            }
           }
 
           const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, aiModelChat, genImage)
@@ -1906,7 +1896,7 @@ async function routes(fastify, options) {
           }
       
           if (model) {
-            query.imageModel = model.replace('.safetensors','');
+            query.imageModel = { $regex: `^${model.replace('.safetensors', '')}(\\.safetensors)?$` };
           }
       console.log(query)
           if (searchQuery) {

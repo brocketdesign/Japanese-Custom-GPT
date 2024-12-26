@@ -231,7 +231,7 @@ const checkImageRequest = async (messages) => {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     // Get the last user messages
     const lastTwoMessages = messages
-    .filter((msg) => msg.role !== 'assistant')
+    .filter((msg) =>  msg.name !== 'master' && msg.name !== 'context')
     .slice(-2);
     console.log({lastTwoMessages})
     

@@ -321,6 +321,7 @@ async function getUserData(userId, collectionUser, collectionChat, currentUser) 
             imageLikeCount: user.imageLikeCount,
             postCount: user.postCount,
             chatCount: chatCount.length,
+            subscriptionStatus: user.subscriptionStatus
         };
     } catch (error) {
         console.error("Error fetching user data:", error);
@@ -367,6 +368,28 @@ async function getUserData(userId, collectionUser, collectionChat, currentUser) 
     };
     return langMap[langCode] || "japanese";
 }
+async function updateUserLang(db, userId, lang) {
+    if (!userId || !lang) {
+        throw new Error('Need a userId and the language');
+    }
+
+    const usersCollection = db.collection('users');
+    try {
+        const result = await usersCollection.updateOne(
+            { _id: new ObjectId(userId) },
+            { $set: { lang } }
+        );
+
+        if (result.matchedCount === 0) {
+            throw new Error('User not found');
+        }
+
+        return result;
+    } catch (error) {
+        throw new Error(`Failed to update user language: ${error.message}`);
+    }
+}
+
   module.exports = { getCounter, 
     updateCounter, 
     handleFileUpload, 
@@ -378,5 +401,6 @@ async function getUserData(userId, collectionUser, collectionChat, currentUser) 
     deleteObjectFromUrl,
     getUserData,
     addTags,
-    getLanguageName
+    getLanguageName,
+    updateUserLang
 }

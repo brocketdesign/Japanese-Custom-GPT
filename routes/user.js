@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const aws = require('aws-sdk');
 const crypto = require('crypto');
 const axios = require('axios');
-const { checkLimits, checkUserAdmin, getUserData } = require('../models/tool');
+const { checkLimits, checkUserAdmin, getUserData, updateUserLang } = require('../models/tool');
 
 async function routes(fastify, options) {
   
@@ -86,20 +86,56 @@ async function routes(fastify, options) {
   });
 
   fastify.post('/user/login', async (request, reply) => {
-    const { email, password } = request.body;
-    const usersCollection = fastify.mongo.db.collection('users');
-    
-    const user = await usersCollection.findOne({ email });
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      return reply.status(401).send({ error: '無効なユーザー名またはパスワード' });
+    try {
+        // Validate and sanitize input
+        const { email, password } = request.body || {};
+        if (!email || !password) {
+            return reply.status(400).send({ error: 'メールとパスワードは必須です' });
+        }
+
+        const sanitizedEmail = email.trim().toLowerCase();
+        const usersCollection = fastify.mongo.db.collection('users');
+
+        // Find user by email
+        const user = await usersCollection.findOne({ email: sanitizedEmail });
+        if (!user) {
+            return reply.status(401).send({ error: '無効なユーザー名またはパスワード' });
+        }
+
+        // Verify password
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        if (!passwordMatch) {
+            return reply.status(401).send({ error: '無効なユーザー名またはパスワード' });
+        }
+
+        // Optionally update the user's language preference, if provided
+        if (request.lang) {
+            try {
+                await updateUserLang(fastify.mongo.db, user._id, request.lang);
+            } catch (langError) {
+                return reply.status(500).send({ error: '言語設定の更新中にエラーが発生しました' });
+            }
+        }
+
+        // Generate JWT
+        const token = jwt.sign(
+            { _id: user._id, email: user.email },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        // Respond with token and clear tempUser cookie
+        return reply
+            .clearCookie('tempUser', { path: '/' })
+            .setCookie('token', token, { path: '/', httpOnly: true })
+            .send({ redirect: '/dashboard' });
+    } catch (error) {
+        // Catch unexpected errors
+        console.error('Login route error:', error);
+        return reply.status(500).send({ error: 'サーバーエラーが発生しました' });
     }
-    
-    const token = jwt.sign({ _id: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '24h' });
-    return reply
-      .clearCookie('tempUser', { path: '/' }) // Clear the tempUser cookie
-      .setCookie('token', token, { path: '/', httpOnly: true })
-      .send({ redirect: '/dashboard' });
-  });  
+});
+
 
   // Google authentication configuration
   const googleClientId = process.env.GOOGLE_CLIENT_ID;
@@ -201,6 +237,7 @@ fastify.get('/user/google-auth/callback', async (request, reply) => {
         await usersCollection.updateOne({ _id: user._id }, { $set: { googleId } });
       }
       // Login the user if they already exist
+      await updateUserLang(fastify.mongo.db, user._id,request.lang)
       const token = jwt.sign({ _id: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '24h' });
       return reply
       .setCookie('token', token, { path: '/', httpOnly: true })
@@ -306,7 +343,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
             userChatUpdated: userChatResult.modifiedCount,
             chatUpdated: chatResult.modifiedCount
         };
-    };
+      };
     
       await updateUserId(collectionChat, collectionUserChat, userId, tempUserId)
 
@@ -317,6 +354,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
         .send({ status: 'ユーザーが正常に登録されました' });
     } else {
       // Login the user if they already exist
+      await updateUserLang(fastify.mongo.db, user._id,request.lang)
       const token = jwt.sign({ _id: user._id, userId: user.userId }, process.env.JWT_SECRET, { expiresIn: '24h' });
       return reply
         .setCookie('token', token, { path: '/', httpOnly: true })

@@ -34,6 +34,7 @@ async function routes(fastify, options) {
       
       const result = await usersCollection.insertOne(
         { 
+          lang: request.lang,
           email, 
           password: hashedPassword, 
           createdAt:new Date(), 
@@ -157,6 +158,7 @@ fastify.get('/user/google-auth/callback', async (request, reply) => {
       const TempUser = request.user;
       let tempUserId = TempUser._id
       const result = await usersCollection.insertOne({ 
+        lang: request.lang,
         email, 
         password: hashedPassword, 
         googleId, 
@@ -274,6 +276,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       const TempUser = request.user;
       let tempUserId = TempUser._id
       const result = await usersCollection.insertOne({ 
+        lang: request.lang,
         userId, 
         email, 
         password: hashedPassword, 

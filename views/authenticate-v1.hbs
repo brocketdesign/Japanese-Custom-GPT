@@ -161,16 +161,16 @@ $(document).ready(function() {
 
     $('#register-link').on('click', function() {
         $('#register-tab').tab('show');
-        $('.authenticate').text('会員登録');
+        $('.authenticate').text(translations.authMail.register);
     });
 
     $('#login-tab').on('click', function() {
-        $('.authenticate').text('ログイン');
-        $('.header').html('ログインして<br>楽しく会話しましょう!')
+        $('.authenticate').text(translations.authMail.login);
+        $('.header').html(translations.authMail.loginDescription)
     });
     $('#register-tab').on('click', function() {
-        $('.authenticate').text('会員登録');
-        $('.header').html('無料アカウント登録で、<br>会話をもっと楽しもう!')
+        $('.authenticate').text(translations.authMail.register);
+        $('.header').html(translations.authMail.registerDescription)
     });
 
     $('input').on('focus', function() {

@@ -43,7 +43,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         const lang = (['en','fr','jp'].includes(subdomain)) ? subdomain : 'en';
         setTranslations(request, lang);
         request.user = user;
-
+        request.lang = lang
     });
 
     // Helper to get authenticated user

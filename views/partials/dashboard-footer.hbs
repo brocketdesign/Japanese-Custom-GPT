@@ -41,21 +41,34 @@
     });
 });
 
-$(document).ready(function(){
-    // Initialize user info from the Handlebars variable
-    const user = {
-        _id: "{{user._id}}",
-        language: "{{user.lang}}",
-        isTemporary: "{{user.isTemporary}}",
-    };
-    console.log({user})
-    localStorage.setItem('currentLang',user.language)
-    if(user.isTemporary == true){
+window.translations = {{{json translations}}}
+window.currentLang = localStorage.getItem('currentLang')
 
-    }else{
-        updatePlanStatus(user)
+window.loadTranslations = async function (lang) {
+    const localTranslations = localStorage.getItem('translations');
+
+    const response = await $.ajax({
+        url: '/api/user/translations',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ lang })
+    });
+
+    if (response.success) {
+        window.translations = response.translations;
+        localStorage.setItem('translations', JSON.stringify(response.translations))
+
+        window.currentLang = lang;
+        localStorage.setItem('currentLang', lang)
     }
-})
+
+}
+
+if (!window.translations ||!window.currentLang) {
+    const user = {{{json user}}}
+    const lang = user.lang
+    loadTranslations(lang);
+}
 
 window.updatePlanStatus = function(user){
   $.get('/user/plan/'+user._id,function(data){
@@ -293,9 +306,7 @@ $(document).ready(function(){
             }
         }).then((result) => {
             if (result.isConfirmed) {
-                handleUserInfo(result.value,function(){
-                    window.location = '/my-plan'
-                });
+                handleUserInfo();
             }
             
         });

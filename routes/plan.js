@@ -4,59 +4,74 @@ const qs = require('qs');
 const stripe = process.env.MODE == 'local'? require('stripe')(process.env.STRIPE_SECRET_KEY_TEST) : require('stripe')(process.env.STRIPE_SECRET_KEY)
 
 async function routes(fastify, options) {
-  const free_plan =  {
-    id: 'free',
-    name: "お試しプラン",
-    price: "無料",
-    monthly: "無料",
-    yearly: "無料",
-    features: [
-      "💬   1日50件までチャットできる",
-      "👥   フレンドを無制限で作成できる",
-      "🎨   新しいキャラクターを作成する",
-      "📝   チャット履歴を保存する",
-      "🤖   基本的なAIキャラクターとの対話",
-      "🖼   無制限の画像生成を受け取る",
-      "💡   10件のメッセージ提案機能",
-      "🎁   毎日プレゼントを受け取る"
-    ],
-    chatLimit:'無制限',
-    imageLimit:'無制限',
-  }
-  const plans = [
+
+  const plans = 
     {
-      id: 'premium',
-      name: "プレミアムプラン",
-      price: "￥1100円/月",
-      monthly: "￥5,000円/月",
-      yearly: "￥990円/月",
-      monthly_id : process.env.MODE == 'local'? process.env.STRIPE_PREMIUM_MONTLY_TEST: process.env.STRIPE_PREMIUM_MONTLY,
-      yearly_id : process.env.MODE == 'local'? process.env.STRIPE_PREMIUM_YEARLY_TEST: process.env.STRIPE_PREMIUM_YEARLY,
-      features: [
-        "💬   毎日無制限でチャットできる",
-        "👥   フレンドを無制限で作成できる",
-        "🎨   新しいキャラクターを作成する",
-        "🚀   新機能の先行アクセス",
-        "🗂   複数選択肢のチャット表示",
-        "🖼   無制限の画像生成を受け取る",
-        "💡   無制限のメッセージ提案機能",
-        "🔓   画像をすべて解除する"
-      ],
-      messageLimit:'無制限',
-      chatLimit:'無制限',
-      imageLimit:'無制限',
-      messageIdeasLimit:'無制限',
-    },
-  ];
+      fr: {
+        name: "Plan Premium",
+        price: "11,00 €/mois",
+        monthly: "50,00 €/mois",
+        yearly: "9,99 €/mois",
+        features: [
+          "💬   Chat illimité tous les jours",
+          "👥   Créer des amis illimités",
+          "🎨   Créer de nouveaux personnages",
+          "🚀   Accès anticipé aux nouvelles fonctionnalités",
+          "🗂   Affichage de plusieurs options de chat",
+          "🖼   Génération d'images illimitée",
+          "💡   Suggestions de messages illimitées",
+          "🔓   Débloquer toutes les images"
+        ],
+        messageLimit: 'Illimité',
+        chatLimit: 'Illimité',
+        imageLimit: 'Illimité',
+        messageIdeasLimit: 'Illimité'
+      },
+      en: {
+        name: "Premium Plan",
+        price: "$11.00/month",
+        monthly: "$50.00/month",
+        yearly: "$9.99/month",
+        features: [
+          "💬   Unlimited chat every day",
+          "👥   Create unlimited friends",
+          "🎨   Create new characters",
+          "🚀   Early access to new features",
+          "🗂   Multiple chat options display",
+          "🖼   Unlimited image generation",
+          "💡   Unlimited message suggestions",
+          "🔓   Unlock all images"
+        ],
+        messageLimit: 'Unlimited',
+        chatLimit: 'Unlimited',
+        imageLimit: 'Unlimited',
+        messageIdeasLimit: 'Unlimited'
+      },
+      jp: {
+        name: "プレミアムプラン",
+        price: "￥1100円/月",
+        monthly: "￥5,000円/月",
+        yearly: "￥990円/月",
+        features: [
+          "💬   毎日無制限でチャットできる",
+          "👥   フレンドを無制限で作成できる",
+          "🎨   新しいキャラクターを作成する",
+          "🚀   新機能の先行アクセス",
+          "🗂   複数選択肢のチャット表示",
+          "🖼   無制限の画像生成を受け取る",
+          "💡   無制限のメッセージ提案機能",
+          "🔓   画像をすべて解除する"
+        ],
+        messageLimit: '無制限',
+        chatLimit: '無制限',
+        imageLimit: '無制限',
+        messageIdeasLimit: '無制限'
+      }
+    };  
 
   fastify.get('/plan/list', async (request, reply) => {
-    const user = request.user;
-  
-    await fastify.mongo.db.collection('plans').deleteMany({});
-    await fastify.mongo.db.collection('plans').insertOne({ plans });
-    
-    const plansFromDb = await fastify.mongo.db.collection('plans').findOne();
-    return reply.send(plansFromDb);
+    const lang = request.query.lang;
+    return reply.send(plans[lang]);
   });
   fastify.post('/plan/subscribe', async (request, reply) => {
     try {

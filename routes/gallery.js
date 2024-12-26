@@ -186,61 +186,57 @@ async function routes(fastify, options) {
       const chatsGalleryCollection = db.collection('gallery');
       const chatsCollection = db.collection('chats');
   
-      const allChatImagesDocs = await chatsGalleryCollection
-        .aggregate([
-          { $unwind: '$images' },
-          {
-            $match: {
-              'images.imageUrl': { $exists: true, $ne: null },
-              'images.prompt': { $regex: queryStr, $options: 'i' },
-            },
-          },
-          { $sort: { _id: -1 } },
-          { $skip: skip },
-          { $limit: 50 },
-          { $project: { _id: 0, image: '$images', chatId: 1 } },
-        ])
-        .toArray();
-        
-      const chatIds = allChatImagesDocs.map((doc) => doc.chatId);
-  
-      const chats = await chatsCollection
-        .find({ _id: { $in: chatIds }, imageStyle:styleStr, language })
-        .toArray();
+      // Replace everything from fetching allChatImagesDocs to totalImagesCount with:
 
-        const imagesWithChatData = allChatImagesDocs
-        .filter((doc) => chats.find((c) => c._id.equals(doc.chatId)))
-        .map((doc) => {
-          const image = doc.image;
-          const chat = chats.find((c) => c._id.equals(doc.chatId));
-          return {
-            ...image,
-            userId: chat?.userId,
-            chatId: chat?._id,
-            chatName: chat ? chat.name : 'Unknown Chat',
-            thumbnail:
-              chat?.thumbnail || chat?.thumbnailUrl || '/img/default-thumbnail.png',
+      const chatIds = await chatsCollection
+      .find({ language, imageStyle: styleStr })
+      .project({ _id: 1 })
+      .toArray()
+      .then((chats) => chats.map((c) => c._id));
+
+      const [allChatImagesDocs, totalCountDocs] = await Promise.all([
+      chatsGalleryCollection.aggregate([
+        { $unwind: '$images' },
+        {
+          $match: {
+            'images.imageUrl': { $exists: true, $ne: null },
+            'images.prompt': { $regex: queryStr, $options: 'i' },
+            chatId: { $in: chatIds }
           }
-        })
-        .slice(0, limit);
-  
-      const totalImagesCount = await chatsGalleryCollection
-        .aggregate([
-          { $unwind: '$images' },
-          {
-            $match: {
-              'images.imageUrl': { $exists: true, $ne: null },
-              'images.prompt': { $regex: queryStr, $options: 'i' },
-            },
-          },
-          { $count: 'total' },
-        ])
-        .toArray();
-  
-      const totalImages =
-        totalImagesCount.length > 0 ? totalImagesCount[0].total : 0;
+        },
+        { $sort: { _id: -1 } },
+        { $skip: skip },
+        { $limit: limit },
+        { $project: { _id: 0, image: '$images', chatId: 1 } }
+      ]).toArray(),
+      chatsGalleryCollection.aggregate([
+        { $unwind: '$images' },
+        {
+          $match: {
+            'images.imageUrl': { $exists: true, $ne: null },
+            'images.prompt': { $regex: queryStr, $options: 'i' },
+            chatId: { $in: chatIds }
+          }
+        },
+        { $count: 'total' }
+      ]).toArray()
+      ]);
+
+      const totalImages = totalCountDocs.length ? totalCountDocs[0].total : 0;
       const totalPages = Math.ceil(totalImages / limit);
-  
+      if (!totalImages) return reply.code(404).send({ images: [], page, totalPages: 0 });
+
+      const chatsData = await chatsCollection.find({ _id: { $in: chatIds } }).toArray();
+      const imagesWithChatData = allChatImagesDocs.map((doc) => {
+      const chat = chatsData.find((c) => c._id.equals(doc.chatId));
+      return {
+        ...doc.image,
+        chatId: doc.chatId,
+        chatName: chat?.name,
+        thumbnail: chat?.thumbnail || chat?.thumbnailUrl || '/img/default-thumbnail.png'
+      };
+      });
+
       if (totalImages === 0) {
         return reply.code(404).send({ images: [], page, totalPages: 0 });
       }

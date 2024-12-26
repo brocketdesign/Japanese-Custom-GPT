@@ -163,12 +163,9 @@ fastify.get('/', async (request, reply) => {
   }
   let chatCount = await collectionChat.distinct('chatImageUrl', { userId: new fastify.mongo.ObjectId(userId) });
   chatCount = chatCount.length;
-  
-  const host = request.hostname; 
-  const subdomain = host.split('.')[0];
-  const lang = (['en','fr','jp'].includes(subdomain)) ? subdomain : 'en';
 
   const translations = request.translations;
+  const lang = request.lang
 
   if (user.isTemporary) {
     return reply.renderWithGtm(`index/${lang}.hbs`, {
@@ -223,7 +220,8 @@ fastify.get('/my-plan', { preHandler: [fastify.authenticate] }, async (request, 
   const userId = user._id;
   user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
   const translations = request.translations;
-  return reply.renderWithGtm('plan.hbs', {
+  const lang = request.lang
+  return reply.renderWithGtm(`plan/${lang}.hbs`, {
     title: 'プレミアムプランAI画像生成',
     translations,
     user,

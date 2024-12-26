@@ -1,29 +1,3 @@
-window.translations = JSON.parse(localStorage.getItem('translations')) || {};
-let currentLang = localStorage.getItem('currentLang');
-
-async function loadTranslations(lang) {
-    const localTranslations = localStorage.getItem('translations');
-
-    if (lang === currentLang && sessionTranslations) {
-        window.translations = JSON.parse(sessionTranslations);
-        return window.translations;
-    }
-
-    const response = await $.ajax({
-        url: '/api/user/translations',
-        method: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify({ lang })
-    });
-
-    if (response.success) {
-        window.translations = response.translations;
-    }
-
-    return window.translations;
-}
-
-
 async function onLanguageChange(lang) {
     const updateResponse = await $.ajax({
         url: '/api/user/update-language',
@@ -35,7 +9,6 @@ async function onLanguageChange(lang) {
     if (updateResponse.success) {
         await loadTranslations(lang);
         $('#languageDropdown').text(getLanguageDisplayName(lang));
-        localStorage.setItem('currentLang',lang)
         location.reload();
     }
 }
@@ -50,10 +23,6 @@ function getLanguageDisplayName(lang) {
 }
 
 $(document).ready(function() {
-    if (Object.keys(window.translations).length === 0) {
-        loadTranslations(currentLang);
-    }
-
     $('.language-select').on('click', function(e) {
         e.preventDefault();
         const selectedLang = $(this).data('lang');

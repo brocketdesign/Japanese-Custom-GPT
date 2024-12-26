@@ -200,8 +200,7 @@ async function fetchNewAPICompletion(userMessages, rawReply, chatname, timeout =
 const formatSchema = z.object({
     nsfw: z.boolean(),
     image_request: z.boolean(),
-    nude: z.boolean(),
-    nude_type: z.enum(['none', 'top', 'bottom', 'full']).optional(),
+    nude: z.enum(['false', 'top', 'bottom', 'full']).optional(),
     image_focus: z.enum(['upper_body', 'full_body']).optional(),
     position: z.enum(['standing', 'sitting', 'squat']).optional(),
     viewpoint: z.enum(['front', 'back', 'side']).optional()
@@ -212,19 +211,17 @@ const formatSchema = z.object({
 const systemPrompt = `
     You are a useful assistant. Your purpose is to determine if the user is requesting a visual. You analyze the conversation:
     1. nsfw: true if nudity (not underwear) is involved, else false.
-    2. nude: true if full nude requested, else false.
+    2. nude: false|top|bottom|full.
     3. image_request: true if user last message is a request for image from the user, else false.
-    4. nude_type: 'none','top','bottom','full' if applicable.
-    5. image_focus: 'upper_body' or 'full_body'.
-    6. position: 'standing','sitting','squat' if specified.
-    7. viewpoint: 'front','back','side' if specified.
+    4. image_focus: 'upper_body' or 'full_body'.
+    5. position: 'standing','sitting','squat' if specified.
+    6. viewpoint: 'front','back','side' if specified.
     
     Return:
     {
     "nsfw": boolean,
     "image_request": boolean,
-    "nude": boolean,
-    "nude_type": "none|top|bottom|full",
+    "nude": "none|top|bottom|full",
     "image_focus": "upper_body|full_body",
     "position": "standing|sitting|squat",
     "viewpoint": "front|back|side"

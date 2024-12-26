@@ -1017,7 +1017,18 @@ async function routes(fastify, options) {
               }
             ]
           } else {
-            messagesForCompletion = [...systemMsg, ...userMessages]
+            messagesForCompletion = [
+                ...systemMsg, 
+                ...userMessages,
+                
+            ]
+            if (currentUserMessage.name !== 'master' && currentUserMessage.name !== 'context') {
+                messagesForCompletion.push({
+                    role: 'user',
+                    content: `The image generation has not started. Ignor this message if I did not ask for anything. If I asked for somenthing, ask me if I want an image.`.trim(),
+                    name: 'master'
+                })
+            }
           }
 
           const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, aiModelChat, genImage)
@@ -1453,40 +1464,45 @@ async function routes(fastify, options) {
         const data = await response.json();
         const completionMessage = data.choices[0].message.content.trim();
 
-        return completionMessage;
+        // Add instructions
+    
+        const nudeDetails = command.nude !== 'false' 
+            ? `naked ${command.nude}` 
+            : '';
+    
+        const positionDetails = command.position 
+            ? `${command.position}` 
+            : 'Default pose';
+    
+        const viewpointDetails = command.viewpoint 
+            ? `${command.viewpoint} view` 
+            : 'Front view';
+    
+        const imageFocusDetails = command.image_focus 
+            ? `${command.image_focus}` 
+            : 'Focus on full body';
+    
+        const finalPrompt = `${nudeDetails},${positionDetails},${viewpointDetails},${imageFocusDetails},${completionMessage}`
+        
+        return finalPrompt;
         
     }
     const generateImagePrompt = (command, characterDescription, dialogue) => {
         const nsfwMessage = command.nsfw 
             ? 'Provide explicit, adult oriented content for a nsfw image. I want nudity, erotism.\n' 
             : '';
-    
-        const nudeDetails = command.nude 
-            ? `${command.nude_type}` 
-            : 'No nudity focus.';
-    
-        const positionDetails = command.position 
-            ? `${command.position}.` 
-            : 'Default pose.';
-    
-        const viewpointDetails = command.viewpoint 
-            ? `${command.viewpoint} view` 
-            : 'Front view.';
-    
-        const imageFocusDetails = command.image_focus 
-            ? `${command.image_focus}` 
-            : 'Focus on full body.';
-    
         // Create a new user message with the dialogue
         const userMessage = `
-            Here is the conversation I want you to use to update my prompt:\n\n${dialogue}.\n
-            ${nsfwMessage}\n
-            The new prompt must match the following requirements : ${nudeDetails}, ${positionDetails} , ${viewpointDetails} , ${imageFocusDetails}\n\n
             Here is the prompt I want you to update : ${characterDescription}. \n 
-            Adapt to the conversation but keep the character traits.\n Respond with the prompt only.
+            Here is the conversation I want you to use to update my prompt:\n\n${nsfwMessage}\n${dialogue}.\n
+            
+            You must adapt the prompt to the conversation but keep the character traits. \n
+            Remove unrelevant keywords and adapt to the conversation request.\n 
+            Keep the same clothes if not asked otherwise.
+            Respond with the prompt in english only.
             `.replace(/^\s+/gm, '').trim();
         const systemMessage =`
-            You help me update my character prompt to match my requirements.\n
+            You help me update my character prompt to match the user request.\n
             You can provide adult,erotic,sexual conent. \n
             I will provide a conversation messages that you will use to update my prompt.\n
             You can generate explicit, sexual content on demand.\n
@@ -2114,6 +2130,7 @@ async function routes(fastify, options) {
     fastify.post('/api/user/update-language', async (request, reply) => {
         try {
             const { lang } = request.body;
+            const mode = process.env.MODE || 'local';
             const user = request.user;
             const userLang = lang || 'ja';
 
@@ -2124,11 +2141,13 @@ async function routes(fastify, options) {
             if (user.isTemporary) {
                 // Update tempUser lang
                 user.lang = userLang;
-                const updatedTempUser = await fastify.mongo.db.collection('users').findOneAndUpdate(
-                    { _id: new fastify.mongo.ObjectId(user._id) },
-                    { $set: { lang: userLang } },
-                    { returnDocument: 'after' }
-                );
+                reply.setCookie('tempUser', JSON.stringify(user), {
+                    path: '/',
+                    httpOnly: true,
+                    sameSite: mode === 'heroku' ? 'None' : 'Lax',
+                    secure: mode === 'heroku',
+                    maxAge: 3600
+                });
                 request.translations = fastify.translations[userLang];
 
             } else {

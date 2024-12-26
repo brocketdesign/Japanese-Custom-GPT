@@ -5,6 +5,8 @@ const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const fastifyPlugin = require('fastify-plugin');
 const { ObjectId } = require('mongodb');
+const requestIp = require('request-ip');
+const geoip = require('geoip-lite');
 
 module.exports = fastifyPlugin(async function (fastify, opts) {
     // 1. Load all translation files at startup
@@ -38,13 +40,30 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     // 4. Add a preHandler hook to set translations and user for every request
     fastify.addHook('preHandler', async (request, reply) => {
         const user = await fastify.getUser(request, reply);
-        const host = request.hostname; 
+        const mode = process.env.MODE || 'local';
+        const host = request.hostname;
         const subdomain = host.split('.')[0];
-        const lang = (['en','fr','jp'].includes(subdomain)) ? subdomain : 'en';
+        const lang = (['en', 'fr', 'ja'].includes(subdomain)) ? subdomain : 'en';
+    
+        // Set translations and user details
         setTranslations(request, lang);
         request.user = user;
-        request.lang = lang
+        request.lang = lang;
+    
+        // Redirect logic if not in local mode
+        if (mode !== 'local' && user.lang && user.lang !== lang) {
+            const baseDomain = host.split('.').slice(1).join('.'); // Extract base domain
+            const redirectUrl = `https://${user.lang}.${baseDomain}${request.url}`;
+            return reply.redirect(302, redirectUrl);
+        }
+        // Translate if on localhost
+        if (mode == 'local' && user.lang && user.lang !== lang) {
+            setTranslations(request, user.lang);
+            request.user = user;
+            request.lang = user.lang;
+        }
     });
+    
 
     // Helper to get authenticated user
     async function getAuthenticatedUser(request, userCollection) {
@@ -70,7 +89,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         if (!tempUser) {
             const host = request.hostname; 
             const subdomain = host.split('.')[0];
-            const lang = (['en','fr','jp'].includes(subdomain)) ? subdomain : 'en';
+            const lang = (['en','fr','ja'].includes(subdomain)) ? subdomain : 'en';
             const tempUserId = new ObjectId().toString();
             tempUser = {
                 _id: tempUserId,
@@ -107,5 +126,18 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     function setTranslations(request, lang) {
         lang = lang || 'ja';
         request.translations = fastify.translations[lang] || fastify.translations['ja'];
+    }
+
+
+    function getUserLanguage(req) {
+        const clientIp = requestIp.getClientIp(req) || '0.0.0.0';
+        const geo = geoip.lookup(clientIp);
+        const countryToLanguage = {
+            US: 'en',
+            JP: 'ja',
+            FR: 'fr',
+        };
+
+        return geo && countryToLanguage[geo.country] ? countryToLanguage[geo.country] : 'en';
     }
 });

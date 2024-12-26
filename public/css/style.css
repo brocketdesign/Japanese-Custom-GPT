@@ -107,6 +107,9 @@ iframe {
   right: 10px;
   left: 10px;
 }
+#imageStyleTabs .nav-item button {
+  padding: 10px;
+}
 #audio-play{
   display: none !important;
 }

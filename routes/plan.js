@@ -50,7 +50,7 @@ async function routes(fastify, options) {
   ];
 
   fastify.get('/plan/list', async (request, reply) => {
-    const user = await fastify.getUser(request, reply);
+    const user = request.user;
   
     await fastify.mongo.db.collection('plans').deleteMany({});
     await fastify.mongo.db.collection('plans').insertOne({ plans });

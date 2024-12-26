@@ -1,11 +1,10 @@
 window.translations = JSON.parse(localStorage.getItem('translations')) || {};
-let currentLang = localStorage.getItem('currentLang') || 'ja';
+let currentLang = localStorage.getItem('currentLang');
 
 async function loadTranslations(lang) {
-    const sessionLang = sessionStorage.getItem('currentLang');
-    const sessionTranslations = sessionStorage.getItem('translations');
+    const localTranslations = localStorage.getItem('translations');
 
-    if (lang === sessionLang && sessionTranslations) {
+    if (lang === currentLang && sessionTranslations) {
         window.translations = JSON.parse(sessionTranslations);
         return window.translations;
     }
@@ -19,8 +18,6 @@ async function loadTranslations(lang) {
 
     if (response.success) {
         window.translations = response.translations;
-        sessionStorage.setItem('currentLang', lang);
-        sessionStorage.setItem('translations', JSON.stringify(window.translations));
     }
 
     return window.translations;
@@ -38,7 +35,7 @@ async function onLanguageChange(lang) {
     if (updateResponse.success) {
         await loadTranslations(lang);
         $('#languageDropdown').text(getLanguageDisplayName(lang));
-        localStorage.setItem('currentLang','en')
+        localStorage.setItem('currentLang',lang)
         location.reload();
     }
 }

@@ -38,9 +38,12 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     // 4. Add a preHandler hook to set translations and user for every request
     fastify.addHook('preHandler', async (request, reply) => {
         const user = await fastify.getUser(request, reply);
-        setTranslations(request, user.lang);
-        // Decorate the request with the user object
+        const host = request.hostname; 
+        const subdomain = host.split('.')[0];
+        const lang = (['en','fr','jp'].includes(subdomain)) ? subdomain : 'en';
+        setTranslations(request, lang);
         request.user = user;
+
     });
 
     // Helper to get authenticated user
@@ -65,12 +68,15 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         let tempUser = request.cookies.tempUser;
     
         if (!tempUser) {
+            const host = request.hostname; 
+            const subdomain = host.split('.')[0];
+            const lang = (['en','fr','jp'].includes(subdomain)) ? subdomain : 'en';
             const tempUserId = new ObjectId().toString();
             tempUser = {
                 _id: tempUserId,
                 isTemporary: true,
                 role: 'guest',
-                lang: 'ja',
+                lang,
                 createdAt: new Date(),
                 session: getSessionIdentifier(request)
             };

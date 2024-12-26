@@ -30,7 +30,7 @@ module.exports = { fetchModels };
 async function routes(fastify, options) {
 
   fastify.get('/admin/notifications', async (request, reply) => {
-    const user = await fastify.getUser(request, reply);
+    const user = request.user;
     const isAdmin = await checkUserAdmin(fastify, user._id);
     if (!isAdmin) return reply.status(403).send({ error: 'Access denied' });
 

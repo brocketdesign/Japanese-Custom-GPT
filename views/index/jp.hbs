@@ -183,6 +183,33 @@
         font-size: 10px;
         border-radius: 50px;
     }
+            .before-after--section-step-container {
+                position: relative;
+            }.before-after--section-symbol {
+            position: absolute;
+            left: 29px;
+            top: 65px;
+            width: 100px;
+            height: 2px;
+            -webkit-transform: rotate(-50deg);
+            transform: rotate(-50deg);
+            background-color: #212529;
+            }.before-after--section-step {
+            font-weight: 700;
+            font-size: 22px;
+            line-height: 26px;
+            }
+            .before-after--section-symbol {
+            left: 8px;
+            top: 25px;
+            width: 42px;
+            height: 1px;
+            }.before-after--section-total-step {
+                display: none;
+            font-size: 14px;
+            line-height: 16px;
+            margin-left: 35px;
+            }
     </style>
 
 {{#if user.isTemporary}}
@@ -222,35 +249,6 @@
 
 
     <section class="container">
-        <style>
-            .before-after--section-step-container {
-                position: relative;
-            }.before-after--section-symbol {
-            position: absolute;
-            left: 29px;
-            top: 65px;
-            width: 100px;
-            height: 2px;
-            -webkit-transform: rotate(-50deg);
-            transform: rotate(-50deg);
-            background-color: #212529;
-            }.before-after--section-step {
-            font-weight: 700;
-            font-size: 22px;
-            line-height: 26px;
-            }
-            .before-after--section-symbol {
-            left: 8px;
-            top: 25px;
-            width: 42px;
-            height: 1px;
-            }.before-after--section-total-step {
-                display: none;
-            font-size: 14px;
-            line-height: 16px;
-            margin-left: 35px;
-            }
-        </style>
 <div class="container row mt-3">
     <div class="col-auto my-3" data-animate="animate__fadeInRight" >
         <div class="before-after--section-step-container">
@@ -267,8 +265,6 @@
 </div>
 
     </section>
-{{/if}}
-{{#if user.isTemporary}}
  <section class="container">
     <div class="container row align-items-center h-100 m-auto">
         <div class="col-12 col-md-6 py-5 text-dark" data-animate="animate__fadeInRight" >

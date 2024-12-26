@@ -155,7 +155,7 @@ fastify.decorate('createNotification', async (userId, message, type, data) => {
 
 fastify.get('/', async (request, reply) => {
   const db = fastify.mongo.db;
-  let user = await fastify.getUser(request, reply);
+  let user = request.user;
   const userId = user._id;
   const collectionChat = db.collection('chats');
   if (userId && !user.isTemporary) {
@@ -163,9 +163,15 @@ fastify.get('/', async (request, reply) => {
   }
   let chatCount = await collectionChat.distinct('chatImageUrl', { userId: new fastify.mongo.ObjectId(userId) });
   chatCount = chatCount.length;
+  
+  const host = request.hostname; 
+  const subdomain = host.split('.')[0];
+  const lang = (['en','fr','jp'].includes(subdomain)) ? subdomain : 'en';
+
   const translations = request.translations;
+
   if (user.isTemporary) {
-    return reply.renderWithGtm('index.hbs', {
+    return reply.renderWithGtm(`index/${lang}.hbs`, {
       title: 'AIフレンズ',
       translations,
       user,
@@ -175,7 +181,7 @@ fastify.get('/', async (request, reply) => {
         { property: 'og:title', content: 'プレミアムプランAI画像生成 | LAMIX | AIグラビア | ラミックスの画像生成AI体験' },
         { property: 'og:description', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },
         { property: 'og:image', content: '/img/share.png' },
-        { property: 'og:url', content: 'https://app.lamix.jp/chat/' },
+        { property: 'og:url', content: 'https://chatlamix.com/' },
       ],
     });
   } else {
@@ -184,7 +190,7 @@ fastify.get('/', async (request, reply) => {
 });
 
 fastify.get('/authenticate', async (request, reply) => {
-  const user = await fastify.getUser(request, reply);
+  const user = request.user;
   const translations = request.translations;
   if (user.isTemporary || request.query.register) {
     return reply.renderWithGtm('authenticate.hbs', {
@@ -198,7 +204,7 @@ fastify.get('/authenticate', async (request, reply) => {
 });
 
 fastify.get('/authenticate/mail', async (request, reply) => {
-  const user = await fastify.getUser(request, reply);
+  const user = request.user;
   const translations = request.translations;
   if (user.isTemporary || request.query.register) {
     return reply.renderWithGtm('authenticate-v1.hbs', {
@@ -518,7 +524,7 @@ fastify.get('/chat/list/:id', { preHandler: [fastify.authenticate] }, async (req
     const user = await db.collection('users').findOne({ _id: userId });
 
     let query = { userId, visibility: 'public' };
-    const currentUser = await fastify.getUser(request, reply);
+    const currentUser = request.user;
 
     if (currentUser._id.toString() === request.params.id.toString()) {
       query = { userId };

@@ -29,7 +29,7 @@ async function routes(fastify, options) {
       const hashedPassword = await bcrypt.hash(password, 10);
 
       // Insert new user into the database
-      const TempUser = await fastify.getUser(request, reply);
+      const TempUser = request.user;
       let tempUserId = TempUser._id
       
       const result = await usersCollection.insertOne(
@@ -154,7 +154,7 @@ fastify.get('/user/google-auth/callback', async (request, reply) => {
       // Create a new user if they don't exist
       const hashedPassword = await bcrypt.hash(Math.random().toString(36).substr(2, 10), 10);
       
-      const TempUser = await fastify.getUser(request, reply);
+      const TempUser = request.user;
       let tempUserId = TempUser._id
       const result = await usersCollection.insertOne({ 
         email, 
@@ -271,7 +271,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       // Create a new user if they don't exist
       const hashedPassword = await bcrypt.hash(Math.random().toString(36).substr(2, 10), 10);
       
-      const TempUser = await fastify.getUser(request, reply);
+      const TempUser = request.user;
       let tempUserId = TempUser._id
       const result = await usersCollection.insertOne({ 
         userId, 
@@ -531,7 +531,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     const collectionUser = db.collection('users');
   
     try {
-      let currentUser = await fastify.getUser(request, reply);
+      let currentUser = request.user;
       const currentUserId = currentUser?._id;
       if (!currentUser?.isTemporary && currentUserId) currentUser = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(currentUserId) });
 
@@ -569,7 +569,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     const collectionUser = db.collection('users');
   
     try {
-      let currentUser = await fastify.getUser(request, reply)
+      let currentUser = request.user
       const currentUserId = currentUser?._id
       if (!currentUser?.isTemporary && currentUserId) await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(currrentUserId) });
       const user = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(userId) });
@@ -629,7 +629,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     const usersCollection = db.collection('users');
     const translations = request.translations
     
-    let currentUser = await fastify.getUser(request, reply);
+    let currentUser = request.user;
     const currentUserId = new fastify.mongo.ObjectId(currentUser?._id);
     const targetUserId = new fastify.mongo.ObjectId(request.params.userId);
     const action = request.body.action == 'true';
@@ -730,7 +730,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
   fastify.get('/follower/:userId', async (request, reply) => {
     try {
       // Get current user
-      let currentUser = await fastify.getUser(request, reply);
+      let currentUser = request.user;
       const currentUserId = currentUser?._id;
   
       const db = fastify.mongo.db
@@ -854,7 +854,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
   });
   
   fastify.get('/users/:userId/notifications', async (request, reply) => {
-    const user = await fastify.getUser(request, reply);
+    const user = request.user;
     const targetUserId = new ObjectId(request.params.userId);
     const isAdmin = await checkUserAdmin(fastify, user._id);
 

@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+   {{> dashboard-header}}
+<body>
+    {{> dashboard-nav}}
+
+    <style>
+    .style-option {
+        width: 75px;
+        cursor:pointer;
+    }
+    .style-option.selected {
+        border: 2px solid #000;
+    }
+    .animated.fadeInDown .swal2-image{
+        margin:0;
+    }
+    .animated.fadeInDown .swal2-close{
+        border:0;
+    }
+    /* Custom animation for sliding in from the bottom */
+    .swal2-bottom-slide-in {
+        animation: bottom-slide-in 0.5s;
+    }
+
+    .swal2-bottom-slide-out {
+        animation: bottom-slide-out 0.5s;
+    }
+
+    @keyframes bottom-slide-in {
+        0% {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        100% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes bottom-slide-out {
+        0% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+    }
+    .custom-gradient-bg {
+        background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        transition: color 0.3s ease-in-out;
+    }
+
+    .custom-gradient-bg::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 300%;
+        height: 300%;
+        background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 80%);
+        transform: translate(-50%, -50%) scale(0);
+        transition: transform 0.5s ease-in-out;
+        z-index: 0;
+    }
+
+    .custom-gradient-bg:hover::before {
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    .custom-gradient-bg:hover {
+        color: #fff;
+    }
+    #chatImage{
+        width: 100px;
+        height: 100px; 
+        object-fit:cover;
+        object-position:top;
+    }
+    #chatImage.on{
+        width: auto !important;
+        height: 270px !important;
+    }
+    .btn-gradient-radius {
+        display: inline-block;
+        padding: 7px 20px;
+        border-radius: 25px;
+        text-decoration: none;
+        color: #FFF;
+        background-image: linear-gradient(45deg, #FFC107 0%, #ff8b5f 100%);
+        transition: .4s;
+        font-size: 21px;
+    }
+    label{
+        font-size: 14px;
+        color: #aaaaaa;
+    }
+    #sendMessage,
+    #chatInput .load {
+        border-left: 0 !important;
+        border-radius: 0px 30px 30px 0px !important;
+        box-shadow: none;
+    }
+    #userMessage {
+        border-radius: 30px 0px 0px 30px !important;
+        background-color: #f8f9fa;
+    }
+    #userMessage:focus {
+        outline: none;
+        box-shadow: none; /* If there is a box shadow applied on focus */
+    }
+    .button-group{
+        top:0;
+        right: 15px;
+    }
+    .scroll-container {
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+    }
+    .scroll-container > * {
+      flex: 0 0 auto;
+      width: auto;
+    }
+    .card-text.template{
+        font-size: 12px;
+    }
+    /*Custom css*/
+    label{
+        font-size: 12px;
+        color: #8d8b8b;
+    }
+    .avatar-xl img {
+        width: 110px;
+    }
+    .rounded-circle {
+        border-radius: 50%;
+    }
+    .rounded-circle.on {
+        border-radius: 15px !important;
+    }
+    img {
+        vertical-align: middle;
+        border-style: none;
+    }
+    .text-muted {
+        color: #aeb0b4 !important;
+    }
+    .text-muted {
+        font-weight: 300;
+    }
+    .form-control {
+        display: block;
+        width: 100%;
+        height: calc(1.5em + 0.75rem + 2px);
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #4d5154;
+        background-color: #ffffff;
+        background-clip: padding-box;
+        border: 1px solid #eef0f3;
+        border-radius: 0.25rem;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+
+    #markdownContainer {
+        margin-bottom: 20px;
+        padding: 20px;
+        border: 1px solid #eef0f3;
+        border-radius: 4px;
+    }
+    .auto-gen{
+        font-size: 10px;
+        border-radius: 50px;
+    }
+            .before-after--section-step-container {
+                position: relative;
+            }.before-after--section-symbol {
+            position: absolute;
+            left: 29px;
+            top: 65px;
+            width: 100px;
+            height: 2px;
+            -webkit-transform: rotate(-50deg);
+            transform: rotate(-50deg);
+            background-color: #212529;
+            }.before-after--section-step {
+            font-weight: 700;
+            font-size: 22px;
+            line-height: 26px;
+            }
+            .before-after--section-symbol {
+            left: 8px;
+            top: 25px;
+            width: 42px;
+            height: 1px;
+            }.before-after--section-total-step {
+                display: none;
+            font-size: 14px;
+            line-height: 16px;
+            margin-left: 35px;
+            }
+    </style>
+
+{{#if user.isTemporary}}
+<section>
+    <div id="intro" class="bg-image shadow-1-strong" data-animate="animate__fadeIn">
+        <div style="background-image:url(/img/pc_lg02_rotate.jpg);" data-animate="animate__zoomIn">
+            <div class="container row align-items-center h-100 m-auto">
+                <div class="col-12 col-md-6 py-5 text-dark">
+                    <h1 class="mb-3 fw-bold text-dark text-start" id="headline-container">
+                        <div class="container d-flex align-items-center text-start">
+                            <img src="/img/logo.webp" alt="" class="me-2" width="40px" height="40px" data-animate="animate__rotateIn" data-delay="animate__delay-1s">
+                            <span class="u-color-grad" style="font-size: 54px;" data-animate="animate__fadeIn" data-delay="animate__delay-1s">
+                                Lamix
+                            </span>
+                        </div>
+
+                        <p data-animate="animate__fadeInUp" data-delay="animate__delay-2s">Génération d'images : Créez facilement votre beauté IA idéale à partir de texte</p>
+                    </h1>
+                    <div class="text-start" data-animate="animate__fadeInUp" data-delay="animate__delay-2s">
+                        Créez des beautés IA à partir de texte ou d'images en quelques étapes simples.
+                    </div>
+                    <div class="text-center d-flex flex-column justify-content-start align-items-start mt-3" data-animate="animate__fadeIn" data-delay="animate__delay-3s">
+                        <a href="/authenticate" class="btn custom-gradient-bg text-white btn-lg m-2 px-5 py-3 mb-3 cta-button" role="button" style="border-radius: 50px;" data-animate="animate__pulse animate__infinite">
+                            Générer une beauté IA
+                        </a>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6">
+                    <div class="container p-3 text-center">
+                        <img src="/img/lp-b-1.png" class="rounded" style="width:100%;" data-animate="animate__fadeIn" data-delay="animate__delay-4s">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="container">
+    <div class="container row mt-3">
+        <div class="col-auto my-3" data-animate="animate__fadeInRight">
+            <div class="before-after--section-step-container">
+                <div style="display: flex;">
+                    <div class="before-after--section-step u-color-grad">01</div>
+                </div>
+                <div class="before-after--section-symbol" data-animate="animate__zoomIn"></div>
+            </div>
+        </div>
+        <div class="col-auto">
+            <h2 class="display-4 fw-bold" data-animate="animate__fadeInRight" data-delay="animate__delay-1s">Créer une beauté IA à partir de texte</h2>
+            <p data-animate="animate__fadeInRight" data-delay="animate__delay-2s">Il vous suffit d'entrer du texte pour créer facilement votre beauté IA idéale ou une jolie fille. Vous pouvez créer diverses beautés IA, de style réaliste à anime, avec des caractéristiques comme l'âge, la coiffure, le teint de peau, les vêtements, etc.</p>
+        </div>
+    </div>
+</section>
+
+<section class="container">
+    <div class="container row align-items-center h-100 m-auto">
+        <div class="col-12 col-md-6 py-5 text-dark" data-animate="animate__fadeInRight">
+            <div class="row mt-3">
+                <div class="col-auto my-3">
+                    <div class="before-after--section-step-container">
+                        <div style="display: flex;">
+                            <div class="before-after--section-step u-color-grad">02</div>
+                        </div>
+                        <div class="before-after--section-symbol" data-animate="animate__zoomIn"></div>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <h2 class="display-4 fw-bold" data-animate="animate__fadeInRight" data-delay="animate__delay-1s">Discuter avec une beauté IA</h2>
+                    <p data-animate="animate__fadeInRight" data-delay="animate__delay-2s">Profitez de la génération d'images dans divers scénarios tout en discutant avec une belle femme IA ! Peut-être que vous tomberez amoureux ?</p>
+                    <div class="text-center d-flex flex-column justify-content-start align-items-start mt-3" data-animate="animate__fadeIn" data-delay="animate__delay-3s">
+                        <a href="/authenticate" class="btn custom-gradient-bg text-white btn-lg m-2 px-5 py-3 mb-3 cta-button" role="button" style="border-radius: 50px;" data-animate="animate__pulse animate__infinite">
+                            Discuter avec une beauté IA
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6" data-animate="animate__slideInRight">
+            <div class="container p-3 text-center">
+                <img src="/img/lp-b-2.png" class="rounded" style="width:100%;">
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="bg-light">
+    <div class="container my-4 py-5">
+        <h2 class="display-4 fw-bold text-center mb-3">Questions fréquentes sur LAMIX</h2>
+        <div class="accordion" id="faqAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingOne">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                        Comment créer une beauté IA ?
+                    </button>
+                </h2>
+                <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        <p>1. Cliquez sur le bouton "Générer une beauté IA".</p>
+                        <p>2. Entrez une description ou un prompt de la beauté IA que vous imaginez.</p>
+                        <p>3. Choisissez le style de la beauté IA et cliquez sur "Générer".</p>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingTwo">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                        Puis-je créer des beautés IA gratuitement ?
+                    </button>
+                </h2>
+                <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        <p>Oui, en vous inscrivant gratuitement, vous recevrez des crédits (points) qui vous permettront de créer des beautés IA gratuitement avec vos crédits.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingThree">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                        Qu'est-ce qu'une beauté IA ?
+                    </button>
+                </h2>
+                <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        <p>Une beauté IA désigne une image d'une femme magnifique générée par l'IA. Elle fait généralement référence à l'image d'une femme créée artificiellement ou au visage d'une femme généré en fonction des critères de beauté appris par l'IA.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{{/if}}
+    <style>footer{display: inline !important;}</style>
+ {{> dashboard-footer}}

@@ -48,6 +48,7 @@ $(document).ready(function(){
         language: "{{user.lang}}",
         isTemporary: "{{user.isTemporary}}",
     };
+    console.log({user})
     localStorage.setItem('currentLang',user.language)
     if(user.isTemporary == true){
 

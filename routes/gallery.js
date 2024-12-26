@@ -6,7 +6,7 @@ async function routes(fastify, options) {
     try {
       const imageId = new fastify.mongo.ObjectId(request.params.imageId);
       const { action } = request.body; // 'like' or 'unlike'
-      const user = await fastify.getUser(request, reply);
+      const user = request.user;
       const userId = new fastify.mongo.ObjectId(user._id);
 
       const db = fastify.mongo.db;

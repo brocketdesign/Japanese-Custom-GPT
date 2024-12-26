@@ -4,7 +4,7 @@ async function routes(fastify, options) {
   fastify.post('/posts', async (request, reply) => {
     try {
       const { imageId, comment } = request.body;
-      const user = await fastify.getUser(request, reply);
+      const user = request.user;
       const userId = new fastify.mongo.ObjectId(user._id);
   
       const db = fastify.mongo.db
@@ -174,7 +174,7 @@ async function routes(fastify, options) {
     try {
       const userId = new fastify.mongo.ObjectId(request.params.userId);
   
-      const currentUser = await fastify.getUser(request, reply);
+      const currentUser = request.user;
       const currentUserId = new fastify.mongo.ObjectId(currentUser._id);
   
       const db = fastify.mongo.db
@@ -257,7 +257,7 @@ async function routes(fastify, options) {
     try {
       const postId = new fastify.mongo.ObjectId(request.params.id);
       const { comment } = request.body;
-      const user = await fastify.getUser(request, reply);
+      const user = request.user;
       const userId = new fastify.mongo.ObjectId(user._id);
   
       const db = fastify.mongo.db
@@ -288,7 +288,7 @@ async function routes(fastify, options) {
     try {
       const postId = new fastify.mongo.ObjectId(request.params.id);
       const { isPrivate } = request.body; // Expecting a boolean value
-      const user = await fastify.getUser(request, reply);
+      const user = request.user;
       const userId = new fastify.mongo.ObjectId(user._id);
       
       const db = fastify.mongo.db
@@ -313,7 +313,7 @@ async function routes(fastify, options) {
     try {
       const postId = new fastify.mongo.ObjectId(request.params.id);
       const { action } = request.body; // 'like' or 'unlike'
-      const user = await fastify.getUser(request, reply); // Assuming you have a method to get the user
+      const user = request.user; // Assuming you have a method to get the user
       const userId = new fastify.mongo.ObjectId(user._id);
   
       const db = fastify.mongo.db

@@ -706,7 +706,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
       const { prompt, aspectRatio, chatId, imageStyle, imageModel, imageVersion } = GenerateImageSchema.parse(request.body);
 
       // Retrieve user information (Assuming a getUser method exists)
-      const user = await fastify.getUser(request, reply);
+      const user = request.user;
       const userId = user._id;
 
       // Select prompts and model based on imageStyle

@@ -50,12 +50,6 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         request.user = user;
         request.lang = lang;
     
-        // Redirect logic if not in local mode
-        if (mode !== 'local' && user.lang && user.lang !== lang) {
-            const baseDomain = host.split('.').slice(1).join('.'); // Extract base domain
-            const redirectUrl = `https://${user.lang}.${baseDomain}${request.url}`;
-            return reply.redirect(302, redirectUrl);
-        }
         // Translate if on localhost
         if (mode == 'local' && user.lang && user.lang !== lang) {
             setTranslations(request, user.lang);

@@ -11,7 +11,7 @@ async function onLanguageChange(lang) {
         $('#languageDropdown').text(getLanguageDisplayName(lang));
         const { API_URL, MODE } = await window.setApiUrlAndMode();
         if(MODE !== 'local'){
-            window.location = `${lang}.chatlamix.com/`
+            window.location.href = `https://${lang}.chatlamix.com/`
         }else{
             location.reload();
         }

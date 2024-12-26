@@ -9,7 +9,12 @@ async function onLanguageChange(lang) {
     if (updateResponse.success) {
         await loadTranslations(lang);
         $('#languageDropdown').text(getLanguageDisplayName(lang));
-        location.reload();
+        const { API_URL, MODE } = await window.setApiUrlAndMode();
+        if(MODE !== 'local'){
+            window.location = `${lang}.chatlamix.com/`
+        }else{
+            location.reload();
+        }
     }
 }
 

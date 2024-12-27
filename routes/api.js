@@ -1000,9 +1000,14 @@ async function routes(fastify, options) {
           )
           const systemMsg = [{ role: 'system', content: systemContent }]
           const messagesForCompletion = [
-            ...systemMsg, 
-            ...getChatTemplate(language),
-            ...userMessages
+                ...systemMsg, 
+                ...getChatTemplate(language),
+                ...userMessages,
+                {
+                    role:'user',
+                    content:'Do not forget to include the trigger [image] in your message to start generating an image.\n Only include the trigger if necessary. If no image is required simply continue chatting.',
+                    name: 'master'
+                }
             ]
             
           const completion = await fetchOpenAICompletionWithTrigger(messagesForCompletion, reply.raw, 300, aiModelChat)

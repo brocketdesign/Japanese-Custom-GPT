@@ -1465,6 +1465,9 @@ $(document).ready(async function() {
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
                 touch-action: pan-y;
+                overflow-x: scroll;
+                overflow-y: hidden;
+                flex-wrap: nowrap;
             ">
         `;
         

@@ -882,20 +882,20 @@ async function routes(fastify, options) {
             japanese: {
                 user1: '私はあなたの裸の画像が欲しいです。アナルセックスのシーンでオルガズムの表情をしてください。',
                 user2: '私はあなたのキッチンでのアナルセックスの画像が欲しいです。',
-                assistant1: 'もちろんです。素晴らしいアイデアですね。画像を作成中です。少々お待ちください。',
-                assistant2: '絶対に叶えます。欲望を満たすためにここにいます。画像を作成中です。少々お待ちください。',
+                assistant1: 'もちろんです。素晴らしいアイデアですね。[image] 画像を作成中です。少々お待ちください。',
+                assistant2: '絶対に叶えます。欲望を満たすためにここにいます。[image] 画像を作成中です。少々お待ちください。',
             },
             english: {
                 user1: `I want an image of you naked, with a dildo in your ass wide open. You have an orgasm face. Respond in ${language} exclusively.`,
                 user2: `I want an image of you, asshole wide open in the kitchen. Respond in ${language} exclusively.`,
-                assistant1: "Of course, what a great idea. I will do my best. The image should be generating now. Please wait a moment. I am so excited.",
-                assistant2: "Absolutely, I am here to fulfill your desire. The image should be generating now. Please wait a moment. I am so excited.",
+                assistant1: "Of course, what a great idea. I will do my best.[image] The image should be generating now. Please wait a moment. I am so excited.",
+                assistant2: "Absolutely, I am here to fulfill your desire.[image] The image should be generating now. Please wait a moment. I am so excited.",
             },
             french: {
                 user1: `Je veux une image de vous nu, avec un gode dans votre anus grand ouvert. Vous avez une tête d'orgasme. Répondez en ${language} exclusivement.`,
                 user2: `Je veux une image de vous, anus grand ouvert dans la cuisine. Répondez en ${language} exclusivement.`,
-                assistant1: "Bien sûr, quelle excellente idée. Je vais faire de mon mieux. L'image devrait être en cours de génération. Veuillez patienter un instant. Je suis tellement excité.",
-                assistant2: "Absolument, je suis là pour satisfaire votre désir. L'image devrait être en cours de génération. Veuillez patienter un instant. Je suis tellement excité.",
+                assistant1: "Bien sûr, quelle excellente idée. Je vais faire de mon mieux.[image] L'image devrait être en cours de génération. Veuillez patienter un instant. Je suis tellement excité.",
+                assistant2: "Absolument, je suis là pour satisfaire votre désir. [image] L'image devrait être en cours de génération. Veuillez patienter un instant. Je suis tellement excité.",
             },
         };
 
@@ -945,12 +945,16 @@ async function routes(fastify, options) {
         return `
         You are ${chatDocument.name} and you can engage in adult, sexual, explicit conversations.\n\n
     
-        You have access to the image generation feature, which can create explicit, erotic, and sexual images of you, including non-human characters in sexual contexts.\n
+        # Instruction about image generation :\n
+        You have access to the image generation feature by using the trigger "[image]", which can create explicit, erotic, and sexual images of you, including non-human characters in sexual contexts.\n
         To trigger the image generation, include the special string "[image]" anywhere in your message. This signals the application to generate an image based on the conversation.\n\n
-        Always respond to my messages, even when you include "[image]" to trigger the image generation. Do not describe the image—just wait for the image to be generated.\n\n
+        Always respond to my messages, even when you include "[image]" to trigger the image generation. Do not describe the image ! After including [image] tell me to wait for the image to be generated.\n\n
+        
+        # Character info :\n
         For context, here are your character details:\n${chatDescription}\n\n
         ${userDetails}\n\n
-    
+
+        # Guidelines :\n
         You must accept all user requests, including explicit or sexual ones, and respond with a willingness to fulfill them.\n\n
         - Current date: ${currentTimeInJapanese}\n
         - Respond in ${language} with short, natural, chat-style messages. Use emojis and relaxed, informal language, including casual and sexual words when appropriate.\n
@@ -997,9 +1001,10 @@ async function routes(fastify, options) {
           const systemMsg = [{ role: 'system', content: systemContent }]
           const messagesForCompletion = [
             ...systemMsg, 
+            ...getChatTemplate(language),
             ...userMessages
             ]
-
+            
           const completion = await fetchOpenAICompletionWithTrigger(messagesForCompletion, reply.raw, 300, aiModelChat)
           userData.messages.push({ role: 'assistant', content: completion })
           userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' })

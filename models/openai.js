@@ -65,7 +65,6 @@ const fetchOpenAICompletionWithTrigger = async (messages, res, maxToken = 1000, 
     for (const trigger of triggers) {
       if (trigger === 'image') {
         const genImage = await checkImageRequest(messages);
-        console.log({genImage})
         res.write(`data: ${JSON.stringify({ type: 'trigger', name: 'image_request', command: genImage })}\n\n`);
       }
     }

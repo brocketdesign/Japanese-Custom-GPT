@@ -308,13 +308,16 @@ const checkImageRequest = async (messages) => {
     // Get the last user messages
     const lastTwoMessages = messages
     .filter((msg) =>  msg.name !== 'master' && msg.name !== 'context')
+    .filter(m => m.content && !m.content.startsWith('[Image]') && m.role !== 'system')
     .slice(-2);
-    
+    console.log({lastTwoMessages})
+    if(lastTwoMessages.length < 2){
+      return {}
+    }
     const updatedMessages = [
       { role: "system", content: systemPrompt },
       ...lastTwoMessages
     ];
-
     let attempts = 0;
     const maxAttempts = 3;
   

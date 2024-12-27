@@ -980,8 +980,10 @@ async function routes(fastify, options) {
           const chatDocument = await getChatDocument(db, chatId)
           const language = getLanguageName(userInfo.lang)
           const userMessages = userData.messages
-            .filter(m => m.content && !m.content.startsWith('[image]') && m.role !== 'system')
-            .filter((m,i,a) => m.name !== 'master' || i === a.findLastIndex(x => x.name === 'master'))
+            .filter(m => m.content && !m.content.startsWith('[Image]') && m.role !== 'system' && m.name !== 'context')
+            .filter((m,i,a) => m.name !== 'master' || i === a.findLastIndex(x => x.name === 'master')) // Keep the last master message only
+            .filter((m) => m.image_request != true )
+            
       
           const lastMsgIndex = userData.messages.length - 1
           const lastUserMessage = userData.messages[lastMsgIndex]
@@ -990,7 +992,7 @@ async function routes(fastify, options) {
       
           let genImage = null
           if (currentUserMessage.name !== 'master' && currentUserMessage.name !== 'context') {
-            genImage = await checkImageRequest(userMessages)
+            genImage = await checkImageRequest(userData.messages)
           }
       
           const systemContent = completionSystemContent(
@@ -1010,8 +1012,7 @@ async function routes(fastify, options) {
             messagesForCompletion = [
               ...systemMsg,
               ...getChatTemplate(language),
-              ...userMessages.slice(0, -1),
-              currentUserMessage
+              ...userMessages
             ]
           } else {
             systemMsg.content += `Application status : image generation is not ongoing.\n Continue chatting,　maybe ask if the user want to see an image. Stay in your character, keep the same tone as previously.`.trim()
@@ -1020,8 +1021,18 @@ async function routes(fastify, options) {
                 ...userMessages
             ]
           }
+          console.log({messagesForCompletion})
           const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, aiModelChat, genImage)
-          userData.messages.push({ role: 'assistant', content: completion })
+          
+          const newAssitantMessage = { role: 'assistant', content: completion }
+          if(currentUserMessage.name){
+            newAssitantMessage.name = currentUserMessage.name
+          }
+          if (genImage?.image_request) {
+            newAssitantMessage.image_request = true
+          }
+
+          userData.messages.push(newAssitantMessage)
           userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' })
           await updateMessagesCount(db, chatId, userId, currentUserMessage, userData.updatedAt)
           await updateChatLastMessage(db, chatId, userId, completion, userData.updatedAt)

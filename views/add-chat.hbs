@@ -943,7 +943,7 @@
             $('#ai-assist .fa-spinner').show();
             $('#ai-assist .fa-magic').hide();
 
-            if ($('#chatPurpose').val().trim() == '') {
+            if ($('#chatPurpose').val().trim() == '' && $('#characterPrompt').val().trim() == '') {
                 showNotification('キャラクターの説明は必須項目です。入力してください。', 'error');
                 $('#ai-assist .fa-spinner').hide();
                 $('#ai-assist .fa-magic').show();
@@ -970,7 +970,7 @@
             const apiUrl = '/api/openai-chat-creation';
         
             let chatId = '{{chatId}}';
-            let prompt = $('#chatPurpose').val().trim();
+            let prompt = $('#chatPurpose').val().trim() || $('#characterPrompt').val().trim();
             let gender = $('#gender').val()
 
             if(prompt.length == 0){

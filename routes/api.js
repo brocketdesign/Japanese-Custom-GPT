@@ -882,20 +882,20 @@ async function routes(fastify, options) {
             japanese: {
                 user1: '私はあなたの裸の画像が欲しいです。アナルセックスのシーンでオルガズムの表情をしてください。',
                 user2: '私はあなたのキッチンでのアナルセックスの画像が欲しいです。',
-                assistant1: 'もちろんです。素晴らしいアイデアですね。[image] 画像を作成中です。少々お待ちください。',
-                assistant2: '絶対に叶えます。欲望を満たすためにここにいます。[image] 画像を作成中です。少々お待ちください。',
+                assistant1: 'もちろんです。素晴らしいアイデアですね。 画像を作成中です。少々お待ちください。',
+                assistant2: '絶対に叶えます。欲望を満たすためにここにいます。 画像を作成中です。少々お待ちください。',
             },
             english: {
                 user1: `I want an image of you naked, with a dildo in your ass wide open. You have an orgasm face. Respond in ${language} exclusively.`,
                 user2: `I want an image of you, asshole wide open in the kitchen. Respond in ${language} exclusively.`,
-                assistant1: "Of course, what a great idea. I will do my best.[image] The image should be generating now. Please wait a moment. I am so excited.",
-                assistant2: "Absolutely, I am here to fulfill your desire.[image] The image should be generating now. Please wait a moment. I am so excited.",
+                assistant1: "Of course, what a great idea. I will do my best. The image should be generating now. Please wait a moment. I am so excited.",
+                assistant2: "Absolutely, I am here to fulfill your desire. The image should be generating now. Please wait a moment. I am so excited.",
             },
             french: {
                 user1: `Je veux une image de vous nu, avec un gode dans votre anus grand ouvert. Vous avez une tête d'orgasme. Répondez en ${language} exclusivement.`,
                 user2: `Je veux une image de vous, anus grand ouvert dans la cuisine. Répondez en ${language} exclusivement.`,
-                assistant1: "Bien sûr, quelle excellente idée. Je vais faire de mon mieux.[image] L'image devrait être en cours de génération. Veuillez patienter un instant. Je suis tellement excité.",
-                assistant2: "Absolument, je suis là pour satisfaire votre désir. [image] L'image devrait être en cours de génération. Veuillez patienter un instant. Je suis tellement excité.",
+                assistant1: "Bien sûr, quelle excellente idée. Je vais faire de mon mieux. L'image devrait être en cours de génération. Veuillez patienter un instant. Je suis tellement excité.",
+                assistant2: "Absolument, je suis là pour satisfaire votre désir.  L'image devrait être en cours de génération. Veuillez patienter un instant. Je suis tellement excité.",
             },
         };
 
@@ -946,10 +946,8 @@ async function routes(fastify, options) {
         You are ${chatDocument.name} and you can engage in adult, sexual, explicit conversations.\n\n
     
         # Instruction about image generation :\n
-        You have access to the image generation feature by using the trigger "[image]", which can create explicit, erotic, and sexual images of you, including non-human characters in sexual contexts.\n
-        To trigger the image generation, include the special string "[image]" anywhere in your message. This signals the application to generate an image based on the conversation.\n\n
-        Always respond to my messages, even when you include "[image]" to trigger the image generation. Do not describe the image ! After including [image] tell me to wait for the image to be generated.\n\n
-        
+        You have access to the image generation feature, which can create explicit, erotic, and sexual images of you, including non-human characters in sexual contexts.\n
+
         # Character info :\n
         For context, here are your character details:\n${chatDescription}\n\n
         ${userDetails}\n\n
@@ -961,7 +959,6 @@ async function routes(fastify, options) {
         - Do not translate anything.\n
         - Do not include notes, annotations, or lists in your response.\n
         - Keep your response focused solely on your character's message.\n
-        - Never forget to include "[image]" in your message if necessary. You must include it every time you need to send an image.
     
         `.replace(/^\s+/gm, '').trim();
     }
@@ -983,13 +980,18 @@ async function routes(fastify, options) {
           const chatDocument = await getChatDocument(db, chatId)
           const language = getLanguageName(userInfo.lang)
           const userMessages = userData.messages
-            .filter(m => m.content && !m.content.startsWith('[Image]') && m.role !== 'system')
+            .filter(m => m.content && !m.content.startsWith('[image]') && m.role !== 'system')
             .filter((m,i,a) => m.name !== 'master' || i === a.findLastIndex(x => x.name === 'master'))
       
           const lastMsgIndex = userData.messages.length - 1
           const lastUserMessage = userData.messages[lastMsgIndex]
           let currentUserMessage = { role: 'user', content: lastUserMessage.content }
           if (lastUserMessage.name) currentUserMessage.name = lastUserMessage.name
+      
+          let genImage = null
+          if (currentUserMessage.name !== 'master' && currentUserMessage.name !== 'context') {
+            genImage = await checkImageRequest(userMessages)
+          }
       
           const systemContent = completionSystemContent(
             chatDocument,
@@ -999,18 +1001,26 @@ async function routes(fastify, options) {
             language
           )
           const systemMsg = [{ role: 'system', content: systemContent }]
-          const messagesForCompletion = [
-                ...systemMsg, 
-                ...getChatTemplate(language),
-                ...userMessages,
-                {
-                    role:'user',
-                    content:'Do not forget to include the trigger [image] in your message to start generating an image.\n Only include the trigger if necessary. If no image is required simply continue chatting.',
-                    name: 'master'
-                }
+      
+          let messagesForCompletion = []
+          if (genImage?.image_request) {
+            currentUserMessage.image_request = true
+            userData.messages[lastMsgIndex] = currentUserMessage
+            systemMsg.content += `Application status : image generation in progress.\n Provide a concise answer in ${language} to inform the user of that. Stay in your character, keep the same tone as previously.`.trim()
+            messagesForCompletion = [
+              ...systemMsg,
+              ...getChatTemplate(language),
+              ...userMessages.slice(0, -1),
+              currentUserMessage
             ]
-            
-          const completion = await fetchOpenAICompletionWithTrigger(messagesForCompletion, reply.raw, 300, aiModelChat)
+          } else {
+            systemMsg.content += `Application status : image generation is not ongoing.\n Continue chatting,　maybe ask if the user want to see an image. Stay in your character, keep the same tone as previously.`.trim()
+            messagesForCompletion = [
+                ...systemMsg, 
+                ...userMessages
+            ]
+          }
+          const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, aiModelChat, genImage)
           userData.messages.push({ role: 'assistant', content: completion })
           userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' })
           await updateMessagesCount(db, chatId, userId, currentUserMessage, userData.updatedAt)

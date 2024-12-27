@@ -1008,14 +1008,14 @@ async function routes(fastify, options) {
           if (genImage?.image_request) {
             currentUserMessage.image_request = true
             userData.messages[lastMsgIndex] = currentUserMessage
-            systemMsg.content += `Application status : image generation in progress.\n Provide a concise answer in ${language} to inform the user of that. Stay in your character, keep the same tone as previously.`.trim()
+            systemMsg[0].content += `\n\n Image status : image generation in progress.\n Provide a concise answer in ${language} to inform the user of that. Stay in your character, keep the same tone as previously.`.trim()
             messagesForCompletion = [
               ...systemMsg,
               ...getChatTemplate(language),
               ...userMessages
             ]
           } else {
-            systemMsg.content += `Application status : image generation is not ongoing.\n Continue chatting,　maybe ask if the user want to see an image. Stay in your character, keep the same tone as previously.`.trim()
+            systemMsg[0].content += `\n\n Image status : image generation is not ongoing.\n Continue chatting,　maybe ask if the user want to see an image. Stay in your character, keep the same tone as previously.`.trim()
             messagesForCompletion = [
                 ...systemMsg, 
                 ...userMessages

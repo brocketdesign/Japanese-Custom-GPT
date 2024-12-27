@@ -1020,7 +1020,7 @@ async function routes(fastify, options) {
                 ...userMessages
             ]
           }
-          console.log({messagesForCompletion})
+          //console.log({messagesForCompletion})
           const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, aiModelChat, genImage)
           
           const newAssitantMessage = { role: 'assistant', content: completion }

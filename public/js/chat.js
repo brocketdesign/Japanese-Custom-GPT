@@ -1364,7 +1364,7 @@ $(document).ready(async function() {
 
    // Function to get prompts data
    function getPromptsData(callback) {
-        var promptsData = sessionStorage.getItem('promptsData');
+        var promptsData = localStorage.getItem('promptsData');
         if (promptsData) {
             // Data is in session storage
             var prompts = JSON.parse(promptsData);
@@ -1377,7 +1377,7 @@ $(document).ready(async function() {
                 url: '/api/prompts',
                 type: 'GET',
                 success: function(prompts) {
-                    sessionStorage.setItem('promptsData', JSON.stringify(prompts));
+                    localStorage.setItem('promptsData', JSON.stringify(prompts));
                     if (typeof callback === 'function') {
                         callback(prompts);
                     }

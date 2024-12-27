@@ -1410,7 +1410,7 @@ async function routes(fastify, options) {
             return
         }
         const newMessages = generateImagePrompt(command, characterDescription, dialogue);
-        console.log({newMessages})
+
         const response = await fetch("https://api.venice.ai/api/v1/chat/completions", {
             headers: {
                 "Content-Type": "application/json",

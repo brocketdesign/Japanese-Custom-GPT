@@ -331,7 +331,7 @@ async function routes(fastify, options) {
         let response = {
             isNew: true,
         };
-    
+
         try {
             
             let userChatDocument = await collectionUserChat.findOne({
@@ -597,7 +597,7 @@ async function routes(fastify, options) {
     
             const collectionChat = fastify.mongo.db.collection('chats');
             const collectionChatLastMessage = fastify.mongo.db.collection('chatLastMessage');
-    
+            
             const chat = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
             if (!chat) return reply.status(404).send({ error: 'Chat not found' });
     

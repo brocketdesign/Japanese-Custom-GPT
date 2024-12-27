@@ -1141,9 +1141,9 @@ $(document).ready(async function() {
     function removeContentBetweenStars(str) {
         if (!str) { return str; }
         return str.replace(/\*.*?\*/g, '').replace(/"/g, '');
-    }                    
+    }   
+    const activeStreams = {};        
     function generateCompletion(callback,isHidden=false){
-        const apiUrl = API_URL+'/api/openai-chat-completion';
 
         hideOtherChoice(false, currentStep)
         // Initialize the bot response container
@@ -1165,6 +1165,7 @@ $(document).ready(async function() {
         botResponseContainer.addClass(animationClass).fadeIn();
         $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
         
+        const apiUrl = API_URL+'/api/openai-chat-completion';
         $.ajax({
             url: apiUrl,
             method: 'POST',
@@ -1173,10 +1174,11 @@ $(document).ready(async function() {
             success: function(response) {
                 const sessionId = response.sessionId;
                 const streamUrl = API_URL+`/api/openai-chat-completion-stream/${sessionId}`;
-                const eventSource = new EventSource(streamUrl);
+
+                activeStreams[uniqueId] = new EventSource(streamUrl);
                 let markdownContent = "";
 
-                eventSource.onmessage = function(event) {
+                activeStreams[uniqueId].onmessage = function(event) {
                     const data = JSON.parse(event.data);
                     if (data.type === 'text') {
                         markdownContent += data.content;
@@ -1186,8 +1188,9 @@ $(document).ready(async function() {
                     }
                 };
 
-                eventSource.onerror = function(error) {
-                    eventSource.close();
+                activeStreams[uniqueId].onerror = function(error) {
+                    activeStreams[uniqueId].close();
+                    delete activeStreams[uniqueId];
                     let message = removeContentBetweenStars(markdownContent)
                     $(`#play-${uniqueId}`).attr('data-content',message)
                     $(`#play-${uniqueId}`).closest('.audio-controller').show()

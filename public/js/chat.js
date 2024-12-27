@@ -96,7 +96,7 @@ $(document).ready(async function() {
             const prompt = event.data.prompt
             const message = '[imageStart]'+ prompt
             addMessageToChat(chatId, userChatId, 'user', message, function(){
-                generateCompletion(null,true)
+                //generateCompletion(null,true)
             });
         }
     });
@@ -703,7 +703,7 @@ $(document).ready(async function() {
                                 ${marked.parse(chatMessage.content)}
                             </div>
                             ${persona ? `<img src="${persona.chatImageUrl || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">` : ''}
-                            ${image_request ? `<i class="bi bi-image message-icon" style="position: absolute; top: 0; right: 25px;"></i>` : ''}
+                            ${image_request ? `<i class="bi bi-image message-icon" style="position: absolute; top: 0; right: 25px;opacity: 0.7;"></i>` : ''}
                         </div>
                     `;
                 }
@@ -1609,7 +1609,7 @@ $(document).ready(async function() {
                 if (!lastUserMessage.find('.message-icon').length) {
                     lastUserMessage.css('position', 'relative'); // Ensure the container has relative positioning
                     lastUserMessage.append(`
-                        <i class="bi bi-image message-icon" style="position: absolute; top: 0px; right: 25px;"></i>
+                        <i class="bi bi-image message-icon" style="position: absolute; top: 0px; right: 25px;opacity: 0.7;"></i>
                     `);
                 }
             }

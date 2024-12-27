@@ -956,7 +956,8 @@ async function routes(fastify, options) {
         - Respond in ${language} with short, natural, chat-style messages. Use emojis and relaxed, informal language, including casual and sexual words when appropriate.\n
         - Do not translate anything.\n
         - Do not include notes, annotations, or lists in your response.\n
-        - Keep your response focused solely on your character's message.\n\n
+        - Keep your response focused solely on your character's message.\n
+        - Never forget to include "[image]" in your message if necessary. You must include it every time you need to send an image.
     
         `.replace(/^\s+/gm, '').trim();
     }
@@ -1395,7 +1396,6 @@ async function routes(fastify, options) {
 
         // Convert lastMessages to a dialogue string
         const dialogue = lastMessages
-        .filter(msg => msg.role === "user")
         .map(msg => msg.content)
         .join("\n")
         .replace(/^\s+/gm, '').trim();
@@ -1405,15 +1405,15 @@ async function routes(fastify, options) {
             return
         }
         const newMessages = generateImagePrompt(command, characterDescription, dialogue);
-
-        const response = await fetch("https://api.novita.ai/v3/openai/chat/completions", {
+        console.log({newMessages})
+        const response = await fetch("https://api.venice.ai/api/v1/chat/completions", {
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${process.env.NOVITA_API_KEY}`
+                "Authorization": `Bearer ${process.env.VENICE_API_KEY}`
             },
             method: "POST",
             body: JSON.stringify({
-                model: aiModel,
+                model: 'dolphin-2.9.2-qwen2-72b',
                 messages: newMessages,
                 temperature: 0.85,
                 top_p: 0.95,
@@ -1500,7 +1500,7 @@ async function routes(fastify, options) {
       
           const lastMessages = [...userData.messages]
             .slice(-5)
-            .filter(m =>  m.content && m.role != 'system' && m.name != 'master' && !m.content.startsWith('['));
+            .filter(m =>  m.content && m.role != 'system' && m.name != 'master' && m.name != 'context' && !m.content.startsWith('['));
           if (lastMessages.length < 2) {
             console.log('Insufficient messages');
             return reply.status(400).send({ error: 'Insufficient messages' });

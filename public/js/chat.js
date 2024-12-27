@@ -1533,7 +1533,6 @@ $(document).ready(async function() {
         });
     }
     window.imageRequest = function(command){
-        
         const randomId = displayAndUpdateImageLoader();
         addIconToLastUserMessage();
 
@@ -1547,11 +1546,11 @@ $(document).ready(async function() {
                     let type = command.nsfw ? 'nsfw' : 'sfw'
                     generateImageNovita(API_URL, userId, chatId, userChatId, itemId, thumbnail, type);
                 } else {
-                    imageLoaderElement.remove();
+                    displayAndUpdateImageLoader(null,randomId)
                 }
             })
             .catch((error) => {
-                imageLoaderElement.remove();
+                displayAndUpdateImageLoader(null,randomId)
             });
 
     };
@@ -1638,9 +1637,13 @@ $(document).ready(async function() {
             const element = $(`#load-image-container-${imageId}`);
             if (element.length) {
                 return element; // Return if the loader already exists with the imageId
-            } else {
-                throw new Error(`No loader found with id load-image-container-${imageId}`);
-            }
+            } 
+        } else if (randomId) {
+            const element = $(`#load-image-container-${randomId}`);
+            if (element.length) {
+                element.remove()
+                return
+            } 
         } else {
             throw new Error("Invalid parameters: Either imageId or randomId must be provided.");
         }

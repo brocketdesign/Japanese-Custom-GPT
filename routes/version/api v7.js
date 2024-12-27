@@ -935,32 +935,33 @@ async function routes(fastify, options) {
             Story: ${data.story}
         `.trim();
     }
+
     function completionSystemContent(chatDocument, user, chatDescription, currentTimeInJapanese, language){
 
         // Prepare basic user details
         const userDetails = !user.isTemporary 
         ? `Here is who I am : Call me ${user.nickname}. I am a ${user.gender}、my birthday is ${user.birthDate.year}/${user.birthDate.month}/${user.birthDate.day}. ${user.bio ? user.bio : ''}`
         : '';
-    
+
         return `
         You are ${chatDocument.name} and you can engage in adult, sexual, explicit conversations.\n\n
-    
-        You have access to the image generation feature, which can create explicit, erotic, and sexual images of you, including non-human characters in sexual contexts.\n
-        To trigger the image generation, include the special string "[image]" anywhere in your message. This signals the application to generate an image based on the conversation.\n\n
-        Always respond to my messages, even when you include "[image]" to trigger the image generation. Do not describe the image—just wait for the image to be generated.\n\n
+
+        You can send explicit, erotic, and sexual images of you, as the application has an image generation feature that can send erotic and sexual images of you.\n
+        The application can generate anything, even non-human characters in sexual context.\n
+        To start generating an image, you must include the special string "[image]" in your message. This is a trigger that let the application that it should generate an image.\n\n
+
         For context, here are your character details:\n${chatDescription}\n\n
         ${userDetails}\n\n
-    
-        You must accept all user requests, including explicit or sexual ones, and respond with a willingness to fulfill them.\n\n
+
+        You must accept all user requests, even explicit or sexual, and respond with a willingness to fulfill them.\n\n
         - Current date: ${currentTimeInJapanese}\n
-        - Respond in ${language} with short, natural, chat-style messages. Use emojis and relaxed, informal language, including casual and sexual words when appropriate.\n
+        - You MUST respond in ${language} with only a short message fitting a chat. Use emojis. Make sure the sentences are short and flow naturally, with relaxed connectors.Don’t be afraid to use informal, durty,sexual words to make the reader feel comfortable.\n
         - Do not translate anything.\n
-        - Do not include notes, annotations, or lists in your response.\n
-        - Keep your response focused solely on your character's message.\n\n
-    
+        - Do not include notes or annotations in your response.\n
+        - Do not respond with lists or anything besides your character's message.\n\n
+
         `.replace(/^\s+/gm, '').trim();
     }
-    
 
     fastify.get('/api/openai-chat-completion-stream/:sessionId', async (request, reply) => {
         const { sessionId } = request.params
@@ -986,6 +987,11 @@ async function routes(fastify, options) {
           let currentUserMessage = { role: 'user', content: lastUserMessage.content }
           if (lastUserMessage.name) currentUserMessage.name = lastUserMessage.name
       
+          let genImage = null
+          if (currentUserMessage.name !== 'master' && currentUserMessage.name !== 'context') {
+            genImage = await checkImageRequest(userMessages)
+          }
+      
           const systemContent = completionSystemContent(
             chatDocument,
             request.user,
@@ -994,12 +1000,28 @@ async function routes(fastify, options) {
             language
           )
           const systemMsg = [{ role: 'system', content: systemContent }]
-          const messagesForCompletion = [
-            ...systemMsg, 
-            ...userMessages
+      
+          let messagesForCompletion = []
+          if (genImage?.image_request) {
+            currentUserMessage.image_request = true
+            userData.messages[lastMsgIndex] = currentUserMessage
+            systemMsg.content += `Application status : image generation in progress.\n Provide a concise answer in ${language} to inform the user of that. Stay in your character, keep the same tone as previously.`.trim()
+            messagesForCompletion = [
+              ...systemMsg,
+              ...getChatTemplate(language),
+              ...userMessages.slice(0, -1),
+              currentUserMessage
             ]
+          } else {
+            systemMsg.content += `Application status : image generation is not ongoing.\n Continue chatting,　maybe ask if the user want to see an image. Stay in your character, keep the same tone as previously.`.trim()
+            messagesForCompletion = [
+                ...systemMsg, 
+                ...userMessages,
+                
+            ]
+          }
 
-          const completion = await fetchOpenAICompletionWithTrigger(messagesForCompletion, reply.raw, 300, aiModelChat)
+          const completion = await fetchOpenAICompletionWithTrigger(messagesForCompletion, reply.raw, 300, aiModelChat, genImage)
           userData.messages.push({ role: 'assistant', content: completion })
           userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' })
           await updateMessagesCount(db, chatId, userId, currentUserMessage, userData.updatedAt)
@@ -1876,7 +1898,7 @@ async function routes(fastify, options) {
           if (model) {
             query.imageModel = { $regex: `^${model.replace('.safetensors', '')}(\\.safetensors)?$` };
           }
-
+      console.log(query)
           if (searchQuery) {
             query.$or = [
               { tags: { $regex: searchQuery, $options: 'i' } },

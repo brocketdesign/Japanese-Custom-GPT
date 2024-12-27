@@ -5,6 +5,151 @@ const { OpenAI } = require("openai");
 const { z } = require("zod");
 const { zodResponseFormat } = require("openai/helpers/zod");
 
+const fetchOpenAICompletionWithTrigger = async (messages, res, maxToken = 1000, model = 'llama-3.1-405b') => { 
+  try {
+    const response = await fetch("https://api.venice.ai/api/v1/chat/completions", {
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.VENICE_API_KEY}`
+      },
+      method: "POST",
+      body: JSON.stringify({
+        model:'llama-3.1-405b',
+        messages,
+        temperature: 0.85,
+        top_p: 0.95,
+        frequency_penalty: 0,
+        presence_penalty: 0,
+        max_tokens: maxToken,
+        stream: true,
+        n: 1,
+      }),
+    });
+
+    if (!response.ok) console.error("Response body:", await response.text());
+
+    let fullCompletion = "";
+    let bracketContent = "";
+    let inBracket = false;
+    let triggers = [];
+
+    const parser = createParser((event) => {
+      if (event.type === 'event' && event.data !== "[DONE]") {
+        const content = JSON.parse(event.data).choices[0]?.delta?.content || "";
+        for (let i = 0; i < content.length; i++) {
+          const char = content[i];
+          if (!inBracket) {
+            if (char === '[') {
+              inBracket = true;
+              bracketContent = "";
+            } else {
+              fullCompletion += char;
+              res.write(`data: ${JSON.stringify({ type: 'text', content: char })}\n\n`);
+            }
+          } else {
+            if (char === ']') {
+              triggers.push(bracketContent);
+              inBracket = false;
+            } else {
+              bracketContent += char;
+            }
+          }
+        }
+      }
+    });
+
+    for await (const chunk of response.body) {
+      parser.feed(new TextDecoder('utf-8').decode(chunk));
+    }
+
+    for (const trigger of triggers) {
+      if (trigger === 'image') {
+        const genImage = await checkImageRequest(messages);
+        console.log({genImage})
+        res.write(`data: ${JSON.stringify({ type: 'trigger', name: 'image_request', command: genImage })}\n\n`);
+      }
+    }
+
+    return fullCompletion;
+  } catch (error) {
+    console.error("Error fetching completion:", error);
+    throw error;
+  }
+};
+
+const _fetchOpenAICompletionWithTrigger = async (messages, res, maxToken = 1000, model = 'meta-llama/llama-3.1-70b-instruct') => {
+  try {
+    const response = await fetch("https://api.novita.ai/v3/openai/chat/completions", {
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.NOVITA_API_KEY}`
+      },
+      method: "POST",
+      body: JSON.stringify({
+        model,
+        messages,
+        temperature: 0.85,
+        top_p: 0.95,
+        frequency_penalty: 0,
+        presence_penalty: 0,
+        max_tokens: maxToken,
+        stream: true,
+        n: 1,
+      }),
+    });
+
+    if (!response.ok) console.error("Response body:", await response.text());
+
+    let fullCompletion = "";
+    let bracketContent = "";
+    let inBracket = false;
+    let triggers = [];
+
+    const parser = createParser((event) => {
+      if (event.type === 'event' && event.data !== "[DONE]") {
+        const content = JSON.parse(event.data).choices[0].delta?.content || "";
+        for (let i = 0; i < content.length; i++) {
+          const char = content[i];
+          if (!inBracket) {
+            if (char === '[') {
+              inBracket = true;
+              bracketContent = "";
+            } else {
+              fullCompletion += char;
+              res.write(`data: ${JSON.stringify({ type: 'text', content: char })}\n\n`);
+            }
+          } else {
+            if (char === ']') {
+              triggers.push(bracketContent);
+              inBracket = false;
+            } else {
+              bracketContent += char;
+            }
+          }
+        }
+      }
+    });
+
+    for await (const chunk of response.body) {
+      parser.feed(new TextDecoder('utf-8').decode(chunk));
+    }
+
+    for (const trigger of triggers) {
+      if (trigger === 'image') {
+        const genImage = await checkImageRequest(messages);
+        console.log({genImage})
+        res.write(`data: ${JSON.stringify({ type: 'trigger', name: 'image_request', command: genImage })}\n\n`);
+      }
+    }
+
+    return fullCompletion;
+  } catch (error) {
+    console.error("Error fetching completion:", error);
+    throw error;
+  }
+};
+
+
 const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'meta-llama/llama-3.1-70b-instruct',genImage) => {
     try {
         let response = await fetch(
@@ -198,42 +343,33 @@ async function fetchNewAPICompletion(userMessages, rawReply, chatname, timeout =
 
 // Define the schema for the response format
 const formatSchema = z.object({
-    nsfw: z.boolean(),
-    image_request: z.boolean(),
-    nude: z.enum(['false', 'top', 'bottom', 'full']).optional(),
-    image_focus: z.enum(['upper_body', 'full_body']).optional(),
-    position: z.enum(['standing', 'sitting', 'squat']).optional(),
-    viewpoint: z.enum(['front', 'back', 'side']).optional()
-  });
+  nsfw: z.boolean(),
+  image_request: z.boolean(),
+  nude: z.enum(['false', 'top', 'bottom', 'full', 'partial', 'implied', 'bare', 'exposed', 'minimal_clothing']).optional(),
+  image_focus: z.enum(['upper_body', 'full_body', 'face', 'hands', 'legs', 'torso', 'shoulders', 'arms', 'feet', 'lower_back', 'chest', 'abdomen', 'waist']).optional(),
+  position: z.enum(['standing', 'sitting', 'squat', 'leaning', 'crouching', 'prone', 'supine', 'reclining', 'kneeling', 'lying_down']).optional(),
+  viewpoint: z.enum(['from bottom','front', 'from behind', 'side', 'overhead', 'low_angle', 'high_angle', 'close_up', 'wide_angle', 'profile']).optional()
+});
+
   
     
 // Define the system prompt
 const systemPrompt = `
-    You are a useful assistant. Your purpose is to determine if the user is requesting a visual. You analyze the conversation:
-    1. nsfw: true if nudity (not underwear) is involved, else false.
-    2. nude: false|top|bottom|full.
-    3. image_request: true if user last message is a request for image from the user, else false.
-    4. image_focus: 'upper_body' or 'full_body'.
-    5. position: 'standing','sitting','squat' if specified.
-    6. viewpoint: 'front','back','side' if specified.
-    
-    Return:
-    {
-    "nsfw": boolean,
-    "image_request": boolean,
-    "nude": "none|top|bottom|full",
-    "image_focus": "upper_body|full_body",
-    "position": "standing|sitting|squat",
-    "viewpoint": "front|back|side"
-    }
+    You are a helpful assistant designed to evaluate whether the user's message is related to visual content. Analyze the conversation for the following:
+    1. **nsfw**: true if nudity (not underwear) is involved, otherwise false.
+    2. **nude**: 'none', 'top', 'bottom', 'full', or 'partial', based on the level of nudity.
+    3. **image_request**: true if the user's message is a request for an image, otherwise false.
+    4. **image_focus**: Specify the focus area, e.g., 'upper_body', 'full_body', etc., if mentioned.
+    5. **position**: Identify any pose or body positioning such as 'standing', 'sitting', or 'squat'.
+    6. **viewpoint**: Capture the perspective, such as 'front', 'back', or 'side', if indicated.
 `;
+
 const checkImageRequest = async (messages) => {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     // Get the last user messages
     const lastTwoMessages = messages
     .filter((msg) =>  msg.name !== 'master' && msg.name !== 'context')
     .slice(-2);
-    console.log({lastTwoMessages})
     
     const updatedMessages = [
       { role: "system", content: systemPrompt },
@@ -353,7 +489,8 @@ async function describeCharacterFromImage(base64Image) {
 
 
   module.exports = {
-    fetchOpenAICompletion,moduleCompletion,generateCompletion, 
+    fetchOpenAICompletion,moduleCompletion,generateCompletion, fetchOpenAICompletionWithTrigger,
     fetchNewAPICompletion,
-    checkImageRequest,describeCharacterFromImage
+    checkImageRequest,
+    describeCharacterFromImage
 }

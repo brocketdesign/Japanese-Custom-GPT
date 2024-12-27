@@ -400,7 +400,6 @@ async function routes(fastify, options) {
                 Provide a short comment and ask me what I think of it.\n
                 Stay in your character, keep the same tone as before.`.replace(/^\s+/gm, '').trim();
                 newMessage.name = 'master'
-                
             } else if (message.startsWith('[imageStart]')){
                 const prompt = message.replace('[imageStart]','').trim()
                 newMessage.content =  `I just aksed for a new image about ${prompt}. \n 
@@ -1008,14 +1007,14 @@ async function routes(fastify, options) {
           if (genImage?.image_request) {
             currentUserMessage.image_request = true
             userData.messages[lastMsgIndex] = currentUserMessage
-            systemMsg[0].content += `\n\n Image status : image generation in progress.\n Provide a concise answer in ${language} to inform the user of that. Stay in your character, keep the same tone as previously.`.trim()
+            systemMsg[0].content += `\n\n Image status : image generation in progress.\n Provide a concise answer in ${language} to inform me of that and ask me to wait. Do no describe the image. Stay in your character, keep the same tone as previously.`.trim()
             messagesForCompletion = [
               ...systemMsg,
-              ...getChatTemplate(language),
+             // ...getChatTemplate(language),
               ...userMessages
             ]
           } else {
-            systemMsg[0].content += `\n\n Image status : image generation is not ongoing.\n Continue chatting,　maybe ask if the user want to see an image. Stay in your character, keep the same tone as previously.`.trim()
+            systemMsg[0].content += `\n\n Image status : image generation is not ongoing.\n Continue chatting,　maybe ask if me want to see an image. Stay in your character, keep the same tone as previously.`.trim()
             messagesForCompletion = [
                 ...systemMsg, 
                 ...userMessages

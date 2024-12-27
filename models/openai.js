@@ -26,8 +26,11 @@ const fetchOpenAICompletionWithTrigger = async (messages, res, maxToken = 1000, 
       }),
     });
 
-    if (!response.ok) console.error("Response body:", await response.text());
-
+    if (!response.ok) {
+      console.error("Response body:", await response.text());
+      return
+    }    
+    
     let fullCompletion = "";
     let bracketContent = "";
     let inBracket = false;

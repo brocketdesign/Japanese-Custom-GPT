@@ -78,17 +78,29 @@ const fetchOpenAICompletionWithTrigger = async (messages, res, maxToken = 1000, 
 
 
 const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'meta-llama/llama-3.1-70b-instruct',genImage) => {
+    const apiDetails = {
+      novita: {
+        apiUrl: 'https://api.novita.ai/v3/openai/chat/completions',
+        model: 'meta-llama/llama-3.1-70b-instruct',
+        key:process.env.NOVITA_API_KEY
+      },
+      venice: {
+        apiUrl: 'https://api.venice.ai/api/v1/chat/completions',
+        model: 'llama-3.1-405b',
+        key:process.env.VENICE_API_KEY
+      }
+    };
+    
     try {
-        let response = await fetch(
-            "https://api.novita.ai/v3/openai/chat/completions",
+        let response = await fetch(apiDetails.novita.apiUrl,
             {
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${process.env.NOVITA_API_KEY}`
+                    "Authorization": `Bearer ${apiDetails.novita.key}`
                 },
                 method: "POST",
                 body: JSON.stringify({
-                    model,
+                    model:apiDetails.novita.model,
                     messages,
                     temperature: 0.85,
                     top_p: 0.95,

@@ -1491,7 +1491,7 @@ $(document).ready(async function() {
     }
     function generatePromptHtml(prompts, nsfwEnabled) {
         let promptHtml = `
-            <div class="swiper-container promptMenu" style="overflow-y: hidden;width:80%;margin: auto;">
+            <div class="swiper-container promptMenu" style="overflow-y: hidden;width:100%;margin: auto;">
                 <div class="swiper-wrapper">
         `;
         

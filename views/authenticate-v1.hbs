@@ -194,7 +194,6 @@ $(document).ready(function() {
             contentType: 'application/json',
             data: JSON.stringify({ email, password }),
             success: function(response) {
-                localStorage.setItem('token', response.token);
                 window.location.href = response.redirect;
             },
             error: function(xhr) {
@@ -219,7 +218,6 @@ $(document).ready(function() {
         contentType: 'application/json',
         data: JSON.stringify({ email, password }),
         success: function(response) {
-          localStorage.setItem('token', response.token);
           window.location.href = response.redirect;
         },
         error: function(xhr) {

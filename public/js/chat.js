@@ -1758,30 +1758,7 @@ function enableToggleDropdown() {
     });
 }
 
-$(document).find('#register-form').on('submit', function(event) {
-    event.preventDefault();
-    const email = $('#register-email').val();
-    const password = $('#register-password').val();
 
-    $.ajax({
-        url: '/user/register',
-        method: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify({ email, password }),
-        success: function(response) {
-            localStorage.setItem('token', response.token);
-            window.location.href = response.redirect;
-        },
-        error: function(xhr) {
-            const res = xhr.responseJSON;
-            Swal.fire({
-            icon: 'error',
-            title: 'エラー',
-            text: res.error || '登録に失敗しました',
-            });
-        }
-    });
-});
 function displayUserChatHistory(userChat) {
 
     const chatHistoryContainer = $('#chat-history');

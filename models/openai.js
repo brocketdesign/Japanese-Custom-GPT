@@ -4,9 +4,11 @@ const axios = require('axios');
 const { OpenAI } = require("openai");
 const { z } = require("zod");
 const { zodResponseFormat } = require("openai/helpers/zod");
+const { sanitizeMessages } = require('./tool')
 
 const fetchOpenAICompletionWithTrigger = async (messages, res, maxToken = 1000, model = 'llama-3.1-405b') => { 
   try {
+    messages = sanitizeMessages(messages)
     const response = await fetch("https://api.venice.ai/api/v1/chat/completions", {
       headers: {
         "Content-Type": "application/json",
@@ -94,6 +96,7 @@ const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'me
       }
     };
     
+    messages = sanitizeMessages(messages)
     try {
         let response = await fetch(apiDetails.novita.apiUrl,
             {
@@ -156,7 +159,7 @@ const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'me
 
 
 async function generateCompletion(systemPrompt, userMessage, maxToken = 1000, aiModel =`meta-llama/llama-3.1-70b-instruct`) {
-  console.log({systemPrompt,userMessage,aiModel})
+
     const response = await fetch("https://api.novita.ai/v3/openai/chat/completions", {
         headers: {
             "Content-Type": "application/json",
@@ -313,7 +316,7 @@ const checkImageRequest = async (messages) => {
     .filter((msg) =>  msg.name !== 'master' && msg.name !== 'context')
     .filter(m => m.content && !m.content.startsWith('[Image]') && m.role !== 'system')
     .slice(-2);
-    console.log({lastTwoMessages})
+
     if(lastTwoMessages.length < 2){
       return {}
     }

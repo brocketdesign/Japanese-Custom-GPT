@@ -389,7 +389,13 @@ async function updateUserLang(db, userId, lang) {
         throw new Error(`Failed to update user language: ${error.message}`);
     }
 }
-
+function sanitizeMessages(messagesForCompletion) {
+    return messagesForCompletion.map(message => ({
+      ...message,
+      content: message.content.replace(/\s+/g, ' ').trim()
+    }));
+  }
+  
   module.exports = { getCounter, 
     updateCounter, 
     handleFileUpload, 
@@ -402,5 +408,6 @@ async function updateUserLang(db, userId, lang) {
     getUserData,
     addTags,
     getLanguageName,
-    updateUserLang
+    updateUserLang,
+    sanitizeMessages
 }

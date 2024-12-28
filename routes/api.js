@@ -1434,7 +1434,9 @@ async function routes(fastify, options) {
             console.log('Must provide a dialogue')
             return
         }
-        const newMessages = generateImagePrompt(command, characterDescription, dialogue);
+        
+        let newMessages = generateImagePrompt(command, characterDescription, dialogue);
+        newMessages = sanitizeMessages(newMessages)
 
         const response = await fetch("https://api.venice.ai/api/v1/chat/completions", {
             headers: {

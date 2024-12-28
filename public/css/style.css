@@ -7,11 +7,6 @@
 .persona{
   display: none;
 }
-.swal2-popup {
-  max-height: 50vh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
 .img-blur {
   filter: blur(5px);
   clip-path: inset(0);
@@ -19,11 +14,32 @@
 img.select {
   border: 2px solid;
 }
+
+.swal2-container {
+  padding: 0 !important;
+}
+
+.swiper-container {
+  width: 100%;
+  height: 90vh; /* Ensure it occupies full height */
+}
+
+.swiper-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.swiper-slide {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 90vh; /* Matches the height of the modal */
+}
+
 .swiper-slide img {
-  display: block;
   max-width: 100%;
-  height: auto;
-  margin: auto;
+  max-height: 90vh;
+  object-fit: contain;
 }
 
 .thumb-option {

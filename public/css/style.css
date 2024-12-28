@@ -7,8 +7,10 @@
 .persona{
   display: none;
 }
-body.swal2-shown {
+.swal2-popup {
+  max-height: 50vh;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .img-blur {
   filter: blur(5px);

@@ -1452,7 +1452,7 @@ $(document).ready(async function() {
             showConfirmButton: false,
             customClass: {
                 container: 'p-0',
-                htmlContainer: 'p-0',
+                htmlContainer: 'p-0 swal2-popup',
                 popup: 'custom-prompt-container shadow',
                 closeButton: 'position-absolute'
             },

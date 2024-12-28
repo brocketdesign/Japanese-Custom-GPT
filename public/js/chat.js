@@ -384,8 +384,10 @@ $(document).ready(async function() {
         thumbnail = character?.image || localStorage.getItem('thumbnail')
 
         displayChat(userChat.messages, persona, function(){
-            $('#chatContainer').animate({
-                scrollTop: $('#chatContainer').prop("scrollHeight")
+            setTimeout(() => {
+                $('#chatContainer').animate({
+                    scrollTop: $('#chatContainer').prop("scrollHeight") + 500
+                }, 500);
             }, 500);
         });
 
@@ -724,7 +726,6 @@ $(document).ready(async function() {
                     const imageId = chatMessage.content.replace("[Image]", "").trim();
                     const imageData = await getImageUrlById(imageId, designStep, thumbnail);
                     messageHtml = imageData.messageHtml
-                    displayImageThumb(imageData.imageUrl)
                 } else {
                     const isHidden = chatMessage.content.startsWith("[Hidden]");
                     if (chatMessage.content && !isHidden) {
@@ -794,47 +795,59 @@ $(document).ready(async function() {
             </div>
         `
     }
-    
     function getImageUrlById(imageId, designStep, thumbnail) {
-        return new Promise((resolve, reject) => {
+        const placeholderImageUrl = '/img/placeholder-image-2.gif'; // Placeholder image URL
+    
+        // Return immediately with placeholder and update asynchronously
+        return new Promise((resolve) => {
+            const placeholderHtml = `
+            <div id="container-${designStep}">
+                <div class="d-flex flex-row justify-content-start mb-4 message-container">
+                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
+                    <div class="ms-3 position-relative">
+                        <div class="ps-3 text-start assistant-image-box">
+                            <img id="image-${imageId}" src="${placeholderImageUrl}" alt="Loading image...">
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+            resolve({ messageHtml: placeholderHtml, imageUrl: placeholderImageUrl });
+    
+            // Fetch image asynchronously and update the DOM
             $.ajax({
                 url: `/image/${imageId}`,
                 method: 'GET',
                 success: function(response) {
-                    let isBlur = response.isBlur
                     if (response.imageUrl) {
-                        const isLiked = response?.likedBy?.some(id => id.toString() === userId.toString());
-                        const messageHtml = `
-                        <div id="container-${designStep}">
-                            <div class="d-flex flex-row justify-content-start mb-4 message-container ${isBlur ? 'unlock-nsfw':''}">
-                                <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
-                                <div class="ms-3 position-relative">
-                                    <div class="ps-3 text-start assistant-image-box">
-                                        <img id="image-${imageId}" src="${response.imageUrl}" alt="${response.imagePrompt}">
-                                    </div>
-                                    ${!isBlur ? getImageTools(imageId,isLiked,response.imagePrompt,response.nsfw,response.imageUrl) :''}
-                                    ${isBlur ? `
-                                    <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
-                                        <span type="button" class="badge bg-danger text-white" style="padding: 5px; border-radius: 5px;">
-                                            <i class="fas fa-lock"></i> 成人向け
-                                        </span>
-                                    </div>` : ''}
-                                </div>
-                            </div>
-                        </div>`;
-                        resolve({messageHtml,imageUrl:response.imageUrl});
+
+                        displayImageThumb(response.imageUrl)
+                        // Update the placeholder image
+                        $(`#image-${imageId}`).attr('src', response.imageUrl).fadeIn();
+    
+                        // Add tools or badges if applicable
+                        if (!response.isBlur) {
+                            const toolsHtml = getImageTools(imageId, response?.likedBy?.some(id => id.toString() === userId.toString()), response.imagePrompt, response.nsfw, response.imageUrl);
+                            $(`#image-${imageId}`).closest('.assistant-image-box').append(toolsHtml);
+                        } else {
+                            const blurBadgeHtml = `
+                            <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
+                                <span type="button" class="badge bg-danger text-white" style="padding: 5px; border-radius: 5px;">
+                                    <i class="fas fa-lock"></i> 成人向け
+                                </span>
+                            </div>`;
+                            $(`#image-${imageId}`).closest('.assistant-image-box').append(blurBadgeHtml);
+                        }
                     } else {
                         console.error('No image URL returned');
-                        reject('No image URL returned');
                     }
                 },
                 error: function(xhr, status, error) {
                     console.error('Error fetching image URL:', error);
-                    reject(error);
                 }
             });
         });
     }
+    
     
     $(document).on('click','.comment-badge', function (e) {
         e.stopPropagation()

@@ -398,14 +398,14 @@ async function routes(fastify, options) {
                 const prompt = message.replace('[imageDone]','').trim()
                 newMessage.content =  `I just received an image of you about : ${prompt}. \n 
                 Provide a short comment and ask me what I think of it.\n
-                Stay in your character, keep the same tone as before.`.replace(/^\s+/gm, '').trim();
+                Stay in your character, keep the same tone as before.`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim();
                 newMessage.name = 'master'
             } else if (message.startsWith('[imageStart]')){
                 const prompt = message.replace('[imageStart]','').trim()
                 newMessage.content =  `I just aksed for a new image about ${prompt}. \n 
                 Inform me that you received my request and that the image generation process is starting.\n
                 Do not include the image description in your answer. Provide a concice and short answer.\n
-                Stay in your character, keep the same tone as before.`.replace(/^\s+/gm, '').trim();
+                Stay in your character, keep the same tone as before.`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim();
                 newMessage.name = 'master'
             } else if (message.startsWith('[imageFav]')){
                 const imageId = message.replace('[imageFav]','').trim()

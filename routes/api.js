@@ -1022,21 +1022,21 @@ async function routes(fastify, options) {
           }
           //console.log({messagesForCompletion})
           const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, aiModelChat, genImage)
-          
-          const newAssitantMessage = { role: 'assistant', content: completion }
-          if(currentUserMessage.name){
-            newAssitantMessage.name = currentUserMessage.name
-          }
-          if (genImage?.image_request) {
-            newAssitantMessage.image_request = true
-          }
+          if(completion){
+            const newAssitantMessage = { role: 'assistant', content: completion }
+            if(currentUserMessage.name){
+                newAssitantMessage.name = currentUserMessage.name
+            }
+            if (genImage?.image_request) {
+                newAssitantMessage.image_request = true
+            }
 
-          userData.messages.push(newAssitantMessage)
-          userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' })
-          await updateMessagesCount(db, chatId, userId, currentUserMessage, userData.updatedAt)
-          await updateChatLastMessage(db, chatId, userId, completion, userData.updatedAt)
-          await updateUserChat(db, userId, userChatId, userData.messages, userData.updatedAt)
-      
+            userData.messages.push(newAssitantMessage)
+            userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' })
+            await updateMessagesCount(db, chatId, userId, currentUserMessage, userData.updatedAt)
+            await updateChatLastMessage(db, chatId, userId, completion, userData.updatedAt)
+            await updateUserChat(db, userId, userChatId, userData.messages, userData.updatedAt)
+          }
           reply.raw.end()
         } catch (err) {
           console.error(err)

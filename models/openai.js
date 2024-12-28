@@ -121,6 +121,7 @@ const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'me
 
         if (!response.ok) {
             console.error("Response body:", await response.text());
+            return false
         }
 
         let fullCompletion = "";

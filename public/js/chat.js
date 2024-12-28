@@ -1427,7 +1427,7 @@ $(document).ready(async function() {
                 ${window.translations.imageForm.nsfwImage}
             </label>
         </div>`;
-        const promptHtml = generatePromptHtml(prompts, nsfwEnabled);
+        const promptHtml = generatePromptHtml(prompts,nsfwEnabled);
 
         Swal.fire({
             html: header + switchType + promptHtml,
@@ -1450,32 +1450,43 @@ $(document).ready(async function() {
                 }
 
                 $('#nsfwCheckbox').on('change', function() {
-                    sessionStorage.setItem('nsfwEnabled', $(this).is(':checked'));
-                    updatePromptContent(prompts, header);
+                    // Store the NSFW enabled state in session storage
+                    const nsfwEnabled = $(this).is(':checked');
+                    sessionStorage.setItem('nsfwEnabled', nsfwEnabled);
+                
+                    // Show or hide cards based on NSFW state
+                    $('.prompt-card').each(function() {
+                        const isNsfw = $(this).data('nsfw');
+                        if (nsfwEnabled || !isNsfw) {
+                            $(this).parent('.swiper-slide').show(); // Show the card
+                        } else {
+                            $(this).parent('.swiper-slide').hide(); // Hide the card
+                        }
+                    });
+                    
+                    // Update Swiper to reflect the changes
+                    const swiper = document.querySelector('.promptMenu').swiper;
+                    swiper.update();
                 });
+                
 
                 attachPromptCardEvents();
                 
-                document.querySelector('.scrollable-div').focus();
+                initializePromptMenuSwiper();
             }
         });
     }
     function generatePromptHtml(prompts, nsfwEnabled) {
         let promptHtml = `
-            <div class="scrollable-div row px-2 mx-0" style="
-                max-height: 60vh;
-                overflow-x: auto; /* Activer le scroll horizontal */
-                -webkit-overflow-scrolling: touch; /* Scroll fluide sur iOS */
-                touch-action: pan-x; /* Prioriser le scroll horizontal */
-                flex-wrap: nowrap; /* Empêcher les lignes multiples */
-                white-space: nowrap; /* Gérer les éléments en une seule ligne */
-            ">
+            <div class="swiper-container promptMenu" style="overflow-y: hidden;">
+                <div class="swiper-wrapper">
         `;
         
         prompts.forEach(function(prompt) {
+            // Filter logic: only include SFW if nsfwEnabled is false
             if (nsfwEnabled || prompt.nsfw !== 'on') {
                 promptHtml += `
-                    <div class="col-4 col-sm-3 col-lg-2 my-2">
+                    <div class="swiper-slide">
                         <div class="card prompt-card shadow-0" data-id="${prompt._id}" data-nsfw="${prompt.nsfw === 'on'}" style="cursor: pointer;">
                             <img src="${prompt.image}" class="card-img-top" alt="${prompt.title}" style="height:80px; object-fit:contain; width:100%;">
                             <div class="card-body p-1">
@@ -1488,30 +1499,32 @@ $(document).ready(async function() {
                 `;
             }
         });
-        
-        return promptHtml + '</div>';
-    }
-
-
-    function updatePromptContent(prompts, header) {
-        const nsfwEnabled = $('#nsfwCheckbox').is(':checked');
-        const switchType = `<div class="form-check text-start my-3 ps-3">
-            <input type="checkbox" class="btn-check" id="nsfwCheckbox" autocomplete="off" ${nsfwEnabled ? 'checked' : ''}>
-            <label class="btn btn-outline-danger btn-sm rounded" for="nsfwCheckbox">
-                ${window.translations.imageForm.nsfwImage}
-            </label>
-        </div>`;
-        const updatedPromptHtml = generatePromptHtml(prompts, nsfwEnabled);
-
-        $('.swal2-html-container').html(header + switchType + updatedPromptHtml);
-        
-        $('#nsfwCheckbox').on('change', function() {
-            sessionStorage.setItem('nsfwEnabled', $(this).is(':checked'));
-            updatePromptContent(prompts, header);
+    
+        promptHtml += `
+                </div>
+            </div>
+        `;
+    
+        return promptHtml;
+    }    
+    
+    // Swiper initialization (make sure to call this after injecting the HTML into your page)
+    function initializePromptMenuSwiper() {
+        new Swiper('.promptMenu', {
+            slidesPerView: 4,
+            spaceBetween: 10,
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+            },
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+            freeMode: true,
         });
-
-        attachPromptCardEvents();
     }
+    
 
     function attachPromptCardEvents() {
         $('.prompt-card').off('click').on('click', function() {

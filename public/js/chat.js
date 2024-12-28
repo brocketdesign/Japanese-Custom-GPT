@@ -1466,7 +1466,7 @@ $(document).ready(async function() {
                     // Store the NSFW enabled state in session storage
                     const nsfwEnabled = $(this).is(':checked');
                     sessionStorage.setItem('nsfwEnabled', nsfwEnabled);
-                
+
                     // Show or hide cards based on NSFW state
                     $('.prompt-card').each(function() {
                         const isNsfw = $(this).data('nsfw');
@@ -1497,9 +1497,8 @@ $(document).ready(async function() {
         
         prompts.forEach(function(prompt) {
             // Filter logic: only include SFW if nsfwEnabled is false
-            if (nsfwEnabled || prompt.nsfw !== 'on') {
                 promptHtml += `
-                    <div class="swiper-slide">
+                    <div class="swiper-slide" style="${!nsfwEnabled && prompt.nsfw === 'on' ? 'display:none;' : ''}">
                         <div class="card prompt-card shadow-0" data-id="${prompt._id}" data-nsfw="${prompt.nsfw === 'on'}" style="cursor: pointer;">
                             <img src="${prompt.image}" class="card-img-top" alt="${prompt.title}" style="height:80px; object-fit:contain; width:100%;">
                             <div class="card-body p-1">
@@ -1510,7 +1509,6 @@ $(document).ready(async function() {
                         </div>
                     </div>
                 `;
-            }
         });
     
         promptHtml += `

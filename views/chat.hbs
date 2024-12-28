@@ -430,7 +430,7 @@ $(document).ready(function() {
                 });
             });
     });
-    $(document).on('click', '.assistant-image-box img', function(e) {
+    $(document).on('click', '.assistant-image-box', function(e) {
         e.preventDefault();
         e.stopPropagation();
 
@@ -438,7 +438,7 @@ $(document).ready(function() {
             return $(this).attr('src');
         }).get();
 
-        const clickedImageUrl = $(this).attr('src') || $(this).attr('data-src');
+        const clickedImageUrl = $(this).find('img').attr('src') || $(this).attr('data-src');
         const initialSlideIndex = images.indexOf(clickedImageUrl);
 
         let slides = '';

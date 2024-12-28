@@ -805,7 +805,7 @@ $(document).ready(async function() {
                 <div class="d-flex flex-row justify-content-start mb-4 message-container">
                     <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
                     <div class="ms-3 position-relative">
-                        <div class="ps-3 text-start assistant-image-box">
+                        <div class="ps-0 text-start assistant-image-box">
                             <img id="image-${imageId}" src="${placeholderImageUrl}" alt="Loading image...">
                         </div>
                     </div>
@@ -827,7 +827,7 @@ $(document).ready(async function() {
                         // Add tools or badges if applicable
                         if (!response.isBlur) {
                             const toolsHtml = getImageTools(imageId, response?.likedBy?.some(id => id.toString() === userId.toString()), response.imagePrompt, response.nsfw, response.imageUrl);
-                            $(`#image-${imageId}`).closest('.assistant-image-box').append(toolsHtml);
+                            $(`#image-${imageId}`).closest('.assistant-image-box').after(toolsHtml);
                         } else {
                             const blurBadgeHtml = `
                             <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
@@ -1265,7 +1265,7 @@ $(document).ready(async function() {
                 <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass}">
                     <img src="${thumbnail || '/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
                     <div class="ms-3 position-relative">
-                        <div class="text-start assistant-image-box" data-id="${imageId}">
+                        <div class="ps-0 text-start assistant-image-box" data-id="${imageId}">
                             ${message.outerHTML}
                         </div>
                         ${getImageTools(imageId,false,description,imageNsfw,imageUrl)}

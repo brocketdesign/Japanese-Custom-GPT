@@ -78,6 +78,9 @@ fastify.after(() => {
   handlebars.registerHelper('includesObjectId', (array, userId) =>
     array?.some((id) => id?.toString() === userId?.toString())
   );
+  handlebars.registerHelper('eq', function(a, b) {
+    return a === b;
+  });
   handlebars.registerHelper('imagePlaceholder', () => `/img/nsfw-blurred-2.png`);
   handlebars.registerHelper('capitalize', (str) => (typeof str !== 'string' ? '' : str.charAt(0).toUpperCase() + str.slice(1)));
 });
@@ -274,6 +277,8 @@ fastify.get('/chat/:chatId', { preHandler: [fastify.authenticate] }, async (requ
     return reply.redirect('/my-plan');
   }
 
+  const promptData = await db.collection('prompts').find({}).toArray();
+
   return reply.renderWithGtm('chat.hbs', {
     title: 'LAMIX | 日本語でAI画像生成 | AIチャット',
     isAdmin,
@@ -285,6 +290,7 @@ fastify.get('/chat/:chatId', { preHandler: [fastify.authenticate] }, async (requ
     userId,
     chatId,
     userData,
+    promptData,
     seo: [
       { name: 'description', content: 'Lamixでは、無料でAIグラビアとのチャット中に生成された画像を使って、簡単に投稿を作成することができます。' },
       { name: 'keywords', content: 'AIグラビア, 無料で画像生成AI, LAMIX, 日本語, AI画像生成' },

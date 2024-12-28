@@ -1375,35 +1375,6 @@ $(document).ready(async function() {
         });
     }
 
-   // Function to get prompts data
-   function getPromptsData(callback) {
-        var promptsData = localStorage.getItem('promptsData');
-        if (promptsData) {
-            // Data is in session storage
-            var prompts = JSON.parse(promptsData);
-            if (typeof callback === 'function') {
-                callback(prompts);
-            }
-        } else {
-            // Fetch data from server and save to session storage
-            $.ajax({
-                url: '/api/prompts',
-                type: 'GET',
-                success: function(prompts) {
-                    localStorage.setItem('promptsData', JSON.stringify(prompts));
-                    if (typeof callback === 'function') {
-                        callback(prompts);
-                    }
-                },
-                error: function(xhr) {
-                    console.error('Error fetching prompts data on page load.');
-                }
-            });
-        }
-    }
-
-    // On page load, ensure prompts data is loaded
-    getPromptsData()
     // Check if the tooltip has already been shown in the session
     if (!sessionStorage.getItem('tooltipShown')) {
         $('#userMessage').one('input', function() {
@@ -1421,145 +1392,63 @@ $(document).ready(async function() {
     }
 
     // Click handler for #showPrompts
-    $(document).on('click','#showPrompts', function() {
-        getPromptsData(function(prompts) {
-            const header = `<p style="font-size:16px;" class="px-3 text-start my-3  pb-0">${window.translations.select_pose_for_image_generation}</p>`;
-            renderPopup(prompts, header);
-        });
+
+    const nsfwEnabled = sessionStorage.getItem('nsfwEnabled') === 'true';
+
+    // Show or hide cards based on the NSFW state
+    $('#promptList .prompt-card').each(function() {
+        const isNsfw = $(this).data('nsfw');
+        if (!nsfwEnabled && isNsfw) {
+            $(this).hide(); // Hide NSFW cards if NSFW is not enabled
+        } else {
+            $(this).show(); // Show other cards
+        }
     });
 
-    function renderPopup(prompts, header) {
-        const nsfwEnabled = sessionStorage.getItem('nsfwEnabled') === 'true';
-        renderSwalPopup(header, prompts, nsfwEnabled);
-    }
-
-    function renderSwalPopup(header, prompts, nsfwEnabled) {
-        const switchType = `<div class="form-check text-start my-3 ps-3">
-            <input type="checkbox" class="btn-check" id="nsfwCheckbox" autocomplete="off" ${nsfwEnabled ? 'checked' : ''}>
-            <label class="btn btn-outline-danger btn-sm rounded" for="nsfwCheckbox">
-                ${window.translations.imageForm.nsfwImage}
-            </label>
-        </div>`;
-        const promptHtml = generatePromptHtml(prompts,nsfwEnabled);
-
-        Swal.fire({
-            html: header + switchType + promptHtml,
-            showClass: { popup: 'animate__animated animate__slideInUp animate__faster' },
-            hideClass: { popup: 'animate__animated animate__slideOutDown animate__faster' },
-            position: 'bottom',
-            backdrop: 'rgba(43, 43, 43, 0.2)',
-            showCloseButton: true,
-            showConfirmButton: false,
-            customClass: {
-                container: 'p-0',
-                htmlContainer: 'p-0 swal2-popup',
-                popup: 'custom-prompt-container shadow',
-                closeButton: 'position-absolute'
-            },
-            didOpen: () => {
-                if (isTemporary) {
-                    showRegistrationForm();
-                    return;
-                }
-
-                $('#nsfwCheckbox').on('change', function() {
-                    // Store the NSFW enabled state in session storage
-                    const nsfwEnabled = $(this).is(':checked');
-                    sessionStorage.setItem('nsfwEnabled', nsfwEnabled);
-
-                    // Show or hide cards based on NSFW state
-                    $('.prompt-card').each(function() {
-                        const isNsfw = $(this).data('nsfw');
-                        if (nsfwEnabled || !isNsfw) {
-                            $(this).parent('.swiper-slide').show(); // Show the card
-                        } else {
-                            $(this).parent('.swiper-slide').hide(); // Hide the card
-                        }
-                    });
-                    
-                    // Update Swiper to reflect the changes
-                    const swiper = document.querySelector('.promptMenu').swiper;
-                    swiper.update();
-                });
-                
-
-                attachPromptCardEvents();
-                
-                initializePromptMenuSwiper();
-            }
+    $(document).on('click','#showPrompts',function(){
+        $('#promptContainer').slideDown('fast');
+        $('#nsfwCheckbox').prop('checked', nsfwEnabled);
+        filterPrompts(nsfwEnabled);
+      });
+      
+      $('#nsfwCheckbox').on('change',function(){
+        const checked = $(this).is(':checked');
+        sessionStorage.setItem('nsfwEnabled', checked);
+        filterPrompts(checked);
+      });
+      
+      function filterPrompts(nsfwEnabled){
+        $('#promptList .prompt-card').each(function(){
+          const isNsfw=$(this).data('nsfw');
+          $(this).toggle(isNsfw?nsfwEnabled:true);
         });
-    }
-    function generatePromptHtml(prompts, nsfwEnabled) {
-        let promptHtml = `
-            <div class="swiper-container promptMenu" style="overflow-y: hidden;width:100%;margin: auto;">
-                <div class="swiper-wrapper">
-        `;
-        
-        prompts.forEach(function(prompt) {
-            // Filter logic: only include SFW if nsfwEnabled is false
-                promptHtml += `
-                    <div class="swiper-slide" style="${!nsfwEnabled && prompt.nsfw === 'on' ? 'display:none;' : ''}">
-                        <div class="card prompt-card shadow-0" data-id="${prompt._id}" data-nsfw="${prompt.nsfw === 'on'}" style="cursor: pointer;">
-                            <img src="${prompt.image}" class="card-img-top" alt="${prompt.title}" style="height:80px; object-fit:contain; width:100%;">
-                            <div class="card-body p-1">
-                                <p class="card-text text-center" style="font-size:12px; margin-bottom:0;">
-                                    ${prompt.title}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                `;
-        });
+      }      
+    $('#close-promptContainer').on('click', function() {
+        $('#promptContainer').slideUp('fast');
+    });
     
-        promptHtml += `
-                </div>
-            </div>
-        `;
+    $('.prompt-card').off('click').on('click', function() {
+        $('.prompt-card').removeClass('selected'); 
+        $(this).addClass('selected');
+
+        const randomId = displayAndUpdateImageLoader();
+
+        var id = $(this).data('id');
+        var isNSFWChecked = $('#nsfwCheckbox').is(':checked');
+
+        // Display the choice and cost in the user message
+        const typeText = isNSFWChecked ? 'NSFW' : 'SFW';
+        const prompt_title = $(this).find('.card-text').text()
+
+        const userMessage = '[context] '+ window.translations['asked_for_new_image'];
+        window.postMessage({ event: 'displayMessage', role:'user', message: userMessage, completion : false , image : false, messageId: false }, '*');
+
+
+        controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isNSFWChecked);
+        displayAndUpdateImageLoader(id,randomId)
+        Swal.close();
+    });
     
-        return promptHtml;
-    }    
-    
-    // Swiper initialization (make sure to call this after injecting the HTML into your page)
-    function initializePromptMenuSwiper() {
-        new Swiper('.promptMenu', {
-            slidesPerView: 4,
-            spaceBetween: 10,
-            pagination: {
-                el: '.swiper-pagination',
-                clickable: true,
-            },
-            navigation: {
-                nextEl: '.swiper-button-next',
-                prevEl: '.swiper-button-prev',
-            },
-            freeMode: true,
-        });
-    }
-    
-
-    function attachPromptCardEvents() {
-        $('.prompt-card').off('click').on('click', function() {
-            $('.prompt-card').removeClass('selected'); 
-            $(this).addClass('selected');
-
-            const randomId = displayAndUpdateImageLoader();
-
-            var id = $(this).data('id');
-            var isNSFWChecked = $('#nsfwCheckbox').is(':checked');
-
-            // Display the choice and cost in the user message
-            const typeText = isNSFWChecked ? 'NSFW' : 'SFW';
-            const prompt_title = $(this).find('.card-text').text()
-
-            const userMessage = '[context] '+ window.translations['asked_for_new_image'];
-            window.postMessage({ event: 'displayMessage', role:'user', message: userMessage, completion : false , image : false, messageId: false }, '*');
-
-
-            controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isNSFWChecked);
-            displayAndUpdateImageLoader(id,randomId)
-            Swal.close();
-        });
-    }
     window.imageRequest = function(command){
         const randomId = displayAndUpdateImageLoader();
         addIconToLastUserMessage();

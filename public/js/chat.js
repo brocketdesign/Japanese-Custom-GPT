@@ -1455,19 +1455,20 @@ $(document).ready(async function() {
                 });
 
                 attachPromptCardEvents();
+                
+                document.querySelector('.scrollable-div').focus();
             }
         });
     }
     function generatePromptHtml(prompts, nsfwEnabled) {
         let promptHtml = `
-            <div class="row px-2 mx-0" style="
+            <div class="scrollable-div row px-2 mx-0" style="
                 max-height: 60vh;
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch;
-                touch-action: pan-y;
-                overflow-x: scroll;
-                overflow-y: hidden;
-                flex-wrap: nowrap;
+                overflow-x: auto; /* Activer le scroll horizontal */
+                -webkit-overflow-scrolling: touch; /* Scroll fluide sur iOS */
+                touch-action: pan-x; /* Prioriser le scroll horizontal */
+                flex-wrap: nowrap; /* Empêcher les lignes multiples */
+                white-space: nowrap; /* Gérer les éléments en une seule ligne */
             ">
         `;
         

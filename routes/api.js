@@ -57,13 +57,13 @@ async function routes(fastify, options) {
             _id: new fastify.mongo.ObjectId(userChatId) 
           });
           let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
-      
+
           // Different starting message depending on user status
           const startMessage = !user.isTemporary 
             ? `Introduce yourself shortly and greet me. \n Inform me that you can send images. Ask me if I have a request. Respond in ${language}.`
             : "挨拶から始め、ログインを促してください。確認から始めるのではなく、直接挨拶とログインのお願いをしてください。";
-      
-          // If new user chat or not found, create a new document
+
+            // If new user chat or not found, create a new document
           if (!userChatDocument || isNew) {
             userChatDocument = {
               userId: new fastify.mongo.ObjectId(userId),
@@ -78,7 +78,7 @@ async function routes(fastify, options) {
       
           let result = await collectionUserChat.insertOne(userChatDocument);
           let documentId = result.insertedId;
-      
+
           // Reply with summary
           return reply.send({ 
             userChatId: documentId, 
@@ -327,7 +327,7 @@ async function routes(fastify, options) {
         const collection = fastify.mongo.db.collection('chats');
         const collectionUserChat = fastify.mongo.db.collection('userChat');
         const collectionCharacters = fastify.mongo.db.collection('characters');
-    
+
         let response = {
             isNew: true,
         };
@@ -339,7 +339,7 @@ async function routes(fastify, options) {
                 _id: new fastify.mongo.ObjectId(userChatId),
                 chatId: new fastify.mongo.ObjectId(chatId)
             });
-            
+
             if (userChatDocument) {
                 response.userChat = userChatDocument;
                 response.isNew = false;
@@ -996,7 +996,7 @@ async function routes(fastify, options) {
       
           const systemContent = completionSystemContent(
             chatDocument,
-            request.user,
+            userInfo,
             chatDataToString(chatDocument.base_personality),
             getCurrentTimeInJapanese(),
             language

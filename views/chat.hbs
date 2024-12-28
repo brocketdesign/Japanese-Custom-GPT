@@ -19,7 +19,7 @@
                 <button class="new-chat d-sm-none btn btn-light"><i class="bi bi-pencil-square"></i></button>
             </div>
             <div>
-                <a href="/chat/edit/" class="{{default isAdmin 'd-inline-block'}} m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius:40px;">
+                <a href="/chat/edit/" class="{{default isAdmin 'd-inline-block'}} m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary text-start" style="border-radius:40px;">
                     <i class="fas fa-plus me-2"></i>{{translations.createCharacter}}
                 </a>
                 <a href="/discover" class="{{default isAdmin 'd-inline-block'}} m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius:40px;">
@@ -31,7 +31,11 @@
             </div>
             <span class="text-dark ps-4 fw-bold" style="font-size: 12px;">{{translations.chatList}} <span id="user-chat-count" >{{chats.length}}</span></span>
         </div>
-        <div id="chat-list" class="mt-1 pb-3" style="flex-grow: 1;overflow-y: scroll;overflow-x: hidden;border-top:1px solid #cccccc6b;">
+        <div id="chat-list" class="mt-1 pb-3 position-relative" style="flex-grow: 1;overflow-y: scroll;overflow-x: hidden;border-top:1px solid #cccccc6b;">
+            <!-- Spinner -->
+            <div id="chat-list-spinner" class="spinner-border text-secondary" role="status" style="position: absolute; top: 45%; left: 45%; display: none;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
         </div>
     </div>
     <div id="overlay" class="d-sm-none bg-dark" style="position: fixed; inset: 0; z-index: 1033; display: none; opacity: 0.4; overflow: hidden;"></div>

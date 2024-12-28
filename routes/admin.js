@@ -154,6 +154,8 @@ async function routes(fastify, options) {
             return reply.view('/admin/users',{
                 users,
                 translations,
+                mode: process.env.MODE,
+                apiurl: process.env.API_URL,
                 femaleCount, 
                 femalePercentage, 
                 maleCount,

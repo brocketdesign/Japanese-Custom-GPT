@@ -124,7 +124,7 @@ fastify.decorate('authenticate', async function (request, reply) {
     }
     const decoded = await jwt.verify(token, process.env.JWT_SECRET);
     if (decoded && decoded._id) {
-      request.user = { _id: decoded._id, ...decoded };
+      //request.user = { _id: decoded._id, ...decoded };
     } else {
       return reply.redirect('/authenticate');
     }
@@ -171,7 +171,9 @@ fastify.get('/', async (request, reply) => {
     return reply.renderWithGtm(`index/${lang}.hbs`, {
       title: 'AIフレンズ',
       translations,
-      user,
+      mode: process.env.MODE,
+      apiurl: process.env.API_URL,
+      user: request.user,
       seo: [
         { name: 'description', content: 'Lamixでは、無料でAIグラビアとのチャット中に生成された画像を使って、簡単に投稿を作成することができます。お気に入りの瞬間やクリエイティブな画像をシェアすることで、他のユーザーと楽しさを共有しましょう。画像を選んで投稿に追加するだけで、あなただけのオリジナルコンテンツを簡単に発信できます。' },
         { name: 'keywords', content: 'AIグラビア, 無料で画像生成AI, Hato Ltd, 日本語, AI画像生成' },
@@ -193,6 +195,8 @@ fastify.get('/authenticate', async (request, reply) => {
     return reply.renderWithGtm('authenticate.hbs', {
       title: 'AIフレンズ',
       translations,
+      mode: process.env.MODE,
+      apiurl: process.env.API_URL,
       register: !!request.query.register,
     });
   } else {
@@ -207,6 +211,8 @@ fastify.get('/authenticate/mail', async (request, reply) => {
     return reply.renderWithGtm('authenticate-v1.hbs', {
       title: 'AIフレンズ',
       translations,
+      mode: process.env.MODE,
+      apiurl: process.env.API_URL,
       register: !!request.query.register,
     });
   } else {
@@ -224,7 +230,9 @@ fastify.get('/my-plan', { preHandler: [fastify.authenticate] }, async (request, 
   return reply.renderWithGtm(`plan/${lang}.hbs`, {
     title: 'プレミアムプランAI画像生成',
     translations,
-    user,
+    mode: process.env.MODE,
+    apiurl: process.env.API_URL,
+    user: request.user,
     seo: [
       { name: 'description', content: 'Lamixでは、無料でAIグラビアとのチャット中に生成された画像を使って、簡単に投稿を作成することができます。お気に入りの瞬間やクリエイティブな画像をシェアすることで、他のユーザーと楽しさを共有しましょう。' },
       { name: 'keywords', content: 'AIグラビア, 無料で画像生成AI, Hato Ltd, 日本語, AI画像生成' },
@@ -242,23 +250,27 @@ fastify.get('/chat', { preHandler: [fastify.authenticate] }, (request, reply) =>
 
 fastify.get('/chat/:chatId', { preHandler: [fastify.authenticate] }, async (request, reply) => {
   const db = fastify.mongo.db;
-  let user = request.user;
-  const chatId = request.params.chatId;
-  const imageType = request.query.type || false;
+
+  const user = request.user; // Directly access the enriched user from preHandler
   const userId = user._id;
-  const translations = request.translations;
-  user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+
   const collectionChat = db.collection('chats');
   const collectionUser = db.collection('users');
   const userData = await getUserData(userId, collectionUser, collectionChat, user);
+
   if (!userData) return reply.status(404).send({ error: 'User not found' });
-  const isAdmin = await checkUserAdmin(fastify, request.user._id);
+
   if (user.isTemporary) {
     return reply.redirect('/authenticate');
   }
-  
-  const subscriptionStatus = user?.subscriptionStatus == 'active'
-  if(!subscriptionStatus){
+
+  const isAdmin = await checkUserAdmin(fastify, userId);
+  const chatId = request.params.chatId;
+  const imageType = request.query.type || false;
+  const translations = request.translations;
+
+  const subscriptionStatus = user.subscriptionStatus === 'active';
+  if (!subscriptionStatus) {
     return reply.redirect('/my-plan');
   }
 
@@ -268,6 +280,7 @@ fastify.get('/chat/:chatId', { preHandler: [fastify.authenticate] }, async (requ
     imageType,
     translations,
     mode: process.env.MODE,
+    apiurl: process.env.API_URL,
     user,
     userId,
     chatId,
@@ -291,8 +304,10 @@ fastify.get('/post', async (request, reply) => {
     const translations = request.translations;
     return reply.view('post.hbs', {
       title: 'コミュニティからの最新投稿 | LAMIX | 日本語 | 無料AI画像生成 | 無料AIチャット',
-      user,
+      user: request.user,
       translations,
+      mode: process.env.MODE,
+      apiurl: process.env.API_URL,
       seo: [
         { name: 'description', content: 'Lamixでは、無料でAIグラビアとのチャット中に生成された画像を使って、簡単に投稿を作成することができます。' },
         { name: 'keywords', content: 'AIグラビア, 無料で画像生成AI, LAMIX, 日本語, AI画像生成' },
@@ -328,7 +343,8 @@ fastify.get('/post/:postId', async (request, reply) => {
       title: 'コミュニティからの最新投稿 | LAMIX | 日本語 | 無料AI画像生成 | 無料AIチャット',
       translations,
       mode: process.env.MODE,
-      user,
+      apiurl: process.env.API_URL,
+      user: request.user,
       postUser,
       userId,
       post,
@@ -357,7 +373,9 @@ fastify.get('/character', async (request, reply) => {
     return reply.view('character.hbs', {
       title: 'AIグラビアから送られてくる特別な写真 | LAMIX | 日本語 | 無料AI画像生成 | 無料AIチャット',
       translations,
-      user,
+      mode: process.env.MODE,
+      apiurl: process.env.API_URL,
+      user: request.user,
       seo: [
         { name: 'description', content: 'AIチャットしながらAI画像生成できるサイトです。日本語対応で簡単に使え、生成した画像を共有したり、他のユーザーの作品を楽しむことができるコミュニティです。' },
         { name: 'keywords', content: 'AIグラビア, 無料画像生成AI, LAMIX, 日本語, AI画像生成' },
@@ -419,9 +437,11 @@ fastify.get('/character/:chatId', async (request, reply) => {
     return reply.view('character.hbs', {
       title: `${chat.name}とAIチャットしながら無料AI画像生成を楽しもう`,
       translations,
+      mode: process.env.MODE,
+      apiurl: process.env.API_URL,
       chat,
       image,
-      user,
+      user: request.user,
       chatId,
       isBlur,
       seo: [
@@ -471,9 +491,11 @@ fastify.get('/search', async (request, reply) => {
 
     return reply.view('search.hbs', {
       title: seoTitle,
-      user,
+      user: request.user,
       data,
       translations,
+      mode: process.env.MODE,
+      apiurl: process.env.API_URL,
       query,
       imageStyle,
       seo: [
@@ -503,6 +525,8 @@ fastify.get('/about', async (request, reply) => {
   return reply.renderWithGtm('chat.hbs', {
     title: 'AIグラビア | ラミックスの無料画像生成AI体験',
     translations,
+    mode: process.env.MODE,
+    apiurl: process.env.API_URL,
     chats,
     seo: [
       { name: 'description', content: 'AIチャットしながらAI画像生成できるサイトです。' },
@@ -535,8 +559,10 @@ fastify.get('/chat/list/:id', { preHandler: [fastify.authenticate] }, async (req
     return reply.renderWithGtm('chat-list', {
       title: 'LAMIX | AIグラビア | ラミックスの画像生成AI体験',
       translations,
+      mode: process.env.MODE,
+      apiurl: process.env.API_URL,
       chats: sortedChats,
-      user,
+      user: request.user,
       seo: [
         { name: 'description', content: 'AIチャットしながらAI画像生成できるサイトです。' },
         { name: 'keywords', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },
@@ -562,7 +588,9 @@ fastify.get('/discover', async (request, reply) => {
   return reply.renderWithGtm('discover.hbs', {
     title: 'LAMIX | 日本語でAI画像生成 | AIチャット',
     translations,
-    user,
+    mode: process.env.MODE,
+    apiurl: process.env.API_URL,
+    user: request.user,
     seo: [
       { name: 'description', content: 'AIチャットしながらAI画像生成できるサイトです。' },
       { name: 'keywords', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },
@@ -615,9 +643,11 @@ fastify.get('/chat/edit/:chatId', { preHandler: [fastify.authenticate] }, async 
     return reply.renderWithGtm(template, {
       title: 'AIフレンズ',
       translations,
+      mode: process.env.MODE,
+      apiurl: process.env.API_URL,
       chatId,
       isTemporaryChat,
-      user,
+      user: request.user,
       prompts,
     });
   } catch (error) {
@@ -673,6 +703,8 @@ fastify.get('/settings', { preHandler: [fastify.authenticate] }, async (request,
     return reply.renderWithGtm('/settings', {
       title: 'AIフレンズ',
       translations,
+      mode: process.env.MODE,
+      apiurl: process.env.API_URL,
       user: userData,
     });
   } catch (err) {

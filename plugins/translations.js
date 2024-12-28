@@ -30,34 +30,50 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         // Try to get authenticated user by token
         const user = await getAuthenticatedUser(request, userCollection);
         if (user) {
-            return user;
+            return { 
+                _id: user._id, 
+                lang: user.lang,
+                profileUrl: user.profileUrl,
+                subscriptionStatus: user.subscriptionStatus,
+                isTemporary: user.isTemporary
+            }
         }
         // Handle temporary user
         const tempUser = await getOrCreateTempUser(request, reply, userCollection);
         return tempUser;
     });
 
-    // 4. Add a preHandler hook to set translations and user for every request
+    // Ajoutez ceci avant vos décorateurs
+    fastify.decorateRequest('lang', null)
+    fastify.decorateRequest('user', null)
+
+    // Déclarez vos décorateurs comme avant
+    fastify.decorate('lang', async function (request, reply) {
+        const subdomain = request.hostname.split('.')[0]
+        return ['en','fr','ja'].includes(subdomain) ? subdomain : 'en'
+    })
+
+    fastify.decorate('user', async function (request, reply) {
+    const user = await fastify.getUser(request, reply)
+        return { _id:user._id, lang:user.lang, profileUrl:user.profileUrl,
+                subscriptionStatus:user.subscriptionStatus, isTemporary:user.isTemporary }
+    })
+
+    // Hook pour setter lang et user
+    fastify.addHook('onRequest', async (request, reply) => {
+        request.lang = await fastify.lang(request, reply)
+        request.user = await fastify.user(request, reply)
+    })
+
+    // Hook pour gérer la traduction
     fastify.addHook('preHandler', async (request, reply) => {
-        const user = await fastify.getUser(request, reply);
-        const mode = process.env.MODE || 'local';
-        const host = request.hostname;
-        const subdomain = host.split('.')[0];
-        const lang = (['en', 'fr', 'ja'].includes(subdomain)) ? subdomain : 'en';
-    
-        // Set translations and user details
-        setTranslations(request, lang);
-        request.user = user;
-        request.lang = lang;
-    
-        // Translate if on localhost
-        if (mode == 'local' && user.lang && user.lang !== lang) {
-            setTranslations(request, user.lang);
-            request.user = user;
-            request.lang = user.lang;
+        setTranslations(request, request.lang)
+        if (process.env.MODE==='local' && request.user.lang!==request.lang) {
+            setTranslations(request, request.user.lang)
+            request.lang = request.user.lang
         }
-    });
-    
+    })
+
 
     // Helper to get authenticated user
     async function getAuthenticatedUser(request, userCollection) {
@@ -118,8 +134,8 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
 
     // Helper to set translations
     function setTranslations(request, lang) {
-        lang = lang || 'ja';
-        request.translations = fastify.translations[lang] || fastify.translations['ja'];
+        lang = lang || 'en';
+        request.translations = fastify.translations[lang] || fastify.translations['en'];
     }
 
 

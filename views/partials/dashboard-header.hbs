@@ -21,6 +21,7 @@
         gtag('config', '{{gtmId}}');
     </script>
     <script>
+        
         // Function to get the value of a specific cookie
         function getCookie(name) {
             const nameEQ = name + "=";
@@ -47,6 +48,14 @@
                 window.location.replace(window.location.origin + decodeURIComponent(redirectUrl));
             }
         })();
+
+        window.API_URL = "{{apiurl}}";
+        window.MODE = "{{mode}}";
+        window.user = {{{json user}}};
+        window.userId = window.user._id;
+        window.translations = {{{json translations}}};
+        window.lang = window.translations.lang;
+
     </script>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">

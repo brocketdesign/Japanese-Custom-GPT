@@ -9,7 +9,6 @@ async function onLanguageChange(lang) {
     if (updateResponse.success) {
         await loadTranslations(lang);
         $('#languageDropdown').text(getLanguageDisplayName(lang));
-        const { API_URL, MODE } = await window.setApiUrlAndMode();
         if(MODE !== 'local'){
             window.location.href = `https://${lang}.chatlamix.com/`
         }else{
@@ -31,7 +30,7 @@ $(document).ready(function() {
     $('.language-select').on('click', function(e) {
         e.preventDefault();
         const selectedLang = $(this).data('lang');
-        if (selectedLang !== currentLang) {
+        if (selectedLang !== lang) {
             onLanguageChange(selectedLang);
         }
     });
@@ -42,14 +41,12 @@ $(document).ready(async function() {
     const sessionId = urlParams.get('session_id');
     const priceId = urlParams.get('priceId');
     const paymentFalse = urlParams.get('payment') == 'false';
-    const user = await fetchUser();
+
     const userId = user._id
     isTemporary = !!user?.isTemporary
     subscriptionStatus = user.subscriptionStatus == 'active'  
 
     const userLang = user.lang
-    currentLang = userLang ? userLang : currentLang
-    $('#languageDropdown').text(getLanguageDisplayName(currentLang));
 
     if(isTemporary){
         let formShown = false;

@@ -41,9 +41,6 @@
     });
 });
 
-window.translations = {{{json translations}}}
-window.currentLang = window.translations.lang
-
 window.loadTranslations = async function (lang) {
     const localTranslations = localStorage.getItem('translations');
 
@@ -56,19 +53,11 @@ window.loadTranslations = async function (lang) {
 
     if (response.success) {
         window.translations = response.translations;
-        localStorage.setItem('translations', JSON.stringify(response.translations))
-
-        window.currentLang = lang;
-        localStorage.setItem('currentLang', lang)
+        window.lang = lang;
     }
 
 }
 
-if (!window.translations ||!window.currentLang) {
-    const user = {{{json user}}}
-    const lang = window.currentLang || user.lang
-    loadTranslations(lang);
-}
 window.fetchAndAppendModels = function() {
     $.get('/api/models', function(response) {
         if (response.success) {
@@ -202,25 +191,8 @@ window.showNotification = function(message, icon) {
         }
     });
 }
-window.setApiUrlAndMode = async function() {
-    let mode = localStorage.getItem('MODE');
-    let API_URL = localStorage.getItem('API_URL');
-
-    if (!mode || !API_URL) {
-        mode = await fetchMode();
-        API_URL = (mode !== 'local' && !window.location.origin.includes('lamix')) 
-            ? 'https://chat.lamixapp.com' 
-            : window.location.origin;
-
-        localStorage.setItem('MODE', mode);
-        localStorage.setItem('API_URL', API_URL);
-    }
-
-    return { API_URL, MODE: mode };
-};
 
 window.fetchUser = async function() {
-    const { API_URL, MODE } = await window.setApiUrlAndMode();
     try {
         const response = await fetch(`${API_URL}/api/user`, { method: 'GET' });
         if (!response.ok) throw new Error('Network response was not ok');
@@ -386,26 +358,27 @@ $(document).ready(function(){
             
         });
     }
-    const user = {{{json user}}};
-    if(user && !user.isTemporary && $('#chat-widget-container').length == 0){
+    fetchUser().then((user) => {
+        if(user && !user.isTemporary && $('#chat-widget-container').length == 0){
+            const userNickname = user?.nickname ?? '';
+            const userGender = user?.gender ?? '';
+            const userBirthYear = user?.birthDate?.year ?? '';
+            const userBirthMonth = user?.birthDate?.month ?? '';
+            const userBirthDay = user?.birthDate?.day ?? '';
 
-        const userNickname = user?.nickname ?? '';
-        const userGender = user?.gender ?? '';
-        const userBirthYear = user?.birthDate?.year ?? '';
-        const userBirthMonth = user?.birthDate?.month ?? '';
-        const userBirthDay = user?.birthDate?.day ?? '';
+            if (!userNickname || !userBirthYear || !userBirthMonth || !userBirthDay || !userGender) {
+                showPopupUserInfo();
+                return
+            }
+            const subscriptionStatus = user?.subscriptionStatus == 'active'
+            const currentLocation = window.location.pathname
 
-        if (!userNickname || !userBirthYear || !userBirthMonth || !userBirthDay || !userGender) {
-            showPopupUserInfo();
-            return
+            if(!subscriptionStatus && currentLocation !== '/my-plan'){
+                    window.location = '/my-plan'
+            }
         }
-        const subscriptionStatus = user?.subscriptionStatus == 'active'
-        const currentLocation = window.location.pathname
+    })
 
-        if(!subscriptionStatus && currentLocation !== '/my-plan'){
-                window.location = '/my-plan'
-        }
-    }
 })
 </script>
 <div class="sticky-bottom py-0 text-center onchat-off" style="bottom:0;left:0;right:0;">

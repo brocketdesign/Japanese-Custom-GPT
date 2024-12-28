@@ -125,15 +125,12 @@ async function routes(fastify, options) {
         );
 
         // Respond with token and clear tempUser cookie
-        localStorage.clear();
-        sessionStorage.clear();
-
         // Clear all cookies
         const cookies = request.cookies;
         for (const cookieName in cookies) {
             reply.clearCookie(cookieName, { path: '/' });
         }
-        
+
         return reply
             .clearCookie('tempUser', { path: '/' })
             .setCookie('token', token, { path: '/', httpOnly: true })
@@ -378,9 +375,6 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
   // Keep the old logout route
   fastify.post('/user/logout', async (request, reply) => {
 
-    localStorage.clear();
-    sessionStorage.clear();
-
     // Clear all cookies
     const cookies = request.cookies;
     for (const cookieName in cookies) {
@@ -605,8 +599,10 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       return reply.view('/user-profile.hbs', {
         title: `${userData.nickname}さんのプロフィール`,
         translations,
+        mode: process.env.MODE,
+        apiurl: process.env.API_URL,
         isAdmin,
-        user: currentUser,
+        user: request.user,
         userData,
       });
     } catch (error) {
@@ -825,6 +821,8 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       const translations = request.translations;
       return reply.view('follower.hbs', {
         title,translations,
+      mode: process.env.MODE,
+      apiurl: process.env.API_URL,
         currentUser: {
           userId: currentUserId,
           userName: currentUser?.nickname,

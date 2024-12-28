@@ -15,15 +15,9 @@ function getIdFromUrl(url) {
 }
 
 let chatId = getIdFromUrl(window.location.href) || sessionStorage.getItem('lastChatId') || getIdFromUrl($.cookie('redirect_url')) || $(`#lamix-chat-widget`).data('id');
+let userChatId = sessionStorage.getItem('userChatId');
 
 $(document).ready(async function() {
-    const { API_URL, MODE } = await window.setApiUrlAndMode();
-    const user = await fetchUser();
-
-    let userChatId = sessionStorage.getItem('userChatId');
-    const userId = user._id
-    sessionStorage.setItem('userId',userId);
-
     let persona
     let currentStep = 0;
     let totalSteps = 0;
@@ -34,12 +28,11 @@ $(document).ready(async function() {
     let thumbnail = false
     let isTemporary = !!user.isTemporary
 
-    language = getLanguageName(user.lang) || getLanguageName(localStorage.getItem('currentLang')) || getLanguageName('ja');
+    language = getLanguageName(user.lang) || getLanguageName(lang) || getLanguageName('ja');
     $('#language').val(language)
 
     $('body').attr('data-temporary-user',isTemporary)
 
-    displayChatList(null,userId);
     window.addEventListener('message', function(event) {
         if (event.data.event === 'displayMessage') {
             const { role, message, completion, image, messageId } = event.data
@@ -389,7 +382,13 @@ $(document).ready(async function() {
     function displayExistingChat(userChat,character) {
         persona = userChat.persona;
         thumbnail = character?.image || localStorage.getItem('thumbnail')
-        displayChat(userChat.messages, persona);
+
+        displayChat(userChat.messages, persona, function(){
+            $('#chatContainer').animate({
+                scrollTop: $('#chatContainer').prop("scrollHeight")
+            }, 500);
+        });
+
         const today = new Date().toISOString().split('T')[0];
         if (userChat.log_success) {
             displayThankMessage();
@@ -645,7 +644,7 @@ $(document).ready(async function() {
         }
         let currentDate = new Date();
         let currentTimeInJapanese = `${currentDate.getHours()}時${currentDate.getMinutes()}分`;
-        
+
         let message = null
         $.ajax({
             url: API_URL+'/api/init-chat',
@@ -678,7 +677,7 @@ $(document).ready(async function() {
         });
     }
     
-    async function displayChat(userChat, persona) {
+    async function displayChat(userChat, persona, callback) {
 
         $('#progress-container').show();
         $('#stability-gen-button').show();
@@ -723,9 +722,11 @@ $(document).ready(async function() {
                     `;
                 } else if (isImage) {
                     const imageId = chatMessage.content.replace("[Image]", "").trim();
-                    messageHtml = await getImageUrlById(imageId, designStep, thumbnail); // Fetch and display image
+                    const imageData = await getImageUrlById(imageId, designStep, thumbnail);
+                    messageHtml = imageData.messageHtml
+                    displayImageThumb(imageData.imageUrl)
                 } else {
-                    const isHidden = chatMessage.content.startsWith("[Hidden]") || chatMessage.name === 'master';
+                    const isHidden = chatMessage.content.startsWith("[Hidden]");
                     if (chatMessage.content && !isHidden) {
                         let message = removeContentBetweenStars(chatMessage.content);
                         messageHtml = `
@@ -749,10 +750,9 @@ $(document).ready(async function() {
                 chatContainer.append($(messageHtml).hide().fadeIn());
             }
         }
-        displayImagesThumb();
-        $('#chatContainer').animate({
-            scrollTop: $('#chatContainer').prop("scrollHeight")
-        }, 500);
+        if( typeof callback == 'function'){
+            callback()
+        }
     }
   
     function sanitizeString(inputString) {
@@ -822,7 +822,7 @@ $(document).ready(async function() {
                                 </div>
                             </div>
                         </div>`;
-                        resolve(messageHtml);
+                        resolve({messageHtml,imageUrl:response.imageUrl});
                     } else {
                         console.error('No image URL returned');
                         reject('No image URL returned');
@@ -1963,28 +1963,31 @@ window.getUserChatHistory = async function(chatId) {
     return null;
 }
 
+var currentChatIndex = 0;
+
+$(document).on('click','#menu-chat, .menu-chat-sm',function(){
+    displayChatList(null,userId);
+})
+
 function displayChatList(reset,userId) {
     if ($('#chat-list').length === 0 || $('#chat-widget-container').length > 0) {
         return;
     }
 
     var chatsPerPage = 10;
-    var chatListData = JSON.parse(localStorage.getItem('chatList')) || [];
-    var currentChatIndex = parseInt(localStorage.getItem('currentChatIndex')) || 0;
-    var currentUserId = localStorage.getItem('chatListUserId') || null
+    var chatListData = JSON.parse(sessionStorage.getItem('chatList')) || [];
 
     function fetchChatListData() {
+        $('#chat-list-spinner').show();
         $.ajax({
             type: 'GET',
             url: '/api/chat-list/',
             success: function(data) {
                 const {chats,userId} = data
-                localStorage.setItem('chatListUserId',userId)
-                localStorage.setItem('chatList', JSON.stringify(chats));
-                localStorage.setItem('currentChatIndex', 0);
+                sessionStorage.setItem('chatList', JSON.stringify(chats));
                 chatListData = chats;
-                currentChatIndex = 0;
                 displayChats();
+                $('#chat-list-spinner').hide();
             },
             error: function(xhr, status, error) {}
         });
@@ -2020,12 +2023,13 @@ function displayChatList(reset,userId) {
         }
     }
     
-    if (currentUserId != userId || reset || chatListData.length === 0) {
+    if (reset || chatListData.length === 0) {
         fetchChatListData();
     } else {
         displayChats();
     }
 }
+
 function updateCurrentChat(chatId, userId) {
     let chatListData = JSON.parse(localStorage.getItem('chatList')) || [];
     let currentChat = chatListData.find(chat => chat._id === chatId);

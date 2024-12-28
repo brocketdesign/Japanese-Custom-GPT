@@ -9,7 +9,7 @@ const {
 } = require('../models/openai')
 const crypto = require('crypto');
 const sessions = new Map(); // Define sessions map
-const { getLanguageName, handleFileUpload, uploadToS3, checkLimits, convertImageUrlToBase64, createBlurredImage } = require('../models/tool');
+const { getLanguageName, handleFileUpload, uploadToS3, checkLimits, convertImageUrlToBase64, createBlurredImage, sanitizeMessages } = require('../models/tool');
 const {sendMail, getRefreshToken} = require('../models/mailer');
 const { createHash } = require('crypto');
 const { convert } = require('html-to-text');

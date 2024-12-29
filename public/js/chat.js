@@ -1875,73 +1875,68 @@ window.getUserChatHistory = async function(chatId) {
     }
     return null;
 }
-
-var currentChatIndex = 0;
+var currentPage = 1;
+var chatsPerPage = 10;
+var chatListData = [];
 
 $(document).on('click','#menu-chat, .menu-chat-sm',function(){
-    displayChatList(null,userId);
-})
+  displayChatList(true, userId);
+});
 
-function displayChatList(reset,userId) {
-    if ($('#chat-list').length === 0 || $('#chat-widget-container').length > 0) {
-        return;
-    }
+function displayChatList(reset, userId) {
+  if ($('#chat-list').length === 0 || $('#chat-widget-container').length > 0) return;
+  if (reset) {
+    currentPage = 1;
+    chatListData = [];
+    $('#chat-list').empty();
+  }
+  fetchChatListData(currentPage);
 
-    var chatsPerPage = 10;
-    var chatListData = JSON.parse(sessionStorage.getItem('chatList')) || [];
+  function fetchChatListData(page) {
+    if (page === 1) $('#chat-list-spinner').show();
+    $.ajax({
+      type: 'GET',
+      url: '/api/chat-list/' + userId,
+      data: { page: page, limit: chatsPerPage },
+      success: function(data) {
+        const { chats, pagination } = data;
+        chatListData = chatListData.concat(chats);
+        displayChats(chats, pagination);
+      },
+      complete: function() { $('#chat-list-spinner').hide(); }
+    });
+  }
 
-    function fetchChatListData() {
+  function displayChats(chats, pagination) {
+    chats.forEach(function(chat){
+      var chatHtml = constructChatItemHtml(chat, false);
+      $('#chat-list').append(chatHtml);
+    });
+    enableToggleDropdown();
+    updateChatCount(pagination.total);
+    checkShowMoreButton(pagination);
+  }
+
+  function updateChatCount(count) {
+    $('#user-chat-count').html('(' + count + ')');
+  }
+
+  function checkShowMoreButton(pagination) {
+    $('#show-more-chats').remove(); 
+    if (pagination.page < pagination.totalPages) {
+      $('#chat-list').append(
+        '<button id="show-more-chats" class="btn shadow-0 w-100"><i class="bi bi-three-dots"></i></button>'
+      );
+      $('#show-more-chats').on('click', function() {
+        $(this).hide();
         $('#chat-list-spinner').show();
-        $.ajax({
-            type: 'GET',
-            url: '/api/chat-list/',
-            success: function(data) {
-                const {chats,userId} = data
-                sessionStorage.setItem('chatList', JSON.stringify(chats));
-                chatListData = chats;
-                displayChats();
-                $('#chat-list-spinner').hide();
-            },
-            error: function(xhr, status, error) {}
-        });
+        currentPage++;
+        fetchChatListData(currentPage);
+      });
     }
-
-    function displayChats() {
-        var chatsToRender = chatListData.slice(currentChatIndex, currentChatIndex + chatsPerPage);
-
-        chatsToRender.forEach(function(chat) {
-            var chatHtml = constructChatItemHtml(chat, false);
-            $('#chat-list').append(chatHtml);
-        });
-
-        enableToggleDropdown();
-        updateChatCount(chatListData.length);
-        checkShowMoreButton();
-    }
-
-    function updateChatCount(count) {
-        $('#user-chat-count').html('(' + count + ')');
-    }
-
-    function checkShowMoreButton() {
-        $('#show-more-chats').remove();
-        if (chatListData.length > currentChatIndex) {
-            $('#chat-list').append('<button id="show-more-chats" class="btn shadow-0 w-100"><i class="bi bi-three-dots"></i></button>');
-            $('#show-more-chats').on('click', function() {
-                $(this).remove();
-                currentChatIndex += chatsPerPage;
-                displayChats();
-
-            });
-        }
-    }
-    
-    if (reset || chatListData.length === 0) {
-        fetchChatListData();
-    } else {
-        displayChats();
-    }
+  }
 }
+
 
 function updateCurrentChat(chatId, userId) {
     let chatListData = JSON.parse(localStorage.getItem('chatList')) || [];

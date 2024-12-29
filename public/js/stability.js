@@ -349,7 +349,6 @@ window.generateImage = async function(data, prompt) {
     const user = await fetchUser();
     const subscriptionStatus = user.subscriptionStatus === 'active';
     displayMessage('bot-image', img, data.userChatId);
-    window.postMessage({ event: 'imageDone', prompt, userChatId:data.userChatId }, '*');
   } catch (error) {
     showNotification('ユーザー情報の取得に失敗しました。', 'error');
   }

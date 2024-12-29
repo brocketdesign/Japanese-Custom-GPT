@@ -617,6 +617,8 @@ async function routes(fastify, options) {
     fastify.get('/api/chat-list/:id', async (request, reply) => {
         try {
             const userId = request.user._id;
+            const page = request.query.page ? parseInt(request.query.page) : 1;
+            const limit = request.query.limit ? parseInt(request.query.limit) : 10;
     
             if (!userId) {
                 const user = request.user;
@@ -631,15 +633,23 @@ async function routes(fastify, options) {
             const userChats = await userChatCollection.find({
                 userId: new fastify.mongo.ObjectId(userId)
             }).sort({ updatedAt: -1 }).toArray();
-
+    
             const chatIds = userChats.map(userChat => new fastify.mongo.ObjectId(userChat.chatId));
     
-            // Fetch chats based on chatIds
+            // Fetch chats based on chatIds with pagination
+            const totalChats = await chatsCollection.countDocuments({
+                _id: { $in: chatIds },
+                name: { $exists: true }
+            });
+    
             const chats = await chatsCollection.find({
                 _id: { $in: chatIds },
                 name: { $exists: true }
-            }).sort({ updatedAt: -1 }).toArray();
-
+            }).sort({ updatedAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .toArray();
+    
             // For each chat, fetch the last message
             for (let chat of chats) {
                 const lastMessage = await chatLastMessageCollection.findOne(
@@ -649,7 +659,16 @@ async function routes(fastify, options) {
                 chat.lastMessage = lastMessage ? lastMessage.lastMessage : null;
             }
     
-            return reply.send({chats,userId});
+            return reply.send({
+                chats,
+                userId,
+                pagination: {
+                    total: totalChats,
+                    page,
+                    limit,
+                    totalPages: Math.ceil(totalChats / limit)
+                }
+            });
         } catch (error) {
             console.log(error);
             return reply.code(500).send({ error: 'An error occurred' });

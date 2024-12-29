@@ -560,6 +560,7 @@ nav.navbar.move {
 #chatContainer {
   height: 100%;
   overflow-y: scroll;
+  overflow-x: hidden;
 }
 .fade-content {
   height: 100%;

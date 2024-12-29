@@ -60,7 +60,7 @@ async function routes(fastify, options) {
 
           // Different starting message depending on user status
           const startMessage = !user.isTemporary 
-            ? `Introduce yourself shortly and greet me. \n Inform me that you can send images. Ask me if I have a request. Respond in ${language}.`
+            ? `Start byy telling me a little about you. I want to chat with you. Answer directly. Respond in ${language}.`
             : "挨拶から始め、ログインを促してください。確認から始めるのではなく、直接挨拶とログインのお願いをしてください。";
 
             // If new user chat or not found, create a new document

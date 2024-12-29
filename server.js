@@ -615,16 +615,8 @@ fastify.get('/chat/edit/:chatId', { preHandler: [fastify.authenticate] }, async 
     const userId = user._id;
     user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
-    const subscriptionStatus = user?.subscriptionStatus == 'active'
-    if(!subscriptionStatus){
-      return reply.redirect('/my-plan');
-    }
-
     let chatId = request.params.chatId;
     const chatImage = request.query.chatImage;
-    // if (!chatId && !chatImage) {
-    //   return reply.redirect('/discover');
-    // }
 
     const usersCollection = db.collection('users');
     const chatsCollection = db.collection('chats');
@@ -681,13 +673,11 @@ fastify.get('/dashboard', { preHandler: [fastify.authenticate] }, async (request
     const userId = new fastify.mongo.ObjectId(request.user._id);
     const chatsCollection = db.collection('chats');
     const chats = await chatsCollection.distinct('chatImageUrl', { userId });
-
-    return reply.redirect('/chat/');
-    if (chats.length === 0) {
+    console.log({chats})
+    if(chats.length === 0){
       return reply.redirect('/chat/edit/');
-    } else {
-      return reply.redirect('/chat/');
     }
+    return reply.redirect('/chat/');
   } catch (err) {
     return reply.status(500).send({ error: 'Unable to render the dashboard' });
   }
@@ -700,11 +690,6 @@ fastify.get('/settings', { preHandler: [fastify.authenticate] }, async (request,
     const usersCollection = db.collection('users');
     const userData = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
     const translations = request.translations;
-
-    const subscriptionStatus = userData?.subscriptionStatus == 'active'
-    if(!subscriptionStatus){
-      return reply.redirect('/my-plan');
-    }
 
     return reply.renderWithGtm('/settings', {
       title: 'AIフレンズ',

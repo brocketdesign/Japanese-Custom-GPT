@@ -13,16 +13,11 @@
           margin-top: 15px;
         }
         /* Hero Image */
-        .hero img {
-            object-fit: cover;
-            width: 100%;
-        }
         /* Main Container */
         .pricing-container {
             margin: 0 auto;
             padding: 40px 20px;
             text-align: center;
-            background-color: #f8f9fa;
         }
 
         /* Title Section */
@@ -255,8 +250,14 @@
         }
     </style>
 <div class="hero d-flex justify-content-center align-items-center" style="background-image: url(/img/TOP.png); height: 500px; background-size: cover; background-position: center;">
-    <div class="container text-center text-white py-4 animate__animated animate__bounceIn" style="background-color:rgba(0, 0, 0, 0.64);">
-        <h1 class="pricing-title fw-bold"><span class="u-font-manrope u-color-grad">Lamix</span> Illimité</h1>
+    <div class="container text-center text-dark py-4 animate__animated animate__bounceIn" style="background-color:rgba(255, 255, 255, 0.89)">
+
+        <div class="container d-flex justify-content-center align-items-center text-center px-0">
+            <img src="/img/logo.webp" alt="" class="me-2" width="40px" height="40px">
+            <span class="u-color-grad" style="font-size: 54px;font-weight:bold;">
+                Lamix
+            </span>
+        </div>
         <p class="fs-3 fw-bold mt-3 animate__animated animate__fadeInUp">
             Discutez avec une petite amie IA unique<br> Générez facilement des images mignonnes
         </p>
@@ -266,69 +267,7 @@
     </div>
 </div>
 
-<div class="container">   
-
-    <div class="container text-center my-5 py-5 animate__animated animate__fadeIn">
-        <p class="fw-bold fs-1 custom-gradient-bg text-white p-3 rounded animate__animated animate__fadeInDown">
-            Imaginez, et l'image idéale est juste devant vous !
-        </p>
-        <p class="text-center fs-5 mt-3 animate__animated animate__fadeIn animate__delay-1s">
-            Avec Lamix, il vous suffit de sélectionner votre pose favorite dans le menu ou de décrire l'image que vous voulez dans le chat, et le personnage générera facilement l'image. C'est très facile à utiliser, et il n'y a pas de limite au nombre d'images que vous pouvez générer. Profitez des possibilités infinies avec votre imagination.
-        </p>
-        <div class="mt-4 animate__animated animate__fadeInUp animate__delay-2s">
-            <a href="#pricing-container" class="btn custom-gradient-bg btn-lg fw-bold text-white rounded-pill shadow-lg">
-                Voir le plan illimité
-            </a>
-        </div>
-    </div>
-
-    <h3 class="my-4 text-start">#Mignonne #Belle Fille #Sexy</h3>
-    <div class="container mt-4">
-        <div class="row all-chats-images-gallery" data-query="panty"></div>
-    </div>
-
-    <div class="container text-center my-5 py-5 animate__animated animate__fadeIn">
-        <p class="fw-bold text-center fs-1 custom-gradient-bg text-white p-3 rounded animate__animated animate__fadeInLeft">
-            Comme une véritable petite amie !
-        </p>
-        <p class="text-center fs-5 mt-3 animate__animated animate__fadeIn animate__delay-1s">
-            Avec Lamix, vous pouvez créer votre personnage idéal dans n'importe quel style et générer des images via le chat avec ce personnage. Vous pouvez choisir librement parmi les styles anime, réaliste ou petite amie. De plus, en spécifiant des situations comme "étudier en classe" ou "se détendre dans un café", vous pouvez facilement créer l'image idéale. Libérez votre imagination et explorez des possibilités infinies !
-        </p>
-        <div class="mt-4 animate__animated animate__fadeInUp animate__delay-2s">
-            <a href="#pricing-container" class="btn custom-gradient-bg btn-lg fw-bold text-white rounded-pill shadow-lg">
-                Voir le plan illimité
-            </a>
-        </div>
-    </div>
-
-    <h3 class="my-4 text-start">#Jambes en M #Gros Seins #À Quatre Pattes</h3>
-    <div class="container mt-4">
-        <div class="row all-chats-images-gallery" data-query="huge breast" data-style="realistic"></div>
-    </div>
-
-    <div class="container text-center my-5 py-5 animate__animated animate__fadeIn">
-        <p class="fw-bold text-center fs-1 custom-gradient-bg text-white p-3 rounded animate__animated animate__fadeInLeft">
-            Partagez vos favoris, évaluez et profitez de toutes les images !
-        </p>
-        <p class="text-center fs-5 mt-3 animate__animated animate__fadeIn animate__delay-1s">
-            Avec Lamix, vous pouvez générer des images librement et profiter de vos contenus favoris dans la galerie. Vous pouvez évaluer et partager toutes les images, y compris les contenus pour adultes, et étendre vos expériences créatives avec d'autres utilisateurs. Exprimez votre imagination sans limites !
-        </p>
-        <div class="mt-4 animate__animated animate__fadeInUp animate__delay-2s">
-            <a href="#pricing-container" class="btn custom-gradient-bg btn-lg fw-bold text-white rounded-pill shadow-lg">
-                Voir le plan illimité
-            </a>
-        </div>
-    </div>
-
-    <h3 class="my-4 text-start">#Exposé #Fesses en Avant</h3>
-    <div class="container mt-4">
-        <div class="row all-chats-images-gallery" data-query="pretty"></div>
-    </div>
-
-</div>
-
 <div id="pricing-container" class="container pricing-container">
-    <h1 class="pricing-title fw-bold"><span class="u-font-manrope u-color-grad">Lamix</span> Illimité</h1>
     <p class="pricing-description fs-5">
         Toutes les fonctionnalités, y compris le chat, la génération d'images et les suggestions de messages, sont disponibles sans limite. Elle inclut également un accès anticipé aux nouvelles fonctionnalités et des options de chat multiples. Découvrez des possibilités infinies avec l'IA dans ce plan.
     </p>
@@ -336,8 +275,8 @@
         <label class="switch">
             <input type="checkbox" id="plan-switch">
             <span class="slider round"></span>
-            <span class="label monthly">Mensuel</span>
-            <span class="label yearly" select>Annuel</span>
+            <span class="label monthly">/Mois</span>
+            <span class="label yearly" select>/An</span>
         </label>
     </div>
     <p>Profitez d'une offre encore plus avantageuse avec le plan annuel !</p>

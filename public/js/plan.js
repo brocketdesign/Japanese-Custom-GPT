@@ -42,7 +42,7 @@ $(document).ready(function() {
   function fetchPlans() {
     $.ajax({
       type: 'GET',
-      url: `/plan/list?lang=${window.currentLang}`,//?update=true
+      url: `/plan/list?lang=${lang}`,//?update=true
       dataType: 'json',
       success: function(response) {
         const isYearly = $('#plan-switch').is(':checked');
@@ -62,6 +62,7 @@ $(document).ready(function() {
 
   // Function to render plans
   function renderPlans(plan) {
+    
     const planCardsContainer = $('#planCards');
         
         let plan_icon
@@ -96,9 +97,12 @@ $(document).ready(function() {
                 </div>
             </div>
             <div class="card-footer bg-transparent ${plan.price == '無料'? 'd-none':''}">
-                <button class="plan-button btn btn-lamix border-0 subscribe-button" data-plan-id="${plan.id}" data-billing-cycle="${isYearly}">
-                ${translations.start_with_this_plan}
-                </button>
+              <div class="py-3">
+                  ${user.isTemporary 
+                      ? `<a href="/authenticate" class="btn btn-lamix custom-gradient-bg border-0">${translations.try_for_free}</a>` 
+                      : `<button class="plan-button btn btn-lamix border-0 subscribe-button" data-plan-id="${plan.id}" data-billing-cycle="${isYearly}">${translations.start_with_this_plan}</button>`
+                  }
+              </div>
             </div>
             </div>
         `;

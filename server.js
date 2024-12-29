@@ -673,7 +673,6 @@ fastify.get('/dashboard', { preHandler: [fastify.authenticate] }, async (request
     const userId = new fastify.mongo.ObjectId(request.user._id);
     const chatsCollection = db.collection('chats');
     const chats = await chatsCollection.distinct('chatImageUrl', { userId });
-    console.log({chats})
     if(chats.length === 0){
       return reply.redirect('/chat/edit/');
     }

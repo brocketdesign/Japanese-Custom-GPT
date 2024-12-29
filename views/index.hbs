@@ -460,7 +460,18 @@
             }
     </style>
 
-{{#if user.isTemporary}}
+    <style>
+        .swiper {
+            width: 100%;
+            height: 400px; /* Adjust as needed */
+        }
+        .swiper-slide img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        }
+    </style>
+
 <section>
     <div class="hero d-flex justify-content-center align-items-center" style="background-image: url(/img/TOP.png); height: 500px; background-size: cover; background-position: center;">
         <div class="container text-center text-dark py-4 animate__animated animate__fadeIn" style="background-color:rgba(255, 255, 255, 0.89)">
@@ -472,33 +483,32 @@
             </div>
 
             <p class="fs-3 fw-bold mt-3 animate__animated " data-animate="animate__fadeInUp" data-delay="animate__delay-2s">
-                Discutez avec une petite amie IA unique<br> Générez facilement des images mignonnes
+                {{translations.chat_with_unique_ai_girlfriend}}<br> {{translations.generate_cute_images_easily}}
             </p>
             <div class="mt-4 animate__animated" data-animate="animate__fadeInUp" data-delay="animate__delay-2s">
-                <a href="/authenticate" class="btn custom-gradient-bg btn-lg fw-bold">Essayez maintenant</a>
+                <a href="/authenticate" class="btn custom-gradient-bg btn-lg fw-bold">{{translations.try_now}}</a>
             </div>
         </div>
     </div>
 
-
     <div class="container text-center my-5 py-5 animate__animated animate__fadeIn">
         <p class="fw-bold text-center fs-1 custom-gradient-bg text-white p-3 rounded animate__animated animate__fadeInLeft">
-            Comme une véritable petite amie !
+            {{translations.like_a_real_girlfriend}}
         </p>
         <p class="text-center fs-5 mt-3 animate__animated animate__fadeIn animate__delay-1s">
-            Avec Lamix, vous pouvez créer votre personnage idéal dans n'importe quel style et générer des images via le chat avec ce personnage. Vous pouvez choisir librement parmi les styles anime, réaliste ou petite amie. De plus, en spécifiant des situations comme "étudier en classe" ou "se détendre dans un café", vous pouvez facilement créer l'image idéale. Libérez votre imagination et explorez des possibilités infinies !
+            {{translations.with_lamix_you_can_create_your_ideal_character_in_any_style_and_generate_images_via_chat}} 
         </p>
         <div class="mt-4 animate__animated animate__fadeInUp animate__delay-2s">
             <a href="/authenticate" class="btn custom-gradient-bg btn-lg fw-bold text-white rounded-pill shadow-lg">
-                Essayez maintenant
+                {{translations.try_now}}
             </a>
         </div>
     </div>
 
     <div class="container mt-4">
-        <h3 class="my-4 text-start">#Mignonne #Belle Fille #Sexy</h3>
+        <h3 class="my-4 text-start">#{{translations.cute}} #{{translations.beautiful_girl}} #{{translations.sexy}}</h3>
         <div style="overflow-x: auto;">
-            <img src="/img/topgallery1.jpg">
+            <img src="/img/topgallery1-{{translations.lang}}.jpg">
         </div>
     </div>
 
@@ -514,14 +524,14 @@
                             </span>
                         </div>
 
-                        <p data-animate="animate__fadeInUp" data-delay="animate__delay-2s">Génération d'images : Créez facilement votre beauté IA idéale à partir de texte</p>
+                        <p data-animate="animate__fadeInUp" data-delay="animate__delay-2s">{{translations.image_generation_create_your_ideal_ai_beauty_from_text}}</p>
                     </h1>
                     <div class="text-start" data-animate="animate__fadeInUp" data-delay="animate__delay-2s">
-                        Créez des beautés IA à partir de texte ou d'images en quelques étapes simples.
+                        {{translations.create_ai_beauties_from_text_or_images_in_few_simple_steps}}
                     </div>
                     <div class="text-center d-flex flex-column justify-content-start align-items-start mt-3" data-animate="animate__fadeIn" data-delay="animate__delay-3s">
                         <a href="/authenticate" class="btn custom-gradient-bg text-white btn-lg m-2 px-5 py-3 mb-3 cta-button" role="button" style="border-radius: 50px;" data-animate="animate__pulse animate__infinite">
-                            Générer une beauté IA
+                            {{translations.generate_ai_beauty}}
                         </a>
                     </div>
                 </div>
@@ -534,28 +544,26 @@
         </div>
     </div>
 
-     <div class="container text-center my-5 py-5 animate__animated animate__fadeIn">
+    <div class="container text-center my-5 py-5 animate__animated animate__fadeIn">
         <p class="fw-bold fs-1 custom-gradient-bg text-white p-3 rounded animate__animated animate__fadeInDown">
-            Imaginez, et l'image idéale est juste devant vous !
+            {{translations.imagine_and_the_ideal_image_is_right_in_front_of_you}}
         </p>
         <p class="text-center fs-5 mt-3 animate__animated animate__fadeIn animate__delay-1s">
-            Avec Lamix, il vous suffit de sélectionner votre pose favorite dans le menu ou de décrire l'image que vous voulez dans le chat, et le personnage générera facilement l'image. C'est très facile à utiliser, et il n'y a pas de limite au nombre d'images que vous pouvez générer. Profitez des possibilités infinies avec votre imagination.
+            {{translations.with_lamix_select_your_favorite_pose_from_menu_or_describe_image_you_want_in_chat}}
         </p>
         <div class="mt-4 animate__animated animate__fadeInUp animate__delay-2s">
             <a href="/authenticate" class="btn custom-gradient-bg btn-lg fw-bold text-white rounded-pill shadow-lg">
-                Essayez maintenant
+                {{translations.try_now}}
             </a>
         </div>
     </div>
 
     <div class="container mt-4">
-        <h3 class="my-4 text-start">#Jambes Ouvertes #Gros Seins #À Quatre Pattes</h3>
+        <h3 class="my-4 text-start">#{{translations.open_legs}} #{{translations.big_breasts}} #{{translations.on_all_fours}}</h3>
         <div style="overflow-x: auto;">
-            <img src="/img/topgallery2.jpg">
+            <img src="/img/topgallery2-{{translations.lang}}.jpg">
         </div>
     </div>
-
-
 </section>
 
 <section class="container">
@@ -569,8 +577,8 @@
             </div>
         </div>
         <div class="col-auto">
-            <h2 class="display-4 fw-bold" data-animate="animate__fadeInRight" data-delay="animate__delay-1s">Créer une beauté IA à partir de texte</h2>
-            <p data-animate="animate__fadeInRight" data-delay="animate__delay-2s">Il vous suffit d'entrer du texte pour créer facilement votre beauté IA idéale ou une jolie fille. Vous pouvez créer diverses beautés IA, de style réaliste à anime, avec des caractéristiques comme l'âge, la coiffure, le teint de peau, les vêtements, etc.</p>
+            <h2 class="display-4 fw-bold" data-animate="animate__fadeInRight" data-delay="animate__delay-1s">{{translations.create_ai_beauty_from_text}}</h2>
+            <p data-animate="animate__fadeInRight" data-delay="animate__delay-2s">{{translations.just_enter_text_to_create_ideal_ai_beauty_or_pretty_girl}}</p>
         </div>
     </div>
 </section>
@@ -588,11 +596,11 @@
                     </div>
                 </div>
                 <div class="col-auto">
-                    <h2 class="display-4 fw-bold" data-animate="animate__fadeInRight" data-delay="animate__delay-1s">Discuter avec une beauté IA</h2>
-                    <p data-animate="animate__fadeInRight" data-delay="animate__delay-2s">Profitez de la génération d'images dans divers scénarios tout en discutant avec une belle femme IA ! Peut-être que vous tomberez amoureux ?</p>
+                    <h2 class="display-4 fw-bold" data-animate="animate__fadeInRight" data-delay="animate__delay-1s">{{translations.chat_with_an_ai_beauty}}</h2>
+                    <p data-animate="animate__fadeInRight" data-delay="animate__delay-2s">{{translations.enjoy_image_generation_in_different_scenarios_while_chatting_with_beautiful_ai_woman}}</p>
                     <div class="text-center d-flex flex-column justify-content-start align-items-start mt-3" data-animate="animate__fadeIn" data-delay="animate__delay-3s">
                         <a href="/authenticate" class="btn custom-gradient-bg text-white btn-lg m-2 px-5 py-3 mb-3 cta-button" role="button" style="border-radius: 50px;" data-animate="animate__pulse animate__infinite">
-                            Essayez maintenant
+                            {{translations.try_now}}
                         </a>
                     </div>
                 </div>
@@ -600,14 +608,14 @@
         </div>
         <div class="col-12 col-sm-6" data-animate="animate__slideInRight">
             <div class="container p-3 text-center">
-                  <div class="swiper">
+                <div class="swiper">
                     <div class="swiper-wrapper">
-                    <div class="swiper-slide"><img src="/img/gall1.jpeg" alt="Image 1"></div>
-                    <div class="swiper-slide"><img src="/img/gall2.jpeg" alt="Image 2"></div>
-                    <div class="swiper-slide"><img src="/img/gall3.jpeg" alt="Image 3"></div>
-                    <div class="swiper-slide"><img src="/img/gall4.jpeg" alt="Image 4"></div>
-                    <div class="swiper-slide"><img src="/img/gall5.jpeg" alt="Image 5"></div>
-                    <div class="swiper-slide"><img src="/img/gall6.jpeg" alt="Image 6"></div>
+                        <div class="swiper-slide"><img src="/img/gall1.jpeg" alt="Image 1"></div>
+                        <div class="swiper-slide"><img src="/img/gall2.jpeg" alt="Image 2"></div>
+                        <div class="swiper-slide"><img src="/img/gall3.jpeg" alt="Image 3"></div>
+                        <div class="swiper-slide"><img src="/img/gall4.jpeg" alt="Image 4"></div>
+                        <div class="swiper-slide"><img src="/img/gall5.jpeg" alt="Image 5"></div>
+                        <div class="swiper-slide"><img src="/img/gall6.jpeg" alt="Image 6"></div>
                     </div>
                 </div>
 
@@ -648,62 +656,62 @@
         </span>
     </div>
     <p class="pricing-description fs-5">
-        Toutes les fonctionnalités, y compris le chat, la génération d'images et les suggestions de messages, sont disponibles sans limite. Elle inclut également un accès anticipé aux nouvelles fonctionnalités et des options de chat multiples. Découvrez des possibilités infinies avec l'IA dans ce plan.
+        {{translations.all_features_including_chat_image_generation_and_message_suggestions_are_available_without_limit}}.
     </p>
     <div class="switch-button-container">
         <label class="switch">
             <input type="checkbox" id="plan-switch">
             <span class="slider round"></span>
-            <span class="label monthly">/Mois</span>
-            <span class="label yearly" select>/An</span>
+            <span class="label monthly">{{translations.monthly}}</span>
+            <span class="label yearly" select>{{translations.yearly}}</span>
         </label>
     </div>
-    <p>Profitez d'une offre encore plus avantageuse avec le plan annuel !</p>
+    <p>{{translations.enjoy_even_better_offers_with_annual_plan}}</p>
     <div class="plan-cards-none d-flex m-0 px-1 container m-auto justify-content-center" style="overflow-x:scroll" id="planCards">
         <!-- Les cartes de plan seront insérées dynamiquement ici -->
     </div>
-    <span style="font-size: 12px;">Méthodes de paiement sécurisées : <a href="https://stripe.com/jp/resources/more/secure-payment-systems-explained" target="_blank"><img src="/img/stripe-logo.png" style="height: 30px;width: auto;"></a> sont utilisées</span>
+    <span style="font-size: 12px;">{{translations.secure_payment_methods}} <a href="https://stripe.com/jp/resources/more/secure-payment-systems-explained" target="_blank"><img src="/img/stripe-logo.png" style="height: 30px;width: auto;"></a> {{translations.are_used}}</span>
 </div>
 
 <section class="bg-light">
     <div class="container py-5">
-        <h2 class="display-4 fw-bold text-center mb-3">Questions fréquentes sur LAMIX</h2>
+        <h2 class="display-4 fw-bold text-center mb-3">{{translations.frequently_asked_questions_on_lamix}}</h2>
         <div class="accordion" id="faqAccordion">
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingOne">
                     <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                        Comment créer une beauté IA ?
+                        {{translations.how_to_create_ai_beauty}}
                     </button>
                 </h2>
                 <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
                     <div class="accordion-body">
-                        <p>1. Cliquez sur le bouton "Générer une beauté IA".</p>
-                        <p>2. Entrez une description ou un prompt de la beauté IA que vous imaginez.</p>
-                        <p>3. Choisissez le style de la beauté IA et cliquez sur "Générer".</p>
+                        <p>{{translations.step_1}}</p>
+                        <p>{{translations.step_2}}</p>
+                        <p>{{translations.step_3}}</p>
                     </div>
                 </div>
             </div>
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingTwo">
                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                        Puis-je créer des beautés IA gratuitement ?
+                        {{translations.can_i_create_ai_beauties_for_free}}
                     </button>
                 </h2>
                 <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#faqAccordion">
                     <div class="accordion-body">
-                        <p>Oui, en vous inscrivant gratuitement, vous recevrez des crédits (points) qui vous permettront de créer des beautés IA gratuitement avec vos crédits.</p>
+                        <p>{{translations.yes_free_signup_for_credits}}</p>
                     </div>
                 </div>
             </div>
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingThree">
                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-                        Qu'est-ce qu'une beauté IA ?
+                        {{translations.what_is_ai_beauty}}
                     </button>
                 </h2>
                 <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#faqAccordion">
                     <div class="accordion-body">
-                        <p>Une beauté IA désigne une image d'une femme magnifique générée par l'IA. Elle fait généralement référence à l'image d'une femme créée artificiellement ou au visage d'une femme généré en fonction des critères de beauté appris par l'IA.</p>
+                        <p>{{translations.ai_beauty_description}}</p>
                     </div>
                 </div>
             </div>
@@ -711,8 +719,23 @@
     </div>
 </section>
 
-{{/if}}
-    <style>footer{display: inline !important;}</style>
+    <style>
+        footer{display: inline !important;}
+        .sticky-bottom{display: inline-block !important;width: 100%;}
+    </style>
  {{> dashboard-footer}}
 <script src="https://js.stripe.com/v3/"></script>
-<script src="/js/plan.js"></script>
+<script src="/js/plan.js"></script>    
+<script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+    <script>
+        const swiper = new Swiper('.swiper', {
+            slidesPerView: 1.9, // Display 1 full slide and part of the next slide
+            centeredSlides: true, // Center the visible slide
+            loop: true,
+            spaceBetween: 0, // Space between slides (adjust as needed)
+            autoplay: {
+                delay: 3000,
+                disableOnInteraction: false,
+            },
+        });
+    </script>

@@ -1716,7 +1716,7 @@ window.loadChatImages = async function (chatId, page = 1) {
                 loadedImages.push(item);
                 const index = loadedImages.length - 1;
                 chatGalleryHtml += `
-                    <div class="col-12 col-md-6 col-lg-4 mb-2">
+                    <div class="col-12 col-md-4 col-lg-2 mb-2">
                         <div class="card shadow-0">
                             <div class="d-flex align-items-center p-2">
                                 <a href="/character/${item.chatId}?imageId=${item._id}">

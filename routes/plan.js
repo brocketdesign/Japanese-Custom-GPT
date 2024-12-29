@@ -47,7 +47,7 @@ async function routes(fastify, options) {
         imageLimit: 'Unlimited',
         messageIdeasLimit: 'Unlimited'
       },
-      jp: {
+      ja: {
         name: "プレミアムプラン",
         price: "￥1100円/月",
         monthly: "￥5,000円/月",

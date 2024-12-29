@@ -171,7 +171,7 @@ fastify.get('/', async (request, reply) => {
   const lang = request.lang
 
   if (user.isTemporary) {
-    return reply.renderWithGtm(`index/${lang}.hbs`, {
+    return reply.renderWithGtm(`index.hbs`, {
       title: 'AIフレンズ',
       translations,
       mode: process.env.MODE,

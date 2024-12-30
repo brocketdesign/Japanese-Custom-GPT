@@ -107,13 +107,13 @@ async function routes(fastify, options) {
         first_message: z.string(), // Adding "first_message" field
     });
 
-    function createSystemPayloadChatRule(prompt, gender, language) {
+    function createSystemPayloadChatRule(prompt, gender, name, language) {
         return [
             {
                 role: "system",
                 content: `You are a helpful assistant.
                 You will generate creative character descriptions in ${language}.
-                name: Please enter the actual ${language} name and surname without furigana. It should match the character's gender and description.
+                name: ${name.trim() !== '' ? name : `Please enter the actual ${language} name and surname without furigana. It should match the character's gender and description.`}
                 short_intro: Write a self-introduction that reflects the character's personality in 2 sentences.
                 base_personality: Define the character's traits, preferences, and expression style. Include a short story describing their personality and background.
                 first_message: Provide the character's first conversational message that reflects their personality.
@@ -131,7 +131,7 @@ async function routes(fastify, options) {
     fastify.post('/api/openai-chat-creation', async (request, reply) => {
         try {
             // Validate request body
-            const { chatId, prompt, gender } = request.body;
+            const { chatId, name, prompt, gender } = request.body;
 
             if (!chatId || !prompt || !gender) {
                 return reply.status(400).send({ error: 'Invalid request body. "prompt" and "gender" are required.' });
@@ -144,9 +144,9 @@ async function routes(fastify, options) {
             }
 
             const userId = user._id;
-            const language = request.body.language ? request.body.language : getLanguageName(user?.lang);
+            const language = request.lang
             // Prepare payload
-            const systemPayload = createSystemPayloadChatRule(prompt, gender, language);
+            const systemPayload = createSystemPayloadChatRule(prompt, gender, name, language);
             // Interact with OpenAI API
             const openai = new OpenAI();
             const completionResponse = await openai.chat.completions.create({
@@ -160,7 +160,7 @@ async function routes(fastify, options) {
             }
 
             const chatData = JSON.parse(completionResponse.choices[0].message.content)
-
+            console.log(chatData)
             // Respond with the validated character data
             chatData.language = language
             chatData.gender = gender
@@ -1897,7 +1897,7 @@ async function routes(fastify, options) {
           
         try {
           const user = request.user;
-          let language = getLanguageName(user?.lang);
+          let language = request.lang;
           const page = parseInt(request.query.page) || 1;
           const style = request.query.style || null;
           const model = request.query.model || null;
@@ -1936,7 +1936,7 @@ async function routes(fastify, options) {
               { imageDescription: { $regex: searchQuery, $options: 'i' } }
             ];
           }
-
+          
           const recentCursor = await chatsCollection.aggregate([
             { $match: query },
             { $group: { _id: "$chatImageUrl", doc: { $first: "$$ROOT" } } },

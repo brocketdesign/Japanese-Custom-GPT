@@ -121,19 +121,15 @@ img {
                 <div class="col-auto">
                   <!-- Language Dropdown -->
                   <label for="lang" class="form-label"><i class="fas fa-user"></i> {{translations.setting.language}}:</label>
-                  <div class="dropdown">
-                    <button data-user-lang="{{user.lang}}" class="btn custom-gradient-bg dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                      {{#if user.lang}}
-                        {{capitalize user.lang}}
-                      {{else}}
-                        {{translations.setting.japanese}}
-                      {{/if}}
-                    </button>
-                    <ul class="dropdown-menu" aria-labelledby="languageDropdown">
-                      <li><a class="dropdown-item language-select" href="#" data-lang="ja">{{translations.setting.japanese}}</a></li>
-                      <li><a class="dropdown-item language-select" href="#" data-lang="en">{{translations.setting.english}}</a></li>
-                      <li><a class="dropdown-item language-select" href="#" data-lang="fr">{{translations.setting.french}}</a></li>
-                    </ul>
+                    <div class="dropdown">
+                      <button data-user-lang="{{user.lang}}" class="btn btn-light dropdown-toggle" type="button" id="languageDropdownMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                          <i class="bi bi-globe2"></i>
+                      </button>
+                      <ul class="dropdown-menu position-absolute dropdown-menu-end" aria-labelledby="languageDropdownMenu">
+                          <li><a class="dropdown-item language-select" href="#" data-lang="ja">日本語</a></li>
+                          <li><a class="dropdown-item language-select" href="#" data-lang="en">English</a></li>
+                          <li><a class="dropdown-item language-select" href="#" data-lang="fr">Français</a></li>
+                      </ul>
                   </div>
                 </div>
 

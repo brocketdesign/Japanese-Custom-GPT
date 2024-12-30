@@ -840,7 +840,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
   });
   fastify.post('/novita/save-image', async (request, reply) => {
     const { imageUrl, chatId, characterPrompt, enhancedPrompt, imageStyle, imageModel, imageVersion } = request.body;
-  
+
     if (!imageUrl || !chatId) {
       return reply.status(400).send({ error: 'imageId, imageUrl, and chatId are required' });
     }

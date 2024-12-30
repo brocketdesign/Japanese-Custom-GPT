@@ -199,7 +199,11 @@
                     <div class="col-lg-6 mb-4">
                         <div class="row mb-4">
                             <!-- Image Style Selection -->
-                            <div class="col-auto">
+                            <div class="row bg-light border py-2 mb-3 mx-0">
+                                <h4 class="mb-4 text-start">{{translations.newCharacter.imageStyleSelectionTitle}}</h4>
+                                <p class="text-start">
+                                    {{translations.newCharacter.imageStyleSelectionDescription}}
+                                </p>
                                 <label class="form-label">{{translations.newCharacter.image_style}}</label>
                                 <div id="imageStyleSelection" class="d-flex flex-row flex-nowrap overflow-auto mb-4">
                                     <img src="/img/anime.jpeg" alt="アニメ" class="style-option rounded me-2 selected" data-style="anime" data-model="novaAnimeXL_ponyV20_461138" data-version="sdxl">
@@ -210,95 +214,302 @@
                                 <input type="hidden" id="imageModel" name="imageModel" value="novaAnimeXL_ponyV20_461138">
                                 <input type="hidden" id="imageVersion" name="imageVersion" value="sdxl">
                             </div>
-                            <div class="d-none col-auto">
-                                <label for="gender" class="form-label"><i class="fas fa-user"></i> {{translations.newCharacter.genderLabel}}:</label>
-                                <select class="form-select w-auto" id="gender" name="gender">
-                                    <option value="female" selected>{{translations.newCharacter.female}}</option>
-                                    <option value="male">{{translations.newCharacter.male}}</option>
-                                </select>
-                            </div>
-                        </div>
-                        <!-- 1. Character Prompt Input -->
-                        <div class="mb-2">
-                            <label for="characterPrompt" class="form-label">{{translations.newCharacter.character_prompt}}</label>
-                            <textarea
-                                class="form-control"
-                                id="characterPrompt"
-                                name="characterPrompt"
-                                rows="4"
-                                maxlength="500"
-                                placeholder="{{translations.newCharacter.character_appearance_description}}"
-                            ></textarea>
-                        </div>
-                        
-                        <!-- 2. Enhanced Prompt Display -->
-                        <div class="form-check mb-3">
-                            <input type="checkbox" class="form-check-input" id="enableEnhancedPrompt" name="enableEnhancedPrompt" checked>
-                            <label class="form-check-label" for="enableEnhancedPrompt">{{translations.newCharacter.enable_enhanced_prompt}}</label>
-                        </div>
-                        <div class="mb-4 d-none">
-                            <label for="enhancedPrompt" class="form-label">AI強化プロンプト</label>
-                            <textarea
-                                class="form-control"
-                                id="enhancedPrompt"
-                                name="enhancedPrompt"
-                                rows="3"
-                                readonly
-                                placeholder="AIによって強化されたプロンプトがここに表示されます..."
-                            ></textarea>
-                        </div>
 
-                        <!-- 4. Single Action Button -->
-                        <div class="d-grid">
-                            <button type="button" id="generateButton" class="btn custom-gradient-bg btn-lg text-white">
-                                <i class="fas fa-magic me-2"></i>{{translations.newCharacter.generate_with_AI}}
-                            </button>
-                            <span class="w-100 text-center text-muted genexp" style="font-size: 12px;display:none;">{{translations.newCharacter.image_generation_message}}</span>
+                            <div class="row justify-content-between character-generator bg-light border py-2 mb-3 mx-0">
+
+                                <h4 class="mb-4 text-start">{{translations.newCharacter.characterPhysicalDescriptionTitle}}</h4>
+                                <p class="text-start">
+                                    {{translations.newCharacter.characterPhysicalDescriptionDescription}}
+                                </p>
+
+                                <!-- Gender -->
+                                <div class="col-auto mb-3">
+                                    <label for="gender" class="form-label">{{translations.newCharacter.genderLabel}}:</label>
+                                    <select class="form-select" id="gender" name="gender">
+                                        <option value="female">{{translations.newCharacter.female}}</option>
+                                        <option value="male">{{translations.newCharacter.male}}</option>
+                                        <option value="nonBinary">{{translations.newCharacter.nonBinary}}</option>
+                                    </select>
+                                </div>
+
+                                <!-- Character Prompt Input -->
+                                <div class="mb-2">
+                                    <label for="characterPrompt" class="form-label">{{translations.newCharacter.character_prompt}}</label>
+                                    <textarea
+                                        class="form-control"
+                                        id="characterPrompt"
+                                        name="characterPrompt"
+                                        rows="4"
+                                        maxlength="500"
+                                        placeholder="{{translations.newCharacter.character_appearance_description}}"
+                                    ></textarea>
+
+                                    <!-- Character Personnality Input -->
+                                    <div class="form-check mb-3 ms-1 mt-1">
+                                        <input type="checkbox" class="form-check-input" id="enableEnhancedPrompt" name="enableEnhancedPrompt" checked>
+                                        <label class="form-check-label" for="enableEnhancedPrompt">{{translations.newCharacter.enable_enhanced_prompt}}</label>
+                                    </div>
+                                </div>
+
+
+                                <div class="mb-4 d-none">
+                                    <label for="enhancedPrompt" class="form-label">AI強化プロンプト</label>
+                                    <textarea
+                                        class="form-control"
+                                        id="enhancedPrompt"
+                                        name="enhancedPrompt"
+                                        rows="3"
+                                        readonly
+                                        placeholder="AIによって強化されたプロンプトがここに表示されます..."
+                                    ></textarea>
+                                </div>
+                                <div class="accordion" id="characterDescriptionAccordion">
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingOne">
+                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                            {{translations.newCharacter.character_overview}}
+                                        </button>
+                                        </h2>
+                                        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#characterDescriptionAccordion">
+                                            <div class="accordion-body row">
+
+                                                <!-- Age -->
+                                                <div class="col-auto mb-3">
+                                                    <label for="age" class="form-label">{{translations.newCharacter.ageLabel}}:</label>
+                                                    <input type="number" class="form-control w-auto" id="age" name="age" min="0" max="120" placeholder="{{translations.newCharacter.agePlaceholder}}">
+                                                </div>
+
+                                                <!-- Height -->
+                                                <div class="col-auto mb-3">
+                                                    <label for="height" class="form-label">{{translations.newCharacter.heightLabel}}:</label>
+                                                    <input type="text" class="form-control" id="height" name="height" placeholder="{{translations.newCharacter.heightPlaceholder}}">
+                                                </div>
+
+                                                <!-- Build -->
+                                                <div class="col-auto mb-3">
+                                                    <label for="build" class="form-label">{{translations.newCharacter.buildLabel}}:</label>
+                                                    <select class="form-select" id="build" name="build">
+                                                        <option value="slim">{{translations.newCharacter.slim}}</option>
+                                                        <option value="muscular">{{translations.newCharacter.muscular}}</option>
+                                                        <option value="athletic">{{translations.newCharacter.athletic}}</option>
+                                                        <option value="stocky">{{translations.newCharacter.stocky}}</option>
+                                                    </select>
+                                                </div>
+
+                                                <!-- Skin Tone -->
+                                                <div class="col-auto mb-3">
+                                                    <label for="skinTone" class="form-label">{{translations.newCharacter.skinToneLabel}}:</label>
+                                                    <select class="form-select" id="skinTone" name="skinTone">
+                                                        <option value="fair">{{translations.newCharacter.fair}}</option>
+                                                        <option value="medium">{{translations.newCharacter.medium}}</option>
+                                                        <option value="dark">{{translations.newCharacter.dark}}</option>
+                                                    </select>
+                                                </div>
+
+                                                <!-- Eye Color -->
+                                                <div class="col-auto mb-3">
+                                                    <label for="eyeColor" class="form-label">{{translations.newCharacter.eyeColorLabel}}:</label>
+                                                    <select class="form-select" id="eyeColor" name="eyeColor">
+                                                        <option value="blue">{{translations.newCharacter.blue}}</option>
+                                                        <option value="brown">{{translations.newCharacter.brown}}</option>
+                                                        <option value="green">{{translations.newCharacter.green}}</option>
+                                                        <option value="gray">{{translations.newCharacter.gray}}</option>
+                                                    </select>
+                                                </div>
+
+                                                <!-- Hair Color -->
+                                                <div class="col-auto mb-3">
+                                                    <label for="hairColor" class="form-label">{{translations.newCharacter.hairColorLabel}}:</label>
+                                                    <select class="form-select" id="hairColor" name="hairColor">
+                                                        <option value="blonde">{{translations.newCharacter.blonde}}</option>
+                                                        <option value="black">{{translations.newCharacter.black}}</option>
+                                                        <option value="red">{{translations.newCharacter.red}}</option>
+                                                        <option value="brown">{{translations.newCharacter.brown}}</option>
+                                                        <option value="gray">{{translations.newCharacter.gray}}</option>
+                                                    </select>
+                                                </div>
+
+                                                <!-- Hair Length -->
+                                                <div class="col-auto mb-3">
+                                                    <label for="hairLength" class="form-label">{{translations.newCharacter.hairLengthLabel}}:</label>
+                                                    <select class="form-select" id="hairLength" name="hairLength">
+                                                        <option value="short">{{translations.newCharacter.short}}</option>
+                                                        <option value="medium">{{translations.newCharacter.medium}}</option>
+                                                        <option value="long">{{translations.newCharacter.long}}</option>
+                                                        <option value="bald">{{translations.newCharacter.bald}}</option>
+                                                    </select>
+                                                </div>
+
+                                                <!-- Hair Style -->
+                                                <div class="col-12 col-sm-6 mb-3">
+                                                    <label for="hairStyle" class="form-label">{{translations.newCharacter.hairStyleLabel}}:</label>
+                                                    <textarea class="form-control" id="hairStyle" name="hairStyle" placeholder="{{translations.newCharacter.hairStylePlaceholder}}"></textarea>
+                                                </div>
+
+                                                <!-- Facial Features -->
+                                                <div class="col-12 col-sm-6 mb-3">
+                                                    <label for="facialFeatures" class="form-label">{{translations.newCharacter.facialFeaturesLabel}}:</label>
+                                                    <textarea class="form-control" id="facialFeatures" name="facialFeatures" placeholder="{{translations.newCharacter.facialFeaturesPlaceholder}}"></textarea>
+                                                </div>
+
+                                                <!-- Clothing Style -->
+                                                <div class="col-12 col-sm-6 mb-3">
+                                                    <label for="clothingStyle" class="form-label">{{translations.newCharacter.clothingStyleLabel}}:</label>
+                                                    <textarea class="form-control" id="clothingStyle" name="clothingStyle" placeholder="{{translations.newCharacter.clothingStylePlaceholder}}"></textarea>
+                                                </div>
+
+                                                <!-- Accessories -->
+                                                <div class="col-12 col-sm-6 mb-3">
+                                                    <label for="accessories" class="form-label">{{translations.newCharacter.accessoriesLabel}}:</label>
+                                                    <textarea class="form-control" id="accessories" name="accessories" placeholder="{{translations.newCharacter.accessoriesPlaceholder}}"></textarea>
+                                                </div>
+
+                                                <!-- Tattoos/Body Art -->
+                                                <div class="col-12 col-sm-6 mb-3">
+                                                    <label for="tattoos" class="form-label">{{translations.newCharacter.tattoosLabel}}:</label>
+                                                    <textarea class="form-control" id="tattoos" name="tattoos" placeholder="{{translations.newCharacter.tattoosPlaceholder}}"></textarea>
+                                                </div>
+
+                                                <!-- Special Features -->
+                                                <div class="col-12 col-sm-6 mb-3">
+                                                    <label for="specialFeatures" class="form-label">{{translations.newCharacter.specialFeaturesLabel}}:</label>
+                                                    <textarea class="form-control" id="specialFeatures" name="specialFeatures" placeholder="{{translations.newCharacter.specialFeaturesPlaceholder}}"></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                              
+                            </div>
+
+                            <div class="row justify-content-between bg-light border py-2 mb-3 mx-0 character-personnality-">
+
+                                <!-- 3. CHaracter Personnalityy -->
+                                <h4 class="mb-4 text-start">{{translations.newCharacter.characterPersonalityTitle}}</h4>
+                                <p class="text-start">
+                                    {{translations.newCharacter.characterPersonalityDescription}}
+                                </p>
+
+                                <!-- Name -->
+                                <div class="row mx-0 px-0">
+                                    <div class="col-12 col-sm-6 mb-3">
+                                        <label for="name" class="form-label">{{translations.newCharacter.nameLabel}}:</label>
+                                        <input type="text" class="form-control" id="name" name="name" placeholder="{{translations.newCharacter.namePlaceholder}}">
+                                    </div>
+                                </div>
+                                    
+                                <div id="chatPurpose-container" class="mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <label for="chatPurpose" class="form-label">{{translations.newCharacter.characterDetailsLabel}}</label>
+                                    </div>
+                                    <textarea class="form-control mb-2" id="chatPurpose" name="content" rows="3" placeholder="{{translations.newCharacter.characterDetailsPlaceholder}}"></textarea>
+                                </div>
+
+                                <div class="accordion" id="personalityAccordion">
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="personalityHeadingOne">
+                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#personalityCollapseOne" aria-expanded="true" aria-controls="personalityCollapseOne">
+                                            {{translations.newCharacter.detailed_personality}}
+                                        </button>
+                                        </h2>
+                                        <div id="personalityCollapseOne" class="accordion-collapse collapse show" aria-labelledby="personalityHeadingOne" data-bs-parent="#personalityAccordion">
+                                            <div class="accordion-body row">
+                                                    <!-- Personality Feature -->
+                                                    <div class="col-auto mb-3">
+                                                        <label for="personality" class="form-label">{{translations.newCharacter.personalityLabel}}:</label>
+                                                        <select class="form-select" id="personality" name="personality">
+                                                            <option value="optimistic">{{translations.newCharacter.optimistic}}</option>
+                                                            <option value="pessimistic">{{translations.newCharacter.pessimistic}}</option>
+                                                            <option value="realistic">{{translations.newCharacter.realistic}}</option>
+                                                            <option value="idealistic">{{translations.newCharacter.idealistic}}</option>
+                                                        </select>
+                                                    </div>
+
+                                                    <!-- Tone Feature -->
+                                                    <div class="col-auto mb-3">
+                                                        <label for="tone" class="form-label">{{translations.newCharacter.toneLabel}}:</label>
+                                                        <select class="form-select" id="tone" name="tone">
+                                                            <option value="friendly">{{translations.newCharacter.friendly}}</option>
+                                                            <option value="serious">{{translations.newCharacter.serious}}</option>
+                                                            <option value="sarcastic">{{translations.newCharacter.sarcastic}}</option>
+                                                            <option value="humorous">{{translations.newCharacter.humorous}}</option>
+                                                        </select>
+                                                    </div>
+
+                                                    <!-- Morality -->
+                                                    <div class="col-auto mb-3">
+                                                        <label for="morality" class="form-label">{{translations.newCharacter.moralityLabel}}:</label>
+                                                        <select class="form-select" id="morality" name="morality">
+                                                            <option value="good">{{translations.newCharacter.good}}</option>
+                                                            <option value="neutral">{{translations.newCharacter.neutral}}</option>
+                                                            <option value="evil">{{translations.newCharacter.evil}}</option>
+                                                        </select>
+                                                    </div>
+
+                                                    <!-- Motivation -->
+                                                    <div class="col-12 col-sm-6 mb-3">
+                                                        <label for="motivation" class="form-label">{{translations.newCharacter.motivationLabel}}:</label>
+                                                        <textarea class="form-control" id="motivation" name="motivation" placeholder="{{translations.newCharacter.motivationPlaceholder}}"></textarea>
+                                                    </div>
+
+                                                    <!-- Strengths -->
+                                                    <div class="col-12 col-sm-6 mb-3">
+                                                        <label for="strengths" class="form-label">{{translations.newCharacter.strengthsLabel}}:</label>
+                                                        <textarea class="form-control" id="strengths" name="strengths" placeholder="{{translations.newCharacter.strengthsPlaceholder}}"></textarea>
+                                                    </div>
+
+                                                    <!-- Weaknesses -->
+                                                    <div class="col-12 col-sm-6 mb-3">
+                                                        <label for="weaknesses" class="form-label">{{translations.newCharacter.weaknessesLabel}}:</label>
+                                                        <textarea class="form-control" id="weaknesses" name="weaknesses" placeholder="{{translations.newCharacter.weaknessesPlaceholder}}"></textarea>
+                                                    </div>
+
+                                                    <!-- Fears -->
+                                                    <div class="col-12 col-sm-6 mb-3">
+                                                        <label for="fears" class="form-label">{{translations.newCharacter.fearsLabel}}:</label>
+                                                        <textarea class="form-control" id="fears" name="fears" placeholder="{{translations.newCharacter.fearsPlaceholder}}"></textarea>
+                                                    </div>
+
+                                                    <!-- Secrets -->
+                                                    <div class="col-12 col-sm-6 mb-3">
+                                                        <label for="secrets" class="form-label">{{translations.newCharacter.secretsLabel}}:</label>
+                                                        <textarea class="form-control" id="secrets" name="secrets" placeholder="{{translations.newCharacter.secretsPlaceholder}}"></textarea>
+                                                    </div>
+                                        </div>
+                                        </div>
+                                </div>
+                                </div>
+                            </div>
+                                                    
+                            <!-- 4. Single Action Button -->
+                            <div class="row mx-0">
+                                <button type="button" id="generateButton" class="btn custom-gradient-bg btn-lg text-white">
+                                    <i class="fas fa-magic me-2"></i>{{translations.newCharacter.generate_with_AI}}
+                                </button>
+                                <span class="w-100 text-center text-muted genexp" style="font-size: 12px;display:none;">{{translations.newCharacter.image_generation_message}}</span>
+                            </div>
+
                         </div>
                     </div>
-                <!-- Right Column: Generated Image -->
-                <div class="col-lg-6 mb-4 d-flex flex-column align-items-center">
-                    <!-- 3. Generated Image Display -->
-                    <label class="form-label d-block mb-2 text-center">{{translations.newCharacter.generatedImageLabel}}</label>
-                    <div id="imageContainer" class="row mb-4 w-100">
-                        <img
-                            id="generatedImage"
-                            src="/img/default-character.png"
-                            alt="{{translations.newCharacter.generatedImageAlt}}"
-                            class="img-fluid rounded"
-                            style="max-height: 300px; width: 100%; object-fit: contain;"
-                        >
-                    </div>
-                    <div id="imageUploaderContainer" class="w-100" style="cursor: pointer;">
-                        <!-- You can add an image uploader here if needed -->
+
+                    <!-- Right Column: Generated Image -->
+                    <div class="col-lg-6 mb-4 d-flex flex-column align-items-center">
+                        <!-- 3. Generated Image Display -->
+                        <label class="form-label d-block mb-2 text-center">{{translations.newCharacter.generatedImageLabel}}</label>
+                        <div id="imageContainer" class="row mb-4 w-100">
+                            <img
+                                id="generatedImage"
+                                src="/img/default-character.png"
+                                alt="{{translations.newCharacter.generatedImageAlt}}"
+                                class="img-fluid rounded"
+                                style="max-height: 300px; width: 100%; object-fit: contain;"
+                            >
+                        </div>
+                        <div id="imageUploaderContainer" class="w-100" style="cursor: pointer;">
+                            <!-- You can add an image uploader here if needed -->
+                        </div>
                     </div>
                 </div>
-            </div>
-            <button type="button" id="nextStep1" class="btn btn-secondary w-100 nextStep">
-                {{translations.newCharacter.nextStep}}
-            </button>
-        </div>
-    </div>
-
-    <!-- 2. キャラクターの性格 -->
-    <div id="step2" class="step d-none">
-        <h4 class="container mb-4 text-center stepTitle">{{translations.newCharacter.characterPersonalityTitle}}</h4>
-
-        <div id="chatPurpose-container" class="mb-3 mx-3">
-            <div class="d-flex justify-content-between">
-                <label for="chatPurpose" class="form-label">{{translations.newCharacter.characterDetailsLabel}}</label>
-            </div>
-            <textarea class="form-control mb-2" id="chatPurpose" name="content" rows="3" placeholder="{{translations.newCharacter.characterDetailsPlaceholder}}"></textarea>
-
-            <input type="text" class="form-control mb-2" id="chatName" name="chatName" placeholder="{{translations.newCharacter.namePlaceholder}}" contenteditable="false" disabled="true" required style="display:none;">
-            <textarea class="form-control mb-2" id="chatDescription" style="display:none;" name="chatDescription" rows="3" placeholder="{{translations.newCharacter.descriptionPlaceholder}}" disabled="true" required></textarea>
-            <textarea class="form-control mb-2" id="chatStory" style="display:none;" name="chatStory" rows="5" placeholder="" disabled="true"></textarea>
-
-            <button type="button" id="ai-assist" class="btn btn-lg custom-gradient-bg shadow-0 mb-2 w-100">
-                <i class="fa fa-spinner fa-spin fa-fw fa-hidden me-2" style="display: none;"></i>
-                <i class="fa fa-magic me-2"></i>{{translations.newCharacter.generateWithAI}}
-            </button>
-
             <button type="button" id="submitForm" class="btn btn-secondary btn-large w-100">
                 {{translations.newCharacter.complete}}
             </button>     
@@ -314,71 +525,12 @@
 
 <script>
     $(document).ready(function() {
-        let currentStep = 1;
-        let translations = window.translations
-
-        function showStep(step) {
-            $(`#nextStep${step}`).addClass('d-none');
-            $(`#step${step +1}`).removeClass('d-none')
-        }
-
-    function validateStep(step) {
-        if (step === 1) {
-            if ($('.img-thumbnail.select').length === 0) {
-                console.log('Validation failed: No image thumbnail selected.');
-            }
-            if(!$('#generatedImage').attr('src') || $('#generatedImage').attr('src') == ''){
-                console.log('Validation failed: No image generatedImage.');
-            }
-            return (
-                $('.img-thumbnail.select').length > 0 ||
-                $('#generatedImage').attr('src') != ''
-            );
-        } else if (step === 2) {
-            if ($('#chatPurpose').val().trim() === '') {
-                console.log('Validation failed: Chat purpose is empty.');
-            }
-            if ($('#chatName').val().trim() === '') {
-                console.log('Validation failed: Chat name is empty.');
-            }
-            if ($('#chatDescription').val().trim() === '') {
-                console.log('Validation failed: Chat description is empty.');
-            }
-            return (
-                $('#chatPurpose').val().trim() !== '' &&
-                $('#chatName').val().trim() !== '' &&
-                $('#chatDescription').val().trim() !== ''
-            );
-        }
-        return true;
-    }
-
-
-        $('.nextStep').click(function() {
-            if (validateStep(currentStep)) {
-                showStep(currentStep);
-                currentStep++;
-            } else {
-                showNotification(translations.newCharacter.allFieldsRequired, 'error');
-            }
-        });
-
-        $('.prevStep').click(function() {
-            currentStep--;
-            showStep(currentStep);
-        });
-
-        //showStep(currentStep);
-    });
-    $(document).ready(function() {
-        let currentLang = getLanguageName(localStorage.getItem('currentLang')) || getLanguageName('ja');        
-        $('#language').val(currentLang)
+        $('#language').val(lang)
 
         $('#characterPrompt').on('input change', function() {
             $('#enhancedPrompt').val('');
         });
         
-
         $(document).on('click','.style-option',function(){
             $('.style-option').removeClass('selected');
             $(this).addClass('selected');
@@ -404,121 +556,51 @@
 </script>
 <script>
     
-    // Store modified galleries
-    const modifiedGalleries = new Set();
-    $(document).ready(function() {
-        let translations = window.translations
+$(document).ready(function() {
         
+    $('.dropdown-toggle').each(function(e) {
+        new mdb.Dropdown($(this)[0]);
+    });
 
-        $('.dropdown-toggle').each(function(e) {
-            new mdb.Dropdown($(this)[0]);
+    var count = 0
+    let chatId = '{{chatId}}';
+    const isTemporaryChat = '{{isTemporaryChat}}'
+    const user = {{{json user}}}
+    const subscriptionStatus = user.subscriptionStatus == 'active'
+    let isAutoGen = false
+    if(subscriptionStatus){
+        $('.is-premium').each(function(){$(this).toggleClass('d-none')})
+    }
+    $('input, textarea').val('');
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const chatImageUrl = urlParams.get('chatImage');
+    if (chatImageUrl) {
+        setTimeout(function(){
+            $('#chatImageUrl').val(chatImageUrl).change();
+        },500)
+        $('#chatImage').attr('src', chatImageUrl).show().addClass('on');
+    }
+
+    if (isTemporaryChat == 'false') {
+        fetchchatData(chatId);
+    }
+
+    $('textarea').each(function() {
+        resizeTextarea(this);
+        $(this).on('input change', function() {
+            resizeTextarea(this);
         });
-        var count = 0
-        let chatId = '{{chatId}}';
-        const isTemporaryChat = '{{isTemporaryChat}}'
-        const user = {{{json user}}}
-        const subscriptionStatus = user.subscriptionStatus == 'active'
-        let isAutoGen = false
-        if(subscriptionStatus){
-            $('.is-premium').each(function(){$(this).toggleClass('d-none')})
+    });
+
+    function resizeTextarea(element){
+        if($(element).val().trim()!=''){
+            element.style.height = 'auto';
+            element.style.height = (element.scrollHeight) + 'px';  
+        }else{
+            element.style.height = 'auto'; 
         }
-        $('input, textarea').val('');
-        $('#resetForm').on('click',function(){
-            $('input, textarea').val('');
-            $('input, textarea').prop('disabled', false);
-            $('#chatName').hide()
-            $('#chatDescription').hide()
-            $('#chatPurpose').show()
-            $('#chatPurpose-markdownContainer').hide()
-            $('#markdownContainer').hide()
-            $('#chatPurpose-markdownContainer').html('')
-            $('#markdownContainer').html('')
-            $('#sendForm').hide()
-            $('#sendForm span').html(translations.newCharacter.startChatting)
-        })
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const chatImageUrl = urlParams.get('chatImage');
-        if (chatImageUrl) {
-            setTimeout(function(){
-                $('#chatImageUrl').val(chatImageUrl).change();
-            },500)
-            $('#chatImage').attr('src', chatImageUrl).show().addClass('on');
-        }
-
-        function checkFieldsAndShowForm() {
-            if ($('#chatName').val().trim() !== '' && 
-                $('#chatDescription').val().trim() !== '' && 
-                $('#chatPurpose').val().trim() !== '') {
-                $('#sendForm').show();
-            } else {
-                $('#sendForm').hide();
-            }
-        }
-        $('#chatName, #chatDescription, #chatPurpose').on('input', checkFieldsAndShowForm);
-
-            if (isTemporaryChat == 'false') {
-                fetchchatData(chatId,function(){
-                    function observeGalleryChanges(galleryIndex) {
-                        const galleryElement = document.querySelector(`#imageGallery-${galleryIndex}`);
-                        if (!galleryElement) return;
-
-                        const observer = new MutationObserver(function(mutationsList, observer) {
-                            modifiedGalleries.add(galleryIndex);
-                        });
-
-                        observer.observe(galleryElement, { childList: true, subtree: true });
-                    }
-
-                    $('#galleries .imageGalleryWrapper').each(function(index) {
-                        observeGalleryChanges(index);
-                    });
-                });
-            }
-
-            $('textarea').each(function() {
-                resizeTextarea(this);
-                $(this).on('input change', function() {
-                    resizeTextarea(this);
-                });
-            });
-
-        $('#visibility').val('public')
-        $('#visibility').change(function() {
-            
-            const user = {{{json user}}}
-            const userId = user._id
-            if(!user){
-                fetchUser(function(error, user){
-                    user = localStorage.setItem('user',JSON.stringify(user))
-                    if(user.subscriptionStatus == 'active'){
-                        return
-                    }else{
-                        if ($(this).val() === 'private') {
-                            showUpgradePopup('chat-private');
-                            $(this).val('public');
-                        }
-                    }
-                })
-            }
-            if(user.subscriptionStatus == 'active'){
-                return
-            }else{
-                if ($(this).val() === 'private') {
-                    showUpgradePopup('chat-private');
-                    $(this).val('public');
-                }
-            }
-        });
-
-        function resizeTextarea(element){
-            if($(element).val().trim()!=''){
-                element.style.height = 'auto';
-                element.style.height = (element.scrollHeight) + 'px';  
-            }else{
-                element.style.height = 'auto'; 
-            }
-        }
+    }
 
      function fetchchatData(chatId, callback) {
             $.ajax({
@@ -595,14 +677,6 @@
                 }
             });
         }
-
-        // Form Submission
-        $('#submitForm').on('click', function(e) {
-            e.preventDefault();
-            $('#sendForm .fa-spinner').toggleClass('d-none');
-            window.location = '/chat/' + chatId;
-        });
-        
       
         function fetchTaskId(enhancedPrompt, aspectRatio, chatId, imageStyle, imageModel, imageVersion) {
             return $.ajax({
@@ -734,6 +808,7 @@
                 }
             }, POLLING_INTERVAL);
         }
+
         function checkImg2ImgTaskStatus(taskId) {
             const POLLING_INTERVAL = 10000; // 3 seconds
             const MAX_ATTEMPTS = 30;
@@ -793,6 +868,7 @@
                 }
             }, POLLING_INTERVAL);
         }
+
     $('#generateButton').on('click', async function() {
 
         const isTemporary = user.isTemporary
@@ -801,12 +877,13 @@
             return
         }
         const prompt = characterPrompt = $('#characterPrompt').val().trim();
+        const gender = $('#gender').val()
 
-        if (!prompt || !chatId) {
+        if (!prompt || !gender || !chatId) {
             showNotification(translations.newCharacter.allFieldsRequired, 'error');
             return;
         }
-        const gender = $('#gender').val()
+        generateCompletion();
         const isEnhanceEnabled = $('#enableEnhancedPrompt').is(':checked');
 
         const $button = $(this);
@@ -899,6 +976,44 @@
         }
     });
 
+
+        async function generateCompletion(callback) {
+
+            const apiUrl = '/api/openai-chat-creation';
+        
+            let chatId = '{{chatId}}';
+            let name = $('#name').val()
+            let prompt = $('#chatPurpose').val().trim() || $('#characterPrompt').val().trim();
+            let gender = $('#gender').val()
+
+            if(prompt.length == 0){
+                return
+            } 
+
+            $.ajax({
+                url: apiUrl,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ chatId, name, prompt, gender}),
+                success: function(response) {
+                    console.log(response)
+                    showInput();
+
+                    $('#chatName').val(response.name);
+                    $('#chatDescription').val(response.short_intro);
+                    $('#chatStory').val(response.base_personality.story);
+
+                    updateButtonText()
+
+                    if (typeof callback === 'function') {
+                        callback();
+                    }
+                },
+                error: function(error) {
+                    console.error('Error:', error);
+                }
+            });
+        }
         function sendImageToBackend(base64Image) {
             const prompt = $('#enhancedPrompt').val().trim();
 
@@ -935,72 +1050,6 @@
                     $('.genexp').fadeOut()
                 }
                 
-            });
-        }
-
-        $('#ai-assist').on('click', function() {
-
-            $('#ai-assist .fa-spinner').show();
-            $('#ai-assist .fa-magic').hide();
-
-            if ($('#chatPurpose').val().trim() == '' && $('#characterPrompt').val().trim() == '') {
-                showNotification('キャラクターの説明は必須項目です。入力してください。', 'error');
-                $('#ai-assist .fa-spinner').hide();
-                $('#ai-assist .fa-magic').show();
-                return;
-            }
-
-            $('#chatPurpose').prop('disabled', false);
-            $('#chatName').prop('disabled', true);
-            $('#chatDescription').prop('disabled', true);
-
-            $('#chatName').val('')
-            $('#chatDescription').val('')
-            $('#markdownContainer').html('')
-            generateCompletion(function() {
-                $('#sendForm').show();
-                $('.sendForm-text').show();
-                $('#ai-assist .fa-spinner').hide();
-                $('#ai-assist .fa-magic').show();
-            });
-        });
-
-        function generateCompletion(callback) {
-
-            const apiUrl = '/api/openai-chat-creation';
-        
-            let chatId = '{{chatId}}';
-            let prompt = $('#chatPurpose').val().trim() || $('#characterPrompt').val().trim();
-            let gender = $('#gender').val()
-
-            if(prompt.length == 0){
-                return
-            } 
-
-            $.ajax({
-                url: apiUrl,
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ chatId, prompt, gender}),
-                success: function(response) {
-                    console.log(response)
-                    showInput();
-
-                    $('#chatName').val(response.name);
-                    $('#chatDescription').val(response.short_intro);
-                    $('#chatStory').val(response.base_personality.story);
-
-                    updateButtonText()
-
-                    if (typeof callback === 'function') {
-                        callback();
-                    }
-                },
-                error: function(error) {
-                    console.error('Error:', error);
-                    $('#ai-assist .fa-spinner').hide();
-                    $('#ai-assist .fa-magic').show();
-                }
             });
         }
 

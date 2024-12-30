@@ -230,7 +230,7 @@ fastify.get('/my-plan', { preHandler: [fastify.authenticate] }, async (request, 
   user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
   const translations = request.translations;
   const lang = request.lang
-  return reply.renderWithGtm(`plan/${lang}.hbs`, {
+  return reply.renderWithGtm(`plan.hbs`, {
     title: 'プレミアムプランAI画像生成',
     translations,
     mode: process.env.MODE,

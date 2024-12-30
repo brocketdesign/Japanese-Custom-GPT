@@ -1913,9 +1913,13 @@ async function routes(fastify, options) {
       
           const query = {
             chatImageUrl: { $exists: true, $ne: '' },
-            language
           };
-      
+          if(language){
+            query.$or = [
+                {language},
+                {language : getLanguageName(user?.lang)}
+            ]
+          }
           if (userId) {
             query.userId = new fastify.mongo.ObjectId(userId);
           }
@@ -1936,7 +1940,7 @@ async function routes(fastify, options) {
               { imageDescription: { $regex: searchQuery, $options: 'i' } }
             ];
           }
-          
+          console.log({query})
           const recentCursor = await chatsCollection.aggregate([
             { $match: query },
             { $group: { _id: "$chatImageUrl", doc: { $first: "$$ROOT" } } },

@@ -66,9 +66,12 @@ window.fetchAndAppendModels = function() {
             const modelElement = `
             <img src="${model.image}" alt="${model.style}" 
                 class="style-option rounded me-2" 
+                data-id="${model.modelId}" 
                 data-style="${model.style}" 
                 data-model="${model.model}" 
-                data-version="${model.version}">
+                data-version="${model.version}"
+                data-count="${model.chatCount}"
+                >
             `;
             $('#imageStyleSelection').append(modelElement);
         });
@@ -80,34 +83,47 @@ window.fetchAndAppendModels = function() {
         }
     });
 };
+
 function showNavTabs(){
     const styleSelection = document.getElementById('imageStyleSelection');
     const tabNav = document.getElementById('imageStyleTabs');
+    const chatDiscovery = document.getElementById('chat-discovery');
 
     if (styleSelection && tabNav) {
         const styleOptions = styleSelection.querySelectorAll('.style-option');
 
         styleOptions.forEach((option, index) => {
             const style = option.getAttribute('data-style');
+            const modelId = option.getAttribute('data-id');
             const model = option.getAttribute('data-model');
             const version = option.getAttribute('data-version');
             const imgSrc = option.getAttribute('src');
             const altText = option.getAttribute('alt');
+            const chatCount = parseInt(option.getAttribute('data-count'), 10) || 0;
+
+            // Skip rendering if `#chat-discovery` exists and count is 0
+            if (chatDiscovery && modelId && chatCount === 0) return;
 
             const isActive = index === 0 ? 'active' : '';
 
+            // Add count tag if `#chat-discovery` exists
+            const countTag = chatDiscovery
+                ? `<span class="badge bg-primary position-absolute top-0 end-0">${chatCount}</span>`
+                : '';
+
             const tabItem = `
-                <li class="nav-item" role="presentation">
+                <li class="nav-item position-relative" role="presentation">
                     <button class="nav-link ${isActive}" id="${style}-${model}-tab" data-style="${style}" data-model="${model}" data-version="${version}" type="button" role="tab">
                         <img src="${imgSrc}" alt="${altText}" class="tab-thumb thumb-option rounded me-2">
                         <span class="d-none">${altText}</span>
                     </button>
+                    ${countTag}
                 </li>
             `;
             tabNav.innerHTML += tabItem;
         });
 
-        $('#imageStyleSelection').remove()
+        $('#imageStyleSelection').remove();
     }
 
     // Handle tab clicks

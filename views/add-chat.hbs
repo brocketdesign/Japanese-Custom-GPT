@@ -210,6 +210,7 @@
                                     <img src="/img/real.jpeg" alt="リアリスティック" class="style-option me-2 rounded" data-style="realistic" data-model="kanpiromix_v20" data-version="sd">
                                     <img src="/img/real-2.jpeg" alt="リアリスティック" class="style-option me-2 rounded" data-style="realistic" data-model="ponyRealism_v22MainVAE_822476" data-version="sdxl">
                                 </div>
+                                <input type="hidden" id="modelId" name="modelId" value="">
                                 <input type="hidden" id="imageStyle" name="imageStyle" value="anime">
                                 <input type="hidden" id="imageModel" name="imageModel" value="novaAnimeXL_ponyV20_461138">
                                 <input type="hidden" id="imageVersion" name="imageVersion" value="sdxl">
@@ -531,26 +532,22 @@
             $('#enhancedPrompt').val('');
         });
         
-        $(document).on('click','.style-option',function(){
+        $(document).on('click', '.style-option', function () {
             $('.style-option').removeClass('selected');
             $(this).addClass('selected');
-            const style = $(this).data('style')
-            const model = $(this).data('model')
-            const version = $(this).data('version')
-            $('#imageStyle').val(style);
-            $('#imageModel').val(model);
-            $('#imageVersion').val(version);
-            
+
+            updateFields($(this));
         });
 
-        imageStyle = $('.style-option.selected').data('style')
-        $('#imageStyle').val(imageStyle);
+        function updateFields(element) {
+            const fields = ['id', 'style', 'model', 'version'];
+            fields.forEach(field => {
+                $(`#${field === 'id' ? 'modelId' : 'image' + field.charAt(0).toUpperCase() + field.slice(1)}`).val(element.data(field));
+            });
+        }
 
-        imageModel = $('.style-option.selected').data('model')
-        $('#imageModel').val(imageModel);
+        updateFields($('.style-option.selected'));
 
-        imageVersion = $('.style-option.selected').data('version')
-        $('#imageVersion').val(imageVersion);
     });
 
 </script>
@@ -611,6 +608,10 @@ $(document).ready(function() {
                     console.log('Fetched chat data:', chatData);
 
                     // Populate Step 1: キャラクターの外見
+                    if (chatData.modelId) {
+                        $('#modelId').val(chatData.modelId);
+                    }
+
                     if (chatData.imageStyle) {
                         $('#imageStyle').val(chatData.imageStyle);
                     }
@@ -694,7 +695,7 @@ $(document).ready(function() {
             });
         }
 
-        function saveSelectedImage(imageUrl, characterPrompt, enhancedPrompt, imageStyle, imageModel, imageVersion) {
+        function saveSelectedImage(imageUrl, characterPrompt, enhancedPrompt, modelId, imageStyle, imageModel, imageVersion) {
             const chatId = '{{chatId}}'; // Replace with actual chat ID
 
             $.ajax({
@@ -704,6 +705,7 @@ $(document).ready(function() {
                 data: {
                     characterPrompt, 
                     enhancedPrompt, 
+                    modelId,
                     imageStyle, 
                     imageModel, 
                     imageVersion,
@@ -719,7 +721,7 @@ $(document).ready(function() {
             });
         }
 
-        function displayGeneratedImages(imageUrls, characterPrompt, enhancedPrompt, imageStyle, imageModel, imageVersion) {
+        function displayGeneratedImages(imageUrls, characterPrompt, enhancedPrompt, modelId, imageStyle, imageModel, imageVersion) {
             // Clear the container
             $('#imageContainer').empty();
 
@@ -740,7 +742,7 @@ $(document).ready(function() {
                     $(this).addClass('select')
                     
                     // Save the selected image (you can implement this function)
-                    saveSelectedImage(url, characterPrompt, enhancedPrompt, imageStyle, imageModel, imageVersion);
+                    saveSelectedImage(url, characterPrompt, enhancedPrompt, modelId, imageStyle, imageModel, imageVersion);
                 });
 
                 colDiv.append(imgElement);
@@ -748,7 +750,7 @@ $(document).ready(function() {
             });
         }
 
-        function checkTaskStatus(taskId, characterPrompt, enhancedPrompt, imageStyle, imageModel, imageVersion) {
+        function checkTaskStatus(taskId, characterPrompt, enhancedPrompt, modelId, imageStyle, imageModel, imageVersion) {
             const POLLING_INTERVAL = 10000; // 3 seconds
             const MAX_ATTEMPTS = 30; // up to 90 seconds
             let attempts = 0;
@@ -766,7 +768,7 @@ $(document).ready(function() {
                         clearInterval(intervalId);
                         const { imageUrls } = statusResponse.result;
 
-                        displayGeneratedImages(imageUrls, characterPrompt, enhancedPrompt, imageStyle, imageModel, imageVersion)
+                        displayGeneratedImages(imageUrls, characterPrompt, enhancedPrompt, modelId, imageStyle, imageModel, imageVersion)
 
                         showNotification('画像が正常に生成されました。', 'success');
                         // Enable buttons and reset text
@@ -948,6 +950,7 @@ $(document).ready(function() {
                 return;
             }
 
+            const modelId = $('.style-option.selected').data('id')
             const imageStyle = $('.style-option.selected').data('style')
             const imageModel = $('.style-option.selected').data('model')
             const imageVersion = $('.style-option.selected').data('version')
@@ -958,7 +961,7 @@ $(document).ready(function() {
             if (taskResponse && taskResponse.taskId) {
                 showNotification(translations.newCharacter.image_generation_start, 'info');
                 // タスクステータスをポーリング
-                checkTaskStatus(taskResponse.taskId,characterPrompt, enhanceResponse.enhancedPrompt, imageStyle, imageModel, imageVersion);
+                checkTaskStatus(taskResponse.taskId,characterPrompt, enhanceResponse.enhancedPrompt, modelId, imageStyle, imageModel, imageVersion);
             } else {
                 showNotification(translations.newCharacter.image_generation_failure, 'error');
                 // ボタンを有効化し、初期状態のテキストに戻す

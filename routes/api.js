@@ -1940,7 +1940,7 @@ async function routes(fastify, options) {
               { imageDescription: { $regex: searchQuery, $options: 'i' } }
             ];
           }
-          console.log({query})
+
           const recentCursor = await chatsCollection.aggregate([
             { $match: query },
             { $group: { _id: "$chatImageUrl", doc: { $first: "$$ROOT" } } },
@@ -2481,17 +2481,45 @@ async function routes(fastify, options) {
 
         fastify.get('/api/models', async (req, reply) => {
             const { id } = req.query;
-          
+        
             try {
                 const db = fastify.mongo.db;
-                const query = id ? { modelId: id } : {};
-                const models = await db.collection('myModels').find(query).toArray();
+                const modelsCollection = db.collection('myModels');
+                const chatsCollection = db.collection('chats');
+        
+                // Build query for models
+                const query = id ? { model: id } : {};
+        
+                // Fetch models with chat count
+                const models = await modelsCollection.aggregate([
+                    { $match: query },
+                    {
+                        $lookup: {
+                            from: 'chats',
+                            localField: 'model', // Field in `modelsCollection`
+                            foreignField: 'imageModel', // Corresponding field in `chatsCollection`
+                            as: 'chats'
+                        }
+                    },
+                    {
+                        $addFields: {
+                            chatCount: { $size: '$chats' } // Calculate the number of chats
+                        }
+                    },
+                    {
+                        $project: {
+                            chats: 0 // Exclude chat details if not needed
+                        }
+                    }
+                ]).toArray();
+
                 return reply.send({ success: true, models });
             } catch (error) {
-                console.log(errir)
-              return reply.code(500).send({ success: false, message: 'Error fetching models', error });
+                console.error(error);
+                return reply.code(500).send({ success: false, message: 'Error fetching models', error });
             }
         });
+        
           
           
 }

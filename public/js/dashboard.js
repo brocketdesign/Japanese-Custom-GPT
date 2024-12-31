@@ -1722,17 +1722,17 @@ window.loadChatImages = async function (chatId, page = 1) {
             currentPageMap[chatId] = data.page;
             let chatGalleryHtml = '';
             data.images.forEach((item, idx) => {
+                console.log(item)
                 const unlockedItem = isUnlocked(currentUser, item._id, item.userId);
                 let isBlur = unlockedItem ? false : item?.nsfw && !subscriptionStatus;
                 const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
-                loadedImages.push(item);
                 const index = loadedImages.length - 1;
                 chatGalleryHtml += `
                     <div class="col-12 col-md-4 col-lg-2 mb-2">
                         <div class="card shadow-0">
                             <div class="d-flex align-items-center p-2">
                                 <a href="/character/${item.chatId}?imageId=${item._id}">
-                                    <img src="${item?.imageUrl}" alt="${item?.chatName}" class="rounded-circle me-2" width="40" height="40">
+                                    <img src="${item?.thumbnail}" alt="${item?.chatName}" class="rounded-circle me-2" width="40" height="40">
                                 </a>
                                 <a href="/character/${item.chatId}?imageId=${item._id}" class="text-decoration-none text-dark">
                                     <strong>${item?.chatName}</strong>

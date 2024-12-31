@@ -251,23 +251,8 @@ async function routes(fastify, options) {
         // Pass `details` if you want to incorporate it into the prompt generation
         const systemPayload = createSystemPayload(prompt, gender, details_description);
 
-        // Initialize OpenAI
-        const openai = new OpenAI({
-          apiKey: process.env.OPENAI_API_KEY,
-        });
-    
-        // Send the request to OpenAI
-        const completionResponse = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
-          messages: systemPayload,
-          max_tokens: 600,
-          temperature: 0.7,
-          n: 1,
-          stop: null,
-        });
-    
-        const enhancedPrompt = completionResponse.choices[0].message.content.trim();
-    
+        const enhancedPrompt = await generateCompletion(systemPayload, 600)
+
         // Access MongoDB and update the chat document
         const db = fastify.mongo.db;
         const collectionChats = db.collection('chats');
@@ -1509,32 +1494,8 @@ async function routes(fastify, options) {
         
         let newMessages = generateImagePrompt(command, characterDescription, dialogue);
         newMessages = sanitizeMessages(newMessages)
-
-        const response = await fetch("https://api.venice.ai/api/v1/chat/completions", {
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${process.env.VENICE_API_KEY}`
-            },
-            method: "POST",
-            body: JSON.stringify({
-                model: 'dolphin-2.9.2-qwen2-72b',
-                messages: newMessages,
-                temperature: 0.85,
-                top_p: 0.95,
-                frequency_penalty: 0,
-                presence_penalty: 0,
-                max_tokens: 600,
-                stream: false,
-                n: 1,
-            }),
-        });
-    
-        if (!response.ok) {
-            console.log(response)
-            throw new Error('Error generating English description');
-        }
-        const data = await response.json();
-        const completionMessage = data.choices[0].message.content.trim();
+        
+        const completionMessage = await generateCompletion(newMessages, 600)
 
         // Add instructions
     

@@ -6,6 +6,19 @@ const { z } = require("zod");
 const { zodResponseFormat } = require("openai/helpers/zod");
 const { sanitizeMessages } = require('./tool')
 
+const apiDetails = {
+  novita: {
+    apiUrl: 'https://api.novita.ai/v3/openai/chat/completions',
+    model: 'meta-llama/llama-3.1-70b-instruct',
+    key:process.env.NOVITA_API_KEY
+  },
+  venice: {
+    apiUrl: 'https://api.venice.ai/api/v1/chat/completions',
+    model: 'llama-3.1-405b',
+    key:process.env.VENICE_API_KEY
+  }
+};
+
 const fetchOpenAICompletionWithTrigger = async (messages, res, maxToken = 1000, model = 'llama-3.1-405b') => { 
   try {
     messages = sanitizeMessages(messages)
@@ -83,19 +96,7 @@ const fetchOpenAICompletionWithTrigger = async (messages, res, maxToken = 1000, 
 
 
 const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'meta-llama/llama-3.1-70b-instruct',genImage) => {
-    const apiDetails = {
-      novita: {
-        apiUrl: 'https://api.novita.ai/v3/openai/chat/completions',
-        model: 'meta-llama/llama-3.1-70b-instruct',
-        key:process.env.NOVITA_API_KEY
-      },
-      venice: {
-        apiUrl: 'https://api.venice.ai/api/v1/chat/completions',
-        model: 'llama-3.1-405b',
-        key:process.env.VENICE_API_KEY
-      }
-    };
-    
+
     messages = sanitizeMessages(messages)
     try {
         let response = await fetch(apiDetails.venice.apiUrl,
@@ -162,20 +163,17 @@ const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'me
 };
 
 
-async function generateCompletion(systemPrompt, userMessage, maxToken = 1000, aiModel =`meta-llama/llama-3.1-70b-instruct`) {
+async function generateCompletion(messages, maxToken = 1000) {
 
-    const response = await fetch("https://api.novita.ai/v3/openai/chat/completions", {
+    const response = await fetch(apiDetails.venice.apiUrl, {
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${process.env.NOVITA_API_KEY}`
+            "Authorization": `Bearer ${apiDetails.venice.key}`
         },
         method: "POST",
         body: JSON.stringify({
-            model: aiModel,
-            messages: [
-                { role: "system", content: systemPrompt },
-                { role: "user", content: userMessage },
-            ],
+            model: 'dolphin-2.9.2-qwen2-72b',
+            messages,
             temperature: 0.85,
             top_p: 0.95,
             frequency_penalty: 0,
@@ -185,9 +183,13 @@ async function generateCompletion(systemPrompt, userMessage, maxToken = 1000, ai
             n: 1,
         }),
     });
-    if (!response.ok) throw new Error('Error generating completion');
+    if (!response.ok) {
+        console.log(response)
+        throw new Error('Error generating English description');
+    }
     const data = await response.json();
-    return data.choices[0].message.content;
+    const completionMessage = data.choices[0].message.content.trim();
+    return completionMessage
 }
 
 const moduleCompletion = async (messages) => {

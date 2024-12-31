@@ -242,22 +242,20 @@
                                     ></textarea>
 
                                     <!-- Character Personnality Input -->
-                                    <div class="form-check mb-3 ms-1 mt-1">
+                                    <div class="form-check mb-1 ms-1 mt-1">
                                         <input type="checkbox" class="form-check-input" id="enableEnhancedPrompt" name="enableEnhancedPrompt" checked>
                                         <label class="form-check-label" for="enableEnhancedPrompt">{{translations.newCharacter.enable_enhanced_prompt}}</label>
                                     </div>
                                 </div>
 
 
-                                <div class="mb-4 d-none">
-                                    <label for="enhancedPrompt" class="form-label">AI強化プロンプト</label>
+                                <div class="mb-3">
                                     <textarea
                                         class="form-control"
                                         id="enhancedPrompt"
                                         name="enhancedPrompt"
                                         rows="3"
                                         readonly
-                                        placeholder="AIによって強化されたプロンプトがここに表示されます..."
                                     ></textarea>
                                 </div>
 
@@ -528,6 +526,9 @@
             const checkId = $(this).attr('id').replace('Accordion','Check')
             $('#' + checkId).prop('checked', e.type === 'show');
         });
+        $('#enableEnhancedPrompt').on('click',function(){
+            $('#enhancedPrompt').toggle()
+        })
     });
 </script>
 

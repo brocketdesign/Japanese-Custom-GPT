@@ -94,7 +94,6 @@ async function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, i
             const imageNsfw = isNSFWChecked ? 'nsfw' : 'sfw';
 
             let imageDescriptionResponse = await checkImageDescription(chatId)
-            return
             const imageDescription = imageDescriptionResponse.imageDescription
 
             prompt = imageDescription +', '+ prompt

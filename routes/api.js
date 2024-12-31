@@ -2535,11 +2535,11 @@ async function routes(fastify, options) {
             try {
                 const db = fastify.mongo.db;
                 const modelsCollection = db.collection('myModels');
-                const free_models = [544806, 64558];
+                const free_models = ['544806', '64558'];
         
                 // Build query for models
                 const query = id ? { model: id } : {};
-        
+
                 // Fetch models with chat count, add premium field, and sort by chatCount
                 const models = await modelsCollection.aggregate([
                     { $match: query },
@@ -2554,7 +2554,7 @@ async function routes(fastify, options) {
                     {
                         $addFields: {
                             chatCount: { $size: '$chats' }, // Calculate the number of chats
-                            premium: { $not: { $in: ['$model', free_models] } } // Add premium field
+                            premium: { $not: { $in: ['$modelId', free_models] } }
                         }
                     },
                     {
@@ -2566,7 +2566,7 @@ async function routes(fastify, options) {
                         }
                     }
                 ]).toArray();
-        
+
                 return reply.send({ success: true, models });
             } catch (error) {
                 console.error(error);

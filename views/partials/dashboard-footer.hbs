@@ -64,6 +64,7 @@ window.fetchAndAppendModels = function() {
         if (response.success) {
         //$('#imageStyleSelection').empty(); // Clear existing content
         response.models.forEach(model => {
+
             const modelElement = `
             <img src="${model.image}" alt="${model.style}" 
                 class="${subscriptionStatus || !model.premium ? '' : 'is-premium'} style-option rounded me-2" 
@@ -74,7 +75,15 @@ window.fetchAndAppendModels = function() {
                 data-count="${model.chatCount}"
                 >
             `;
-            $('#imageStyleSelection').append(modelElement);
+            if(!subscriptionStatus){
+                if(subscriptionStatus || !model.premium){
+                    $('#imageStyleSelection').prepend(modelElement);
+                }else{
+                    $('#imageStyleSelection').append(modelElement);
+                }
+            }else{
+                $('#imageStyleSelection').append(modelElement);
+            }
         });
         if($('#imageStyleTabs').length > 0){
             showNavTabs();

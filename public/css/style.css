@@ -14,7 +14,9 @@
 img.select {
   border: 2px solid;
 }
-
+.style-option.is-premium{
+  opacity: 0.5;
+}
 .swal2-container {
   padding: 0 !important;
 }

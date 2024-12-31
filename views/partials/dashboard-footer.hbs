@@ -59,13 +59,14 @@ window.loadTranslations = async function (lang) {
 }
 
 window.fetchAndAppendModels = function() {
+    const subscriptionStatus = user.subscriptionStatus == 'active'
     $.get('/api/models', function(response) {
         if (response.success) {
         //$('#imageStyleSelection').empty(); // Clear existing content
         response.models.forEach(model => {
             const modelElement = `
             <img src="${model.image}" alt="${model.style}" 
-                class="style-option rounded me-2" 
+                class="${subscriptionStatus ? '' : 'is-premium'} style-option rounded me-2" 
                 data-id="${model.modelId}" 
                 data-style="${model.style}" 
                 data-model="${model.model}" 
@@ -88,6 +89,7 @@ function showNavTabs(){
     const styleSelection = document.getElementById('imageStyleSelection');
     const tabNav = document.getElementById('imageStyleTabs');
     const chatDiscovery = document.getElementById('chat-discovery');
+    const subscriptionStatus = user.subscriptionStatus == 'active'
 
     if (styleSelection && tabNav) {
         const styleOptions = styleSelection.querySelectorAll('.style-option');
@@ -135,8 +137,9 @@ function showNavTabs(){
         var style = $(this).data('style');
         var model = $(this).data('model');
         localStorage.setItem('chat-nav',`${style}-${model}`)
-        displayPeopleChat(1, {imageStyle:style,imageModel:model});
+        displayPeopleChat(1, {imageStyle:style,imageModel:model,userId:user._id});
     });
+
     const chatNav = localStorage.getItem('chat-nav');
 
     if (chatNav) {

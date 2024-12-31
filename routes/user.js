@@ -10,8 +10,8 @@ async function routes(fastify, options) {
   
   fastify.post('/user/register', async (request, reply) => {
     try {
-      const { email, password } = request.body;
-      
+      const { nickname, email, password, ageVerification } = request.body;
+
       // Validate request data
       if (!email || !password) {
         return reply.status(400).send({ error: 'ユーザー名とパスワードは必須です' });
@@ -35,7 +35,10 @@ async function routes(fastify, options) {
       const result = await usersCollection.insertOne(
         { 
           lang: request.lang,
+          nickname,
           email, 
+          email, 
+          ageVerification,
           password: hashedPassword, 
           createdAt:new Date(), 
           tempUserId,

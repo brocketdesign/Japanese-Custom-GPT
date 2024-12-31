@@ -225,7 +225,7 @@
 
                                 <!-- Gender -->
                                 <div class="col-auto mb-3">
-                                    <label for="gender" class="form-label">{{translations.newCharacter.genderLabel}}:</label>
+                                    <label for="gender" class="form-label"><i class="bi bi-asterisk text-danger me-2"></i>{{translations.newCharacter.genderLabel}}:</label>
                                     <select class="form-select" id="gender" name="gender">
                                         <option value="female">{{translations.newCharacter.female}}</option>
                                         <option value="male">{{translations.newCharacter.male}}</option>
@@ -235,7 +235,7 @@
 
                                 <!-- Character Prompt Input -->
                                 <div class="mb-2">
-                                    <label for="characterPrompt" class="form-label">{{translations.newCharacter.character_prompt}}</label>
+                                    <label for="characterPrompt" class="form-label"><i class="bi bi-asterisk text-danger me-2"></i>{{translations.newCharacter.character_prompt}}</label>
                                     <textarea
                                         class="form-control"
                                         id="characterPrompt"
@@ -264,6 +264,7 @@
                                         placeholder="AIによって強化されたプロンプトがここに表示されます..."
                                     ></textarea>
                                 </div>
+
                                 <div class="accordion" id="characterDescriptionAccordion">
                                     <div class="accordion-item">
                                         <h2 class="accordion-header" id="headingOne">
@@ -273,17 +274,20 @@
                                         </h2>
                                         <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#characterDescriptionAccordion">
                                             <div class="accordion-body row">
-
+                                                <a href="/my-plan" class="is-premium badge custom-gradient-bg  mb-3">{{translations.unlock_more_customization_fields}}</a>
+                                                
                                                 <!-- Age -->
                                                 <div class="col-auto mb-3">
                                                     <label for="age" class="form-label">{{translations.newCharacter.ageLabel}}:</label>
-                                                    <input type="number" class="form-control w-auto" id="age" name="age" min="0" max="120" placeholder="{{translations.newCharacter.agePlaceholder}}">
-                                                </div>
-
-                                                <!-- Height -->
-                                                <div class="col-auto mb-3">
-                                                    <label for="height" class="form-label">{{translations.newCharacter.heightLabel}}:</label>
-                                                    <input type="text" class="form-control" id="height" name="height" placeholder="{{translations.newCharacter.heightPlaceholder}}">
+                                                    <select class="form-select w-auto" id="age" name="age">
+                                                        <option value="" disabled selected>{{translations.newCharacter.agePlaceholder}}</option>
+                                                        <!-- Adult Age Range -->
+                                                        <option value="18-24">{{translations.newCharacter.ageYoungAdult}}</option>
+                                                        <option value="25-34">{{translations.newCharacter.ageAdultEarly}}</option>
+                                                        <option value="35-44">{{translations.newCharacter.ageAdultMid}}</option>
+                                                        <option value="45-54">{{translations.newCharacter.ageAdultLate}}</option>
+                                                        <option value="55+">{{translations.newCharacter.ageSenior}}</option>
+                                                    </select>
                                                 </div>
 
                                                 <!-- Build -->
@@ -415,69 +419,71 @@
                                         </h2>
                                         <div id="personalityCollapseOne" class="accordion-collapse collapse show" aria-labelledby="personalityHeadingOne" data-bs-parent="#personalityAccordion">
                                             <div class="accordion-body row">
-                                                    <!-- Personality Feature -->
-                                                    <div class="col-auto mb-3">
-                                                        <label for="personality" class="form-label">{{translations.newCharacter.personalityLabel}}:</label>
-                                                        <select class="form-select" id="personality" name="personality">
-                                                            <option value="optimistic">{{translations.newCharacter.optimistic}}</option>
-                                                            <option value="pessimistic">{{translations.newCharacter.pessimistic}}</option>
-                                                            <option value="realistic">{{translations.newCharacter.realistic}}</option>
-                                                            <option value="idealistic">{{translations.newCharacter.idealistic}}</option>
-                                                        </select>
-                                                    </div>
+                                                <a href="/my-plan" class="is-premium badge custom-gradient-bg  mb-3">{{translations.unlock_more_customization_fields}}</a>
+                                            
+                                                <!-- Personality Feature -->
+                                                <div class="col-auto mb-3">
+                                                    <label for="personality" class="form-label">{{translations.newCharacter.personalityLabel}}:</label>
+                                                    <select class="form-select" id="personality" name="personality">
+                                                        <option value="optimistic">{{translations.newCharacter.optimistic}}</option>
+                                                        <option value="pessimistic">{{translations.newCharacter.pessimistic}}</option>
+                                                        <option value="realistic">{{translations.newCharacter.realistic}}</option>
+                                                        <option value="idealistic">{{translations.newCharacter.idealistic}}</option>
+                                                    </select>
+                                                </div>
 
-                                                    <!-- Tone Feature -->
-                                                    <div class="col-auto mb-3">
-                                                        <label for="tone" class="form-label">{{translations.newCharacter.toneLabel}}:</label>
-                                                        <select class="form-select" id="tone" name="tone">
-                                                            <option value="friendly">{{translations.newCharacter.friendly}}</option>
-                                                            <option value="serious">{{translations.newCharacter.serious}}</option>
-                                                            <option value="sarcastic">{{translations.newCharacter.sarcastic}}</option>
-                                                            <option value="humorous">{{translations.newCharacter.humorous}}</option>
-                                                        </select>
-                                                    </div>
+                                                <!-- Tone Feature -->
+                                                <div class="col-auto mb-3">
+                                                    <label for="tone" class="form-label">{{translations.newCharacter.toneLabel}}:</label>
+                                                    <select class="form-select" id="tone" name="tone">
+                                                        <option value="friendly">{{translations.newCharacter.friendly}}</option>
+                                                        <option value="serious">{{translations.newCharacter.serious}}</option>
+                                                        <option value="sarcastic">{{translations.newCharacter.sarcastic}}</option>
+                                                        <option value="humorous">{{translations.newCharacter.humorous}}</option>
+                                                    </select>
+                                                </div>
 
-                                                    <!-- Morality -->
-                                                    <div class="col-auto mb-3">
-                                                        <label for="morality" class="form-label">{{translations.newCharacter.moralityLabel}}:</label>
-                                                        <select class="form-select" id="morality" name="morality">
-                                                            <option value="good">{{translations.newCharacter.good}}</option>
-                                                            <option value="neutral">{{translations.newCharacter.neutral}}</option>
-                                                            <option value="evil">{{translations.newCharacter.evil}}</option>
-                                                        </select>
-                                                    </div>
+                                                <!-- Morality -->
+                                                <div class="col-auto mb-3">
+                                                    <label for="morality" class="form-label">{{translations.newCharacter.moralityLabel}}:</label>
+                                                    <select class="form-select" id="morality" name="morality">
+                                                        <option value="good">{{translations.newCharacter.good}}</option>
+                                                        <option value="neutral">{{translations.newCharacter.neutral}}</option>
+                                                        <option value="evil">{{translations.newCharacter.evil}}</option>
+                                                    </select>
+                                                </div>
 
-                                                    <!-- Motivation -->
-                                                    <div class="col-12 col-sm-6 mb-3">
-                                                        <label for="motivation" class="form-label">{{translations.newCharacter.motivationLabel}}:</label>
-                                                        <textarea class="form-control" id="motivation" name="motivation" placeholder="{{translations.newCharacter.motivationPlaceholder}}"></textarea>
-                                                    </div>
+                                                <!-- Motivation -->
+                                                <div class="col-12 col-sm-6 mb-3">
+                                                    <label for="motivation" class="form-label">{{translations.newCharacter.motivationLabel}}:</label>
+                                                    <textarea class="form-control" id="motivation" name="motivation" placeholder="{{translations.newCharacter.motivationPlaceholder}}"></textarea>
+                                                </div>
 
-                                                    <!-- Strengths -->
-                                                    <div class="col-12 col-sm-6 mb-3">
-                                                        <label for="strengths" class="form-label">{{translations.newCharacter.strengthsLabel}}:</label>
-                                                        <textarea class="form-control" id="strengths" name="strengths" placeholder="{{translations.newCharacter.strengthsPlaceholder}}"></textarea>
-                                                    </div>
+                                                <!-- Strengths -->
+                                                <div class="col-12 col-sm-6 mb-3">
+                                                    <label for="strengths" class="form-label">{{translations.newCharacter.strengthsLabel}}:</label>
+                                                    <textarea class="form-control" id="strengths" name="strengths" placeholder="{{translations.newCharacter.strengthsPlaceholder}}"></textarea>
+                                                </div>
 
-                                                    <!-- Weaknesses -->
-                                                    <div class="col-12 col-sm-6 mb-3">
-                                                        <label for="weaknesses" class="form-label">{{translations.newCharacter.weaknessesLabel}}:</label>
-                                                        <textarea class="form-control" id="weaknesses" name="weaknesses" placeholder="{{translations.newCharacter.weaknessesPlaceholder}}"></textarea>
-                                                    </div>
+                                                <!-- Weaknesses -->
+                                                <div class="col-12 col-sm-6 mb-3">
+                                                    <label for="weaknesses" class="form-label">{{translations.newCharacter.weaknessesLabel}}:</label>
+                                                    <textarea class="form-control" id="weaknesses" name="weaknesses" placeholder="{{translations.newCharacter.weaknessesPlaceholder}}"></textarea>
+                                                </div>
 
-                                                    <!-- Fears -->
-                                                    <div class="col-12 col-sm-6 mb-3">
-                                                        <label for="fears" class="form-label">{{translations.newCharacter.fearsLabel}}:</label>
-                                                        <textarea class="form-control" id="fears" name="fears" placeholder="{{translations.newCharacter.fearsPlaceholder}}"></textarea>
-                                                    </div>
+                                                <!-- Fears -->
+                                                <div class="col-12 col-sm-6 mb-3">
+                                                    <label for="fears" class="form-label">{{translations.newCharacter.fearsLabel}}:</label>
+                                                    <textarea class="form-control" id="fears" name="fears" placeholder="{{translations.newCharacter.fearsPlaceholder}}"></textarea>
+                                                </div>
 
-                                                    <!-- Secrets -->
-                                                    <div class="col-12 col-sm-6 mb-3">
-                                                        <label for="secrets" class="form-label">{{translations.newCharacter.secretsLabel}}:</label>
-                                                        <textarea class="form-control" id="secrets" name="secrets" placeholder="{{translations.newCharacter.secretsPlaceholder}}"></textarea>
-                                                    </div>
+                                                <!-- Secrets -->
+                                                <div class="col-12 col-sm-6 mb-3">
+                                                    <label for="secrets" class="form-label">{{translations.newCharacter.secretsLabel}}:</label>
+                                                    <textarea class="form-control" id="secrets" name="secrets" placeholder="{{translations.newCharacter.secretsPlaceholder}}"></textarea>
+                                                </div>
                                         </div>
-                                        </div>
+                                    </div>
                                 </div>
                                 </div>
                             </div>
@@ -510,10 +516,7 @@
                             <!-- You can add an image uploader here if needed -->
                         </div>
                     </div>
-                </div>
-            <button type="button" id="submitForm" class="btn btn-secondary btn-large w-100">
-                {{translations.newCharacter.complete}}
-            </button>     
+                </div> 
         </div>
     </div>
 </div>
@@ -533,9 +536,12 @@
         });
         
         $(document).on('click', '.style-option', function () {
+            if($(this).hasClass('is-premium')){
+                showUpgradePopup('image-generation')
+                return
+            }
             $('.style-option').removeClass('selected');
             $(this).addClass('selected');
-
             updateFields($(this));
         });
 
@@ -553,6 +559,9 @@
 </script>
 <script>
     
+window.chatId = '{{chatId}}';
+window.isTemporaryChat = '{{isTemporaryChat}}'
+console.log({chatId,isTemporaryChat})
 $(document).ready(function() {
         
     $('.dropdown-toggle').each(function(e) {
@@ -560,13 +569,19 @@ $(document).ready(function() {
     });
 
     var count = 0
-    let chatId = '{{chatId}}';
-    const isTemporaryChat = '{{isTemporaryChat}}'
-    const user = {{{json user}}}
     const subscriptionStatus = user.subscriptionStatus == 'active'
     let isAutoGen = false
+
     if(subscriptionStatus){
         $('.is-premium').each(function(){$(this).toggleClass('d-none')})
+    }else{
+        function disableInputs(containerId) {
+            $(containerId).find('input, select, textarea').each(function () {
+                $(this).prop('disabled', true);
+            });
+        }
+        disableInputs('#characterDescriptionAccordion');
+        disableInputs('#personalityAccordion');
     }
     $('input, textarea').val('');
 
@@ -696,7 +711,6 @@ $(document).ready(function() {
         }
 
         function saveSelectedImage(imageUrl, characterPrompt, enhancedPrompt, modelId, imageStyle, imageModel, imageVersion) {
-            const chatId = '{{chatId}}'; // Replace with actual chat ID
 
             $.ajax({
                 url: '/novita/save-image',
@@ -870,9 +884,41 @@ $(document).ready(function() {
                 }
             }, POLLING_INTERVAL);
         }
+        function returnDetails(containerId) {
+            const details = {};
+            $(containerId).find('input, select, textarea').each(function () {
+                const element = $(this), name = element.attr('name');
+                if (name) {
+                    let value = element.is(':checkbox') ? element.is(':checked')
+                            : element.is(':radio') ? (element.is(':checked') ? element.val() : null)
+                            : element.val()?.trim();
+                    if (value !== null && value !== '') details[name] = value;
+                }
+            });
+            return details;
+        }
+
+        function returnCharacterDetails() {
+            return returnDetails('#characterDescriptionAccordion');
+        }
+
+        function returnCharacterPersonalityDetails() {
+            return returnDetails('#personalityAccordion');
+        }
+
+    async function checkChat(chatId) {
+        const response = await $.post('/check-chat', { chatId });
+        if (response.message === 'Chat exists') {
+            console.log('Chat exists:', response.chat);
+            return response.chat;
+        } else {
+            console.log('Chat created:', response.chatId);
+            return response.chatId;
+        }
+    }
 
     $('#generateButton').on('click', async function() {
-
+        checkChat(chatId)
         const isTemporary = user.isTemporary
         if(isTemporary){
             showRegistrationForm()
@@ -885,7 +931,8 @@ $(document).ready(function() {
             showNotification(translations.newCharacter.allFieldsRequired, 'error');
             return;
         }
-        generateCompletion();
+        generateCharacterPersonnality();
+        const characterDetails = returnCharacterDetails();
         const isEnhanceEnabled = $('#enableEnhancedPrompt').is(':checked');
 
         const $button = $(this);
@@ -907,12 +954,24 @@ $(document).ready(function() {
                 if($('#enhancedPrompt').val().trim() != ''){
                     enhanceResponse.enhancedPrompt = $('#enhancedPrompt').val()
                 }else{
+                    let customData = {
+                        prompt,
+                        gender,
+                        chatId,
+                    };
+
+                    if (subscriptionStatus) {
+                        customData.details = characterDetails;
+                    }
+
+                    customData = JSON.stringify(customData);
+
                     // プロンプトを強化するリクエスト
                     enhanceResponse = await $.ajax({
                         url: '/api/enhance-prompt',
                         method: 'POST',
                         contentType: 'application/json',
-                        data: JSON.stringify({ prompt, gender, chatId })
+                        data: customData
                     });
                 }
 
@@ -980,10 +1039,8 @@ $(document).ready(function() {
     });
 
 
-        async function generateCompletion(callback) {
-
-            const apiUrl = '/api/openai-chat-creation';
-        
+        async function generateCharacterPersonnality(callback) {
+            const personalityDetails = returnCharacterPersonalityDetails();        
             let chatId = '{{chatId}}';
             let name = $('#name').val()
             let prompt = $('#chatPurpose').val().trim() || $('#characterPrompt').val().trim();
@@ -992,12 +1049,24 @@ $(document).ready(function() {
             if(prompt.length == 0){
                 return
             } 
+            let customData = {
+                prompt,
+                name,
+                gender,
+                chatId,
+            };
+
+            if (subscriptionStatus) {
+                customData.details = personalityDetails;
+            }
+
+            customData = JSON.stringify(customData);
 
             $.ajax({
-                url: apiUrl,
+                url: '/api/openai-chat-creation',
                 method: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({ chatId, name, prompt, gender}),
+                data: customData,
                 success: function(response) {
                     console.log(response)
                     showInput();

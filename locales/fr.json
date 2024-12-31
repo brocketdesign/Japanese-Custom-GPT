@@ -1,5 +1,12 @@
 {
   "lang":"fr",
+  "check_premium_plan": "Consulter le plan premium",
+  "imageGeneration": {
+    "messageTitle": "L'accès à toutes les fonctionnalités de génération d'images nécessite Lamix Premium",
+    "messageText": "Pour profiter de tous les modèles et fonctionnalités de génération d'images, veuillez vous abonner à Lamix Premium."
+  },
+  "unlock_more_customization_fields": "Déverrouillez plus de champs de personnalisation avec Lamix Premium",
+  "over_18": "J'ai plus de 18 ans",
   "monthly":"/Mois",
   "yearly":"/An",
   "view_unlimited_plan": "Voir le plan illimité",
@@ -164,6 +171,11 @@
     "content": "Discutez avec de jolies filles et recevez des photos exclusives d'elles ! Choisissez simplement une fille qui attire votre attention et commencez à discuter immédiatement. Apprenez à mieux la connaître, partagez des moments, et profitez d'une conversation amusante et engageante. C'est aussi simple que de sélectionner et commencer votre discussion !"
   },
   "authMail": {
+    "nickName": {
+      "title": "Surnom",
+      "subTitle": "Le nom que vous voulez que le personnage utilise",
+      "placeholder": "Entrez votre surnom"
+    },
     "register": "S'inscrire",
     "login": "Connexion",
     "registerDescription": "Commencez à profiter de conversations avec des personnages IA avec un compte gratuit !",
@@ -251,6 +263,16 @@
       "next": "Suivant",
       "prev": "Précédent",
       "newCharacter": {
+        "ageYoungAdult": "18-24 Ans",
+        "ageAdultEarly": "25-34 Ans",
+        "ageAdultMid": "35-44 Ans",
+        "ageAdultLate": "45-54 Ans",
+        "ageSenior": "55+ Ans",
+        "ageYoungAdult": "18〜24歳",
+        "ageAdultEarly": "25〜34歳",
+        "ageAdultMid": "35〜44歳",
+        "ageAdultLate": "45〜54歳",
+        "ageSenior": "55歳以上",
         "detailed_personality": "Personnalité détaillée",
         "character_overview": "Aperçu du personnage",
         "characterPhysicalDescriptionTitle": "Description physique du personnage",

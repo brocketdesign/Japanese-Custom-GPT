@@ -78,6 +78,44 @@
             margin-right: 10px;
         }
     </style>
+
+
+    <!-- CSS for Styling and State Management -->
+    <style>
+        /* Ensure reusable class for the toggle button */
+        .toggle-btn {
+            min-width: 150px;
+            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+        }
+
+        /* When the checkbox is checked */
+        .form-check-input:checked + .toggle-btn {
+            background-color: #dc3545;
+            color: white;
+            border-color: #fff;
+        }
+
+        /* Add hover effect for better interaction */
+        .form-check-input:not(:checked) + .toggle-btn:hover {
+            background-color: rgba(13, 110, 253, 0.1);
+        }
+
+        /* Focus for accessibility */
+        .form-check-input:focus-visible + .toggle-btn {
+            outline: 2px dashed #dc3545;
+            outline-offset: 2px;
+        }
+
+        /* Toggle icon visibility based on state */
+        .form-check-input:not(:checked) + .toggle-btn .toggle-icon {
+            opacity: 0.5;
+        }
+        
+        .form-check-input:checked + .toggle-btn .toggle-icon {
+            opacity: 1;
+        }
+    </style>
+
 <section class="gradient-custom bg-dark" style="min-height:100vh">
   <div class="container py-5 h-100">
     <div class="row d-flex justify-content-center align-items-center h-100">
@@ -116,14 +154,42 @@
                           </div>
                           <div class="tab-pane fade {{#if register}}show active{{/if}}" id="register" role="tabpanel" aria-labelledby="register-tab">
                               <form id="register-form" class="mt-3">
-                                  <div data-mdb-input-init class="form-outline form-white mb-4">
-                                      <input type="email" id="register-email" name="email" class="form-control form-control-lg" required />
-                                      <label class="form-label" for="register-email">{{translations.authMail.email}}</label>
-                                  </div>
-                                  <div data-mdb-input-init class="form-outline form-white mb-4">
-                                      <input type="password" id="register-password" name="password" class="form-control form-control-lg" required />
-                                      <label class="form-label" for="register-password">{{translations.authMail.password}}</label>
-                                  </div>
+                                    <div data-mdb-input-init class="form-outline form-white mb-4">
+                                        <label for="nickname" class="form-label">
+                                            <span class="small" style="font-size:12px">
+                                            {{translations.authMail.nickName.title}}
+                                            </span>
+                                            <span class="small text-muted" style="font-size:10px">
+                                            {{translations.authMail.nickName.subTitle}}
+                                            </span>
+                                        </label>
+                                        <input
+                                            id="nickname"
+                                            name="nickname"
+                                            type="text"
+                                            class="form-control form-control-lg"
+                                            placeholder="{{translations.authMail.nickName.placeholder}}"
+                                            required
+                                        >
+                                    </div>
+
+                                    <div data-mdb-input-init class="form-outline form-white mb-4">
+                                        <input type="email" id="register-email" name="email" class="form-control form-control-lg" required />
+                                        <label class="form-label" for="register-email">{{translations.authMail.email}}</label>
+                                    </div>
+                                    <div data-mdb-input-init class="form-outline form-white mb-4">
+                                        <input type="password" id="register-password" name="password" class="form-control form-control-lg" required />
+                                        <label class="form-label" for="register-password">{{translations.authMail.password}}</label>
+                                    </div>
+                                    <div class="form-check text-start d-flex align-items-center position-relative mb-3 px-0">
+                                        <input class="form-check-input d-none" type="checkbox" value="" id="ageVerification" required>
+                                        <label class="btn btn-outline-danger d-flex align-items-center justify-content-center toggle-btn" 
+                                            for="ageVerification"
+                                            style="position: initial;">
+                                            <i class="bi bi-check-circle me-2 toggle-icon"></i>
+                                            {{translations.over_18}}
+                                        </label>
+                                    </div>
                                   <button type="submit" style="border-radius: 50px;" class="btn btn-light custom-gradient-bg btn-lg px-5 w-100">{{translations.authMail.register}}</button>
                               </form>
                               <section class="my-3">
@@ -185,14 +251,16 @@ $(document).ready(function() {
 
     $('#register-form').on('submit', function(event) {
         event.preventDefault();
+        const nickname = $('#nickname').val()
         const email = $('#register-email').val();
         const password = $('#register-password').val();
-
+        const ageVerification = $('#ageVerification').is(':checked');
+    
         $.ajax({
             url: '/user/register',
             method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({ email, password }),
+            data: JSON.stringify({ nickname, email, password, ageVerification }),
             success: function(response) {
                 window.location.href = response.redirect;
             },

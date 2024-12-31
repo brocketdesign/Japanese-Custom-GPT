@@ -1,5 +1,12 @@
 {
   "lang":"en",
+  "check_premium_plan": "Check out the premium plan",
+  "imageGeneration": {
+    "messageTitle": "Access to all image generation features requires Lamix Premium",
+    "messageText": "To enjoy all image generation models and features, please subscribe to Lamix Premium."
+  },
+  "unlock_more_customization_fields": "Unlock more customization fields with Lamix Premium",
+  "over_18": "I am over 18 years old",
   "view_unlimited_plan": "View Unlimited Plan",
   "monthly":"/Month",
   "yearly":"/Year",
@@ -165,6 +172,11 @@
     "content": "Chat with beautiful girls and receive exclusive photos from them! Simply choose a pretty girl that catches your eye and start chatting right away. Get to know her better, share moments, and enjoy a fun, engaging conversation. It's as easy as selecting and starting your chat!"
   },
   "authMail": {
+    "nickName": {
+      "title": "Nickname",
+      "subTitle": "The name you want the character to call you",
+      "placeholder": "Enter your nickname"
+    },
     "register": "Register",
     "login": "Login",
     "registerDescription": "Start enjoying conversations with AI characters with a free account!",
@@ -251,6 +263,11 @@
   "next":"Next",
   "prev":"Previous",
   "newCharacter": {
+    "ageYoungAdult": "18-24 Years",
+    "ageAdultEarly": "25-34 Years",
+    "ageAdultMid": "35-44 Years",
+    "ageAdultLate": "45-54 Years",
+    "ageSenior": "55+ Years",
     "detailed_personality": "Detailed Personality",
     "character_overview": "Character Overview",
     "imageStyleSelectionTitle": "Image Style Selection",

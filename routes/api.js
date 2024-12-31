@@ -90,6 +90,26 @@ async function routes(fastify, options) {
           return reply.status(403).send({ error: error.message });
         }
       });
+      fastify.post('/check-chat', async (request, reply) => {
+        const chatId = new fastify.mongo.ObjectId(request.body.chatId);
+        const userId = new fastify.mongo.ObjectId(request.user._id);
+        const chatsCollection = fastify.mongo.db.collection('chats');
+      
+        const existingChat = await chatsCollection.findOne({ _id: chatId });
+      
+        if (existingChat) {
+          return reply.send({ message: 'Chat exists', chat: existingChat });
+        }
+      
+        await chatsCollection.insertOne({
+          _id: chatId,
+          userId,
+          isTemporary: false,
+        });
+      
+        return reply.send({ message: 'Chat created', chatId });
+      });
+      
     const characterSchema = z.object({
         name: z.string(),
         short_intro: z.string(),
@@ -107,7 +127,14 @@ async function routes(fastify, options) {
         first_message: z.string(), // Adding "first_message" field
     });
 
-    function createSystemPayloadChatRule(prompt, gender, name, language) {
+    function createSystemPayloadChatRule(prompt, gender, name, details, language) {
+        let detailsString = '';
+        if (details && typeof details === 'object') {
+          // Example: "hairColor:blonde, eyeColor:blue, ..."
+          detailsString = Object.entries(details)
+            .map(([key, value]) => `${key}:${value}`)
+            .join(', ');
+        }
         return [
             {
                 role: "system",
@@ -118,12 +145,14 @@ async function routes(fastify, options) {
                 base_personality: Define the character's traits, preferences, and expression style. Include a short story describing their personality and background.
                 first_message: Provide the character's first conversational message that reflects their personality.
                 tags: A list of 5 tags to help find similar character.
-                Please respond entirely in ${language}.`
+                Please respond entirely in ${language}.`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim()
             },
             {
                 role: "user",
                 content: `The character's gender is ${gender}.
-                Please review the following information: ${prompt}`
+                Please review the following information: ${prompt}.
+                ${detailsString.trim() !== '' ? `Additional details: ${detailsString}.` : ''}
+                `.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim()
             },
         ];
     }
@@ -131,7 +160,7 @@ async function routes(fastify, options) {
     fastify.post('/api/openai-chat-creation', async (request, reply) => {
         try {
             // Validate request body
-            const { chatId, name, prompt, gender } = request.body;
+            const { chatId, name, prompt, gender, details } = request.body;
 
             if (!chatId || !prompt || !gender) {
                 return reply.status(400).send({ error: 'Invalid request body. "prompt" and "gender" are required.' });
@@ -146,7 +175,7 @@ async function routes(fastify, options) {
             const userId = user._id;
             const language = request.lang
             // Prepare payload
-            const systemPayload = createSystemPayloadChatRule(prompt, gender, name, language);
+            const systemPayload = createSystemPayloadChatRule(prompt, gender, name, details, language);
             // Interact with OpenAI API
             const openai = new OpenAI();
             const completionResponse = await openai.chat.completions.create({
@@ -160,7 +189,7 @@ async function routes(fastify, options) {
             }
 
             const chatData = JSON.parse(completionResponse.choices[0].message.content)
-            console.log(chatData)
+
             // Respond with the validated character data
             chatData.language = language
             chatData.gender = gender
@@ -177,7 +206,6 @@ async function routes(fastify, options) {
             }
 
 
-            
             const collectionChats = fastify.mongo.db.collection('chats');
             const updateResult = await collectionChats.updateOne(
                 { _id: new fastify.mongo.ObjectId(chatId) },
@@ -201,96 +229,114 @@ async function routes(fastify, options) {
         }
     });
     
-    // Define the schema for request validation
+    // Update the schema to include an optional `details` field
     const EnhancePromptSchema = z.object({
-        prompt: z.string().min(10, 'プロンプトは最低でも10文字必要です'),
-        gender: z.string(),
-        chatId: z.string().regex(/^[0-9a-fA-F]{24}$/, '無効なchatIdです') // Validates MongoDB ObjectId
+      prompt: z.string().min(10, 'プロンプトは最低でも10文字必要です'),
+      gender: z.string(),
+      chatId: z.string().regex(/^[0-9a-fA-F]{24}$/, '無効なchatIdです'),
+      details: z.any().optional(), // Accept any type or refine as needed (e.g., object)
     });
-
+    
     fastify.post('/api/enhance-prompt', async (request, reply) => {
-        try {
-            // Validate and parse the request body
-            const { prompt, gender, chatId } = EnhancePromptSchema.parse(request.body);
+      try {
+        // Validate and parse the request body
+        const { prompt, gender, chatId, details } = EnhancePromptSchema.parse(request.body);
 
-            // Create the system payload for OpenAI
-            const systemPayload = createSystemPayload(prompt,gender);
+        // Create the system payload for OpenAI
+        // Pass `details` if you want to incorporate it into the prompt generation
+        const systemPayload = createSystemPayload(prompt, gender, details);
+
+        // Initialize OpenAI
+        const openai = new OpenAI({
+          apiKey: process.env.OPENAI_API_KEY,
+        });
     
-            // Initialize OpenAI (ensure you have set your API key in environment variables)
-            const openai = new OpenAI({
-                apiKey: process.env.OPENAI_API_KEY
-            });
+        // Send the request to OpenAI
+        const completionResponse = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: systemPayload,
+          max_tokens: 600,
+          temperature: 0.7,
+          n: 1,
+          stop: null,
+        });
     
-            // Make the request to OpenAI
-            const completionResponse = await openai.chat.completions.create({
-                model: "gpt-4o-mini",
-                messages: systemPayload,
-                max_tokens: 600, // Adjust as needed
-                temperature: 0.7, // Adjust creativity
-                n: 1, // Number of responses
-                stop: null
-            });
+        const enhancedPrompt = completionResponse.choices[0].message.content.trim();
     
-            // Extract the enhanced prompt from the response
-            const enhancedPrompt = completionResponse.choices[0].message.content.trim();
-            console.log({enhancedPrompt})
-            // Access MongoDB and update the chat document
-            const db = fastify.mongo.db;
-            const collectionChats = db.collection('chats'); // Replace 'chats' with your actual collection name
+        // Access MongoDB and update the chat document
+        const db = fastify.mongo.db;
+        const collectionChats = db.collection('chats');
+        const chatObjectId = new fastify.mongo.ObjectId(chatId);
     
-            // Convert chatId string to ObjectId
-            const chatObjectId = new fastify.mongo.ObjectId(chatId);
-    
-            // Update the imageDescription field in the chat document
-            const updateResult = await collectionChats.updateOne(
-                { _id: chatObjectId },
-                { $set: { characterPrompt:prompt, imageDescription: enhancedPrompt } }
-            );
-    
-            // Check if the chat document was found and updated
-            if (updateResult.matchedCount === 0) {
-                return reply.status(404).send({ error: '指定されたチャットが見つかりませんでした。' });
-            }
-    
-            if (updateResult.modifiedCount === 0) {
-                fastify.log.warn(`Chat with ID ${chatId} was found but imageDescription was not updated.`);
-            }
-    
-            // Send the enhanced prompt back to the client
-            reply.send({ enhancedPrompt });
-        } catch (error) {
-            // Handle validation errors
-            if (error instanceof z.ZodError) {
-                return reply.status(400).send({ error: error.errors });
-            }
-    
-            // Log and handle other errors
-            fastify.log.error(error);
-            reply.status(500).send({ error: 'プロンプトの生成に失敗しました。' });
+        // Build update object dynamically
+        // Only store `details` if it exists
+        const updateFields = {
+          characterPrompt: prompt,
+          imageDescription: enhancedPrompt,
+        };
+        if (details) {
+          updateFields.details = details; // store details in the DB if provided
         }
+    
+        const updateResult = await collectionChats.updateOne(
+          { _id: chatObjectId },
+          { $set: updateFields }
+        );
+    
+        if (updateResult.matchedCount === 0) {
+          return reply.status(404).send({ error: '指定されたチャットが見つかりませんでした。' });
+        }
+    
+        if (updateResult.modifiedCount === 0) {
+          fastify.log.warn(`Chat with ID ${chatId} was found but fields were not updated.`);
+        }
+    
+        // Send the enhanced prompt back to the client
+        reply.send({ enhancedPrompt });
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return reply.status(400).send({ error: error.errors });
+        }
+        fastify.log.error(error);
+        reply.status(500).send({ error: 'プロンプトの生成に失敗しました。' });
+      }
     });
-
-    // Helper function to create the system payload
-    function createSystemPayload(prompt,gender) {
-        return [
-            {
-                role: "system",
-                content: `
-                    You are a Stable Diffusion image prompt generator specializing in beautiful woman character.
-                    Your task is to generate a concise image prompt (under 1000 characters) based on the latest character description provided.
-                    The prompt should be a comma-separated list of descriptive keywords in English that accurately depict the character's appearance, emotions, and style.
-                    Your response contains the character's age, skin color, hair color, hair legnth, eyes color, tone, face expression, body type, body characteristic, breast size,ass size, body curves, gender, facial features. 
-                    Respond in a single, descriptive line of plain text using keywords.\n
-                    DO NOT form complete sentences; use only relevant keywords.
-                    Ensure the prompt is optimized for generating high-quality upper body portraits.
-                    Respond EXCLUSIVELY IN ENGLISH!
-                `
-            },
-            {
-                role: "user",
-                content: `The character gender is :${gender}. Here is the character description: ${prompt}.\n Answer with the image description only. Do not include any comments. Respond EXCLUSIVELY IN ENGLISH!`
-            }
-        ];
+    
+    // Updated helper function to optionally use `details`
+    function createSystemPayload(prompt, gender, details) {
+      let detailsString = '';
+      if (details && typeof details === 'object') {
+        // Example: "hairColor:blonde, eyeColor:blue, ..."
+        detailsString = Object.entries(details)
+          .map(([key, value]) => `${key}:${value}`)
+          .join(', ');
+      }
+    
+      // Incorporate `detailsString` into the prompt if desired
+      return [
+        {
+          role: 'system',
+          content: `
+            You are a Stable Diffusion image prompt generator specializing in beautiful woman characters.
+            Your task is to generate a concise image prompt (under 1000 characters) based on the latest character description provided.
+            The prompt should be a comma-separated list of descriptive keywords in English that accurately depict the character's appearance, emotions, and style.
+            Your response contains the character's age, skin color, hair color, hair length, eyes color, tone, face expression, body type, body characteristic, breast size, ass size, body curves, gender, facial features. 
+            Respond in a single descriptive line of plain text using keywords.
+            DO NOT form complete sentences; use only relevant keywords.
+            Ensure the prompt is optimized for generating high-quality upper body portraits.
+            Respond EXCLUSIVELY IN ENGLISH!
+          `.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim(),
+        },
+        {
+          role: 'user',
+          content: `
+            The character's gender is: ${gender}.
+            Here is the character description: ${prompt}.
+            ${detailsString.trim() !== '' ? `Additional details: ${detailsString}.` : ''}
+            Answer with the image description only. Do not include any comments. Respond EXCLUSIVELY IN ENGLISH!
+          `.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim(),
+        },
+      ];
     }
     
     fastify.delete('/api/delete-chat/:id', async (request, reply) => {

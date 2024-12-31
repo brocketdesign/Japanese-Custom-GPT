@@ -33,7 +33,6 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             return { 
                 _id: user._id, 
                 lang: user.lang,
-                profileUrl: user.profileUrl,
                 subscriptionStatus: user.subscriptionStatus,
                 isTemporary: user.isTemporary
             }
@@ -54,9 +53,13 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     })
 
     fastify.decorate('user', async function (request, reply) {
-    const user = await fastify.getUser(request, reply)
-        return { _id:user._id, lang:user.lang, profileUrl:user.profileUrl,
-                subscriptionStatus:user.subscriptionStatus, isTemporary:user.isTemporary }
+        const user = await fastify.getUser(request, reply)
+        return { 
+            _id:user._id, 
+            lang:user.lang,
+            subscriptionStatus:user.subscriptionStatus, 
+            isTemporary:user.isTemporary 
+        }
     })
 
     // Hook pour setter lang et user

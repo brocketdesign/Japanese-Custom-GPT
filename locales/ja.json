@@ -1,5 +1,12 @@
 {
   "lang":"ja",
+  "check_premium_plan": "有料プランを確認する",
+  "imageGeneration": {
+    "messageTitle": "全ての画像生成機能へのアクセスにはLamix Premiumが必要です",
+    "messageText": "全ての画像生成モデルと機能を楽しむには、Lamix Premiumにご登録ください。"
+  },
+  "unlock_more_customization_fields": "Lamix Premiumでさらにカスタマイズフィールドをアンロック",
+  "over_18": "私は18歳以上です",
   "monthly": "/月",
   "yearly": "/年",
   "view_unlimited_plan": "無制限プランを見る",
@@ -165,6 +172,11 @@
     "content": "美しい女の子たちとチャットし、彼女から特別な写真を受け取ることができます。気になる可愛い女の子を選んで、すぐにチャットを始めましょう。彼女との会話を楽しみながら、素敵な時間を共有しましょう。選んでチャットを始めるだけで、とても簡単です！"
   },
   "authMail": {
+    "nickName": {
+      "title": "ニックネーム",
+      "subTitle": "キャラクターに呼んでほしい名前",
+      "placeholder": "ニックネームを入力"
+    },
     "register": "会員登録",
     "login": "ログイン",
     "registerDescription": "無料アカウント登録で、会話をもっと楽しもう!",

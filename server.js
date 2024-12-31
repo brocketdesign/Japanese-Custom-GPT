@@ -272,9 +272,10 @@ fastify.get('/chat/:chatId', { preHandler: [fastify.authenticate] }, async (requ
   const imageType = request.query.type || false;
   const translations = request.translations;
 
-  const subscriptionStatus = user.subscriptionStatus === 'active';
-  if (!subscriptionStatus) {
-    return reply.redirect('/my-plan');
+
+  const chats = await collectionChat.distinct('chatImageUrl', { userId:new fastify.mongo.ObjectId(request.user._id) });
+  if(chats.length === 0){
+    return reply.redirect('/chat/edit/');
   }
 
   const promptData = await db.collection('prompts').find({}).toArray();
@@ -301,6 +302,38 @@ fastify.get('/chat/:chatId', { preHandler: [fastify.authenticate] }, async (requ
   });
 });
 
+fastify.get('/chat/edit/:chatId', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+  try {
+    const db = fastify.mongo.db;
+
+    const usersCollection = db.collection('users');
+    const chatsCollection = db.collection('chats');
+
+    let user = request.user;
+    const userId = user._id;
+    user = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
+
+    let chatId = request.params.chatId || null;
+    const chatImage = request.query.chatImage;
+
+    const isTemporaryChat = !request.params.chatId;
+
+    const translations = request.translations;
+
+    return reply.renderWithGtm('add-chat.hbs', {
+      title: 'AIフレンズ',
+      translations,
+      mode: process.env.MODE,
+      apiurl: process.env.API_URL,
+      chatId,
+      isTemporaryChat,
+      user: request.user,
+    });
+  } catch (error) {
+    console.log(error);
+    return reply.status(500).send({ error: 'Failed to retrieve chatId' });
+  }
+});
 fastify.get('/post', async (request, reply) => {
   try {
     const db = fastify.mongo.db;
@@ -608,51 +641,7 @@ fastify.get('/discover', async (request, reply) => {
   });
 });
 
-fastify.get('/chat/edit/:chatId', { preHandler: [fastify.authenticate] }, async (request, reply) => {
-  try {
-    const db = fastify.mongo.db;
-    let user = request.user;
-    const userId = user._id;
-    user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
-    let chatId = request.params.chatId;
-    const chatImage = request.query.chatImage;
-
-    const usersCollection = db.collection('users');
-    const chatsCollection = db.collection('chats');
-
-    user = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
-    const isTemporaryChat = !request.params.chatId;
-
-    if (isTemporaryChat) {
-      chatId = new fastify.mongo.ObjectId()
-      await chatsCollection.insertOne({
-        userId: new fastify.mongo.ObjectId(userId),
-        _id: chatId,
-        isTemporary: true,
-      });
-    }
-
-    const prompts = fs.readFileSync('./models/girl_char.md', 'utf8');
-    const isAdmin = await checkUserAdmin(fastify, request.user._id);
-    const template = 'add-chat.hbs' //isAdmin ? 'add-chat-admin.hbs' : 'add-chat.hbs';
-    const translations = request.translations;
-
-    return reply.renderWithGtm(template, {
-      title: 'AIフレンズ',
-      translations,
-      mode: process.env.MODE,
-      apiurl: process.env.API_URL,
-      chatId,
-      isTemporaryChat,
-      user: request.user,
-      prompts,
-    });
-  } catch (error) {
-    console.log(error);
-    return reply.status(500).send({ error: 'Failed to retrieve chatId' });
-  }
-});
 
 fastify.get('/users', (request, reply) => {
   if (process.env.MODE === 'local') {

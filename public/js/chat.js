@@ -1434,11 +1434,18 @@ $(document).ready(async function() {
         const randomId = displayAndUpdateImageLoader();
 
         var id = $(this).data('id');
+        var nsfw = $(this).data('nsfw')
         var isNSFWChecked = $('#nsfwCheckbox').is(':checked');
+        const subscriptionStatus = user.subscriptionStatus == 'active'
 
         // Display the choice and cost in the user message
         const typeText = isNSFWChecked ? 'NSFW' : 'SFW';
         const prompt_title = $(this).find('.card-text').text()
+        console.log({subscriptionStatus, isNSFWChecked})
+        if(!subscriptionStatus && isNSFWChecked){
+            showUpgradePopup('image-generation')
+            return
+        }
 
         const userMessage = '[context] '+ window.translations['asked_for_new_image'];
         window.postMessage({ event: 'displayMessage', role:'user', message: userMessage, completion : false , image : false, messageId: false }, '*');

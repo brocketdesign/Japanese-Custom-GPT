@@ -170,7 +170,7 @@ async function routes(fastify, options) {
         try {
             // Validate request body
             const { chatId, name, prompt, gender, details } = request.body;
-console.log({ chatId, name, prompt, gender, details })
+
             if (!chatId || !prompt || !gender) {
                 return reply.status(400).send({ error: 'Invalid request body. "prompt" and "gender" are required.' });
             }
@@ -185,7 +185,7 @@ console.log({ chatId, name, prompt, gender, details })
             const language = request.lang
             // Prepare payload
             const systemPayload = createSystemPayloadChatRule(prompt, gender, name, details, language);
-console.log({systemPayload})
+
             // Interact with OpenAI API
             const openai = new OpenAI();
             const completionResponse = await openai.chat.completions.create({
@@ -330,7 +330,7 @@ console.log({systemPayload})
         {
           role: 'system',
           content: `
-            You are a Stable Diffusion image prompt generator specializing in beautiful woman characters.
+            You are a Stable Diffusion image prompt generator.
             Your task is to generate a concise image prompt (under 1000 characters) based on the latest character description provided.
             The prompt should be a comma-separated list of descriptive keywords in English that accurately depict the character's appearance, emotions, and style.
             Your response contains the character's age, skin color, hair color, hair length, eyes color, tone, face expression, body type, body characteristic, breast size, ass size, body curves, gender, facial features. 
@@ -1098,7 +1098,7 @@ console.log({systemPayload})
                 ...userMessages
             ]
           }
-          //console.log({messagesForCompletion})
+          console.log({messagesForCompletion})
           const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, aiModelChat, genImage)
           if(completion){
             const newAssitantMessage = { role: 'assistant', content: completion }
@@ -1609,7 +1609,7 @@ console.log({systemPayload})
           if (!userData) return reply.status(404).send({ error: 'User data not found' });
       
           const lastMessages = [...userData.messages]
-            .slice(-5)
+            .slice(-2)
             .filter(m =>  m.content && m.role != 'system' && m.name != 'master' && m.name != 'context' && !m.content.startsWith('['));
           if (lastMessages.length < 2) {
             console.log('Insufficient messages');

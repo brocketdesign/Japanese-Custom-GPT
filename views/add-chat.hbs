@@ -264,11 +264,11 @@
                                 <div class="accordion" id="characterDescriptionAccordion">
                                     <div class="accordion-item">
                                         <h2 class="accordion-header" id="headingOne">
-                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                                            {{translations.newCharacter.character_overview}}
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                            <input class="form-check-input" type="checkbox" value="" id="characterDescriptionCheck">{{translations.newCharacter.character_overview}}
                                         </button>
                                         </h2>
-                                        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#characterDescriptionAccordion">
+                                        <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#characterDescriptionAccordion">
                                             <div class="accordion-body row">
                                                 <a href="/my-plan" class="is-premium badge custom-gradient-bg  mb-3">{{translations.unlock_more_customization_fields}}</a>
                                                 
@@ -409,11 +409,11 @@
                                 <div class="accordion" id="personalityAccordion">
                                     <div class="accordion-item">
                                         <h2 class="accordion-header" id="personalityHeadingOne">
-                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#personalityCollapseOne" aria-expanded="true" aria-controls="personalityCollapseOne">
-                                            {{translations.newCharacter.detailed_personality}}
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#personalityCollapseOne" aria-expanded="true" aria-controls="personalityCollapseOne">
+                                            <input class="form-check-input" type="checkbox" value="" id="personalityCheck">{{translations.newCharacter.detailed_personality}}
                                         </button>
                                         </h2>
-                                        <div id="personalityCollapseOne" class="accordion-collapse collapse show" aria-labelledby="personalityHeadingOne" data-bs-parent="#personalityAccordion">
+                                        <div id="personalityCollapseOne" class="accordion-collapse collapse" aria-labelledby="personalityHeadingOne" data-bs-parent="#personalityAccordion">
                                             <div class="accordion-body row">
                                                 <a href="/my-plan" class="is-premium badge custom-gradient-bg  mb-3">{{translations.unlock_more_customization_fields}}</a>
                                             
@@ -522,6 +522,14 @@
 <link type="text/css" rel="stylesheet" href="/css/image-uploader.css">
 <script type="text/javascript" src="/js/image-uploader.js"></script>
 <script type="text/javascript" src="/js/stability.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#characterDescriptionAccordion, #personalityAccordion').on('show.bs.collapse hide.bs.collapse', function (e) {
+            const checkId = $(this).attr('id').replace('Accordion','Check')
+            $('#' + checkId).prop('checked', e.type === 'show');
+        });
+    });
+</script>
 
 <script>
     $(document).ready(function() {
@@ -541,17 +549,16 @@
             updateFields($(this));
         });
 
-        function updateFields(element) {
-            const fields = ['id', 'style', 'model', 'version'];
-            fields.forEach(field => {
-                $(`#${field === 'id' ? 'modelId' : 'image' + field.charAt(0).toUpperCase() + field.slice(1)}`).val(element.data(field));
-            });
-        }
-
-        updateFields($('.style-option.selected'));
+        updateFields($(document).find('.style-option.selected'));
 
     });
 
+    function updateFields(element) {
+        const fields = ['id', 'style', 'model', 'version'];
+        fields.forEach(field => {
+            $(`#${field === 'id' ? 'modelId' : 'image' + field.charAt(0).toUpperCase() + field.slice(1)}`).val(element.data(field));
+        });
+    }
 </script>
 <script>
     
@@ -930,12 +937,21 @@ $(document).ready(function() {
         }
         const prompt = characterPrompt = $('#characterPrompt').val().trim();
         const gender = $('#gender').val();
-        const modelId = $('#modelId').val();
+        let modelId = $('#modelId').val();
+
+        if(!modelId){
+            const initial_modelId = `{{modelId}}`
+            if(initial_modelId){
+                modelId = initial_modelId
+                $(document).find(`.style-option[data-id=${initial_modelId}]`).click();
+            }
+        }
 
         if (!modelId || !prompt || !gender || !chatId) {
             showNotification(translations.newCharacter.allFieldsRequired, 'error');
             return;
         }
+
         generateCharacterPersonnality();
         const characterDetails = returnCharacterDetails();
         const isEnhanceEnabled = $('#enableEnhancedPrompt').is(':checked');
@@ -965,7 +981,7 @@ $(document).ready(function() {
                         chatId,
                     };
 
-                    if (subscriptionStatus) {
+                    if (subscriptionStatus && $('#characterDescriptionCheck').is(':checked')) {
                         customData.details = characterDetails;
                     }
 
@@ -1060,7 +1076,7 @@ $(document).ready(function() {
                 chatId,
             };
 
-            if (subscriptionStatus) {
+            if (subscriptionStatus && $('#personalityCheck').is(':checked')) {
                 customData.details = personalityDetails;
             }
 
@@ -1077,7 +1093,6 @@ $(document).ready(function() {
                     $('#chatDescription').val(response.short_intro);
                     $('#chatStory').val(response.base_personality.story);
 
-                    updateButtonText()
 
                     if (typeof callback === 'function') {
                         callback();
@@ -1137,12 +1152,6 @@ $(document).ready(function() {
                     }
                 }
             ];
-        }
-
-
-        function updateButtonText() {
-            let chatName = $('#chatName').val().trim();
-            $('#sendForm span').html(`${chatName}とチャットする`);
         }
         
        

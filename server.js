@@ -326,6 +326,7 @@ fastify.get('/chat/edit/:chatId', { preHandler: [fastify.authenticate] }, async 
       mode: process.env.MODE,
       apiurl: process.env.API_URL,
       chatId,
+      modelId: request.query.modelId,
       isTemporaryChat,
       user: request.user,
     });

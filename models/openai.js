@@ -129,7 +129,10 @@ const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'me
 
         const parser = createParser((event) => {
             if (event.type === 'event' && event.data !== "[DONE]") {
-                const content = JSON.parse(event.data).choices[0].delta?.content || "";
+              const parsedData = JSON.parse(event.data);
+              const content = (parsedData.choices && parsedData.choices.length > 0) 
+                  ? (parsedData.choices[0].delta?.content || "") 
+                  : "";
                 for (let i = 0; i < content.length; i++) {
                     const char = content[i];
                     fullCompletion += char;

@@ -104,7 +104,7 @@ function showNavTabs(){
             const chatCount = parseInt(option.getAttribute('data-count'), 10) || 0;
 
             // Skip rendering if `#chat-discovery` exists and count is 0
-            if ( !modelId ) return;
+            if ( !modelId || (chatDiscovery && (chatCount == 0) ) ) return;
 
             const isActive = index === 0 ? 'active' : '';
 
@@ -114,8 +114,9 @@ function showNavTabs(){
                 : '';
 
             const tabItem = `
-                <li class="nav-item position-relative" role="presentation">
-                    <button class="nav-link ${isActive}" id="${style}-${model}-tab" data-style="${style}" data-model="${model}" data-version="${version}" type="button" role="tab">
+                <li class="nav-item position-relative" role="presentation" 
+                    ${chatCount == 0 ? `onclick="window.location='/chat/edit/?modelId=${modelId}'"` : ''}>
+                    <button class="nav-link ${isActive}" id="${modelId}-tab" data-style="${style}" data-id="${modelId}" data-model="${model}" data-version="${version}" type="button" role="tab">
                         <img src="${imgSrc}" alt="${altText}" class="tab-thumb thumb-option rounded me-2">
                         <span class="d-none">${altText}</span>
                     </button>
@@ -124,31 +125,42 @@ function showNavTabs(){
             `;
             tabNav.innerHTML += tabItem;
         });
+        if(chatDiscovery){
+            tabNav.innerHTML += `
+            <li class="nav-item position-relative bg-light rounded" role="presentation" onclick="window.location='/chat/edit/'">
+                <button class="nav-link" type="button" role="tab">
+                    <i class="bi bi-plus-lg thumb-option d-flex justify-content-center align-items-center" style="font-size: 31px;"></i>
+                </button>
+            </li>
+            `
+        }
 
-        //$('#imageStyleSelection').remove();
+
+        $('#imageStyleSelection').remove();
     }
 
     // Handle tab clicks
-    $('#imageStyleTabs button').on('click', function () {
-        $('#chat-gallery').empty()
+    $(document).find('#imageStyleTabs button').on('click', function () {
+        $('#chat-gallery').fadeOut().empty()
         $('#imageStyleTabs button').removeClass('active');
         $(this).addClass('active');
 
-        var style = $(this).data('style');
-        var model = $(this).data('model');
-        localStorage.setItem('chat-nav',`${style}-${model}`)
-        displayPeopleChat(1, {imageStyle:style,imageModel:model,userId:user._id});
+        var modelId = $(this).data('id');
+        const model =  $(this).data('model');
+        const style =  $(this).data('style');
+
+        if(modelId){
+            localStorage.setItem('chat-nav',`${modelId}`)
+            displayPeopleChat(1, {imageStyle:style, imageModel:model, userId:user._id});
+        }
     });
 
-    const chatNav = localStorage.getItem('chat-nav');
+    const chatNav_modelId = localStorage.getItem('chat-nav');
 
-    if (chatNav) {
-        const [style, model] = chatNav.split('-');
-        if (style && model) {
-                $(`#imageStyleTabs`).find(`#${style}-${model}-tab`).click()
-        } 
+    if (chatNav_modelId) {
+        $(document).find(`#imageStyleTabs`).find(`#${chatNav_modelId}-tab`).click()
     } else {
-        $(`#imageStyleTabs`).find(`.nav-link`).eq(0).click()
+        $(document).find(`#imageStyleTabs`).find(`.nav-link`).eq(0).click();
     }
 }
 window.updatePlanStatus = function(user){

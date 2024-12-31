@@ -1889,10 +1889,15 @@ function displayChatList(reset, userId) {
     currentPage = 1;
     chatListData = [];
     $('#chat-list').empty();
+    $('#chat-list').append(`
+        <div id="chat-list-spinner" class="spinner-border text-secondary" role="status" style="position: absolute; top: 45%; left: 45%; display: none;">
+            <span class="visually-hidden">Loading...</span>
+        </div>`)
   }
   fetchChatListData(currentPage);
 
   function fetchChatListData(page) {
+    console.log({page})
     if (page === 1) $('#chat-list-spinner').show();
     $.ajax({
       type: 'GET',

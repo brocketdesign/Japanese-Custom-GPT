@@ -59,8 +59,11 @@ window.loadTranslations = async function (lang) {
 }
 
 window.fetchAndAppendModels = function() {
+    const chatDiscovery = document.getElementById('chat-discovery');
     const subscriptionStatus = user.subscriptionStatus == 'active'
-    $.get('/api/models', function(response) {
+    let apiUrl = '/api/models'
+    if(chatDiscovery){ apiUrl += '?userId='+user._id }
+    $.get(apiUrl, function(response) {
         if (response.success) {
         //$('#imageStyleSelection').empty(); // Clear existing content
         response.models.forEach(model => {

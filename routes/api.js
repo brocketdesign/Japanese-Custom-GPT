@@ -1008,7 +1008,9 @@ async function routes(fastify, options) {
 
         // Prepare basic user details
         const userDetails = !user.isTemporary 
-        ? `Here is who I am : Call me ${user.nickname}. I am a ${user.gender}、my birthday is ${user.birthDate.year}/${user.birthDate.month}/${user.birthDate.day}. ${user.bio ? user.bio : ''}`
+        ? `Here is who I am : Call me ${user.nickname}. I am a ${user.gender}${user.birthDate 
+            ? `, my birthday is ${user.birthDate.year}/${user.birthDate.month}/${user.birthDate.day}` 
+            : ''}. ${user.bio ? user.bio : ''}`
         : '';
     
         return `
@@ -2530,25 +2532,29 @@ async function routes(fastify, options) {
         });
 
         fastify.get('/api/models', async (req, reply) => {
-            const { id } = req.query;
-        
+            const { id, userId } = req.query;
+        //if userId is provided, search for the chats of new ObjectId(userId) only 
             try {
                 const db = fastify.mongo.db;
                 const modelsCollection = db.collection('myModels');
                 const free_models = ['544806', '64558'];
         
                 // Build query for models
-                const query = id ? { model: id } : {};
+                let query = id ? { model: id } : {};
+                const userIdMatch = userId ? [{ $match: { userId: new ObjectId(userId) } }] : [];
 
                 // Fetch models with chat count, add premium field, and sort by chatCount
                 const models = await modelsCollection.aggregate([
                     { $match: query },
                     {
                         $lookup: {
-                            from: 'chats',
-                            localField: 'model', // Field in `modelsCollection`
-                            foreignField: 'imageModel', // Corresponding field in `chatsCollection`
-                            as: 'chats'
+                          from: 'chats',
+                          let: { model: '$model' },
+                          pipeline: [
+                            { $match: { $expr: { $eq: ['$imageModel', '$$model'] } } },
+                            ...userIdMatch
+                          ],
+                          as: 'chats'
                         }
                     },
                     {

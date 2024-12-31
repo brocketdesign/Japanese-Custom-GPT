@@ -1441,7 +1441,7 @@ $(document).ready(async function() {
         // Display the choice and cost in the user message
         const typeText = isNSFWChecked ? 'NSFW' : 'SFW';
         const prompt_title = $(this).find('.card-text').text()
-        console.log({subscriptionStatus, isNSFWChecked})
+
         if(!subscriptionStatus && isNSFWChecked){
             showUpgradePopup('image-generation')
             return

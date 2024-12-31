@@ -141,7 +141,7 @@ function showNavTabs(){
 
     // Handle tab clicks
     $(document).find('#imageStyleTabs button').on('click', function () {
-        $('#chat-gallery').fadeOut().empty()
+        $('#chat-gallery .chat-card-container').fadeOut()
         $('#imageStyleTabs button').removeClass('active');
         $(this).addClass('active');
 

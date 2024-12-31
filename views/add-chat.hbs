@@ -982,7 +982,7 @@ $(document).ready(function() {
                     };
 
                     if (subscriptionStatus && $('#characterDescriptionCheck').is(':checked')) {
-                        customData.details = characterDetails;
+                        customData.details_description = characterDetails;
                     }
 
                     customData = JSON.stringify(customData);
@@ -1077,7 +1077,7 @@ $(document).ready(function() {
             };
 
             if (subscriptionStatus && $('#personalityCheck').is(':checked')) {
-                customData.details = personalityDetails;
+                customData.details_personality = personalityDetails;
             }
 
             customData = JSON.stringify(customData);

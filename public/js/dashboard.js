@@ -966,18 +966,22 @@ function generateUserChatsPagination(userId, currentPage, totalPages) {
     $('#user-chat-pagination-controls').html(paginationHtml);
 }
 
-
-window.displayPeopleChat = async function (page = 1, option, preLoadedData) {
+window.preLoadedData = {}
+window.displayPeopleChat = async function (page = 1, option) {
     const currentUserId = user._id;
     const {imageStyle, imageModel, query = false, userId = false} = option
+    const searchId =`${imageStyle}-${imageModel}-${query}`
     try {
-        let data
-        if(preLoadedData && preLoadedData.length > 0){
-            data = preLoadedData
-        }else{
-            const response = await fetch(`/api/chats?page=${page}&style=${imageStyle}&model=${imageModel}&q=${query}&userId=${userId}`);
-            data = await response.json();
+
+        if(preLoadedData && preLoadedData[searchId] <= page){
+            $(`#chat-gallery .chat-card-container[data-id="${searchId}"]`).fadeIn()
+            return
         }
+        
+        const response = await fetch(`/api/chats?page=${page}&style=${imageStyle}&model=${imageModel}&q=${query}&userId=${userId}`);
+        const data = await response.json();
+
+        preLoadedData[searchId] = page
         let recentChats = data.recent || [];
         let htmlContent = '';
 
@@ -1005,7 +1009,7 @@ window.displayPeopleChat = async function (page = 1, option, preLoadedData) {
                 
                 // Render chat
                 htmlContent += `
-                <div class="col-12 col-sm-4 col-lg-3 mb-2">
+                <div class="chat-card-container col-12 col-sm-4 col-lg-3 mb-2" data-id="${searchId}">
                     <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 redirectToChat" style="cursor:pointer;" data-id="${chat._id}" data-image="${chat.chatImageUrl}">
                         <div style="background-image:url('${chat.chatImageUrl || '/img/logo.webp'}')" class="card-img-top girls_avatar position-relative" alt="${chat.name}">
                             <div id="spinner-${chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>

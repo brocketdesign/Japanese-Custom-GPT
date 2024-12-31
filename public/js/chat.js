@@ -1875,12 +1875,16 @@ window.getUserChatHistory = async function(chatId) {
     }
     return null;
 }
+var initChatList = false
 var currentPage = 1;
 var chatsPerPage = 10;
 var chatListData = [];
 
 $(document).on('click','#menu-chat, .menu-chat-sm',function(){
-  displayChatList(true, userId);
+    if(!initChatList){
+        initChatList = true
+        displayChatList(null, userId);
+    }
 });
 
 function displayChatList(reset, userId) {
@@ -1894,10 +1898,10 @@ function displayChatList(reset, userId) {
             <span class="visually-hidden">Loading...</span>
         </div>`)
   }
+
   fetchChatListData(currentPage);
 
   function fetchChatListData(page) {
-    console.log({page})
     if (page === 1) $('#chat-list-spinner').show();
     $.ajax({
       type: 'GET',
@@ -1932,7 +1936,7 @@ function displayChatList(reset, userId) {
       $('#chat-list').append(
         '<button id="show-more-chats" class="btn shadow-0 w-100"><i class="bi bi-three-dots"></i></button>'
       );
-      $('#show-more-chats').on('click', function() {
+      $('#show-more-chats').off().on('click', function() {
         $(this).hide();
         $('#chat-list-spinner').show();
         currentPage++;

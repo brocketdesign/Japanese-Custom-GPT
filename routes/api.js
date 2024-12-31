@@ -169,7 +169,7 @@ async function routes(fastify, options) {
     fastify.post('/api/openai-chat-creation', async (request, reply) => {
         try {
             // Validate request body
-            const { chatId, name, prompt, gender, details } = request.body;
+            const { chatId, name, prompt, gender, details_personality } = request.body;
 
             if (!chatId || !prompt || !gender) {
                 return reply.status(400).send({ error: 'Invalid request body. "prompt" and "gender" are required.' });
@@ -184,7 +184,7 @@ async function routes(fastify, options) {
             const userId = user._id;
             const language = request.lang
             // Prepare payload
-            const systemPayload = createSystemPayloadChatRule(prompt, gender, name, details, language);
+            const systemPayload = createSystemPayloadChatRule(prompt, gender, name, details_personality, language);
 
             // Interact with OpenAI API
             const openai = new OpenAI();
@@ -215,8 +215,8 @@ async function routes(fastify, options) {
                 );
             }
 
-            if (details) {
-                chatData.details = details; // store details in the DB if provided
+            if (details_personality) {
+                chatData.details_personality = details_personality; // store details in the DB if provided
             }
 
             const collectionChats = fastify.mongo.db.collection('chats');
@@ -242,22 +242,14 @@ async function routes(fastify, options) {
         }
     });
     
-    // Update the schema to include an optional `details` field
-    const EnhancePromptSchema = z.object({
-      prompt: z.string().min(10, 'プロンプトは最低でも10文字必要です'),
-      gender: z.string(),
-      chatId: z.string().regex(/^[0-9a-fA-F]{24}$/, '無効なchatIdです'),
-      details: z.any().optional(), // Accept any type or refine as needed (e.g., object)
-    });
-    
     fastify.post('/api/enhance-prompt', async (request, reply) => {
       try {
         // Validate and parse the request body
-        const { prompt, gender, chatId, details } = EnhancePromptSchema.parse(request.body);
+        const { prompt, gender, chatId, details_description } = request.body;
 
         // Create the system payload for OpenAI
         // Pass `details` if you want to incorporate it into the prompt generation
-        const systemPayload = createSystemPayload(prompt, gender, details);
+        const systemPayload = createSystemPayload(prompt, gender, details_description);
 
         // Initialize OpenAI
         const openai = new OpenAI({
@@ -287,8 +279,8 @@ async function routes(fastify, options) {
           characterPrompt: prompt,
           imageDescription: enhancedPrompt,
         };
-        if (details) {
-          updateFields.details = details; // store details in the DB if provided
+        if (details_description) {
+          updateFields.details_description = details_description; // store details in the DB if provided
         }
     
         const updateResult = await collectionChats.updateOne(
@@ -1098,7 +1090,7 @@ async function routes(fastify, options) {
                 ...userMessages
             ]
           }
-          console.log({messagesForCompletion})
+          //console.log({messagesForCompletion})
           const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, aiModelChat, genImage)
           if(completion){
             const newAssitantMessage = { role: 'assistant', content: completion }
@@ -1836,15 +1828,14 @@ async function routes(fastify, options) {
     
             // Check if the description for the image already exists in the database
             const chatData = await collection.findOne({ _id: objectId });
-            
-            const imageDescription = chatData?.imageDescription || null;
-            const characterPrompt = chatData?.characterPrompt || chatData?.enhancedPrompt || null;
+            console.log(chatData)
+            const characterPrompt = chatData?.enhancedPrompt || chatData?.characterPrompt || null;
             const characterDescription = characterPrompt || imageDescription
     
             if (!characterDescription || characterDescription.includes('sorry')) {
                 return reply.send(false);
             }
-    
+            console.log({characterDescription})
             return reply.send({ imageDescription:characterDescription });
         } catch (error) {
             reply.status(500).send({ error: 'Internal Server Error', details: error.message });
@@ -2029,7 +2020,7 @@ async function routes(fastify, options) {
           if (recentCursor.length < limit) {
             totalPages = page;
           }
-      
+
           reply.send({
             recent: recentWithUser,
             page,

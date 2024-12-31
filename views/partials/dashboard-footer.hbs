@@ -66,7 +66,7 @@ window.fetchAndAppendModels = function() {
         response.models.forEach(model => {
             const modelElement = `
             <img src="${model.image}" alt="${model.style}" 
-                class="${subscriptionStatus ? '' : 'is-premium'} style-option rounded me-2" 
+                class="${subscriptionStatus || !model.premium ? '' : 'is-premium'} style-option rounded me-2" 
                 data-id="${model.modelId}" 
                 data-style="${model.style}" 
                 data-model="${model.model}" 
@@ -104,7 +104,7 @@ function showNavTabs(){
             const chatCount = parseInt(option.getAttribute('data-count'), 10) || 0;
 
             // Skip rendering if `#chat-discovery` exists and count is 0
-            if (chatDiscovery && modelId && chatCount === 0) return;
+            if ( !modelId ) return;
 
             const isActive = index === 0 ? 'active' : '';
 
@@ -125,7 +125,7 @@ function showNavTabs(){
             tabNav.innerHTML += tabItem;
         });
 
-        $('#imageStyleSelection').remove();
+        //$('#imageStyleSelection').remove();
     }
 
     // Handle tab clicks

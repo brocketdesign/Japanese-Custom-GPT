@@ -205,15 +205,11 @@
                                     {{translations.newCharacter.imageStyleSelectionDescription}}
                                 </p>
                                 <label class="form-label">{{translations.newCharacter.image_style}}</label>
-                                <div id="imageStyleSelection" class="d-flex flex-row flex-nowrap overflow-auto mb-4">
-                                    <img src="/img/anime.jpeg" alt="アニメ" class="style-option rounded me-2 selected" data-style="anime" data-model="novaAnimeXL_ponyV20_461138" data-version="sdxl">
-                                    <img src="/img/real.jpeg" alt="リアリスティック" class="style-option me-2 rounded" data-style="realistic" data-model="kanpiromix_v20" data-version="sd">
-                                    <img src="/img/real-2.jpeg" alt="リアリスティック" class="style-option me-2 rounded" data-style="realistic" data-model="ponyRealism_v22MainVAE_822476" data-version="sdxl">
-                                </div>
-                                <input type="hidden" id="modelId" name="modelId" value="">
-                                <input type="hidden" id="imageStyle" name="imageStyle" value="anime">
-                                <input type="hidden" id="imageModel" name="imageModel" value="novaAnimeXL_ponyV20_461138">
-                                <input type="hidden" id="imageVersion" name="imageVersion" value="sdxl">
+                                <div id="imageStyleSelection" class="d-flex flex-row flex-nowrap overflow-auto mb-4"></div>
+                                <input type="hidden" id="modelId" name="modelId" required>
+                                <input type="hidden" id="imageStyle" name="imageStyle" required>
+                                <input type="hidden" id="imageModel" name="imageModel" required>
+                                <input type="hidden" id="imageVersion" name="imageVersion" required>
                             </div>
 
                             <div class="row justify-content-between character-generator bg-light border py-2 mb-3 mx-0">
@@ -561,7 +557,7 @@
     
 window.chatId = '{{chatId}}';
 window.isTemporaryChat = '{{isTemporaryChat}}'
-console.log({chatId,isTemporaryChat})
+
 $(document).ready(function() {
         
     $('.dropdown-toggle').each(function(e) {
@@ -906,28 +902,37 @@ $(document).ready(function() {
             return returnDetails('#personalityAccordion');
         }
 
-    async function checkChat(chatId) {
-        const response = await $.post('/check-chat', { chatId });
-        if (response.message === 'Chat exists') {
-            console.log('Chat exists:', response.chat);
-            return response.chat;
-        } else {
-            console.log('Chat created:', response.chatId);
-            return response.chatId;
+        async function checkChat(chatId) {
+            try {
+                const response = await $.post('/api/check-chat', { chatId });
+                if (response.message === 'Chat exists') {
+                    console.log('Chat exists:', response.chat);
+                    return false;
+                } else {
+                    console.log('Chat created:', response.chatId);
+                    return response.chatId;
+                }
+            } catch (error) {
+                console.error('Request failed:', error);
+                throw error;
+            }
         }
-    }
 
     $('#generateButton').on('click', async function() {
-        checkChat(chatId)
+        let newchatId = await checkChat(chatId)
+        if(newchatId){
+            window.chatId = newchatId
+        }
         const isTemporary = user.isTemporary
         if(isTemporary){
             showRegistrationForm()
             return
         }
         const prompt = characterPrompt = $('#characterPrompt').val().trim();
-        const gender = $('#gender').val()
+        const gender = $('#gender').val();
+        const modelId = $('#modelId').val();
 
-        if (!prompt || !gender || !chatId) {
+        if (!modelId || !prompt || !gender || !chatId) {
             showNotification(translations.newCharacter.allFieldsRequired, 'error');
             return;
         }
@@ -1041,7 +1046,6 @@ $(document).ready(function() {
 
         async function generateCharacterPersonnality(callback) {
             const personalityDetails = returnCharacterPersonalityDetails();        
-            let chatId = '{{chatId}}';
             let name = $('#name').val()
             let prompt = $('#chatPurpose').val().trim() || $('#characterPrompt').val().trim();
             let gender = $('#gender').val()
@@ -1068,8 +1072,6 @@ $(document).ready(function() {
                 contentType: 'application/json',
                 data: customData,
                 success: function(response) {
-                    console.log(response)
-                    showInput();
 
                     $('#chatName').val(response.name);
                     $('#chatDescription').val(response.short_intro);
@@ -1123,15 +1125,6 @@ $(document).ready(function() {
                 }
                 
             });
-        }
-
-        function showInput(){
-            $('#markdownContainer').show()
-            $('#chatDescription').show()
-            $('#chatStory').show()
-            $('#chatName').show()
-            resizeTextarea($('#chatDescription')[0]);
-            resizeTextarea($('#chatStory')[0]);
         }
 
         // Helper function to create the message payload

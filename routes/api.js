@@ -90,25 +90,34 @@ async function routes(fastify, options) {
           return reply.status(403).send({ error: error.message });
         }
       });
-      fastify.post('/check-chat', async (request, reply) => {
-        const chatId = new fastify.mongo.ObjectId(request.body.chatId);
-        const userId = new fastify.mongo.ObjectId(request.user._id);
-        const chatsCollection = fastify.mongo.db.collection('chats');
-      
-        const existingChat = await chatsCollection.findOne({ _id: chatId });
-      
-        if (existingChat) {
-          return reply.send({ message: 'Chat exists', chat: existingChat });
+
+      fastify.post('/api/check-chat', async (request, reply) => {
+        try {
+          let chatId = request.body.chatId 
+            ? new fastify.mongo.ObjectId(request.body.chatId) 
+            : new fastify.mongo.ObjectId(); // Generate a new chatId if undefined
+          const userId = new fastify.mongo.ObjectId(request.user._id);
+          const chatsCollection = fastify.mongo.db.collection('chats');
+          
+          const existingChat = await chatsCollection.findOne({ _id: chatId });
+          
+          if (existingChat) {
+            return reply.code(200).send({ message: 'Chat exists', chat: existingChat });
+          }
+          
+          await chatsCollection.insertOne({
+            _id: chatId,
+            userId,
+            isTemporary: false,
+          });
+          
+          return reply.code(201).send({ message: 'Chat created', chatId });
+        } catch (error) {
+          console.error('Error in /api/check-chat:', error);
+          return reply.code(500).send({ message: 'Internal Server Error', error: error.message });
         }
-      
-        await chatsCollection.insertOne({
-          _id: chatId,
-          userId,
-          isTemporary: false,
-        });
-      
-        return reply.send({ message: 'Chat created', chatId });
       });
+      
       
     const characterSchema = z.object({
         name: z.string(),
@@ -161,7 +170,7 @@ async function routes(fastify, options) {
         try {
             // Validate request body
             const { chatId, name, prompt, gender, details } = request.body;
-
+console.log({ chatId, name, prompt, gender, details })
             if (!chatId || !prompt || !gender) {
                 return reply.status(400).send({ error: 'Invalid request body. "prompt" and "gender" are required.' });
             }
@@ -176,6 +185,7 @@ async function routes(fastify, options) {
             const language = request.lang
             // Prepare payload
             const systemPayload = createSystemPayloadChatRule(prompt, gender, name, details, language);
+console.log({systemPayload})
             // Interact with OpenAI API
             const openai = new OpenAI();
             const completionResponse = await openai.chat.completions.create({
@@ -205,6 +215,9 @@ async function routes(fastify, options) {
                 );
             }
 
+            if (details) {
+                chatData.details = details; // store details in the DB if provided
+            }
 
             const collectionChats = fastify.mongo.db.collection('chats');
             const updateResult = await collectionChats.updateOne(
@@ -2531,12 +2544,12 @@ async function routes(fastify, options) {
             try {
                 const db = fastify.mongo.db;
                 const modelsCollection = db.collection('myModels');
-                const chatsCollection = db.collection('chats');
+                const free_models = [544806, 64558];
         
                 // Build query for models
                 const query = id ? { model: id } : {};
         
-                // Fetch models with chat count
+                // Fetch models with chat count, add premium field, and sort by chatCount
                 const models = await modelsCollection.aggregate([
                     { $match: query },
                     {
@@ -2549,8 +2562,12 @@ async function routes(fastify, options) {
                     },
                     {
                         $addFields: {
-                            chatCount: { $size: '$chats' } // Calculate the number of chats
+                            chatCount: { $size: '$chats' }, // Calculate the number of chats
+                            premium: { $not: { $in: ['$model', free_models] } } // Add premium field
                         }
+                    },
+                    {
+                        $sort: { chatCount: -1 } // Sort by chatCount in descending order
                     },
                     {
                         $project: {
@@ -2558,7 +2575,7 @@ async function routes(fastify, options) {
                         }
                     }
                 ]).toArray();
-
+        
                 return reply.send({ success: true, models });
             } catch (error) {
                 console.error(error);
@@ -2566,8 +2583,6 @@ async function routes(fastify, options) {
             }
         });
         
-          
-          
 }
 
 module.exports = routes;

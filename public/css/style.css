@@ -3,11 +3,6 @@ body{
   overflow-x: hidden !important;
 }
 
-.container, .row {
-  max-width: 100%;
-  overflow-x: auto;
-}
-
 .isAdmin{
   display: none;
 }

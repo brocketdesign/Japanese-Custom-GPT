@@ -1182,7 +1182,7 @@ window.resultImageSearch = async function (page = 1,query,style = 'anime') {
                             <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
                         </a>
                         <div class="d-none card-body p-2 d-flex align-items-center justify-content-between">
-                            <a onclick="scrollToPlan()" data-href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
+                            <a onclick="scrollToPlan()" data-href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> ${translations.startChat}</a>
                             <button class="btn btn-light image-nsfw-toggle ${!isAdmin?'d-none':''}" data-id="${item._id}">
                                 <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill':'bi-eye-fill'}"></i> 
                             </button>
@@ -1224,14 +1224,6 @@ window.loadAllChatImages = async function (page = 1) {
             chatGalleryHtml += `
                 <div class="col-12 col-md-3 col-lg-2 mb-2">
                     <div class="card shadow-0">
-                        <div class="d-flex align-items-center p-2">
-                            <a href="/character/${item.chatId}?imageId=${item._id}">
-                                <img src="${item?.imageUrl}" alt="${item?.prompt}" class="rounded-circle me-2" width="40" height="40">
-                            </a>
-                            <a href="/character/${item.chatId}?imageId=${item._id}" class="text-decoration-none text-dark">
-                                <strong>${item?.chatName}</strong>
-                            </a>
-                        </div>
                         ${isBlur ? `
                         <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item._id}','gallery',this)`}>
                             <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" >
@@ -1240,8 +1232,8 @@ window.loadAllChatImages = async function (page = 1) {
                         <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
                             <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
                         </a>
-                        <div class="d-none card-body p-2 d-flex align-items-center justify-content-between">
-                            <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
+                        <div class="${!isAdmin?'d-none':''} card-body p-2 d-flex align-items-center justify-content-between">
+                            <a href="/chat/${item.chatId}" class="btn btn-outline-secondary col-12"> <i class="bi bi-chat-dots me-2"></i> ${translations.startChat}</a>
                             <button class="btn btn-light image-nsfw-toggle ${!isAdmin?'d-none':''}" data-id="${item._id}">
                                 <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill':'bi-eye-fill'}"></i> 
                             </button>
@@ -1304,7 +1296,7 @@ window.loadUserImages = async function (userId, page = 1) {
                         <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
                     </a>
                     <div class="d-none card-body p-2 d-flex align-items-center justify-content-between">
-                        <a href="/chat/${item.chatId}?imageId=${item._id}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> チャットする</a>
+                        <a href="/chat/${item.chatId}?imageId=${item._id}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> ${translations.startChat}</a>
                         <span class="btn btn-light float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
                             <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
                         </span>
@@ -1714,7 +1706,7 @@ window.loadChatImages = async function (chatId, page = 1) {
     const currentUserId = currentUser._id;
     const subscriptionStatus = currentUser.subscriptionStatus === 'active';
     const isTemporary = !!currentUser?.isTemporary;
-
+    const isAdmin = await checkIfAdmin(currentUserId);    
     $.ajax({
         url: `/chat/${chatId}/images?page=${page}`,
         method: 'GET',
@@ -1730,14 +1722,6 @@ window.loadChatImages = async function (chatId, page = 1) {
                 chatGalleryHtml += `
                     <div class="col-12 col-md-4 col-lg-2 mb-2">
                         <div class="card shadow-0">
-                            <div class="d-flex align-items-center p-2">
-                                <a href="/character/${item.chatId}?imageId=${item._id}">
-                                    <img src="${item?.thumbnail}" alt="${item?.chatName}" class="rounded-circle me-2" width="40" height="40">
-                                </a>
-                                <a href="/character/${item.chatId}?imageId=${item._id}" class="text-decoration-none text-dark">
-                                    <strong>${item?.chatName}</strong>
-                                </a>
-                            </div>
                             ${isBlur ? `
                             <div type="button" onclick=${isTemporary ? `showRegistrationForm()` : `unlockImage('${item._id}','gallery',this)`}>
                                 <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" >
@@ -1746,9 +1730,11 @@ window.loadChatImages = async function (chatId, page = 1) {
                             <a href="/character/${item.chatId}?imageId=${item._id}" data-index="${index}">
                                 <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
                             </a>
-                            <div class="d-none card-body p-2 d-flex align-items-center justify-content-between">
-                                <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"><i class="bi bi-chat-dots me-2"></i> チャットする</a>
-                                <span class="btn btn-light float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
+                            <div class="${!isAdmin?'d-none':''} card-body p-2 row mx-0 px-0 align-items-center justify-content-between">
+                                <button class="btn btn-light col-6 image-nsfw-toggle ${!isAdmin?'d-none':''}" data-id="${item._id}">
+                                    <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill':'bi-eye-fill'}"></i> 
+                                </button>
+                                <span class="btn btn-light float-end col-6 image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
                                     <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
                                 </span>
                             </div>

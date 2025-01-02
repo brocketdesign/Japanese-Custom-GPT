@@ -1,5 +1,9 @@
 {
   "lang":"en",
+  "character_and_ai_chat": "Enjoy free AI image generation while chatting with",
+  "about_the_character": "About the character",
+  "user_in_chat": "User in Chat",
+  "other_images": "Other Images",
   "check_premium_plan": "Check out the premium plan",
   "imageGeneration": {
     "messageTitle": "Access to all image generation features requires Lamix Premium",

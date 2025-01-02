@@ -11,8 +11,8 @@
   {{#if chat}}
     <!-- SEO Section -->
     <div class="row mx-0 {{#if user.isTemporary}}{{else}}d-none{{/if}}">
-      <h1>{{title}}</h1>
-        <h3>{{chat.name}}ちゃんはどんな人？</h3>
+        <h1>{{translations.character_and_ai_chat}} {{chat.name}}</h1>
+        <h3>{{translations.about_the_character}} {{chat.name}}</h3>
         <hr>
         <p>{{chat.description}}</p>
         <p>{{chat.rule}}</p>
@@ -70,7 +70,7 @@
       </div>
     </div>
   </div>
-  <h3 class="text-start">チャット中のユーザー</h3>
+  <h3 class="text-start">{{translations.user_in_chat}}</h3>
   <div class="container mt-4 mb-5">
     <!-- Chat Users Section -->
     <div id="chat-users-gallery" class="d-flex overflow-auto p-2" style="white-space: nowrap;"></div>
@@ -84,7 +84,7 @@
   <div class="container mb-5 px-0">
     <div class="row mx-0">
       <div class="col-12 mt-4 px-0">
-        <h4>他の画像</h4>
+        <h4>{{translations.other_images}}</h4>
         <hr>
         <div class="container-none">
           <div class="row mx-0" id="chat-images-gallery"></div>

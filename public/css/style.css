@@ -6,6 +6,9 @@ body{
 .isAdmin{
   display: none;
 }
+.image-nsfw-toggle.nsfw {
+  color: red;
+  }
 .jp-date{
   display: none;
 }

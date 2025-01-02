@@ -1183,7 +1183,7 @@ window.resultImageSearch = async function (page = 1,query,style = 'anime') {
                         </a>
                         <div class="d-none card-body p-2 d-flex align-items-center justify-content-between">
                             <a onclick="scrollToPlan()" data-href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> ${translations.startChat}</a>
-                            <button class="btn btn-light image-nsfw-toggle ${!isAdmin?'d-none':''}" data-id="${item._id}">
+                            <button class="btn btn-light image-nsfw-toggle ${!isAdmin?'d-none':''} ${item?.nsfw ? 'nsfw':'sfw'}" data-id="${item._id}">
                                 <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill':'bi-eye-fill'}"></i> 
                             </button>
                             <span class="btn btn-light float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
@@ -1234,7 +1234,7 @@ window.loadAllChatImages = async function (page = 1) {
                         </a>
                         <div class="${!isAdmin?'d-none':''} card-body p-2 d-flex align-items-center justify-content-between">
                             <a href="/chat/${item.chatId}" class="btn btn-outline-secondary col-12"> <i class="bi bi-chat-dots me-2"></i> ${translations.startChat}</a>
-                            <button class="btn btn-light image-nsfw-toggle ${!isAdmin?'d-none':''}" data-id="${item._id}">
+                            <button class="btn btn-light image-nsfw-toggle ${!isAdmin?'d-none':''} ${item?.nsfw ? 'nsfw':'sfw'}" data-id="${item._id}">
                                 <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill':'bi-eye-fill'}"></i> 
                             </button>
                             <span class="btn btn-light float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
@@ -1731,7 +1731,7 @@ window.loadChatImages = async function (chatId, page = 1) {
                                 <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
                             </a>
                             <div class="${!isAdmin?'d-none':''} card-body p-2 row mx-0 px-0 align-items-center justify-content-between">
-                                <button class="btn btn-light col-6 image-nsfw-toggle ${!isAdmin?'d-none':''}" data-id="${item._id}">
+                                <button class="btn btn-light col-6 image-nsfw-toggle ${!isAdmin?'d-none':''} ${item?.nsfw ? 'nsfw':'sfw'}" data-id="${item._id}">
                                     <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill':'bi-eye-fill'}"></i> 
                                 </button>
                                 <span class="btn btn-light float-end col-6 image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">

@@ -265,7 +265,12 @@ async function routes(fastify, options) {
       const chatsCollection = db.collection('chats');
   
       const chatIds = await chatsCollection
-        .find({ language })
+        .find({ 
+          $or: [
+          { language },
+          { language: request.lang }
+          ]
+        })
         .project({ _id: 1 })
         .toArray()
         .then(chats => chats.map(c => c._id));

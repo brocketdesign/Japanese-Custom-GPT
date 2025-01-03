@@ -112,6 +112,7 @@ const fetchOpenAICompletionWithTrigger = async (messages, res, maxToken = 1000, 
 const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'meta-llama/llama-3.1-70b-instruct',genImage) => {
 
     messages = sanitizeMessages(messages)
+
     try {
         let response = await fetch(apiDetails.novita.apiUrl,
             {

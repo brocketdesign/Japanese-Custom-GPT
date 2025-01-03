@@ -328,7 +328,8 @@ async function routes(fastify, options) {
             You are a Stable Diffusion image prompt generator.
             Your task is to generate a concise image prompt (under 1000 characters) based on the latest character description provided.
             The prompt should be a comma-separated list of descriptive keywords in English that accurately depict the character's appearance, emotions, and style.
-            Your response contains the character's age, skin color, hair color, hair length, eyes color, tone, face expression, body type, body characteristic, breast size, ass size, body curves, gender, facial features. 
+            Your response contains the character's age, skin color, hair color, hair length, eyes color, tone, face expression, body type, body characteristic, breast size, ass size, body curves, gender, facial features, background, accessories.\n
+            You must extand the provided prompt, describe the full image. 
             Respond in a single descriptive line of plain text using keywords.
             DO NOT form complete sentences; use only relevant keywords.
             Ensure the prompt is optimized for generating high-quality upper body portraits.
@@ -963,7 +964,7 @@ async function routes(fastify, options) {
 
         // Prepare basic user details
         const userDetails = !user.isTemporary 
-        ? `Here is who I am : Call me ${user.nickname}. I am a ${user.gender}${user.birthDate 
+        ? `Here is who I am : Call me ${user.nickname}. ${user.gender ? `I am a ${user.gender}` : '' } ${user.birthDate 
             ? `, my birthday is ${user.birthDate.year}/${user.birthDate.month}/${user.birthDate.day}` 
             : ''}. ${user.bio ? user.bio : ''}`
         : '';

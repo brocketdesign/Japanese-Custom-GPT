@@ -35,6 +35,7 @@ $(document).ready(function() {
         }
     });
 });
+
 $(document).ready(async function() {
     const urlParams = new URLSearchParams(window.location.search);
     const success = urlParams.get('success');

@@ -8,6 +8,7 @@ const ip = require('ip');
 const handlebars = require('handlebars');
 const fastifyMultipart = require('@fastify/multipart');
 const translationsPlugin = require('./plugins/translations');
+
 const { getCounter, updateCounter } = require('./models/tool');
 const {
   cleanupNonRegisteredUsers,
@@ -100,7 +101,14 @@ fastify.register(fastifyMultipart, {
     fileSize: 10 * 1024 * 1024,
   },
 });
+
 fastify.register(translationsPlugin);
+
+
+const websocketPlugin = require('@fastify/websocket');
+fastify.register(websocketPlugin);
+fastify.register(require('./plugins/websocket'));
+
 fastify.decorateReply('renderWithGtm', function (template, data) {
   data = data || {};
   data.gtmId = process.env.GTM_ID;
@@ -311,6 +319,7 @@ fastify.get('/chat/edit/:chatId', { preHandler: [fastify.authenticate] }, async 
 
     let user = request.user;
     const userId = user._id;
+
     user = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
     let chatId = request.params.chatId || null;
@@ -696,8 +705,13 @@ fastify.get('/settings', { preHandler: [fastify.authenticate] }, async (request,
 const start = async () => {
   try {
     const port = process.env.PORT || 3000;
-    await fastify.listen(port, '0.0.0.0');
-    console.log(`Fastify running → PORT http://${ip.address()}:${port}`);
+    fastify.listen({ port: 3000, host: '0.0.0.0' }, (err, address) => {
+      if (err) {
+        console.error(err);
+        process.exit(1);
+      }
+      console.log(`Fastify running → PORT http://${ip.address()}:${port}`);
+    });
   } catch (err) {
     console.log(err);
     process.exit(1);

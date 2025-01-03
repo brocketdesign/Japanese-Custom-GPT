@@ -99,15 +99,15 @@ const fetchOpenAICompletion = async (messages, res, maxToken = 1000, model = 'me
 
     messages = sanitizeMessages(messages)
     try {
-        let response = await fetch(apiDetails.venice.apiUrl,
+        let response = await fetch(apiDetails.novita.apiUrl,
             {
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${apiDetails.venice.key}`
+                    "Authorization": `Bearer ${apiDetails.novita.key}`
                 },
                 method: "POST",
                 body: JSON.stringify({
-                    model:apiDetails.venice.model,
+                    model:apiDetails.novita.model,
                     messages,
                     temperature: 0.85,
                     top_p: 0.95,

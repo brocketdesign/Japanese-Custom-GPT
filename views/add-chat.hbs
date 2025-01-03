@@ -714,28 +714,55 @@ $(document).ready(function() {
             });
         }
 
-        function saveSelectedImage(imageUrl, characterPrompt, enhancedPrompt, modelId, imageStyle, imageModel, imageVersion) {
+        function saveSelectedImage(imageUrl, characterPrompt, enhancedPrompt, modelId, imageStyle, imageModel, imageVersion, callback) {
 
             $.ajax({
-                url: '/novita/save-image',
-                method: 'POST',
-                dataType: 'json',
-                data: {
-                    characterPrompt, 
-                    enhancedPrompt, 
-                    modelId,
-                    imageStyle, 
-                    imageModel, 
-                    imageVersion,
-                    imageUrl,
-                    chatId
-                },
-                success: function(response) {
-                    showNotification(translations.imageForm.image_saved, 'success');
-                },
-                error: function(error) {
-                    showNotification(translations.imageForm.image_save_failed, 'error');
+            url: '/novita/save-image',
+            method: 'POST',
+            dataType: 'json',
+            data: {
+                characterPrompt, 
+                enhancedPrompt, 
+                modelId,
+                imageStyle, 
+                imageModel, 
+                imageVersion,
+                imageUrl,
+                chatId
+            },
+            success: function(response) {
+                if (typeof callback === 'function') {
+                callback(null, response);
                 }
+            },
+            error: function(error) {
+                if (typeof callback === 'function') {
+                callback(error);
+                }
+            }
+            });
+        }
+        function saveModeration(moderationResult, chatId, callback){
+
+            $.ajax({
+            url: '/novita/save-moderation',
+            method: 'POST',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify({
+            moderation: moderationResult,
+            chatId
+            }),
+            success: function(response) {
+            if (typeof callback === 'function') {
+            callback(null, response);
+            }
+            },
+            error: function(error) {
+            if (typeof callback === 'function') {
+            callback(error);
+            }
+            }
             });
         }
 
@@ -744,27 +771,38 @@ $(document).ready(function() {
             $('#imageContainer').empty();
 
             // For each image URL, create an image element and append to the container
-            imageUrls.forEach(function(data) {
-                const url = data.imageUrl
-                const colDiv = $('<div>').addClass('col-12 col-md-6 mb-3');
-                const imgElement = $('<img>')
-                    .attr('src', url)
-                    .addClass('img-fluid img-thumbnail')
-                    .css('cursor', 'pointer');
+            imageUrls.forEach(function(data, index) {
+            const url = data.imageUrl;
+            const colDiv = $('<div>').addClass('col-12 col-md-6 mb-3');
+            const imgElement = $('<img>')
+                .attr('src', url)
+                .addClass('img-fluid img-thumbnail')
+                .css('cursor', 'pointer');
 
-                // Add click handler to each image
-                imgElement.on('click', function() {
-                    $('.img-thumbnail').each(function(){
-                        $(this).removeClass('select')
-                    })
-                    $(this).addClass('select')
-                    
-                    // Save the selected image (you can implement this function)
-                    saveSelectedImage(url, characterPrompt, enhancedPrompt, modelId, imageStyle, imageModel, imageVersion);
+            // Add click handler to each image
+            imgElement.on('click', function() {
+                $('.img-thumbnail').each(function(){
+                $(this).removeClass('select')
                 });
+                $(this).addClass('select');
+                
+                // Save the selected image
+                saveSelectedImage(url, characterPrompt, enhancedPrompt, modelId, imageStyle, imageModel, imageVersion, function(error, response){
+                if (error) {
+                    showNotification(translations.imageForm.image_save_failed, 'error');
+                } else {
+                    showNotification(translations.imageForm.image_saved, 'success');
+                }
+                });
+            });
 
-                colDiv.append(imgElement);
-                $('#imageContainer').append(colDiv);
+            colDiv.append(imgElement);
+            $('#imageContainer').append(colDiv);
+
+            // Automatically click the first image
+            if (index === 0) {
+                imgElement.click();
+            }
             });
         }
 
@@ -914,10 +952,8 @@ $(document).ready(function() {
             try {
                 const response = await $.post('/api/check-chat', { chatId });
                 if (response.message === 'Chat exists') {
-                    console.log('Chat exists:', response.chat);
                     return false;
                 } else {
-                    console.log('Chat created:', response.chatId);
                     return response.chatId;
                 }
             } catch (error) {
@@ -953,7 +989,6 @@ $(document).ready(function() {
             return;
         }
 
-        generateCharacterPersonnality();
         const characterDetails = returnCharacterDetails();
         const isEnhanceEnabled = $('#enableEnhancedPrompt').is(':checked');
 
@@ -970,6 +1005,26 @@ $(document).ready(function() {
         $('#characterPrompt').prop('disabled', true);
         
         try {
+
+            // Call moderation function on enhancedPrompt content
+            const moderationResult = await moderateContent(prompt);
+            saveModeration(moderationResult, chatId, function(error, response) {
+                if (error) {
+                    console.error('Error saving moderation:', error);
+                }
+            });
+            // Check if the content is NSFW
+            if (moderationResult.flagged) {
+                if (!subscriptionStatus) {
+                    showUpgradePopup('nsfw-prompt');
+                    // Enable buttons and reset text
+                    $button.prop('disabled', false);
+                    $button.html('<i class="fas fa-magic me-2"></i>' + translations.newCharacter.generate_with_AI);
+                    $('#characterPrompt').prop('disabled', false);
+                    return
+                }
+            }
+
             let enhanceResponse = {enhancedPrompt:''}
 
             if(isEnhanceEnabled){
@@ -988,6 +1043,7 @@ $(document).ready(function() {
 
                     customData = JSON.stringify(customData);
 
+                    generateCharacterPersonnality();
                     // プロンプトを強化するリクエスト
                     enhanceResponse = await $.ajax({
                         url: '/api/enhance-prompt',

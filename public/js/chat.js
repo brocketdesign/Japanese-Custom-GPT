@@ -89,7 +89,7 @@ $(document).ready(async function() {
             const prompt = event.data.prompt
             const message = '[imageStart]'+ prompt
             addMessageToChat(chatId, userChatId, 'user', message, function(){
-                //generateCompletion(null,true)
+                generateCompletion(null,true)
             });
         }
     });

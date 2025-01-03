@@ -131,8 +131,6 @@ window.txt2ImageNovita = async function(API_URL, userId, chatId, userChatId, ima
             return;
         }
 
-        window.postMessage({ event: 'imageStart', prompt }, '*');
-
         const API_ENDPOINT = `${API_URL}/novita/txt2img`;
 
         const response = await fetch(API_ENDPOINT, {
@@ -196,8 +194,6 @@ window.img2ImageNovita = async function(API_URL, userId, chatId, userChatId, ima
             $(`.img2img[data-id=${imageId}]`).removeClass('spin')
             return;
         }
-
-        window.postMessage({ event: 'imageStart', prompt}, '*');
 
         const API_ENDPOINT = `${API_URL}/novita/img2img`;
 

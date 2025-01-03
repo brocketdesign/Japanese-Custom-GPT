@@ -658,7 +658,32 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
   }
 });
 
-      
+  async function saveModerationToDB(db, chatId, moderation){
+    const collectionChats = db.collection('chats'); // Replace 'chats' with your actual collection name
+
+    // Convert chatId string to ObjectId
+    let chatObjectId;
+    try {
+        chatObjectId = new ObjectId(chatId);
+    } catch (error) {
+        throw new Error('無効なchatIdです。');
+    }
+
+    // Update the 'chats' collection with chatImageUrl and thumbnail
+    const updateResult = await collectionChats.updateOne(
+        { _id: chatObjectId },
+        { 
+            $set: { moderation } 
+        }
+    );
+
+    if (updateResult.matchedCount === 0) {
+        throw new Error('指定されたチャットが見つかりませんでした。');
+    }
+
+    return updateResult;
+  }
+
   async function saveChatImageToDB(db, chatId, imageUrl, characterPrompt, enhancedPrompt, modelId, imageStyle, imageModel, imageVersion) {
     const collectionChats = db.collection('chats'); // Replace 'chats' with your actual collection name
 
@@ -857,6 +882,25 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
       return reply.status(500).send({ error: 'Failed to save image to database' });
     }
   });
+  fastify.post('/novita/save-moderation', async (request, reply) => {
+    const { moderation, chatId } = request.body;
+
+    if (!moderation || !chatId) {
+      return reply.status(400).send({ error: 'moderation and chatId are required' });
+    }
+  
+    try {
+      const db = fastify.mongo.db
+      await saveModerationToDB(db, chatId, moderation);
+  
+      return reply.status(200).send({ message: 'Moderation saved successfully' });
+  
+    } catch (error) {
+      console.error('Error saving image:', error);
+      return reply.status(500).send({ error: 'Failed to save moderation to database' });
+    }
+  });
+
   fastify.get('/novita/img2img-task-status/:taskId', async (request, reply) => {
       const { taskId } = request.params;
 

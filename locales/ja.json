@@ -1,5 +1,9 @@
 {
   "lang":"ja",
+  "nsfwPrompt": {
+    "messageTitle": "⚠️このコンテンツにはNSFW（仕事に適さない）要素が含まれています",
+    "messageText": "このコンテンツには成人向けの要素が含まれている可能性があります。続行するには18歳以上であることを確認してください。"
+  },
   "character_and_ai_chat": "AIチャットしながら無料AI画像生成を楽しもう",
   "about_the_character": "キャラクターについて",
   "user_in_chat": "チャット中のユーザー",

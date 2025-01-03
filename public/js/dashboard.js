@@ -168,7 +168,6 @@ $(document).ready(async function() {
         }
     }
     //checkAndRedirect();
-
     window.showUpgradePopup = function(limitType) {
     
         $.ajax({
@@ -192,6 +191,10 @@ $(document).ready(async function() {
                 case 'image-generation':
                     messageTitle = `🎨${translations.imageGeneration.messageTitle}`;
                     messageText = translations.imageGeneration.messageText;
+                    break;
+                case 'nsfw-prompt':
+                    messageTitle = `${translations.nsfwPrompt.messageTitle}`;
+                    messageText = translations.nsfwPrompt.messageText;
                     break;
                 case 'chat-message':
                     messageTitle = '💬メッセージ制限に達しました';
@@ -1982,3 +1985,17 @@ function generateChatsPagination(totalPages, option) {
     }
 }
 
+window.moderateContent = async function(content) {
+    try {
+        const response = await $.ajax({
+            url: '/api/moderate',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ content })
+        });
+        return response.results[0];
+    } catch (error) {
+        console.error('Moderation request failed:', error);
+        throw error;
+    }
+}

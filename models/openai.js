@@ -19,6 +19,20 @@ const apiDetails = {
   }
 };
 
+const moderateText = async (text) => {
+  try {
+    const openai = new OpenAI();
+    const moderation = await openai.moderations.create({
+      model: "omni-moderation-latest",
+      input: text,
+    });
+    return moderation;
+  } catch (error) {
+    console.error("Error moderating text:", error);
+    throw error;
+  }
+};
+
 const fetchOpenAICompletionWithTrigger = async (messages, res, maxToken = 1000, model = 'llama-3.1-405b') => { 
   try {
     messages = sanitizeMessages(messages)
@@ -446,5 +460,6 @@ async function describeCharacterFromImage(base64Image) {
     fetchOpenAICompletion,moduleCompletion,generateCompletion, fetchOpenAICompletionWithTrigger,
     fetchNewAPICompletion,
     checkImageRequest,
+    moderateText,
     describeCharacterFromImage
 }

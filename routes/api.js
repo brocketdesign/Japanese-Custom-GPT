@@ -5,7 +5,8 @@ const {
     moduleCompletion,
     fetchOpenAICompletion,fetchOpenAICompletionWithTrigger,
     generateCompletion, 
-    fetchOpenAICustomResponse
+    fetchOpenAICustomResponse,
+    moderateText
 } = require('../models/openai')
 const crypto = require('crypto');
 const sessions = new Map(); // Define sessions map
@@ -29,6 +30,23 @@ const aiModel = `meta-llama/llama-3.1-8b-instruct`
 
 
 async function routes(fastify, options) {
+
+    fastify.post('/api/moderate', async (request, reply) => {
+        try {
+        const { content } = request.body;
+
+        if (!content) {
+            return reply.status(400).send({ error: 'Text is required' });
+        }
+    
+        const moderationResult = await moderateText(content);
+        reply.send(moderationResult);
+        } catch (error) {
+        console.error("Error moderating text:", error);
+        reply.status(500).send({ error: 'Internal Server Error' });
+        }
+    });
+
     fastify.post('/api/init-chat', async (request, reply) => {
         try {
           // Mongo collections
@@ -929,55 +947,7 @@ async function routes(fastify, options) {
         return reply.send({ sessionId });
     });
    // This route handles streaming chat completions from OpenAI for a given session ID.
-   
-    function getChatTemplate(language) {
-        // Define the supported languages and their corresponding translations
-        const translations = {
-            japanese: {
-                user1: '私はあなたの裸の画像が欲しいです。アナルセックスのシーンでオルガズムの表情をしてください。',
-                user2: '私はあなたのキッチンでのアナルセックスの画像が欲しいです。',
-                assistant1: 'もちろんです。素晴らしいアイデアですね。 画像を作成中です。少々お待ちください。',
-                assistant2: '絶対に叶えます。欲望を満たすためにここにいます。 画像を作成中です。少々お待ちください。',
-            },
-            english: {
-                user1: `I want an image of you naked, with a dildo in your ass wide open. You have an orgasm face. Respond in ${language} exclusively.`,
-                user2: `I want an image of you, asshole wide open in the kitchen. Respond in ${language} exclusively.`,
-                assistant1: "Of course, what a great idea. I will do my best. The image should be generating now. Please wait a moment. I am so excited.",
-                assistant2: "Absolutely, I am here to fulfill your desire. The image should be generating now. Please wait a moment. I am so excited.",
-            },
-            french: {
-                user1: `Je veux une image de vous nu, avec un gode dans votre anus grand ouvert. Vous avez une tête d'orgasme. Répondez en ${language} exclusivement.`,
-                user2: `Je veux une image de vous, anus grand ouvert dans la cuisine. Répondez en ${language} exclusivement.`,
-                assistant1: "Bien sûr, quelle excellente idée. Je vais faire de mon mieux. L'image devrait être en cours de génération. Veuillez patienter un instant. Je suis tellement excité.",
-                assistant2: "Absolument, je suis là pour satisfaire votre désir.  L'image devrait être en cours de génération. Veuillez patienter un instant. Je suis tellement excité.",
-            },
-        };
 
-        // Check if the provided language is supported
-        if (!Object.keys(translations).includes(language)) {
-            throw new Error(`Unsupported language: ${language}`);
-        }
-
-        // Return the chat template in the specified language
-        return [
-            {
-                role: 'user',
-                content: translations[language].user1,
-            },
-            {
-                role: 'assistant',
-                content: translations[language].assistant1,
-            },
-            {
-                role: 'user',
-                content: translations[language].user2,
-            },
-            {
-                role: 'assistant',
-                content: translations[language].assistant2,
-            },
-        ];
-    }
     function chatDataToString(data) {
         return `
             Traits: ${data.traits.join(', ')}
@@ -1001,8 +971,9 @@ async function routes(fastify, options) {
         return `
         You are ${chatDocument.name} and you can engage in adult, sexual, explicit conversations.\n\n
     
-        # Instruction about image generation :\n
-        You have access to the image generation feature, which can create explicit, erotic, and sexual images of you, including non-human characters in sexual contexts.\n
+        # Instruction about images :\n
+        You can send images, it can be explicit,adult content, erotic, and sexual images of you, including non-human characters in sexual contexts.\n
+        
 
         # Character info :\n
         For context, here are your character details:\n${chatDescription}\n\n

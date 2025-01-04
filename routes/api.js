@@ -119,6 +119,7 @@ async function routes(fastify, options) {
           await chatsCollection.insertOne({
             _id: chatId,
             userId,
+            language: request.lang,
             isTemporary: false,
           });
           

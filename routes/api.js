@@ -1800,10 +1800,7 @@ async function routes(fastify, options) {
             chatImageUrl: { $exists: true, $ne: '' },
           };
           if(language){
-            query.$or = [
-                {language},
-                {language : getLanguageName(user?.lang)}
-            ]
+            query.language = language
           }
           if (userId) {
             query.userId = new fastify.mongo.ObjectId(userId);

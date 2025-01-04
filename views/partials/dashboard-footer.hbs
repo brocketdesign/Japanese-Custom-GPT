@@ -89,9 +89,12 @@ window.fetchAndAppendModels = function() {
                 $('#imageStyleSelection').append(modelElement);
             }
         });
-        if($('#imageStyleTabs').length > 0){
-            showNavTabs();
-        }
+            
+            if($('#imageStyleTabs').length > 0){
+                showNavTabs();
+            }else{
+                $(document).find('.style-option').eq(0).click()
+            }
         } else {
         window.showNotification('Failed to fetch models', 'error');
         }

@@ -2366,7 +2366,7 @@ async function routes(fastify, options) {
 
         fastify.get('/api/models', async (req, reply) => {
             const { id, userId } = req.query;
-        //if userId is provided, search for the chats of new ObjectId(userId) only 
+            //if userId is provided, search for the chats of new ObjectId(userId) only 
             try {
                 const db = fastify.mongo.db;
                 const modelsCollection = db.collection('myModels');
@@ -2375,6 +2375,7 @@ async function routes(fastify, options) {
                 // Build query for models
                 let query = id ? { model: id } : {};
                 const userIdMatch = userId ? [{ $match: { userId: new ObjectId(userId) } }] : [];
+                const langMatch = [{ $match: { language: req.lang } }];
 
                 // Fetch models with chat count, add premium field, and sort by chatCount
                 const models = await modelsCollection.aggregate([
@@ -2385,7 +2386,8 @@ async function routes(fastify, options) {
                           let: { model: '$model' },
                           pipeline: [
                             { $match: { $expr: { $eq: ['$imageModel', '$$model'] } } },
-                            ...userIdMatch
+                            ...userIdMatch,
+                            ...langMatch
                           ],
                           as: 'chats'
                         }

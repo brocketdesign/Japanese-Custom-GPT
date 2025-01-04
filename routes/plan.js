@@ -20,7 +20,8 @@ async function routes(fastify, options) {
           "🗂   Affichage de plusieurs options de chat",
           "🖼   Génération d'images illimitée",
           "💡   Suggestions de messages illimitées",
-          "🔓   Débloquer toutes les images"
+          "🔓   Débloquer toutes les images",
+          "🌶️ Générez des images NSFW"
         ],
         messageLimit: 'Illimité',
         chatLimit: 'Illimité',
@@ -40,7 +41,8 @@ async function routes(fastify, options) {
           "🗂   Multiple chat options display",
           "🖼   Unlimited image generation",
           "💡   Unlimited message suggestions",
-          "🔓   Unlock all images"
+          "🔓   Unlock all images",
+          "🌶️ Generate NSFW images"
         ],
         messageLimit: 'Unlimited',
         chatLimit: 'Unlimited',
@@ -60,7 +62,8 @@ async function routes(fastify, options) {
           "🗂   複数選択肢のチャット表示",
           "🖼   無制限の画像生成を受け取る",
           "💡   無制限のメッセージ提案機能",
-          "🔓   画像をすべて解除する"
+          "🔓   画像をすべて解除する",
+          "🌶️ NSFW画像を生成する"
         ],
         messageLimit: '無制限',
         chatLimit: '無制限',

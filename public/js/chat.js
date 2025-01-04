@@ -162,12 +162,8 @@ $(document).ready(async function() {
         });
     }            
 
-    if(chatId){
-        fetchChatData(chatId, userId)
-    }else{
-        showDiscovery()
-    }
 
+    showDiscovery();
     enableToggleDropdown()
     
     $('textarea').each(function() {
@@ -1393,36 +1389,10 @@ $(document).ready(async function() {
 
     // Click handler for #showPrompts
 
-    const nsfwEnabled = sessionStorage.getItem('nsfwEnabled') === 'true';
-
-    // Show or hide cards based on the NSFW state
-    $('#promptList .prompt-card').each(function() {
-        const isNsfw = $(this).data('nsfw');
-        if (!nsfwEnabled && isNsfw) {
-            $(this).hide(); // Hide NSFW cards if NSFW is not enabled
-        } else {
-            $(this).show(); // Show other cards
-        }
-    });
-
     $(document).on('click','#showPrompts',function(){
         $('#promptContainer').slideDown('fast');
-        $('#nsfwCheckbox').prop('checked', nsfwEnabled);
-        filterPrompts(nsfwEnabled);
       });
       
-      $('#nsfwCheckbox').on('change',function(){
-        const checked = $(this).is(':checked');
-        sessionStorage.setItem('nsfwEnabled', checked);
-        filterPrompts(checked);
-      });
-      
-      function filterPrompts(nsfwEnabled){
-        $('#promptList .prompt-card').each(function(){
-          const isNsfw=$(this).data('nsfw');
-          $(this).toggle(isNsfw?nsfwEnabled:true);
-        });
-      }      
     $('#close-promptContainer').on('click', function() {
         $('#promptContainer').slideUp('fast');
     });
@@ -1431,25 +1401,22 @@ $(document).ready(async function() {
         $('.prompt-card').removeClass('selected'); 
         $(this).addClass('selected');
 
-        const randomId = displayAndUpdateImageLoader();
-
         var id = $(this).data('id');
         var nsfw = $(this).data('nsfw')
-        var isNSFWChecked = $('#nsfwCheckbox').is(':checked');
         const subscriptionStatus = user.subscriptionStatus == 'active'
 
-        // Display the choice and cost in the user message
-        const typeText = isNSFWChecked ? 'NSFW' : 'SFW';
-        const prompt_title = $(this).find('.card-text').text()
-
-        if(!subscriptionStatus && isNSFWChecked){
+        if(!subscriptionStatus && nsfw){
             showUpgradePopup('image-generation')
             return
         }
 
+        const randomId = displayAndUpdateImageLoader();
+
+        // Display the choice and cost in the user message
+        const prompt_title = $(this).find('.card-text').text()
         showNotification(window.translations['image_generation_processing'],'info')
 
-        controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isNSFWChecked);
+        controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, nsfw);
         displayAndUpdateImageLoader(id,randomId)
         Swal.close();
     });

@@ -587,6 +587,9 @@ async function checkIfAdmin(userId) {
     }
   }
   function unlockImage(id, type, el) {
+    window.location.href = '/my-plan'
+    return
+    /*
     $.post(`/api/unlock/${type}/${id}`)
       .done((response) => {
         const imageUrl = response.item.image ? response.item.image.imageUrl : response.item.imageUrl
@@ -600,6 +603,7 @@ async function checkIfAdmin(userId) {
       })
       .fail(() => {
     });
+    */
   }
   
   function isUnlocked(currentUser, id, ownerId) {
@@ -1004,8 +1008,8 @@ window.displayPeopleChat = async function (page = 1, option) {
                     });
                     if(image_count > 0){
                         galleryIco = `
-                            <div class="gallery" style="color: rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
-                                <span class="btn btn-dark"><i class="far fa-images me-1"></i><span style="font-size:12px;">${image_count}</span></span>
+                            <div class="gallery" data-id="${chat._id}">
+                                <span class="btn btn-dark" background-color: rgba(66, 70, 59, 0.84);><i class="far fa-images me-1"></i><span style="font-size:12px;">${image_count}</span></span>
                             </div>
                         `;
                     }
@@ -1018,7 +1022,7 @@ window.displayPeopleChat = async function (page = 1, option) {
                         <div style="background-image:url('${chat.chatImageUrl || '/img/logo.webp'}')" class="card-img-top girls_avatar position-relative" alt="${chat.name}">
                             <div id="spinner-${chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
                             <div class="position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px;right:10px;">
-                                ${(chat.tags || []).length ? `<div class="tags d-flex justify-content-between align-items-center flex-wrap">${chat.tags.map(tag => `<span class="badge bg-dark">${tag}</span>`).join('')}</div>` : ''}
+                                ${(chat.tags || []).length ? `<div class="tags d-flex justify-content-between align-items-center flex-wrap">${chat.tags.map(tag => `<span class="badge bg-dark mt-1">${tag}</span>`).join('')}</div>` : ''}
                             </div>
                             <div class="position-absolute text-end" style="top:10px;right:10px">
                                 <div class="persona" style="color:rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
@@ -1030,17 +1034,12 @@ window.displayPeopleChat = async function (page = 1, option) {
                                     </div>
                                 </a>
                                 ${galleryIco}
-                                ${chat.messagesCount ? `<span class="badge bg-dark message-count"><i class="fas fa-comment-alt me-2"></i>${chat.messagesCount}</span>` : ''}
+                                ${chat.messagesCount ? `<span class="btn btn-dark message-count mt-1 border-0" style="background-color: rgba(66, 70, 59, 0.84); font-size: 12px;"><i class="fas fa-comment-alt me-2"></i>${chat.messagesCount}</span>` : ''}
                             </div>
                         </div>
                         <div class="card-body bg-transparent border-0 pb-0 px-0 mx-0 text-start">
                             <div class="row mx-0 px-0">
-                                <div class="d-none col-auto text-center">
-                                    <a href="/character/${chat._id}" style="text-decoration: none;">
-                                        <img src="${chat.chatImageUrl || '/img/avatar.png'}" alt="${chat.name}" class="rounded-circle" width="40" height="40">
-                                    </a>
-                                </div>
-                                <div class="col-auto mx-0 px-0">
+                                <div class="col-12 mx-0 px-0">
                                     <button class="btn btn-outline-secondary redirectToChat w-100 mb-2" data-id="${chat._id}"> <i class="bi bi-chat-dots me-2"></i> ${window.translations.startChatting}</button>
                                     <div class="d-flex align-items-center justify-content-between">
                                         <h5 class="card-title character-title mb-0">${chat.name}</h5>

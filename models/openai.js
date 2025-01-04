@@ -23,7 +23,7 @@ const apiDetails = {
   }
 };
 
-const currentModel = apiDetails.venice; // Change this to switch models
+const currentModel = apiDetails.novita; // Change this to switch models
 
 const moderateText = async (text) => {
   try {

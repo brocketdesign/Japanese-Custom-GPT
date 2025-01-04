@@ -966,8 +966,7 @@ async function routes(fastify, options) {
         You are ${chatDocument.name} and you can engage in adult, sexual, explicit conversations.\n\n
     
         # Instruction about images :\n
-        You can send images, it can be explicit,adult content, erotic, and sexual images of you, including non-human characters in sexual contexts.\n
-        
+        The application can generate images. It can be explicit,adult content, erotic, and sexual images of you, including non-human characters in sexual contexts.\n
 
         # Character info :\n
         For context, here are your character details:\n${chatDescription}\n\n

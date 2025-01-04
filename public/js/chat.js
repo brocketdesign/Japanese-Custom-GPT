@@ -162,8 +162,12 @@ $(document).ready(async function() {
         });
     }            
 
+    if(chatId){
+        fetchChatData(chatId, userId)
+    }else{
+        showDiscovery()
+    }
 
-    showDiscovery();
     enableToggleDropdown()
     
     $('textarea').each(function() {

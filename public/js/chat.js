@@ -1381,7 +1381,6 @@ $(document).ready(async function() {
 
         controlImageGen(userId, chatId, userChatId, id, nsfw);
         displayAndUpdateImageLoader(id,randomId)
-        Swal.close();
     });
     
     $(document).on('click', '.regen-img', function () {

@@ -1405,7 +1405,7 @@ $(document).ready(async function() {
         var nsfw = $(this).data('nsfw')
         const subscriptionStatus = user.subscriptionStatus == 'active'
 
-        if(!subscriptionStatus && nsfw){
+        if(!subscriptionStatus){
             showUpgradePopup('image-generation')
             return
         }

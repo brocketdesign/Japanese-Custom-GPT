@@ -78,44 +78,52 @@
             margin-right: 10px;
         }
     </style>
+<style>
+    /* Make the checkbox visible but nicely styled */
+.form-check-input {
+  width: 20px;
+  height: 20px;
+  accent-color: #dc3545; /* Adds a red checkmark on supported browsers */
+  cursor: pointer;
+  margin-top: 0; /* Align better with label text/icon */
+}
 
+/* The label styled as a button */
+.toggle-btn {
+  border: 1px solid #dc3545; /* Red border for outline style */
+  color: #dc3545;           /* Text/icon color in default (unchecked) state */
+  background-color: transparent;
+  transition: background-color 0.3s, color 0.3s;
+}
 
-    <!-- CSS for Styling and State Management -->
-    <style>
-        /* Ensure reusable class for the toggle button */
-        .toggle-btn {
-            min-width: 150px;
-            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
-        }
+/* When the checkbox is checked, style the label (the "button") */
+.form-check-input:checked + .toggle-btn {
+  background-color: #dc3545; /* Solid red background */
+  color: #ffffff;            /* White text/icon for contrast */
+  border-color: #dc3545;     /* Keep border consistent */
+}
 
-        /* When the checkbox is checked */
-        .form-check-input:checked + .toggle-btn {
-            background-color: #dc3545;
-            color: white;
-            border-color: #fff;
-        }
+/* Default icon color and transition */
+.toggle-icon {
+  color: #dc3545;
+  transition: color 0.3s;
+}
 
-        /* Add hover effect for better interaction */
-        .form-check-input:not(:checked) + .toggle-btn:hover {
-            background-color: rgba(13, 110, 253, 0.1);
-        }
+/* Icon color changes to white when checked */
+.form-check-input:checked + .toggle-btn .toggle-icon {
+  color: #ffffff;
+}
 
-        /* Focus for accessibility */
-        .form-check-input:focus-visible + .toggle-btn {
-            outline: 2px dashed #dc3545;
-            outline-offset: 2px;
-        }
+/* Optional: Hover effect for better interactivity */
+.toggle-btn:hover {
+  background-color: rgba(220, 53, 69, 0.05); /* Slight red tint on hover */
+}
 
-        /* Toggle icon visibility based on state */
-        .form-check-input:not(:checked) + .toggle-btn .toggle-icon {
-            opacity: 0.5;
-        }
-        
-        .form-check-input:checked + .toggle-btn .toggle-icon {
-            opacity: 1;
-        }
-    </style>
+.form-check-input:checked + .toggle-btn:hover {
+  background-color: #c82333; /* Darker red on hover when checked */
+}
 
+</style>
 <section class="gradient-custom bg-dark" style="min-height:100vh">
   <div class="container py-5 h-100">
     <div class="row d-flex justify-content-center align-items-center h-100">
@@ -181,14 +189,27 @@
                                         <input type="password" id="register-password" name="password" class="form-control form-control-lg" required />
                                         <label class="form-label" for="register-password">{{translations.authMail.password}}</label>
                                     </div>
-                                    <div class="form-check text-start d-flex align-items-center position-relative mb-3 px-0">
-                                        <input class="form-check-input d-none" type="checkbox" value="" id="ageVerification" required>
-                                        <label class="btn btn-outline-danger d-flex align-items-center justify-content-center toggle-btn" 
+                                    <div class="mb-3 px-0" style="position: initial;">
+                                        <div class="form-check d-flex align-items-center position-relative text-start">
+                                            <!-- Visible checkbox -->
+                                            <input
+                                            class="form-check-input me-2"
+                                            type="checkbox"
+                                            value=""
+                                            id="ageVerification"
+                                            required
+                                            />
+                                            
+                                            <!-- Label styled as a button -->
+                                            <label
+                                            style="position: initial;"
+                                            class="btn btn-outline-danger d-flex align-items-center justify-content-center toggle-btn w-100"
                                             for="ageVerification"
-                                            style="position: initial;">
+                                            >
                                             <i class="bi bi-check-circle me-2 toggle-icon"></i>
                                             {{translations.over_18}}
-                                        </label>
+                                            </label>
+                                        </div>
                                     </div>
                                   <button type="submit" style="border-radius: 50px;" class="btn btn-light custom-gradient-bg btn-lg px-5 w-100">{{translations.authMail.register}}</button>
                               </form>

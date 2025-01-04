@@ -1043,7 +1043,7 @@ $(document).ready(function() {
 
                     customData = JSON.stringify(customData);
 
-                    generateCharacterPersonnality();
+                    
                     // プロンプトを強化するリクエスト
                     enhanceResponse = await $.ajax({
                         url: '/api/enhance-prompt',
@@ -1067,7 +1067,8 @@ $(document).ready(function() {
                 // プロンプトをそのまま使用
                 enhanceResponse.enhancedPrompt = prompt;
             }
-
+						
+						generateCharacterPersonnality();
             // ボタンテキストを「画像を生成中...」に更新
             $button.html(`<i class="fas fa-spinner fa-spin me-2"></i>${translations.imageForm.generatingImages}`);
             $('.genexp').fadeIn()

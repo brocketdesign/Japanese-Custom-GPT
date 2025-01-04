@@ -145,7 +145,7 @@ async function routes(fastify, options) {
     }
   };
 
-  async function saveImageToDB(userId, chatId, userChatId, prompt, imageUrl, aspectRatio, blurredImageUrl = null, nsfw = false) {
+  async function saveImageToDB(userId, chatId, userChatId, prompt, title, imageUrl, aspectRatio, blurredImageUrl = null, nsfw = false) {
     try {
       const db = fastify.mongo.db
       const chatsGalleryCollection = db.collection('gallery');
@@ -174,6 +174,7 @@ async function routes(fastify, options) {
             images: { 
               _id: imageId, 
               prompt, 
+              title,
               imageUrl, 
               blurredImageUrl, 
               aspectRatio, 
@@ -349,7 +350,7 @@ async function routes(fastify, options) {
       loras: [],
     }
 
-    fastify.get('/image/:imageId', async (request, reply) => {
+  fastify.get('/image/:imageId', async (request, reply) => {
       try {
           const { imageId } = request.params;
           const db = fastify.mongo.db;
@@ -370,7 +371,7 @@ async function routes(fastify, options) {
           }
   
           const image = imageDocument.images[0];
-          const { imageUrl, prompt: imagePrompt, nsfw, likedBy = [] } = image;
+          const { imageUrl, prompt: imagePrompt, title, nsfw, likedBy = [] } = image;
           const { chatId } = imageDocument;
   
           let imageModel = null;
@@ -389,7 +390,7 @@ async function routes(fastify, options) {
               imageVersion = chatData?.imageVersion || null;
           }
   
-          return reply.status(200).send({ imageUrl, imagePrompt, likedBy, nsfw, imageModel, imageStyle, imageVersion });
+          return reply.status(200).send({ imageUrl, imagePrompt, title, likedBy, nsfw, imageModel, imageStyle, imageVersion });
       } catch (error) {
           console.error('Error fetching image details:', error);
           return reply.status(500).send({ error: 'An error occurred while fetching the image details' });
@@ -397,93 +398,11 @@ async function routes(fastify, options) {
   });
   
 
-  // Endpoint to initiate txt2img with SFW and NSFW
-  fastify.post('/novita/product2img', async (request, reply) => {
-    const { prompt, aspectRatio, userId, chatId, userChatId, imageType } = request.body;
-
-    const Txt2ImgSchema = z.object({
-        prompt: z.string().min(10, 'Prompt must be at least 10 characters long'),
-        aspectRatio: z.string().optional().default('9:16'),
-        userId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid userId'),
-        chatId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid chatId'),
-        userChatId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid userChatId'),
-        imageType: z.enum(['sfw', 'nsfw'])
-    });
-
-    try {
-        const validated = Txt2ImgSchema.parse(request.body);
-        const { prompt, aspectRatio, userId, chatId, userChatId, imageType } = validated;
-
-        const db = fastify.mongo.db
-        const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-        const isSubscribed = user && user.subscriptionStatus === 'active';
-
-        const chat = await db.collection('chats').findOne({ _id: new ObjectId(chatId) });
-        const imageVersion = chat.imageVersion;
-
-        const selectedStyle = default_prompt[imageVersion] || default_prompt['sdxl'];
-        const style = selectedStyle[imageType];
-
-        const imageModel = chat.imageModel || 'novaAnimeXL_ponyV20_461138';
-
-        const image_request = {
-            type: imageType,
-            model_name: imageModel.replace('.safetensors','') + '.safetensors',
-            sampler_name: style.sampler_name || '',
-            loras: style.loras,
-            prompt: (style.prompt + prompt).replace(/^\s+/gm, '').trim(),
-            negative_prompt: style.negative_prompt,
-            aspectRatio: aspectRatio,
-            width: style.width || params.width,
-            height: style.height || params.height,
-            blur: imageType === 'nsfw' && !isSubscribed
-        };
-
-        const requestData = { ...params, ...image_request };
-        console.log({model_name:requestData.model_name,prompt:requestData.prompt})
-
-        const novitaTaskId = await fetchNovitaMagic(requestData);
-
-        await db.collection('tasks').insertOne({
-            taskId: novitaTaskId,
-            type: image_request.type,
-            status: 'pending',
-            prompt: prompt.replace(/^\s+/gm, '').trim(),
-            negative_prompt: image_request.negative_prompt,
-            aspectRatio: aspectRatio,
-            userId: new ObjectId(userId),
-            chatId: new ObjectId(chatId),
-            userChatId: new ObjectId(userChatId),
-            blur: image_request.blur || false,
-            createdAt: new Date(),
-            updatedAt: new Date()
-        });
-
-        reply.send({ taskId: novitaTaskId, message: 'Image generation task started. Use the taskId to check status.' });
-
-    } catch (err) {
-        console.error(err);
-        reply.status(500).send({ error: 'Error initiating image generation.' });
-    }
-});
-
 // Endpoint to initiate txt2img for selected image type
 fastify.post('/novita/txt2img', async (request, reply) => {
-  const { prompt, aspectRatio, userId, chatId, userChatId, imageType } = request.body;
-
-  // Define the schema for validation
-  const Txt2ImgSchema = z.object({
-      prompt: z.string().min(10, 'Prompt must be at least 10 characters long'),
-      aspectRatio: z.string().optional().default('9:16'),
-      userId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid userId'),
-      chatId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid chatId'),
-      userChatId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid userChatId'),
-      imageType: z.enum(['sfw', 'nsfw']),
-  });
+  const { title, prompt, aspectRatio, userId, chatId, userChatId, imageType } = request.body;
 
   try {
-      const validated = Txt2ImgSchema.parse(request.body);
-      const { prompt, aspectRatio, userId, chatId, userChatId, imageType } = validated;
 
       const db = fastify.mongo.db
 
@@ -547,6 +466,7 @@ fastify.post('/novita/txt2img', async (request, reply) => {
           type: imageType,
           status: 'pending',
           prompt: prompt,
+          title: title,
           negative_prompt: image_request.negative_prompt,
           aspectRatio: aspectRatio,
           userId: new ObjectId(userId),
@@ -623,6 +543,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
               task.chatId,
               task.userChatId,
               task.prompt,
+              task.title,
               imageData.imageUrl,
               task.aspectRatio,
               null, // blurredImageUrl is null since we're not blurring images

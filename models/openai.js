@@ -40,7 +40,7 @@ const moderateText = async (text) => {
 };
 const fetchOpenAICompletion = async (messages, res, maxToken = 1000, genImage) => {
   messages = sanitizeMessages(messages);
-
+console.log(messages)
   try {
     const response = await sendRequest(messages, maxToken);
 
@@ -119,7 +119,7 @@ const processResponse = async (response, res, genImage) => {
 
 async function generateCompletion(messages, maxToken = 1000) {
 
-    const response = await fetch(currentModel.apiUrl, {
+  const response = await fetch(currentModel.apiUrl, {
         headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${currentModel.key}`
@@ -139,7 +139,7 @@ async function generateCompletion(messages, maxToken = 1000) {
     });
     if (!response.ok) {
         console.log(response)
-        throw new Error('Error generating English description');
+        return false
     }
     const data = await response.json();
     const completionMessage = data.choices[0].message.content.trim();
@@ -216,9 +216,10 @@ const checkImageRequest = async (messages) => {
     .filter(m => m.content && !m.content.startsWith('[Image]') && m.role !== 'system')
     .slice(-2);
 
-    if(lastTwoMessages.length < 2){
+    if(lastTwoMessages.length < 1){
       return {}
     }
+
     const updatedMessages = [
       { role: "system", content: systemPrompt },
       ...lastTwoMessages
@@ -238,8 +239,8 @@ const checkImageRequest = async (messages) => {
           frequency_penalty: 0.75,
           presence_penalty: 0.75,
         });
-
-        return JSON.parse(response.choices[0].message.content);
+        const genImage = JSON.parse(response.choices[0].message.content);
+        return genImage
       } catch (error) {
         attempts++;
         console.error(`Parsing error (Attempt ${attempts}/${maxAttempts}):`, error.message || error);

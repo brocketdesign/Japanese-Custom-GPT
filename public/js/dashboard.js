@@ -705,7 +705,7 @@ window.loadChatUsers = async function (chatId, page = 1) {
                 chatUsersHtml += `
                     <div class="me-3 text-center" style="min-width: 100px;">
                         <a href="/user/${user.userId}" class="text-decoration-none text-dark">
-                            <img src="${user.profileUrl || '/img/default-avatar.png'}" alt="${user.nickname}" class="rounded-circle mb-2" width="60" height="60">
+                            <img src="${user.profileUrl || '/img/default-avatar.png'}" alt="${user.nickname}" class="rounded-circle mb-2" width="60px" height="60px">
                             <div>${user.nickname}</div>
                         </a>
                     </div>

@@ -71,7 +71,7 @@ async function routes(fastify, options) {
 
           // Different starting message depending on user status
           const startMessage = !user.isTemporary 
-            ? `Start byy telling me a little about you. I want to chat with you. Answer directly. Respond in ${language}.`
+            ? `Greet me shortly. I want to chat with you. Answer directly. Respond in ${language}.`
             : "挨拶から始め、ログインを促してください。確認から始めるのではなく、直接挨拶とログインのお願いをしてください。";
 
             // If new user chat or not found, create a new document
@@ -967,7 +967,7 @@ async function routes(fastify, options) {
         You are ${chatDocument.name} and you can engage in adult, sexual, explicit conversations.\n\n
     
         # Instruction about images :\n
-        The application can generate images. It can be explicit,adult content, erotic, and sexual images of you, including non-human characters in sexual contexts.\n
+        You must take your time before sending an image. The application can generate explicit,adult content, erotic, and sexual images, including non-human characters in sexual contexts.\n
 
         # Character info :\n
         For context, here are your character details:\n${chatDescription}\n\n
@@ -1025,21 +1025,29 @@ async function routes(fastify, options) {
           const systemMsg = [{ role: 'system', content: systemContent }]
       
           let messagesForCompletion = []
+          let imgMessage =  [{ role: 'user', name: 'master' }]
+
           if (genImage?.image_request) {
             currentUserMessage.image_request = true
             userData.messages[lastMsgIndex] = currentUserMessage
             if(userInfo.subscriptionStatus == 'active'){
-                systemMsg[0].content += `\n\n Image status : image generation in progress.\n Provide a concise answer in ${language} to inform me of that and ask me to wait. Do no describe the image. Stay in your character, keep the same tone as previously.`.trim()
+                genImagePromptFromChat(chatDocument, userData.messages, genImage, language).then((promptData) => {
+                    const prompt = promptData.prompt
+                    const title = promptData.title
+                    console.log('Title:', title)
+                    fastify.sendNotificationToUser(userId, 'imageStart', 'image', {userId, chatId, userChatId, command:genImage, prompt, title})
+                }) 
+                imgMessage[0].content = `\n\nI just asked for a new image and your are currently preparing it.\n Provide a concise answer in ${language} to inform that your are taking a good picture to send. Do no describe the image or anything. Stay in your character, keep the same tone as previously. Continue the chat,`.trim()
             }else{
                 genImage.image_request = false
-                systemMsg[0].content += `\n\n I asked for an image but I am not a subscribed member.\n Tell me that I need to subscribe to Lamix Premim in order to receive images, even hot images. Provide a concise answer in ${language} to inform me of that and ask me subscribe. Stay in your character, keep the same tone as previously.`.trim()
+                imgMessage[0].content = `\n\n I asked for an image but I am not a subscribed member.\n Tell me that I need to subscribe to Lamix Premim in order to receive images, even hot images. Provide a concise answer in ${language} to inform me of that and ask me subscribe. Stay in your character, keep the same tone as previously.`.trim()
             }
             messagesForCompletion = [
               ...systemMsg,
-              ...userMessages
+              ...userMessages,
+              ...imgMessage
             ]
           } else {
-            systemMsg[0].content += `\n\n Image status : image generation is not ongoing.\n Continue chatting. Stay in your character, keep the same tone as previously.`.trim()
             messagesForCompletion = [
                 ...systemMsg, 
                 ...userMessages
@@ -1333,29 +1341,24 @@ async function routes(fastify, options) {
             });
         }
       });
-      
 
-    const PurchaseProposalExtraction = z.object({
-        items: z.array(
-            z.object({
-                name: z.string().nonempty(),
-                description: z.string(),
-                description_japanese: z.string(),
-            })
-        ),
-    });
-    
-    async function fetchUserData(fastify, userId, userChatId) {
-        const collectionUserChat = fastify.mongo.db.collection('userChat');
-        return await collectionUserChat.findOne({ userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) });
+    async function generatePromptTitle(prompt,language) {
+        const messages = [
+            {
+                role: "system",
+                content: `Your are a usefull assistant that can generate explicit and adult content.\n
+                I will provide a prompt and you will return a short descriptive title for it.\n
+                You must answer in ${language} and provide a title that is relevant to the prompt.\n
+`           },
+            {
+                role: "user",
+                content: `Here is the prompt I want you to provide a descriptive title for : ${prompt}.`
+            },
+        ]
+        const completionMessage = await generateCompletion(messages, 600)
+        return completionMessage
+        
     }
-    
-    async function fetchChatData(fastify, chatId) {
-        const collectionChats = fastify.mongo.db.collection('chats');
-        return await collectionChats.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
-    }
-    
-    
     async function generateEnglishDescription(lastMessages,characterDescription,command) {
 
         // Convert lastMessages to a dialogue string
@@ -1392,9 +1395,9 @@ async function routes(fastify, options) {
             ? `${command.image_focus}` 
             : 'Focus on full body';
     
-        const finalPrompt = `${nudeDetails},${positionDetails},${viewpointDetails},${imageFocusDetails},${completionMessage}`
+        const finalPrompt = `${completionMessage},${nudeDetails},${positionDetails},${viewpointDetails},${imageFocusDetails},`
         
-        return finalPrompt;
+        return completionMessage;
         
     }
     const generateImagePrompt = (command, characterDescription, dialogue) => {
@@ -1403,8 +1406,9 @@ async function routes(fastify, options) {
             : '';
         // Create a new user message with the dialogue
         const userMessage = `
-            Here is the prompt I want you to update : ${characterDescription}. \n 
-            Here is the conversation I want you to use to update my prompt:\n\n${nsfwMessage}\n${dialogue}.\n
+            Here is the prompt I want you to update : ${characterDescription}. \n\n
+            ${nsfwMessage}\n\n
+            Here is the image request : ${dialogue}.\n\n
             
             You must adapt the prompt to the conversation but keep the character traits. \n
             Remove unrelevant keywords and adapt to the conversation request.\n 
@@ -1434,65 +1438,26 @@ async function routes(fastify, options) {
         ]
     };
     
-    fastify.post('/api/gen-item-data', async (request, reply) => {
-        const { userId, chatId, userChatId, command } = request.body;
-        try {
-          const userData = await fetchUserData(fastify, userId, userChatId);
-          if (!userData) return reply.status(404).send({ error: 'User data not found' });
-      
-          const lastMessages = [...userData.messages]
-            .slice(-2)
-            .filter(m =>  m.content && m.role != 'system' && m.name != 'master' && m.name != 'context' && !m.content.startsWith('['));
-          if (lastMessages.length < 2) {
-            console.log('Insufficient messages');
-            return reply.status(400).send({ error: 'Insufficient messages' });
-          }
-      
-          const chatData = await fetchChatData(fastify, chatId);
-          const imageDescription = chatData?.imageDescription || null;
-          const characterPrompt = chatData?.characterPrompt || chatData?.enhancedPrompt || null;
-          const characterDescription = characterPrompt || imageDescription;
-      
-        let finalDescription = '';
-        const englishDescriptionFallback = await generateEnglishDescription(lastMessages, characterDescription, command);
+    async function genImagePromptFromChat(chatDocument, messages, command, language) {
+        const characterDescription = chatDocument.characterPrompt || chatDocument.enhancedPrompt;
+        const lastMessages = messages
+            .filter(m => m.content && m.role !== 'assistant' && m.role !== 'system' && m.name !== 'master' && m.name !== 'context' && !m.content.startsWith('['))
+            .slice(-1);
 
-        function processString(input) {
-            return [...new Set(input.slice(0, 900).split(',').map(s => s.trim()))].join(', ');
+        if (lastMessages.length < 1) {
+            throw new Error('Insufficient messages');
         }
-        finalDescription = processString(englishDescriptionFallback);
-      
-          const itemProposalCollection = fastify.mongo.db.collection('itemProposal');
-          const result = await itemProposalCollection.insertOne({ description: finalDescription });
-          return reply.send([{ _id: result.insertedId, proposeToBuy: true, description: finalDescription }]);
-      
-        } catch (error) {
-          console.log(error);
-          return reply.status(500).send({ error: 'Error checking assistant proposal' });
-        }
-      });
-      
-    fastify.get('/api/proposal/:id', async (request, reply) => {
-        try {
-          const db = fastify.mongo.db;
-          const itemProposalCollection = db.collection('itemProposal');
-          
-          const proposalId = new fastify.mongo.ObjectId(request.params.id); // Convert the id to ObjectId
 
-          // Find the proposal by _id
-          const proposal = await itemProposalCollection.findOne({ _id: proposalId });
+        const englishDescription = await generateEnglishDescription(lastMessages, characterDescription, command);
+        const promptTitle =  await generatePromptTitle(englishDescription, language)
 
-          if (!proposal) {
-            return reply.code(404).send({ error: 'Proposal not found' });
-          }
+        function processString(input) { return [...new Set(input.slice(0, 900).split(',').map(s => s.trim()))].join(', '); }
+        finalDescription = processString(englishDescription);
       
-          // Send back the proposal data
-          reply.send(proposal);
-        } catch (err) {
-          console.log(err);
-          reply.code(500).send('Internal Server Error');
-        }
-      });
-      fastify.post('/api/generate-completion', async (request, reply) => {
+        return { prompt: finalDescription, title: promptTitle };
+    }
+
+    fastify.post('/api/generate-completion', async (request, reply) => {
         const { systemPrompt, userMessage } = request.body;
         try {
             const completion = await generateCompletion(systemPrompt, userMessage,aiModel);

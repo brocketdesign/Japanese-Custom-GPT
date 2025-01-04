@@ -340,11 +340,12 @@ async function routes(fastify, options) {
         .aggregate([
           { $match: { chatId } },           // Match the document by chatId
           { $unwind: '$images' },           // Unwind the images array
+          { $sort: { 'images.createdAt': -1 } }, // Sort by createdAt in descending order
           { $skip: skip },                  // Skip for pagination
           { $limit: limit },                // Limit the results to the page size
           { $project: { _id: 0, image: '$images', chatId: 1 } }  // Project image and chatId
         ])
-        .toArray();
+        .toArray()
   
       // Get total image count for pagination info
       const totalImagesCount = await chatsGalleryCollection

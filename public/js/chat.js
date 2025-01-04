@@ -818,11 +818,13 @@ $(document).ready(async function() {
                 url: `/image/${imageId}`,
                 method: 'GET',
                 success: function(response) {
+                    console.log(response)
                     if (response.imageUrl) {
 
                         displayImageThumb(response.imageUrl)
                         // Update the placeholder image
                         $(`#image-${imageId}`).attr('src', response.imageUrl).fadeIn();
+                        $(`#image-${imageId}`).attr('alt', response.title.trim()).fadeIn();
     
                         // Add tools or badges if applicable
                         if (!response.isBlur) {
@@ -1196,8 +1198,6 @@ $(document).ready(async function() {
                     if (data.type === 'text') {
                         markdownContent += data.content;
                         $(`#completion-${uniqueId}`).html(marked.parse(markdownContent));
-                    } else if (data.type === 'trigger') {
-                        handleTrigger(data);
                     }
                 };
 
@@ -1223,15 +1223,6 @@ $(document).ready(async function() {
         });
     }
 
-    const handleTrigger = (data) => {
-        switch (data.name) {
-            case 'image_request':
-                imageRequest(data.command);
-                break;
-            default:
-                console.warn(`Unhandled trigger command: ${data.name}`);
-        }
-    };
   
     window.displayMessage = function(sender, message, origineUserChatId, callback) {
         const messageContainer = $(`#chatContainer[data-id=${origineUserChatId}]`)
@@ -1341,39 +1332,7 @@ $(document).ready(async function() {
         if (typeof callback === 'function') {
             callback();
         }
-    };            
-    
-    function initiatePurchase(itemId, itemName, itemPrice, userId, chatId, callback) {
-        $.ajax({
-            url: '/api/purchaseItem',
-            method: 'POST',
-            data: { itemId, itemName, itemPrice, userId, chatId },
-            success: function(response) {
-                callback(response);
-            },
-            error: function(xhr, status, error) {
-                console.error('Error during purchase request:', error);
-                callback({ success: false, error: error });
-            }
-        });
-    }
-    async function saveImageRequest(command, userId, chatId) {
-
-        return new Promise((resolve, reject) => {
-            $.ajax({
-                url: '/api/purchaseImage',
-                method: 'POST',
-                data: { command: JSON.stringify(command), userId, chatId },
-                success: function(response) {
-                    resolve(response);
-                },
-                error: function(response) {
-                    console.error('Error during purchase request:', response);
-                    reject({ success: false, error: response });
-                }
-            });
-        });
-    }
+    };       
 
     // Check if the tooltip has already been shown in the session
     if (!sessionStorage.getItem('tooltipShown')) {
@@ -1420,33 +1379,10 @@ $(document).ready(async function() {
         const prompt_title = $(this).find('.card-text').text()
         showNotification(window.translations['image_generation_processing'],'info')
 
-        controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, nsfw);
+        controlImageGen(userId, chatId, userChatId, id, nsfw);
         displayAndUpdateImageLoader(id,randomId)
         Swal.close();
     });
-    
-    window.imageRequest = function(command){
-        const randomId = displayAndUpdateImageLoader();
-        addIconToLastUserMessage();
-
-        saveImageRequest(command, userId, chatId);
-        generateItemData(command)
-            .then((item) => {
-                if (item && item.length > 0) {
-                    const itemId = item[0]._id;
-                    displayAndUpdateImageLoader(itemId,randomId);
-                    addIconToLastUserMessage(itemId);
-                    let type = command.nsfw ? 'nsfw' : 'sfw'
-                    generateImageNovita(API_URL, userId, chatId, userChatId, itemId, thumbnail, type);
-                } else {
-                    displayAndUpdateImageLoader(null,randomId)
-                }
-            })
-            .catch((error) => {
-                displayAndUpdateImageLoader(null,randomId)
-            });
-
-    };
     
     $(document).on('click', '.regen-img', function () {
 
@@ -1465,10 +1401,10 @@ $(document).ready(async function() {
         displayAndUpdateImageLoader(imageId,randomId);
 
         if($(this).hasClass('img2img')){
-            img2ImageNovita(API_URL, userId, chatId, userChatId, imageId, thumbnail, imageNsfw, {prompt:imageDescription})
+            img2ImageNovita(userId, chatId, userChatId, imageId, imageNsfw, {prompt:imageDescription})
         }
         if($(this).hasClass('txt2img')){
-            txt2ImageNovita(API_URL, userId, chatId, userChatId, imageId, thumbnail, imageNsfw, {prompt:imageDescription})
+            txt2ImageNovita(userId, chatId, userChatId, imageId, imageNsfw, {prompt:imageDescription})
         }
     });
     
@@ -1494,7 +1430,7 @@ $(document).ready(async function() {
         });
     }    
 
-    function addIconToLastUserMessage(itemId = false) {
+    window.addIconToLastUserMessage = function(itemId = false) {
         if(!itemId){
             const lastUserMessage = $('.message-container.user-message:last'); // Select the last user message
             if (lastUserMessage.length) {

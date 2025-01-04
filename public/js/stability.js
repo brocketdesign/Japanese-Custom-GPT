@@ -21,68 +21,7 @@ window.checkImageDescription = async function(chatId = null) {
 };
 
 // Generate Image using Novita
-window.generateImageNovita = async function(API_URL, userId, chatId, userChatId, item_id, thumbnail, imageType, option = {}) {
-
-    if (!item_id) {
-        $(`#load-image-container-${item_id}`).remove();
-        showNotification('無効なアイテムIDです。', 'error');
-        return;
-    }
-
-    try {
-        const proposal = await getProposalById(item_id);
-        let {
-            negativePrompt = $('#negativePrompt-input').val(),
-            prompt = proposal.description.replace(/^\s+/gm, '').trim() || $('#prompt-input').val(),
-            aspectRatio = '9:16',
-            baseFace = null
-        } = option;
-
-        if (!prompt) {
-            console.error('generateImageNovita Error: Prompt is required.');
-            showNotification('画像生成に必要なプロンプトがありません。', 'error');
-            $(`#load-image-container-${item_id}`).remove();
-            return;
-        }
-
-        const API_ENDPOINT = `${API_URL}/novita/product2img`;
-
-        const response = await fetch(API_ENDPOINT, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                prompt: prompt, 
-                aspectRatio: aspectRatio, 
-                userId: userId, 
-                chatId: chatId, 
-                userChatId: userChatId,
-                imageType: imageType
-            })
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`ネットワークエラー (${response.status} ${response.statusText}): ${errorText}`);
-        }
-
-        const data = await response.json();
-        const { taskId } = data;
-
-        if (!taskId) {
-            throw new Error('サーバーからタスクが返されませんでした。');
-        }
-
-        pollTaskStatus(API_URL, taskId, imageType, prompt, item_id, userChatId);
-
-    } catch (error) {
-        console.error('generateImageNovita Error:', error);
-        console.log(`画像生成エラー: ${error.message}`);
-        $(`#load-image-container-${item_id}`).remove();
-        showNotification('画像の生成中にエラーが発生しました。', 'error');
-    }
-}
-
-async function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, imageId, isNSFWChecked) {
+async function controlImageGen(userId, chatId, userChatId, imageId, isNSFWChecked) {
     const t = window.translations.imageForm;
 
     $.ajax({
@@ -97,7 +36,7 @@ async function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, i
             const imageDescription = imageDescriptionResponse.imageDescription
 
             prompt = imageDescription +', '+ prompt
-            txt2ImageNovita(API_URL, userId, chatId, userChatId, imageId, thumbnail, imageNsfw, {prompt})
+            txt2ImageNovita(userId, chatId, userChatId, imageId, imageNsfw, {prompt})
         },
         error: function(xhr) {
             showNotification('プロンプトの取得中にエラーが発生しました。', 'error');
@@ -106,7 +45,7 @@ async function controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, i
 }
 
 // Re-generate Image using Novita
-window.txt2ImageNovita = async function(API_URL, userId, chatId, userChatId, imageId, thumbnail, imageType, option = {}) {
+window.txt2ImageNovita = async function(userId, chatId, userChatId, imageId, imageType, option = {}) {
 
     if (!imageId) {
         $(`#load-image-container-${imageId}`).remove();
@@ -118,6 +57,7 @@ window.txt2ImageNovita = async function(API_URL, userId, chatId, userChatId, ima
     try {
         const {
             negativePrompt = $('#negativePrompt-input').val(),
+            title = option.title || $('#title-input').val(),
             prompt = option.prompt.replace(/^\s+/gm, '').trim() || $('#prompt-input').val(),
             aspectRatio = '9:16',
             baseFace = null,
@@ -137,12 +77,13 @@ window.txt2ImageNovita = async function(API_URL, userId, chatId, userChatId, ima
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-                prompt: prompt, 
-                aspectRatio: aspectRatio, 
-                userId: userId, 
-                chatId: chatId, 
-                userChatId: userChatId,
-                imageType: imageType
+                title,
+                prompt, 
+                aspectRatio, 
+                userId, 
+                chatId, 
+                userChatId,
+                imageType
             })
         });
 
@@ -158,7 +99,7 @@ window.txt2ImageNovita = async function(API_URL, userId, chatId, userChatId, ima
             throw new Error('サーバーからタスクが返されませんでした。');
         }
 
-        pollTaskStatus(API_URL, taskId, imageType, prompt, imageId, userChatId, function(){
+        pollTaskStatus(taskId, imageType, prompt, title, imageId, userChatId, function(){
             $(`.txt2img[data-id=${imageId}]`).removeClass('spin');
         });
 
@@ -170,7 +111,7 @@ window.txt2ImageNovita = async function(API_URL, userId, chatId, userChatId, ima
         showNotification('画像の生成中にエラーが発生しました。', 'error');
     }
 }
-window.img2ImageNovita = async function(API_URL, userId, chatId, userChatId, imageId, thumbnail, imageType, option = {}) {
+window.img2ImageNovita = async function(userId, chatId, userChatId, imageId, imageType, option = {}) {
 
     if (!imageId) {
         $(`#load-image-container-${imageId}`).remove();
@@ -222,7 +163,8 @@ window.img2ImageNovita = async function(API_URL, userId, chatId, userChatId, ima
             throw new Error('サーバーからタスクが返されませんでした。');
         }
 
-        pollTaskStatus(API_URL, taskId, imageType, prompt, imageId, userChatId, function(){
+        // must include title for pollTaskStatus
+        pollTaskStatus(taskId, imageType, prompt, imageId, userChatId, function(){
             $(`.img2img[data-id=${imageId}]`).removeClass('spin')
         });
 
@@ -236,7 +178,7 @@ window.img2ImageNovita = async function(API_URL, userId, chatId, userChatId, ima
 }
 
 const displayedImageIds = new Set();
-function pollTaskStatus(API_URL, taskId, type, prompt, item_id, userChatId, callback) {
+function pollTaskStatus(taskId, type, prompt, title, item_id, userChatId, callback) {
     const POLLING_INTERVAL = 30000; // 30 seconds
     const MAX_ATTEMPTS = 60;
     let attempts = 0;
@@ -262,7 +204,8 @@ function pollTaskStatus(API_URL, taskId, type, prompt, item_id, userChatId, call
                         url: imageUrl,
                         id: imageId,
                         userChatId,
-                        prompt: prompt,
+                        title,
+                        prompt,
                         nsfw: type === 'nsfw'
                     }, prompt);
 
@@ -307,25 +250,6 @@ function pollTaskStatus(API_URL, taskId, type, prompt, item_id, userChatId, call
     }, POLLING_INTERVAL);
 }
 
-// Fetch Proposal by ID
-function getProposalById(id) {
-  //console.log('getProposalById called with id:', id);
-  return new Promise((resolve, reject) => {
-      $.ajax({
-          url: `/api/proposal/${id}`,
-          method: 'GET',
-          success: function(data) {
-              //console.log('getProposalById Success:', data);
-              resolve(data);
-          },
-          error: function(err, status, error) {
-              console.error('getProposalById Error:', status, error, err);
-              reject(new Error('Failed to fetch proposal.'));
-          }
-      });
-  });
-}
-
 const sentImageIds = new Set();
 
 window.generateImage = async function(data, prompt) {
@@ -336,7 +260,7 @@ window.generateImage = async function(data, prompt) {
 
   const img = document.createElement('img');
   img.setAttribute('src', imageUrl);
-  img.setAttribute('alt', prompt);
+  img.setAttribute('alt', data.title);
   img.setAttribute('class', 'm-auto');
   img.setAttribute('data-id', imageId);
   img.setAttribute('data-nsfw', imageNsfw);

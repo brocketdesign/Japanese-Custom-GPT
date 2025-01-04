@@ -4,13 +4,6 @@ body {
   padding: 0; /* Avoid body padding if any */
   margin: 0; /* Avoid body margin if any */
 }
-
-/* Optional: Constrain media and fixed elements */
-img, video, iframe {
-  max-width: 100%;
-  height: auto;
-}
-
 .isAdmin{
   display: none;
 }

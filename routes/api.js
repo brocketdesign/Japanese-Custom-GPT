@@ -1032,7 +1032,7 @@ async function routes(fastify, options) {
                 systemMsg[0].content += `\n\n Image status : image generation in progress.\n Provide a concise answer in ${language} to inform me of that and ask me to wait. Do no describe the image. Stay in your character, keep the same tone as previously.`.trim()
             }else{
                 genImage.image_request = false
-                systemMsg[0].content += `\n\n I asked for an image but I am not a subscribed member.\n Tell me that I need to subscribe to receive images, even hot images. Provide a concise answer in ${language} to inform me of that and ask me subscribe. Stay in your character, keep the same tone as previously.`.trim()
+                systemMsg[0].content += `\n\n I asked for an image but I am not a subscribed member.\n Tell me that I need to subscribe to Lamix Premim in order to receive images, even hot images. Provide a concise answer in ${language} to inform me of that and ask me subscribe. Stay in your character, keep the same tone as previously.`.trim()
             }
             messagesForCompletion = [
               ...systemMsg,

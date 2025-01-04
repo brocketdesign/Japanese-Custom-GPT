@@ -9,7 +9,7 @@ const handlebars = require('handlebars');
 const fastifyMultipart = require('@fastify/multipart');
 const translationsPlugin = require('./plugins/translations');
 
-const { getCounter, updateCounter } = require('./models/tool');
+const { updateCounter } = require('./models/tool');
 const {
   cleanupNonRegisteredUsers,
   deleteTemporaryChats,
@@ -22,36 +22,17 @@ fastify.register(require('fastify-mongodb'), {
   database: process.env.MONGODB_NAME,
 });
 
-cron.schedule('0 0 * * *', () => {
-  const db = fastify.mongo.db;
-  cleanupNonRegisteredUsers(db);
-  deleteTemporaryChats(db);
-});
-
 cron.schedule('0 0 * * *', async () => {
   const db = fastify.mongo.db;
   try {
+    cleanupNonRegisteredUsers(db);
+    deleteTemporaryChats(db);
     await updateCounter(db, 0);
     fastify.log.info('Counter has been reset to 0.');
   } catch (err) {
     fastify.log.error('Failed to reset counter:', err);
   }
 });
-
-async function initializeCategoriesCollection() {
-  const db = fastify.mongo.db;
-  try {
-    const filePath = path.join(__dirname, 'categories.json');
-    const fileData = fs.readFileSync(filePath, 'utf8');
-    const categories = JSON.parse(fileData);
-    const collection = db.collection('categories');
-    await collection.deleteMany({});
-    await collection.insertMany(categories);
-    console.log('Categories collection initialized.');
-  } catch (err) {
-    console.error('Error initializing categories collection:', err);
-  }
-}
 
 fastify.register(require('@fastify/static'), {
   root: path.join(__dirname, 'public'),
@@ -148,20 +129,6 @@ fastify.addHook('onRequest', async (req, reply) => {
   if (process.env.MODE !== 'local' && req.headers['x-forwarded-proto'] !== 'https') {
     reply.redirect(`https://${req.headers['host']}${req.raw.url}`);
   }
-});
-
-fastify.decorate('createNotification', async (userId, message, type, data) => {
-  const db = fastify.mongo.db;
-  const notificationsCollection = db.collection('notifications');
-  const notification = {
-    userId: new fastify.mongo.ObjectId(userId),
-    message,
-    type: type || 'info',
-    data: data || {},
-    viewed: false,
-    createdAt: new Date(),
-  };
-  await notificationsCollection.insertOne(notification);
 });
 
 fastify.get('/', async (request, reply) => {
@@ -324,7 +291,7 @@ fastify.get('/chat/edit/:chatId', { preHandler: [fastify.authenticate] }, async 
 
     let chatId = request.params.chatId || null;
     const chatImage = request.query.chatImage;
-
+    fastify.sendNotificationToUser(userId,'Hello from LAMIX','info',{});
     const isTemporaryChat = !request.params.chatId;
 
     const translations = request.translations;

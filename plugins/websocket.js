@@ -47,10 +47,15 @@ module.exports = fastifyPlugin(async function (fastify) {
     }
   });
 
-  fastify.decorate('sendNotificationToUser', (userId, notification) => {
+  fastify.decorate('sendNotificationToUser', (userId, message, type, additionalData) => {
     try {
       const userConnections = fastify.connections.get(userId);
       if (userConnections) {
+        const notification = {
+          message,
+          type,
+          ...additionalData
+        };
         for (const conn of userConnections) {
           conn.send(JSON.stringify({ notification }));
         }

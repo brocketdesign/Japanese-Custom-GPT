@@ -1,33 +1,26 @@
 const { ObjectId } = require('mongodb');
 const {
-    describeCharacterFromImage,
     checkImageRequest, 
-    moduleCompletion,
-    fetchOpenAICompletion,fetchOpenAICompletionWithTrigger,
-    generateCompletion, 
-    fetchOpenAICustomResponse,
+    fetchOpenAICompletion,
+    generateCompletion,
     moderateText
 } = require('../models/openai')
-const crypto = require('crypto');
-const sessions = new Map(); // Define sessions map
-const { getLanguageName, handleFileUpload, uploadToS3, checkLimits, convertImageUrlToBase64, createBlurredImage, sanitizeMessages } = require('../models/tool');
-const {sendMail, getRefreshToken} = require('../models/mailer');
-const { createHash } = require('crypto');
-const { convert } = require('html-to-text');
+const { 
+    getLanguageName, 
+    handleFileUpload,
+    convertImageUrlToBase64, 
+    sanitizeMessages 
+} = require('../models/tool');
 const axios = require('axios');
 const OpenAI = require("openai");
 const { z } = require("zod");
 const { zodResponseFormat } = require("openai/helpers/zod");
 const path = require('path');
 const fs = require('fs');
-const stripe = process.env.MODE == 'local'? require('stripe')(process.env.STRIPE_SECRET_KEY_TEST) : require('stripe')(process.env.STRIPE_SECRET_KEY)
 const sharp = require('sharp');
-const { chat } = require('googleapis/build/src/apis/chat');
+const sessions = new Map();
 
-const aiModelChat = 'meta-llama/llama-3.1-8b-instruct-max' //'meta-llama/llama-3.1-70b-instruct'
 const aiModel = `meta-llama/llama-3.1-8b-instruct`
-  
-
 
 async function routes(fastify, options) {
 
@@ -996,7 +989,6 @@ async function routes(fastify, options) {
         const { sessionId } = request.params
         const session = sessions.get(sessionId)
         if (!session) { reply.status(404).send({ error: 'Session not found' }); return }
-      
         setSSEHeaders(reply)
         try {
           const db = fastify.mongo.db
@@ -1039,7 +1031,6 @@ async function routes(fastify, options) {
             systemMsg[0].content += `\n\n Image status : image generation in progress.\n Provide a concise answer in ${language} to inform me of that and ask me to wait. Do no describe the image. Stay in your character, keep the same tone as previously.`.trim()
             messagesForCompletion = [
               ...systemMsg,
-             // ...getChatTemplate(language),
               ...userMessages
             ]
           } else {
@@ -1049,8 +1040,7 @@ async function routes(fastify, options) {
                 ...userMessages
             ]
           }
-          //console.log({messagesForCompletion})
-          const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, aiModelChat, genImage)
+          const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, genImage)
           if(completion){
             const newAssitantMessage = { role: 'assistant', content: completion }
             if(currentUserMessage.name){
@@ -1196,96 +1186,6 @@ async function routes(fastify, options) {
         if (!str) return str;
         return str.replace(/\*.*?\*/g, '').replace(/"/g, '');
     }    
-    
-    fastify.post('/api/openai-chat-image-completion/', async (request, reply) => {
-        let userId = request.body.userId
-        if(!userId){ 
-            const user = request.user;
-            userId = user._id
-        }
-        const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
-        const userLimitCheck = await checkLimits(fastify, request.body.userId);
-
-        if (userLimitCheck.limitIds?.includes(3)) {
-            return reply.status(403).send(userLimitCheck);
-        }
-        const collectionCharacters = fastify.mongo.db.collection('characters');
-        const collectionChat = fastify.mongo.db.collection('chats');
-        const userDataCollection = fastify.mongo.db.collection('userChat');
-        const collectionImageCount = fastify.mongo.db.collection('ImageCount');
-        const { chatId, userChatId, character } = request.body;    
-        try {
-
-            let userData = await userDataCollection.findOne({ userId : new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) })
-
-            if (!userData) {
-                return reply.status(404).send({ error: 'User data not found' });
-            }
-
-            characterDescription = character?.description || null
-            if(!characterDescription){
-                const chatData = await collectionChat.findOne({_id: new fastify.mongo.ObjectId(chatId) })
-                if(chatData.chatImageUrl){
-                    const image_url = new URL(chatData.chatImageUrl);
-                    const path = image_url.pathname;
-    
-                    const character = await collectionCharacters.findOne({
-                        image: { $regex: path }
-                    });
-                    if (character) {
-                        characterDescription = character?.description || null;
-                    } 
-                }
-            }
-            let userMessages = userData.messages;
-            const imagePrompt = [
-                { 
-                    role: "system", 
-                    content: `
-                    You are a stable diffusion image prompt generator.
-                    You take a conversation and respond with an image prompt of less than 800 characters. 
-                    You MUST provide an image description for the user request.
-                    Respond like that with only one of two keywords in english: 
-                    day or night, inside or outside, setting name, \n
-                    young girl, yellow eyes, long hair,pink hair, white hair, white skin, voluptuous body, cute face, smiling,
-                    Customize the example to match the current character description. DO NOT MAKE SENTENCES, I WANT A LIST OF KEY WORDS THAT DESCRIBE THE IMAGE.\n
-                    Repond EXCLUSIVELY IN ENGLISH !
-                    ` 
-                },
-                { 
-                    role: "user", 
-                    content: `${characterDescription ? `\n First here is the character description:  ${characterDescription}`:''}`
-                    +`Here are the messages:
-                    ` + 
-                    userMessages
-                    .map(msg => 
-                        msg.role !== 'system' && msg.name !== 'master' && !msg.content.startsWith('[Image]')
-                            ? `${msg.content.replace('[Narrator]', '')}` 
-                            : ''
-                    )
-                    .join("\n")                  
-                }
-            ];
-            completion = await moduleCompletion(imagePrompt, reply.raw);
-            newImageCount = await collectionImageCount.findOneAndUpdate(
-                { userId: new fastify.mongo.ObjectId(userId), date: today },
-                { 
-                    $inc: { count: 1 }, 
-                    $setOnInsert: { limit: userLimitCheck.imageLimit } 
-                },
-                { 
-                    returnOriginal: false,
-                    upsert: true  // Create a new document if no match is found
-                }
-            );
-            
-            return reply.send(completion)
-
-        } catch (error) {
-            console.log(error)
-            return reply.status(500).send({ error: 'Error fetching OpenAI completion' });
-        }
-    });
 
     
     fastify.post('/api/openai-chat', (request, reply) => {
@@ -1330,7 +1230,7 @@ async function routes(fastify, options) {
                 return reply.status(404).send({ error: 'Chat data not found' });
             }
     
-            const completion = await fetchOpenAICompletion(chatData.messages, reply.raw, 600, aiModelChat);
+            const completion = await fetchOpenAICompletion(chatData.messages, reply.raw, 600);
     
             // Append the assistant's response to the messages array in the chat document
             const assistantMessage = { "role": "assistant", "content": completion };

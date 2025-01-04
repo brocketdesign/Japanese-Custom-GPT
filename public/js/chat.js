@@ -1447,9 +1447,7 @@ $(document).ready(async function() {
             return
         }
 
-        const userMessage = '[context] '+ window.translations['asked_for_new_image'];
-        window.postMessage({ event: 'displayMessage', role:'user', message: userMessage, completion : false , image : false, messageId: false }, '*');
-
+        showNotification(window.translations['image_generation_processing'],'info')
 
         controlImageGen(API_URL, userId, chatId, userChatId, thumbnail, id, isNSFWChecked);
         displayAndUpdateImageLoader(id,randomId)

@@ -100,7 +100,7 @@ $(document).ready(function() {
               <div class="py-3">
                   ${user.isTemporary 
                       ? `<a href="/authenticate" class="btn btn-lamix custom-gradient-bg border-0">${translations.try_for_free}</a>` 
-                      : `<button class="plan-button btn btn-lamix border-0 subscribe-button" data-plan-id="${plan.id}" data-billing-cycle="${isYearly}">${translations.start_with_this_plan}</button>`
+                      : `<button class="plan-button btn btn-lamix border-0 subscribe-button" data-billing-cycle="${isYearly}">${translations.start_with_this_plan}</button>`
                   }
               </div>
             </div>
@@ -110,21 +110,20 @@ $(document).ready(function() {
 
     // Add event listener to subscribe buttons
     $('.subscribe-button').on('click', function() {
-      const planId = $(this).data('plan-id');
       const billingCycle = $(this).data('billing-cycle');
-      createCheckoutSession(planId, billingCycle);
+      createCheckoutSession(billingCycle);
     });
   }
 
 // Function to create a checkout session
-function createCheckoutSession(planId, billingCycle) {
+function createCheckoutSession(billingCycle) {
   $.ajax({
     type: 'POST',
     url: '/plan/subscribe',
     headers: {
       'Content-Type': 'application/json'
     },
-    data: JSON.stringify({ planId, billingCycle }),
+    data: JSON.stringify({ billingCycle }),
     success: function(response) {
         if (response.action == 'upgrade') {
             $.post('/plan/upgrade', { 

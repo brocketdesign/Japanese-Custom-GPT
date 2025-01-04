@@ -1,7 +1,7 @@
 
 const { ObjectId } = require('mongodb');
 const qs = require('qs');
-const stripe = process.env.MODE == 'local'? require('stripe')(process.env.STRIPE_SECRET_KEY_TEST) : require('stripe')(process.env.STRIPE_SECRET_KEY)
+const stripe = process.env.MODE == 'local' ? require('stripe')(process.env.STRIPE_SECRET_KEY_TEST) : require('stripe')(process.env.STRIPE_SECRET_KEY)
 
 async function routes(fastify, options) {
 
@@ -96,17 +96,11 @@ async function routes(fastify, options) {
       }
   
       // Extract planId and billingCycle from the request body
-      const { planId, billingCycle } = request.body;
+      const { billingCycle } = request.body;
 
-      // Find the plan from your available plans
-      const plan = plans.find((plan) => plan.id === planId);
-  
-      if (!plan) {
-        return reply.status(400).send({ error: 'Invalid plan' });
-      }
-  
-      // Determine the correct price ID based on the billing cycle
-      const planPriceId = plan[`${billingCycle}_id`];
+      const planPriceId = process.env.MODE === 'local'
+        ? (billingCycle === 'yearly' ? process.env.STRIPE_PREMIUM_YEARLY_TEST : process.env.STRIPE_PREMIUM_MONTLY_TEST)
+        : (billingCycle === 'yearly' ? process.env.STRIPE_PREMIUM_YEARLY : process.env.STRIPE_PREMIUM_MONTLY);
   
       // Check if the user already has an active subscription for this plan
       let existingSubscription = await fastify.mongo.db.collection('subscriptions').findOne({
@@ -148,7 +142,7 @@ async function routes(fastify, options) {
         metadata: {
           userId: user._id.toString(), // Optionally store user ID in metadata for future reference
         },
-        locale: 'ja',
+        locale: request.lang,
       });
   
       // Return the session URL to redirect the user

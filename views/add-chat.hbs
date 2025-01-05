@@ -573,7 +573,7 @@ window.isTemporaryChat = '{{isTemporaryChat}}';
 
 $(document).ready(function() {
     if (chatId) {
-        $('.redirectToChat').attr('href', `/chat/${chatId}`);
+        $('#redirectToChat').attr('href', `/chat/${chatId}`);
     }
 });
 
@@ -978,7 +978,7 @@ $(document).ready(function() {
         let newchatId = await checkChat(chatId)
         if(newchatId){
             window.chatId = newchatId
-            $('.redirectToChat').attr('href', `/chat/${newchatId}`)
+            $('#redirectToChat').attr('href', `/chat/${newchatId}`)
         }
         const isTemporary = user.isTemporary
         if(isTemporary){

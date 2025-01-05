@@ -1053,7 +1053,7 @@ async function routes(fastify, options) {
                 ...userMessages
             ]
           }
-          const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, genImage)
+          const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, genImage, request.lang)
           if(completion){
             const newAssitantMessage = { role: 'assistant', content: completion }
             if(currentUserMessage.name){
@@ -1243,7 +1243,7 @@ async function routes(fastify, options) {
                 return reply.status(404).send({ error: 'Chat data not found' });
             }
     
-            const completion = await fetchOpenAICompletion(chatData.messages, reply.raw, 600);
+            const completion = await fetchOpenAICompletion(chatData.messages, reply.raw, 600, null, request.lang);
     
             // Append the assistant's response to the messages array in the chat document
             const assistantMessage = { "role": "assistant", "content": completion };

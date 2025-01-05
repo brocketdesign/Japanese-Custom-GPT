@@ -23,7 +23,7 @@ const apiDetails = {
   }
 };
 
-const currentModel = apiDetails.novita; // Change this to switch models
+let currentModel = apiDetails.novita; // Change this to switch models
 
 const moderateText = async (text) => {
   try {
@@ -38,9 +38,11 @@ const moderateText = async (text) => {
     throw error;
   }
 };
-const fetchOpenAICompletion = async (messages, res, maxToken = 1000, genImage) => {
+const fetchOpenAICompletion = async (messages, res, maxToken = 1000, genImage, lang) => {
+
+  if(lang === 'ja'){ currentModel = apiDetails.openai }
+  console.log('currentModel', currentModel)
   messages = sanitizeMessages(messages);
-console.log(messages)
   try {
     const response = await sendRequest(messages, maxToken);
 

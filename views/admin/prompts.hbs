@@ -62,7 +62,7 @@
         </div>
         <div class="modal-body">
           <input type="hidden" id="editId" name="id">
-          <div class="mb-3">
+            <div class="mb-3"></div>
             <label for="editTitle" class="form-label">タイトル</label>
             <input type="text" class="form-control" id="editTitle" name="title" required>
           </div>
@@ -173,6 +173,7 @@
         url: '/api/prompts/' + id,
         type: 'GET',
         success: function(data) {
+          console.log(data)
           $('#editId').val(data._id);
           $('#editTitle').val(data.title);
           $('#editPrompt').val(data.prompt);
@@ -190,6 +191,11 @@
       e.preventDefault();
       var id = $('#editId').val();
       var formData = new FormData(this);
+      // Remove image if not selected
+      if (!$('#editImage')[0].files.length) {
+        formData.delete('image');
+      }
+
       $.ajax({
         url: '/api/prompts/' + id,
         type: 'PUT',

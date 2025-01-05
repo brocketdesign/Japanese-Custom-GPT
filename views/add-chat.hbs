@@ -268,7 +268,7 @@
                                         </h2>
                                         <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#characterDescriptionAccordion">
                                             <div class="accordion-body row">
-                                                <a href="/my-plan" class="is-premium badge custom-gradient-bg  mb-3">{{translations.unlock_more_customization_fields}}</a>
+                                                <a href="/my-plan" class="is-premium card py-2 custom-gradient-bg mb-3">{{translations.unlock_more_customization_fields}}</a>
                                                 
                                                 <!-- Age -->
                                                 <div class="col-auto mb-3">
@@ -413,7 +413,7 @@
                                         </h2>
                                         <div id="personalityCollapseOne" class="accordion-collapse collapse" aria-labelledby="personalityHeadingOne" data-bs-parent="#personalityAccordion">
                                             <div class="accordion-body row">
-                                                <a href="/my-plan" class="is-premium badge custom-gradient-bg  mb-3">{{translations.unlock_more_customization_fields}}</a>
+                                                <a href="/my-plan" class="is-premium  card py-2  custom-gradient-bg  mb-3">{{translations.unlock_more_customization_fields}}</a>
                                             
                                                 <!-- Personality Feature -->
                                                 <div class="col-auto mb-3">
@@ -509,6 +509,11 @@
                         <div id="imageUploaderContainer" class="w-100" style="cursor: pointer;">
                             <!-- You can add an image uploader here if needed -->
                         </div>
+                        <div class="row w-100 chatRedirection" style="display:none;">
+                            <a type="button" id="redirectToChat" href="#" class="btn custom-gradient-bg  mt-3">{{translations.newCharacter.start_chat_and_image_generation}}</a>
+                            <p class="text-center text-muted mt-2">{{translations.newCharacter.start_chat_and_image_generation_description}}</p>
+                        </div>
+                      
                     </div>
                 </div> 
         </div>
@@ -564,7 +569,13 @@
 <script>
     
 window.chatId = '{{chatId}}';
-window.isTemporaryChat = '{{isTemporaryChat}}'
+window.isTemporaryChat = '{{isTemporaryChat}}';
+
+$(document).ready(function() {
+    if (chatId) {
+        $('.chatRedirection').attr('href', `/chat/${chatId}`);
+    }
+});
 
 $(document).ready(function() {
         
@@ -826,8 +837,9 @@ $(document).ready(function() {
 
                         displayGeneratedImages(imageUrls, characterPrompt, enhancedPrompt, modelId, imageStyle, imageModel, imageVersion)
 
-                        showNotification('画像が正常に生成されました。', 'success');
+                        showNotification(translations.image_generated_successfully, 'success');
                         // Enable buttons and reset text
+                        $('.chatRedirection').show();
                         $('#characterPrompt').prop('disabled', false);
                         $('#generateButton').prop('disabled', false);
                         $('#generateButton').html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
@@ -847,7 +859,7 @@ $(document).ready(function() {
                     if (attempts >= MAX_ATTEMPTS) {
                         clearInterval(intervalId);
                         $('#imageContainer').empty();
-                        showNotification('画像の生成がタイムアウトしました。再試行してください。', 'error');
+                        showNotification(translations.image_generation_failure, 'error');
                         // Enable buttons and reset text
                         $('#characterPrompt').prop('disabled', false);
                         $('#generateButton').prop('disabled', false);
@@ -858,7 +870,7 @@ $(document).ready(function() {
                     console.error('タスクステータスポーリングエラー:', error);
                     clearInterval(intervalId);
                     $('#imageContainer').empty();
-                    showNotification('画像の生成中にエラーが発生しました。', 'error');
+                    showNotification(translations.image_generation_failure, 'error');
                     // Enable buttons and reset text
                     $('#characterPrompt').prop('disabled', false);
                     $('#generateButton').prop('disabled', false);
@@ -966,6 +978,7 @@ $(document).ready(function() {
         let newchatId = await checkChat(chatId)
         if(newchatId){
             window.chatId = newchatId
+            $('.chatRedirection').attr('href', `/chat/${newchatId}`)
         }
         const isTemporary = user.isTemporary
         if(isTemporary){

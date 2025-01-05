@@ -271,6 +271,8 @@
   "next":"次へ",
   "prev":"前へ",
   "newCharacter": {  
+    "start_chat_and_image_generation":"チャットと画像生成を開始",
+    "start_chat_and_image_generation_description": "無料でAIキャラクターとチャットし、画像を生成しましょう！",
     "detailed_personality": "詳細な性格",
     "character_overview": "キャラクター概要",
     "imageStyleSelectionTitle": "画像スタイルの選択",
@@ -400,7 +402,8 @@
   "selectBackground": "背景を選択してください",
   "background1": "背景1",
   "background2": "背景2",
-  "selectPose": "体勢を選択してください",
+  "selectPose": "ポーズを選択してください",
+  "selectPose_description": "キャラクターのポーズを選択してください。ポーズとは、画像内でキャラクターが取る位置や態度のことです。",
   "pose1": "体勢1",
   "pose2": "体勢2",
   "selectCharacter": "キャラクターを選択してください",

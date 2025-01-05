@@ -271,6 +271,8 @@
   "next":"Next",
   "prev":"Previous",
   "newCharacter": {
+    "start_chat_and_image_generation": "Start Chat & Image Generation",
+    "start_chat_and_image_generation_description": "Chat with beautiful, unique AI characters and generate images with them!",
     "ageYoungAdult": "18-24 Years",
     "ageAdultEarly": "25-34 Years",
     "ageAdultMid": "35-44 Years",
@@ -429,6 +431,7 @@
   "background1": "Background 1",
   "background2": "Background 2",
   "selectPose": "Select Pose",
+  "selectPose_description": "Select a pose for the character. A pose is a position or attitude that the character takes in the image.",
   "pose1": "Pose 1",
   "pose2": "Pose 2",
   "selectCharacter": "Select Character",

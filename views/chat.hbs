@@ -143,15 +143,18 @@
                                 <button id="sendMessage" class="btn btn-light px-4 border-0"><i class="fas fa-paper-plane"></i></button>
                             </div>
 
-                            <div id="promptContainer" style="position: absolute; bottom: 0px; width: 100%; max-height: 45vh; background: rgb(255, 255, 255); overflow-y: auto;left: 0;right: 0;z-index: 10;display:none;">
-                                <div class="position-sticky sticky-top border shadow d-flex justify-content-end align-items-center bg-white form-check text-start mb-2 py-2 ps-3">
+                            <div id="promptContainer" class="shadow" style="position: absolute; bottom: 0px; width: 100%; max-height: 45vh; background: rgb(255, 255, 255); overflow-y: auto;left: 0;right: 0;z-index: 10;display:none;">
+                                <div class="position-sticky sticky-top shadow d-flex justify-content-end align-items-center bg-white form-check text-start mb-2 py-2 ps-3">
                                     <button id="close-promptContainer" class="btn shadow-0"><i class="bi bi-x"></i></button>
                                 </div>
                                 <div id="promptList" class="row mx-0 pb-2">
+                                    <h4 class="text-center w-100">{{translations.selectPose}}</h4>
+                                    <p class="text-center text-muted w-100">{{translations.selectPose_description}}</p>
+                                    <!-- Prompts will be dynamically generated here -->
                                     {{#each promptData}}
-                                        <div class="card prompt-card col-3 col-sm-2 shadow-0" data-id="{{_id}}" data-nsfw="{{eq nsfw 'on'}}" style="cursor:pointer;">
-                                            <img src="{{image}}" style="height:80px;width:100%;object-fit:contain;">
-                                            <p style="font-size:12px;margin:0;text-align:center;">{{title}}</p>
+                                        <div class="prompt-card col-4 col-sm-3 border-0 shadow-0 mb-1 " data-id="{{_id}}" data-nsfw="{{eq nsfw 'on'}}" style="cursor:pointer;">
+                                            <img src="{{image}}" class="rounded w-100" style="height:200px;object-fit:contain;">
+                                            <p class="d-none" style="font-size:12px;margin:0;text-align:center;">{{title}}</p>
                                         </div>
                                     {{/each}}
                                 </div>

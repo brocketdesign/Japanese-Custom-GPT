@@ -289,6 +289,11 @@ fastify.get('/chat/edit/:chatId', { preHandler: [fastify.authenticate] }, async 
 
     user = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
+    const chats = await chatsCollection.distinct('chatImageUrl', { userId });
+    if(user.subscriptionStatus !== 'active' && chats.length > 0){
+      return reply.redirect('/my-plan');
+    }
+
     let chatId = request.params.chatId || null;
     const chatImage = request.query.chatImage;
     fastify.sendNotificationToUser(userId,'Hello from LAMIX','info',{});

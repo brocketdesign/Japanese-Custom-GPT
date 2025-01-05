@@ -271,6 +271,8 @@
       "next": "Suivant",
       "prev": "Précédent",
       "newCharacter": {
+        "start_chat_and_image_generation": "Commencez à discuter et à générer des images",
+        "start_chat_and_image_generation_description": "Commencez à discuter avec des personnages IA et générez des images en fonction de vos conversations.",
         "ageYoungAdult": "18-24 Ans",
         "ageAdultEarly": "25-34 Ans",
         "ageAdultMid": "35-44 Ans",
@@ -434,6 +436,7 @@
         "background1": "Arrière-plan 1",
         "background2": "Arrière-plan 2",
         "selectPose": "Sélectionner une pose",
+        "selectPose_description": "Sélectionnez une pose pour le personnage. Une pose est une position ou une attitude que le personnage prend dans l'image.",
         "pose1": "Pose 1",
         "pose2": "Pose 2",
         "selectCharacter": "Sélectionner un personnage",

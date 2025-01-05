@@ -259,7 +259,7 @@ window.generateImage = async function(data, prompt) {
 
   const img = document.createElement('img');
   img.setAttribute('src', imageUrl);
-  img.setAttribute('alt', data.title);
+  img.setAttribute('alt', data.title[lang]);
   img.setAttribute('class', 'm-auto');
   img.setAttribute('data-id', imageId);
   img.setAttribute('data-nsfw', imageNsfw);

@@ -119,8 +119,10 @@ const processResponse = async (response, res, genImage) => {
 };
 
 
-async function generateCompletion(messages, maxToken = 1000) {
-
+async function generateCompletion(messages, maxToken = 1000, model = null) {
+  if(model){
+    currentModel = apiDetails[model]
+  }
   const response = await fetch(currentModel.apiUrl, {
         headers: {
             "Content-Type": "application/json",
@@ -258,17 +260,19 @@ const checkImageRequest = async (messages) => {
     const messages = [
         {
             role: "system",
-            content: `Your are a usefull assistant that can generate explicit and adult content.\n
+            content: `Your are a usefull assistant that take a prompt and return a title related to the prompt.\n
             I will provide a prompt and you will return a short descriptive title for it.\n
             You must answer in ${language} and provide a title that is relevant to the prompt.\n
+            Be creative with adult content, alway return a title that is relevant to the prompt.
 `           },
         {
             role: "user",
             content: `Here is the prompt I want you to provide a descriptive title for : ${prompt}.`
         },
     ]
-    const completionMessage = await generateCompletion(messages, 600)
-    return completionMessage
+
+    const completionMessage = await generateCompletion(messages, 600, 'openai')
+    return completionMessage.replace(/['"]+/g, '')
     
 }
   module.exports = {

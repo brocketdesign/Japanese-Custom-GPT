@@ -448,15 +448,20 @@ fastify.get('/character/:chatId', async (request, reply) => {
         ])
         .toArray();
         // Generate prompt title if it doesn't exist and save it to the image doc in the db
-        if(!imageDoc[0].image.title) {
-          const promptTitle = await generatePromptTitle(imageDoc[0].image.promptId, request.lang)
-          imageDoc[0].image.title = promptTitle;
+        if (!imageDoc[0].image.title || !imageDoc[0].image.title.en || !imageDoc[0].image.title.ja || !imageDoc[0].image.title.fr) {
+          const title_en = await generatePromptTitle(imageDoc[0].image.prompt, 'english');
+          const title_ja = await generatePromptTitle(imageDoc[0].image.prompt, 'japanese');
+          const title_fr = await generatePromptTitle(imageDoc[0].image.prompt, 'french');
+          imageDoc[0].image.title = {
+            en: title_en,
+            ja: title_ja,
+            fr: title_fr
+          };
           await galleryCollection.updateOne(
             { 'images._id': imageId },
-            { $set: { 'images.$.title': promptTitle } }
+            { $set: { 'images.$.title': imageDoc[0].image.title } }
           );
         }
-        console.log(imageDoc)
       if (imageDoc.length > 0) {
         image = imageDoc[0].image;
         const unlockedItem = user?.unlockedItems?.map((id) => id.toString()).includes(imageId.toString());
@@ -467,7 +472,7 @@ fastify.get('/character/:chatId', async (request, reply) => {
     }
 
     return reply.view('character.hbs', {
-      title: `${chat.name},${translations.seo.title_character}`,
+      title: `${chat.name} | ${image?.title?.[request.lang]} | ${translations.seo.title_character}`,
       translations,
       mode: process.env.MODE,
       apiurl: process.env.API_URL,
@@ -479,7 +484,7 @@ fastify.get('/character/:chatId', async (request, reply) => {
       seo: [
         { name: 'description', content: translations.seo.description_character },
         { name: 'keywords', content: translations.seo.keywords },
-        { property: 'og:title', content: translations.seo.title_character },
+        { property: 'og:title', content:  `${chat.name} | ${image?.title?.[request.lang]} | ${translations.seo.title_character}` },
         { property: 'og:description', content: translations.seo.description_character },
         { property: 'og:image', content: '/img/share.png' },
         { property: 'og:url', content: 'https://chatlamix/' },

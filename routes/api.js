@@ -1034,7 +1034,8 @@ async function routes(fastify, options) {
             if(userInfo.subscriptionStatus == 'active'){
                 genImagePromptFromChat(chatDocument, userData.messages, genImage, language).then((promptData) => {
                     const prompt = promptData.prompt
-                    const title = promptData.title
+                    const title = promptData.title[request.lang]
+                    console.log('Title:', title)
                     fastify.sendNotificationToUser(userId, 'imageStart', 'image', {userId, chatId, userChatId, command:genImage, prompt, title})
                 }) 
                 imgMessage[0].content = `\n\nI just asked for a new image and your are currently preparing it.\n Provide a concise answer in ${language} to inform that your are taking a good picture to send. Do no describe the image or anything. Stay in your character, keep the same tone as previously. Continue the chat,`.trim()
@@ -1432,7 +1433,15 @@ async function routes(fastify, options) {
         }
 
         const englishDescription = await generateEnglishDescription(lastMessages, characterDescription, command);
-        const promptTitle =  await generatePromptTitle(englishDescription, language)
+
+        const title_en = await generatePromptTitle(englishDescription, 'english');
+        const title_ja = await generatePromptTitle(englishDescription, 'japanese');
+        const title_fr = await generatePromptTitle(englishDescription, 'french');
+        const promptTitle = {
+          en: title_en,
+          ja: title_ja,
+          fr: title_fr
+        };
 
         function processString(input) { return [...new Set(input.slice(0, 900).split(',').map(s => s.trim()))].join(', '); }
         finalDescription = processString(englishDescription);

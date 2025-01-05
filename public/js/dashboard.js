@@ -1717,7 +1717,6 @@ window.loadChatImages = async function (chatId, page = 1) {
             currentPageMap[chatId] = data.page;
             let chatGalleryHtml = '';
             data.images.forEach((item, idx) => {
-                console.log(item)
                 const unlockedItem = isUnlocked(currentUser, item._id, item.userId);
                 let isBlur = unlockedItem ? false : item?.nsfw && !subscriptionStatus;
                 const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());

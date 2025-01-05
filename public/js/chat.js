@@ -818,13 +818,14 @@ $(document).ready(async function() {
                 url: `/image/${imageId}`,
                 method: 'GET',
                 success: function(response) {
-                    console.log(response)
                     if (response.imageUrl) {
 
                         displayImageThumb(response.imageUrl)
                         // Update the placeholder image
                         $(`#image-${imageId}`).attr('src', response.imageUrl).fadeIn();
-                        $(`#image-${imageId}`).attr('alt', response.title.trim()).fadeIn();
+
+                        const title = response?.title?.[lang]?.trim() || '';
+                        $(`#image-${imageId}`).attr('alt', title).fadeIn();
     
                         // Add tools or badges if applicable
                         if (!response.isBlur) {

@@ -459,13 +459,22 @@ fastify.post('/novita/txt2img', async (request, reply) => {
       console.log({model_name:requestData.model_name,prompt:requestData.prompt});
 
 
-      // Send request to Novita and get taskId
-      const novitaTaskId = await fetchNovitaMagic(requestData);
       let newTitle = title;
       if(!title){
-        newTitle = await generatePromptTitle(requestData.prompt)
+        const title_en = await generatePromptTitle(requestData.prompt, 'english');
+        const title_ja = await generatePromptTitle(requestData.prompt, 'japanese');
+        const title_fr = await generatePromptTitle(requestData.prompt, 'french');
+        newTitle = {
+          en: title_en,
+          ja: title_ja,
+          fr: title_fr
+        };
       }
-      console.log('New Title:', newTitle)
+      console.log('New Title:', newTitle);
+
+      // Send request to Novita and get taskId
+      const novitaTaskId = await fetchNovitaMagic(requestData);
+
       // Store task details in DB
       await db.collection('tasks').insertOne({
           taskId: novitaTaskId,

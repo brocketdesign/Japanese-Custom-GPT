@@ -14,7 +14,7 @@
         <h1>{{translations.character_and_ai_chat}} {{chat.name}}</h1>
         <h3>{{translations.about_the_character}} {{chat.name}}</h3>
         <hr>
-        <p>{{chat.description}}</p>
+        <p class="description">{{chat.description}}</p>
         <p>{{chat.rule}}</p>
     </div>
   {{/if}}
@@ -137,11 +137,28 @@
   $(document).ready(function () {
     const chatId =`{{chatId}}`
     if(chatId.trim() !== ''){
-      let title = {{{json image.title}}}
+
+      let title = {{{json image.title}}};
       if(title && title[lang]){
         $('.card-title').text(title[lang].replace(/['"]+/g, ''));
       }
 
+      const chat = {{{json chat}}};
+      const description = chat.description
+      if(!description || description.trim() === ''){
+        const chatDataToString = function(data) {
+            return `
+              <strong>${translations.characterDescription.traits}:</strong> ${data.traits.join(', ')}<br>
+              <strong>${translations.characterDescription.preferences}:</strong> ${data.preferences.join(', ')}<br>
+              <strong>${translations.characterDescription.expression_style}:</strong><br>
+              - <strong>${translations.characterDescription.tone}:</strong> ${data.expression_style.tone}<br>
+              - <strong>${translations.characterDescription.vocabulary}:</strong> ${data.expression_style.vocabulary}<br>
+              - <strong>${translations.characterDescription.unique_feature}:</strong> ${data.expression_style.unique_feature}<br>
+              <strong>${translations.characterDescription.story}:</strong> ${data.story}
+            `;
+        }
+        $('.description').html(chatDataToString(chat.base_personality));
+      }
       loadChatImages(chatId, 1);
       loadChatUsers(chatId);
     }else{

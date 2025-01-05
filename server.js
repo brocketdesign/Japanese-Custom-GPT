@@ -55,7 +55,11 @@ fastify.register(require('@fastify/view'), {
 fastify.after(() => {
   handlebars.registerHelper('default', (value, fallback) => value || fallback);
   handlebars.registerHelper('eq', (a, b) => a.toString() === b.toString());
-  handlebars.registerHelper('json', (context) => JSON.stringify(context));
+  handlebars.registerHelper('json', (context) => {
+    return context !== undefined && context !== null
+      ? JSON.stringify(context)
+      : 'null';
+  });  
   handlebars.registerHelper('includesObjectId', (array, userId) =>
     array?.some((id) => id?.toString() === userId?.toString())
   );
@@ -470,7 +474,7 @@ fastify.get('/character/:chatId', async (request, reply) => {
         return reply.code(404).send({ error: 'Image not found' });
       }
     }
-
+    console.log(chat)
     return reply.view('character.hbs', {
       title: `${chat.name} | ${image?.title?.[request.lang]} | ${translations.seo.title_character}`,
       translations,

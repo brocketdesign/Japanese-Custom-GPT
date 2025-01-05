@@ -11,6 +11,15 @@
     "title_character": "AI Characters | LAMIX",
     "description_character": "Chat with beautiful AI characters and generate images with them! Enjoy free AI image generation while chatting with beautiful AI characters."
   },
+  "characterDescription": {
+    "traits": "Traits",
+    "preferences": "Preferences",
+    "expression_style": "Expression Style",
+    "tone": "Tone",
+    "vocabulary": "Vocabulary",
+    "unique_feature": "Unique Feature",
+    "story": "Story"
+  },
   "nsfwPrompt": {
     "messageTitle": "⚠️This content contains NSFW (Not Safe For Work) elements",
     "messageText": "This content may contain adult elements. Please confirm that you are over 18 to proceed."

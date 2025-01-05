@@ -11,6 +11,15 @@
     "title_character": "Personnages IA | LAMIX",
     "description_character": "Discutez avec de beaux personnages IA et générez des images avec eux ! Profitez de la génération d'images IA gratuite tout en discutant avec de beaux personnages IA."
   },
+  "characterDescription": {
+    "traits": "Traits",
+    "preferences": "Préférences",
+    "expression_style": "Style d'expression",
+    "tone": "Ton",
+    "vocabulary": "Vocabulaire",
+    "unique_feature": "Caractéristique unique",
+    "story": "Histoire"
+  },
   "nsfwPrompt": {
     "messageTitle": "⚠️Ce contenu contient des éléments NSFW (Non Sûr Pour le Travail)",
     "messageText": "Ce contenu peut contenir des éléments pour adultes. Veuillez confirmer que vous avez plus de 18 ans pour continuer."

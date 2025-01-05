@@ -11,6 +11,15 @@
     "title_character": "AIキャラクター | LAMIX",
     "description_character": "美しいAIキャラクターとチャットして画像を生成しよう！美しいAIキャラクターとチャットしながら、無料でAI画像生成を楽しめます。"
   },
+  "characterDescription": {
+    "traits": "特徴",
+    "preferences": "好み",
+    "expression_style": "表現スタイル",
+    "tone": "トーン",
+    "vocabulary": "語彙",
+    "unique_feature": "ユニークな特徴",
+    "story": "ストーリー"
+  },
   "nsfwPrompt": {
     "messageTitle": "⚠️このコンテンツにはNSFW（仕事に適さない）要素が含まれています",
     "messageText": "このコンテンツには成人向けの要素が含まれている可能性があります。続行するには18歳以上であることを確認してください。"

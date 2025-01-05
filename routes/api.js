@@ -955,6 +955,7 @@ async function routes(fastify, options) {
             Story: ${data.story}
         `.trim();
     }
+    
     function completionSystemContent(chatDocument, user, chatDescription, currentTimeInJapanese, language){
 
         // Prepare basic user details

@@ -475,7 +475,7 @@ fastify.get('/character/:chatId', async (request, reply) => {
       }
     }
     // Log user activity 
-    console.log(`Visiting Character ${chat.name}, ${image?.title?.en || ''}, /character/${chatId.toString()}`);
+    console.log(`Visiting Character ${chat.name}, ${image?.title?.en || ''}, /character/${chatId.toString()}${imageId ? `?imageId=${imageId}` : ''}`);
     return reply.view('character.hbs', {
       title: `${chat.name} | ${image?.title?.[request.lang]} | ${translations.seo.title_character}`,
       translations,

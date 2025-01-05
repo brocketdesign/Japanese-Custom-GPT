@@ -474,7 +474,8 @@ fastify.get('/character/:chatId', async (request, reply) => {
         return reply.code(404).send({ error: 'Image not found' });
       }
     }
-    console.log(chat)
+    // Log user activity 
+    console.log(`Visiting Character ${chat.name}, image ${image.title.en}`)
     return reply.view('character.hbs', {
       title: `${chat.name} | ${image?.title?.[request.lang]} | ${translations.seo.title_character}`,
       translations,

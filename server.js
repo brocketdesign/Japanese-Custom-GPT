@@ -147,18 +147,18 @@ fastify.get('/', async (request, reply) => {
 
   if (user.isTemporary) {
     return reply.renderWithGtm(`index.hbs`, {
-      title: 'AIフレンズ',
+      title: translations.seo.title,
       translations,
       mode: process.env.MODE,
       apiurl: process.env.API_URL,
       user: request.user,
       seo: [
-        { name: 'description', content: 'Lamixでは、無料でAIグラビアとのチャット中に生成された画像を使って、簡単に投稿を作成することができます。お気に入りの瞬間やクリエイティブな画像をシェアすることで、他のユーザーと楽しさを共有しましょう。画像を選んで投稿に追加するだけで、あなただけのオリジナルコンテンツを簡単に発信できます。' },
-        { name: 'keywords', content: 'AIグラビア, 無料で画像生成AI, Hato Ltd, 日本語, AI画像生成' },
-        { property: 'og:title', content: 'プレミアムプランAI画像生成 | LAMIX | AIグラビア | ラミックスの画像生成AI体験' },
-        { property: 'og:description', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },
+        { name: 'description', content: translations.seo.description },
+        { name: 'keywords', content: translations.seo.keywords },
+        { property: 'og:title', content: translations.seo.title },
+        { property: 'og:description', content: translations.seo.description },
         { property: 'og:image', content: '/img/share.png' },
-        { property: 'og:url', content: 'https://chatlamix.com/' },
+        { property: 'og:url', content: 'https://chatlamix/' },
       ],
     });
   } else {
@@ -212,12 +212,12 @@ fastify.get('/my-plan', { preHandler: [fastify.authenticate] }, async (request, 
     apiurl: process.env.API_URL,
     user: request.user,
     seo: [
-      { name: 'description', content: 'Lamixでは、無料でAIグラビアとのチャット中に生成された画像を使って、簡単に投稿を作成することができます。お気に入りの瞬間やクリエイティブな画像をシェアすることで、他のユーザーと楽しさを共有しましょう。' },
-      { name: 'keywords', content: 'AIグラビア, 無料で画像生成AI, Hato Ltd, 日本語, AI画像生成' },
-      { property: 'og:title', content: 'プレミアムプランAI画像生成 | LAMIX | AIグラビア' },
-      { property: 'og:description', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },
+      { name: 'description', content: translations.seo.description_plan },
+      { name: 'keywords', content: translations.seo.keywords },
+      { property: 'og:title', content: translations.seo.title_plan },
+      { property: 'og:description', content: translations.seo.description_plan },
       { property: 'og:image', content: '/img/share.png' },
-      { property: 'og:url', content: 'https://app.lamix.jp/chat/' },
+      { property: 'og:url', content: 'https://chatlamix/' },
     ],
   });
 });
@@ -256,7 +256,7 @@ fastify.get('/chat/:chatId', { preHandler: [fastify.authenticate] }, async (requ
   const promptData = await db.collection('prompts').find({}).toArray();
 
   return reply.renderWithGtm('chat.hbs', {
-    title: 'LAMIX | 日本語でAI画像生成 | AIチャット',
+    title: translations.seo.title,
     isAdmin,
     imageType,
     translations,
@@ -268,11 +268,12 @@ fastify.get('/chat/:chatId', { preHandler: [fastify.authenticate] }, async (requ
     userData,
     promptData,
     seo: [
-      { name: 'description', content: 'Lamixでは、無料でAIグラビアとのチャット中に生成された画像を使って、簡単に投稿を作成することができます。' },
-      { name: 'keywords', content: 'AIグラビア, 無料で画像生成AI, LAMIX, 日本語, AI画像生成' },
-      { property: 'og:title', content: 'LAMIX | AIグラビア' },
-      { property: 'og:description', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },
+      { name: 'description', content: translations.seo.description },
+      { name: 'keywords', content: translations.seo.keywords },
+      { property: 'og:title', content: translations.seo.title },
+      { property: 'og:description', content: translations.seo.description },
       { property: 'og:image', content: '/img/share.png' },
+      { property: 'og:url', content: 'https://chatlamix/' },
     ],
   });
 });
@@ -296,7 +297,6 @@ fastify.get('/chat/edit/:chatId', { preHandler: [fastify.authenticate] }, async 
 
     let chatId = request.params.chatId || null;
     const chatImage = request.query.chatImage;
-    fastify.sendNotificationToUser(userId,'Hello from LAMIX','info',{});
     const isTemporaryChat = !request.params.chatId;
 
     const translations = request.translations;
@@ -324,17 +324,18 @@ fastify.get('/post', async (request, reply) => {
     if (!user.isTemporary && userId) user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
     const translations = request.translations;
     return reply.view('post.hbs', {
-      title: 'コミュニティからの最新投稿 | LAMIX | 日本語 | 無料AI画像生成 | 無料AIチャット',
+      title: translations.seo.title_post,
       user: request.user,
       translations,
       mode: process.env.MODE,
       apiurl: process.env.API_URL,
       seo: [
-        { name: 'description', content: 'Lamixでは、無料でAIグラビアとのチャット中に生成された画像を使って、簡単に投稿を作成することができます。' },
-        { name: 'keywords', content: 'AIグラビア, 無料で画像生成AI, LAMIX, 日本語, AI画像生成' },
-        { property: 'og:title', content: 'LAMIX | AIグラビア' },
-        { property: 'og:description', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },
+        { name: 'description', content: translations.seo.description_post },
+        { name: 'keywords', content: translations.seo.keywords },
+        { property: 'og:title', content: translations.seo.title_post },
+        { property: 'og:description', content: translations.seo.description_post },
         { property: 'og:image', content: '/img/share.png' },
+        { property: 'og:url', content: 'https://chatlamix/' },
       ],
     });
   } catch (error) {
@@ -361,7 +362,7 @@ fastify.get('/post/:postId', async (request, reply) => {
     const postUser = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(postUserId) });
 
     return reply.renderWithGtm('post.hbs', {
-      title: 'コミュニティからの最新投稿 | LAMIX | 日本語 | 無料AI画像生成 | 無料AIチャット',
+      title: translations.seo.title_post,
       translations,
       mode: process.env.MODE,
       apiurl: process.env.API_URL,
@@ -370,11 +371,12 @@ fastify.get('/post/:postId', async (request, reply) => {
       userId,
       post,
       seo: [
-        { name: 'description', content: 'AIチャットしながらAI画像生成できるサイトです。日本語対応で簡単に使え、生成した画像を共有したり、他のユーザーの作品を楽しむことができるコミュニティです。' },
-        { name: 'keywords', content: 'AIグラビア, 無料画像生成AI, LAMIX, 日本語, AI画像生成, AIアート, AIイラスト, 自動画像生成, クリエイティブAI, 生成系AI, 画像共有, AIコミュニティ' },
-        { property: 'og:title', content: 'LAMIX | AIグラビア | ラミックスの画像生成AI体験' },
-        { property: 'og:description', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },
+        { name: 'description', content: translations.seo.description_post },
+        { name: 'keywords', content: translations.seo.keywords },
+        { property: 'og:title', content: translations.seo.title_post },
+        { property: 'og:description', content: translations.seo.description_post },
         { property: 'og:image', content: '/img/share.png' },
+        { property: 'og:url', content: 'https://chatlamix/' },
       ],
     });
   } catch (err) {
@@ -398,11 +400,12 @@ fastify.get('/character', async (request, reply) => {
       apiurl: process.env.API_URL,
       user: request.user,
       seo: [
-        { name: 'description', content: 'AIチャットしながらAI画像生成できるサイトです。日本語対応で簡単に使え、生成した画像を共有したり、他のユーザーの作品を楽しむことができるコミュニティです。' },
-        { name: 'keywords', content: 'AIグラビア, 無料画像生成AI, LAMIX, 日本語, AI画像生成' },
-        { property: 'og:title', content: 'LAMIX | AIグラビア | ラミックスの画像生成AI体験' },
-        { property: 'og:description', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },
+        { name: 'description', content: translations.seo.description_character },
+        { name: 'keywords', content: translations.seo.keywords },
+        { property: 'og:title', content: translations.seo.title_character },
+        { property: 'og:description', content: translations.seo.description_character },
         { property: 'og:image', content: '/img/share.png' },
+        { property: 'og:url', content: 'https://chatlamix/' },
       ],
     });
   } catch (error) {
@@ -456,7 +459,7 @@ fastify.get('/character/:chatId', async (request, reply) => {
     }
 
     return reply.view('character.hbs', {
-      title: `${chat.name}とAIチャットしながら無料AI画像生成を楽しもう`,
+      title: `${chat.name},${translations.seo.title_character}`,
       translations,
       mode: process.env.MODE,
       apiurl: process.env.API_URL,
@@ -466,12 +469,12 @@ fastify.get('/character/:chatId', async (request, reply) => {
       chatId,
       isBlur,
       seo: [
-        { name: 'description', content: '無料AIチャットしながら無料AI画像生成できるサイトです。' },
-        { name: 'keywords', content: `AIグラビア,AIチャット, 画像生成AI, LAMIX, 日本語, AI画像生成, ${chat.characterPrompt}` },
-        { property: 'og:title', content: `${chat.name}とAIチャットしながら無料AI画像生成を楽しもう` },
-        { property: 'og:description', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },
+        { name: 'description', content: translations.seo.description_character },
+        { name: 'keywords', content: translations.seo.keywords },
+        { property: 'og:title', content: translations.seo.title_character },
+        { property: 'og:description', content: translations.seo.description_character },
         { property: 'og:image', content: '/img/share.png' },
-        { property: 'og:url', content: `https://app.lamix.jp/chat/${chatId}` },
+        { property: 'og:url', content: 'https://chatlamix/' },
       ],
     });
   } catch (err) {
@@ -521,7 +524,7 @@ fastify.get('/search', async (request, reply) => {
       imageStyle,
       seo: [
         { name: 'description', content: seoDescription },
-        { name: 'keywords', content: `${query ? query + ', ' : ''}AIグラビア, 無料で画像生成AI, LAMIX, 日本語, AI画像生成, AIアート` },
+        { name: 'keywords', content: `${query ? query + ', ' : ''}${translations.seo.keywords}` },
         { property: 'og:title', content: seoTitle },
         { property: 'og:description', content: seoDescription },
         { property: 'og:image', content: '/img/share.png' },
@@ -544,18 +547,18 @@ fastify.get('/about', async (request, reply) => {
     .toArray();
 
   return reply.renderWithGtm('chat.hbs', {
-    title: 'AIグラビア | ラミックスの無料画像生成AI体験',
+    title: translations.seo.title,
     translations,
     mode: process.env.MODE,
     apiurl: process.env.API_URL,
     chats,
     seo: [
-      { name: 'description', content: 'AIチャットしながらAI画像生成できるサイトです。' },
-      { name: 'keywords', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },
-      { property: 'og:title', content: 'AIグラビア | ラミックスの画像生成AI体験' },
-      { property: 'og:description', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },
+      { name: 'description', content: translations.seo.description },
+      { name: 'keywords', content: translations.seo.keywords },
+      { property: 'og:title', content: translations.seo.title },
+      { property: 'og:description', content: translations.seo.description },
       { property: 'og:image', content: '/img/share.png' },
-      { property: 'og:url', content: 'https://app.lamix.jp/about' },
+      { property: 'og:url', content: 'https://chatlamix/' },
     ],
   });
 });
@@ -578,19 +581,19 @@ fastify.get('/chat/list/:id', { preHandler: [fastify.authenticate] }, async (req
     const translations = request.translations;
 
     return reply.renderWithGtm('chat-list', {
-      title: 'LAMIX | AIグラビア | ラミックスの画像生成AI体験',
+      title: translations.seo.title,
       translations,
       mode: process.env.MODE,
       apiurl: process.env.API_URL,
       chats: sortedChats,
       user: request.user,
       seo: [
-        { name: 'description', content: 'AIチャットしながらAI画像生成できるサイトです。' },
-        { name: 'keywords', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },
-        { property: 'og:title', content: 'LAMIX | AIグラビア | ラミックスの画像生成AI体験' },
-        { property: 'og:description', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },
+        { name: 'description', content: translations.seo.description },
+        { name: 'keywords', content: translations.seo.keywords },
+        { property: 'og:title', content: translations.seo.title },
+        { property: 'og:description', content: translations.seo.description },
         { property: 'og:image', content: '/img/share.png' },
-        { property: 'og:url', content: `https://app.lamix.jp/chat/list/${request.params.id}` },
+        { property: 'og:url', content: 'https://chatlamix/' },
       ],
     });
   } catch (err) {
@@ -607,18 +610,18 @@ fastify.get('/discover', async (request, reply) => {
   const translations = request.translations;
 
   return reply.renderWithGtm('discover.hbs', {
-    title: 'LAMIX | 日本語でAI画像生成 | AIチャット',
+    title: translations.seo.titl,
     translations,
     mode: process.env.MODE,
     apiurl: process.env.API_URL,
     user: request.user,
     seo: [
-      { name: 'description', content: 'AIチャットしながらAI画像生成できるサイトです。' },
-      { name: 'keywords', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },
-      { property: 'og:title', content: 'LAMIX | AIグラビア | ラミックスの画像生成AI体験' },
-      { property: 'og:description', content: 'AIグラビア, 画像生成AI, LAMIX, 日本語, AI画像生成' },
+      { name: 'description', content: translations.seo.description },
+      { name: 'keywords', content: translations.seo.keywords },
+      { property: 'og:title', content: translations.seo.title },
+      { property: 'og:description', content: translations.seo.description },
       { property: 'og:image', content: '/img/share.png' },
-      { property: 'og:url', content: `https://app.lamix.jp/chat/list/${request.params.id}` },
+      { property: 'og:url', content: 'https://chatlamix/' },
     ],
   });
 });

@@ -1,5 +1,16 @@
 {
   "lang":"en",
+  "seo": {
+    "title": "LAMIX - Chat with AI Characters and Generate Images",
+    "description": "Chat with AI characters and generate images with them! Enjoy free AI image generation while chatting with beautiful AI characters.",
+    "keywords": "AI, chat, image generation, AI characters, AI beauties, AI girlfriend, AI gravure, AI image generation, AI chat, AI character",
+    "title_plan": "LAMIX Premium Plan - Chat with AI Characters and Generate Images",
+    "description_plan": "Subscribe to LAMIX Premium and enjoy chatting with AI characters and generating images with them! Enjoy free AI image generation while chatting with beautiful AI characters.",
+    "title_post": "Latest Posts from the Community | LAMIX",
+    "description_post": "With Lamix, you can easily create posts using images generated during a chat with AI Gravure, for free.",
+    "title_character": "AI Characters | LAMIX",
+    "description_character": "Chat with beautiful AI characters and generate images with them! Enjoy free AI image generation while chatting with beautiful AI characters."
+  },
   "nsfwPrompt": {
     "messageTitle": "⚠️This content contains NSFW (Not Safe For Work) elements",
     "messageText": "This content may contain adult elements. Please confirm that you are over 18 to proceed."

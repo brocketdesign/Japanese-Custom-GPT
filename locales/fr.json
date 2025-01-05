@@ -1,5 +1,16 @@
 {
   "lang":"fr",
+  "seo": {
+    "title": "LAMIX - Discutez avec des personnages IA et générez des images",
+    "description": "Discutez avec des personnages IA et générez des images avec eux ! Profitez de la génération d'images IA gratuite tout en discutant avec de beaux personnages IA.",
+    "keywords": "IA, chat, génération d'images, personnages IA, beautés IA, petite amie IA, gravure IA, génération d'images IA, chat IA, personnage IA",
+    "title_plan": "Plan Premium LAMIX - Discutez avec des personnages IA et générez des images",
+    "description_plan": "Abonnez-vous à LAMIX Premium et profitez de discussions avec des personnages IA et de la génération d'images avec eux ! Profitez de la génération d'images IA gratuite tout en discutant avec de beaux personnages IA.",
+    "title_post": "Derniers posts de la communauté | LAMIX",
+    "description_post": "Avec Lamix, vous pouvez facilement créer des posts en utilisant des images générées lors d'une discussion avec l'IA Gravure, gratuitement.",
+    "title_character": "Personnages IA | LAMIX",
+    "description_character": "Discutez avec de beaux personnages IA et générez des images avec eux ! Profitez de la génération d'images IA gratuite tout en discutant avec de beaux personnages IA."
+  },
   "nsfwPrompt": {
     "messageTitle": "⚠️Ce contenu contient des éléments NSFW (Non Sûr Pour le Travail)",
     "messageText": "Ce contenu peut contenir des éléments pour adultes. Veuillez confirmer que vous avez plus de 18 ans pour continuer."

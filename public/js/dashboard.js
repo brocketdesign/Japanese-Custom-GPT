@@ -275,7 +275,6 @@ $(document).ready(async function() {
         $(this).replaceWith(`
             <div>
                 <i class="bi bi-calendar"></i> ${formattedDate.slice(0, 10)} 
-                <i class="bi bi-clock"></i> ${formattedDate.slice(11)}
             </div>
         `);
     });

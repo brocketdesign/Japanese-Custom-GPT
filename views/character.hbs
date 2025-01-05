@@ -25,12 +25,12 @@
       <div class="card border-0 shadow-0">
         {{#if isBlur}}
           <div type="button" class="text-center" onclick={{#if user.isTemporary}}'showRegistrationForm()'{{else}}'unlockImage('{{image._id}}',"gallery",this)'{{/if}}>
-            <img data-src="{{image.imageUrl}}" class="card-img-top img-blur" alt="{{image.prompt}}" style="max-height:400px;width:auto;object-fit:contain;">
+            <img data-src="{{image.imageUrl}}" class="card-img-top img-blur rounded shadow" alt="{{image.prompt}}" style="max-height:80vh;width:auto;object-fit:contain;">
           </div>
         {{else}}
-            <img src="{{image.imageUrl}}" class="card-img-top" alt="{{image.prompt}}" style="max-height:400px;width:auto;object-fit:contain;">
+            <img src="{{image.imageUrl}}" class="card-img-top rounded shadow" alt="{{image.prompt}}" style="max-height:80vh;width:auto;object-fit:contain;">
         {{/if}}
-        <div class="card-body border mt-3">
+        <div class="card-body border rounded mt-3">
           <h5 class="card-title"></h5>
           <h5 class="card-prompt d-none">{{image.prompt}}</h5>
           <p class="card-text">{{image.comment}}</p>
@@ -39,7 +39,7 @@
             <button class="btn btn-light shadow-0 image-fav {{#if  (includesObjectId image.likedBy user._id) }}liked{{/if}}" data-id="{{image._id}}">
               <i class="bi bi-heart-fill me-2"></i>{{translations.like}}<span class="ct d-none">{{default image.likes 0}}</span>
             </button>
-            <a href="/chat/{{chat._id}}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> {{translations.startChatting}}</a>
+            <a href="/chat/{{chat._id}}" class="btn custom-gradient-bg"> <i class="bi bi-chat-dots me-2"></i> {{translations.startChatting}}</a>
           </div>
         </div>
       </div>
@@ -63,7 +63,7 @@
                   <h2>{{chat.name}}</h2>
                 </a>
                   <p>{{chat.description}}</p>
-                <a href="/chat/{{chat._id}}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i>  {{translations.startChatting}}</a>
+                <a href="/chat/{{chat._id}}" class="btn custom-gradient-bg"> <i class="bi bi-chat-dots me-2"></i>  {{translations.startChatting}}</a>
               </div>
             </div>
           </div>

@@ -3,18 +3,38 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById("plan-switch").checked = true; 
 });
 $(document).ready(function () {
-    const messages = [
-        "新しい画像が作成されました！",
-        "新しいキャラクターが作成されました！",
-        "ギャラリーに画像が追加されました！",
-        "人気のポーズで画像が生成されました！",
-        "リアル風のキャラクターが生成されました！"
-    ];
+
+  const messages = {
+    ja: [
+      "新しい画像が作成されました！",
+      "新しいキャラクターが作成されました！",
+      "ギャラリーに画像が追加されました！",
+      "人気のポーズで画像が生成されました！",
+      "リアル風のキャラクターが生成されました！"
+    ],
+    en: [
+      "A new image has been created!",
+      "A new character has been created!",
+      "An image has been added to the gallery!",
+      "An image has been generated with a popular pose!",
+      "A realistic character has been generated!"
+    ],
+    fr: [
+      "Une nouvelle image a été créée !",
+      "Un nouveau personnage a été créé !",
+      "Une image a été ajoutée à la galerie !",
+      "Une image a été générée avec une pose populaire !",
+      "Un personnage réaliste a été généré !"
+    ]
+  };
+
+  const selectedMessages = messages[lang[0]] || messages.en;
+
 
     let messageIndex = 0;
 
     function showNextNotification() {
-        const message = messages[messageIndex];
+        const message = selectedMessages[messageIndex];
         showNotification(message, "success");
 
         // Increment index and loop back to start if needed
@@ -137,10 +157,10 @@ function createCheckoutSession(billingCycle) {
                 
                 // SweetAlert2 for successful upgrade
                 Swal.fire({
-                    icon: 'success',
-                    title: 'プランのアップグレードが成功しました',
-                    text: `新しいプラン: ${planName}`,
-                    confirmButtonText: 'OK'
+                  icon: 'success',
+                  title: translations.upgrade_successful,
+                  text: `${translations.new_plan}: ${planName}`,
+                  showCloseButton: true
                 });
             })
             .fail(function(xhr, status, error) {
@@ -170,18 +190,18 @@ function createCheckoutSession(billingCycle) {
       if (xhr.responseJSON && xhr.responseJSON.error === 'You already have an active subscription for this plan.') {
         // Display SweetAlert2 message in Japanese
         Swal.fire({
-          title: '既にサブスクリプションがあります',
-          text: 'このプランに既に登録されています。別のプランを選択してください。',
+          title: translations.already_subscribed,
+          text: translations.already_subscribed_message,
           icon: 'warning',
-          confirmButtonText: 'OK'
+          showCloseButton: true
         });
       } else {
         // Handle other errors, e.g., display a generic error message
         Swal.fire({
-          title: 'エラーが発生しました',
-          text: 'サブスクリプションの作成中にエラーが発生しました。後でもう一度お試しください。',
+          title: translations.error_occurred,
+          text: translations.subscription_creation_failed,
           icon: 'error',
-          confirmButtonText: 'OK'
+          showCloseButton: true
         });
       }
     }
@@ -212,10 +232,10 @@ function createCheckoutSession(billingCycle) {
     if (urlParams.get('cancel-payment') === 'true') {
         // Display SweetAlert2 in Japanese
         Swal.fire({
-            title: '支払いキャンセル',
-            text: 'お支払いは完了していません。お客様の口座からは引き落とされていません。',
-            icon: 'info',
-            confirmButtonText: '閉じる'
+          title: translations.payment_cancelled,
+          text: translations.payment_not_completed,
+          icon: 'info',
+          showCloseButton: true
         });
         var currentUrl = window.location.href;
         var urlParts = currentUrl.split('?');

@@ -405,28 +405,6 @@ $(document).ready(function(){
             
         });
     }
-    /*
-    fetchUser().then((user) => {
-        if(user && !user.isTemporary && $('#chat-widget-container').length == 0){
-            const userNickname = user?.nickname ?? '';
-            const userGender = user?.gender ?? '';
-            const userBirthYear = user?.birthDate?.year ?? '';
-            const userBirthMonth = user?.birthDate?.month ?? '';
-            const userBirthDay = user?.birthDate?.day ?? '';
-
-            if (!userNickname || !userBirthYear || !userBirthMonth || !userBirthDay || !userGender) {
-                showPopupUserInfo();
-                return
-            }
-            const subscriptionStatus = user?.subscriptionStatus == 'active'
-            const currentLocation = window.location.pathname
-
-            if(!subscriptionStatus && currentLocation !== '/my-plan'){
-                    window.location = '/my-plan'
-            }
-        }
-    })
-    */
 
 })
 </script>

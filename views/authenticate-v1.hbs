@@ -52,10 +52,10 @@
         .text-muted {
             font-weight: 300;
         }
-      #authTabContent input{
-          background: #212529;
-          color: #fff !important;
-      }
+        #authTabContent input:not([type="checkbox"]) {
+            background: #212529;
+            color: #fff !important;
+        }
         #authTabContent label{
           position: absolute;
           top: 10px;
@@ -78,52 +78,7 @@
             margin-right: 10px;
         }
     </style>
-<style>
-    /* Make the checkbox visible but nicely styled */
-.form-check-input {
-  width: 20px;
-  height: 20px;
-  accent-color: #dc3545; /* Adds a red checkmark on supported browsers */
-  cursor: pointer;
-  margin-top: 0; /* Align better with label text/icon */
-}
 
-/* The label styled as a button */
-.toggle-btn {
-  border: 1px solid #dc3545; /* Red border for outline style */
-  color: #dc3545;           /* Text/icon color in default (unchecked) state */
-  background-color: transparent;
-  transition: background-color 0.3s, color 0.3s;
-}
-
-/* When the checkbox is checked, style the label (the "button") */
-.form-check-input:checked + .toggle-btn {
-  background-color: #dc3545; /* Solid red background */
-  color: #ffffff;            /* White text/icon for contrast */
-  border-color: #dc3545;     /* Keep border consistent */
-}
-
-/* Default icon color and transition */
-.toggle-icon {
-  color: #dc3545;
-  transition: color 0.3s;
-}
-
-/* Icon color changes to white when checked */
-.form-check-input:checked + .toggle-btn .toggle-icon {
-  color: #ffffff;
-}
-
-/* Optional: Hover effect for better interactivity */
-.toggle-btn:hover {
-  background-color: rgba(220, 53, 69, 0.05); /* Slight red tint on hover */
-}
-
-.form-check-input:checked + .toggle-btn:hover {
-  background-color: #c82333; /* Darker red on hover when checked */
-}
-
-</style>
 <section class="gradient-custom bg-dark" style="min-height:100vh">
   <div class="container py-5 h-100">
     <div class="row d-flex justify-content-center align-items-center h-100">
@@ -190,15 +145,15 @@
                                         <label class="form-label" for="register-password">{{translations.authMail.password}}</label>
                                     </div>
 
-                                    <div class="col-auto">
-                                    <label for="gender" class="form-label"><i class="fas fa-user"></i> {{translations.setting.gender}}:</label>
-                                    <select class="form-select w-auto" id="gender" name="gender">
-                                        <option value="female" selected>{{translations.setting.female}}</option>
-                                        <option value="male">{{translations.setting.male}}</option>
-                                    </select>
+                                    <div class="col-auto mb-3 text-start">
+                                        <label for="gender" class="form-label" style="position: initial;"><i class="fas fa-user"></i> {{translations.setting.gender}}:</label>
+                                        <select class="form-select w-auto" id="gender" name="gender">
+                                            <option value="female" selected>{{translations.setting.female}}</option>
+                                            <option value="male">{{translations.setting.male}}</option>
+                                        </select>
                                     </div>
                                     <div class="mb-3 px-0" style="position: initial;">
-                                        <div class="form-check d-flex align-items-center position-relative text-start">
+                                        <div class="form-check">
                                             <!-- Visible checkbox -->
                                             <input
                                             class="form-check-input me-2"
@@ -211,7 +166,7 @@
                                             <!-- Label styled as a button -->
                                             <label
                                             style="position: initial;"
-                                            class="btn btn-outline-danger d-flex align-items-center justify-content-center toggle-btn w-100 text-white"
+                                            class="d-flex align-items-center justify-content-start toggle-btn w-100 text-white"
                                             for="ageVerification"
                                             >
                                             <i class="bi bi-check-circle me-2 toggle-icon"></i>

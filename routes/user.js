@@ -10,7 +10,7 @@ async function routes(fastify, options) {
   
   fastify.post('/user/register', async (request, reply) => {
     try {
-      const { nickname, email, password, ageVerification } = request.body;
+      const { nickname, email, password, gender, ageVerification } = request.body;
 
       // Validate request data
       if (!email || !password) {
@@ -37,9 +37,9 @@ async function routes(fastify, options) {
           lang: request.lang,
           nickname,
           email, 
-          email, 
-          ageVerification,
           password: hashedPassword, 
+          gender, 
+          ageVerification,
           createdAt:new Date(), 
           tempUserId,
           coins: 100

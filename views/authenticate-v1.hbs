@@ -189,6 +189,14 @@
                                         <input type="password" id="register-password" name="password" class="form-control form-control-lg" required />
                                         <label class="form-label" for="register-password">{{translations.authMail.password}}</label>
                                     </div>
+
+                                    <div class="col-auto">
+                                    <label for="gender" class="form-label"><i class="fas fa-user"></i> {{translations.setting.gender}}:</label>
+                                    <select class="form-select w-auto" id="gender" name="gender">
+                                        <option value="female" selected>{{translations.setting.female}}</option>
+                                        <option value="male">{{translations.setting.male}}</option>
+                                    </select>
+                                    </div>
                                     <div class="mb-3 px-0" style="position: initial;">
                                         <div class="form-check d-flex align-items-center position-relative text-start">
                                             <!-- Visible checkbox -->
@@ -213,23 +221,6 @@
                                     </div>
                                   <button type="submit" style="border-radius: 50px;" class="btn btn-light custom-gradient-bg btn-lg px-5 w-100">{{translations.authMail.register}}</button>
                               </form>
-                              <section class="my-3">
-                                  <small class="d-none text-white text-center" style="font-size:12px;">{{translations.authMail.privacyNote}}</small>
-                                  <div class="p-contact-scroll text-muted d-none" style="height: 200px; overflow-y: scroll; margin-top: 10px; padding: 10px; border: 1px solid #ccc;text-align: start;font-size: 13px;">
-                                      <h3>{{translations.authMail.privacyPolicy}}</h3>
-                                      <p>{{translations.authMail.privacyDescription}}</p>
-                                      <h3>{{translations.authMail.dataCollection}}</h3>
-                                      <p>{{translations.authMail.dataUsage}}</p>
-                                      <h3>{{translations.authMail.dataStorage}}</h3>
-                                      <p>{{translations.authMail.dataProtection}}</p>
-                                      <h3>{{translations.authMail.infoSharing}}</h3>
-                                      <p>{{translations.authMail.infoSharingDetails}}</p>
-                                      <h3>{{translations.authMail.cookies}}</h3>
-                                      <p>{{translations.authMail.cookiesDetails}}</p>
-                                      <h3>{{translations.authMail.contact}}</h3>
-                                      <p>{{translations.authMail.contactDetails}}</p>
-                                  </div>
-                              </section>
                           </div>
                       </div>
                   </div>
@@ -275,13 +266,14 @@ $(document).ready(function() {
         const nickname = $('#nickname').val()
         const email = $('#register-email').val();
         const password = $('#register-password').val();
+        const gender = $('#gender').val()
         const ageVerification = $('#ageVerification').is(':checked');
     
         $.ajax({
             url: '/user/register',
             method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({ nickname, email, password, ageVerification }),
+            data: JSON.stringify({ nickname, email, password, gender, ageVerification }),
             success: function(response) {
                 window.location.href = response.redirect;
             },

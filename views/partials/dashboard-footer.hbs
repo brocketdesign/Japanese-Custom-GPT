@@ -173,8 +173,8 @@ function showNavTabs(){
 
     const chatNav_modelId = localStorage.getItem('chat-nav');
 
-    if (chatNav_modelId) {
-        $(document).find(`#imageStyleTabs`).find(`#${chatNav_modelId}-tab`).click()
+    if (chatNav_modelId && $(document).find(`#imageStyleTabs`).find(`#${chatNav_modelId}-tab`).length) {
+        $(document).find(`#imageStyleTabs`).find(`#${chatNav_modelId}-tab`).click();
     } else {
         $(document).find(`#imageStyleTabs`).find(`.nav-link`).eq(0).click();
     }

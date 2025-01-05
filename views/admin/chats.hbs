@@ -39,7 +39,7 @@
             <a href="/admin/users/registered" class="btn btn-secondary mt-3" id="back-to-users">Back to Users</a>
         </div>
     </body>
-        {{> dashboard-footer}}
+    {{> dashboard-footer}}
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Include SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -69,26 +69,33 @@
 
                 // Build HTML content for the popup
                 var chatContent = `
-                    <h3>Chat Preview: ${chatName}</h3>
-                    <p><strong>Last Updated:</strong> ${convertToJapaneseDate(updatedAt)}</p>
-                    <div style="text-align: left; max-height: 400px; overflow-y: auto;">
-                        ${messages.map(function(message) {
-                            var role = message.role === 'user' ? 'ユーザー' : (message.role === 'assistant' ? 'アシスタント' : 'システム');
-                            // Escape HTML to prevent XSS
-                            var content = $('<div>').text(message.content).html().replace(/\n/g, '<br>');
-                            return `<p><strong>${role}:</strong> ${content}</p>`;
-                        }).join('')}
+                    <div class="chat-preview-container">
+                        <div style="background-color: #f9f9f9; padding: 10px; border-radius: 5px;">
+                            <h3 class="chat-preview-title">Chat Preview: ${chatName}</h3>
+                            <p class="chat-preview-updated"><strong>Last Updated:</strong> ${convertToJapaneseDate(updatedAt)}</p>
+                        </div>
+                        <div class="chat-preview-messages m-auto" style="text-align: left; max-height: 400px; overflow-y: auto;">
+                            ${messages.map(function(message) {
+                                // Escape HTML to prevent XSS
+                                var content = $('<div>').text(message.content).html().replace(/\n/g, '<br>');
+                                var bubbleClass = message.role === 'user' ? 'user-bubble' : 'assistant-bubble';
+                                return `
+                                    <div class="chat-message ${bubbleClass}">
+                                        <p class="chat-message-content">${content}</p>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
                     </div>
                 `;
 
                 // Display SweetAlert2 popup
                 Swal.fire({
-                    title: `チャットプレビュー: ${chatName}`,
                     html: chatContent,
                     width: '800px',
                     showCloseButton: true,
                     focusConfirm: false,
-                    confirmButtonText: '閉じる',
+                    showConfirmButton: false,
                     customClass: {
                         popup: 'animated fadeInDown'
                     }
@@ -104,4 +111,25 @@
 
         });
     </script>
+    <style>
+        .assistant-bubble {
+            background-color: #f0f0f0;
+            color: #333;
+            border-radius: 10px;
+            padding: 10px;
+            margin: 10px 0;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+        .user-bubble {
+            background-color: #007bff;
+            color: #fff;
+            border-radius: 10px;
+            padding: 10px;
+            margin: 10px 0;
+            max-width: 70%;
+            word-wrap: break-word;
+            margin-left: auto;
+        }
+    </style>
 </html>

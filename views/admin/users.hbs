@@ -12,46 +12,53 @@
             <a href="/admin/users/registered" class="btn btn-outline-dark mb-3">Registered users</a>
         </div>
         <div>
-            <span class="badge bg-dark"><i class="fas fa-users me-2"></i>{{users.length}}</span>
-            <span class="badge bg-danger"><i class="fas fa-female me-2"></i></i>{{femaleCount}}人 ({{femalePercentage}}%)</span>
-            <span class="badge bg-primary"><i class="fas fa-male me-2"></i></i>{{maleCount}}人 ({{malePercentage}}%)</span>
+            <span class="badge bg-dark"><i class="bi bi-people me-2"></i>{{users.length}}</span>
+            <span class="badge bg-danger"><i class="bi bi-gender-female me-2"></i>{{femaleCount}}人 ({{femalePercentage}}%)</span>
+            <span class="badge bg-primary"><i class="bi bi-gender-male me-2"></i>{{maleCount}}人 ({{malePercentage}}%)</span>
         </div>
     </div>
     <div class="table-responsive">
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>IP</th>
-                    <th>日付</th>
-                    <th>メール</th>
-                    <th>名前</th>
-                    <th>性別</th>
-                    <th>年齢</th>
-                    <th>アクション</th>
+                    <th>Date</th>
+                    <th>Email</th>
+                    <th>Name</th>
+                    <th>Gender</th>
+                    <th>Subscription</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {{#each users}}
-                <tr data-user-id="{{this._id}}"></tr>
-                    <td class="ip-agent">{{this.session}}</td>
+                <tr data-user-id="{{this._id}}">
                     <td class="jp-d">{{this.createdAt}}</td>
                     <td>{{this.email}}</td>
                     <td>{{this.nickname}}</td>
                     <td>{{this.gender}}</td>
-                    <td>{{this.birthDate.year}}年{{this.birthDate.month}}月{{this.birthDate.day}}日</td>
+                    <td class="subscriptionStatus">{{this.subscriptionStatus}}</td>
                     <td>
                         <div class="dropdown">
-                            <button class="btn btn-secondary dropdown-toggle shadow-0" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-ellipsis-v"></i>
+                            <button class="btn btn-secondary dropdown-toggle shadow-0" type="button" id="dropdownMenuButton{{this._id}}" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-three-dots-vertical"></i>
                             </button>
-                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                            <a class="dropdown-item" href="/admin/chat/{{this._id}}">
-                                <i class="fas fa-comments me-2"></i> View Chats
-                            </a>
-                            <button class="dropdown-item delete-user" data-user-id="{{this._id}}">
-                                <i class="fas fa-trash-alt me-2"></i> Delete User
-                            </button>
-                            </div>
+                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton{{this._id}}">
+                                <li>
+                                    <button class="dropdown-item subscriptionToggle" data-user-id="{{this._id}}">
+                                        <i class="bi bi-pencil-square me-2"></i> Toggle Subscription
+                                    </button>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="/admin/chat/{{this._id}}">
+                                        <i class="bi bi-chat-dots me-2"></i> View Chats
+                                    </a>
+                                </li>
+                                <li>
+                                    <button class="dropdown-item delete-user" data-user-id="{{this._id}}">
+                                        <i class="bi bi-trash me-2"></i> Delete User
+                                    </button>
+                                </li>
+                            </ul>
                         </div>
                     </td>
                 </tr>
@@ -64,46 +71,6 @@
 </body>
     <script>
         $(document).ready(function() {
-            enableToggleDropdown() 
-            function enableToggleDropdown() {
-                $(document).find('.dropdown-toggle').each(function() {
-                    if (!$(this).hasClass('event-attached')) {
-                        $(this).addClass('event-attached');
-            
-                        // Attach the event listener
-                        $(this).on('click', function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                        });
-            
-                        // Initialize the dropdown
-                        const dropdown = new mdb.Dropdown($(this)[0]);
-            
-                        // Find the parent element that has the hover effect
-                        const parent = $(this).closest('.chat-list');
-            
-                        // Add hover event listeners to the parent element
-                        parent.hover(
-                            function() {
-                                // When the parent element is hovered
-                                $(this).find('.dropdown-toggle').css({
-                                    'opacity': 1,
-                                    'pointer-events': ''
-                                });
-                            },
-                            function() {
-                                // When the parent element is no longer hovered
-                                $(this).find('.dropdown-toggle').css({
-                                    'opacity': 0,
-                                    'pointer-events': 'none'
-                                });
-                                // Close the dropdown
-                                dropdown.hide();
-                            }
-                        );
-                    }
-                });
-            }
             function convertToJapaneseDate(dateString) {
                 var options = { 
                     year: 'numeric', 
@@ -128,7 +95,23 @@
                 var newText = original.split('-')[0]
                 $(this).text(newText);
             });
-            
+            $('.subscriptionToggle').on('click', function() {
+                var userId = $(this).data('user-id');
+                $.ajax({
+                    type: 'PUT',
+                    url: '/admin/users/' + userId + '/subscription',
+                    success: function(response) {
+                        console.log('Subscription toggled successfully!');
+                        const subscriptionStatus = response.subscriptionStatus;
+                        // Update the subscription status in the table
+                        $(`tr[data-user-id="${userId}"] .subscriptionStatus`).text(subscriptionStatus);
+                    },
+                    error: function(xhr, status, error) {
+                        console.log('Error toggling subscription:', error);
+                        Swal.fire('Error!', 'Failed to toggle subscription.', 'error');
+                    }
+                });
+            });
             $('.delete-user').on('click', function() {
                 var userId = $(this).data('user-id');
                 Swal.fire({

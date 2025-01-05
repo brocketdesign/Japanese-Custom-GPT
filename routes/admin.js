@@ -107,6 +107,38 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: error.message });
         }
     });
+    fastify.put('/admin/users/:userId/subscription', {
+      preHandler: [fastify.authenticate]
+    }, async (request, reply) => {
+      try {
+      const isAdmin = await checkUserAdmin(fastify, request.user._id);
+      if (!isAdmin) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+
+      const userId = request.params.userId;
+      const usersCollection = fastify.mongo.db.collection('users');
+
+      const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+      if (!user) {
+        return reply.status(404).send({ error: 'User not found' });
+      }
+
+      const subscriptionStatus = user.subscriptionStatus === 'active' ? 'inactive' : 'active';
+      const result = await usersCollection.updateOne(
+        { _id: new ObjectId(userId) },
+        { $set: { subscriptionStatus } }
+      );
+
+      if (result.matchedCount === 0) {
+        return reply.status(404).send({ error: 'User not found' });
+      }
+
+      return reply.status(200).send({ message: 'Subscription updated successfully', subscriptionStatus });
+      } catch (error) {
+      return reply.status(500).send({ error: 'Internal Server Error' });
+      }
+    });
     fastify.delete('/admin/users/:id', {
         preHandler: [fastify.authenticate]
       }, async (request, reply) => {
@@ -152,6 +184,7 @@ async function routes(fastify, options) {
             const translations = request.translations
 
             return reply.view('/admin/users',{
+                user: request.user,
                 users,
                 translations,
                 mode: process.env.MODE,

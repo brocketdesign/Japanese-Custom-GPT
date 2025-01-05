@@ -1272,7 +1272,7 @@ $(document).ready(async function() {
         else if (messageClass.startsWith('new-image-') && message instanceof HTMLElement) {
             const imageId = message.getAttribute('data-id');
             const imageNsfw = message.getAttribute('data-nsfw');
-            const description = message.getAttribute('alt');
+            const description = message.getAttribute('data-prompt');
             const imageUrl = message.getAttribute('src');
             const messageId = messageClass.split('new-image-')[1]
             messageElement = $(`

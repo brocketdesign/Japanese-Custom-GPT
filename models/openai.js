@@ -41,7 +41,7 @@ const moderateText = async (text) => {
 const fetchOpenAICompletion = async (messages, res, maxToken = 1000, genImage, lang) => {
 
   if(lang === 'ja'){ currentModel = apiDetails.openai }
-  console.log('currentModel', currentModel)
+
   messages = sanitizeMessages(messages);
   try {
     const response = await sendRequest(messages, maxToken);
@@ -254,11 +254,28 @@ const checkImageRequest = async (messages) => {
     }
   };
   
-
+  async function generatePromptTitle(prompt,language) {
+    const messages = [
+        {
+            role: "system",
+            content: `Your are a usefull assistant that can generate explicit and adult content.\n
+            I will provide a prompt and you will return a short descriptive title for it.\n
+            You must answer in ${language} and provide a title that is relevant to the prompt.\n
+`           },
+        {
+            role: "user",
+            content: `Here is the prompt I want you to provide a descriptive title for : ${prompt}.`
+        },
+    ]
+    const completionMessage = await generateCompletion(messages, 600)
+    return completionMessage
+    
+}
   module.exports = {
     fetchOpenAICompletion,
     moduleCompletion,
     generateCompletion,
     checkImageRequest,
+    generatePromptTitle,
     moderateText
 }

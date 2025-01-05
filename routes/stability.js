@@ -6,6 +6,7 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const { createHash } = require('crypto');
 const stringSimilarity = require('string-similarity'); 
 const { createBlurredImage, convertImageUrlToBase64 } = require('../models/tool')
+const { generatePromptTitle } = require('../models/openai')
 const { z } = require("zod");
 
 async function routes(fastify, options) {
@@ -149,7 +150,7 @@ async function routes(fastify, options) {
     try {
       const db = fastify.mongo.db
       const chatsGalleryCollection = db.collection('gallery');
-  
+  console.log('Image Title: ', title)
       // Check if the image has already been saved for this task
       const existingImage = await chatsGalleryCollection.findOne({
         userId: new fastify.mongo.ObjectId(userId),
@@ -457,16 +458,21 @@ fastify.post('/novita/txt2img', async (request, reply) => {
       const requestData = { ...params, ...image_request, image_num: 1 };
       console.log({model_name:requestData.model_name,prompt:requestData.prompt});
 
+
       // Send request to Novita and get taskId
       const novitaTaskId = await fetchNovitaMagic(requestData);
-
+      let newTitle = title;
+      if(!title){
+        newTitle = await generatePromptTitle(requestData.prompt)
+      }
+      console.log('New Title:', newTitle)
       // Store task details in DB
       await db.collection('tasks').insertOne({
           taskId: novitaTaskId,
           type: imageType,
           status: 'pending',
           prompt: prompt,
-          title: title,
+          title: newTitle,
           negative_prompt: image_request.negative_prompt,
           aspectRatio: aspectRatio,
           userId: new ObjectId(userId),
@@ -513,7 +519,6 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
       const task = await tasksCollection.findOne({ taskId });
 
       if (!task) {
-
           return reply.status(404).send({ error: 'Task not found.' });
       }
 
@@ -549,7 +554,7 @@ fastify.get('/novita/task-status/:taskId', async (request, reply) => {
               null, // blurredImageUrl is null since we're not blurring images
               task.type === 'nsfw' // nsfw flag
           );
-          return { imageId: saveResult.imageId, imageUrl: imageData.imageUrl, prompt:task.prompt};
+          return { imageId: saveResult.imageId, imageUrl: imageData.imageUrl, prompt:task.prompt, title:task.title};
       }));
 
       // Update the task status to 'completed' and store the result

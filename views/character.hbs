@@ -31,7 +31,8 @@
             <img src="{{image.imageUrl}}" class="card-img-top" alt="{{image.prompt}}" style="max-height:400px;width:auto;object-fit:contain;">
         {{/if}}
         <div class="card-body border mt-3">
-          <h5 class="card-title d-none">{{image.prompt}}</h5>
+          <h5 class="card-title">{{image.title}}</h5>
+          <h5 class="card-prompt d-none">{{image.prompt}}</h5>
           <p class="card-text">{{image.comment}}</p>
           <p class="text-muted"><span class="jp-date">{{image.createdAt}}</span></p>
           <div class="d-flex justify-content-between align-items-center">

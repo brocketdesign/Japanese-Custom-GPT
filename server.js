@@ -448,7 +448,7 @@ fastify.get('/character/:chatId', async (request, reply) => {
           { $project: { image: '$images', _id: 0 } },
         ])
         .toArray();
-
+        console.log(imageDoc)
       if (imageDoc.length > 0) {
         image = imageDoc[0].image;
         const unlockedItem = user?.unlockedItems?.map((id) => id.toString()).includes(imageId.toString());

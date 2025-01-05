@@ -99,7 +99,7 @@ window.txt2ImageNovita = async function(userId, chatId, userChatId, imageId, ima
             throw new Error('サーバーからタスクが返されませんでした。');
         }
 
-        pollTaskStatus(taskId, imageType, prompt, title, imageId, userChatId, function(){
+        pollTaskStatus(taskId, imageType, imageId, userChatId, function(){
             $(`.txt2img[data-id=${imageId}]`).removeClass('spin');
         });
 
@@ -163,8 +163,7 @@ window.img2ImageNovita = async function(userId, chatId, userChatId, imageId, ima
             throw new Error('サーバーからタスクが返されませんでした。');
         }
 
-        // must include title for pollTaskStatus
-        pollTaskStatus(taskId, imageType, prompt, imageId, userChatId, function(){
+        pollTaskStatus(taskId, imageType, imageId, userChatId, function(){
             $(`.img2img[data-id=${imageId}]`).removeClass('spin')
         });
 
@@ -178,7 +177,7 @@ window.img2ImageNovita = async function(userId, chatId, userChatId, imageId, ima
 }
 
 const displayedImageIds = new Set();
-function pollTaskStatus(taskId, type, prompt, title, item_id, userChatId, callback) {
+function pollTaskStatus(taskId, type, item_id, userChatId, callback) {
     const POLLING_INTERVAL = 30000; // 30 seconds
     const MAX_ATTEMPTS = 60;
     let attempts = 0;
@@ -197,7 +196,7 @@ function pollTaskStatus(taskId, type, prompt, title, item_id, userChatId, callba
 
             if (statusData.status === 'completed') {
                 clearInterval(intervalId);
-                const { imageId, imageUrl } = statusData.images[0];
+                const { imageId, imageUrl, title, prompt } = statusData.images[0];
 
                 if (!displayedImageIds.has(imageId)) {
                     generateImage({

@@ -1,6 +1,7 @@
 const { ObjectId } = require('mongodb');
 const {
     checkImageRequest, 
+    generatePromptTitle,
     fetchOpenAICompletion,
     generateCompletion,
     moderateText
@@ -1034,7 +1035,6 @@ async function routes(fastify, options) {
                 genImagePromptFromChat(chatDocument, userData.messages, genImage, language).then((promptData) => {
                     const prompt = promptData.prompt
                     const title = promptData.title
-                    console.log('Title:', title)
                     fastify.sendNotificationToUser(userId, 'imageStart', 'image', {userId, chatId, userChatId, command:genImage, prompt, title})
                 }) 
                 imgMessage[0].content = `\n\nI just asked for a new image and your are currently preparing it.\n Provide a concise answer in ${language} to inform that your are taking a good picture to send. Do no describe the image or anything. Stay in your character, keep the same tone as previously. Continue the chat,`.trim()
@@ -1342,23 +1342,6 @@ async function routes(fastify, options) {
         }
       });
 
-    async function generatePromptTitle(prompt,language) {
-        const messages = [
-            {
-                role: "system",
-                content: `Your are a usefull assistant that can generate explicit and adult content.\n
-                I will provide a prompt and you will return a short descriptive title for it.\n
-                You must answer in ${language} and provide a title that is relevant to the prompt.\n
-`           },
-            {
-                role: "user",
-                content: `Here is the prompt I want you to provide a descriptive title for : ${prompt}.`
-            },
-        ]
-        const completionMessage = await generateCompletion(messages, 600)
-        return completionMessage
-        
-    }
     async function generateEnglishDescription(lastMessages,characterDescription,command) {
 
         // Convert lastMessages to a dialogue string

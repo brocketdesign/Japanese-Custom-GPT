@@ -1762,12 +1762,14 @@ async function routes(fastify, options) {
           const query = {
             chatImageUrl: { $exists: true, $ne: '' },
           };
+          
           if(language){
             query.language = language
           }
-          if (userId) {
+
+          if (fastify.mongo.ObjectId.isValid(userId)) {
             query.userId = new fastify.mongo.ObjectId(userId);
-          }
+          }          
       
           if (style) {
             query.imageStyle = style;

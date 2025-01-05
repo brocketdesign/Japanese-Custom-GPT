@@ -577,6 +577,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
 
   fastify.get('/user/:userId', async (request, reply) => {
     const { userId } = request.params;
+
     const db = fastify.mongo.db
     const collectionChat = db.collection('chats');
     const collectionUser = db.collection('users');
@@ -587,6 +588,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       if (!currentUser?.isTemporary && currentUserId) currentUser = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(currentUserId) });
 
       const userData = await getUserData(userId, collectionUser, collectionChat, currentUser);
+
       if (!userData) {
         return reply.redirect('/my-plan');
       }

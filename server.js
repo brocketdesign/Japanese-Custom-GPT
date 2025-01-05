@@ -8,13 +8,12 @@ const ip = require('ip');
 const handlebars = require('handlebars');
 const fastifyMultipart = require('@fastify/multipart');
 const translationsPlugin = require('./plugins/translations');
-
-const { updateCounter } = require('./models/tool');
+const { generatePromptTitle } = require('./models/openai');
 const {
   cleanupNonRegisteredUsers,
   deleteTemporaryChats,
 } = require('./models/cleanupNonRegisteredUsers');
-const { checkUserAdmin, getUserData } = require('./models/tool');
+const { checkUserAdmin, getUserData, updateCounter } = require('./models/tool');
 
 fastify.register(require('fastify-mongodb'), {
   forceClose: true,
@@ -448,6 +447,15 @@ fastify.get('/character/:chatId', async (request, reply) => {
           { $project: { image: '$images', _id: 0 } },
         ])
         .toArray();
+        // Generate prompt title if it doesn't exist and save it to the image doc in the db
+        if(!imageDoc[0].image.title) {
+          const promptTitle = await generatePromptTitle(imageDoc[0].image.promptId, request.lang)
+          imageDoc[0].image.title = promptTitle;
+          await galleryCollection.updateOne(
+            { 'images._id': imageId },
+            { $set: { 'images.$.title': promptTitle } }
+          );
+        }
         console.log(imageDoc)
       if (imageDoc.length > 0) {
         image = imageDoc[0].image;

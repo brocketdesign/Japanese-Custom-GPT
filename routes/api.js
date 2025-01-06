@@ -7,7 +7,8 @@ const {
 } = require('../models/openai')
 const { 
     generateTxt2img,
-    getPromptById 
+    getPromptById ,
+    getTasks
 } = require('../models/imagen');
 const { 
     getLanguageName, 
@@ -1023,19 +1024,24 @@ async function routes(fastify, options) {
             if(userInfo.subscriptionStatus == 'active'){
                 const imageId = Math.random().toString(36).substr(2, 9);
                 fastify.sendNotificationToUser(userId, 'addIconToLastUserMessage')
-                fastify.sendNotificationToUser(userId, 'handleLoader', { imageId, action:'show' })
+
+                const image_num = Math.min(Math.max(genImage?.image_num || 1, 1), 8);
+                for (let i = 0; i < image_num; i++) {
+                    fastify.sendNotificationToUser(userId, 'handleLoader', { imageId, action:'show' })
+                }
                 genImagePromptFromChat(chatDocument, userData.messages, genImage, language).then((promptData) => {
                     const prompt = promptData.prompt
                     const title = promptData.title[request.lang]
                     const imageType = genImage.nsfw ? 'nsfw' : 'sfw'
                     const aspectRatio = null
-                    generateTxt2img(title, prompt, aspectRatio, userId, chatId, userChatId, imageType, 1, fastify)
+                    generateTxt2img(title, prompt, aspectRatio, userId, chatId, userChatId, imageType, image_num, fastify)
                     .then((taskStatus) => {
                         fastify.sendNotificationToUser(userId, 'handleLoader', { imageId, action:'remove' })
                         const { images } = taskStatus;
                         for (const image of images) {
                             const { imageId, imageUrl, prompt, title, nsfw } = image;
                             const { userId, userChatId } = taskStatus;
+                            console.log('Image generated:', imageUrl);
                             fastify.sendNotificationToUser(userId, 'imageGenerated', {
                                 imageUrl,
                                 imageId,
@@ -1435,7 +1441,7 @@ async function routes(fastify, options) {
         const characterDescription = chatDocument.characterPrompt || chatDocument.enhancedPrompt;
         const lastMessages = messages
             .filter(m => m.content && m.role !== 'assistant' && m.role !== 'system' && m.name !== 'master' && m.name !== 'context' && !m.content.startsWith('['))
-            .slice(-1);
+            .slice(-2);
 
         if (lastMessages.length < 1) {
             throw new Error('Insufficient messages');

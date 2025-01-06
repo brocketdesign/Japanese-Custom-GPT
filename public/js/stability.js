@@ -70,14 +70,14 @@ window.handleRegenSpin = function (imageId, spin) {
         }
     }
 }
-// Display and remove image loader with provided id
+// Display and remove image loader with provided data-id
 window.displayOrRemoveImageLoader = function (imageId, action) {
     if (action === 'remove') {
-        $(`#load-image-container-${imageId}`).remove();
+        $(`[data-id=${imageId}]`).remove();
     } else {
         const placeholder = "/img/image-placeholder.gif";
         const card = $(`
-            <div id="load-image-container-${imageId}" class="assistant-image-box card custom-card bg-transparent shadow-0 border-0 px-1 mx-1 col-auto" style="cursor:pointer;">
+            <div data-id="${imageId}" class="assistant-image-box card custom-card bg-transparent shadow-0 border-0 px-1 mx-1 col-auto" style="cursor:pointer;">
                 <div style="background-image:url(${placeholder});border:4px solid white;background-size:cover;" class="card-img-top rounded-avatar position-relative m-auto">
                 </div>
             </div>

@@ -161,7 +161,8 @@ const formatSchema = z.object({
   nude: z.enum(['false', 'top', 'bottom', 'full', 'partial', 'implied', 'bare', 'exposed', 'minimal_clothing']).optional(),
   image_focus: z.enum(['upper_body', 'full_body', 'face', 'hands', 'legs', 'torso', 'shoulders', 'arms', 'feet', 'lower_back', 'chest', 'abdomen', 'waist']).optional(),
   position: z.enum(['standing', 'sitting', 'squat', 'leaning', 'crouching', 'prone', 'supine', 'reclining', 'kneeling', 'lying_down']).optional(),
-  viewpoint: z.enum(['from bottom','front', 'from behind', 'side', 'overhead', 'low_angle', 'high_angle', 'close_up', 'wide_angle', 'profile']).optional()
+  viewpoint: z.enum(['from bottom','front', 'from behind', 'side', 'overhead', 'low_angle', 'high_angle', 'close_up', 'wide_angle', 'profile']).optional(),
+  image_num: z.number(),
 });
 
   
@@ -175,6 +176,7 @@ const systemPrompt = `
     4. **image_focus**: Specify the focus area, e.g., 'upper_body', 'full_body', etc., if mentioned.
     5. **position**: Identify any pose or body positioning such as 'standing', 'sitting', or 'squat'.
     6. **viewpoint**: Capture the perspective, such as 'front', 'back', or 'side', if indicated.
+    7. **image_num**: The number of images requested (minimum 1  maximum 8).
 `;
 
 const checkImageRequest = async (messages) => {

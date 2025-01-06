@@ -2,7 +2,7 @@ const { ObjectId } = require('mongodb');
 const axios = require('axios');
 const fs = require('fs');
 const { convertImageUrlToBase64 } = require('../models/tool')
-const { generateTxt2img,getPromptById,checkImageDescription } = require('../models/imagen');
+const { generateTxt2img,getPromptById,checkImageDescription,getTasks } = require('../models/imagen');
 const { createPrompt, moderateText } = require('../models/openai');
 async function routes(fastify, options) {
 
@@ -11,6 +11,9 @@ fastify.post('/novita/txt2img', async (request, reply) => {
   const { title, prompt, aspectRatio, userId, chatId, userChatId, imageType, placeholderId, customPrompt, chatCreation } = request.body;
   const db = fastify.mongo.db;
   try {
+    const pending_taks =  await getTasks(db, 'pending', userId)
+    console.log('Pending images : ',pending_taks.length);
+
     let newPrompt = prompt
     if(customPrompt){
       const promptId = placeholderId

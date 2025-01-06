@@ -173,21 +173,32 @@ async function pollTaskStatus(taskId, fastify) {
 }
 
 // Module to check the status of a task
-async function getTasks(request, reply) {
-    const { status, userId } = request.query;
-    try {
-      const db = request.server.mongo.db;
-      const tasksCollection = db.collection('tasks');
-      const query = {};
-      if (status) query.status = status;
-      if (userId) query.userId = userId;
-      const tasks = await tasksCollection.find(query).toArray();
-      return reply.send(tasks);
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-      return reply.status(500).send({ error: 'Internal Server Error' });
-    }
+async function getTasks(db, status, userId) {
+  try {
+    await deleteOldTasks(db) // Delete old tasks before fetching
+    const tasksCollection = db.collection('tasks');
+    const query = {};
+    if (status) query.status = status;
+    if (userId) query.userId = new ObjectId(userId);
+    const tasks = await tasksCollection.find(query).toArray();
+    return tasks;
+  } catch (error) {
+    console.error('Error fetching tasks:', error);
+    return reply.status(500).send({ error: 'Internal Server Error' });
+  }
 };
+
+// Module to delete tasks older than 5 minutes
+async function deleteOldTasks(db) {
+  try {
+    const tasksCollection = db.collection('tasks');
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const result = await tasksCollection.deleteMany({ createdAt: { $lt: fiveMinutesAgo } });
+    console.log(`Deleted ${result.deletedCount} old tasks`);
+  } catch (error) {
+    console.error('Error deleting old tasks:', error);
+  }
+}
   
 async function checkTaskStatus(taskId, fastify) {
     const db = fastify.mongo.db;
@@ -449,5 +460,6 @@ async function checkImageDescription(db, chatId) {
   module.exports = {
     generateTxt2img,
     getPromptById,
-    checkImageDescription
+    checkImageDescription,
+    getTasks
   };

@@ -245,7 +245,10 @@ async function createPrompt(customPrompt, imageDescription) {
   const messages = [
     {
       role: "system",
-      content: `You are a prompt designer. You generate a new prompt by combining a custom prompt and an image description.\n You can generate adult content or sexual content.\nYou must follow the custom prompt as it is the main focus of the new prompt.\n`
+      content: `You are a prompt designer.\n
+      You generate a new prompt by combining a custom prompt and an image description.\n 
+      You can generate adult content or sexual content.\n
+      You must follow the custom prompt as it is the main focus of the new prompt but keep the character main characteristic to avoid generating a different character.\n`
     },
     {
       role: "user",
@@ -257,7 +260,9 @@ async function createPrompt(customPrompt, imageDescription) {
     },
     { 
       role:"user",
-      content: "Generate a new prompt by combining the custom prompt and the image description. You must answer in English with the new prompt. Do not include anything else in the response."
+      content: `Generate a new prompt by combining the custom prompt and the image description. \n 
+      You must include the character's skin color, hair color, and eye color in the new prompt. \n
+      You must answer in English with the new prompt. Do not include anything else in the response.`
     }
   ];
 

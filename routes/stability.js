@@ -27,7 +27,7 @@ fastify.post('/novita/txt2img', async (request, reply) => {
     .then((taskStatus) => {
       fastify.sendNotificationToUser(userId, 'handleLoader', { imageId:placeholderId, action:'remove' })
       fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId:placeholderId, spin: false })
-      fastify.sendNotificationToUser(userId, 'resetCharacterForm')
+      if(chatCreation){ fastify.sendNotificationToUser(userId, 'resetCharacterForm') }
       const { images } = taskStatus;
       images.forEach((image, index) => {
           const { imageId, imageUrl, prompt, title, nsfw } = image;

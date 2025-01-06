@@ -23,7 +23,7 @@ fastify.post('/novita/txt2img', async (request, reply) => {
       newPrompt = await createPrompt(customPrompt, imageDescription)
 
     }
-    const result = generateTxt2img( title, newPrompt, aspectRatio, userId, chatId, userChatId, imageType, chatCreation ? 4: 1 , fastify )
+    const result = generateTxt2img(title, newPrompt, aspectRatio, userId, chatId, userChatId, imageType, chatCreation ? 4: 1 , fastify )
     .then((taskStatus) => {
       fastify.sendNotificationToUser(userId, 'handleLoader', { imageId:placeholderId, action:'remove' })
       fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId:placeholderId, spin: false })

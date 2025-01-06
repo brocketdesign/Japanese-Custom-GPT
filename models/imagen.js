@@ -57,7 +57,7 @@ const default_prompt = {
   }
 
 // Module to generate an image
-async function generateTxt2img( title, prompt, aspectRatio, userId, chatId, userChatId, imageType, image_num, fastify ) {
+async function generateTxt2img(title, prompt, aspectRatio, userId, chatId, userChatId, imageType, image_num, fastify) {
     const db = fastify.mongo.db;
   
     // Fetch the user
@@ -156,7 +156,6 @@ async function pollTaskStatus(taskId, fastify) {
     const intervalId = setInterval(async () => {
       try {
         const taskStatus = await checkTaskStatus(taskId, fastify);
-        
         if (taskStatus.status === 'completed') {
           clearInterval(intervalId);
           completedTasks.add(taskId);

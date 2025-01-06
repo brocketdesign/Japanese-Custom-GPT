@@ -1367,21 +1367,6 @@ $(document).ready(async function() {
         }
     };       
 
-    // Check if the tooltip has already been shown in the session
-    if (!sessionStorage.getItem('tooltipShown')) {
-        $('#userMessage').one('input', function() {
-            // Show tooltip
-            $('#showPrompts').tooltip('show');
-            
-            // Set sessionStorage flag to ensure it's only shown once
-            sessionStorage.setItem('tooltipShown', 'true');
-            
-            // Hide tooltip after 3 seconds
-            setTimeout(function() {
-                $('#showPrompts').tooltip('hide');
-            }, 3000); // Hide after 3 seconds
-        });
-    }
 
     // Click handler for #showPrompts
 

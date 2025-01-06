@@ -1029,7 +1029,7 @@ async function routes(fastify, options) {
                     const title = promptData.title[request.lang]
                     const imageType = genImage.nsfw ? 'nsfw' : 'sfw'
                     const aspectRatio = null
-                    generateTxt2img({ title, prompt, aspectRatio, userId, chatId, userChatId, imageType, fastify })
+                    generateTxt2img(title, prompt, aspectRatio, userId, chatId, userChatId, imageType, 1, fastify)
                     .then((taskStatus) => {
                         fastify.sendNotificationToUser(userId, 'handleLoader', { imageId, action:'remove' })
                         const { images } = taskStatus;

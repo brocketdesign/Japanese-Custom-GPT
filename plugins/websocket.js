@@ -1,8 +1,7 @@
 const fastifyPlugin = require('fastify-plugin');
-const connections = new Map();
 
 module.exports = fastifyPlugin(async function (fastify) {
-  fastify.decorate('connections', connections);
+  fastify.decorate('connections', new Map());
 
   fastify.get('/ws', { websocket: true }, (connection, request) => {
     try {
@@ -13,32 +12,34 @@ module.exports = fastifyPlugin(async function (fastify) {
         return;
       }
 
-      if (!fastify.connections.has(userId)) {
-        fastify.connections.set(userId, new Set());
-        console.log(`New user registered: ${userId}`);
+      const normalizedUserId = userId.toString();
+
+      if (!fastify.connections.has(normalizedUserId)) {
+        fastify.connections.set(normalizedUserId, new Set());
+        console.log(`New user registered: ${normalizedUserId}`);
       }
 
-      fastify.connections.get(userId).add(connection);
-      console.log(`Connection added for user ${userId}. Total connections: ${fastify.connections.get(userId).size}`);
+      fastify.connections.get(normalizedUserId).add(connection);
+      console.log(`Connection added for user ${normalizedUserId}. Total connections: ${fastify.connections.get(normalizedUserId).size}`);
 
       connection.on('message', (message) => {
-        console.log(`Message received from user ${userId}:`, message.toString());
+        console.log(`Message received from user ${normalizedUserId}:`, message.toString());
         try {
           connection.send(message); // Echo back the message
         } catch (err) {
-          console.error(`Error sending message to user ${userId}:`, err);
+          console.error(`Error sending message to user ${normalizedUserId}:`, err);
         }
       });
 
       connection.on('close', () => {
-        console.log(`Connection closed for user: ${userId}`);
-        const userConnections = fastify.connections.get(userId);
+        console.log(`Connection closed for user: ${normalizedUserId}`);
+        const userConnections = fastify.connections.get(normalizedUserId);
         if (userConnections) {
           userConnections.delete(connection);
-          console.log(`Remaining connections for user ${userId}: ${userConnections.size}`);
+          console.log(`Remaining connections for user ${normalizedUserId}: ${userConnections.size}`);
           if (userConnections.size === 0) {
-            fastify.connections.delete(userId);
-            console.log(`All connections closed for user ${userId}. User removed.`);
+            fastify.connections.delete(normalizedUserId);
+            console.log(`All connections closed for user ${normalizedUserId}. User removed.`);
           }
         }
       });
@@ -47,24 +48,24 @@ module.exports = fastifyPlugin(async function (fastify) {
     }
   });
 
-  fastify.decorate('sendNotificationToUser', (userId, message, type, additionalData) => {
+  fastify.decorate('sendNotificationToUser', (userId, type, additionalData) => {
     try {
-      const userConnections = fastify.connections.get(userId);
+      const normalizedUserId = userId.toString();
+      const userConnections = fastify.connections.get(normalizedUserId);
       if (userConnections) {
         const notification = {
-          message,
           type,
           ...additionalData
         };
         for (const conn of userConnections) {
           conn.send(JSON.stringify({ notification }));
         }
-        console.log(`Notification sent to user ${userId}`);
+        console.log(`Notification sent to user ${normalizedUserId}`);
       } else {
-        console.log(`No active connections for user ${userId}`);
+        console.log(`No active connections for user ${normalizedUserId}`);
       }
     } catch (err) {
-      console.error(`Error sending notification to user ${userId}:`, err);
+      console.error(`Error sending notification to user ${normalizedUserId}:`, err);
     }
   });
 

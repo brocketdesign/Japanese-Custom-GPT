@@ -757,21 +757,16 @@ $(document).ready(async function() {
     }
   
     function sanitizeString(inputString) {
-        var wordsToRemove = ["latex","topless","abortion","adultery","assault","bestiality","bisexuality","incest","pedophilia","rape","sadism","suicide","transphobia", "violence",'sexy', 'masturbation','nsfw', 'nude', 'sexy', 'erotic', 'naughty', 'body', 'breast','breasts','nipple','nipples', 'boobs', 'curvy', 'uncensored']; // Add words to remove
-        wordsToRemove.forEach(function(word) {
-            var regex = new RegExp('\\b' + word + '\\b', 'g');
-            inputString = inputString.replace(regex, '');
-        });
+        if(!inputString)return ''
         inputString.replace(/\s+/g, ' ').trim();  
         if (inputString.includes(",,,")){
             return inputString.split(",,,")[1].trim();
         }
-        
         return inputString;
     }
     
-    function getImageTools(imageId, isLiked = false, description = false, nsfw = false, imageUrl = false){
-        description = sanitizeString(description);
+    function getImageTools(imageId, isLiked = false, prompt = false, nsfw = false, imageUrl = false){
+        prompt = sanitizeString(prompt);
         return `
             <div class="bg-white py-2 rounded mt-1 d-flex justify-content-between">
                 <div class="d-flex">
@@ -783,7 +778,7 @@ $(document).ready(async function() {
                     style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
                         <i class="bi bi-arrow-clockwise"></i>
                     </span>
-                    <span class="badge bg-white text-secondary txt2img regen-img" data-description="${description}" data-nsfw="${nsfw}" data-id="${imageId}" 
+                    <span class="badge bg-white text-secondary txt2img regen-img" data-prompt="${prompt}" data-nsfw="${nsfw}" data-id="${imageId}" 
                     style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
                         <i class="bi bi-arrow-clockwise"></i>
                     </span>
@@ -823,10 +818,11 @@ $(document).ready(async function() {
                         displayImageThumb(response.imageUrl)
                         // Update the placeholder image
                         $(`#image-${imageId}`).attr('src', response.imageUrl).fadeIn();
-
+                        // Update the alt text
                         const title = response?.title?.[lang]?.trim() || '';
                         $(`#image-${imageId}`).attr('alt', title).fadeIn();
-    
+                        //update the image prompt
+                        $(`#image-${imageId}`).attr('data-prompt', response.imagePrompt);
                         // Add tools or badges if applicable
                         if (!response.isBlur) {
                             const toolsHtml = getImageTools(imageId, response?.likedBy?.some(id => id.toString() === userId.toString()), response.imagePrompt, response.nsfw, response.imageUrl);
@@ -1158,72 +1154,108 @@ $(document).ready(async function() {
         if (!str) { return str; }
         return str.replace(/\*.*?\*/g, '').replace(/"/g, '');
     }   
-    const activeStreams = {};        
-    function generateCompletion(callback,isHidden=false){
 
-        hideOtherChoice(false, currentStep)
-        // Initialize the bot response container
-        const animationClass = 'animate__animated animate__slideInUp';
-        const uniqueId = `${currentStep}-${Date.now()}`;
-        const botResponseContainer = $(`
-            <div id="container-${uniqueId}">
-                <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
-                    <img src="${ thumbnail ? thumbnail : '/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
-                    <div class="audio-controller">
-                        <button id="play-${uniqueId}" class="audio-content badge bg-dark">►</button>
-                    </div>
-                    <div id="completion-${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">
-                        <img src="/img/load-dot.gif" width="50px">
-                    </div>
-                </div>
-            </div>`).hide();
-        $('#chatContainer').append(botResponseContainer);
-        botResponseContainer.addClass(animationClass).fadeIn();
-        $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
-        
-        const apiUrl = API_URL+'/api/openai-chat-completion';
-        $.ajax({
-            url: apiUrl,
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ userId, chatId, userChatId, isHidden }),
-            success: function(response) {
-                const sessionId = response.sessionId;
-                const streamUrl = API_URL+`/api/openai-chat-completion-stream/${sessionId}`;
+    const activeStreams = {};      
+    let attemptCount = 2;
 
-                activeStreams[uniqueId] = new EventSource(streamUrl);
-                let markdownContent = "";
-
-                activeStreams[uniqueId].onmessage = function(event) {
-                    const data = JSON.parse(event.data);
-                    if (data.type === 'text') {
-                        markdownContent += data.content;
-                        $(`#completion-${uniqueId}`).html(marked.parse(markdownContent));
-                    }
-                };
-
-                activeStreams[uniqueId].onerror = function(error) {
-                    activeStreams[uniqueId].close();
-                    delete activeStreams[uniqueId];
-                    let message = removeContentBetweenStars(markdownContent)
-                    $(`#play-${uniqueId}`).attr('data-content',message)
-                    $(`#play-${uniqueId}`).closest('.audio-controller').show()
-
-                    let autoPlay = localStorage.getItem('audioAutoPlay') === 'true';
-                    if(autoPlay){
-                        //initAudio($(`#play-${uniqueId}`), message);
-                    }
-                    if (typeof callback === "function") {
-                        callback();
-                    }
-                };
-            },
-            error: function(error) {
-                console.error('Error:', error);
-            }
-        });
+    function createBotResponseContainer(uniqueId) {
+    const container = $(`
+        <div id="container-${uniqueId}">
+        <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
+            <img src="${thumbnail ? thumbnail : '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width:45px;width:45px;height:45px;border-radius:15%;object-fit:cover;object-position:top;cursor:pointer;">
+            <div class="audio-controller"><button id="play-${uniqueId}" class="audio-content badge bg-dark">►</button></div>
+            <div id="completion-${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box"><img src="/img/load-dot.gif" width="50px"></div>
+        </div>
+        </div>`).hide();
+    $('#chatContainer').append(container);
+    container.addClass('animate__animated animate__slideInUp').fadeIn();
+    $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
+    return container;
     }
 
+    function afterStreamEnd(uniqueId, markdownContent) {
+    let msg = removeContentBetweenStars(markdownContent);
+    $(`#play-${uniqueId}`).attr('data-content', msg);
+    $(`#play-${uniqueId}`).closest('.audio-controller').show();
+    }
+
+    function handleStreamMessage(event, uniqueId, markdownContent) {
+    const data = JSON.parse(event.data);
+    if (data.type === 'done') {
+        activeStreams[uniqueId].close();
+        delete activeStreams[uniqueId];
+        afterStreamEnd(uniqueId, markdownContent.val);
+        return true; // signal done
+    } else if (data.type === 'text') {
+        markdownContent.val += data.content;
+        $(`#completion-${uniqueId}`).html(marked.parse(markdownContent.val));
+    }
+    return false;
+    }
+
+    function handleStreamError(uniqueId, markdownContent, container, callback, isHidden) {
+    activeStreams[uniqueId].close();
+    delete activeStreams[uniqueId];
+    if (++attemptCount < 2) {
+        container.remove(); // remove failed placeholder before retry
+        generateCompletion(callback, isHidden);
+    } else {
+        container.hide(); // hide if second attempt also fails
+        afterStreamEnd(uniqueId, markdownContent.val);
+        if (typeof callback === 'function') callback();
+    }
+    }
+
+    function startStream(uniqueId, sessionId, callback, isHidden, container) {
+    let markdownContent = { val: '' };
+    const streamUrl = API_URL + `/api/openai-chat-completion-stream/${sessionId}`;
+    activeStreams[uniqueId] = new EventSource(streamUrl);
+
+    activeStreams[uniqueId].onmessage = e => {
+        if (handleStreamMessage(e, uniqueId, markdownContent)) {
+        if (typeof callback === 'function') callback();
+        }
+    };
+    activeStreams[uniqueId].onerror = () => {
+        handleStreamError(uniqueId, markdownContent, container, callback, isHidden);
+    };
+    }
+
+    function generateCompletion(callback, isHidden = false) {
+    hideOtherChoice(false, currentStep);
+    const uniqueId = `${currentStep}-${Date.now()}`;
+    const container = createBotResponseContainer(uniqueId);
+
+    $.ajax({
+        url: API_URL + '/api/openai-chat-completion',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ userId, chatId, userChatId, isHidden }),
+        success: function(res) {
+        startStream(uniqueId, res.sessionId, callback, isHidden, container);
+        },
+        error: function() {
+        console.error('Error: AJAX call failed');
+        if (++attemptCount < 2) {
+            container.remove();
+            generateCompletion(callback, isHidden);
+        } else {
+            container.hide();
+            if (typeof callback === 'function') callback();
+        }
+        }
+    });
+    }
+
+
+    function afterStreamEnd(uniqueId, markdownContent){
+        let message = removeContentBetweenStars(markdownContent);
+        $(`#play-${uniqueId}`).attr('data-content', message);
+        $(`#play-${uniqueId}`).closest('.audio-controller').show();
+        if (localStorage.getItem('audioAutoPlay') === 'true') {
+          //initAudio($(`#play-${uniqueId}`), message);
+        }
+    }
   
     window.displayMessage = function(sender, message, origineUserChatId, callback) {
         const messageContainer = $(`#chatContainer[data-id=${origineUserChatId}]`)
@@ -1250,7 +1282,7 @@ $(document).ready(async function() {
         else if (messageClass === 'bot-image' && message instanceof HTMLElement) {
             const imageId = message.getAttribute('data-id');
             const imageNsfw = message.getAttribute('data-nsfw');
-            const description = message.getAttribute('alt');
+            const prompt = message.getAttribute('data-prompt');
             const imageUrl = message.getAttribute('src');
             
             messageElement = $(`
@@ -1260,7 +1292,7 @@ $(document).ready(async function() {
                         <div class="ps-0 text-start assistant-image-box" data-id="${imageId}">
                             ${message.outerHTML}
                         </div>
-                        ${getImageTools(imageId,false,description,imageNsfw,imageUrl)}
+                        ${getImageTools(imageId,false,prompt,imageNsfw,imageUrl)}
                     </div>
                 </div>      
             `).hide();
@@ -1272,7 +1304,7 @@ $(document).ready(async function() {
         else if (messageClass.startsWith('new-image-') && message instanceof HTMLElement) {
             const imageId = message.getAttribute('data-id');
             const imageNsfw = message.getAttribute('data-nsfw');
-            const description = message.getAttribute('data-prompt');
+            const prompt = message.getAttribute('data-prompt');
             const imageUrl = message.getAttribute('src');
             const messageId = messageClass.split('new-image-')[1]
             messageElement = $(`
@@ -1280,7 +1312,7 @@ $(document).ready(async function() {
                         <div class="text-start assistant-image-box" data-id="${imageId}">
                             ${message.outerHTML}
                         </div>
-                        ${getImageTools(imageId,false,description,imageNsfw,imageUrl)}
+                        ${getImageTools(imageId,false,prompt,imageNsfw,imageUrl)}
                     </div>  
             `).hide();
             $(`#${messageId}`).find('.load').remove()
@@ -1366,7 +1398,7 @@ $(document).ready(async function() {
         $(this).addClass('selected');
 
         var id = $(this).data('id');
-        var nsfw = $(this).data('nsfw')
+        var imageNsfw = $(this).data('nsfw') ? 'nsfw' : 'sfw';
         const subscriptionStatus = user.subscriptionStatus == 'active'
 
         if(!subscriptionStatus){
@@ -1374,14 +1406,9 @@ $(document).ready(async function() {
             return
         }
 
-        const randomId = displayAndUpdateImageLoader();
+        displayOrRemoveImageLoader(id, 'show');
+        txt2ImageNovita(userId, chatId, userChatId, {placeholderId:id, imageNsfw, customPrompt:true})
 
-        // Display the choice and cost in the user message
-        const prompt_title = $(this).find('.card-text').text()
-        showNotification(window.translations['image_generation_processing'],'info')
-
-        controlImageGen(userId, chatId, userChatId, id, nsfw);
-        displayAndUpdateImageLoader(id,randomId)
     });
     
     $(document).on('click', '.regen-img', function () {
@@ -1394,89 +1421,20 @@ $(document).ready(async function() {
         $(this).addClass('spin')
 
         const imageNsfw = $(this).attr('data-nsfw') == 'true' ? 'nsfw' : 'sfw'
-        const imageId = $(this).data('id')
-        const imageDescription = $(this).data('description')
-
-        const randomId = displayAndUpdateImageLoader();
-        displayAndUpdateImageLoader(imageId,randomId);
+        const imagePrompt = $(this).data('prompt')
+        const placeholderId = $(this).data('id')
+        displayOrRemoveImageLoader(placeholderId, 'show');
 
         if($(this).hasClass('img2img')){
-            img2ImageNovita(userId, chatId, userChatId, imageId, imageNsfw, {prompt:imageDescription})
+            img2ImageNovita(userId, chatId, userChatId, {prompt:imagePrompt, imageNsfw, placeholderId})
         }
         if($(this).hasClass('txt2img')){
-            txt2ImageNovita(userId, chatId, userChatId, imageId, imageNsfw, {prompt:imageDescription})
+            txt2ImageNovita(userId, chatId, userChatId, {prompt:imagePrompt, imageNsfw, placeholderId});
         }
     });
     
-    function generateItemData(command) {
-        return new Promise((resolve, reject) => {
-            $.ajax({
-                url: '/api/gen-item-data',
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ userId, chatId, userChatId, command }),
-                success: function(response) {
-                    if (response.length > 0) {
-                        resolve(response);
-                    } else {
-                        reject('Empty response');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error checking purchase proposal:', error);
-                    reject(error);
-                }
-            });
-        });
-    }    
 
-    window.addIconToLastUserMessage = function(itemId = false) {
-        if(!itemId){
-            const lastUserMessage = $('.message-container.user-message:last'); // Select the last user message
-            if (lastUserMessage.length) {
-                // Add the icon if not already added
-                if (!lastUserMessage.find('.message-icon').length) {
-                    lastUserMessage.css('position', 'relative'); // Ensure the container has relative positioning
-                    lastUserMessage.append(`
-                        <i class="bi bi-image message-icon" style="position: absolute; top: 0px; right: 25px;opacity: 0.7;"></i>
-                    `);
-                }
-            }
-        }
-    }
-    
-    window.displayAndUpdateImageLoader = function (imageId = null, randomId = null) {
-        const imageUrl = "/img/image-placeholder.gif";
-    
-        if (!imageId && !randomId) {
-            const newRandomId = Math.random().toString(36).substr(2, 9);
-            const card = $(`
-                <div id="load-image-container-${newRandomId}" class="assistant-image-box card custom-card bg-transparent shadow-0 border-0 px-1 mx-1 col-auto" style="cursor:pointer;" data-src="${imageUrl}">
-                    <div style="background-image:url(${imageUrl});border:4px solid white;background-size:cover;" class="card-img-top rounded-avatar position-relative m-auto">
-                    </div>
-                </div>
-            `);
-            $('#chat-recommend').append(card);
-            $('#chat-recommend').scrollLeft($('#chat-recommend')[0].scrollWidth);
-            return newRandomId;
-        } else if (imageId && randomId) {
-            $(`#load-image-container-${randomId}`).attr("id", `load-image-container-${imageId}`);
-            return $(`#load-image-container-${imageId}`);
-        } else if (imageId) {
-            const element = $(`#load-image-container-${imageId}`);
-            if (element.length) {
-                return element; // Return if the loader already exists with the imageId
-            } 
-        } else if (randomId) {
-            const element = $(`#load-image-container-${randomId}`);
-            if (element.length) {
-                element.remove()
-                return
-            } 
-        } else {
-            throw new Error("Invalid parameters: Either imageId or randomId must be provided.");
-        }
-    };
+
     
 
     

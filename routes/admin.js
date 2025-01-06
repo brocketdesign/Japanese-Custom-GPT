@@ -29,6 +29,38 @@ module.exports = { fetchModels };
 
 async function routes(fastify, options) {
 
+  fastify.get('/admin/notifications', async (request, reply) => {
+    const user = request.user;
+    const isAdmin = await checkUserAdmin(fastify, user._id);
+    if (!isAdmin) return reply.status(403).send({ error: 'Access denied' });
+
+    const db = fastify.mongo.db;
+    const notificationsCollection = db.collection('notifications');
+
+    const notifications = await notificationsCollection.aggregate([
+      {
+        $group: {
+          _id: {_id:"$_id", title: "$title", message: "$message", type: "$type", sticky: "$sticky", createdAt: "$createdAt" },
+          viewedCount: { $sum: { $cond: ["$viewed", 1, 0] } },
+          total: { $sum: 1 }
+        }
+      },
+      { $sort: { "_id.createdAt": -1 } }
+    ]).toArray();
+
+    const formattedNotifications = notifications.map(n => ({
+      _id: n._id._id,
+      title : n._id.title,
+      message: n._id.message,
+      type: n._id.type,
+      sticky : n._id.sticky,
+      createdAt: n._id.createdAt,
+      viewedCount: n.viewedCount
+    }));
+
+    return reply.view('/admin/notifications', { notifications: formattedNotifications });
+  });
+  
     fastify.get('/admin/users', {
         preHandler: [fastify.authenticate]
       }, async (request, reply) => {

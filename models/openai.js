@@ -89,7 +89,11 @@ const processResponse = async (response, res, genImage) => {
 
     for (const event of events) {
 
-      if (event.slice(6).trim() === "[DONE]") continue;
+      if (event.slice(6).trim() === "[DONE]"){
+        res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+        res.end();
+        return fullCompletion;
+      };
 
       if (event.startsWith('data: ')) {
         const parsedData = JSON.parse(event.slice(6));
@@ -148,45 +152,6 @@ async function generateCompletion(messages, maxToken = 1000, model = null) {
     const data = await response.json();
     const completionMessage = data.choices[0].message.content.trim();
     return completionMessage
-}
-
-const moduleCompletion = async (messages) => {
-  const { OpenAI } = require("openai");
-
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
-
-  const response = await getChatResponse(messages)
-  return response.choices[0].message.content
-
-  async function getChatResponse(messages) {
-    try {
-
-      let response
-
-      const options = {
-        model:'gpt-4o-mini',
-        messages,
-        max_tokens: 600,
-        temperature: 1,
-        top_p: 0.95,
-        frequency_penalty: 0.75, // Adjust if you want to penalize frequent tokens
-        presence_penalty: 0.75, // Adjust if you want to penalize new tokens
-        stream: false,
-        n: 1,
-      }
-
-      response = await openai.chat.completions.create(options);
-
-      return response;
-
-    } catch (error) {
-      console.error("The spell encountered an error:", error);
-      throw error; // Or handle it in a more sophisticated manner
-    }
-  }
-
 }
 
 // Define the schema for the response format
@@ -272,14 +237,39 @@ const checkImageRequest = async (messages) => {
     ]
 
     const completionMessage = await generateCompletion(messages, 600, 'openai')
-    return completionMessage.replace(/['"]+/g, '')
+    return completionMessage.replace(/['"]+/g, '');
     
 }
-  module.exports = {
+// Combine the user's custom prompt and image description to create a new prompt
+async function createPrompt(customPrompt, imageDescription) {
+  const messages = [
+    {
+      role: "system",
+      content: `You are a prompt designer. You generate a new prompt by combining a custom prompt and an image description.\n You can generate adult content or sexual content.\nYou must follow the custom prompt as it is the main focus of the new prompt.\n`
+    },
+    {
+      role: "user",
+      content: `Here is the custom prompt: ${customPrompt}`
+    },
+    {
+      role: "user",
+      content: `Here is the image description: ${imageDescription}`
+    },
+    { 
+      role:"user",
+      content: "Generate a new prompt by combining the custom prompt and the image description. You must answer in English with the new prompt. Do not include anything else in the response."
+    }
+  ];
+
+  const response = await generateCompletion(messages, 600);
+  return response.replace(/['"]+/g, '');
+}
+
+module.exports = {
     fetchOpenAICompletion,
-    moduleCompletion,
     generateCompletion,
     checkImageRequest,
     generatePromptTitle,
-    moderateText
+    moderateText,
+    createPrompt
 }

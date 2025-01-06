@@ -7,10 +7,14 @@ const {
     moderateText
 } = require('../models/openai')
 const { 
+    generateTxt2img,
+    getPromptById 
+} = require('../models/imagen');
+const { 
     getLanguageName, 
     handleFileUpload,
     convertImageUrlToBase64, 
-    sanitizeMessages 
+    sanitizeMessages,
 } = require('../models/tool');
 const axios = require('axios');
 const OpenAI = require("openai");
@@ -19,6 +23,7 @@ const { zodResponseFormat } = require("openai/helpers/zod");
 const path = require('path');
 const fs = require('fs');
 const sharp = require('sharp');
+const { title } = require('process');
 const sessions = new Map();
 
 const aiModel = `meta-llama/llama-3.1-8b-instruct`
@@ -1033,12 +1038,32 @@ async function routes(fastify, options) {
             currentUserMessage.image_request = true
             userData.messages[lastMsgIndex] = currentUserMessage
             if(userInfo.subscriptionStatus == 'active'){
+                const imageId = Math.random().toString(36).substr(2, 9);
+                fastify.sendNotificationToUser(userId, 'addIconToLastUserMessage')
+                fastify.sendNotificationToUser(userId, 'handleLoader', { imageId, action:'show' })
                 genImagePromptFromChat(chatDocument, userData.messages, genImage, language).then((promptData) => {
                     const prompt = promptData.prompt
                     const title = promptData.title[request.lang]
-                    console.log('Title:', title)
-                    fastify.sendNotificationToUser(userId, 'imageStart', 'image', {userId, chatId, userChatId, command:genImage, prompt, title})
-                }) 
+                    const imageType = genImage.nsfw ? 'nsfw' : 'sfw'
+                    const aspectRatio = null
+                    generateTxt2img({ title, prompt, aspectRatio, userId, chatId, userChatId, imageType, fastify })
+                    .then((taskStatus) => {
+                        fastify.sendNotificationToUser(userId, 'handleLoader', { imageId, action:'remove' })
+                        const { images } = taskStatus;
+                        for (const image of images) {
+                            const { imageId, imageUrl, prompt, title, nsfw } = image;
+                            const { userId, userChatId } = taskStatus;
+                            fastify.sendNotificationToUser(userId, 'imageGenerated', {
+                                imageUrl,
+                                imageId,
+                                userChatId,
+                                title,
+                                prompt,
+                                nsfw
+                            });
+                        }
+                    });
+                })
                 imgMessage[0].content = `\n\nI just asked for a new image and your are currently preparing it.\n Provide a concise answer in ${language} to inform that your are taking a good picture to send. Do no describe the image or anything. Stay in your character, keep the same tone as previously. Continue the chat,`.trim()
             }else{
                 genImage.image_request = false
@@ -1359,7 +1384,7 @@ async function routes(fastify, options) {
         
         let newMessages = generateImagePrompt(command, characterDescription, dialogue);
         newMessages = sanitizeMessages(newMessages)
-        
+
         const completionMessage = await generateCompletion(newMessages, 600)
 
         // Add instructions
@@ -1432,7 +1457,7 @@ async function routes(fastify, options) {
         if (lastMessages.length < 1) {
             throw new Error('Insufficient messages');
         }
-
+        
         const englishDescription = await generateEnglishDescription(lastMessages, characterDescription, command);
 
         const title_en = await generatePromptTitle(englishDescription, 'english');
@@ -1444,7 +1469,15 @@ async function routes(fastify, options) {
           fr: title_fr
         };
 
-        function processString(input) { return [...new Set(input.slice(0, 900).split(',').map(s => s.trim()))].join(', '); }
+        function processString(input) { 
+            try {
+                return [...new Set(input.slice(0, 900).split(',').map(s => s.trim()))].join(', '); 
+            } catch (error) {
+                console.error('Error processing string:', error);
+                console.log({input})
+                return input;
+            }
+        }
         finalDescription = processString(englishDescription);
       
         return { prompt: finalDescription, title: promptTitle };
@@ -2231,10 +2264,7 @@ async function routes(fastify, options) {
             try {
             const db = fastify.mongo.db;
             const { id } = request.params;
-            const prompt = await db.collection('prompts').findOne({ _id: new fastify.mongo.ObjectId(id) });
-            if (!prompt) {
-                return reply.status(404).send({ success: false, message: 'Prompt not found' });
-            }
+            const prompt = await getPromptById(db, id)
             reply.send(prompt);
             } catch (error) {
             console.error('Error fetching prompt:', error);

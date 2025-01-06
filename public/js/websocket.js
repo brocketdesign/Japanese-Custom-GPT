@@ -13,13 +13,42 @@ function initializeWebSocket() {
   socket.onmessage = (event) => {
     const data = JSON.parse(event.data);
     if (data.notification) {
-      if (data.notification.message == 'imageStart') {
-        const { userId, chatId, userChatId, command, prompt, title } = data.notification;
-        const randomId = displayAndUpdateImageLoader();
+      // log message
+      if (data.notification.type == 'log') {
+        console.log(data.notification.message);
+      }
+      // handle showNotification (message, icon)
+      if (data.notification.type == 'showNotification') {
+        const { message, icon } = data.notification;
+        showNotification( message, icon );
+      }
+      // Display image icon in last user message
+      if (data.notification.type == 'addIconToLastUserMessage') {
         addIconToLastUserMessage();
+      }
+      // Display or remove loader
+      if(data.notification.type == 'handleLoader') {
+        const {imageId, action } = data.notification;
+        displayOrRemoveImageLoader(imageId, action);
+      }
+      // Display or remove spinner
+      if(data.notification.type == 'handleRegenSpin') {
+        const {imageId, spin} = data.notification;
+        handleRegenSpin(imageId, spin);
+      }
+      // Display generated image
+      if(data.notification.type == 'imageGenerated') {
+        const { userChatId, imageId, imageUrl, title, prompt, nsfw } = data.notification;
+        generateImage({
+          userChatId,
+          url: imageUrl,
+          id:imageId,
+          title,
+          prompt,
+          imageId,
+          nsfw
+        });
 
-        let imageNsfw = command.nsfw ? 'nsfw' : 'sfw';
-        txt2ImageNovita(userId, chatId, userChatId, randomId, imageNsfw, { prompt, title });
       }
     } else {
       console.log('Message from server:', event.data);

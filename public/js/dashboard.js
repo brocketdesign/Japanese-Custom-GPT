@@ -1884,17 +1884,3 @@ function generateChatsPagination(totalPages, option) {
     }
 }
 
-window.moderateContent = async function(content) {
-    try {
-        const response = await $.ajax({
-            url: '/api/moderate',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ content })
-        });
-        return response.results[0];
-    } catch (error) {
-        console.error('Moderation request failed:', error);
-        throw error;
-    }
-}

@@ -11,7 +11,8 @@ window.txt2ImageNovita = async function(userId, chatId, userChatId, option = {})
             baseFace = null,
             imageType = option.imageType || 'sfw',
             placeholderId = option.placeholderId || null,
-            customPrompt = option.customPrompt || false
+            customPrompt = option.customPrompt || false,
+            chatCreation = option.chatCreation || false
         } = option;
 
         const API_ENDPOINT = `${API_URL}/novita/txt2img`;
@@ -28,7 +29,8 @@ window.txt2ImageNovita = async function(userId, chatId, userChatId, option = {})
                 userChatId,
                 imageType,
                 placeholderId,
-                customPrompt
+                customPrompt,
+                chatCreation
             })
         });
 

@@ -3,12 +3,12 @@ const axios = require('axios');
 const fs = require('fs');
 const { convertImageUrlToBase64 } = require('../models/tool')
 const { generateTxt2img,getPromptById,checkImageDescription } = require('../models/imagen');
-const { createPrompt } = require('../models/openai');
+const { createPrompt, moderateText } = require('../models/openai');
 async function routes(fastify, options) {
 
 // Endpoint to initiate txt2img for selected image type
 fastify.post('/novita/txt2img', async (request, reply) => {
-  const { title, prompt, aspectRatio, userId, chatId, userChatId, imageType, placeholderId, customPrompt } = request.body;
+  const { title, prompt, aspectRatio, userId, chatId, userChatId, imageType, placeholderId, customPrompt, chatCreation } = request.body;
   const db = fastify.mongo.db;
   try {
     let newPrompt = prompt
@@ -23,23 +23,34 @@ fastify.post('/novita/txt2img', async (request, reply) => {
       newPrompt = await createPrompt(customPrompt, imageDescription)
 
     }
-    const result = await generateTxt2img({ title, prompt:newPrompt, aspectRatio, userId, chatId, userChatId, imageType, fastify })
+    const result = await generateTxt2img( title, newPrompt, aspectRatio, userId, chatId, userChatId, imageType, chatCreation ? 4: 1 , fastify )
     .then((taskStatus) => {
       fastify.sendNotificationToUser(userId, 'handleLoader', { imageId:placeholderId, action:'remove' })
       fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId:placeholderId, spin: false })
+      fastify.sendNotificationToUser(userId, 'resetCharacterForm')
       const { images } = taskStatus;
-      for (const image of images) {
+      images.forEach((image, index) => {
           const { imageId, imageUrl, prompt, title, nsfw } = image;
           const { userId, userChatId } = taskStatus;
-          fastify.sendNotificationToUser(userId, 'imageGenerated', {
+          if(chatCreation){
+            fastify.sendNotificationToUser(userId, 'characterImageGenerated', {
+              imageUrl,
+              nsfw
+            });
+            if(index == 0){
+              saveChatImageToDB(db, chatId, imageUrl)
+            }
+          }else{
+            fastify.sendNotificationToUser(userId, 'imageGenerated', {
               imageUrl,
               imageId,
               userChatId,
               title,
               prompt,
               nsfw
-          });
-      }
+            });
+          }
+      });
   });
     reply.send(result);
   } catch (err) {
@@ -83,9 +94,25 @@ fastify.get('/image/:imageId', async (request, reply) => {
   }
 });
 
+fastify.post('/novita/save-image-model', async (request, reply) => {
+  const { chatId, modelId, imageModel, imageStyle, imageVersion } = request.body;
+
+  if (!chatId || !modelId || !imageModel || !imageStyle || !imageVersion) {
+    return reply.status(400).send({ error: 'chatId, imageModel, imageStyle, and imageVersion are required' });
+  }
+
+  try {
+    const db = fastify.mongo.db
+    await saveImageModel(db, chatId, { modelId, imageModel, imageStyle, imageVersion });
+    return reply.status(200).send({ message: 'Image model saved successfully' });
+  } catch (error) {
+    console.error('Error saving image model:', error);
+    return reply.status(500).send({ error: 'Failed to save image model to database' });
+  }
+});
 
 fastify.post('/novita/save-image', async (request, reply) => {
-  const { imageUrl, chatId, characterPrompt, enhancedPrompt, modelId, imageStyle, imageModel, imageVersion } = request.body;
+  const { imageUrl, chatId } = request.body;
 
   if (!imageUrl || !chatId) {
     return reply.status(400).send({ error: 'imageId, imageUrl, and chatId are required' });
@@ -93,7 +120,7 @@ fastify.post('/novita/save-image', async (request, reply) => {
 
   try {
     const db = fastify.mongo.db
-    await saveChatImageToDB(db, chatId, imageUrl, characterPrompt, enhancedPrompt, modelId, imageStyle, imageModel, imageVersion);
+    await saveChatImageToDB(db, chatId, imageUrl);
     return reply.status(200).send({ message: 'Image saved successfully' });
   } catch (error) {
     console.error('Error saving image:', error);
@@ -101,24 +128,27 @@ fastify.post('/novita/save-image', async (request, reply) => {
   }
 });
 
-fastify.post('/novita/save-moderation', async (request, reply) => {
-  const { moderation, chatId } = request.body;
+fastify.post('/novita/moderate', async (request, reply) => {
+  try {
+  const { chatId, content } = request.body;
 
-  if (!moderation || !chatId) {
-    return reply.status(400).send({ error: 'moderation and chatId are required' });
+  if (!content) {
+      return reply.status(400).send({ error: 'Text is required' });
   }
 
-  try {
-    const db = fastify.mongo.db
-    await saveModerationToDB(db, chatId, moderation);
-    return reply.status(200).send({ message: 'Moderation saved successfully' });
+  const moderationResult = await moderateText(content);
+
+  const db = fastify.mongo.db
+  await saveModerationToDB(db, chatId, moderationResult, content);
+
+  reply.send(moderationResult);
   } catch (error) {
-    console.error('Error saving image:', error);
-    return reply.status(500).send({ error: 'Failed to save moderation to database' });
+  console.error("Error moderating text:", error);
+  reply.status(500).send({ error: 'Internal Server Error' });
   }
 });
 
-  async function saveModerationToDB(db, chatId, moderation){
+  async function saveModerationToDB(db, chatId, moderation, characterPrompt){
     const collectionChats = db.collection('chats'); // Replace 'chats' with your actual collection name
 
     // Convert chatId string to ObjectId
@@ -133,7 +163,7 @@ fastify.post('/novita/save-moderation', async (request, reply) => {
     const updateResult = await collectionChats.updateOne(
         { _id: chatObjectId },
         { 
-            $set: { moderation } 
+            $set: { moderation, characterPrompt } 
         }
     );
 
@@ -144,7 +174,7 @@ fastify.post('/novita/save-moderation', async (request, reply) => {
     return updateResult;
   }
 
-  async function saveChatImageToDB(db, chatId, imageUrl, characterPrompt, enhancedPrompt, modelId, imageStyle, imageModel, imageVersion) {
+  async function saveChatImageToDB(db, chatId, imageUrl) {
     const collectionChats = db.collection('chats'); // Replace 'chats' with your actual collection name
 
     // Convert chatId string to ObjectId
@@ -160,13 +190,7 @@ fastify.post('/novita/save-moderation', async (request, reply) => {
         { _id: chatObjectId },
         { 
             $set: { 
-                chatImageUrl: imageUrl,
-                characterPrompt, 
-                enhancedPrompt, 
-                modelId,
-                imageStyle, 
-                imageModel, 
-                imageVersion
+                chatImageUrl: imageUrl
             } 
         }
     );
@@ -178,6 +202,29 @@ fastify.post('/novita/save-moderation', async (request, reply) => {
     return updateResult;
   }
 
+  async function saveImageModel(db, chatId, option) {
+    const collectionChats = db.collection('chats');
+    const { modelId, imageModel, imageStyle, imageVersion } = option;
+    // Convert chatId string to ObjectId
+    let chatObjectId;
+    try {
+        chatObjectId = new ObjectId(chatId);
+    } catch (error) {
+        throw new Error('無効なchatIdです。');
+    }
+    const updateResult = await collectionChats.updateOne(
+        { _id: chatObjectId },
+        { 
+            $set: { modelId, imageModel, imageStyle, imageVersion } 
+        }
+    );
+
+    if (updateResult.matchedCount === 0) {
+        throw new Error('指定されたチャットが見つかりませんでした。');
+    }
+
+    return updateResult;
+  }
 
 }
 

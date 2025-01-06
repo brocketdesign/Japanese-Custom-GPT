@@ -3,8 +3,7 @@ const {
     checkImageRequest, 
     generatePromptTitle,
     fetchOpenAICompletion,
-    generateCompletion,
-    moderateText
+    generateCompletion
 } = require('../models/openai')
 const { 
     generateTxt2img,
@@ -29,22 +28,6 @@ const sessions = new Map();
 const aiModel = `meta-llama/llama-3.1-8b-instruct`
 
 async function routes(fastify, options) {
-
-    fastify.post('/api/moderate', async (request, reply) => {
-        try {
-        const { content } = request.body;
-
-        if (!content) {
-            return reply.status(400).send({ error: 'Text is required' });
-        }
-    
-        const moderationResult = await moderateText(content);
-        reply.send(moderationResult);
-        } catch (error) {
-        console.error("Error moderating text:", error);
-        reply.status(500).send({ error: 'Internal Server Error' });
-        }
-    });
 
     fastify.post('/api/init-chat', async (request, reply) => {
         try {

@@ -36,6 +36,10 @@ function initializeWebSocket() {
         const {imageId, spin} = data.notification;
         handleRegenSpin(imageId, spin);
       }
+      // Reset character form
+      if(data.notification.type == 'resetCharacterForm') {
+        resetCharacterForm();
+      }
       // Display generated image
       if(data.notification.type == 'imageGenerated') {
         const { userChatId, imageId, imageUrl, title, prompt, nsfw } = data.notification;
@@ -48,7 +52,11 @@ function initializeWebSocket() {
           imageId,
           nsfw
         });
-
+      }
+      // Display character image
+      if(data.notification.type == 'characterImageGenerated') {
+        const { imageUrl, nsfw } = data.notification;
+        generateCharacterImage(imageUrl,nsfw);
       }
     } else {
       console.log('Message from server:', event.data);

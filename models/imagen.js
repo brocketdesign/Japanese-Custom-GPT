@@ -57,7 +57,7 @@ const default_prompt = {
   }
 
 // Module to generate an image
-async function generateTxt2img({ title, prompt, aspectRatio, userId, chatId, userChatId, imageType, fastify }) {
+async function generateTxt2img( title, prompt, aspectRatio, userId, chatId, userChatId, imageType, image_num, fastify ) {
     const db = fastify.mongo.db;
   
     // Fetch the user
@@ -106,7 +106,7 @@ async function generateTxt2img({ title, prompt, aspectRatio, userId, chatId, use
     }
   
     // Prepare params
-    const requestData = { ...params, ...image_request, image_num: 1 };
+    const requestData = { ...params, ...image_request, image_num };
     console.log({ model_name: requestData.model_name, prompt: requestData.prompt });
   
     let newTitle = title;
@@ -135,7 +135,7 @@ async function generateTxt2img({ title, prompt, aspectRatio, userId, chatId, use
       aspectRatio: aspectRatio,
       userId: new ObjectId(userId),
       chatId: new ObjectId(chatId),
-      userChatId: new ObjectId(userChatId),
+      userChatId: userChatId ? new ObjectId(userChatId) : null,
       blur: image_request.blur,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -327,6 +327,11 @@ async function fetchNovitaResult(task_id) {
 async function saveImageToDB(userId, chatId, userChatId, prompt, title, imageUrl, aspectRatio, blurredImageUrl = null, nsfw = false, fastify) {
     const db = fastify.mongo.db;
     try {
+
+      if (!userChatId || !ObjectId.isValid(userChatId)) {
+        return { imageUrl };
+      }
+      
       const chatsGalleryCollection = db.collection('gallery');
 
       // Check if the image has already been saved for this task
@@ -341,7 +346,7 @@ async function saveImageToDB(userId, chatId, userChatId, prompt, title, imageUrl
         const image = existingImage.images.find(img => img.imageUrl === imageUrl);
         return { imageId: image._id, imageUrl: image.imageUrl };
       }
-  
+
       const imageId = new ObjectId();
       await chatsGalleryCollection.updateOne(
         { 

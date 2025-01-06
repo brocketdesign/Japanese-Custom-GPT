@@ -709,50 +709,8 @@ $(document).ready(function() {
             });
         }
       
-        function fetchTaskId(enhancedPrompt, aspectRatio, chatId, imageStyle, imageModel, imageVersion) {
-            return $.ajax({
-                url: '/novita/generate-image',
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({
-                    prompt: enhancedPrompt,
-                    aspectRatio: aspectRatio,
-                    chatId: chatId,
-                    imageStyle,
-                    imageModel,
-                    imageVersion
-                })
-            });
-        }
 
-        function saveSelectedImage(imageUrl, characterPrompt, enhancedPrompt, modelId, imageStyle, imageModel, imageVersion, callback) {
 
-            $.ajax({
-            url: '/novita/save-image',
-            method: 'POST',
-            dataType: 'json',
-            data: {
-                characterPrompt, 
-                enhancedPrompt, 
-                modelId,
-                imageStyle, 
-                imageModel, 
-                imageVersion,
-                imageUrl,
-                chatId
-            },
-            success: function(response) {
-                if (typeof callback === 'function') {
-                callback(null, response);
-                }
-            },
-            error: function(error) {
-                if (typeof callback === 'function') {
-                callback(error);
-                }
-            }
-            });
-        }
         function saveModeration(moderationResult, chatId, callback){
 
             $.ajax({
@@ -776,168 +734,38 @@ $(document).ready(function() {
             }
             });
         }
+        // Save selected image model
+        function saveSelectedImageModel(chatId, callback) {
+            
+            const modelId = $('.style-option.selected').data('id')
+            const imageStyle = $('.style-option.selected').data('style')
+            const imageModel = $('.style-option.selected').data('model')
+            const imageVersion = $('.style-option.selected').data('version')
 
-        function displayGeneratedImages(imageUrls, characterPrompt, enhancedPrompt, modelId, imageStyle, imageModel, imageVersion) {
-            // Clear the container
-            $('#imageContainer').empty();
-
-            // For each image URL, create an image element and append to the container
-            imageUrls.forEach(function(data, index) {
-            const url = data.imageUrl;
-            const colDiv = $('<div>').addClass('col-12 col-md-6 mb-3');
-            const imgElement = $('<img>')
-                .attr('src', url)
-                .addClass('img-fluid img-thumbnail')
-                .css('cursor', 'pointer');
-
-            // Add click handler to each image
-            imgElement.on('click', function() {
-                $('.img-thumbnail').each(function(){
-                $(this).removeClass('select')
-                });
-                $(this).addClass('select');
-                
-                // Save the selected image
-                saveSelectedImage(url, characterPrompt, enhancedPrompt, modelId, imageStyle, imageModel, imageVersion, function(error, response){
-                if (error) {
-                    showNotification(translations.imageForm.image_save_failed, 'error');
-                } else {
-                    showNotification(translations.imageForm.image_saved, 'success');
+            $.ajax({
+            url: '/novita/save-image-model',
+            method: 'POST',
+            dataType: 'json',
+            data: {
+                chatId,
+                modelId,
+                imageStyle,
+                imageModel,
+                imageVersion
+            },
+            success: function(response) {
+                if (typeof callback === 'function') {
+                callback(null, response);
                 }
-                });
-            });
-
-            colDiv.append(imgElement);
-            $('#imageContainer').append(colDiv);
-
-            // Automatically click the first image
-            if (index === 0) {
-                imgElement.click();
+            },
+            error: function(error) {
+                if (typeof callback === 'function') {
+                callback(error);
+                }
             }
             });
         }
-
-        function checkTaskStatus(taskId, characterPrompt, enhancedPrompt, modelId, imageStyle, imageModel, imageVersion) {
-            const POLLING_INTERVAL = 10000; // 3 seconds
-            const MAX_ATTEMPTS = 30; // up to 90 seconds
-            let attempts = 0;
-
-            const intervalId = setInterval(async () => {
-                attempts++;
-                try {
-                    const statusResponse = await $.ajax({
-                        url: `/novita/chat-thumb-task-status/${taskId}`,
-                        method: 'GET',
-                        dataType: 'json'
-                    });
-
-                    if (statusResponse.status === 'completed') {
-                        clearInterval(intervalId);
-                        const { imageUrls } = statusResponse.result;
-
-                        displayGeneratedImages(imageUrls, characterPrompt, enhancedPrompt, modelId, imageStyle, imageModel, imageVersion)
-
-                        showNotification(translations.image_generated_successfully, 'success');
-                        // Enable buttons and reset text
-                        $('.chatRedirection').show();
-                        $('#characterPrompt').prop('disabled', false);
-                        $('#generateButton').prop('disabled', false);
-                        $('#generateButton').html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
-
-                    } else if (statusResponse.status === 'failed') {
-                        clearInterval(intervalId);
-                        $('#imageContainer').empty();
-                        showNotification(`画像の生成に失敗しました: ${statusResponse.error}`, 'error');
-                        // Enable buttons and reset text
-                        $('#characterPrompt').prop('disabled', false);
-                        $('#generateButton').prop('disabled', false);
-                        $('#generateButton').html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
-                    } else {
-                        console.log('タスクはまだ処理中です...');
-                    }
-
-                    if (attempts >= MAX_ATTEMPTS) {
-                        clearInterval(intervalId);
-                        $('#imageContainer').empty();
-                        showNotification(translations.image_generation_failure, 'error');
-                        // Enable buttons and reset text
-                        $('#characterPrompt').prop('disabled', false);
-                        $('#generateButton').prop('disabled', false);
-                        $('#generateButton').html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
-                    }
-
-                } catch (error) {
-                    console.error('タスクステータスポーリングエラー:', error);
-                    clearInterval(intervalId);
-                    $('#imageContainer').empty();
-                    showNotification(translations.image_generation_failure, 'error');
-                    // Enable buttons and reset text
-                    $('#characterPrompt').prop('disabled', false);
-                    $('#generateButton').prop('disabled', false);
-                    $('#generateButton').html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
-                }
-            }, POLLING_INTERVAL);
-        }
-
-        function checkImg2ImgTaskStatus(taskId) {
-            const POLLING_INTERVAL = 10000; // 3 seconds
-            const MAX_ATTEMPTS = 30;
-            let attempts = 0;
-
-            const intervalId = setInterval(async () => {
-                attempts++;
-                try {
-                    const statusResponse = await $.ajax({
-                        url: `/novita/img2img-task-status/${taskId}`,
-                        method: 'GET',
-                        dataType: 'json'
-                    });
-
-                    if (statusResponse.status === 'completed') {
-                        clearInterval(intervalId);
-                        const { imageUrls } = statusResponse.result;
-
-                        // Display the generated images for selection
-                        displayGeneratedImages(imageUrls);
-
-                        showNotification(translations.newCharacter.image_generated_successfully, 'success');
-                        $('#characterPrompt').prop('disabled', false);
-                        $('#generateButton').prop('disabled', false);
-                        $('#generateButton').html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
-                        $('.genexp').fadeOut()
-
-                    } else if (statusResponse.status === 'failed') {
-                        clearInterval(intervalId);
-                        showNotification(`画像の生成に失敗しました: ${statusResponse.error}`, 'error');
-                        $('#characterPrompt').prop('disabled', false);
-                        $('#generateButton').prop('disabled', false);
-                        $('#generateButton').html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
-                        $('.genexp').fadeOut()
-                    } else {
-                        console.log('タスクはまだ処理中です...');
-                    }
-
-                    if (attempts >= MAX_ATTEMPTS) {
-                        clearInterval(intervalId);
-                        showNotification('画像の生成がタイムアウトしました。再試行してください。', 'error');
-                        $('#characterPrompt').prop('disabled', false);
-                        $('#generateButton').prop('disabled', false);
-                        $('#generateButton').html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
-                        $('.genexp').fadeOut()
-                    }
-
-                } catch (error) {
-                    clearInterval(intervalId);
-                    console.error('タスクステータスポーリングエラー:', error);
-                    showNotification('画像の生成中にエラーが発生しました。', 'error');
-                    $('#characterPrompt').prop('disabled', false);
-                    $('#generateButton').prop('disabled', false);
-                    $('#generateButton').html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
-                    $('.genexp').fadeOut()
-
-                }
-            }, POLLING_INTERVAL);
-        }
+   
         function returnDetails(containerId) {
             const details = {};
             $(containerId).find('input, select, textarea').each(function () {
@@ -973,18 +801,30 @@ $(document).ready(function() {
                 throw error;
             }
         }
-
+    window.moderateContent = async function(chatId, content) {
+        try {
+            const response = await $.ajax({
+                url: '/novita/moderate',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ chatId, content })
+            });
+            return response.results[0];
+        } catch (error) {
+            console.error('Moderation request failed:', error);
+            throw error;
+        }
+    }
     $('#generateButton').on('click', async function() {
+        // Clear the container
+        $('#imageContainer').empty();
+
         let newchatId = await checkChat(chatId)
         if(newchatId){
             window.chatId = newchatId
             $('#redirectToChat').attr('href', `/chat/${newchatId}`)
         }
-        const isTemporary = user.isTemporary
-        if(isTemporary){
-            showRegistrationForm()
-            return
-        }
+
         const prompt = characterPrompt = $('#characterPrompt').val().trim();
         const gender = $('#gender').val();
         let modelId = $('#modelId').val();
@@ -996,6 +836,12 @@ $(document).ready(function() {
                 $(document).find(`.style-option[data-id=${initial_modelId}]`).click();
             }
         }
+
+        await saveSelectedImageModel(chatId, function(error, response) {
+            if (error) {
+                console.error('Error saving image model:', error);
+            }
+        });
 
         if (!modelId || !prompt || !gender || !chatId) {
             showNotification(translations.newCharacter.allFieldsRequired, 'error');
@@ -1016,16 +862,11 @@ $(document).ready(function() {
         }
 
         $('#characterPrompt').prop('disabled', true);
-        
+        let moderationResult = {flagged: false};
         try {
 
             // Call moderation function on enhancedPrompt content
-            const moderationResult = await moderateContent(prompt);
-            saveModeration(moderationResult, chatId, function(error, response) {
-                if (error) {
-                    console.error('Error saving moderation:', error);
-                }
-            });
+            moderationResult = await moderateContent(chatId,prompt);
             // Check if the content is NSFW
             if (moderationResult.flagged) {
                 if (!subscriptionStatus) {
@@ -1056,7 +897,6 @@ $(document).ready(function() {
 
                     customData = JSON.stringify(customData);
 
-                    
                     // プロンプトを強化するリクエスト
                     enhanceResponse = await $.ajax({
                         url: '/api/enhance-prompt',
@@ -1069,8 +909,6 @@ $(document).ready(function() {
                 if (enhanceResponse && enhanceResponse.enhancedPrompt) {
                     $('#enhancedPrompt').val(enhanceResponse.enhancedPrompt);
                 } else {
-                    showNotification('プロンプトの生成に失敗しました。再試行してください。', 'error');
-                    // ボタンを有効化し、初期状態のテキストに戻す
                     $button.prop('disabled', false);
                     $button.html(`<i class="fas fa-magic me-2"></i>${translations.newCharacter.generate_with_AI}`);
                     $('#characterPrompt').prop('disabled', false);
@@ -1081,49 +919,19 @@ $(document).ready(function() {
                 enhanceResponse.enhancedPrompt = prompt;
             }
 						
-						generateCharacterPersonnality();
+			generateCharacterPersonnality();
             // ボタンテキストを「画像を生成中...」に更新
             $button.html(`<i class="fas fa-spinner fa-spin me-2"></i>${translations.imageForm.generatingImages}`);
             $('.genexp').fadeIn()
 
-            const files = $('#imageUploaderContainer')?.find('input[type="file"]')[0]?.files;
-            if (files && files.length > 0) {
-                const file = files[0];
+            const imageType = moderationResult.flagged ? 'nsfw' : 'sfw';
+            txt2ImageNovita(userId, chatId, null, { prompt:enhanceResponse.enhancedPrompt, imageType, chatCreation: true})
+            .catch((error) => {
+                console.error('Error generating image:', error);
+            })
 
-                // ファイルをBase64として読み込む
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const base64Image = e.target.result.split(',')[1]; // data:image/png;base64, 部分を削除
-                    // このBase64画像をバックエンドに送信
-                    sendImageToBackend(base64Image);
-                };
-                reader.readAsDataURL(file);
-                return;
-            }
-
-            const modelId = $('.style-option.selected').data('id')
-            const imageStyle = $('.style-option.selected').data('style')
-            const imageModel = $('.style-option.selected').data('model')
-            const imageVersion = $('.style-option.selected').data('version')
-
-            // タスクIDを取得するリクエスト
-            const taskResponse = await fetchTaskId(enhanceResponse.enhancedPrompt, '9:16', chatId, imageStyle, imageModel, imageVersion);
-
-            if (taskResponse && taskResponse.taskId) {
-                showNotification(translations.newCharacter.image_generation_start, 'info');
-                // タスクステータスをポーリング
-                checkTaskStatus(taskResponse.taskId,characterPrompt, enhanceResponse.enhancedPrompt, modelId, imageStyle, imageModel, imageVersion);
-            } else {
-                showNotification(translations.newCharacter.image_generation_failure, 'error');
-                // ボタンを有効化し、初期状態のテキストに戻す
-                $button.prop('disabled', false);
-                $button.html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
-                $('#characterPrompt').prop('disabled', false);
-            }
         } catch (error) {
             console.error('Error:', error);
-            showNotification(translations.newCharacter.generation_error, 'error');
-            // ボタンを有効化し、初期状態のテキストに戻す
             $button.prop('disabled', false);
             $button.html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
             $('#characterPrompt').prop('disabled', false);
@@ -1174,59 +982,66 @@ $(document).ready(function() {
                 }
             });
         }
-        function sendImageToBackend(base64Image) {
-            const prompt = $('#enhancedPrompt').val().trim();
-
-            if (!prompt) {
-                showNotification('プロンプトを入力してください。', 'error');
-                return;
-            }
-
-            const data = {
-                image_base64: base64Image,
-                prompt: prompt,
-                aspectRatio: '9:16',
-                userId: '{{user._id}}', 
-                chatId: '{{chatId}}',
-            };
-
-            $.ajax({
-                url: '/novita/img2img',
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(data),
-                success: function(response) {
-                    const taskId = response.taskId;
-                    showNotification('画像生成タスクを開始しました。ステータスを確認中...', 'info');
-                    // Start polling for the task status
-                    checkImg2ImgTaskStatus(taskId);
-                },
-                error: function(error) {
-                    console.error('Error starting img2img task:', error);
-                    showNotification('画像生成タスクの開始に失敗しました。再試行してください。', 'error');
-                    $('#characterPrompt').prop('disabled', false);
-                    $('#generateButton').prop('disabled', false);
-                    $('#generateButton').html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
-                    $('.genexp').fadeOut()
-                }
-                
-            });
-        }
-
-        // Helper function to create the message payload
-        function createMessagePayload(base64Image) {
-            return [
-                {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": `data:image/png;base64,${base64Image}`
-                    }
-                }
-            ];
-        }
-        
        
 });
+window.saveSelectedImage = function(imageUrl, callback) {
+    $.ajax({
+    url: '/novita/save-image',
+    method: 'POST',
+    dataType: 'json',
+    data: {
+        imageUrl,
+        chatId
+    },
+    success: function(response) {
+        if (typeof callback === 'function') {
+        callback(null, response);
+        }
+    },
+    error: function(error) {
+        if (typeof callback === 'function') {
+        callback(error);
+        }
+    }
+    });
+}
+window.generateCharacterImage = function(url, nsfw) {
+    // For each image URL, create an image element and append to the container
+    const colDiv = $('<div>').addClass('col-12 col-md-6 mb-3');
+    const imgElement = $('<img>')
+        .attr('src', url)
+        .addClass('img-fluid img-thumbnail')
+        .css('cursor', 'pointer');
+
+    // Add click handler to each image
+    imgElement.on('click', function() {
+        $('.img-thumbnail').each(function(){
+        $(this).removeClass('select')
+        });
+        $(this).addClass('select');
+        
+        // Save the selected image
+        saveSelectedImage(url,function(error, response){
+        if (error) {
+            showNotification(translations.imageForm.image_save_failed, 'error');
+        } else {
+            showNotification(translations.imageForm.image_saved, 'success');
+        }
+        });
+    });
+
+    colDiv.append(imgElement);
+    $('#imageContainer').append(colDiv);
+}
+
+// After the image is generated, save the image and redirect to the chat
+window.resetCharacterForm = function(){
+    // Enable buttons and reset text
+    $('.chatRedirection').show();
+    $('#characterPrompt').prop('disabled', false);
+    $('#generateButton').prop('disabled', false);
+    $('#generateButton').html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
+}
 </script>
 </body>
 </html>

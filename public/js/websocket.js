@@ -3,7 +3,11 @@ const maxReconnectAttempts = 3;
 const reconnectInterval = 10000; // 10 seconds
 
 function initializeWebSocket() {
+
   socket = new WebSocket(`ws://localhost:3000/ws?userId=${user._id}`);
+  if(MODE !== 'local') {
+    socket = new WebSocket(`wss://app.chatlamix.com/ws?userId=${user._id}`);
+  }
 
   socket.onopen = () => {
     console.log('WebSocket connection established');

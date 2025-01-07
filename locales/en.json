@@ -1,5 +1,7 @@
 {
   "lang":"en",
+  "prompt":"Prompt",
+  "prompt_description": "An image prompt is a textual description or set of instructions provided to an AI model to generate an image. The prompt guides the AI in creating an image that matches the given description.",
   "seo": {
     "title": "LAMIX - Chat with AI Characters and Generate Images",
     "description": "Chat with AI characters and generate images with them! Enjoy free AI image generation while chatting with beautiful AI characters.",

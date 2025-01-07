@@ -1,5 +1,7 @@
 {
   "lang":"fr",
+  "prompt": "Invite",
+  "prompt_description": "Une invite d'image est une description textuelle ou un ensemble d'instructions fournies à un modèle d'IA pour générer une image. L'invite guide l'IA dans la création d'une image correspondant à la description donnée.",
   "seo": {
     "title": "LAMIX - Discutez avec des personnages IA et générez des images",
     "description": "Discutez avec des personnages IA et générez des images avec eux ! Profitez de la génération d'images IA gratuite tout en discutant avec de beaux personnages IA.",

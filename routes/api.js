@@ -15,7 +15,8 @@ const {
     handleFileUpload,
     convertImageUrlToBase64, 
     sanitizeMessages,
-    fetchTags
+    fetchTags,
+    processPromptToTags
 } = require('../models/tool');
 const axios = require('axios');
 const OpenAI = require("openai");
@@ -1032,6 +1033,7 @@ async function routes(fastify, options) {
                 }
                 genImagePromptFromChat(chatDocument, userData.messages, genImage, language).then((promptData) => {
                     const prompt = promptData.prompt
+                    processPromptToTags(db,prompt);
                     const title = promptData.title[request.lang]
                     const imageType = genImage.nsfw ? 'nsfw' : 'sfw'
                     const aspectRatio = null
@@ -1469,7 +1471,6 @@ async function routes(fastify, options) {
             }
         }
         finalDescription = processString(englishDescription);
-        processPromptToTags(db,finalDescription);
 
         return { prompt: finalDescription, title: promptTitle };
     }

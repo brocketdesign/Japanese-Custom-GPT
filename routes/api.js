@@ -7,8 +7,7 @@ const {
 } = require('../models/openai')
 const { 
     generateTxt2img,
-    getPromptById ,
-    getTasks
+    getPromptById 
 } = require('../models/imagen');
 const { 
     getLanguageName, 

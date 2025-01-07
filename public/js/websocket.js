@@ -75,7 +75,7 @@ function initializeWebSocket() {
         updateCharacterGenerationMess(mess);
       }
     } else {
-      console.log('Message from server:', event.data);
+      //console.log('Message from server:', event.data);
     }
   };
 

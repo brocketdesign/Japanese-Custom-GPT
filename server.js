@@ -13,7 +13,8 @@ const {
   cleanupNonRegisteredUsers,
   deleteTemporaryChats,
 } = require('./models/cleanupNonRegisteredUsers');
-const { checkUserAdmin, getUserData, updateCounter } = require('./models/tool');
+const { checkUserAdmin, getUserData, updateCounter, fetchTags } = require('./models/tool');
+
 
 fastify.register(require('fastify-mongodb'), {
   forceClose: true,
@@ -52,22 +53,9 @@ fastify.register(require('@fastify/view'), {
   root: path.join(__dirname, 'views'),
 });
 
+const registerHelpers = require('./plugins/handlebars-helpers');
 fastify.after(() => {
-  handlebars.registerHelper('default', (value, fallback) => value || fallback);
-  handlebars.registerHelper('eq', (a, b) => a.toString() === b.toString());
-  handlebars.registerHelper('json', (context) => {
-    return context !== undefined && context !== null
-      ? JSON.stringify(context)
-      : 'null';
-  });  
-  handlebars.registerHelper('includesObjectId', (array, userId) =>
-    array?.some((id) => id?.toString() === userId?.toString())
-  );
-  handlebars.registerHelper('eq', function(a, b) {
-    return a === b;
-  });
-  handlebars.registerHelper('imagePlaceholder', () => `/img/nsfw-blurred-2.png`);
-  handlebars.registerHelper('capitalize', (str) => (typeof str !== 'string' ? '' : str.charAt(0).toUpperCase() + str.slice(1)));
+  registerHelpers();
 });
 
 fastify.register(require('@fastify/cookie'), {
@@ -510,6 +498,35 @@ fastify.get('/character/:chatId', async (request, reply) => {
   }
 });
 
+
+fastify.get('/tags', async (request, reply) => {
+  try {
+    const db = fastify.mongo.db;
+    const translations = request.translations;
+    const { tags, page, totalPages } = await fetchTags(db,request);
+    return reply.view('tags.hbs', {
+      title: `${translations.seo.title_tags} ${translations.seo.page} ${page}`,
+      user: request.user,
+      tags,
+      page,
+      totalPages,
+      translations,
+      mode: process.env.MODE,
+      apiurl: process.env.API_URL,
+      seo: [
+        { name: 'description', content: translations.seo.description_tags },
+        { name: 'keywords', content: `${translations.seo.keywords}` },
+        { property: 'og:title', content: translations.seo.title_tags },
+        { property: 'og:description', content: translations.seo.description_tags },
+        { property: 'og:image', content: '/img/share.png' },
+      ],
+    });
+  } catch (error) {
+  console.error('Error displaying tags:', error);
+  reply.status(500).send({ error: 'Failed to display tags' });
+  }
+});
+
 fastify.get('/search', async (request, reply) => {
   try {
     const db = fastify.mongo.db;
@@ -519,10 +536,14 @@ fastify.get('/search', async (request, reply) => {
 
     const translations = request.translations;
     const page = request.query.page || 1;
-    const query = request.query.q || null;
+    const query = request.query.q || request.query.query || null;
     const imageStyle = request.query.imageStyle || 'anime';
 
-    const baseUrl = `${request.protocol}://${request.hostname}`;
+    console.log('Page: ', page);
+    console.log('Query: ', query);
+    console.log('Image Style: ', imageStyle);
+
+    const baseUrl = process.env.MODE === 'local' ? 'http://localhost:3000' : `${request.protocol}://${request.hostname}`;
     const response = await fetch(`${baseUrl}/api/chats?page=${page}&type=${imageStyle}&q=${encodeURIComponent(query)}`);
 
     if (!response.ok) {

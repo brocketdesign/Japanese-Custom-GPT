@@ -16,6 +16,7 @@
     <p class="u-color-grad" style="font-size: 54px;"><img src="/img/logo.webp" alt="" class="me-2" width="40px">Lamix</p>
     <span class="text-muted">{{translations.ai_character_conversation}}</span>
     <h3>{{translations.free_ai_chat_and_image_generation}}</h3>
+    <p>{{translations.seo.description}}</p>
     <hr>
     <h1 class="mb-4">{{title}}</h1>
     <form id="search-form" action="/search" method="get" class="row g-3">
@@ -26,7 +27,8 @@
             </div>
         </div>
         <div class="col-md-12">
-            <label class="form-label">{{translations.image_style}}</label>
+            <h3>{{translations.image_style}}</h3>
+            <p class="text-muted">{{translations.newCharacter.imageStyleSelectionDescription}}</p>
             <div id="imageStyleSelection" class="d-flex">
                 <img src="/img/anime.jpeg" alt="{{translations.anime}}" class="style-option rounded me-2 selected" data-model="novaAnimeXL_ponyV20_461138" data-value="anime">
                 <img src="/img/real.jpeg" alt="{{translations.realistic}}" class="style-option me-2 rounded" data-model="kanpiromix_v20" data-value="realistic">
@@ -36,10 +38,28 @@
             <input type="hidden" id="imageModel" name="imageModel" value="novaAnimeXL_ponyV20_461138">
         </div>
     </form>
+    <hr>
+    <h3>{{translations.chat_gallery}}</h3>
+    <p class="text-muted">{{translations.chat_gallery_description}}</p>
     <div id="chat-gallery" class="row mx-0 mt-4"></div>
     <div id="chat-pagination-controls" class="d-flex justify-content-center my-3"></div>
+    <div class="d-flex justify-content-center mt-4">
+        <a href="/chat" class="btn custom-gradient-bg w-100">{{translations.startChatting}}</a>
+    </div>
+    <hr>
+
+    <h3>{{translations.result_image_query}} | {{query}}</h3>
+    <div class="all-chats-images-gallery row" data-query="{{query}}"></div>
+    <div class="d-flex justify-content-center mt-4">
+        <a href="/character" class="btn custom-gradient-bg w-100">{{translations.view_all_character}}</a>
+    </div>
+    <hr>
+
     <h3>{{translations.search_ai_character_by_tag}}</h3>
     <div id="tags-container"></div>
+    <div class="d-flex justify-content-center mt-4">
+        <a href="/tags" class="btn custom-gradient-bg w-100">{{translations.view_all_tags}}</a>
+    </div>
 </section>
     <style>
   footer{display: inline !important;}
@@ -47,12 +67,24 @@
   </style>
   {{> dashboard-footer}}
   <script>
+    const user = {{{json user}}}
+    const query = '{{query}}';
+    const imageStyle = '{{imageStyle}}';
+    const imageModel = '{{imageModel}}'
+    const data = {{{json data}}} || [];
     $(document).ready(function() {
-      const query = '{{query}}';
-      const imageStyle = '{{imageStyle}}';
-      const imageModel = '{{imageModel}}'
-      const data = {{{json data}}} || [];
+
+        resultImageSearch(1,query,imageStyle)
+        
         $(document).on('click','.style-option',function(){
+            if($(this).hasClass('is-premium') && user.isTemporary){
+                showRegistrationForm()
+                return
+            }
+            if($(this).hasClass('is-premium') && !user.isTemporary && user.subscriptionStatus !== 'active'){
+                showUpgradePopup('image-generation')
+                return
+            }
             $('.style-option').removeClass('selected');
             $(this).addClass('selected');
             $('#imageStyle').val($(this).data('value'));
@@ -61,33 +93,41 @@
             // Update the history state
             const newUrl = `/search?query=${encodeURIComponent(query)}&imageStyle=${$(this).data('value')}&imageModel=${$(this).data('model')}`;
             history.pushState(null, '', newUrl);
+            displayTags($(this).data('value'))         
 
             $('#chat-gallery').empty()
             displayPeopleChat(1, { imageStyle:$(this).data('value'), imageModel:$(this).data('model'), query }, data);
         });
+
         if(query && query.trim() != ''){
             $(`.style-option[data-value="${imageStyle}"]`).click()
         }
-            displayTags()
+        
+        displayTags(imageStyle)
     });
+    
     // jQuery function to display tags
-    function displayTags() {
-        let tags = JSON.parse(localStorage.getItem('tags'));
+    function displayTags(imageStyle) {
+        let tags;
         if (!tags || !tags.length) {
-            $.get('/api/tags', function(response) {
-            tags = response.tags;
-            localStorage.setItem('tags', JSON.stringify(tags));
-            renderTags(tags);
+            $.get(`/api/tags`, function(response) {
+            const totalPages = response.totalPages;
+            const randomPage = Math.floor(Math.random() * totalPages) + 1; // Random page number between 1 and totalPages
+            $.get(`/api/tags?page=${randomPage}`, function(response) {
+                tags = response.tags;
+                renderTags(tags,imageStyle);
+            });
             });
         } else {
-            renderTags(tags);
+            renderTags(tags,imageStyle);
         }
     }
 
-    function renderTags(tags) {
+    function renderTags(tags,imageStyle) {
+        $('#tags-container').empty();
         const html = tags.length ? `<div style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px;right:10px;">
             <div class="tags d-flex justify-content-between align-items-center flex-wrap">
-            ${tags.map(tag => `<a href="/search?q=${encodeURIComponent(tag)}" class="badge bg-dark m-2">${tag}</a>`).join('')}
+            ${tags.map(tag => `<a href="/search?q=${encodeURIComponent(tag)}&imageStyle=${imageStyle}" class="btn btn-secondary m-1">${tag}</a>`).join('')}
             </div>
         </div>` : '';
         $('#tags-container').html(html);

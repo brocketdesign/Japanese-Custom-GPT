@@ -176,82 +176,72 @@ async function routes(fastify, options) {
   fastify.get('/chats/images/search', async (request, reply) => {
     try {
       const user = request.user;
-      let language = getLanguageName(user?.lang);
+      const language = getLanguageName(user?.lang);
       const queryStr = request.query.query || '';
-      const styleStr = request.query.style || 'anime';
+      const styleStr = request.query.style !== 'undefined' ? request.query.style : 'anime';
       const page = parseInt(request.query.page) || 1;
-      const limit = 12;
+      const limit = 24;
       const skip = (page - 1) * limit;
       const db = fastify.mongo.db;
       const chatsGalleryCollection = db.collection('gallery');
       const chatsCollection = db.collection('chats');
-  
-      // Replace everything from fetching allChatImagesDocs to totalImagesCount with:
 
       const chatIds = await chatsCollection
-      .find({ language, imageStyle: styleStr })
-      .project({ _id: 1 })
-      .toArray()
-      .then((chats) => chats.map((c) => c._id));
+        .find({ $or: [{ language }, { language: request.lang }], imageStyle: styleStr })
+        .project({ _id: 1 })
+        .toArray()
+        .then(chats => chats.map(c => c._id));
+
+      const queryWords = queryStr.split(' ').filter(word => word.replace(/[^\w\s]/gi, '').trim() !== '');
+      const matchCriteria = {
+        'images.imageUrl': { $exists: true, $ne: null },
+        $or: queryWords.map(word => ({ 'images.prompt': { $regex: word, $options: 'i' } })),
+        chatId: { $in: chatIds }
+      };
 
       const [allChatImagesDocs, totalCountDocs] = await Promise.all([
-      chatsGalleryCollection.aggregate([
-        { $unwind: '$images' },
-        {
-          $match: {
-            'images.imageUrl': { $exists: true, $ne: null },
-            'images.prompt': { $regex: queryStr, $options: 'i' },
-            chatId: { $in: chatIds }
-          }
-        },
-        { $sort: { _id: -1 } },
-        { $skip: skip },
-        { $limit: limit },
-        { $project: { _id: 0, image: '$images', chatId: 1 } }
-      ]).toArray(),
-      chatsGalleryCollection.aggregate([
-        { $unwind: '$images' },
-        {
-          $match: {
-            'images.imageUrl': { $exists: true, $ne: null },
-            'images.prompt': { $regex: queryStr, $options: 'i' },
-            chatId: { $in: chatIds }
-          }
-        },
-        { $count: 'total' }
-      ]).toArray()
+        chatsGalleryCollection.aggregate([
+          { $unwind: '$images' },
+          { $match: matchCriteria },
+          { $sort: { _id: -1 } },
+          { $skip: skip },
+          { $limit: limit },
+          { $project: { _id: 0, image: '$images', chatId: 1 } }
+        ]).toArray(),
+        chatsGalleryCollection.aggregate([
+          { $unwind: '$images' },
+          { $match: matchCriteria },
+          { $count: 'total' }
+        ]).toArray()
       ]);
 
       const totalImages = totalCountDocs.length ? totalCountDocs[0].total : 0;
       const totalPages = Math.ceil(totalImages / limit);
-      if (!totalImages) return reply.code(404).send({ images: [], page, totalPages: 0 });
-
-      const chatsData = await chatsCollection.find({ _id: { $in: chatIds } }).toArray();
-      const imagesWithChatData = allChatImagesDocs.map((doc) => {
-      const chat = chatsData.find((c) => c._id.equals(doc.chatId));
-      return {
-        ...doc.image,
-        chatId: doc.chatId,
-        chatName: chat?.name,
-        thumbnail: chat?.thumbnail || chat?.thumbnailUrl || '/img/default-thumbnail.png'
-      };
-      });
-
-      if (totalImages === 0) {
+      if (!totalImages) {
         return reply.code(404).send({ images: [], page, totalPages: 0 });
       }
-  
+
+      const chatsData = await chatsCollection.find({ _id: { $in: chatIds } }).toArray();
+      const imagesWithChatData = allChatImagesDocs.map(doc => {
+        const chat = chatsData.find(c => c._id.equals(doc.chatId));
+        return {
+          ...doc.image,
+          chatId: doc.chatId,
+          chatName: chat?.name,
+          thumbnail: chat?.thumbnail || chat?.thumbnailUrl || '/img/default-thumbnail.png'
+        };
+      });
+
       reply.send({
         images: imagesWithChatData,
         page,
         totalPages,
       });
-    } catch (err) {
-      console.error(err);
+        } catch (err) {
+      console.error('Error in /chats/images/search:', err);
       reply.code(500).send('Internal Server Error');
-    }
-  });
-  
+        }
+      });
   fastify.get('/chats/images', async (request, reply) => {
     try {
       const user = request.user;

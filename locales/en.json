@@ -1,8 +1,14 @@
 {
   "lang":"en",
+  "chat_gallery":"Chat Gallery",
+  "chat_gallery_description":"Chat with AI characters and generate images with them! Enjoy free AI image generation while chatting with beautiful AI characters.",
+  "view_all_tags":"View All Tags",
+  "view_all_character":"View All Characters",
+  "result_image_query": "AI image generated using the chat and prompt feature.",
   "prompt":"Prompt",
   "prompt_description": "An image prompt is a textual description or set of instructions provided to an AI model to generate an image. The prompt guides the AI in creating an image that matches the given description.",
   "seo": {
+    "page": "Page",
     "title": "LAMIX - Chat with AI Characters and Generate Images",
     "description": "Chat with AI characters and generate images with them! Enjoy free AI image generation while chatting with beautiful AI characters.",
     "keywords": "AI, chat, image generation, AI characters, AI beauties, AI girlfriend, AI gravure, AI image generation, AI chat, AI character",
@@ -11,7 +17,9 @@
     "title_post": "Latest Posts from the Community | LAMIX",
     "description_post": "With Lamix, you can easily create posts using images generated during a chat with AI Gravure, for free.",
     "title_character": "AI Characters | LAMIX",
-    "description_character": "Chat with beautiful AI characters and generate images with them! Enjoy free AI image generation while chatting with beautiful AI characters."
+    "description_character": "Chat with beautiful AI characters and generate images with them! Enjoy free AI image generation while chatting with beautiful AI characters.",
+    "title_tags": "Search results for tags | LAMIX",
+    "description_tags": "Displaying search results for tags. Find your favorite images on Lamix."
   },
   "characterDescription": {
     "traits": "Traits",
@@ -202,6 +210,7 @@
   "RegistrationForm": {
     "free": "Free",
     "chatContinue": "Continue chatting",
+    "loginToGenerateImages": "Login to generate images and chat with amazing characters",
     "startNow": "Start your experience now!",
     "continueWithGoogle": "Continue with Google",
     "continueWithLINE": "Continue with LINE",

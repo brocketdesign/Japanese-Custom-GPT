@@ -351,15 +351,85 @@ async function getUserData(userId, collectionUser, collectionChat, currentUser) 
   }
   async function addTags(tags, db) {
     const tagsCollection = db.collection('tags');
+
     const bulkOps = tags.map(tag => ({
       updateOne: {
         filter: { name: tag },
-        update: { $setOnInsert: { name: tag } },
+        update: { $setOnInsert: { name: tag.name, language: tag.language, fromPrompt: tag.fromPrompt || false } },
         upsert: true
       }
     }));
     await tagsCollection.bulkWrite(bulkOps);
   };
+  const logImageTags = async (fastify) => {
+    try {
+      const db = fastify.mongo.db;
+      const galleryCollection = db.collection('gallery');
+        
+      // Retrieve all images with their prompts
+      const cursor = galleryCollection.aggregate([
+        { $unwind: '$images' },
+        { $project: { _id: 0, imageId: '$images._id', prompt: '$images.prompt' } }
+      ]);
+    
+    let index = 0;
+    await cursor.forEach(image => {
+        if (index < 100) {
+            const prompt = image.prompt || '';
+            const tags = prompt.split(',').map(tag => tag.trim()).map(tag => ({ name:tag.replace(/[^\w\s]/gi, ''), language: 'en', fromPrompt:true }));
+            console.log({ index, tags });
+            addTags(tags, db)
+            index++;
+        }
+    });
+
+      return { message: 'Tags logged successfully' };
+    } catch (err) {
+      console.error(err);
+      throw new Error('Internal Server Error');
+    }
+  };
+
+  async function fetchTags(db,request) {
+      const user = request.user;
+      let language = getLanguageName(user?.lang);
+      const tagsCollection = db.collection('tags');
+      const chatsCollection = db.collection('chats');
+      
+      const page = parseInt(request.query.page) || 1;
+      const limit = parseInt(request.query.limit) || 200;
+      const skip = (page - 1) * limit;
+      
+      let tags = await tagsCollection
+      .find({ $or: [{ language }, { language: request.lang }] })
+      .skip(skip)
+      .limit(limit)
+      .toArray();
+
+      if (!tags.length) {
+      let tagsFromChats = await chatsCollection.distinct('tags', { $or: [{ language }, { language: request.lang }] });
+      tagsFromChats = tagsFromChats.flat().filter(Boolean);
+      await tagsCollection.insertMany(tagsFromChats.map(tag => ({ name: tag, language: request.lang })));
+      tags = tagsFromChats.slice(skip, skip + limit);
+      } else {
+      tags = tags.map(tag => tag.name);
+      }
+
+      const totalTags = await tagsCollection.countDocuments({ $or: [{ language }, { language: request.lang }] });
+      const totalPages = Math.ceil(totalTags / limit);
+
+      return { tags, page, totalPages };
+  }
+const processPromptToTags = async (db, prompt) => {
+    if (!prompt) {
+        throw new Error('Prompt is required');
+    }
+
+    const tags = prompt.split(',').map(tag => tag.trim()).map(tag => ({ name: tag.replace(/[^\w\s]/gi, ''), language: 'en', fromPrompt:true }));
+    await addTags(tags, db);
+};
+
+  
   function getLanguageName(langCode) {
     const langMap = {
         en: "english",
@@ -395,19 +465,24 @@ function sanitizeMessages(messagesForCompletion) {
       content: message.content.replace(/\s+/g, ' ').trim()
     }));
   }
-  
-  module.exports = { getCounter, 
-    updateCounter, 
-    handleFileUpload, 
-    uploadToS3, 
-    checkLimits, 
-    checkUserAdmin, 
+
+module.exports = {
+    getCounter,
+    updateCounter,
+    handleFileUpload,
+    uploadToS3,
+    checkLimits,
+    checkUserAdmin,
     convertImageUrlToBase64,
     createBlurredImage,
     deleteObjectFromUrl,
     getUserData,
     addTags,
+    logImageTags,
     getLanguageName,
     updateUserLang,
-    sanitizeMessages
-}
+    sanitizeMessages,
+    processPromptToTags,
+    processPromptToTags,
+    fetchTags
+};

@@ -1065,7 +1065,7 @@ window.displayPeopleChat = async function (page = 1, option) {
     }
 };
 window.loadAllUserPosts = async function (page = 1) {
-    const currentUser = await fetchUser();
+    const currentUser = user
     console.log(currentUser)
     const currentUserId = currentUser._id;
     const subscriptionStatus = currentUser.subscriptionStatus === 'active';
@@ -1151,7 +1151,7 @@ window.searchImages = async function () {
     })
 }
 window.resultImageSearch = async function (page = 1,query,style = 'anime') {
-    const currentUser = await fetchUser();
+    const currentUser = user
     const currentUserId = currentUser._id;
     const subscriptionStatus = currentUser.subscriptionStatus === 'active';
     const isAdmin = await checkIfAdmin(currentUserId);    
@@ -1167,24 +1167,16 @@ window.resultImageSearch = async function (page = 1,query,style = 'anime') {
             chatGalleryHtml += `
                 <div class="col-6 col-md-3 col-lg-2 mb-2">
                     <div class="card shadow-0">
-                        <div class="d-flex align-items-center p-2">
-                            <a onclick="scrollToPlan()" data-href="/character/${item.chatId}?imageId=${item._id}">
-                                <img src="${item?.thumbnail}" alt="${item?.prompt}" class="rounded-circle me-2" width="40" height="40">
-                            </a>
-                            <a onclick="scrollToPlan()" data-href="/character/${item.chatId}?imageId=${item._id}" class="text-decoration-none text-dark">
-                                <strong>${item?.chatName}</strong>
-                            </a>
-                        </div>
                         ${isBlur ? `
                         <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`scrollToPlan()`}>
                             <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" >
                         </div>
                         ` : `
-                        <a onclick="scrollToPlan()" data-href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
+                        <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
                             <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
                         </a>
                         <div class="d-none card-body p-2 d-flex align-items-center justify-content-between">
-                            <a onclick="scrollToPlan()" data-href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> ${translations.startChat}</a>
+                            <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> ${translations.startChat}</a>
                             <button class="btn btn-light image-nsfw-toggle ${!isAdmin?'d-none':''} ${item?.nsfw ? 'nsfw':'sfw'}" data-id="${item._id}">
                                 <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill':'bi-eye-fill'}"></i> 
                             </button>
@@ -1210,7 +1202,7 @@ window.resultImageSearch = async function (page = 1,query,style = 'anime') {
     });
 }
 window.loadAllChatImages = async function (page = 1) {
-    const currentUser = await fetchUser();
+    const currentUser = user
     const currentUserId = currentUser._id;
     const subscriptionStatus = currentUser.subscriptionStatus === 'active';
     const isAdmin = await checkIfAdmin(currentUserId);    
@@ -1325,7 +1317,7 @@ window.loadUserImages = async function (userId, page = 1) {
 }
 
 window.loadUserPosts = async function (userId, page = 1, like = false) {
-    const currentUser = await fetchUser();
+    const currentUser = user
     const currentUserId = currentUser._id
     const subscriptionStatus = currentUser.subscriptionStatus == 'active'
     const isTemporary = !!currentUser?.isTemporary
@@ -1406,10 +1398,10 @@ window.showRegistrationForm = function(messageId,callback) {
       position: 'bottom',
       html: `
             <h2>
-                <span class="u-color-grad">${window.translations.RegistrationForm.free}</span><br>
-                ${window.translations.RegistrationForm.chatContinue}
+                <span class="u-color-grad">LAMIX ${window.translations.RegistrationForm.free}</span><br>
+                ${window.translations.RegistrationForm.loginToGenerateImages}
             </h2>
-            <p class="d-none text-muted mb-2 header" style="font-size: 16px;">
+            <p class="text-muted mb-2 header" style="font-size: 16px;">
                 ${window.translations.RegistrationForm.startNow}
             </p>
             <div class="container">
@@ -1477,7 +1469,7 @@ function initializePersonaStats(personas) {
 
 
 window.showPremiumPopup = async function() {
-    const user = await fetchUser();
+    const user = user
     const isTemporary = !!user?.isTemporary
     if(isTemporary){
         showRegistrationForm()
@@ -1645,7 +1637,7 @@ function updateSwiperSlides(images) {
 
 // Load chat images (refactored)
 window.loadChatImages = async function (chatId, page = 1) {
-    const currentUser = await fetchUser();
+    const currentUser = user
     const currentUserId = currentUser._id;
     const subscriptionStatus = currentUser.subscriptionStatus === 'active';
     const isTemporary = !!currentUser?.isTemporary;

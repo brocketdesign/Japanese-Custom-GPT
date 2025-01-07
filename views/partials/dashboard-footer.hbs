@@ -93,7 +93,7 @@ window.fetchAndAppendModels = function() {
             
             if($('#imageStyleTabs').length > 0){
                 showNavTabs();
-            }else{
+            }else if($('#search-form').length == 0){
                 $(document).find('.style-option').eq(0).click()
             }
         } else {

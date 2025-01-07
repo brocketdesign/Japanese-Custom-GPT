@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="{{user.lang}}">
+  {{> dashboard-header}}
+<body>
+    {{> dashboard-nav}}
+  <section class="container my-5">                            
+    <p class="u-color-grad" style="font-size: 54px;"><img src="/img/logo.webp" alt="" class="me-2" width="40px">Lamix</p>
+    <span class="text-muted">{{translations.ai_character_conversation}}</span>
+    <h3>{{translations.free_ai_chat_and_image_generation}}</h3>
+    <p>{{translations.seo.description}}</p>
+    <hr>
+    <h1 class="mb-4">{{title}}</h1>
+    <div class="tags">
+        {{#each tags}}
+            <a href="/search?q={{this}}" class="btn btn-secondary m-1">{{this}}</a>
+        {{/each}}
+    </div>
+    <hr>
+    <!-- Pagination using page and totalPages -->
+    <nav aria-label="Page navigation" class="w-100">
+      <ul class="pagination justify-content-center d-flex flex-wrap">
+        {{#if (gt page 1)}}
+          <li class="page-item">
+            <a class="page-link" href="?page={{subtract page 1}}" aria-label="Previous">
+              <span aria-hidden="true">&laquo;</span>
+            </a>
+          </li>
+        {{else}}
+          <li class="page-item disabled">
+            <span class="page-link" aria-label="Previous">
+              <span aria-hidden="true">&laquo;</span>
+            </span>
+          </li>
+        {{/if}}
+
+        {{#each (range 1 totalPages)}}
+          <li class="page-item {{#if (eq this ../page)}}active{{/if}}">
+            <a class="page-link" href="?page={{this}}">{{this}}</a>
+          </li>
+        {{/each}}
+
+        {{#if (lt page totalPages)}}
+          <li class="page-item">
+            <a class="page-link" href="?page={{add page 1}}" aria-label="Next">
+              <span aria-hidden="true">&raquo;</span>
+            </a>
+          </li>
+        {{else}}
+          <li class="page-item disabled">
+            <span class="page-link" aria-label="Next">
+              <span aria-hidden="true">&raquo;</span>
+            </span>
+          </li>
+        {{/if}}
+      </ul>
+    </nav>
+
+</section>
+<style>
+  footer{display: inline !important;}
+  .sticky-bottom{display: inline-block !important;width: 100%;}
+</style>
+  {{> dashboard-footer}}
+</body>
+</html>

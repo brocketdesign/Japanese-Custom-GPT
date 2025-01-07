@@ -15,6 +15,7 @@ const {
     handleFileUpload,
     convertImageUrlToBase64, 
     sanitizeMessages,
+    fetchTags
 } = require('../models/tool');
 const axios = require('axios');
 const OpenAI = require("openai");
@@ -1468,7 +1469,8 @@ async function routes(fastify, options) {
             }
         }
         finalDescription = processString(englishDescription);
-      
+        processPromptToTags(db,finalDescription);
+
         return { prompt: finalDescription, title: promptTitle };
     }
 
@@ -1802,12 +1804,15 @@ async function routes(fastify, options) {
           }
 
           if (searchQuery) {
-            query.$or = [
-              { tags: { $regex: searchQuery, $options: 'i' } },
-              { characterPrompt: { $regex: searchQuery, $options: 'i' } },
-              { enhancedPrompt: { $regex: searchQuery, $options: 'i' } },
-              { imageDescription: { $regex: searchQuery, $options: 'i' } }
-            ];
+            const queryWords = searchQuery.split(' ').map(word => word.replace(/[^\w\s]/gi, '').trim()).filter(word => word !== '');
+            query.$or = queryWords.map(word => ({
+                $or: [
+                    { tags: { $regex: word, $options: 'i' } },
+                    { characterPrompt: { $regex: word, $options: 'i' } },
+                    { enhancedPrompt: { $regex: word, $options: 'i' } },
+                    { imageDescription: { $regex: word, $options: 'i' } }
+                ]
+        }));
           }
 
           const recentCursor = await chatsCollection.aggregate([
@@ -2321,28 +2326,14 @@ async function routes(fastify, options) {
             }
         });
         fastify.get('/api/tags', async (request, reply) => {
+            try {
             const db = fastify.mongo.db;
-            const user = request.user;
-            let language = getLanguageName(user?.lang);
-            const tagsCollection = db.collection('tags');
-            const chatsCollection = db.collection('chats');
-        
-            let tags = await tagsCollection.find({ language }).toArray();
-
-            if (!tags.length) {
-                // If no tags are found for the specific language, fetch from chats
-                let tagsFromChats = await chatsCollection.distinct('tags', { language });
-                tagsFromChats = tagsFromChats.flat().filter(Boolean);
-        
-                // Insert tags into the tagsCollection for future use
-                await tagsCollection.insertMany(tagsFromChats.map(tag => ({ name: tag, language })));
-                
-                tags = tagsFromChats;
-            } else {
-                tags = tags.map(tag => tag.name);
+            const { tags, page, totalPages } = await fetchTags(db,request);
+            reply.send({ tags, page, totalPages });
+            } catch (error) {
+            console.error('Error fetching tags:', error);
+            reply.status(500).send({ error: 'Failed to fetch tags' });
             }
-        
-            reply.send({ tags });
         });
 
         fastify.get('/api/models', async (req, reply) => {

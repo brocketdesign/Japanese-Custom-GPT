@@ -1,8 +1,14 @@
 {
   "lang":"ja",
+  "chat_gallery":"チャットギャラリー",
+  "chat_gallery_description":"AIキャラクターとチャットし、画像を生成しましょう！美しいAIキャラクターとチャットしながら、無料でAI画像生成を楽しめます。",
+  "view_all_tags":"すべてのタグを表示",
+  "view_all_character":"すべてのキャラクターを表示",
+  "result_image_query": "チャットとプロンプト機能を使用して生成された画像。",
   "prompt": "プロンプト",
   "prompt_description": "画像プロンプトとは、AIモデルに画像を生成するために提供されるテキストの説明や指示のセットです。プロンプトは、与えられた説明に一致する画像を作成するためにAIを導きます。",
   "seo": {
+    "page": "ページ",
     "title": "LAMIX - AIキャラクターとチャットして画像を生成",
     "description": "AIキャラクターとチャットして画像を生成しよう！美しいAIキャラクターとチャットしながら、無料でAI画像生成を楽しめます。",
     "keywords": "AI, チャット, 画像生成, AIキャラクター, AI美, AI彼女, AIグラビア, AI画像生成, AIチャット, AIキャラ",
@@ -11,7 +17,9 @@
     "title_post": "コミュニティからの最新投稿 | LAMIX",
     "description_post": "Lamixでは、無料でAIグラビアとのチャット中に生成された画像を使って、簡単に投稿を作成することができます。",
     "title_character": "AIキャラクター | LAMIX",
-    "description_character": "美しいAIキャラクターとチャットして画像を生成しよう！美しいAIキャラクターとチャットしながら、無料でAI画像生成を楽しめます。"
+    "description_character": "美しいAIキャラクターとチャットして画像を生成しよう！美しいAIキャラクターとチャットしながら、無料でAI画像生成を楽しめます。",
+    "title_tags": "タグの検索結果 | LAMIX",
+    "description_tags": "タグの検索結果を表示しています。Lamixでお気に入りの画像を見つけましょう。"
   },
   "characterDescription": {
     "traits": "特徴",
@@ -202,6 +210,7 @@
   "RegistrationForm": {
     "free": "無料で",
     "chatContinue": "登録して",
+    "loginToGenerateImages": "画像を生成し、素晴らしいキャラクターとチャットするにはログインしてください",
     "startNow": "今すぐ体験を始めよう！",
     "continueWithGoogle": "Googleで続ける",
     "continueWithLINE": "LINEで続ける",

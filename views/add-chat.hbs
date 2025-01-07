@@ -1042,6 +1042,10 @@ window.resetCharacterForm = function(){
     $('#generateButton').prop('disabled', false);
     $('#generateButton').html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
 }
+
+window.updateCharacterGenerationMessage = function(message){
+    $('.genexp').text(message)
+}
 </script>
 </body>
 </html>

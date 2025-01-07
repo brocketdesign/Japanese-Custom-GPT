@@ -63,6 +63,11 @@ function initializeWebSocket() {
         const { imageId, title } = data.notification;
         updateImageTitle(imageId, title);
       }
+      // Update character generation message
+      if(data.notification.type == 'updateCharacterGenerationMessage' &&  $('.genexp').length) {
+        const { mess } = data.notification;
+        updateCharacterGenerationMess(mess);
+      }
     } else {
       console.log('Message from server:', event.data);
     }

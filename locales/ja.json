@@ -29,7 +29,10 @@
   "character_and_ai_chat": "AIチャットしながら無料AI画像生成を楽しもう",
   "about_the_character": "キャラクターについて",
   "user_in_chat": "チャット中のユーザー",
+  "create_new_character": "新しいキャラクターを作成",
+  "user_in_chat_description": "キャラクターとチャットしたり、名前や性格を変更して理想の友達やそれ以上を作成できます。",
   "other_images": "他の画像",
+  "other_images_description": "チャット中に依頼したり、提供されたカスタムプロンプト機能を使用して、キャラクターの多くの画像を作成できます。",
   "check_premium_plan": "有料プランを確認する",
   "imageGeneration": {
     "messageTitle": "全ての画像生成機能へのアクセスにはLamix Premiumが必要です",

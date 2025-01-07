@@ -29,12 +29,12 @@
           </div>
         {{else}}
         <div class="w-100">
-            <img data-src="{{image.imageUrl}}" class="card-img-top rounded shadow m-auto" alt="{{image.prompt}}" style="max-height:80vh;width:auto;object-fit:contain;display:none;">
+            <img id="mainImage" data-src="{{image.imageUrl}}" class="card-img-top rounded shadow m-auto" alt="{{image.prompt}}" style="max-height:80vh;width:auto;object-fit:contain;display:none;">
 
             <div id="swiperModal" data-chat-id="{{chat._id}}" class="swiper-container" style="width:100%;height:100%;overflow-x:hidden;">
               <div class="swiper-wrapper text-center"></div>
-              <div class="swiper-button-next swiper-button-white" style="color: #606060;"></div>
-              <div class="swiper-button-prev swiper-button-white" style="color: #606060;"></div>
+              <div class="swiper-button-next swiper-button-white" style="color: #606060; transform: translateY(-400%);"></div>
+              <div class="swiper-button-prev swiper-button-white" style="color: #606060; transform: translateY(-400%);"></div>
             </div>
         </div>
         {{/if}}
@@ -42,12 +42,17 @@
           <h5 class="card-title"></h5>
           <h6>{{translations.prompt}} :</h6>
           <p class="card-prompt text-muted" style="font-size: 14px;">{{image.prompt}}</p>
-          <span class="bg-light" style="font-size:12px;">{{translations.prompt_description}}</span>
+          <p class="bg-light p-2" style="font-size:12px;">{{translations.prompt_description}}</p>
+          <a href="/chat/edit/" class="btn btn-outline-secondary">{{translations.create_new_character}}</a>
           <p class="card-text">{{image.comment}}</p>
           <p class="text-muted"><span class="jp-date">{{image.createdAt}}</span></p>
           <div class="d-flex justify-content-between align-items-center">
             <button class="btn btn-light shadow-0 image-fav {{#if  (includesObjectId image.likedBy user._id) }}liked{{/if}}" data-id="{{image._id}}">
               <i class="bi bi-heart-fill me-2"></i>{{translations.like}}<span class="ct d-none">{{default image.likes 0}}</span>
+            </button>
+            <!--- A button to share on sns --->
+            <button class="btn btn-light shadow-0 share">
+              <i class="bi bi-share me-2"></i>{{translations.share}}
             </button>
             <a href="/chat/{{chat._id}}" class="btn custom-gradient-bg"> <i class="bi bi-chat-dots me-2"></i> {{translations.startChatting}}</a>
           </div>
@@ -90,6 +95,7 @@
     </div>
   </div>
   <h3 class="text-start">{{translations.user_in_chat}}</h3>
+  <span class="text-muted">{{translations.user_in_chat_description}}</span>
   <div class="container mt-4 mb-5">
     <!-- Chat Users Section -->
     <div id="chat-users-gallery" class="d-flex overflow-auto p-2" style="white-space: nowrap;"></div>
@@ -104,6 +110,7 @@
     <div class="row mx-0">
       <div class="col-12 mt-4 px-0">
         <h4>{{translations.other_images}}</h4>
+        <span class="text-muted">{{translations.other_images_description}}</span>
         <hr>
         <div class="container-none">
           <div class="row mx-0" id="chat-images-gallery"></div>
@@ -168,6 +175,17 @@
       loadChatUsers(chatId);
     }else{
       loadAllChatImages(1);
+    }
+    // Function to share image and title on SNS
+    if($('#mainImage').length){
+      const imageUrl = $('#mainImage').data('src');
+      $('.share').on('click', function(){
+        shareSns($('.card-title').text(), imageUrl);
+      });
+    }
+    function shareSns(title, imageUrl) {
+      const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(imageUrl)}`;
+      window.open(url, '_blank');
     }
   });
   </script>

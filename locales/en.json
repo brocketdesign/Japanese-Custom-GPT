@@ -27,9 +27,12 @@
     "messageText": "This content may contain adult elements. Please confirm that you are over 18 to proceed."
   },
   "character_and_ai_chat": "Enjoy free AI image generation while chatting with",
+  "create_new_character": "Create a new character",
   "about_the_character": "About the character",
   "user_in_chat": "User in Chat",
+  "user_in_chat_description": "Chat with the character, change their name and personality to create your ideal friend or more.",
   "other_images": "Other Images",
+  "other_images_description": "You can create many images of the character by asking during the chat or using the provided custom prompt feature.",
   "check_premium_plan": "Check out the premium plan",
   "imageGeneration": {
     "messageTitle": "Access to all image generation features requires Lamix Premium",

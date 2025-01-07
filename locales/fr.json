@@ -29,7 +29,10 @@
   "character_and_ai_chat": "Profitez de la génération d'images IA gratuite en discutant avec",
   "about_the_character": "À propos du personnage",
   "user_in_chat": "Utilisateur en Chat",
+  "create_new_character": "Créer un nouveau personnage",
+  "user_in_chat_description": "Discutez avec le personnage, changez son nom et sa personnalité pour créer votre ami idéal ou plus.",
   "other_images": "Autres Images",
+  "other_images_description": "Vous pouvez créer de nombreuses images du personnage en demandant pendant le chat ou en utilisant la fonctionnalité d'invite personnalisée fournie.",
   "check_premium_plan": "Consulter le plan premium",
   "imageGeneration": {
     "messageTitle": "L'accès à toutes les fonctionnalités de génération d'images nécessite Lamix Premium",

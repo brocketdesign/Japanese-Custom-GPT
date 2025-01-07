@@ -81,5 +81,16 @@ module.exports = fastifyPlugin(async function (fastify) {
     fastify.sendNotificationToUser(userId, notification);
     reply.send({ status: 'Notification sent' });
   });
-
+  
+  // Ping all connections every 30 seconds
+  setInterval(() => {
+    for (const [userId, connections] of fastify.connections.entries()) {
+      for (const conn of connections) {
+        if (conn.readyState === 1) {
+          conn.send(JSON.stringify({ type: 'ping' }));
+        }
+      }
+    }
+  }, 30000);
+  
 });

@@ -58,6 +58,11 @@ function initializeWebSocket() {
         const { imageUrl, nsfw } = data.notification;
         generateCharacterImage(imageUrl,nsfw);
       }
+      // Updade image title dynamically
+      if(data.notification.type == 'updateImageTitle') {
+        const { imageId, title } = data.notification;
+        updateImageTitle(imageId, title);
+      }
     } else {
       console.log('Message from server:', event.data);
     }

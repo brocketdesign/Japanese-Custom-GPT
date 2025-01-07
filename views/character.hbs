@@ -3,19 +3,19 @@
        {{> dashboard-header}}
 <body>
     {{> dashboard-nav}}
-
 <style>
-
+  #swiperModal .swiper-slide img {
+    width: 100%;
+    height: 80vh !important;
+    object-fit: contain;
+  }
 </style>
 <div class="container mt-4">
   {{#if chat}}
     <!-- SEO Section -->
     <div class="row mx-0 {{#if user.isTemporary}}{{else}}d-none{{/if}}">
         <h1>{{translations.character_and_ai_chat}} {{chat.name}}</h1>
-        <h3>{{translations.about_the_character}} {{chat.name}}</h3>
         <hr>
-        <p class="description">{{chat.description}}</p>
-        <p>{{chat.rule}}</p>
     </div>
   {{/if}}
   <div class="row mx-0">
@@ -25,14 +25,22 @@
       <div class="card border-0 shadow-0">
         {{#if isBlur}}
           <div type="button" class="text-center" onclick={{#if user.isTemporary}}'showRegistrationForm()'{{else}}'unlockImage('{{image._id}}',"gallery",this)'{{/if}}>
-            <img data-src="{{image.imageUrl}}" class="card-img-top img-blur rounded shadow" alt="{{image.prompt}}" style="max-height:80vh;width:auto;object-fit:contain;">
+            <img data-src="{{image.imageUrl}}" class="card-img-top img-blur rounded shadow m-auto" alt="{{image.prompt}}" style="max-height:80vh;width:auto;object-fit:contain;">
           </div>
         {{else}}
-            <img src="{{image.imageUrl}}" class="card-img-top rounded shadow" alt="{{image.prompt}}" style="max-height:80vh;width:auto;object-fit:contain;">
+        <div class="w-100">
+            <img data-src="{{image.imageUrl}}" class="card-img-top rounded shadow m-auto" alt="{{image.prompt}}" style="max-height:80vh;width:auto;object-fit:contain;display:none;">
+
+            <div id="swiperModal" data-chat-id="{{chat._id}}" class="swiper-container" style="width:100%;height:100%;overflow-x:hidden;">
+              <div class="swiper-wrapper text-center"></div>
+              <div class="swiper-button-next swiper-button-white" style="color: #606060;"></div>
+              <div class="swiper-button-prev swiper-button-white" style="color: #606060;"></div>
+            </div>
+        </div>
         {{/if}}
         <div class="card-body border rounded mt-3">
           <h5 class="card-title"></h5>
-          <h5 class="card-prompt d-none">{{image.prompt}}</h5>
+          <p class="card-prompt text-muted" style="font-size: 14px;">{{image.prompt}}</p>
           <p class="card-text">{{image.comment}}</p>
           <p class="text-muted"><span class="jp-date">{{image.createdAt}}</span></p>
           <div class="d-flex justify-content-between align-items-center">
@@ -63,6 +71,14 @@
                   <h2>{{chat.name}}</h2>
                 </a>
                   <p>{{chat.description}}</p>
+                  <!-- SEO Section -->
+                  <div class="row mx-0 text-start {{#if user.isTemporary}}{{else}}d-none{{/if}}">
+                      <span>{{translations.about_the_character}} {{chat.name}}</span>
+                      <hr>
+                      <p class="description">{{chat.description}}</p>
+                      <p>{{chat.rule}}</p>
+                  </div>
+
                 <a href="/chat/{{chat._id}}" class="btn custom-gradient-bg"> <i class="bi bi-chat-dots me-2"></i>  {{translations.startChatting}}</a>
               </div>
             </div>
@@ -95,25 +111,6 @@
     </div>
   </div>
 </div>
-
-<!-- Update the modal HTML to include a close button, fullscreen, and arrows -->
-<div class="modal fade" id="swiperModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-fullscreen">
-    <div class="modal-content bg-dark">
-      <div class="modal-header border-0 position-absolute" style="z-index: 99;">
-        <button type="button" class="btn-close btn-close-white"  style="color: #f5f5f5;" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-0 d-flex align-items-center justify-content-center">
-        <div class="swiper-container" style="width:100%;height:100%;">
-          <div class="swiper-wrapper"></div>
-          <div class="swiper-button-next swiper-button-white" style="color: #f5f5f5;"></div>
-          <div class="swiper-button-prev swiper-button-white" style="color: #f5f5f5;"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 {{else}}
  <h1 class="my-4 text-center">{{translations.ai_gravure_special_photos}}</h1>
   <p>{{translations.ai_gravure_description}}</p>
@@ -128,11 +125,17 @@
   footer{display: inline !important;}
   .sticky-bottom{display: inline-block !important;width: 100%;}
 </style>
+<script>
+    const imageId =`{{image._id}}`
+</script>
  {{> dashboard-footer}}
 
-
-</body>
-
+<script>
+  window.updateImageTitle = function(imageId,title){
+    console.log('updateImageTitle',title);
+    $('.card-title').text(title[lang].replace(/['"]+/g, ''));
+  }
+</script>>
 <script>
   $(document).ready(function () {
     const chatId =`{{chatId}}`
@@ -166,4 +169,5 @@
     }
   });
   </script>
+</body>
 </html>

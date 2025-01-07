@@ -1603,6 +1603,46 @@ var swiperInstance;
 var currentPageMap = {}; // track current page per chatId
 var currentSwiperIndex = 0;
 
+function updateSwiperSlides(images) {
+    // Ensure Swiper container exists
+    const swiperContainer = document.querySelector('.swiper-container');
+    const swiperWrapper = swiperContainer.querySelector('.swiper-wrapper');
+    
+    if (!swiperContainer || !swiperWrapper) {
+        console.error('Swiper container or wrapper is missing.');
+        return;
+    }
+
+    // Append new slides
+    images.forEach((image, index) => {
+        const slide = document.createElement('div');
+        slide.className = 'swiper-slide';
+        slide.setAttribute('data-index', index);
+        slide.innerHTML = `<img src="${image.imageUrl}" alt="${image.prompt}" class="card-img-top rounded shadow m-auto" style="object-fit: contain;height: 100%;width: auto;">`;
+        swiperWrapper.appendChild(slide);
+    });
+
+    // Initialize or update Swiper
+    if (!swiperInstance) {
+        swiperInstance = new Swiper('.swiper-container', {
+            loop: false,
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+            },
+        });
+    } else {
+        swiperInstance.update(); // Update existing instance with new slides
+    }
+
+    // Navigate to the current index
+    swiperInstance.slideTo(currentSwiperIndex, 0);
+}
+
 // Load chat images (refactored)
 window.loadChatImages = async function (chatId, page = 1) {
     const currentUser = await fetchUser();
@@ -1610,6 +1650,16 @@ window.loadChatImages = async function (chatId, page = 1) {
     const subscriptionStatus = currentUser.subscriptionStatus === 'active';
     const isTemporary = !!currentUser?.isTemporary;
     const isAdmin = await checkIfAdmin(currentUserId);    
+    // if an imageId is provided, add the current image to the loadedImages array
+    if(page === 1 && imageId){
+        $.get('/image/' + imageId, function(data){
+            console.log('data',data);
+            if(!loadedImages.some(image => image._id === data._id)){
+                loadedImages.push(data);
+            }
+            return data;
+        });
+    }
     $.ajax({
         url: `/chat/${chatId}/images?page=${page}`,
         method: 'GET',
@@ -1621,6 +1671,9 @@ window.loadChatImages = async function (chatId, page = 1) {
                 let isBlur = unlockedItem ? false : item?.nsfw && !subscriptionStatus;
                 const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
                 const index = loadedImages.length - 1;
+                if (!isBlur && !loadedImages.some(image => image._id === item._id)) {
+                    loadedImages.push(item);
+                }
                 chatGalleryHtml += `
                     <div class="col-12 col-md-4 col-lg-2 mb-2">
                         <div class="card shadow-0">
@@ -1656,6 +1709,7 @@ window.loadChatImages = async function (chatId, page = 1) {
             });
 
             // Update swiper slides if modal is open
+            console.log($('#swiperModal').data('chat-id').length)
             if ($('#swiperModal').data('chat-id') === chatId) {
                 updateSwiperSlides(loadedImages);
             }

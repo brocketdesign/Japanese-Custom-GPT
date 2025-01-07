@@ -450,20 +450,30 @@ fastify.get('/character/:chatId', async (request, reply) => {
           { $project: { image: '$images', _id: 0 } },
         ])
         .toArray();
-        // Generate prompt title if it doesn't exist and save it to the image doc in the db
+        // Generate prompt title if it doesn't exist and save it to the image doc in the db then send it using websocket
         if (!imageDoc[0].image.title || !imageDoc[0].image.title.en || !imageDoc[0].image.title.ja || !imageDoc[0].image.title.fr) {
-          const title_en = await generatePromptTitle(imageDoc[0].image.prompt, 'english');
-          const title_ja = await generatePromptTitle(imageDoc[0].image.prompt, 'japanese');
-          const title_fr = await generatePromptTitle(imageDoc[0].image.prompt, 'french');
-          imageDoc[0].image.title = {
-            en: title_en,
-            ja: title_ja,
-            fr: title_fr
-          };
-          await galleryCollection.updateOne(
-            { 'images._id': imageId },
-            { $set: { 'images.$.title': imageDoc[0].image.title } }
-          );
+            const generateTitles = async () => {
+              const title_en = await generatePromptTitle(imageDoc[0].image.prompt, 'english');
+              const title_ja = await generatePromptTitle(imageDoc[0].image.prompt, 'japanese');
+              const title_fr = await generatePromptTitle(imageDoc[0].image.prompt, 'french');
+              return {
+                en: title_en,
+                ja: title_ja,
+                fr: title_fr
+              };
+            };
+
+            generateTitles().then((title) => {
+
+              galleryCollection.updateOne(
+                { 'images._id': imageId },
+                { $set: { 'images.$.title': title } }
+              );
+
+              fastify.sendNotificationToUser(userId, 'updateImageTitle', { title });
+            }).catch((err) => {
+            console.error('Failed to generate titles:', err);
+            });
         }
       if (imageDoc.length > 0) {
         image = imageDoc[0].image;

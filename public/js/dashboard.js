@@ -1714,7 +1714,6 @@ window.loadChatImages = async function (chatId, page = 1) {
             });
 
             // Update swiper slides if modal is open
-            console.log($('#swiperModal').data('chat-id').length)
             if ($('#swiperModal').data('chat-id') === chatId) {
                 updateSwiperSlides(loadedImages);
             }

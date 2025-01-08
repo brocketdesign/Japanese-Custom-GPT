@@ -234,7 +234,7 @@ const checkImageRequest = async (messages) => {
             role: "system",
             content: `Your are a usefull assistant that take a prompt and return a title related to the prompt.\n
             I will provide a prompt and you will return a short descriptive title for it.\n
-            You must answer in ${language} and provide a title that is relevant to the prompt.\n
+            You must answer in ${language} and provide a title that is relevant to the prompt, include the prompt keywords for SEO purposes.\n
             Be creative with adult content, alway return a title that is relevant to the prompt.
 `           },
         {

@@ -231,8 +231,15 @@ async function routes(fastify, options) {
           ...doc.image,
           chatId: doc.chatId,
           chatName: chat?.name,
-          thumbnail: chat?.thumbnail || chat?.thumbnailUrl || '/img/default-thumbnail.png'
-        };
+          chatImageUrl: chat?.chatImageUrl || '/img/default-thumbnail.png',
+          chatTags: chat.tags || [],
+          messagesCount: chat.messagesCount || 0,
+          first_message: chat.first_message || '',
+          description: chat.description || '',
+          galleries: chat.galleries || [],
+          nickname: chat.nickname || '',
+          imageCount: chat.imageCount
+        };        
       });
 
       reply.send({

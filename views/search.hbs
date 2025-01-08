@@ -73,9 +73,8 @@
     const imageModel = '{{imageModel}}'
     const data = {{{json data}}} || [];
     $(document).ready(function() {
+        let visibleChatId = data.recent.map(chat => chat._id);
 
-        resultImageSearch(1,query,imageStyle)
-        
         $(document).on('click','.style-option',function(){
             if($(this).hasClass('is-premium') && user.isTemporary){
                 showRegistrationForm()
@@ -95,8 +94,17 @@
             history.pushState(null, '', newUrl);
             displayTags($(this).data('value'))         
 
-            $('#chat-gallery').empty()
-            displayPeopleChat(1, { imageStyle:$(this).data('value'), imageModel:$(this).data('model'), query }, data);
+            $('#chat-gallery').empty();
+            $('.all-chats-images-gallery').empty();
+            visibleChatId = []
+            displayPeopleChat(1, { imageStyle:$(this).data('value'), imageModel:$(this).data('model'), query },function(displayedChatId){
+                visibleChatId = displayedChatId
+                resultImageSearch(1, query, imageStyle, function(images) {
+                    const uniqueChatIds = [...new Set(images.map(image => image.chatId).filter(id => !visibleChatId.includes(id)))];
+                    const chatData = uniqueChatIds.map(id => images.find(image => image.chatId === id));
+                    displayChats(chatData)
+                });
+            });
         });
 
         if(query && query.trim() != ''){

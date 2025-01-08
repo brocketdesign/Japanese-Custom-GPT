@@ -974,96 +974,105 @@ function generateUserChatsPagination(userId, currentPage, totalPages) {
 }
 
 window.preLoadedData = {}
-window.displayPeopleChat = async function (page = 1, option) {
-    const currentUserId = user._id;
-    const {imageStyle, imageModel, query = false, userId = false} = option
-    const searchId =`${imageStyle}-${imageModel}-${query}`
-    try {
+window.displayChats = function (chatData, searchId = null) {
+    let htmlContent = '';
 
-        if(preLoadedData && preLoadedData[searchId] <= page){
-            $(`#chat-gallery .chat-card-container[data-id="${searchId}"]`).fadeIn()
-            return
-        }
-        
-        const response = await fetch(`/api/chats?page=${page}&style=${imageStyle}&model=${imageModel}&q=${query}&userId=${userId}`);
-        const data = await response.json();
+    chatData.forEach(chat => {
+        if (chat.name || chat.chatName) {
+            let galleryIco = '';
+            let image_count = 0;
 
-        preLoadedData[searchId] = page
-        let recentChats = data.recent || [];
-        let htmlContent = '';
-
-        // If there are recent chats
-        recentChats.forEach(chat => {
-            if (chat.nickname) {
-                let galleryIco = '';
-                let image_count = 0;
-
-                // Handle galleries
-                if (chat.galleries && chat.galleries.length > 0) {
-                    chat.galleries.forEach(gallery => {
-                        if (gallery.images && gallery.images.length > 0) {
-                            image_count += gallery.images.length;
-                        }
-                    });
-                    if(image_count > 0){
-                        galleryIco = `
-                            <div class="gallery" data-id="${chat._id}">
-                                <span class="btn btn-dark" background-color: rgba(66, 70, 59, 0.84);><i class="far fa-images me-1"></i><span style="font-size:12px;">${image_count}</span></span>
-                            </div>
-                        `;
+            if (chat.galleries && chat.galleries.length > 0) {
+                chat.galleries.forEach(gallery => {
+                    if (gallery.images && gallery.images.length > 0) {
+                        image_count += gallery.images.length;
                     }
-                }
-                
-                // Render chat
-                htmlContent += `
-                <div class="chat-card-container col-12 col-sm-4 col-lg-3 mb-2" data-id="${searchId}">
-                    <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 redirectToChat" style="cursor:pointer;" data-id="${chat._id}" data-image="${chat.chatImageUrl}">
-                        <div style="background-image:url('${chat.chatImageUrl || '/img/logo.webp'}')" class="card-img-top girls_avatar position-relative" alt="${chat.name}">
-                            <div id="spinner-${chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
-                            <div class="position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px;right:10px;">
-                                ${(chat.tags || []).length ? `<div class="tags d-flex justify-content-between align-items-center flex-wrap">${chat.tags.map(tag => `<span class="badge bg-dark mt-1">${tag}</span>`).join('')}</div>` : ''}
-                            </div>
-                            <div class="position-absolute text-end" style="top:10px;right:10px">
-                                <div class="persona" style="color:rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
-                                    <span class="badge bg-dark" style="width: 30px;"><i class="far fa-user-circle"></i></span>
-                                </div>
-                                <a href="/character/${chat._id}">
-                                    <div class="gallery" style="color: rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
-                                        <span class="btn btn-dark"><i class="far fa-image me-1"></i><span style="font-size:12px;">${chat.imageCount || 0}</span></span>
-                                    </div>
-                                </a>
-                                ${galleryIco}
-                                ${chat.messagesCount ? `<span class="btn btn-dark message-count mt-1 border-0" style="background-color: rgba(66, 70, 59, 0.84); font-size: 12px;"><i class="fas fa-comment-alt me-2"></i>${chat.messagesCount}</span>` : ''}
-                            </div>
+                });
+                if (image_count > 0) {
+                    galleryIco = `
+                        <div class="gallery" data-id="${chat.chatId || chat._id}">
+                            <span class="btn btn-dark" style="background-color: rgba(66, 70, 59, 0.84);">
+                                <i class="far fa-images me-1"></i><span style="font-size:12px;">${image_count}</span>
+                            </span>
                         </div>
-                        <div class="card-body bg-transparent border-0 pb-0 px-0 mx-0 text-start">
-                            <div class="row mx-0 px-0">
-                                <div class="col-12 mx-0 px-0">
-                                    <button class="btn btn-outline-secondary redirectToChat w-100 mb-2" data-id="${chat._id}"> <i class="bi bi-chat-dots me-2"></i> ${window.translations.startChatting}</button>
-                                    <div class="d-flex align-items-center justify-content-between">
-                                        <h5 class="card-title character-title mb-0">${chat.name}</h5>
-                                        <a href="/user/${chat.userId}" class="text-muted" style="font-size:12px;">${chat.nickname}</a>
-                                    </div>
-                                    <a href="/character/${chat._id}" class="text-muted" style="text-decoration: none;">
-                                        <span style="font-size:12px;">${chat?.first_message || chat.description}</span>
-                                    </a>
+                    `;
+                }
+            }
+
+            htmlContent += `
+            <div class="chat-card-container col-12 col-sm-4 col-lg-3 mb-2" ${searchId?`data-id="${searchId}"`:''}>
+                <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 redirectToChat" style="cursor:pointer;" data-id="${chat.chatId || chat._id}" data-image="${chat.chatImageUrl}">
+                    <div style="background-image:url('${chat.chatImageUrl || '/img/logo.webp'}')" class="card-img-top girls_avatar position-relative" alt="${chat.name || chat.chatName}">
+                        <div id="spinner-${chat.chatId || chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
+                        <div class="position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px;right:10px;">
+                            ${(chat.tags || chat.chatTags || []).length ? `<div class="tags d-flex justify-content-between align-items-center flex-wrap">${ (chat.tags ? chat.tags : chat.chatTags ).map(tag => `<span class="badge bg-dark mt-1">${tag}</span>`).join('')}</div>` : ''}
+                        </div>
+                        <div class="position-absolute text-end" style="top:10px;right:10px">
+                            <div class="persona" style="color:rgb(165 164 164);opacity:0.8;" data-id="${chat.chatId || chat._id}">
+                                <span class="badge bg-dark" style="width: 30px;"><i class="far fa-user-circle"></i></span>
+                            </div>
+                            <a href="/character/${chat.chatId || chat._id}">
+                                <div class="gallery" style="color: rgb(165 164 164);opacity:0.8;" data-id="${chat.chatId || chat._id}">
+                                    <span class="btn btn-dark"><i class="far fa-image me-1"></i><span style="font-size:12px;">${chat.imageCount || 0}</span></span>
                                 </div>
+                            </a>
+                            ${galleryIco}
+                            ${chat.messagesCount ? `<span class="btn btn-dark message-count mt-1 border-0" style="background-color: rgba(66, 70, 59, 0.84); font-size: 12px;"><i class="fas fa-comment-alt me-2"></i>${chat.messagesCount}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="card-body bg-transparent border-0 pb-0 px-0 mx-0 text-start">
+                        <div class="row mx-0 px-0">
+                            <div class="col-12 mx-0 px-0">
+                                <a class="btn btn-outline-secondary redirectToChat w-100 mb-2" href="/chat/${chat.chatId || chat._id}"> <i class="bi bi-chat-dots me-2"></i> ${window.translations.startChatting}</a>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <h5 class="card-title character-title mb-0">${chat.name || chat.chatName}</h5>
+                                    <a href="/user/${chat.userId}" class="text-muted" style="font-size:12px;">${chat.nickname}</a>
+                                </div>
+                                <a href="/character/${chat.chatId || chat._id}" class="text-muted" style="text-decoration: none;">
+                                    <span style="font-size:12px;">${chat?.first_message || chat.description}</span>
+                                </a>
                             </div>
                         </div>
                     </div>
-                </div>`;
-            }
-        });
+                </div>
+            </div>`;
+        }
+    });
 
-        // Update the gallery HTML
-        $('#chat-gallery').append(htmlContent);
-        if($('#chat-pagination-controls').length > 0){      
+    $('#chat-gallery').append(htmlContent);
+};
+
+window.displayPeopleChat = async function (page = 1, option, callback) {
+    const { imageStyle, imageModel, query = false, userId = false } = option;
+    const searchId = `${imageStyle}-${imageModel}-${query}`;
+
+    if (preLoadedData && preLoadedData[searchId] <= page) {
+        $(`#chat-gallery .chat-card-container[data-id="${searchId}"]`).fadeIn();
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/chats?page=${page}&style=${imageStyle}&model=${imageModel}&q=${query}&userId=${userId}`);
+        const data = await response.json();
+
+        preLoadedData[searchId] = page;
+
+        if (data.recent) {
+            window.displayChats(data.recent, searchId);
+            const uniqueChatIds = [...new Set(data.recent.map(chat => chat._id))];
+            if (typeof callback === 'function') callback(uniqueChatIds);
+        }
+
+        if ($('#chat-pagination-controls').length > 0) {
             generateChatsPagination(data.totalPages, option);
         }
     } catch (err) {
         console.error('Failed to load chats', err);
+        if (typeof callback === 'function') callback([]);
     }
 };
+
+
 window.loadAllUserPosts = async function (page = 1) {
     const currentUser = user
     console.log(currentUser)
@@ -1150,7 +1159,7 @@ window.searchImages = async function () {
         resultImageSearch(1,query,style)
     })
 }
-window.resultImageSearch = async function (page = 1,query,style = 'anime') {
+window.resultImageSearch = async function (page = 1,query,style = 'anime', callback) {
     const currentUser = user
     const currentUserId = currentUser._id;
     const subscriptionStatus = currentUser.subscriptionStatus === 'active';
@@ -1195,6 +1204,10 @@ window.resultImageSearch = async function (page = 1,query,style = 'anime') {
         $(document).find('.img-blur').each(function() {
             blurImage(this);
         });
+
+        if (typeof callback === 'function') {
+            callback(data.images);
+        }
       },
       error: function (err) {
         console.error('Failed to load images', err);

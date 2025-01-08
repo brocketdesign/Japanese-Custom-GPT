@@ -29,6 +29,16 @@ img.select {
 .swal2-container {
   padding: 0 !important;
 }
+/* Position the modal at top: 40% */
+.modal-dialog {
+  top: 40%;
+  transform: translateY(-40%);
+}
+
+/* Remove the modal overlay (backdrop) */
+.modal-backdrop {
+  display: none !important;
+}
 
 .thumb-option {
   width: 50px;

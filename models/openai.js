@@ -230,17 +230,22 @@ const checkImageRequest = async (messages) => {
   
   async function generatePromptTitle(prompt,language) {
     const messages = [
-        {
+          {
             role: "system",
-            content: `Your are a usefull assistant that take a prompt and return a title related to the prompt.\n
+            content: `Your are a useful assistant that take a prompt and return a title related to the prompt.\n
             I will provide a prompt and you will return a short descriptive title for it.\n
             You must answer in ${language} and provide a title that is relevant to the prompt, include the prompt keywords for SEO purposes.\n
             Be creative with adult content, alway return a title that is relevant to the prompt.
-`           },
-        {
-            role: "user",
-            content: `Here is the prompt I want you to provide a descriptive title for : ${prompt}.`
-        },
+            `       
+          },
+          {
+              role: "user",
+              content: `Here is the prompt I want you to provide a descriptive title for : ${prompt}.`
+          },
+          {
+              role: "user",
+              content: `I have lots of images, I need a title that help me find the image. Try to describe using keywords.`
+          },
     ]
 
     const completionMessage = await generateCompletion(messages, 600, 'openai')

@@ -764,13 +764,12 @@ $(document).ready(async function() {
         }
         return inputString;
     }
-    
-    function getImageTools(imageId, isLiked = false, prompt = false, nsfw = false, imageUrl = false){
+    function getImageTools(imageId, isLiked = false, title, prompt = false, nsfw = false, imageUrl = false) {
         prompt = sanitizeString(prompt);
         return `
             <div class="bg-white py-2 rounded mt-1 d-flex justify-content-between">
                 <div class="d-flex">
-                    <span class="badge bg-white text-secondary image-fav ${isLiked ? 'liked':''}" data-id="${imageId}" 
+                    <span class="badge bg-white text-secondary image-fav ${isLiked ? 'liked' : ''}" data-id="${imageId}" 
                     style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
                         <i class="bi bi-heart-fill"></i>
                     </span>
@@ -782,13 +781,42 @@ $(document).ready(async function() {
                     style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
                         <i class="bi bi-arrow-clockwise"></i>
                     </span>
+                    <span type="button" class="badge bg-white text-secondary isAdmin" data-bs-toggle="modal" data-bs-target="#modal-${imageId}">
+                        <i class="bi bi-info-circle"></i>
+                    </span>
+                    <div class="modal fade" id="modal-${imageId}" tabindex="-1" aria-labelledby="modal-${imageId}-label" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content border-0 shadow">
+                                <div class="modal-header">
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>${prompt}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="badge bg-white text-secondary share-on-twitter" 
+                        data-id="${title}" data-url="${imageUrl}" 
+                        style="cursor: pointer; bottom:5px; right:5px; opacity:0.8;" 
+                        onclick="shareOnTwitter('${title}', '${imageUrl}')">
+                        <i class="bi bi-twitter-x"></i>
+                    </span>
+                    <span class="badge bg-white text-secondary download-image" style="cursor: pointer; bottom:5px; right:5px; opacity:0.8;">
+                        <a href="${imageUrl}" download="${title}.png" style="color:inherit;"><i class="bi bi-download"></i></a>
+                    </span>
                 </div>
-                <span class="badge bg-white text-secondary comment-badge" data-id="${imageId}" 
-                style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
-                    <i class="bi bi-share"></i>
-                </span>
             </div>
-        `
+            <div class="title assistant-chat-box py-1 px-3" style="border-radius: 0px 0px 15px 15px;max-width: 200px;">
+                <p class="text-white" style="font-size: 12px;">${title}</p>
+            </div>
+        `;
+    }
+    window.shareOnTwitter = function(title, imageUrl) {
+        const tweetText = encodeURIComponent(title);
+        const tweetUrl = encodeURIComponent(imageUrl);
+        const twitterUrl = `https://twitter.com/intent/tweet?text=${tweetText}&url=${tweetUrl}`;
+        window.open(twitterUrl, '_blank');
     }
     function getImageUrlById(imageId, designStep, thumbnail) {
         const placeholderImageUrl = '/img/placeholder-image-2.gif'; // Placeholder image URL
@@ -825,7 +853,7 @@ $(document).ready(async function() {
                         $(`#image-${imageId}`).attr('data-prompt', response.imagePrompt);
                         // Add tools or badges if applicable
                         if (!response.isBlur) {
-                            const toolsHtml = getImageTools(imageId, response?.likedBy?.some(id => id.toString() === userId.toString()), response.imagePrompt, response.nsfw, response.imageUrl);
+                            const toolsHtml = getImageTools(imageId, response?.likedBy?.some(id => id.toString() === userId.toString()),response.title[lang], response.imagePrompt, response.nsfw, response.imageUrl);
                             $(`#image-${imageId}`).closest('.assistant-image-box').after(toolsHtml);
                         } else {
                             const blurBadgeHtml = `
@@ -1286,6 +1314,7 @@ $(document).ready(async function() {
         else if (messageClass === 'bot-image' && message instanceof HTMLElement) {
             const imageId = message.getAttribute('data-id');
             const imageNsfw = message.getAttribute('data-nsfw');
+            const title = message.getAttribute('alt');
             const prompt = message.getAttribute('data-prompt');
             const imageUrl = message.getAttribute('src');
             
@@ -1296,7 +1325,7 @@ $(document).ready(async function() {
                         <div class="ps-0 text-start assistant-image-box" data-id="${imageId}">
                             ${message.outerHTML}
                         </div>
-                        ${getImageTools(imageId,false,prompt,imageNsfw,imageUrl)}
+                        ${getImageTools(imageId,false,title,prompt,imageNsfw,imageUrl)}
                     </div>
                 </div>      
             `).hide();
@@ -1308,6 +1337,7 @@ $(document).ready(async function() {
         else if (messageClass.startsWith('new-image-') && message instanceof HTMLElement) {
             const imageId = message.getAttribute('data-id');
             const imageNsfw = message.getAttribute('data-nsfw');
+            const title = message.getAttribute('alt');
             const prompt = message.getAttribute('data-prompt');
             const imageUrl = message.getAttribute('src');
             const messageId = messageClass.split('new-image-')[1]
@@ -1316,7 +1346,7 @@ $(document).ready(async function() {
                         <div class="text-start assistant-image-box" data-id="${imageId}">
                             ${message.outerHTML}
                         </div>
-                        ${getImageTools(imageId,false,prompt,imageNsfw,imageUrl)}
+                        ${getImageTools(imageId,false,title,prompt,imageNsfw,imageUrl)}
                     </div>  
             `).hide();
             $(`#${messageId}`).find('.load').remove()

@@ -1033,7 +1033,7 @@ async function routes(fastify, options) {
                 genImagePromptFromChat(chatDocument, userData.messages, genImage, language).then((promptData) => {
                     const prompt = promptData.prompt
                     processPromptToTags(db,prompt);
-                    const title = promptData.title[request.lang]
+                    const title = promptData.title
                     const imageType = genImage.nsfw ? 'nsfw' : 'sfw'
                     const aspectRatio = null
                     generateTxt2img(title, prompt, aspectRatio, userId, chatId, userChatId, imageType, image_num, fastify)

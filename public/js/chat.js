@@ -807,7 +807,7 @@ $(document).ready(async function() {
                     </span>
                 </div>
             </div>
-            <div class="title assistant-chat-box py-1 px-3" style="border-radius: 0px 0px 15px 15px;max-width: 200px;">
+            <div class="title assistant-chat-box py-1 px-3 ${title && title !== 'undefined' ? '': 'd-none'}" style="border-radius: 0px 0px 15px 15px;max-width: 200px;">
                 <p class="text-white" style="font-size: 12px;">${title}</p>
             </div>
         `;

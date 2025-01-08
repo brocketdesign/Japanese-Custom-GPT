@@ -90,7 +90,7 @@ const processResponse = async (response, res, genImage) => {
     for (const event of events) {
 
       if (event.slice(6).trim() === "[DONE]"){
-        res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+        res.write(`data: ${JSON.stringify({ type: 'done', fullCompletion })}\n\n`);
         res.end();
         return fullCompletion;
       };

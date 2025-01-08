@@ -1180,17 +1180,21 @@ $(document).ready(async function() {
     }
 
     function handleStreamMessage(event, uniqueId, markdownContent) {
-    const data = JSON.parse(event.data);
-    if (data.type === 'done') {
-        activeStreams[uniqueId].close();
-        delete activeStreams[uniqueId];
-        afterStreamEnd(uniqueId, markdownContent.val);
-        return true; // signal done
-    } else if (data.type === 'text') {
-        markdownContent.val += data.content;
-        $(`#completion-${uniqueId}`).html(marked.parse(markdownContent.val));
-    }
-    return false;
+        const data = JSON.parse(event.data);
+        if (data.type === 'done') {
+            activeStreams[uniqueId].close();
+            delete activeStreams[uniqueId];
+            if (markdownContent.val !== data.fullCompletion) {
+                markdownContent.val = data.fullCompletion;
+                $(`#completion-${uniqueId}`).html(marked.parse(markdownContent.val));
+            }
+            afterStreamEnd(uniqueId, markdownContent.val);
+            return true; // signal done
+        } else if (data.type === 'text') {
+            markdownContent.val += data.content;
+            $(`#completion-${uniqueId}`).html(marked.parse(markdownContent.val));
+        }
+        return false;
     }
 
     function handleStreamError(uniqueId, markdownContent, container, callback, isHidden) {

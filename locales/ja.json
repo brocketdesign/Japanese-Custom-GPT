@@ -1,5 +1,6 @@
 {
   "lang":"ja",
+  "too_many_pending_images":"画像生成タスクが多すぎます。後で再試行してください。",
   "tags": "タグ",
   "chat_gallery":"チャットギャラリー",
   "chat_gallery_description":"AIキャラクターとチャットし、画像を生成しましょう！美しいAIキャラクターとチャットしながら、無料でAI画像生成を楽しめます。",

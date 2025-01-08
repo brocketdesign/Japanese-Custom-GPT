@@ -344,7 +344,6 @@ $(document).ready(async function() {
     
     function setupChatInterface(chat, character) {
         const gender = determineChatGender(chat);
-        console.log('Gender: ',gender)
         $('#chat-container').attr('data-genre', gender);
         if(gender === 'female'){
             $('#showPrompts').show();

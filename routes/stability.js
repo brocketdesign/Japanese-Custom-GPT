@@ -13,8 +13,11 @@ fastify.post('/novita/txt2img', async (request, reply) => {
   const db = fastify.mongo.db;
   try {
     const pending_taks =  await getTasks(db, 'pending', userId)
-    console.log('Pending images : ',pending_taks.length);
-
+    if(pending_taks.length > 5){
+      fastify.sendNotificationToUser(userId, 'showNotification', { message:request.translations.too_many_pending_images , icon:'wrning' })
+      reply.status(500).send({ error: 'You have too many pending images, please wait for them to finish' });
+      return
+    }
     let newPrompt = prompt
     if(customPrompt){
       const promptId = placeholderId

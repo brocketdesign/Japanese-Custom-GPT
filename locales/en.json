@@ -1,5 +1,6 @@
 {
   "lang":"en",
+  "too_many_pending_images": "You have too many pending images. Please wait for the current images to be generated.",
   "tags": "Tags",
   "chat_gallery":"Chat Gallery",
   "chat_gallery_description":"Chat with AI characters and generate images with them! Enjoy free AI image generation while chatting with beautiful AI characters.",

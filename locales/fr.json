@@ -1,5 +1,6 @@
 {
   "lang":"fr",
+  "too_many_pending_images": "Vous avez trop d'images en attente. Veuillez attendre que les images en attente soient générées.",
   "tags": "Tags",
   "chat_gallery":"Galerie de Chat",
   "chat_gallery_description":"Discutez avec des personnages IA et générez des images avec eux ! Profitez de la génération d'images IA gratuite tout en discutant avec de beaux personnages IA.",

@@ -7,7 +7,8 @@ const {
 } = require('../models/openai')
 const { 
     generateTxt2img,
-    getPromptById 
+    getPromptById,
+    getTasks
 } = require('../models/imagen');
 const { 
     getLanguageName, 
@@ -1024,38 +1025,44 @@ async function routes(fastify, options) {
             userData.messages[lastMsgIndex] = currentUserMessage
             if(userInfo.subscriptionStatus == 'active'){
                 const imageId = Math.random().toString(36).substr(2, 9);
-                fastify.sendNotificationToUser(userId, 'addIconToLastUserMessage')
-
-                const image_num = Math.min(Math.max(genImage?.image_num || 1, 1), 8);
-                for (let i = 0; i < image_num; i++) {
-                    fastify.sendNotificationToUser(userId, 'handleLoader', { imageId, action:'show' })
+                const pending_taks =  await getTasks(db, 'pending', userId)
+                if(pending_taks.length > 5){
+                  fastify.sendNotificationToUser(userId, 'showNotification', { message:request.translations.too_many_pending_images , icon:'wrning' });
+                }else{
+                    fastify.sendNotificationToUser(userId, 'addIconToLastUserMessage')
+    
+                    const image_num = Math.min(Math.max(genImage?.image_num || 1, 1), 8);
+                    for (let i = 0; i < image_num; i++) {
+                        fastify.sendNotificationToUser(userId, 'handleLoader', { imageId, action:'show' })
+                    }
+                    genImagePromptFromChat(chatDocument, userData.messages, genImage, language).then((promptData) => {
+                        const prompt = promptData.prompt
+                        processPromptToTags(db,prompt);
+                        const title = promptData.title
+                        const imageType = genImage.nsfw ? 'nsfw' : 'sfw'
+                        const aspectRatio = null
+                        generateTxt2img(title, prompt, aspectRatio, userId, chatId, userChatId, imageType, image_num, fastify)
+                        .then((taskStatus) => {
+                            fastify.sendNotificationToUser(userId, 'handleLoader', { imageId, action:'remove' })
+                            const { images } = taskStatus;
+                            for (const image of images) {
+                                const { imageId, imageUrl, prompt, title, nsfw } = image;
+                                const { userId, userChatId } = taskStatus;
+                                console.log('Image generated:', imageUrl);
+                                fastify.sendNotificationToUser(userId, 'imageGenerated', {
+                                    imageUrl,
+                                    imageId,
+                                    userChatId,
+                                    title,
+                                    prompt,
+                                    nsfw
+                                });
+                            }
+                        });
+                    })
+                    imgMessage[0].content = `\n\nI just asked for a new image and your are currently preparing it.\n Provide a concise answer in ${language} to inform that your are taking a good picture to send. Do no describe the image or anything. Stay in your character, keep the same tone as previously. Continue the chat,`.trim()
                 }
-                genImagePromptFromChat(chatDocument, userData.messages, genImage, language).then((promptData) => {
-                    const prompt = promptData.prompt
-                    processPromptToTags(db,prompt);
-                    const title = promptData.title
-                    const imageType = genImage.nsfw ? 'nsfw' : 'sfw'
-                    const aspectRatio = null
-                    generateTxt2img(title, prompt, aspectRatio, userId, chatId, userChatId, imageType, image_num, fastify)
-                    .then((taskStatus) => {
-                        fastify.sendNotificationToUser(userId, 'handleLoader', { imageId, action:'remove' })
-                        const { images } = taskStatus;
-                        for (const image of images) {
-                            const { imageId, imageUrl, prompt, title, nsfw } = image;
-                            const { userId, userChatId } = taskStatus;
-                            console.log('Image generated:', imageUrl);
-                            fastify.sendNotificationToUser(userId, 'imageGenerated', {
-                                imageUrl,
-                                imageId,
-                                userChatId,
-                                title,
-                                prompt,
-                                nsfw
-                            });
-                        }
-                    });
-                })
-                imgMessage[0].content = `\n\nI just asked for a new image and your are currently preparing it.\n Provide a concise answer in ${language} to inform that your are taking a good picture to send. Do no describe the image or anything. Stay in your character, keep the same tone as previously. Continue the chat,`.trim()
+               
             }else{
                 genImage.image_request = false
                 imgMessage[0].content = `\n\n I asked for an image but I am not a subscribed member.\n Tell me that I need to subscribe to Lamix Premim in order to receive images, even hot images. Provide a concise answer in ${language} to inform me of that and ask me subscribe. Stay in your character, keep the same tone as previously.`.trim()

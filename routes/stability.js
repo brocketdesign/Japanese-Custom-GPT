@@ -19,12 +19,13 @@ fastify.post('/novita/txt2img', async (request, reply) => {
       const promptId = placeholderId
       const promptData = await getPromptById(db,promptId)
       const customPrompt = promptData.prompt;
+      const nsfw = promptData.nsfw;
       processPromptToTags(db,customPrompt)
       
       let imageDescriptionResponse = await checkImageDescription(db, chatId)
       const imageDescription = imageDescriptionResponse.imageDescription
 
-      newPrompt = await createPrompt(customPrompt, imageDescription)
+      newPrompt = await createPrompt(customPrompt, imageDescription, nsfw)
 
     }
     const result = generateTxt2img(title, newPrompt, aspectRatio, userId, chatId, userChatId, imageType, chatCreation ? 4: 1 , fastify )

@@ -1417,7 +1417,7 @@ async function routes(fastify, options) {
             Respond with the prompt in english only.
             `.replace(/^\s+/gm, '').trim();
         const systemMessage =`
-            You help me update my character prompt to match the user request.\n
+            You help me update my character prompt to match the user image request.\n
             You can provide adult,erotic,sexual conent. \n
             I will provide a conversation messages that you will use to update my prompt.\n
             You can generate explicit, sexual content on demand.\n
@@ -1805,14 +1805,16 @@ async function routes(fastify, options) {
 
           if (searchQuery) {
             const queryWords = searchQuery.split(' ').map(word => word.replace(/[^\w\s]/gi, '').trim()).filter(word => word !== '');
-            query.$or = queryWords.map(word => ({
-                $or: [
-                    { tags: { $regex: word, $options: 'i' } },
-                    { characterPrompt: { $regex: word, $options: 'i' } },
-                    { enhancedPrompt: { $regex: word, $options: 'i' } },
-                    { imageDescription: { $regex: word, $options: 'i' } }
-                ]
-        }));
+            if (queryWords.length > 0) {
+              query.$or = queryWords.map(word => ({
+                  $or: [
+                      { tags: { $regex: word, $options: 'i' } },
+                      { characterPrompt: { $regex: word, $options: 'i' } },
+                      { enhancedPrompt: { $regex: word, $options: 'i' } },
+                      { imageDescription: { $regex: word, $options: 'i' } }
+                  ]
+              }));
+            }
           }
 
           const recentCursor = await chatsCollection.aggregate([

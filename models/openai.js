@@ -96,24 +96,29 @@ const processResponse = async (response, res, genImage) => {
       };
 
       if (event.startsWith('data: ')) {
-        const parsedData = JSON.parse(event.slice(6));
-        const content = (parsedData.choices && parsedData.choices.length > 0)
-          ? (parsedData.choices[0].delta?.content || "")
-          : "";
+        try {
+          const parsedData = JSON.parse(event.slice(6));
+          const content = (parsedData.choices && parsedData.choices.length > 0)
+            ? (parsedData.choices[0].delta?.content || "")
+            : "";
 
-        for (let i = 0; i < content.length; i++) {
-          const char = content[i];
-          fullCompletion += char;
-          res.write(`data: ${JSON.stringify({ type: 'text', content: char })}\n\n`);
-        }
+          for (let i = 0; i < content.length; i++) {
+            const char = content[i];
+            fullCompletion += char;
+            res.write(`data: ${JSON.stringify({ type: 'text', content: char })}\n\n`);
+          }
 
-        if (genImage?.image_request && !triggerSent) {
-          res.write(`data: ${JSON.stringify({
-            type: 'trigger',
-            name: 'image_request',
-            command: genImage
-          })}\n\n`);
-          triggerSent = true;
+          if (genImage?.image_request && !triggerSent) {
+            res.write(`data: ${JSON.stringify({
+              type: 'trigger',
+              name: 'image_request',
+              command: genImage
+            })}\n\n`);
+            triggerSent = true;
+          }
+        } catch (error) {
+          console.error("Error parsing JSON:", error);
+          console.log({event})
         }
       }
     }
@@ -243,28 +248,35 @@ const checkImageRequest = async (messages) => {
     
 }
 // Combine the user's custom prompt and image description to create a new prompt
-async function createPrompt(customPrompt, imageDescription) {
+async function createPrompt(customPrompt, imageDescription, nsfw) {
+  const nsfwMessage = nsfw 
+            ? 'Provide explicit, adult oriented content for a nsfw image. I want nudity, erotism.\n' 
+            : '';
   const messages = [
     {
       role: "system",
-      content: `You are a prompt designer.\n
-      You generate a new prompt by combining a custom prompt and an image description.\n 
-      You can generate adult content or sexual content.\n
-      You must follow the custom prompt as it is the main focus of the new prompt but keep the character main characteristic to avoid generating a different character.\n`
+      content: `
+      You help me update my character prompt to match the user image request.\n
+      You can provide adult,erotic,sexual conent. \n
+      I will provide an image request that you will use to update my prompt.\n
+      You can generate explicit, sexual content on demand.\n
+      Use explicit keywords to describe body parts (ass,pussy,boobs), clothes.\n
+      You must follow the image request as it is the main focus of the new prompt but keep the character main characteristic to avoid generating a different character.\n`
     },
     {
       role: "user",
-      content: `Here is the custom prompt: ${customPrompt}`
+      content: `Here is the prompt I want you to update : ${imageDescription}\n${nsfwMessage}`.replace(/^\s+/gm, '').trim()
     },
     {
       role: "user",
-      content: `Here is the image description: ${imageDescription}`
+      content: `Here is the image request : ${customPrompt}`.replace(/^\s+/gm, '').trim()
     },
     { 
       role:"user",
-      content: `Generate a new prompt by combining the custom prompt and the image description. \n 
-      You must include the character's skin color, hair color, and eye color in the new prompt. \n
-      You must answer in English with the new prompt. Do not include anything else in the response.`
+      content: `You must adapt the prompt to the image request but keep the character traits. \n
+      Remove unrelevant keywords and adapt to the image request.\n 
+      You must include the character's skin color, hair color, and eye color in the new prompt. Keep the same clothes if not asked otherwise. \n
+      You must answer in English with the new prompt. Do not include anything else in the response.`.replace(/^\s+/gm, '').trim()
     }
   ];
 

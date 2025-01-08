@@ -195,9 +195,12 @@ async function routes(fastify, options) {
       const queryWords = queryStr.split(' ').filter(word => word.replace(/[^\w\s]/gi, '').trim() !== '');
       const matchCriteria = {
         'images.imageUrl': { $exists: true, $ne: null },
-        $or: queryWords.map(word => ({ 'images.prompt': { $regex: word, $options: 'i' } })),
         chatId: { $in: chatIds }
       };
+
+      if (queryWords.length > 0) {
+        matchCriteria.$or = queryWords.map(word => ({ 'images.prompt': { $regex: word, $options: 'i' } }));
+      }
 
       const [allChatImagesDocs, totalCountDocs] = await Promise.all([
         chatsGalleryCollection.aggregate([

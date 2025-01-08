@@ -37,7 +37,7 @@ $(document).ready(async function() {
         if (event.data.event === 'displayMessage') {
             const { role, message, completion, image, messageId } = event.data
             displayMessage(role, message, userChatId, function() {
-                addMessageToChat(chatId, userChatId, role, message, function(error, res) {
+                addMessageToChat(chatId, userChatId, {role, message}, function(error, res) {
                     const messageContainer = $(`#chatContainer[data-id=${userChatId}]`)
                     if (error) {
                         console.error('Error adding message:', error);
@@ -67,7 +67,7 @@ $(document).ready(async function() {
             const role = event.data.role || 'user'
             const completion = event.data.completion
             if(!message)return
-            addMessageToChat(chatId, userChatId, role, message,function(){
+            addMessageToChat(chatId, userChatId, {role, message},function(){
                 if(completion){
                     generateCompletion()
                 }
@@ -79,7 +79,7 @@ $(document).ready(async function() {
             const imageId = event.data.imageId
             if(!imageId)return
             let message = `[imageFav] ${imageId}`
-            addMessageToChat(chatId, userChatId, 'user', message, function(){
+            addMessageToChat(chatId, userChatId, {role:'user', message}, function(){
                 generateCompletion()
             });
         }
@@ -88,7 +88,7 @@ $(document).ready(async function() {
         if (event.data.event === 'imageStart') {
             const prompt = event.data.prompt
             const message = '[imageStart]'+ prompt
-            addMessageToChat(chatId, userChatId, 'user', message, function(){
+            addMessageToChat(chatId, userChatId, {role:'user', message}, function(){
                 generateCompletion(null,true)
             });
         }
@@ -97,7 +97,7 @@ $(document).ready(async function() {
         if (event.data.event === 'imageDone') {
             const prompt = event.data.prompt
             const message = '[imageDone]'+ prompt
-            addMessageToChat(chatId, userChatId, 'user', message, function(){
+            addMessageToChat(chatId, userChatId, {role:'user', message}, function(){
                 generateCompletion()
             });
         }
@@ -106,7 +106,7 @@ $(document).ready(async function() {
         if (event.data.event === 'imageError') {
             const error = event?.data?.error || ''
             let message = `[master] There way an error. The image could not be generated ${error}.`
-            addMessageToChat(chatId, userChatId, 'user', message,function(){
+            addMessageToChat(chatId, userChatId, {role:'user', message},function(){
                 generateCompletion()
             });
         }
@@ -295,7 +295,7 @@ $(document).ready(async function() {
             }
             $('#userMessage').val(''); // Clear the input field
             // Send the message to the backend
-            addMessageToChat(chatId, userChatId, 'user', message, function(){
+            addMessageToChat(chatId, userChatId, {role: 'user', message}, function(){
                 generateCompletion(null,true)
             });
         }
@@ -1392,6 +1392,7 @@ $(document).ready(async function() {
         }
 
         displayOrRemoveImageLoader(id, 'show');
+
         txt2ImageNovita(userId, chatId, userChatId, {placeholderId:id, imageNsfw, customPrompt:true})
 
     });
@@ -1625,7 +1626,8 @@ function renderChatDropdown(chat) {
     return dropdownHtml 
 }
   
-window.addMessageToChat = function(chatId, userChatId, role, message, callback) {
+window.addMessageToChat = function(chatId, userChatId, option, callback) {
+    const { message, role, image_request } = option;
     $.ajax({
         url: '/api/chat/add-message',
         type: 'POST',

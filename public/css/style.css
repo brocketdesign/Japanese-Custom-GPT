@@ -664,6 +664,9 @@ nav.navbar.move {
   outline: none;
   box-shadow: none; /* If there is a box shadow applied on focus */
 }
+#userMessage.male{
+  border-radius: 50px 0px 0px 50px !important;
+}
 .user-chat{
   cursor: pointer;
 }

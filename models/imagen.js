@@ -107,7 +107,7 @@ async function generateTxt2img(title, prompt, aspectRatio, userId, chatId, userC
   
     // Prepare params
     const requestData = { ...params, ...image_request, image_num };
-    console.log({ model_name: requestData.model_name, prompt: requestData.prompt });
+    console.log({ model_name: requestData.model_name, prompt: requestData.prompt, nsfw: image_request.type });
   
     let newTitle = title;
     if (!title) {

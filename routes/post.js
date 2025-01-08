@@ -239,6 +239,7 @@ async function routes(fastify, options) {
       const totalPosts = await postsCollection.countDocuments(query);
   
       if (userPosts.length === 0) {
+        console.log("No posts found");
         return reply.code(404).send({ error: 'No posts found' });
       }
   
@@ -252,7 +253,6 @@ async function routes(fastify, options) {
       reply.code(500).send('Internal Server Error');
     }
   });
-  
   fastify.post('/posts/:id/comment', async (request, reply) => {
     try {
       const postId = new fastify.mongo.ObjectId(request.params.id);

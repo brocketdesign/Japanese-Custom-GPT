@@ -8,7 +8,8 @@ async function routes(fastify, options) {
 
 // Endpoint to initiate txt2img for selected image type
 fastify.post('/novita/txt2img', async (request, reply) => {
-  const { title, prompt, aspectRatio, userId, chatId, userChatId, imageType, placeholderId, customPrompt, chatCreation } = request.body;
+  const { title, prompt, aspectRatio, userId, chatId, userChatId, placeholderId, customPrompt, chatCreation } = request.body;
+  let imageType = request.body.imageType
   const db = fastify.mongo.db;
   try {
     const pending_taks =  await getTasks(db, 'pending', userId)
@@ -19,7 +20,8 @@ fastify.post('/novita/txt2img', async (request, reply) => {
       const promptId = placeholderId
       const promptData = await getPromptById(db,promptId)
       const customPrompt = promptData.prompt;
-      const nsfw = promptData.nsfw;
+      const nsfw = promptData.nsfw == 'on' ? true : false;
+      imageType = nsfw ? 'nsfw' : 'sfw'
       processPromptToTags(db,customPrompt)
       
       let imageDescriptionResponse = await checkImageDescription(db, chatId)
@@ -28,6 +30,7 @@ fastify.post('/novita/txt2img', async (request, reply) => {
       newPrompt = await createPrompt(customPrompt, imageDescription, nsfw)
 
     }
+
     const result = generateTxt2img(title, newPrompt, aspectRatio, userId, chatId, userChatId, imageType, chatCreation ? 4: 1 , fastify )
     .then((taskStatus) => {
       fastify.sendNotificationToUser(userId, 'handleLoader', { imageId:placeholderId, action:'remove' })

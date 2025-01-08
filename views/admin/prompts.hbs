@@ -13,6 +13,7 @@
         <th>画像</th>
         <th>タイトル</th>
         <th>プロンプト</th>
+        <th>NSFW</th>
         <th>アクション</th>
       </tr>
     </thead>
@@ -22,6 +23,7 @@
         <td><img src="{{this.image}}" alt="{{this.title}}" class="img-thumbnail" style="width: 100px;"></td>
         <td>{{this.title}}</td>
         <td>{{this.prompt}}</td>
+        <td>{{this.nsfw}}</td>
         <td>
           <button class="btn btn-info btn-sm preview-btn" data-id="{{this._id}}">プレビュー</button>
           <button class="btn btn-warning btn-sm edit-btn" data-id="{{this._id}}">編集</button>
@@ -62,7 +64,7 @@
         </div>
         <div class="modal-body">
           <input type="hidden" id="editId" name="id">
-            <div class="mb-3"></div>
+          <div class="mb-3">
             <label for="editTitle" class="form-label">タイトル</label>
             <input type="text" class="form-control" id="editTitle" name="title" required>
           </div>
@@ -73,6 +75,14 @@
           <div class="mb-3">
             <label for="editImage" class="form-label">画像をアップロード</label>
             <input type="file" class="form-control" id="editImage" name="image" accept="image/*">
+          </div>
+          <div class="col-auto mb-3">
+              <label for="editGender" class="form-label">{{translations.newCharacter.genderLabel}}:</label>
+              <select class="form-select" id="editGender" name="editGender">
+                  <option value="female">{{translations.newCharacter.female}}</option>
+                  <option value="male">{{translations.newCharacter.male}}</option>
+                  <option value="nonBinary">{{translations.newCharacter.nonBinary}}</option>
+              </select>
           </div>
           <div class="mb-3">
             <label for="editNsfw" class="form-label">NSFW</label>
@@ -129,6 +139,14 @@
             '<div class="mb-3">' +
               '<label for="newImage" class="form-label">画像をアップロード</label>' +
               '<input type="file" class="form-control" id="newImage" name="image" accept="image/*" required>' +
+            '</div>' +
+            '<div class="col-auto mb-3">' +
+              '<label for="newGender" class="form-label">{{translations.newCharacter.genderLabel}}:</label>' +
+              '<select class="form-select" id="newGender" name="gender">' +
+          '<option value="female">{{translations.newCharacter.female}}</option>' +
+          '<option value="male">{{translations.newCharacter.male}}</option>' +
+          '<option value="nonBinary">{{translations.newCharacter.nonBinary}}</option>' +
+              '</select>' +
             '</div>' +
             '<div class="mb-3">' +
               '<label for="newNsfw" class="form-label">NSFW</label>' +

@@ -407,7 +407,7 @@
     "enable_enhanced_prompt":"強化プロンプトを有効にする",
     "character_prompt":"キャラクタープロンプト",
     "image_style":"画像スタイル",
-    "image_generation_message":"ただいま画像を4枚生成しています。1分ほどお待ちください。",
+    "image_generation_message":"ただいま画像を2枚生成しています。1分ほどお待ちください。",
     "stepProgress": "ステップ",
     "characterCreationForm": "キャラクター作成フォーム",
     "characterPromptLabel": "キャラクタープロンプト",

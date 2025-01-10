@@ -13,6 +13,7 @@
     "chat": "Chat",
     "delete": "Supprimer"
   },
+  "free_usage_image_limit": "Vous avez atteint la limite d'utilisation gratuite quotidienne. Veuillez passer à un plan premium pour continuer à utiliser le service.",
   "too_many_pending_images": "Vous avez trop d'images en attente. Veuillez attendre que les images en attente soient générées.",
   "tags": "Tags",
   "chat_gallery":"Galerie de Chat",

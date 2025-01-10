@@ -1023,7 +1023,9 @@ async function routes(fastify, options) {
           if (genImage?.image_request) {
             currentUserMessage.image_request = true
             userData.messages[lastMsgIndex] = currentUserMessage
-            if(userInfo.subscriptionStatus == 'active'){
+            const all_tasks =  await getTasks(db,null, userId)
+
+            if(userInfo.subscriptionStatus == 'active' || (userInfo.subscriptionStatus !== 'active' && all_tasks.length < 5)){
                 const imageId = Math.random().toString(36).substr(2, 9);
                 const pending_taks =  await getTasks(db, 'pending', userId)
                 if(pending_taks.length > 5){
@@ -1067,6 +1069,7 @@ async function routes(fastify, options) {
                 genImage.image_request = false
                 imgMessage[0].content = `\n\n I asked for an image but I am not a subscribed member.\n Tell me that I need to subscribe to Lamix Premim in order to receive images, even hot images. Provide a concise answer in ${language} to inform me of that and ask me subscribe. Stay in your character, keep the same tone as previously.`.trim()
             }
+
             messagesForCompletion = [
               ...systemMsg,
               ...userMessages,

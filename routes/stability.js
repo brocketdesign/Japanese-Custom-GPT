@@ -12,12 +12,18 @@ fastify.post('/novita/txt2img', async (request, reply) => {
   let imageType = request.body.imageType
   const db = fastify.mongo.db;
   try {
+    const all_tasks =  await getTasks(db,null, userId)
+
+    if(request.user.subscriptionStatus !== 'active' && all_tasks.length >= 5){
+      fastify.sendNotificationToUser(userId, 'showNotification', { message:request.translations.free_usage_image_limit , icon:'warning' })
+      return reply.status(500).send({ error: 'You reached the limit of the free usage' });
+    }
     const pending_taks =  await getTasks(db, 'pending', userId)
     if(pending_taks.length > 5){
-      fastify.sendNotificationToUser(userId, 'showNotification', { message:request.translations.too_many_pending_images , icon:'wrning' })
-      reply.status(500).send({ error: 'You have too many pending images, please wait for them to finish' });
-      return
+      fastify.sendNotificationToUser(userId, 'showNotification', { message:request.translations.too_many_pending_images , icon:'warning' })
+      return reply.status(500).send({ error: 'You have too many pending images, please wait for them to finish' });
     }
+
     let newPrompt = prompt
     if(customPrompt){
       const promptId = placeholderId

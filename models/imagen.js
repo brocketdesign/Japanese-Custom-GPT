@@ -193,8 +193,15 @@ async function deleteOldTasks(db) {
   try {
     const tasksCollection = db.collection('tasks');
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-    const result = await tasksCollection.deleteMany({ createdAt: { $lt: fiveMinutesAgo } });
-    console.log(`Deleted ${result.deletedCount} old tasks`);
+    const result =  tasksCollection.deleteMany({ createdAt: { $lt: fiveMinutesAgo }, status: { $in: ['pending', 'failed'] } });
+
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const result2 =  tasksCollection.deleteMany({ createdAt: { $lt: yesterday }, status: 'completed' });
+
+    const allResults = await Promise.all([result, result2]);
+    allResults.forEach((res, index) => {
+      console.log(`Deleted ${res.deletedCount} old tasks for query ${index}`);
+    });
   } catch (error) {
     console.error('Error deleting old tasks:', error);
   }

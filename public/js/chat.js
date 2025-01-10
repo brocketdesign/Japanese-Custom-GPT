@@ -1432,9 +1432,16 @@ $(document).ready(async function() {
         }
 
         displayOrRemoveImageLoader(id, 'show');
-
         txt2ImageNovita(userId, chatId, userChatId, {placeholderId:id, imageNsfw, customPrompt:true})
-
+        .then(data => {
+            if(data.error){
+                displayOrRemoveImageLoader(id, 'remove');
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            displayOrRemoveImageLoader(id, 'remove');
+        });
     });
     
     $(document).on('click', '.regen-img', function () {
@@ -1443,19 +1450,27 @@ $(document).ready(async function() {
             showNotification(window.translations.image_generation_processing,'warning')
             return
         }
-
-        $(this).addClass('spin')
+        const button = $(this)
+        button.addClass('spin')
 
         const imageNsfw = $(this).attr('data-nsfw') == 'true' ? 'nsfw' : 'sfw'
         const imagePrompt = $(this).data('prompt')
         const placeholderId = $(this).data('id')
         displayOrRemoveImageLoader(placeholderId, 'show');
 
-        if($(this).hasClass('img2img')){
-            img2ImageNovita(userId, chatId, userChatId, {prompt:imagePrompt, imageNsfw, placeholderId})
-        }
         if($(this).hasClass('txt2img')){
-            txt2ImageNovita(userId, chatId, userChatId, {prompt:imagePrompt, imageNsfw, placeholderId});
+            txt2ImageNovita(userId, chatId, userChatId, {prompt:imagePrompt, imageNsfw, placeholderId})
+            .then(data => {
+                if(data.error){
+                    displayOrRemoveImageLoader(placeholderId, 'remove');
+                    button.removeClass('spin');
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                displayOrRemoveImageLoader(placeholderId, 'remove');
+                button.removeClass('spin');
+            });
         }
     });
     

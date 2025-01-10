@@ -17,7 +17,7 @@ window.txt2ImageNovita = async function(userId, chatId, userChatId, option = {})
 
         const API_ENDPOINT = `${API_URL}/novita/txt2img`;
 
-        await fetch(API_ENDPOINT, {
+        const response = await fetch(API_ENDPOINT, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -34,6 +34,8 @@ window.txt2ImageNovita = async function(userId, chatId, userChatId, option = {})
             })
         });
 
+        const data = await response.json();
+        return data;
     } catch (error) {
         console.error('generateImageNovita Error:', error);
     }
@@ -73,7 +75,7 @@ window.handleRegenSpin = function (imageId, spin) {
 // Display and remove image loader with provided data-id
 window.displayOrRemoveImageLoader = function (imageId, action) {
     if (action === 'remove') {
-        $(`[data-id=${imageId}]`).remove();
+        $(`#chat-recommend [data-id=${imageId}]`).remove();
     } else {
         const placeholder = "/img/image-placeholder.gif";
         const card = $(`

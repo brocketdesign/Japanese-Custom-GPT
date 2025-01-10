@@ -1,5 +1,18 @@
 {
   "lang":"fr",
+  "admin_user": {
+    "recent_users": "Utilisateurs récents",
+    "registered_users": "Utilisateurs enregistrés",
+    "date": "Date",
+    "email": "E-mail",
+    "name": "Nom",
+    "gender": "Genre",
+    "subscription": "Abonnement",
+    "actions": "Actions",
+    "toggle_subscription": "Basculer l'abonnement",
+    "chat": "Chat",
+    "delete": "Supprimer"
+  },
   "too_many_pending_images": "Vous avez trop d'images en attente. Veuillez attendre que les images en attente soient générées.",
   "tags": "Tags",
   "chat_gallery":"Galerie de Chat",

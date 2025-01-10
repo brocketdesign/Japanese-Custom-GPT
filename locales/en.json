@@ -1,5 +1,18 @@
 {
   "lang":"en",
+  "admin_user": {
+    "recent_users": "Recent Users",
+    "registered_users": "Registered Users",
+    "date": "Date",
+    "email": "Email",
+    "name": "Name",
+    "gender": "Gender",
+    "subscription": "Subscription",
+    "actions": "Actions",
+    "toggle_subscription": "Toggle Subscription",
+    "chat": "Chat",
+    "delete": "Delete"
+  },
   "too_many_pending_images": "You have too many pending images. Please wait for the current images to be generated.",
   "tags": "Tags",
   "chat_gallery":"Chat Gallery",

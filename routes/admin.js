@@ -101,7 +101,12 @@ async function routes(fastify, options) {
             
             const users = await getUniqueUsers()
             const translations = request.translations
-            return reply.view('/admin/users',{users,title:'Latest users', translations})
+            return reply.view('/admin/users',{
+              user: request.user,
+              users,
+              title:translations.admin_user.recent_users, 
+              translations
+            })
         } catch (error) {
             return reply.status(500).send({ error: error.message });
         }
@@ -192,7 +197,7 @@ async function routes(fastify, options) {
                 femalePercentage, 
                 maleCount,
                 malePercentage,
-                title:'Registered users'})
+                title:translations.admin_user.registered_users})
         } catch (error) {
             return reply.status(500).send({ error: error.message });
         }
@@ -236,7 +241,10 @@ async function routes(fastify, options) {
         name: chatMap[chat.chatId.toString()] || 'Unknown Chat'
         }));
 
-        return reply.view('/admin/chats', { chats: enrichedChats });
+        return reply.view('/admin/chats', { 
+          user: request.user,
+          chats: enrichedChats 
+        });
         } catch (error) {
           console.error('Error fetching chats:', error);
           return reply.status(500).send({ error: error.message });

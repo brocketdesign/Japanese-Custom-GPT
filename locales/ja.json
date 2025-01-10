@@ -1,5 +1,18 @@
 {
   "lang":"ja",
+  "admin_user": {
+    "recent_users": "最近のユーザー",
+    "registered_users": "登録ユーザー",
+    "date": "日付",
+    "email": "メール",
+    "name": "名前",
+    "gender": "性別",
+    "subscription": "サブスクリプション",
+    "actions": "アクション",
+    "toggle_subscription": "サブスクリプションの切り替え",
+    "chat": "チャット",
+    "delete": "削除"
+  },
   "too_many_pending_images":"画像生成タスクが多すぎます。後で再試行してください。",
   "tags": "タグ",
   "chat_gallery":"チャットギャラリー",

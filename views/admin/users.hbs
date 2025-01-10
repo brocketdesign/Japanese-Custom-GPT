@@ -8,8 +8,8 @@
     <h2 class="mb-4">{{title}}</h2>
     <div class="d-flex justify-content-between">
         <div>
-            <a href="/admin/users" class="btn btn-outline-dark mb-3">Latest users</a>
-            <a href="/admin/users/registered" class="btn btn-outline-dark mb-3">Registered users</a>
+            <a href="/admin/users" class="btn btn-outline-dark mb-3">{{translations.admin_user.recent_users}}</a>
+            <a href="/admin/users/registered" class="btn btn-outline-dark mb-3">{{translations.admin_user.registered_users}}</a>
         </div>
         <div>
             <span class="badge bg-dark"><i class="bi bi-people me-2"></i>{{users.length}}</span>
@@ -21,12 +21,12 @@
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>Date</th>
-                    <th>Email</th>
-                    <th>Name</th>
-                    <th>Gender</th>
-                    <th>Subscription</th>
-                    <th>Actions</th>
+                    <th>{{translations.admin_user.date}}</th>
+                    <th>{{translations.admin_user.email}}</th>
+                    <th>{{translations.admin_user.name}}</th>
+                    <th>{{translations.admin_user.gender}}</th>
+                    <th>{{translations.admin_user.subscription}}</th>
+                    <th>{{translations.admin_user.actions}}</th>
                 </tr>
             </thead>
             <tbody>
@@ -45,17 +45,17 @@
                             <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton{{this._id}}">
                                 <li>
                                     <button class="dropdown-item subscriptionToggle" data-user-id="{{this._id}}">
-                                        <i class="bi bi-pencil-square me-2"></i> Toggle Subscription
+                                        <i class="bi bi-pencil-square me-2"></i> {{../translations.admin_user.toggle_subscription}}
                                     </button>
                                 </li>
                                 <li>
                                     <a class="dropdown-item" href="/admin/chat/{{this._id}}">
-                                        <i class="bi bi-chat-dots me-2"></i> View Chats
+                                        <i class="bi bi-chat-dots me-2"></i> {{../translations.admin_user.chat}}
                                     </a>
                                 </li>
                                 <li>
                                     <button class="dropdown-item delete-user" data-user-id="{{this._id}}">
-                                        <i class="bi bi-trash me-2"></i> Delete User
+                                        <i class="bi bi-trash me-2"></i> {{../translations.admin_user.delete}}
                                     </button>
                                 </li>
                             </ul>

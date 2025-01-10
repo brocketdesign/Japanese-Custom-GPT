@@ -412,7 +412,7 @@
     "enable_enhanced_prompt":"Enable Enhanced Prompt",
     "character_prompt":"Character Prompt",
     "image_style":"Image Style",
-    "image_generation_message":"Currently generating 4 images. Please wait for about a minute.",
+    "image_generation_message":"Currently generating 2 images. Please wait for about a minute.",
     "stepProgress": "Step",
     "characterCreationForm": "Character Creation Form",
     "characterPromptLabel": "Character Prompt",

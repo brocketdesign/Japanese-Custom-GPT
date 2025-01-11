@@ -453,7 +453,7 @@ $(document).ready(function() {
             showCloseButton: true,
             showConfirmButton: false,
             width: '100%',
-            height: '100vh',
+            zoom: true,
             background: 'rgba(0,0,0,0.85)',
             customClass: {
                 popup: 'bg-transparent animated-popup image-preview p-0',
@@ -475,6 +475,12 @@ $(document).ready(function() {
                     },
                     autoHeight: true,
                     slideToSHow : 1,
+                    responsive: true,
+                    breakpoints: {
+                        1024: {
+                            slidesPerView: 3,
+                        },
+                    },
                     zoom: {
                         maxRatio: 3,
                     },

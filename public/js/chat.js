@@ -1248,25 +1248,54 @@ $(document).ready(async function() {
     function startStream(uniqueId, sessionId, callback, isHidden, container) {
         let markdownContent = { val: '' };
         const streamUrl = API_URL + `/api/openai-chat-completion-stream/${sessionId}`;
-        activeStreams[uniqueId] = new EventSource(streamUrl);
-
-        // Disable the text area during the stream
-        $('#userMessage').prop('disabled', true);
-
-        activeStreams[uniqueId].onmessage = e => {
-            if (handleStreamMessage(e, uniqueId, markdownContent)) {
-                // Re-enable the text area after the stream ends
-                $('#userMessage').prop('disabled', false);
-                if (typeof callback === 'function') callback();
-            }
-        };
-        activeStreams[uniqueId].onerror = () => {
-            handleStreamError(uniqueId, markdownContent, container, callback, isHidden);
-            // Re-enable the text area if there's an error
-            $('#userMessage').prop('disabled', false);
-        };
+        const maxCheckInterval = 10000; // Maximum interval to check stream activity
+        let checkInterval = 2000; // Initial interval
+        let lastUpdateTime = Date.now();
+    
+        function startEventSource() {
+            activeStreams[uniqueId] = new EventSource(streamUrl);
+    
+            activeStreams[uniqueId].onmessage = e => {
+                if (e.data !== '[DONE]') {
+                    if (handleStreamMessage(e, uniqueId, markdownContent)) {
+                        lastUpdateTime = Date.now(); // Update activity timestamp
+                        if (typeof callback === 'function') callback(markdownContent.val);
+                    }
+                } else {
+                    activeStreams[uniqueId].close(); // Gracefully close the stream
+                }
+            };
+    
+            activeStreams[uniqueId].onerror = () => {
+                activeStreams[uniqueId].close(); // Handle errors gracefully
+            };
+    
+            monitorStream(); // Start monitoring activity
+        }
+    
+        function monitorStream() {
+            const monitor = setInterval(() => {
+                if (!activeStreams[uniqueId] || activeStreams[uniqueId].readyState === 2) {
+                    clearInterval(monitor); // Stop monitoring if stream is closed
+                    return;
+                }
+    
+                if (Date.now() - lastUpdateTime > checkInterval) {
+                    checkInterval = Math.min(checkInterval * 2, maxCheckInterval); // Exponential backoff
+                } else {
+                    checkInterval = 2000; // Reset check interval if activity is detected
+                }
+    
+                if (checkInterval === maxCheckInterval) {
+                    activeStreams[uniqueId].close(); // Close the stream after max interval
+                    clearInterval(monitor);
+                }
+            }, checkInterval);
+        }
+    
+        startEventSource();
     }
-
+    
     function generateCompletion(callback, isHidden = false) {
     hideOtherChoice(false, currentStep);
     const uniqueId = `${currentStep}-${Date.now()}`;

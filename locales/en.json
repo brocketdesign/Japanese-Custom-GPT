@@ -1,5 +1,10 @@
 {
-  "lang":"en",
+  "lang":"en", 
+  "admin": {
+        "users": "Users",
+        "prompts": "Prompts",
+        "notifications": "Notifications"
+  },
   "admin_user": {
     "recent_users": "Recent Users",
     "registered_users": "Registered Users",

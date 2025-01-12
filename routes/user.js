@@ -137,7 +137,7 @@ async function routes(fastify, options) {
         return reply
             .clearCookie('tempUser', { path: '/' })
             .setCookie('token', token, { path: '/', httpOnly: true })
-            .send({ redirect: '/dashboard' });
+            .send({ redirect: '/chat/' });
     } catch (error) {
         // Catch unexpected errors
         console.error('Login route error:', error);

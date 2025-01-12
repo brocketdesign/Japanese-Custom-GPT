@@ -81,7 +81,7 @@ async function routes(fastify, options) {
   
       return reply
         .setCookie('token', token, { path: '/', httpOnly: true })
-        .send({ status: 'ユーザーが正常に登録されました', redirect: '/dashboard' });
+        .send({ status: 'ユーザーが正常に登録されました', redirect: '/chat/' });
     } catch (err) {
       console.log(err);
       return reply.status(500).send({ error: 'サーバーエラーが発生しました' });
@@ -238,7 +238,7 @@ fastify.get('/user/google-auth/callback', async (request, reply) => {
       const token = jwt.sign({ _id: userId, email }, process.env.JWT_SECRET, { expiresIn: '24h' });
       return reply
       .setCookie('token', token, { path: '/', httpOnly: true })
-      .redirect('/dashboard')
+      .redirect('/chat/')
       .send({ status: 'ユーザーが正常に登録されました' });
     } else {
       // Update the user's Google ID if it's not already set
@@ -250,7 +250,7 @@ fastify.get('/user/google-auth/callback', async (request, reply) => {
       const token = jwt.sign({ _id: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '24h' });
       return reply
       .setCookie('token', token, { path: '/', httpOnly: true })
-      .redirect('/dashboard')
+      .redirect('/chat/')
     }
   } catch (err) {
     fastify.log.error(err);
@@ -359,7 +359,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       const token = jwt.sign({ _id: newUserId, userId }, process.env.JWT_SECRET, { expiresIn: '24h' });
       return reply
         .setCookie('token', token, { path: '/', httpOnly: true })
-        .redirect('/dashboard')
+        .redirect('/chat/')
         .send({ status: 'ユーザーが正常に登録されました' });
     } else {
       // Login the user if they already exist
@@ -367,7 +367,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       const token = jwt.sign({ _id: user._id, userId: user.userId }, process.env.JWT_SECRET, { expiresIn: '24h' });
       return reply
         .setCookie('token', token, { path: '/', httpOnly: true })
-        .redirect('/dashboard');
+        .redirect('/chat/');
     }
   } catch (err) {
     fastify.log.error(err.response ? err.response.data : err.message);

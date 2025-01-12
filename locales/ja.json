@@ -1,5 +1,10 @@
 {
   "lang":"ja",
+  "admin": {
+        "users": "ユーザー",
+        "prompts": "プロンプト",
+        "notifications": "通知"
+  },
   "admin_user": {
     "recent_users": "最近のユーザー",
     "registered_users": "登録ユーザー",

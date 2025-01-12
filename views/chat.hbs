@@ -149,14 +149,23 @@
                                 </div>
                                 <div id="promptList" class="row mx-0 pb-2">
                                     <h4 class="text-center w-100">{{translations.selectPose}}</h4>
-                                    <p class="text-center text-muted w-100">{{translations.selectPose_description}}</p>
-                                    <!-- Prompts will be dynamically generated here -->
+                                    <p class="text-center text-muted w-100">{{translations.selectPose_description}}</p><!-- Prompts will be dynamically generated here -->
                                     {{#each promptData}}
-                                        <div class="prompt-card col-6 col-sm-3 border-0 shadow-0 mb-1 " data-id="{{_id}}" data-nsfw="{{eq nsfw 'on'}}" style="cursor:pointer;">
-                                            <img src="{{image}}" class="rounded w-100" style="height:200px;object-fit:contain;">
-                                            <p class="d-none" style="font-size:12px;margin:0;text-align:center;">{{title}}</p>
+                                        <div class="prompt-card col-6 col-sm-3 border-0 shadow-0 mb-1" 
+                                            data-id="{{_id}}" 
+                                            data-nsfw="{{eq nsfw 'on'}}" 
+                                            style="cursor:pointer;">
+                                            <!-- Placeholder image that will be replaced when loaded -->
+                                            <img 
+                                                src="/img/image-placeholder-1.gif"
+                                                data-src="{{image}}" 
+                                                class="lazy-image rounded w-100" 
+                                                alt="Prompt Image" 
+                                                style="height:200px; object-fit:contain;">
+                                            <p class="d-none" style="font-size:12px; margin:0; text-align:center;">{{title}}</p>
                                         </div>
                                     {{/each}}
+
                                 </div>
                             </div>
 
@@ -169,7 +178,6 @@
 
  {{> dashboard-footer}}
 <script src="/js/chat.js"></script>
-<script src="/js/discovery.js"></script>
 <script src="/js/stability.js"></script>
 <script src="https://js.stripe.com/v3/"></script>
 <script>

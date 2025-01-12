@@ -49,6 +49,44 @@
             }
         })();
 
+        document.addEventListener("DOMContentLoaded", () => {
+            const promptContainer = document.getElementById("promptContainer");
+            const showPromptsBtn = document.getElementById("showPrompts"); // Button to show the container
+            const lazyImages = document.querySelectorAll("#promptContainer img.lazy-image");
+
+            // Intersection Observer for lazy loading
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        const dataSrc = img.getAttribute("data-src");
+                        if (dataSrc) {
+                            img.src = dataSrc; // Replace placeholder with actual image
+                            img.removeAttribute("data-src");
+                        }
+                        observer.unobserve(img); // Stop observing once the image is loaded
+                    }
+                });
+            });
+
+            // Function to reinitialize the observer after showing the container
+            const observeImages = () => {
+                lazyImages.forEach((img) => {
+                    if (img.getAttribute("data-src")) {
+                        observer.observe(img);
+                    }
+                });
+            };
+
+            // Event listener to show the container and reinitialize lazy loading
+            showPromptsBtn.addEventListener("click", () => {
+                promptContainer.style.display = "block"; // Make container visible
+                observeImages(); // Start observing images again
+            });
+        });
+
+
+
         window.API_URL = "{{apiurl}}";
         window.MODE = "{{mode}}";
         window.user = {{{json user}}};

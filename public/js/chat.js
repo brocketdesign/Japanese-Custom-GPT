@@ -1218,10 +1218,12 @@ $(document).ready(async function() {
         if (data.type === 'done') {
             activeStreams[uniqueId].close();
             delete activeStreams[uniqueId];
-            if (markdownContent.val !== data.fullCompletion) {
-                markdownContent.val = data.fullCompletion;
-                $(`#completion-${uniqueId}`).html(marked.parse(markdownContent.val));
-            }
+            setTimeout(() => {
+                if (markdownContent.val !== data.fullCompletion) {
+                    markdownContent.val = data.fullCompletion;
+                    $(`#completion-${uniqueId}`).html(marked.parse(markdownContent.val));
+                }
+            }, 5000);
             afterStreamEnd(uniqueId, markdownContent.val);
             return true; // signal done
         } else if (data.type === 'text') {

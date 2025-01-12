@@ -13,6 +13,8 @@
     "chat": "チャット",
     "delete": "削除"
   },
+  "image_generation_soft_limit_reset": "次の画像を生成できます。",
+  "image_generation_soft_limit": "次の画像を生成する前に%{interval}%秒お待ちください。",
   "free_usage_image_limit": "無料利用の制限に達しました。サービスを継続して利用するには、プレミアムプランにアップグレードしてください。",
   "too_many_pending_images":"画像生成タスクが多すぎます。後で再試行してください。",
   "tags": "タグ",

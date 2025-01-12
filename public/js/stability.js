@@ -1,6 +1,21 @@
+// Semaphore for controlling the number of concurrent requests
+let activeGenerations = 0;
+const MAX_CONCURRENT_GENERATIONS = 5; // Adjust this limit as needed
+const RESET_INTERVAL = 10000;
+// Reset activeGenerations count every interval
+setInterval(() => {
+    activeGenerations = 0;
+}, RESET_INTERVAL);
+
 // Generate Image using Novita
 window.txt2ImageNovita = async function(userId, chatId, userChatId, option = {}) {
+    if (activeGenerations >= MAX_CONCURRENT_GENERATIONS) {
+        showNotification(translations.image_generation_soft_limit.replace('%{interval}%',parseInt(RESET_INTERVAL)/1000), 'warning');
+        return;
+    }
+
     try {
+        activeGenerations++;
         const getValue = (selector, defaultValue = '') => $(selector).val() || defaultValue;
 
         const {
@@ -38,7 +53,6 @@ window.txt2ImageNovita = async function(userId, chatId, userChatId, option = {})
         return data;
     } catch (error) {
         console.error('generateImageNovita Error:', error);
-    } finally {
     }
 };
 

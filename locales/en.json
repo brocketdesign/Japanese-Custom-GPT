@@ -13,6 +13,8 @@
     "chat": "Chat",
     "delete": "Delete"
   },
+  "image_generation_soft_limit_reset": "You can now generate another image.",
+  "image_generation_soft_limit": "Please wait %{interval}% seconds before generating another image.",
   "free_usage_image_limit": "You have reached the daily free usage limit. Please upgrade to a premium plan to continue using the service.",
   "too_many_pending_images": "You have too many pending images. Please wait for the current images to be generated.",
   "tags": "Tags",

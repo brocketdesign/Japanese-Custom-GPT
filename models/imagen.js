@@ -175,7 +175,7 @@ async function pollTaskStatus(taskId, fastify) {
 // Module to check the status of a task
 async function getTasks(db, status, userId) {
   try {
-    await deleteOldTasks(db) // Delete old tasks before fetching
+    await deleteOldPendingAndFailedTasks(db) // Delete old tasks before fetching
     const tasksCollection = db.collection('tasks');
     const query = {};
     if (status) query.status = status;
@@ -189,19 +189,24 @@ async function getTasks(db, status, userId) {
 };
 
 // Module to delete tasks older than 5 minutes
-async function deleteOldTasks(db) {
+async function deleteOldPendingAndFailedTasks(db) {
   try {
     const tasksCollection = db.collection('tasks');
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-    const result =  tasksCollection.deleteMany({ createdAt: { $lt: fiveMinutesAgo }, status: { $in: ['pending', 'failed'] } });
+    const result = await tasksCollection.deleteMany({ createdAt: { $lt: fiveMinutesAgo }, status: { $in: ['pending', 'failed'] } });
+    console.log(`Deleted ${result.deletedCount} old pending or failed tasks.`);
+  } catch (error) {
+    console.error('Error deleting old pending or failed tasks:', error);
+  }
+}
 
+// Module to delete tasks older than 24 hours
+async function deleteOldTasks(db) {
+  try {
+    const tasksCollection = db.collection('tasks');
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const result2 =  tasksCollection.deleteMany({ createdAt: { $lt: yesterday }, status: 'completed' });
-
-    const allResults = await Promise.all([result, result2]);
-    allResults.forEach((res, index) => {
-      console.log(`Deleted ${res.deletedCount} old tasks for query ${index}`);
-    });
+    const result = await tasksCollection.deleteMany({ createdAt: { $lt: yesterday } });
+    console.log(`Deleted ${result.deletedCount} old tasks.`);
   } catch (error) {
     console.error('Error deleting old tasks:', error);
   }
@@ -468,5 +473,6 @@ async function checkImageDescription(db, chatId) {
     generateTxt2img,
     getPromptById,
     checkImageDescription,
-    getTasks
+    getTasks,
+    deleteOldTasks
   };

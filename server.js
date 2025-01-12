@@ -13,7 +13,7 @@ const {
   cleanupNonRegisteredUsers,
   deleteTemporaryChats,
 } = require('./models/cleanupNonRegisteredUsers');
-const { checkUserAdmin, getUserData, updateCounter, fetchTags } = require('./models/tool');
+const { checkUserAdmin, getUserData, updateCounter, fetchTags, deleteOldTasks } = require('./models/tool');
 
 
 fastify.register(require('fastify-mongodb'), {
@@ -27,6 +27,7 @@ cron.schedule('0 0 * * *', async () => {
   try {
     cleanupNonRegisteredUsers(db);
     deleteTemporaryChats(db);
+    deleteOldTasks(db);
     await updateCounter(db, 0);
     fastify.log.info('Counter has been reset to 0.');
   } catch (err) {

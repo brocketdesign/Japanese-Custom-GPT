@@ -3,7 +3,8 @@
   "admin": {
         "users": "ユーザー",
         "prompts": "プロンプト",
-        "notifications": "通知"
+        "notifications": "通知",
+        "models": "モデル"
   },
   "admin_user": {
     "recent_users": "最近のユーザー",

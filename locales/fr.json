@@ -3,7 +3,8 @@
   "admin": {
         "users": "Utilisateurs",
         "prompts": "Invites",
-        "notifications": "Notifications"
+        "notifications": "Notifications",
+        "models": "Models"
   },
   "admin_user": {
     "recent_users": "Utilisateurs récents",

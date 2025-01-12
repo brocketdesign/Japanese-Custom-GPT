@@ -3,7 +3,8 @@
   "admin": {
         "users": "Users",
         "prompts": "Prompts",
-        "notifications": "Notifications"
+        "notifications": "Notifications",
+        "models": "Models"
   },
   "admin_user": {
     "recent_users": "Recent Users",

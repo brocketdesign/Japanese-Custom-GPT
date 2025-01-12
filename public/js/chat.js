@@ -1243,20 +1243,26 @@ $(document).ready(async function() {
         if (typeof callback === 'function') callback();
     }
     }
-
     function startStream(uniqueId, sessionId, callback, isHidden, container) {
-    let markdownContent = { val: '' };
-    const streamUrl = API_URL + `/api/openai-chat-completion-stream/${sessionId}`;
-    activeStreams[uniqueId] = new EventSource(streamUrl);
+        let markdownContent = { val: '' };
+        const streamUrl = API_URL + `/api/openai-chat-completion-stream/${sessionId}`;
+        activeStreams[uniqueId] = new EventSource(streamUrl);
 
-    activeStreams[uniqueId].onmessage = e => {
-        if (handleStreamMessage(e, uniqueId, markdownContent)) {
-        if (typeof callback === 'function') callback();
-        }
-    };
-    activeStreams[uniqueId].onerror = () => {
-        handleStreamError(uniqueId, markdownContent, container, callback, isHidden);
-    };
+        // Disable the text area during the stream
+        $('#userMessage').prop('disabled', true);
+
+        activeStreams[uniqueId].onmessage = e => {
+            if (handleStreamMessage(e, uniqueId, markdownContent)) {
+                // Re-enable the text area after the stream ends
+                $('#userMessage').prop('disabled', false);
+                if (typeof callback === 'function') callback();
+            }
+        };
+        activeStreams[uniqueId].onerror = () => {
+            handleStreamError(uniqueId, markdownContent, container, callback, isHidden);
+            // Re-enable the text area if there's an error
+            $('#userMessage').prop('disabled', false);
+        };
     }
 
     function generateCompletion(callback, isHidden = false) {

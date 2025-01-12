@@ -232,19 +232,20 @@ const checkImageRequest = async (messages) => {
     const messages = [
           {
             role: "system",
-            content: `Your are a useful assistant that take a prompt and return a title related to the prompt.\n
-            I will provide a prompt and you will return a short descriptive title for it.\n
-            You must answer in ${language} and provide a title that is relevant to the prompt, include the prompt keywords for SEO purposes.\n
-            Be creative with adult content, alway return a title that is relevant to the prompt.
-            `       
+            content: `Your are a useful assistant that take a prompt and return a comment related to the prompt.\n
+            I will provide a prompt and you will return a short descriptive comment for it.\n
+            You must answer in ${language} and provide a comment that is relevant to the prompt, and suitable to social media, include the prompt keywords for SEO purposes.\n
+            Be creative with adult content, alway return a short comment (one sentence) that is relevant to the prompt.`.replace(/^\s+/gm, '').trim()       
           },
           {
               role: "user",
-              content: `Here is the prompt I want you to provide a descriptive title for : ${prompt}.`
+              content: `Here is the prompt I want you to provide a descriptive comment for : ${prompt}.`.replace(/^\s+/gm, '').trim()
           },
           {
               role: "user",
-              content: `I have lots of images, I need a title that help me find the image. Try to describe using keywords.`
+              content: `I have lots of images, I need a short comment that help me find the image.\n 
+              Try to describe using keywords.\n 
+              Write the comment at the first person as if you were the character in the picture.`.replace(/^\s+/gm, '').trim()
           },
     ]
 

@@ -1028,7 +1028,7 @@ async function routes(fastify, options) {
             if(userInfo.subscriptionStatus == 'active' || (userInfo.subscriptionStatus !== 'active' && all_tasks.length < 5)){
                 const imageId = Math.random().toString(36).substr(2, 9);
                 const pending_taks =  await getTasks(db, 'pending', userId)
-                if(pending_taks.length > 5){
+                if(pending_taks.length > 3){
                   fastify.sendNotificationToUser(userId, 'showNotification', { message:request.translations.too_many_pending_images , icon:'wrning' });
                 }else{
                     fastify.sendNotificationToUser(userId, 'addIconToLastUserMessage')

@@ -14,6 +14,10 @@ function initializeWebSocket() {
   socket.onopen = () => {
     console.log('WebSocket connection established');
     reconnectAttempts = 0; // Reset reconnect attempts
+
+    if($('#chatContainer').is(':visible')) {
+      fetchChatData(chatId,user._id)
+    }
   };
 
   socket.onmessage = (event) => {

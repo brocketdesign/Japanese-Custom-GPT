@@ -38,8 +38,10 @@ window.txt2ImageNovita = async function(userId, chatId, userChatId, option = {})
         return data;
     } catch (error) {
         console.error('generateImageNovita Error:', error);
+    } finally {
     }
-}
+};
+
 
 // Display image icon in last user message
 window.addIconToLastUserMessage = function(itemId = false) {

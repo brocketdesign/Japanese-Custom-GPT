@@ -1248,9 +1248,8 @@ $(document).ready(async function() {
     function startStream(uniqueId, sessionId, callback, isHidden, container) {
         let markdownContent = { val: '' };
         const streamUrl = API_URL + `/api/openai-chat-completion-stream/${sessionId}`;
-        const maxCheckInterval = 10000; // Maximum interval to check stream activity
-        let checkInterval = 2000; // Initial interval
-        let lastUpdateTime = Date.now();
+        const idleTimeout = 15000; // Maximum idle time in ms before auto-closing
+        let lastUpdateTime = Date.now(); // Track the last time data was received
     
         function startEventSource() {
             activeStreams[uniqueId] = new EventSource(streamUrl);
@@ -1258,39 +1257,34 @@ $(document).ready(async function() {
             activeStreams[uniqueId].onmessage = e => {
                 if (e.data !== '[DONE]') {
                     if (handleStreamMessage(e, uniqueId, markdownContent)) {
-                        lastUpdateTime = Date.now(); // Update activity timestamp
+                        lastUpdateTime = Date.now(); // Reset idle timer
                         if (typeof callback === 'function') callback(markdownContent.val);
                     }
                 } else {
-                    activeStreams[uniqueId].close(); // Gracefully close the stream
+                    activeStreams[uniqueId].close(); // Gracefully close on completion
                 }
             };
     
             activeStreams[uniqueId].onerror = () => {
-                activeStreams[uniqueId].close(); // Handle errors gracefully
+                activeStreams[uniqueId].close(); // Handle stream error gracefully
             };
     
-            monitorStream(); // Start monitoring activity
+            monitorIdleState(); // Start monitoring for idle state
         }
     
-        function monitorStream() {
-            const monitor = setInterval(() => {
+        function monitorIdleState() {
+            const idleMonitor = setInterval(() => {
                 if (!activeStreams[uniqueId] || activeStreams[uniqueId].readyState === 2) {
-                    clearInterval(monitor); // Stop monitoring if stream is closed
+                    clearInterval(idleMonitor); // Stop monitoring if stream is already closed
                     return;
                 }
     
-                if (Date.now() - lastUpdateTime > checkInterval) {
-                    checkInterval = Math.min(checkInterval * 2, maxCheckInterval); // Exponential backoff
-                } else {
-                    checkInterval = 2000; // Reset check interval if activity is detected
+                if (Date.now() - lastUpdateTime > idleTimeout) {
+                    activeStreams[uniqueId].close(); // Close the stream if idle
+                    clearInterval(idleMonitor);
+                    console.warn(`Stream ${uniqueId} closed due to inactivity.`);
                 }
-    
-                if (checkInterval === maxCheckInterval) {
-                    activeStreams[uniqueId].close(); // Close the stream after max interval
-                    clearInterval(monitor);
-                }
-            }, checkInterval);
+            }, 2000); // Check every 2 seconds
         }
     
         startEventSource();

@@ -344,6 +344,7 @@
       "next": "Suivant",
       "prev": "Précédent",
       "newCharacter": {
+        "tagsLabel": "Tags",
         "start_chat_and_image_generation": "Commencez à discuter et à générer des images",
         "start_chat_and_image_generation_description": "Commencez à discuter avec des personnages IA et générez des images en fonction de vos conversations.",
         "ageYoungAdult": "18-24 Ans",

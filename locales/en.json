@@ -344,6 +344,7 @@
   "next":"Next",
   "prev":"Previous",
   "newCharacter": {
+    "tagsLabel": "Tags",
     "start_chat_and_image_generation": "Start Chat & Image Generation",
     "start_chat_and_image_generation_description": "Chat with beautiful, unique AI characters and generate images with them!",
     "ageYoungAdult": "18-24 Years",

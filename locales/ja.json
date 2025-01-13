@@ -344,6 +344,7 @@
   "next":"次へ",
   "prev":"前へ",
   "newCharacter": {  
+    "tagsLabel": "タグ",
     "start_chat_and_image_generation":"チャットと画像生成を開始",
     "start_chat_and_image_generation_description": "無料でAIキャラクターとチャットし、画像を生成しましょう！",
     "detailed_personality": "詳細な性格",

@@ -232,6 +232,15 @@
                                 <!-- Character Prompt Input -->
                                 <div class="mb-2">
                                     <label for="characterPrompt" class="form-label"><i class="bi bi-asterisk text-danger me-2"></i>{{translations.newCharacter.character_prompt}}</label>
+                                    <!-- List of tags -->
+                                    <div class="mb-2">
+                                        <label for="tags" class="form-label">{{translations.newCharacter.tagsLabel}}:</label>
+                                        <div class="scroll-container">
+                                            {{#each tags}}
+                                                <span type="button" class="badge bg-light text-secondary me-1 add-tag fw-light border">{{this}}</span>
+                                            {{/each}}
+                                        </div>
+                                    </div>
                                     <textarea
                                         class="form-control"
                                         id="characterPrompt"
@@ -534,6 +543,12 @@
         $('#enableEnhancedPrompt').on('click',function(){
             $('#enhancedPrompt').toggle()
         })
+    });
+    $(document).on('click', '.add-tag', function() {
+        const tag = $(this).text();
+        const $characterPrompt = $('#characterPrompt');
+        const prompt = $characterPrompt.val();
+        $characterPrompt.val(prompt + ',' + tag);
     });
 </script>
 

@@ -282,7 +282,7 @@ fastify.get('/chat/edit/:chatId', { preHandler: [fastify.authenticate] }, async 
     user = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
     const chats = await chatsCollection.distinct('chatImageUrl', { userId });
-    console.log('Chat length:', chats.length);
+
     if(user.subscriptionStatus !== 'active' && chats.length > 0){
       return reply.redirect('/my-plan');
     }
@@ -291,10 +291,15 @@ fastify.get('/chat/edit/:chatId', { preHandler: [fastify.authenticate] }, async 
     const chatImage = request.query.chatImage;
     const isTemporaryChat = !request.params.chatId;
 
+    request.query.limit = 20;
+    const { tags, page, totalPages } = await fetchTags(db,request);
+    // Assure that tags are unique by first converting them to lowercasing and then to a set then back to an array
+    const uniqueTags = [...new Set(tags.map(tag => tag.toLowerCase()))];
     const translations = request.translations;
 
     return reply.renderWithGtm('add-chat.hbs', {
       title: 'AIフレンズ',
+      tags,
       translations,
       mode: process.env.MODE,
       apiurl: process.env.API_URL,

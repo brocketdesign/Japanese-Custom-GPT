@@ -177,7 +177,8 @@ function showNavTabs(){
     if (chatNav_modelId && $(document).find(`#imageStyleTabs`).find(`#${chatNav_modelId}-tab`).length) {
         $(document).find(`#imageStyleTabs`).find(`#${chatNav_modelId}-tab`).click();
     } else {
-        $(document).find(`#imageStyleTabs`).find(`.nav-link`).eq(0).click();
+        // Find the first tab with a modelId and click it
+        $(document).find(`#imageStyleTabs button[data-id]`).first().click();
     }
 }
 window.updatePlanStatus = function(user){

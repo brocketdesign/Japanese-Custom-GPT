@@ -239,7 +239,7 @@ fastify.get('/chat/:chatId', { preHandler: [fastify.authenticate] }, async (requ
   const translations = request.translations;
 
 
-  const chats = await collectionChat.distinct('chatImageUrl', { userId:new fastify.mongo.ObjectId(request.user._id) });
+  const chats = await collectionChat.distinct('chatImageUrl', { userId:request.user._id });
   if(chats.length === 0){
     return reply.redirect('/chat/edit/');
   }
@@ -282,6 +282,7 @@ fastify.get('/chat/edit/:chatId', { preHandler: [fastify.authenticate] }, async 
     user = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
     const chats = await chatsCollection.distinct('chatImageUrl', { userId });
+    console.log('Chat length:', chats.length);
     if(user.subscriptionStatus !== 'active' && chats.length > 0){
       return reply.redirect('/my-plan');
     }

@@ -9,9 +9,9 @@ async function routes(fastify, options) {
     {
       fr: {
         name: "Plan Premium",
-        price: "11,00 €/mois",
-        monthly: "50,00 €/mois",
-        yearly: "9,99 €/mois",
+        price: "9,99 €/mois",
+        monthly: "9,99 €/mois",
+        yearly: "99,99 €/ans",
         features: [
           "💬   Chat illimité tous les jours",
           "👥   Créer des amis illimités",
@@ -30,9 +30,9 @@ async function routes(fastify, options) {
       },
       en: {
         name: "Premium Plan",
-        price: "$11.00/month",
-        monthly: "$50.00/month",
-        yearly: "$9.99/month",
+        price: "$9.99/month",
+        monthly: "$9.99/month",
+        yearly: "$99.99/year",
         features: [
           "💬   Unlimited chat every day",
           "👥   Create unlimited friends",
@@ -52,8 +52,8 @@ async function routes(fastify, options) {
       ja: {
         name: "プレミアムプラン",
         price: "￥1100円/月",
-        monthly: "￥5,000円/月",
-        yearly: "￥990円/月",
+        monthly: "￥1100円/月",
+        yearly: "￥11,000円/年",
         features: [
           "💬   毎日無制限でチャットできる",
           "👥   フレンドを無制限で作成できる",

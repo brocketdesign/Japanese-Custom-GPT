@@ -1,5 +1,11 @@
 {
   "lang":"fr",
+  "promo": {
+    "title": "Débloquez les fonctionnalités Premium",
+    "subtitle": "Profitez d'un accès illimité à toutes les fonctionnalités premium.",
+    "price": "Seulement 9,99 €/mois",
+    "details": "Voir les détails"
+  },
   "admin": {
         "users": "Utilisateurs",
         "prompts": "Invites",

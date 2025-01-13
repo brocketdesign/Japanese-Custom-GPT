@@ -49,7 +49,6 @@ async function routes(fastify, options) {
           }
       
           const user = request.user;
-          const userData = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
           let language = getLanguageName(user?.lang);
       
           const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
@@ -59,25 +58,40 @@ async function routes(fastify, options) {
             userId: new fastify.mongo.ObjectId(userId), 
             _id: new fastify.mongo.ObjectId(userChatId) 
           });
-          let chatDocument = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
-
-          // Different starting message depending on user status
-          const startMessage = !user.isTemporary 
-            ? `Greet me shortly. I want to chat with you. Answer directly. Respond in ${language}.`
-            : "挨拶から始め、ログインを促してください。確認から始めるのではなく、直接挨拶とログインのお願いをしてください。";
 
             // If new user chat or not found, create a new document
-          if (!userChatDocument || isNew) {
-            userChatDocument = {
-              userId: new fastify.mongo.ObjectId(userId),
-              chatId: new fastify.mongo.ObjectId(chatId),
-              createdAt: today,
-              updatedAt: today,
-              messages: [
-                { "role": "user", "content": startMessage, "name": "master" }
-              ]
-            };
-          }
+            if (!userChatDocument || isNew) {
+
+                // Different starting message depending on user status
+                let startMessage 
+                // User is temporary, prompt to log in
+                if(user.isTemporary){
+                    startMessage = "Start with a greeting and prompt the user to log in. Do not start with a confirmation, but directly greet and ask the user to log in.";
+                }
+                const userChats = await collectionUserChat.find({ userId:new fastify.mongo.ObjectId(userId) }).toArray();
+                if(userChats.length === 0){
+                    // First chat ever, explain that image can be generated
+                    startMessage = `Start by greeting me, it is my first time trying the application. Inform me that you can generate images. Ask me if I would like to see one. Stay in your character, keep the same tone as before.`
+                }
+                const userChat = await collectionUserChat.find({ userId:new fastify.mongo.ObjectId(userId), chatId: new fastify.mongo.ObjectId(chatId) }).toArray();
+                if(userChat.length > 0){
+                    // Not first chat, welcome back and ask if they want to see another image
+                    startMessage = `Start by welcoming me back. Inform me that you like chatting with me. Ask me if I would like to see another one. Stay in your character, keep the same tone as before.`
+                }else{
+                    // First chat with this character, simply say hi
+                    startMessage = `Start by greeting me. Inform me that you are happy to chat with me. Stay in your character, keep the same tone as before.`
+                }
+
+                userChatDocument = {
+                userId: new fastify.mongo.ObjectId(userId),
+                chatId: new fastify.mongo.ObjectId(chatId),
+                createdAt: today,
+                updatedAt: today,
+                messages: [
+                    { "role": "user", "content": startMessage, "name": "master" }
+                ]
+                };
+            }
       
           let result = await collectionUserChat.insertOne(userChatDocument);
           let documentId = result.insertedId;

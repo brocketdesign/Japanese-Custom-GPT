@@ -1,5 +1,4 @@
 const { createHash } = require('crypto');
-const aws = require('aws-sdk');
 const { ObjectId } = require('mongodb');
 const sharp = require('sharp');
 const axios = require('axios');
@@ -19,12 +18,16 @@ async function checkUserAdmin(fastify, userId) {
     }
     return adminEmails.includes(user.email);
 }
+
 // Configure AWS S3
-const s3 = new aws.S3({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    region: process.env.AWS_REGION
-});
+const { S3Client, PutObjectCommand, ListObjectsV2Command } = require('@aws-sdk/client-s3');
+const s3 = new S3Client({
+    region: process.env.AWS_REGION,
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
+  });  
 
 const getS3Stream = (bucket, key) => {
     return s3.getObject({ Bucket: bucket, Key: key }).createReadStream();
@@ -55,19 +58,27 @@ async function getCounter(db) {
         throw new Error(`Error deleting object: ${error.message}`);
     }
 };
+
 const uploadToS3 = async (buffer, hash, filename) => {
+    const key = `${hash}/${filename}`;
     const params = {
         Bucket: process.env.AWS_S3_BUCKET_NAME,
-        Key: `${hash}_${filename}`,
+        Key: key,
         Body: buffer,
-        ACL: 'public-read'
+        ACL: 'public-read', // Ensures the file is publicly accessible
+        ContentType: 'application/octet-stream', // Set default content type for binary files
     };
+
     try {
-        const uploadResult = await s3.upload(params).promise();
-        return uploadResult.Location;
+        console.log("Uploading to S3:", key);
+        const command = new PutObjectCommand(params);
+        await s3.send(command);
+        const location = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+        console.log("S3 Upload Successful:", location);
+        return location;
     } catch (error) {
-        console.error("S3 Upload Error:", error);
-        throw error;
+        console.error("S3 Upload Error:", error.message);
+        throw new Error("Failed to upload file to S3. Please try again.");
     }
 };
 
@@ -190,6 +201,24 @@ const streamToBuffer = async (readableStream) => {
     return Buffer.concat(chunks);
 };
 
+async function listFiles(prefix = '') {
+    try {
+        // Create the command with the required parameters
+        const command = new ListObjectsV2Command({
+            Bucket: process.env.AWS_S3_BUCKET_NAME,
+            Prefix: prefix,
+        });
+
+        // Send the command and wait for the response
+        const existingFiles = await s3.send(command);
+
+        return existingFiles;
+    } catch (err) {
+        console.error('Error listing objects:', err);
+        throw err;
+    }
+}
+
 const handleFileUpload = async (part, db) => {
     let buffer;
     if (part.file) {
@@ -205,21 +234,19 @@ const handleFileUpload = async (part, db) => {
         throw new Error('No valid file or URL provided');
     }
 
-    const hash = createHash('md5').update(buffer).digest('hex');
+    const hash = createHash('sha256').update(buffer).digest('hex');
     const awsimages = db.collection('awsimages');
 
     // Check if the image already exists in MongoDB
     const existingFile = await awsimages.findOne({ hash });
+
     if (existingFile) {
         console.log(`Already exists in DB`);
         return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFile.key}`;
     }
 
     // If not in DB, check S3
-    const existingFiles = await s3.listObjectsV2({
-        Bucket: process.env.AWS_S3_BUCKET_NAME,
-        Prefix: hash,
-    }).promise();
+    const existingFiles = await listFiles();
     
     if (existingFiles.Contents.length > 0) {
         console.log(`Already exists in S3`);
@@ -484,5 +511,6 @@ module.exports = {
     sanitizeMessages,
     processPromptToTags,
     processPromptToTags,
-    fetchTags
+    fetchTags,
+    listFiles
 };

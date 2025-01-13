@@ -13,10 +13,11 @@ const {
   cleanupNonRegisteredUsers,
   deleteTemporaryChats,
 } = require('./models/cleanupNonRegisteredUsers');
-const { checkUserAdmin, getUserData, updateCounter, fetchTags, deleteOldTasks } = require('./models/tool');
+const { checkUserAdmin, getUserData, updateCounter, fetchTags } = require('./models/tool');
+const { deleteOldTasks } = require('./models/imagen');
 
 
-fastify.register(require('fastify-mongodb'), {
+fastify.register(require('@fastify/mongodb'), {
   forceClose: true,
   url: process.env.MONGODB_URI,
   database: process.env.MONGODB_NAME,
@@ -93,7 +94,6 @@ fastify.register(require('@fastify/formbody'));
 fastify.register(require('./routes/api'));
 fastify.register(require('./routes/stability'));
 fastify.register(require('./routes/plan'));
-fastify.register(require('./routes/scraper'));
 fastify.register(require('./routes/user'));
 fastify.register(require('./routes/admin'));
 fastify.register(require('./routes/post'));

@@ -1,5 +1,11 @@
 # Dependencies
 /node_modules
 
+# Old route files
+/routes/old
+
+# Old views
+/views/old
+
 # Environment variables
 .env

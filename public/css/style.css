@@ -10,6 +10,17 @@ body {
 .image-nsfw-toggle.nsfw {
   color: red;
   }
+.assistant-image-box{
+  position: relative;
+}
+.nsfw-badge-container {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  font-size: 12px;
+  opacity: 0.5;
+  background: linear-gradient(to right, #ff0000, #ff4d4d, #ff9999);
+}
 .jp-date{
   display: none;
 }

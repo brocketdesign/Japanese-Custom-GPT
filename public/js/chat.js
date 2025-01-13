@@ -774,7 +774,7 @@ $(document).ready(async function() {
         prompt = sanitizeString(prompt);
         return `
             <div class="bg-white py-2 rounded mt-1 d-flex justify-content-between">
-                <div class="d-flex">
+                <div class="d-flex justify-content-around w-100">
                     <span class="badge bg-white text-secondary image-fav ${isLiked ? 'liked' : ''}" data-id="${imageId}" 
                     style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
                         <i class="bi bi-heart-fill"></i>
@@ -836,6 +836,7 @@ $(document).ready(async function() {
                     <div class="ms-3 position-relative">
                         <div class="ps-0 text-start assistant-image-box">
                             <img id="image-${imageId}" src="${placeholderImageUrl}" alt="Loading image...">
+                            <div class="nsfw-badge-container badge" style="display:none;">NSFW<div>
                         </div>
                     </div>
                 </div>
@@ -861,6 +862,9 @@ $(document).ready(async function() {
                         if (!response.isBlur) {
                             const toolsHtml = getImageTools(imageId, response?.likedBy?.some(id => id.toString() === userId.toString()),response.title[lang], response.imagePrompt, response.nsfw, response.imageUrl);
                             $(`#image-${imageId}`).closest('.assistant-image-box').after(toolsHtml);
+                            if(response.nsfw){
+                                $(`#image-${imageId}`).closest('.assistant-image-box').find('.nsfw-badge-container').show();
+                            }
                         } else {
                             const blurBadgeHtml = `
                             <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
@@ -1361,6 +1365,7 @@ $(document).ready(async function() {
                     <div class="ms-3 position-relative">
                         <div class="ps-0 text-start assistant-image-box" data-id="${imageId}">
                             ${message.outerHTML}
+                            ${imageNsfw ? `<div class="nsfw-badge-container badge">NSFW</div>` : ''}
                         </div>
                         ${getImageTools(imageId,false,title,prompt,imageNsfw,imageUrl)}
                     </div>
@@ -1382,6 +1387,7 @@ $(document).ready(async function() {
                     <div class="ms-3 position-relative">
                         <div class="text-start assistant-image-box" data-id="${imageId}">
                             ${message.outerHTML}
+                            ${imageNsfw ? `<div class="nsfw-badge-container badge">NSFW</div>` : ''}
                         </div>
                         ${getImageTools(imageId,false,title,prompt,imageNsfw,imageUrl)}
                     </div>  

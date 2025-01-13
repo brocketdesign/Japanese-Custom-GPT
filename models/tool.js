@@ -487,11 +487,17 @@ async function updateUserLang(db, userId, lang) {
     }
 }
 function sanitizeMessages(messagesForCompletion) {
-    return messagesForCompletion.map(message => ({
-      ...message,
-      content: message.content.replace(/\s+/g, ' ').trim()
-    }));
-  }
+    try {
+        return messagesForCompletion.map(message => ({
+            ...message,
+            content: message.content.replace(/\s+/g, ' ').trim()
+        }));
+    } catch (error) {
+        console.log(messagesForCompletion)
+        console.error('Error sanitizing messages:', error);
+        throw new Error('Failed to sanitize messages');
+    }
+}
 
 module.exports = {
     getCounter,

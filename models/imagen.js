@@ -120,7 +120,7 @@ async function generateTxt2img(title, prompt, aspectRatio, userId, chatId, userC
         fr: title_fr
       };
     }
-    console.log({ newTitle });
+
     // Send request to Novita and get taskId
     const novitaTaskId = await fetchNovitaMagic(requestData);
   
@@ -232,6 +232,11 @@ async function checkTaskStatus(taskId, fastify) {
 
   const images = Array.isArray(result) ? result : [result];
   const savedImages = await Promise.all(images.map(async (imageData) => {
+    let nsfw = task.type === 'nsfw';
+    // Check if the image is NSFW with a confidence threshold of 50 and more
+    if (imageData.nsfw_detection_result && imageData.nsfw_detection_result.valid && imageData.nsfw_detection_result.confidence >= 50) {
+      nsfw = true;
+    }
     const saveResult = await saveImageToDB(
       task.userId,
       task.chatId,
@@ -241,10 +246,10 @@ async function checkTaskStatus(taskId, fastify) {
       imageData.imageUrl,
       task.aspectRatio,
       null,
-      task.type === 'nsfw',
+      nsfw,
       fastify
     );
-    return { nsfw :task.type === 'nsfw', imageId: saveResult.imageId, imageUrl: imageData.imageUrl, prompt: task.prompt, title: task.title };
+    return { nsfw, imageId: saveResult.imageId, imageUrl: imageData.imageUrl, prompt: task.prompt, title: task.title };
   }));
 
   await tasksCollection.updateOne(
@@ -259,9 +264,9 @@ async function fetchNovitaMagic(data) {
     try {
     const response = await axios.post('https://api.novita.ai/v3/async/txt2img', {
         extra: {
-        response_image_type: 'jpeg',
-        enable_nsfw_detection: false,
-        nsfw_detection_level: 0,
+          response_image_type: 'jpeg',
+          enable_nsfw_detection: true,
+          nsfw_detection_level: 0,
         },
         request: data,
     }, {
@@ -325,12 +330,12 @@ async function fetchNovitaResult(task_id) {
         }
 
         const s3Urls = await Promise.all(images.map(async (image) => {
-        const imageUrl = image.image_url;
-        const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
-        const buffer = Buffer.from(imageResponse.data, 'binary');
-        const hash = createHash('md5').update(buffer).digest('hex');
-        const uploadedUrl = await uploadToS3(buffer, hash, 'novita_result_image.png');
-        return { imageId: hash, imageUrl: uploadedUrl };
+          const imageUrl = image.image_url;
+          const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+          const buffer = Buffer.from(imageResponse.data, 'binary');
+          const hash = createHash('md5').update(buffer).digest('hex');
+          const uploadedUrl = await uploadToS3(buffer, hash, 'novita_result_image.png');
+          return { imageId: hash, imageUrl: uploadedUrl, nsfw_detection_result: image.nsfw_detection_result };
         }));
 
         return s3Urls.length === 1 ? s3Urls[0] : s3Urls;

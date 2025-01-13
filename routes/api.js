@@ -1399,7 +1399,6 @@ async function routes(fastify, options) {
         
         let newMessages = generateImagePrompt(command, characterDescription, dialogue);
         newMessages = sanitizeMessages(newMessages)
-
         const completionMessage = await generateCompletion(newMessages, 600)
 
         // Add instructions
@@ -1494,7 +1493,6 @@ async function routes(fastify, options) {
             }
         }
         finalDescription = processString(englishDescription);
-
         return { prompt: finalDescription, title: promptTitle };
     }
 

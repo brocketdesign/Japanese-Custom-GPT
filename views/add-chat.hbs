@@ -869,7 +869,7 @@ $(document).ready(function() {
             moderationResult = await moderateContent(chatId,prompt);
             // Check if the content is NSFW
             if (moderationResult.flagged) {
-                if (!subscriptionStatus) {
+                if (false && !subscriptionStatus) { // Allow user to generate NSFW prompt
                     showUpgradePopup('nsfw-prompt');
                     // Enable buttons and reset text
                     $button.prop('disabled', false);

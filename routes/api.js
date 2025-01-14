@@ -76,6 +76,13 @@ async function routes(fastify, options) {
                     // First chat with this character, simply say hi and send an image
                     startMessage.content = `Start by greeting me, say that it is nice to meet me for the first time. Inform me that you are happy to chat with me and as it is the first time we chat, you will send me an image to get more intimate (the application will send the image, do not try to send the image yourself). Stay in your character, keep the same tone as before.`
                     startMessage.sendImage = true;
+                    // If there are no images in the gallery, send a message to inform the user that there are no images available to create one
+                    const chatsGalleryCollection = fastify.mongo.db.collection('gallery');
+                    const gallery = await chatsGalleryCollection.findOne({ chatId: new fastify.mongo.ObjectId(chatId) });
+                    if(!gallery?.images || gallery?.images?.length == 0 ){
+                        startMessage.content = `Start by greeting me, say that it is nice to meet me for the first time. Inform me that you are happy to chat with me and as it is the first time we chat, you want to send me an image to get more intimate. However, there are no images available, why not create one. Stay in your character, keep the same tone as before.`
+                        startMessage.sendImage = false;
+                    }
                 }
 
                 userChatDocument = {
@@ -1108,7 +1115,6 @@ async function routes(fastify, options) {
           reply.raw.end();
 
           if(lastUserMessage.sendImage){
-            console.log('send image')
             const chatsGalleryCollection = db.collection('gallery');
             const gallery = await chatsGalleryCollection.findOne({ chatId: new fastify.mongo.ObjectId(chatId) });
             // Select a random image from the gallery

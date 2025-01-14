@@ -704,7 +704,7 @@ fastify.post('/user/update-info', async (request, reply) => {
 
         // Create a notification for the target user
         const message = `${currentUser?.nickname} ${translations.startFollow} `;
-        await fastify.createNotification(targetUserId, message, 'info', { followerId: currentUserId });
+        await fastify.sendNotificationToUser(targetUserId, message, 'info', { followerId: currentUserId });
 
         reply.send({ message: 'フォローしました！' });
       } else {

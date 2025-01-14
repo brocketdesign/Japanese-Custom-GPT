@@ -64,7 +64,6 @@ window.fetchAndAppendModels = function() {
     const chatDiscovery = document.getElementById('chat-discovery');
     const subscriptionStatus = user.subscriptionStatus == 'active'
     let apiUrl = '/api/models'
-    if(chatDiscovery){ apiUrl += '?userId='+user._id }
     $.get(apiUrl, function(response) {
         if (response.success) {
         //$('#imageStyleSelection').empty(); // Clear existing content
@@ -168,7 +167,9 @@ function showNavTabs(){
 
         if(modelId){
             localStorage.setItem('chat-nav',`${modelId}`)
-            displayPeopleChat(1, {imageStyle:style, imageModel:model, userId:user._id});
+            let option = {imageStyle:style, imageModel:model, userId: user._id}
+            if(chatDiscovery ){ option.userId = false }
+            displayPeopleChat(1, option);
         }
     });
 

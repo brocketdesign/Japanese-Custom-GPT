@@ -238,12 +238,6 @@ fastify.get('/chat/:chatId', { preHandler: [fastify.authenticate] }, async (requ
   const imageType = request.query.type || false;
   const translations = request.translations;
 
-
-  const chats = await collectionChat.distinct('chatImageUrl', { userId:request.user._id });
-  if(chats.length === 0){
-    return reply.redirect('/chat/edit/');
-  }
-
   const promptData = await db.collection('prompts').find({}).toArray();
 
   return reply.renderWithGtm('chat.hbs', {

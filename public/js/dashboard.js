@@ -973,7 +973,6 @@ function generateUserChatsPagination(userId, currentPage, totalPages) {
     $('#user-chat-pagination-controls').html(paginationHtml);
 }
 
-window.preLoadedData = {}
 window.displayChats = function (chatData, searchId = null) {
     let htmlContent = '';
 
@@ -1045,17 +1044,10 @@ window.displayChats = function (chatData, searchId = null) {
 window.displayPeopleChat = async function (page = 1, option, callback) {
     const { imageStyle, imageModel, query = false, userId = false } = option;
     const searchId = `${imageStyle}-${imageModel}-${query}`;
-
-    if (preLoadedData && preLoadedData[searchId] <= page) {
-        $(`#chat-gallery .chat-card-container[data-id="${searchId}"]`).fadeIn();
-        return;
-    }
-
+    
     try {
         const response = await fetch(`/api/chats?page=${page}&style=${imageStyle}&model=${imageModel}&q=${query}&userId=${userId}`);
         const data = await response.json();
-
-        preLoadedData[searchId] = page;
 
         if (data.recent) {
             window.displayChats(data.recent, searchId);
@@ -1921,8 +1913,9 @@ function generateChatsPagination(totalPages, option) {
             displayPeopleChat(currentPageMap[key] + 1, option).then(() => {
                 currentPageMap[key]++; // Increment the page after successful loading
                 loadingStates[key] = false; // Reset the loading state
-            }).catch(() => {
+            }).catch((error) => {
                 // Handle errors if needed
+                console.error('Failed to load chat images', error);
                 loadingStates[key] = false;
             });
         }

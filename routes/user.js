@@ -598,13 +598,8 @@ fastify.post('/user/update-info', async (request, reply) => {
       if (!userData) {
         return reply.redirect('/my-plan');
       }
-  
-      const subscriptionStatus = userData?.subscriptionStatus == 'active'
-      if(!subscriptionStatus){
-        return reply.redirect('/my-plan');
-      }
 
-      const isAdmin = currentUserId.toString() === userId;
+      const isAdmin = await checkUserAdmin(fastify, request.user._id);
       const translations = request.translations;
 
       return reply.view('/user-profile.hbs', {

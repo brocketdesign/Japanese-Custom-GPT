@@ -68,11 +68,6 @@ async function routes(fastify, options) {
                 if(user.isTemporary){
                     startMessage = "Start with a greeting and prompt the user to log in. Do not start with a confirmation, but directly greet and ask the user to log in.";
                 }
-                const userChats = await collectionUserChat.find({ userId:new fastify.mongo.ObjectId(userId) }).toArray();
-                if(userChats.length === 0){
-                    // First chat ever, explain that image can be generated
-                    startMessage = `Start by greeting me, it is my first time trying the application. Inform me that you can generate images. Ask me if I would like to see one. Stay in your character, keep the same tone as before.`
-                }
                 const userChat = await collectionUserChat.find({ userId:new fastify.mongo.ObjectId(userId), chatId: new fastify.mongo.ObjectId(chatId) }).toArray();
                 if(userChat.length > 0){
                     // Not first chat, welcome back and ask if they want to see another image
@@ -80,6 +75,11 @@ async function routes(fastify, options) {
                 }else{
                     // First chat with this character, simply say hi
                     startMessage = `Start by greeting me. Inform me that you are happy to chat with me. Stay in your character, keep the same tone as before.`
+                }
+                const userChats = await collectionUserChat.find({ userId:new fastify.mongo.ObjectId(userId) }).toArray();
+                if(userChats.length === 0){
+                    // First chat ever, explain that image can be generated
+                    startMessage = `Start by greeting me, it is my first time trying the application. Inform me that you can generate images. Ask me if I would like to see one. Stay in your character, keep the same tone as before.`
                 }
 
                 userChatDocument = {
@@ -1081,7 +1081,7 @@ async function routes(fastify, options) {
                
             }else{
                 genImage.image_request = false
-                imgMessage[0].content = `\n\n I asked for an image but I am not a subscribed member.\n Tell me that I need to subscribe to Lamix Premim in order to receive images, even hot images. Provide a concise answer in ${language} to inform me of that and ask me subscribe. Stay in your character, keep the same tone as previously.`.trim()
+                imgMessage[0].content = `\n\n I asked for an other image but I am not a subscribed member.\n Tell me that I need to subscribe to Lamix Premim in order to receive unlimited images, even hot images. Or I can come back tomorrow to get 5 images for free. Provide a concise answer in ${language} to inform me of that and ask me if I want to subscribe. Stay in your character, keep the same tone as previously.`.trim()
             }
 
             messagesForCompletion = [

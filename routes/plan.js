@@ -9,9 +9,9 @@ async function routes(fastify, options) {
     {
       fr: {
         name: "Plan Premium",
-        price: "9,99 €/mois",
-        monthly: "9,99 €/mois",
-        yearly: "99,99 €/ans",
+        "price": "10,00 €/mois",
+        "monthly": "10,00 €/mois",
+        "yearly": "100,00 €/an",
         features: [
           "💬   Chat illimité tous les jours",
           "👥   Créer des amis illimités",
@@ -30,9 +30,9 @@ async function routes(fastify, options) {
       },
       en: {
         name: "Premium Plan",
-        price: "$9.99/month",
-        monthly: "$9.99/month",
-        yearly: "$99.99/year",
+        "price": "$10.00/month",
+        "monthly": "$10.00/month",
+        "yearly": "$100.00/year",
         features: [
           "💬   Unlimited chat every day",
           "👥   Create unlimited friends",
@@ -51,9 +51,9 @@ async function routes(fastify, options) {
       },
       ja: {
         name: "プレミアムプラン",
-        price: "￥1100円/月",
-        monthly: "￥1100円/月",
-        yearly: "￥11,000円/年",
+        "price": "￥1,100/月",
+        "monthly": "￥1,100/月",
+        "yearly": "￥11,000/年",
         features: [
           "💬   毎日無制限でチャットできる",
           "👥   フレンドを無制限で作成できる",
@@ -76,6 +76,63 @@ async function routes(fastify, options) {
     const lang = request.query.lang;
     return reply.send(plans[lang]);
   });
+  async function getLocalizedDescription(lang) {
+    // Define a fallback mechanism
+    switch (lang) {
+      case 'fr':
+        return  `Libérez tout le potentiel de votre créativité avec le forfait Premium. Profitez de conversations quotidiennes illimitées, créez et personnalisez de nouveaux personnages et bénéficiez d'un accès anticipé à de nouvelles fonctionnalités passionnantes. Générez un nombre illimité d'images, accédez à tous les visuels disponibles et explorez des suggestions de messages infinies pour laisser libre cours à vos idées. Avec des options avancées telles que plusieurs affichages de chat et la génération d'images NSFW, le forfait Premium garantit une expérience d'IA inégalée adaptée à votre imagination.`;
+      case 'ja':
+        return 'プレミアム プランであなたの創造性を最大限に引き出しましょう。無制限の毎日のチャットを楽しんだり、新しいキャラクターを作成してパーソナライズしたり、エキサイティングな新機能に早期アクセスしたりできます。無制限の画像を生成し、利用可能なすべてのビジュアルにアクセスし、無限のメッセージ提案を探索して、アイデアを生み出し続けます。複数のチャット表示や NSFW 画像生成などの高度なオプションを備えたプレミアム プランは、あなたの想像力に合わせた比類のない AI エクスペリエンスを保証します。';
+      default:
+        return 'Unlock the full potential of your creativity with the Premium Plan. Enjoy unlimited daily chats, create and personalize new characters, and gain early access to exciting new features. Generate unlimited images, access all available visuals, and explore endless message suggestions to keep your ideas flowing. With advanced options like multiple chat displays and NSFW image generation, the Premium Plan ensures an unparalleled AI experience tailored to your imagination.';
+    }
+  }
+  function getCurrency(lang) {
+    switch (lang) {
+      case 'fr': // French
+        return 'eur'; // Euros
+      case 'ja': // Japanese
+        return 'jpy'; // Japanese Yen
+      case 'en': // English (default to USD)
+      default:
+        return 'usd'; // US Dollars
+    }
+  }
+  function getLocalizedName(lang) {
+    switch (lang) {
+      case 'fr': // French
+        return 'Lamix Premium'; // Product name in French
+      case 'ja': // Japanese
+        return 'ラミックスプレミアム'; // Product name in Japanese
+      case 'en': // English (default)
+      default:
+        return 'Lamix Premium'; // Product name in English
+    }
+  }
+
+  function getBillingCycle(preference) {
+    console.log(preference)
+    switch (preference) {
+      case 'yearly':
+        return { interval: 'year', interval_count: 1 }; // Yearly billing
+      case 'monthly':
+      default:
+        return { interval: 'month', interval_count: 1 }; // Monthly billing as default
+    }
+  }
+  function getAmount(currency, billingCycle) {
+    switch (currency) {
+      case 'jpy': // Japanese Yen
+        return billingCycle === 'yearly' ? 11000 : 1100; // 11,000 JPY/year or 1,100 JPY/month
+      case 'usd': // US Dollars
+        return billingCycle === 'yearly' ? 10000 : 1000; // 100 USD/year or 10 USD/month
+      case 'eur': // Euros
+        return billingCycle === 'yearly' ? 10000 : 1000; // 100 EUR/year or 10 EUR/month
+      default:
+        throw new Error(`Unsupported currency: ${currency}`); // Handle unsupported currencies
+    }
+  }
+  
   fastify.post('/plan/subscribe', async (request, reply) => {
     try {
       const frontEnd = process.env.MODE === 'local' 
@@ -101,7 +158,9 @@ async function routes(fastify, options) {
       const planPriceId = process.env.MODE === 'local'
         ? (billingCycle === 'yearly' ? process.env.STRIPE_PREMIUM_YEARLY_TEST : process.env.STRIPE_PREMIUM_MONTLY_TEST)
         : (billingCycle === 'yearly' ? process.env.STRIPE_PREMIUM_YEARLY : process.env.STRIPE_PREMIUM_MONTLY);
-  
+      const productId = process.env.MODE === 'local'
+        ? process.env.STRIPE_PRODUCT_ID_TEST : process.env.STRIPE_PRODUCT_ID;
+
       // Check if the user already has an active subscription for this plan
       let existingSubscription = await fastify.mongo.db.collection('subscriptions').findOne({
         _id: new fastify.mongo.ObjectId(userId),
@@ -125,15 +184,23 @@ async function routes(fastify, options) {
           url: '/plan/upgrade',
         });
       }
-  
       // Create a Stripe Checkout session
+      const currency = getCurrency(request.lang)
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'], // Accept card payments
         mode: 'subscription', // Subscription mode
         customer_email: user.email, // Automatically pre-fills the email field
         line_items: [
           {
-            price: planPriceId, // Use the correct price ID from your Stripe dashboard
+            price_data: {
+              currency, // Replace with your desired currency
+              product_data: {
+                name: getLocalizedName(request.lang), // Localized product name
+                description: await getLocalizedDescription(request.lang), // Localized description
+              },
+              unit_amount: getAmount(currency, billingCycle), // Replace with your product price in cents
+              recurring: getBillingCycle(billingCycle),
+            },
             quantity: 1,
           },
         ],

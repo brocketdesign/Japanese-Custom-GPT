@@ -860,7 +860,7 @@ $(document).ready(async function() {
                         $(`#image-${imageId}`).attr('data-prompt', response.imagePrompt);
                         // Add tools or badges if applicable
                         if (!response.isBlur) {
-                            const toolsHtml = getImageTools(imageId, response?.likedBy?.some(id => id.toString() === userId.toString()),response.title[lang], response.imagePrompt, response.nsfw, response.imageUrl);
+                            const toolsHtml = getImageTools(imageId, response?.likedBy?.some(id => id.toString() === userId.toString()),response?.title?.[lang], response.imagePrompt, response.nsfw, response.imageUrl);
                             $(`#image-${imageId}`).closest('.assistant-image-box').after(toolsHtml);
                             if(response.nsfw){
                                 $(`#image-${imageId}`).closest('.assistant-image-box').find('.nsfw-badge-container').show();
@@ -1210,6 +1210,18 @@ $(document).ready(async function() {
     $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
     return container;
     }
+    function handleStreamError(uniqueId, markdownContent, container, callback, isHidden) {
+        activeStreams[uniqueId].close();
+        delete activeStreams[uniqueId];
+        if (++attemptCount < 2) {
+            container.remove(); // remove failed placeholder before retry
+            generateCompletion(callback, isHidden);
+        } else {
+            container.hide(); // hide if second attempt also fails
+            afterStreamEnd(uniqueId, markdownContent.val);
+            if (typeof callback === 'function') callback();
+        }
+    }
 
     function afterStreamEnd(uniqueId, markdownContent) {
     let msg = removeContentBetweenStars(markdownContent);
@@ -1217,82 +1229,100 @@ $(document).ready(async function() {
     $(`#play-${uniqueId}`).closest('.audio-controller').show();
     }
 
-    function handleStreamMessage(event, uniqueId, markdownContent) {
-        const data = JSON.parse(event.data);
-        if (data.type === 'done') {
-            activeStreams[uniqueId].close();
-            delete activeStreams[uniqueId];
-            setTimeout(() => {
-                if (markdownContent.val !== data.fullCompletion) {
-                    markdownContent.val = data.fullCompletion;
-                    $(`#completion-${uniqueId}`).html(marked.parse(markdownContent.val));
-                }
-            }, 5000);
-            afterStreamEnd(uniqueId, markdownContent.val);
-            return true; // signal done
-        } else if (data.type === 'text') {
-            markdownContent.val += data.content;
-            $(`#completion-${uniqueId}`).html(marked.parse(markdownContent.val));
+    function handleStreamMessage(event, uniqueId, buffer) {
+    const data = JSON.parse(event.data);
+
+    if (data.type === 'done') {
+        // Close the stream and do a final render of any remaining buffer
+        activeStreams[uniqueId].close();
+        delete activeStreams[uniqueId];
+        
+        // Append any leftover buffer
+        if (buffer.pendingChunk) {
+        buffer.content += buffer.pendingChunk;
+        buffer.pendingChunk = '';
         }
-        return false;
+        
+        // Final parse
+        $(`#completion-${uniqueId}`).html(buffer.content);
+        
+        // Optionally wait a bit and parse again to ensure the final text is rendered
+        setTimeout(() => {
+        if (buffer.content !== data.fullCompletion) {
+            buffer.content = data.fullCompletion;
+            $(`#completion-${uniqueId}`).html(buffer.content);
+        }
+        }, 1000);
+
+        // Any "post-stream" logic here
+        afterStreamEnd(uniqueId, buffer.content);
+        return true; // done
+    } 
+    else if (data.type === 'text') {
+        // Accumulate streamed text (do NOT parse immediately)
+        buffer.pendingChunk += data.content;
+    }
+    
+    return false;
     }
 
-    function handleStreamError(uniqueId, markdownContent, container, callback, isHidden) {
-    activeStreams[uniqueId].close();
-    delete activeStreams[uniqueId];
-    if (++attemptCount < 2) {
-        container.remove(); // remove failed placeholder before retry
-        generateCompletion(callback, isHidden);
-    } else {
-        container.hide(); // hide if second attempt also fails
-        afterStreamEnd(uniqueId, markdownContent.val);
-        if (typeof callback === 'function') callback();
-    }
-    }
     function startStream(uniqueId, sessionId, callback, isHidden, container) {
-        let markdownContent = { val: '' };
-        const streamUrl = API_URL + `/api/openai-chat-completion-stream/${sessionId}`;
-        const idleTimeout = 15000; // Maximum idle time in ms before auto-closing
-        let lastUpdateTime = Date.now(); // Track the last time data was received
+    // This object will hold all the text content in `content` 
+    // and the latest chunk in `pendingChunk`.
+    let buffer = {
+        content: '',
+        pendingChunk: '',
+    };
     
-        function startEventSource() {
-            activeStreams[uniqueId] = new EventSource(streamUrl);
-    
-            activeStreams[uniqueId].onmessage = e => {
-                if (e.data !== '[DONE]') {
-                    if (handleStreamMessage(e, uniqueId, markdownContent)) {
-                        lastUpdateTime = Date.now(); // Reset idle timer
-                        if (typeof callback === 'function') callback(markdownContent.val);
-                    }
-                } else {
-                    activeStreams[uniqueId].close(); // Gracefully close on completion
-                }
-            };
-    
-            activeStreams[uniqueId].onerror = () => {
-                activeStreams[uniqueId].close(); // Handle stream error gracefully
-            };
-    
-            monitorIdleState(); // Start monitoring for idle state
+    const streamUrl = API_URL + `/api/openai-chat-completion-stream/${sessionId}`;
+    activeStreams[uniqueId] = new EventSource(streamUrl);
+
+    let lastRenderTime = 0;
+    const RENDER_INTERVAL = 100; // Throttle DOM updates to ~10fps
+
+    function scheduleRender() {
+        requestAnimationFrame(() => {
+        const now = Date.now();
+        // Update DOM only if we have new text and enough time has passed
+        if (buffer.pendingChunk && (now - lastRenderTime > RENDER_INTERVAL)) {
+            buffer.content += buffer.pendingChunk;
+            buffer.pendingChunk = '';
+            $(`#completion-${uniqueId}`).html(buffer.content);
+            lastRenderTime = now;
         }
-    
-        function monitorIdleState() {
-            const idleMonitor = setInterval(() => {
-                if (!activeStreams[uniqueId] || activeStreams[uniqueId].readyState === 2) {
-                    clearInterval(idleMonitor); // Stop monitoring if stream is already closed
-                    return;
-                }
-    
-                if (Date.now() - lastUpdateTime > idleTimeout) {
-                    activeStreams[uniqueId].close(); // Close the stream if idle
-                    clearInterval(idleMonitor);
-                    console.warn(`Stream ${uniqueId} closed due to inactivity.`);
-                }
-            }, 2000); // Check every 2 seconds
-        }
-    
-        startEventSource();
+        // Keep scheduling in a loop
+        scheduleRender();
+        });
     }
+
+    // Kick off the render loop
+    scheduleRender();
+
+    // SSE onmessage handler
+    activeStreams[uniqueId].onmessage = (e) => {
+        // SSE sometimes sends '[DONE]' or custom 'done' object
+        if (e.data !== '[DONE]') {
+        if (handleStreamMessage(e, uniqueId, buffer)) {
+            // If handleStreamMessage returns true, it means stream ended
+            if (typeof callback === 'function') {
+            callback(buffer.content);
+            }
+        }
+        } else {
+        // Gracefully close on [DONE]
+        activeStreams[uniqueId].close();
+        delete activeStreams[uniqueId];
+        }
+    };
+
+    // SSE onerror handler
+    activeStreams[uniqueId].onerror = () => {
+        activeStreams[uniqueId].close(); // Close on error
+        delete activeStreams[uniqueId];
+        // Fallback / retry logic or final rendering here
+    };
+    }
+
     
     function generateCompletion(callback, isHidden = false) {
     hideOtherChoice(false, currentStep);

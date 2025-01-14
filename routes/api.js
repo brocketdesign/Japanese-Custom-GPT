@@ -63,23 +63,19 @@ async function routes(fastify, options) {
             if (!userChatDocument || isNew) {
 
                 // Different starting message depending on user status
-                let startMessage 
+                let startMessage = { "role": "user", "name": "master" }
                 // User is temporary, prompt to log in
                 if(user.isTemporary){
-                    startMessage = "Start with a greeting and prompt the user to log in. Do not start with a confirmation, but directly greet and ask the user to log in.";
+                    startMessage.content = "Start with a greeting and prompt the user to log in. Do not start with a confirmation, but directly greet and ask the user to log in.";
                 }
                 const userChat = await collectionUserChat.find({ userId:new fastify.mongo.ObjectId(userId), chatId: new fastify.mongo.ObjectId(chatId) }).toArray();
                 if(userChat.length > 0){
                     // Not first chat, welcome back and ask if they want to see another image
-                    startMessage = `Start by welcoming me back. Inform me that you like chatting with me. Ask me if I would like to see another one. Stay in your character, keep the same tone as before.`
+                    startMessage.content = `Start by welcoming me back. Inform me that you like chatting with me. Ask me if I would like to see another one. Stay in your character, keep the same tone as before.`
                 }else{
-                    // First chat with this character, simply say hi
-                    startMessage = `Start by greeting me. Inform me that you are happy to chat with me. Stay in your character, keep the same tone as before.`
-                }
-                const userChats = await collectionUserChat.find({ userId:new fastify.mongo.ObjectId(userId) }).toArray();
-                if(userChats.length === 0){
-                    // First chat ever, explain that image can be generated
-                    startMessage = `Start by greeting me, it is my first time trying the application. Inform me that you can generate images. Ask me if I would like to see one. Stay in your character, keep the same tone as before.`
+                    // First chat with this character, simply say hi and send an image
+                    startMessage.content = `Start by greeting me, say that it is nice to meet me for the first time. Inform me that you are happy to chat with me and as it is the first time we chat, you will send me an image to get more intimate (the application will send the image, do not try to send the image yourself). Stay in your character, keep the same tone as before.`
+                    startMessage.sendImage = true;
                 }
 
                 userChatDocument = {
@@ -87,9 +83,7 @@ async function routes(fastify, options) {
                 chatId: new fastify.mongo.ObjectId(chatId),
                 createdAt: today,
                 updatedAt: today,
-                messages: [
-                    { "role": "user", "content": startMessage, "name": "master" }
-                ]
+                messages: [startMessage]
                 };
             }
       
@@ -1111,7 +1105,30 @@ async function routes(fastify, options) {
             await updateChatLastMessage(db, chatId, userId, completion, userData.updatedAt)
             await updateUserChat(db, userId, userChatId, userData.messages, userData.updatedAt)
           }
-          reply.raw.end()
+          reply.raw.end();
+
+          if(lastUserMessage.sendImage){
+            console.log('send image')
+            const chatsGalleryCollection = db.collection('gallery');
+            const gallery = await chatsGalleryCollection.findOne({ chatId: new fastify.mongo.ObjectId(chatId) });
+            // Select a random image from the gallery
+            const image = gallery.images[Math.floor(Math.random() * gallery.images.length)];
+            const data = {userChatId, imageId:image._id, imageUrl:image.imageUrl, title:image.title, prompt:image.prompt, nsfw:image.nsfw}
+            fastify.sendNotificationToUser(userId,'imageGenerated', data)
+            const imageMessage = { role: "assistant", content: `[Image] ${image._id}` };
+            const userDataCollection = db.collection('userChat');
+            await userDataCollection.updateOne(
+              { 
+                userId: new ObjectId(userId), 
+                _id: new ObjectId(userChatId) 
+              },
+              { 
+                $push: { messages: imageMessage }, 
+                $set: { updatedAt: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) } 
+              }
+            );
+          }
+
         } catch (err) {
           console.error(err)
           reply.raw.end()

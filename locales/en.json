@@ -1,5 +1,10 @@
 {
   "lang":"en", 
+  "popup_save": {
+    "instructions": "Follow these steps to save the app:",
+    "step1": "Tap the Share icon on the menu bar below.",
+    "step2": "Select Add to Home Screen from the options."
+  },
   "promo": {
     "title": "Unlock Premium Features",
     "subtitle": "Enjoy unlimited access to all premium features.",

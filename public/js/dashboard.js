@@ -168,6 +168,60 @@ $(document).ready(async function() {
             }
         }
     }
+    // Display a popup to ask the user to save the links as a PWA on mobile
+    if (window.matchMedia('(display-mode: browser)').matches && window.matchMedia('(max-width: 768px)').matches) {
+         function showAddToHomeScreenPopup() {
+            // Display the popup using Swal.fire
+            Swal.fire({
+                title: translations.popup_save.instructions,
+                imageWidth: '100%',
+                imageHeight: 'auto',
+                position: 'bottom',
+                html: `
+                    <div class="d-flex align-items-center py-3">
+                        <div>
+                            <ul class="list-group mb-0">
+                                <li class="bg-light d-flex align-items-center list-group-item">
+                                    <i class="bi bi-box-arrow-up me-2 text-primary"></i>
+                                    <span>1) ${translations.popup_save.step1}</span>
+                                </li>
+                                <li class="bg-light d-flex align-items-center list-group-item">
+                                    <i class="bi bi-plus-square me-2 text-success"></i>
+                                    <span>2) ${translations.popup_save.step2}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: false,
+                showConfirmButton: false,
+                showCloseButton: true,
+                allowOutsideClick: false,
+                showClass: {
+                    popup: 'swal2-bottom-slide-in'
+                },
+                hideClass: {
+                    popup: 'swal2-bottom-slide-out'
+                },
+                customClass: {
+                    popup: 'animated fadeInDown'
+                }
+            }).then((result) => {   
+                if (result.dismiss) {
+                    localStorage.setItem('dismissedAddToHomeScreenPopup', 'true');
+                }
+            });
+         };
+        // if user is not temporary
+        if (!isTemporary) {
+            // Check if the user has already dismissed the popup
+            if (!localStorage.getItem('dismissedAddToHomeScreenPopup')) {
+                // Show the popup after a delay
+                setTimeout(showAddToHomeScreenPopup, 5000);
+            }
+        }
+        
+    }
     //checkAndRedirect();
     window.showUpgradePopup = function(limitType) {
     

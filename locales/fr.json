@@ -1,5 +1,10 @@
 {
   "lang":"fr",
+  "popup_save": {
+    "instructions": "Suivez ces étapes pour enregistrer l'application :",
+    "step1": "Appuyez sur l'icône de partage dans la barre de menu ci-dessous.",
+    "step2": "Sélectionnez Ajouter à l'écran d'accueil parmi les options."
+  },
   "promo": {
     "title": "Débloquez les fonctionnalités Premium",
     "subtitle": "Profitez d'un accès illimité à toutes les fonctionnalités premium.",

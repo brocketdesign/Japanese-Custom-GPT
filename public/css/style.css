@@ -740,6 +740,10 @@ nav.navbar.move {
 .chat-contain .card-body{
       width: 100%;
 }
+.smaller-title .swal2-title {
+  font-size: 18px;
+  font-weight: 600;
+}
 .swal-image{
   border-radius: 50px;
   object-fit: cover;

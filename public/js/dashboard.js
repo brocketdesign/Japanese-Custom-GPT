@@ -204,7 +204,7 @@ $(document).ready(async function() {
                     popup: 'swal2-bottom-slide-out'
                 },
                 customClass: {
-                    popup: 'animated fadeInDown'
+                    popup: 'animated fadeInDown smaller-title'
                 }
             }).then((result) => {   
                 if (result.dismiss) {

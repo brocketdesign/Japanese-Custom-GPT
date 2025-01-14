@@ -1077,7 +1077,7 @@ async function routes(fastify, options) {
                             }
                         });
                     })
-                    imgMessage[0].content = `\n\nI just asked for a new image and your are currently preparing it.\n Provide a concise answer in ${language} to inform that your are taking a good picture to send. Do no describe the image or anything. Stay in your character, keep the same tone as previously. Continue the chat,`.trim()
+                    imgMessage[0].content = `\n\nI just asked for a new image and your are currently preparing it.\n Provide an answer in ${language} to inform that your are taking a good picture to send. Do no describe the image or anything. Stay in your character, keep the same tone as previously. Continue the chat, add a comment or answer me.`.trim()
                 }
                
             }else{
@@ -1118,7 +1118,9 @@ async function routes(fastify, options) {
             const chatsGalleryCollection = db.collection('gallery');
             const gallery = await chatsGalleryCollection.findOne({ chatId: new fastify.mongo.ObjectId(chatId) });
             // Select a random image from the gallery
-            const image = gallery.images[Math.floor(Math.random() * gallery.images.length)];
+            const image = gallery.images.length === 1 
+                ? gallery.images[0] 
+                : gallery.images[Math.floor(Math.random() * gallery.images.length)];
             const data = {userChatId, imageId:image._id, imageUrl:image.imageUrl, title:image.title, prompt:image.prompt, nsfw:image.nsfw}
             fastify.sendNotificationToUser(userId,'imageGenerated', data)
             const imageMessage = { role: "assistant", content: `[Image] ${image._id}` };

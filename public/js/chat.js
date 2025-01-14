@@ -1222,105 +1222,74 @@ $(document).ready(async function() {
             if (typeof callback === 'function') callback();
         }
     }
-
     function afterStreamEnd(uniqueId, markdownContent) {
-    let msg = removeContentBetweenStars(markdownContent);
-    $(`#play-${uniqueId}`).attr('data-content', msg);
-    $(`#play-${uniqueId}`).closest('.audio-controller').show();
+      let msg = removeContentBetweenStars(markdownContent);
+      $(`#play-${uniqueId}`).attr('data-content', msg);
+      $(`#play-${uniqueId}`).closest('.audio-controller').show();
     }
-
     function handleStreamMessage(event, uniqueId, buffer) {
-    const data = JSON.parse(event.data);
-
-    if (data.type === 'done') {
-        // Close the stream and do a final render of any remaining buffer
+      const data = JSON.parse(event.data);
+      $(`#completion-${uniqueId}`).find('img').fadeOut().remove();
+      if (data.type === 'done') {
         activeStreams[uniqueId].close();
         delete activeStreams[uniqueId];
-        
-        // Append any leftover buffer
         if (buffer.pendingChunk) {
-        buffer.content += buffer.pendingChunk;
-        buffer.pendingChunk = '';
+          buffer.queue.push(...Array.from(buffer.pendingChunk));
+          buffer.pendingChunk = '';
         }
-        
-        // Final parse
-        $(`#completion-${uniqueId}`).html(buffer.content);
-        
-        // Optionally wait a bit and parse again to ensure the final text is rendered
-        setTimeout(() => {
-        if (buffer.content !== data.fullCompletion) {
-            buffer.content = data.fullCompletion;
-            $(`#completion-${uniqueId}`).html(buffer.content);
+        // Don't render all at once; let scheduleRender handle it
+        afterStreamEnd(uniqueId, $(`#completion-${uniqueId}`).text());
+        if (typeof callback === 'function') {
+          callback($(`#completion-${uniqueId}`).text());
         }
-        }, 1000);
-
-        // Any "post-stream" logic here
-        afterStreamEnd(uniqueId, buffer.content);
-        return true; // done
-    } 
-    else if (data.type === 'text') {
-        // Accumulate streamed text (do NOT parse immediately)
+        return true;
+      } else if (data.type === 'text') {
         buffer.pendingChunk += data.content;
-    }
-    
-    return false;
+      }
+      return false;
     }
 
-    function startStream(uniqueId, sessionId, callback, isHidden, container) {
-    // This object will hold all the text content in `content` 
-    // and the latest chunk in `pendingChunk`.
-    let buffer = {
-        content: '',
+    function startStream(uniqueId, sessionId, callback) {
+      let buffer = {
         pendingChunk: '',
-    };
-    
-    const streamUrl = API_URL + `/api/openai-chat-completion-stream/${sessionId}`;
-    activeStreams[uniqueId] = new EventSource(streamUrl);
+        queue: [],
+        renderAll() {}
+      };
+      const streamUrl = API_URL + `/api/openai-chat-completion-stream/${sessionId}`;
+      activeStreams[uniqueId] = new EventSource(streamUrl);
 
-    let lastRenderTime = 0;
-    const RENDER_INTERVAL = 100; // Throttle DOM updates to ~10fps
-
-    function scheduleRender() {
+      function scheduleRender() {
         requestAnimationFrame(() => {
-        const now = Date.now();
-        // Update DOM only if we have new text and enough time has passed
-        if (buffer.pendingChunk && (now - lastRenderTime > RENDER_INTERVAL)) {
-            buffer.content += buffer.pendingChunk;
+          if (buffer.pendingChunk.length > 0) {
+            buffer.queue.push(...Array.from(buffer.pendingChunk));
             buffer.pendingChunk = '';
-            $(`#completion-${uniqueId}`).html(buffer.content);
-            lastRenderTime = now;
-        }
-        // Keep scheduling in a loop
-        scheduleRender();
+          }
+          if (buffer.queue.length > 0) {
+            const textNode = document.createTextNode(buffer.queue.shift());
+            $(`#completion-${uniqueId}`).append(textNode);
+          }
+          scheduleRender();
         });
-    }
+      }
+      scheduleRender();
 
-    // Kick off the render loop
-    scheduleRender();
-
-    // SSE onmessage handler
-    activeStreams[uniqueId].onmessage = (e) => {
-        // SSE sometimes sends '[DONE]' or custom 'done' object
+      activeStreams[uniqueId].onmessage = (e) => {
         if (e.data !== '[DONE]') {
-        if (handleStreamMessage(e, uniqueId, buffer)) {
-            // If handleStreamMessage returns true, it means stream ended
+          if (handleStreamMessage(e, uniqueId, buffer)) {
             if (typeof callback === 'function') {
-            callback(buffer.content);
+              callback($(`#completion-${uniqueId}`).text());
             }
-        }
+          }
         } else {
-        // Gracefully close on [DONE]
+          activeStreams[uniqueId].close();
+          delete activeStreams[uniqueId];
+        }
+      };
+
+      activeStreams[uniqueId].onerror = () => {
         activeStreams[uniqueId].close();
         delete activeStreams[uniqueId];
-        }
-    };
-
-    // SSE onerror handler
-    activeStreams[uniqueId].onerror = () => {
-        activeStreams[uniqueId].close(); // Close on error
-        delete activeStreams[uniqueId];
-        // Fallback / retry logic or final rendering here
-    };
+      };
     }
 
     

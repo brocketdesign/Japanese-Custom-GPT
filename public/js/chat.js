@@ -1216,7 +1216,11 @@ $(document).ready(async function() {
       $(`#play-${uniqueId}`).attr('data-content', msg);
       $(`#play-${uniqueId}`).closest('.audio-controller').show();
     }
-
+    // Hide the completion message container
+    window.hideCompletion = function(uniqueId) {
+        $(`#completion-${uniqueId}`).fadeOut();
+    };
+    // Display completion message character by character
     window.displayCompletionMessage = function(message, uniqueId) {
         $(`#completion-${uniqueId}`).find('img').fadeOut().remove();
         const graphemes = [...message];

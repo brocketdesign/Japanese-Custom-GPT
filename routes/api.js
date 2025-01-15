@@ -442,7 +442,7 @@ async function routes(fastify, options) {
             if (!userData) {
                 return reply.status(404).send({ error: 'User data not found' });
             }
-
+            console.log('Language:', request.lang)
             let newMessage = { role: role };    
             if(message.startsWith('[master]')){
                 newMessage.content = message.replace('[master]','')
@@ -454,20 +454,20 @@ async function routes(fastify, options) {
                 const prompt = message.replace('[imageDone]','').trim()
                 newMessage.content =  `I just received an image of you about : ${prompt}. \n 
                 Provide a short comment and ask me what I think of it.\n
-                Stay in your character, keep the same tone as before.`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim();
+                Stay in your character, keep the same tone as before. Respond in ${request.lang}.`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim();
                 newMessage.name = 'master'
             } else if (message.startsWith('[imageStart]')){
                 const prompt = message.replace('[imageStart]','').trim()
                 newMessage.content =  `I just aksed for a new image about ${prompt}. \n 
                 Inform me that you received my request and that the image generation process is starting.\n
                 Do not include the image description in your answer. Provide a concice and short answer.\n
-                Stay in your character, keep the same tone as before.`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim();
+                Stay in your character, keep the same tone as before. Respond in ${request.lang}.`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim();
                 newMessage.name = 'master'
             } else if (message.startsWith('[imageFav]')){
                 const imageId = message.replace('[imageFav]','').trim()
                 const imageData = await findImageId(fastify.mongo.db,chatId,imageId)
                 newMessage.content =  `I liked one of your picture. The one about: ${imageData.prompt}\n
-                 Provide a short answer to thank me, stay in your character. 
+                 Provide a short answer to thank me, stay in your character. Respond in ${request.lang}.
                  `.replace(/^\s+/gm, '').trim();
                 newMessage.name = 'master'
             } else {
@@ -1086,7 +1086,6 @@ async function routes(fastify, options) {
             ]
           }
           generateCompletion(messagesForCompletion, 300, null, request.lang).then(async (completion) => {
-            console.log('Completion:', completion)
             if(completion){
                 fastify.sendNotificationToUser(userId, 'displayCompletionMessage', { message: completion, uniqueId })
                 const newAssitantMessage = { role: 'assistant', content: completion }
@@ -1102,6 +1101,8 @@ async function routes(fastify, options) {
                 await updateMessagesCount(db, chatId, userId, currentUserMessage, userData.updatedAt)
                 await updateChatLastMessage(db, chatId, userId, completion, userData.updatedAt)
                 await updateUserChat(db, userId, userChatId, userData.messages, userData.updatedAt)
+            }else{
+                fastify.sendNotificationToUser(userId, 'hideCompletionMessage', { uniqueId })
             }
           });
 

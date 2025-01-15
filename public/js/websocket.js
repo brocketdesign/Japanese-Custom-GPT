@@ -83,6 +83,11 @@ function initializeWebSocket() {
         const { message, uniqueId } = data.notification;
         displayCompletionMessage(message, uniqueId);
       }
+      // Hide completion message
+      if(data.notification.type == 'hideCompletionMessage') {
+        const { uniqueId } = data.notification;
+        hideCompletionMessage(uniqueId);
+      }
     } else {
       //console.log('Message from server:', event.data);
     }

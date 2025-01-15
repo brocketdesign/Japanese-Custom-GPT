@@ -44,7 +44,9 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
   }
   if(lang === 'ja'){ currentModel = apiDetails.openai }
 
-  const response = await fetch(currentModel.apiUrl, {
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const response = await fetch(currentModel.apiUrl, {
         headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${currentModel.key}`
@@ -61,14 +63,26 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
             stream: false,
             n: 1,
         }),
-    });
-    if (!response.ok) {
-        console.log(response)
-        return false
+      });
+
+      if (!response.ok) {
+        if (attempt === 2) {
+          const errorData = await response.json().catch(() => ({}));
+          console.log(`Failed after ${attempt} attempts:`, errorData.error?.message || '');
+          return false
+        }
+        continue; // Try second attempt
+      }
+
+      const data = await response.json();
+      return data.choices[0].message.content.trim();
+    } catch (error) {
+      if (attempt === 2) {
+        console.error(`Failed after ${attempt} attempts:`, error.message);
+        return false;
+      }
     }
-    const data = await response.json();
-    const completionMessage = data.choices[0].message.content.trim();
-    return completionMessage
+  }
 }
 
 // Define the schema for the response format

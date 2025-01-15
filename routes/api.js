@@ -442,7 +442,6 @@ async function routes(fastify, options) {
             if (!userData) {
                 return reply.status(404).send({ error: 'User data not found' });
             }
-            console.log('Language:', request.lang)
             let newMessage = { role: role };    
             if(message.startsWith('[master]')){
                 newMessage.content = message.replace('[master]','')
@@ -1027,8 +1026,7 @@ async function routes(fastify, options) {
           if (genImage?.image_request) {
             currentUserMessage.image_request = true
             userData.messages[lastMsgIndex] = currentUserMessage
-            const all_tasks =  await getTasks(db,null, userId)
-
+            const all_tasks =  await getTasks(db,null, userId);
             if(userInfo.subscriptionStatus == 'active' || (userInfo.subscriptionStatus !== 'active' && all_tasks.length < 5)){
                 const imageId = Math.random().toString(36).substr(2, 9);
                 const pending_taks =  await getTasks(db, 'pending', userId)
@@ -1071,7 +1069,7 @@ async function routes(fastify, options) {
                
             }else{
                 genImage.image_request = false
-                imgMessage[0].content = `\n\n I asked for an other image but I am not a subscribed member.\n Tell me that I need to subscribe to Lamix Premim in order to receive unlimited images, even hot images. Or I can come back tomorrow to get 5 images for free. Provide a concise answer in ${language} to inform me of that and ask me if I want to subscribe. Stay in your character, keep the same tone as previously.`.trim()
+                imgMessage[0].content = `\n\n I asked for an other image but I am not a subscribed member.\n Tell me that I need to subscribe to Lamix Premim in order to receive unlimited images, even hot images. Or I can come back in one hour to get 5 more images for free. Provide a concise answer in ${language} to inform me of that and ask me if I want to subscribe. Stay in your character, keep the same tone as previously.`.trim()
             }
 
             messagesForCompletion = [

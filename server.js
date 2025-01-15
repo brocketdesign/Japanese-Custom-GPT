@@ -16,23 +16,33 @@ const {
 const { checkUserAdmin, getUserData, updateCounter, fetchTags } = require('./models/tool');
 const { deleteOldTasks } = require('./models/imagen');
 
-
 fastify.register(require('@fastify/mongodb'), {
   forceClose: true,
   url: process.env.MONGODB_URI,
   database: process.env.MONGODB_NAME,
+}, (err) => {
+  if (err) {
+    console.log('Failed to connect to database:', err);
+    process.exit(1); // Exit the process if the database connection fails
+  }
 });
 
+
 cron.schedule('0 0 * * *', async () => {
-  const db = fastify.mongo.db;
+  const db = fastify.mongo.db; // Access the database object after plugin registration
   try {
-    cleanupNonRegisteredUsers(db);
-    deleteTemporaryChats(db);
-    deleteOldTasks(db);
+    // Check if the database is accessible
+    await db.command({ ping: 1 });
+    console.log('Database connection is healthy.');
+
+    // Call your cleanup and update functions
+    await cleanupNonRegisteredUsers(db);
+    await deleteTemporaryChats(db);
+    await deleteOldTasks(db);
     await updateCounter(db, 0);
-    fastify.log.info('Counter has been reset to 0.');
+    console.log('Counter has been reset to 0.');
   } catch (err) {
-    fastify.log.error('Failed to reset counter:', err);
+    console.log('Failed to execute cron tasks or access database:', err);
   }
 });
 

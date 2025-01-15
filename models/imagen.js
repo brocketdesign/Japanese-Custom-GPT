@@ -204,8 +204,8 @@ async function deleteOldPendingAndFailedTasks(db) {
 async function deleteOldTasks(db) {
   try {
     const tasksCollection = db.collection('tasks');
-    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const result = await tasksCollection.deleteMany({ createdAt: { $lt: yesterday } });
+    const aDayAgo = new Date(Date.now() - 1 * 60 * 60 * 1000); // 1 hour ago
+    const result = await tasksCollection.deleteMany({ createdAt: { $lt: aDayAgo } });
     console.log(`Deleted ${result.deletedCount} old tasks.`);
   } catch (error) {
     console.error('Error deleting old tasks:', error);

@@ -1889,8 +1889,8 @@ $(document).ready(function () {
             chatsHtml += `
               <div class="chat-item mb-4">
                 <div class="d-flex justify-content-start align-items-center">
-                    <span style="font-size: 18px; font-weight: 700;"><a href="/character/${chat._id}">${chat.name}</a></span>
-                    <span class="badge custom-gradient-bg ms-2">${chat.imageCount}</span>
+                    <a href="/character/${chat._id}"><span style="font-size: 18px; font-weight: 700;">${chat.name}</span></a>
+                    <a href="/character/${chat._id}"><span class="badge custom-gradient-bg ms-2">${chat.imageCount}</span></a>
                 </div>
                 <p>${chat?.first_message || chat.description}</p>
                 <!-- Horizontal scrolling container -->

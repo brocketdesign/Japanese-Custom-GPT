@@ -335,6 +335,7 @@ async function routes(fastify, options) {
       const chatsWithImages = await chatsGalleryCollection
         .aggregate([
           { $match: { 'images.0': { $exists: true } } }, // Only chats with images
+          { $sort: { _id: -1 } }, // Sort by _id in descending order for latest first
           { $project: { chatId: 1 } }
         ])
         .toArray();
@@ -346,8 +347,8 @@ async function routes(fastify, options) {
         .find({
           _id: { $in: chatIdsWithImages },
           $or: [
-            { language: language },
-            { language: requestLang }
+        { language: language },
+        { language: requestLang }
           ]
         })
         .project({
@@ -359,6 +360,7 @@ async function routes(fastify, options) {
           description: 1,
           first_message: 1,
         })
+        .sort({ _id: -1 }) // Sort by _id in descending order for latest first
         .skip(skip)
         .limit(limit)
         .toArray();

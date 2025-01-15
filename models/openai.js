@@ -38,100 +38,12 @@ const moderateText = async (text) => {
     throw error;
   }
 };
-const fetchOpenAICompletion = async (messages, res, maxToken = 1000, genImage, lang) => {
-
-  if(lang === 'ja'){ currentModel = apiDetails.openai }
-
-  messages = sanitizeMessages(messages);
-  try {
-    const response = await sendRequest(messages, maxToken);
-
-    if (!response.ok) {
-      return false;
-    }
-
-    const fullCompletion = await processResponse(response, res, genImage);
-    return fullCompletion;
-
-  } catch (error) {
-    console.error("Error fetching completion:", error);
-    throw error;
-  }
-};
-
-const sendRequest = async (messages, maxToken) => {
-  return await fetch(currentModel.apiUrl, {
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${currentModel.key}`
-    },
-    method: "POST",
-    body: JSON.stringify({
-      model: currentModel.model,
-      messages,
-      temperature: 0.85,
-      top_p: 0.95,
-      frequency_penalty: 0,
-      presence_penalty: 0,
-      max_tokens: maxToken,
-      stream: true,
-      n: 1,
-    }),
-  });
-};
-const processResponse = async (response, res, genImage) => {
-  let fullCompletion = "";
-  let triggerSent = false;
-
-  for await (const chunk of response.body) {
-    const decoded = new TextDecoder('utf-8').decode(chunk);
-    const events = decoded.split('\n\n');
-
-    for (const event of events) {
-
-      if (event.slice(6).trim() === "[DONE]"){
-        res.write(`data: ${JSON.stringify({ type: 'done', fullCompletion })}\n\n`);
-        res.end();
-        return fullCompletion;
-      };
-
-      if (event.startsWith('data: ')) {
-        try {
-          const parsedData = JSON.parse(event.slice(6));
-          const content = (parsedData.choices && parsedData.choices.length > 0)
-            ? (parsedData.choices[0].delta?.content || "")
-            : "";
-
-          for (let i = 0; i < content.length; i++) {
-            const char = content[i];
-            fullCompletion += char;
-            res.write(`data: ${JSON.stringify({ type: 'text', content: char })}\n\n`);
-          }
-
-          if (genImage?.image_request && !triggerSent) {
-            res.write(`data: ${JSON.stringify({
-              type: 'trigger',
-              name: 'image_request',
-              command: genImage
-            })}\n\n`);
-            triggerSent = true;
-          }
-        } catch (error) {
-          console.error("Error parsing JSON:", error);
-          console.log({event})
-        }
-      }
-    }
-  }
-
-  return fullCompletion;
-};
-
-
-async function generateCompletion(messages, maxToken = 1000, model = null) {
+async function generateCompletion(messages, maxToken = 1000, model = null, lang = 'en') {
   if(model){
     currentModel = apiDetails[model]
   }
+  if(lang === 'ja'){ currentModel = apiDetails.openai }
+
   const response = await fetch(currentModel.apiUrl, {
         headers: {
             "Content-Type": "application/json",
@@ -291,7 +203,6 @@ async function createPrompt(customPrompt, imageDescription, nsfw) {
 }
 
 module.exports = {
-    fetchOpenAICompletion,
     generateCompletion,
     checkImageRequest,
     generatePromptTitle,

@@ -1210,123 +1210,49 @@ $(document).ready(async function() {
     $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
     return container;
     }
-    function handleStreamError(uniqueId, markdownContent, container, callback, isHidden) {
-        activeStreams[uniqueId].close();
-        delete activeStreams[uniqueId];
-        if (++attemptCount < 2) {
-            container.remove(); // remove failed placeholder before retry
-            generateCompletion(callback, isHidden);
-        } else {
-            container.hide(); // hide if second attempt also fails
-            afterStreamEnd(uniqueId, markdownContent.val);
-            if (typeof callback === 'function') callback();
-        }
-    }
+
     function afterStreamEnd(uniqueId, markdownContent) {
       let msg = removeContentBetweenStars(markdownContent);
       $(`#play-${uniqueId}`).attr('data-content', msg);
       $(`#play-${uniqueId}`).closest('.audio-controller').show();
     }
-    function handleStreamMessage(event, uniqueId, buffer) {
-      const data = JSON.parse(event.data);
-      $(`#completion-${uniqueId}`).find('img').fadeOut().remove();
-      if (data.type === 'done') {
-        activeStreams[uniqueId].close();
-        delete activeStreams[uniqueId];
-        if (buffer.pendingChunk) {
-          buffer.queue.push(...Array.from(buffer.pendingChunk));
-          buffer.pendingChunk = '';
-        }
-        // Don't render all at once; let scheduleRender handle it
-        afterStreamEnd(uniqueId, $(`#completion-${uniqueId}`).text());
-        if (typeof callback === 'function') {
-          callback($(`#completion-${uniqueId}`).text());
-        }
-        return true;
-      } else if (data.type === 'text') {
-        buffer.pendingChunk += data.content;
-      }
-      return false;
-    }
 
-    function startStream(uniqueId, sessionId, callback) {
-      let buffer = {
-        pendingChunk: '',
-        queue: [],
-        renderAll() {}
-      };
-      const streamUrl = API_URL + `/api/openai-chat-completion-stream/${sessionId}`;
-      activeStreams[uniqueId] = new EventSource(streamUrl);
-
-      function scheduleRender() {
-        requestAnimationFrame(() => {
-          if (buffer.pendingChunk.length > 0) {
-            buffer.queue.push(...Array.from(buffer.pendingChunk));
-            buffer.pendingChunk = '';
-          }
-          if (buffer.queue.length > 0) {
-            const textNode = document.createTextNode(buffer.queue.shift());
+    window.displayCompletionMessage = function(message, uniqueId) {
+        $(`#completion-${uniqueId}`).find('img').fadeOut().remove();
+        const graphemes = [...message];
+        const CHUNK_SIZE = 1;
+      
+        function renderChunk() {
+          for (let i = 0; i < CHUNK_SIZE && graphemes.length; i++) {
+            const textNode = document.createTextNode(graphemes.shift());
             $(`#completion-${uniqueId}`).append(textNode);
           }
-          scheduleRender();
-        });
-      }
-      scheduleRender();
-
-      activeStreams[uniqueId].onmessage = (e) => {
-        if (e.data !== '[DONE]') {
-          if (handleStreamMessage(e, uniqueId, buffer)) {
-            if (typeof callback === 'function') {
-              callback($(`#completion-${uniqueId}`).text());
-            }
+          if (graphemes.length > 0) {
+            requestAnimationFrame(renderChunk);
+          } else {
+            afterStreamEnd(uniqueId, $(`#completion-${uniqueId}`).text());
           }
-        } else {
-          activeStreams[uniqueId].close();
-          delete activeStreams[uniqueId];
         }
+      
+        requestAnimationFrame(renderChunk);
       };
-
-      activeStreams[uniqueId].onerror = () => {
-        activeStreams[uniqueId].close();
-        delete activeStreams[uniqueId];
-      };
-    }
-
+      
     
     function generateCompletion(callback, isHidden = false) {
-    hideOtherChoice(false, currentStep);
-    const uniqueId = `${currentStep}-${Date.now()}`;
-    const container = createBotResponseContainer(uniqueId);
+        const uniqueId = `${currentStep}-${Date.now()}`;
+        const container = createBotResponseContainer(uniqueId);
 
-    $.ajax({
-        url: API_URL + '/api/openai-chat-completion',
-        method: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify({ userId, chatId, userChatId, isHidden }),
-        success: function(res) {
-        startStream(uniqueId, res.sessionId, callback, isHidden, container);
-        },
-        error: function() {
-        console.error('Error: AJAX call failed');
-        if (++attemptCount < 2) {
-            container.remove();
-            generateCompletion(callback, isHidden);
-        } else {
-            container.hide();
-            if (typeof callback === 'function') callback();
-        }
-        }
-    });
-    }
-
-
-    function afterStreamEnd(uniqueId, markdownContent){
-        let message = removeContentBetweenStars(markdownContent);
-        $(`#play-${uniqueId}`).attr('data-content', message);
-        $(`#play-${uniqueId}`).closest('.audio-controller').show();
-        if (localStorage.getItem('audioAutoPlay') === 'true') {
-          //initAudio($(`#play-${uniqueId}`), message);
-        }
+        $.ajax({
+            url: API_URL + '/api/openai-chat-completion',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ userId, chatId, userChatId, isHidden, uniqueId }),
+            success: function() {
+            },
+            error: function() {
+            console.error('Error: AJAX call failed');
+            }
+        });
     }
   
     window.displayMessage = function(sender, message, origineUserChatId, callback) {

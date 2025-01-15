@@ -78,6 +78,11 @@ function initializeWebSocket() {
         const { mess } = data.notification;
         updateCharacterGenerationMess(mess);
       }
+      // Display completion message
+      if(data.notification.type == 'displayCompletionMessage') {
+        const { message, uniqueId } = data.notification;
+        displayCompletionMessage(message, uniqueId);
+      }
     } else {
       //console.log('Message from server:', event.data);
     }

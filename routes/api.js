@@ -936,18 +936,6 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to save user feedback' });
         }
     });
-
-    fastify.post('/api/openai-chat-completion', async (request, reply) => {
-        const { chatId, userChatId, isHidden } = request.body;
-        let userId = request.body.userId
-        if(!userId){ 
-            const user = request.user;
-            userId = user._id
-        }
-        const sessionId = Math.random().toString(36).substring(2, 15); // Generate a unique session ID
-        sessions.set(sessionId, { userId, chatId, userChatId, isHidden });
-        return reply.send({ sessionId });
-    });
    // This route handles streaming chat completions from OpenAI for a given session ID.
 
     function chatDataToString(data) {
@@ -991,19 +979,20 @@ async function routes(fastify, options) {
     
         `.replace(/^\s+/gm, '').trim();
     }
-    
 
-    fastify.get('/api/openai-chat-completion-stream/:sessionId', async (request, reply) => {
-        const { sessionId } = request.params
-        const session = sessions.get(sessionId)
-        if (!session) { reply.status(404).send({ error: 'Session not found' }); return }
-        setSSEHeaders(reply)
+    fastify.post('/api/openai-chat-completion', async (request, reply) => {
+
         try {
           const db = fastify.mongo.db
-          const { userId, chatId, userChatId } = session
+          const { chatId, userChatId, isHidden, uniqueId } = request.body
+          let userId = request.body.userId
+          if(!userId){ 
+              const user = request.user;
+              userId = user._id
+          }
           const userInfo = await getUserInfo(db, userId)
           let userData = await getUserChatData(db, userId, userChatId)
-          if (!userData) { reply.raw.end(); return reply.status(404).send({ error: 'User data not found' }) }
+          if (!userData) { return reply.status(404).send({ error: 'User data not found' }) }
       
           const chatDocument = await getChatDocument(db, chatId)
           const language = getLanguageName(userInfo.lang)
@@ -1096,67 +1085,58 @@ async function routes(fastify, options) {
                 ...userMessages
             ]
           }
-          const completion = await fetchOpenAICompletion(messagesForCompletion, reply.raw, 300, genImage, request.lang)
-          if(completion){
-            const newAssitantMessage = { role: 'assistant', content: completion }
-            if(currentUserMessage.name){
-                newAssitantMessage.name = currentUserMessage.name
-            }
-            if (genImage?.image_request) {
-                newAssitantMessage.image_request = true
-            }
+          generateCompletion(messagesForCompletion, 300, null, request.lang).then(async (completion) => {
+            console.log('Completion:', completion)
+            if(completion){
+                fastify.sendNotificationToUser(userId, 'displayCompletionMessage', { message: completion, uniqueId })
+                const newAssitantMessage = { role: 'assistant', content: completion }
+                if(currentUserMessage.name){
+                    newAssitantMessage.name = currentUserMessage.name
+                }
+                if (genImage?.image_request) {
+                    newAssitantMessage.image_request = true
+                }
 
-            userData.messages.push(newAssitantMessage)
-            userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' })
-            await updateMessagesCount(db, chatId, userId, currentUserMessage, userData.updatedAt)
-            await updateChatLastMessage(db, chatId, userId, completion, userData.updatedAt)
-            await updateUserChat(db, userId, userChatId, userData.messages, userData.updatedAt)
-          }
-          reply.raw.end();
+                userData.messages.push(newAssitantMessage)
+                userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' })
+                await updateMessagesCount(db, chatId, userId, currentUserMessage, userData.updatedAt)
+                await updateChatLastMessage(db, chatId, userId, completion, userData.updatedAt)
+                await updateUserChat(db, userId, userChatId, userData.messages, userData.updatedAt)
+            }
+          });
 
           if(lastUserMessage.sendImage){
             const chatsGalleryCollection = db.collection('gallery');
-            const gallery = await chatsGalleryCollection.findOne({ chatId: new fastify.mongo.ObjectId(chatId) });
-            // Select a random image from the gallery
-            const image = gallery.images.length === 1 
-                ? gallery.images[0] 
-                : gallery.images[Math.floor(Math.random() * gallery.images.length)];
-            const data = {userChatId, imageId:image._id, imageUrl:image.imageUrl, title:image.title, prompt:image.prompt, nsfw:image.nsfw}
-            fastify.sendNotificationToUser(userId,'imageGenerated', data)
-            const imageMessage = { role: "assistant", content: `[Image] ${image._id}` };
-            const userDataCollection = db.collection('userChat');
-            await userDataCollection.updateOne(
-              { 
-                userId: new ObjectId(userId), 
-                _id: new ObjectId(userChatId) 
-              },
-              { 
-                $push: { messages: imageMessage }, 
-                $set: { updatedAt: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) } 
-              }
-            );
+            chatsGalleryCollection.findOne({ chatId: new fastify.mongo.ObjectId(chatId) }).then(async (gallery) => {
+                // Select a random image from the gallery
+                const image = gallery.images.length === 1 
+                    ? gallery.images[0] 
+                    : gallery.images[Math.floor(Math.random() * gallery.images.length)];
+                const data = {userChatId, imageId:image._id, imageUrl:image.imageUrl, title:image.title, prompt:image.prompt, nsfw:image.nsfw}
+                fastify.sendNotificationToUser(userId,'imageGenerated', data)
+                const imageMessage = { role: "assistant", content: `[Image] ${image._id}` };
+                const userDataCollection = db.collection('userChat');
+                await userDataCollection.updateOne(
+                    { 
+                        userId: new ObjectId(userId), 
+                        _id: new ObjectId(userChatId) 
+                    },
+                    { 
+                        $push: { messages: imageMessage }, 
+                        $set: { updatedAt: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) } 
+                    }
+                );
+            });
           }
 
         } catch (err) {
-          console.error(err)
-          reply.raw.end()
+          console.log(err)
           reply.status(500).send({ error: 'Error fetching OpenAI completion' })
         }
       })
       
 
     // -------------------- Helper functions --------------------
-
-    // Sets response headers for SSE
-    function setSSEHeaders(reply) {
-        reply.raw.setHeader('Access-Control-Allow-Origin', '*');
-        reply.raw.setHeader('Access-Control-Allow-Methods', 'GET');
-        reply.raw.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-        reply.raw.setHeader('Content-Type', 'text/event-stream');
-        reply.raw.setHeader('Cache-Control', 'no-cache');
-        reply.raw.setHeader('Connection', 'keep-alive');
-        reply.raw.flushHeaders();
-    }
 
     // Fetches user info from 'users' collection
     async function getUserInfo(db, userId) {
@@ -1175,7 +1155,7 @@ async function routes(fastify, options) {
         if (process.env.MODE === 'local') {
             return 'http://localhost:3000'; // Local development URL
         } else {
-            return 'https://chat.lamixapp.com'
+            return 'https://app.chatlamix.com'
         }
     };    
 
@@ -1196,17 +1176,6 @@ async function routes(fastify, options) {
             chatdoc = response.data
         }
         return chatdoc;
-    }
-
-    // Counts how many images are pending in the last 30 minutes for a specific user
-    async function getPendingImageCount(db, userId) {
-        const tasksCollection = db.collection('tasks');
-        const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
-        return tasksCollection.countDocuments({
-            userId: new fastify.mongo.ObjectId(userId),
-            status: 'pending',
-            updatedAt: { $gte: thirtyMinutesAgo }
-        });
     }
 
     // Returns current time formatted in Japanese

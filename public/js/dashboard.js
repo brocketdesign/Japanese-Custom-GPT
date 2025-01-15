@@ -1772,6 +1772,277 @@ window.loadChatImages = async function (chatId, page = 1) {
         }
     });
 }
+$(document).ready(function () {
+    let currentPage = 1;
+    let isFetchingChats = false;
+  
+    // Adjust these as needed
+    const currentUser = window.user || {};
+    const currentUserId = currentUser._id;
+    const subscriptionStatus = currentUser.subscriptionStatus === 'active';
+    const isTemporary = !!currentUser.isTemporary;
+  
+    // Check admin rights (optional async call)
+    let isAdmin = false;
+    if (currentUserId) {
+      checkIfAdmin(currentUserId)
+        .then(result => {
+          isAdmin = result;
+        })
+        .catch(err => console.error('Failed to check admin status:', err));
+    }
+  
+    /**
+     * Fetch Chats with Images (Vertical Infinite Scroll)
+     */
+    function fetchChatsWithImages(page) {
+      if (isFetchingChats) return;
+      isFetchingChats = true;
+  
+      $.ajax({
+        url: `/chats/horizontal-gallery?page=${page}`,
+        method: 'GET',
+        success: function (data) {
+          let chatsHtml = '';
+  
+          data.chats.forEach(chat => {
+            let chatImagesHtml = '';
+  
+            // Loop through images in each chat
+            chat.images.forEach((item, index) => {
+                // Display a maximum of 12 images per chat
+                if (index >= 12) return;
+              // Check unlock logic (adapt to your own logic)
+              const unlockedItem = isUnlocked(currentUser, item._id, item.userId);
+              const isBlur = unlockedItem ? false : item.nsfw && !subscriptionStatus;
+              // Check if user has “liked” this image
+              const isLiked = Array.isArray(item.likedBy)
+                ? item.likedBy.some(id => id.toString() === currentUserId.toString())
+                : false;
+  
+              chatImagesHtml += `
+                <div class="horizontal-image-wrapper col-12 col-md-4 col-lg-2 mb-2">
+                  <div class="card shadow-0">
+                    ${
+                      isBlur
+                        ? `
+                          <!-- Blurred Image -->
+                          <div 
+                            type="button" 
+                            onclick="${
+                              isTemporary
+                                ? `showRegistrationForm()`
+                                : `unlockImage('${item._id}', 'gallery', this)`
+                            }"
+                          >
+                            <img 
+                              data-src="${item.imageUrl}" 
+                              class="card-img-top img-blur" 
+                              style="object-fit: cover;"
+                            >
+                          </div>
+                        `
+                        : `
+                          <!-- Unblurred Image -->
+                          <a 
+                            href="/character/${chat._id}?imageId=${item._id}" 
+                            class="text-muted text-decoration-none"
+                            data-index="${index}"
+                          >
+                            <img 
+                              src="${item.imageUrl}" 
+                              alt="${item.prompt}" 
+                              class="card-img-top"
+                            >
+                          </a>
+                          <!-- Admin/Like Controls -->
+                          <div class="${
+                            !isAdmin ? 'd-none' : ''
+                          } card-body p-2 d-flex align-items-center justify-content-between">
+                            <button 
+                              class="btn btn-light image-nsfw-toggle ${
+                                !isAdmin ? 'd-none' : ''
+                              } ${item.nsfw ? 'nsfw' : 'sfw'}" 
+                              data-id="${item._id}"
+                            >
+                              <i class="bi ${
+                                item.nsfw ? 'bi-eye-slash-fill' : 'bi-eye-fill'
+                              }"></i> 
+                            </button>
+                            <span 
+                              class="btn btn-light float-end image-fav ${
+                                isLiked ? 'liked' : ''
+                              }" 
+                              data-id="${item._id}"
+                            >
+                              <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
+                            </span>
+                          </div>
+                        `
+                    }
+                  </div>
+                </div>
+              `;
+            });
+  
+            // Wrap each chat with its title/description and horizontal scroll container
+            chatsHtml += `
+              <div class="chat-item mb-4">
+                <div class="d-flex justify-content-start align-items-center">
+                    <h5><a href="/character/${chat._id}">${chat.name}</a></h5>
+                    <span class="badge bg-primary ms-2">${chat.imageCount}</span>
+                </div>
+                <p>${chat?.first_message || chat.description}</p>
+                <!-- Horizontal scrolling container -->
+                <div class="chat-images-horizontal row flex-nowrap" data-chat-id="${chat._id}" style="overflow-x:auto;">
+                  ${chatImagesHtml}
+                </div>
+              </div>
+            `;
+          });
+  
+          // Append the generated HTML for all chats
+          $('#all-chats-container').append(chatsHtml);
+  
+          // Attach horizontal scrolling listeners
+          attachHorizontalScrollListeners();
+  
+          // Apply blur if needed
+          $(document)
+            .find('.img-blur')
+            .each(function () {
+              blurImage(this);
+            });
+  
+          // Reset fetching flag and increment page
+          isFetchingChats = false;
+          currentPage++;
+        },
+        error: function (err) {
+          console.error('Failed to load chats', err);
+          isFetchingChats = false;
+        }
+      });
+    }
+  
+    /**
+     * Horizontal Infinite Scrolling for Each Chat’s Images
+     */
+    function attachHorizontalScrollListeners() {
+      $('.chat-images-horizontal').off('scroll').on('scroll', function () {
+        const $container = $(this);
+        // If near the right edge, load more images
+        if ($container[0].scrollWidth - $container.scrollLeft() <= $container.outerWidth() + 50) {
+          const chatId = $container.data('chat-id');
+          const currentImages = $container.find('.horizontal-image-wrapper').length;
+  
+          // Fetch more images for the chat (only if your backend supports offset/pagination)
+          $.ajax({
+            url: `/chats/${chatId}/images?skip=${currentImages}`,
+            method: 'GET',
+            success: function (data) {
+              let additionalImagesHtml = '';
+  
+              data.images.forEach((item, index) => {
+                const unlockedItem = isUnlocked(currentUser, item._id, item.userId);
+                const isBlur = unlockedItem ? false : item.nsfw && !subscriptionStatus;
+                const isLiked = Array.isArray(item.likedBy)
+                  ? item.likedBy.some(id => id.toString() === currentUserId.toString())
+                  : false;
+  
+                additionalImagesHtml += `
+                  <div class="horizontal-image-wrapper col-12 col-md-4 col-lg-2 mb-2">
+                    <div class="card shadow-0">
+                      ${
+                        isBlur
+                          ? `
+                            <div 
+                              type="button" 
+                              onclick="${
+                                isTemporary
+                                  ? `showRegistrationForm()`
+                                  : `unlockImage('${item._id}', 'gallery', this)`
+                              }"
+                            >
+                              <img 
+                                data-src="${item.imageUrl}" 
+                                class="card-img-top img-blur" 
+                                style="object-fit: cover;"
+                              >
+                            </div>
+                          `
+                          : `
+                            <a 
+                              href="/character/${item.chatId}?imageId=${item._id}" 
+                              class="text-muted text-decoration-none"
+                            >
+                              <img 
+                                src="${item.imageUrl}" 
+                                alt="${item.prompt}" 
+                                class="card-img-top"
+                              >
+                            </a>
+                            <div class="${
+                              !isAdmin ? 'd-none' : ''
+                            } card-body p-2 d-flex align-items-center justify-content-between">
+                              <button 
+                                class="btn btn-light image-nsfw-toggle ${
+                                  !isAdmin ? 'd-none' : ''
+                                } ${item.nsfw ? 'nsfw' : 'sfw'}" 
+                                data-id="${item._id}"
+                              >
+                                <i class="bi ${
+                                  item.nsfw ? 'bi-eye-slash-fill' : 'bi-eye-fill'
+                                }"></i> 
+                              </button>
+                              <span 
+                                class="btn btn-light float-end image-fav ${
+                                  isLiked ? 'liked' : ''
+                                }" 
+                                data-id="${item._id}"
+                              >
+                                <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
+                              </span>
+                            </div>
+                          `
+                      }
+                    </div>
+                  </div>
+                `;
+              });
+  
+              $container.append(additionalImagesHtml);
+  
+              // Re-apply blur to newly added images
+              $(document)
+                .find('.img-blur')
+                .each(function () {
+                  blurImage(this);
+                });
+            },
+            error: function (err) {
+              console.error('Failed to load more images', err);
+            }
+          });
+        }
+      });
+    }
+  
+    /**
+     * Vertical Infinite Scroll for Chats
+     */
+    $(window).on('scroll', function () {
+      if ($(window).scrollTop() + $(window).height() >= $(document).height() - 50) {
+        fetchChatsWithImages(currentPage);
+      }
+    });
+  
+    /**
+     * Initial Load
+     */
+    fetchChatsWithImages(currentPage);
+  });
+  
 window.getLanguageName = function(langCode) {
     const langMap = {
         en: "english",

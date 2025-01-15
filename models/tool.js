@@ -14,7 +14,7 @@ async function checkUserAdmin(fastify, userId) {
     const usersCollection = fastify.mongo.db.collection('users');
     const user = await usersCollection.findOne({_id: new ObjectId(userId)});
     if (!user) {
-        throw new Error('User not found');
+        return false;
     }
     return adminEmails.includes(user.email);
 }

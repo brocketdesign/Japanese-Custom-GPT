@@ -598,8 +598,10 @@ fastify.post('/user/update-info', async (request, reply) => {
       if (!userData) {
         return reply.redirect('/my-plan');
       }
-
-      const isAdmin = await checkUserAdmin(fastify, request.user._id);
+      let isAdmin = false;
+      if(!userData.isTemporary){
+        isAdmin = await checkUserAdmin(fastify, request.user._id);
+      }
       const translations = request.translations;
 
       return reply.view('/user-profile.hbs', {

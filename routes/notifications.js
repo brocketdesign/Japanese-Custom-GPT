@@ -2,6 +2,7 @@ const { ObjectId } = require('mongodb');
 const { checkUserAdmin } = require('../models/tool');
 
 async function routes(fastify, options) {
+
   fastify.post('/notifications', async (request, reply) => {
     try {
       const user = await fastify.getUser(request, reply);
@@ -71,8 +72,6 @@ async function routes(fastify, options) {
       const db = fastify.mongo.db;
       const notificationsCollection = db.collection('notifications');
 
-      const userNotifications = await notificationsCollection.find({ userId }).toArray();
-
       const stickyNotifications = await notificationsCollection.find({
         sticky: true,
         dismissedBy: { $ne: userId },
@@ -88,8 +87,8 @@ async function routes(fastify, options) {
       reply.code(500).send('Internal Server Error');
     }
   });
-
-  fastify.put('/notifications/:id/viewed', async (request, reply) => {
+  
+  fastify.put('/notifications/viewed/:id', async (request, reply) => {
     try {
       const user = await fastify.getUser(request, reply);
       const userId = new fastify.mongo.ObjectId(user._id);

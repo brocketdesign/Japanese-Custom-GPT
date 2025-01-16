@@ -107,6 +107,7 @@ fastify.register(require('./routes/plan'));
 fastify.register(require('./routes/user'));
 fastify.register(require('./routes/admin'));
 fastify.register(require('./routes/post'));
+fastify.register(require('./routes/notifications'));
 fastify.register(require('./routes/gallery'));
 
 fastify.decorate('authenticate', async function (request, reply) {

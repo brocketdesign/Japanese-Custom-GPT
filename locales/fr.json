@@ -349,6 +349,9 @@
       "next": "Suivant",
       "prev": "Précédent",
       "newCharacter": {
+        "imageCompletionDone_title": "Complétion de l'image terminée",
+        "imageCompletionDone_message": "Votre nouvelle image de personnage est disponible.",
+        "personalityDetailsDone": "Détails de la personnalité terminés",
         "tagsLabel": "Tags",
         "start_chat_and_image_generation": "Commencez à discuter et à générer des images",
         "start_chat_and_image_generation_description": "Commencez à discuter avec des personnages IA et générez des images en fonction de vos conversations.",

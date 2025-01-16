@@ -32,6 +32,15 @@ function initializeWebSocket() {
         const { message, icon } = data.notification;
         showNotification( message, icon );
       }
+      // Add a new notification
+      if(data.notification.type == 'updateNotificationCountOnLoad') {
+        const { userId } = data.notification;
+        updateNotificationCountOnLoad(userId);
+
+        if($('#chatContainer').is(':visible')) {
+          fetchChatData(chatId,user._id)
+        }
+      }
       // Display image icon in last user message
       if (data.notification.type == 'addIconToLastUserMessage') {
         addIconToLastUserMessage();
@@ -45,10 +54,6 @@ function initializeWebSocket() {
       if(data.notification.type == 'handleRegenSpin') {
         const {imageId, spin} = data.notification;
         handleRegenSpin(imageId, spin);
-      }
-      // Reset character form
-      if(data.notification.type == 'resetCharacterForm') {
-        resetCharacterForm();
       }
       // Display generated image
       if(data.notification.type == 'imageGenerated') {
@@ -64,9 +69,13 @@ function initializeWebSocket() {
         });
       }
       // Display character image
-      if(data.notification.type == 'characterImageGenerated') {
+      if(data.notification.type == 'characterImageGenerated' && $('#imageContainer').length > 0) {
         const { imageUrl, nsfw } = data.notification;
         generateCharacterImage(imageUrl,nsfw);
+      }
+      // Reset character form
+      if(data.notification.type == 'resetCharacterForm' && $('#imageContainer').length > 0) {
+        resetCharacterForm();
       }
       // Updade image title dynamically
       if(data.notification.type == 'updateImageTitle') {

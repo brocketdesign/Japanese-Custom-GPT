@@ -168,7 +168,7 @@ async function routes(fastify, options) {
                 role: "system",
                 content: `You are a helpful assistant.
                 You will generate creative character descriptions in ${language}.
-                name: ${name && name.trim() !== '' ? name : `Please enter the actual ${language} name and surname without furigana. It should match the character's gender and description.`}
+                name: ${name && name.trim() !== '' ? name : `Please provide the actual ${language} name and surname without furigana. It should match the character's gender and description.`}
                 short_intro: Write a self-introduction that reflects the character's personality in 2 sentences.
                 base_personality: Define the character's traits, preferences, and expression style. Include a short story describing their personality and background.
                 first_message: Provide the character's first conversational message that reflects their personality.
@@ -222,6 +222,7 @@ async function routes(fastify, options) {
             // Respond with the validated character data
             chatData.language = language
             chatData.gender = gender
+            chatData.characterPrompt = prompt
             
             // Save generated tags
             const tagsCollection = fastify.mongo.db.collection('tags');
@@ -282,6 +283,7 @@ async function routes(fastify, options) {
         const updateFields = {
           characterPrompt: prompt,
           imageDescription: enhancedPrompt,
+          gender
         };
         if (details_description) {
           updateFields.details_description = details_description; // store details in the DB if provided

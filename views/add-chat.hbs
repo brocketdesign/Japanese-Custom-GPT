@@ -401,8 +401,8 @@
                                 <!-- Name -->
                                 <div class="row mx-0 px-0">
                                     <div class="col-12 col-sm-6 mb-3">
-                                        <label for="name" class="form-label">{{translations.newCharacter.nameLabel}}:</label>
-                                        <input type="text" class="form-control" id="name" name="name" placeholder="{{translations.newCharacter.namePlaceholder}}">
+                                        <label for="chatName" class="form-label">{{translations.newCharacter.nameLabel}}:</label>
+                                        <input type="text" class="form-control" id="chatName" name="chatName" placeholder="{{translations.newCharacter.namePlaceholder}}">
                                     </div>
                                 </div>
                                     
@@ -692,8 +692,8 @@ $(document).ready(function() {
                         $('#gender').val(chatData.gender);
                     }
 
-                    if (chatData.purpose) {
-                        $('#chatPurpose').val(chatData.purpose);
+                    if (chatData?.base_personality && chatData?.base_personality?.story) {
+                        $('#chatPurpose').val(chatData?.base_personality?.story);
                         resizeTextarea($('#chatPurpose')[0]);
                     }
 
@@ -831,8 +831,6 @@ $(document).ready(function() {
         }
     }
     $('#generateButton').on('click', async function() {
-        // Clear the container
-        $('#imageContainer').empty();
 
         let newchatId = await checkChat(chatId)
         if(newchatId){
@@ -877,6 +875,8 @@ $(document).ready(function() {
         }
 
         $('#characterPrompt').prop('disabled', true);
+        $('#chatName').prop('disabled', true);
+        $('#chatPurpose').prop('disabled', true);
         let moderationResult = {flagged: false};
         try {
 
@@ -890,6 +890,8 @@ $(document).ready(function() {
                     $button.prop('disabled', false);
                     $button.html('<i class="fas fa-magic me-2"></i>' + translations.newCharacter.generate_with_AI);
                     $('#characterPrompt').prop('disabled', false);
+                    $('#chatName').prop('disabled', false);
+                    $('#chatPurpose').prop('disabled', false);
                     return
                 }
             }
@@ -927,14 +929,15 @@ $(document).ready(function() {
                     $button.prop('disabled', false);
                     $button.html(`<i class="fas fa-magic me-2"></i>${translations.newCharacter.generate_with_AI}`);
                     $('#characterPrompt').prop('disabled', false);
+                    $('#chatName').prop('disabled', false);
+                    $('#chatPurpose').prop('disabled', false);
                     return;
                 }
             } else {
                 // プロンプトをそのまま使用
                 enhanceResponse.enhancedPrompt = prompt;
             }
-						
-			generateCharacterPersonnality();
+
             // ボタンテキストを「画像を生成中...」に更新
             $button.html(`<i class="fas fa-spinner fa-spin me-2"></i>${translations.imageForm.generatingImages}`);
             $('.genexp').fadeIn()
@@ -944,19 +947,30 @@ $(document).ready(function() {
             .catch((error) => {
                 console.error('Error generating image:', error);
             })
+						
+			generateCharacterPersonnality(function(response){
+                showNotification(translations.newCharacter.personalityDetailsDone , 'success');
+                $('.chatRedirection').show();
+                //Scroll to .chatRedirection
+                $('html, body').animate({
+                    scrollTop: $(".chatRedirection").offset().top
+                }, 1000);
+            });
 
         } catch (error) {
             console.error('Error:', error);
             $button.prop('disabled', false);
             $button.html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
             $('#characterPrompt').prop('disabled', false);
+            $('#chatName').prop('disabled', false);
+            $('#chatPurpose').prop('disabled', false);
         }
     });
 
 
         async function generateCharacterPersonnality(callback) {
             const personalityDetails = returnCharacterPersonalityDetails();        
-            let name = $('#name').val()
+            let name = $('#chatName').val()
             let prompt = $('#chatPurpose').val().trim() || $('#characterPrompt').val().trim();
             let gender = $('#gender').val()
 
@@ -984,12 +998,11 @@ $(document).ready(function() {
                 success: function(response) {
 
                     $('#chatName').val(response.name);
-                    $('#chatDescription').val(response.short_intro);
+                    $('#chatPurpose').val(response?.base_personality?.story);
                     $('#chatStory').val(response.base_personality.story);
 
-
                     if (typeof callback === 'function') {
-                        callback();
+                        callback(response);
                     }
                 },
                 error: function(error) {
@@ -1021,6 +1034,9 @@ window.saveSelectedImage = function(imageUrl, callback) {
     });
 }
 window.generateCharacterImage = function(url, nsfw) {
+    // Clear the container
+    $('#imageContainer').empty();
+
     // For each image URL, create an image element and append to the container
     const colDiv = $('<div>').addClass('col-12 col-md-6 mb-3');
     const imgElement = $('<img>')
@@ -1054,6 +1070,8 @@ window.resetCharacterForm = function(){
     // Enable buttons and reset text
     $('.chatRedirection').show();
     $('#characterPrompt').prop('disabled', false);
+    $('#chatName').prop('disabled', false);
+    $('#chatPurpose').prop('disabled', false);
     $('#generateButton').prop('disabled', false);
     $('#generateButton').html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
 }

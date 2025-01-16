@@ -349,6 +349,9 @@
   "next":"Next",
   "prev":"Previous",
   "newCharacter": {
+    "imageCompletionDone_title": "Image Completion Done",
+    "imageCompletionDone_message": "Your new character image is available.",
+    "personalityDetailsDone": "Personality Details Done",
     "tagsLabel": "Tags",
     "start_chat_and_image_generation": "Start Chat & Image Generation",
     "start_chat_and_image_generation_description": "Chat with beautiful, unique AI characters and generate images with them!",

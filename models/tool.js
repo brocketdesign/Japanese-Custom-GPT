@@ -499,6 +499,25 @@ function sanitizeMessages(messagesForCompletion) {
     }
 }
 
+// Module to add a notification
+async function addNotification(fastify, userId, data) {
+    const { title, message, link, ico } = data;
+    const db = fastify.mongo.db;
+    const notificationsCollection = db.collection('notifications');
+
+    const notification = {
+        title,
+        message,
+        type: ico || 'info',
+        data: { link },
+        userId: new ObjectId(userId),
+        viewed: false,
+        createdAt: new Date(),
+        sticky: false,
+    };
+
+    await notificationsCollection.insertOne(notification);
+}
 module.exports = {
     getCounter,
     updateCounter,
@@ -518,5 +537,6 @@ module.exports = {
     processPromptToTags,
     processPromptToTags,
     fetchTags,
-    listFiles
+    listFiles,
+    addNotification
 };

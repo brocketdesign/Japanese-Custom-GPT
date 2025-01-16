@@ -916,12 +916,6 @@ fastify.post('/user/update-info', async (request, reply) => {
   fastify.get('/users/:userId/notifications', async (request, reply) => {
     const user = request.user;
     const targetUserId = new ObjectId(request.params.userId);
-    const isAdmin = await checkUserAdmin(fastify, user._id);
-
-    if (!isAdmin && user._id.toString() !== targetUserId.toString()) {
-      return reply.status(403).send({ error: 'Access denied' });
-    }
-
     const viewed = request.query.viewed;
     const orConditions = [
         { userId: targetUserId },
@@ -936,13 +930,12 @@ fastify.post('/user/update-info', async (request, reply) => {
 
     const db = fastify.mongo.db
     const notificationsCollection = db.collection('notifications');
-
     const notifications = await notificationsCollection
       .find(filter)
       .sort({ createdAt: -1 })
       .toArray();
 
-    reply.send(notifications);
+      reply.send(notifications);
   });
 }
 

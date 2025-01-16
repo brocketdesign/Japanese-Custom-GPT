@@ -1,7 +1,7 @@
 const { ObjectId } = require('mongodb');
 const axios = require('axios');
 const fs = require('fs');
-const { processPromptToTags } = require('../models/tool')
+const { processPromptToTags, addNotification } = require('../models/tool')
 const { generateTxt2img,getPromptById,checkImageDescription,getTasks } = require('../models/imagen');
 const { createPrompt, moderateText } = require('../models/openai');
 async function routes(fastify, options) {
@@ -11,6 +11,7 @@ fastify.post('/novita/txt2img', async (request, reply) => {
   const { title, prompt, aspectRatio, userId, chatId, userChatId, placeholderId, customPrompt, chatCreation } = request.body;
   let imageType = request.body.imageType
   const db = fastify.mongo.db;
+  const translations = request.translations
   try {
     const all_tasks =  await getTasks(db,null, userId)
     console.log('All tasks: ',all_tasks.length)
@@ -44,7 +45,14 @@ fastify.post('/novita/txt2img', async (request, reply) => {
     .then((taskStatus) => {
       fastify.sendNotificationToUser(userId, 'handleLoader', { imageId:placeholderId, action:'remove' })
       fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId:placeholderId, spin: false })
-      if(chatCreation){ fastify.sendNotificationToUser(userId, 'resetCharacterForm') }
+      if(chatCreation){ 
+        fastify.sendNotificationToUser(userId, 'resetCharacterForm');
+        // Add notification
+        const notification = { title: translations.newCharacter.imageCompletionDone_title , message: translations.newCharacter.imageCompletionDone_message, link: `/chat/edit/${chatId}`, ico: 'success' };
+        addNotification(fastify, userId, notification).then(() => {        
+          fastify.sendNotificationToUser(userId, 'updateNotificationCountOnLoad', {userId});
+        });
+       }
       const { images } = taskStatus;
       images.forEach((image, index) => {
           const { imageId, imageUrl, prompt, title, nsfw } = image;

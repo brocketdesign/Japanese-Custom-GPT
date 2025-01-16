@@ -1,6 +1,6 @@
 
 document.addEventListener("DOMContentLoaded", function() {
-    document.getElementById("plan-switch").checked = true; 
+    //document.getElementById("plan-switch").checked = true; 
 });
 $(document).ready(function () {
 
@@ -50,7 +50,6 @@ $(document).ready(function () {
 
 
 $(document).ready(function() {
-  searchImages();
   let plan = {};
   let stripe
   if(window.location.href.indexOf('https://') >= 0){

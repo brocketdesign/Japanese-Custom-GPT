@@ -13,6 +13,7 @@ a {
 a:hover {
   color: #6a1af3;
 }
+
 .image-nsfw-toggle.nsfw {
   color: red;
   }
@@ -763,6 +764,12 @@ nav.navbar.move {
 .liked i{
   color:red;
 }
+@media (max-width: 600px) {
+  .dropdown-menu {
+    transform: translate3d(68px, 36px, 0px) !important;
+  }
+}
+
 @media (max-width: 600px) {
   .chat-contain .card-body{
       width: 100%;

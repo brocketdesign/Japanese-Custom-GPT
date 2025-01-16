@@ -20,15 +20,18 @@
         </li>
                 
     {{else}}
-       <li class="nav-item dropdown onchat">
+    <li class="nav-item dropdown onchat">
         <a data-mdb-dropdown-init class="nav-link dropdown-toggle hidden-arrow d-inline align-items-center me-2 position-relative" href="#"
             id="notificationIcon" role="button" aria-expanded="false" data-userid="{{user._id}}">
             <div class="btn bg-white rounded-circle border-0 p-1" style="width: 35px; height: 35px;">
                 <i class="bi bi-bell"></i>
             </div>
         </a>
-            <ul class="notifications-menu dropdown-menu dropdown-menu-end mx-3 border-0 shadow-0 bg-transparent" aria-labelledby="notificationIcon">
-            </ul>
+<ul class="notifications-menu dropdown-menu dropdown-menu-end dropdown-menu-sm-end mx-3 border-0 shadow-0 bg-transparent"
+    aria-labelledby="notificationIcon"
+    style="max-height: 400px; overflow-y: auto;">
+</ul>
+
     </li>
     <li class="nav-item dropdown onchat">
         <a data-mdb-dropdown-init class="nav-link dropdown-toggle hidden-arrow d-inline align-items-center" href="#"

@@ -1788,6 +1788,7 @@ function displayChatList(reset, userId) {
       success: function(data) {
         const { chats, pagination } = data;
         chatListData = chatListData.concat(chats);
+        sessionStorage.setItem('chatList', JSON.stringify(chatListData));
         displayChats(chats, pagination);
       },
       complete: function() { $('#chat-list-spinner').hide(); }
@@ -1799,6 +1800,7 @@ function displayChatList(reset, userId) {
       var chatHtml = constructChatItemHtml(chat, false);
       $('#chat-list').append(chatHtml);
     });
+    updateCurrentChat(chatId, userId);
     enableToggleDropdown();
     updateChatCount(pagination.total);
     checkShowMoreButton(pagination);
@@ -1826,7 +1828,7 @@ function displayChatList(reset, userId) {
 
 
 function updateCurrentChat(chatId, userId) {
-    let chatListData = JSON.parse(localStorage.getItem('chatList')) || [];
+    let chatListData = JSON.parse(sessionStorage.getItem('chatList')) || [];
     let currentChat = chatListData.find(chat => chat._id === chatId);
 
     if (currentChat) {
@@ -1850,14 +1852,23 @@ function fetchChatDataInfo(chatId) {
 }
 
 function updateChatListDisplay(currentChat) {
-    let chatListData = JSON.parse(localStorage.getItem('chatList')) || [];
+    let chatListData = JSON.parse(sessionStorage.getItem('chatList')) || [];
+
     chatListData = chatListData.filter(chat => chat._id !== currentChat._id);
     chatListData.unshift(currentChat);
     chatListData.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-    localStorage.setItem('chatList', JSON.stringify(chatListData));
+    sessionStorage.setItem('chatList', JSON.stringify(chatListData));
 
+    // remoce all active class 
     $('#chat-list').find('.chat-list.item').removeClass('active');
-    $('#chat-list').find(`.chat-list.item[data-id="${currentChat._id}"]`).remove();
+    // remove all occurrence of chat from list
+    const currentChatObjs = $(document).find('#chat-list').find(`.chat-list.item[data-id="${currentChat._id}"]`);
+    if(currentChatObjs.length >= 1){
+        currentChatObjs.each(function(){
+            const chatName = $(this).find('.chat-list-title h6').text();
+            $(this).remove();
+        });
+    }
 
     let chatHtml = constructChatItemHtml(currentChat, true);
     $('#chat-list').prepend(chatHtml);

@@ -1035,7 +1035,7 @@ window.saveSelectedImage = function(imageUrl, callback) {
 }
 window.generateCharacterImage = function(url, nsfw) {
     // Clear the container
-    $('#imageContainer').empty();
+    $('#generatedImage').remove();
 
     // For each image URL, create an image element and append to the container
     const colDiv = $('<div>').addClass('col-12 col-md-6 mb-3');

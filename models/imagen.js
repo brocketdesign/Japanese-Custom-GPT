@@ -213,7 +213,7 @@ async function deleteOldTasks(db) {
 }
   
 async function checkTaskStatus(taskId, fastify) {
-    const db = fastify.mongo.db;
+  const db = fastify.mongo.db;
   const tasksCollection = db.collection('tasks');
   const task = await tasksCollection.findOne({ taskId });
 

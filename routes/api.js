@@ -1115,19 +1115,9 @@ async function routes(fastify, options) {
                   fastify.sendNotificationToUser(userId,'imageGenerated', data)
                   
                   const imageMessage = { role: "assistant", content: `[Image] ${image._id}` };
-                  userData.messages.push(imageMessage)
-  
-                  const userDataCollection = db.collection('userChat');
-                  await userDataCollection.updateOne(
-                      { 
-                          userId: new fastify.mongo.ObjectId(userId), 
-                          _id: new fastify.mongo.ObjectId(userChatId) 
-                      },
-                      { 
-                          $push: { messages: imageMessage }, 
-                          $set: { updatedAt: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) } 
-                      }
-                  );
+                  userData.messages.push(imageMessage);
+                  userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
+                  await updateUserChat(db, userId, userChatId, userData.messages, userData.updatedAt)
               });
             }
           });
@@ -1221,16 +1211,37 @@ async function routes(fastify, options) {
     }
 
     // Updates user chat messages in 'userChat' collection
-    async function updateUserChat(db, userId, userChatId, messages, updatedAt) {
+    async function updateUserChat(db, userId, userChatId, newMessages, updatedAt) {
         const collectionUserChat = db.collection('userChat');
+        const userChat = await collectionUserChat.findOne({
+            userId: new fastify.mongo.ObjectId(userId),
+            _id: new fastify.mongo.ObjectId(userChatId)
+        });
+    
+        if (!userChat) throw new Error('User chat not found');
+    
+        const existingMessages = userChat.messages || [];
+        const combinedMessages = [...existingMessages];
+    
+        for (const newMsg of newMessages) {
+            const index = combinedMessages.findIndex(
+                (msg) => msg.content === newMsg.content
+            );
+            if (index !== -1) {
+                combinedMessages[index] = newMsg; // update in-place
+            } else {
+                combinedMessages.push(newMsg); // append new
+            }
+        }
+    
         await collectionUserChat.updateOne(
             {
                 userId: new fastify.mongo.ObjectId(userId),
                 _id: new fastify.mongo.ObjectId(userChatId)
             },
-            { $set: { messages, updatedAt } }
+            { $set: { messages: combinedMessages, updatedAt } }
         );
-    }
+    }    
 
     // Removes content between asterisks to clean up the message
     function removeContentBetweenStars(str) {

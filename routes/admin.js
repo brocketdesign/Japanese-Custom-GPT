@@ -300,7 +300,7 @@ async function routes(fastify, options) {
 const fetchModels = async (query = '', cursor = '') => {
 
   try {
-    const url = `https://api.novita.ai/v3/model?filter.visibility=public&filter.types=checkpoint&filter.is_sdxl=true&pagination.limit=12${
+    const url = `https://api.novita.ai/v3/model?filter.visibility=public&filter.types=checkpoint&pagination.limit=12${
       cursor ? `&pagination.cursor=${cursor}` : ''
     }${query ? `&filter.query=${encodeURIComponent(query)}` : ''}`;
 

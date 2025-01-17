@@ -47,6 +47,7 @@ fastify.post('/novita/txt2img', async (request, reply) => {
       fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId:placeholderId, spin: false })
       if(chatCreation){ 
         fastify.sendNotificationToUser(userId, 'resetCharacterForm');
+        fastify.sendNotificationToUser(userId, 'showNotification', {message:translations.newCharacter.imageCompletionDone_message, icon:'success'});
         // Add notification
         const notification = { title: translations.newCharacter.imageCompletionDone_title , message: translations.newCharacter.imageCompletionDone_message, link: `/chat/edit/${chatId}`, ico: 'success' };
         addNotification(fastify, userId, notification).then(() => {        

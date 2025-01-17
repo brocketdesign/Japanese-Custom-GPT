@@ -162,7 +162,7 @@ async function pollTaskStatus(taskId, fastify) {
           resolve(taskStatus);
         } else if (Date.now() - startTime > timeout) {
           clearInterval(intervalId);
-          reject(new Error('Task polling timed out.'));
+          reject('Task polling timed out.');
         }
       } catch (error) {
         clearInterval(intervalId);
@@ -277,14 +277,15 @@ async function fetchNovitaMagic(data) {
     });
 
     if (response.status !== 200) {
-        throw new Error(`Error - ${response.data}`);
+      console.log(`Error - ${response.data}`);
+      return false
     }
 
-    return response.data.task_id;
+      return response.data.task_id;
     } catch (error) {
-    console.log(error)
-    console.error('Error fetching Novita image:', error.message);
-    throw '';
+      console.log(error)
+      console.error('Error fetching Novita image:', error.message);
+      return false
     }
 }
 
@@ -340,7 +341,8 @@ async function fetchNovitaResult(task_id) {
 
         return s3Urls.length === 1 ? s3Urls[0] : s3Urls;
     } else if (taskStatus === 'TASK_STATUS_FAILED') {
-        throw new Error(`Task failed with reason: ${response.data.task.reason}`);
+        console.log(`Task failed with reason: ${response.data.task.reason}`);
+        return false;
     } else {
         // Task is still processing or queued
         return null;

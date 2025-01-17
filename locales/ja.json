@@ -1,5 +1,13 @@
 {
   "lang":"ja",
+  "cancel_policy": "キャンセルポリシー",
+  "cancel_policy_description": "サブスクリプションはいつでもキャンセルできます。サブスクリプションは現在の請求期間の終了まで有効です。",
+  "cancel_policy_description2": "設定ページのサブスクリプションセクションで「サブスクリプションをキャンセル」ボタンをクリックするだけです。",
+  "premium_advantage" : {
+    "early_access_and_multiple_chat_options_included": "早期アクセスと複数のチャットオプションが含まれています",
+    "all_features_including_chat_image_generation_and_message_suggestions_are_available_without_limit": "チャット、画像生成、メッセージの提案を含むすべての機能が無制限で利用可能です。",
+    "explore_infinite_possibilities_with_ai_in_this_plan": "このプランでAIと無限の可能性を探求しましょう。"
+  },
   "popup_save": {
     "instructions": "アプリを保存する手順は以下の通りです:",
     "step1": "下のメニューバーにある共有アイコンをタップします。",
@@ -7,6 +15,7 @@
   },
   "promo": {
     "title": "プレミアム機能を解除",
+    "short_title": "プレミアム機能を解除",
     "subtitle": "すべてのプレミアム機能を無制限に楽しもう。",
     "price": "月額￥1,100のみ",
     "details": "詳細を見る"

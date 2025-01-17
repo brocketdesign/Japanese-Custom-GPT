@@ -101,7 +101,7 @@ $(document).ready(function() {
         
         const isYearly =  $('#plan-switch').is(':checked') ? `yearly` : 'monthly';
         const planCard = `
-            <div class="plan-card card mb-3 px-1 ${plan.name == '無制限プラン'? 'col-12 col-lg-4':'col-10 col-lg-auto'} ${plan.name == '無制限プラン'? 'best':''}  m-2">
+            <div class="plan-card card mb-3 px-1 ${plan.name == '無制限プラン'? 'col-12 col-lg-4':'col-12 col-lg-auto'} ${plan.name == '無制限プラン'? 'best':''}  m-2">
             <div class="card-header plan-header bg-white">
                 <h2>${plan_icon}${plan.name}${plan_icon}</h2>
             </div>

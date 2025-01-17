@@ -268,8 +268,10 @@
 </div>
 
 <div id="pricing-container" class="container pricing-container">
-    <p class="pricing-description fs-5">
-        {{translations.all_features_including_chat_image_generation_and_message_suggestions_are_available_without_limit}} {{translations.early_access_and_multiple_chat_options_included}} {{translations.explore_infinite_possibilities_with_ai_in_this_plan}}
+    <p class="pricing-description fs-6">
+        {{translations.premium_advantage.all_features_including_chat_image_generation_and_message_suggestions_are_available_without_limit}} 
+        <br>
+        {{translations.premium_advantage.early_access_and_multiple_chat_options_included}}
     </p>
     <div class="switch-button-container">
         <label class="switch">
@@ -280,12 +282,21 @@
         </label>
     </div>
     <p>{{translations.enjoy_even_better_offers_with_annual_plan}}</p>
-    <div class="plan-cards-none d-flex m-0 px-1 container m-auto justify-content-center" style="overflow-x:scroll" id="planCards">
+    <div class="plan-cards-none d-flex m-0 container m-auto justify-content-center" style="overflow-x:scroll" id="planCards">
         <!-- The plan cards will be dynamically inserted here -->
     </div>
     <span style="font-size: 12px;">{{translations.secure_payment_methods}} <a href="https://stripe.com/jp/resources/more/secure-payment-systems-explained" target="_blank"><img src="/img/stripe-logo.png" style="height: 30px;width: auto;"></a> {{translations.are_used}}</span>
+   <section class="container">
+    <div class="card cancel-policy my-3">
+            <div class="card-body">
+                <h5 class="card-title">{{translations.cancel_policy}}</h5>
+                <span class="card-text">{{translations.cancel_policy_description}}</span>
+                <br>
+                <span class="card-text" style="font-size: 14px;">{{translations.cancel_policy_description2}}</span>
+            </div>
+        </div>
+    </section>
 </div>
-
 <style>
   footer{display: inline !important;}
 </style>

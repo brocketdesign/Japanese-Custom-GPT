@@ -1,5 +1,13 @@
 {
   "lang":"en", 
+  "cancel_policy": "Cancellation Policy",
+  "cancel_policy_description": "You can cancel your subscription at any time. Your subscription will remain active until the end of the current billing period.",
+  "cancel_policy_description2": "Simply click the 'Cancel Subscription' button in the subscription section of the settings page.",
+  "premium_advantage" : {
+    "early_access_and_multiple_chat_options_included":"Early access and multiple chat options included",
+    "all_features_including_chat_image_generation_and_message_suggestions_are_available_without_limit":"All features, including chat, image generation, and message suggestions, are available without limitation.",
+    "explore_infinite_possibilities_with_ai_in_this_plan":"Explore infinite possibilities with AI in this plan."
+  },
   "popup_save": {
     "instructions": "Follow these steps to save the app:",
     "step1": "Tap the Share icon on the menu bar below.",
@@ -7,6 +15,7 @@
   },
   "promo": {
     "title": "Unlock Premium Features",
+    "short_title": "Unlock Premium",
     "subtitle": "Enjoy unlimited access to all premium features.",
     "price": "Only $10.00/month",
     "details": "View Details"

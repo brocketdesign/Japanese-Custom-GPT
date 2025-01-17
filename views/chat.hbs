@@ -66,11 +66,11 @@
         </nav>
         <section id="chat-discovery" class="onchat-off mt-5 pt-3" style="display: block;">
             <!-- Promo Section -->
-            <section class="is-free-user animate__animated m-3 p-3 bg-light" style="display: none;" data-animate="animate__fadeInLeft" data-delay="0.3s">
+            <section class="is-free-user animate__animated m-3 p-3 bg-light" style="display: none;overflow-x: hidden;" data-animate="animate__fadeInLeft" data-delay="0.3s">
                 <div class="container text-center">
                     <h2 class="pricing-title fw-bold animate__animated" data-animate="animate__fadeInLeft"><span class="u-font-manrope u-color-grad">{{translations.promo.title}}</span></h2>   
                     <h3 class="fw-bold mb-1 px-3 animate__animated" data-animate="animate__fadeInLeft">{{translations.promo.subtitle}}</h3>
-                    <h3 class="fw-bold mb-1 px-3 u-font-manrope u-color-grad my-5 animate__animated" data-animate="animate__fadeInRight">{{translations.promo.price}}</h3>
+                    <h3 class="fw-bold mb-1 px-3 u-font-manrope u-color-grad my-5 animate__animated" data-animate="animate__fadeInRight" style="font-size: 2em;">{{translations.promo.price}}</h3>
                 </div>
                 <div class="is-free-user sticky-bottom py-2 mx-auto text-center animate__animated" style="display:none;bottom:0;left:0;right:0;" data-animate="animate__fadeInLeft" data-delay="0.5s">
                     <a href="/my-plan" class="m-2 btn border shadow-0 btn-secondary px-5 py-2 m-auto animate__animated" data-animate="animate__fadeInRight" style="border-radius:40px;background: linear-gradient(90.9deg, rgba(110, 32, 244, 0.5) 2.74%, #6E20F4 102.92%);">
@@ -134,7 +134,14 @@
                                     </div>
                                 </div>
                             </div>
-
+                            <!-- Promo Section -->
+                            <section class="is-free-user animate__animated m-3 p-3 custom-gradient-bg w-100 rounded-pill" style="display: none;overflow-x: hidden;" data-animate="animate__fadeInLeft" data-delay="0.3s" onclick="window.location.href='/my-plan'">
+                                <div class="container text-center">
+                                    <span class="pricing-title fw-bold animate__animated " data-animate="animate__fadeInLeft">
+                                        <span>{{translations.promo.title}}</span>
+                                    </span>   
+                                </div>
+                            </section>
                             <div id="input-container" class="d-flex w-100">
                                 <button id="gen-ideas" class="d-none btn btn-light px-4 border-0">💡</button>
                                 <button id="showPrompts" class="btn custom-gradient-bg px-4 border-0" data-bs-toggle="tooltip" data-bs-placement="top" title="{{translations.generateImage}}" style="display:none;"> 

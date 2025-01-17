@@ -80,7 +80,7 @@ async function routes(fastify, options) {
                     const chatsGalleryCollection = fastify.mongo.db.collection('gallery');
                     const gallery = await chatsGalleryCollection.findOne({ chatId: new fastify.mongo.ObjectId(chatId) });
                     if(!gallery?.images || gallery?.images?.length == 0 ){
-                        startMessage.content = `Start by greeting me, say that it is nice to meet me for the first time. Inform me that you are happy to chat with me and as it is the first time we chat, you want to send me an image to get more intimate. However, there are no images available, why not create one. Stay in your character, keep the same tone as before.`
+                        startMessage.content = `Start by greeting me, say that it is nice to meet me for the first time. Inform me that you are happy to chat with me and as it is the first time we chat, you want to send me an image to get more intimate. Ask me what image do I want. Stay in your character, keep the same tone as before.`
                         startMessage.sendImage = false;
                     }
                 }
@@ -647,8 +647,8 @@ async function routes(fastify, options) {
     });
 
     fastify.get('/api/chat-data/:chatId', async (request, reply) => {
+        const { chatId } = request.params;
         try {
-            const { chatId } = request.params;
             const user = request.user;
             const userId = user._id;
     
@@ -666,6 +666,7 @@ async function routes(fastify, options) {
             chat.lastMessage = lastMessageDoc?.lastMessage || null;
             return reply.send(chat);
         } catch (error) {
+            console.log('chatId:', chatId);
             console.error('Error fetching chat data:', error);
             return reply.status(500).send({ error: 'Internal Server Error' });
         }
@@ -1104,32 +1105,32 @@ async function routes(fastify, options) {
             }else{
                 fastify.sendNotificationToUser(userId, 'hideCompletionMessage', { uniqueId })
             }
+            if(lastUserMessage.sendImage){
+              const chatsGalleryCollection = db.collection('gallery');
+              chatsGalleryCollection.findOne({ chatId: new fastify.mongo.ObjectId(chatId) }).then(async (gallery) => {
+                  // Select a random image from the gallery
+                  const image = gallery.images[Math.floor(Math.random() * gallery.images.length)];
+  
+                  const data = {userChatId, imageId:image._id, imageUrl:image.imageUrl, title:image.title, prompt:image.prompt, nsfw:image.nsfw}
+                  fastify.sendNotificationToUser(userId,'imageGenerated', data)
+                  
+                  const imageMessage = { role: "assistant", content: `[Image] ${image._id}` };
+                  userData.messages.push(imageMessage)
+  
+                  const userDataCollection = db.collection('userChat');
+                  await userDataCollection.updateOne(
+                      { 
+                          userId: new fastify.mongo.ObjectId(userId), 
+                          _id: new fastify.mongo.ObjectId(userChatId) 
+                      },
+                      { 
+                          $push: { messages: imageMessage }, 
+                          $set: { updatedAt: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) } 
+                      }
+                  );
+              });
+            }
           });
-
-          if(lastUserMessage.sendImage){
-            const chatsGalleryCollection = db.collection('gallery');
-            chatsGalleryCollection.findOne({ chatId: new fastify.mongo.ObjectId(chatId) }).then(async (gallery) => {
-                // Select a random image from the gallery
-                const image = gallery.images.length === 1 
-                    ? gallery.images[0] 
-                    : gallery.images[Math.floor(Math.random() * gallery.images.length)];
-                const data = {userChatId, imageId:image._id, imageUrl:image.imageUrl, title:image.title, prompt:image.prompt, nsfw:image.nsfw}
-                fastify.sendNotificationToUser(userId,'imageGenerated', data)
-                const imageMessage = { role: "assistant", content: `[Image] ${image._id}` };
-                const userDataCollection = db.collection('userChat');
-                await userDataCollection.updateOne(
-                    { 
-                        userId: new ObjectId(userId), 
-                        _id: new ObjectId(userChatId) 
-                    },
-                    { 
-                        $push: { messages: imageMessage }, 
-                        $set: { updatedAt: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) } 
-                    }
-                );
-            });
-          }
-
         } catch (err) {
           console.log(err)
           reply.status(500).send({ error: 'Error fetching OpenAI completion' })

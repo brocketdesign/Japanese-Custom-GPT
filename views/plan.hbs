@@ -297,6 +297,39 @@
         </div>
     </section>
 </div>
+<section class="bg-light">
+    <div class="container py-5">
+        <h2 class="display-4 fw-bold text-center mb-3">{{translations.frequently_asked_questions_on_lamix}}</h2>
+        <div class="accordion" id="faqAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingOne">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                        {{translations.how_to_create_ai_beauty}}
+                    </button>
+                </h2>
+                <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        <p>{{translations.step_1}}</p>
+                        <p>{{translations.step_2}}</p>
+                        <p>{{translations.step_3}}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingThree">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                        {{translations.what_is_ai_beauty}}
+                    </button>
+                </h2>
+                <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        <p>{{translations.ai_beauty_description}}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 <style>
   footer{display: inline !important;}
 </style>

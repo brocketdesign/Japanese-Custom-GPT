@@ -768,6 +768,9 @@ nav.navbar.move {
   .dropdown-menu {
     transform: translate3d(68px, 36px, 0px) !important;
   }
+  .avatar-menu.dropdown-menu {
+    transform: translate3d(18px, 46px, 0px) !important;
+  }
 }
 
 @media (max-width: 600px) {

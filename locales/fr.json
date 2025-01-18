@@ -1,5 +1,19 @@
 {
   "lang":"fr",
+  "advice" :{
+    "advice_title_1": "Choisir un personnage",
+    "advice_text_1":"Sélectionnez un personnage pour discuter et générer des images.",
+    "advice_title_2": "Créer un nouveau personnage",
+    "advice_text_2":"Si vous ne trouvez pas le personnage que vous cherchez, vous pouvez créer un nouveau personnage.",
+    "advice_title_3": "Parcourir la bibliothèque de personnages",
+    "advice_text_3":"Vous pouvez parcourir la bibliothèque de personnages pour trouver le personnage avec lequel vous souhaitez discuter.",
+    "advice_title_4": "Suivre des utilisateurs",
+    "advice_text_4":"Suivez des utilisateurs pour voir leurs publications et personnages.",
+    "advice_title_5": "Aimer les images",
+    "advice_text_5":"Aimez les images pour montrer votre appréciation.",
+    "advice_title_6": "Régénérer l'image",
+    "advice_text_6":"Si vous n'aimez pas l'image, vous pouvez la régénérer."
+  },
   "cancel_policy": "Politique d'annulation",
   "cancel_policy_description": "Vous pouvez annuler votre abonnement à tout moment. Votre abonnement restera actif jusqu'à la fin de la période de facturation en cours.",
   "cancel_policy_description2": "Il vous suffit de cliquer sur le bouton \"Annuler l'abonnement\" dans la section abonnement de la page de paramètres.",

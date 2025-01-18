@@ -65,26 +65,87 @@
             </div>
         </nav>
         <section id="chat-discovery" class="onchat-off mt-5 pt-3" style="display: block;">
-<!-- Promo Section -->
-<section class="is-free-user animate__animated m-3 p-3 bg-light" style="display: none; overflow-x: hidden;" data-animate="animate__fadeInLeft" data-delay="0.3s">
-    <div class="container text-center">
-        <h2 class="pricing-title fw-bold animate__animated animate__fadeInLeft" data-animate="animate__fadeInLeft" style="animation-delay: 0.3s;">
-            <span class="u-font-manrope u-color-grad" style="font-size: 100%;">{{translations.promo.title}}</span>
-        </h2>
-        <h3 class="fw-bold mb-1 px-3 animate__animated animate__fadeInLeft" data-animate="animate__fadeInLeft" style="animation-delay: 0.5s;">
-            {{translations.promo.subtitle}}
-        </h3>
-        <h3 class="fw-bold mb-1 px-3 u-font-manrope u-color-grad my-5 animate__animated animate__fadeInRight" data-animate="animate__fadeInRight" style="font-size: 2em; animation-delay: 0.7s;">
-            {{translations.promo.price}}
-        </h3>
-    </div>
-    <div class="is-free-user sticky-bottom py-2 mx-auto text-center animate__animated" style="display:none; bottom:0; left:0; right:0;" data-animate="animate__fadeInLeft" style="animation-delay: 0.9s;">
-        <a href="/my-plan" class="m-2 btn border shadow-0 btn-secondary px-5 py-2 m-auto animate__animated" data-animate="animate__zoomIn" style="border-radius:40px; background: linear-gradient(90.9deg, rgba(110, 32, 244, 0.5) 2.74%, #6E20F4 102.92%);">
-            <i class="fas fa-plus me-2"></i>{{translations.promo.details}}
-        </a>
-    </div>
-</section>
 
+            <!-- Promo Section -->
+            <section class="is-free-user animate__animated m-3 p-3 bg-light d-none" style="display: none; overflow-x: hidden;" data-animate="animate__fadeInLeft" data-delay="0.3s">
+                <div class="container text-center">
+                    <h2 class="pricing-title fw-bold animate__animated animate__fadeInLeft" data-animate="animate__fadeInLeft" style="animation-delay: 0.3s;">
+                        <span class="u-font-manrope u-color-grad" style="font-size: 100%;">{{translations.promo.title}}</span>
+                    </h2>
+                    <h3 class="fw-bold mb-1 px-3 animate__animated animate__fadeInLeft" data-animate="animate__fadeInLeft" style="animation-delay: 0.5s;">
+                        {{translations.promo.subtitle}}
+                    </h3>
+                    <h3 class="fw-bold mb-1 px-3 u-font-manrope u-color-grad my-5 animate__animated animate__fadeInRight" data-animate="animate__fadeInRight" style="font-size: 2em; animation-delay: 0.7s;">
+                        {{translations.promo.price}}
+                    </h3>
+                </div>
+                <div class="is-free-user sticky-bottom py-2 mx-auto text-center animate__animated" style="display:none; bottom:0; left:0; right:0;" data-animate="animate__fadeInLeft" style="animation-delay: 0.9s;">
+                    <a href="/my-plan" class="m-2 btn border shadow-0 btn-secondary px-5 py-2 m-auto animate__animated" data-animate="animate__zoomIn" style="border-radius:40px; background: linear-gradient(90.9deg, rgba(110, 32, 244, 0.5) 2.74%, #6E20F4 102.92%);">
+                        <i class="fas fa-plus me-2"></i>{{translations.promo.details}}
+                    </a>
+                </div>
+            </section>
+
+            <!-- Carousel Advices -->
+            <div id="adviceCarousel" class="carousel slide mt-4 py-5 mb-3" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                    <!-- Carousel Item 1 -->
+                    <div class="carousel-item active">
+                        <div class="container text-center">
+                            <h4 class="fw-bold u-color-grad" 
+                            style="font-size: 100%;">{{translations.advice.advice_title_1}}</h4>
+                            <p class="text-muted">{{translations.advice.advice_text_1}}</p>
+                        </div>
+                    </div>
+                    <!-- Carousel Item 2 -->
+                    <div class="carousel-item">
+                        <div class="container text-center">
+                            <h4 class="fw-bold u-color-grad"
+                            style="font-size: 100%;">{{translations.advice.advice_title_2}}</h4>
+                            <p class="text-muted">{{translations.advice.advice_text_2}}</p>
+                        </div>
+                    </div>
+                    <!-- Carousel Item 3 -->
+                    <div class="carousel-item">
+                        <div class="container text-center">
+                            <h4 class="fw-bold u-color-grad"
+                            style="font-size: 100%;">{{translations.advice.advice_title_3}}</h4>
+                            <p class="text-muted">{{translations.advice.advice_text_3}}</p>
+                        </div>
+                    </div>
+                    <!-- Carousel Item 4 -->
+                    <div class="carousel-item">
+                        <div class="container text-center">
+                            <h4 class="fw-bold u-color-grad"
+                            style="font-size: 100%;">{{translations.advice.advice_title_4}}</h4>
+                            <p class="text-muted">{{translations.advice.advice_text_4}}</p>
+                        </div>
+                    </div>
+                    <!-- Carousel Item 5 -->
+                    <div class="carousel-item">
+                        <div class="container text-center">
+                            <h4 class="fw-bold u-color-grad"
+                            style="font-size: 100%;">{{translations.advice.advice_title_5}}</h4>
+                            <p class="text-muted">{{translations.advice.advice_text_5}}</p>
+                        </div>
+                    </div>
+                    <!-- Carousel Item 6 -->
+                    <div class="carousel-item">
+                        <div class="container text-center">
+                            <h4 class="fw-bold u-color-grad"
+                            style="font-size: 100%;">{{translations.advice.advice_title_6}}</h4>
+                            <p class="text-muted">{{translations.advice.advice_text_6}}</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Controls -->
+                <button class="carousel-control-prev" type="button" data-bs-target="#adviceCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon text-secondary" aria-hidden="true"></span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#adviceCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon text-secondary" aria-hidden="true"></span>
+                </button>
+            </div>
 
             <!-- Image Style Selection -->
             <div id="imageStyleSelection" class="d-none"></div>

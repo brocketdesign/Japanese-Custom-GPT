@@ -1,5 +1,19 @@
 {
   "lang":"en", 
+  "advice" :{
+    "advice_title_1": "Choose Character",
+    "advice_text_1":"Select a character to chat with and generate images.",
+    "advice_title_2": "Create New Character",
+    "advice_text_2":"If you do not find the character you are looking for, you can create a new character.",
+    "advice_title_3": "Browse Characters Library",
+    "advice_text_3":"You can browse the characters library to find the character you want to chat with.",
+    "advice_title_4": "Follow Users",
+    "advice_text_4":"Follow users to see their posts and characters.",
+    "advice_title_5": "Like Images",
+    "advice_text_5":"Like images to show your appreciation.",
+    "advice_title_6": "Regenerate Image",
+    "advice_text_6":"If you do not like the image, you can regenerate it."
+  },
   "cancel_policy": "Cancellation Policy",
   "cancel_policy_description": "You can cancel your subscription at any time. Your subscription will remain active until the end of the current billing period.",
   "cancel_policy_description2": "Simply click the 'Cancel Subscription' button in the subscription section of the settings page.",

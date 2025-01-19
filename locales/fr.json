@@ -1,5 +1,49 @@
 {
   "lang":"fr",
+  "landing_page": {
+    "main_heading": "Créez les hentai de la meilleure qualité. Gratuitement.",
+    "sub_heading": "Profitez de la génération gratuite d'images IA tout en discutant avec de magnifiques personnages IA.",
+    "cta_button": "Commencez à générer",
+    "main_heading2": "Aucune honte dans votre jeu. Lamix peut tout générer.",
+    "sub_heading2": "Ces images ont toutes été générées par Lamix. Vous pouvez créer vos propres images gratuitement.",
+    "cta_button2": "Commencez à discuter",
+    "main_heading3": "50 000+ amateurs d'art utilisent Lamix pour générer de meilleures images",
+    "sub_heading3": "Vous pouvez aimer, partager et commenter les images créées par d'autres utilisateurs.",
+    "cta_button3": "Commencez à générer",
+    "main_heading4": "Imaginez, et l'image idéale est juste devant vous !",
+    "sub_heading4": "Avec Lamix, sélectionnez simplement votre pose préférée dans le menu ou décrivez l'image souhaitée dans le chat, et le personnage générera facilement l'image.",
+    "cta_button4": "Commencez gratuitement maintenant",
+    "social_proof": {
+      "name1": "John Doe",
+      "title1": "Développeur senior",
+      "articles": "Images",
+      "articles_count1": "120",
+      "followers": "Abonnés",
+      "followers_count1": "15,2k",
+      "rating": "Évaluation",
+      "rating_value1": "4.9",
+      "chat": "Discuter",
+      "follow": "Suivre",
+    
+      "name2": "Jane Smith",
+      "title2": "Spécialiste en marketing",
+      "articles_count2": "85",
+      "followers_count2": "10,8k",
+      "rating_value2": "4.8",
+    
+      "name3": "Alice Johnson",
+      "title3": "Designer UI/UX",
+      "articles_count3": "45",
+      "followers_count3": "7,4k",
+      "rating_value3": "4.7",
+    
+      "name4": "Bob Brown",
+      "title4": "Rédacteur de contenu",
+      "articles_count4": "65",
+      "followers_count4": "9,6k",
+      "rating_value4": "4.6"
+    } 
+  },
   "advice" :{
     "advice_title_1": "Choisir un personnage",
     "advice_text_1":"Sélectionnez un personnage pour discuter et générer des images.",

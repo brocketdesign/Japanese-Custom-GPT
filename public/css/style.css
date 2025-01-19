@@ -1,4 +1,19 @@
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/Inter-VariableFont_opsz,wght.ttf') format('ttf');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/Inter-Italic-VariableFont_opsz,wght.ttf') format('ttf');
+  font-weight: 700;
+  font-style: italic;
+}
+
 body {
+  font-family: 'Inter', sans-serif;
   max-width: 100vw !important;
   overflow-x: hidden !important;
   padding: 0; /* Avoid body padding if any */
@@ -258,16 +273,19 @@ em {
   left: 0;
   right: 0;
   height: 10px;
-  background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
+  --tw-bg-opacity: 1;
+  background-color: rgb(168 85 247/var(--tw-bg-opacity));
   z-index: 1;
 }
 
 .custom-gradient-bg-no-animation{
-  background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
+  --tw-bg-opacity: 1;
+  background-color: rgb(168 85 247/var(--tw-bg-opacity));
 }
 
 .custom-gradient-bg {
-  background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
+  --tw-bg-opacity: 1;
+  background-color: rgb(168 85 247/var(--tw-bg-opacity));
   color: white;
   border: none;
   border-radius: 5px;
@@ -302,7 +320,24 @@ em {
 
 .custom-gradient-bg:hover {
   color: #fff;
-  background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%) !important;
+  --tw-bg-opacity: 1;
+  background-color: rgb(168 85 247/var(--tw-bg-opacity));
+}
+.custom-gradient-bg-outline {
+  --tw-bg-opacity: 1;
+  background-color: transparent;
+  color: rgb(168 85 247/var(--tw-bg-opacity));
+  border: 2px solid rgb(168 85 247/var(--tw-bg-opacity));
+  border-radius: 5px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+}
+
+.custom-gradient-bg-outline:hover {
+  background-color: rgb(168 85 247/var(--tw-bg-opacity));
+  color: white;
 }
 .chatbot-info-card {
   height: 80vh;
@@ -420,7 +455,7 @@ em {
   touch-action: pan-x; /* Enable horizontal touch scrolling */
 }
 .u-color-grad {
-  background: linear-gradient(90.9deg, rgba(110, 32, 244, 0.5) 2.74%, #6E20F4 102.92%);
+  background-image: radial-gradient(circle at 0 0,#ffa0d9,#8d34e2 50%,#8d34e2);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

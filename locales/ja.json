@@ -1,5 +1,49 @@
 {
   "lang":"ja",
+    "landing_page": {
+    "main_heading": "最高品質のエロアニメを無料で作成。",
+    "sub_heading": "美しいAIキャラクターとチャットしながら、無料でAI画像生成を楽しもう。",
+    "cta_button": "生成を開始",
+    "main_heading2": "恥じることはありません。Lamixは何でも生成できます。",
+    "sub_heading2": "これらの画像はすべてLamixで生成されました。あなたも自分の画像を無料で作成できます。",
+    "cta_button2": "チャットを開始",
+    "main_heading3": "50,000人以上のアート愛好家がLamixを使ってより良い画像を生成",
+    "sub_heading3": "他のユーザーが作成した画像に「いいね」したり、共有したり、コメントしたりできます。",
+    "cta_button3": "生成を開始",
+    "main_heading4": "想像すれば、理想の画像が目の前に現れます！",
+    "sub_heading4": "Lamixを使えば、メニューからお気に入りのポーズを選ぶか、チャットで欲しい画像を説明するだけで、キャラクターが簡単に画像を生成します。",
+    "cta_button4": "今すぐ無料で始める",
+    "social_proof": {
+      "name1": "ジョン・ドウ",
+      "title1": "シニアデベロッパー",
+      "articles": "画像",
+      "articles_count1": "120",
+      "followers": "フォロワー",
+      "followers_count1": "15.2k",
+      "rating": "評価",
+      "rating_value1": "4.9",
+      "chat": "チャット",
+      "follow": "フォロー",
+    
+      "name2": "ジェーン・スミス",
+      "title2": "マーケティングスペシャリスト",
+      "articles_count2": "85",
+      "followers_count2": "10.8k",
+      "rating_value2": "4.8",
+    
+      "name3": "アリス・ジョンソン",
+      "title3": "UI/UXデザイナー",
+      "articles_count3": "45",
+      "followers_count3": "7.4k",
+      "rating_value3": "4.7",
+    
+      "name4": "ボブ・ブラウン",
+      "title4": "コンテンツライター",
+      "articles_count4": "65",
+      "followers_count4": "9.6k",
+      "rating_value4": "4.6"
+    } 
+  },
   "advice": {
     "advice_title_1": "キャラクターを選ぶ",
     "advice_text_1": "チャットして画像を生成するためにキャラクターを選択します。",

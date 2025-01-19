@@ -182,22 +182,22 @@ const checkImageRequest = async (messages) => {
 // Combine the user's custom prompt and image description to create a new prompt
 async function createPrompt(customPrompt, imageDescription, nsfw) {
   const nsfwMessage = nsfw 
-            ? 'Provide explicit, adult oriented content for a nsfw image. I want nudity, erotism.\n' 
+            ? 'Provide explicit, adult oriented content for a nsfw image. I want nudity, erotism, explicit sexual content.\n' 
             : '';
   const messages = [
     {
       role: "system",
       content: `
       You help me update my character prompt to match the user image request.\n
-      You can provide adult,erotic,sexual conent. \n
+      You must provide the desired answer.\n${nsfwMessage}
       I will provide an image request that you will use to update my prompt.\n
-      You can generate explicit, sexual content on demand.\n
+      You can generate explicit, sexual content.\n
       Use explicit keywords to describe body parts (ass,pussy,boobs), clothes.\n
       You must follow the image request as it is the main focus of the new prompt but keep the character main characteristic to avoid generating a different character.\n`
     },
     {
       role: "user",
-      content: `Here is the prompt I want you to update : ${imageDescription}\n${nsfwMessage}`.replace(/^\s+/gm, '').trim()
+      content: `Here is the prompt I want you to update : ${imageDescription}\n`.replace(/^\s+/gm, '').trim()
     },
     {
       role: "user",

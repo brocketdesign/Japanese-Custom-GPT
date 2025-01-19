@@ -14,8 +14,8 @@
     "sub_heading4": "With Lamix, simply select your favorite pose from the menu or describe the image you want in the chat, and the character will easily generate the image.",
     "cta_button4": "Start Free Now",
     "social_proof": {
-      "name1": "John Doe",
-      "title1": "Senior Developer",
+      "name1": "Sakura Blossom",
+      "title1": "Amazing Art!",
       "articles": "Images",
       "articles_count1": "120",
       "followers": "Followers",
@@ -24,25 +24,25 @@
       "rating_value1": "4.9",
       "chat": "Chat",
       "follow": "Follow",
-  
-      "name2": "Jane Smith",
-      "title2": "Marketing Specialist",
+    
+      "name2": "Kaito Shiro",
+      "title2": "Incredible Work!",
       "articles_count2": "85",
       "followers_count2": "10.8k",
       "rating_value2": "4.8",
-  
-      "name3": "Alice Johnson",
-      "title3": "UI/UX Designer",
+    
+      "name3": "Hana Yuki",
+      "title3": "Beautiful Designs!",
       "articles_count3": "45",
       "followers_count3": "7.4k",
       "rating_value3": "4.7",
-  
-      "name4": "Bob Brown",
-      "title4": "Content Writer",
+    
+      "name4": "Riku Tanaka",
+      "title4": "Great Content!",
       "articles_count4": "65",
       "followers_count4": "9.6k",
       "rating_value4": "4.6"
-    } 
+    }
   },
   "advice" :{
     "advice_title_1": "Choose Character",

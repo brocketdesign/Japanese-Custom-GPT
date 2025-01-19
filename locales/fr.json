@@ -14,8 +14,8 @@
     "sub_heading4": "Avec Lamix, sélectionnez simplement votre pose préférée dans le menu ou décrivez l'image souhaitée dans le chat, et le personnage générera facilement l'image.",
     "cta_button4": "Commencez gratuitement maintenant",
     "social_proof": {
-      "name1": "John Doe",
-      "title1": "Développeur senior",
+      "name1": "PixelMaster",
+      "title1": "Super application pour créer des images IA ! 🎨✨",
       "articles": "Images",
       "articles_count1": "120",
       "followers": "Abonnés",
@@ -25,24 +25,24 @@
       "chat": "Discuter",
       "follow": "Suivre",
     
-      "name2": "Jane Smith",
-      "title2": "Spécialiste en marketing",
+      "name2": "ArtWizard",
+      "title2": "Génial pour le marketing visuel ! 📈👍",
       "articles_count2": "85",
       "followers_count2": "10,8k",
       "rating_value2": "4.8",
     
-      "name3": "Alice Johnson",
-      "title3": "Designer UI/UX",
+      "name3": "DesignGuru",
+      "title3": "Parfait pour les designers ! 💻🎨",
       "articles_count3": "45",
       "followers_count3": "7,4k",
       "rating_value3": "4.7",
     
-      "name4": "Bob Brown",
-      "title4": "Rédacteur de contenu",
+      "name4": "ContentKing",
+      "title4": "Idéal pour du contenu captivant ! 📸🔥",
       "articles_count4": "65",
       "followers_count4": "9,6k",
       "rating_value4": "4.6"
-    } 
+    }
   },
   "advice" :{
     "advice_title_1": "Choisir un personnage",

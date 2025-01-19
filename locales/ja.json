@@ -14,8 +14,8 @@
     "sub_heading4": "Lamixを使えば、メニューからお気に入りのポーズを選ぶか、チャットで欲しい画像を説明するだけで、キャラクターが簡単に画像を生成します。",
     "cta_button4": "今すぐ無料で始める",
     "social_proof": {
-      "name1": "ジョン・ドウ",
-      "title1": "シニアデベロッパー",
+      "name1": "ピクセルマスター",
+      "title1": "IA画像作成のスーパーアプリ！ 🎨✨",
       "articles": "画像",
       "articles_count1": "120",
       "followers": "フォロワー",
@@ -25,25 +25,25 @@
       "chat": "チャット",
       "follow": "フォロー",
     
-      "name2": "ジェーン・スミス",
-      "title2": "マーケティングスペシャリスト",
+      "name2": "アートウィザード",
+      "title2": "ビジュアルマーケティングに最適！ 📈👍",
       "articles_count2": "85",
       "followers_count2": "10.8k",
       "rating_value2": "4.8",
     
-      "name3": "アリス・ジョンソン",
-      "title3": "UI/UXデザイナー",
+      "name3": "デザイングル",
+      "title3": "デザイナーに最適！ 💻🎨",
       "articles_count3": "45",
       "followers_count3": "7.4k",
       "rating_value3": "4.7",
     
-      "name4": "ボブ・ブラウン",
-      "title4": "コンテンツライター",
+      "name4": "コンテンツキング",
+      "title4": "魅力的なコンテンツに最適！ 📸🔥",
       "articles_count4": "65",
       "followers_count4": "9.6k",
       "rating_value4": "4.6"
-    } 
-  },
+    }
+    },
   "advice": {
     "advice_title_1": "キャラクターを選ぶ",
     "advice_text_1": "チャットして画像を生成するためにキャラクターを選択します。",

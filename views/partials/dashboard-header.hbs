@@ -79,10 +79,12 @@
             };
 
             // Event listener to show the container and reinitialize lazy loading
-            showPromptsBtn.addEventListener("click", () => {
-                promptContainer.style.display = "block"; // Make container visible
-                observeImages(); // Start observing images again
-            });
+            if (showPromptsBtn){
+                showPromptsBtn.addEventListener("click", () => {
+                    promptContainer.style.display = "block"; // Make container visible
+                    observeImages(); // Start observing images again
+                });
+            }
         });
 
 
@@ -95,6 +97,8 @@
         window.lang = window.translations.lang;
 
     </script>
+
+    <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />

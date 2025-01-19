@@ -2,256 +2,261 @@
 <html lang="{{user.lang}}">
     {{> dashboard-header}}
 <body>
-    
-    <div class="sidebar-history hidden shadow">
-        <div class="d-flex justify-content-between">
-            <h5 class="my-2 mx-3">チャット履歴</h5>
-            <button type="button" class="btn btn-light history-chat">
-                <i class="fas fa-angle-left"></i>
-            </button>
-        </div>
-        <div id="chat-history"></div>
-    </div>
-    <div class="sidebar hidden bg-light shadow-0 d-flex flex-column">
-        <div class="tools d-flex align-items-start flex-column sticky-top bg-light py-2">
-            <div class="d-none w-100 m-2">
-                <button class="menu-chat-sm d-sm-none btn bg-white shadow-0"><i class="bi bi-list"></i></button>
-                <button class="new-chat d-sm-none btn btn-light"><i class="bi bi-pencil-square"></i></button>
+    <div id="swup">
+        <div class="sidebar-history hidden shadow">
+            <div class="d-flex justify-content-between">
+                <h5 class="my-2 mx-3">チャット履歴</h5>
+                <button type="button" class="btn btn-light history-chat">
+                    <i class="fas fa-angle-left"></i>
+                </button>
             </div>
-            <div>
-                <a href="/chat/edit/" class="{{default isAdmin 'd-inline-block'}} m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary text-start" style="border-radius:40px;">
-                    <i class="fas fa-plus me-2"></i>{{translations.createCharacter}}
-                </a>
-                <a href="/discover" class="{{default isAdmin 'd-inline-block'}} m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius:40px;">
-                   <i class="fas fa-compass me-2"></i>{{translations.library}}
-                </a>
-                <span onclick="showDiscovery()" class="d-none m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius: 40px;">
-                    <i class="fas fa-compass me-2"></i>{{translations.library}}
-                </span>
-            </div>
-            <span class="text-dark ps-4 fw-bold" style="font-size: 12px;">{{translations.chatList}} <span id="user-chat-count" >{{chats.length}}</span></span>
+            <div id="chat-history"></div>
         </div>
-        <div id="chat-list" class="mt-1 pb-3 position-relative" style="flex-grow: 1;overflow-y: scroll;overflow-x: hidden;border-top:1px solid #cccccc6b;">
-            <!-- Spinner -->
-            <div id="chat-list-spinner" class="spinner-border text-secondary" role="status" style="position: absolute; top: 45%; left: 45%; display: none;">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-        </div>
-    </div>
-    <div id="overlay" class="d-sm-none bg-dark" style="position: fixed; inset: 0; z-index: 1033; display: none; opacity: 0.4; overflow: hidden;"></div>
-    <div class="content collapsed">
-        <nav class="navbar navbar-expand-lg navbar-white bg-transparent fixed-top shadow-0">
-            <div class="container-fluid">
-                <div class="d-flex align-items-center justify-content-center m-auto">
-                    <div style="position: absolute;left: 20px;top: 10px;">
-                        <button class="menu-chat-sm d-sm-none btn btn-light"><i class="bi bi-list"></i></button>
-                        <button id="menu-chat" class="d-none d-sm-inline-block btn btn-light"><i class="bi bi-list"></i></button>
-
-                        <button class="new-chat d-sm-none btn btn-light"><i class="bi bi-pencil-square"></i></button>
-                        <button id="new-chat" class="new-chat d-none d-sm-inline-block btn btn-light"><i class="bi bi-pencil-square"></i></button>
-                    </div>
-                    <div class="d-flex flex-row" style="cursor:pointer" onclick="showDiscovery()">
-                        <img src="/img/logo.webp" alt="" class="mx-3" width="40px">
-                        <span class="d-none">LAMIXボット</span>
-                    </div>  
-                    <div>
-                        <div class="navbar-collapse" id="navbarNav" style="position: absolute;right: 20px;top: 10px;">
-                            <ul class="navbar-nav ms-auto flex-row mb-lg-0">
-                                {{> dashboard-avatar}}
-                            </ul>
-                        </div>
-                    </div>   
+        <div class="sidebar hidden bg-light shadow-0 d-flex flex-column">
+            <div class="tools d-flex align-items-start flex-column sticky-top bg-light py-2">
+                <div class="d-none w-100 m-2">
+                    <button class="menu-chat-sm d-sm-none btn bg-white shadow-0"><i class="bi bi-list"></i></button>
+                    <button class="new-chat d-sm-none btn btn-light"><i class="bi bi-pencil-square"></i></button>
                 </div>
-            </div>
-        </nav>
-        <section id="chat-discovery" class="onchat-off mt-5 pt-3" style="display: block;">
-
-            <!-- Promo Section -->
-            <section class="is-free-user animate__animated m-3 p-3 bg-light d-none" style="display: none; overflow-x: hidden;" data-animate="animate__fadeInLeft" data-delay="0.3s">
-                <div class="container text-center">
-                    <h2 class="pricing-title fw-bold animate__animated animate__fadeInLeft" data-animate="animate__fadeInLeft" style="animation-delay: 0.3s;">
-                        <span class="u-font-manrope u-color-grad" style="font-size: 100%;">{{translations.promo.title}}</span>
-                    </h2>
-                    <h3 class="fw-bold mb-1 px-3 animate__animated animate__fadeInLeft" data-animate="animate__fadeInLeft" style="animation-delay: 0.5s;">
-                        {{translations.promo.subtitle}}
-                    </h3>
-                    <h3 class="fw-bold mb-1 px-3 u-font-manrope u-color-grad my-5 animate__animated animate__fadeInRight" data-animate="animate__fadeInRight" style="font-size: 2em; animation-delay: 0.7s;">
-                        {{translations.promo.price}}
-                    </h3>
-                </div>
-                <div class="is-free-user sticky-bottom py-2 mx-auto text-center animate__animated" style="display:none; bottom:0; left:0; right:0;" data-animate="animate__fadeInLeft" style="animation-delay: 0.9s;">
-                    <a href="/my-plan" class="m-2 btn border shadow-0 btn-secondary px-5 py-2 m-auto animate__animated" data-animate="animate__zoomIn" style="border-radius:40px; background: linear-gradient(90.9deg, rgba(110, 32, 244, 0.5) 2.74%, #6E20F4 102.92%);">
-                        <i class="fas fa-plus me-2"></i>{{translations.promo.details}}
+                <div>
+                    <a href="/chat/edit/" class="{{default isAdmin 'd-inline-block'}} m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary text-start" style="border-radius:40px;">
+                        <i class="fas fa-plus me-2"></i>{{translations.createCharacter}}
                     </a>
+                    <a href="/discover" class="{{default isAdmin 'd-inline-block'}} m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius:40px;">
+                    <i class="fas fa-compass me-2"></i>{{translations.library}}
+                    </a>
+                    <span onclick="showDiscovery()" class="d-none m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius: 40px;">
+                        <i class="fas fa-compass me-2"></i>{{translations.library}}
+                    </span>
                 </div>
-            </section>
+                <span class="text-dark ps-4 fw-bold" style="font-size: 12px;">{{translations.chatList}} <span id="user-chat-count" >{{chats.length}}</span></span>
+            </div>
+            <div id="chat-list" class="mt-1 pb-3 position-relative" style="flex-grow: 1;overflow-y: scroll;overflow-x: hidden;border-top:1px solid #cccccc6b;">
+                <!-- Spinner -->
+                <div id="chat-list-spinner" class="spinner-border text-secondary" role="status" style="position: absolute; top: 45%; left: 45%; display: none;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+        <div id="overlay" class="d-sm-none bg-dark" style="position: fixed; inset: 0; z-index: 1033; display: none; opacity: 0.4; overflow: hidden;"></div>
+        <div class="content collapsed">
+            <nav class="navbar navbar-expand-lg navbar-white bg-transparent fixed-top shadow-0">
+                <div class="container-fluid">
+                    <div class="d-flex align-items-center justify-content-center m-auto">
+                        <div style="position: absolute;left: 20px;top: 10px;">
+                            <button class="menu-chat-sm d-sm-none btn btn-light"><i class="bi bi-list"></i></button>
+                            <button id="menu-chat" class="d-none d-sm-inline-block btn btn-light"><i class="bi bi-list"></i></button>
 
-            <!-- Carousel Advices -->
-            <div id="adviceCarousel" class="carousel slide mt-4 py-5 mb-3" data-bs-ride="carousel">
-                <div class="carousel-inner">
-                    <!-- Carousel Item 1 -->
-                    <div class="carousel-item active">
-                        <div class="container text-center">
-                            <h4 class="fw-bold u-color-grad" 
-                            style="font-size: 100%;">{{translations.advice.advice_title_1}}</h4>
-                            <p class="text-muted">{{translations.advice.advice_text_1}}</p>
+                            <button class="new-chat d-sm-none btn btn-light"><i class="bi bi-pencil-square"></i></button>
+                            <button id="new-chat" class="new-chat d-none d-sm-inline-block btn btn-light"><i class="bi bi-pencil-square"></i></button>
                         </div>
-                    </div>
-                    <!-- Carousel Item 2 -->
-                    <div class="carousel-item">
-                        <div class="container text-center">
-                            <h4 class="fw-bold u-color-grad"
-                            style="font-size: 100%;">{{translations.advice.advice_title_2}}</h4>
-                            <p class="text-muted">{{translations.advice.advice_text_2}}</p>
-                        </div>
-                    </div>
-                    <!-- Carousel Item 3 -->
-                    <div class="carousel-item">
-                        <div class="container text-center">
-                            <h4 class="fw-bold u-color-grad"
-                            style="font-size: 100%;">{{translations.advice.advice_title_3}}</h4>
-                            <p class="text-muted">{{translations.advice.advice_text_3}}</p>
-                        </div>
-                    </div>
-                    <!-- Carousel Item 4 -->
-                    <div class="carousel-item">
-                        <div class="container text-center">
-                            <h4 class="fw-bold u-color-grad"
-                            style="font-size: 100%;">{{translations.advice.advice_title_4}}</h4>
-                            <p class="text-muted">{{translations.advice.advice_text_4}}</p>
-                        </div>
-                    </div>
-                    <!-- Carousel Item 5 -->
-                    <div class="carousel-item">
-                        <div class="container text-center">
-                            <h4 class="fw-bold u-color-grad"
-                            style="font-size: 100%;">{{translations.advice.advice_title_5}}</h4>
-                            <p class="text-muted">{{translations.advice.advice_text_5}}</p>
-                        </div>
-                    </div>
-                    <!-- Carousel Item 6 -->
-                    <div class="carousel-item">
-                        <div class="container text-center">
-                            <h4 class="fw-bold u-color-grad"
-                            style="font-size: 100%;">{{translations.advice.advice_title_6}}</h4>
-                            <p class="text-muted">{{translations.advice.advice_text_6}}</p>
-                        </div>
+                        <div class="d-flex flex-row" style="cursor:pointer" onclick="showDiscovery()">
+                            <img src="/img/logo.webp" alt="" class="mx-3" width="40px">
+                            <span class="d-none">LAMIXボット</span>
+                        </div>  
+                        <div>
+                            <div class="navbar-collapse" id="navbarNav" style="position: absolute;right: 20px;top: 10px;">
+                                <ul class="navbar-nav ms-auto flex-row mb-lg-0">
+                                    {{> dashboard-avatar}}
+                                </ul>
+                            </div>
+                        </div>   
                     </div>
                 </div>
-                <!-- Controls -->
-                <button class="carousel-control-prev" type="button" data-bs-target="#adviceCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon text-secondary" aria-hidden="true"></span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#adviceCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon text-secondary" aria-hidden="true"></span>
-                </button>
-            </div>
+            </nav>
+            <section id="chat-discovery" class="onchat-off mt-5 pt-3" style="display: block;">
 
-            <!-- Image Style Selection -->
-            <div id="imageStyleSelection" class="d-none"></div>
-            <div class="col-auto">
-                <ul class="nav nav-tabs justify-content-start" style="overflow-x: scroll; overflow-y: hidden; flex-wrap: nowrap;" id="imageStyleTabs" role="tablist">
-                    <!-- Tabs will be dynamically generated here -->
-                </ul>
-            </div>
-
-
-            <!-- Content Section -->
-            <section>
-                <div id="chat-gallery" class="row mx-0"></div>
-                <div id="chat-pagination-controls" class="d-flex justify-content-center my-3"></div>
-            </section>
-
-        </section>
-        <div class="container chat-contain px-0 onchat-on">
-            <div id="chat-container" class="card shadow-0 border-0 rounded-0" style="background-position: top center;background-repeat: no-repeat;">
-                <div class="card-body text-center p-0 container" style="min-height:250px;overflow-y:hidden;display: flex;flex-direction: column;">
-                    <div id="chat-recommend" class="px-4 text-white rounded d-flex align-items-center justify-content-start scroll-horizontal" style="margin-top: 70px !important;margin-bottom:10px;min-height: 70px;">
-                        <div class="characters" style="display: flex;flex-direction: row;overflow-x: scroll;"></div>
+                <!-- Promo Section -->
+                <section class="is-free-user animate__animated m-3 p-3 bg-light d-none" style="display: none; overflow-x: hidden;" data-animate="animate__fadeInLeft" data-delay="0.3s">
+                    <div class="container text-center">
+                        <h2 class="pricing-title fw-bold animate__animated animate__fadeInLeft" data-animate="animate__fadeInLeft" style="animation-delay: 0.3s;">
+                            <span class="u-font-manrope u-color-grad" style="font-size: 100%;">{{translations.promo.title}}</span>
+                        </h2>
+                        <h3 class="fw-bold mb-1 px-3 animate__animated animate__fadeInLeft" data-animate="animate__fadeInLeft" style="animation-delay: 0.5s;">
+                            {{translations.promo.subtitle}}
+                        </h3>
+                        <h3 class="fw-bold mb-1 px-3 u-font-manrope u-color-grad my-5 animate__animated animate__fadeInRight" data-animate="animate__fadeInRight" style="font-size: 2em; animation-delay: 0.7s;">
+                            {{translations.promo.price}}
+                        </h3>
                     </div>
-                    <div class="px-2" style="flex-grow:1;height: 100%;overflow: scroll;">
-                        <div id="chatContainer" data-id="" class="pt-2 fade-content" style="padding-bottom: 150px !important;"></div>
-                        <div id="chatInput" class="input-group rounded-0 rounded-bottom" style="position: absolute;bottom: 0;left: 0;right: 0;padding: 0px 15px 5px 15px;">
-                            <div class="d-flex justify-content-between align-items-center w-100">
-                                <div>
-                                    <button type="button" class="btn btn-md bg-light shadow-0 border-0 mb-2 mx-1" id="audio-play">
-                                        <i class="fa" id="audio-icon"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-md bg-dark text-white shadow-0 border-0 mb-2 mx-1" id="galleries-open" style="display: none;opacity:0.8;">
-                                        <i class="fas fa-th-large"></i>
-                                    </button>
-                                </div>
-                                <div class="d-flex pe-2">
-                                    <button class="d-none btn btn-dark border-light shadow-0 mx-1 my-1 img-gen-button" id="stability-gen-button-none" style="display:none;background-image:url('/img/sd.jpg')"><i class="fa fa-spinner fa-spin fa-fw fa-hidden" style="display: none;"></i><i class="far fa-image"></i></button>
-                                    <button class="d-none btn btn-dark border-light shadow-0 mx-1 my-1 img-gen-button" id="novita-gen-button-none" style="display:none;background-image:url('/img/novita.jpg')"><i class="fa fa-spinner fa-spin fa-fw fa-hidden" style="display: none;"></i><i class="far fa-image"></i></button>
-                                    <button type="button" class="d-none btn btn-md custom-gradient-bg danger shadow-0 border-0 mb-2 mx-1 auto-gen" id="novita-gen-button" style="display: none;">
-                                        <div class="d-flex">
-                                            <i class="fa fa-spinner fa-spin fa-fw fa-hidden" style="display: none;"></i>
-                                            <i class="fa fa-image me-2"></i>
-                                            成人向け画像
+                    <div class="is-free-user sticky-bottom py-2 mx-auto text-center animate__animated" style="display:none; bottom:0; left:0; right:0;" data-animate="animate__fadeInLeft" style="animation-delay: 0.9s;">
+                        <a href="/my-plan" class="m-2 btn border shadow-0 btn-secondary px-5 py-2 m-auto animate__animated" data-animate="animate__zoomIn" style="border-radius:40px; background: linear-gradient(90.9deg, rgba(110, 32, 244, 0.5) 2.74%, #6E20F4 102.92%);">
+                            <i class="fas fa-plus me-2"></i>{{translations.promo.details}}
+                        </a>
+                    </div>
+                </section>
+
+                <!-- Carousel Advices -->
+                <div id="adviceCarousel" class="carousel slide mt-4 py-5 mb-3" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        <!-- Carousel Item 1 -->
+                        <div class="carousel-item active">
+                            <div class="container text-center">
+                                <h4 class="fw-bold u-color-grad" 
+                                style="font-size: 100%;">{{translations.advice.advice_title_1}}</h4>
+                                <p class="text-muted">{{translations.advice.advice_text_1}}</p>
+                            </div>
+                        </div>
+                        <!-- Carousel Item 2 -->
+                        <div class="carousel-item">
+                            <div class="container text-center">
+                                <h4 class="fw-bold u-color-grad"
+                                style="font-size: 100%;">{{translations.advice.advice_title_2}}</h4>
+                                <p class="text-muted">{{translations.advice.advice_text_2}}</p>
+                            </div>
+                        </div>
+                        <!-- Carousel Item 3 -->
+                        <div class="carousel-item">
+                            <div class="container text-center">
+                                <h4 class="fw-bold u-color-grad"
+                                style="font-size: 100%;">{{translations.advice.advice_title_3}}</h4>
+                                <p class="text-muted">{{translations.advice.advice_text_3}}</p>
+                            </div>
+                        </div>
+                        <!-- Carousel Item 4 -->
+                        <div class="carousel-item">
+                            <div class="container text-center">
+                                <h4 class="fw-bold u-color-grad"
+                                style="font-size: 100%;">{{translations.advice.advice_title_4}}</h4>
+                                <p class="text-muted">{{translations.advice.advice_text_4}}</p>
+                            </div>
+                        </div>
+                        <!-- Carousel Item 5 -->
+                        <div class="carousel-item">
+                            <div class="container text-center">
+                                <h4 class="fw-bold u-color-grad"
+                                style="font-size: 100%;">{{translations.advice.advice_title_5}}</h4>
+                                <p class="text-muted">{{translations.advice.advice_text_5}}</p>
+                            </div>
+                        </div>
+                        <!-- Carousel Item 6 -->
+                        <div class="carousel-item">
+                            <div class="container text-center">
+                                <h4 class="fw-bold u-color-grad"
+                                style="font-size: 100%;">{{translations.advice.advice_title_6}}</h4>
+                                <p class="text-muted">{{translations.advice.advice_text_6}}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Controls -->
+                    <button class="carousel-control-prev" type="button" data-bs-target="#adviceCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon text-secondary" aria-hidden="true"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#adviceCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon text-secondary" aria-hidden="true"></span>
+                    </button>
+                </div>
+
+                <!-- Image Style Selection -->
+                <div id="imageStyleSelection" class="d-none"></div>
+                <div class="col-auto">
+                    <ul class="nav nav-tabs justify-content-start" style="overflow-x: scroll; overflow-y: hidden; flex-wrap: nowrap;" id="imageStyleTabs" role="tablist">
+                        <!-- Tabs will be dynamically generated here -->
+                    </ul>
+                </div>
+
+
+                <!-- Content Section -->
+                <section>
+                    <div id="chat-gallery" class="row mx-0"></div>
+                    <div id="chat-pagination-controls" class="d-flex justify-content-center my-3"></div>
+                </section>
+
+            </section>
+            <div class="container chat-contain px-0 onchat-on">
+                <div id="chat-container" class="card shadow-0 border-0 rounded-0" style="background-position: top center;background-repeat: no-repeat;">
+                    <div class="card-body text-center p-0 container" style="min-height:250px;overflow-y:hidden;display: flex;flex-direction: column;">
+                        <div id="chat-recommend" class="px-4 text-white rounded d-flex align-items-center justify-content-start scroll-horizontal" style="margin-top: 70px !important;margin-bottom:10px;min-height: 70px;">
+                            <div class="characters" style="display: flex;flex-direction: row;overflow-x: scroll;"></div>
+                        </div>
+                        <div class="px-2" style="flex-grow:1;height: 100%;overflow: scroll;">
+                            <div id="chatContainer" data-id="" class="pt-2 fade-content" style="padding-bottom: 150px !important;"></div>
+                            <div id="chatInput" class="input-group rounded-0 rounded-bottom" style="position: absolute;bottom: 0;left: 0;right: 0;padding: 0px 15px 5px 15px;">
+                                <div class="d-flex justify-content-between align-items-center w-100">
+                                    <div>
+                                        <button type="button" class="btn btn-md bg-light shadow-0 border-0 mb-2 mx-1" id="audio-play">
+                                            <i class="fa" id="audio-icon"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-md bg-dark text-white shadow-0 border-0 mb-2 mx-1" id="galleries-open" style="display: none;opacity:0.8;">
+                                            <i class="fas fa-th-large"></i>
+                                        </button>
+                                    </div>
+                                    <div class="d-flex pe-2">
+                                        <button class="d-none btn btn-dark border-light shadow-0 mx-1 my-1 img-gen-button" id="stability-gen-button-none" style="display:none;background-image:url('/img/sd.jpg')"><i class="fa fa-spinner fa-spin fa-fw fa-hidden" style="display: none;"></i><i class="far fa-image"></i></button>
+                                        <button class="d-none btn btn-dark border-light shadow-0 mx-1 my-1 img-gen-button" id="novita-gen-button-none" style="display:none;background-image:url('/img/novita.jpg')"><i class="fa fa-spinner fa-spin fa-fw fa-hidden" style="display: none;"></i><i class="far fa-image"></i></button>
+                                        <button type="button" class="d-none btn btn-md custom-gradient-bg danger shadow-0 border-0 mb-2 mx-1 auto-gen" id="novita-gen-button" style="display: none;">
+                                            <div class="d-flex">
+                                                <i class="fa fa-spinner fa-spin fa-fw fa-hidden" style="display: none;"></i>
+                                                <i class="fa fa-image me-2"></i>
+                                                成人向け画像
+                                            </div>
+                                        </button>
+                                        <button type="button" class="d-none btn btn-md custom-gradient-bg shadow-0 border-0 mb-2 mx-1 auto-gen-none" id="huggingface-gen-button" style="display: none;">
+                                            <div class="d-flex">
+                                                <i class="fa fa-spinner fa-spin fa-fw fa-hidden" style="display: none;"></i>
+                                                <i class="fa fa-image me-2"></i>
+                                                AI画像
+                                            </div>
+                                        </button>
+                                        <div id="progress-container" style="position: absolute; width: 44px; height: 100px;bottom: 50px;right: 10px;display:none;">
                                         </div>
-                                    </button>
-                                    <button type="button" class="d-none btn btn-md custom-gradient-bg shadow-0 border-0 mb-2 mx-1 auto-gen-none" id="huggingface-gen-button" style="display: none;">
-                                        <div class="d-flex">
-                                            <i class="fa fa-spinner fa-spin fa-fw fa-hidden" style="display: none;"></i>
-                                            <i class="fa fa-image me-2"></i>
-                                            AI画像
-                                        </div>
-                                    </button>
-                                    <div id="progress-container" style="position: absolute; width: 44px; height: 100px;bottom: 50px;right: 10px;display:none;">
                                     </div>
                                 </div>
-                            </div>
-                            <!-- Promo Section -->
-                            <section class="is-free-user animate__animated m-3 p-3 custom-gradient-bg w-100 rounded-pill" style="display: none;overflow-x: hidden;" data-animate="animate__fadeInLeft" data-delay="0.3s" onclick="window.location.href='/my-plan'">
-                                <div class="container text-center">
-                                    <span class="pricing-title fw-bold animate__animated " data-animate="animate__fadeInLeft">
-                                        <span>🎉 {{translations.promo.short_title}} 🎉</span>
-                                    </span>   
+                                <!-- Promo Section -->
+                                <section class="is-free-user animate__animated m-3 p-3 custom-gradient-bg w-100 rounded-pill" style="display: none;overflow-x: hidden;" data-animate="animate__fadeInLeft" data-delay="0.3s" onclick="window.location.href='/my-plan'">
+                                    <div class="container text-center">
+                                        <span class="pricing-title fw-bold animate__animated " data-animate="animate__fadeInLeft">
+                                            <span>🎉 {{translations.promo.short_title}} 🎉</span>
+                                        </span>   
+                                    </div>
+                                </section>
+                                <div id="input-container" class="d-flex w-100">
+                                    <button id="gen-ideas" class="d-none btn btn-light px-4 border-0">💡</button>
+                                    <button id="showPrompts" class="btn custom-gradient-bg px-4 border-0" data-bs-toggle="tooltip" data-bs-placement="top" title="{{translations.generateImage}}" style="display:none;"> 
+                                        <i class="bi bi-image"></i>
+                                    </button>
+                                    <textarea id="userMessage" class="form-control py-3 border-0" style="max-height: 100px;" placeholder="チャットしよう"></textarea>
+                                    <button id="sendMessage" class="btn btn-light px-4 border-0"><i class="fas fa-paper-plane"></i></button>
                                 </div>
-                            </section>
-                            <div id="input-container" class="d-flex w-100">
-                                <button id="gen-ideas" class="d-none btn btn-light px-4 border-0">💡</button>
-                                <button id="showPrompts" class="btn custom-gradient-bg px-4 border-0" data-bs-toggle="tooltip" data-bs-placement="top" title="{{translations.generateImage}}" style="display:none;"> 
-                                    <i class="bi bi-image"></i>
-                                </button>
-                                <textarea id="userMessage" class="form-control py-3 border-0" style="max-height: 100px;" placeholder="チャットしよう"></textarea>
-                                <button id="sendMessage" class="btn btn-light px-4 border-0"><i class="fas fa-paper-plane"></i></button>
-                            </div>
 
-                            <div id="promptContainer" class="shadow" style="position: absolute; bottom: 0px; width: 100%; max-height: 45vh; background: rgb(255, 255, 255); overflow-y: auto;left: 0;right: 0;z-index: 10;display:none;">
-                                <div class="position-sticky sticky-top shadow d-flex justify-content-end align-items-center bg-white form-check text-start mb-2 py-2 ps-3">
-                                    <button id="close-promptContainer" class="btn shadow-0"><i class="bi bi-x"></i></button>
+                                <div id="promptContainer" class="shadow" style="position: absolute; bottom: 0px; width: 100%; max-height: 45vh; background: rgb(255, 255, 255); overflow-y: auto;left: 0;right: 0;z-index: 10;display:none;">
+                                    <div class="position-sticky sticky-top shadow d-flex justify-content-end align-items-center bg-white form-check text-start mb-2 py-2 ps-3">
+                                        <button id="close-promptContainer" class="btn shadow-0"><i class="bi bi-x"></i></button>
+                                    </div>
+                                    <div id="promptList" class="row mx-0 pb-2">
+                                        <h4 class="text-center w-100">{{translations.selectPose}}</h4>
+                                        <p class="text-center text-muted w-100">{{translations.selectPose_description}}</p><!-- Prompts will be dynamically generated here -->
+                                        {{#each promptData}}
+                                            <div class="prompt-card col-6 col-sm-3 border-0 shadow-0 mb-1" 
+                                                data-id="{{_id}}" 
+                                                data-nsfw="{{eq nsfw 'on'}}" 
+                                                style="cursor:pointer;">
+                                                <!-- Placeholder image that will be replaced when loaded -->
+                                                <img 
+                                                    src="/img/image-placeholder-1.gif"
+                                                    data-src="{{image}}" 
+                                                    class="lazy-image rounded w-100" 
+                                                    alt="Prompt Image" 
+                                                    style="height:200px; object-fit:contain;">
+                                                <p class="d-none" style="font-size:12px; margin:0; text-align:center;">{{title}}</p>
+                                            </div>
+                                        {{/each}}
+
+                                    </div>
                                 </div>
-                                <div id="promptList" class="row mx-0 pb-2">
-                                    <h4 class="text-center w-100">{{translations.selectPose}}</h4>
-                                    <p class="text-center text-muted w-100">{{translations.selectPose_description}}</p><!-- Prompts will be dynamically generated here -->
-                                    {{#each promptData}}
-                                        <div class="prompt-card col-6 col-sm-3 border-0 shadow-0 mb-1" 
-                                            data-id="{{_id}}" 
-                                            data-nsfw="{{eq nsfw 'on'}}" 
-                                            style="cursor:pointer;">
-                                            <!-- Placeholder image that will be replaced when loaded -->
-                                            <img 
-                                                src="/img/image-placeholder-1.gif"
-                                                data-src="{{image}}" 
-                                                class="lazy-image rounded w-100" 
-                                                alt="Prompt Image" 
-                                                style="height:200px; object-fit:contain;">
-                                            <p class="d-none" style="font-size:12px; margin:0; text-align:center;">{{title}}</p>
-                                        </div>
-                                    {{/each}}
 
-                                </div>
                             </div>
-
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>  
+            </div>  
+        </div>
+        <style>
+            #mainNav{
+                display: none;
+            }
+        </style>
     </div>
-
  {{> dashboard-footer}}
 <script src="/js/chat.js"></script>
 <script src="/js/stability.js"></script>

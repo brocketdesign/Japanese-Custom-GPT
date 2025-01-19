@@ -1753,10 +1753,12 @@ window.getUserChatHistory = async function(chatId) {
     }
     return null;
 }
-var initChatList = false
-var currentPage = 1;
+
 var chatsPerPage = 10;
-var chatListData = [];
+let initChatList = false
+let currentPage = 1;
+let pagination = { total: 0, totalPages: 0 };
+let chatListData = [];
 
 $(document).on('click','#menu-chat, .menu-chat-sm',function(){
     if(!initChatList){
@@ -1770,6 +1772,7 @@ function displayChatList(reset, userId) {
   if (reset) {
     currentPage = 1;
     chatListData = [];
+    sessionStorage.removeItem('chatListData');
     $('#chat-list').empty();
     $('#chat-list').append(`
         <div id="chat-list-spinner" class="spinner-border text-secondary" role="status" style="position: absolute; top: 45%; left: 45%; display: none;">
@@ -1780,6 +1783,13 @@ function displayChatList(reset, userId) {
   fetchChatListData(currentPage);
 
   function fetchChatListData(page) {
+    chatListData = JSON.parse(sessionStorage.getItem('chatListData')) || [];
+    currentPage = parseInt(sessionStorage.getItem('currentPage')) || 1;
+    pagination = sessionStorage.getItem('pagination') ? JSON.parse(sessionStorage.getItem('pagination')) : { total: 0, totalPages: 0 };
+    if (initChatList && pagination && currentPage >= page && chatListData.length > 1) {
+      displayChats(chatListData, pagination);
+      return;
+    }
     if (page === 1) $('#chat-list-spinner').show();
     $.ajax({
       type: 'GET',
@@ -1788,7 +1798,8 @@ function displayChatList(reset, userId) {
       success: function(data) {
         const { chats, pagination } = data;
         chatListData = chatListData.concat(chats);
-        sessionStorage.setItem('chatList', JSON.stringify(chatListData));
+        sessionStorage.setItem('chatListData', JSON.stringify(chatListData));
+        sessionStorage.setItem('pagination', JSON.stringify(pagination));
         displayChats(chats, pagination);
       },
       complete: function() { $('#chat-list-spinner').hide(); }
@@ -1820,6 +1831,7 @@ function displayChatList(reset, userId) {
         $(this).hide();
         $('#chat-list-spinner').show();
         currentPage++;
+        sessionStorage.setItem('currentPage', currentPage);
         fetchChatListData(currentPage);
       });
     }
@@ -1828,7 +1840,6 @@ function displayChatList(reset, userId) {
 
 
 function updateCurrentChat(chatId, userId) {
-    let chatListData = JSON.parse(sessionStorage.getItem('chatList')) || [];
     let currentChat = chatListData.find(chat => chat._id === chatId);
 
     if (currentChat) {
@@ -1852,12 +1863,10 @@ function fetchChatDataInfo(chatId) {
 }
 
 function updateChatListDisplay(currentChat) {
-    let chatListData = JSON.parse(sessionStorage.getItem('chatList')) || [];
 
     chatListData = chatListData.filter(chat => chat._id !== currentChat._id);
     chatListData.unshift(currentChat);
     chatListData.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-    sessionStorage.setItem('chatList', JSON.stringify(chatListData));
 
     // remoce all active class 
     $('#chat-list').find('.chat-list.item').removeClass('active');

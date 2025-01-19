@@ -4,100 +4,102 @@
 <body>
     {{> dashboard-nav}}
 
-<section class="container">
+  <section class="container">
 
-  <div class="col-12">
-    <div class="user-profile mt-4">
-      <div class="row mb-3">
-        <div id="profileSection" class="text-center">
-          <div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative mb-2">
-            <a href="/user/{{requestedUser.userId}}" class="text-decoration-none">
-              <img id="profileImage" src="{{default requestedUser.profilePicture '/img/avatar.png'}}" alt="Profile Picture" class="rounded-circle" 
-              style="width: 100px; height: 100px; object-fit: cover; object-position: top;cursor:pointer;">
-            </a>
-            <i type="button" class="fas fa-edit position-absolute {{#if (eq currentUser.userId requestedUser.userId)}}{{else}}d-none{{/if}}" style="bottom: 5px; font-size: 1em; color: white; background-color: rgba(0, 0, 0, 0.5); border-radius: 50%; padding: 5px;cursor:pointer;"></i>
-          </div>
-
-          <h2><a href="/user/{{requestedUser.userId}}" class="text-decoration-none text-secondary">{{requestedUser.userName}}</a></h2>
-
-          
-          <div class="d-flex justify-content-center text-center">
-            <div class="mx-2">
-              <h6 class="fw-bold">{{default requestedUser.postCount 0}}</h6>
-              <p class="text-muted small"><i class="bi bi-grid-fill"></i> 投稿</p>
+    <div class="col-12">
+      <div class="user-profile mt-4">
+        <div class="row mb-3">
+          <div id="profileSection" class="text-center">
+            <div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative mb-2">
+              <a href="/user/{{requestedUser.userId}}" class="text-decoration-none">
+                <img id="profileImage" src="{{default requestedUser.profilePicture '/img/avatar.png'}}" alt="Profile Picture" class="rounded-circle" 
+                style="width: 100px; height: 100px; object-fit: cover; object-position: top;cursor:pointer;">
+              </a>
+              <i type="button" class="fas fa-edit position-absolute {{#if (eq currentUser.userId requestedUser.userId)}}{{else}}d-none{{/if}}" style="bottom: 5px; font-size: 1em; color: white; background-color: rgba(0, 0, 0, 0.5); border-radius: 50%; padding: 5px;cursor:pointer;"></i>
             </div>
-            <div class="mx-2">
-              <h6 class="fw-bold">{{default requestedUser.imageLikeCount 0}}</h6>
-              <p class="text-muted small"><i class="bi bi-heart-fill"></i> いいね</p>
-            </div>
-            <div class="mx-2">
-              <h6 class="fw-bold">{{default requestedUser.followCount 0}}</h6>
-              <p class="text-muted small">
-                <a href="/follower/{{requestedUser.userId}}?type=following" class="text-decoration-none text-muted ">
-                  <i class="bi bi-person-check-fill"></i> フォロー中
-                </a>
-              </p>
-            </div>
-            <div class="mx-2">
-              <h6 class="fw-bold">{{default requestedUser.followerCount 0}}</h6>
-              <p class="text-muted small">
-                <a href="/follower/{{requestedUser.userId}}?type=followers" class="text-decoration-none text-muted ">
-                  <i class="bi bi-people-fill"></i> フォロワー
-                </a>
-              </p>
-            </div>
-          </div>
 
-          <span class="btn btn-light me-2">
-            <span>🪙</span>
-            <span class="user-coins fw-bold">{{requestedUser.coins}}</span>
-          </span>
+            <h2><a href="/user/{{requestedUser.userId}}" class="text-decoration-none text-secondary">{{requestedUser.userName}}</a></h2>
 
-          {{#if (eq currentUser.userId requestedUser.userId)}}
-          <!-- If current user is viewing their own profile -->
-          {{else}}
-          <!-- Follow button for other users -->
-            <span class="btn custom-gradient-bg me-2 follow-button {{#if requestedUser.follow}}following{{/if}}" data-user-id="{{requestedUser.userId}}">
-              <span class="user-follow fw-bold">
-                {{#if requestedUser.follow}}
-                  フォロー中 <!-- Following -->
-                {{else}}
-                  フォロー <!-- Follow -->
-                {{/if}}
-              </span>
+            
+            <div class="d-flex justify-content-center text-center">
+              <div class="mx-2">
+                <h6 class="fw-bold">{{default requestedUser.postCount 0}}</h6>
+                <p class="text-muted small"><i class="bi bi-grid-fill"></i> 投稿</p>
+              </div>
+              <div class="mx-2">
+                <h6 class="fw-bold">{{default requestedUser.imageLikeCount 0}}</h6>
+                <p class="text-muted small"><i class="bi bi-heart-fill"></i> いいね</p>
+              </div>
+              <div class="mx-2">
+                <h6 class="fw-bold">{{default requestedUser.followCount 0}}</h6>
+                <p class="text-muted small">
+                  <a href="/follower/{{requestedUser.userId}}?type=following" class="text-decoration-none text-muted ">
+                    <i class="bi bi-person-check-fill"></i> フォロー中
+                  </a>
+                </p>
+              </div>
+              <div class="mx-2">
+                <h6 class="fw-bold">{{default requestedUser.followerCount 0}}</h6>
+                <p class="text-muted small">
+                  <a href="/follower/{{requestedUser.userId}}?type=followers" class="text-decoration-none text-muted ">
+                    <i class="bi bi-people-fill"></i> フォロワー
+                  </a>
+                </p>
+              </div>
+            </div>
+
+            <span class="btn btn-light me-2">
+              <span>🪙</span>
+              <span class="user-coins fw-bold">{{requestedUser.coins}}</span>
             </span>
 
-            {{#if requestedUser.followedBy}}
-              <p class="text-muted small">{{requestedUser.userName}} にフォローされています</p> <!-- Followed by {{requestedUser.userName}} -->
-            {{/if}}
+            {{#if (eq currentUser.userId requestedUser.userId)}}
+            <!-- If current user is viewing their own profile -->
+            {{else}}
+            <!-- Follow button for other users -->
+              <span class="btn custom-gradient-bg me-2 follow-button {{#if requestedUser.follow}}following{{/if}}" data-user-id="{{requestedUser.userId}}">
+                <span class="user-follow fw-bold">
+                  {{#if requestedUser.follow}}
+                    フォロー中 <!-- Following -->
+                  {{else}}
+                    フォロー <!-- Follow -->
+                  {{/if}}
+                </span>
+              </span>
 
-          {{/if}}
+              {{#if requestedUser.followedBy}}
+                <p class="text-muted small">{{requestedUser.userName}} にフォローされています</p> <!-- Followed by {{requestedUser.userName}} -->
+              {{/if}}
+
+            {{/if}}
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
 
-</section>
-<section class="container ">
-  <div class="mt-4 mb-5">
-    <ul id="people-list" class="list-group"></ul>
-    <div id="pagination-controls" class="mt-3"></div>
-  </div>
-</section>
+  </section>
+  <section class="container ">
+    <div class="mt-4 mb-5">
+      <ul id="people-list" class="list-group"></ul>
+      <div id="pagination-controls" class="mt-3"></div>
+    </div>
+  </section>
 
-<style>
-  footer{display: inline !important;}
-  .sticky-bottom{display: inline-block !important;width: 100%;}
-</style>
-{{> dashboard-footer}}
+  <style>
+    footer{display: inline !important;}
+    .sticky-bottom{display: inline-block !important;width: 100%;}
+  </style>
+  {{> dashboard-footer}}
 
-<script>
+  <script>
 
-  $(document).ready(function () {
-    const userId = `{{{requestedUser.userId}}}`;
-    const type = `{{type}}`
-    displayPeopleList(userId, type , 1)
-  });
+    $(document).ready(function () {
+      const userId = `{{{requestedUser.userId}}}`;
+      const type = `{{type}}`
+      displayPeopleList(userId, type , 1)
+    });
 
-</script>
+  </script>
+</body>
+</html>

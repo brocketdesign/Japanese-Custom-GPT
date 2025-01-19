@@ -266,13 +266,6 @@
         </div>
     </section>
 
-    <script>
-        // Redirect to the authentication page when a button is clicked
-        $('#social_proof button').click(function() {
-            window.location.href = '/authenticate';
-        });
-    </script>
-
     <!-- Section 4 -->
     <div class="container text-center mt-5 animate__animated" data-animate="animate__fadeIn">
         <p class="fw-bold text-center fs-1 text-dark p-3 mb-0 rounded animate__animated" data-animate="animate__fadeInLeft">
@@ -326,5 +319,12 @@
                 delay: 3000,
                 disableOnInteraction: false,
             },
+        });
+    </script>
+
+    <script>
+        // Redirect to the authentication page when a button is clicked
+        $(document).find('#social_proof button').click(function() {
+            window.location.href = '/authenticate';
         });
     </script>

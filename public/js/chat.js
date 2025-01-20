@@ -360,11 +360,11 @@ $(document).ready(async function() {
         }else{
             $('#userMessage').attr('placeholder', `${window.translations.sendMessageTo}${chatName}`);
         }
-        const albumLink = $(`<a href="/character/${chat._id}"></a>`)
+        const albumLink = $(`<a href="#" onclick="openCharacterModal('${chat._id}')"></a>`)
         albumLink.attr('data-bs-toggle', 'tooltip');
         albumLink.attr('title', `${window.translations.album || 'アルバム'}`);
         albumLink.addClass('btn btn-light shadow-0 border')
-        albumLink.append('<i class="bi bi-images"></i>')
+        albumLink.append(`<i class="bi bi-images me-1"></i><span style="font-size:12px;">${chat.imageCount ? chat.imageCount : 0}</span>`)
         new bootstrap.Tooltip(albumLink[0]);
         $('#chat-recommend').append(albumLink)
     }
@@ -1923,7 +1923,7 @@ function constructChatItemHtml(chat, isActive) {
                                 </button>
                             </li>
                             <li>
-                                <a href="/chat/edit/${chat._id}" class="dropdown-item text-secondary">
+                                <a href="#" class="dropdown-item text-secondary" onclick="loadCharacterCreationPage('${chat._id}')">
                                     <i class="far fa-edit me-2"></i>
                                     <span class="text-muted" style="font-size:12px;">${window.translations.edit}</span>
                                 </a>

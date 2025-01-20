@@ -1027,7 +1027,7 @@ function generateUserChatsPagination(userId, currentPage, totalPages) {
     $('#user-chat-pagination-controls').html(paginationHtml);
 }
 
-window.displayChats = function (chatData, searchId = null) {
+window.displayChats = function (chatData, searchId = null, modal = false) {
     let htmlContent = '';
 
     chatData.forEach(chat => {
@@ -1064,7 +1064,7 @@ window.displayChats = function (chatData, searchId = null) {
                             <div class="persona" style="color:rgb(165 164 164);opacity:0.8;" data-id="${chat.chatId || chat._id}">
                                 <span class="badge bg-dark" style="width: 30px;"><i class="far fa-user-circle"></i></span>
                             </div>
-                            <a href="/character/${chat.chatId || chat._id}">
+                            <a ${modal ? `onclick="openCharacterModal('${chat.chatId || chat._id}')"` : `href="/character/${chat.chatId || chat._id}"`}>
                                 <div class="gallery" style="color: rgb(165 164 164);opacity:0.8;" data-id="${chat.chatId || chat._id}">
                                     <span class="btn btn-dark"><i class="far fa-image me-1"></i><span style="font-size:12px;">${chat.imageCount || 0}</span></span>
                                 </div>
@@ -1096,7 +1096,7 @@ window.displayChats = function (chatData, searchId = null) {
 };
 
 window.displayPeopleChat = async function (page = 1, option, callback) {
-    const { imageStyle, imageModel, query = false, userId = false } = option;
+    const { imageStyle, imageModel, query = false, userId = false, modal = false } = option;
     const searchId = `${imageStyle}-${imageModel}-${query}`;
     
     try {
@@ -1104,7 +1104,7 @@ window.displayPeopleChat = async function (page = 1, option, callback) {
         const data = await response.json();
 
         if (data.recent) {
-            window.displayChats(data.recent, searchId);
+            window.displayChats(data.recent, searchId, modal);
             const uniqueChatIds = [...new Set(data.recent.map(chat => chat._id))];
             if (typeof callback === 'function') callback(uniqueChatIds);
         }
@@ -2041,7 +2041,7 @@ $(document).ready(function () {
      * Initial Load
      */
     fetchChatsWithImages(currentPage);
-  });
+});
   
 window.getLanguageName = function(langCode) {
     const langMap = {
@@ -2189,31 +2189,59 @@ function generateAllChatsImagePagination(totalPages) {
         );
     }
 }
-
 function generateChatImagePagination(totalPages, chatId) {
-    if (typeof loadingStates === 'undefined') loadingStates = {}; // Ensure the loadingStates object exists
-    if (typeof currentPageMap === 'undefined') currentPageMap = {}; // Ensure the currentPageMap object exists
+    if (typeof loadingStates === 'undefined') loadingStates = {};
+    if (typeof currentPageMap === 'undefined') currentPageMap = {};
 
     if (typeof loadingStates[chatId] === 'undefined') loadingStates[chatId] = false;
-    if (typeof currentPageMap[chatId] === 'undefined') currentPageMap[chatId] = 1; // Initialize the current page for the chatId
+    if (typeof currentPageMap[chatId] === 'undefined') currentPageMap[chatId] = 1;
+
+    // Helper function to load more pages if there's still space
+    async function loadUntilScrollable() {
+        while (
+            !loadingStates[chatId] &&
+            currentPageMap[chatId] < totalPages &&
+            $(document).height() <= $(window).height()
+        ) {
+            try {
+                loadingStates[chatId] = true;
+                await loadChatImages(chatId, currentPageMap[chatId] + 1);
+                currentPageMap[chatId]++;
+            } catch (err) {
+                console.error('Failed to load chat images', err);
+            } finally {
+                loadingStates[chatId] = false;
+            }
+        }
+    }
+
+    // Attempt to load more images immediately if page isn't scrollable
+    loadUntilScrollable();
 
     // Scroll event listener for infinite scroll
     $(window).off('scroll').on('scroll', function() {
-        if (!loadingStates[chatId] && currentPageMap[chatId] < totalPages && $(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+        if (
+            !loadingStates[chatId] &&
+            currentPageMap[chatId] < totalPages &&
+            $(window).scrollTop() + $(window).height() >= $(document).height() - 100
+        ) {
             loadingStates[chatId] = true;
-            loadChatImages(chatId, currentPageMap[chatId] + 1).then(() => {
-                currentPageMap[chatId]++; // Increment the page after successful loading
-                loadingStates[chatId] = false; // Reset the loading state
-            }).catch(() => {
-                // Handle errors if needed
-                loadingStates[chatId] = false;
-            });
+            loadChatImages(chatId, currentPageMap[chatId] + 1)
+                .then(() => {
+                    currentPageMap[chatId]++;
+                    loadingStates[chatId] = false;
+                    // Check again if there's still space after loading
+                    loadUntilScrollable();
+                })
+                .catch(() => {
+                    loadingStates[chatId] = false;
+                });
         }
     });
 
     // Display spinner if more pages are available, otherwise clear the pagination controls
     if (currentPageMap[chatId] >= totalPages) {
-        $('#chat-images-pagination-controls').html(''); // Clear controls if no more pages
+        $('#chat-images-pagination-controls').html('');
     } else {
         $('#chat-images-pagination-controls').html(
             '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
@@ -2259,4 +2287,134 @@ function generateChatsPagination(totalPages, option) {
         );
     }
 }
+// Function to load settings page & execute script settings.js & open #settingsModal
+function loadSettingsPage() {
+    $.ajax({
+        url: '/settings',
+        method: 'GET',
+        success: function(data) {
+            $('#settings-container').html(data);
+            // Load settings.js script
+            const script = document.createElement('script');
+            script.src = '/js/settings.js';
+            script.onload = function() {
+                // Open the Bootstrap 5 modal
+                const settingsModal = new bootstrap.Modal(document.getElementById('settingsModal'));
+                settingsModal.show();
+            };
+            script.onerror = function() {
+                console.error('Failed to load settings.js script.');
+            };
+            document.body.appendChild(script);
+        },
+        error: function(err) {
+            console.error('Failed to load settings page', err);
+        }
+    });
+}
 
+// Function to load charater creation page & execute scripts  & open #settingsModal
+function loadCharacterCreationPage(chatId) {
+    let redirectUrl = '/chat/edit/'
+    if(chatId){
+        redirectUrl += chatId
+    }
+    $.ajax({
+        url: redirectUrl, 
+        method: 'GET',
+        success: function(data) {
+            if(!data){
+                loadPlanPage();
+                return
+            }
+            $('#character-creation-container').html(data);
+            // Load image-uploader.css
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = '/css/image-uploader.css';
+            document.head.appendChild(link);
+
+            // Load image-uploader.js script
+            const imageUploaderScript = document.createElement('script');
+            imageUploaderScript.src = '/js/image-uploader.js';
+            document.body.appendChild(imageUploaderScript);
+
+            // Load stability.js script
+            const stabilityScript = document.createElement('script');
+            stabilityScript.src = '/js/stability.js';
+            document.body.appendChild(stabilityScript);
+
+            // Load character-creation.js script
+            const script = document.createElement('script');
+            script.src = '/js/character-creation.js';
+            script.onload = function() {
+                // Open the Bootstrap 5 modal
+                const characterCreationModal = new bootstrap.Modal(document.getElementById('characterCreationModal'));
+                characterCreationModal.show();
+            };
+            script.onerror = function() {
+                console.error('Failed to load character-creation.js script.');
+            };
+            document.body.appendChild(script);
+        },
+        error: function(err) {
+            console.error('Failed to load character creation page', err);
+        }
+    });
+}
+
+// Load the plan page and open the modal
+function loadPlanPage() {
+    $.ajax({
+        url: '/my-plan',
+        method: 'GET',
+        success: function(data) {
+            console.log('Loaded plan page Success');
+            $('#plan-container').html(data);
+            // Load plan.js script
+            const script = document.createElement('script');
+            script.src = '/js/plan.js';
+            script.onload = function() {
+                // Open the Bootstrap 5 modal
+                const planModal = new bootstrap.Modal(document.getElementById('planUpgradeModal'));
+                planModal.show();
+            };
+            script.onerror = function() {
+                console.error('Failed to load plan.js script.');
+            };
+            document.body.appendChild(script);
+        },
+        error: function(err) {
+            console.error('Failed to load plan page', err);
+        }
+    });
+}
+
+// Function to redirect to /chat/ page or avoid redirect if the current page is /chat/
+function redirectToChatPage() {
+    if (window.location.pathname !== '/chat/') {
+        window.location.href = '/chat/';
+    }
+}
+
+// Open /character/:ig?modal=true to show the character modal
+function openCharacterModal(modalChatId) {
+    const url = `/character/${modalChatId}?modal=true`;
+    $.ajax({
+        url: url,
+        method: 'GET',
+        success: function(data) {
+            $('#character-modal-container').html(data);
+            const characterModal = new bootstrap.Modal(document.getElementById('characterModal'));
+            $(document).ready(function () {
+                if(modalChatId){
+                    loadChatImages(modalChatId, 1);
+                }
+            });
+            characterModal.show();
+        },
+        error: function(err) {
+            console.error('Failed to open character modal', err);
+        }
+    });
+}

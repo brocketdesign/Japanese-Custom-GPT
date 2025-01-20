@@ -223,25 +223,4 @@ function createCheckoutSession(billingCycle) {
       }
     renderPlans(plan);
   });
-
-   // Parse the URL and get query parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    
-    // Check if 'cancel-payment' parameter is true
-    if (urlParams.get('cancel-payment') === 'true') {
-        // Display SweetAlert2 in Japanese
-        Swal.fire({
-          title: translations.payment_cancelled,
-          text: translations.payment_not_completed,
-          icon: 'info',
-          showCloseButton: true
-        });
-        var currentUrl = window.location.href;
-        var urlParts = currentUrl.split('?');
-        urlParts[urlParts.length - 1] = '';
-        var newUrl = urlParts.join('');
-        if($('#chat-widget-container').length == 0){
-            window.history.replaceState({ path: newUrl }, '', newUrl);
-        }
-    }
 });

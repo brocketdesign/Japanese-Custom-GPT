@@ -26,6 +26,7 @@ const path = require('path');
 const fs = require('fs');
 const sharp = require('sharp');
 const { title } = require('process');
+const { chat } = require('googleapis/build/src/apis/chat');
 const sessions = new Map();
 
 const aiModel = `meta-llama/llama-3.1-8b-instruct`
@@ -111,9 +112,11 @@ async function routes(fastify, options) {
 
       fastify.post('/api/check-chat', async (request, reply) => {
         try {
-          let chatId = request.body.chatId 
+            let chatId = request?.body?.chatId 
+            chatId = chatId !== undefined && chatId !== null && chatId !== ''
             ? new fastify.mongo.ObjectId(request.body.chatId) 
-            : new fastify.mongo.ObjectId(); // Generate a new chatId if undefined
+            : new fastify.mongo.ObjectId(); 
+            console.log('chatId:', chatId);
           const userId = new fastify.mongo.ObjectId(request.user._id);
           const chatsCollection = fastify.mongo.db.collection('chats');
           

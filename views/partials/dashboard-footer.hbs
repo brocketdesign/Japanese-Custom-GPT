@@ -6,6 +6,7 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ja.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
 <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+<script src="https://js.stripe.com/v3/"></script>
 <script src="/js/moment-with-locales.js"></script>
 <script src="/js/dashboard.js"></script>
 <script src="/js/notifications.js"></script>
@@ -67,7 +68,6 @@ window.fetchAndAppendModels = function() {
     let apiUrl = '/api/models'
     $.get(apiUrl, function(response) {
         if (response.success) {
-        //$('#imageStyleSelection').empty(); // Clear existing content
         response.models.forEach(model => {
 
             const modelElement = `
@@ -80,20 +80,23 @@ window.fetchAndAppendModels = function() {
                 data-count="${model.chatCount}"
                 >
             `;
+
             if(!subscriptionStatus){
                 if(subscriptionStatus || !model.premium){
-                    $('#imageStyleSelection').prepend(modelElement);
+                    $(document).find('#imageStyleSelection').prepend(modelElement);
+                    $(document).find('#imageStyleSelectionCharacterCreation').prepend(modelElement);
                 }else{
-                    $('#imageStyleSelection').append(modelElement);
+                    $(document).find('#imageStyleSelection').append(modelElement);
+                    $(document).find('#imageStyleSelectionCharacterCreation').append(modelElement);
                 }
             }else{
-                $('#imageStyleSelection').append(modelElement);
+                $(document).find('#imageStyleSelection').append(modelElement);
+                $(document).find('#imageStyleSelectionCharacterCreation').append(modelElement);
             }
         });
-            
-            if($('#imageStyleTabs').length > 0){
+            if($(document).find('#imageStyleTabs').length > 0){
                 showNavTabs();
-            }else if($('#search-form').length == 0){
+            }else if($(document).find('#search-form').length == 0){
                 $(document).find('.style-option').eq(0).click()
             }
         } else {
@@ -168,7 +171,7 @@ function showNavTabs(){
 
         if(modelId){
             localStorage.setItem('chat-nav',`${modelId}`)
-            let option = {imageStyle:style, imageModel:model, userId: user._id}
+            let option = {imageStyle:style, imageModel:model, userId: user._id, modal: true}
             if(chatDiscovery ){ option.userId = false }
             displayPeopleChat(1, option);
         }
@@ -221,7 +224,26 @@ window.updatePlanStatus = function(user){
       })
   })
 }
+ // Parse the URL and get query parameters
+const urlParams = new URLSearchParams(window.location.search);
 
+// Check if 'cancel-payment' parameter is true
+if (urlParams.get('cancel-payment') === 'true') {
+    // Display SweetAlert2 in Japanese
+    Swal.fire({
+        title: translations.payment_cancelled,
+        text: translations.payment_not_completed,
+        icon: 'info',
+        showCloseButton: true
+    });
+    var currentUrl = window.location.href;
+    var urlParts = currentUrl.split('?');
+    urlParts[urlParts.length - 1] = '';
+    var newUrl = urlParts.join('');
+    if($('#chat-widget-container').length == 0){
+        window.history.replaceState({ path: newUrl }, '', newUrl);
+    }
+}
 window.showNotification = function(message, icon) {
     Swal.fire({
         position: 'top',

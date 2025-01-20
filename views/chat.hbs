@@ -251,16 +251,66 @@
                 </div>
             </div>  
         </div>
-        <style>
-            #mainNav{
-                display: none;
-            }
-        </style>
+        <!-- Settings Modal -->
+        <div class="modal fade " id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-scrollable">
+                <div class="modal-content mx-auto">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="settingsModalLabel">{{translations.avatar.settings}}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="settings-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Character Creation Modal -->
+        <div class="modal fade" id="characterCreationModal" tabindex="-1" aria-labelledby="characterCreationModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-scrollable">
+                <div class="modal-content mx-auto">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="characterCreationModalLabel">{{translations.characterCreation.title}}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="character-creation-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Plan Upgrade Modal #plan-container-->
+        <div class="modal fade" id="planUpgradeModal" tabindex="-1" aria-labelledby="planUpgradeModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-scrollable">
+                <div class="modal-content mx-auto">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="planUpgradeModalLabel">{{translations.upgradePlan.title}}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="plan-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Character Modal -->
+        <div class="modal fade" id="characterModal" tabindex="-1" aria-labelledby="characterModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content mx-auto">
+                <div class="modal-header">
+                <h5 class="modal-title" id="characterModalLabel">{{translations.character.title}}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                <div id="character-modal-container"></div>
+                </div>
+            </div>
+            </div>
+        </div>
     </div>
  {{> dashboard-footer}}
 <script src="/js/chat.js"></script>
 <script src="/js/stability.js"></script>
-<script src="https://js.stripe.com/v3/"></script>
 <script>
 $(document).ready(function() {
 

@@ -289,7 +289,7 @@ fastify.get('/chat/edit/:chatId', { preHandler: [fastify.authenticate] }, async 
     const chats = await chatsCollection.distinct('chatImageUrl', { userId });
 
     if(user.subscriptionStatus !== 'active' && chats.length > 0){
-      return reply.redirect('/my-plan');
+      return false;
     }
 
     let chatId = request.params.chatId || null;
@@ -424,7 +424,8 @@ fastify.get('/character/:chatId', async (request, reply) => {
     const userId = user._id;
     const chatId = new fastify.mongo.ObjectId(request.params.chatId);
     const imageId = request.query.imageId ? new fastify.mongo.ObjectId(request.query.imageId) : null;
-
+    const isModal = request.query.modal === 'true';
+    
     const chatsCollection = db.collection('chats');
     const galleryCollection = db.collection('gallery');
 
@@ -485,7 +486,8 @@ fastify.get('/character/:chatId', async (request, reply) => {
     }
     // Log user activity 
     console.log(`Visiting Character ${chat.name}, ${image?.title?.en || ''}, /character/${chatId.toString()}${imageId ? `?imageId=${imageId}` : ''}`);
-    return reply.view('character.hbs', {
+    const template = isModal ? 'character-modal.hbs' : 'character.hbs';
+    return reply.view(template, {
       title: `${chat.name} | ${image?.title?.[request.lang] ?? ''} ${translations.seo.title_character}`,
       translations,
       mode: process.env.MODE,

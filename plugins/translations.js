@@ -54,13 +54,26 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     })
 
     fastify.decorate('user', async function (request, reply) {
-        const user = await fastify.getUser(request, reply)
+        let user = await fastify.getUser(request, reply)
+        const userCollection = fastify.mongo.client.db(process.env.MONGODB_NAME).collection('users');
+        if(!user?.isTemporary) {
+            user = await userCollection.findOne({ _id: new fastify.mongo.ObjectId(user._id) });
+        }
         return { 
-            _id:user._id, 
-            lang:user.lang,
-            profileUrl: user.profileUrl,
-            subscriptionStatus:user.subscriptionStatus, 
-            isTemporary:user.isTemporary 
+            _id: user._id || null, 
+            lang: user.lang || 'en',
+            profileUrl: user.profileUrl || '',
+            subscriptionStatus: user.subscriptionStatus || 'free', 
+            isTemporary: user.isTemporary || false,
+            email: user.email || '',
+            nickname: user.nickname || '',
+            birthDate: {
+            year: user.birthDate?.year || 1900,
+            month: user.birthDate?.month || 1,
+            day: user.birthDate?.day || 1
+            },
+            gender: user.gender || 'unknown',
+            bio: user.bio || ''
         }
     })
 

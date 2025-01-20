@@ -315,7 +315,7 @@ async function routes(fastify, options) {
       console.log('User canceled the payment process.');
 
       // Redirect the user to a cancellation page or inform them about the cancellation
-      return reply.redirect(`${frontEnd}/my-plan?cancel-payment=true`);
+      return reply.redirect(`${frontEnd}/?cancel-payment=true`);
     } catch (error) {
       console.error('Error handling cancellation:', error);
       return reply.status(500).send({ error: 'Internal Server Error' });

@@ -117,16 +117,16 @@ fastify.decorate('authenticate', async function (request, reply) {
   try {
     const token = request.cookies.token;
     if (!token) {
-      return reply.redirect('/authenticate');
+      return reply.redirect('/');
     }
     const decoded = await jwt.verify(token, process.env.JWT_SECRET);
     if (decoded && decoded._id) {
       //request.user = { _id: decoded._id, ...decoded };
     } else {
-      return reply.redirect('/authenticate');
+      return reply.redirect('/');
     }
   } catch (err) {
-    return reply.redirect('/authenticate');
+    return reply.redirect('/');
   }
 });
 
@@ -230,7 +230,7 @@ fastify.get('/chat/:chatId', { preHandler: [fastify.authenticate] }, async (requ
   if (!userData) return reply.status(404).send({ error: 'User not found' });
 
   if (user.isTemporary) {
-    return reply.redirect('/authenticate');
+    return reply.redirect('/');
   }
 
   const isAdmin = await checkUserAdmin(fastify, userId);

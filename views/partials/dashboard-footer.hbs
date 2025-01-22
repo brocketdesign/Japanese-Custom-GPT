@@ -104,7 +104,7 @@ window.fetchAndAppendModels = function() {
         }
     });
 };
-
+let navInit = false;
 function showNavTabs(){
     const styleSelection = document.getElementById('imageStyleSelection');
     const tabNav = document.getElementById('imageStyleTabs');
@@ -148,7 +148,7 @@ function showNavTabs(){
         if(chatDiscovery){
             tabNav.innerHTML += `
             <li class="nav-item position-relative bg-light rounded" role="presentation" onclick="loadCharacterCreationPage()">
-                <button class="nav-link" type="button" role="tab">
+                <button class="nav-link add-more" type="button" role="tab">
                     <i class="bi bi-plus-lg thumb-option d-flex justify-content-center align-items-center" style="font-size: 31px;"></i>
                 </button>
             </li>
@@ -161,6 +161,9 @@ function showNavTabs(){
 
     // Handle tab clicks
     $(document).find('#imageStyleTabs button').on('click', function () {
+        if($(this).hasClass('add-more')){
+            return
+        }
         $('#chat-gallery .chat-card-container').fadeOut()
         $('#imageStyleTabs button').removeClass('active');
         $(this).addClass('active');
@@ -178,12 +181,16 @@ function showNavTabs(){
     });
 
     const chatNav_modelId = localStorage.getItem('chat-nav');
-
+    if(navInit){
+        return
+    }
     if (chatNav_modelId && $(document).find(`#imageStyleTabs`).find(`#${chatNav_modelId}-tab`).length) {
         $(document).find(`#imageStyleTabs`).find(`#${chatNav_modelId}-tab`).click();
+        navInit = true;
     } else {
         // Find the first tab with a modelId and click it
         $(document).find(`#imageStyleTabs button[data-id]`).first().click();
+        navInit = true;
     }
 }
 window.updatePlanStatus = function(user){

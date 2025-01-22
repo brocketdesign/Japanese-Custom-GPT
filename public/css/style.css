@@ -1342,6 +1342,9 @@ nav.navbar.move {
   #adviceCarousel .carousel-inner .carousel-item .container {
     min-height: 200px;
   }
+  #adviceCarousel .carousel-inner .carousel-item .container h4 {
+    font-size: 100%;
+  }
 }
 
 @media (max-width: 600px) {

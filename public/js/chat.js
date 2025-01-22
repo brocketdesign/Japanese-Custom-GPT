@@ -851,7 +851,7 @@ $(document).ready(async function() {
                     if (response.imageUrl) {
                         
                         // Update the placeholder image
-                        if(!subscriptionStatus){
+                        if(!subscriptionStatus && response.nsfw){
                             $(`#image-${imageId}`).attr('data-src', response.imageUrl).addClass('img-blur').fadeIn();
                             blurImage($(`#image-${imageId}`));
                         }else{
@@ -1292,11 +1292,12 @@ $(document).ready(async function() {
     
         else if (messageClass === 'bot-image' && message instanceof HTMLElement) {
             const imageId = message.getAttribute('data-id');
-            const imageNsfw = message.getAttribute('data-nsfw');
+            const imageNsfw = message.getAttribute('data-nsfw') == 'true';
             const title = message.getAttribute('alt');
             const prompt = message.getAttribute('data-prompt');
             const imageUrl = message.getAttribute('src');
-            if(!subscriptionStatus){
+
+            if(!subscriptionStatus && imageNsfw){
                 // Remove src attribute to prevent loading the image
                 message.removeAttribute('src');
                 // Set data-src attribute to generate the blurry image
@@ -1309,7 +1310,7 @@ $(document).ready(async function() {
                 <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass}">
                     <img src="${thumbnail || '/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
                     <div class="ms-3 position-relative">
-                        <div class="ps-0 text-start assistant-image-box ${!subscriptionStatus ? 'isBlurred' : '' }" data-id="${imageId}">
+                        <div class="ps-0 text-start assistant-image-box ${!subscriptionStatus && imageNsfw ? 'isBlurred' : '' }" data-id="${imageId}">
                             ${message.outerHTML}
                             ${imageNsfw ? `<div class="nsfw-badge-container badge">NSFW</div>` : ''}
                         </div>

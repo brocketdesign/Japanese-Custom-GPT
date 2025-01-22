@@ -296,7 +296,7 @@ $(document).ready(function() {
             window.chatId = newchatId
             chatId = newchatId
             $(document).on('click','#redirectToChat', function() {
-                if($('#chatContainer').length){
+                if(!$('#chatContainer').length){
                     window.location.href = `/chat/${newchatId}`;
                     return
                 }

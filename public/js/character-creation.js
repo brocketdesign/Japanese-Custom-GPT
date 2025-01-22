@@ -295,7 +295,14 @@ $(document).ready(function() {
         if(newchatId){
             window.chatId = newchatId
             chatId = newchatId
-            $('#redirectToChat').attr('href', `/chat/${newchatId}`)
+            $(document).on('click','#redirectToChat', function() {
+                if($('#chatContainer').length){
+                    window.location.href = `/chat/${newchatId}`;
+                    return
+                }
+                closeAllModals();
+                fetchchatData(chatId,userId);
+            });
         }
         const prompt = characterPrompt = $('#characterPrompt').val().trim();
         const gender = $('#gender').val();

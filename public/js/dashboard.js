@@ -2327,7 +2327,7 @@ const modalStatus = {
 };
 
 // Function to close any opened modal
-function closeAllModals() {
+window.closeAllModals = function() {
     const modals = ['settingsModal', 'characterCreationModal', 'planUpgradeModal', 'characterModal', 'loginModal'];
     modals.forEach(modalId => {
         const modalElement = document.getElementById(modalId);
@@ -2394,10 +2394,14 @@ function loadCharacterCreationPage(chatId) {
         url: redirectUrl,
         method: 'GET',
         success: function(data) {
-            if (!data) {
-                loadPlanPage();
-                return;
-            }
+            $('#characterCreationModal').one('shown.bs.modal', () => {
+                if (!data) {
+                    characterCreationModal.hide();
+                    modalStatus.isCharacterCreationLoading = false;
+                    loadPlanPage();
+                    return
+                }
+            });
             $('#character-creation-container').html(data);
 
             const link = document.createElement('link');

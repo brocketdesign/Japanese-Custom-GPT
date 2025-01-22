@@ -226,7 +226,6 @@ function getAmount(currency, billingCycle,month_count, lang) {
       const month_count = billingCycle.split('-')[0];
       const currency = getCurrency(request.lang)
       const amount = getAmount(currency, billingCycle, month_count, request.lang);
-      console.log({currency, amount, billingCycle})
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'], // Accept card payments
         mode: 'subscription', // Subscription mode

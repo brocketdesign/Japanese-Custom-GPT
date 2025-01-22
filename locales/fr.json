@@ -4,7 +4,10 @@
   "discount": "70% off",
   "new_user_discount": "💎 70% de réduction pour les nouveaux utilisateurs",
   "plan_page" :{
-    "subscription": "Abonnement"
+    "subscription": "Abonnement",
+    "choose_your_plan": "Choisissez votre plan",
+    "choose_your_plan_description": "100% anonyme. Vous pouvez annuler à tout moment.",
+    "features": "Avantages Premium"
   },
   "landing_page": {
     "main_heading": "Créez les hentai de la meilleure qualité. Gratuitement.",

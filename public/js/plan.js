@@ -85,7 +85,7 @@ function renderPlans(plans) {
         </div>
         <div class="mt-2">
           <h2 class="fw-bold">${plan.price}<span class="text-muted" style="font-size:11px;">${translations.monthly}</span></h2>
-          <small class="text-decoration-line-through">Was ${plan.originalPrice}${translations.monthly}</small>
+          <small class="text-decoration-line-through">${plan.originalPrice}${translations.monthly}</small>
         </div>
       </div>
     `;

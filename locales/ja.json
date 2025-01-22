@@ -4,8 +4,11 @@
   "discount": "70%オフ",
   "new_user_discount": "💎 新規ユーザーに70%割引",
   "plan_page" :{
-    "subscription": "サブスクリプション"
-  },
+      "subscription": "サブスクリプション",
+      "choose_your_plan": "プランを選択",
+      "choose_your_plan_description": "100%匿名。いつでもキャンセルできます。",
+      "features": "プレミアムの利点"
+    },
   "landing_page": {
     "main_heading": "最高品質のエロアニメを無料で作成。",
     "sub_heading": "美しいAIキャラクターとチャットしながら、無料でAI画像生成を楽しもう。",

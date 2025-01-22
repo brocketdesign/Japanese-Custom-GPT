@@ -154,6 +154,7 @@ function getBillingCycle(preference) {
 
 // Function to get the amount based on currency and billing cycle
 function getAmount(currency, billingCycle,month_count, lang) {
+  console.log('currency:', currency);
   const plan = plans[lang].find(plan => plan.id === billingCycle);
   if (!plan) {
       throw new Error(`Plan with ID ${billingCycle} not found.`);
@@ -163,8 +164,8 @@ function getAmount(currency, billingCycle,month_count, lang) {
   const price = parseFloat(plan.price.replace(',', '.'));
 
   // Multiply by 100 for currencies like USD/EUR or leave as-is for JPY
-  if (currency === 'JPY') {
-      return Math.round(price); // JPY does not use smaller units
+  if (currency === 'jpy') {
+      return Math.round(price * month_count); // JPY does not use smaller units
   }
   return Math.round(price * 100 * month_count); // Other currencies (e.g., USD, EUR)
 }
@@ -192,35 +193,6 @@ function getAmount(currency, billingCycle,month_count, lang) {
       // Extract planId and billingCycle from the request body
       const { billingCycle } = request.body;
 
-      const planPriceId = process.env.MODE === 'local'
-        ? (billingCycle === 'yearly' ? process.env.STRIPE_PREMIUM_YEARLY_TEST : process.env.STRIPE_PREMIUM_MONTLY_TEST)
-        : (billingCycle === 'yearly' ? process.env.STRIPE_PREMIUM_YEARLY : process.env.STRIPE_PREMIUM_MONTLY);
-      const productId = process.env.MODE === 'local'
-        ? process.env.STRIPE_PRODUCT_ID_TEST : process.env.STRIPE_PRODUCT_ID;
-
-      // Check if the user already has an active subscription for this plan
-      let existingSubscription = await fastify.mongo.db.collection('subscriptions').findOne({
-        _id: new fastify.mongo.ObjectId(userId),
-        currentPlanId: planPriceId,
-        subscriptionStatus: 'active',
-      });
-      if (existingSubscription) {
-        return reply.status(400).send({ error: 'You already have an active subscription for this plan.' });
-      }
-      existingSubscription = await fastify.mongo.db.collection('subscriptions').findOne({
-        _id: new fastify.mongo.ObjectId(userId),
-        subscriptionStatus: 'active', 
-      });
-      if(existingSubscription && existingSubscription.currentPlanId != planPriceId ){
-        console.log(`change plan to ${planId} ${billingCycle}`)
-        return reply.send({
-          action: 'upgrade',
-          newPlanId: planId,
-          billingCycle,
-          method: 'POST',
-          url: '/plan/upgrade',
-        });
-      }
       // Create a Stripe Checkout session
       const billing = getBillingCycle(billingCycle);
       const month_count = billingCycle.split('-')[0];

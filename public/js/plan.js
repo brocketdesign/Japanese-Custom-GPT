@@ -62,7 +62,6 @@ $(document).ready(function() {
       url: `/plan/list?lang=${lang}`,//?update=true
       dataType: 'json',
       success: function({plans,features}) {
-        console.log('features:', features);
         renderPlans(plans);
         renderFeaturesList(features);
       },

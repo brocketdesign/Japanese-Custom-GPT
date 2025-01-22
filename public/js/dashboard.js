@@ -27,7 +27,7 @@ function getLanguageDisplayName(lang) {
 }
 
 $(document).ready(function() {
-    $('.language-select').on('click', function(e) {
+    $(document).on('click','.language-select', function(e) {
         e.preventDefault();
         const selectedLang = $(this).data('lang');
         if (selectedLang !== lang) {

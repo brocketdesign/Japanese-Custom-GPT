@@ -211,7 +211,16 @@ async function deleteOldTasks(db) {
     console.error('Error deleting old tasks:', error);
   }
 }
-  
+// Delete all tasks
+async function deleteAllTasks(db) {
+  try {
+    const tasksCollection = db.collection('tasks');
+    const result = await tasksCollection.deleteMany({});
+    console.log(`Deleted ${result.deletedCount} tasks.`);
+  } catch (error) {
+    console.error('Error deleting tasks:', error);
+  }
+} 
 async function checkTaskStatus(taskId, fastify) {
   const db = fastify.mongo.db;
   const tasksCollection = db.collection('tasks');
@@ -481,5 +490,6 @@ async function checkImageDescription(db, chatId) {
     getPromptById,
     checkImageDescription,
     getTasks,
-    deleteOldTasks
+    deleteOldTasks,
+    deleteAllTasks
   };

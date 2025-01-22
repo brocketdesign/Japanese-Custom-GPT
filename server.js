@@ -14,7 +14,7 @@ const {
   deleteTemporaryChats,
 } = require('./models/cleanupNonRegisteredUsers');
 const { checkUserAdmin, getUserData, updateCounter, fetchTags } = require('./models/tool');
-const { deleteOldTasks } = require('./models/imagen');
+const { deleteOldTasks, deleteAllTasks } = require('./models/imagen');
 
 fastify.register(require('@fastify/mongodb'), {
   forceClose: true,
@@ -27,6 +27,10 @@ fastify.register(require('@fastify/mongodb'), {
   }
 });
 
+// Wait for the database connection to be established then delete all tasks
+fastify.ready(() => {
+  deleteAllTasks(fastify.mongo.db);
+});
 
 cron.schedule('0 0 * * *', async () => {
   const db = fastify.mongo.db; // Access the database object after plugin registration
@@ -87,7 +91,6 @@ fastify.register(fastifyMultipart, {
 });
 
 fastify.register(translationsPlugin);
-
 
 const websocketPlugin = require('@fastify/websocket');
 fastify.register(websocketPlugin);

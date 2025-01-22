@@ -174,18 +174,17 @@ $(document).ready(function() {
 
   // Display user plan
   $.get('/user/plan/'+user._id,function(data){
-    let message = `${translations.no_subscription} <a href="/my-plan">${translations.select_plan_here}</a>`
+    let message = `${translations.no_subscription}<br> <button class="btn custom-gradient-bg" onclick="loadPlanPage()">${translations.select_plan_here}</button>`
     if(!data.plan){
       $('#user-plan').html(message).show()
       return
     }
     const billingCycle = data.plan.billingCycle
     const currentPlanId = data.plan.currentPlanId
-    $.get('/plan/list',function(data){
-      const plans = data.plans
+    $.get('/plan/list',function({plans,features}){
       const plan = plans.find((plan) => plan[`${billingCycle}_id`] === currentPlanId);
       if(plan){
-        message = `現在のプランは : <span class="fw-bold">${plan.name}</span>`
+        message = `<span class="fw-bold">${plan.name}</span>`
         $('#cancel-plan').show()
       }
       $('#user-plan').html(message).show()

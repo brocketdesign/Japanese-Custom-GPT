@@ -1,3 +1,98 @@
+<!-- Plan Upgrade Modal #plan-container-->
+<div class="modal fade" id="planUpgradeModal" tabindex="-1" aria-labelledby="planUpgradeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable mx-0">
+        <div class="modal-content mx-auto">
+            <div class="modal-header">
+                <h5 class="modal-title" id="planUpgradeModalLabel">{{translations.plan_page.subscription}}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body m-0 p-0 position-relative">
+                <div id="plan-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="sticky-bottom pt-0 pb-3 text-center onchat-off" style="bottom:0;left:0;right:0;">
+  <button onclick="loadPlanPage()" class="btn d-flex justify-content-center align-items-center rounded-pill fw-bold custom-gradient-bg gap-2 px-2 py-1.5 text-sm text-white bg-white mx-auto" style="border: 1px solid #000;">
+    <div>
+      {{translations.premium}}
+      <span class="text-rose-400 text-sm  text-danger">{{translations.discount}}</span>
+    </div>
+  </button>
+</div>
+<footer class="l-footer p-footer bg-dark text-light text-center onchat-off">
+  <div class="bg-dark py-5">
+    <div class="row mb-4 mx-0">
+      <div class="col-12">
+        <div class="social-section" style="background-color: #343a40; padding: 20px; border-radius: 5px;">
+          <p class="text-light mb-2">{{translations.contactUs}}</p>
+          <div class="d-flex justify-content-center">
+            <a href="https://x.com/Lamix253843" target="_blank" class="btn btn-light rounded-circle mx-2 twitter-link">
+              <i class="bi bi-twitter"></i>
+            </a>
+            <a href="https://www.instagram.com/aichat_lamix/" target="_blank" class="btn btn-light rounded-circle mx-2">
+              <i class="bi bi-instagram"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row mx-0">
+      <div class="col-12">
+        <nav class="navbar navbar-expand-lg navbar-dark shadow-0">
+          <div class="container-fluid">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-center" id="navbarContent">
+              <ul class="navbar-nav d-flex flex-wrap border">
+                <li class="nav-item m-1 d-none">
+                  <a class="nav-link text-light" href="/about" target="_blank">{{translations.aboutService}}</a>
+                </li>
+                <li class="nav-item m-1 d-none">
+                  <span class="text-light mx-2">|</span>
+                </li>
+                <li class="nav-item m-1">
+                  <a class="nav-link text-light" href="https:/blog.chatlamix.com/usage-policy/" target="_blank">{{translations.termsOfUse}}</a>
+                </li>
+                <li class="nav-item m-1">
+                  <span class="text-light mx-2">|</span>
+                </li>
+                <li class="nav-item m-1">
+                  <a class="nav-link text-light" href="https://blog.chatlamix.com/privacy-policy/" target="_blank">{{translations.privacyPolicy}}</a>
+                </li>
+                <li class="nav-item m-1">
+                  <span class="text-light mx-2">|</span>
+                </li>
+                <li class="nav-item m-1">
+                  <a class="nav-link text-light" href="https://blog.chatlamix.com/%e3%83%96%e3%83%ad%e3%82%b0/" target="_blank">{{translations.blog}}</a>
+                </li>
+                <li class="nav-item m-1">
+                  <span class="text-light mx-2">|</span>
+                </li>
+                <li class="nav-item m-1">
+                  <a class="nav-link text-light" href="/character" target="_blank">{{translations.characters}}</a>
+                </li>
+                <li class="nav-item m-1">
+                  <span class="text-light mx-2">|</span>
+                </li>
+                <li class="nav-item m-1">
+                  <a class="nav-link text-light" href="/search" target="_blank">{{translations.search}}</a>
+                </li>
+                <li class="nav-item m-1">
+                  <span class="text-light mx-2">|</span>
+                </li>
+                <li class="nav-item m-1">
+                  <a class="nav-link text-light" href="/tags" target="_blank">{{translations.tags}}</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </nav>
+      </div>
+    </div>
+  </div>
+</footer>
 <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -441,86 +536,4 @@ $(document).ready(function(){
 
 })
 </script>
-    <div class="sticky-bottom pt-0 pb-3 text-center onchat-off" style="bottom:0;left:0;right:0;">
-        <button onclick="loadPlanPage()" 
-        class="btn d-flex justify-content-center align-items-center rounded-pill fw-bold custom-gradient-bg gap-2 px-2 py-1.5 text-sm text-white bg-white mx-auto"
-        style="border: 1px solid #000;">
-            <div>
-            {{translations.premium}} <span class="text-rose-400 text-sm  text-danger">{{translations.discount}}</span>
-            </div>
-        </button>
-    </div>
-  <footer class="l-footer p-footer bg-dark text-light text-center onchat-off">
-  <div class="bg-dark py-5">
-    <div class="row mb-4 mx-0">
-      <div class="col-12">
-        <div class="social-section" style="background-color: #343a40; padding: 20px; border-radius: 5px;">
-          <p class="text-light mb-2">{{translations.contactUs}}</p>
-          <div class="d-flex justify-content-center">
-            <a href="https://x.com/Lamix253843" target="_blank" class="btn btn-light rounded-circle mx-2 twitter-link">
-              <i class="bi bi-twitter"></i>
-            </a>
-            <a href="https://www.instagram.com/aichat_lamix/" target="_blank" class="btn btn-light rounded-circle mx-2">
-              <i class="bi bi-instagram"></i>
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="row mx-0">
-      <div class="col-12">
-        <nav class="navbar navbar-expand-lg navbar-dark shadow-0">
-  <div class="container-fluid">
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse justify-content-center" id="navbarContent">
-      <ul class="navbar-nav d-flex flex-wrap border">
-        <li class="nav-item m-1 d-none">
-          <a class="nav-link text-light" href="/about" target="_blank">{{translations.aboutService}}</a>
-        </li>
-        <li class="nav-item m-1 d-none">
-          <span class="text-light mx-2">|</span>
-        </li>
-        <li class="nav-item m-1">
-          <a class="nav-link text-light" href="https:/blog.chatlamix.com/usage-policy/" target="_blank">{{translations.termsOfUse}}</a>
-        </li>
-        <li class="nav-item m-1">
-          <span class="text-light mx-2">|</span>
-        </li>
-        <li class="nav-item m-1">
-          <a class="nav-link text-light" href="https://blog.chatlamix.com/privacy-policy/" target="_blank">{{translations.privacyPolicy}}</a>
-        </li>
-        <li class="nav-item m-1">
-          <span class="text-light mx-2">|</span>
-        </li>
-        <li class="nav-item m-1">
-          <a class="nav-link text-light" href="https://blog.chatlamix.com/%e3%83%96%e3%83%ad%e3%82%b0/" target="_blank">{{translations.blog}}</a>
-        </li>
-        <li class="nav-item m-1">
-          <span class="text-light mx-2">|</span>
-        </li>
-        <li class="nav-item m-1">
-          <a class="nav-link text-light" href="/character" target="_blank">{{translations.characters}}</a>
-        </li>
-        <li class="nav-item m-1">
-          <span class="text-light mx-2">|</span>
-        </li>
-        <li class="nav-item m-1">
-          <a class="nav-link text-light" href="/search" target="_blank">{{translations.search}}</a>
-        </li>
-        <li class="nav-item m-1">
-          <span class="text-light mx-2">|</span>
-        </li>
-        <li class="nav-item m-1">
-          <a class="nav-link text-light" href="/tags" target="_blank">{{translations.tags}}</a>
-        </li>
-      </ul>
-    </div>
-  </div>
-</nav>
-
-      </div>
-    </div>
-  </div>
-</footer>
+    

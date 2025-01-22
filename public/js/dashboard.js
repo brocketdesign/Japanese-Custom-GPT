@@ -2348,7 +2348,7 @@ function loadSettingsPage() {
     closeAllModals();
 
     const settingsModal = new bootstrap.Modal(document.getElementById('settingsModal'));
-    $('#settings-container').html('<div class="position-absolute" style="inset:0;"><div class="spinner-border" role="status"></div></div>');
+    $('#settings-container').html('<div class="position-absolute d-flex justify-content-center align-items-center" style="inset:0;"><div class="spinner-border" role="status"></div></div>');
     settingsModal.show();
 
     $.ajax({
@@ -2382,7 +2382,7 @@ function loadCharacterCreationPage(chatId) {
     closeAllModals();
 
     const characterCreationModal = new bootstrap.Modal(document.getElementById('characterCreationModal'));
-    $('#character-creation-container').html('<div class="position-absolute" style="inset:0;"><div class="spinner-border" role="status"></div></div>');
+    $('#character-creation-container').html('<div class="position-absolute d-flex justify-content-center align-items-center" style="inset:0;"><div class="spinner-border" role="status"></div></div>');
     characterCreationModal.show();
 
     let redirectUrl = '/chat/edit/';
@@ -2439,7 +2439,7 @@ function loadPlanPage() {
     closeAllModals();
 
     const planModal = new bootstrap.Modal(document.getElementById('planUpgradeModal'));
-    $('#plan-container').html('<div class="position-absolute" style="inset:0;"><div class="spinner-border" role="status"></div></div>');
+    $('#plan-container').html('<div class="position-absolute d-flex justify-content-center align-items-center" style="inset:0;"><div class="spinner-border" role="status"></div></div>');
     planModal.show();
 
     $.ajax({
@@ -2480,7 +2480,7 @@ function openCharacterModal(modalChatId) {
     closeAllModals();
 
     const characterModal = new bootstrap.Modal(document.getElementById('characterModal'));
-    $('#character-modal-container').html('<div class="position-absolute" style="inset:0;"><div class="spinner-border" role="status"></div></div>');
+    $('#character-modal-container').html('<div class="position-absolute d-flex justify-content-center align-items-center" style="inset:0;"><div class="spinner-border" role="status"></div></div>');
     characterModal.show();
 
     const url = `/character/${modalChatId}?modal=true`;
@@ -2511,7 +2511,7 @@ function openLoginForm(withMail = false) {
     closeAllModals();
 
     const loginModalElement = document.getElementById('loginModal');
-    $('#login-container').html('<div class="position-absolute" style="inset:0;"><div class="spinner-border" role="status"></div></div>');
+    $('#login-container').html('<div class="position-absolute d-flex justify-content-center align-items-center" style="inset:0;"><div class="spinner-border" role="status"></div></div>');
     const loginModal = new bootstrap.Modal(loginModalElement);
     loginModal.show();
 

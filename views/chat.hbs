@@ -499,7 +499,12 @@ $(document).ready(function() {
                 });
             });
     });
+    
     $(document).on('click', '.assistant-image-box', function(e) {
+        if($(this).hasClass('isBlurred')){
+            loadPlanPage();
+           return
+        }
         e.preventDefault();
         e.stopPropagation();
 

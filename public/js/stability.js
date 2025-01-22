@@ -107,18 +107,18 @@ window.displayOrRemoveImageLoader = function (imageId, action) {
 
 const sentImageIds = new Set();
 window.generateImage = async function(data) {
-  if (!data || !data.userChatId || !data.url || !data.id || !data.prompt || sentImageIds.has(data.id)) return;
+    if (!data || !data.userChatId || !data.url || !data.id || !data.prompt || sentImageIds.has(data.id)) return;
 
-  const { url: imageUrl, id: imageId, nsfw: imageNsfw, prompt: imagePrompt } = data;
-  sentImageIds.add(imageId);
+    const { url: imageUrl, id: imageId, nsfw: imageNsfw, prompt: imagePrompt } = data;
+    sentImageIds.add(imageId);
 
-  const img = document.createElement('img');
-  img.setAttribute('src', imageUrl);
-  img.setAttribute('alt', data.title[lang]);
-  img.setAttribute('data-prompt', imagePrompt);
-  img.setAttribute('class', 'm-auto');
-  img.setAttribute('data-id', imageId);
-  img.setAttribute('data-nsfw', imageNsfw);
+    const img = document.createElement('img');
+    img.setAttribute('src', imageUrl);
+    img.setAttribute('alt', data.title[lang]);
+    img.setAttribute('data-prompt', imagePrompt);
+    img.setAttribute('class', 'm-auto');
+    img.setAttribute('data-id', imageId);
+    img.setAttribute('data-nsfw', imageNsfw);
 
-  displayMessage('bot-image', img, data.userChatId);
+    displayMessage('bot-image', img, data.userChatId);
 };

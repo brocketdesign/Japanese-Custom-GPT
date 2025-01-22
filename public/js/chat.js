@@ -826,7 +826,7 @@ $(document).ready(async function() {
     }
     function getImageUrlById(imageId, designStep, thumbnail) {
         const placeholderImageUrl = '/img/placeholder-image-2.gif'; // Placeholder image URL
-    
+
         // Return immediately with placeholder and update asynchronously
         return new Promise((resolve) => {
             const placeholderHtml = `
@@ -849,10 +849,15 @@ $(document).ready(async function() {
                 method: 'GET',
                 success: function(response) {
                     if (response.imageUrl) {
-
-                        displayImageThumb(response.imageUrl)
+                        
                         // Update the placeholder image
-                        $(`#image-${imageId}`).attr('src', response.imageUrl).fadeIn();
+                        if(!subscriptionStatus){
+                            $(`#image-${imageId}`).attr('data-src', response.imageUrl).addClass('img-blur').fadeIn();
+                            blurImage($(`#image-${imageId}`));
+                        }else{
+                            displayImageThumb(response.imageUrl)
+                            $(`#image-${imageId}`).attr('src', response.imageUrl).fadeIn();
+                        }
                         // Update the alt text
                         const title = response?.title?.[lang]?.trim() || '';
                         $(`#image-${imageId}`).attr('alt', title).fadeIn();
@@ -873,6 +878,10 @@ $(document).ready(async function() {
                                 </span>
                             </div>`;
                             $(`#image-${imageId}`).closest('.assistant-image-box').append(blurBadgeHtml);
+                        }
+                        // Add blur effect if not subscribed
+                        if(!subscriptionStatus){
+                            $(`#image-${imageId}`).closest('.assistant-image-box').addClass('isBlurred');
                         }
                     } else {
                         console.error('No image URL returned');
@@ -1287,12 +1296,20 @@ $(document).ready(async function() {
             const title = message.getAttribute('alt');
             const prompt = message.getAttribute('data-prompt');
             const imageUrl = message.getAttribute('src');
+            if(!subscriptionStatus){
+                // Remove src attribute to prevent loading the image
+                message.removeAttribute('src');
+                // Set data-src attribute to generate the blurry image
+                message.setAttribute('data-src', imageUrl);
+                // add class img-blur
+                message.classList.add('img-blur');
+            }
             
             messageElement = $(`
                 <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass}">
                     <img src="${thumbnail || '/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
                     <div class="ms-3 position-relative">
-                        <div class="ps-0 text-start assistant-image-box" data-id="${imageId}">
+                        <div class="ps-0 text-start assistant-image-box ${!subscriptionStatus ? 'isBlurred' : '' }" data-id="${imageId}">
                             ${message.outerHTML}
                             ${imageNsfw ? `<div class="nsfw-badge-container badge">NSFW</div>` : ''}
                         </div>
@@ -1302,7 +1319,12 @@ $(document).ready(async function() {
             `).hide();
             messageContainer.append(messageElement);
             messageElement.addClass(animationClass).fadeIn();
-            displayImageThumb(imageUrl)
+            if(!subscriptionStatus){
+                const image = messageElement.find('img[data-id="'+imageId+'"]');
+                blurImage(image)
+            }else{
+                displayImageThumb(imageUrl)
+            }
         } 
 
         else if (messageClass.startsWith('new-image-') && message instanceof HTMLElement) {

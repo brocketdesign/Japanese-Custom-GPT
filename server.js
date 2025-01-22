@@ -171,24 +171,10 @@ fastify.get('/', async (request, reply) => {
 fastify.get('/authenticate', async (request, reply) => {
   const user = request.user;
   const translations = request.translations;
+  const withMail = request.query.withMail;
+  const template = withMail ? 'authenticate-v1.hbs' : 'authenticate.hbs';
   if (user.isTemporary || request.query.register) {
-    return reply.renderWithGtm('authenticate.hbs', {
-      title: 'AIフレンズ',
-      translations,
-      mode: process.env.MODE,
-      apiurl: process.env.API_URL,
-      register: !!request.query.register,
-    });
-  } else {
-    return reply.redirect('/dashboard');
-  }
-});
-
-fastify.get('/authenticate/mail', async (request, reply) => {
-  const user = request.user;
-  const translations = request.translations;
-  if (user.isTemporary || request.query.register) {
-    return reply.renderWithGtm('authenticate-v1.hbs', {
+    return reply.renderWithGtm(template, {
       title: 'AIフレンズ',
       translations,
       mode: process.env.MODE,

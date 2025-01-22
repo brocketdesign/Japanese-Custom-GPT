@@ -2418,3 +2418,25 @@ function openCharacterModal(modalChatId) {
         }
     });
 }
+
+// Open authenticate page in a modal
+function openLoginForm(withMail = false) {
+    const url = withMail == 'true' ? '/authenticate?withMail=true' : '/authenticate';
+    $.ajax({
+        url: url,
+        method: 'GET',
+        success: function(data) {
+            const loginModalElement = document.getElementById('loginModal');
+            if (loginModalElement && $(loginModalElement).hasClass('show')) {
+                $('#login-container').html(data);
+            } else {
+                $('#login-container').html(data);
+                const loginModal = new bootstrap.Modal(loginModalElement);
+                loginModal.show();
+            }
+        },
+        error: function(err) {
+            console.error('Failed to open login modal', err);
+        }
+    });
+}

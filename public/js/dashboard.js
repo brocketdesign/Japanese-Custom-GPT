@@ -2318,104 +2318,123 @@ window.updateCountdown = function(endTime, interval) {
     );
 }
 // Function to load settings page & execute script settings.js & open #settingsModal
+let isSettingsLoading = false;
 function loadSettingsPage() {
+    if (isSettingsLoading) return;
+    isSettingsLoading = true;
+
+    const settingsModal = new bootstrap.Modal(document.getElementById('settingsModal'));
+    $('#settings-container').html('<div class="spinner-border" role="status"></div>');
+    settingsModal.show();
+
     $.ajax({
         url: '/settings',
         method: 'GET',
         success: function(data) {
             $('#settings-container').html(data);
-            // Load settings.js script
             const script = document.createElement('script');
             script.src = '/js/settings.js';
             script.onload = function() {
-                // Open the Bootstrap 5 modal
-                const settingsModal = new bootstrap.Modal(document.getElementById('settingsModal'));
-                settingsModal.show();
+                isSettingsLoading = false;
             };
             script.onerror = function() {
                 console.error('Failed to load settings.js script.');
+                isSettingsLoading = false;
             };
             document.body.appendChild(script);
         },
         error: function(err) {
             console.error('Failed to load settings page', err);
+            isSettingsLoading = false;
         }
     });
 }
 
-// Function to load charater creation page & execute scripts  & open #settingsModal
+// Function to load character creation page & execute scripts & open #characterCreationModal
+let isCharacterCreationLoading = false;
 function loadCharacterCreationPage(chatId) {
-    let redirectUrl = '/chat/edit/'
-    if(chatId){
-        redirectUrl += chatId
+    if (isCharacterCreationLoading) return;
+    isCharacterCreationLoading = true;
+
+    const characterCreationModal = new bootstrap.Modal(document.getElementById('characterCreationModal'));
+    $('#character-creation-container').html('<div class="spinner-border" role="status"></div>');
+    characterCreationModal.show();
+
+    let redirectUrl = '/chat/edit/';
+    if (chatId) {
+        redirectUrl += chatId;
     }
+
     $.ajax({
-        url: redirectUrl, 
+        url: redirectUrl,
         method: 'GET',
         success: function(data) {
-            if(!data){
+            if (!data) {
                 loadPlanPage();
-                return
+                return;
             }
             $('#character-creation-container').html(data);
-            // Load image-uploader.css
+
             const link = document.createElement('link');
             link.rel = 'stylesheet';
             link.href = '/css/image-uploader.css';
             document.head.appendChild(link);
 
-            // Load image-uploader.js script
             const imageUploaderScript = document.createElement('script');
             imageUploaderScript.src = '/js/image-uploader.js';
             document.body.appendChild(imageUploaderScript);
 
-            // Load stability.js script
             const stabilityScript = document.createElement('script');
             stabilityScript.src = '/js/stability.js';
             document.body.appendChild(stabilityScript);
 
-            // Load character-creation.js script
             const script = document.createElement('script');
             script.src = '/js/character-creation.js';
             script.onload = function() {
-                // Open the Bootstrap 5 modal
-                const characterCreationModal = new bootstrap.Modal(document.getElementById('characterCreationModal'));
-                characterCreationModal.show();
+                isCharacterCreationLoading = false;
             };
             script.onerror = function() {
                 console.error('Failed to load character-creation.js script.');
+                isCharacterCreationLoading = false;
             };
             document.body.appendChild(script);
         },
         error: function(err) {
             console.error('Failed to load character creation page', err);
+            isCharacterCreationLoading = false;
         }
     });
 }
 
 // Load the plan page and open the modal
+let isPlanLoading = false;
 function loadPlanPage() {
+    if (isPlanLoading) return;
+    isPlanLoading = true;
+
+    const planModal = new bootstrap.Modal(document.getElementById('planUpgradeModal'));
+    $('#plan-container').html('<div class="spinner-border" role="status"></div>');
+    planModal.show();
+
     $.ajax({
         url: '/my-plan',
         method: 'GET',
         success: function(data) {
-            console.log('Loaded plan page Success');
             $('#plan-container').html(data);
-            // Load plan.js script
             const script = document.createElement('script');
             script.src = '/js/plan.js';
             script.onload = function() {
-                // Open the Bootstrap 5 modal
-                const planModal = new bootstrap.Modal(document.getElementById('planUpgradeModal'));
-                planModal.show();
+                isPlanLoading = false;
             };
             script.onerror = function() {
                 console.error('Failed to load plan.js script.');
+                isPlanLoading = false;
             };
             document.body.appendChild(script);
         },
         error: function(err) {
             console.error('Failed to load plan page', err);
+            isPlanLoading = false;
         }
     });
 }
@@ -2427,46 +2446,58 @@ function redirectToChatPage() {
     }
 }
 
-// Open /character/:ig?modal=true to show the character modal
+// Open /character/:id?modal=true to show the character modal
+let isCharacterModalLoading = false;
 function openCharacterModal(modalChatId) {
+    if (isCharacterModalLoading) return;
+    isCharacterModalLoading = true;
+
+    const characterModal = new bootstrap.Modal(document.getElementById('characterModal'));
+    $('#character-modal-container').html('<div class="spinner-border" role="status"></div>');
+    characterModal.show();
+
     const url = `/character/${modalChatId}?modal=true`;
     $.ajax({
         url: url,
         method: 'GET',
         success: function(data) {
             $('#character-modal-container').html(data);
-            const characterModal = new bootstrap.Modal(document.getElementById('characterModal'));
             $(document).ready(function () {
-                if(modalChatId){
+                if (modalChatId) {
                     loadChatImages(modalChatId, 1);
                 }
             });
-            characterModal.show();
+            isCharacterModalLoading = false;
         },
         error: function(err) {
             console.error('Failed to open character modal', err);
+            isCharacterModalLoading = false;
         }
     });
 }
 
 // Open authenticate page in a modal
+let isLoginLoading = false;
 function openLoginForm(withMail = false) {
+    if (isLoginLoading) return;
+    isLoginLoading = true;
+
+    const loginModalElement = document.getElementById('loginModal');
+    $('#login-container').html('<div class="spinner-border" role="status"></div>');
+    const loginModal = new bootstrap.Modal(loginModalElement);
+    loginModal.show();
+
     const url = withMail == 'true' ? '/authenticate?withMail=true' : '/authenticate';
     $.ajax({
         url: url,
         method: 'GET',
         success: function(data) {
-            const loginModalElement = document.getElementById('loginModal');
-            if (loginModalElement && $(loginModalElement).hasClass('show')) {
-                $('#login-container').html(data);
-            } else {
-                $('#login-container').html(data);
-                const loginModal = new bootstrap.Modal(loginModalElement);
-                loginModal.show();
-            }
+            $('#login-container').html(data);
+            isLoginLoading = false;
         },
         error: function(err) {
             console.error('Failed to open login modal', err);
+            isLoginLoading = false;
         }
     });
 }

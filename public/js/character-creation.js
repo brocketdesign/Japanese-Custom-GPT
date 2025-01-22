@@ -409,6 +409,7 @@ $(document).ready(function() {
             $('.genexp').fadeIn()
 
             const imageType = moderationResult.flagged ? 'nsfw' : 'sfw';
+
             txt2ImageNovita(userId, chatId, null, { prompt:enhanceResponse.enhancedPrompt, imageType, chatCreation: true})
             .catch((error) => {
                 console.error('Error generating image:', error);
@@ -436,15 +437,17 @@ $(document).ready(function() {
 
         async function generateCharacterPersonnality(callback) {
             const personalityDetails = returnCharacterPersonalityDetails();        
-            let name = $('#chatName').val()
-            let prompt = $('#chatPurpose').val().trim() || $('#characterPrompt').val().trim();
-            let gender = $('#gender').val()
-
-            if(prompt.length == 0){
+            let name = $('#chatName').val();
+            let purpose = $('#chatPurpose').val().trim() !== '' ? $('#chatPurpose').val().trim() : $('#characterPrompt').val().trim();   
+            let prompt = $('#characterPrompt').val().trim();
+            let gender = $('#gender').val();
+            
+            if(purpose.length == 0){
                 return
             } 
             let customData = {
                 prompt,
+                purpose,
                 name,
                 gender,
                 chatId,

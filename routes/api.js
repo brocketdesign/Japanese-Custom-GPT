@@ -191,9 +191,9 @@ async function routes(fastify, options) {
     fastify.post('/api/openai-chat-creation', async (request, reply) => {
         try {
             // Validate request body
-            const { chatId, name, prompt, gender, details_personality } = request.body;
+            const { chatId, name, purpose, prompt, gender, details_personality } = request.body;
 
-            if (!chatId || !prompt || !gender) {
+            if (!chatId || !purpose || !gender) {
                 return reply.status(400).send({ error: 'Invalid request body. "prompt" and "gender" are required.' });
             }
 
@@ -206,7 +206,7 @@ async function routes(fastify, options) {
             const userId = user._id;
             const language = request.lang
             // Prepare payload
-            const systemPayload = createSystemPayloadChatRule(prompt, gender, name, details_personality, language);
+            const systemPayload = createSystemPayloadChatRule(purpose, gender, name, details_personality, language);
 
             // Interact with OpenAI API
             const openai = new OpenAI();

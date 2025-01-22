@@ -22,7 +22,12 @@ body {
 .isAdmin{
   display: none;
 }
-
+.cursor-pointer{
+  cursor: pointer;
+}
+.bg-gradient-danger{
+  background: linear-gradient(90.9deg, #F9B8FF 2.74%, #FF4040 102.92%);
+}
 .text-muted {
   color: #aeb0b4 !important;
 }
@@ -428,7 +433,6 @@ input:not(:checked) ~.label.monthly  {
 .plan-card {
     border: 1px solid #e0e0e0;
     border-radius: 8px;
-    background-color: #fff;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     transition: box-shadow 0.3s ease;

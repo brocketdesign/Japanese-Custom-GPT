@@ -1,7 +1,4 @@
 
-document.addEventListener("DOMContentLoaded", function() {
-    //document.getElementById("plan-switch").checked = true; 
-});
 $(document).ready(function () {
 
   const messages = {
@@ -57,21 +54,17 @@ $(document).ready(function() {
   }else{
     stripe = Stripe('pk_test_51PjtRbE5sP7DA1XvD68v7X7Qj7pG6ZJpQmvuNodJjxc7MbH1ss2Te2gahFAS9nms4pbmEdMYdfCPxFDWHBbu9CxR003ikTnRES'); // Use your publishable key here
   }
+
   // Function to fetch plans from the server
   function fetchPlans() {
     $.ajax({
       type: 'GET',
       url: `/plan/list?lang=${lang}`,//?update=true
       dataType: 'json',
-      success: function(response) {
-        const isYearly = $('#plan-switch').is(':checked');
-        plan = response
-        if (isYearly) {
-            plan.price = plan.yearly;
-        } else {
-            plan.price = plan.monthly;
-        }
-        renderPlans(plan);
+      success: function({plans,features}) {
+        console.log('features:', features);
+        renderPlans(plans);
+        renderFeaturesList(features);
       },
       error: function(xhr, status, error) {
         console.error('Failed to fetch plans:', error);
@@ -79,60 +72,39 @@ $(document).ready(function() {
     });
   }
 
-  // Function to render plans
-  function renderPlans(plan) {
-    
-    const planCardsContainer = $('#planCards');
-        
-        let plan_icon
-            switch (plan.id) {
-            case 'free':
-                plan_icon = `<span class="m-1">&#x1F381;</span>`;
-                break;
-            case 'premium':
-                plan_icon = `<span class="m-1"> &#x1F48E;</span>`;
-                break;
-            case 'special':
-                plan_icon = ` <span class="m-1">&#x1F525;</span>`;
-                break;
-            default:
-                plan_icon = ``;
-            }
-        
-        const isYearly =  $('#plan-switch').is(':checked') ? `yearly` : 'monthly';
-        const planCard = `
-            <div class="plan-card card mb-3 px-1 ${plan.name == '無制限プラン'? 'col-12 col-lg-4':'col-12 col-lg-auto'} ${plan.name == '無制限プラン'? 'best':''}  m-2">
-            <div class="card-header plan-header bg-white">
-                <h2>${plan_icon}${plan.name}${plan_icon}</h2>
-            </div>
-            <div class="card-body px-1">
-                <div class="plan-price">
-                <h3>${plan.price}</h3>
-                </div>
-                <div class="plan-details px-0 pb-0">
-                <ul class="list-group list-group-flush">
-                    ${plan.features.map(feature => `<li class="list-group-item" style="font-size: 16px;">${feature}</li>`).join('')}
-                </ul>
-                </div>
-            </div>
-            <div class="card-footer bg-transparent ${plan.price == '無料'? 'd-none':''}">
-              <div class="py-3">
-                  ${user.isTemporary 
-                      ? `<a href="/authenticate" class="btn btn-lamix custom-gradient-bg border-0">${translations.try_for_free}</a>` 
-                      : `<button class="plan-button btn btn-lamix border-0 subscribe-button" data-billing-cycle="${isYearly}">${translations.start_with_this_plan}</button>`
-                  }
-              </div>
-            </div>
-            </div>
-        `;
-        planCardsContainer.append(planCard);
+// Function to render plans
+function renderPlans(plans) {
+  const planCardsContainer = $('#planCards');
+  planCardsContainer.empty();
+  plans.forEach(plan => {
+    const planCard = `
+      <div class="plan-card mb-3 p-3 text-white cursor-pointer custom-gradient-bg col-12 col-sm-7" style="border-radius: 8px;"  data-plan-id="${plan.id}" data-billing-cycle="${plan.id}">
+        <div class="d-flex justify-content-start align-items-center">
+          <h6 class="mb-0 me-2">${plan.name}</h6>
+          <span class="badge" style="background-color: #FF5E7E;">${plan.discount}</span>
+        </div>
+        <div class="mt-2">
+          <h2 class="fw-bold">${plan.price}<span class="text-muted" style="font-size:11px;">${translations.monthly}</span></h2>
+          <small class="text-decoration-line-through">Was ${plan.originalPrice}${translations.monthly}</small>
+        </div>
+      </div>
+    `;
+    planCardsContainer.append(planCard);
+  });  
+  // Add event listener to plan cards
+  $('.plan-card').on('click', function() {
+    const billingCycle = $(this).data('billing-cycle');
+    createCheckoutSession(billingCycle);
+  });
 
-    // Add event listener to subscribe buttons
-    $('.subscribe-button').on('click', function() {
-      const billingCycle = $(this).data('billing-cycle');
-      createCheckoutSession(billingCycle);
-    });
-  }
+}
+// Show a list of features for the selected plan in #feature-list
+function renderFeaturesList(features){
+  const featuresList = features.map(feature => `<li class="list-group-item">✅ ${feature}</li>`).join('');
+  const featuresListContainer = $('<ul class="features-list list-group text-start col-12 col-sm-7 mx-auto"></ul>');
+  featuresListContainer.append(featuresList);
+  $('#featureList').html(featuresListContainer);
+}
 
 // Function to create a checkout session
 function createCheckoutSession(billingCycle) {

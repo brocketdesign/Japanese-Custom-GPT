@@ -1,5 +1,11 @@
 {
   "lang":"fr",
+  "premium": " 💎 Premium",
+  "discount": "70% off",
+  "new_user_discount": "💎 70% de réduction pour les nouveaux utilisateurs",
+  "plan_page" :{
+    "subscription": "Abonnement"
+  },
   "landing_page": {
     "main_heading": "Créez les hentai de la meilleure qualité. Gratuitement.",
     "sub_heading": "Profitez de la génération gratuite d'images IA tout en discutant avec de magnifiques personnages IA.",
@@ -386,6 +392,7 @@
       "cancelSubscription": "Annuler l'abonnement"
     },
     "avatar": {
+      "subscription": "Abonnement",
       "myPlan": "Mon plan",
       "profile": "Profil",
       "characters": "Personnages",

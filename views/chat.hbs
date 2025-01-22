@@ -56,6 +56,13 @@
                         </div>  
                         <div>
                             <div class="navbar-collapse" id="navbarNav" style="position: absolute;right: 20px;top: 10px;">
+                                <button onclick="loadPlanPage()" 
+                                class="btn d-flex justify-content-center align-items-center rounded-pill fw-bold custom-gradient-bg gap-2 px-2 py-1.5  text-sm text-white bg-white"
+                                style="border: 1px solid #000;">
+                                    <div>
+                                    {{translations.premium}} <span class="text-rose-400 text-sm  text-danger">{{translations.discount}}</span>
+                                    </div>
+                                </button>
                                 <ul class="navbar-nav ms-auto flex-row mb-lg-0">
                                     {{> dashboard-avatar}}
                                 </ul>
@@ -270,7 +277,7 @@
             <div class="modal-dialog modal-dialog-scrollable mx-0">
                 <div class="modal-content mx-auto">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="characterCreationModalLabel">{{translations.characterCreation.title}}</h5>
+                        <h5 class="modal-title" id="characterCreationModalLabel">{{translations.newCharacter.characterCreationForm}}</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
@@ -284,11 +291,11 @@
             <div class="modal-dialog modal-dialog-scrollable mx-0">
                 <div class="modal-content mx-auto">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="planUpgradeModalLabel">{{translations.upgradePlan.title}}</h5>
+                        <h5 class="modal-title" id="planUpgradeModalLabel">{{translations.plan_page.subscription}}</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body">
-                        <div id="plan-container"></div>
+                    <div class="modal-body m-0 p-0">
+                        <div id="plan-container" class="position-relative"></div>
                     </div>
                 </div>
             </div>

@@ -5,76 +5,105 @@ const stripe = process.env.MODE == 'local' ? require('stripe')(process.env.STRIP
 
 async function routes(fastify, options) {
 
-  const plans = 
-    {
-      fr: {
-        name: "Plan Premium",
-        "price": "10,00 €/mois",
-        "monthly": "10,00 €/mois",
-        "yearly": "100,00 €/an",
-        features: [
-          "💬   Chat illimité tous les jours",
-          "👥   Créer des amis illimités",
-          "🎨   Créer de nouveaux personnages",
-          "🚀   Accès anticipé aux nouvelles fonctionnalités",
-          "🗂   Affichage de plusieurs options de chat",
-          "🖼   Génération d'images illimitée",
-          "💡   Suggestions de messages illimitées",
-          "🔓   Débloquer toutes les images",
-          "🌶️ Générez des images NSFW"
-        ],
-        messageLimit: 'Illimité',
-        chatLimit: 'Illimité',
-        imageLimit: 'Illimité',
-        messageIdeasLimit: 'Illimité'
+  const plans = {
+    en: [
+        {
+            id: '12-months',
+            name: '12 Months',
+            price: '5.99',
+            currency: 'USD',
+            discount: '70% OFF',
+            originalPrice: '19.99',
+            billingCycle: 'monthly',
+        },
+        {
+            id: '3-months',
+            name: '3 Months',
+            price: '9.99',
+            currency: 'USD',
+            discount: '50% OFF',
+            originalPrice: '19.99',
+            billingCycle: 'monthly',
+        },
+        {
+            id: '1-month',
+            name: '1 Month',
+            price: '12.99',
+            currency: 'USD',
+            discount: '35% OFF',
+            originalPrice: '19.99',
+            billingCycle: 'monthly',
+        }
+    ],
+    fr: [
+        {
+            id: '12-months',
+            name: '12 Mois',
+            price: '5.99',
+            currency: 'EUR',
+            discount: '70% DE RÉDUCTION',
+            originalPrice: '19.99',
+            billingCycle: 'monthly',
+        },
+        {
+            id: '3-months',
+            name: '3 Mois',
+            price: '9.99',
+            currency: 'EUR',
+            discount: '50% DE RÉDUCTION',
+            originalPrice: '19.99',
+            billingCycle: 'monthly',
+        },
+        {
+            id: '1-month',
+            name: '1 Mois',
+            price: '12.99',
+            currency: 'EUR',
+            discount: '35% DE RÉDUCTION',
+            originalPrice: '19.99',
+            billingCycle: 'monthly',
+        }
+    ],
+    ja: [
+      {
+          id: '12-months',
+          name: '12ヶ月',
+          price: '599',
+          currency: 'JPY',
+          discount: '70% 割引',
+          originalPrice: '1999',
+          billingCycle: 'monthly',
       },
-      en: {
-        name: "Premium Plan",
-        "price": "$10.00/month",
-        "monthly": "$10.00/month",
-        "yearly": "$100.00/year",
-        features: [
-          "💬   Unlimited chat every day",
-          "👥   Create unlimited friends",
-          "🎨   Create new characters",
-          "🚀   Early access to new features",
-          "🗂   Multiple chat options display",
-          "🖼   Unlimited image generation",
-          "💡   Unlimited message suggestions",
-          "🔓   Unlock all images",
-          "🌶️ Generate NSFW images"
-        ],
-        messageLimit: 'Unlimited',
-        chatLimit: 'Unlimited',
-        imageLimit: 'Unlimited',
-        messageIdeasLimit: 'Unlimited'
+      {
+          id: '3-months',
+          name: '3ヶ月',
+          price: '999',
+          currency: 'JPY',
+          discount: '50% 割引',
+          originalPrice: '1999',
+          billingCycle: 'monthly',
       },
-      ja: {
-        name: "プレミアムプラン",
-        "price": "￥1,100/月",
-        "monthly": "￥1,100/月",
-        "yearly": "￥11,000/年",
-        features: [
-          "💬   毎日無制限でチャットできる",
-          "👥   フレンドを無制限で作成できる",
-          "🎨   新しいキャラクターを作成する",
-          "🚀   新機能の先行アクセス",
-          "🗂   複数選択肢のチャット表示",
-          "🖼   無制限の画像生成を受け取る",
-          "💡   無制限のメッセージ提案機能",
-          "🔓   画像をすべて解除する",
-          "🌶️ NSFW画像を生成する"
-        ],
-        messageLimit: '無制限',
-        chatLimit: '無制限',
-        imageLimit: '無制限',
-        messageIdeasLimit: '無制限'
-      }
-    };  
+      {
+          id: '1-month',
+          name: '1ヶ月',
+          price: '1299',
+          currency: 'JPY',
+          discount: '35% 割引',
+          originalPrice: '1999',
+          billingCycle: 'monthly',
+      },
+    ],
+    features: {
+      en : ["Unlimited Daily Chats", "Create & Personalize Characters", "Early Access to New Features", "Generate Unlimited Images", "Access All Visuals", "Explore Endless Message Suggestions", "Generate NSFW Images"],
+      fr : ["Chats quotidiens illimités", "Créez et personnalisez des personnages", "Accès anticipé aux nouvelles fonctionnalités", "Générez des images illimitées", "Accédez à tous les visuels", "Explorez des suggestions de messages infinies", "Générez des images NSFW"],
+      ja : ["毎日無制限のチャット", "キャラクターの作成とパーソナライズ", "新機能への早期アクセス", "無制限の画像生成", "すべてのビジュアルにアクセス", "無限のメッセージ提案を探索", "NSFW 画像生成"]
+    }
+  
+};
 
   fastify.get('/plan/list', async (request, reply) => {
     const lang = request.query.lang;
-    return reply.send(plans[lang]);
+    return reply.send({plans: plans[lang], features: plans.features[lang]});
   });
   async function getLocalizedDescription(lang) {
     // Define a fallback mechanism
@@ -110,28 +139,36 @@ async function routes(fastify, options) {
     }
   }
 
-  function getBillingCycle(preference) {
-    console.log(preference)
-    switch (preference) {
-      case 'yearly':
-        return { interval: 'year', interval_count: 1 }; // Yearly billing
-      case 'monthly':
+// Function to get the billing cycle for Stripe based on preference
+function getBillingCycle(preference) {
+  switch (preference) {
+      case '12-months':
+          return { interval: 'year', interval_count: 1 }; // Yearly billing
+      case '3-months':
+          return { interval: 'month', interval_count: 3 }; // Quarterly billing (3 months)
+      case '1-month':
       default:
-        return { interval: 'month', interval_count: 1 }; // Monthly billing as default
-    }
+          return { interval: 'month', interval_count: 1 }; // Monthly billing as default
   }
-  function getAmount(currency, billingCycle) {
-    switch (currency) {
-      case 'jpy': // Japanese Yen
-        return billingCycle === 'yearly' ? 11000 : 1100; // 11,000 JPY/year or 1,100 JPY/month
-      case 'usd': // US Dollars
-        return billingCycle === 'yearly' ? 10000 : 1000; // 100 USD/year or 10 USD/month
-      case 'eur': // Euros
-        return billingCycle === 'yearly' ? 10000 : 1000; // 100 EUR/year or 10 EUR/month
-      default:
-        throw new Error(`Unsupported currency: ${currency}`); // Handle unsupported currencies
-    }
+}
+
+// Function to get the amount based on currency and billing cycle
+function getAmount(currency, billingCycle,month_count, lang) {
+  const plan = plans[lang].find(plan => plan.id === billingCycle);
+  if (!plan) {
+      throw new Error(`Plan with ID ${billingCycle} not found.`);
   }
+
+  // Convert price to the smallest currency unit
+  const price = parseFloat(plan.price.replace(',', '.'));
+
+  // Multiply by 100 for currencies like USD/EUR or leave as-is for JPY
+  if (currency === 'JPY') {
+      return Math.round(price); // JPY does not use smaller units
+  }
+  return Math.round(price * 100 * month_count); // Other currencies (e.g., USD, EUR)
+}
+
   
   fastify.post('/plan/subscribe', async (request, reply) => {
     try {
@@ -185,7 +222,11 @@ async function routes(fastify, options) {
         });
       }
       // Create a Stripe Checkout session
+      const billing = getBillingCycle(billingCycle);
+      const month_count = billingCycle.split('-')[0];
       const currency = getCurrency(request.lang)
+      const amount = getAmount(currency, billingCycle, month_count, request.lang);
+      console.log({currency, amount, billingCycle})
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'], // Accept card payments
         mode: 'subscription', // Subscription mode
@@ -198,8 +239,8 @@ async function routes(fastify, options) {
                 name: getLocalizedName(request.lang), // Localized product name
                 description: await getLocalizedDescription(request.lang), // Localized description
               },
-              unit_amount: getAmount(currency, billingCycle), // Replace with your product price in cents
-              recurring: getBillingCycle(billingCycle),
+              unit_amount: amount, // Replace with your product price in cents
+              recurring: billing,
             },
             quantity: 1,
           },

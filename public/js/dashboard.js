@@ -2287,6 +2287,36 @@ function generateChatsPagination(totalPages, option) {
         );
     }
 }
+window.startCountdown = function() {
+    const countdownElement = $('#countdown-timer');
+    const storedEndTime = localStorage.getItem('countdownEndTime');
+    const now = Date.now();
+    let endTime = storedEndTime ? parseInt(storedEndTime) : now + 30 * 60 * 1000;
+
+    if (!storedEndTime) localStorage.setItem('countdownEndTime', endTime);
+
+    const interval = setInterval(() => updateCountdown(endTime, interval), 10); // Update every 10ms
+    updateCountdown(endTime, interval);
+}
+
+window.updateCountdown = function(endTime, interval) {
+    const countdownElement = $('#countdown-timer');
+    const remaining = endTime - Date.now();
+
+    if (remaining <= 0) {
+        countdownElement.text('00:00.00');
+        localStorage.removeItem('countdownEndTime');
+        clearInterval(interval);
+        return;
+    }
+
+    const minutes = Math.floor(remaining / (60 * 1000));
+    const seconds = Math.floor((remaining % (60 * 1000)) / 1000);
+    const milliseconds = Math.floor((remaining % 1000) / 10); // Convert to two-digit milliseconds
+    countdownElement.text(
+        `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(2, '0')}`
+    );
+}
 // Function to load settings page & execute script settings.js & open #settingsModal
 function loadSettingsPage() {
     $.ajax({

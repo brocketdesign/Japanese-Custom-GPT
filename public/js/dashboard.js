@@ -640,7 +640,7 @@ async function checkIfAdmin(userId) {
     }
   }
   function unlockImage(id, type, el) {
-    window.location.href = '/my-plan'
+    loadPlanPage();
     return
     /*
     $.post(`/api/unlock/${type}/${id}`)
@@ -2317,14 +2317,38 @@ window.updateCountdown = function(endTime, interval) {
         `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(2, '0')}`
     );
 }
+// Object to manage modal loading status
+const modalStatus = {
+    isSettingsLoading: false,
+    isCharacterCreationLoading: false,
+    isPlanLoading: false,
+    isCharacterModalLoading: false,
+    isLoginLoading: false
+};
+
+// Function to close any opened modal
+function closeAllModals() {
+    const modals = ['settingsModal', 'characterCreationModal', 'planUpgradeModal', 'characterModal', 'loginModal'];
+    modals.forEach(modalId => {
+        const modalElement = document.getElementById(modalId);
+        if (modalElement) {
+            const modalInstance = bootstrap.Modal.getInstance(modalElement);
+            if (modalInstance) {
+                modalInstance.hide();
+            }
+        }
+    });
+}
+
 // Function to load settings page & execute script settings.js & open #settingsModal
-let isSettingsLoading = false;
 function loadSettingsPage() {
-    if (isSettingsLoading) return;
-    isSettingsLoading = true;
+    if (modalStatus.isSettingsLoading) return;
+    modalStatus.isSettingsLoading = true;
+
+    closeAllModals();
 
     const settingsModal = new bootstrap.Modal(document.getElementById('settingsModal'));
-    $('#settings-container').html('<div class="spinner-border" role="status"></div>');
+    $('#settings-container').html('<div class="position-absolute" style="inset:0;"><div class="spinner-border" role="status"></div></div>');
     settingsModal.show();
 
     $.ajax({
@@ -2335,29 +2359,30 @@ function loadSettingsPage() {
             const script = document.createElement('script');
             script.src = '/js/settings.js';
             script.onload = function() {
-                isSettingsLoading = false;
+                modalStatus.isSettingsLoading = false;
             };
             script.onerror = function() {
                 console.error('Failed to load settings.js script.');
-                isSettingsLoading = false;
+                modalStatus.isSettingsLoading = false;
             };
             document.body.appendChild(script);
         },
         error: function(err) {
             console.error('Failed to load settings page', err);
-            isSettingsLoading = false;
+            modalStatus.isSettingsLoading = false;
         }
     });
 }
 
 // Function to load character creation page & execute scripts & open #characterCreationModal
-let isCharacterCreationLoading = false;
 function loadCharacterCreationPage(chatId) {
-    if (isCharacterCreationLoading) return;
-    isCharacterCreationLoading = true;
+    if (modalStatus.isCharacterCreationLoading) return;
+    modalStatus.isCharacterCreationLoading = true;
+
+    closeAllModals();
 
     const characterCreationModal = new bootstrap.Modal(document.getElementById('characterCreationModal'));
-    $('#character-creation-container').html('<div class="spinner-border" role="status"></div>');
+    $('#character-creation-container').html('<div class="position-absolute" style="inset:0;"><div class="spinner-border" role="status"></div></div>');
     characterCreationModal.show();
 
     let redirectUrl = '/chat/edit/';
@@ -2391,29 +2416,30 @@ function loadCharacterCreationPage(chatId) {
             const script = document.createElement('script');
             script.src = '/js/character-creation.js';
             script.onload = function() {
-                isCharacterCreationLoading = false;
+                modalStatus.isCharacterCreationLoading = false;
             };
             script.onerror = function() {
                 console.error('Failed to load character-creation.js script.');
-                isCharacterCreationLoading = false;
+                modalStatus.isCharacterCreationLoading = false;
             };
             document.body.appendChild(script);
         },
         error: function(err) {
             console.error('Failed to load character creation page', err);
-            isCharacterCreationLoading = false;
+            modalStatus.isCharacterCreationLoading = false;
         }
     });
 }
 
 // Load the plan page and open the modal
-let isPlanLoading = false;
 function loadPlanPage() {
-    if (isPlanLoading) return;
-    isPlanLoading = true;
+    if (modalStatus.isPlanLoading) return;
+    modalStatus.isPlanLoading = true;
+
+    closeAllModals();
 
     const planModal = new bootstrap.Modal(document.getElementById('planUpgradeModal'));
-    $('#plan-container').html('<div class="spinner-border" role="status"></div>');
+    $('#plan-container').html('<div class="position-absolute" style="inset:0;"><div class="spinner-border" role="status"></div></div>');
     planModal.show();
 
     $.ajax({
@@ -2424,17 +2450,17 @@ function loadPlanPage() {
             const script = document.createElement('script');
             script.src = '/js/plan.js';
             script.onload = function() {
-                isPlanLoading = false;
+                modalStatus.isPlanLoading = false;
             };
             script.onerror = function() {
                 console.error('Failed to load plan.js script.');
-                isPlanLoading = false;
+                modalStatus.isPlanLoading = false;
             };
             document.body.appendChild(script);
         },
         error: function(err) {
             console.error('Failed to load plan page', err);
-            isPlanLoading = false;
+            modalStatus.isPlanLoading = false;
         }
     });
 }
@@ -2447,13 +2473,14 @@ function redirectToChatPage() {
 }
 
 // Open /character/:id?modal=true to show the character modal
-let isCharacterModalLoading = false;
 function openCharacterModal(modalChatId) {
-    if (isCharacterModalLoading) return;
-    isCharacterModalLoading = true;
+    if (modalStatus.isCharacterModalLoading) return;
+    modalStatus.isCharacterModalLoading = true;
+
+    closeAllModals();
 
     const characterModal = new bootstrap.Modal(document.getElementById('characterModal'));
-    $('#character-modal-container').html('<div class="spinner-border" role="status"></div>');
+    $('#character-modal-container').html('<div class="position-absolute" style="inset:0;"><div class="spinner-border" role="status"></div></div>');
     characterModal.show();
 
     const url = `/character/${modalChatId}?modal=true`;
@@ -2467,23 +2494,24 @@ function openCharacterModal(modalChatId) {
                     loadChatImages(modalChatId, 1);
                 }
             });
-            isCharacterModalLoading = false;
+            modalStatus.isCharacterModalLoading = false;
         },
         error: function(err) {
             console.error('Failed to open character modal', err);
-            isCharacterModalLoading = false;
+            modalStatus.isCharacterModalLoading = false;
         }
     });
 }
 
 // Open authenticate page in a modal
-let isLoginLoading = false;
 function openLoginForm(withMail = false) {
-    if (isLoginLoading) return;
-    isLoginLoading = true;
+    if (modalStatus.isLoginLoading) return;
+    modalStatus.isLoginLoading = true;
+
+    closeAllModals();
 
     const loginModalElement = document.getElementById('loginModal');
-    $('#login-container').html('<div class="spinner-border" role="status"></div>');
+    $('#login-container').html('<div class="position-absolute" style="inset:0;"><div class="spinner-border" role="status"></div></div>');
     const loginModal = new bootstrap.Modal(loginModalElement);
     loginModal.show();
 
@@ -2493,11 +2521,11 @@ function openLoginForm(withMail = false) {
         method: 'GET',
         success: function(data) {
             $('#login-container').html(data);
-            isLoginLoading = false;
+            modalStatus.isLoginLoading = false;
         },
         error: function(err) {
             console.error('Failed to open login modal', err);
-            isLoginLoading = false;
+            modalStatus.isLoginLoading = false;
         }
     });
 }

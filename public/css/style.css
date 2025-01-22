@@ -34,7 +34,9 @@ body {
 .text-muted {
   font-weight: 300;
 }
-
+.payment-methods img{
+  width: 50px;
+}
 #authTabContent input{
 background: #212529;
 color: #fff !important;

@@ -154,7 +154,6 @@ function getBillingCycle(preference) {
 
 // Function to get the amount based on currency and billing cycle
 function getAmount(currency, billingCycle,month_count, lang) {
-  console.log('currency:', currency);
   const plan = plans[lang].find(plan => plan.id === billingCycle);
   if (!plan) {
       throw new Error(`Plan with ID ${billingCycle} not found.`);

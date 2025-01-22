@@ -1,5 +1,6 @@
 {
   "lang":"en", 
+  "currency": "$",
   "premium": " 💎 Premium",
   "discount": "70% off",
   "new_user_discount": "💎 70% off for new users",

@@ -1,6 +1,6 @@
 <div 
-class="d-flex justify-content-center align-items-center text-center w-100 position-sticky sticky-top custom-gradient-bg shadow px-3"
-style="min-height: 100px; border-bottom: 4px solid var(--bs-indigo); z-index: 1000; border-radius: 0;">
+class="d-flex justify-content-center align-items-center text-center text-white w-100 position-sticky sticky-top shadow px-3"
+style="min-height: 100px; border-bottom: 4px solid var(--bs-indigo); z-index: 1000; border-radius: 0; background: linear-gradient(to right, color(display-p3 0.094 0 0.2), color(srgb 0.3974 0 0.6667));">
     <h1 class="me-3 mb-0 text-uppercase fw-bold">{{translations.new_user_discount}}</h1>
     <div id="countdown-timer" class="fs-4"></div>
 </div>
@@ -17,6 +17,15 @@ style="min-height: 100px; border-bottom: 4px solid var(--bs-indigo); z-index: 10
         <!-- The plan cards will be dynamically inserted here -->
     </div>
     <span style="font-size: 12px;">{{translations.secure_payment_methods}} <a href="https://stripe.com/jp/resources/more/secure-payment-systems-explained" target="_blank"><img src="/img/stripe-logo.png" style="height: 30px;width: auto;"></a> {{translations.are_used}}</span>
+    <!-- Gird of payment methods -->
+    <div class="payment-methods">
+        <img src="/img/payment-methods/visa.png" alt="Visa" title="Visa">
+        <img src="/img/payment-methods/mastercard.png" alt="Mastercard" title="Mastercard">
+        <img src="/img/payment-methods/amex.png" alt="American Express" title="American Express">
+        <img src="/img/payment-methods/applepay.png" alt="Apple Pay" title="Apple Pay">
+        <img src="/img/payment-methods/jcb.png" alt="JCB" title="JCB">
+        <img src="/img/payment-methods/id.png" alt="ID" title="ID">
+    </div>
     <div class="feature-list-container mt-3">
         <h4 class="fw-blod text-muted">{{translations.plan_page.features}}</h4>
         <div id="featureList" class="feature-list">

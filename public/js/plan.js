@@ -83,8 +83,8 @@ function renderPlans(plans) {
           <span class="badge" style="background-color: #FF5E7E;">${plan.discount}</span>
         </div>
         <div class="mt-2">
-          <h2 class="fw-bold">${plan.price}<span class="text-muted" style="font-size:11px;">${translations.monthly}</span></h2>
-          <small class="text-decoration-line-through">${plan.originalPrice}${translations.monthly}</small>
+          <h2 class="fw-bold">${plan.price}<span class="text-muted" style="font-size:11px;">${translations.currency}${translations.monthly}</span></h2>
+          <small class="text-decoration-line-through">${plan.originalPrice}${translations.currency}${translations.monthly}</small>
         </div>
       </div>
     `;

@@ -2394,14 +2394,14 @@ function loadCharacterCreationPage(chatId) {
         url: redirectUrl,
         method: 'GET',
         success: function(data) {
-            $('#characterCreationModal').one('shown.bs.modal', () => {
-                if (!data) {
+            if(!data){
+                $('#characterCreationModal').one('shown.bs.modal', () => {
                     characterCreationModal.hide();
                     modalStatus.isCharacterCreationLoading = false;
                     loadPlanPage();
                     return
-                }
-            });
+                });
+            }
             $('#character-creation-container').html(data);
 
             const link = document.createElement('link');

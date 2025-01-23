@@ -316,7 +316,10 @@ function showNavTabs(){
             localStorage.setItem('chat-nav',`${modelId}`)
             let option = {imageStyle:style, imageModel:model, userId: user._id, modal: true}
             if(chatDiscovery ){ option.userId = false }
-            displayPeopleChat(1, option);
+            displayPeopleChat(1, option, 
+            (ids) => {
+                console.log('Callback with chat IDs:', ids)
+            }, true);
         }
     });
 

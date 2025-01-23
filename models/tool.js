@@ -235,28 +235,16 @@ const handleFileUpload = async (part, db) => {
     }
 
     const hash = createHash('sha256').update(buffer).digest('hex');
-    const awsimages = db.collection('awsimages');
-
-    // Check if the image already exists in MongoDB
-    const existingFile = await awsimages.findOne({ hash });
-
-    if (existingFile) {
-        console.log(`Already exists in DB`);
-        return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFile.key}`;
-    }
-
-    // If not in DB, check S3
-    const existingFiles = await listFiles();
     
-    if (existingFiles.Contents.length > 0) {
-        console.log(`Already exists in S3`);
-        await awsimages.insertOne({ key: existingFiles.Contents[0].Key, hash });
-        return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFiles.Contents[0].Key}`;
+    const existingFiles = await listFiles();
+    const foundFile = existingFiles.Contents.find(item => item.Key.includes(hash));
+    if (foundFile) {
+      return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${foundFile.Key}`;
     } else {
-        const uploadUrl = await uploadToS3(buffer, hash, part.filename || 'uploaded_file');
-        await awsimages.insertOne({ key: uploadUrl.split('/').pop(), hash });
-        return uploadUrl;
+      const uploadUrl = await uploadToS3(buffer, hash, part.filename || 'uploaded_file');
+      return uploadUrl;
     }
+    
 };
 
 const createBlurredImage = async (imageUrl, db) => {

@@ -1226,7 +1226,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
           }
 
           htmlContent += `
-          <div class="chat-card-container col-12 col-sm-4 col-lg-3 mb-2" ${searchId?`data-id="${searchId}"`:''}>
+          <div class="chat-card-container col-6 col-sm-3 col-lg-3 mb-2" ${searchId?`data-id="${searchId}"`:''}>
               <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 redirectToChat" style="cursor:pointer;" data-id="${chat.chatId || chat._id}" data-image="${chat.chatImageUrl}">
                   <div data-bg="${chat.chatImageUrl || '/img/logo.webp'}" class="card-img-top girls_avatar position-relative lazy-bg" alt="${chat.name || chat.chatName}">
                       <div id="spinner-${chat.chatId || chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>

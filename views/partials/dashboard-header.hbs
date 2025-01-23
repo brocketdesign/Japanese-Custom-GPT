@@ -48,6 +48,65 @@
                 window.location.replace(window.location.origin + decodeURIComponent(redirectUrl));
             }
         })();
+        
+        document.addEventListener("DOMContentLoaded", () => {
+            // Intersection Observer for lazy loading
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        const dataSrc = img.getAttribute("data-src");
+                        if (dataSrc) {
+                            img.src = dataSrc; // Replace placeholder with actual image
+                            img.removeAttribute("data-src");
+                        }
+                        observer.unobserve(img); // Stop observing once the image is loaded
+                    }
+                });
+            });
+
+            // Function to observe all .lazy-image elements
+            const observeImages = () => {
+                const lazyImages = document.querySelectorAll(".lazy-image");
+                lazyImages.forEach((img) => {
+                    if (img.getAttribute("data-src")) {
+                        observer.observe(img);
+                    }
+                });
+            };
+
+            // Observe all images initially
+            observeImages();
+
+            // Mutation Observer to handle dynamically added elements
+            const mutationObserver = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.type === "childList") {
+                        mutation.addedNodes.forEach((node) => {
+                            if (node.nodeType === 1) { // Ensure it's an element node
+                                if (node.matches(".lazy-image")) {
+                                    // Observe the newly added lazy-image element
+                                    observer.observe(node);
+                                } else {
+                                    // Check for any .lazy-image elements inside the added node
+                                    const lazyImages = node.querySelectorAll(".lazy-image");
+                                    lazyImages.forEach((img) => {
+                                        observer.observe(img);
+                                    });
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Observe changes in the document body or a specific container
+            mutationObserver.observe(document.body, {
+                childList: true, // Watch for added/removed child nodes
+                subtree: true,   // Watch the entire subtree
+            });
+        });
+
 
         document.addEventListener("DOMContentLoaded", () => {
             const promptContainer = document.getElementById("promptContainer");

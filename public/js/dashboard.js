@@ -1,3 +1,31 @@
+
+// Global states
+var swiperInstance;
+var currentSwiperIndex = 0;
+
+// Loading Functions Names in this file
+// loadAllChatImages
+if (typeof allChatsLoadingState === 'undefined') allChatsLoadingState = false
+if (typeof allChatsCurrentPage === 'undefined') allChatsCurrentPage = 0
+if (typeof allChatsImagesCache === 'undefined') allChatsImagesCache = {}
+
+//loadChatImages
+if (typeof chatLoadingStates === 'undefined') chatLoadingStates = {}
+if (typeof chatCurrentPageMap === 'undefined') chatCurrentPageMap = {}
+if (typeof chatImagesCache === 'undefined') chatImagesCache = {}
+if (typeof loadedImages === 'undefined') loadedImages = []
+
+// loadUserImages
+if (typeof loadingStates === 'undefined') loadingStates = {};
+if (typeof currentPageMap === 'undefined') currentPageMap = {};
+if (typeof userImagesCache === 'undefined') userImagesCache = {}; // To store fetched images per page
+
+// loadUserPosts 
+// displayPeopleChat
+// loadChatUsers
+// loadUsers
+
+
 async function onLanguageChange(lang) {
     const updateResponse = await $.ajax({
         url: '/api/user/update-language',
@@ -638,7 +666,7 @@ async function checkIfAdmin(userId) {
       console.log('Error checking admin status');
       return false;
     }
-  }
+}
   function unlockImage(id, type, el) {
     loadPlanPage();
     return
@@ -1260,121 +1288,325 @@ window.resultImageSearch = async function (page = 1,query,style = 'anime', callb
       }
     });
 }
-window.loadAllChatImages = async function (page = 1) {
-    const currentUser = user
-    const currentUserId = currentUser._id;
-    const subscriptionStatus = currentUser.subscriptionStatus === 'active';
-    const isAdmin = await checkIfAdmin(currentUserId);    
-    $.ajax({
-      url: `/chats/images?page=${page}`,
-      method: 'GET',
-      success: function (data) {
-        let chatGalleryHtml = '';
-        data.images.forEach(item => {
-            const unlockedItem = isUnlocked(currentUser, item._id,item.userId)
-            let isBlur = unlockedItem ? false : item?.nsfw && !subscriptionStatus 
-            const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
-            chatGalleryHtml += `
-                <div class="col-12 col-md-3 col-lg-2 mb-2">
-                    <div class="card shadow-0">
-                        ${isBlur ? `
-                        <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item._id}','gallery',this)`}>
-                            <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" >
-                        </div>
-                        ` : `
-                        <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
-                            <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
-                        </a>
-                        <div class="${!isAdmin?'d-none':''} card-body p-2 d-flex align-items-center justify-content-between">
-                            <a href="/chat/${item.chatId}" class="btn btn-outline-secondary col-12"> <i class="bi bi-chat-dots me-2"></i> ${translations.startChat}</a>
-                            <button class="btn btn-light image-nsfw-toggle ${!isAdmin?'d-none':''} ${item?.nsfw ? 'nsfw':'sfw'}" data-id="${item._id}">
-                                <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill':'bi-eye-fill'}"></i> 
-                            </button>
-                            <span class="btn btn-light float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
-                                <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
-                            </span>
-                        </div>
-                        `}
-                    </div>
-                </div>
-            `;
-        });
-
-        $('#all-chats-images-gallery').append(chatGalleryHtml);
-        if($('#all-chats-images-pagination-controls').length > 0){
-            generateAllChatsImagePagination(data.totalPages);
-        }
-
-        $(document).find('.img-blur').each(function() {
-            blurImage(this);
-        });
-      },
-      error: function (err) {
-        console.error('Failed to load images', err);
+// Load All Chat Images with cache + infinite scroll
+window.loadAllChatImages = function (page = 1, reload = false) {
+    console.log(`loadAllChatImages => page:${page}, reload:${reload}`)
+    const cacheKey = 'allChatsImagesCache'
+    const currentUserId = user._id
+    const subscriptionStatus = user.subscriptionStatus === 'active'
+  
+    // Return a Promise for sync with infinite scroll
+    return new Promise(async (resolve, reject) => {
+      // Check admin once here
+      const isAdmin = await checkIfAdmin(currentUserId)
+  
+      // Retrieve or init cache
+      let cacheData = JSON.parse(localStorage.getItem(cacheKey) || '{}')
+      if (!cacheData.pages) cacheData.pages = {}
+      allChatsImagesCache = cacheData.pages
+  
+      // List cached pages
+      const cachedPages = Object.keys(allChatsImagesCache).map(Number).sort((a, b) => a - b)
+      const maxCachedPage = cachedPages.length ? Math.max(...cachedPages) : 0
+      console.log(`Cached pages: [${cachedPages}], maxCachedPage: ${maxCachedPage}`)
+  
+      // If reload => append all cached pages, set current page
+      if (reload) {
+        console.log('Reload requested; showing all cached pages first')
+        cachedPages.forEach((p) => {
+          console.log(`Appending cached page ${p}`)
+          appendAllChatsImages(allChatsImagesCache[p], subscriptionStatus, isAdmin)
+        })
+        allChatsCurrentPage = maxCachedPage
+        if (maxCachedPage > 0) page = maxCachedPage + 1 // optional: refresh the last cached page
       }
-    });
-}
-
-window.loadUserImages = async function (userId, page = 1) {
-    const currentUser = user
-    const currentUserId = currentUser._id
-    const subscriptionStatus = currentUser.subscriptionStatus == 'active'
-    const isTemporary = !!currentUser?.isTemporary
-    $.ajax({
-      url: `/user/${userId}/liked-images?page=${page}`,
-      method: 'GET',
-      success: function (data) {
-        let galleryHtml = '';
-        data.images.forEach(item => {
-            const unlockedItem = isUnlocked(currentUser, item._id, item.userId)
-            let isBlur = unlockedItem ? false : item?.nsfw && !subscriptionStatus 
-            const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
-            galleryHtml += `
-                <div class="col-6 col-md-3 col-lg-2 mb-2">
-                <div class="card">
-                    <div class="d-flex align-items-center p-2">
-                        <a href="/character/${item.chatId}?imageId=${item._id}">
-                            <img src="${item?.thumbnail}" alt="${item?.chatName}" class="rounded-circle me-2" width="40" height="40">
-                        </a>
-                        <a href="/character/${item.chatId}?imageId=${item._id}" class="text-decoration-none text-dark">
-                            <strong>${item?.chatName}</strong>
-                        </a>
-                    </div>
-                    ${isBlur ? `
-                    <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item._id}','gallery',this)`}>
-                        <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" >
-                    </div>
-                    ` : `
-                    <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
-                        <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
-                    </a>
-                    <div class="d-none card-body p-2 d-flex align-items-center justify-content-between">
-                        <a href="/chat/${item.chatId}?imageId=${item._id}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> ${translations.startChat}</a>
-                        <span class="btn btn-light float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
-                            <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
-                        </span>
-                    </div>
-                    `}
-                </div>
-                </div>
-            `;
-        });
-
-        $('#user-images-gallery').append(galleryHtml);
-        if($('#images-pagination-controls').length > 0){
-            generateImagePagination(data.page, data.totalPages, userId);
-        }
-
-        $(document).find('.img-blur').each(function() {
-            blurImage(this);
-        });
-      },
-      error: function (err) {
-        console.error('Failed to load images', err);
+  
+      // If page is in cache and not reloading => skip server call
+      if (allChatsImagesCache[page] && !reload) {
+        console.log(`Page ${page} is cached; skipping server call`)
+        appendAllChatsImages(allChatsImagesCache[page], subscriptionStatus, isAdmin)
+        allChatsCurrentPage = page
+        generateAllChatsImagePaginationFromCache() // updates spinner/back-to-top
+        return resolve()
       }
-    });
-}
-
+  
+      // Otherwise, fetch from server
+      console.log(`Fetching page ${page} from server...`)
+      $.ajax({
+        url: `/chats/images?page=${page}`,
+        method: 'GET',
+        success: (data) => {
+          console.log(`Fetched page ${page} from server:`, data)
+          appendAllChatsImages(data.images, subscriptionStatus, isAdmin)
+  
+          // Cache the new page
+          allChatsImagesCache[data.page] = data.images
+          cacheData.pages = allChatsImagesCache
+          localStorage.setItem(cacheKey, JSON.stringify(cacheData))
+  
+          // Update current page, then set up infinite scroll
+          allChatsCurrentPage = data.page
+          generateAllChatsImagePagination(data.totalPages)
+          resolve()
+        },
+        error: (err) => {
+          console.error(`Failed to load page ${page} from server`, err)
+          reject(err)
+        },
+      })
+    })
+  }
+  
+  // Infinite scroll + pagination for All Chats images
+  window.generateAllChatsImagePagination = function (totalPages) {
+    console.log(`generateAllChatsImagePagination => totalPages:${totalPages}`)
+    $(window).off('scroll').on('scroll', () => {
+      if (
+        !allChatsLoadingState &&
+        allChatsCurrentPage < totalPages &&
+        $(window).scrollTop() + $(window).height() >= $(document).height() - 100
+      ) {
+        console.log(`Infinite scroll => fetching next page:${allChatsCurrentPage + 1}`)
+        allChatsLoadingState = true
+        loadAllChatImages(allChatsCurrentPage + 1, false)
+          .then(() => {
+            allChatsLoadingState = false
+            console.log(`Loaded page ${allChatsCurrentPage}`)
+          })
+          .catch(() => {
+            allChatsLoadingState = false
+            console.error('Failed to load the next page')
+          })
+      }
+    })
+    updateAllChatsPaginationControls(totalPages)
+  }
+  
+  // If we skip a server call (using only cache), refresh controls
+  function generateAllChatsImagePaginationFromCache() {
+    console.log(`generateAllChatsImagePaginationFromCache => currentPage:${allChatsCurrentPage}`)
+    // If you don't store totalPages, set a high number or store it separately
+    updateAllChatsPaginationControls(9999)
+  }
+  
+  // Spinner vs. Back-to-Top
+  function updateAllChatsPaginationControls(totalPages) {
+    if (allChatsCurrentPage >= totalPages) {
+      $('#all-chats-images-pagination-controls').html(
+        `<button class="btn btn-outline-secondary" onclick="scrollToTop()">
+           <i class="bi bi-arrow-up-circle-fill me-2"></i>${window.translations.backToTop}
+         </button>`
+      )
+    } else {
+      $('#all-chats-images-pagination-controls').html(
+        '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
+      )
+    }
+  }
+  
+  // Append images to #all-chats-images-gallery
+  function appendAllChatsImages(images, subscriptionStatus, isAdmin) {
+    const currentUserId = user._id
+    const isTemporary = !!user.isTemporary
+    let chatGalleryHtml = ''
+  
+    images.forEach((item) => {
+      const unlockedItem = isUnlocked(user, item._id, item.userId)
+      const isBlur = !unlockedItem && item?.nsfw && !subscriptionStatus
+      const isLiked = item?.likedBy?.some((id) => id.toString() === currentUserId.toString())
+  
+      chatGalleryHtml += `
+        <div class="col-6 col-md-3 col-lg-2 mb-2">
+          <div class="card shadow-0">
+            ${
+              isBlur
+                ? `<div type="button" onclick="${isTemporary ? 'showRegistrationForm()' : `unlockImage('${item._id}','gallery',this)`}">
+                     <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
+                   </div>`
+                : `<a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
+                     <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
+                   </a>
+                   <div class="${!isAdmin ? 'd-none' : ''} card-body p-2 d-flex align-items-center justify-content-between">
+                     <a href="/chat/${item.chatId}" class="btn btn-outline-secondary col-12">
+                       <i class="bi bi-chat-dots me-2"></i> ${translations.startChat}
+                     </a>
+                     <button class="btn btn-light image-nsfw-toggle ${!isAdmin ? 'd-none' : ''} ${item?.nsfw ? 'nsfw' : 'sfw'}" data-id="${item._id}">
+                       <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
+                     </button>
+                     <span class="btn btn-light float-end image-fav ${isLiked ? 'liked' : ''}" data-id="${item._id}">
+                       <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
+                     </span>
+                   </div>`
+            }
+          </div>
+        </div>
+      `
+    })
+  
+    $('#all-chats-images-gallery').append(chatGalleryHtml)
+    $(document).find('.img-blur').each(function () {
+      blurImage(this)
+    })
+  }
+// Load user images with cache + infinite scroll
+window.loadUserImages = function (userId, page = 1, reload = false) {
+    console.log(`loadUserImages => userId: ${userId}, page: ${page}, reload: ${reload}`)
+    return new Promise((resolve, reject) => {
+      const cacheKey = `userImages_${userId}`
+      let cacheData = JSON.parse(localStorage.getItem(cacheKey) || '{}')
+      if (!cacheData.pages) cacheData.pages = {}
+      userImagesCache[userId] = cacheData.pages
+  
+      let cachedPages = Object.keys(userImagesCache[userId]).map(Number)
+      let maxCachedPage = cachedPages.length ? Math.max(...cachedPages) : 0
+      console.log('Cached pages:', cachedPages, 'maxCachedPage:', maxCachedPage)
+  
+      // If reload => render all cached pages in ascending order, update currentPageMap
+      if (reload) {
+        cachedPages.sort((a, b) => a - b).forEach((p) => {
+          console.log(`Reloading cached page ${p}`)
+          appendImages(userImagesCache[userId][p])
+        })
+        currentPageMap[userId] = maxCachedPage
+        // Optionally refresh the last cached page from the server:
+        if (maxCachedPage > 0) page = maxCachedPage + 1
+      }
+  
+      // If the page is already in cache and we're NOT reloading => skip server call
+      if (userImagesCache[userId][page] && !reload) {
+        console.log(`Page ${page} is already cached, skip server call`)
+        appendImages(userImagesCache[userId][page])
+        currentPageMap[userId] = page
+        generateImagePaginationFromCache(userId) // update spinner/back-to-top if needed
+        return resolve()
+      }
+  
+      // Otherwise, fetch from server
+      console.log(`Fetching page ${page} from server...`)
+      $.ajax({
+        url: `/user/${userId}/liked-images?page=${page}`,
+        method: 'GET',
+        success: (data) => {
+          console.log(`Fetched page ${page} from server`, data)
+          appendImages(data.images)
+  
+          // Store in cache
+          userImagesCache[userId][data.page] = data.images
+          cacheData.pages = userImagesCache[userId]
+          localStorage.setItem(cacheKey, JSON.stringify(cacheData))
+  
+          // Update currentPageMap, then pagination
+          currentPageMap[userId] = data.page
+          generateImagePagination(data.totalPages, userId)
+          resolve()
+        },
+        error: (err) => {
+          console.error(`Failed to load page ${page} from server`, err)
+          reject(err)
+        },
+      })
+    })
+  }
+  
+  window.generateImagePagination = function (totalPages, userId) {
+    console.log(`generateImagePagination => userId: ${userId}, totalPages: ${totalPages}`)
+    if (!loadingStates[userId]) loadingStates[userId] = false
+    if (!currentPageMap[userId]) currentPageMap[userId] = 0
+  
+    $(window).off('scroll').on('scroll', () => {
+      // If near bottom & still have pages left
+      if (
+        !loadingStates[userId] &&
+        currentPageMap[userId] < totalPages &&
+        $(window).scrollTop() + $(window).height() >= $(document).height() - 100
+      ) {
+        console.log(
+          `Infinite scroll => fetching next page: ${currentPageMap[userId] + 1}`
+        )
+        loadingStates[userId] = true
+        loadUserImages(userId, currentPageMap[userId] + 1, false)
+          .then(() => {
+            loadingStates[userId] = false
+            console.log(`Finished loading page ${currentPageMap[userId]}`)
+          })
+          .catch((e) => {
+            loadingStates[userId] = false
+            console.error('Failed to load next page:', e)
+          })
+      }
+    })
+  
+    updatePaginationControls(totalPages, userId)
+  }
+  
+  // If we skip a server call by using cache only, just refresh the pagination controls
+  function generateImagePaginationFromCache(userId) {
+    let totalPages = 9999 // or figure out from somewhere else if needed
+    console.log(`generateImagePaginationFromCache => userId: ${userId}`)
+    updatePaginationControls(totalPages, userId)
+  }
+  
+  // Common function to update spinner/back-to-top
+  function updatePaginationControls(totalPages, userId) {
+    if (currentPageMap[userId] >= totalPages) {
+      $('#images-pagination-controls').html(
+        `<button class="btn btn-outline-secondary" onclick="scrollToTop()">
+           <i class="bi bi-arrow-up-circle-fill me-2"></i>${window.translations.backToTop}
+         </button>`
+      )
+    } else {
+      $('#images-pagination-controls').html(
+        '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
+      )
+    }
+  }
+  
+  // Append images to gallery
+  function appendImages(images) {
+    const currentUserId = user._id
+    const subscriptionActive = user.subscriptionStatus === 'active'
+    const isTemp = !!user.isTemporary
+  
+    let html = ''
+    images.forEach((item) => {
+      const unlocked = isUnlocked(user, item._id, item.userId)
+      const blurred = !unlocked && item.nsfw && !subscriptionActive
+      const liked = item.likedBy?.some((id) => id.toString() === currentUserId.toString())
+      html += `
+        <div class="col-6 col-md-3 col-lg-2 mb-2">
+          <div class="card">
+            <div class="d-flex align-items-center p-2">
+              <a href="/character/${item.chatId}?imageId=${item._id}">
+                <img src="${item.thumbnail}" alt="" class="rounded-circle me-2" width="40" height="40">
+              </a>
+              <a href="/character/${item.chatId}?imageId=${item._id}" class="text-decoration-none text-dark">
+                <strong>${item.chatName}</strong>
+              </a>
+            </div>
+            ${
+              blurred
+                ? `<div type="button" onclick=${isTemp ? `showRegistrationForm()` : `unlockImage('${item._id}','gallery',this)`}>
+                     <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
+                   </div>`
+                : `<a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
+                     <img data-src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top lazy-image" loading="lazy">
+                   </a>
+                   <div class="d-none card-body p-2 d-flex align-items-center justify-content-between">
+                     <a href="/chat/${item.chatId}?imageId=${item._id}" class="btn btn-outline-secondary">
+                       <i class="bi bi-chat-dots me-2"></i> ${translations.startChat}
+                     </a>
+                     <span class="btn btn-light float-end image-fav ${liked ? 'liked' : ''}" data-id="${item._id}">
+                       <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
+                     </span>
+                   </div>`
+            }
+          </div>
+        </div>
+      `
+    })
+    $('#user-images-gallery').append(html)
+    $('.img-blur').each((_, el) => blurImage(el))
+  }
 window.loadUserPosts = async function (userId, page = 1, like = false) {
     const currentUser = user
     const currentUserId = currentUser._id
@@ -1646,13 +1878,8 @@ window.generateCompletion = async function(systemPrompt, userMessage) {
     }
 }
 
-/* Short comments added inline */
 
-var loadingStates = {};
-var loadedImages = []; // store all loaded images
-var swiperInstance;
-var currentPageMap = {}; // track current page per chatId
-var currentSwiperIndex = 0;
+
 
 function updateSwiperSlides(images) {
     // Ensure Swiper container exists
@@ -1694,84 +1921,191 @@ function updateSwiperSlides(images) {
     swiperInstance.slideTo(currentSwiperIndex, 0);
 }
 
-// Load chat images (refactored)
-window.loadChatImages = async function (chatId, page = 1) {
-    const currentUser = user
-    const currentUserId = currentUser._id;
-    const subscriptionStatus = currentUser.subscriptionStatus === 'active';
-    const isTemporary = !!currentUser?.isTemporary;
-    const isAdmin = await checkIfAdmin(currentUserId);    
-    // if an imageId is provided, add the current image to the loadedImages array
-    if(page === 1 && imageId){
-        $.get('/image/' + imageId, function(data){
-            console.log('data',data);
-            if(!loadedImages.some(image => image._id === data._id)){
-                loadedImages.push(data);
-            }
-            return data;
-        });
-    }
-    $.ajax({
+// Load chat images (with cache + infinite scroll)
+window.loadChatImages = function (chatId, page = 1, reload = false) {
+    console.log(`loadChatImages => chatId:${chatId}, page:${page}, reload:${reload}`)
+  
+    return new Promise(async (resolve, reject) => {
+      const cacheKey = `chatImages_${chatId}`
+      const currentUserId = user._id
+      const subscriptionStatus = user.subscriptionStatus === 'active'
+      const isAdmin = await checkIfAdmin(currentUserId)
+      const isTemporary = !!user.isTemporary
+  
+      // Retrieve or init cache
+      let cacheData = JSON.parse(localStorage.getItem(cacheKey) || '{}')
+      if (!cacheData.pages) cacheData.pages = {}
+      chatImagesCache[chatId] = cacheData.pages
+  
+      // Show which pages are cached
+      let cachedPages = Object.keys(chatImagesCache[chatId]).map(Number).sort((a, b) => a - b)
+      let maxCachedPage = cachedPages.length ? Math.max(...cachedPages) : 0
+      console.log(`Cached pages: [${cachedPages}], maxCachedPage: ${maxCachedPage}`)
+  
+      // If reload => render all cached pages in ascending order, update currentPage
+      if (reload) {
+        console.log(`Reload => appending all cached pages for chatId:${chatId}`)
+        cachedPages.forEach((p) => {
+          console.log(`Appending cached page ${p}`)
+          appendChatImages(chatImagesCache[chatId][p], subscriptionStatus, isAdmin, isTemporary)
+        })
+        chatCurrentPageMap[chatId] = maxCachedPage
+        if (maxCachedPage > 0) page = maxCachedPage + 1 // optionally refresh the last cached page
+      }
+  
+      // If page=1 and imageId is present => load that image into loadedImages
+      if (page === 1 && typeof imageId !== 'undefined' && imageId) {
+        console.log(`Fetching single image by imageId:${imageId}`)
+        $.get(`/image/${imageId}`, function (data) {
+          console.log('Single image fetched:', data)
+          if (!loadedImages.some((img) => img._id === data._id)) {
+            loadedImages.push(data)
+          }
+        })
+      }
+  
+      // If already cached and NOT reload => skip server call
+      if (chatImagesCache[chatId][page] && !reload) {
+        console.log(`Page ${page} is cached for chatId:${chatId}, skipping server call`)
+        appendChatImages(chatImagesCache[chatId][page], subscriptionStatus, isAdmin, isTemporary)
+        chatCurrentPageMap[chatId] = page
+        generateChatImagePaginationFromCache(chatId) // update spinner/back-to-top if needed
+        return resolve()
+      }
+  
+      // Otherwise fetch from server
+      console.log(`Fetching page ${page} from server for chatId:${chatId}...`)
+      $.ajax({
         url: `/chat/${chatId}/images?page=${page}`,
         method: 'GET',
-        success: function (data) {
-            currentPageMap[chatId] = data.page;
-            let chatGalleryHtml = '';
-            data.images.forEach((item, idx) => {
-                const unlockedItem = isUnlocked(currentUser, item._id, item.userId);
-                let isBlur = unlockedItem ? false : item?.nsfw && !subscriptionStatus;
-                const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
-                const index = loadedImages.length - 1;
-                if (!isBlur && !loadedImages.some(image => image._id === item._id)) {
-                    loadedImages.push(item);
-                }
-                chatGalleryHtml += `
-                    <div class="col-12 col-md-4 col-lg-2 mb-2">
-                        <div class="card shadow-0">
-                            ${isBlur ? `
-                            <div type="button" onclick=${isTemporary ? `showRegistrationForm()` : `unlockImage('${item._id}','gallery',this)`}>
-                                <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" >
-                            </div>
-                            ` : `
-                            <a href="/character/${item.chatId}?imageId=${item._id}" data-index="${index}">
-                                <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
-                            </a>
-                            <div class="${!isAdmin?'d-none':''} card-body p-2 row mx-0 px-0 align-items-center justify-content-between">
-                                <button class="btn btn-light col-6 image-nsfw-toggle ${!isAdmin?'d-none':''} ${item?.nsfw ? 'nsfw':'sfw'}" data-id="${item._id}">
-                                    <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill':'bi-eye-fill'}"></i> 
-                                </button>
-                                <span class="btn btn-light float-end col-6 image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
-                                    <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
-                                </span>
-                            </div>
-                            `}
-                        </div>
-                    </div>
-                `;
-            });
-
-            $('#chat-images-gallery').append(chatGalleryHtml);
-            if ($('#chat-images-pagination-controls').length > 0) {
-                generateChatImagePagination(data.totalPages, chatId);
-            }
-
-            $(document).find('.img-blur').each(function() {
-                blurImage(this);
-            });
-
-            // Update swiper slides if modal is open
-            if ($('#swiperModal').data('chat-id') === chatId) {
-                updateSwiperSlides(loadedImages);
-            }
-
-            loadingStates[chatId] = false;
-            $('#swiperModal').data('total-pages', data.totalPages);
+        success: (data) => {
+          console.log(`Fetched page ${page} from server:`, data)
+          chatCurrentPageMap[chatId] = data.page
+  
+          // Append
+          appendChatImages(data.images, subscriptionStatus, isAdmin, isTemporary)
+  
+          // Cache
+          chatImagesCache[chatId][data.page] = data.images
+          cacheData.pages = chatImagesCache[chatId]
+          localStorage.setItem(cacheKey, JSON.stringify(cacheData))
+  
+          // Set up infinite scroll
+          generateChatImagePagination(data.totalPages, chatId)
+          resolve()
         },
-        error: function (err) {
-            console.error('Failed to load images', err);
-        }
-    });
-}
+        error: (err) => {
+          console.error(`Failed to load images for chatId:${chatId}`, err)
+          reject(err)
+        },
+      })
+    })
+  }
+  
+  // Minimal helper to append chat images
+  function appendChatImages(images, subscriptionStatus, isAdmin, isTemporary) {
+    const currentUserId = user._id
+    let chatGalleryHtml = ''
+  
+    images.forEach((item) => {
+      const unlockedItem = isUnlocked(user, item._id, item.userId)
+      const isBlur = !unlockedItem && item?.nsfw && !subscriptionStatus
+      const isLiked = item?.likedBy?.some((id) => id.toString() === currentUserId.toString())
+  
+      // If not blurred & not in loadedImages => push into loadedImages
+      if (!isBlur && !loadedImages.some((img) => img._id === item._id)) {
+        loadedImages.push(item)
+      }
+      let index = loadedImages.length - 1
+  
+      chatGalleryHtml += `
+        <div class="col-12 col-md-4 col-lg-2 mb-2">
+          <div class="card shadow-0">
+            ${
+              isBlur
+                ? `<div type="button" onclick="${isTemporary ? 'showRegistrationForm()' : `unlockImage('${item._id}','gallery',this)`}">
+                     <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
+                   </div>`
+                : `<a href="/character/${item.chatId}?imageId=${item._id}" data-index="${index}">
+                     <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
+                   </a>
+                   <div class="${!isAdmin ? 'd-none' : ''} card-body p-2 row mx-0 px-0 align-items-center justify-content-between">
+                     <button class="btn btn-light col-6 image-nsfw-toggle ${!isAdmin ? 'd-none' : ''} ${item?.nsfw ? 'nsfw' : 'sfw'}" data-id="${item._id}">
+                       <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
+                     </button>
+                     <span class="btn btn-light float-end col-6 image-fav ${isLiked ? 'liked' : ''}" data-id="${item._id}">
+                       <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
+                     </span>
+                   </div>`
+            }
+          </div>
+        </div>
+      `
+    })
+  
+    $('#chat-images-gallery').append(chatGalleryHtml)
+    $(document).find('.img-blur').each(function () {
+      blurImage(this)
+    })
+  
+    // Update swiper if modal is open
+    const modalChatId = $('#swiperModal').data('chat-id')
+    if (modalChatId && modalChatId.toString() === images?.[0]?.chatId?.toString()) {
+      updateSwiperSlides(loadedImages)
+    }
+  }
+  
+  // Infinite scroll / pagination
+  window.generateChatImagePagination = function (totalPages, chatId) {
+    console.log(`generateChatImagePagination => chatId:${chatId}, totalPages:${totalPages}`)
+    if (!chatLoadingStates[chatId]) chatLoadingStates[chatId] = false
+    if (!chatCurrentPageMap[chatId]) chatCurrentPageMap[chatId] = 0
+  
+    $(window).off('scroll').on('scroll', () => {
+      if (
+        !chatLoadingStates[chatId] &&
+        chatCurrentPageMap[chatId] < totalPages &&
+        $(window).scrollTop() + $(window).height() >= $(document).height() - 100
+      ) {
+        console.log(`Infinite scroll => next page: ${chatCurrentPageMap[chatId] + 1}`)
+        chatLoadingStates[chatId] = true
+        loadChatImages(chatId, chatCurrentPageMap[chatId] + 1, false)
+          .then(() => {
+            chatLoadingStates[chatId] = false
+            console.log(`Finished loading page ${chatCurrentPageMap[chatId]}`)
+          })
+          .catch((err) => {
+            chatLoadingStates[chatId] = false
+            console.error('Failed to load the next page:', err)
+          })
+      }
+    })
+  
+    updateChatPaginationControls(totalPages, chatId)
+  }
+  
+  // If we skip the server call due to cache only
+  function generateChatImagePaginationFromCache(chatId) {
+    console.log(`generateChatImagePaginationFromCache => chatId:${chatId}`)
+    // If you don't store totalPages, set a large number or store it somewhere else
+    updateChatPaginationControls(9999, chatId)
+  }
+  
+  // Spinner or back-to-top
+  function updateChatPaginationControls(totalPages, chatId) {
+    if (chatCurrentPageMap[chatId] >= totalPages) {
+      $('#chat-images-pagination-controls').html(
+        `<button class="btn btn-outline-secondary" onclick="scrollToTop()">
+           <i class="bi bi-arrow-up-circle-fill me-2"></i>${window.translations.backToTop}
+         </button>`
+      )
+    } else {
+      $('#chat-images-pagination-controls').html(
+        '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
+      )
+    }
+  }
+
 $(document).ready(function () {
     let currentPage = 1;
     let isFetchingChats = false;
@@ -2086,42 +2420,6 @@ function generateUserPostsPagination(totalPages) {
     }
 }
 
-function generateImagePagination(totalPages, userId) {
-    if (typeof loadingStates === 'undefined') loadingStates = {}; // Ensure the loadingStates object exists
-    if (typeof currentPageMap === 'undefined') currentPageMap = {}; // Ensure the currentPageMap object exists
-
-    if (typeof loadingStates[userId] === 'undefined') loadingStates[userId] = false;
-    if (typeof currentPageMap[userId] === 'undefined') currentPageMap[userId] = 1; // Initialize the current page for the userId
-
-    // Scroll event listener for infinite scroll
-    $(window).off('scroll').on('scroll', function() {
-        if (!loadingStates[userId] && currentPageMap[userId] < totalPages && $(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
-            loadingStates[userId] = true;
-            loadUserImages(userId, currentPageMap[userId] + 1).then(() => {
-                currentPageMap[userId]++; // Increment the page after successful loading
-                loadingStates[userId] = false; // Reset the loading state
-            }).catch(() => {
-                // Handle errors if needed
-                loadingStates[userId] = false;
-            });
-        }
-    });
-
-    // Display spinner if more pages are available, otherwise show a back-to-top button
-    if (currentPageMap[userId] >= totalPages) {
-        $('#images-pagination-controls').html(
-            '<button class="btn btn-outline-secondary" onclick="scrollToTop()">' +
-            '<i class="bi bi-arrow-up-circle-fill me-2"></i>' + window.translations.backToTop +
-            '</button>'
-        );
-    } else {
-        $('#images-pagination-controls').html(
-            '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
-        );
-    }
-}
-
-
 function generateUserPostsPagination(userId, totalPages) {
     if (typeof loadingStates === 'undefined') loadingStates = {}; // Ensure the loadingStates object exists
     if (typeof currentPageMap === 'undefined') currentPageMap = {}; // Ensure the currentPageMap object exists
@@ -2152,98 +2450,6 @@ function generateUserPostsPagination(userId, totalPages) {
         );
     } else {
         $('#user-posts-pagination-controls').html(
-            '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
-        );
-    }
-}
-
-
-function generateAllChatsImagePagination(totalPages) {
-
-    if (typeof loadingStates === 'undefined') loadingStates = {}; // Ensure the loadingStates object exists
-    if (typeof currentPageMap === 'undefined') currentPageMap = {}; // Ensure the currentPageMap object exists
-
-    if (typeof loadingStates['allChats'] === 'undefined') loadingStates['allChats'] = false;
-    if (typeof currentPageMap['allChats'] === 'undefined') currentPageMap['allChats'] = 1; // Initialize the current page for all chats
-
-    // Scroll event listener for infinite scroll
-    $(window).off('scroll').on('scroll', function() {
-        if (!loadingStates['allChats'] && currentPageMap['allChats'] < totalPages && $(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
-            loadingStates['allChats'] = true;
-            loadAllChatImages(currentPageMap['allChats'] + 1).then(() => {
-                currentPageMap['allChats']++; // Increment the page after successful loading
-                loadingStates['allChats'] = false; // Reset the loading state
-            }).catch(() => {
-                // Handle errors if needed
-                loadingStates['allChats'] = false;
-            });
-        }
-    });
-
-    // Display spinner if more pages are available, otherwise clear the pagination controls
-    if (currentPageMap['allChats'] >= totalPages) {
-        $('#all-chats-images-pagination-controls').html(''); // Clear controls if no more pages
-    } else {
-        $('#all-chats-images-pagination-controls').html(
-            '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
-        );
-    }
-}
-function generateChatImagePagination(totalPages, chatId) {
-    if (typeof loadingStates === 'undefined') loadingStates = {};
-    if (typeof currentPageMap === 'undefined') currentPageMap = {};
-
-    if (typeof loadingStates[chatId] === 'undefined') loadingStates[chatId] = false;
-    if (typeof currentPageMap[chatId] === 'undefined') currentPageMap[chatId] = 1;
-
-    // Helper function to load more pages if there's still space
-    async function loadUntilScrollable() {
-        while (
-            !loadingStates[chatId] &&
-            currentPageMap[chatId] < totalPages &&
-            $(document).height() <= $(window).height()
-        ) {
-            try {
-                loadingStates[chatId] = true;
-                await loadChatImages(chatId, currentPageMap[chatId] + 1);
-                currentPageMap[chatId]++;
-            } catch (err) {
-                console.error('Failed to load chat images', err);
-            } finally {
-                loadingStates[chatId] = false;
-            }
-        }
-    }
-
-    // Attempt to load more images immediately if page isn't scrollable
-    loadUntilScrollable();
-
-    // Scroll event listener for infinite scroll
-    $(window).off('scroll').on('scroll', function() {
-        if (
-            !loadingStates[chatId] &&
-            currentPageMap[chatId] < totalPages &&
-            $(window).scrollTop() + $(window).height() >= $(document).height() - 100
-        ) {
-            loadingStates[chatId] = true;
-            loadChatImages(chatId, currentPageMap[chatId] + 1)
-                .then(() => {
-                    currentPageMap[chatId]++;
-                    loadingStates[chatId] = false;
-                    // Check again if there's still space after loading
-                    loadUntilScrollable();
-                })
-                .catch(() => {
-                    loadingStates[chatId] = false;
-                });
-        }
-    });
-
-    // Display spinner if more pages are available, otherwise clear the pagination controls
-    if (currentPageMap[chatId] >= totalPages) {
-        $('#chat-images-pagination-controls').html('');
-    } else {
-        $('#chat-images-pagination-controls').html(
             '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
         );
     }

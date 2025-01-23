@@ -1330,7 +1330,7 @@ window.loadUserImages = async function (userId, page = 1) {
             let isBlur = unlockedItem ? false : item?.nsfw && !subscriptionStatus 
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             galleryHtml += `
-                <div class="col-12 col-md-6 col-lg-4 mb-2">
+                <div class="col-6 col-md-3 col-lg-2 mb-2">
                 <div class="card">
                     <div class="d-flex align-items-center p-2">
                         <a href="/character/${item.chatId}?imageId=${item._id}">

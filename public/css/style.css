@@ -982,6 +982,17 @@ em {
   scroll-behavior: smooth;
   touch-action: pan-x; /* Enable horizontal touch scrolling */
 }
+.modal-content{
+  border-radius: 5px;
+}
+.modal-title{
+  font-size: 20px;
+  font-weight: 600;
+  background-image: radial-gradient(circle at 0 0,#ffa0d9,#8d34e2 50%,#8d34e2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 .u-color-grad {
   background-image: radial-gradient(circle at 0 0,#ffa0d9,#8d34e2 50%,#8d34e2);
   -webkit-background-clip: text;

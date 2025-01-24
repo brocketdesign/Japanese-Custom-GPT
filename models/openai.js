@@ -13,7 +13,12 @@ const apiDetails = {
   },
   novita: {
     apiUrl: 'https://api.novita.ai/v3/openai/chat/completions',
-    model: 'meta-llama/llama-3.1-70b-instruct',
+    model: 'google/gemma-2-9b-it',
+    key: process.env.NOVITA_API_KEY
+  },
+  novita_nsfw: {
+    apiUrl: 'https://api.novita.ai/v3/openai/chat/completions',
+    model: 'openchat/openchat-7b',
     key: process.env.NOVITA_API_KEY
   },
   venice: {

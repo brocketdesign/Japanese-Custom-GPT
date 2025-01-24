@@ -104,6 +104,7 @@ function initializeWebSocket() {
 
   socket.onclose = () => {
     console.log('WebSocket connection closed');
+    showNotification(translations.websocket.connection_lost, 'warning');
     if (reconnectAttempts < maxReconnectAttempts) {
       setTimeout(() => {
         console.log(`Reconnecting... Attempt ${reconnectAttempts + 1}`);

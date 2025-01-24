@@ -30,6 +30,11 @@ fastify.register(require('@fastify/mongodb'), {
 // Wait for the database connection to be established then delete all tasks
 fastify.ready(() => {
   deleteAllTasks(fastify.mongo.db);
+  const awsimages = fastify.mongo.db.collection('awsimages');
+  awsimages.deleteMany({}, function(err, obj) {
+    if (err) throw err;
+    console.log(obj.result.n + " document(s) deleted");
+  });
 });
 
 cron.schedule('0 0 * * *', async () => {

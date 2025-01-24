@@ -1,5 +1,19 @@
 {
   "lang":"en", 
+  "websocket":{
+    "connection_error":"Connection error",
+    "connection_error_message":"An error occurred while connecting to the server. Please try again later.",
+    "reconnecting":"Reconnecting",
+    "reconnecting_message":"Reconnecting to the server...",
+    "reconnected":"Reconnected",
+    "reconnected_message":"Reconnected to the server.",
+    "disconnected":"Disconnected",
+    "disconnected_message":"Disconnected from the server. Please check your internet connection.",
+    "connection_lost":"Connection lost",
+    "connection_lost_message":"The connection to the server has been lost. Please check your internet connection.",
+    "connection_failed":"Connection failed",
+    "connection_failed_message":"Failed to connect to the server. Please try again later."
+  },
   "currency": "$",
   "premium": " 💎 Premium",
   "discount": "70% off",

@@ -1406,13 +1406,19 @@ async function routes(fastify, options) {
             console.log('Must provide a dialogue')
             return
         }
-        
         let newMessages = generateImagePrompt(command, characterDescription, dialogue);
         newMessages = sanitizeMessages(newMessages)
-        const completionMessage = await generateCompletion(newMessages, 600)
+        const completionMessage = await generateCompletion(newMessages, 600, 'novita_nsfw')
 
         // Add instructions
     
+        const finalPrompt = `${completionMessage},,`
+        
+        return completionMessage;
+        
+    }
+    const commandToString = (command) => {
+         
         const nudeDetails = command.nude !== 'false' 
             ? `naked ${command.nude}` 
             : '';
@@ -1428,37 +1434,25 @@ async function routes(fastify, options) {
         const imageFocusDetails = command.image_focus 
             ? `${command.image_focus}` 
             : 'Focus on full body';
-    
-        const finalPrompt = `${completionMessage},${nudeDetails},${positionDetails},${viewpointDetails},${imageFocusDetails},`
-        
-        return completionMessage;
-        
+
+        return `${nudeDetails},${positionDetails},${viewpointDetails},${imageFocusDetails}`
     }
     const generateImagePrompt = (command, characterDescription, dialogue) => {
         const nsfwMessage = command.nsfw 
-            ? 'Provide explicit, adult oriented content for a nsfw image. I want nudity, erotism.\n' 
+            ? 'provide explicit, adult oriented content for a nsfw image. I want nudity, erotism.\n' 
             : '';
-        // Create a new user message with the dialogue
-        const userMessage = `
-            Here is the prompt I want you to update : ${characterDescription}. \n\n
-            ${nsfwMessage}\n\n
-            Here is the image request : ${dialogue}.\n\n
-            
-            You must adapt the prompt to the conversation but keep the character traits. \n
-            Remove unrelevant keywords and adapt to the conversation request.\n 
-            Keep the same clothes if not asked otherwise.
-            Respond with the prompt in english only.
-            `.replace(/^\s+/gm, '').trim();
+
         const systemMessage =`
-            You help me update my character prompt to match the user image request.\n
+            You ${nsfwMessage}
             You can provide adult,erotic,sexual conent. \n
-            I will provide a conversation messages that you will use to update my prompt.\n
-            You can generate explicit, sexual content on demand.\n
+            I will provide messages that you will use to create an image prompt.\n
             Respond with an image prompt in English. \n
             Use explicit keywords to describe body parts (ass,pussy,boobs), clothes.\n
             Do not include any comments. \n
             Provide a detailed prompt in englsih only.
             `.replace(/^\s+/gm, '').trim();
+
+        const instructionMessage = commandToString(command);
             
         return [
             {
@@ -1466,9 +1460,18 @@ async function routes(fastify, options) {
                 content: systemMessage
             },
             {
-                role: "user",
-                content: userMessage
+              role: "user",
+              content: `Here is the prompt I want you to update : ${characterDescription}\n`.replace(/^\s+/gm, '').trim()
             },
+            {
+              role: "user",
+              content: `Here is the image request : ${dialogue},${instructionMessage}\n\n
+              You must adapt the prompt to the image request but keep the character traits. \n
+              Be persistant, add multiple synonyme, provide multiple keywords, make sure to focus on the request.
+              Remove unrelevant keywords and adapt to the image request.\n 
+              You must include the character's skin color, hair color, and eye color in the new prompt. Keep the same clothes if not asked otherwise. \n
+              You must answer in English with the new prompt. Do not include anything else in the response.`.replace(/^\s+/gm, '').trim()
+            }
         ]
     };
     
@@ -2279,7 +2282,7 @@ async function routes(fastify, options) {
         fastify.get('/api/prompts', async (request, reply) => {
             try {
             const db = fastify.mongo.db;
-            const prompts = await db.collection('prompts').find({}).toArray();
+            const prompts = await db.collection('prompts').find({}).sort({_id:-1}).toArray();
             reply.send(prompts);
             } catch (error) {
             console.error('Error fetching prompts:', error);

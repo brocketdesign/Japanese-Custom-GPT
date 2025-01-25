@@ -202,10 +202,13 @@ fastify.get('/user/google-auth/callback', async (request, reply) => {
       
       const TempUser = request.user;
       let tempUserId = TempUser._id
+
+      const tempNickname = Math.random().toString(36).substr(2, 10);
       const result = await usersCollection.insertOne({ 
         lang: request.lang,
         email, 
         password: hashedPassword, 
+        nickname: tempNickname,
         googleId, 
         createdAt: new Date() , 
         tempUserId,
@@ -321,11 +324,13 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       
       const TempUser = request.user;
       let tempUserId = TempUser._id
+      const tempNickname = Math.random().toString(36).substr(2, 10);
       const result = await usersCollection.insertOne({ 
         lang: request.lang,
         userId, 
         email, 
         password: hashedPassword, 
+        nickname: tempNickname,
         createdAt: new Date(), 
         tempUserId ,
         coins: 100

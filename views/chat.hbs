@@ -671,13 +671,14 @@ $(document).ready(function() {
             $('.custom-card').show();
         }
     });
-    $(document).on('click','.redirectToChat',function(){
-        const chatId = $(this).data('id');
-        const chatImage = $(this).data('image');
-        redirectToChat(chatId,chatImage)
-    })
 });
+$(document).on('click','.redirectToChat',function(){
+    const chatId = $(this).data('id');
+    const chatImage = $(this).data('image');
+    redirectToChat(chatId,chatImage)
+})
 function redirectToChat(chatId,chatImage) {
+console.log('chatId',chatId)
     if($(`#spinner-${chatId}`).hasClass('on')){
         return
     }
@@ -687,7 +688,6 @@ function redirectToChat(chatId,chatImage) {
     $(`#spinner-${chatId}`).addClass('on').show()
     const user = {{{json user}}}
     const userId = user._id
-
     fetchChatData(chatId,userId,null,function(){
         $(`#spinner-${chatId}`).removeClass('on').hide()
     })

@@ -1,3 +1,15 @@
+
+<!-- Authenticate Modal -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog mx-0">
+        <div class="modal-content mx-auto ">
+            <div class="modal-header">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body bg-dark p-0 m-0" id="login-container"></div>
+        </div>
+    </div>
+</div>
 <!-- Settings Modal -->
 <div class="modal fade " id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-scrollable mx-0">
@@ -300,7 +312,7 @@ function showNavTabs(){
     }
 
     // Handle tab clicks
-    $(document).find('#imageStyleTabs button').on('click', function () {
+    $(document).on('click','#imageStyleTabs button', function () {
         if($(this).hasClass('add-more')){
             return
         }

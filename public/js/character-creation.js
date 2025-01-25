@@ -12,7 +12,7 @@
             $('#enhancedPrompt').toggle()
         })
     });
-    $(document).on('click', '.add-tag', function() {
+    $(document).off().on('click', '.add-tag', function() {
         const tag = $(this).text();
         const $characterPrompt = $('#characterPrompt');
         const prompt = $characterPrompt.val();
@@ -47,25 +47,25 @@
         });
     }
 
+
 $(document).ready(function() {
-    if (!isTemporaryChat && chatId) {
+        
+    if (chatId && chatId.trim() !== '') {
+        $(".chatRedirection").show();
         $(document).on('click','#redirectToChat', function() {
             if(!$('#chatContainer').length){
                 window.location.href = `/chat/${chatId}`;
                 return
             }
             closeAllModals();
-            fetchchatData(chatId,userId);
+            callFetchChatData(chatId,userId);
         });
     }
-});
-
-$(document).ready(function() {
-        
+    
     $('.dropdown-toggle').each(function(e) {
         new mdb.Dropdown($(this)[0]);
     });
-
+    
     var count = 0
     const subscriptionStatus = user.subscriptionStatus == 'active'
     let isAutoGen = false
@@ -93,7 +93,7 @@ $(document).ready(function() {
     }
 
     if (isTemporaryChat == 'false' || isTemporaryChat == false) {
-        fetchchatData(chatId);
+        fetchchatCreationData(chatId);
     }
 
     $('textarea').each(function() {
@@ -112,7 +112,7 @@ $(document).ready(function() {
         }
     }
 
-     function fetchchatData(chatId, callback) {
+     function fetchchatCreationData(chatId, callback) {
             $.ajax({
                 url: `/api/chat-data/${chatId}`,
                 type: 'GET',
@@ -175,7 +175,7 @@ $(document).ready(function() {
                         resizeTextarea($('#chatDescription')[0]);
                     }
 
-                    if (chatData.base_personality.story && $('#chatStory').length) {
+                    if (chatData?.base_personality && chatData?.base_personality?.story && $('#chatStory').length) {
                         $('#chatStory').val(chatData.base_personality.story).show();
                         resizeTextarea($('#chatStory')[0]);
                     }
@@ -217,6 +217,13 @@ $(document).ready(function() {
             }
             });
         }
+        function resetInfiniteScroll(){
+            const imageStyle = $('.style-option.selected').data('style')
+            const imageModel = $('.style-option.selected').data('model')
+            const searchId = `peopleChatCache_${imageStyle}-${imageModel}--false`
+            localStorage.removeItem(searchId)
+        }; 
+
         // Save selected image model
         function saveSelectedImageModel(chatId, callback) {
             
@@ -248,7 +255,7 @@ $(document).ready(function() {
             }
             });
         }
-   
+
         function returnDetails(containerId) {
             const details = {};
             $(containerId).find('input, select, textarea').each(function () {
@@ -298,7 +305,9 @@ $(document).ready(function() {
             throw error;
         }
     }
+
     $('#generateButton').on('click', async function() {
+        resetInfiniteScroll();
         let newchatId = await checkChat(chatId)
 
         if(newchatId){
@@ -310,7 +319,9 @@ $(document).ready(function() {
                     return
                 }
                 closeAllModals();
-                fetchchatData(newchatId,userId);
+                console.log('Fetch newchatId',newchatId)
+                console.log('userId',userId)
+                callFetchChatData(newchatId,userId);
             });
         }
         const prompt = characterPrompt = $('#characterPrompt').val().trim();
@@ -321,7 +332,7 @@ $(document).ready(function() {
             const initial_modelId = `{{modelId}}`
             if(initial_modelId){
                 modelId = initial_modelId
-                $(document).find(`.style-option[data-id=${initial_modelId}]`).click();
+                $(document).find(`.style-option[data-id="${initial_modelId}"]`).click();
             }
         }
 
@@ -428,7 +439,7 @@ $(document).ready(function() {
                 showNotification(translations.newCharacter.personalityDetailsDone , 'success');
                 $('.chatRedirection').show();
                 //Scroll to .chatRedirection
-                $('html, body').animate({
+                $('#characterCreationModal .modal-body').animate({
                     scrollTop: $(".chatRedirection").offset().top
                 }, 1000);
             });
@@ -490,6 +501,12 @@ $(document).ready(function() {
         }
        
 });
+
+function resetChatList(){
+    const imageModel = $('.style-option.selected').data('model')
+    $(document).find(`#imageStyleTabs button[data-model="${imageModel}"]`).click()
+}
+
 window.saveSelectedImage = function(imageUrl, callback) {
     $.ajax({
     url: '/novita/save-image',
@@ -535,6 +552,7 @@ window.generateCharacterImage = function(url, nsfw) {
             showNotification(translations.imageForm.image_save_failed, 'error');
         } else {
             showNotification(translations.imageForm.image_saved, 'success');
+            resetChatList();
         }
         });
     });

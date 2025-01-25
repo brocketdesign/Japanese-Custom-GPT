@@ -227,7 +227,8 @@ async function checkTaskStatus(taskId, fastify) {
   const task = await tasksCollection.findOne({ taskId });
 
   if (!task) {
-    throw new Error('Task not found.');
+    console.log(`Task not found: ${taskId}`);
+    return false;
   }
 
   if (['completed', 'failed'].includes(task.status)) {

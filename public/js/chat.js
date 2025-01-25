@@ -118,7 +118,7 @@ $(document).ready(async function() {
     $('.is-free-user').each(function(){if(!subscriptionStatus && !isTemporary)$(this).show()})
 
     window.fetchChatData = async function(fetch_chatId, fetch_userId, fetch_reset, callback) {
-        
+        console.log('fetchChatData',fetch_chatId, fetch_userId, fetch_reset)
         const lastUserChat = await getUserChatHistory(fetch_chatId);
         fetch_chatId = lastUserChat ?.chatId || fetch_chatId
         chatId = fetch_chatId
@@ -1512,6 +1512,10 @@ $(document).ready(async function() {
     }
 });
 
+// call fetchchatdata function accross other scripts
+function callFetchChatData(fetch_chatId, fetch_userId, fetch_reset, callback){
+    fetchChatData(fetch_chatId, fetch_userId, fetch_reset, callback);
+}
 function updateProgress(messagesCount, maxMessages) {
     if(messagesCount>maxMessages){return}
     // Calculate fill percentage out of 100

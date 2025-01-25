@@ -1062,7 +1062,8 @@ function generateUserChatsPagination(userId, currentPage, totalPages) {
 
 // Enhanced displayPeopleChat with caching + infinite scroll
 window.displayPeopleChat = async function (page = 1, option = {}, callback, reload = false) {
-  const { imageStyle, imageModel, query = '', userId = '', modal = false } = option
+  const { imageStyle, imageModel, query = '', userId = false, modal = false } = option
+
   const searchId = `${imageStyle}-${imageModel}-${query}-${userId}`
 
   // LocalStorage key
@@ -1260,7 +1261,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
       }
   });
 
-  $('#chat-gallery').append(htmlContent);
+  $(document).find('#chat-gallery').append(htmlContent);
 };
 
 
@@ -2661,10 +2662,6 @@ function loadCharacterCreationPage(chatId) {
             const imageUploaderScript = document.createElement('script');
             imageUploaderScript.src = '/js/image-uploader.js';
             document.body.appendChild(imageUploaderScript);
-
-            const stabilityScript = document.createElement('script');
-            stabilityScript.src = '/js/stability.js';
-            document.body.appendChild(stabilityScript);
 
             const script = document.createElement('script');
             script.src = '/js/character-creation.js';

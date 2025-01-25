@@ -33,7 +33,9 @@ fastify.ready(() => {
   const awsimages = fastify.mongo.db.collection('awsimages');
   awsimages.deleteMany({}, function(err, obj) {
     if (err) throw err;
-    console.log(obj.result.n + " document(s) deleted");
+    if(obj?.result){
+      console.log(obj.result.n + " document(s) deleted");
+    }
   });
 });
 

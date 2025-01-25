@@ -1064,7 +1064,6 @@ function generateUserChatsPagination(userId, currentPage, totalPages) {
 window.displayPeopleChat = async function (page = 1, option = {}, callback, reload = false) {
   const { imageStyle, imageModel, query = '', userId = '', modal = false } = option
   const searchId = `${imageStyle}-${imageModel}-${query}-${userId}`
-  console.log(`displayPeopleChat => page:${page}, searchId:${searchId}, reload:${reload}`)
 
   // LocalStorage key
   const cacheKey = `peopleChatCache_${searchId}`
@@ -1076,13 +1075,10 @@ window.displayPeopleChat = async function (page = 1, option = {}, callback, relo
   // List cached pages
   const cachedPages = Object.keys(peopleChatCache[searchId]).map(Number).sort((a, b) => a - b)
   const maxCachedPage = cachedPages.length ? Math.max(...cachedPages) : 0
-  console.log('Cached pages:', cachedPages, 'maxCachedPage:', maxCachedPage)
 
   // If reload => append all cached pages, update current page
   if (reload) {
-    console.log('Reload => appending all cached pages')
     for (let p of cachedPages) {
-      console.log(`Appending cached page ${p}`)
       if (peopleChatCache[searchId][p]?.recent) {
         window.displayChats(peopleChatCache[searchId][p].recent, searchId, modal)
         if (typeof callback === 'function') {
@@ -1097,7 +1093,6 @@ window.displayPeopleChat = async function (page = 1, option = {}, callback, relo
 
   // If page already cached & not reloading => skip server call
   if (peopleChatCache[searchId][page] && !reload) {
-    console.log(`Page ${page} is cached for searchId:${searchId}; skipping fetch`)
     const cachedResult = peopleChatCache[searchId][page]
     window.displayChats(cachedResult.recent || [], searchId, modal)
     if (typeof callback === 'function') {

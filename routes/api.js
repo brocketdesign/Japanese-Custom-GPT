@@ -351,6 +351,10 @@ async function routes(fastify, options) {
             Answer with the image description only. Do not include any comments. Respond EXCLUSIVELY IN ENGLISH!
           `.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim(),
         },
+        {
+            role: 'user',
+            content: `Your response contains the character's age, skin color, hair color, hair length, eyes color, tone, face expression, body type, body characteristic, breast size, ass size, body curves, gender, facial features, background, accessories.\n`
+        }
       ];
     }
     

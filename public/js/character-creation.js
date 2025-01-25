@@ -1,3 +1,4 @@
+
     $(document).ready(function() {
         fetchAndAppendModels();
     });
@@ -47,15 +48,15 @@
     }
 
 $(document).ready(function() {
-    if (chatId) {
-    $(document).on('click','#redirectToChat', function() {
-        if(!$('#chatContainer').length){
-            window.location.href = `/chat/${chatId}`;
-            return
-        }
-        closeAllModals();
-        fetchchatData(chatId,userId);
-    });
+    if (!isTemporaryChat && chatId) {
+        $(document).on('click','#redirectToChat', function() {
+            if(!$('#chatContainer').length){
+                window.location.href = `/chat/${chatId}`;
+                return
+            }
+            closeAllModals();
+            fetchchatData(chatId,userId);
+        });
     }
 });
 
@@ -299,6 +300,7 @@ $(document).ready(function() {
     }
     $('#generateButton').on('click', async function() {
         let newchatId = await checkChat(chatId)
+
         if(newchatId){
             window.chatId = newchatId
             chatId = newchatId
@@ -308,7 +310,7 @@ $(document).ready(function() {
                     return
                 }
                 closeAllModals();
-                fetchchatData(chatId,userId);
+                fetchchatData(newchatId,userId);
             });
         }
         const prompt = characterPrompt = $('#characterPrompt').val().trim();

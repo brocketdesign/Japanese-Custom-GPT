@@ -110,35 +110,50 @@ async function routes(fastify, options) {
         }
       });
 
-      fastify.post('/api/check-chat', async (request, reply) => {
-        try {
-            let chatId = request?.body?.chatId 
-            chatId = chatId !== undefined && chatId !== null && chatId !== ''
-            ? new fastify.mongo.ObjectId(request.body.chatId) 
-            : new fastify.mongo.ObjectId(); 
-            console.log('chatId:', chatId);
-          const userId = new fastify.mongo.ObjectId(request.user._id);
-          const chatsCollection = fastify.mongo.db.collection('chats');
-          
-          const existingChat = await chatsCollection.findOne({ _id: chatId });
-          
-          if (existingChat) {
-            return reply.code(200).send({ message: 'Chat exists', chat: existingChat });
-          }
-          
+    fastify.post('/api/check-chat', async (request, reply) => {
+      try {
+        let chatId = request?.body?.chatId 
+        chatId = chatId !== undefined && chatId !== null && chatId !== ''
+        ? new fastify.mongo.ObjectId(request.body.chatId) 
+        : new fastify.mongo.ObjectId(); 
+        console.log('chatId:', chatId);
+        
+        const userId = new fastify.mongo.ObjectId(request.user._id);
+        const chatsCollection = fastify.mongo.db.collection('chats');
+        
+        const existingChat = await chatsCollection.findOne({ _id: chatId });
+        
+        if (existingChat) {
+        if (existingChat.userId.equals(userId)) {
+            console.log('Chat exists for user:', userId);
+          return reply.code(200).send({ message: 'Chat exists', chat: existingChat });
+        } else {
+          // Create a new chat if the current userId is not the chat userId
+          console.log('Creating new chat for user:', userId);
+          const newChatId = new fastify.mongo.ObjectId();
           await chatsCollection.insertOne({
-            _id: chatId,
+            _id: newChatId,
             userId,
             language: request.lang,
             isTemporary: false,
           });
-          
-          return reply.code(201).send({ message: 'Chat created', chatId });
-        } catch (error) {
-          console.error('Error in /api/check-chat:', error);
-          return reply.code(500).send({ message: 'Internal Server Error', error: error.message });
+          return reply.code(201).send({ message: 'New chat created', chatId: newChatId });
         }
-      });
+        }
+        console.log('Creating new chat for user:', userId);
+        await chatsCollection.insertOne({
+        _id: chatId,
+        userId,
+        language: request.lang,
+        isTemporary: false,
+        });
+        
+        return reply.code(201).send({ message: 'Chat created', chatId });
+      } catch (error) {
+        console.error('Error in /api/check-chat:', error);
+        return reply.code(500).send({ message: 'Internal Server Error', error: error.message });
+      }
+    });
       
       
     const characterSchema = z.object({

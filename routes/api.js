@@ -1408,7 +1408,7 @@ async function routes(fastify, options) {
         }
         let newMessages = generateImagePrompt(command, characterDescription, dialogue);
         newMessages = sanitizeMessages(newMessages)
-        const completionMessage = await generateCompletion(newMessages, 600, 'novita_nsfw')
+        const completionMessage = await generateCompletion(newMessages, 600)
 
         // Add instructions
     

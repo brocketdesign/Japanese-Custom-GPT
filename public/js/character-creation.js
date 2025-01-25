@@ -1,45 +1,43 @@
 
-    $(document).ready(function() {
-        fetchAndAppendModels();
+$(document).ready(function() {
+    fetchAndAppendModels();
+});
+
+$(document).ready(function () {
+    $('#characterDescriptionAccordion, #personalityAccordion').on('show.bs.collapse hide.bs.collapse', function (e) {
+        const checkId = $(this).attr('id').replace('Accordion','Check')
+        $('#' + checkId).prop('checked', e.type === 'show');
+    });
+    $('#enableEnhancedPrompt').on('click',function(){
+        $('#enhancedPrompt').toggle()
+    })
+});
+$(document).off().on('click', '.add-tag', function() {
+    const tag = $(this).text();
+    const $characterPrompt = $('#characterPrompt');
+    const prompt = $characterPrompt.val();
+    $characterPrompt.val(prompt + ',' + tag);
+});
+
+$(document).ready(function() {
+    $('#language').val(lang)
+
+    $('#characterPrompt').on('input change', function() {
+        $('#enhancedPrompt').val('');
     });
     
-    $(document).ready(function () {
-        $('#characterDescriptionAccordion, #personalityAccordion').on('show.bs.collapse hide.bs.collapse', function (e) {
-            const checkId = $(this).attr('id').replace('Accordion','Check')
-            $('#' + checkId).prop('checked', e.type === 'show');
-        });
-        $('#enableEnhancedPrompt').on('click',function(){
-            $('#enhancedPrompt').toggle()
-        })
-    });
-    $(document).off().on('click', '.add-tag', function() {
-        const tag = $(this).text();
-        const $characterPrompt = $('#characterPrompt');
-        const prompt = $characterPrompt.val();
-        $characterPrompt.val(prompt + ',' + tag);
+    $(document).on('click', '.style-option', function () {
+        if($(this).hasClass('is-premium')){
+            showUpgradePopup('image-generation')
+            return
+        }
+        $('.style-option').removeClass('selected');
+        $(this).addClass('selected');
+        updateFields($(this));
     });
 
-    $(document).ready(function() {
-        $('#language').val(lang)
-
-        $('#characterPrompt').on('input change', function() {
-            $('#enhancedPrompt').val('');
-        });
-        
-        $(document).on('click', '.style-option', function () {
-            if($(this).hasClass('is-premium')){
-                showUpgradePopup('image-generation')
-                return
-            }
-            $('.style-option').removeClass('selected');
-            $(this).addClass('selected');
-            updateFields($(this));
-        });
-
-        updateFields($(document).find('.style-option.selected'));
-
-    });
-
+    updateFields($(document).find('.style-option.selected'));
+    
     function updateFields(element) {
         const fields = ['id', 'style', 'model', 'version'];
         fields.forEach(field => {
@@ -47,9 +45,10 @@
         });
     }
 
+});
 
 $(document).ready(function() {
-        
+
     if (chatId && chatId.trim() !== '') {
         $(".chatRedirection").show();
         $(document).on('click','#redirectToChat', function() {

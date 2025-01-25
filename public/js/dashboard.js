@@ -69,18 +69,19 @@ $(document).ready(function() {
     });
 });
 
+
+
+const userId = user._id
+isTemporary = !!user?.isTemporary
+subscriptionStatus = user.subscriptionStatus == 'active'  
+
+const userLang = user.lang
 $(document).ready(async function() {
     const urlParams = new URLSearchParams(window.location.search);
     const success = urlParams.get('success');
     const sessionId = urlParams.get('session_id');
     const priceId = urlParams.get('priceId');
     const paymentFalse = urlParams.get('payment') == 'false';
-
-    const userId = user._id
-    isTemporary = !!user?.isTemporary
-    subscriptionStatus = user.subscriptionStatus == 'active'  
-
-    const userLang = user.lang
 
     if(isTemporary){
         let formShown = false;
@@ -350,278 +351,281 @@ $(document).ready(async function() {
     
       
     }
-    $(document).find('.jp-date').each(function () {
-        const originalDate = new Date($(this).text());
-        if (isNaN(originalDate.getTime())) {
-            $(this).parent().hide(); 
-            return;
-        }
-        
-        const formattedDate = originalDate.toISOString().slice(0, 16).replace('T', ' ');
-    
-        $(this).replaceWith(`
-            <div>
-                <i class="bi bi-calendar"></i> ${formattedDate.slice(0, 10)} 
-            </div>
-        `);
-    });
-    
-    
-    $(document).on('click', '.persona', function(e) {
-        e.stopPropagation();
-        e.preventDefault();
-        const isTemporary = !!user.isTemporary
-        if(isTemporary){ showRegistrationForm(); return; }
-        const $this = $(this)
-        $this.toggleClass('on');
-        const $icon = $(this).find('i');
-        const isAdding = $icon.hasClass('far');
-        $icon.toggleClass('fas far');
-        const personaId = $(this).attr('data-id');
-        const isEvent = $(this).attr('data-event') == 'true'
-        if(isEvent){
-            window.parent.postMessage({ event: 'updatePersona', personaId,isAdding }, '*');
-        }else{
-            updatePersona(personaId,isAdding,null,function(){
-                $icon.toggleClass('fas far');
-                $this.toggleClass('on');
-            })
-        }
-    });
-    if(!isTemporary){
-        const personas = user?.personas || false
-        initializePersonaStats(personas)
+      
+});
+
+
+$(document).find('.jp-date').each(function () {
+    const originalDate = new Date($(this).text());
+    if (isNaN(originalDate.getTime())) {
+        $(this).parent().hide(); 
+        return;
     }
-    $(document).on('click', '.post-fav', function () {
+    
+    const formattedDate = originalDate.toISOString().slice(0, 16).replace('T', ' ');
 
-        const isTemporary = !!user.isTemporary;
-        if (isTemporary) { showRegistrationForm(); return; }
-    
-        const $this = $(this);
-        const postId = $(this).data('id');
-        const isLiked = $(this).hasClass('liked'); // Check if already liked
-    
-        const action = isLiked ? 'unlike' : 'like'; // Determine action
-    
+    $(this).replaceWith(`
+        <div>
+            <i class="bi bi-calendar"></i> ${formattedDate.slice(0, 10)} 
+        </div>
+    `);
+});
+
+
+$(document).on('click', '.persona', function(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    const isTemporary = !!user.isTemporary
+    if(isTemporary){ showRegistrationForm(); return; }
+    const $this = $(this)
+    $this.toggleClass('on');
+    const $icon = $(this).find('i');
+    const isAdding = $icon.hasClass('far');
+    $icon.toggleClass('fas far');
+    const personaId = $(this).attr('data-id');
+    const isEvent = $(this).attr('data-event') == 'true'
+    if(isEvent){
+        window.parent.postMessage({ event: 'updatePersona', personaId,isAdding }, '*');
+    }else{
+        updatePersona(personaId,isAdding,null,function(){
+            $icon.toggleClass('fas far');
+            $this.toggleClass('on');
+        })
+    }
+});
+if(!isTemporary){
+    const personas = user?.personas || false
+    initializePersonaStats(personas)
+}
+$(document).on('click', '.post-fav', function () {
+
+    const isTemporary = !!user.isTemporary;
+    if (isTemporary) { showRegistrationForm(); return; }
+
+    const $this = $(this);
+    const postId = $(this).data('id');
+    const isLiked = $(this).hasClass('liked'); // Check if already liked
+
+    const action = isLiked ? 'unlike' : 'like'; // Determine action
+
+    $this.toggleClass('liked');
+
+    $.ajax({
+      url: `/posts/${postId}/like-toggle`, // Single endpoint
+      method: 'POST',
+      data: { action: action }, // Send action (like/unlike) in the request body
+      success: function () {
+
+        // Show success notification in Japanese
+        if (action === 'like') {
+          showNotification('いいねしました！', 'success');
+          $this.find('.ct').text(parseInt($this.find('.ct').text()) + 1);
+        } else {
+          showNotification('いいねを取り消しました！', 'success');
+          $this.find('.ct').text(parseInt($this.find('.ct').text()) - 1);
+        }
+      },
+      error: function () {
+        // Show error notification in Japanese
         $this.toggleClass('liked');
-
-        $.ajax({
-          url: `/posts/${postId}/like-toggle`, // Single endpoint
-          method: 'POST',
-          data: { action: action }, // Send action (like/unlike) in the request body
-          success: function () {
-    
-            // Show success notification in Japanese
-            if (action === 'like') {
-              showNotification('いいねしました！', 'success');
-              $this.find('.ct').text(parseInt($this.find('.ct').text()) + 1);
-            } else {
-              showNotification('いいねを取り消しました！', 'success');
-              $this.find('.ct').text(parseInt($this.find('.ct').text()) - 1);
-            }
-          },
-          error: function () {
-            // Show error notification in Japanese
-            $this.toggleClass('liked');
-            showNotification('リクエストに失敗しました。', 'error');
-          }
-        });
+        showNotification('リクエストに失敗しました。', 'error');
+      }
     });
-    $(document).on('click', '.image-fav', function () {
+});
+$(document).on('click', '.image-fav', function () {
 
-        const isTemporary = !!user.isTemporary;
-        if (isTemporary) { showRegistrationForm(); return; }
-    
-        const $this = $(this);
-        const imageId = $(this).data('id');
-        const isLiked = $(this).hasClass('liked'); // Check if already liked
-    
-        const action = isLiked ? 'unlike' : 'like'; // Determine action
+    const isTemporary = !!user.isTemporary;
+    if (isTemporary) { showRegistrationForm(); return; }
+
+    const $this = $(this);
+    const imageId = $(this).data('id');
+    const isLiked = $(this).hasClass('liked'); // Check if already liked
+
+    const action = isLiked ? 'unlike' : 'like'; // Determine action
+    $this.toggleClass('liked');
+
+    $.ajax({
+      url: `/gallery/${imageId}/like-toggle`, // Single endpoint
+      method: 'POST',
+      data: { action: action }, // Send action (like/unlike) in the request body
+      success: function () {
+
+        // Show success notification in Japanese
+        if (action === 'like') {
+            $this.find('.ct').text(parseInt($this.find('.ct').text()) + 1);
+            window.postMessage({ event: 'imageFav' , imageId}, '*');
+        } else {
+            showNotification('いいねを取り消しました！', 'success');
+            $this.find('.ct').text(parseInt($this.find('.ct').text()) - 1);
+        }
+      },
+      error: function () {
         $this.toggleClass('liked');
-    
-        $.ajax({
-          url: `/gallery/${imageId}/like-toggle`, // Single endpoint
-          method: 'POST',
-          data: { action: action }, // Send action (like/unlike) in the request body
-          success: function () {
-    
-            // Show success notification in Japanese
-            if (action === 'like') {
-                $this.find('.ct').text(parseInt($this.find('.ct').text()) + 1);
-                window.postMessage({ event: 'imageFav' , imageId}, '*');
-            } else {
-                showNotification('いいねを取り消しました！', 'success');
-                $this.find('.ct').text(parseInt($this.find('.ct').text()) - 1);
-            }
-          },
-          error: function () {
-            $this.toggleClass('liked');
-            showNotification('リクエストに失敗しました。', 'error');
-          }
-        });
+        showNotification('リクエストに失敗しました。', 'error');
+      }
     });
-    
-      $(document).on('click', '.post-visible', function () {
+});
 
-        const isTemporary = !!user.isTemporary;
-        if (isTemporary) { showRegistrationForm(); return; }
-    
-        const $this = $(this);
-        const postId = $(this).data('id');
-        const isPrivate = $(this).hasClass('private'); // Check if already private
-    
-        const newPrivacyState = !isPrivate; // Toggle privacy state
+  $(document).on('click', '.post-visible', function () {
 
-        $.ajax({
-          url: `/posts/${postId}/set-private`, // Single endpoint for both public and private
-          method: 'POST',
-          data: { isPrivate: newPrivacyState },
-          success: function () {
-            // Toggle private/public button state
-            $this.toggleClass('private');
-            const ico = newPrivacyState ? 'bi-eye-slash' : 'bi-eye'
-            const text = newPrivacyState ? '非公開' : '公開'
-            $this.find('i').removeClass('bi-eye bi-eye-slash').addClass(ico);
-            $this.find('.text').text(text)
+    const isTemporary = !!user.isTemporary;
+    if (isTemporary) { showRegistrationForm(); return; }
 
-            // Show success notification in Japanese
-            if (newPrivacyState) {
-              showNotification('投稿を非公開にしました！', 'success');
-            } else {
-              showNotification('投稿を公開にしました！', 'success');
-            }
-          },
-          error: function () {
-            // Show error notification in Japanese
-            showNotification('リクエストに失敗しました。', 'error');
-          }
-        });
-    }); 
-    $(document).on('click', '.image-nsfw-toggle', function () {
+    const $this = $(this);
+    const postId = $(this).data('id');
+    const isPrivate = $(this).hasClass('private'); // Check if already private
 
-        const isTemporary = !!user.isTemporary;
-        //if (isTemporary) { showRegistrationForm(); return; }
-    
-        const $this = $(this);
-        const imageId = $this.data('id');
-        const isNSFW = $this.hasClass('nsfw'); // Check if already marked as NSFW
-    
-        const nsfwStatus = !isNSFW; // Toggle NSFW status
-    
-        $this.toggleClass('nsfw'); // Toggle NSFW class for UI change
-    
-        // Update the button icon based on the NSFW status
-        const icon = nsfwStatus 
-          ? '<i class="bi bi-eye-slash-fill"></i>'   // NSFW icon (eye-slash for hidden content)
-          : '<i class="bi bi-eye-fill"></i>';        // Non-NSFW icon (eye for visible content)
-    
-        $this.html(icon); // Update the button's icon
-    
-        $.ajax({
-          url: `/images/${imageId}/nsfw`, // Endpoint for updating NSFW status
-          method: 'PUT',
-          contentType: 'application/json',
-          data: JSON.stringify({ nsfw: nsfwStatus }), // Send NSFW status in request body
-          success: function () {
-    
-            // Show success notification in Japanese
+    const newPrivacyState = !isPrivate; // Toggle privacy state
+
+    $.ajax({
+      url: `/posts/${postId}/set-private`, // Single endpoint for both public and private
+      method: 'POST',
+      data: { isPrivate: newPrivacyState },
+      success: function () {
+        // Toggle private/public button state
+        $this.toggleClass('private');
+        const ico = newPrivacyState ? 'bi-eye-slash' : 'bi-eye'
+        const text = newPrivacyState ? '非公開' : '公開'
+        $this.find('i').removeClass('bi-eye bi-eye-slash').addClass(ico);
+        $this.find('.text').text(text)
+
+        // Show success notification in Japanese
+        if (newPrivacyState) {
+          showNotification('投稿を非公開にしました！', 'success');
+        } else {
+          showNotification('投稿を公開にしました！', 'success');
+        }
+      },
+      error: function () {
+        // Show error notification in Japanese
+        showNotification('リクエストに失敗しました。', 'error');
+      }
+    });
+}); 
+$(document).on('click', '.image-nsfw-toggle', function () {
+
+    const isTemporary = !!user.isTemporary;
+    //if (isTemporary) { showRegistrationForm(); return; }
+
+    const $this = $(this);
+    const imageId = $this.data('id');
+    const isNSFW = $this.hasClass('nsfw'); // Check if already marked as NSFW
+
+    const nsfwStatus = !isNSFW; // Toggle NSFW status
+
+    $this.toggleClass('nsfw'); // Toggle NSFW class for UI change
+
+    // Update the button icon based on the NSFW status
+    const icon = nsfwStatus 
+      ? '<i class="bi bi-eye-slash-fill"></i>'   // NSFW icon (eye-slash for hidden content)
+      : '<i class="bi bi-eye-fill"></i>';        // Non-NSFW icon (eye for visible content)
+
+    $this.html(icon); // Update the button's icon
+
+    $.ajax({
+      url: `/images/${imageId}/nsfw`, // Endpoint for updating NSFW status
+      method: 'PUT',
+      contentType: 'application/json',
+      data: JSON.stringify({ nsfw: nsfwStatus }), // Send NSFW status in request body
+      success: function () {
+
+        // Show success notification in Japanese
+        if (nsfwStatus) {
+          showNotification('NSFWに設定されました！', 'success');
+        } else {
+          showNotification('NSFW設定が解除されました！', 'success');
+        }
+      },
+      error: function () {
+        $this.toggleClass('nsfw'); // Revert the class change if request fails
+        $this.html(isNSFW 
+          ? '<i class="bi bi-eye-fill"></i>' 
+          : '<i class="bi bi-eye-slash-fill"></i>'); // Revert the icon as well
+        showNotification('リクエストに失敗しました。', 'error');
+      }
+    });
+});
+$(document).on('click', '.post-nsfw-toggle', function () {
+
+    const isTemporary = !!user.isTemporary;
+    // if (isTemporary) { showRegistrationForm(); return; }
+
+    const $this = $(this);
+    const postId = $this.data('id'); // Post ID is stored in data attribute
+    const isNSFW = $this.hasClass('nsfw'); // Check if already marked as NSFW
+
+    const nsfwStatus = !isNSFW; // Toggle NSFW status
+
+    $this.toggleClass('nsfw'); // Toggle NSFW class for UI change
+
+    // Update the button icon based on the NSFW status
+    const icon = nsfwStatus 
+      ? '<i class="bi bi-eye-slash-fill"></i>'   // NSFW icon (eye-slash for hidden content)
+      : '<i class="bi bi-eye-fill"></i>';        // Non-NSFW icon (eye for visible content)
+
+    $this.html(icon); // Update the button's icon
+
+    $.ajax({
+        url: `/user/posts/${postId}/nsfw`, // Endpoint for updating NSFW status
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify({ nsfw: nsfwStatus }), // Send NSFW status in request body
+        success: function () {
+            // Show success notification
             if (nsfwStatus) {
-              showNotification('NSFWに設定されました！', 'success');
+                showNotification('NSFWに設定されました！', 'success');
             } else {
-              showNotification('NSFW設定が解除されました！', 'success');
+                showNotification('NSFW設定が解除されました！', 'success');
             }
-          },
-          error: function () {
+        },
+        error: function () {
             $this.toggleClass('nsfw'); // Revert the class change if request fails
             $this.html(isNSFW 
               ? '<i class="bi bi-eye-fill"></i>' 
               : '<i class="bi bi-eye-slash-fill"></i>'); // Revert the icon as well
             showNotification('リクエストに失敗しました。', 'error');
-          }
-        });
+        }
     });
-    $(document).on('click', '.post-nsfw-toggle', function () {
+}); 
+$(document).on('click', '.follow-button', function () {
 
-        const isTemporary = !!user.isTemporary;
-        // if (isTemporary) { showRegistrationForm(); return; }
-    
-        const $this = $(this);
-        const postId = $this.data('id'); // Post ID is stored in data attribute
-        const isNSFW = $this.hasClass('nsfw'); // Check if already marked as NSFW
+    const isTemporary = !!user.isTemporary;
+    if (isTemporary) { showRegistrationForm(); return; }
 
-        const nsfwStatus = !isNSFW; // Toggle NSFW status
-    
-        $this.toggleClass('nsfw'); // Toggle NSFW class for UI change
-    
-        // Update the button icon based on the NSFW status
-        const icon = nsfwStatus 
-          ? '<i class="bi bi-eye-slash-fill"></i>'   // NSFW icon (eye-slash for hidden content)
-          : '<i class="bi bi-eye-fill"></i>';        // Non-NSFW icon (eye for visible content)
-    
-        $this.html(icon); // Update the button's icon
-    
-        $.ajax({
-            url: `/user/posts/${postId}/nsfw`, // Endpoint for updating NSFW status
-            method: 'PUT',
-            contentType: 'application/json',
-            data: JSON.stringify({ nsfw: nsfwStatus }), // Send NSFW status in request body
-            success: function () {
-                // Show success notification
-                if (nsfwStatus) {
-                    showNotification('NSFWに設定されました！', 'success');
-                } else {
-                    showNotification('NSFW設定が解除されました！', 'success');
-                }
-            },
-            error: function () {
-                $this.toggleClass('nsfw'); // Revert the class change if request fails
-                $this.html(isNSFW 
-                  ? '<i class="bi bi-eye-fill"></i>' 
-                  : '<i class="bi bi-eye-slash-fill"></i>'); // Revert the icon as well
-                showNotification('リクエストに失敗しました。', 'error');
+    const $this = $(this);
+    const userId = $this.data('user-id');
+    const isFollowing = $this.hasClass('following'); // Check if already following
+
+    const action = isFollowing ? false : true;
+    $this.toggleClass('following');
+
+    $.ajax({
+        url: `/user/${userId}/follow-toggle`, // Single endpoint for both follow/unfollow
+        method: 'POST',
+        data: { action: action }, // Send action (follow/unfollow) in the request body
+        success: function () {
+            // Update the button text
+            if (action) {
+                $this.find('.user-follow').text('フォロー中');
+                showNotification('フォローしました！', 'success');
+            } else {
+                $this.find('.user-follow').text('フォロー');
+                showNotification('フォローを解除しました！', 'success');
             }
-        });
-    }); 
-    $(document).on('click', '.follow-button', function () {
-
-        const isTemporary = !!user.isTemporary;
-        if (isTemporary) { showRegistrationForm(); return; }
-    
-        const $this = $(this);
-        const userId = $this.data('user-id');
-        const isFollowing = $this.hasClass('following'); // Check if already following
-    
-        const action = isFollowing ? false : true;
-        $this.toggleClass('following');
-    
-        $.ajax({
-            url: `/user/${userId}/follow-toggle`, // Single endpoint for both follow/unfollow
-            method: 'POST',
-            data: { action: action }, // Send action (follow/unfollow) in the request body
-            success: function () {
-                // Update the button text
-                if (action) {
-                    $this.find('.user-follow').text('フォロー中');
-                    showNotification('フォローしました！', 'success');
-                } else {
-                    $this.find('.user-follow').text('フォロー');
-                    showNotification('フォローを解除しました！', 'success');
-                }
-            },
-            error: function () {
-                $this.toggleClass('following'); // Revert the state on error
-                showNotification('リクエストに失敗しました。', 'error');
-            }
-        });
+        },
+        error: function () {
+            $this.toggleClass('following'); // Revert the state on error
+            showNotification('リクエストに失敗しました。', 'error');
+        }
     });
-
-    $(document).on('click','.redirectToChatPage',function(){
-        const chatId = $(this).data('id');
-        const chatImage = $(this).data('image');
-        window.location='/chat/'+chatId
-    })
-      
 });
+
+$(document).on('click','.redirectToChatPage',function(e){
+    e.preventDefault();
+    const chatId = $(this).data('id');
+    const chatImage = $(this).data('image');
+    window.location='/chat/'+chatId
+})
 
 window.blurImage = function(img) {
     if ($(img).data('processed') === "true") return;
@@ -1223,7 +1227,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
 
           htmlContent += `
           <div class="chat-card-container col-6 col-sm-3 col-lg-3 mb-2" ${searchId?`data-id="${searchId}"`:''}>
-              <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 redirectToChat" style="cursor:pointer;" data-id="${chat.chatId || chat._id}" data-image="${chat.chatImageUrl}">
+              <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 redirectToChat" style="cursor:pointer;"  onclick="redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')" data-id="${chat.chatId || chat._id}" data-image="${chat.chatImageUrl}">
                   <div data-bg="${chat.chatImageUrl || '/img/logo.webp'}" class="card-img-top girls_avatar position-relative lazy-bg" alt="${chat.name || chat.chatName}">
                       <div id="spinner-${chat.chatId || chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
                       <div class="position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px;right:10px;">
@@ -1245,7 +1249,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                   <div class="card-body bg-transparent border-0 pb-0 px-0 mx-0 text-start">
                       <div class="row mx-0 px-0">
                           <div class="col-12 mx-0 px-0">
-                              <a class="btn btn-outline-secondary redirectToChat w-100 mb-2" href="/chat/${chat.chatId || chat._id}"> <i class="bi bi-chat-dots me-2"></i> ${window.translations.startChatting}</a>
+                              <span class="btn btn-outline-secondary redirectToChat w-100 mb-2" onclick="redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')"> <i class="bi bi-chat-dots me-2"></i> ${window.translations.startChatting}</span>
                               <div class="d-flex align-items-center justify-content-between">
                                   <h5 class="card-title character-title mb-0">${chat.name || chat.chatName}</h5>
                                   <a href="/user/${chat.userId}" class="text-muted" style="font-size:12px;">${chat.nickname}</a>
@@ -2588,6 +2592,7 @@ window.closeAllModals = function() {
             }
         }
     });
+
 }
 
 // Function to load settings page & execute script settings.js & open #settingsModal

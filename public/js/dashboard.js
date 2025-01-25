@@ -1412,7 +1412,6 @@ window.resultImageSearch = async function (page = 1,query,style = 'anime', callb
 }
 // Load All Chat Images with cache + infinite scroll
 window.loadAllChatImages = function (page = 1, reload = false) {
-    console.log(`loadAllChatImages => page:${page}, reload:${reload}`)
     const cacheKey = 'allChatsImagesCache'
     const currentUserId = user._id
     const subscriptionStatus = user.subscriptionStatus === 'active'
@@ -1430,13 +1429,10 @@ window.loadAllChatImages = function (page = 1, reload = false) {
       // List cached pages
       const cachedPages = Object.keys(allChatsImagesCache).map(Number).sort((a, b) => a - b)
       const maxCachedPage = cachedPages.length ? Math.max(...cachedPages) : 0
-      console.log(`Cached pages: [${cachedPages}], maxCachedPage: ${maxCachedPage}`)
   
       // If reload => append all cached pages, set current page
       if (reload) {
-        console.log('Reload requested; showing all cached pages first')
         cachedPages.forEach((p) => {
-          console.log(`Appending cached page ${p}`)
           appendAllChatsImages(allChatsImagesCache[p], subscriptionStatus, isAdmin)
         })
         allChatsCurrentPage = maxCachedPage
@@ -1445,7 +1441,6 @@ window.loadAllChatImages = function (page = 1, reload = false) {
   
       // If page is in cache and not reloading => skip server call
       if (allChatsImagesCache[page] && !reload) {
-        console.log(`Page ${page} is cached; skipping server call`)
         appendAllChatsImages(allChatsImagesCache[page], subscriptionStatus, isAdmin)
         allChatsCurrentPage = page
         generateAllChatsImagePaginationFromCache() // updates spinner/back-to-top
@@ -1458,7 +1453,6 @@ window.loadAllChatImages = function (page = 1, reload = false) {
         url: `/chats/images?page=${page}`,
         method: 'GET',
         success: (data) => {
-          console.log(`Fetched page ${page} from server:`, data)
           appendAllChatsImages(data.images, subscriptionStatus, isAdmin)
   
           // Cache the new page
@@ -1481,23 +1475,19 @@ window.loadAllChatImages = function (page = 1, reload = false) {
   
   // Infinite scroll + pagination for All Chats images
   window.generateAllChatsImagePagination = function (totalPages) {
-    console.log(`generateAllChatsImagePagination => totalPages:${totalPages}`)
     $(window).off('scroll').on('scroll', () => {
       if (
         !allChatsLoadingState &&
         allChatsCurrentPage < totalPages &&
         $(window).scrollTop() + $(window).height() >= $(document).height() - 100
       ) {
-        console.log(`Infinite scroll => fetching next page:${allChatsCurrentPage + 1}`)
         allChatsLoadingState = true
         loadAllChatImages(allChatsCurrentPage + 1, false)
           .then(() => {
             allChatsLoadingState = false
-            console.log(`Loaded page ${allChatsCurrentPage}`)
           })
           .catch(() => {
             allChatsLoadingState = false
-            console.error('Failed to load the next page')
           })
       }
     })
@@ -1506,7 +1496,6 @@ window.loadAllChatImages = function (page = 1, reload = false) {
   
   // If we skip a server call (using only cache), refresh controls
   function generateAllChatsImagePaginationFromCache() {
-    console.log(`generateAllChatsImagePaginationFromCache => currentPage:${allChatsCurrentPage}`)
     // If you don't store totalPages, set a high number or store it separately
     updateAllChatsPaginationControls(9999)
   }
@@ -1572,7 +1561,6 @@ window.loadAllChatImages = function (page = 1, reload = false) {
   }
 // Load user images with cache + infinite scroll
 window.loadUserImages = function (userId, page = 1, reload = false) {
-    console.log(`loadUserImages => userId: ${userId}, page: ${page}, reload: ${reload}`)
     return new Promise((resolve, reject) => {
       const cacheKey = `userImages_${userId}`
       let cacheData = JSON.parse(localStorage.getItem(cacheKey) || '{}')
@@ -1581,12 +1569,10 @@ window.loadUserImages = function (userId, page = 1, reload = false) {
   
       let cachedPages = Object.keys(userImagesCache[userId]).map(Number)
       let maxCachedPage = cachedPages.length ? Math.max(...cachedPages) : 0
-      console.log('Cached pages:', cachedPages, 'maxCachedPage:', maxCachedPage)
   
       // If reload => render all cached pages in ascending order, update currentPageMap
       if (reload) {
         cachedPages.sort((a, b) => a - b).forEach((p) => {
-          console.log(`Reloading cached page ${p}`)
           appendImages(userImagesCache[userId][p])
         })
         currentPageMap[userId] = maxCachedPage
@@ -1596,7 +1582,6 @@ window.loadUserImages = function (userId, page = 1, reload = false) {
   
       // If the page is already in cache and we're NOT reloading => skip server call
       if (userImagesCache[userId][page] && !reload) {
-        console.log(`Page ${page} is already cached, skip server call`)
         appendImages(userImagesCache[userId][page])
         currentPageMap[userId] = page
         generateImagePaginationFromCache(userId) // update spinner/back-to-top if needed
@@ -1604,12 +1589,10 @@ window.loadUserImages = function (userId, page = 1, reload = false) {
       }
   
       // Otherwise, fetch from server
-      console.log(`Fetching page ${page} from server...`)
       $.ajax({
         url: `/user/${userId}/liked-images?page=${page}`,
         method: 'GET',
         success: (data) => {
-          console.log(`Fetched page ${page} from server`, data)
           appendImages(data.images)
   
           // Store in cache
@@ -1623,7 +1606,6 @@ window.loadUserImages = function (userId, page = 1, reload = false) {
           resolve()
         },
         error: (err) => {
-          console.error(`Failed to load page ${page} from server`, err)
           reject(err)
         },
       })
@@ -1631,7 +1613,6 @@ window.loadUserImages = function (userId, page = 1, reload = false) {
   }
   
   window.generateImagePagination = function (totalPages, userId) {
-    console.log(`generateImagePagination => userId: ${userId}, totalPages: ${totalPages}`)
     if (!loadingStates[userId]) loadingStates[userId] = false
     if (!currentPageMap[userId]) currentPageMap[userId] = 0
   
@@ -1642,18 +1623,13 @@ window.loadUserImages = function (userId, page = 1, reload = false) {
         currentPageMap[userId] < totalPages &&
         $(window).scrollTop() + $(window).height() >= $(document).height() - 100
       ) {
-        console.log(
-          `Infinite scroll => fetching next page: ${currentPageMap[userId] + 1}`
-        )
         loadingStates[userId] = true
         loadUserImages(userId, currentPageMap[userId] + 1, false)
           .then(() => {
             loadingStates[userId] = false
-            console.log(`Finished loading page ${currentPageMap[userId]}`)
           })
           .catch((e) => {
             loadingStates[userId] = false
-            console.error('Failed to load next page:', e)
           })
       }
     })
@@ -1664,7 +1640,6 @@ window.loadUserImages = function (userId, page = 1, reload = false) {
   // If we skip a server call by using cache only, just refresh the pagination controls
   function generateImagePaginationFromCache(userId) {
     let totalPages = 9999 // or figure out from somewhere else if needed
-    console.log(`generateImagePaginationFromCache => userId: ${userId}`)
     updatePaginationControls(totalPages, userId)
   }
   
@@ -2044,9 +2019,7 @@ function updateSwiperSlides(images) {
 }
 
 // Load chat images (with cache + infinite scroll)
-window.loadChatImages = function (chatId, page = 1, reload = false) {
-    console.log(`loadChatImages => chatId:${chatId}, page:${page}, reload:${reload}`)
-  
+window.loadChatImages = function (chatId, page = 1, reload = false) {  
     return new Promise(async (resolve, reject) => {
       const cacheKey = `chatImages_${chatId}`
       const currentUserId = user._id
@@ -2062,13 +2035,10 @@ window.loadChatImages = function (chatId, page = 1, reload = false) {
       // Show which pages are cached
       let cachedPages = Object.keys(chatImagesCache[chatId]).map(Number).sort((a, b) => a - b)
       let maxCachedPage = cachedPages.length ? Math.max(...cachedPages) : 0
-      console.log(`Cached pages: [${cachedPages}], maxCachedPage: ${maxCachedPage}`)
   
       // If reload => render all cached pages in ascending order, update currentPage
       if (reload) {
-        console.log(`Reload => appending all cached pages for chatId:${chatId}`)
         cachedPages.forEach((p) => {
-          console.log(`Appending cached page ${p}`)
           appendChatImages(chatImagesCache[chatId][p], subscriptionStatus, isAdmin, isTemporary)
         })
         chatCurrentPageMap[chatId] = maxCachedPage
@@ -2077,9 +2047,7 @@ window.loadChatImages = function (chatId, page = 1, reload = false) {
   
       // If page=1 and imageId is present => load that image into loadedImages
       if (page === 1 && typeof imageId !== 'undefined' && imageId) {
-        console.log(`Fetching single image by imageId:${imageId}`)
         $.get(`/image/${imageId}`, function (data) {
-          console.log('Single image fetched:', data)
           if (!loadedImages.some((img) => img._id === data._id)) {
             loadedImages.push(data)
           }
@@ -2088,7 +2056,6 @@ window.loadChatImages = function (chatId, page = 1, reload = false) {
   
       // If already cached and NOT reload => skip server call
       if (chatImagesCache[chatId][page] && !reload) {
-        console.log(`Page ${page} is cached for chatId:${chatId}, skipping server call`)
         appendChatImages(chatImagesCache[chatId][page], subscriptionStatus, isAdmin, isTemporary)
         chatCurrentPageMap[chatId] = page
         generateChatImagePaginationFromCache(chatId) // update spinner/back-to-top if needed
@@ -2096,12 +2063,10 @@ window.loadChatImages = function (chatId, page = 1, reload = false) {
       }
   
       // Otherwise fetch from server
-      console.log(`Fetching page ${page} from server for chatId:${chatId}...`)
       $.ajax({
         url: `/chat/${chatId}/images?page=${page}`,
         method: 'GET',
         success: (data) => {
-          console.log(`Fetched page ${page} from server:`, data)
           chatCurrentPageMap[chatId] = data.page
   
           // Append
@@ -2117,7 +2082,6 @@ window.loadChatImages = function (chatId, page = 1, reload = false) {
           resolve()
         },
         error: (err) => {
-          console.error(`Failed to load images for chatId:${chatId}`, err)
           reject(err)
         },
       })

@@ -48,7 +48,14 @@
 
 $(document).ready(function() {
     if (chatId) {
-        $('#redirectToChat').attr('href', `/chat/${chatId}`);
+    $(document).on('click','#redirectToChat', function() {
+        if(!$('#chatContainer').length){
+            window.location.href = `/chat/${chatId}`;
+            return
+        }
+        closeAllModals();
+        fetchchatData(chatId,userId);
+    });
     }
 });
 

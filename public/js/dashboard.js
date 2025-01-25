@@ -320,7 +320,7 @@ $(document).ready(async function() {
                                 <ul class="list-group list-group-flush">
                                     ${plan.features.map(feature => `<li class="list-group-item px-0"><span class="me-2">🔥</span>${feature}</li>`).join('')}
                                 </ul>
-                                <a href="/my-plan" class="btn btn-dark border-0 w-100 custom-gradient-bg mt-3">${translations.check_premium_plan}</a>
+                                <a href="#" onclick="loadPlanPage()" class="btn btn-dark close-alert border-0 w-100 custom-gradient-bg mt-3">${translations.check_premium_plan}</a>
                             </div>
                         </div>
                     </div>
@@ -349,11 +349,15 @@ $(document).ready(async function() {
         }
         });
     
-      
+  
     }
       
 });
 
+$(document).on('click', '.close-alert', function (e) {
+  e.preventDefault();
+  Swal.close();
+});
 
 $(document).find('.jp-date').each(function () {
     const originalDate = new Date($(this).text());

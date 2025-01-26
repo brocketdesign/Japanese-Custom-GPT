@@ -37,7 +37,7 @@ fastify.post('/novita/txt2img', async (request, reply) => {
       
       let imageDescriptionResponse = await checkImageDescription(db, chatId);
       const imageDescription = imageDescriptionResponse.imageDescription
-
+      console.log('Image description: ',imageDescription) 
       newPrompt = imageDescription +','+ customPrompt 
     }
 

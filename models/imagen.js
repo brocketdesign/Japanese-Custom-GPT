@@ -475,8 +475,7 @@ async function checkImageDescription(db, chatId) {
   const collection = db.collection('chats');
 
   const chatData = await collection.findOne({ _id: objectId });
-
-  const characterPrompt = chatData?.enhancedPrompt || chatData?.characterPrompt || null;
+  const characterPrompt = chatData?.imageDescription || chatData?.enhancedPrompt || chatData?.characterPrompt || null;
   const characterDescription = characterPrompt;
 
   if (!characterDescription || characterDescription.includes('sorry')) {

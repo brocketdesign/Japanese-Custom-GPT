@@ -301,6 +301,7 @@ async function routes(fastify, options) {
         const updateFields = {
           characterPrompt: prompt,
           imageDescription: enhancedPrompt,
+          enhancedPrompt,
           gender
         };
         if (details_description) {
@@ -1488,14 +1489,18 @@ async function routes(fastify, options) {
               You must adapt the prompt to the image request but keep the character traits. \n
               Be persistant, add multiple synonyme, provide multiple keywords, make sure to focus on the request.
               Remove unrelevant keywords and adapt to the image request.\n 
-              You must include the character's skin color, hair color, and eye color in the new prompt. Keep the same clothes if not asked otherwise. \n
               You must answer in English with the new prompt. Do not include anything else in the response.`.replace(/^\s+/gm, '').trim()
+            },
+            {
+                role: 'user',
+                content: `Your response contains the character's age, skin color, hair color, hair length, eyes color, tone, face expression, body type, body characteristic, breast size, ass size, body curves, gender, facial features, background, accessories.\n`
             }
         ]
     };
     
     async function genImagePromptFromChat(chatDocument, messages, command, language) {
-        const characterDescription = chatDocument.characterPrompt || chatDocument.enhancedPrompt;
+        const characterDescription = chatDocument?.imageDescription || chatDocument.enhancedPrompt || chatDocument.characterPrompt;
+
         const lastMessages = messages
             .filter(m => m.content && m.role !== 'assistant' && m.role !== 'system' && m.name !== 'master' && m.name !== 'context' && !m.content.startsWith('['))
             .slice(-2);
@@ -1705,7 +1710,7 @@ async function routes(fastify, options) {
             // Check if the description for the image already exists in the database
             const chatData = await collection.findOne({ _id: objectId });
 
-            const characterPrompt = chatData?.enhancedPrompt || chatData?.characterPrompt || null;
+            const characterPrompt = chatData?.imageDescription || chatData?.enhancedPrompt || chatData?.characterPrompt || null;
             const characterDescription = characterPrompt || imageDescription
     
             if (!characterDescription || characterDescription.includes('sorry')) {

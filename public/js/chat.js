@@ -118,7 +118,6 @@ $(document).ready(async function() {
     $('.is-free-user').each(function(){if(!subscriptionStatus && !isTemporary)$(this).show()})
 
     window.fetchChatData = async function(fetch_chatId, fetch_userId, fetch_reset, callback) {
-        console.log('fetchChatData',fetch_chatId, fetch_userId, fetch_reset)
         const lastUserChat = await getUserChatHistory(fetch_chatId);
         fetch_chatId = lastUserChat ?.chatId || fetch_chatId
         chatId = fetch_chatId
@@ -205,34 +204,6 @@ $(document).ready(async function() {
         element.style.height = 'auto';
         element.style.height = (element.scrollHeight - 20 ) + 'px';  
     }
-
-    $(document).on('click','.reset-chat,.new-chat', function(){
-        chatId = $(this).data('id')
-        fetchChatData(chatId, userId, true) ;
-    })
-    $(document).on('click','.user-chat-history', function(){
-        //const selectUser = $(this).data('user')
-        if(userChatId == $(this).data('chat')){
-            return
-        }
-        chatId = $(this).data('id')
-        userChatId = $(this).data('chat')
-        postChatData(chatId, userId, userChatId, null, null) 
-    })
-    $(document).on('click', '.chat-list.item.user-chat .user-chat-content', function(e) {
-        const $this = $(this);
-        if ($this.hasClass('loading')) return;
-        $this.addClass('loading');
-        const selectChatId = $this.closest('.user-chat').data('id');
-        const chatImageUrl = $this.find('img').attr('src');
-        $this.closest('.chat-list.item').addClass('active').siblings().removeClass('active');
-        $('#chat-container').css('background-image', `url(${chatImageUrl})`);
-        
-        fetchChatData(selectChatId, userId, null, function() {
-            $this.removeClass('loading');
-        });
-    });
-        
 
     function updateParameters(newchatId, newuserId, userChatId){
 
@@ -775,15 +746,16 @@ $(document).ready(async function() {
         return `
             <div class="bg-white py-2 rounded mt-1 d-flex justify-content-between">
                 <div class="d-flex justify-content-around w-100">
-                    <span class="badge bg-white text-secondary image-fav ${isLiked ? 'liked' : ''}" data-id="${imageId}" 
+                    <span class="badge bg-white text-secondary image-fav ${isLiked ? 'liked' : ''}" data-id="${imageId}"
+                    onclick="toggleImageFavorite(this)" 
                     style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
                         <i class="bi bi-heart-fill"></i>
                     </span>
-                    <span class="badge bg-white text-secondary img2img regen-img d-none" data-nsfw="${nsfw}" data-id="${imageId}" 
+                    <span class="badge bg-white text-secondary img2img regen-img d-none" onclick="regenImage(this)" data-nsfw="${nsfw}" data-id="${imageId}" 
                     style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
                         <i class="bi bi-arrow-clockwise"></i>
                     </span>
-                    <span class="badge bg-white text-secondary txt2img regen-img" data-prompt="${prompt}" data-nsfw="${nsfw}" data-id="${imageId}" 
+                    <span class="badge bg-white text-secondary txt2img regen-img" onclick="regenImage(this)" data-prompt="${prompt}" data-nsfw="${nsfw}" data-id="${imageId}" 
                     style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
                         <i class="bi bi-arrow-clockwise"></i>
                     </span>
@@ -1433,40 +1405,6 @@ $(document).ready(async function() {
         });
     });
     
-    $(document).on('click', '.regen-img', function () {
-
-        if($(this).hasClass('spin')){
-            showNotification(window.translations.image_generation_processing,'warning')
-            return
-        }
-        const button = $(this)
-        button.addClass('spin')
-
-        const imageNsfw = $(this).attr('data-nsfw') == 'true' ? 'nsfw' : 'sfw'
-        const imagePrompt = $(this).data('prompt')
-        const placeholderId = $(this).data('id')
-        displayOrRemoveImageLoader(placeholderId, 'show');
-
-        if($(this).hasClass('txt2img')){
-            txt2ImageNovita(userId, chatId, userChatId, {prompt:imagePrompt, imageNsfw, placeholderId})
-            .then(data => {
-                if(data.error){
-                    displayOrRemoveImageLoader(placeholderId, 'remove');
-                    button.removeClass('spin');
-                }
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-                displayOrRemoveImageLoader(placeholderId, 'remove');
-                button.removeClass('spin');
-            });
-        }
-    });
-    
-
-
-    
-
     
   // Fetch the user's IP address and generate a unique ID
    
@@ -1512,6 +1450,64 @@ $(document).ready(async function() {
     }
 });
 
+
+//.reset-chat,.new-chat
+window.handleChatReset = function(el) {
+    chatId = $(el).data('id');
+    fetchChatData(chatId, userId, true);
+};
+//.user-chat-history
+window.handleUserChatHistoryClick = function(el) {
+    if (userChatId == $(el).data('chat')) {
+        return;
+    }
+    chatId = $(el).data('id');
+    userChatId = $(el).data('chat');
+    postChatData(chatId, userId, userChatId, null, null);
+};
+//.chat-list.item.user-chat .user-chat-content
+window.handleChatListItemClick = function(el) {
+    const $el = $(el);
+    if ($el.hasClass('loading')) return;
+    $el.addClass('loading');
+    const selectChatId = $el.closest('.user-chat').data('id');
+    const chatImageUrl = $el.find('img').attr('src');
+    $el.closest('.chat-list.item').addClass('active').siblings().removeClass('active');
+    $('#chat-container').css('background-image', `url(${chatImageUrl})`);
+    
+    fetchChatData(selectChatId, userId, null, function() {
+        $el.removeClass('loading');
+    });
+};
+
+window.regenImage = function(el){
+    if($(el).hasClass('spin')){
+        showNotification(window.translations.image_generation_processing,'warning')
+        return
+    }
+    const button = $(el)
+    button.addClass('spin')
+
+    const imageNsfw = $(el).attr('data-nsfw') == 'true' ? 'nsfw' : 'sfw'
+    const imagePrompt = $(el).data('prompt')
+    const placeholderId = $(el).data('id')
+    displayOrRemoveImageLoader(placeholderId, 'show');
+
+    if($(el).hasClass('txt2img')){
+        txt2ImageNovita(userId, chatId, userChatId, {prompt:imagePrompt, imageNsfw, placeholderId})
+        .then(data => {
+            if(data.error){
+                displayOrRemoveImageLoader(placeholderId, 'remove');
+                button.removeClass('spin');
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            displayOrRemoveImageLoader(placeholderId, 'remove');
+            button.removeClass('spin');
+        });
+    }
+};
 // call fetchchatdata function accross other scripts
 function callFetchChatData(fetch_chatId, fetch_userId, fetch_reset, callback){
     fetchChatData(fetch_chatId, fetch_userId, fetch_reset, callback);
@@ -1594,7 +1590,11 @@ function displayUserChatHistory(userChat) {
         const userChatListGroup = $('<ul class="list-group list-group-flush"></ul>');
         const userChats = userChat.filter(chat =>!chat.isWidget);
         userChats.forEach(chat => {
-            const listItem = $(`<li class="list-group-item user-chat-history bg-transparent d-flex align-items-center justify-content-between" data-id="${chat.chatId}" data-chat="${chat._id}" ></li>`);
+            const listItem = $(`<li 
+                class="list-group-item user-chat-history bg-transparent d-flex align-items-center justify-content-between" 
+                data-id="${chat.chatId}" 
+                data-chat="${chat._id}" 
+                onclick="handleUserChatHistoryClick(this)"></li>`);
             listItem.css('cursor', 'pointer');
 
             const small = $('<small class="text-secondary"></small>');
@@ -1628,7 +1628,11 @@ function displayUserChatHistory(userChat) {
         const widgetChatListGroup = $('<ul class="list-group list-group-flush"></ul>');
         const widgetChats = userChat.filter(chat => chat.isWidget);
         widgetChats.forEach(chat => {
-            const listItem = $(`<li class="list-group-item user-chat-history bg-transparent d-flex align-items-center justify-content-between" data-id="${chat.chatId}" data-chat="${chat._id}" ></li>`);
+            const listItem = $(`<li 
+                class="list-group-item user-chat-history bg-transparent d-flex align-items-center justify-content-between" 
+                data-id="${chat.chatId}" 
+                data-chat="${chat._id}" 
+                onclick="handleUserChatHistoryClick(this)"></li>`);
             listItem.css('cursor', 'pointer');
 
             const small = $('<small class="text-secondary"></small>');
@@ -1916,7 +1920,8 @@ function constructChatItemHtml(chat, isActive) {
         <div class="${isActive ? 'active' : ''} chat-list item user-chat d-flex align-items-center justify-content-between p-1 mx-2 rounded bg-transparent" 
             data-id="${chat._id}">
             <div class="d-flex align-items-center w-100">
-                <div class="user-chat-content d-flex align-items-center flex-1">
+                <div class="user-chat-content d-flex align-items-center flex-1"
+                onclick="handleChatListItemClick(this)">
                     <div class="thumb d-flex align-items-center justify-content-center col-3 p-1">
                         <img class="img-fluid" src="${chat.chatImageUrl || '/img/logo.webp'}" alt="">
                     </div>
@@ -1962,7 +1967,10 @@ function constructChatItemHtml(chat, isActive) {
                                 </button>
                             </li>
                             <li>
-                                <button class="dropdown-item text-secondary reset-chat" data-id="${chat._id}">
+                                <button 
+                                class="dropdown-item text-secondary reset-chat" 
+                                data-id="${chat._id}"
+                                onclick="handleChatReset(this)">
                                     <i class="fas fa-plus-square me-2"></i>
                                     <span class="text-muted" style="font-size:12px;">${window.translations.newChat}</span>
                                 </button>

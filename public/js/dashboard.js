@@ -436,200 +436,200 @@ $(document).on('click', '.post-fav', function () {
       }
     });
 });
-$(document).on('click', '.image-fav', function () {
+window.toggleImageFavorite = function(el) {
+  const isTemporary = !!user.isTemporary;
+  if (isTemporary) { showRegistrationForm(); return; }
 
-    const isTemporary = !!user.isTemporary;
-    if (isTemporary) { showRegistrationForm(); return; }
+  const $this = $(el);
+  const imageId = $this.data('id');
+  const isLiked = $this.hasClass('liked'); // Check if already liked
 
-    const $this = $(this);
-    const imageId = $(this).data('id');
-    const isLiked = $(this).hasClass('liked'); // Check if already liked
+  const action = isLiked ? 'unlike' : 'like'; // Determine action
+  $this.toggleClass('liked');
 
-    const action = isLiked ? 'unlike' : 'like'; // Determine action
-    $this.toggleClass('liked');
-
-    $.ajax({
-      url: `/gallery/${imageId}/like-toggle`, // Single endpoint
-      method: 'POST',
-      data: { action: action }, // Send action (like/unlike) in the request body
-      success: function () {
-
-        // Show success notification in Japanese
-        if (action === 'like') {
-            $this.find('.ct').text(parseInt($this.find('.ct').text()) + 1);
-            window.postMessage({ event: 'imageFav' , imageId}, '*');
-        } else {
-            showNotification('いいねを取り消しました！', 'success');
-            $this.find('.ct').text(parseInt($this.find('.ct').text()) - 1);
-        }
-      },
-      error: function () {
-        $this.toggleClass('liked');
-        showNotification('リクエストに失敗しました。', 'error');
+  $.ajax({
+    url: `/gallery/${imageId}/like-toggle`, // Single endpoint
+    method: 'POST',
+    data: { action: action }, // Send action (like/unlike) in the request body
+    success: function() {
+      // Show success notification in Japanese
+      if (action === 'like') {
+        $this.find('.ct').text(parseInt($this.find('.ct').text()) + 1);
+        window.postMessage({ event: 'imageFav', imageId }, '*');
+      } else {
+        showNotification('いいねを取り消しました！', 'success');
+        $this.find('.ct').text(parseInt($this.find('.ct').text()) - 1);
       }
-    });
-});
+    },
+    error: function() {
+      $this.toggleClass('liked');
+      showNotification('リクエストに失敗しました。', 'error');
+    }
+  });
+};
+window.togglePostVisibility = function(el) {
+  const isTemporary = !!user.isTemporary;
+  if (isTemporary) { showRegistrationForm(); return; }
 
-  $(document).on('click', '.post-visible', function () {
+  const $this = $(el);
+  const postId = $this.data('id');
+  const isPrivate = $this.hasClass('private'); // Check if already private
 
-    const isTemporary = !!user.isTemporary;
-    if (isTemporary) { showRegistrationForm(); return; }
+  const newPrivacyState = !isPrivate; // Toggle privacy state
 
-    const $this = $(this);
-    const postId = $(this).data('id');
-    const isPrivate = $(this).hasClass('private'); // Check if already private
+  $.ajax({
+    url: `/posts/${postId}/set-private`, // Single endpoint for both public and private
+    method: 'POST',
+    data: { isPrivate: newPrivacyState },
+    success: function() {
+      // Toggle private/public button state
+      $this.toggleClass('private');
+      const ico = newPrivacyState ? 'bi-eye-slash' : 'bi-eye';
+      const text = newPrivacyState ? '非公開' : '公開';
+      $this.find('i').removeClass('bi-eye bi-eye-slash').addClass(ico);
+      $this.find('.text').text(text);
 
-    const newPrivacyState = !isPrivate; // Toggle privacy state
-
-    $.ajax({
-      url: `/posts/${postId}/set-private`, // Single endpoint for both public and private
-      method: 'POST',
-      data: { isPrivate: newPrivacyState },
-      success: function () {
-        // Toggle private/public button state
-        $this.toggleClass('private');
-        const ico = newPrivacyState ? 'bi-eye-slash' : 'bi-eye'
-        const text = newPrivacyState ? '非公開' : '公開'
-        $this.find('i').removeClass('bi-eye bi-eye-slash').addClass(ico);
-        $this.find('.text').text(text)
-
-        // Show success notification in Japanese
-        if (newPrivacyState) {
-          showNotification('投稿を非公開にしました！', 'success');
-        } else {
-          showNotification('投稿を公開にしました！', 'success');
-        }
-      },
-      error: function () {
-        // Show error notification in Japanese
-        showNotification('リクエストに失敗しました。', 'error');
+      // Show success notification in Japanese
+      if (newPrivacyState) {
+        showNotification('投稿を非公開にしました！', 'success');
+      } else {
+        showNotification('投稿を公開にしました！', 'success');
       }
-    });
-}); 
-$(document).on('click', '.image-nsfw-toggle', function () {
+    },
+    error: function() {
+      // Show error notification in Japanese
+      showNotification('リクエストに失敗しました。', 'error');
+    }
+  });
+};
+window.toggleImageNSFW = function(el) {
+  const isTemporary = !!user.isTemporary;
+  //if (isTemporary) { showRegistrationForm(); return; }
 
-    const isTemporary = !!user.isTemporary;
-    //if (isTemporary) { showRegistrationForm(); return; }
+  const $this = $(el);
+  const imageId = $this.data('id');
+  const isNSFW = $this.hasClass('nsfw'); // Check if already marked as NSFW
 
-    const $this = $(this);
-    const imageId = $this.data('id');
-    const isNSFW = $this.hasClass('nsfw'); // Check if already marked as NSFW
+  const nsfwStatus = !isNSFW; // Toggle NSFW status
 
-    const nsfwStatus = !isNSFW; // Toggle NSFW status
+  $this.toggleClass('nsfw'); // Toggle NSFW class for UI change
 
-    $this.toggleClass('nsfw'); // Toggle NSFW class for UI change
+  // Update the button icon based on the NSFW status
+  const icon = nsfwStatus 
+    ? '<i class="bi bi-eye-slash-fill"></i>'   // NSFW icon (eye-slash for hidden content)
+    : '<i class="bi bi-eye-fill"></i>';        // Non-NSFW icon (eye for visible content)
 
-    // Update the button icon based on the NSFW status
-    const icon = nsfwStatus 
-      ? '<i class="bi bi-eye-slash-fill"></i>'   // NSFW icon (eye-slash for hidden content)
-      : '<i class="bi bi-eye-fill"></i>';        // Non-NSFW icon (eye for visible content)
+  $this.html(icon); // Update the button's icon
 
-    $this.html(icon); // Update the button's icon
+  $.ajax({
+    url: `/images/${imageId}/nsfw`, // Endpoint for updating NSFW status
+    method: 'PUT',
+    contentType: 'application/json',
+    data: JSON.stringify({ nsfw: nsfwStatus }), // Send NSFW status in request body
+    success: function () {
 
-    $.ajax({
-      url: `/images/${imageId}/nsfw`, // Endpoint for updating NSFW status
+    // Show success notification in Japanese
+    if (nsfwStatus) {
+      showNotification('NSFWに設定されました！', 'success');
+    } else {
+      showNotification('NSFW設定が解除されました！', 'success');
+    }
+    },
+    error: function () {
+    $this.toggleClass('nsfw'); // Revert the class change if request fails
+    $this.html(isNSFW 
+      ? '<i class="bi bi-eye-fill"></i>' 
+      : '<i class="bi bi-eye-slash-fill"></i>'); // Revert the icon as well
+    showNotification('リクエストに失敗しました。', 'error');
+    }
+  });
+}
+
+window.togglePostNSFW = function(el) {
+  const isTemporary = !!user.isTemporary;
+  // if (isTemporary) { showRegistrationForm(); return; }
+
+  const $this = $(el);
+  const postId = $this.data('id'); // Post ID is stored in data attribute
+  const isNSFW = $this.hasClass('nsfw'); // Check if already marked as NSFW
+
+  const nsfwStatus = !isNSFW; // Toggle NSFW status
+
+  $this.toggleClass('nsfw'); // Toggle NSFW class for UI change
+
+  // Update the button icon based on the NSFW status
+  const icon = nsfwStatus 
+    ? '<i class="bi bi-eye-slash-fill"></i>'   // NSFW icon (eye-slash for hidden content)
+    : '<i class="bi bi-eye-fill"></i>';        // Non-NSFW icon (eye for visible content)
+
+  $this.html(icon); // Update the button's icon
+
+  $.ajax({
+      url: `/user/posts/${postId}/nsfw`, // Endpoint for updating NSFW status
       method: 'PUT',
       contentType: 'application/json',
       data: JSON.stringify({ nsfw: nsfwStatus }), // Send NSFW status in request body
       success: function () {
-
-        // Show success notification in Japanese
-        if (nsfwStatus) {
-          showNotification('NSFWに設定されました！', 'success');
-        } else {
-          showNotification('NSFW設定が解除されました！', 'success');
-        }
+          // Show success notification
+          if (nsfwStatus) {
+              showNotification('NSFWに設定されました！', 'success');
+          } else {
+              showNotification('NSFW設定が解除されました！', 'success');
+          }
       },
       error: function () {
-        $this.toggleClass('nsfw'); // Revert the class change if request fails
-        $this.html(isNSFW 
-          ? '<i class="bi bi-eye-fill"></i>' 
-          : '<i class="bi bi-eye-slash-fill"></i>'); // Revert the icon as well
-        showNotification('リクエストに失敗しました。', 'error');
+          $this.toggleClass('nsfw'); // Revert the class change if request fails
+          $this.html(isNSFW 
+            ? '<i class="bi bi-eye-fill"></i>' 
+            : '<i class="bi bi-eye-slash-fill"></i>'); // Revert the icon as well
+          showNotification('リクエストに失敗しました。', 'error');
       }
-    });
-});
-$(document).on('click', '.post-nsfw-toggle', function () {
+  });
+};
 
-    const isTemporary = !!user.isTemporary;
-    // if (isTemporary) { showRegistrationForm(); return; }
+window.toggleFollow = function(el) {
+  const isTemporary = !!user.isTemporary;
+  if (isTemporary) { showRegistrationForm(); return; }
 
-    const $this = $(this);
-    const postId = $this.data('id'); // Post ID is stored in data attribute
-    const isNSFW = $this.hasClass('nsfw'); // Check if already marked as NSFW
+  const $this = $(el);
+  const userId = $this.data('user-id');
+  const isFollowing = $this.hasClass('following'); // Check if already following
 
-    const nsfwStatus = !isNSFW; // Toggle NSFW status
+  const action = isFollowing ? false : true;
+  $this.toggleClass('following');
 
-    $this.toggleClass('nsfw'); // Toggle NSFW class for UI change
+  $.ajax({
+    url: `/user/${userId}/follow-toggle`, // Single endpoint for both follow/unfollow
+    method: 'POST',
+    data: { action: action }, // Send action (follow/unfollow) in the request body
+    success: function () {
+      // Update the button text
+      if (action) {
+        $this.find('.user-follow').text('フォロー中');
+        showNotification('フォローしました！', 'success');
+      } else {
+        $this.find('.user-follow').text('フォロー');
+        showNotification('フォローを解除しました！', 'success');
+      }
+    },
+    error: function () {
+      $this.toggleClass('following'); // Revert the state on error
+      showNotification('リクエストに失敗しました。', 'error');
+    }
+  });
+}
 
-    // Update the button icon based on the NSFW status
-    const icon = nsfwStatus 
-      ? '<i class="bi bi-eye-slash-fill"></i>'   // NSFW icon (eye-slash for hidden content)
-      : '<i class="bi bi-eye-fill"></i>';        // Non-NSFW icon (eye for visible content)
-
-    $this.html(icon); // Update the button's icon
-
-    $.ajax({
-        url: `/user/posts/${postId}/nsfw`, // Endpoint for updating NSFW status
-        method: 'PUT',
-        contentType: 'application/json',
-        data: JSON.stringify({ nsfw: nsfwStatus }), // Send NSFW status in request body
-        success: function () {
-            // Show success notification
-            if (nsfwStatus) {
-                showNotification('NSFWに設定されました！', 'success');
-            } else {
-                showNotification('NSFW設定が解除されました！', 'success');
-            }
-        },
-        error: function () {
-            $this.toggleClass('nsfw'); // Revert the class change if request fails
-            $this.html(isNSFW 
-              ? '<i class="bi bi-eye-fill"></i>' 
-              : '<i class="bi bi-eye-slash-fill"></i>'); // Revert the icon as well
-            showNotification('リクエストに失敗しました。', 'error');
-        }
-    });
-}); 
-$(document).on('click', '.follow-button', function () {
-
-    const isTemporary = !!user.isTemporary;
-    if (isTemporary) { showRegistrationForm(); return; }
-
-    const $this = $(this);
-    const userId = $this.data('user-id');
-    const isFollowing = $this.hasClass('following'); // Check if already following
-
-    const action = isFollowing ? false : true;
-    $this.toggleClass('following');
-
-    $.ajax({
-        url: `/user/${userId}/follow-toggle`, // Single endpoint for both follow/unfollow
-        method: 'POST',
-        data: { action: action }, // Send action (follow/unfollow) in the request body
-        success: function () {
-            // Update the button text
-            if (action) {
-                $this.find('.user-follow').text('フォロー中');
-                showNotification('フォローしました！', 'success');
-            } else {
-                $this.find('.user-follow').text('フォロー');
-                showNotification('フォローを解除しました！', 'success');
-            }
-        },
-        error: function () {
-            $this.toggleClass('following'); // Revert the state on error
-            showNotification('リクエストに失敗しました。', 'error');
-        }
-    });
-});
-
-$(document).on('click','.redirectToChatPage',function(e){
-    e.preventDefault();
-    const chatId = $(this).data('id');
-    const chatImage = $(this).data('image');
-    window.location='/chat/'+chatId
-})
+window.redirectToChatPage = function(el) {
+    const chatId = $(el).data('id');
+    if(chatId){
+      window.location = '/chat/' + chatId;
+      return
+    }
+    
+    if (window.location.pathname !== '/chat/') {
+      window.location.href = '/chat/';
+    }
+};
 
 window.blurImage = function(img) {
     if ($(img).data('processed') === "true") return;
@@ -978,7 +978,12 @@ window.displayUserChats = async function(userId, page = 1) {
             // Render chat card
             htmlContent += `
             <div class="col-12 col-sm-4 col-lg-3 mb-2">
-                <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 redirectToChatPage" style="cursor:pointer;" data-id="${chat._id}" data-image="${chat.chatImageUrl}">
+                <div 
+                class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 redirectToChatPage" 
+                style="cursor:pointer;" data-id="${chat._id}" 
+                data-image="${chat.chatImageUrl}"
+                onclick="redirectToChatPage(this)"
+                >
                     <div style="background-image:url('${chat.chatImageUrl || '/img/logo.webp'}')" class="card-img-top girls_avatar position-relative" alt="${chat.name}">
                         <div id="spinner-${chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
                         <div class="position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px;right:10px;">
@@ -1315,7 +1320,10 @@ window.loadAllUserPosts = async function (page = 1) {
                                 <a href="/post/${item.post.postId}" class="text-muted text-decoration-none text-short">${item.post.comment}</a>
                             </div>
                             <div class="col-12 text-end">
-                                <button class="btn btn-light post-nsfw-toggle ${!isAdmin?'d-none':''}" data-id="${item.post.postId}">
+                                <button 
+                                class="btn btn-light post-nsfw-toggle ${!isAdmin?'d-none':''}" 
+                                data-id="${item.post.postId}"
+                                onclick="togglePostNSFW(this)">
                                     <i class="bi ${item?.post?.nsfw ? 'bi-eye-slash-fill':'bi-eye-fill'}"></i> 
                                 </button>
                                 <button class="btn btn-light shadow-0 post-fav  ${isLiked ? 'liked' : ''}" data-id="${item.post.postId}"> 
@@ -1751,7 +1759,11 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
                                     <i class="bi bi-heart-fill me-2"></i>いいね 
                                     <span class="ct">${item.likes || 0}</span>
                                 </button>
-                                <span class="float-end post-visible d-none ${item.isPrivate ? 'private':''} ${item.userId.toString() != currentUser._id.toString() ? 'd-none':''}" data-id="${item._id}">
+                                <span 
+                                class="float-end post-visible d-none ${item.isPrivate ? 'private':''} ${item.userId.toString() != currentUser._id.toString() ? 'd-none':''}" 
+                                data-id="${item._id}"
+                                onclick="togglePostVisibility(this)"
+                                >
                                     <i class="bi ${item.isPrivate ? 'bi-eye-slash':'bi-eye'} me-2" style="cursor: pointer;"></i>
                                 </span>
                             </div>
@@ -2120,7 +2132,11 @@ window.loadChatImages = function (chatId, page = 1, reload = false) {
                      <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
                    </a>
                    <div class="${!isAdmin ? 'd-none' : ''} card-body p-2 row mx-0 px-0 align-items-center justify-content-between">
-                     <button class="btn btn-light col-6 image-nsfw-toggle ${!isAdmin ? 'd-none' : ''} ${item?.nsfw ? 'nsfw' : 'sfw'}" data-id="${item._id}">
+                     <button 
+                     class="btn btn-light col-6 image-nsfw-toggle ${!isAdmin ? 'd-none' : ''} ${item?.nsfw ? 'nsfw' : 'sfw'}" 
+                     data-id="${item._id}"
+                      onclick="toggleImageNSFW(this)"
+                      >
                        <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
                      </button>
                      <span class="btn btn-light float-end col-6 image-fav ${isLiked ? 'liked' : ''}" data-id="${item._id}">
@@ -2288,6 +2304,7 @@ $(document).ready(function () {
                                 !isAdmin ? 'd-none' : ''
                               } ${item.nsfw ? 'nsfw' : 'sfw'}" 
                               data-id="${item._id}"
+                                onclick="toggleImageNSFW(this)"
                             >
                               <i class="bi ${
                                 item.nsfw ? 'bi-eye-slash-fill' : 'bi-eye-fill'
@@ -2414,6 +2431,7 @@ $(document).ready(function () {
                                   !isAdmin ? 'd-none' : ''
                                 } ${item.nsfw ? 'nsfw' : 'sfw'}" 
                                 data-id="${item._id}"
+                                onclick="toggleImageNSFW(this)"
                               >
                                 <i class="bi ${
                                   item.nsfw ? 'bi-eye-slash-fill' : 'bi-eye-fill'
@@ -2724,12 +2742,6 @@ function loadPlanPage() {
     });
 }
 
-// Function to redirect to /chat/ page or avoid redirect if the current page is /chat/
-function redirectToChatPage() {
-    if (window.location.pathname !== '/chat/') {
-        window.location.href = '/chat/';
-    }
-}
 
 // Open /character/:id?modal=true to show the character modal
 function openCharacterModal(modalChatId) {

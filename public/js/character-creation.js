@@ -49,15 +49,15 @@ $(document).ready(function() {
 
 $(document).ready(function() {
 
-    if (chatId && chatId.trim() !== '') {
+    if (chatCreationId && chatCreationId.trim() !== '') {
         $(".chatRedirection").show();
         $(document).on('click','#redirectToChat', function() {
             if(!$('#chatContainer').length){
-                window.location.href = `/chat/${chatId}`;
+                window.location.href = `/chat/${chatCreationId}`;
                 return
             }
             closeAllModals();
-            callFetchChatData(chatId,userId);
+            callFetchChatData(chatCreationId,userId);
         });
     }
     
@@ -92,7 +92,7 @@ $(document).ready(function() {
     }
 
     if (isTemporaryChat == 'false' || isTemporaryChat == false) {
-        fetchchatCreationData(chatId);
+        fetchchatCreationData(chatCreationId);
     }
 
     $('textarea').each(function() {
@@ -111,9 +111,9 @@ $(document).ready(function() {
         }
     }
 
-     function fetchchatCreationData(chatId, callback) {
+     function fetchchatCreationData(chatCreationId, callback) {
             $.ajax({
-                url: `/api/chat-data/${chatId}`,
+                url: `/api/chat-data/${chatCreationId}`,
                 type: 'GET',
                 dataType: 'json',
                 success: function(chatData) {
@@ -193,7 +193,7 @@ $(document).ready(function() {
       
 
 
-        function saveModeration(moderationResult, chatId, callback){
+        function saveModeration(moderationResult, chatCreationId, callback){
 
             $.ajax({
             url: '/novita/save-moderation',
@@ -202,7 +202,7 @@ $(document).ready(function() {
             contentType: 'application/json',
             data: JSON.stringify({
             moderation: moderationResult,
-            chatId
+            chatId:chatCreationId
             }),
             success: function(response) {
             if (typeof callback === 'function') {
@@ -224,7 +224,7 @@ $(document).ready(function() {
         }; 
 
         // Save selected image model
-        function saveSelectedImageModel(chatId, callback) {
+        function saveSelectedImageModel(chatCreationId, callback) {
             
             const modelId = $('.style-option.selected').data('id')
             const imageStyle = $('.style-option.selected').data('style')
@@ -236,7 +236,7 @@ $(document).ready(function() {
             method: 'POST',
             dataType: 'json',
             data: {
-                chatId,
+                chatId:chatCreationId,
                 modelId,
                 imageStyle,
                 imageModel,
@@ -277,9 +277,9 @@ $(document).ready(function() {
             return returnDetails('#personalityAccordion');
         }
 
-        async function checkChat(chatId) {
+        async function checkChat(chatCreationId) {
             try {
-                const response = await $.post('/api/check-chat', { chatId });
+                const response = await $.post('/api/check-chat', { chatId:chatCreationId });
                 if (response.message === 'Chat exists') {
                     return false;
                 } else {
@@ -290,13 +290,13 @@ $(document).ready(function() {
                 throw error;
             }
         }
-    window.moderateContent = async function(chatId, content) {
+    window.moderateContent = async function(chatCreationId, content) {
         try {
             const response = await $.ajax({
                 url: '/novita/moderate',
                 method: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({ chatId, content })
+                data: JSON.stringify({ chatId:chatCreationId, content })
             });
             return response.results[0];
         } catch (error) {
@@ -307,11 +307,10 @@ $(document).ready(function() {
 
     $('#generateButton').on('click', async function() {
         resetInfiniteScroll();
-        let newchatId = await checkChat(chatId)
+        let newchatId = await checkChat(chatCreationId)
 
         if(newchatId){
-            window.chatId = newchatId
-            chatId = newchatId
+            chatCreationId = newchatId
             $(document).on('click','#redirectToChat', function() {
                 if(!$('#chatContainer').length){
                     window.location.href = `/chat/${newchatId}`;
@@ -335,13 +334,13 @@ $(document).ready(function() {
             }
         }
 
-        await saveSelectedImageModel(chatId, function(error, response) {
+        await saveSelectedImageModel(chatCreationId, function(error, response) {
             if (error) {
                 console.error('Error saving image model:', error);
             }
         });
 
-        if (!modelId || !prompt || !gender || !chatId) {
+        if (!modelId || !prompt || !gender || !chatCreationId) {
             showNotification(translations.newCharacter.allFieldsRequired, 'error');
             return;
         }
@@ -366,7 +365,7 @@ $(document).ready(function() {
         try {
 
             // Call moderation function on enhancedPrompt content
-            moderationResult = await moderateContent(chatId,prompt);
+            moderationResult = await moderateContent(chatCreationId,prompt);
             // Check if the content is NSFW
             if (moderationResult.flagged) {
                 if (false && !subscriptionStatus) { // Allow user to generate NSFW prompt
@@ -390,7 +389,7 @@ $(document).ready(function() {
                     let customData = {
                         prompt,
                         gender,
-                        chatId,
+                        chatId:chatCreationId,
                     };
 
                     if (subscriptionStatus && $('#characterDescriptionCheck').is(':checked')) {
@@ -429,7 +428,7 @@ $(document).ready(function() {
 
             const imageType = moderationResult.flagged ? 'nsfw' : 'sfw';
 
-            txt2ImageNovita(userId, chatId, null, { prompt:enhanceResponse.enhancedPrompt, imageType, chatCreation: true})
+            txt2ImageNovita(userId, chatCreationId, null, { prompt:enhanceResponse.enhancedPrompt, imageType, chatCreation: true})
             .catch((error) => {
                 console.error('Error generating image:', error);
             })
@@ -469,7 +468,7 @@ $(document).ready(function() {
                 purpose,
                 name,
                 gender,
-                chatId,
+                chatId:chatCreationId,
             };
 
             if (subscriptionStatus && $('#personalityCheck').is(':checked')) {
@@ -513,7 +512,7 @@ window.saveSelectedImage = function(imageUrl, callback) {
     dataType: 'json',
     data: {
         imageUrl,
-        chatId
+        chatId:chatCreationId
     },
     success: function(response) {
         if (typeof callback === 'function') {

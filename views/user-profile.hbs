@@ -172,7 +172,10 @@
                   </span>
                   {{#if isAdmin}}
                   {{else}}
-                  <span class="btn custom-gradient-bg me-2 follow-button {{#if userData.follow}}following{{/if}}" data-user-id="{{userData._id}}">
+                  <span 
+                  class="btn custom-gradient-bg me-2 follow-button {{#if userData.follow}}following{{/if}}" 
+                  data-user-id="{{userData._id}}"
+                  onclick="toggleFollow(this)">
                     <span class="user-follow fw-bold">
                       {{#if userData.follow}}
                         {{translations.profile.following}}

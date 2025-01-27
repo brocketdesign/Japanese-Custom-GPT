@@ -185,23 +185,23 @@ async function routes(fastify, options) {
       const db = fastify.mongo.db;
       const chatsGalleryCollection = db.collection('gallery');
       const chatsCollection = db.collection('chats');
-
+  
       const chatIds = await chatsCollection
         .find({ $or: [{ language }, { language: request.lang }], imageStyle: styleStr })
         .project({ _id: 1 })
         .toArray()
         .then(chats => chats.map(c => c._id));
-
+  
       const queryWords = queryStr.split(' ').filter(word => word.replace(/[^\w\s]/gi, '').trim() !== '');
       const matchCriteria = {
         'images.imageUrl': { $exists: true, $ne: null },
         chatId: { $in: chatIds }
       };
-
+  
       if (queryWords.length > 0) {
         matchCriteria.$or = queryWords.map(word => ({ 'images.prompt': { $regex: word, $options: 'i' } }));
       }
-
+  
       const [allChatImagesDocs, totalCountDocs] = await Promise.all([
         chatsGalleryCollection.aggregate([
           { $unwind: '$images' },
@@ -217,15 +217,26 @@ async function routes(fastify, options) {
           { $count: 'total' }
         ]).toArray()
       ]);
-
+  
+      // Group images by chatId and limit 3 per chat
+      const grouped = {};
+      const limitedDocs = [];
+      for (const doc of allChatImagesDocs) {
+        if (!grouped[doc.chatId]) grouped[doc.chatId] = 0;
+        if (grouped[doc.chatId] < 3) {
+          limitedDocs.push(doc);
+          grouped[doc.chatId]++;
+        }
+      }
+  
       const totalImages = totalCountDocs.length ? totalCountDocs[0].total : 0;
       const totalPages = Math.ceil(totalImages / limit);
       if (!totalImages) {
         return reply.code(404).send({ images: [], page, totalPages: 0 });
       }
-
+  
       const chatsData = await chatsCollection.find({ _id: { $in: chatIds } }).toArray();
-      const imagesWithChatData = allChatImagesDocs.map(doc => {
+      const imagesWithChatData = limitedDocs.map(doc => {
         const chat = chatsData.find(c => c._id.equals(doc.chatId));
         return {
           ...doc.image,
@@ -239,19 +250,21 @@ async function routes(fastify, options) {
           galleries: chat.galleries || [],
           nickname: chat.nickname || '',
           imageCount: chat.imageCount
-        };        
+        };
       });
-
+  
       reply.send({
         images: imagesWithChatData,
         page,
         totalPages,
       });
-        } catch (err) {
+    } catch (err) {
       console.error('Error in /chats/images/search:', err);
       reply.code(500).send('Internal Server Error');
-        }
-      });
+    }
+  });
+  
+
   fastify.get('/chats/images', async (request, reply) => {
     try {
       const user = request.user;

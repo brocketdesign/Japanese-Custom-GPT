@@ -1388,7 +1388,7 @@ $(document).ready(async function() {
         const subscriptionStatus = user.subscriptionStatus == 'active'
 
         if(!subscriptionStatus){
-            showUpgradePopup('image-generation')
+            loadPlanPage();
             return
         }
 

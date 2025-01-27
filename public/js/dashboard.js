@@ -153,34 +153,6 @@ $(document).ready(async function() {
             }
         });
     }
-        
-    $(document).on('click', '.logout', function(event) {
-        event.preventDefault();
-        $.ajax({
-            url: '/user/logout',
-            type: 'POST',
-            success: function(response) {
-                // Clear all cookies
-                Object.keys($.cookie()).forEach(function(cookie) {
-                    $.removeCookie(cookie, { path: '/' });
-                });
-    
-                // **Clear all localStorage data**
-                localStorage.clear();
-                sessionStorage.clear();
-    
-                // Redirect to the homepage
-                window.location.href = '/';
-            },
-            error: function() {
-                Swal.fire({
-                    title: 'エラー',
-                    text: 'ログアウトに失敗しました',
-                    icon: 'error'
-                });
-            }
-        });
-    });
     
     
     
@@ -397,45 +369,73 @@ $(document).on('click', '.persona', function(e) {
         })
     }
 });
+
 if(!isTemporary){
     const personas = user?.personas || false
     initializePersonaStats(personas)
 }
-$(document).on('click', '.post-fav', function () {
 
-    const isTemporary = !!user.isTemporary;
-    if (isTemporary) { showRegistrationForm(); return; }
+window.togglePostFavorite = function(el) {
+  const isTemporary = !!user.isTemporary;
+  if (isTemporary) { showRegistrationForm(); return; }
 
-    const $this = $(this);
-    const postId = $(this).data('id');
-    const isLiked = $(this).hasClass('liked'); // Check if already liked
+  const $this = $(el);
+  const postId = $this.data('id');
+  const isLiked = $this.hasClass('liked'); // Check if already liked
 
-    const action = isLiked ? 'unlike' : 'like'; // Determine action
+  const action = isLiked ? 'unlike' : 'like'; // Determine action
 
-    $this.toggleClass('liked');
+  $this.toggleClass('liked');
 
-    $.ajax({
-      url: `/posts/${postId}/like-toggle`, // Single endpoint
-      method: 'POST',
-      data: { action: action }, // Send action (like/unlike) in the request body
-      success: function () {
-
-        // Show success notification in Japanese
-        if (action === 'like') {
-          showNotification('いいねしました！', 'success');
-          $this.find('.ct').text(parseInt($this.find('.ct').text()) + 1);
-        } else {
-          showNotification('いいねを取り消しました！', 'success');
-          $this.find('.ct').text(parseInt($this.find('.ct').text()) - 1);
-        }
-      },
-      error: function () {
-        // Show error notification in Japanese
-        $this.toggleClass('liked');
-        showNotification('リクエストに失敗しました。', 'error');
+  $.ajax({
+    url: `/posts/${postId}/like-toggle`, // Single endpoint
+    method: 'POST',
+    data: { action: action }, // Send action (like/unlike) in the request body
+    success: function () {
+      // Show success notification in Japanese
+      if (action === 'like') {
+        showNotification('いいねしました！', 'success');
+        $this.find('.ct').text(parseInt($this.find('.ct').text()) + 1);
+      } else {
+        showNotification('いいねを取り消しました！', 'success');
+        $this.find('.ct').text(parseInt($this.find('.ct').text()) - 1);
       }
-    });
-});
+    },
+    error: function () {
+      // Show error notification in Japanese
+      $this.toggleClass('liked');
+      showNotification('リクエストに失敗しました。', 'error');
+    }
+  });
+};
+
+window.logoutUser = function() {
+  $.ajax({
+    url: '/user/logout',
+    type: 'POST',
+    success: function(response) {
+      // Clear all cookies
+      Object.keys($.cookie()).forEach(function(cookie) {
+        $.removeCookie(cookie, { path: '/' });
+      });
+
+      // Clear all localStorage data
+      localStorage.clear();
+      sessionStorage.clear();
+
+      // Redirect to the homepage
+      window.location.href = '/';
+    },
+    error: function() {
+      Swal.fire({
+        title: 'エラー',
+        text: 'ログアウトに失敗しました',
+        icon: 'error'
+      });
+    }
+  });
+};
+
 window.toggleImageFavorite = function(el) {
   const isTemporary = !!user.isTemporary;
   if (isTemporary) { showRegistrationForm(); return; }
@@ -1326,7 +1326,11 @@ window.loadAllUserPosts = async function (page = 1) {
                                 onclick="togglePostNSFW(this)">
                                     <i class="bi ${item?.post?.nsfw ? 'bi-eye-slash-fill':'bi-eye-fill'}"></i> 
                                 </button>
-                                <button class="btn btn-light shadow-0 post-fav  ${isLiked ? 'liked' : ''}" data-id="${item.post.postId}"> 
+                                <button 
+                                class="btn btn-light shadow-0 post-fav  ${isLiked ? 'liked' : ''}" 
+                                data-id="${item.post.postId}"
+                                onclick="togglePostFavorite(this)"
+                                > 
                                     <i class="bi bi-heart-fill me-2"></i>いいね 
                                     <span class="ct">${item.post.likes || 0}</span>
                                 </button>
@@ -1755,7 +1759,10 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
                                 <a href="/post/${item._id}" class="text-muted text-decoration-none text-short ">${item.comment || 'No Comment'}</a>
                             </div>
                             <div class="col-12 text-end">
-                                <button class="btn btn-light shadow-0 post-fav  ${isLiked ? 'liked' : ''}" data-id="${item._id}"> 
+                                <button 
+                                class="btn btn-light shadow-0 post-fav  ${isLiked ? 'liked' : ''}" 
+                                data-id="${item._id}
+                                onclick="togglePostFavorite(this)"> 
                                     <i class="bi bi-heart-fill me-2"></i>いいね 
                                     <span class="ct">${item.likes || 0}</span>
                                 </button>

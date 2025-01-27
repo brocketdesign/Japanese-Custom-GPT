@@ -79,8 +79,6 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
 
       const data = await response.json();
       const filter = data.choices[0]?.content_filter_results;
-      console.log('Model:', finalModel.model);
-      console.log('Content filter:', filter);
       return data.choices[0].message.content.trim();
     } catch (error) {
       if (attempt === 2) {

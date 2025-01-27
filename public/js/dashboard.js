@@ -2128,7 +2128,7 @@ window.loadChatImages = function (chatId, page = 1, reload = false) {
       let index = loadedImages.length - 1
   
       chatGalleryHtml += `
-        <div class="col-12 col-md-4 col-lg-2 mb-2">
+        <div class="col-6 col-md-3 col-lg-2 mb-2">
           <div class="card shadow-0">
             ${
               isBlur

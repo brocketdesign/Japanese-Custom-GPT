@@ -44,21 +44,19 @@ const moderateText = async (text) => {
   }
 };
 async function generateCompletion(messages, maxToken = 1000, model = null, lang = 'en') {
-  if(model){
-    currentModel = apiDetails[model]
-  }
-  if(lang === 'ja'){ currentModel = apiDetails.openai }
+  const selectedModel = model ? apiDetails[model] : currentModel;
+  const finalModel = lang === 'ja' ? apiDetails.openai : selectedModel;
 
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      const response = await fetch(currentModel.apiUrl, {
+      const response = await fetch(finalModel.apiUrl, {
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${currentModel.key}`
+            "Authorization": `Bearer ${finalModel.key}`
         },
         method: "POST",
         body: JSON.stringify({
-            model: currentModel.model,
+            model: finalModel.model,
             messages,
             temperature: 0.85,
             top_p: 0.95,
@@ -74,12 +72,15 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
         if (attempt === 2) {
           const errorData = await response.json().catch(() => ({}));
           console.log(`Failed after ${attempt} attempts:`, errorData.error?.message || '');
-          return false
+          return false;
         }
         continue; // Try second attempt
       }
 
       const data = await response.json();
+      const filter = data.choices[0]?.content_filter_results;
+      console.log('Model:', finalModel.model);
+      console.log('Content filter:', filter);
       return data.choices[0].message.content.trim();
     } catch (error) {
       if (attempt === 2) {

@@ -1001,6 +1001,7 @@ async function routes(fastify, options) {
         - Do not translate anything.\n
         - Do not include notes, annotations, or lists in your response.\n
         - Keep your response focused solely on your character's message.\n
+        - Provide short answers switable for a chat.\n
     
         `.replace(/^\s+/gm, '').trim();
     }

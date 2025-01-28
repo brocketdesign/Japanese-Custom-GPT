@@ -121,7 +121,7 @@ const checkImageRequest = async (messages) => {
     let lastUserMessagesContent = messages
     .filter((msg) =>  msg.name !== 'master' && msg.name !== 'context')
     .filter(m => m.content && !m.content.startsWith('[Image]') && m.role !== 'system' && m.role !== 'assistant')
-    .slice(-2);
+    .slice(-1);
     // Get the last user message content as a string
     lastUserMessagesContent = lastUserMessagesContent.map((msg) => msg.content);
     lastUserMessagesContent = lastUserMessagesContent.join(',');

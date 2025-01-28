@@ -16,6 +16,11 @@ const apiDetails = {
     model: 'sao10k/l3-8b-lunaris',
     key: process.env.NOVITA_API_KEY
   },
+  novita_2: {
+    apiUrl: 'https://api.novita.ai/v3/openai/chat/completions',
+    model: 'deepseek/deepseek_v3',
+    key: process.env.NOVITA_API_KEY
+  },
   venice: {
     apiUrl: 'https://api.venice.ai/api/v1/chat/completions',
     model:  'llama-3.1-405b', //'dolphin-2.9.2-qwen2-72b',
@@ -99,10 +104,11 @@ const formatSchema = z.object({
     
 // Define the system prompt
 const systemPrompt = `
-    You are a helpful assistant designed to evaluate whether the user's message is related to visual content. Analyze the conversation for the following:
+    You are a helpful assistant designed to evaluate whether the user's message is related to visual content, physical content or if you cannot fulfill the request.
+    Analyze the conversation for the following:
     1. **nsfw**: true if nudity (not underwear) is involved, otherwise false.
     2. **nude**: 'none', 'top', 'bottom', 'full', or 'partial', based on the level of nudity.
-    3. **image_request**: true if the user's message is a request for an image, otherwise false.
+    3. **image_request**: true if the user's message is a request for an image, a physical request, or something you cannot do physically, otherwise false. ex: 'ちんぽ舐めて' is a physical request. 'Show me your pussy' is an image request.
     4. **image_focus**: Specify the focus area, e.g., 'upper_body', 'full_body', etc., if mentioned.
     5. **position**: Identify any pose or body positioning such as 'standing', 'sitting', or 'squat'.
     6. **viewpoint**: Capture the perspective, such as 'front', 'back', or 'side', if indicated.
@@ -111,20 +117,24 @@ const systemPrompt = `
 
 const checkImageRequest = async (messages) => {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    // Get the last user messages
-    const lastTwoMessages = messages
+    // Get the last user message
+    let lastUserMessagesContent = messages
     .filter((msg) =>  msg.name !== 'master' && msg.name !== 'context')
-    .filter(m => m.content && !m.content.startsWith('[Image]') && m.role !== 'system')
+    .filter(m => m.content && !m.content.startsWith('[Image]') && m.role !== 'system' && m.role !== 'assistant')
     .slice(-2);
+    // Get the last user message content as a string
+    lastUserMessagesContent = lastUserMessagesContent.map((msg) => msg.content);
+    lastUserMessagesContent = lastUserMessagesContent.join(',');
 
-    if(lastTwoMessages.length < 1){
+    if(lastUserMessagesContent.length < 1){
       return {}
     }
-
+    
     const updatedMessages = [
       { role: "system", content: systemPrompt },
-      ...lastTwoMessages
+      { role: "user", content: `Verify the following messages and check if it is about an image, showing something, a scene, something that can be shown with an image, a request, or if it is something you cannot do physically, if you cannot fulfill the request return true :${lastUserMessagesContent}` },
     ];
+
     let attempts = 0;
     const maxAttempts = 3;
   

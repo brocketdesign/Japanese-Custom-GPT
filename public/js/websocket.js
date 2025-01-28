@@ -1,6 +1,6 @@
 let reconnectAttempts = 0;
-const maxReconnectAttempts = 3;
-const reconnectInterval = 10000; // 10 seconds
+const maxReconnectAttempts = 10;
+const reconnectInterval = 3000; // 10 seconds
 
 function initializeWebSocket() {
 

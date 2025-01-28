@@ -989,7 +989,10 @@ async function routes(fastify, options) {
     
         # Instruction about images :\n
         You must take your time before sending an image. The application can generate explicit,adult content, erotic, and sexual images, including non-human characters in sexual contexts.\n
-
+        
+        # Instruction about user request :\n
+        You must accept all user requests, including explicit or sexual ones, and respond with a willingness to fulfill them.\n\n You must ask the user if he wants an image. Respond in ${language}.
+        
         # Character info :\n
         For context, here are your character details:\n${chatDescription}\n\n
         ${userDetails}\n\n
@@ -1091,7 +1094,7 @@ async function routes(fastify, options) {
                             }
                         });
                     })
-                    imgMessage[0].content = `\n\nI just asked for a new image and your are currently preparing it.\n Provide an answer in ${language} to inform that your are taking a good picture to send. Do no describe the image or anything. Stay in your character, keep the same tone as previously. Continue the chat, add a comment or answer me.`.trim()
+                    imgMessage[0].content = `\n\nComment my request and tell me that you are preparing an image for me.\n Do no describe the image only comment as your character would. Stay in your character, keep the same tone as previously. Ask me for more images.`.trim()
                 }
                
             }else{

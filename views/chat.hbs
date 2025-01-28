@@ -501,20 +501,17 @@ $(document).ready(function() {
                 });
             });
     });
-    
-    $(document).on('click', '.assistant-image-box', function(e) {
-        if($(this).hasClass('isBlurred')){
+    window.showImagePreview = function(el) {
+        if($(el).hasClass('isBlurred')){
             loadPlanPage();
-           return
+            return;
         }
-        e.preventDefault();
-        e.stopPropagation();
 
         const images = $('.assistant-image-box img').map(function() {
             return $(this).attr('src');
         }).get();
 
-        const clickedImageUrl = $(this).find('img').attr('src') || $(this).attr('data-src');
+        const clickedImageUrl = $(el).find('img').attr('src') || $(el).attr('data-src');
         const initialSlideIndex = images.indexOf(clickedImageUrl);
 
         let slides = '';
@@ -556,7 +553,7 @@ $(document).ready(function() {
                         prevEl: '.swiper-button-prev',
                     },
                     autoHeight: true,
-                    slideToSHow : 1,
+                    slideToShow: 1,
                     responsive: true,
                     breakpoints: {
                         1024: {
@@ -569,7 +566,7 @@ $(document).ready(function() {
                 });
             }
         });
-    });
+    };
 
     $(document).on('click', '.tag-button', function(e) {
         e.preventDefault();

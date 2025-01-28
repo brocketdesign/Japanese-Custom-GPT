@@ -1429,14 +1429,10 @@ async function routes(fastify, options) {
         }
         let newMessages = generateImagePrompt(command, characterDescription, dialogue);
         newMessages = sanitizeMessages(newMessages)
-        const completionMessage = await generateCompletion(newMessages, 600, 'novita_nsfw')
 
-        // Add instructions
-    
-        const finalPrompt = `${completionMessage},,`
-        
+        const completionMessage = await generateCompletion(newMessages, 600)
+
         return completionMessage;
-        
     }
     const commandToString = (command) => {
          

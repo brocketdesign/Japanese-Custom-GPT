@@ -1,5 +1,19 @@
 {
   "lang":"fr",
+  "websocket": {
+    "connection_error": "Erreur de connexion",
+    "connection_error_message": "Une erreur s'est produite lors de la connexion au serveur. Veuillez réessayer plus tard.",
+    "reconnecting": "Reconnexion",
+    "reconnecting_message": "Reconnexion au serveur...",
+    "reconnected": "Reconnecté",
+    "reconnected_message": "Reconnecté au serveur.",
+    "disconnected": "Déconnecté",
+    "disconnected_message": "Déconnecté du serveur. Veuillez vérifier votre connexion Internet.",
+    "connection_lost": "Connexion perdue",
+    "connection_lost_message": "La connexion au serveur a été perdue. Veuillez vérifier votre connexion Internet.",
+    "connection_failed": "Échec de la connexion",
+    "connection_failed_message": "Échec de la connexion au serveur. Veuillez réessayer plus tard."
+  },
   "currency": "€",
   "premium": " 💎 Premium",
   "discount": "70% off",

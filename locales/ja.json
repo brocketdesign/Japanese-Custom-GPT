@@ -1,5 +1,19 @@
 {
-  "lang":"ja",
+  "lang":"ja",  
+  "websocket": {
+    "connection_error": "接続エラー",
+    "connection_error_message": "サーバーへの接続中にエラーが発生しました。後でもう一度お試しください。",
+    "reconnecting": "再接続中",
+    "reconnecting_message": "サーバーに再接続中...",
+    "reconnected": "再接続完了",
+    "reconnected_message": "サーバーに再接続しました。",
+    "disconnected": "切断されました",
+    "disconnected_message": "サーバーから切断されました。インターネット接続を確認してください。",
+    "connection_lost": "接続が失われました",
+    "connection_lost_message": "サーバーへの接続が失われました。インターネット接続を確認してください。",
+    "connection_failed": "接続に失敗しました",
+    "connection_failed_message": "サーバーへの接続に失敗しました。後でもう一度お試しください。"
+  },
   "currency": "¥",
   "premium": " 💎 プレミアム",
   "discount": "70%オフ",

@@ -39,31 +39,61 @@
 
     <!-- New Mail Modal -->
     <div class="modal fade" id="newMailModal" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-scrollable mx-0">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable mx-0">
         <div class="modal-content mx-auto">
-          <form>
+          <form id="newMailForm">
             <div class="modal-header">
               <h5 class="modal-title">{{translations.admin_mails.create_mail}}</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+
             <div class="modal-body">
               <div class="mb-3">
+                <label for="mailSubject" class="form-label">{{translations.admin_mails.subject}}</label>
+                <input type="text" class="form-control" id="mailSubject" placeholder="{{translations.admin_mails.subject_placeholder}}" required>
+              </div>
+
+              <div class="mb-3">
                 <label for="trigger" class="form-label">{{translations.admin_mails.mail_trigger}}</label>
-                <select id="trigger" class="form-select">
+                <select id="trigger" class="form-select" required>
                   <option value="registration">{{translations.admin_mails.trigger_registration}}</option>
                   <option value="payment">{{translations.admin_mails.trigger_payment}}</option>
                   <option value="cron">{{translations.admin_mails.trigger_cron}}</option>
                 </select>
               </div>
-              <!-- Subject, message fields, etc. -->
+
+              <div class="mb-3">
+                <label for="mailRecipients" class="form-label">{{translations.admin_mails.recipients}}</label>
+                <input type="email" class="form-control" id="mailRecipients" placeholder="{{translations.admin_mails.recipients_placeholder}}" multiple required>
+                <small class="text-muted">{{translations.admin_mails.recipients_info}}</small>
+              </div>
+
+              <div class="mb-3">
+                <label for="mailBody" class="form-label">{{translations.admin_mails.message}}</label>
+                <textarea class="form-control" id="mailBody" rows="5" placeholder="{{translations.admin_mails.message_placeholder}}" required></textarea>
+              </div>
+
+              <div class="mb-3">
+                <label for="attachment" class="form-label">{{translations.admin_mails.attachment}}</label>
+                <input type="file" class="form-control" id="attachment">
+                <small class="text-muted">{{translations.admin_mails.attachment_info}}</small>
+              </div>
+
+              <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="sendTestMail">
+                <label class="form-check-label" for="sendTestMail">{{translations.admin_mails.send_test}}</label>
+              </div>
             </div>
+
             <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{translations.admin_mails.cancel}}</button>
               <button type="submit" class="btn btn-primary">{{translations.admin_mails.create_button}}</button>
             </div>
           </form>
         </div>
       </div>
     </div>
+
 
     <!-- Edit Mail Modal -->
     <div class="modal fade" id="editMailModal" tabindex="-1" aria-hidden="true">

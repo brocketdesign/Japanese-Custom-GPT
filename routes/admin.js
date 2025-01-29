@@ -25,9 +25,25 @@ const fetchModels = async (query = '', cursor = '') => {
   }
 };
 
-module.exports = { fetchModels };
-
 async function routes(fastify, options) {
+
+  // Admin dashboard for mails
+  fastify.get('/admin/mails', {
+    
+  }, async (request, reply) => {
+    try {
+      const isAdmin = await checkUserAdmin(fastify, request.user._id);
+      if (!isAdmin) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+      const db = fastify.mongo.db;
+      const mailsCollection = db.collection('mails');
+      const mails = await mailsCollection.find().sort({ createdAt: -1 }).toArray();
+      return reply.view('/admin/mails', { mails });
+    } catch (error) {
+      return reply.status(500).send({ error: error.message });
+    }
+  });
 
   fastify.get('/admin/notifications', async (request, reply) => {
     const user = request.user;
@@ -61,9 +77,7 @@ async function routes(fastify, options) {
     return reply.view('/admin/notifications', { notifications: formattedNotifications });
   });
   
-    fastify.get('/admin/users', {
-        preHandler: [fastify.authenticate]
-      }, async (request, reply) => {
+    fastify.get('/admin/users',  async (request, reply) => {
         try {
             const isAdmin = await checkUserAdmin(fastify, request.user._id);
             if (!isAdmin) {
@@ -111,9 +125,7 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: error.message });
         }
     });
-    fastify.put('/admin/users/:userId/subscription', {
-      preHandler: [fastify.authenticate]
-    }, async (request, reply) => {
+    fastify.put('/admin/users/:userId/subscription', async (request, reply) => {
       try {
       const isAdmin = await checkUserAdmin(fastify, request.user._id);
       if (!isAdmin) {
@@ -143,9 +155,7 @@ async function routes(fastify, options) {
       return reply.status(500).send({ error: 'Internal Server Error' });
       }
     });
-    fastify.delete('/admin/users/:id', {
-        preHandler: [fastify.authenticate]
-      }, async (request, reply) => {
+    fastify.delete('/admin/users/:id',  async (request, reply) => {
         try {
           const isAdmin = await checkUserAdmin(fastify, request.user._id);
           if (!isAdmin) {
@@ -165,9 +175,7 @@ async function routes(fastify, options) {
           return reply.status(500).send({ error: 'Internal Server Error' });
         }
     });
-    fastify.get('/admin/users/registered', {
-        preHandler: [fastify.authenticate]
-      }, async (request, reply) => {
+    fastify.get('/admin/users/registered',  async (request, reply) => {
         try {
             const isAdmin = await checkUserAdmin(fastify, request.user._id);
             if (!isAdmin) {
@@ -203,9 +211,7 @@ async function routes(fastify, options) {
         }
     });
     
-    fastify.get('/admin/chat/:userId', {
-        preHandler: [fastify.authenticate]
-      }, async (request, reply) => {
+    fastify.get('/admin/chat/:userId',  async (request, reply) => {
         try {
           // Check if the user is an admin
           const isAdmin = await checkUserAdmin(fastify, request.user._id);
@@ -252,9 +258,7 @@ async function routes(fastify, options) {
       });
       
 
-    fastify.get('/admin/users/cleanup', {
-        preHandler: [fastify.authenticate]
-    }, async (request, reply) => {
+    fastify.get('/admin/users/cleanup', async (request, reply) => {
         try {
             const isAdmin = await checkUserAdmin(fastify, request.user._id);
             if (!isAdmin) {
@@ -270,9 +274,7 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: error.message });
         }
     });
-    fastify.get('/admin/prompts',{
-      preHandler: [fastify.authenticate]
-  }, async (request, reply) => {
+    fastify.get('/admin/prompts', async (request, reply) => {
     try {
       let user = request.user;
       const userId = user._id;

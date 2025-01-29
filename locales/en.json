@@ -106,7 +106,8 @@
         "users": "Users",
         "prompts": "Prompts",
         "notifications": "Notifications",
-        "models": "Models"
+        "models": "Models",
+        "mails" : "Mails"
   },
   "admin_user": {
     "recent_users": "Recent Users",
@@ -120,6 +121,20 @@
     "toggle_subscription": "Toggle Subscription",
     "chat": "Chat",
     "delete": "Delete"
+  },
+  "admin_mails": {
+    "title": "Mails Dashboard",
+    "subscription_status": "Subscription Status",
+    "paid_user_features": "Paid user features enabled",
+    "new_mail": "New Mail",
+    "create_mail": "Create New Mail",
+    "mail_trigger": "Mail Trigger",
+    "trigger_registration": "On First Registration",
+    "trigger_payment": "After Successful Payment",
+    "trigger_cron": "Cronjob Mail",
+    "create_button": "Create Mail",
+    "edit_mail": "Edit Mail",
+    "preview_mail": "Preview Mail"
   },
   "image_generation_soft_limit_reset": "You can now generate another image.",
   "image_generation_soft_limit": "Please wait %{interval}% seconds before generating another image.",

@@ -7,7 +7,6 @@ const fs = require('fs');
 const ip = require('ip');
 const handlebars = require('handlebars');
 const fastifyMultipart = require('@fastify/multipart');
-const translationsPlugin = require('./plugins/translations');
 const { generatePromptTitle } = require('./models/openai');
 const {
   cleanupNonRegisteredUsers,
@@ -26,6 +25,15 @@ fastify.register(require('@fastify/mongodb'), {
     process.exit(1); // Exit the process if the database connection fails
   }
 });
+
+fastify.register(require('@fastify/cookie'), {
+  secret: process.env.JWT_SECRET,
+  parseOptions: {},
+});
+
+// Load global plugins
+const fastifyPluginGlobals = require('./plugins/globals');
+fastify.register(fastifyPluginGlobals);
 
 // Wait for the database connection to be established 
 fastify.ready(() => { 
@@ -81,10 +89,6 @@ fastify.after(() => {
   registerHelpers();
 });
 
-fastify.register(require('@fastify/cookie'), {
-  secret: 'my-secret',
-  parseOptions: {},
-});
 fastify.register(require('@fastify/cors'), {
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -97,7 +101,6 @@ fastify.register(fastifyMultipart, {
   },
 });
 
-fastify.register(translationsPlugin);
 
 const websocketPlugin = require('@fastify/websocket');
 fastify.register(websocketPlugin);
@@ -120,32 +123,9 @@ fastify.register(require('./routes/post'));
 fastify.register(require('./routes/notifications'));
 fastify.register(require('./routes/gallery'));
 
-fastify.decorate('authenticate', async function (request, reply) {
-  try {
-    const token = request.cookies.token;
-    if (!token) {
-      return reply.redirect('/');
-    }
-    const decoded = await jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded && decoded._id) {
-      //request.user = { _id: decoded._id, ...decoded };
-    } else {
-      return reply.redirect('/');
-    }
-  } catch (err) {
-    return reply.redirect('/');
-  }
-});
-
-fastify.addHook('onRequest', async (req, reply) => {
-  if (process.env.MODE !== 'local' && req.headers['x-forwarded-proto'] !== 'https') {
-    reply.redirect(`https://${req.headers['host']}${req.raw.url}`);
-  }
-});
-
 fastify.get('/', async (request, reply) => {
   const db = fastify.mongo.db;
-  let user = request.user;
+  let { translations, lang, user } = request;
   const userId = user._id;
   const collectionChat = db.collection('chats');
   if (userId && !user.isTemporary) {
@@ -154,16 +134,10 @@ fastify.get('/', async (request, reply) => {
   let chatCount = await collectionChat.distinct('chatImageUrl', { userId: new fastify.mongo.ObjectId(userId) });
   chatCount = chatCount.length;
 
-  const translations = request.translations;
-  const lang = request.lang
-
+  
   if (user.isTemporary) {
     return reply.renderWithGtm(`index.hbs`, {
       title: translations.seo.title,
-      translations,
-      mode: process.env.MODE,
-      apiurl: process.env.API_URL,
-      user: request.user,
       seo: [
         { name: 'description', content: translations.seo.description },
         { name: 'keywords', content: translations.seo.keywords },
@@ -179,16 +153,12 @@ fastify.get('/', async (request, reply) => {
 });
 
 fastify.get('/authenticate', async (request, reply) => {
-  const user = request.user;
-  const translations = request.translations;
+  let { translations, lang, user } = request;
   const withMail = request.query.withMail;
   const template = withMail ? 'authenticate-v1.hbs' : 'authenticate.hbs';
   if (user.isTemporary || request.query.register) {
     return reply.renderWithGtm(template, {
       title: 'AIフレンズ',
-      translations,
-      mode: process.env.MODE,
-      apiurl: process.env.API_URL,
       register: !!request.query.register,
     });
   } else {
@@ -196,19 +166,15 @@ fastify.get('/authenticate', async (request, reply) => {
   }
 });
 
-fastify.get('/my-plan', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+fastify.get('/my-plan', async (request, reply) => {
   const db = fastify.mongo.db;
-  let user = request.user;
+  let { translations, lang, user } = request;
   const userId = user._id;
   user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-  const translations = request.translations;
-  const lang = request.lang
+
   return reply.renderWithGtm(`plan.hbs`, {
     title: 'プレミアムプランAI画像生成',
-    translations,
-    mode: process.env.MODE,
-    apiurl: process.env.API_URL,
-    user: request.user,
+    
     seo: [
       { name: 'description', content: translations.seo.description_plan },
       { name: 'keywords', content: translations.seo.keywords },
@@ -220,15 +186,17 @@ fastify.get('/my-plan', { preHandler: [fastify.authenticate] }, async (request, 
   });
 });
 
-fastify.get('/chat', { preHandler: [fastify.authenticate] }, (request, reply) => {
+fastify.get('/chat', (request, reply) => {
   reply.redirect('/chat/');
 });
 
-fastify.get('/chat/:chatId', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+fastify.get('/chat/:chatId', async (request, reply) => {
   const db = fastify.mongo.db;
-
-  const user = request.user; // Directly access the enriched user from preHandler
+  
+  let { translations, lang, user } = request;
+  console.log({user})
   const userId = user._id;
+  console.log({translations:translations.lang,languages:lang,user:user});
 
   const collectionChat = db.collection('chats');
   const collectionUser = db.collection('users');
@@ -243,7 +211,7 @@ fastify.get('/chat/:chatId', { preHandler: [fastify.authenticate] }, async (requ
   const isAdmin = await checkUserAdmin(fastify, userId);
   const chatId = request.params.chatId;
   const imageType = request.query.type || false;
-  const translations = request.translations;
+  
 
   const promptData = await db.collection('prompts').find({}).toArray();
 
@@ -251,9 +219,9 @@ fastify.get('/chat/:chatId', { preHandler: [fastify.authenticate] }, async (requ
     title: translations.seo.title,
     isAdmin,
     imageType,
-    translations,
-    mode: process.env.MODE,
-    apiurl: process.env.API_URL,
+   
+    
+    
     user,
     userId,
     chatId,
@@ -270,14 +238,14 @@ fastify.get('/chat/:chatId', { preHandler: [fastify.authenticate] }, async (requ
   });
 });
 
-fastify.get('/chat/edit/:chatId', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+fastify.get('/chat/edit/:chatId', async (request, reply) => {
   try {
     const db = fastify.mongo.db;
 
     const usersCollection = db.collection('users');
     const chatsCollection = db.collection('chats');
 
-    let user = request.user;
+    let { translations, lang, user } = request;
     const userId = user._id;
 
     user = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
@@ -296,18 +264,17 @@ fastify.get('/chat/edit/:chatId', { preHandler: [fastify.authenticate] }, async 
     const { tags, page, totalPages } = await fetchTags(db,request);
     // Assure that tags are unique by first converting them to lowercasing and then to a set then back to an array
     const uniqueTags = [...new Set(tags.map(tag => tag.toLowerCase()))];
-    const translations = request.translations;
+    
 
     return reply.renderWithGtm('add-chat.hbs', {
       title: 'AIフレンズ',
       tags,
-      translations,
-      mode: process.env.MODE,
-      apiurl: process.env.API_URL,
+      
+      
       chatId,
       modelId: request.query.modelId,
       isTemporaryChat,
-      user: request.user,
+      
     });
   } catch (error) {
     console.log(error);
@@ -317,16 +284,12 @@ fastify.get('/chat/edit/:chatId', { preHandler: [fastify.authenticate] }, async 
 fastify.get('/post', async (request, reply) => {
   try {
     const db = fastify.mongo.db;
-    let user = request.user;
+    let { translations, lang, user } = request;
     const userId = user._id;
     if (!user.isTemporary && userId) user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-    const translations = request.translations;
+    
     return reply.view('post.hbs', {
       title: translations.seo.title_post,
-      user: request.user,
-      translations,
-      mode: process.env.MODE,
-      apiurl: process.env.API_URL,
       seo: [
         { name: 'description', content: translations.seo.description_post },
         { name: 'keywords', content: translations.seo.keywords },
@@ -344,8 +307,8 @@ fastify.get('/post', async (request, reply) => {
 fastify.get('/post/:postId', async (request, reply) => {
   try {
     const db = fastify.mongo.db;
-    let user = request.user;
-    const translations = request.translations;
+    let { translations, lang, user } = request;
+    
     const userId = user._id;
     const postId = request.params.postId;
 
@@ -361,10 +324,9 @@ fastify.get('/post/:postId', async (request, reply) => {
 
     return reply.renderWithGtm('post.hbs', {
       title: translations.seo.title_post,
-      translations,
-      mode: process.env.MODE,
-      apiurl: process.env.API_URL,
-      user: request.user,
+      
+      
+      
       postUser,
       userId,
       post,
@@ -386,17 +348,16 @@ fastify.get('/post/:postId', async (request, reply) => {
 fastify.get('/character', async (request, reply) => {
   try {
     const db = fastify.mongo.db;
-    let user = request.user;
-    const translations = request.translations;
+    let { translations, lang, user } = request;
+    
     const userId = user._id;
     user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
     return reply.view('character.hbs', {
       title: 'AIグラビアから送られてくる特別な写真 | LAMIX | 日本語 | 無料AI画像生成 | 無料AIチャット',
-      translations,
-      mode: process.env.MODE,
-      apiurl: process.env.API_URL,
-      user: request.user,
+      
+      
+      
       seo: [
         { name: 'description', content: translations.seo.description_character },
         { name: 'keywords', content: translations.seo.keywords },
@@ -415,8 +376,8 @@ fastify.get('/character', async (request, reply) => {
 fastify.get('/character/:chatId', async (request, reply) => {
   try {
     const db = fastify.mongo.db;
-    const translations = request.translations;
-    let user = request.user;
+    
+    let { translations, lang, user } = request;
     const userId = user._id;
     const chatId = new fastify.mongo.ObjectId(request.params.chatId);
     const imageId = request.query.imageId ? new fastify.mongo.ObjectId(request.query.imageId) : null;
@@ -485,12 +446,8 @@ fastify.get('/character/:chatId', async (request, reply) => {
     const template = isModal ? 'character-modal.hbs' : 'character.hbs';
     return reply.view(template, {
       title: `${chat.name} | ${image?.title?.[request.lang] ?? ''} ${translations.seo.title_character}`,
-      translations,
-      mode: process.env.MODE,
-      apiurl: process.env.API_URL,
       chat,
       image,
-      user: request.user,
       chatId,
       isBlur,
       seo: [
@@ -512,17 +469,16 @@ fastify.get('/character/:chatId', async (request, reply) => {
 fastify.get('/tags', async (request, reply) => {
   try {
     const db = fastify.mongo.db;
-    const translations = request.translations;
+    
     const { tags, page, totalPages } = await fetchTags(db,request);
     return reply.view('tags.hbs', {
       title: `${translations.seo.title_tags} ${translations.seo.page} ${page}`,
-      user: request.user,
+      
       tags,
       page,
       totalPages,
-      translations,
-      mode: process.env.MODE,
-      apiurl: process.env.API_URL,
+      
+      
       seo: [
         { name: 'description', content: translations.seo.description_tags },
         { name: 'keywords', content: `${translations.seo.keywords}` },
@@ -540,11 +496,11 @@ fastify.get('/tags', async (request, reply) => {
 fastify.get('/search', async (request, reply) => {
   try {
     const db = fastify.mongo.db;
-    let user = request.user;
+    let { translations, lang, user } = request;
     const userId = user._id;
     user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
-    const translations = request.translations;
+    
     const page = request.query.page || 1;
     const query = request.query.q || request.query.query || null;
     const imageStyle = request.query.imageStyle || 'anime';
@@ -573,11 +529,10 @@ fastify.get('/search', async (request, reply) => {
 
     return reply.view('search.hbs', {
       title: seoTitle,
-      user: request.user,
+      
       data,
-      translations,
-      mode: process.env.MODE,
-      apiurl: process.env.API_URL,
+      
+      
       query,
       imageStyle,
       seo: [
@@ -596,7 +551,7 @@ fastify.get('/search', async (request, reply) => {
 
 fastify.get('/about', async (request, reply) => {
   const db = fastify.mongo.db;
-  const translations = request.translations;
+  
   const collectionChats = db.collection('chats');
   const chats = await collectionChats
     .find({ visibility: { $exists: true, $eq: 'public' } })
@@ -606,9 +561,9 @@ fastify.get('/about', async (request, reply) => {
 
   return reply.renderWithGtm('chat.hbs', {
     title: translations.seo.title,
-    translations,
-    mode: process.env.MODE,
-    apiurl: process.env.API_URL,
+   
+    
+    
     chats,
     seo: [
       { name: 'description', content: translations.seo.description },
@@ -621,7 +576,7 @@ fastify.get('/about', async (request, reply) => {
   });
 });
 
-fastify.get('/chat/list/:id', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+fastify.get('/chat/list/:id', async (request, reply) => {
   try {
     const db = fastify.mongo.db;
     const userId = new fastify.mongo.ObjectId(request.params.id);
@@ -636,15 +591,14 @@ fastify.get('/chat/list/:id', { preHandler: [fastify.authenticate] }, async (req
 
     const chatsCollection = db.collection('chats');
     const sortedChats = await chatsCollection.find(query).sort({ updatedAt: -1 }).toArray();
-    const translations = request.translations;
+    
 
     return reply.renderWithGtm('chat-list', {
       title: translations.seo.title,
-      translations,
-      mode: process.env.MODE,
-      apiurl: process.env.API_URL,
+      
+      
       chats: sortedChats,
-      user: request.user,
+      
       seo: [
         { name: 'description', content: translations.seo.description },
         { name: 'keywords', content: translations.seo.keywords },
@@ -662,17 +616,17 @@ fastify.get('/chat/list/:id', { preHandler: [fastify.authenticate] }, async (req
 
 fastify.get('/discover', async (request, reply) => {
   const db = fastify.mongo.db;
-  let user = request.user;
+  let { translations, lang, user } = request;
   const userId = user._id;
   user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-  const translations = request.translations;
+  
 
   return reply.renderWithGtm('discover.hbs', {
     title: translations.seo.titl,
-    translations,
-    mode: process.env.MODE,
-    apiurl: process.env.API_URL,
-    user: request.user,
+   
+    
+    
+    
     seo: [
       { name: 'description', content: translations.seo.description },
       { name: 'keywords', content: translations.seo.keywords },
@@ -699,7 +653,7 @@ fastify.get('/generate/:userid', (request, reply) => {
   reply.renderWithGtm('generate.hbs', { title: 'AIフレンズ', userId });
 });
 
-fastify.get('/dashboard', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+fastify.get('/dashboard', async (request, reply) => {
   try {
     const db = fastify.mongo.db;
     const userId = new fastify.mongo.ObjectId(request.user._id);
@@ -714,19 +668,18 @@ fastify.get('/dashboard', { preHandler: [fastify.authenticate] }, async (request
   }
 });
 
-fastify.get('/settings', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+fastify.get('/settings', async (request, reply) => {
   try {
     const db = fastify.mongo.db;
     const userId = request.user._id;
     const usersCollection = db.collection('users');
     const userData = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
-    const translations = request.translations;
+    
 
     return reply.renderWithGtm('/settings', {
       title: 'AIフレンズ',
-      translations,
-      mode: process.env.MODE,
-      apiurl: process.env.API_URL,
+      
+      
       user: userData,
     });
   } catch (err) {

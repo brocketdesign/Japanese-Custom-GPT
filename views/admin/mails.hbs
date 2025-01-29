@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+{{> dashboard-header}}
+<body>
+  {{> dashboard-nav}}
+
+  <div class="container py-4">
+    <h1>{{translations.admin_mails.title}}</h1>
+
+    <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#newMailModal">
+      {{translations.admin_mails.new_mail}}
+    </button>
+
+    <div class="row">
+      {{#each mails}}
+        <div class="col-md-4">
+          <div class="card mb-3">
+            <div class="card-body">
+              <h5 class="card-title">{{this.subject}}</h5>
+              <p class="card-text"><strong>{{translations.admin_mails.mail_trigger}}:</strong> {{this.trigger}}</p>
+              <div class="d-flex justify-content-between">
+                <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editMailModal" 
+                        onclick="editMail('{{this.id}}')">
+                  {{translations.admin_mails.edit_mail}}
+                </button>
+                <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#previewMailModal" 
+                        onclick="previewMail('{{this.id}}')">
+                  {{translations.admin_mails.preview_mail}}
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="deleteMail('{{this.id}}')">
+                  {{translations.admin_mails.delete_mail}}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      {{/each}}
+    </div>
+
+    <!-- New Mail Modal -->
+    <div class="modal fade" id="newMailModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-scrollable mx-0">
+        <div class="modal-content mx-auto">
+          <form>
+            <div class="modal-header">
+              <h5 class="modal-title">{{translations.admin_mails.create_mail}}</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="trigger" class="form-label">{{translations.admin_mails.mail_trigger}}</label>
+                <select id="trigger" class="form-select">
+                  <option value="registration">{{translations.admin_mails.trigger_registration}}</option>
+                  <option value="payment">{{translations.admin_mails.trigger_payment}}</option>
+                  <option value="cron">{{translations.admin_mails.trigger_cron}}</option>
+                </select>
+              </div>
+              <!-- Subject, message fields, etc. -->
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-primary">{{translations.admin_mails.create_button}}</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Mail Modal -->
+    <div class="modal fade" id="editMailModal" tabindex="-1" aria-hidden="true">
+      <!-- Similar structure with form for editing -->
+    </div>
+
+    <!-- Preview Mail Modal -->
+    <div class="modal fade" id="previewMailModal" tabindex="-1" aria-hidden="true">
+      <!-- Preview content only -->
+    </div>
+  </div>
+
+  {{> dashboard-footer}}
+  <script>
+    function editMail(mailId) {
+      // Logic to load and populate the edit modal with mailId
+      console.log("Edit Mail:", mailId);
+    }
+
+    function previewMail(mailId) {
+      // Logic to load and show mail preview
+      console.log("Preview Mail:", mailId);
+    }
+
+    function deleteMail(mailId) {
+      if (confirm("{{translations.admin_mails.confirm_delete}}")) {
+        // Logic to delete mail
+        console.log("Delete Mail:", mailId);
+      }
+    }
+  </script>
+
+</body>
+</html>

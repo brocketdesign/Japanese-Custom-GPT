@@ -106,7 +106,8 @@
         "users": "Utilisateurs",
         "prompts": "Invites",
         "notifications": "Notifications",
-        "models": "Models"
+        "models": "Models",
+        "mails" : "Mails"
   },
   "admin_user": {
     "recent_users": "Utilisateurs récents",
@@ -120,6 +121,20 @@
     "toggle_subscription": "Basculer l'abonnement",
     "chat": "Chat",
     "delete": "Supprimer"
+  },
+  "admin_mails": {
+    "title": "Tableau de bord des mails",
+    "subscription_status": "Statut de l'abonnement",
+    "paid_user_features": "Fonctionnalités pour les utilisateurs payants activées",
+    "new_mail": "Nouveau mail",
+    "create_mail": "Créer un nouveau mail",
+    "mail_trigger": "Déclencheur de mail",
+    "trigger_registration": "Lors de la première inscription",
+    "trigger_payment": "Après un paiement réussi",
+    "trigger_cron": "Mail de tâche cron",
+    "create_button": "Créer un mail",
+    "edit_mail": "Modifier le mail",
+    "preview_mail": "Aperçu du mail"
   },
   "image_generation_soft_limit_reset": "Vous pouvez maintenant générer une autre image.",
   "image_generation_soft_limit": "Veuillez attendre %{interval}% secondes avant de générer une autre image.",

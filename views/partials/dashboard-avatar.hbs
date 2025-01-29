@@ -89,6 +89,11 @@
                         <i class="fas fa-bell me-3"></i>{{translations.admin.notifications}}
                     </a>
                 </li>
+                <li class="{{#if isAdmin }}{{else}}d-none{{/if}}">
+                    <a class="dropdown-item text-secondary" href="/admin/mails">
+                        <i class="fas fa-envelope me-3"></i>{{translations.admin.mails}}
+                    </a>
+                </li>
                 <li>
                     <a class="dropdown-item text-secondary" href="#" onclick="loadSettingsPage()">
                         <i class="fas fa-cog me-3"></i>{{translations.avatar.settings}}

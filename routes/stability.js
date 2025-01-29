@@ -77,6 +77,11 @@ fastify.post('/novita/txt2img', async (request, reply) => {
             });
           }
       });
+    })
+    .catch((error) => {
+      console.error('Error initiating image generation:', error);
+      fastify.sendNotificationToUser(userId, 'handleLoader', { imageId:placeholderId, action:'remove' })
+      fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId:placeholderId, spin: false })
     });
     reply.send(result);
   } catch (err) {

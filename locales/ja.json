@@ -106,7 +106,8 @@
         "users": "ユーザー",
         "prompts": "プロンプト",
         "notifications": "通知",
-        "models": "モデル"
+        "models": "モデル",
+        "mails" : "メール"
   },
   "admin_user": {
     "recent_users": "最近のユーザー",
@@ -120,6 +121,20 @@
     "toggle_subscription": "サブスクリプションの切り替え",
     "chat": "チャット",
     "delete": "削除"
+  },
+  "admin_mails": {
+    "title": "メールダッシュボード",
+    "subscription_status": "サブスクリプションステータス",
+    "paid_user_features": "有料ユーザー機能が有効",
+    "new_mail": "新しいメール",
+    "create_mail": "新しいメールを作成",
+    "mail_trigger": "メールトリガー",
+    "trigger_registration": "初回登録時",
+    "trigger_payment": "支払い成功後",
+    "trigger_cron": "Cronタスクメール",
+    "create_button": "メールを作成",
+    "edit_mail": "メールを編集",
+    "preview_mail": "メールのプレビュー"
   },
   "image_generation_soft_limit_reset": "次の画像を生成できます。",
   "image_generation_soft_limit": "次の画像を生成する前に%{interval}%秒お待ちください。",

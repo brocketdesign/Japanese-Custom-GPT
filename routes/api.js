@@ -1092,6 +1092,10 @@ async function routes(fastify, options) {
                                     nsfw
                                 });
                             }
+                        }).catch((error) => {
+                            console.log('Error generating image:', error);
+                            fastify.sendNotificationToUser(userId, 'handleLoader', { imageId, action:'remove' })
+                            fastify.sendNotificationToUser(userId, 'showNotification', { message:request.translations.image_generation_error , icon:'error' });
                         });
                     })
                     imgMessage[0].content = `\n\nComment my request and tell me that you are preparing an image for me.\n Do no describe the image only comment as your character would. Stay in your character, keep the same tone as previously. Ask me for more images.`.trim()

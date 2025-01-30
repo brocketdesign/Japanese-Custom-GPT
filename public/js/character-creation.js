@@ -436,10 +436,6 @@ $(document).ready(function() {
 			generateCharacterPersonnality(function(response){
                 showNotification(translations.newCharacter.personalityDetailsDone , 'success');
                 $('.chatRedirection').show();
-                //Scroll to .chatRedirection
-                $('#characterCreationModal .modal-body').animate({
-                    scrollTop: $(".chatRedirection").offset().top
-                }, 1000);
             });
 
         } catch (error) {

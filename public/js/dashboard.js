@@ -2068,15 +2068,6 @@ window.loadChatImages = function (chatId, page = 1, reload = false) {
         if (maxCachedPage > 0) page = maxCachedPage + 1 // optionally refresh the last cached page
       }
   
-      // If page=1 and imageId is present => load that image into loadedImages
-      if (page === 1 && typeof imageId !== 'undefined' && imageId) {
-        $.get(`/image/${imageId}`, function (data) {
-          if (!loadedImages.some((img) => img._id === data._id)) {
-            loadedImages.push(data)
-          }
-        })
-      }
-  
       // If already cached and NOT reload => skip server call
       if (chatImagesCache[chatId][page] && !reload) {
         appendChatImages(chatImagesCache[chatId][page], subscriptionStatus, isAdmin, isTemporary)
@@ -2115,7 +2106,7 @@ window.loadChatImages = function (chatId, page = 1, reload = false) {
   function appendChatImages(images, subscriptionStatus, isAdmin, isTemporary) {
     const currentUserId = user._id
     let chatGalleryHtml = ''
-  
+
     images.forEach((item) => {
       const unlockedItem = isUnlocked(user, item._id, item.userId)
       const isBlur = !unlockedItem && item?.nsfw && !subscriptionStatus
@@ -2164,7 +2155,19 @@ window.loadChatImages = function (chatId, page = 1, reload = false) {
     // Update swiper if modal is open
     const modalChatId = $('#swiperModal').data('chat-id')
     if (modalChatId && modalChatId.toString() === images?.[0]?.chatId?.toString()) {
-      updateSwiperSlides(loadedImages)
+      // If imageId is present => load that image into loadedImages
+      if (typeof imageId !== 'undefined' && imageId) {
+        $.get(`/image/${imageId}`, function (data) {
+          const existingIndex = loadedImages.findIndex((img) => img._id === data._id)
+          if (existingIndex !== -1) {
+            loadedImages.splice(existingIndex, 1)  // Remove existing item
+          }
+          loadedImages.unshift(data)  // Insert at the beginning
+          updateSwiperSlides(loadedImages)
+        })
+      } else {
+        updateSwiperSlides(loadedImages)
+      }
     }
   }
   

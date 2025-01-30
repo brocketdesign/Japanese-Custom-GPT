@@ -22,15 +22,15 @@
                     ><i class="bi bi-pencil-square"></i></button>
                 </div>
                 <div>
-                    <a href="#" onclick="loadCharacterCreationPage()" class="{{default isAdmin 'd-inline-block'}} m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary text-start" style="border-radius:40px;">
-                        <i class="fas fa-plus me-2"></i>{{translations.createCharacter}}
-                    </a>
-                    <a href="/character" class="{{default isAdmin 'd-inline-block'}} m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius:40px;">
-                    <i class="fas fa-compass me-2"></i>{{translations.library}}
-                    </a>
-                    <span onclick="showDiscovery()" class="d-none m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius: 40px;">
-                        <i class="fas fa-compass me-2"></i>{{translations.library}}
+                    <span onclick="showDiscovery()" class="m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius: 40px;">
+                        <i class="bi bi-chat me-2"></i>{{translations.chatList}}
                     </span>
+                    <a href="/character" class="{{default isAdmin 'd-inline-block'}} m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius:40px;">
+                        <i class="bi bi-compass me-2"></i>{{translations.library}}
+                    </a>
+                    <a href="#" onclick="loadCharacterCreationPage()" class="{{default isAdmin 'd-inline-block'}} m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary text-start" style="border-radius:40px;">
+                        <i class="bi bi-plus me-2"></i>{{translations.createCharacter}}
+                    </a>
                 </div>
                 <span class="text-dark ps-4 fw-bold" style="font-size: 12px;">{{translations.chatList}} <span id="user-chat-count" >{{chats.length}}</span></span>
             </div>
@@ -60,7 +60,6 @@
                         </div>
                         <div class="d-flex flex-row" style="cursor:pointer" onclick="showDiscovery()">
                             <img src="/img/logo.webp" alt="" class="mx-3" width="40px">
-                            <span class="d-none">LAMIXボット</span>
                         </div>  
                         <div>
                             <div class="navbar-collapse" id="navbarNav" style="position: absolute;right: 20px;top: 10px;">
@@ -248,7 +247,6 @@
     </div>
  {{> dashboard-footer}}
 <script src="/js/chat.js"></script>
-<script src="/js/stability.js"></script>
 <script>
 $(document).ready(function() {
 

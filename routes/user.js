@@ -607,8 +607,7 @@ fastify.post('/user/update-info', async (request, reply) => {
       if(!userData.isTemporary){
        isAdmin = await checkUserAdmin(fastify, userId);
       }
-      console.log('isAdmin',isAdmin)
-      console.log('isMyProfile',isMyProfile)
+      
       const translations = request.translations;
 
       return reply.view('/user-profile.hbs', {

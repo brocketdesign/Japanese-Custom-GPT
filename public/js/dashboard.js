@@ -2042,7 +2042,7 @@ function updateSwiperSlides(images) {
 }
 
 // Load chat images (with cache + infinite scroll)
-window.loadChatImages = function (chatId, page = 1, reload = false) {  
+window.loadChatImages = function (chatId, page = 1, reload = false, isModal = false) {  
     return new Promise(async (resolve, reject) => {
       const cacheKey = `chatImages_${chatId}`
       const currentUserId = user._id
@@ -2092,7 +2092,7 @@ window.loadChatImages = function (chatId, page = 1, reload = false) {
           localStorage.setItem(cacheKey, JSON.stringify(cacheData))
   
           // Set up infinite scroll
-          generateChatImagePagination(data.totalPages, chatId)
+          generateChatImagePagination(data.totalPages, chatId, isModal)
           resolve()
         },
         error: (err) => {
@@ -2172,34 +2172,39 @@ window.loadChatImages = function (chatId, page = 1, reload = false) {
   }
   
   // Infinite scroll / pagination
-  window.generateChatImagePagination = function (totalPages, chatId) {
-    console.log(`generateChatImagePagination => chatId:${chatId}, totalPages:${totalPages}`)
-    if (!chatLoadingStates[chatId]) chatLoadingStates[chatId] = false
-    if (!chatCurrentPageMap[chatId]) chatCurrentPageMap[chatId] = 0
-  
-    $(window).off('scroll').on('scroll', () => {
+window.generateChatImagePagination = function (totalPages, chatId, isModal = false) {
+  if (!chatLoadingStates[chatId]) chatLoadingStates[chatId] = false;
+  if (!chatCurrentPageMap[chatId]) chatCurrentPageMap[chatId] = 0;
+
+  const scrollContainer = isModal ? $('#characterModal .modal-body') : $(window);
+
+  scrollContainer.off('scroll').on('scroll', function () {
+      const currentScrollPosition = isModal ? scrollContainer.scrollTop() : $(window).scrollTop();
+      const containerHeight = isModal ? scrollContainer.innerHeight() : $(window).height();
+      const contentHeight = isModal ? scrollContainer[0].scrollHeight : $(document).height();
+
       if (
-        !chatLoadingStates[chatId] &&
-        chatCurrentPageMap[chatId] < totalPages &&
-        $(window).scrollTop() + $(window).height() >= $(document).height() - 100
+          !chatLoadingStates[chatId] &&
+          chatCurrentPageMap[chatId] < totalPages &&
+          currentScrollPosition + containerHeight >= contentHeight - 100
       ) {
-        console.log(`Infinite scroll => next page: ${chatCurrentPageMap[chatId] + 1}`)
-        chatLoadingStates[chatId] = true
-        loadChatImages(chatId, chatCurrentPageMap[chatId] + 1, false)
-          .then(() => {
-            chatLoadingStates[chatId] = false
-            console.log(`Finished loading page ${chatCurrentPageMap[chatId]}`)
-          })
-          .catch((err) => {
-            chatLoadingStates[chatId] = false
-            console.error('Failed to load the next page:', err)
-          })
+          console.log(`Infinite scroll => next page: ${chatCurrentPageMap[chatId] + 1}`);
+          chatLoadingStates[chatId] = true;
+          loadChatImages(chatId, chatCurrentPageMap[chatId] + 1, false)
+              .then(() => {
+                  chatLoadingStates[chatId] = false;
+                  console.log(`Finished loading page ${chatCurrentPageMap[chatId]}`);
+              })
+              .catch((err) => {
+                  chatLoadingStates[chatId] = false;
+                  console.error('Failed to load the next page:', err);
+              });
       }
-    })
-  
-    updateChatPaginationControls(totalPages, chatId)
-  }
-  
+  });
+
+  updateChatPaginationControls(totalPages, chatId);
+};
+
   // If we skip the server call due to cache only
   function generateChatImagePaginationFromCache(chatId) {
     console.log(`generateChatImagePaginationFromCache => chatId:${chatId}`)
@@ -2772,7 +2777,7 @@ function openCharacterModal(modalChatId) {
             $('#character-modal-container').html(data);
             $(document).ready(function () {
                 if (modalChatId) {
-                    loadChatImages(modalChatId, 1);
+                    loadChatImages(modalChatId, 1, true, true);
                 }
             });
             modalStatus.isCharacterModalLoading = false;

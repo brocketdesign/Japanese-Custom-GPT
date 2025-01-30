@@ -588,7 +588,6 @@ fastify.post('/user/update-info', async (request, reply) => {
 
   fastify.get('/user/:userId', async (request, reply) => {
     const { userId } = request.params;
-
     const db = fastify.mongo.db
     const collectionChat = db.collection('chats');
     const collectionUser = db.collection('users');
@@ -603,10 +602,13 @@ fastify.post('/user/update-info', async (request, reply) => {
       if (!userData) {
         return reply.redirect('/my-plan');
       }
+      let isMyProfile =  userId.toString() === currentUser?._id.toString();
       let isAdmin = false;
       if(!userData.isTemporary){
-        isAdmin = await checkUserAdmin(fastify, request.user._id);
+       isAdmin = await checkUserAdmin(fastify, userId);
       }
+      console.log('isAdmin',isAdmin)
+      console.log('isMyProfile',isMyProfile)
       const translations = request.translations;
 
       return reply.view('/user-profile.hbs', {
@@ -615,6 +617,7 @@ fastify.post('/user/update-info', async (request, reply) => {
         mode: process.env.MODE,
         apiurl: process.env.API_URL,
         isAdmin,
+        isMyProfile,
         user: request.user,
         userData,
       });

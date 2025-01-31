@@ -59,7 +59,6 @@ module.exports = fastifyPlugin(async function (fastify) {
         for (const conn of userConnections) {
           conn.send(JSON.stringify({ notification }));
         }
-        console.log(`Notification sent to user ${normalizedUserId}`);
       } else {
         console.log(`No active connections for user ${normalizedUserId}`);
       }

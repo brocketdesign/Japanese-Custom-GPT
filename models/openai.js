@@ -13,12 +13,12 @@ const apiDetails = {
   },
   novita: {
     apiUrl: 'https://api.novita.ai/v3/openai/chat/completions',
-    model: 'sao10k/l3-8b-lunaris',
+    model: 'deepseek/deepseek_v3',
     key: process.env.NOVITA_API_KEY
   },
   novita_2: {
     apiUrl: 'https://api.novita.ai/v3/openai/chat/completions',
-    model: 'deepseek/deepseek_v3',
+    model: 'sao10k/l3-8b-lunaris',
     key: process.env.NOVITA_API_KEY
   },
   venice: {
@@ -45,8 +45,8 @@ const moderateText = async (text) => {
 };
 async function generateCompletion(messages, maxToken = 1000, model = null, lang = 'en') {
   const selectedModel = model ? apiDetails[model] : currentModel;
-  const finalModel = lang === 'ja' ? apiDetails.openai : selectedModel;
-
+  const finalModel = lang === 'ja' ? apiDetails.novita : selectedModel;
+  console.log('finalModel', finalModel.model)
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
       const response = await fetch(finalModel.apiUrl, {
@@ -184,7 +184,7 @@ const checkImageRequest = async (messages) => {
           },
     ]
 
-    const completionMessage = await generateCompletion(messages, 600, 'openai')
+    const completionMessage = await generateCompletion(messages, 600)
     return completionMessage.replace(/['"]+/g, '');
     
 }

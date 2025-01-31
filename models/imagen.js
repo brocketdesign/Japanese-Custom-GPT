@@ -123,7 +123,7 @@ async function generateTxt2img(title, prompt, aspectRatio, userId, chatId, userC
 
     // Send request to Novita and get taskId
     const novitaTaskId = await fetchNovitaMagic(requestData);
-  
+    console.log('Novita task ID:', novitaTaskId);
     // Store task details in DB
     await db.collection('tasks').insertOne({
       taskId: novitaTaskId,

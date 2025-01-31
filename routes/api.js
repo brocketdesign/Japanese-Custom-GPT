@@ -167,13 +167,12 @@ async function routes(fastify, options) {
                 vocabulary: z.string(),
                 unique_feature: z.string(),
             }),
-            story: z.string(), 
         }),
         tags:z.array(z.string()),
         first_message: z.string(), // Adding "first_message" field
     });
 
-    function createSystemPayloadChatRule(prompt, gender, name, details, language) {
+    function createSystemPayloadChatRule(purpose, gender, name, details, language) {
         let detailsString = '';
         if (details && typeof details === 'object') {
           // Example: "hairColor:blonde, eyeColor:blue, ..."
@@ -196,7 +195,7 @@ async function routes(fastify, options) {
             {
                 role: "user",
                 content: `The character's gender is ${gender}.
-                Please review the following information: ${prompt}.
+                Please review the following information: ${purpose}.
                 ${detailsString.trim() !== '' ? `Additional details: ${detailsString}.` : ''}
                 `.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim()
             },
@@ -236,7 +235,7 @@ async function routes(fastify, options) {
             }
 
             const chatData = JSON.parse(completionResponse.choices[0].message.content)
-
+            console.log('chatData:', chatData);
             // Respond with the validated character data
             chatData.language = language
             chatData.gender = gender
@@ -964,14 +963,15 @@ async function routes(fastify, options) {
    // This route handles streaming chat completions from OpenAI for a given session ID.
 
     function chatDataToString(data) {
+        const base_personality = data.base_personality;
         return `
-            Traits: ${data.traits.join(', ')}
-            Preferences: ${data.preferences.join(', ')}
+            Traits: ${base_personality.traits.join(', ')}
+            Preferences: ${base_personality.preferences.join(', ')}
             Expression Style:
-            - Tone: ${data.expression_style.tone}
-            - Vocabulary: ${data.expression_style.vocabulary}
-            - Unique Feature: ${data.expression_style.unique_feature}
-            Story: ${data.story}
+            - Tone: ${base_personality.expression_style.tone}
+            - Vocabulary: ${base_personality.expression_style.vocabulary}
+            - Unique Feature: ${base_personality.expression_style.unique_feature}
+            Story: ${data.short_intro}
         `.trim();
     }
     
@@ -1044,7 +1044,7 @@ async function routes(fastify, options) {
           const systemContent = completionSystemContent(
             chatDocument,
             userInfo,
-            chatDataToString(chatDocument.base_personality),
+            chatDataToString(chatDocument),
             getCurrentTimeInJapanese(),
             language
           )
@@ -1117,6 +1117,7 @@ async function routes(fastify, options) {
                 ...userMessages
             ]
           }
+          
           generateCompletion(messagesForCompletion, 300, null, request.lang).then(async (completion) => {
             if(completion){
                 fastify.sendNotificationToUser(userId, 'displayCompletionMessage', { message: completion, uniqueId })

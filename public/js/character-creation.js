@@ -159,8 +159,8 @@ $(document).ready(function() {
                         $('#gender').val(chatData.gender);
                     }
 
-                    if (chatData?.base_personality && chatData?.base_personality?.story) {
-                        $('#chatPurpose').val(chatData?.base_personality?.story);
+                    if (chatData?.base_personality && chatData?.short_intro) {
+                        $('#chatPurpose').val(chatData?.short_intro);
                         resizeTextarea($('#chatPurpose')[0]);
                     }
 
@@ -172,11 +172,6 @@ $(document).ready(function() {
                     if (chatData.description) {
                         $('#chatDescription').val(chatData.description).show();
                         resizeTextarea($('#chatDescription')[0]);
-                    }
-
-                    if (chatData?.base_personality && chatData?.base_personality?.story && $('#chatStory').length) {
-                        $('#chatStory').val(chatData.base_personality.story).show();
-                        resizeTextarea($('#chatStory')[0]);
                     }
 
                     // Callback if provided
@@ -479,11 +474,10 @@ $(document).ready(function() {
                 contentType: 'application/json',
                 data: customData,
                 success: function(response) {
-
+                    console.log('Generated chat:', response);
                     $('#chatName').val(response.name);
-                    $('#chatPurpose').val(response?.base_personality?.story);
-                    $('#chatStory').val(response.base_personality.story);
-
+                    $('#chatPurpose').val(response?.short_intro);
+                    resizeTextarea($('#chatPurpose')[0]);
                     if (typeof callback === 'function') {
                         callback(response);
                     }

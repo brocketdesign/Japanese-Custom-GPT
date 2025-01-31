@@ -173,6 +173,7 @@
 ></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 <script>
+    
     document.addEventListener('DOMContentLoaded', function() {
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -454,9 +455,12 @@ window.fetchMode = async function() {
 };
 
 $(document).ready(function(){
+    $('.dropdown-toggle').each(function() {
+        new bootstrap.Dropdown(this); // Initialize Bootstrap Dropdown for each dropdown toggle
+    });
 
     fetchAndAppendModels();
-// User info popup
+    // User info popup
         
     function generateRandomNickname() {
         const adjectives = ["すばやい", "静かな", "強力な", "勇敢な", "明るい", "高貴な"];

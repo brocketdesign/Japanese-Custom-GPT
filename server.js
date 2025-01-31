@@ -194,15 +194,14 @@ fastify.get('/chat/:chatId', async (request, reply) => {
   const db = fastify.mongo.db;
   
   let { translations, lang, user } = request;
+  console.log('User:', user); 
   const userId = user._id;
 
   const collectionChat = db.collection('chats');
   const collectionUser = db.collection('users');
   const userData = await getUserData(userId, collectionUser, collectionChat, user);
 
-  if (!userData) return reply.status(404).send({ error: 'User not found' });
-
-  if (user.isTemporary) {
+  if (user.isTemporary || !userData) {
     return reply.redirect('/');
   }
 
@@ -217,9 +216,6 @@ fastify.get('/chat/:chatId', async (request, reply) => {
     title: translations.seo.title,
     isAdmin,
     imageType,
-   
-    
-    
     user,
     userId,
     chatId,

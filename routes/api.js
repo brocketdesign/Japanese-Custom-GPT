@@ -116,7 +116,6 @@ async function routes(fastify, options) {
         chatId = chatId !== undefined && chatId !== null && chatId !== ''
         ? new fastify.mongo.ObjectId(request.body.chatId) 
         : new fastify.mongo.ObjectId(); 
-        console.log('chatId:', chatId);
         
         const userId = new fastify.mongo.ObjectId(request.user._id);
         const chatsCollection = fastify.mongo.db.collection('chats');
@@ -235,7 +234,6 @@ async function routes(fastify, options) {
             }
 
             const chatData = JSON.parse(completionResponse.choices[0].message.content)
-            console.log('chatData:', chatData);
             // Respond with the validated character data
             chatData.language = language
             chatData.gender = gender
@@ -1474,7 +1472,7 @@ async function routes(fastify, options) {
             Respond with an image prompt in English. \n
             Use explicit keywords to describe body parts (ass,pussy,boobs), clothes.\n
             Do not include any comments. \n
-            Provide a detailed prompt in englsih only.
+            Provide a detailed prompt in english only.
             `.replace(/^\s+/gm, '').trim();
 
         const instructionMessage = commandToString(command);
@@ -2077,14 +2075,10 @@ async function routes(fastify, options) {
         try {
             const { lang } = request.body;
             const userLang = lang || 'ja';
-
-            if (!fastify.translations[userLang]) {
-                return reply.status(404).send({ error: 'Translation file not found.' });
-            }
-
-            return reply.send({ success: true, translations: fastify.translations[userLang] });
+            const translations = request.translations;
+            return reply.send({ success: true, translations });
         } catch (error) {
-            fastify.log.error(error);
+            console.log(error);
             return reply.status(500).send({ error: 'An error occurred while fetching translations.' });
         }
     });
@@ -2096,11 +2090,7 @@ async function routes(fastify, options) {
             const mode = process.env.MODE || 'local';
             const user = request.user;
             const userLang = lang || 'ja';
-
-            if (!fastify.translations[userLang]) {
-                return reply.status(400).send({ error: 'Unsupported language.' });
-            }
-
+            
             if (user.isTemporary) {
                 // Update tempUser lang
                 user.lang = userLang;
@@ -2111,7 +2101,6 @@ async function routes(fastify, options) {
                     secure: mode === 'heroku',
                     maxAge: 3600
                 });
-                request.translations = fastify.translations[userLang];
 
             } else {
                 // Update user's lang in the database
@@ -2119,7 +2108,6 @@ async function routes(fastify, options) {
                     { _id: user._id },
                     { $set: { lang: userLang } }
                 );
-                request.translations = fastify.translations[userLang];
             }
 
             return reply.send({ success: true, lang: userLang });
@@ -2289,8 +2277,6 @@ async function routes(fastify, options) {
               imageUrl = await handleFileUpload(part, db);
             }
           }
-          
-          console.log({ title, promptText,nsfw, imageUrl });
           
           await collection.insertOne({
             title,

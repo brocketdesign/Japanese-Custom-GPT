@@ -72,8 +72,8 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
 
     /** Middleware: Set request language and user */
     async function setRequestLangAndUser(request, reply) {
-        request.lang = await fastify.getLang(request, reply);
         request.user = await fastify.getUser(request, reply);
+        request.lang = request.user.lang || await fastify.getLang(request, reply);
         request.translations = fastify.getTranslations(request.lang);
     }
 

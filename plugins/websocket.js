@@ -16,7 +16,6 @@ module.exports = fastifyPlugin(async function (fastify) {
 
       if (!fastify.connections.has(normalizedUserId)) {
         fastify.connections.set(normalizedUserId, new Set());
-        console.log(`New user registered: ${normalizedUserId}`);
       }
 
       fastify.connections.get(normalizedUserId).add(connection);

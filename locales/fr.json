@@ -642,6 +642,9 @@
         "aiHiddenMessage": "J'ai reçu les images.",
         "aiInstruction": "Remerciez-moi et commentez le moment où vous avez pris la photo.",
         "imageForm": {
+          "uploadAreaLabel": "Une image du personnage que vous souhaitez générer",
+          "image_size_limit": "La taille limite de l'image est de 5 Mo.",
+          "image_invalid_format": "Format d'image non valide. Veuillez télécharger une image au format PNG, JPEG ou JPG.",
           "image_save_failed": "Échec de l'enregistrement de l'image.",
           "image_saved": "L'image a été enregistrée.",
           "imageGenerationForm": "Formulaire de génération d'image",

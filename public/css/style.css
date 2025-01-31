@@ -1334,7 +1334,15 @@ nav.navbar.move {
   border-radius: 50%;
   padding: 15px;
 }
-
+.upload-area {
+  border: 2px dashed #ccc;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+}
+.upload-area.dragover {
+  border-color: #000;
+}
 .liked i{
   color:red;
 }
@@ -1344,6 +1352,7 @@ nav.navbar.move {
   }
   .avatar-menu.dropdown-menu {
     transform: translate3d(18px, 46px, 0px) !important;
+    top: auto !important;
   }
 
   .modal-content{

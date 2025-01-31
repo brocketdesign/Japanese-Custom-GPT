@@ -6,7 +6,7 @@ const {
     generateCompletion
 } = require('../models/openai')
 const { 
-    generateTxt2img,
+    generateImg,
     getPromptById,
     getTasks
 } = require('../models/imagen');
@@ -1073,7 +1073,7 @@ async function routes(fastify, options) {
                         const title = promptData.title
                         const imageType = genImage.nsfw ? 'nsfw' : 'sfw'
                         const aspectRatio = null
-                        generateTxt2img(title, prompt, aspectRatio, userId, chatId, userChatId, imageType, image_num, fastify)
+                        generateImg({title, prompt, aspectRatio, userId, chatId, userChatId, imageType, image_num, fastify})
                         .then((taskStatus) => {
                             fastify.sendNotificationToUser(userId, 'handleLoader', { imageId, action:'remove' })
                             const { images } = taskStatus;

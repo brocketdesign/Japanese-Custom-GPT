@@ -422,8 +422,10 @@ $(document).ready(function() {
             $('.genexp').fadeIn()
 
             const imageType = moderationResult.flagged ? 'nsfw' : 'sfw';
-
-            txt2ImageNovita(userId, chatCreationId, null, { prompt:enhanceResponse.enhancedPrompt, imageType, chatCreation: true})
+            // Check if #imageUpload has a file
+            const file = $('#imageUpload')[0].files[0];
+                
+            novitaImageGeneration(userId, chatCreationId, null, { prompt:enhanceResponse.enhancedPrompt, imageType, file, chatCreation: true})
             .catch((error) => {
                 console.error('Error generating image:', error);
             })
@@ -489,6 +491,54 @@ $(document).ready(function() {
         }
        
 });
+
+const uploadArea = document.getElementById('uploadArea');
+const fileInput = document.getElementById('imageUpload');
+
+uploadArea.addEventListener('dragover', (event) => {
+    event.preventDefault();
+    uploadArea.classList.add('dragover');
+});
+
+uploadArea.addEventListener('dragleave', () => {
+    uploadArea.classList.remove('dragover');
+});
+
+uploadArea.addEventListener('drop', (event) => {
+    event.preventDefault();
+    uploadArea.classList.remove('dragover');
+    fileInput.files = event.dataTransfer.files;
+    previewImage(event);
+});
+
+function previewImage(event) {
+    const reader = new FileReader();
+    const imagePreview = document.getElementById('imagePreview');
+    reader.onload = function() {
+        imagePreview.src = reader.result;
+        imagePreview.style.display = 'block';
+    };
+    reader.readAsDataURL(event.target.files[0]);
+}
+
+function previewImage(event) {
+    const file = event.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+        if (file.size > 5 * 1024 * 1024) { // 5MB limit
+            showNotification(translations.imageForm.image_size_limit, 'error');
+            return;
+        }
+        const reader = new FileReader();
+        const imagePreview = document.getElementById('imagePreview');
+        reader.onload = function() {
+            imagePreview.src = reader.result;
+            imagePreview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    } else {
+        showNotification(translations.imageForm.image_invalid, 'error');
+    }
+}
 
 function resetChatList(){
     const imageModel = $('.style-option.selected').data('model')

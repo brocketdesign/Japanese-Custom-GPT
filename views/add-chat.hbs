@@ -202,6 +202,16 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- Field to upload an image with an area -->
+                                <div class="my-3">
+                                    <label for="imageUpload" class="form-label">{{translations.imageForm.uploadAreaLabel}}</label>
+                                    <div class="upload-area" id="uploadArea">
+                                        <input type="file" class="form-control" id="imageUpload" name="imageUpload" accept="image/*" onchange="previewImage(event)">
+                                    </div>
+                                    <img id="imagePreview" src="#" alt="Image Preview" style="display: none; max-width: 100%; margin-top: 10px;">
+                                </div>
+
                                               
                             </div>
 

@@ -650,6 +650,9 @@
   "aiHiddenMessage": "I received the images.",
   "aiInstruction": "Thank me and comment about the moment you took the picture.",
   "imageForm": {
+      "image_size_limit": "The image size limit is 5MB.",
+      "image_invalid_format": "Invalid image format. Please upload a valid image file.",
+      "uploadAreaLabel": "Provide an image of the character",
       "image_save_failed": "Failed to save the image.",
       "image_saved": "The image has been saved.",
       "imageGenerationForm": "Image Generation Form",

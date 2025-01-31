@@ -1403,7 +1403,7 @@ $(document).ready(async function() {
         }
 
         displayOrRemoveImageLoader(id, 'show');
-        txt2ImageNovita(userId, chatId, userChatId, {placeholderId:id, imageNsfw, customPrompt:true})
+        novitaImageGeneration(userId, chatId, userChatId, {placeholderId:id, imageNsfw, customPrompt:true})
         .then(data => {
             if(data.error){
                 displayOrRemoveImageLoader(id, 'remove');
@@ -1504,7 +1504,7 @@ window.regenImage = function(el){
     displayOrRemoveImageLoader(placeholderId, 'show');
 
     if($(el).hasClass('txt2img')){
-        txt2ImageNovita(userId, chatId, userChatId, {prompt:imagePrompt, imageNsfw, placeholderId})
+        novitaImageGeneration(userId, chatId, userChatId, {prompt:imagePrompt, imageNsfw, placeholderId})
         .then(data => {
             if(data.error){
                 displayOrRemoveImageLoader(placeholderId, 'remove');

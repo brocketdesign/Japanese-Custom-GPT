@@ -8,7 +8,7 @@ setInterval(() => {
 }, RESET_INTERVAL);
 
 // Generate Image using Novita
-window.txt2ImageNovita = async function(userId, chatId, userChatId, option = {}) {
+window.novitaImageGeneration = async function(userId, chatId, userChatId, option = {}) {
     if (activeGenerations >= MAX_CONCURRENT_GENERATIONS) {
         showNotification(translations.image_generation_soft_limit.replace('%{interval}%',parseInt(RESET_INTERVAL)/1000), 'warning');
         return;
@@ -24,13 +24,19 @@ window.txt2ImageNovita = async function(userId, chatId, userChatId, option = {})
             prompt = (option.prompt || getValue('#prompt-input')).replace(/^\s+/gm, '').trim(),
             aspectRatio = '9:16',
             baseFace = null,
+            file = null,
             imageType = option.imageType || 'sfw',
             placeholderId = option.placeholderId || null,
             customPrompt = option.customPrompt || false,
             chatCreation = option.chatCreation || false
         } = option;
 
-        const API_ENDPOINT = `${API_URL}/novita/txt2img`;
+        let image_base64 = null;
+        if(file){
+            image_base64 = await toBase64(file);
+        }
+
+        const API_ENDPOINT = `${API_URL}/novita/generate-img`;
 
         const response = await fetch(API_ENDPOINT, {
             method: 'POST',
@@ -45,6 +51,7 @@ window.txt2ImageNovita = async function(userId, chatId, userChatId, option = {})
                 imageType,
                 placeholderId,
                 customPrompt,
+                image_base64,
                 chatCreation
             })
         });
@@ -56,7 +63,15 @@ window.txt2ImageNovita = async function(userId, chatId, userChatId, option = {})
     }
 };
 
-
+// Convert file to base64
+window.toBase64 = function(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+};
 // Display image icon in last user message
 window.addIconToLastUserMessage = function(itemId = false) {
     if(!itemId){

@@ -57,7 +57,7 @@ const default_prompt = {
   }
 
 // Module to generate an image
-async function generateTxt2img(title, prompt, aspectRatio, userId, chatId, userChatId, imageType, image_num, fastify) {
+async function generateImg({title, prompt, aspectRatio, userId, chatId, userChatId, imageType, image_num, image_base64, fastify}) {
     const db = fastify.mongo.db;
   
     // Fetch the user
@@ -106,7 +106,10 @@ async function generateTxt2img(title, prompt, aspectRatio, userId, chatId, userC
     }
   
     // Prepare params
-    const requestData = { ...params, ...image_request, image_num };
+    let requestData = { ...params, ...image_request, image_num };
+    if(image_base64){
+      requestData.image_base64 = image_base64;
+    }
     console.log({ model_name: requestData.model_name, prompt: requestData.prompt, nsfw: image_request.type });
   
     let newTitle = title;
@@ -272,7 +275,12 @@ async function checkTaskStatus(taskId, fastify) {
 // Function to trigger the Novita API for text-to-image generation
 async function fetchNovitaMagic(data) {
     try {
-    const response = await axios.post('https://api.novita.ai/v3/async/txt2img', {
+    let apiUrl = 'https://api.novita.ai/v3/async/txt2img';
+    if(data.image_base64){
+      apiUrl = 'https://api.novita.ai/v3/async/img2img';
+    }
+    console.log('Novita API URL:', apiUrl);
+    const response = await axios.post(apiUrl, {
         extra: {
           response_image_type: 'jpeg',
           enable_nsfw_detection: true,
@@ -486,7 +494,7 @@ async function checkImageDescription(db, chatId) {
 }
 
   module.exports = {
-    generateTxt2img,
+    generateImg,
     getPromptById,
     checkImageDescription,
     getTasks,

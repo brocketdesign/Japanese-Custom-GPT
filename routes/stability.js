@@ -2,13 +2,13 @@ const { ObjectId } = require('mongodb');
 const axios = require('axios');
 const fs = require('fs');
 const { processPromptToTags, addNotification } = require('../models/tool')
-const { generateTxt2img,getPromptById,checkImageDescription,getTasks } = require('../models/imagen');
+const { generateImg,getPromptById,checkImageDescription,getTasks } = require('../models/imagen');
 const { createPrompt, moderateText } = require('../models/openai');
 async function routes(fastify, options) {
 
-// Endpoint to initiate txt2img for selected image type
-fastify.post('/novita/txt2img', async (request, reply) => {
-  const { title, prompt, aspectRatio, userId, chatId, userChatId, placeholderId, customPrompt, chatCreation } = request.body;
+// Endpoint to initiate generate-img for selected image type
+fastify.post('/novita/generate-img', async (request, reply) => {
+  const { title, prompt, aspectRatio, userId, chatId, userChatId, placeholderId, customPrompt, image_base64, chatCreation } = request.body;
   let imageType = request.body.imageType
   const db = fastify.mongo.db;
   const translations = request.translations
@@ -40,7 +40,7 @@ fastify.post('/novita/txt2img', async (request, reply) => {
       newPrompt = imageDescription +','+ customPrompt 
     }
 
-    const result = generateTxt2img(title, newPrompt, aspectRatio, userId, chatId, userChatId, imageType, chatCreation ? 2 : 1 , fastify )
+    const result = generateImg({title, prompt:newPrompt, aspectRatio, userId, chatId, userChatId, imageType, image_num: chatCreation ? 2 : 1 , image_base64, fastify})
     .then((taskStatus) => {
       fastify.sendNotificationToUser(userId, 'handleLoader', { imageId:placeholderId, action:'remove' })
       fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId:placeholderId, spin: false })

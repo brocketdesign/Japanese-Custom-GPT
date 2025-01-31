@@ -609,6 +609,9 @@
   "aiHiddenMessage": "I received the images",
   "aiInstruction": "私に感謝して、その写真を撮った時のことをコメントしてください。",
   "imageForm": {
+      "uploadAreaLabel": "画像をアップロード",
+      "image_size_limit": "画像サイズの上限は5MBです。",
+      "image_invalid_format": "無効なファイル形式です。",
       "image_save_failed": "画像の保存に失敗しました。",
       "image_saved": "画像が保存されました。",
       "imageGenerationError": "画像の生成中にエラーが発生しました。",

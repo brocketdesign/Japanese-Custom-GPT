@@ -1496,6 +1496,10 @@ async function routes(fastify, options) {
             },
             {
                 role: 'user',
+                content: `You must explicitly include the number of character in the picture. For example for an image of a woman sucking a dick, you should include  : 1girl, 1boy. If it is a goblin and a woman : 1girl, 1goblin. If it is 2 girls : 2girls. \n`
+            },
+            {
+                role: 'user',
                 content: `Your response contains the character's age, skin color, hair color, hair length, eyes color, tone, face expression, body type, body characteristic, breast size, ass size, body curves, gender, facial features, background, accessories.\n`
             }
         ]

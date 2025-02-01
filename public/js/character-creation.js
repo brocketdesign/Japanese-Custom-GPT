@@ -476,7 +476,6 @@ $(document).ready(function() {
                 contentType: 'application/json',
                 data: customData,
                 success: function(response) {
-                    console.log('Generated chat:', response);
                     $('#chatName').val(response.name);
                     $('#chatPurpose').val(response?.short_intro);
                     resizeTextarea($('#chatPurpose')[0]);

@@ -33,7 +33,9 @@ window.novitaImageGeneration = async function(userId, chatId, userChatId, option
 
         let image_base64 = null;
         if(file){
+            console.log('Converting file to base64...');
             image_base64 = await toBase64(file);
+            console.log('File converted to base64');
         }
 
         const API_ENDPOINT = `${API_URL}/novita/generate-img`;

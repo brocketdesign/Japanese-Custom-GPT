@@ -2174,7 +2174,6 @@ async function routes(fastify, options) {
         if (!imageUrl) {
             return reply.status(400).send({ error: 'File upload failed' });
         }
-        console.log('Image uploaded:', imageUrl);
         reply.send({ imageUrl });
     });
     // route to convert an url to base64
@@ -2185,7 +2184,6 @@ async function routes(fastify, options) {
                 return reply.status(400).send({ error: 'URL is required' });
             }
             const base64Image = await convertImageUrlToBase64(url);
-            console.log('URL converted to Base64');
             reply.send({ base64Image });
         } catch (error) {
             console.error('Error converting URL to Base64:', error);

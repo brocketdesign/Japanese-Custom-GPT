@@ -92,7 +92,7 @@
                                         </h2>
                                         <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#characterDescriptionAccordion">
                                             <div class="accordion-body row">
-                                                <a href="/my-plan" class="is-premium card py-2 custom-gradient-bg mb-3">{{translations.unlock_more_customization_fields}}</a>
+                                                <a href="#" onclick="loadPlanPage()" class="is-premium card py-2 custom-gradient-bg mb-3">{{translations.unlock_more_customization_fields}}</a>
                                                 
                                                 <!-- Age -->
                                                 <div class="col-auto mb-3">
@@ -207,11 +207,11 @@
                                 <div class="my-3">
                                     <label for="imageUpload" class="form-label">{{translations.imageForm.uploadAreaLabel}}</label>
                                     <div class="upload-area" id="uploadArea">
-                                        <input type="file" class="form-control" id="imageUpload" name="imageUpload" accept="image/*" onchange="previewImage(event)">
+                                        <input type="file" class="form-control" id="imageUpload" name="imageUpload" accept="image/*" onchange="previewImage(event)" disabled>
                                     </div>
                                     <img id="imagePreview" src="#" alt="Image Preview" style="display: none; max-width: 100%; margin-top: 10px;">
+                                    <a href="#" onclick="loadPlanPage()" class="is-premium  card p-2  custom-gradient-bg  mt-3 ">{{translations.unlock_more_customization_fields}}</a>
                                 </div>
-
                                               
                             </div>
 
@@ -247,7 +247,7 @@
                                         </h2>
                                         <div id="personalityCollapseOne" class="accordion-collapse collapse" aria-labelledby="personalityHeadingOne" data-bs-parent="#personalityAccordion">
                                             <div class="accordion-body row">
-                                                <a href="/my-plan" class="is-premium  card py-2  custom-gradient-bg  mb-3">{{translations.unlock_more_customization_fields}}</a>
+                                                <a href="#" onclick="loadPlanPage()" class="is-premium  card py-2  custom-gradient-bg  mb-3">{{translations.unlock_more_customization_fields}}</a>
                                             
                                                 <!-- Personality Feature -->
                                                 <div class="col-auto mb-3">

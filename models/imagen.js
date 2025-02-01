@@ -110,7 +110,7 @@ async function generateImg({title, prompt, aspectRatio, userId, chatId, userChat
     if(image_base64){
       requestData.image_base64 = image_base64;
     }
-    console.log({ model_name: requestData.model_name, prompt: requestData.prompt, nsfw: image_request.type });
+    console.log({ model_name: requestData.model_name, prompt: requestData.prompt, nsfw: image_request.type, image_base64: !!requestData.image_base64 });
   
     let newTitle = title;
     if (!title) {

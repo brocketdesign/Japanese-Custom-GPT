@@ -194,7 +194,6 @@ fastify.get('/chat/:chatId', async (request, reply) => {
   const db = fastify.mongo.db;
   
   let { translations, lang, user } = request;
-  console.log('User:', user); 
   const userId = user._id;
 
   const collectionChat = db.collection('chats');

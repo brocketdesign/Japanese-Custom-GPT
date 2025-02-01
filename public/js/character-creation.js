@@ -492,23 +492,29 @@ $(document).ready(function() {
        
 });
 
-const uploadArea = document.getElementById('uploadArea');
-const fileInput = document.getElementById('imageUpload');
+$(document).ready(function() {
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('imageUpload');
 
-uploadArea.addEventListener('dragover', (event) => {
-    event.preventDefault();
-    uploadArea.classList.add('dragover');
-});
+    if (!uploadArea.hasEventListener) {
+        uploadArea.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
 
-uploadArea.addEventListener('dragleave', () => {
-    uploadArea.classList.remove('dragover');
-});
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
 
-uploadArea.addEventListener('drop', (event) => {
-    event.preventDefault();
-    uploadArea.classList.remove('dragover');
-    fileInput.files = event.dataTransfer.files;
-    previewImage(event);
+        uploadArea.addEventListener('drop', (event) => {
+            event.preventDefault();
+            uploadArea.classList.remove('dragover');
+            fileInput.files = event.dataTransfer.files;
+            previewImage(event);
+        });
+
+        uploadArea.hasEventListener = true;
+    }
 });
 
 function previewImage(event) {

@@ -33,9 +33,7 @@ window.novitaImageGeneration = async function(userId, chatId, userChatId, option
 
         let image_base64 = null;
         if(file){
-            console.log('Converting file to base64...');
-            image_base64 = await toBase64(file);
-            console.log('File converted to base64');
+            image_base64 = await uploadAndConvertToBase64(file);
         }
 
         const API_ENDPOINT = `${API_URL}/novita/generate-img`;
@@ -65,15 +63,54 @@ window.novitaImageGeneration = async function(userId, chatId, userChatId, option
     }
 };
 
-// Convert file to base64
-window.toBase64 = function(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-    });
-};
+
+// Upload image and convert to base64
+window.uploadAndConvertToBase64 = async function(file) {
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const uploadResponse = await fetch('/api/upload-image', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!uploadResponse.ok) {
+            console.error('File upload failed:', uploadResponse.statusText);
+            return null;
+        }
+
+        const uploadData = await uploadResponse.json();
+        if (!uploadData.imageUrl) {
+            console.error('File upload failed: No imageUrl returned');
+            return null;
+        }
+
+        const convertResponse = await fetch('/api/convert-url-to-base64', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: uploadData.imageUrl })
+        });
+
+        if (!convertResponse.ok) {
+            console.error('Failed to convert URL to Base64:', convertResponse.statusText);
+            return null;
+        }
+
+        const convertData = await convertResponse.json();
+        if (!convertData.base64Image) {
+            console.error('Failed to convert URL to Base64: No base64Image returned');
+            return null;
+        }
+
+        return convertData.base64Image;
+    } catch (error) {
+        console.error('Error in uploadAndConvertToBase64:', error);
+        return null;
+    }
+}
+
+
 // Display image icon in last user message
 window.addIconToLastUserMessage = function(itemId = false) {
     if(!itemId){

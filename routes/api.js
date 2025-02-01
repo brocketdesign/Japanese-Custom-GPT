@@ -2174,8 +2174,23 @@ async function routes(fastify, options) {
         if (!imageUrl) {
             return reply.status(400).send({ error: 'File upload failed' });
         }
-    
+        console.log('Image uploaded:', imageUrl);
         reply.send({ imageUrl });
+    });
+    // route to convert an url to base64
+    fastify.post('/api/convert-url-to-base64', async (request, reply) => {
+        try {
+            const { url } = request.body;
+            if (!url) {
+                return reply.status(400).send({ error: 'URL is required' });
+            }
+            const base64Image = await convertImageUrlToBase64(url);
+            console.log('URL converted to Base64');
+            reply.send({ base64Image });
+        } catch (error) {
+            console.error('Error converting URL to Base64:', error);
+            reply.status(500).send({ error: 'Failed to convert URL to Base64' });
+        }
     });
 
     fastify.get('/blur-image', async (request, reply) => {

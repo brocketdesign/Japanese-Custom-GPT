@@ -1352,7 +1352,6 @@ nav.navbar.move {
   }
   .avatar-menu.dropdown-menu {
     transform: translate3d(18px, 46px, 0px) !important;
-    top: auto !important;
   }
 
   .modal-content{

@@ -496,6 +496,10 @@ $(document).ready(function() {
     const uploadArea = document.getElementById('uploadArea');
     const fileInput = document.getElementById('imageUpload');
 
+    const subscriptionStatus = user.subscriptionStatus == 'active'
+    if(subscriptionStatus){
+        $('#imageUpload').prop('disabled', false);
+    }
     if (!uploadArea.hasEventListener) {
         uploadArea.addEventListener('dragover', (event) => {
             event.preventDefault();

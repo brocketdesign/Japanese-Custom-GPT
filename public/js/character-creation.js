@@ -429,7 +429,6 @@ $(document).ready(function() {
             })
             
 			generateCharacterPersonnality(function(response){
-                showNotification(translations.newCharacter.personalityDetailsDone , 'success');
                 $('.chatRedirection').show();
             });
 

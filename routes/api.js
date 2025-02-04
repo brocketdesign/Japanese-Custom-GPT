@@ -1067,13 +1067,14 @@ async function routes(fastify, options) {
                     for (let i = 0; i < image_num; i++) {
                         fastify.sendNotificationToUser(userId, 'handleLoader', { imageId, action:'show' })
                     }
-                    genImagePromptFromChat(chatDocument, userData.messages, genImage, language).then((promptData) => {
+                    genImagePromptFromChat(chatDocument, userData.messages, genImage, language)
+                        .then((promptData) => {
                         const prompt = promptData.prompt
                         processPromptToTags(db,prompt);
-                        const title = promptData.title
+                        
                         const imageType = genImage.nsfw ? 'nsfw' : 'sfw'
                         const aspectRatio = null
-                        generateImg({title, prompt, aspectRatio, userId, chatId, userChatId, imageType, image_num, chatCreation:false, placeholderId:imageId, translations:request.translations , fastify})
+                        generateImg({prompt, aspectRatio, userId, chatId, userChatId, imageType, image_num, chatCreation:false, placeholderId:imageId, translations:request.translations , fastify})
                         .then((response) => {
                         }).catch((error) => {
                             console.log('error:', error);
@@ -1501,15 +1502,6 @@ async function routes(fastify, options) {
         
         const englishDescription = await generateEnglishDescription(lastMessages, characterDescription, command);
 
-        const title_en = await generatePromptTitle(englishDescription, 'english');
-        const title_ja = await generatePromptTitle(englishDescription, 'japanese');
-        const title_fr = await generatePromptTitle(englishDescription, 'french');
-        const promptTitle = {
-          en: title_en,
-          ja: title_ja,
-          fr: title_fr
-        };
-
         function processString(input) { 
             try {
                 return [...new Set(input.slice(0, 900).split(',').map(s => s.trim()))].join(', '); 
@@ -1520,7 +1512,7 @@ async function routes(fastify, options) {
             }
         }
         finalDescription = processString(englishDescription);
-        return { prompt: finalDescription, title: promptTitle };
+        return { prompt: finalDescription };
     }
 
     fastify.post('/api/generate-completion', async (request, reply) => {

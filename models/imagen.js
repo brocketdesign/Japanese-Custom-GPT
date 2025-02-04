@@ -141,7 +141,7 @@ async function generateImg({title, prompt, aspectRatio, userId, chatId, userChat
       fastify.sendNotificationToUser(userId, 'resetCharacterForm');
       return false;
     }
-    
+
     let newTitle = title;
     if (!title) {
       const title_en =  generatePromptTitle(requestData.prompt, 'english');
@@ -446,7 +446,7 @@ async function fetchNovitaResult(task_id) {
     }
 }
 async function updateTitle({ taskId, newTitle, fastify, userId, chatId, placeholderId }) {
-  const db = fastify.mongo.db;
+  const db = fastify.mongo.db; 
   const tasksCollection = db.collection('tasks');
   const galleryCollection = db.collection('gallery');
 

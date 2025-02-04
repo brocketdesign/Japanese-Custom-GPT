@@ -134,7 +134,6 @@ async function generateImg({title, prompt, aspectRatio, userId, chatId, userChat
 
     let newTitle = title;
     if (!title) {
-      console.log('Generating title for image');
       const title_en =  generatePromptTitle(requestData.prompt, 'english');
       const title_ja =  generatePromptTitle(requestData.prompt, 'japanese');
       const title_fr =  generatePromptTitle(requestData.prompt, 'french');
@@ -146,7 +145,6 @@ async function generateImg({title, prompt, aspectRatio, userId, chatId, userChat
       // Wait for all titles and update task with title
       const title_promises = [title_en, title_ja, title_fr];
       Promise.all(title_promises).then((titles) => {
-        console.log('Titles:', titles);
         newTitle = {
           en: titles[0],
           ja: titles[1],
@@ -218,6 +216,10 @@ async function pollTaskStatus(taskId, fastify) {
     const intervalId = setInterval(async () => {
       try {
         const taskStatus = await checkTaskStatus(taskId, fastify);
+        if(!taskStatus){
+          clearInterval(intervalId);
+          reject('Task not found');
+        }
         if (taskStatus.status === 'completed') {
           clearInterval(intervalId);
           completedTasks.add(taskId);

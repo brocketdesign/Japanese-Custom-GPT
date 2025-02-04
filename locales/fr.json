@@ -456,6 +456,7 @@
       "next": "Suivant",
       "prev": "Précédent",
       "newCharacter": {
+        "errorInitiatingImageGeneration": "Erreur lors de l'initialisation de la génération d'image.",
         "imageTitle_done": "Titres d'images terminés",
         "imageCompletionDone_title": "Complétion de l'image terminée",
         "imageCompletionDone_message": "Votre nouvelle image de personnage est disponible.",

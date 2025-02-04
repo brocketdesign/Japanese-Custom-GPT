@@ -469,6 +469,7 @@
   "next":"Next",
   "prev":"Previous",
   "newCharacter": {
+    "errorInitiatingImageGeneration": "An error occurred while initiating image generation.",
     "imageTitle_done": "Image title done",
     "imageCompletionDone_title": "Image Completion Done",
     "imageCompletionDone_message": "Your new character image is available.",

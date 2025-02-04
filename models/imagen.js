@@ -116,7 +116,7 @@ async function generateImg({title, prompt, aspectRatio, userId, chatId, userChat
     // Send request to Novita and get taskId
     const novitaTaskId = await fetchNovitaMagic(requestData);
     // Store task details in DB
-    await db.collection('tasks').insertOne({
+    const checkTaskValidity = await db.collection('tasks').insertOne({
       taskId: novitaTaskId,
       type: imageType,
       status: 'pending',
@@ -131,7 +131,17 @@ async function generateImg({title, prompt, aspectRatio, userId, chatId, userChat
       createdAt: new Date(),
       updatedAt: new Date()
     });
-
+    // Check if the task has been saved
+    if (!checkTaskValidity.insertedId) {
+      console.log('Error saving task to DB');
+      // error handling here
+      fastify.sendNotificationToUser(userId, 'showNotification', { message:translations.newCharacter.errorInitiatingImageGeneration, icon:'error' });
+      fastify.sendNotificationToUser(userId, 'handleLoader', { imageId:placeholderId, action:'remove' })
+      fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId:placeholderId, spin: false })
+      fastify.sendNotificationToUser(userId, 'resetCharacterForm');
+      return false;
+    }
+    
     let newTitle = title;
     if (!title) {
       const title_en =  generatePromptTitle(requestData.prompt, 'english');
@@ -195,8 +205,10 @@ async function generateImg({title, prompt, aspectRatio, userId, chatId, userChat
     .catch(error => {
       // error handling here
       console.error('Error initiating image generation:', error);
+      fastify.sendNotificationToUser(userId, 'showNotification', { message:translations.newCharacter.errorInitiatingImageGeneration, icon:'error' });
       fastify.sendNotificationToUser(userId, 'handleLoader', { imageId:placeholderId, action:'remove' })
       fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId:placeholderId, spin: false })
+      fastify.sendNotificationToUser(userId, 'resetCharacterForm');
     });
 
     console.log('Task status:', novitaTaskId);

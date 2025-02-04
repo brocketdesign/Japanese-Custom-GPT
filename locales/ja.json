@@ -456,6 +456,7 @@
   "next":"次へ",
   "prev":"前へ",
   "newCharacter": {  
+    "errorInitiatingImageGeneration": "画像生成の初期化中にエラーが発生しました。",
     "imageTitle_done": "画像のタイトル生成完了",
     "imageCompletionDone_title": "画像生成完了",
     "imageCompletionDone_message": "新しいキャラクター画像が利用可能です。",

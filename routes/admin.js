@@ -383,7 +383,6 @@ const modelCardTemplate = hbs.compile(`
   fastify.post('/admin/models/remove', async (req, reply) => {
     const { modelId } = req.body;
     const db = fastify.mongo.db;
-    console.log({modelId})
     await db.collection('myModels').deleteOne({ modelId });
     reply.send({ success: true, message: 'Model removed successfully.' });
   });

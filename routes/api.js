@@ -1073,27 +1073,10 @@ async function routes(fastify, options) {
                         const title = promptData.title
                         const imageType = genImage.nsfw ? 'nsfw' : 'sfw'
                         const aspectRatio = null
-                        generateImg({title, prompt, aspectRatio, userId, chatId, userChatId, imageType, image_num, fastify})
-                        .then((taskStatus) => {
-                            fastify.sendNotificationToUser(userId, 'handleLoader', { imageId, action:'remove' })
-                            const { images } = taskStatus;
-                            for (const image of images) {
-                                const { imageId, imageUrl, prompt, title, nsfw } = image;
-                                const { userId, userChatId } = taskStatus;
-                                console.log('Image generated:', imageUrl);
-                                fastify.sendNotificationToUser(userId, 'imageGenerated', {
-                                    imageUrl,
-                                    imageId,
-                                    userChatId,
-                                    title,
-                                    prompt,
-                                    nsfw
-                                });
-                            }
+                        generateImg({title, prompt, aspectRatio, userId, chatId, userChatId, imageType, image_num, chatCreation:false, placeholderId:imageId, translations:request.translations , fastify})
+                        .then((response) => {
                         }).catch((error) => {
-                            console.log('Error generating image:', error);
-                            fastify.sendNotificationToUser(userId, 'handleLoader', { imageId, action:'remove' })
-                            fastify.sendNotificationToUser(userId, 'showNotification', { message:request.translations.image_generation_error , icon:'error' });
+                            console.log('error:', error);
                         });
                     })
                     imgMessage[0].content = `\n\nComment my request and tell me that you are preparing an image for me.\n Do no describe the image only comment as your character would. Stay in your character, keep the same tone as previously. Ask me for more images.`.trim()

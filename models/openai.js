@@ -184,7 +184,7 @@ const checkImageRequest = async (messages) => {
           },
     ]
 
-    const completionMessage = await generateCompletion(messages, 600)
+    const completionMessage = await generateCompletion(messages, 600, 'openai')
     return completionMessage.replace(/['"]+/g, '');
     
 }

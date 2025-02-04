@@ -1,7 +1,7 @@
 const { ObjectId } = require('mongodb');
 const axios = require('axios');
 const fs = require('fs');
-const { processPromptToTags, addNotification } = require('../models/tool')
+const { processPromptToTags, saveChatImageToDB } = require('../models/tool')
 const { generateImg,getPromptById,checkImageDescription,getTasks } = require('../models/imagen');
 const { createPrompt, moderateText } = require('../models/openai');
 async function routes(fastify, options) {
@@ -40,47 +40,11 @@ fastify.post('/novita/generate-img', async (request, reply) => {
       newPrompt = imageDescription +','+ customPrompt 
     }
 
-    const result = generateImg({title, prompt:newPrompt, aspectRatio, userId, chatId, userChatId, imageType, image_num: chatCreation ? 2 : 1 , image_base64, fastify})
-    .then((taskStatus) => {
-      fastify.sendNotificationToUser(userId, 'handleLoader', { imageId:placeholderId, action:'remove' })
-      fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId:placeholderId, spin: false })
-      if(chatCreation){ 
-        fastify.sendNotificationToUser(userId, 'resetCharacterForm');
-        fastify.sendNotificationToUser(userId, 'showNotification', {message:translations.newCharacter.imageCompletionDone_message, icon:'success'});
-        // Add notification
-        const notification = { title: translations.newCharacter.imageCompletionDone_title , message: translations.newCharacter.imageCompletionDone_message, link: `/chat/edit/${chatId}`, ico: 'success' };
-        addNotification(fastify, userId, notification).then(() => {        
-          fastify.sendNotificationToUser(userId, 'updateNotificationCountOnLoad', {userId});
-        });
-       }
-      const { images } = taskStatus;
-      images.forEach((image, index) => {
-          const { imageId, imageUrl, prompt, title, nsfw } = image;
-          const { userId, userChatId } = taskStatus;
-          if(chatCreation){
-            fastify.sendNotificationToUser(userId, 'characterImageGenerated', {
-              imageUrl,
-              nsfw
-            });
-            if(index == 0){
-              saveChatImageToDB(db, chatId, imageUrl)
-            }
-          }else{
-            fastify.sendNotificationToUser(userId, 'imageGenerated', {
-              imageUrl,
-              imageId,
-              userChatId,
-              title,
-              prompt,
-              nsfw
-            });
-          }
-      });
+    const result = generateImg({title, prompt:newPrompt, aspectRatio, userId, chatId, userChatId, imageType, image_num: chatCreation ? 2 : 1 , image_base64, chatCreation, placeholderId, translations:request.translations , fastify})
+    .then((response) => {
     })
     .catch((error) => {
-      console.error('Error initiating image generation:', error);
-      fastify.sendNotificationToUser(userId, 'handleLoader', { imageId:placeholderId, action:'remove' })
-      fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId:placeholderId, spin: false })
+      console.log('error:', error);
     });
     reply.send(result);
   } catch (err) {
@@ -194,34 +158,6 @@ fastify.post('/novita/moderate', async (request, reply) => {
         { _id: chatObjectId },
         { 
             $set: { moderation, characterPrompt } 
-        }
-    );
-
-    if (updateResult.matchedCount === 0) {
-        throw new Error('指定されたチャットが見つかりませんでした。');
-    }
-
-    return updateResult;
-  }
-
-  async function saveChatImageToDB(db, chatId, imageUrl) {
-    const collectionChats = db.collection('chats'); // Replace 'chats' with your actual collection name
-
-    // Convert chatId string to ObjectId
-    let chatObjectId;
-    try {
-        chatObjectId = new ObjectId(chatId);
-    } catch (error) {
-        throw new Error('無効なchatIdです。');
-    }
-
-    // Update the 'chats' collection with chatImageUrl and thumbnail
-    const updateResult = await collectionChats.updateOne(
-        { _id: chatObjectId },
-        { 
-            $set: { 
-                chatImageUrl: imageUrl
-            } 
         }
     );
 

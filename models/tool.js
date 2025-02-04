@@ -506,6 +506,36 @@ async function addNotification(fastify, userId, data) {
 
     await notificationsCollection.insertOne(notification);
 }
+
+
+async function saveChatImageToDB(db, chatId, imageUrl) {
+    const collectionChats = db.collection('chats'); // Replace 'chats' with your actual collection name
+
+    // Convert chatId string to ObjectId
+    let chatObjectId;
+    try {
+        chatObjectId = new ObjectId(chatId);
+    } catch (error) {
+        return { error: '無効なchatIdです。' };
+    }
+
+    // Update the 'chats' collection with chatImageUrl and thumbnail
+    const updateResult = await collectionChats.updateOne(
+        { _id: chatObjectId },
+        { 
+            $set: { 
+                chatImageUrl: imageUrl
+            } 
+        }
+    );
+
+    if (updateResult.matchedCount === 0) {
+        return { error: '指定されたチャットが見つかりませんでした。' };
+    }
+
+    return updateResult;
+  }
+
 module.exports = {
     getCounter,
     updateCounter,
@@ -526,5 +556,6 @@ module.exports = {
     processPromptToTags,
     fetchTags,
     listFiles,
-    addNotification
+    addNotification,
+    saveChatImageToDB
 };

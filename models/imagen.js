@@ -4,6 +4,7 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const { ObjectId } = require('mongodb');
 const axios = require('axios');
 const { createHash } = require('crypto');
+const { addNotification, saveChatImageToDB } = require('../models/tool')
 
 const default_prompt = {
     sdxl: {
@@ -57,7 +58,7 @@ const default_prompt = {
   }
 
 // Module to generate an image
-async function generateImg({title, prompt, aspectRatio, userId, chatId, userChatId, imageType, image_num, image_base64, fastify}) {
+async function generateImg({title, prompt, aspectRatio, userId, chatId, userChatId, imageType, image_num, image_base64, chatCreation, placeholderId, translations, fastify}) {
     const db = fastify.mongo.db;
   
     // Fetch the user
@@ -112,28 +113,15 @@ async function generateImg({title, prompt, aspectRatio, userId, chatId, userChat
     }
     console.log({ model_name: requestData.model_name, prompt: requestData.prompt, nsfw: image_request.type, image_base64: !!requestData.image_base64 });
   
-    let newTitle = title;
-    if (!title) {
-      const title_en = await generatePromptTitle(requestData.prompt, 'english');
-      const title_ja = await generatePromptTitle(requestData.prompt, 'japanese');
-      const title_fr = await generatePromptTitle(requestData.prompt, 'french');
-      newTitle = {
-        en: title_en,
-        ja: title_ja,
-        fr: title_fr
-      };
-    }
-
     // Send request to Novita and get taskId
     const novitaTaskId = await fetchNovitaMagic(requestData);
-    console.log('Novita task ID:', novitaTaskId);
     // Store task details in DB
     await db.collection('tasks').insertOne({
       taskId: novitaTaskId,
       type: imageType,
       status: 'pending',
       prompt: prompt,
-      title: newTitle,
+      title: {},
       negative_prompt: image_request.negative_prompt,
       aspectRatio: aspectRatio,
       userId: new ObjectId(userId),
@@ -143,8 +131,79 @@ async function generateImg({title, prompt, aspectRatio, userId, chatId, userChat
       createdAt: new Date(),
       updatedAt: new Date()
     });
+
+    let newTitle = title;
+    if (!title) {
+      console.log('Generating title for image');
+      const title_en =  generatePromptTitle(requestData.prompt, 'english');
+      const title_ja =  generatePromptTitle(requestData.prompt, 'japanese');
+      const title_fr =  generatePromptTitle(requestData.prompt, 'french');
+      newTitle = {
+        en: title_en,
+        ja: title_ja,
+        fr: title_fr
+      };
+      // Wait for all titles and update task with title
+      const title_promises = [title_en, title_ja, title_fr];
+      Promise.all(title_promises).then((titles) => {
+        console.log('Titles:', titles);
+        newTitle = {
+          en: titles[0],
+          ja: titles[1],
+          fr: titles[2]
+        };
+        updateTitle({ taskId:novitaTaskId , newTitle, fastify, userId, chatId, placeholderId });
+      });
+    }
   
-    return pollTaskStatus(novitaTaskId, fastify);
+    // Poll the task status
+    pollTaskStatus(novitaTaskId, fastify)
+    .then(taskStatus => {
+      fastify.sendNotificationToUser(userId, 'handleLoader', { imageId:placeholderId, action:'remove' })
+      fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId:placeholderId, spin: false })
+      if(chatCreation){ 
+        fastify.sendNotificationToUser(userId, 'resetCharacterForm');
+        fastify.sendNotificationToUser(userId, 'showNotification', {message:translations.newCharacter.imageCompletionDone_message, icon:'success'});
+        // Add notification
+        const notification = { title: translations.newCharacter.imageCompletionDone_title , message: translations.newCharacter.imageCompletionDone_message, link: `/chat/edit/${chatId}`, ico: 'success' };
+        addNotification(fastify, userId, notification).then(() => {        
+          fastify.sendNotificationToUser(userId, 'updateNotificationCountOnLoad', {userId});
+        });
+       }
+      const { images } = taskStatus;
+      images.forEach((image, index) => {
+          const { imageId, imageUrl, prompt, title, nsfw } = image;
+          const { userId, userChatId } = taskStatus;
+          if(chatCreation){
+            fastify.sendNotificationToUser(userId, 'characterImageGenerated', {
+              imageUrl,
+              nsfw
+            });
+            if(index == 0){
+              saveChatImageToDB(db, chatId, imageUrl)
+            }
+          }else{
+            fastify.sendNotificationToUser(userId, 'imageGenerated', {
+              imageUrl,
+              imageId,
+              userChatId,
+              title,
+              prompt,
+              nsfw
+            });
+          }
+      });
+    })
+    .catch(error => {
+      // error handling here
+      console.error('Error initiating image generation:', error);
+      fastify.sendNotificationToUser(userId, 'handleLoader', { imageId:placeholderId, action:'remove' })
+      fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId:placeholderId, spin: false })
+    });
+
+    console.log('Task status:', novitaTaskId);
+    return { taskId: novitaTaskId };
+
   }
 
 // Module to check the status of a task at regular intervals
@@ -152,7 +211,7 @@ const completedTasks = new Set();
 
 async function pollTaskStatus(taskId, fastify) {
   const startTime = Date.now();
-  const interval = 10000; // 10 seconds
+  const interval = 5000; // 10 seconds
   const timeout = 180000; // 3 minutes
 
   return new Promise((resolve, reject) => {
@@ -250,18 +309,19 @@ async function checkTaskStatus(taskId, fastify) {
     if (imageData.nsfw_detection_result && imageData.nsfw_detection_result.valid && imageData.nsfw_detection_result.confidence >= 50) {
       nsfw = true;
     }
-    const saveResult = await saveImageToDB(
-      task.userId,
-      task.chatId,
-      task.userChatId,
-      task.prompt,
-      task.title,
-      imageData.imageUrl,
-      task.aspectRatio,
-      null,
+    const saveResult = await saveImageToDB({
+      taskId,
+      userId: task.userId,
+      chatId: task.chatId,
+      userChatId: task.userChatId,
+      prompt: task.prompt,
+      title: task.title,
+      imageUrl: imageData.imageUrl,
+      aspectRatio: task.aspectRatio,
+      blurredImageUrl: null,
       nsfw,
       fastify
-    );
+    });
     return { nsfw, imageId: saveResult.imageId, imageUrl: imageData.imageUrl, prompt: task.prompt, title: task.title };
   }));
 
@@ -279,7 +339,7 @@ async function fetchNovitaMagic(data) {
     if(data.image_base64){
       apiUrl = 'https://api.novita.ai/v3/async/img2img';
     }
-    console.log('Novita API URL:', apiUrl);
+
     const response = await axios.post(apiUrl, {
         extra: {
           response_image_type: 'jpeg',
@@ -371,7 +431,28 @@ async function fetchNovitaResult(task_id) {
     throw error;
     }
 }
-async function saveImageToDB(userId, chatId, userChatId, prompt, title, imageUrl, aspectRatio, blurredImageUrl = null, nsfw = false, fastify) {
+async function updateTitle({ taskId, newTitle, fastify, userId, chatId, placeholderId }) {
+  const db = fastify.mongo.db;
+  const tasksCollection = db.collection('tasks');
+  const galleryCollection = db.collection('gallery');
+
+  const task = await tasksCollection.findOne({ taskId });
+  if (task && task.status !== 'completed') {
+    await tasksCollection.updateOne(
+      { taskId },
+      { $set: { title: newTitle, updatedAt: new Date() } }
+    );
+  } else {
+    await galleryCollection.updateOne(
+      { userId: new ObjectId(userId), chatId: new ObjectId(chatId), "images.taskId": taskId },
+      { $set: { "images.$.title": newTitle } }
+    );
+    // Update the front end 
+    console.log('Updating title on the front end');
+  }
+}
+
+async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title, imageUrl, aspectRatio, blurredImageUrl = null, nsfw = false, fastify}) {
     const db = fastify.mongo.db;
     try {
 
@@ -404,6 +485,7 @@ async function saveImageToDB(userId, chatId, userChatId, prompt, title, imageUrl
           $push: { 
             images: { 
               _id: imageId, 
+              taskId,
               prompt, 
               title,
               imageUrl, 

@@ -1155,7 +1155,6 @@ window.displayPeopleChat = async function (page = 1, option = {}, callback, relo
 window.generateChatsPagination = function (totalPages, option = {}) {
   const { imageStyle, imageModel, query = '', userId = '' } = option
   const searchId = `${imageStyle}-${imageModel}-${query}-${userId}`
-  console.log(`generateChatsPagination => totalPages:${totalPages}, searchId:${searchId}`)
 
   if (!peopleChatLoadingState[searchId]) peopleChatLoadingState[searchId] = false
   if (!peopleChatCurrentPage[searchId]) peopleChatCurrentPage[searchId] = 0

@@ -312,8 +312,6 @@ $(document).ready(function() {
                     return
                 }
                 closeAllModals();
-                console.log('Fetch newchatId',newchatId)
-                console.log('userId',userId)
                 callFetchChatData(newchatId,userId);
             });
         }
@@ -429,7 +427,7 @@ $(document).ready(function() {
             .catch((error) => {
                 console.error('Error generating image:', error);
             })
-						
+            
 			generateCharacterPersonnality(function(response){
                 showNotification(translations.newCharacter.personalityDetailsDone , 'success');
                 $('.chatRedirection').show();

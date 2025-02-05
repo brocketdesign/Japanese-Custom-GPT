@@ -11,6 +11,9 @@ module.exports = function registerHelpers() {
   handlebars.registerHelper('includesObjectId', (array, userId) =>
     array?.some((id) => id?.toString() === userId?.toString())
   );
+  handlebars.registerHelper('increment', function(value) {
+    return value + 1;
+  });
   handlebars.registerHelper('gt', (a, b) => a > b);
   handlebars.registerHelper('lt', (a, b) => a < b);
   handlebars.registerHelper('eq', (a, b) => a === b);

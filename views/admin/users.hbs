@@ -49,6 +49,7 @@
         <table class="table table-striped">
             <thead>
                 <tr>
+                    <th>#</th>
                     <th>{{translations.admin_user.date}}</th>
                     <th>{{translations.admin_user.email}}</th>
                     <th>{{translations.admin_user.name}}</th>
@@ -60,6 +61,7 @@
             <tbody>
                 {{#each users}}
                 <tr data-user-id="{{this._id}}">
+                    <td>{{increment @index}}</td>
                     <td class="jp-d">{{this.createdAt}}</td>
                     <td>{{this.email}}</td>
                     <td>{{this.nickname}}</td>
@@ -98,31 +100,31 @@
     {{> dashboard-footer}}
 </body>
     <script>
-$(document).ready(function(){
-  $("#openCsvModal").click(function(){
-    $("#csvModal").modal('show');
-  });
-  
-  $('.field-btn').click(function(){
-    $(this).toggleClass('selected');
-    if($(this).hasClass('selected')){
-      $(this).removeClass('btn-outline-primary').addClass('btn-primary');
-    } else {
-      $(this).removeClass('btn-primary').addClass('btn-outline-primary');
-    }
-    var fields = [];
-    $('.field-btn.selected').each(function(){
-      fields.push($(this).data('field'));
-    });
-    $('#selectedFields').val(fields.join(','));
-  });
+    $(document).ready(function(){
+        $("#openCsvModal").click(function(){
+            $("#csvModal").modal('show');
+        });
+        
+        $('.field-btn').click(function(){
+            $(this).toggleClass('selected');
+            if($(this).hasClass('selected')){
+            $(this).removeClass('btn-outline-primary').addClass('btn-primary');
+            } else {
+            $(this).removeClass('btn-primary').addClass('btn-outline-primary');
+            }
+            var fields = [];
+            $('.field-btn.selected').each(function(){
+            fields.push($(this).data('field'));
+            });
+            $('#selectedFields').val(fields.join(','));
+        });
 
-  $("#submitCsv").click(function(){
-    var fields = $('#selectedFields').val();
-    var query = fields.length ? '?fields=' + fields : '';
-    window.location.href = '/admin/users/csv' + query;
-  });
-});
+        $("#submitCsv").click(function(){
+            var fields = $('#selectedFields').val();
+            var query = fields.length ? '?fields=' + fields : '';
+            window.location.href = '/admin/users/csv' + query;
+        });
+    });
 
         $(document).ready(function() {
             function convertToJapaneseDate(dateString) {

@@ -9,7 +9,7 @@ setInterval(() => {
 
 // Generate Image using Novita
 window.novitaImageGeneration = async function(userId, chatId, userChatId, option = {}) {
-    if (activeGenerations >= MAX_CONCURRENT_GENERATIONS) {
+    if (activeGenerations > MAX_CONCURRENT_GENERATIONS) {
         showNotification(translations.image_generation_soft_limit.replace('%{interval}%',parseInt(RESET_INTERVAL)/1000), 'warning');
         return;
     }

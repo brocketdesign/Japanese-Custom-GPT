@@ -315,7 +315,13 @@ async function checkTaskStatus(taskId, fastify) {
   if (!result) {
     return { taskId: task.taskId, status: 'processing' };
   }
-
+  if(result.error){
+    await tasksCollection.updateOne(
+      { taskId: task.taskId },
+      { $set: { status: 'failed', result: { error: result.error }, updatedAt: new Date() } }
+    );
+    return false
+  }
   const images = Array.isArray(result) ? result : [result];
   const savedImages = await Promise.all(images.map(async (imageData) => {
     let nsfw = task.type === 'nsfw';
@@ -434,7 +440,7 @@ async function fetchNovitaResult(task_id) {
         return s3Urls.length === 1 ? s3Urls[0] : s3Urls;
     } else if (taskStatus === 'TASK_STATUS_FAILED') {
         console.log(`Task failed with reason: ${response.data.task.reason}`);
-        return false;
+        return { error: response.data.task.reason, status: 'failed' };
     } else {
         // Task is still processing or queued
         return null;
@@ -442,7 +448,7 @@ async function fetchNovitaResult(task_id) {
 
     } catch (error) {
     console.error("Error fetching Novita result:", error.message);
-    throw error;
+    return { error: error.message, status: 'failed' };
     }
 }
 async function updateTitle({ taskId, newTitle, fastify, userId, chatId, placeholderId }) {

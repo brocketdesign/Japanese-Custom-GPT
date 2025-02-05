@@ -203,7 +203,8 @@ fastify.get('/user/google-auth/callback', async (request, reply) => {
       const TempUser = request.user;
       let tempUserId = TempUser._id
 
-      const tempNickname = Math.random().toString(36).substr(2, 10);
+      //tempNickname should be the first 10 characters of the email before the @ symbol
+      const tempNickname = email.split('@')[0].substr(0, 10);
       const result = await usersCollection.insertOne({ 
         lang: request.lang,
         email, 
@@ -324,7 +325,8 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       
       const TempUser = request.user;
       let tempUserId = TempUser._id
-      const tempNickname = Math.random().toString(36).substr(2, 10);
+      //tempNickname should be the first 10 characters of the email before the @ symbol
+      const tempNickname = email.split('@')[0].substr(0, 10);
       const result = await usersCollection.insertOne({ 
         lang: request.lang,
         userId, 

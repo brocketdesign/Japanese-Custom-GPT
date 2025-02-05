@@ -210,6 +210,32 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: error.message });
         }
     });
+    fastify.get('/admin/users/csv', async (request, reply) => {
+      try {
+        const isAdmin = await checkUserAdmin(fastify, request.user._id);
+        if (!isAdmin) return reply.status(403).send({ error: 'Access denied' });
+        
+        let fields = request.query.fields ? request.query.fields.split(',') : [];
+        if (!fields.length) fields = ['createdAt', 'email', 'nickname', 'gender', 'subscriptionStatus'];
+        const projection = {};
+        fields.forEach(field => projection[field] = 1);
+        
+        const users = await fastify.mongo.db.collection('users')
+          .find({ email: { $exists: true } })
+          .project(projection)
+          .toArray();
+        
+        const header = fields.join(',');
+        const rows = users.map(u => fields.map(f => u[f] || '').join(','));
+        const csv = [header, ...rows].join('\n');
+        
+        reply.header('Content-Type', 'text/csv')
+             .header('Content-Disposition', 'attachment; filename="users.csv"')
+             .send(csv);
+      } catch (error) {
+        reply.status(500).send({ error: error.message });
+      }
+    });
     
     fastify.get('/admin/chat/:userId',  async (request, reply) => {
         try {

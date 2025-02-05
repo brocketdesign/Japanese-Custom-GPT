@@ -7,9 +7,11 @@
 <div class="container mt-5">
     <h2 class="mb-4">{{title}}</h2>
     <div class="d-flex justify-content-between">
-        <div>
-            <a href="/admin/users" class="btn btn-outline-dark mb-3">{{translations.admin_user.recent_users}}</a>
-            <a href="/admin/users/registered" class="btn btn-outline-dark mb-3">{{translations.admin_user.registered_users}}</a>
+        <div class="d-flex align-items-center mb-3">
+            <a href="/admin/users" class="btn btn-outline-dark me-2">{{translations.admin_user.recent_users}}</a>
+            <a href="/admin/users/registered" class="btn btn-outline-dark me-2">{{translations.admin_user.registered_users}}</a>
+            <!-- Button to open modal -->
+            <span id="openCsvModal" class="btn btn-primary">{{translations.admin_user.export_csv}}</span>
         </div>
         <div>
             <span class="badge bg-dark"><i class="bi bi-people me-2"></i>{{users.length}}</span>
@@ -17,6 +19,32 @@
             <span class="badge bg-primary"><i class="bi bi-gender-male me-2"></i>{{maleCount}}人 ({{malePercentage}}%)</span>
         </div>
     </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="csvModal" tabindex="-1" aria-labelledby="csvModalLabel" aria-hidden="true">
+    <div class="modal-dialog mx-0">
+        <div class="modal-content mx-auto">
+        <div class="modal-header">
+            <h5 class="modal-title" id="csvModalLabel">{{translations.admin_user.column_csv}}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <div class="d-flex flex-wrap justify-content-center">
+                <button type="button" class="btn btn-outline-primary m-2 field-btn" data-field="createdAt">{{translations.admin_user.date}}</button>
+                <button type="button" class="btn btn-outline-primary m-2 field-btn" data-field="email">{{translations.admin_user.email}}</button>
+                <button type="button" class="btn btn-outline-primary m-2 field-btn" data-field="nickname">{{translations.admin_user.name}}</button>
+                <button type="button" class="btn btn-outline-primary m-2 field-btn" data-field="gender">{{translations.admin_user.gender}}</button>
+                <button type="button" class="btn btn-outline-primary m-2 field-btn" data-field="subscriptionStatus">{{translations.admin_user.subscription}}</button>
+            </div>
+            <input type="hidden" id="selectedFields" name="fields">
+        </div>
+        <div class="modal-footer">
+            <button id="submitCsv" type="button" class="btn btn-success">{{translations.admin_user.download_csv}}</button>
+        </div>
+        </div>
+    </div>
+    </div>
+
     <div class="table-responsive">
         <table class="table table-striped">
             <thead>
@@ -70,6 +98,32 @@
     {{> dashboard-footer}}
 </body>
     <script>
+$(document).ready(function(){
+  $("#openCsvModal").click(function(){
+    $("#csvModal").modal('show');
+  });
+  
+  $('.field-btn').click(function(){
+    $(this).toggleClass('selected');
+    if($(this).hasClass('selected')){
+      $(this).removeClass('btn-outline-primary').addClass('btn-primary');
+    } else {
+      $(this).removeClass('btn-primary').addClass('btn-outline-primary');
+    }
+    var fields = [];
+    $('.field-btn.selected').each(function(){
+      fields.push($(this).data('field'));
+    });
+    $('#selectedFields').val(fields.join(','));
+  });
+
+  $("#submitCsv").click(function(){
+    var fields = $('#selectedFields').val();
+    var query = fields.length ? '?fields=' + fields : '';
+    window.location.href = '/admin/users/csv' + query;
+  });
+});
+
         $(document).ready(function() {
             function convertToJapaneseDate(dateString) {
                 var options = { 

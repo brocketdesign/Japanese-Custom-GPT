@@ -110,6 +110,9 @@
         "mails" : "Mails"
   },
   "admin_user": {
+    "export_csv": "Export CSV",
+    "column_csv": "Select columns to export",
+    "download_csv": "Download CSV",
     "recent_users": "Recent Users",
     "registered_users": "Registered Users",
     "date": "Date",

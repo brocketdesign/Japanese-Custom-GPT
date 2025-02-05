@@ -110,6 +110,9 @@
         "mails" : "メール"
   },
   "admin_user": {
+    "export_csv": "CSVをエクスポート",
+    "column_csv": "エクスポートする列を選択",
+    "download_csv": "CSVをダウンロード",
     "recent_users": "最近のユーザー",
     "registered_users": "登録ユーザー",
     "date": "日付",

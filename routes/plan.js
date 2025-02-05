@@ -101,9 +101,11 @@ async function routes(fastify, options) {
   
 };
 
-  fastify.get('/plan/list', async (request, reply) => {
+  fastify.get('/plan/list/:id', async (request, reply) => {
     const lang = request.query.lang || request.lang;
-    return reply.send({plans: plans[lang], features: plans.features[lang]});
+    const id = request.params.id;
+    const plan = plans[lang].find(plan => plan.id === id);
+    return reply.send({plan, features: plans.features[lang]});
   });
   async function getLocalizedDescription(lang) {
     // Define a fallback mechanism
@@ -219,6 +221,7 @@ function getAmount(currency, billingCycle,month_count, lang) {
         cancel_url: `${frontEnd}/plan/cancel-payment`, // Redirect here on cancellation
         metadata: {
           userId: user._id.toString(), // Optionally store user ID in metadata for future reference
+          planId: billingCycle, // Optionally store plan ID in metadata for future reference
         },
         locale: request.lang,
       });
@@ -262,7 +265,7 @@ function getAmount(currency, billingCycle,month_count, lang) {
   
       // Retrieve subscription details
       const subscription = await stripe.subscriptions.retrieve(session.subscription);
-  
+
       if (!subscription) {
         return reply.status(404).send({ error: 'Subscription not found' });
       }
@@ -280,7 +283,7 @@ function getAmount(currency, billingCycle,month_count, lang) {
             stripeSubscriptionId: session.subscription, 
             subscriptionStatus: 'active',
             currentPlanId: subscription.items.data[0].price.id, 
-            billingCycle: subscription.items.data[0].price.recurring.interval+'ly', 
+            billingCycle: session.metadata.planId,
             subscriptionStartDate: new Date(subscription.start_date * 1000), 
             subscriptionEndDate: new Date(subscription.current_period_end * 1000), 
           },
@@ -309,7 +312,7 @@ function getAmount(currency, billingCycle,month_count, lang) {
 
 
       // Redirect the user to a success page or dashboard
-      return reply.redirect(`${frontEnd}/chat/?subscribe=true`);
+      return reply.redirect(`${frontEnd}/chat/?newSubscription=true`);
     } catch (error) {
       console.error('Error handling successful payment:', error);
       return reply.status(500).send({ error: 'Internal Server Error' });

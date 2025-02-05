@@ -204,6 +204,9 @@
                                     </div>
                                 </div>
                                 <div id="input-container" class="d-flex w-100">
+                                    <div id="suggestions" class="d-flex flex-row w-100 justify-content-center" style="overflow-x: auto; white-space: nowrap;"></div>
+                                        <!-- Suggestions will be dynamically generated here -->
+                                    </div>
                                     <button id="gen-ideas" class="d-none btn btn-light px-4 border-0">💡</button>
                                     <button id="showPrompts" class="btn custom-gradient-bg px-4 border-0" data-bs-toggle="tooltip" data-bs-placement="top" title="{{translations.generateImage}}" style="display:none;"> 
                                         <i class="bi bi-image" class="animate__animated" data-animate="animate__flash"></i>
@@ -248,9 +251,9 @@
  {{> dashboard-footer}}
 <script src="/js/chat.js"></script>
 <script>
+    const newSubscription = {{newSubscription}};
+    console.log(newSubscription)
 $(document).ready(function() {
-
-    const user = {{{json user}}}
     
     function adjustHeight() {
         const newHeight = $(window).height() * 0.97;

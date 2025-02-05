@@ -19,6 +19,9 @@
   "discount": "70% off",
   "new_user_discount": "💎 70% de réduction pour les nouveaux utilisateurs",
   "plan_page" :{
+    "subscription_start_date": "Date de début d'abonnement",
+    "subscription_end_date": "Date de fin d'abonnement",
+    "subscription_renewal_date": "Date de renouvellement de l'abonnement",
     "subscription": "Abonnement",
     "choose_your_plan": "Choisissez votre plan",
     "choose_your_plan_description": "100% anonyme. Vous pouvez annuler à tout moment.",
@@ -390,6 +393,19 @@
     "cookiesDetails": "Notre site utilise des cookies pour améliorer les services.",
     "contact": "6. Contactez-nous",
     "contactDetails": "Si vous avez des questions ou des préoccupations concernant notre politique de confidentialité, veuillez nous contacter via le <a href=\"https://hatoltd.com/contact/\" target=\"_blank\">formulaire de contact</a>."
+  },
+  "userinfo": {
+    "thankYou": "Merci pour votre inscription !",
+    "provideInfo": "Pour une expérience de chat plus personnalisée, veuillez fournir les informations ci-dessous.",
+    "nickname": "Surnom",
+    "nicknameHint": "Le nom que vous voulez que le personnage utilise",
+    "nicknamePlaceholder": "Entrez votre surnom",
+    "gender": "Genre",
+    "female": "Femme",
+    "male": "Homme",
+    "birthdate": "Date de naissance",
+    "birthdatePlaceholder": "Sélectionnez votre date de naissance",
+    "ageVerification": "J'ai plus de 18 ans"
   },
     "setting": {
       "pageTitle": "Paramètres",

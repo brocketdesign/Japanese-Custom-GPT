@@ -647,6 +647,28 @@ function fetchBlurredImage(img, imageUrl) {
     });
 }
 
+window.updateChatImage = function(el) {
+  const chatId = $(el).data('id');
+  const imageUrl = $(el).data('img');
+  $.ajax({
+    url: `/chat/${chatId}/image`,
+    type: 'PUT',
+    data: { imageUrl },
+    success: function(response) {
+      updateChatBackgroundImage(imageUrl)
+      console.log(response);
+    }
+  });
+}
+
+    
+window.updateChatBackgroundImage = function(thumbnail) {
+  const currentImageUrl = $('#chat-container').css('background-image').replace(/url\(["']?|["']?\)$/g, '');
+  if (currentImageUrl !== thumbnail) {
+      $('#chat-container').css('background-image', `url(${thumbnail})`);
+  }
+}
+
 function handleImageSuccess(img, blob, imageUrl) {
     let objectUrl = URL.createObjectURL(blob);
     $(img).attr('src', objectUrl).data('processed', "true").removeAttr('data-original-src').removeAttr('data-src').removeAttr('srcset');

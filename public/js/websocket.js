@@ -97,6 +97,11 @@ function initializeWebSocket() {
         const { uniqueId } = data.notification;
         hideCompletionMessage(uniqueId);
       }
+      // Display suggestions
+      if (data.notification.type == 'displaySuggestions') {
+        const { suggestions, uniqueId } = data.notification;
+        displaySuggestions(suggestions, uniqueId);
+      }
     } else {
       //console.log('Message from server:', event.data);
     }

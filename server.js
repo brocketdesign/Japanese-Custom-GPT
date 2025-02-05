@@ -207,7 +207,7 @@ fastify.get('/chat/:chatId', async (request, reply) => {
   const isAdmin = await checkUserAdmin(fastify, userId);
   const chatId = request.params.chatId;
   const imageType = request.query.type || false;
-  
+  const newSubscription = request.query.newSubscription || false;
 
   const promptData = await db.collection('prompts').find({}).toArray();
 
@@ -216,6 +216,7 @@ fastify.get('/chat/:chatId', async (request, reply) => {
     isAdmin,
     imageType,
     user,
+    newSubscription,
     userId,
     chatId,
     userData,

@@ -19,6 +19,9 @@
   "discount": "70%オフ",
   "new_user_discount": "💎 新規ユーザーに70%割引",
   "plan_page" :{
+    "subscription_start_date": "サブスクリプション開始日",
+    "subscription_end_date": "サブスクリプション終了日",
+    "subscription_renewal_date": "サブスクリプション更新日",
       "subscription": "サブスクリプション",
       "choose_your_plan": "プランを選択",
       "choose_your_plan_description": "100%匿名。いつでもキャンセルできます。",
@@ -391,6 +394,19 @@
     "cookiesDetails": "当社のウェブサイトでは、サービス向上のためにクッキーを使用しています。",
     "contact": "6. お問い合わせ",
     "contactDetails": "プライバシーポリシーに関するご質問やご不明点がございましたら、<a href=\"https://hatoltd.com/contact/\" target=\"_blank\">お問い合わせフォーム</a>よりご連絡ください。"
+  },
+  "userinfo": {
+    "thankYou": "ご登録ありがとうございます！",
+    "provideInfo": "よりパーソナライズされたチャット体験のために、以下の情報をご提供ください。",
+    "nickname": "ニックネーム",
+    "nicknameHint": "キャラクターに呼んでほしい名前",
+    "nicknamePlaceholder": "ニックネームを入力",
+    "gender": "性別",
+    "female": "女性",
+    "male": "男性",
+    "birthdate": "生年月日",
+    "birthdatePlaceholder": "生年月日を選択",
+    "ageVerification": "私は18歳以上です"
   },
   "setting": {
     "pageTitle": "設定",

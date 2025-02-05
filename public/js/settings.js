@@ -1,46 +1,20 @@
 $(document).ready(function() {
+  // Initialize flatpickr for birthdate
+  flatpickr("#birthdate", {
+    locale: "ja",
+    dateFormat: "Y年m月d日",
+    maxDate: new Date(),
+    defaultDate: new Date(new Date().setFullYear(new Date().getFullYear() - 18)),
+    onChange: function(selectedDates, dateStr, instance) {
+      const dateParts = dateStr.match(/(\d{4})年(\d{2})月(\d{2})日/);
+      const birthYear = dateParts[1];
+      const birthMonth = dateParts[2];
+      const birthDay = dateParts[3];
 
-  // Populate years
-  var currentYear = new Date().getFullYear();
-  var startYear = 1900; // Adjust this to your preferred start year
-
-  for (var year = currentYear; year >= startYear; year--) {
-    $('#birthYear').append($('<option>', {
-      value: year,
-      text: year + '年'
-    }));
-  }
-
-  // Populate months
-  for (var month = 1; month <= 12; month++) {
-    $('#birthMonth').append($('<option>', {
-      value: month,
-      text: month + '月'
-    }));
-  }
-
-  // Populate days
-  function populateDays(month, year) {
-    $('#birthDay').empty().append($('<option>', {
-      value: '',
-      text: '日'
-    }));
-
-    var daysInMonth = new Date(year, month, 0).getDate();
-    for (var day = 1; day <= daysInMonth; day++) {
-      $('#birthDay').append($('<option>', {
-        value: day,
-        text: day + '日'
-      }));
+      $('#birthYear').val(birthYear);
+      $('#birthMonth').val(birthMonth);
+      $('#birthDay').val(birthDay);
     }
-  }
-
-  // Populate days based on current month and year
-  populateDays($('#birthMonth').val(), $('#birthYear').val());
-
-  // Update days when month or year changes
-  $('#birthMonth, #birthYear').change(function() {
-    populateDays($('#birthMonth').val(), $('#birthYear').val());
   });
 
   // Set user email
@@ -49,10 +23,8 @@ $(document).ready(function() {
   // Set user nickname
   $('#nickname').val(user.nickname);
 
-  // Set user birthdate fields
-  $('#birthYear').val(user.birthDate.year);
-  $('#birthMonth').val(user.birthDate.month);
-  $('#birthDay').val(user.birthDate.day);
+  // Set user birthdate field
+  $('#birthdate').val(`${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日`);
 
   // Set user gender
   if (user.gender) {
@@ -157,7 +129,7 @@ $(document).ready(function() {
         text: response.message,
         confirmButtonText: 'OK'
       });
-      let message = `${translations.no_subscription}<a href="/my-plan">${translations.select_plan_here}</a>`
+      let message = `${translations.no_subscription}<br> <button class="btn custom-gradient-bg" onclick="loadPlanPage()">${translations.select_plan_here}</button>`
       $('#cancel-plan').hide()
       $('#user-plan').html(message).show()
       updatePlanStatus(user)
@@ -175,20 +147,26 @@ $(document).ready(function() {
   // Display user plan
   $.get('/user/plan/'+user._id,function(data){
     let message = `${translations.no_subscription}<br> <button class="btn custom-gradient-bg" onclick="loadPlanPage()">${translations.select_plan_here}</button>`
+
+    if(data.plan){
+      const billingCycle = data.plan.billingCycle
+      const subscriptionEndDate = new Date(data.plan.subscriptionEndDate)
+      const subscriptionStartDate = new Date(data.plan.subscriptionStartDate)
+      $.get('/plan/list/'+billingCycle, function(planData){
+        message = `<span class="fw-bold">${planData.plan.name}</span><br>
+             <span style="font-size:12px;">${translations.plan_page.subscription_start_date}: ${moment(subscriptionStartDate).locale(lang).format('LL')}</span><br>
+             <span style="font-size:12px;">${translations.plan_page.subscription_renewal_date}: ${moment(subscriptionEndDate).locale(lang).format('LL')}</span>`
+        $('#user-plan').html(message).show()
+        $('#cancel-plan').show()
+      })
+
+      return
+    }
     if(!data.plan){
+      console.log('no plan')
       $('#user-plan').html(message).show()
       return
     }
-    const billingCycle = data.plan.billingCycle
-    const currentPlanId = data.plan.currentPlanId
-    $.get('/plan/list',function({plans,features}){
-      const plan = plans.find((plan) => plan[`${billingCycle}_id`] === currentPlanId);
-      if(plan){
-        message = `<span class="fw-bold">${plan.name}</span>`
-        $('#cancel-plan').show()
-      }
-      $('#user-plan').html(message).show()
-    })
   })
 
   // Display user limits

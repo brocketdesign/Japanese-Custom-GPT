@@ -162,7 +162,55 @@ const checkImageRequest = async (messages) => {
       }
     }
   };
-  
+
+  const suggestionSchema = z.object({
+    suggestions: z.array(z.string())
+  });
+async function generatePromptSuggestions(messages,chatDescription,language) {
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+  // Get the last user message
+  let lastUserMessagesContent = messages
+  .filter((msg) =>  msg.name !== 'master' && msg.name !== 'context')
+  .filter(m => m.content && !m.content.startsWith('[Image]') && m.role !== 'system')
+  .slice(-3);
+
+  const updatedMessages = [
+    { role: 'system', content: `
+      You are a creative assistant.
+      Return exactly 3 unique suggestions in ${language} as a JSON object with a "suggestions" key.
+      Your suggestions must include:
+      1. An image suggestion relevant to the user's chat and the character description.
+      2. A chat suggestion to make the conversation more engaging.
+      3. An interaction improvement suggestion to enhance the user's experience.
+      Make them short and relevant to the user's chat.
+      You must provide suggestions from the user's perspective and suitable for a chat.
+      Example: ["send an image of you smiling", "what did you do today", "let's play together"].
+      Respond in ${language}`.replace(/^\s+/gm, '').trim()
+    },
+    {
+      role: 'assistant',
+      content: 'To help you provide more accurate suggestions, here is the character description: ' + chatDescription
+    },
+    ...lastUserMessagesContent,
+  ];
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: updatedMessages,
+      response_format: zodResponseFormat(suggestionSchema, "suggestionResponse"),
+      max_tokens: 150,
+      temperature: 0.8
+    });
+    return JSON.parse(response.choices[0].message.content).suggestions;
+
+  } catch (error) {
+    console.log("Error generating prompt suggestions:", error.message || error);
+    return error;
+  }
+}
+
   async function generatePromptTitle(prompt,language) {
     const messages = [
           {
@@ -230,5 +278,6 @@ module.exports = {
     checkImageRequest,
     generatePromptTitle,
     moderateText,
-    createPrompt
+    createPrompt,
+    generatePromptSuggestions
 }

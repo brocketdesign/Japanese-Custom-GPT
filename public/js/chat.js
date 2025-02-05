@@ -349,13 +349,6 @@ $(document).ready(async function() {
         return gender;
     }
     
-    function updateChatBackgroundImage(thumbnail) {
-        const currentImageUrl = $('#chat-container').css('background-image').replace(/url\(["']?|["']?\)$/g, '');
-        if (currentImageUrl !== thumbnail) {
-            $('#chat-container').css('background-image', `url(${thumbnail})`);
-        }
-    }
-    
     function displayExistingChat(userChat,character) {
         persona = userChat.persona;
         thumbnail = character?.image || localStorage.getItem('thumbnail')
@@ -743,21 +736,24 @@ $(document).ready(async function() {
         }
         return inputString;
     }
-    function getImageTools(imageId, isLiked = false, title, prompt = false, nsfw = false, imageUrl = false) {
+    function getImageTools({chatId, imageId, isLiked = false, title, prompt = false, nsfw = false, imageUrl = false}) {
+        const subscriptionStatus = user.subscriptionStatus == 'active';
         prompt = sanitizeString(prompt);
         return `
             <div class="bg-white py-2 rounded mt-1 d-flex justify-content-between">
                 <div class="d-flex justify-content-around w-100">
                     <span class="badge bg-white text-secondary image-fav ${isLiked ? 'liked' : ''}" data-id="${imageId}"
-                    onclick="toggleImageFavorite(this)" 
+                    onclick="${subscriptionStatus ? 'toggleImageFavorite(this)' : 'loadPlanPage()'}" 
                     style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
                         <i class="bi bi-heart-fill"></i>
                     </span>
-                    <span class="badge bg-white text-secondary img2img regen-img d-none" onclick="regenImage(this)" data-nsfw="${nsfw}" data-id="${imageId}" 
+                    <span class="badge bg-white text-secondary img2img regen-img d-none" 
+                    onclick="${subscriptionStatus ? 'regenImage(this)' : 'loadPlanPage()'}" 
+                    data-nsfw="${nsfw}" data-id="${imageId}" 
                     style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
                         <i class="bi bi-arrow-clockwise"></i>
                     </span>
-                    <span class="badge bg-white text-secondary txt2img regen-img" onclick="regenImage(this)" data-prompt="${prompt}" data-nsfw="${nsfw}" data-id="${imageId}" 
+                    <span class="badge bg-white text-secondary txt2img regen-img" onclick="${subscriptionStatus ? 'regenImage(this)' : 'loadPlanPage()'}" data-prompt="${prompt}" data-nsfw="${nsfw}" data-id="${imageId}" 
                     style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
                         <i class="bi bi-arrow-clockwise"></i>
                     </span>
@@ -776,14 +772,19 @@ $(document).ready(async function() {
                             </div>
                         </div>
                     </div>
-                    <span class="badge bg-white text-secondary share-on-twitter" 
-                        data-id="${title}" data-url="${imageUrl}" 
-                        style="cursor: pointer; bottom:5px; right:5px; opacity:0.8;" 
-                        onclick="shareOnTwitter('${title}', '${imageUrl}')">
-                        <i class="bi bi-twitter-x"></i>
+                    <span class="badge bg-white text-secondary share d-none"
+                            data-title="${title}"
+                            data-url="${imageUrl}"
+                            style="cursor: pointer; bottom:5px; right:5px; opacity:0.8;"
+                            onclick="openShareModal(this)">
+                        <i class="bi bi-box-arrow-up"></i>
                     </span>
+
                     <span class="badge bg-white text-secondary download-image" style="cursor: pointer; bottom:5px; right:5px; opacity:0.8;">
                         <a href="${imageUrl}" download="${title}.png" style="color:inherit;"><i class="bi bi-download"></i></a>
+                    </span>
+                    <span class="badge bg-white text-secondary update-chat-image" onclick="${subscriptionStatus ? 'updateChatImage(this)' : 'loadPlanPage()'}" data-id="${chatId}" data-img="${imageUrl}" style="cursor: pointer; bottom:5px; right:5px; opacity:0.8;">
+                        <i class="bi bi-image"></i>
                     </span>
                 </div>
             </div>
@@ -792,12 +793,19 @@ $(document).ready(async function() {
             </div>
         `;
     }
-    window.shareOnTwitter = function(title, imageUrl) {
-        const tweetText = encodeURIComponent(title);
-        const tweetUrl = encodeURIComponent(imageUrl);
-        const twitterUrl = `https://twitter.com/intent/tweet?text=${tweetText}&url=${tweetUrl}`;
-        window.open(twitterUrl, '_blank');
-    }
+    window.openShareModal = function(el) {
+        const title = $(el).data('title');
+        const url = $(el).data('url');
+        $('#twitterShareButton').off('click').on('click', () => shareOnTwitter(title, url));
+        $('#facebookShareButton').off('click').on('click', () => shareOnFacebook(title, url));
+        $('#shareModal').modal('show');
+      }
+      function shareOnTwitter(title, url) {
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`, '_blank');
+      }
+      function shareOnFacebook(title, url) {
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+      }
     function getImageUrlById(imageId, designStep, thumbnail) {
         const placeholderImageUrl = '/img/placeholder-image-2.gif'; // Placeholder image URL
 
@@ -841,7 +849,7 @@ $(document).ready(async function() {
                         $(`#image-${imageId}`).attr('data-prompt', response.imagePrompt);
                         // Add tools or badges if applicable
                         if (!response.isBlur) {
-                            const toolsHtml = getImageTools(imageId, response?.likedBy?.some(id => id.toString() === userId.toString()),response?.title?.[lang], response.imagePrompt, response.nsfw, response.imageUrl);
+                            const toolsHtml = getImageTools({chatId, imageId, isLiked:response?.likedBy?.some(id => id.toString() === userId.toString()),title:response?.title?.[lang], prompt:response.imagePrompt, nsfw:response.nsfw, imageUrl:response.imageUrl});
                             $(`#image-${imageId}`).closest('.assistant-image-box').after(toolsHtml);
                             if(response.nsfw){
                                 $(`#image-${imageId}`).closest('.assistant-image-box').find('.nsfw-badge-container').show();
@@ -1292,7 +1300,7 @@ $(document).ready(async function() {
                             ${message.outerHTML}
                             ${imageNsfw ? `<div class="nsfw-badge-container badge">NSFW</div>` : ''}
                         </div>
-                        ${getImageTools(imageId,false,title,prompt,imageNsfw,imageUrl)}
+                        ${getImageTools({chatId:origineUserChatId, imageId,isLiked:false,title,prompt,imageNsfw,imageUrl})}
                     </div>
                 </div>      
             `).hide();
@@ -1321,7 +1329,7 @@ $(document).ready(async function() {
                             ${message.outerHTML}
                             ${imageNsfw ? `<div class="nsfw-badge-container badge">NSFW</div>` : ''}
                         </div>
-                        ${getImageTools(imageId,false,title,prompt,imageNsfw,imageUrl)}
+                        ${getImageTools({chatId:origineUserChatId, imageId,isLiked:false,title,prompt,imageNsfw,imageUrl})}
                     </div>  
             `).hide();
             $(`#${messageId}`).find('.load').remove()
@@ -1445,11 +1453,8 @@ $(document).ready(async function() {
 
     }
 
-    // Parse the URL and get query parameters
-    const urlParams = new URLSearchParams(window.location.search);
-
-    // Check if 'subscribe' parameter is true
-    if (urlParams.get('subscribe') === 'true') {
+    // Check if 'newSubscription' is true
+    if (newSubscription) {
         // Display SweetAlert2 in Japanese
         Swal.fire({
             title: 'サブスクリプション成功',
@@ -1518,6 +1523,23 @@ window.regenImage = function(el){
         });
     }
 };
+function displaySuggestions(suggestions, uniqueId) {
+    const suggestionContainer = $(`#suggestions`);
+    
+    // Remove existing suggestions smoothly one by one
+    suggestionContainer.children().each(function(index) {
+        $(this).fadeOut().remove();
+    });
+
+    // Add new suggestions smoothly one by one
+    suggestions.forEach((suggestion, index) => {
+        const button = $(`<button class="btn btn-light shadow m-1 rounded-pill">${suggestion}</button>`);
+        button.on('click', function() {
+            sendMessage(suggestion);
+        });
+        suggestionContainer.append(button.hide().fadeIn());
+    });
+}
 // call fetchchatdata function accross other scripts
 function callFetchChatData(fetch_chatId, fetch_userId, fetch_reset, callback){
     fetchChatData(fetch_chatId, fetch_userId, fetch_reset, callback);

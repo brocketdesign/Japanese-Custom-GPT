@@ -1,4 +1,22 @@
-
+<!-- Share Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="openShareModal" aria-hidden="true">
+    <div class="modal-dialog mx-0">
+        <div class="modal-content mx-auto">
+            <div class="modal-header">
+                <h5 class="modal-title" id="shareModalLabel">Share</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body d-flex flex-column align-items-center">
+                <button id="twitterShareButton" class="btn btn-outline-primary mb-2 col-lg-8 col-12">
+                    <i class="bi bi-twitter me-2"></i>Twitter
+                </button>
+                <button id="facebookShareButton" class="btn btn-outline-primary mb-2  col-lg-8 col-12">
+                    <i class="bi bi-facebook me-2"></i>Facebook
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 <!-- Authenticate Modal -->
 <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog mx-0">
@@ -467,45 +485,46 @@ $(document).ready(function(){
     function UserInfoForm(){
         return `
             <div class="text-center mb-3">
-                <h3 class="mt-3">ご登録ありがとうございます！</h3>
-                <p style="font-size:14px;color:#aaa;">よりパーソナライズされたチャット体験のために、以下の情報をご提供ください。</p>
+                <h3 class="mt-3">${translations.userinfo.thankYou}</h3>
+                <p style="font-size:14px;color:#aaa;">${translations.userinfo.provideInfo}</p>
             </div>
             <div class="form-group mb-3 text-start">
                 <label for="nickname" class="form-label">
-                    <span class="small" style="font-size:12px">ニックネーム</span>
-                    <span class="small text-muted" style="font-size:10px">キャラクターに呼んでほしい名前</span>
+                    <span class="small" style="font-size:12px">${translations.userinfo.nickname}</span>
+                    <span class="small text-muted" style="font-size:10px">${translations.userinfo.nicknameHint}</span>
                 </label>
-                <input id="nickname" type="text" class="form-control form-control-sm" placeholder="ニックネームを入力">
+                <input id="nickname" type="text" class="form-control form-control-sm" placeholder="${translations.userinfo.nicknamePlaceholder}">
             </div>
             <div class="form-group mb-3 text-start">
-                <label for="gender" class="form-label" style="font-size:12px">性別</label>
+                <label for="gender" class="form-label" style="font-size:12px">${translations.userinfo.gender}</label>
                 <select class="form-select" id="gender" name="gender">
-                    <option value="female" selected>女性</option>
-                    <option value="male">男性</option>
+                    <option value="female" selected>${translations.userinfo.female}</option>
+                    <option value="male">${translations.userinfo.male}</option>
                 </select>
             </div>
             <div class="form-group mb-3 text-start">
-                <label for="birthdate" class="form-label" style="font-size:12px">生年月日</label>
-                <input id="birthdate" type="text" class="form-control" placeholder="生年月日を選択" autocomplete="off">
+                <label for="birthdate" class="form-label" style="font-size:12px">${translations.userinfo.birthdate}</label>
+                <input id="birthdate" type="text" class="form-control" placeholder="${translations.userinfo.birthdatePlaceholder}" autocomplete="off">
             </div>
             <div class="form-check text-start mb-3">
                 <input class="form-check-input" type="checkbox" value="" id="ageVerification">
                 <label class="form-check-label" for="ageVerification">
-                    私は18歳以上です
+                    ${translations.userinfo.ageVerification}
                 </label>
             </div>
         `
     }
     
     function handleUserInfo(value,callback){
-        const { nickname, birthYear, birthMonth, birthDay, gender } = value;
+        const { nickname, birthYear, birthMonth, birthDay, gender, ageVerification } = value;
         const formData = new FormData();
         formData.append('nickname', nickname);
         formData.append('birthYear', birthYear);
         formData.append('birthMonth', birthMonth);
         formData.append('birthDay', birthDay);
         formData.append('gender', gender);
-    
+        formData.append('ageVerification', ageVerification);
+
         $.ajax({
             url: '/user/update-info',
             type: 'POST',
@@ -513,7 +532,7 @@ $(document).ready(function(){
             contentType: false,
             data: formData,
             success: function(response) {
-                if(typeof callback == 'function'){callback()}
+                if(typeof callback == 'function'){callback(response)}
             },
             error: function() {
                 showNotification('情報の更新中に問題が発生しました。','error')
@@ -521,7 +540,9 @@ $(document).ready(function(){
             }
         });
     }
-    
+    if(window.user.email && !window.user.ageVerification) {
+        showPopupUserInfo();
+    }
     function showPopupUserInfo(callback) {
         Swal.fire({
             html: UserInfoForm(),
@@ -553,14 +574,14 @@ $(document).ready(function(){
                 const nickname = $('#nickname').val();
                 const birthdate = $('#birthdate').val();
                 const gender = $('#gender').val();
-                const ageVerified = $('#ageVerification').is(':checked');
+                const ageVerification = $('#ageVerification').is(':checked');
     
                 if (!nickname || !birthdate || !gender)  {
                     Swal.showValidationMessage('すべてのフィールドを入力してください');
                     return false;
                 }
     
-                if (!ageVerified) {
+                if (!ageVerification) {
                     Swal.showValidationMessage('18歳以上であることを確認してください');
                     return false;
                 }
@@ -587,12 +608,11 @@ $(document).ready(function(){
                     return false;
                 }
     
-                return { nickname, birthYear, birthMonth, birthDay, gender };
+                handleUserInfo({ nickname, birthYear, birthMonth, birthDay, gender, ageVerification }, function(response){
+                    window.user = response.user;
+                });
             }
         }).then((result) => {
-            if (result.isConfirmed) {
-                handleUserInfo();
-            }
             
         });
     }

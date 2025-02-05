@@ -496,12 +496,14 @@ fastify.post('/user/update-info', async (request, reply) => {
       }
       if (formData.gender) updateData.gender = formData.gender;
       if (formData.profileUrl) updateData.profileUrl = formData.profileUrl;
+      if(formData.ageVerification) updateData.ageVerification = formData.ageVerification == 'true' ? true : false;
 
       if (Object.keys(updateData).length === 0) {
           return reply.status(400).send({ error: 'No data to update' });
       }
 
       // Update user information in MongoDB
+      console.log('Updating user info:', updateData);
       const usersCollection = fastify.mongo.db.collection('users');
       const updateResult = await usersCollection.updateOne(
           { _id: new fastify.mongo.ObjectId(userId) },
@@ -511,8 +513,12 @@ fastify.post('/user/update-info', async (request, reply) => {
       if (updateResult.modifiedCount === 0) {
           console.warn('User info update failed');
       }
+      let user = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
+      // Remove the password hash from the user object
+      delete user.password;
+      delete user.purchasedItems;
 
-      return reply.send({ status: 'User information successfully updated' });
+      return reply.send({ user, status: 'User information successfully updated' });
   } catch (error) {
       console.error('Error in update-info route:', error);
       return reply.status(500).send({ error: 'An internal server error occurred' });

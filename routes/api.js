@@ -3,7 +3,8 @@ const {
     checkImageRequest, 
     generatePromptTitle,
     fetchOpenAICompletion,
-    generateCompletion
+    generateCompletion,
+    generatePromptSuggestions
 } = require('../models/openai')
 const { 
     generateImg,
@@ -16,7 +17,8 @@ const {
     convertImageUrlToBase64, 
     sanitizeMessages,
     fetchTags,
-    processPromptToTags
+    processPromptToTags,
+    saveChatImageToDB
 } = require('../models/tool');
 const axios = require('axios');
 const OpenAI = require("openai");
@@ -453,7 +455,13 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to retrieve chat or character' });
         }
     });
-
+    fastify.put('/chat/:chatId/image', async (request, reply) => {
+        const { chatId } = request.params;
+        const { imageUrl } = request.body;
+        await saveChatImageToDB(fastify.mongo.db, chatId, imageUrl);
+        reply.send({ success: true });
+    });
+      
     fastify.post('/api/chat/add-message', async (request, reply) => {
         const { chatId, userChatId, role, message } = request.body;
 
@@ -1019,9 +1027,11 @@ async function routes(fastify, options) {
           }
           const userInfo = await getUserInfo(db, userId)
           let userData = await getUserChatData(db, userId, userChatId)
+          const subscriptionStatus = userInfo.subscriptionStatus == 'active' ? true : false
           if (!userData) { return reply.status(404).send({ error: 'User data not found' }) }
       
           const chatDocument = await getChatDocument(db, chatId)
+          const chatDescription = chatDataToString(chatDocument)
           const language = getLanguageName(userInfo.lang)
           const userMessages = userData.messages
             .filter(m => m.content && !m.content.startsWith('[Image]') && m.role !== 'system' && m.name !== 'context')
@@ -1042,7 +1052,7 @@ async function routes(fastify, options) {
           const systemContent = completionSystemContent(
             chatDocument,
             userInfo,
-            chatDataToString(chatDocument),
+            chatDescription,
             getCurrentTimeInJapanese(),
             language
           )
@@ -1116,6 +1126,13 @@ async function routes(fastify, options) {
                 await updateMessagesCount(db, chatId, userId, currentUserMessage, userData.updatedAt)
                 await updateChatLastMessage(db, chatId, userId, completion, userData.updatedAt)
                 await updateUserChat(db, userId, userChatId, userData.messages, userData.updatedAt)
+
+                // Generate prompt suggestions premium only
+                if(subscriptionStatus){
+                    suggestions = await generatePromptSuggestions(userData.messages,chatDescription,language)
+                    fastify.sendNotificationToUser(userId, 'displaySuggestions', { suggestions, uniqueId })
+                }
+        
             }else{
                 fastify.sendNotificationToUser(userId, 'hideCompletionMessage', { uniqueId })
             }

@@ -512,6 +512,7 @@ async function saveChatImageToDB(db, chatId, imageUrl) {
     const collectionChats = db.collection('chats'); // Replace 'chats' with your actual collection name
 
     // Convert chatId string to ObjectId
+    console.log(chatId);
     let chatObjectId;
     try {
         chatObjectId = new ObjectId(chatId);
@@ -534,7 +535,7 @@ async function saveChatImageToDB(db, chatId, imageUrl) {
     }
 
     return updateResult;
-  }
+}
 
 module.exports = {
     getCounter,

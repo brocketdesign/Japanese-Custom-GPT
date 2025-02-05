@@ -61,22 +61,14 @@
               </div>
 
               <div class="row mb-3">
-                <label for="birthdate" class="form-label">{{translations.setting.birthdate}}</label>
-                <div class="d-flex">
-                  <select class="form-control me-2" id="birthYear" name="birthYear">
-                    <option value="" selected>{{translations.setting.year}}</option>
-                  </select>
-
-                  <select class="form-control me-2" id="birthMonth" name="birthMonth">
-                    <option value="" selected>{{translations.setting.month}}</option>
-                  </select>
-
-                  <select class="form-control" id="birthDay" name="birthDay">
-                    <option value="" selected>{{translations.setting.day}}</option>
-                  </select>
+                <div class="form-group mb-3 text-start">
+                    <label for="birthdate" class="form-label" style="font-size:12px">生年月日</label>
+                    <input id="birthdate" type="text" class="form-control" placeholder="生年月日を選択" autocomplete="off">
+                    <input type="hidden" id="birthYear" name="birthYear">
+                    <input type="hidden" id="birthMonth" name="birthMonth">
+                    <input type="hidden" id="birthDay" name="birthDay">
                 </div>
               </div>
-
               <div class="row mb-3">
                 <div class="col-auto">
                   <label for="gender" class="form-label"><i class="fas fa-user"></i> {{translations.setting.gender}}:</label>
@@ -150,9 +142,8 @@
 
           <!-- Subscription Tab -->
           <div class="tab-pane fade" id="subscription" role="tabpanel" aria-labelledby="subscription-tab">
-            <h6>{{translations.setting.manageSubscription}}</h6>
             <p id="user-plan" style="display: none;"></p>
-            <button id="cancel-plan" class="btn btn-danger" style="display: none;" data-user-id="{{user._id}}">{{translations.setting.cancelSubscription}}</button>
+            <button id="cancel-plan" class="btn btn-outline-secondary btn-sm" style="display: none;" data-user-id="{{user._id}}">{{translations.setting.cancelSubscription}}</button>
           </div>
 
           <!-- Usage Tab -->

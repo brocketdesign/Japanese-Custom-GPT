@@ -1391,10 +1391,14 @@ $(document).ready(async function() {
 
     $(document).on('click','#showPrompts',function(){
         $('#promptContainer').slideDown('fast');
-      });
+        // Hide suggestions
+        $('#suggestions').hide().removeClass('d-flex');
+    });
       
     $('#close-promptContainer').on('click', function() {
         $('#promptContainer').slideUp('fast');
+        // Show suggestions
+        $('#suggestions').show().addClass('d-flex');
     });
     
     $('.prompt-card').off('click').on('click', function() {

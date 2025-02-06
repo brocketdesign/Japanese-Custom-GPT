@@ -6,6 +6,13 @@ const { ObjectId } = require('mongodb');
 const  { checkUserAdmin } = require('../models/tool');
 
 module.exports = fastifyPlugin(async function (fastify, opts) {
+    // Decorate Fastify with a render function that includes GTM
+    fastify.decorateReply('renderWithGtm', function (template, data) {
+        data = data || {};
+        data.gtmId = process.env.GTM_ID;
+        return this.view(template, data);
+    });
+
     // Cache translations to avoid redundant file reads
     const translationsCache = {};
 

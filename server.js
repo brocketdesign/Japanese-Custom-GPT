@@ -106,12 +106,6 @@ const websocketPlugin = require('@fastify/websocket');
 fastify.register(websocketPlugin);
 fastify.register(require('./plugins/websocket'));
 
-fastify.decorateReply('renderWithGtm', function (template, data) {
-  data = data || {};
-  data.gtmId = process.env.GTM_ID;
-  return this.view(template, data);
-});
-
 fastify.register(require('fastify-sse'));
 fastify.register(require('@fastify/formbody'));
 fastify.register(require('./routes/api'));

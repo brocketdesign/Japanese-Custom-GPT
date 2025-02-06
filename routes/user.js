@@ -618,7 +618,7 @@ fastify.post('/user/update-info', async (request, reply) => {
       
       const translations = request.translations;
 
-      return reply.view('/user-profile.hbs', {
+      return reply.renderWithGtm('/user-profile.hbs', {
         title: `${userData.nickname}さんのプロフィール`,
         translations,
         mode: process.env.MODE,

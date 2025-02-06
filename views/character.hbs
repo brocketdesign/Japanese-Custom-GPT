@@ -43,7 +43,6 @@
       <div class="card border-0 shadow-0">
         {{#if isBlur}}
           <div type="button" class="text-center mx-auto" onclick={{#if user.isTemporary}}'openLoginForm()'{{else}}'loadPlanPage()'{{/if}}>
-            <div class="placeholder-img bg-light p-auto position-absolute" style="width:100%;height: 80vh;"></div>
             <img data-src="{{image.imageUrl}}" 
             class="card-img-top img-blur rounded shadow p-auto" 
             alt="{{image.prompt}}" 
@@ -52,18 +51,12 @@
           </div>
         {{else}}
         <div class="mx-auto">
-            <div class="placeholder-img bg-light p-auto position-absolute" style="width:100%;height: 80vh;"></div>
             <img id="mainImage" 
             src="{{image.imageUrl}}" 
             class="card-img-top rounded shadow p-auto" 
             alt="{{image.prompt}}" 
             style="max-height:80vh;width:auto;max-width:100%;object-fit:contain;">
         </div>
-        <script>
-          window.onload = function() {
-            document.querySelector('.placeholder-img').style.display = 'none';
-          };
-        </script>
         {{/if}}
         <div class="card-body border rounded mt-3">
           <h5 class="card-title"></h5>

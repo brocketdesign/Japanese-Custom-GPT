@@ -101,6 +101,10 @@ async function routes(fastify, options) {
   
 };
 
+  fastify.get('/plan/list', async (request, reply) => {
+    const lang = request.query.lang || request.lang;
+    return reply.send({plans: plans[lang], features: plans.features[lang]});
+  });
   fastify.get('/plan/list/:id', async (request, reply) => {
     const lang = request.query.lang || request.lang;
     const id = request.params.id;

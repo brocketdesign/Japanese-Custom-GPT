@@ -221,7 +221,7 @@ const completedTasks = new Set();
 
 async function pollTaskStatus(taskId, fastify) {
   const startTime = Date.now();
-  const interval = 5000; // 10 seconds
+  const interval = 3000;
   const timeout = 180000; // 3 minutes
 
   return new Promise((resolve, reject) => {
@@ -442,7 +442,6 @@ async function fetchNovitaResult(task_id) {
         console.log(`Task failed with reason: ${response.data.task.reason}`);
         return { error: response.data.task.reason, status: 'failed' };
     } else {
-        // Task is still processing or queued
         return null;
     }
 

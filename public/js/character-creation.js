@@ -346,9 +346,13 @@ $(document).ready(function() {
 
         // ボタンテキストを更新
         if(isEnhanceEnabled){
-            $button.html(`<i class="fas fa-spinner fa-spin me-2"></i>${translations.newCharacter.enhancing_prompt}`);
+            $button.html(`<div class="me-2 spinner-border spinner-border-sm" role="status">
+            <span class="visually-hidden">Loading...</span>
+            </div>${translations.newCharacter.enhancing_prompt}`);
         } else {
-            $button.html(`<i class="fas fa-spinner fa-spin me-2"></i>${translations.imageForm.generatingImages}`);
+            $button.html(`<div class="me-2 spinner-border spinner-border-sm" role="status">
+            <span class="visually-hidden">Loading...</span>
+            </div>${translations.imageForm.generatingImages}`);
         }
 
         $('#characterPrompt').prop('disabled', true);
@@ -365,7 +369,7 @@ $(document).ready(function() {
                     showUpgradePopup('nsfw-prompt');
                     // Enable buttons and reset text
                     $button.prop('disabled', false);
-                    $button.html('<i class="fas fa-magic me-2"></i>' + translations.newCharacter.generate_with_AI);
+                    $button.html('<i class="bi bi-magic me-2"></i>' + translations.newCharacter.generate_with_AI);
                     $('#characterPrompt').prop('disabled', false);
                     $('#chatName').prop('disabled', false);
                     $('#chatPurpose').prop('disabled', false);
@@ -404,7 +408,7 @@ $(document).ready(function() {
                     $('#enhancedPrompt').val(enhanceResponse.enhancedPrompt);
                 } else {
                     $button.prop('disabled', false);
-                    $button.html(`<i class="fas fa-magic me-2"></i>${translations.newCharacter.generate_with_AI}`);
+                    $button.html(`<i class="bi bi-magic me-2"></i>${translations.newCharacter.generate_with_AI}`);
                     $('#characterPrompt').prop('disabled', false);
                     $('#chatName').prop('disabled', false);
                     $('#chatPurpose').prop('disabled', false);
@@ -416,7 +420,9 @@ $(document).ready(function() {
             }
 
             // ボタンテキストを「画像を生成中...」に更新
-            $button.html(`<i class="fas fa-spinner fa-spin me-2"></i>${translations.imageForm.generatingImages}`);
+            $button.html(`<div class="me-2 spinner-border spinner-border-sm" role="status">
+            <span class="visually-hidden">Loading...</span>
+            </div>${translations.imageForm.generatingImages}`);
             $('.genexp').fadeIn()
 
             const imageType = moderationResult.flagged ? 'nsfw' : 'sfw';
@@ -435,7 +441,7 @@ $(document).ready(function() {
         } catch (error) {
             console.error('Error:', error);
             $button.prop('disabled', false);
-            $button.html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
+            $button.html('<i class="bi bi-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
             $('#characterPrompt').prop('disabled', false);
             $('#chatName').prop('disabled', false);
             $('#chatPurpose').prop('disabled', false);
@@ -613,7 +619,7 @@ window.resetCharacterForm = function(){
     $('#chatName').prop('disabled', false);
     $('#chatPurpose').prop('disabled', false);
     $('#generateButton').prop('disabled', false);
-    $('#generateButton').html('<i class="fas fa-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
+    $('#generateButton').html('<i class="bi bi-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
 }
 
 window.updateCharacterGenerationMessage = function(message){

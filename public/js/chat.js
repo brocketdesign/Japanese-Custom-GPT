@@ -130,6 +130,7 @@ $(document).ready(async function() {
         count_proposal = 0;
         
         $('#chatContainer').empty();
+        $('#suggestions').empty();
         $('#startButtonContained').remove();
         $('#chat-recommend').empty();
 
@@ -1392,13 +1393,13 @@ $(document).ready(async function() {
     $(document).on('click','#showPrompts',function(){
         $('#promptContainer').slideDown('fast');
         // Hide suggestions
-        $('#suggestions').hide().removeClass('d-flex');
+        $('#suggestions').removeClass('d-flex').hide();
     });
       
     $('#close-promptContainer').on('click', function() {
         $('#promptContainer').slideUp('fast');
         // Show suggestions
-        $('#suggestions').show().addClass('d-flex');
+        $('#suggestions').addClass('d-flex').show();
     });
     
     $('.prompt-card').off('click').on('click', function() {

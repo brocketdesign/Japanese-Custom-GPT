@@ -51,29 +51,29 @@
             }
         })();
         
-document.addEventListener("DOMContentLoaded", () => {
-    const lazyBgElements = new Set();
+        document.addEventListener("DOMContentLoaded", () => {
+            const lazyBgElements = new Set();
 
-    const addLazyBgObserver = (element) => {
-        if (!lazyBgElements.has(element)) {
-            observer.observe(element);
-            lazyBgElements.add(element);
-        }
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-                const element = entry.target;
-                const bgImage = element.getAttribute("data-bg");
-                if (bgImage) {
-                    element.style.backgroundImage = `url(${bgImage})`;
-                    observer.unobserve(element);
-                    lazyBgElements.delete(element);
+            const addLazyBgObserver = (element) => {
+                if (!lazyBgElements.has(element)) {
+                    observer.observe(element);
+                    lazyBgElements.add(element);
                 }
-            }
+            };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    const element = entry.target;
+                    const bgImage = element.getAttribute("data-bg");
+                    if (bgImage) {
+                        element.style.backgroundImage = `url(${bgImage})`;
+                        observer.unobserve(element);
+                        lazyBgElements.delete(element);
+                    }
+                }
+            });
         });
-    });
 
         // Observe existing .lazy-bg elements
         document.querySelectorAll(".lazy-bg").forEach(addLazyBgObserver);
@@ -194,8 +194,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             }
         });
-
-
 
         window.API_URL = "{{apiurl}}";
         window.MODE = "{{mode}}";

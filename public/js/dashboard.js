@@ -991,7 +991,7 @@ window.displayUserChats = async function(userId, page = 1) {
                 if (image_count > 0) {
                     galleryIco = `
                         <div class="gallery" style="color: rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
-                            <span class="badge bg-dark"><i class="far fa-images me-1"></i>${image_count}</span>
+                            <span class="badge bg-dark"><i class="bi bi-images me-1"></i>${image_count}</span>
                         </div>
                     `;
                 }
@@ -999,44 +999,44 @@ window.displayUserChats = async function(userId, page = 1) {
 
             // Render chat card
             htmlContent += `
-            <div class="col-12 col-sm-4 col-lg-3 mb-2">
-                <div 
-                class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 redirectToChatPage" 
-                style="cursor:pointer;" data-id="${chat._id}" 
-                data-image="${chat.chatImageUrl}"
-                onclick="redirectToChatPage(this)"
-                >
-                    <div style="background-image:url('${chat.chatImageUrl || '/img/logo.webp'}')" class="card-img-top girls_avatar position-relative" alt="${chat.name}">
+                  <div class="col-12 col-sm-4 col-lg-3 mb-2">
+                    <div 
+                    class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 redirectToChatPage" 
+                    style="cursor:pointer;" data-id="${chat._id}" 
+                    data-image="${chat.chatImageUrl}"
+                    onclick="redirectToChatPage(this)"
+                    >
+                      <div style="background-image:url('${chat.chatImageUrl || '/img/logo.webp'}')" class="card-img-top girls_avatar position-relative" alt="${chat.name}">
                         <div id="spinner-${chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
                         <div class="position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px;right:10px;">
-                            ${(chat.tags || []).length ? `<div class="tags d-flex justify-content-between align-items-center flex-wrap">${chat.tags.map(tag => `<span class="badge bg-dark">${tag}</span>`).join('')}</div>` : ''}
+                          ${(chat.tags || []).length ? `<div class="tags d-flex justify-content-between align-items-center flex-wrap">${chat.tags.map(tag => `<span class="badge bg-dark">${tag}</span>`).join('')}</div>` : ''}
                         </div>
                         <div class="position-absolute text-end" style="top:10px;right:10px">
-                            <a href="/character/${chat._id}">
-                                <div class="gallery" style="color: rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
-                                    <span class="btn btn-dark"><i class="far fa-image me-1"></i><span style="font-size:12px;">${chat.imageCount || 0}</span></span>
-                                </div>
-                            </a>
-                            ${galleryIco}
-                            ${chat.messagesCount ? `<span class="badge bg-dark message-count"><i class="fas fa-comment-alt me-2"></i>${chat.messagesCount}</span>` : ''}
+                          <a href="/character/${chat._id}">
+                            <div class="gallery" style="color: rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
+                              <span class="btn btn-dark"><i class="bi bi-image me-1"></i><span style="font-size:12px;">${chat.imageCount || 0}</span></span>
+                            </div>
+                          </a>
+                          ${galleryIco}
+                          ${chat.messagesCount ? `<span class="badge bg-dark message-count"><i class="bi bi-chat-dots me-2"></i>${chat.messagesCount}</span>` : ''}
                         </div>
-                    </div>
-                    <div class="card-body bg-transparent border-0 pb-0 text-start">
+                      </div>
+                      <div class="card-body bg-transparent border-0 pb-0 text-start">
                         <div class="row align-items-center">
-                            <div class="col-auto text-center">
-                                <a href="/character/${chat._id}" style="text-decoration: none;">
-                                    <img src="${chat.chatImageUrl || '/img/avatar.png'}" alt="${chat.name}" class="rounded-circle" width="40" height="40">
-                                </a>
-                            </div>
-                            <div class="col-auto">
-                                <a href="/character/${chat._id}" class="text-muted" style="text-decoration: none;">
-                                    <h5 class="card-title character-title mb-0">${chat.name}</h5>
-                                </a>
-                            </div>
+                          <div class="col-auto text-center">
+                            <a href="/character/${chat._id}" style="text-decoration: none;">
+                              <img src="${chat.chatImageUrl || '/img/avatar.png'}" alt="${chat.name}" class="rounded-circle" width="40" height="40">
+                            </a>
+                          </div>
+                          <div class="col-auto">
+                            <a href="/character/${chat._id}" class="text-muted" style="text-decoration: none;">
+                              <h5 class="card-title character-title mb-0">${chat.name}</h5>
+                            </a>
+                          </div>
                         </div>
+                      </div>
                     </div>
-                </div>
-            </div>`;
+                  </div>`;
         });
 
         // Update the gallery HTML
@@ -1248,7 +1248,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                   galleryIco = `
                       <div class="gallery" data-id="${chat.chatId || chat._id}">
                           <span class="btn btn-dark" style="background-color: rgba(66, 70, 59, 0.84);">
-                              <i class="far fa-images me-1"></i><span style="font-size:12px;">${image_count}</span>
+                              <i class="bi bi-images me-1"></i><span style="font-size:12px;">${image_count}</span>
                           </span>
                       </div>
                   `;
@@ -1268,12 +1268,24 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                               <span class="badge bg-dark" style="width: 30px;"><i class="far fa-user-circle"></i></span>
                           </div>
                           <a ${modal ? `onclick="openCharacterModal('${chat.chatId || chat._id}')"` : `href="/character/${chat.chatId || chat._id}"`}>
-                              <div class="gallery" style="color: rgb(165 164 164);opacity:0.8;" data-id="${chat.chatId || chat._id}">
-                                  <span class="btn btn-dark"><i class="far fa-image me-1"></i><span style="font-size:12px;">${chat.imageCount || 0}</span></span>
+                              <div class="gallery" style="opacity:0.8;" data-id="${chat.chatId || chat._id}">
+                                  <span 
+                                  class="btn btn-light text-dark shadow-0 border-0 position-relative"
+                                  style="min-width: 30px; font-size: 12px;">
+                                    <i class="bi bi-images me-2"></i>
+                                    <span class="position-absolute" style="font-size:12px;top:0;right:3px;">${chat.imageCount || 0}</span>
+                                  </span>
                               </div>
                           </a>
                           ${galleryIco}
-                          ${chat.messagesCount ? `<span class="btn btn-dark message-count mt-1 border-0" style="background-color: rgba(66, 70, 59, 0.84); font-size: 12px;"><i class="fas fa-comment-alt me-2"></i>${chat.messagesCount}</span>` : ''}
+                          ${chat.messagesCount ? `<div style="opacity:0.8;">
+                            <span 
+                            class="btn btn-light text-dark shadow-0 message-count mt-1 border-0 position-relative" 
+                            style="min-width: 30px; font-size: 12px;">
+                              <i class="bi bi-chat me-2"></i>
+                              <span class="position-absolute" style="font-size:12px;top:0;right:3px;">${chat.messagesCount}</span>
+                            </span>
+                            </div>` : ''}
                       </div>
                   </div>
                   <div class="card-body bg-transparent border-0 pb-0 px-0 mx-0 text-start">

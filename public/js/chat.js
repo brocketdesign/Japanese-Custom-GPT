@@ -496,7 +496,7 @@ $(document).ready(async function() {
                             </div>
                             <p style="color: white;font-size: 12px;" class="p-4">${album.description}</p>
                             <div class="text-start">
-                                <span type="button" id="toggle-grid-${album.chatId}" class="btn btn-light mx-3"><i class="fas fa-th-large"></i></span>
+                                <span type="button" id="toggle-grid-${album.chatId}" class="btn btn-light mx-3"><i class="bi bi-grid"></i></span>
                             </div>
                             <div id="album-container" class="position-relative text-white pt-2 px-3 w-100" style="min-height:200px;overflow: hidden;">
                                 <div class="images" data-id="${album.chatId}">
@@ -510,7 +510,7 @@ $(document).ready(async function() {
                             </div>
                             ${!subscriptionStatus && !isTemporary ? `
                                 <div style="bottom: 20px;z-index: 100;" class="mx-auto mt-4 position-fixed w-100">
-                                    <a href="/my-plan" class="btn btn-lg custom-gradient-bg" style="border-radius:50px;"><i class="far fa-images me-2"></i>プレミアムに登録する</a>
+                                    <a href="/my-plan" class="btn btn-lg custom-gradient-bg" style="border-radius:50px;"><i class="bi bi-images me-2"></i>プレミアムに登録する</a>
                                     <a href="/my-plan" class="d-block mt-1 text-white">Lamixプレミアムなら見放題</a>
                                 </div>`:''
                             }
@@ -858,7 +858,7 @@ $(document).ready(async function() {
                             const blurBadgeHtml = `
                             <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
                                 <span type="button" class="badge bg-danger text-white" style="padding: 5px; border-radius: 5px;">
-                                    <i class="fas fa-lock"></i> 成人向け
+                                    <i class="bi bi-lock"></i> 成人向け
                                 </span>
                             </div>`;
                             $(`#image-${imageId}`).closest('.assistant-image-box').append(blurBadgeHtml);
@@ -1350,7 +1350,7 @@ $(document).ready(async function() {
                         </div>
                         <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
                             <span type="button" class="badge bg-danger text-white" style="padding: 5px; border-radius: 5px;">
-                                <i class="fas fa-lock"></i> 成人向け
+                                <i class="bi bi-lock"></i> 成人向け
                             </span>
                         </div>
                     </div>
@@ -1638,7 +1638,7 @@ function displayUserChatHistory(userChat) {
             listItem.css('cursor', 'pointer');
 
             const small = $('<small class="text-secondary"></small>');
-            small.append($('<i class="fas fa-clock me-1"></i>'));
+            small.append($('<i class="bi bi-clock me-1"></i>'));
             var chatUpdatedAt = new Date(chat.updatedAt);
             // Convert to Japanese localized date string
             var japaneseDateString = chatUpdatedAt.toLocaleDateString('ja-JP', {
@@ -1676,7 +1676,7 @@ function displayUserChatHistory(userChat) {
             listItem.css('cursor', 'pointer');
 
             const small = $('<small class="text-secondary"></small>');
-            small.append($('<i class="fas fa-clock me-1"></i>'));
+            small.append($('<i class="bi bi-clock me-1"></i>'));
             small.append(chat.updatedAt);
 
             const dropdown = renderChatDropdown(chat)
@@ -1700,12 +1700,12 @@ function renderChatDropdown(chat) {
             <!-- Dropdown -->
             <div class="dropdown pe-2">
                 <button class="btn border-0 shadow-0 dropdown-toggle ms-2" type="button" id="dropdownMenuButton_${chatId}" data-mdb-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-ellipsis-v text-secondary"></i>
+                    <i class="bi bi-three-dots text-secondary"></i>
                 </button>
                 <ul class="chat-option-menu dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton_${chatId}">
                     <li>
                         <span data-id="${chatId}" class="dropdown-item text-danger delete-chat-history" style="cursor:pointer">
-                            <i class="fas fa-trash me-2"></i>
+                            <i class="bi bi-trash me-2"></i>
                             <span class="text-muted" style="font-size:12px"></span>削除する</span>
                         </span>
                     </li>
@@ -1954,7 +1954,6 @@ function updateChatListDisplay(currentChat) {
     $('#chat-list').prepend(chatHtml);
     enableToggleDropdown();
 }
-
 function constructChatItemHtml(chat, isActive) {
     return `
         <div class="${isActive ? 'active' : ''} chat-list item user-chat d-flex align-items-center justify-content-between p-1 mx-2 rounded bg-transparent" 
@@ -1979,30 +1978,30 @@ function constructChatItemHtml(chat, isActive) {
                 <div class="d-flex align-items-center">
                     <div class="dropdown pe-2">
                         <button class="btn border-0 shadow-0 dropdown-toggle ms-2" type="button" id="dropdownMenuButton_${chat._id}" data-mdb-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-ellipsis-v text-secondary"></i>
+                            <i class="bi bi-three-dots text-secondary"></i>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end chat-option-menu bg-light shadow rounded mx-3" aria-labelledby="dropdownMenuButton_${chat._id}">
                             <li>
                                 <button class="dropdown-item text-secondary chart-button" data-id="${chat._id}">
-                                    <i class="fas fa-info-circle me-2"></i>
+                                    <i class="bi bi-info-circle me-2"></i>
                                     <span class="text-muted" style="font-size:12px;">${window.translations.info}</span>
                                 </button>
                             </li>
                             <li>
                                 <button class="dropdown-item text-secondary tag-button" data-id="${chat._id}">
-                                    <i class="fas fa-share me-2"></i>
+                                    <i class="bi bi-share me-2"></i>
                                     <span class="text-muted" style="font-size:12px;">${window.translations.share}</span>
                                 </button>
                             </li>
                             <li>
                                 <a href="#" class="dropdown-item text-secondary" onclick="loadCharacterCreationPage('${chat._id}')">
-                                    <i class="far fa-edit me-2"></i>
+                                    <i class="bi bi-pencil me-2"></i>
                                     <span class="text-muted" style="font-size:12px;">${window.translations.edit}</span>
                                 </a>
                             </li>
                             <li>
                                 <button class="dropdown-item text-secondary history-chat" data-id="${chat._id}" >
-                                    <i class="fas fa-history me-2"></i>
+                                    <i class="bi bi-clock-history me-2"></i>
                                     <span class="text-muted" style="font-size:12px;">${window.translations.chatHistory}</span>
                                 </button>
                             </li>
@@ -2011,13 +2010,13 @@ function constructChatItemHtml(chat, isActive) {
                                 class="dropdown-item text-secondary reset-chat" 
                                 data-id="${chat._id}"
                                 onclick="handleChatReset(this)">
-                                    <i class="fas fa-plus-square me-2"></i>
+                                    <i class="bi bi-plus-square me-2"></i>
                                     <span class="text-muted" style="font-size:12px;">${window.translations.newChat}</span>
                                 </button>
                             </li>
                             <li class="d-none">
                                 <span data-id="${chat._id}" class="dropdown-item text-danger delete-chat" style="cursor:pointer">
-                                    <i class="fas fa-trash me-2"></i>
+                                    <i class="bi bi-trash me-2"></i>
                                     <span class="text-muted" style="font-size:12px;">${window.translations.delete}</span>
                                 </span>
                             </li>

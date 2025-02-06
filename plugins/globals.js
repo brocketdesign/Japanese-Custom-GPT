@@ -3,6 +3,7 @@ const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const fastifyPlugin = require('fastify-plugin');
 const { ObjectId } = require('mongodb');
+const  { checkUserAdmin } = require('../models/tool');
 
 module.exports = fastifyPlugin(async function (fastify, opts) {
     // Cache translations to avoid redundant file reads
@@ -30,6 +31,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     fastify.decorateRequest('translations', null);
     fastify.decorateRequest('lang', null);
     fastify.decorateRequest('user', null);
+    fastify.decorateRequest('isAdmin', null);
 
     // Hooks to handle language and user settings
     fastify.addHook('onRequest', setRequestLangAndUser);
@@ -75,6 +77,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         request.user = await fastify.getUser(request, reply);
         request.lang = request.user.lang || await fastify.getLang(request, reply);
         request.translations = fastify.getTranslations(request.lang);
+        request.isAdmin = await checkUserAdmin(fastify, request.user._id) || false;
     }
 
     /** Middleware: Set reply.locals */
@@ -85,6 +88,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             translations: request.translations,
             lang: request.lang,
             user: request.user,
+            isAdmin: request.isAdmin
         };
     }
 

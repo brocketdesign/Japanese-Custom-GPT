@@ -782,9 +782,10 @@ $(document).ready(async function() {
                     <span class="badge bg-white text-secondary download-image" style="cursor: pointer; bottom:5px; right:5px; opacity:0.8;">
                         <a href="${imageUrl}" download="${title}.png" style="color:inherit;"><i class="bi bi-download"></i></a>
                     </span>
+                    ${window.isAdmin ? `
                     <span class="badge bg-white text-secondary update-chat-image" onclick="${subscriptionStatus ? 'updateChatImage(this)' : 'loadPlanPage()'}" data-id="${chatId}" data-img="${imageUrl}" style="cursor: pointer; bottom:5px; right:5px; opacity:0.8;">
                         <i class="bi bi-image"></i>
-                    </span>
+                    </span>` : ''}
                 </div>
             </div>
             <div class="title assistant-chat-box py-1 px-3 ${title && title !== 'undefined' ? '': 'd-none'}" style="border-radius: 0px 0px 15px 15px;max-width: 200px;">

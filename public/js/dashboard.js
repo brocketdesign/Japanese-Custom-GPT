@@ -1328,7 +1328,7 @@ window.loadAllUserPosts = async function (page = 1) {
                     </a>
                   </div>
                   ${isBlur ? `
-                  <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item.post.postId}','posts',this)`}>
+                  <div type="button" onclick=${isTemporary?`openLoginForm()`:`loadPlanPage()`}>
                     <img data-src="${item.post.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
                   </div>
                   ` : `
@@ -1410,7 +1410,7 @@ window.resultImageSearch = async function (page = 1,query,style = 'anime', callb
                 <div class="col-6 col-md-3 col-lg-2 mb-2">
                     <div class="card shadow-0">
                         ${isBlur ? `
-                        <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`scrollToPlan()`}>
+                        <div type="button" onclick="handleClickRegisterOrPay(event,${isTemporary})">
                             <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" >
                         </div>
                         ` : `
@@ -1568,8 +1568,10 @@ window.loadAllChatImages = function (page = 1, reload = false) {
           <div class="card shadow-0">
             ${
               isBlur
-                ? `<div type="button" onclick="${isTemporary ? 'showRegistrationForm()' : `unlockImage('${item._id}','gallery',this)`}">
-                     <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
+                ? `<div type="button" onclick="handleClickRegisterOrPay(event,${isTemporary})">
+                      <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
+                        <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
+                      </a>
                    </div>`
                 : `<a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
                      <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
@@ -1719,7 +1721,7 @@ window.loadUserImages = function (userId, page = 1, reload = false) {
             </div>
             ${
               blurred
-                ? `<div type="button" onclick=${isTemp ? `showRegistrationForm()` : `unlockImage('${item._id}','gallery',this)`}>
+                ? `<div type="button" onclick=handleClickRegisterOrPay(event,${isTemp})>
                      <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
                    </div>`
                 : `<a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
@@ -1767,7 +1769,7 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
                         </a>
                     </div>
                     ${isBlur ? `
-                    <div type="button" onclick=${isTemporary?`showRegistrationForm()`:`unlockImage('${item._id}','posts',this)`}>
+                    <div type="button" handleClickRegisterOrPay(event,${isTemporary})>
                         <img data-src="${item.image.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" >
                     </div>
                     ` : `
@@ -2144,8 +2146,10 @@ window.loadChatImages = function (chatId, page = 1, reload = false, isModal = fa
           <div class="card shadow-0">
             ${
               isBlur
-                ? `<div type="button" onclick="${isTemporary ? 'showRegistrationForm()' : `unlockImage('${item._id}','gallery',this)`}">
-                     <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
+                ? `<div type="button" onclick="handleClickRegisterOrPay(event,${isTemporary})">
+                      <a href="/character/${item.chatId}?imageId=${item._id}" data-index="${index}">
+                        <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
+                      </a>
                    </div>`
                 : `<a href="/character/${item.chatId}?imageId=${item._id}" data-index="${index}">
                      <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
@@ -2172,24 +2176,6 @@ window.loadChatImages = function (chatId, page = 1, reload = false, isModal = fa
     $(document).find('.img-blur').each(function () {
       blurImage(this)
     })
-  
-    // Update swiper if modal is open
-    const modalChatId = $('#swiperModal').data('chat-id')
-    if (modalChatId && modalChatId.toString() === images?.[0]?.chatId?.toString()) {
-      // If imageId is present => load that image into loadedImages
-      if (typeof imageId !== 'undefined' && imageId) {
-        $.get(`/image/${imageId}`, function (data) {
-          const existingIndex = loadedImages.findIndex((img) => img._id === data._id)
-          if (existingIndex !== -1) {
-            loadedImages.splice(existingIndex, 1)  // Remove existing item
-          }
-          loadedImages.unshift(data)  // Insert at the beginning
-          updateSwiperSlides(loadedImages)
-        })
-      } else {
-        updateSwiperSlides(loadedImages)
-      }
-    }
   }
   
   // Infinite scroll / pagination
@@ -2305,11 +2291,12 @@ $(document).ready(function () {
                           <!-- Blurred Image -->
                           <div 
                             type="button" 
-                            onclick="${
-                              isTemporary
-                                ? `showRegistrationForm()`
-                                : `unlockImage('${item._id}', 'gallery', this)`
-                            }"
+                            onclick="handleClickRegisterOrPay(event,${isTemporary})"
+                          >
+                          <a 
+                            href="/character/${chat._id}?imageId=${item._id}" 
+                            class="text-muted text-decoration-none"
+                            data-index="${index}"
                           >
                             <img 
                               data-src="${item.imageUrl}" 
@@ -2317,6 +2304,7 @@ $(document).ready(function () {
                               style="object-fit: cover;"
                             >
                           </div>
+                          </a>
                         `
                         : `
                           <!-- Unblurred Image -->
@@ -2435,11 +2423,7 @@ $(document).ready(function () {
                           ? `
                             <div 
                               type="button" 
-                              onclick="${
-                                isTemporary
-                                  ? `showRegistrationForm()`
-                                  : `unlockImage('${item._id}', 'gallery', this)`
-                              }"
+                              onclick="handleClickRegisterOrPay(event,${isTemporary})"
                             >
                               <img 
                                 data-src="${item.imageUrl}" 
@@ -2835,4 +2819,13 @@ function openLoginForm(withMail = false) {
             modalStatus.isLoginLoading = false;
         }
     });
+}
+
+window.handleClickRegisterOrPay = function(event, isTemporary) {
+  event.preventDefault();
+  if (isTemporary) {
+      openLoginForm();
+  } else {
+      loadPlanPage();
+  }
 }

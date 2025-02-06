@@ -347,7 +347,7 @@ fastify.get('/character', async (request, reply) => {
     const userId = user._id;
     user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
-    return reply.view('character.hbs', {
+    return reply.renderWithGtm('character.hbs', {
       title: 'AIグラビアから送られてくる特別な写真 | LAMIX | 日本語 | 無料AI画像生成 | 無料AIチャット',
       
       
@@ -463,9 +463,9 @@ fastify.get('/character/:chatId', async (request, reply) => {
 fastify.get('/tags', async (request, reply) => {
   try {
     const db = fastify.mongo.db;
-    
+    const { translations, lang, user } = request;
     const { tags, page, totalPages } = await fetchTags(db,request);
-    return reply.view('tags.hbs', {
+    return reply.renderWithGtm('tags.hbs', {
       title: `${translations.seo.title_tags} ${translations.seo.page} ${page}`,
       
       tags,
@@ -521,12 +521,9 @@ fastify.get('/search', async (request, reply) => {
     }
     
 
-    return reply.view('search.hbs', {
+    return reply.renderWithGtm('search.hbs', {
       title: seoTitle,
-      
       data,
-      
-      
       query,
       imageStyle,
       seo: [

@@ -271,8 +271,8 @@ window.fetchAndAppendModels = function() {
         });
             if($(document).find('#imageStyleTabs').length > 0){
                 showNavTabs();
-            }else if($(document).find('#search-form').length == 0){
-                $(document).find('.style-option').eq(0).click()
+            }else {
+                $(document).find('.style-option').eq(0).click();
             }
         } else {
         window.showNotification('Failed to fetch models', 'error');

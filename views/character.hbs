@@ -43,8 +43,9 @@
       <div class="card border-0 shadow-0">
         {{#if isBlur}}
           <div type="button" class="text-center mx-auto" onclick={{#if user.isTemporary}}'openLoginForm()'{{else}}'loadPlanPage()'{{/if}}>
+            <div class="placeholder custom-gradient-bg p-auto" style="width: 100%; height: 80vh;"></div>
             <img data-src="{{image.imageUrl}}" 
-            class="card-img-top img-blur rounded shadow p-auto w-auto" 
+            class="card-img-top img-blur rounded shadow p-auto" 
             alt="{{image.prompt}}" 
             style="width: 100%;max-height:80vh;object-fit:contain;">
           </div>
@@ -53,7 +54,7 @@
             <div class="placeholder custom-gradient-bg p-auto" style="width: 100%; height: 80vh;"></div>
             <img id="mainImage" 
             src="{{image.imageUrl}}" 
-            class="card-img-top rounded shadow p-auto w-auto" 
+            class="card-img-top rounded shadow p-auto" 
             alt="{{image.prompt}}" 
             style="max-height:80vh;width:100%;object-fit:contain;"
             onload="this.style.display='block';$('.placeholder').hide();">

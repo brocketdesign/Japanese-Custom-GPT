@@ -171,6 +171,16 @@
     </div>
   </div>
 </footer>
+<script>
+    window.API_URL = "{{apiurl}}";
+    window.MODE = "{{mode}}";
+    window.user = {{{json user}}};
+    window.userId = window.user._id;
+    window.isAdmin = {{isAdmin}};
+    window.imageId = null;
+    window.translations = {{{json translations}}};
+    window.lang = window.translations.lang;
+</script>
 <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>

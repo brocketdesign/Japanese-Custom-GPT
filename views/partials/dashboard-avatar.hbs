@@ -45,13 +45,13 @@
             <ul class="avatar-menu dropdown-menu dropdown-menu-end mx-3" aria-labelledby="navbarDropdownMenuLink">
                 <li>
                     <a class="dropdown-item text-secondary custom-gradient-bg text-white" href="#" onclick="loadPlanPage()">
-                        <i class="fas fa-layer-group me-3"></i> 
+                        <i class="bi bi-layers me-3"></i> 
                         <span>{{translations.avatar.subscription}}</span>
                     </a>
                 </li>
                 <li>
                     <a class="dropdown-item text-secondary" href="/user/{{user._id}}">
-                        <i class="fas fa-user-circle me-3"></i>{{translations.avatar.profile}}
+                        <i class="bi bi-person-circle me-3"></i>{{translations.avatar.profile}}
                     </a>
                 </li>
                 <li>
@@ -61,48 +61,48 @@
                 </li>
                 <li class="d-none">
                     <a class="dropdown-item text-secondary" href="/chat/list/{{user._id}}">
-                        <i class="fas fa-user-cog me-3"></i>{{translations.avatar.characters}}
+                        <i class="bi bi-people me-3"></i>{{translations.avatar.characters}}
                     </a>
                 </li>
                 <li>
                     <a class="dropdown-item text-secondary" href="#" onclick="loadCharacterCreationPage()">
-                        <i class="fas fa-plus me-3"></i>{{translations.avatar.createCharacter}}
+                        <i class="bi bi-plus-circle me-3"></i>{{translations.avatar.createCharacter}}
                     </a>
                 </li>
                 <li class="{{#if isAdmin }}{{else}}d-none{{/if}}">
                     <a class="dropdown-item text-secondary" href="/admin/users">
-                        <i class="fas fa-users me-3"></i>{{translations.admin.users}}
+                        <i class="bi bi-people me-3"></i>{{translations.admin.users}}
                     </a>
                 </li>
                 <li class="{{#if isAdmin }}{{else}}d-none{{/if}}">
                     <a class="dropdown-item text-secondary" href="/admin/prompts">
-                        <i class="fas fa-edit me-3"></i>{{translations.admin.prompts}}
+                        <i class="bi bi-pencil me-3"></i>{{translations.admin.prompts}}
                     </a>
                 </li>
                 <li class="{{#if isAdmin }}{{else}}d-none{{/if}}">
                     <a class="dropdown-item text-secondary" href="/admin/models">
-                        <i class="fas fa-user-tie me-3"></i>{{translations.admin.models}}
+                        <i class="bi bi-person-badge me-3"></i>{{translations.admin.models}}
                     </a>
                 </li>
                 <li class="{{#if isAdmin }}{{else}}d-none{{/if}}">
                     <a class="dropdown-item text-secondary" href="/admin/notifications">
-                        <i class="fas fa-bell me-3"></i>{{translations.admin.notifications}}
+                        <i class="bi bi-bell me-3"></i>{{translations.admin.notifications}}
                     </a>
                 </li>
                 <li class="{{#if isAdmin }}{{else}}d-none{{/if}}">
                     <a class="dropdown-item text-secondary" href="/admin/mails">
-                        <i class="fas fa-envelope me-3"></i>{{translations.admin.mails}}
+                        <i class="bi bi-envelope me-3"></i>{{translations.admin.mails}}
                     </a>
                 </li>
                 <li>
                     <a class="dropdown-item text-secondary" href="#" onclick="loadSettingsPage()">
-                        <i class="fas fa-cog me-3"></i>{{translations.avatar.settings}}
+                        <i class="bi bi-gear me-3"></i>{{translations.avatar.settings}}
                     </a>
                 </li>
                 <hr>
                 <li>
                     <a class="dropdown-item text-danger logout" href="#" onclick="logoutUser()">
-                        <i class="fas fa-sign-out-alt me-3"></i>{{translations.avatar.logout}}
+                        <i class="bi bi-box-arrow-right me-3"></i>{{translations.avatar.logout}}
                     </a>
                 </li>
             </ul>

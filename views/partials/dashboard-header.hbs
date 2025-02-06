@@ -4,14 +4,15 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="purple">
     <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/img/logo.webp" type="image/webp">
     <title>{{title}}</title>
 
     <!-- SEO Meta Tags -->
     {{#each seo}}
     <meta {{#if name}}name="{{name}}"{{/if}} {{#if property}}property="{{property}}"{{/if}} content="{{content}}">
     {{/each}}
-
-    <link rel="icon" href="/img/logo.webp" type="image/webp">
+    {{#if gtmId}}
+    <!-- Google Tag Manager -->
     <script async src="https://www.googletagmanager.com/gtag/js?id={{gtmId}}"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -20,8 +21,9 @@
 
         gtag('config', '{{gtmId}}');
     </script>
+    <!-- End Google Tag Manager -->
+    {{/if}}
     <script>
-        
         // Function to get the value of a specific cookie
         function getCookie(name) {
             const nameEQ = name + "=";

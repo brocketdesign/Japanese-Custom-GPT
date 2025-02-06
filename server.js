@@ -211,7 +211,7 @@ fastify.get('/chat/:chatId', async (request, reply) => {
 
   const promptData = await db.collection('prompts').find({}).toArray();
 
-  return reply.renderWithGtm('chat.hbs', {
+  return reply.view('chat.hbs', {
     title: translations.seo.title,
     isAdmin,
     imageType,
@@ -260,7 +260,7 @@ fastify.get('/chat/edit/:chatId', async (request, reply) => {
     const uniqueTags = [...new Set(tags.map(tag => tag.toLowerCase()))];
     
 
-    return reply.renderWithGtm('add-chat.hbs', {
+    return reply.view('add-chat.hbs', {
       title: 'AIフレンズ',
       tags,
       
@@ -438,7 +438,7 @@ fastify.get('/character/:chatId', async (request, reply) => {
     // Log user activity 
     console.log(`Visiting Character ${chat.name}, ${image?.title?.en || ''}, /character/${chatId.toString()}${imageId ? `?imageId=${imageId}` : ''}`);
     const template = isModal ? 'character-modal.hbs' : 'character.hbs';
-    return reply.view(template, {
+    return reply.renderWithGtm(template, {
       title: `${chat.name} | ${image?.title?.[request.lang] ?? ''} ${translations.seo.title_character}`,
       chat,
       image,
@@ -587,7 +587,7 @@ fastify.get('/chat/list/:id', async (request, reply) => {
     const sortedChats = await chatsCollection.find(query).sort({ updatedAt: -1 }).toArray();
     
 
-    return reply.renderWithGtm('chat-list', {
+    return reply.view('chat-list', {
       title: translations.seo.title,
       
       
@@ -636,7 +636,7 @@ fastify.get('/discover', async (request, reply) => {
 
 fastify.get('/users', (request, reply) => {
   if (process.env.MODE === 'local') {
-    reply.renderWithGtm('user-list.hbs', { title: 'AIフレンズ' });
+    reply.view('user-list.hbs', { title: 'AIフレンズ' });
   } else {
     reply.redirect('/');
   }
@@ -644,7 +644,7 @@ fastify.get('/users', (request, reply) => {
 
 fastify.get('/generate/:userid', (request, reply) => {
   const userId = request.params.userid;
-  reply.renderWithGtm('generate.hbs', { title: 'AIフレンズ', userId });
+  reply.view('generate.hbs', { title: 'AIフレンズ', userId });
 });
 
 fastify.get('/dashboard', async (request, reply) => {
@@ -670,7 +670,7 @@ fastify.get('/settings', async (request, reply) => {
     const userData = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
     
 
-    return reply.renderWithGtm('/settings', {
+    return reply.view('/settings', {
       title: 'AIフレンズ',
       
       

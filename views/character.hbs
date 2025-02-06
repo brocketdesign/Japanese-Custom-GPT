@@ -48,7 +48,6 @@
             class="card-img-top img-blur rounded shadow p-auto" 
             alt="{{image.prompt}}" 
             style="width:auto;max-width:100%;max-height:80vh;object-fit:contain;"
-            onload="this.style.display='block';$('.placeholder-img').hide();"
             >
           </div>
         {{else}}
@@ -58,9 +57,13 @@
             src="{{image.imageUrl}}" 
             class="card-img-top rounded shadow p-auto" 
             alt="{{image.prompt}}" 
-            style="max-height:80vh;width:auto;max-width:100%;object-fit:contain;"
-            onload="this.style.display='block';$('.placeholder-img').hide();">
+            style="max-height:80vh;width:auto;max-width:100%;object-fit:contain;">
         </div>
+        <script>
+          window.onload = function() {
+            document.querySelector('.placeholder-img').style.display = 'none';
+          };
+        </script>
         {{/if}}
         <div class="card-body border rounded mt-3">
           <h5 class="card-title"></h5>

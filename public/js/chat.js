@@ -137,7 +137,7 @@ $(document).ready(async function() {
         postChatData(fetch_chatId, fetch_userId, userChatId, fetch_reset, callback);
     }
     
-    function postChatData(fetch_chatId, fetch_userId, userChatId, fetch_reset, callback) {
+    window.postChatData = function(fetch_chatId, fetch_userId, userChatId, fetch_reset, callback) {
         
         $('#chatContainer').empty();
         $('#startButtonContained').remove();
@@ -748,13 +748,11 @@ $(document).ready(async function() {
                     style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
                         <i class="bi bi-heart-fill"></i>
                     </span>
-                    <span class="badge bg-white text-secondary img2img regen-img d-none" 
+                    <span class="badge bg-white text-secondary txt2img regen-img" 
                     onclick="${subscriptionStatus ? 'regenImage(this)' : 'loadPlanPage()'}" 
-                    data-nsfw="${nsfw}" data-id="${imageId}" 
-                    style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
-                        <i class="bi bi-arrow-clockwise"></i>
-                    </span>
-                    <span class="badge bg-white text-secondary txt2img regen-img" onclick="${subscriptionStatus ? 'regenImage(this)' : 'loadPlanPage()'}" data-prompt="${prompt}" data-nsfw="${nsfw}" data-id="${imageId}" 
+                    data-prompt="${prompt}" 
+                    data-nsfw="${nsfw}" 
+                    data-id="${imageId}" 
                     style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
                         <i class="bi bi-arrow-clockwise"></i>
                     </span>
@@ -1528,23 +1526,27 @@ window.regenImage = function(el){
         });
     }
 };
+
 function displaySuggestions(suggestions, uniqueId) {
     const suggestionContainer = $(`#suggestions`);
-    
-    // Remove existing suggestions smoothly one by one
-    suggestionContainer.children().each(function(index) {
-        $(this).fadeOut().remove();
-    });
 
     // Add new suggestions smoothly one by one
     suggestions.forEach((suggestion, index) => {
         const button = $(`<button class="btn btn-light shadow m-1 rounded-pill">${suggestion}</button>`);
         button.on('click', function() {
             sendMessage(suggestion);
+            $('#suggestions').empty();
         });
-        suggestionContainer.append(button.hide().fadeIn());
+        suggestionContainer.prepend(button.hide().fadeIn());
     });
+
+    // Ensure only the most recent 6 suggestions are displayed
+    const allSuggestions = suggestionContainer.children();
+    if (allSuggestions.length > 6) {
+        allSuggestions.slice(6).fadeOut().remove();
+    }
 }
+
 // call fetchchatdata function accross other scripts
 function callFetchChatData(fetch_chatId, fetch_userId, fetch_reset, callback){
     fetchChatData(fetch_chatId, fetch_userId, fetch_reset, callback);

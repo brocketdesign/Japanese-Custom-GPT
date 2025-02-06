@@ -129,17 +129,9 @@ window.addIconToLastUserMessage = function(itemId = false) {
 // Display or remove spinner with provided id
 window.handleRegenSpin = function (imageId, spin) {
     if (spin) {
-        if ($(`.img2img[data-id=${imageId}]`).length) {
-            $(`.img2img[data-id=${imageId}]`).addClass('spin');
-        } else if ($(`.txt2img[data-id=${imageId}]`).length) {
-            $(`.txt2img[data-id=${imageId}]`).addClass('spin');
-        }
+        $(`.txt2img[data-id=${imageId}]`).addClass('spin');
     } else {
-        if ($(`.img2img[data-id=${imageId}]`).length) {
-            $(`.img2img[data-id=${imageId}]`).removeClass('spin');
-        } else if ($(`.txt2img[data-id=${imageId}]`).length) {
-            $(`.txt2img[data-id=${imageId}]`).removeClass('spin');
-        }
+        $(`.txt2img[data-id=${imageId}]`).removeClass('spin');
     }
 }
 // Display and remove image loader with provided data-id

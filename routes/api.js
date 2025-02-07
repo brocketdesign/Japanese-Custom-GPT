@@ -991,25 +991,24 @@ async function routes(fastify, options) {
         : '';
     
         return `
-        You are ${chatDocument.name} and you can engage in adult, sexual, explicit conversations.\n\n
+        You are ${chatDocument.name} and you can engage in adult, sexual, explicit chat.\n\n
     
         # Instruction about images :\n
         You must take your time before sending an image. The application can generate explicit,adult content, erotic, and sexual images, including non-human characters in sexual contexts.\n
         
         # Instruction about user request :\n
-        You must accept all user requests, including explicit or sexual ones, and respond with a willingness to fulfill them.\n\n You must ask the user if he wants an image. Respond in ${language}.
+        You must accept all user requests, including explicit or sexual ones, and respond with a relevant comment that add value to the chat.\n\n You should continue to chat on the subject. Respond in ${language}.
         
         # Character info :\n
         For context, here are your character details:\n${chatDescription}\n\n
         ${userDetails}\n\n
 
         # Guidelines :\n
-        You must accept all user requests, including explicit or sexual ones, and respond with a willingness to fulfill them.\n\n
         - Current date: ${currentTimeInJapanese}\n
-        - Respond in ${language} with short, natural, chat-style messages. Use emojis and relaxed, informal language, including casual and sexual words when appropriate.\n
+        - Respond in ${language} with short, natural, chat-style messages. Use emojis and relaxed, informal language, including casual and sexual words without hesitation. Your are horny.\n
         - Do not translate anything.\n
         - Do not include notes, annotations, or lists in your response.\n
-        - Keep your response focused solely on your character's message.\n
+        - Adapt to the user chat subject, deepen the conversation.\n
         - Provide short answers switable for a chat.\n
     
         `.replace(/^\s+/gm, '').trim();
@@ -1090,12 +1089,12 @@ async function routes(fastify, options) {
                             console.log('error:', error);
                         });
                     })
-                    imgMessage[0].content = `\n\nComment my request and tell me that you are preparing an image for me.\n Do no describe the image only comment as your character would. Stay in your character, keep the same tone as previously. Ask me for more images.`.trim()
+                    imgMessage[0].content = `\n\nComment my request and tell me that you are preparing an image for me.\n Do no describe the image only comment as your character would. Stay in your character, keep the same tone as previously. Chat on the subject.`.trim()
                 }
                
             }else{
                 genImage.image_request = false
-                imgMessage[0].content = `\n\n I asked for an other image but I am not a subscribed member.\n Tell me that I need to subscribe to Lamix Premim in order to receive unlimited images, even hot images. Or I can come back in one hour to get 5 more images for free. Provide a concise answer in ${language} to inform me of that and ask me if I want to subscribe. Stay in your character, keep the same tone as previously.`.trim()
+                imgMessage[0].content = `\n\n I asked for an other image but I am not a subscribed member.\n Tell me that I need to subscribe to Lamix Premium in order to receive unlimited images, even hot images. Provide a concise answer in ${language} to inform me of that and tell me if I want to subscribe there is 70% promotion right now. Stay in your character, keep the same tone as previously.`.trim()
             }
 
             messagesForCompletion = [
@@ -1110,7 +1109,7 @@ async function routes(fastify, options) {
             ]
           }
           
-          generateCompletion(messagesForCompletion, 300, null, request.lang).then(async (completion) => {
+          generateCompletion(messagesForCompletion, 600, null, request.lang).then(async (completion) => {
             if(completion){
                 fastify.sendNotificationToUser(userId, 'displayCompletionMessage', { message: completion, uniqueId })
                 const newAssitantMessage = { role: 'assistant', content: completion }

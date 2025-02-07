@@ -199,6 +199,10 @@ $(document).ready(async function() {
         }
     });     
 
+    $('#userMessage').on('click', function() {
+        resizeTextarea(this);
+    });
+    
     function resizeTextarea(element){
         element.style.height = 'auto';
         element.style.height = (element.scrollHeight - 20 ) + 'px';  

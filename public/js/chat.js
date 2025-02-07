@@ -202,7 +202,7 @@ $(document).ready(async function() {
     $('#userMessage').on('click', function() {
         resizeTextarea(this);
     });
-    
+
     function resizeTextarea(element){
         element.style.height = 'auto';
         element.style.height = (element.scrollHeight - 20 ) + 'px';  
@@ -361,7 +361,7 @@ $(document).ready(async function() {
                 $('#chatContainer').animate({
                     scrollTop: $('#chatContainer').prop("scrollHeight") + 500
                 }, 500);
-            }, 500);
+            }, 1000);
         });
 
         const today = new Date().toISOString().split('T')[0];
@@ -1202,7 +1202,6 @@ $(document).ready(async function() {
         </div>`).hide();
     $('#chatContainer').append(container);
     container.addClass('animate__animated animate__slideInUp').fadeIn();
-    $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
     return container;
     }
 

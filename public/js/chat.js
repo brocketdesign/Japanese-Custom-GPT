@@ -167,8 +167,6 @@ $(document).ready(async function() {
     }else{
         showDiscovery()
     }
-
-    enableToggleDropdown()
     
     $('textarea').each(function() {
         //resizeTextarea(this);
@@ -1377,10 +1375,6 @@ $(document).ready(async function() {
             messageElement.show().addClass(animationClass);
         }
     
-        messageContainer.animate({
-            scrollTop: messageContainer.prop("scrollHeight")
-        }, 500); 
-    
         if (typeof callback === 'function') {
             callback();
         }
@@ -1562,51 +1556,48 @@ function updateProgress(messagesCount, maxMessages) {
     // Update the progress label with the current count
     $('#progress-label').text(`${messagesCount}/${maxMessages}`);
 }
-function enableToggleDropdown() {
-    $(document).find('.dropdown-toggle').each(function() {
-        if (!$(this).hasClass('event-attached')) {
-            $(this).addClass('event-attached');
 
-            // Attach the event listener
-            $(this).on('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-            });
+window.enableToggleDropdown = function(el) {
+    const dropdownToggle = $(el);
+    if (!dropdownToggle.hasClass('event-attached')) {
+        dropdownToggle.addClass('event-attached');
 
-            // Initialize the dropdown
-            const dropdown = new mdb.Dropdown($(this)[0]);
+        // Initialize the dropdown
+        const dropdown = new mdb.Dropdown(dropdownToggle[0]);
 
-            // Find the parent element that has the hover effect
-            const parent = $(this).closest('.chat-list');
+        // Find the parent element that has the hover effect
+        const parent = dropdownToggle.closest('.chat-list');
 
-            let hoverTimeout;
+        let hoverTimeout;
 
-            // Add hover event listeners to the parent element
-            parent.hover(
-                function() {
-                    if (hoverTimeout) {
-                        clearTimeout(hoverTimeout);
-                    }
-                    // When the parent element is hovered
+        // Add hover event listeners to the parent element
+        parent.hover(
+            function() {
+                if (hoverTimeout) {
+                    clearTimeout(hoverTimeout);
+                }
+                // When the parent element is hovered
+                $(this).find('.dropdown-toggle').css({
+                    'opacity': 1,
+                    'pointer-events': ''
+                });
+            },
+            function() {
+                hoverTimeout = setTimeout(() => {
+                    // When the parent element is no longer hovered
                     $(this).find('.dropdown-toggle').css({
                         'opacity': 1,
-                        'pointer-events': ''
+                        'pointer-events': 'none'
                     });
-                },
-                function() {
-                    hoverTimeout = setTimeout(() => {
-                        // When the parent element is no longer hovered
-                        $(this).find('.dropdown-toggle').css({
-                            'opacity': 1,
-                            'pointer-events': 'none'
-                        });
-                        // Close the dropdown
-                        dropdown.hide();
-                    }, 500);
-                }
-            );
-        }
-    });
+                    // Close the dropdown
+                    dropdown.hide();
+                }, 500);
+            }
+        );
+
+        // Open the dropdown on the first click
+        dropdownToggle.click();
+    }
 }
 
 
@@ -1687,7 +1678,6 @@ function displayUserChatHistory(userChat) {
         //widgetChatCard.append(widgetChatListGroup);
         //chatHistoryContainer.append(widgetChatCard);
 
-        enableToggleDropdown()
     }
 }
 
@@ -1696,8 +1686,11 @@ function renderChatDropdown(chat) {
     const dropdownHtml = `
         <div class="d-inline-block align-items-center">
             <!-- Dropdown -->
-            <div class="dropdown pe-2">
-                <button class="btn border-0 shadow-0 dropdown-toggle ms-2" type="button" id="dropdownMenuButton_${chatId}" data-mdb-toggle="dropdown" aria-expanded="false">
+            <div 
+                onclick="enableToggleDropdown(this)"
+                class="dropdown pe-2">
+                <button
+                class="btn border-0 shadow-0 dropdown-toggle ms-2" type="button" id="dropdownMenuButton_${chatId}" data-mdb-toggle="dropdown" aria-expanded="false">
                     <i class="bi bi-three-dots text-secondary"></i>
                 </button>
                 <ul class="chat-option-menu dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton_${chatId}">
@@ -1881,7 +1874,6 @@ function displayChatList(reset, userId) {
       $('#chat-list').append(chatHtml);
     });
     updateCurrentChat(chatId, userId);
-    enableToggleDropdown();
     updateChatCount(pagination.total);
     checkShowMoreButton(pagination);
   }
@@ -1950,7 +1942,6 @@ function updateChatListDisplay(currentChat) {
 
     let chatHtml = constructChatItemHtml(currentChat, true);
     $('#chat-list').prepend(chatHtml);
-    enableToggleDropdown();
 }
 function constructChatItemHtml(chat, isActive) {
     return `
@@ -1974,11 +1965,18 @@ function constructChatItemHtml(chat, isActive) {
                     </div>
                 </div>
                 <div class="d-flex align-items-center">
-                    <div class="dropdown pe-2">
-                        <button class="btn border-0 shadow-0 dropdown-toggle ms-2" type="button" id="dropdownMenuButton_${chat._id}" data-mdb-toggle="dropdown" aria-expanded="false">
+                    <div 
+                        onclick="enableToggleDropdown(this)"
+                        class="dropdown pe-2">
+                        <button 
+                        class="btn border-0 shadow-0 dropdown-toggle ms-2" 
+                        type="button" 
+                        id="dropdownMenuButton_${chat._id}" 
+                        data-mdb-toggle="dropdown" 
+                        aria-expanded="false">
                             <i class="bi bi-three-dots text-secondary"></i>
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end chat-option-menu bg-light shadow rounded mx-3" aria-labelledby="dropdownMenuButton_${chat._id}">
+                        <ul class="dropdown-menu dropdown-menu-start chat-option-menu bg-light shadow rounded mx-3" aria-labelledby="dropdownMenuButton_${chat._id}">
                             <li>
                                 <button class="dropdown-item text-secondary chart-button" data-id="${chat._id}">
                                     <i class="bi bi-info-circle me-2"></i>

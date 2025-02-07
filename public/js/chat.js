@@ -79,9 +79,7 @@ $(document).ready(async function() {
             const imageId = event.data.imageId
             if(!imageId)return
             let message = `[imageFav] ${imageId}`
-            addMessageToChat(chatId, userChatId, {role:'user', message}, function(){
-                generateCompletion()
-            });
+            addMessageToChat(chatId, userChatId, {role:'user', message});
         }
     });
     window.addEventListener('message', function(event) {

@@ -1270,6 +1270,8 @@ $(document).ready(async function() {
                 `).hide();
                 messageContainer.append(messageElement);
                 messageElement.addClass(animationClass).fadeIn();
+
+                $('#chatContainer').animate({ scrollTop: $('#chatContainer')[0].scrollHeight }, 500);
             }
         } 
     

@@ -433,16 +433,16 @@ fastify.get('/character/:chatId', async (request, reply) => {
     console.log(`Visiting Character ${chat.name}, ${image?.title?.en || ''}, /character/${chatId.toString()}${imageId ? `?imageId=${imageId}` : ''}`);
     const template = isModal ? 'character-modal.hbs' : 'character.hbs';
     return reply.renderWithGtm(template, {
-      title: `${chat.name} | ${image?.title?.[request.lang] ?? ''} ${translations.seo.title_character}`,
+      title: `${chat.name} | ${translations.seo.title_character}`,
       chat,
       image,
       chatId,
       isBlur,
       seo: [
-        { name: 'description', content: translations.seo.description_character },
+        { name: 'description', content: ` ${image?.title?.[request.lang] ?? ''} | ${translations.seo.description_character}` },
         { name: 'keywords', content: translations.seo.keywords },
-        { property: 'og:title', content:  `${chat.name} | ${image?.title?.[request.lang]} | ${translations.seo.title_character}` },
-        { property: 'og:description', content: translations.seo.description_character },
+        { property: 'og:title', content: `${chat.name} | ${translations.seo.title_character}` },
+        { property: 'og:description', content: `${image?.title?.[request.lang] ?? ''} | ${translations.seo.description_character}` },
         { property: 'og:image', content: '/img/share.png' },
         { property: 'og:url', content: 'https://chatlamix/' },
       ],

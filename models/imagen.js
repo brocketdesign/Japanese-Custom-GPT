@@ -12,16 +12,16 @@ const default_prompt = {
         sampler_name: "Euler a",
         prompt: `score_9, score_8_up, masterpiece, best quality, (ultra-detailed), (perfect hands:0.1), (sfw), dressed, clothes, `,
         negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, nipple, topless, nsfw, naked, nude, sex, worst quality, low quality,young,child,dick,man`,
-        width: 832,
-        height: 1216,
+        width: 1024,
+        height: 1360,
         loras: []
       },
       nsfw: {
         sampler_name: "Euler a",
         prompt: `score_9, score_8_up, masterpiece, best quality, (ultra-detailed), (nsfw), uncensored, `,
         negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, worst quality, low quality,young,child,dick,man`,
-        width: 832,
-        height: 1216,
+        width: 1024,
+        height: 1360,
         loras: []
       }
     },
@@ -111,7 +111,7 @@ async function generateImg({title, prompt, aspectRatio, userId, chatId, userChat
     if(image_base64){
       requestData.image_base64 = image_base64;
     }
-    console.log({ model_name: requestData.model_name, prompt: requestData.prompt, nsfw: image_request.type, image_base64: !!requestData.image_base64 });
+    console.log({ model_name: requestData.model_name, imageVersion, prompt: requestData.prompt, nsfw: image_request.type, image_base64: !!requestData.image_base64 });
   
     // Send request to Novita and get taskId
     const novitaTaskId = await fetchNovitaMagic(requestData);
@@ -222,12 +222,13 @@ const completedTasks = new Set();
 async function pollTaskStatus(taskId, fastify) {
   const startTime = Date.now();
   const interval = 3000;
-  const timeout = 180000; // 3 minutes
+  const timeout = 120000; // 1 minute
 
   return new Promise((resolve, reject) => {
     const intervalId = setInterval(async () => {
       try {
         const taskStatus = await checkTaskStatus(taskId, fastify);
+        
         if(!taskStatus){
           clearInterval(intervalId);
           reject('Task not found');

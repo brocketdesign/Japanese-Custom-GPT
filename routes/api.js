@@ -1499,7 +1499,7 @@ async function routes(fastify, options) {
             },
             {
                 role: 'user',
-                content: `Your response contains the character's age, skin color, hair color, hair length, eyes color, tone, face expression, body type, body characteristic, breast size, ass size, body curves, gender, facial features, background, accessories.\n`
+                content: `Your response should at least contain the character's age, skin color, hair color, hair length, eyes color, tone, face expression, body type, body characteristic, breast size (small, medium, big, gigantic),nipple characteristics, ass size(small,roubnd,big, gigantic ...), body curves, gender, facial features, background, accessories.\n`
             }
         ]
     };

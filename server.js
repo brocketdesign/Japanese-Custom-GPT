@@ -257,8 +257,6 @@ fastify.get('/chat/edit/:chatId', async (request, reply) => {
     return reply.view('add-chat.hbs', {
       title: 'AIフレンズ',
       tags,
-      
-      
       chatId,
       modelId: request.query.modelId,
       isTemporaryChat,

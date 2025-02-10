@@ -349,26 +349,25 @@ async function routes(fastify, options) {
             You are a Stable Diffusion image prompt generator.
             Your task is to generate a concise image prompt (under 1000 characters) based on the latest character description provided.
             The prompt should be a comma-separated list of descriptive keywords in English that accurately depict the character's appearance, emotions, and style.
-            Your response contains the character's age, skin color, hair color, hair length, eyes color, tone, face expression, body type, body characteristic, breast size, ass size, body curves, gender, facial features, background, accessories.\n
             You must extand the provided prompt, describe the full image. 
             Respond in a single descriptive line of plain text using keywords.
             DO NOT form complete sentences; use only relevant keywords.
-            Ensure the prompt is optimized for generating high-quality upper body portraits.
+            Ensure the prompt is optimized for generating high-detailed image of the provided instructions.
             Respond EXCLUSIVELY IN ENGLISH!
           `.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim(),
         },
         {
           role: 'user',
           content: `
-            The character's gender is: ${gender}.
-            Here is the character description: ${prompt}.
-            ${detailsString.trim() !== '' ? `Additional details: ${detailsString}.` : ''}
-            Answer with the image description only. Do not include any comments. Respond EXCLUSIVELY IN ENGLISH!
+            The character's gender is: ${gender}.\n
+            Here is the image prompt to enhance : ${prompt}.\n
+            ${detailsString.trim() !== '' ? `Additional details: ${detailsString}.` : ''}\n
+            Answer with the image description only. Do not include any comments. Respond EXCLUSIVELY IN ENGLISH!\n
           `.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim(),
         },
         {
             role: 'user',
-            content: `Your response contains the character's age, skin color, hair color, hair length, eyes color, tone, face expression, body type, body characteristic, breast size, ass size, body curves, gender, facial features, background, accessories.\n`
+            content: `Your response should at least contain the character's age, skin color, hair color, hair length, eyes color, tone, face expression, body type, body characteristic, breast size (small, medium, big, gigantic),nipple characteristics, ass size(small,roubnd,big, gigantic ...), body curves, gender, facial features, background, accessories.\n`
         }
       ];
     }

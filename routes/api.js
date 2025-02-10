@@ -2438,14 +2438,45 @@ async function routes(fastify, options) {
                         }
                     }
                 ]).toArray();
-
+                console.log(models)
                 return reply.send({ success: true, models });
             } catch (error) {
                 console.error(error);
                 return reply.code(500).send({ success: false, message: 'Error fetching models', error });
             }
         });
-        
+        fastify.post('/api/models/averageTime', async (req, reply) => {
+            const { id, time } = req.body;
+            if (!id || !time) return reply.code(400).send({ success: false, message: 'Missing parameters' });
+            try {
+              const db = fastify.mongo.db;
+              const models = db.collection('myModels');
+              const result = await models.findOneAndUpdate(
+                { model: id },
+                [{
+                  $set: {
+                    imageGenerationTimeCount: { $add: [{ $ifNull: ['$imageGenerationTimeCount', 0] }, 1] },
+                    imageGenerationTimeAvg: {
+                      $divide: [
+                        {
+                          $add: [
+                            { $multiply: [{ $ifNull: ['$imageGenerationTimeAvg', 0] }, { $ifNull: ['$imageGenerationTimeCount', 0] }] },
+                            time
+                          ]
+                        },
+                        { $add: [{ $ifNull: ['$imageGenerationTimeCount', 0] }, 1] }
+                      ]
+                    }
+                  }
+                }],
+                { returnDocument: 'after' }
+              );
+              return reply.send({ success: true, model: result.value });
+            } catch (error) {
+              return reply.code(500).send({ success: false, message: 'Error updating average time', error });
+            }
+          });
+          
 }
 
 module.exports = routes;

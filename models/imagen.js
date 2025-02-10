@@ -115,6 +115,8 @@ async function generateImg({title, prompt, aspectRatio, userId, chatId, userChat
   
     // Send request to Novita and get taskId
     const novitaTaskId = await fetchNovitaMagic(requestData);
+    // Save start time
+    const startTime = Date.now();
     // Store task details in DB
     const checkTaskValidity = await db.collection('tasks').insertOne({
       taskId: novitaTaskId,
@@ -167,6 +169,8 @@ async function generateImg({title, prompt, aspectRatio, userId, chatId, userChat
     // Poll the task status
     pollTaskStatus(novitaTaskId, fastify)
     .then(taskStatus => {
+      // Save time difference
+      saveAverageTaskTime(db, Date.now() - startTime, requestData.model_name);
       fastify.sendNotificationToUser(userId, 'handleLoader', { imageId:placeholderId, action:'remove' })
       fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId:placeholderId, spin: false })
       if(chatCreation){ 
@@ -264,6 +268,37 @@ async function getTasks(db, status, userId) {
     return reply.status(500).send({ error: 'Internal Server Error' });
   }
 };
+
+// Module to save the average task time
+async function saveAverageTaskTime(db, time, modelName) {
+  try {
+    const models = db.collection('myModels');
+    const result = await models.findOneAndUpdate(
+      { model: modelName },
+      [{
+        $set: {
+          taskTimeCount: { $add: [{ $ifNull: ['$taskTimeCount', 0] }, 1] },
+          taskTimeAvg: {
+            $divide: [
+              {
+                $add: [
+                  { $multiply: [{ $ifNull: ['$taskTimeAvg', 0] }, { $ifNull: ['$taskTimeCount', 0] }] },
+                  time
+                ]
+              },
+              { $add: [{ $ifNull: ['$taskTimeCount', 0] }, 1] }
+            ]
+          }
+        }
+      }],
+      { returnDocument: 'after' }
+    );
+    console.log('Average task time:', result);
+    return result.value;
+  } catch (error) {
+    console.error('Error saving average task time:', error);
+  }
+}
 
 // Module to delete tasks older than 5 minutes
 async function deleteOldPendingAndFailedTasks(db) {

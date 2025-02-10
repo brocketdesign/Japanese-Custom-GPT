@@ -111,8 +111,8 @@ async function generateImg({title, prompt, aspectRatio, userId, chatId, userChat
     if(image_base64){
       requestData.image_base64 = image_base64;
     }
-    console.log({ model_name: requestData.model_name, imageVersion, prompt: requestData.prompt, nsfw: image_request.type, image_base64: !!requestData.image_base64 });
-  
+    console.log('Starting image generation...'+requestData.model_name);
+
     // Send request to Novita and get taskId
     const novitaTaskId = await fetchNovitaMagic(requestData);
     // Save start time
@@ -293,7 +293,6 @@ async function saveAverageTaskTime(db, time, modelName) {
       }],
       { returnDocument: 'after' }
     );
-    console.log('Average task time:', result);
     return result.value;
   } catch (error) {
     console.error('Error saving average task time:', error);
@@ -328,7 +327,6 @@ async function deleteAllTasks(db) {
   try {
     const tasksCollection = db.collection('tasks');
     const result = await tasksCollection.deleteMany({});
-    console.log(`Deleted ${result.deletedCount} tasks.`);
   } catch (error) {
     console.error('Error deleting tasks:', error);
   }

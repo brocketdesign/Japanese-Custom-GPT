@@ -180,8 +180,8 @@ async function generatePromptSuggestions(messages,chatDescription,language) {
       You are a creative assistant.
       Return exactly 3 unique suggestions in ${language} as a JSON object with a "suggestions" key.
       Your suggestions must include:
-      1. An image suggestion relevant to the user's chat and the character description.
-      2. A chat suggestion to make the conversation more engaging.
+      1. An erotic image suggestion relevant to the user's chat and the character description.
+      2. An erotic chat suggestion to make the conversation more engaging.
       3. An interaction improvement suggestion to enhance the user's experience.
       Make them short and relevant to the user's chat.
       You must provide suggestions from the user's perspective and suitable for a chat.

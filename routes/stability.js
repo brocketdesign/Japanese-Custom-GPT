@@ -14,14 +14,12 @@ fastify.post('/novita/generate-img', async (request, reply) => {
   const translations = request.translations
   try {
     const all_tasks =  await getTasks(db,null, userId)
-    console.log('All tasks: ',all_tasks.length)
     if(request.user.subscriptionStatus !== 'active' && all_tasks.length >= 5){
       fastify.sendNotificationToUser(userId, 'showNotification', { message:request.translations.free_usage_image_limit , icon:'warning' })
       return reply.status(500).send({ error: 'You reached the limit of the free usage' });
     }
     const pending_taks =  await getTasks(db, 'pending', userId)
-    console.log('Pending tasks: ',pending_taks.length)
-    if(pending_taks.length > 3){
+    if(pending_taks.length > 10){
       fastify.sendNotificationToUser(userId, 'showNotification', { message:request.translations.too_many_pending_images , icon:'warning' })
       return reply.status(500).send({ error: 'You have too many pending images, please wait for them to finish' });
     }

@@ -2401,7 +2401,7 @@ async function routes(fastify, options) {
             try {
                 const db = fastify.mongo.db;
                 const modelsCollection = db.collection('myModels');
-                const free_models = ['544806', '64558'];
+                const free_models = ['293564'];
         
                 // Build query for models
                 let query = id ? { model: id } : {};

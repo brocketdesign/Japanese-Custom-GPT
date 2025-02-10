@@ -315,6 +315,7 @@ $(document).ready(function() {
                 callFetchChatData(newchatId,userId);
             });
         }
+
         const prompt = characterPrompt = $('#characterPrompt').val().trim();
         const gender = $('#gender').val();
         let modelId = $('#modelId').val();
@@ -430,6 +431,9 @@ $(document).ready(function() {
             const file = $('#imageUpload')[0].files[0];
                 
             novitaImageGeneration(userId, chatCreationId, null, { prompt:enhanceResponse.enhancedPrompt, imageType, file, chatCreation: true})
+            .then((response) => {
+                startTimer(chatCreationId);
+            })
             .catch((error) => {
                 console.error('Error generating image:', error);
             })
@@ -578,7 +582,7 @@ window.saveSelectedImage = function(imageUrl, callback) {
     }
     });
 }
-window.generateCharacterImage = function(url, nsfw) {
+window.generateCharacterImage = function( url, nsfw) {
     // Clear the container
     $('#generatedImage').remove();
 
@@ -609,6 +613,8 @@ window.generateCharacterImage = function(url, nsfw) {
 
     colDiv.append(imgElement);
     $('#imageContainer').append(colDiv);
+
+    getTimer(chatCreationId)
 }
 
 // After the image is generated, save the image and redirect to the chat
@@ -624,4 +630,23 @@ window.resetCharacterForm = function(){
 
 window.updateCharacterGenerationMessage = function(message){
     $('.genexp').text(message)
+}
+
+// Set a start time in the session storage
+window.startTimer = function(id){
+    console.log('Starting timer for:',id)
+    sessionStorage.setItem('startTime_'+id, new Date().getTime());
+}
+// Get the start time from the session storage & return the time difference
+window.getTimer = function(id){
+    const startTime = sessionStorage.getItem('startTime_'+id);
+    if(startTime){
+        const diff = new Date().getTime() - parseInt(startTime);
+        const minutes = Math.floor(diff / 60000);
+        const seconds = ((diff % 60000) / 1000).toFixed(0);
+        console.log(`Time taken: ${minutes} minutes and ${seconds} seconds`);
+        return diff;
+    }
+    console.log('No start time found for:',id)
+    return 0;
 }

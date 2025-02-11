@@ -272,6 +272,14 @@
   outline:none;
   box-shadow:none
   }
+
+  #userMessage.prompt-image {
+    background-size: 45px;
+    background-position: left;
+    background-repeat: no-repeat;
+    border-radius: 15px;
+    padding-left: 50px;
+  }
   
   .button-group {
   top:0;

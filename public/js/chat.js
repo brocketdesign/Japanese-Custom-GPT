@@ -179,6 +179,7 @@ $(document).ready(async function() {
     $('#sendMessage').on('click', function() {
         sendMessage();
         $('#userMessage').val('');  
+        removePromptFromMessage();
         setTimeout(() => {
             resizeTextarea($('#userMessage')[0]);
         }, 500);
@@ -285,7 +286,12 @@ $(document).ready(async function() {
             showDiscovery();
             return;
         }
-    
+        if(data.premium && !subscriptionStatus && !isTemporary){
+            console.log('premium')
+            loadPlanPage()
+            return
+        }
+
         setupChatData(data.chat);
         setupChatInterface(data.chat, data.character);
         updateCurrentChat(chatId);
@@ -332,7 +338,7 @@ $(document).ready(async function() {
         }else{
             $('#userMessage').attr('placeholder', `${window.translations.sendMessageTo}${chatName}`);
         }
-        const albumLink = $(`<a href="#" onclick="openCharacterModal('${chat._id}')"></a>`)
+        const albumLink = $(`<a href="#" onclick="openCharacterModal('${chat._id}',event)"></a>`)
         albumLink.attr('data-bs-toggle', 'tooltip');
         albumLink.attr('title', `${window.translations.album || 'アルバム'}`);
         albumLink.addClass('btn btn-light shadow-0 border')
@@ -1394,6 +1400,7 @@ $(document).ready(async function() {
     $('#close-promptContainer').on('click', function() {
         $('#promptContainer').slideUp('fast');
         $('#suggestions').addClass('d-flex').show();
+        removePromptFromMessage();
     });
     
     $('.prompt-card').off('click').on('click', function() {
@@ -1402,12 +1409,15 @@ $(document).ready(async function() {
 
         var id = $(this).data('id');
         var imageNsfw = $(this).data('nsfw') ? 'nsfw' : 'sfw';
+        const imagePreview = $(this).find('img').attr('data-src') || $(this).find('img').attr('src');
         const subscriptionStatus = user.subscriptionStatus == 'active'
 
         if(!subscriptionStatus){
             loadPlanPage();
             return
         }
+        // Add the prompt to the user's message to allow for image generation
+        //addPromptToMessage(id,imageNsfw,imagePreview);
 
         displayOrRemoveImageLoader(id, 'show');
         novitaImageGeneration(userId, chatId, userChatId, {placeholderId:id, imageNsfw, customPrompt:true})
@@ -1422,10 +1432,26 @@ $(document).ready(async function() {
         });
     });
     
+    // Add the prompt image to the #userMessage textarea and update the value
+    function addPromptToMessage(id,imageNsfw,imagePreview){
+        const userMessage = $('#userMessage');
+        // Set imagePreview as the background image of the textarea
+        userMessage.css('background-image', `url(${imagePreview})`);
+        userMessage.addClass('prompt-image');
+        // Add prompt id to the #sendMessage submit button
+        $('#sendMessage').data('prompt', id);
+        $('#sendMessage').data('nsfw', imageNsfw);
+    }
+
+    function removePromptFromMessage(){
+        const userMessage = $('#userMessage');
+        userMessage.css('background-image', 'none');
+        userMessage.removeClass('prompt-image');
+        $('#sendMessage').removeData('prompt');
+        $('#sendMessage').removeData('nsfw');
+    }
     
   // Fetch the user's IP address and generate a unique ID
-   
-
     function appendHeadlineCharacterByCharacter($element, headline, callback) {
         let index = 0;
 

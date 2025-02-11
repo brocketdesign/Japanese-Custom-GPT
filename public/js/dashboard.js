@@ -781,8 +781,8 @@ function generateUserPagination(currentPage, totalPages) {
     });
 
     if (currentPage >= totalPages) {
-        $('#users-pagination-controls').html('<button class="btn btn-outline-secondary" onclick="scrollToTop()"><i class="bi bi-arrow-up-circle-fill me-2"></i>'+window.translations.backToTop+'</button>');
-        return;
+      console.log('All Chats: No more pages to load.')
+      return;
     }
 
     if (totalPages > 1) {
@@ -852,8 +852,8 @@ function generateChatUserPagination(currentPage, totalPages, chatId) {
     });
 
     if (currentPage >= totalPages) {
-        $('#chat-users-pagination-controls').html('<button class="btn btn-outline-secondary" onclick="scrollToTop()"><i class="bi bi-arrow-up-circle-fill me-2"></i>'+window.translations.backToTop+'</button>');
-        return;
+      console.log('All Chats: No more pages to load.')
+      return;
     }
 
     if (totalPages > 1) {
@@ -1065,8 +1065,8 @@ function generateUserChatsPagination(userId, currentPage, totalPages) {
     });
 
     if (currentPage >= totalPages) {
-        $('#user-chat-pagination-controls').html('<button class="btn btn-outline-secondary" onclick="scrollToTop()"><i class="bi bi-arrow-up-circle-fill me-2"></i>'+window.translations.backToTop+'</button>');
-        return;
+      console.log('All Chats: No more pages to load.')
+      return;
     }
 
     if (totalPages > 1) {
@@ -1097,7 +1097,7 @@ function generateUserChatsPagination(userId, currentPage, totalPages) {
 
 // Enhanced displayPeopleChat with caching + infinite scroll
 window.displayPeopleChat = async function (page = 1, option = {}, callback, reload = false) {
-  const { imageStyle, imageModel, query = '', userId = false, modal = false } = option
+  const { imageStyle, imageModel, modelId = false, premium = false, query = '', userId = false, modal = false } = option
 
   const searchId = `${imageStyle}-${imageModel}-${query}-${userId}`
 
@@ -1144,10 +1144,12 @@ window.displayPeopleChat = async function (page = 1, option = {}, callback, relo
   console.log(`Fetching page ${page} from server...`)
   try {
     const response = await fetch(
-      `/api/chats?page=${page}&style=${imageStyle}&model=${imageModel}&q=${query}&userId=${userId}`
+      `/api/chats?page=${page}&style=${imageStyle}&model=${imageModel}&modelId=${modelId}&q=${query}&userId=${userId}`
     )
     const data = await response.json()
-
+    data.premium = premium
+    //Set premium status to all recent chats
+    data.recent.forEach(chat => chat.premium = premium)
     // Display and callback
     if (data.recent) {
       window.displayChats(data.recent, searchId, modal)
@@ -1217,11 +1219,7 @@ function generateChatsPaginationFromCache(option = {}) {
 // Spinner or back-to-top
 function updateChatPaginationControls(totalPages, searchId) {
   if (peopleChatCurrentPage[searchId] >= totalPages) {
-    $('#chat-pagination-controls').html(`
-      <button class="btn btn-outline-secondary" onclick="scrollToTop()">
-        <i class="bi bi-arrow-up-circle-fill me-2"></i>${window.translations?.backToTop || 'Back to Top'}
-      </button>
-    `)
+    console.log('All Chats: No more pages to load.')
   } else {
     $('#chat-pagination-controls').html(
       '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
@@ -1259,15 +1257,24 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
           <div class="chat-card-container col-6 col-sm-3 col-lg-3 mb-2" ${searchId?`data-id="${searchId}"`:''}>
               <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 redirectToChat" style="cursor:pointer;"  onclick="redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')" data-id="${chat.chatId || chat._id}" data-image="${chat.chatImageUrl}">
                   <div data-bg="${chat.chatImageUrl || '/img/logo.webp'}" class="card-img-top girls_avatar position-relative lazy-bg" alt="${chat.name || chat.chatName}">
-                      <div id="spinner-${chat.chatId || chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
+                      <div id="spinner-${chat.chatId || chat._id}" 
+                      class="position-absolute spinner-grow spinner-grow-sm text-light" 
+                      role="status" 
+                      style="inset:0;margin: auto;display:none;"></div>
                       <div class="position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px;right:10px;">
                           ${(chat.tags || chat.chatTags || []).length ? `<div class="tags d-flex justify-content-between align-items-center flex-wrap">${ (chat.tags ? chat.tags : chat.chatTags ).map(tag => `<span class="badge bg-dark mt-1">${tag}</span>`).join('')}</div>` : ''}
+                      </div>
+                      <div class="position-absolute text-start" style="top:10px;left:10px">
+                        ${chat.premium ? `<div style="opacity:0.8;">
+                          <span class="badge custom-gradient-bg mt-1">
+                          <i class="bi bi-gem"></i></span>
+                          </div>` : ''}
                       </div>
                       <div class="position-absolute text-end" style="top:10px;right:10px">
                           <div class="persona" style="color:rgb(165 164 164);opacity:0.8;" data-id="${chat.chatId || chat._id}">
                               <span class="badge bg-dark" style="width: 30px;"><i class="far fa-user-circle"></i></span>
                           </div>
-                          <a ${modal ? `onclick="openCharacterModal('${chat.chatId || chat._id}')"` : `href="/character/${chat.chatId || chat._id}"`}>
+                          <a ${modal ? `onclick="openCharacterModal('${chat.chatId || chat._id}',event)"` : `href="/character/${chat.chatId || chat._id}"`}>
                               <div class="gallery" style="opacity:0.8;" data-id="${chat.chatId || chat._id}">
                                   <span 
                                   class="btn btn-light text-dark shadow-0 border-0 position-relative"
@@ -1552,11 +1559,7 @@ window.loadAllChatImages = function (page = 1, reload = false) {
   // Spinner vs. Back-to-Top
   function updateAllChatsPaginationControls(totalPages) {
     if (allChatsCurrentPage >= totalPages) {
-      $('#all-chats-images-pagination-controls').html(
-        `<button class="btn btn-outline-secondary" onclick="scrollToTop()">
-           <i class="bi bi-arrow-up-circle-fill me-2"></i>${window.translations.backToTop}
-         </button>`
-      )
+      console.log('All Chats: No more pages to load.')
     } else {
       $('#all-chats-images-pagination-controls').html(
         '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
@@ -1697,11 +1700,7 @@ window.loadUserImages = function (userId, page = 1, reload = false) {
   // Common function to update spinner/back-to-top
   function updatePaginationControls(totalPages, userId) {
     if (currentPageMap[userId] >= totalPages) {
-      $('#images-pagination-controls').html(
-        `<button class="btn btn-outline-secondary" onclick="scrollToTop()">
-           <i class="bi bi-arrow-up-circle-fill me-2"></i>${window.translations.backToTop}
-         </button>`
-      )
+      console.log('All Chats: No more pages to load.')
     } else {
       $('#images-pagination-controls').html(
         '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
@@ -2234,11 +2233,7 @@ window.generateChatImagePagination = function (totalPages, chatId, isModal = fal
   // Spinner or back-to-top
   function updateChatPaginationControls(totalPages, chatId) {
     if (chatCurrentPageMap[chatId] >= totalPages) {
-      $('#chat-images-pagination-controls').html(
-        `<button class="btn btn-outline-secondary" onclick="scrollToTop()">
-           <i class="bi bi-arrow-up-circle-fill me-2"></i>${window.translations.backToTop}
-         </button>`
-      )
+      console.log('All Chats: No more pages to load.')
     } else {
       $('#chat-images-pagination-controls').html(
         '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
@@ -2548,11 +2543,7 @@ function generateUserPostsPagination(totalPages) {
     });
 
     if (currentPageMap['userPosts'] >= totalPages) {
-        $('#user-posts-pagination-controls').html(
-            '<button class="btn btn-outline-secondary" onclick="scrollToTop()">' +
-            '<i class="bi bi-arrow-up-circle-fill me-2"></i>' + window.translations.backToTop +
-            '</button>'
-        );
+      console.log('All Chats: No more pages to load.')
     } else {
         $('#user-posts-pagination-controls').html(
             '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
@@ -2583,11 +2574,7 @@ function generateUserPostsPagination(userId, totalPages) {
 
     // Display spinner if more pages are available, otherwise show a back-to-top button
     if (currentPageMap[userId] >= totalPages) {
-        $('#user-posts-pagination-controls').html(
-            '<button class="btn btn-outline-secondary" onclick="scrollToTop()">' +
-            '<i class="bi bi-arrow-up-circle-fill me-2"></i>' + window.translations.backToTop +
-            '</button>'
-        );
+      console.log('All Chats: No more pages to load.')
     } else {
         $('#user-posts-pagination-controls').html(
             '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
@@ -2776,7 +2763,9 @@ function loadPlanPage() {
 
 
 // Open /character/:id?modal=true to show the character modal
-function openCharacterModal(modalChatId) {
+function openCharacterModal(modalChatId, event) {
+    event.stopPropagation();
+    event.preventDefault(); 
     if (modalStatus.isCharacterModalLoading) return;
     modalStatus.isCharacterModalLoading = true;
 

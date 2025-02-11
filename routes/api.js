@@ -32,6 +32,7 @@ const { chat } = require('googleapis/build/src/apis/chat');
 const sessions = new Map();
 
 const aiModel = `meta-llama/llama-3.1-8b-instruct`
+const free_models = ['293564'];
 
 async function routes(fastify, options) {
 
@@ -448,6 +449,11 @@ async function routes(fastify, options) {
                     response.character = null;
                 }
             }
+            // Check if imageModel is free. Retrieve the modelId from myModels
+            const model = await fastify.mongo.db.collection('myModels').findOne({ model: chat.imageModel });
+            const premiumModel = model ? !free_models.includes(model.modelId) : false;
+
+            response.premium = premiumModel;
             return reply.send(response);
         } catch (error) {
             console.error('Failed to retrieve chat or character:', error);
@@ -1829,6 +1835,7 @@ async function routes(fastify, options) {
           const page = parseInt(request.query.page) || 1;
           const style = request.query.style || null;
           const model = request.query.model || null;
+          const modelId = request.query.modelId || null;
           const searchQuery = request.query.q !== 'false' ? request.query.q : null;
 
           const limit = 12;
@@ -2401,7 +2408,6 @@ async function routes(fastify, options) {
             try {
                 const db = fastify.mongo.db;
                 const modelsCollection = db.collection('myModels');
-                const free_models = ['293564'];
         
                 // Build query for models
                 let query = id ? { model: id } : {};
@@ -2438,7 +2444,7 @@ async function routes(fastify, options) {
                         }
                     }
                 ]).toArray();
-                console.log(models)
+
                 return reply.send({ success: true, models });
             } catch (error) {
                 console.error(error);

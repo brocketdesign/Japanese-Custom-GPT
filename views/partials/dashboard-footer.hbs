@@ -263,6 +263,7 @@ window.fetchAndAppendModels = function() {
                 data-model="${model.model}" 
                 data-version="${model.version}"
                 data-count="${model.chatCount}"
+                data-premium="${model.premium}"
                 >
             `;
 
@@ -304,6 +305,7 @@ function showNavTabs(){
             const modelId = option.getAttribute('data-id');
             const model = option.getAttribute('data-model');
             const version = option.getAttribute('data-version');
+            const premium = option.getAttribute('data-premium');
             const imgSrc = option.getAttribute('src');
             const altText = option.getAttribute('alt');
             const chatCount = parseInt(option.getAttribute('data-count'), 10) || 0;
@@ -321,7 +323,14 @@ function showNavTabs(){
             const tabItem = `
                 <li class="nav-item position-relative" role="presentation" 
                     ${chatCount == 0 ? `onclick="window.location='/chat/edit/?modelId=${modelId}'"` : ''}>
-                    <button class="nav-link ${isActive}" id="${modelId}-tab" data-style="${style}" data-id="${modelId}" data-model="${model}" data-version="${version}" type="button" role="tab">
+                    <button class="nav-link ${isActive}" 
+                    id="${modelId}-tab" 
+                    data-style="${style}" 
+                    data-id="${modelId}" 
+                    data-model="${model}" 
+                    data-version="${version}" 
+                    data-premium="${premium}"
+                    type="button" role="tab">
                         <img src="${imgSrc}" alt="${altText}" class="tab-thumb thumb-option rounded me-2">
                         <span class="d-none">${altText}</span>
                     </button>
@@ -353,13 +362,14 @@ function showNavTabs(){
         $('#imageStyleTabs button').removeClass('active');
         $(this).addClass('active');
 
-        var modelId = $(this).data('id');
+        const modelId = $(this).data('id');
+        const premium = $(this).data('premium');
         const model =  $(this).data('model');
         const style =  $(this).data('style');
 
         if(modelId){
             localStorage.setItem('chat-nav',`${modelId}`)
-            let option = {imageStyle:style, imageModel:model, userId: user._id, modal: true}
+            let option = {imageStyle:style, imageModel:model, modelId, premium, userId: user._id, modal: true}
             if(chatDiscovery ){ option.userId = false }
             displayPeopleChat(1, option, 
             (ids) => {

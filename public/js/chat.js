@@ -240,67 +240,66 @@ $(document).ready(async function() {
             $(this).attr('href','/chat/edit/'+newchatId)
         })
     }
+
     window.sendMessage = function(customMessage, displayStatus = true) {
-        if($('#chat-widget-container').length == 0 && isTemporary){
-            showRegistrationForm()
-            return
+        if ($('#chat-widget-container').length === 0 && isTemporary) {
+            showRegistrationForm();
+            return;
         }
 
         $('#promptContainer').slideUp('fast');
         $('#suggestions').addClass('d-flex').show();
-        $('#startButtonContained').hide();
-        $('#introChat').hide();
-        $('#gen-ideas').removeClass('done')
+        $('#startButtonContained, #introChat').hide();
+        $('#gen-ideas').removeClass('done');
         Swal.close();
-
+    
+        const cleanup = () => {
+            removePromptFromMessage();
+            setTimeout(() => {
+                $('#userMessage').val('')
+                    .attr('placeholder', window.translations.sendMessage);
+                resizeTextarea($('#userMessage')[0]);
+            }, 500);
+        };
+    
         const isPromptImage = $('#userMessage').hasClass('prompt-image');
         const message = customMessage || $('#userMessage').val();
         let finalMessage = message;
+    
         if (isPromptImage) {
             const promptId = $('#userMessage').attr('data-prompt-id');
             const imageNsfw = $('#userMessage').attr('data-nsfw');
             if (!promptId) {
                 console.error('Prompt ID not found.');
+                cleanup();
                 return;
             }
-            if(finalMessage.trim() === ''){
-                const placeholderId = new Date().getTime() +"_"+ promptId;
+            if (finalMessage.trim() === '') {
+                const placeholderId = new Date().getTime() + "_" + promptId;
                 displayOrRemoveImageLoader(placeholderId, 'show');
-                novitaImageGeneration(userId, chatId, userChatId, {placeholderId, imageNsfw, promptId, customPrompt:true})
-                .then(data => {
-                    if(data.error){
+                novitaImageGeneration(userId, chatId, userChatId, { placeholderId, imageNsfw, promptId, customPrompt: true })
+                    .then(data => {
+                        if (data.error) displayOrRemoveImageLoader(placeholderId, 'remove');
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
                         displayOrRemoveImageLoader(placeholderId, 'remove');
-                    }
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                    displayOrRemoveImageLoader(placeholderId, 'remove');
-                });
-                return
+                    });
+                cleanup();
+                return;
             }
-
             finalMessage = `[promptImage]${promptId};;;${message};;;${imageNsfw}`;
         }
-        
+    
         if (finalMessage.trim() !== '') {
-            if(displayStatus){
-                displayMessage('user', message, userChatId);
-            }
-            $('#userMessage').val(''); // Clear the input field
-            // Send the message to the backend
-            addMessageToChat(chatId, userChatId, {role: 'user', message:finalMessage}, function(){
-                generateCompletion(null,true)
+            if (displayStatus) displayMessage('user', message, userChatId);
+            $('#userMessage').val('');
+            addMessageToChat(chatId, userChatId, { role: 'user', message: finalMessage }, () => {
+                generateCompletion(null, true);
             });
         }
-
-
-        removePromptFromMessage();
-        setTimeout(() => {
-            $('#userMessage').val('');  
-            $('#userMessage').attr('placeholder', window.translations.sendMessage); 
-            resizeTextarea($('#userMessage')[0]);
-        }, 500);
-    }
+        cleanup();
+    };    
 
     $(document).on('click','#unlock-result',function(){
         promptForEmail()
@@ -1460,12 +1459,13 @@ $(document).ready(async function() {
     }
 
     function removePromptFromMessage() {
+        console.log('removePromptFromMessage');
         const userMessage = $('#userMessage');
         userMessage.css('background-image', 'none');
         userMessage.removeClass('prompt-image');
         userMessage.removeAttr('data-prompt-id');
         userMessage.removeAttr('data-nsfw');
-        $('#userMessage').attr('placeholder', translations.sendMessage); 
+        userMessage.attr('placeholder', translations.sendMessage); 
     }
     
   // Fetch the user's IP address and generate a unique ID

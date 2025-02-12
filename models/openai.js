@@ -43,6 +43,28 @@ const moderateText = async (text) => {
     throw error;
   }
 };
+
+const moderateImage = async (imageUrl) => {
+  try {
+    const openai = new OpenAI();
+    const moderation = await openai.moderations.create({
+      model: "omni-moderation-latest",
+      input: [
+        {
+          type: "image_url",
+          image_url: {
+            url: imageUrl
+          }
+        }
+      ],
+    });
+    return moderation;
+  } catch (error) {
+    console.error("Error moderating image:", error);
+    throw error;
+  }
+};
+
 async function generateCompletion(messages, maxToken = 1000, model = null, lang = 'en') {
   const selectedModel = model ? apiDetails[model] : currentModel;
   const finalModel = lang === 'ja' ? apiDetails.novita : selectedModel;
@@ -278,6 +300,7 @@ module.exports = {
     checkImageRequest,
     generatePromptTitle,
     moderateText,
+    moderateImage,
     createPrompt,
     generatePromptSuggestions
 }

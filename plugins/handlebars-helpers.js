@@ -14,6 +14,7 @@ module.exports = function registerHelpers() {
       ? JSON.stringify(context)
       : 'null';
   });
+  handlebars.registerHelper('or', (a, b) => a || b);
   handlebars.registerHelper('includesObjectId', (array, userId) =>
     array?.some((id) => id?.toString() === userId?.toString())
   );

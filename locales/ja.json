@@ -409,6 +409,7 @@
     "ageVerification": "私は18歳以上です"
   },
   "setting": {
+    "imageModerationFlagged": "画像がモデレーションによってフラグ付けされました",
     "pageTitle": "設定",
     "profile": "プロフィール",
     "password": "パスワード",

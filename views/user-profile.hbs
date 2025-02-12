@@ -126,11 +126,16 @@
           <div class="user-profile mt-4"></div>
             <form id="user-info-form">
               <div class="row mb-3">
-                <div id="profileSection" class="text-center">
+                <div id="profileSection" data-user-id="{{userData._id}}" class="text-center">
                   <div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative mb-2">
                     <img id="profileImage" src="{{default userData.profileUrl '/img/avatar.png'}}" alt="{{translations.profile.thumbnailAlt}}" class="rounded-circle" 
-                    style="width: 100px; height: 100px; object-fit: cover; object-position: top;cursor:pointer;">
-                    <i type="button" class="fas fa-edit position-absolute {{#if isMyProfile}}{{else}}d-none{{/if}}" style="bottom: 5px; font-size: 1em; color: white; background-color: rgba(0, 0, 0, 0.5); border-radius: 50%; padding: 5px;cursor:pointer;"></i>
+                    style="width: 100px; height: 100px; object-fit: cover; object-position: top;{{#if (or isMyProfile isAdmin) }}cursor:pointer;{{/if}}">
+                    <i class="{{#if (or isMyProfile isAdmin)}}{{else}}d-none{{/if}} bi bi-pencil position-absolute" 
+                    style="bottom: 5px; font-size: 10px; color: white; background-color: rgba(0, 0, 0, 0.5); border-radius: 50%; padding: 5px 8px;cursor:pointer;"></i>
+                  </div>
+                  <!-- imageModerationFlagged -->
+                  <div class="alert alert-warning mt-2" role="alert" id="imageModerationFlagged" style="display: none;">
+                    {{translations.setting.imageModerationFlagged}}
                   </div>
                   <h2>{{userData.nickname}}</h2>
                   </a>
@@ -251,7 +256,8 @@
 <script>
   $(document).ready(function(){
     const isMyProfile = `{{isMyProfile}}` == 'true'
-    if(!isMyProfile){return}
+    const isAdmin = `{{isAdmin}}` == 'true'
+    if(!isMyProfile && !isAdmin){return}
     $('#profileImage').parent().click(function() {
         $('#profileImageInput').click();
     });
@@ -265,10 +271,11 @@
 
         const formData = new FormData();
         const profileImage = $('#profileImageInput')[0].files[0];
+        const currentUserId = $('#profileSection').data('user-id');
         if (profileImage) {
           formData.append('profile', profileImage);
           $.ajax({
-            url: '/user/update-info',
+            url: '/user/update-info/' + currentUserId,
             method: 'POST',
             data: formData,
             processData: false,

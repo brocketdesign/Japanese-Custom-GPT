@@ -408,6 +408,7 @@
     "ageVerification": "J'ai plus de 18 ans"
   },
     "setting": {
+      "imageModerationFlagged": "L'image a été signalée pour examen.",
       "pageTitle": "Paramètres",
       "profile": "Profil",
       "password": "Mot de passe",

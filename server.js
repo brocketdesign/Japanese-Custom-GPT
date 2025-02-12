@@ -101,7 +101,6 @@ fastify.register(fastifyMultipart, {
   },
 });
 
-
 const websocketPlugin = require('@fastify/websocket');
 fastify.register(websocketPlugin);
 fastify.register(require('./plugins/websocket'));

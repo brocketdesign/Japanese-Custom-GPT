@@ -17,6 +17,9 @@ $(document).ready(function() {
     }
   });
 
+  // Set user info
+  $('#profile #profileSection').attr('data-user-id', user._id);
+
   // Set user email
   $('#inputEmail4').val(user.email);
 
@@ -24,7 +27,9 @@ $(document).ready(function() {
   $('#nickname').val(user.nickname);
 
   // Set user birthdate field
-  $('#birthdate').val(`${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日`);
+  if(user.birthDate){
+    $('#birthdate').val(`${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日`);
+  }
 
   // Set user gender
   if (user.gender) {
@@ -39,24 +44,25 @@ $(document).ready(function() {
   }
   resizeTextarea($('#bio')[0])
   if(user.profileUrl){
-    $('#profileImage').attr('src', user.profileUrl).show();
+    $('#profile #profileImage').attr('src', user.profileUrl).show();
   }
 
-  $('#profileImage').parent().click(function() {
-    $('#profileImageInput').click();
+  $('#profile #profileImage').parent().click(function() {
+    $('#profile #profileImageInput').click();
   });
 
-  $('#profileImageInput').change(function(event) {
+  $('#profile #profileImageInput').change(function(event) {
     const reader = new FileReader();
     reader.onload = function(e) {
-      $('#profileImage').attr('src', e.target.result).show();
+      $('#profile #profileImage').attr('src', e.target.result).show();
     }
     reader.readAsDataURL(event.target.files[0]);
   });
 
   // User Info Form Submission
-  $('#user-info-form').submit(function(event) {
+  $('#profile #user-info-form').submit(function(event) {
     event.preventDefault();
+    const currentUserId = $('#profile #profileSection').data('user-id');
 
     const formData = new FormData();
     formData.append('email', $('#inputEmail4').val());
@@ -67,13 +73,13 @@ $(document).ready(function() {
     formData.append('gender', $('#gender').val());
     formData.append('bio', $('#bio').val());
 
-    const profileImage = $('#profileImageInput')[0].files[0];
+    const profileImage = $('#profile #profileImageInput')[0].files[0];
     if (profileImage) {
       formData.append('profile', profileImage);
     }
 
     $.ajax({
-      url: '/user/update-info',
+      url: '/user/update-info/' + currentUserId,
       method: 'POST',
       data: formData,
       processData: false,

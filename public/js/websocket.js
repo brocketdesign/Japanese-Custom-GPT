@@ -32,6 +32,17 @@ function initializeWebSocket() {
         const { message, icon } = data.notification;
         showNotification( message, icon );
       }
+      // handle imageModerationFlagged
+      if (data.notification.type == 'imageModerationFlagged') {
+        const { flagged, currentUserId } = data.notification;
+        if(flagged){
+          $(`[data-user-id="${currentUserId}"] #imageModerationFlagged`).show();
+          $(`[data-user-id="${currentUserId}"] #profileImage`).addClass('flagged');
+          $(`[data-user-id="${currentUserId}"] #profileImage`).attr('src', '/img/avatar.png');
+        }else{
+          $(`[data-user-id="${currentUserId}"] #imageModerationFlagged`).hide();
+        }
+      }
       // Add a new notification
       if(data.notification.type == 'updateNotificationCountOnLoad') {
         const { userId } = data.notification;

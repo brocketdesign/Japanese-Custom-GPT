@@ -422,6 +422,7 @@
     "ageVerification": "I am over 18 years old"
   },
   "setting": {
+    "imageModerationFlagged": "This image has been flagged for moderation.",
     "pageTitle": "Settings",
     "profile": "Profile",
     "password": "Password",

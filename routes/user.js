@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const axios = require('axios');
 const { checkLimits, checkUserAdmin, getUserData, updateUserLang, listFiles, uploadToS3 } = require('../models/tool');
+const { moderateImage } = require('../models/openai');
 
 async function routes(fastify, options) {
   
@@ -398,134 +399,144 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
             clearLocalStorage: true 
         });
   });
-// Refactored route to update user information
-fastify.post('/user/update-info', async (request, reply) => {
-  try {
-      const parts = request.parts();
+
+  fastify.post('/user/update-info/:currentUserId', async (request, reply) => {
+    try {
       
-      // Initialize variables for the form data
-      const formData = {
-          email: null,
-          nickname: null,
-          bio: null,
-          birthYear: null,
-          birthMonth: null,
-          birthDay: null,
-          gender: null,
-          profileUrl: null
-      };
-
-      // Process multipart form data
-      for await (const part of parts) {
-          if (part.fieldname && part.value) {
-              formData[part.fieldname] = part.value;
-          } else if (part.fieldname === 'profile' && part.file) {
-              // Handle profile image upload
-              const chunks = [];
-              for await (const chunk of part.file) {
-                  chunks.push(chunk);
-              }
-              const buffer = Buffer.concat(chunks);
-
-              // Generate hash for the profile image
-              const hash = createHash('sha256').update(buffer).digest('hex');
-              const awsimages = fastify.mongo.db.collection('awsimages');
-
-              // Check MongoDB for existing image
-              const existingFile = await awsimages.findOne({ hash });
-              if (existingFile) {
-                  console.log('Profile image already exists in DB');
-                  formData.profileUrl = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFile.key}`;
-                  continue;
-              }
-
-              // Check S3 for existing image
-              let existingFiles;
-              try {
-                  existingFiles = await listFiles(hash);
-              } catch (error) {
-                  console.error('Failed to list objects in S3:', error);
-                  return reply.status(500).send({ error: 'Failed to check existing profile images' });
-              }
-
-              if (existingFiles.Contents?.length > 0) {
-                  console.log('Profile image already exists in S3');
-                  formData.profileUrl = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFiles.Contents[0].Key}`;
-              } else {
-                  // Upload new profile image to S3
-                  const key = `${hash}_${part.filename}`;
-                  const params = {
-                      Bucket: process.env.AWS_S3_BUCKET_NAME,
-                      Key: key,
-                      Body: buffer
-                  };
-
-                  try {
-                      const uploadUrl = await uploadToS3(buffer, hash, part.filename || 'uploaded_file');
-                      formData.profileUrl = uploadUrl;
-                      // Save the new image record to MongoDB
-                      await awsimages.insertOne({ key, hash });
-                  } catch (error) {
-                      console.error('Failed to upload profile image:', error);
-                      return reply.status(500).send({ error: 'Failed to upload profile image' });
-                  }
-              }
-          }
+  
+      if (!request.isMultipart?.()) {
+        console.error('Request is not multipart/form-data');
+        return reply.status(400).send({ error: 'Request must be multipart/form-data' });
       }
-
-      // Authenticate user via JWT
+  
+      const currentUserId = request.params.currentUserId;
+      const formData = {
+        email: null,
+        nickname: null,
+        bio: null,
+        birthYear: null,
+        birthMonth: null,
+        birthDay: null,
+        gender: null,
+        profileUrl: null,
+        ageVerification: null
+      };
+  
+      async function processImage(url, onSuccess) {
+        const moderation = await moderateImage(url);
+        if (!moderation.results[0].flagged) {
+          await onSuccess(url);
+          fastify.sendNotificationToUser(request.user._id, 'imageModerationFlagged', { flagged: false, currentUserId });
+        } else {
+          fastify.sendNotificationToUser(request.user._id, 'imageModerationFlagged', { flagged: true, currentUserId });
+        }
+      }
+  
+      // Process each part as it arrives.
+      for await (const part of request.parts()) {
+        if (part.fieldname && part.value) {
+          formData[part.fieldname] = part.value;
+        } else if (part.fieldname === 'profile' && part.file) {
+          // Consume file stream immediately.
+          const chunks = [];
+          for await (const chunk of part.file) {
+            chunks.push(chunk);
+          }
+          const buffer = Buffer.concat(chunks);
+          const hash = createHash('sha256').update(buffer).digest('hex');
+          const awsimages = fastify.mongo.db.collection('awsimages');
+  
+          const existingFile = await awsimages.findOne({ hash });
+          if (existingFile) {
+            const imageUrl = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFile.key}`;
+            console.log('Profile image already exists in DB');
+            await processImage(imageUrl, async (url) => { formData.profileUrl = url; });
+            continue;
+          }
+  
+          let existingFiles;
+          try {
+            existingFiles = await listFiles(hash);
+          } catch (error) {
+            console.error('Failed to list objects in S3:', error);
+            return reply.status(500).send({ error: 'Failed to check existing profile images' });
+          }
+  
+          if (existingFiles.Contents?.length > 0) {
+            const imageUrl = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFiles.Contents[0].Key}`;
+            console.log('Profile image already exists in S3');
+            await processImage(imageUrl, async (url) => { formData.profileUrl = url; });
+          } else {
+            const key = `${hash}_${part.filename}`;
+            let uploadUrl;
+            try {
+              uploadUrl = await uploadToS3(buffer, hash, part.filename || 'uploaded_file');
+            } catch (error) {
+              console.error('Failed to upload profile image:', error);
+              return reply.status(500).send({ error: 'Failed to upload profile image' });
+            }
+            await processImage(uploadUrl, async (url) => {
+              formData.profileUrl = url;
+              await awsimages.insertOne({ key, hash });
+            });
+          }
+        }
+      }
+  
+      console.log('All parts processed');
+  
+      if (!currentUserId) {
+        console.error('Missing currentUserId');
+        return reply.status(400).send({ error: 'Missing currentUserId' });
+      }
+      console.log('currentUserId:', currentUserId);
+  
       const { token } = request.cookies;
       if (!token) {
-          return reply.status(401).send({ error: 'Authentication token is missing' });
+        return reply.status(401).send({ error: 'Authentication token is missing' });
       }
-
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const userId = decoded._id;
-
-      // Prepare update data
+  
       const updateData = {};
       if (formData.email) updateData.email = formData.email;
       if (formData.nickname) updateData.nickname = formData.nickname;
       if (formData.bio) updateData.bio = formData.bio;
       if (formData.birthYear && formData.birthMonth && formData.birthDay) {
-          updateData.birthDate = {
-              year: formData.birthYear,
-              month: formData.birthMonth,
-              day: formData.birthDay
-          };
+        updateData.birthDate = {
+          year: formData.birthYear,
+          month: formData.birthMonth,
+          day: formData.birthDay
+        };
       }
       if (formData.gender) updateData.gender = formData.gender;
       if (formData.profileUrl) updateData.profileUrl = formData.profileUrl;
-      if(formData.ageVerification) updateData.ageVerification = formData.ageVerification == 'true' ? true : false;
-
+      if (formData.ageVerification) updateData.ageVerification = formData.ageVerification === 'true';
+  
       if (Object.keys(updateData).length === 0) {
-          return reply.status(400).send({ error: 'No data to update' });
+        return reply.status(400).send({ error: 'No data to update' });
       }
-
-      // Update user information in MongoDB
+  
       console.log('Updating user info:', updateData);
       const usersCollection = fastify.mongo.db.collection('users');
       const updateResult = await usersCollection.updateOne(
-          { _id: new fastify.mongo.ObjectId(userId) },
-          { $set: updateData }
+        { _id: new fastify.mongo.ObjectId(currentUserId) },
+        { $set: updateData }
       );
-
+  
       if (updateResult.modifiedCount === 0) {
-          console.warn('User info update failed');
+        console.warn('User info update failed');
       }
-      let user = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
-      // Remove the password hash from the user object
+      const user = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(currentUserId) });
       delete user.password;
       delete user.purchasedItems;
-
+  
       return reply.send({ user, status: 'User information successfully updated' });
-  } catch (error) {
+    } catch (error) {
       console.error('Error in update-info route:', error);
       return reply.status(500).send({ error: 'An internal server error occurred' });
-  }
-});
-
+    }
+  });
   
+
   // Keep the old update-password route
   fastify.post('/user/update-password', async (request, reply) => {
     try {
@@ -613,11 +624,11 @@ fastify.post('/user/update-info', async (request, reply) => {
       let isMyProfile =  userId.toString() === currentUser?._id.toString();
       let isAdmin = false;
       if(!userData.isTemporary){
-       isAdmin = await checkUserAdmin(fastify, userId);
+       isAdmin = await checkUserAdmin(fastify, currentUser._id);
       }
       
       const translations = request.translations;
-
+      console.log({isAdmin,isMyProfile})
       return reply.renderWithGtm('/user-profile.hbs', {
         title: `${userData.nickname}さんのプロフィール`,
         translations,

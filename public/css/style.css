@@ -153,10 +153,10 @@
   cursor:pointer
   }
   
-  .style-option.selected {
+  .style-option.selected,  #imageStyleTabs .nav-link.active {
   border:4px solid #8849ff
   }
-  
+
   .animated.fadeInDown .swal2-image {
   margin:0
   }

@@ -2,7 +2,13 @@ const handlebars = require('handlebars');
 
 module.exports = function registerHelpers() {
   handlebars.registerHelper('default', (value, fallback) => value || fallback);
-  handlebars.registerHelper('eq', (a, b) => a.toString() === b.toString());
+  handlebars.registerHelper('eq', (a, b) => {
+    if (a == null || b == null) {
+      return false;
+    }
+    return a.toString() === b.toString();
+  });
+  handlebars.registerHelper('ne', (a, b) => a.toString() !== b.toString());
   handlebars.registerHelper('json', (context) => {
     return context !== undefined && context !== null
       ? JSON.stringify(context)
@@ -16,7 +22,6 @@ module.exports = function registerHelpers() {
   });
   handlebars.registerHelper('gt', (a, b) => a > b);
   handlebars.registerHelper('lt', (a, b) => a < b);
-  handlebars.registerHelper('eq', (a, b) => a === b);
   handlebars.registerHelper('add', (a, b) => a + b);
   handlebars.registerHelper('subtract', (a, b) => a - b);
   handlebars.registerHelper('range', (start, end) => {

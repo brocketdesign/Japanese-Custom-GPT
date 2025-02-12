@@ -254,19 +254,28 @@ window.fetchAndAppendModels = function() {
     $.get(apiUrl, function(response) {
         if (response.success) {
         response.models.forEach(model => {
-
+            
+            const premiumIndicator = model.premium 
+                ? `<div class="position-absolute top-0 start-0">
+                    <span class="badge custom-gradient-bg">
+                        <i class="bi bi-gem"></i>
+                    </span>
+                </div>`
+                : '';
             const modelElement = `
-            <img src="${model.image}" alt="${model.style}" 
-                class="${subscriptionStatus || !model.premium ? '' : 'is-premium'} style-option rounded me-2" 
-                data-id="${model.modelId}" 
-                data-style="${model.style}" 
-                data-model="${model.model}" 
-                data-version="${model.version}"
-                data-count="${model.chatCount}"
-                data-premium="${model.premium}"
+            <div class="position-relative">
+                ${premiumIndicator}
+                <img src="${model.image}" alt="${model.style}" 
+                    class="${subscriptionStatus || !model.premium ? '' : 'is-premium'} style-option rounded me-2" 
+                    data-id="${model.modelId}" 
+                    data-style="${model.style}" 
+                    data-model="${model.model}" 
+                    data-version="${model.version}"
+                    data-count="${model.chatCount}"
+                    data-premium="${model.premium}"
                 >
+            </div>
             `;
-
             if(!subscriptionStatus){
                 if(subscriptionStatus || !model.premium){
                     $(document).find('#imageStyleSelection').prepend(modelElement);
@@ -317,28 +326,41 @@ function showNavTabs(){
 
             // Add count tag if `#chat-discovery` exists
             const countTag = chatDiscovery
-                ? `<span class="badge bg-primary position-absolute top-0 end-0">${chatCount}</span>`
+                ? `<span 
+                class="badge btn-light text-dark position-absolute top-0 end-0" 
+                style="opacity:0.8;">
+                ${chatCount}</span>`
+                : '';
+            // Add premium indicator (gem icon with custom gradient background)
+            const premiumIndicator = premium === 'true'
+                ? `<div class="position-absolute top-0 start-0">
+                    <span class="badge custom-gradient-bg">
+                        <i class="bi bi-gem"></i>
+                    </span>
+                </div>`
                 : '';
 
             const tabItem = `
-                <li class="nav-item position-relative" role="presentation" 
-                    ${chatCount == 0 ? `onclick="window.location='/chat/edit/?modelId=${modelId}'"` : ''}>
-                    <button class="nav-link ${isActive}" 
-                    id="${modelId}-tab" 
-                    data-style="${style}" 
-                    data-id="${modelId}" 
-                    data-model="${model}" 
-                    data-version="${version}" 
-                    data-premium="${premium}"
-                    type="button" role="tab">
-                        <img src="${imgSrc}" alt="${altText}" class="tab-thumb thumb-option rounded me-2">
-                        <span class="d-none">${altText}</span>
-                    </button>
-                    ${countTag}
-                </li>
+            <li class="nav-item position-relative" role="presentation" 
+                ${chatCount == 0 ? `onclick="window.location='/chat/edit/?modelId=${modelId}'"` : ''}>
+                <button class="nav-link ${isActive} rounded" 
+                        id="${modelId}-tab" 
+                        data-style="${style}" 
+                        data-id="${modelId}" 
+                        data-model="${model}" 
+                        data-version="${version}" 
+                        data-premium="${premium}"
+                        type="button" role="tab"
+                        style="background: url('${imgSrc}') no-repeat center center; background-size: cover;height: 70px;width: 70px;">
+                    <span class="d-none">${altText}</span>
+                    ${premiumIndicator}
+                </button>
+                ${countTag}
+            </li>
             `;
             tabNav.innerHTML += tabItem;
         });
+
         if(chatDiscovery){
             tabNav.innerHTML += `
             <li class="nav-item position-relative bg-light rounded" role="presentation" onclick="loadCharacterCreationPage()">
@@ -448,6 +470,28 @@ if (urlParams.get('cancel-payment') === 'true') {
         window.history.replaceState({ path: newUrl }, '', newUrl);
     }
 }
+
+window.showDiscovery = function() {
+    if (!window.location.pathname.includes('/chat/')) {
+        window.location.href = '/chat/';
+    }
+    $('.onchat-on').hide()
+    $('.onchat-on').addClass('d-none').css({
+        'opacity': 0,
+        'pointer-events': 'none',
+        'visibility': 'hidden'
+    });    
+    $('.onchat-off').show()
+    $('.onchat-off').removeClass('d-none').css({
+        'opacity': '',
+        'pointer-events': '',
+        'visibility': ''
+    }); 
+    $('#promptContainer').slideUp('fast');
+    resetChatUrl();
+    window.postMessage('resizeIframe', '*');
+}
+
 window.showNotification = function(message, icon) {
     Swal.fire({
         position: 'top',

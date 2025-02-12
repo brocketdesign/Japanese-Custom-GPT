@@ -27,24 +27,6 @@ const fetchModels = async (query = '', cursor = '') => {
 
 async function routes(fastify, options) {
 
-  // Admin dashboard for mails
-  fastify.get('/admin/mails', {
-    
-  }, async (request, reply) => {
-    try {
-      const isAdmin = await checkUserAdmin(fastify, request.user._id);
-      if (!isAdmin) {
-        return reply.status(403).send({ error: 'Access denied' });
-      }
-      const db = fastify.mongo.db;
-      const mailsCollection = db.collection('mails');
-      const mails = await mailsCollection.find().sort({ createdAt: -1 }).toArray();
-      return reply.view('/admin/mails', { mails });
-    } catch (error) {
-      return reply.status(500).send({ error: error.message });
-    }
-  });
-
   fastify.get('/admin/notifications', async (request, reply) => {
     const user = request.user;
     const isAdmin = await checkUserAdmin(fastify, user._id);

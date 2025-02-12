@@ -41,9 +41,16 @@
                 class="rounded-circle avatar" height="35px" alt="Avatar"
                 loading="lazy" />
             </div>
+            {{#if (eq user.subscriptionStatus 'active')}}
+                <div class="premiumIndicator position-absolute top-0 start-0" style="font-size: 10px;">
+                    <span class="badge custom-gradient-bg">
+                        <i class="bi bi-gem"></i>
+                    </span>
+                </div>
+            {{/if}}
         </a>
             <ul class="avatar-menu dropdown-menu dropdown-menu-end mx-3" aria-labelledby="navbarDropdownMenuLink">
-                <li>
+                <li class="{{#if (eq user.subscriptionStatus 'active')}}d-none{{/if}} ">
                     <a class="dropdown-item text-secondary custom-gradient-bg text-white" href="#" onclick="loadPlanPage()">
                         <i class="bi bi-layers me-3"></i> 
                         <span>{{translations.avatar.subscription}}</span>
@@ -87,11 +94,6 @@
                 <li class="{{#if isAdmin }}{{else}}d-none{{/if}}">
                     <a class="dropdown-item text-secondary" href="/admin/notifications">
                         <i class="bi bi-bell me-3"></i>{{translations.admin.notifications}}
-                    </a>
-                </li>
-                <li class="{{#if isAdmin }}{{else}}d-none{{/if}}">
-                    <a class="dropdown-item text-secondary" href="/admin/mails">
-                        <i class="bi bi-envelope me-3"></i>{{translations.admin.mails}}
                     </a>
                 </li>
                 <li>

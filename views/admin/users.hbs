@@ -50,22 +50,29 @@
             <thead>
                 <tr>
                     <th>#</th>
+                    <th>{{translations.admin_user.avatar}}</th>
                     <th>{{translations.admin_user.date}}</th>
                     <th>{{translations.admin_user.email}}</th>
                     <th>{{translations.admin_user.name}}</th>
                     <th>{{translations.admin_user.gender}}</th>
                     <th>{{translations.admin_user.subscription}}</th>
                     <th>{{translations.admin_user.actions}}</th>
+                    <th>{{translations.admin_user.profile}} </th>
                 </tr>
             </thead>
             <tbody>
                 {{#each users}}
                 <tr data-user-id="{{this._id}}">
                     <td>{{increment @index}}</td>
+                    <td>
+                        <a href="/user/{{this._id}}" target="_blank">
+                            <img src="{{this.profileUrl}}" alt="{{this.nickname}}" class="rounded-circle" style="width: 40px;height: 40px;object-fit: cover;">
+                        </a>
+                    </td>
                     <td class="jp-d">{{this.createdAt}}</td>
                     <td>{{this.email}}</td>
                     <td>{{this.nickname}}</td>
-                    <td>{{this.gender}}</td>
+                    <td><i class="bi bi-gender-{{this.gender}} me-2"></i></td>
                     <td class="subscriptionStatus">{{this.subscriptionStatus}}</td>
                     <td>
                         <div class="dropdown">
@@ -90,6 +97,11 @@
                                 </li>
                             </ul>
                         </div>
+                    </td>
+                    <td>
+                        <a href="/user/{{this._id}}" target="_blank" class="btn btn-primary">
+                            <i class="bi bi-box-arrow-up-right"></i>
+                        </a>
                     </td>
                 </tr>
                 {{/each}}

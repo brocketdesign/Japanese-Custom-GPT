@@ -628,7 +628,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       }
       
       const translations = request.translations;
-      console.log({isAdmin,isMyProfile})
+
       return reply.renderWithGtm('/user-profile.hbs', {
         title: `${userData.nickname}さんのプロフィール`,
         translations,

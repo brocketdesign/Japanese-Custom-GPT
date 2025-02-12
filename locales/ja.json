@@ -113,6 +113,8 @@
         "mails" : "メール"
   },
   "admin_user": {
+    "profile": "プロフィール",
+    "avatar": "アバター",
     "export_csv": "CSVをエクスポート",
     "column_csv": "エクスポートする列を選択",
     "download_csv": "CSVをダウンロード",

@@ -113,6 +113,8 @@
         "mails" : "Mails"
   },
   "admin_user": {
+    "profile": "Profile",
+    "avatar": "Avatar",
     "export_csv": "Export CSV",
     "column_csv": "Select columns to export",
     "download_csv": "Download CSV",

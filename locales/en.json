@@ -346,6 +346,7 @@
   "share":"Share",
   "delete":"Delete",
   "sendMessageTo":"Send a message to ",
+  "customPromptPlaceholder": "Provide image details",
   "conversationStarter" : {
     "starter": "Starter",
     "prompt": "This is a prompt for a web application. Please naturally initiate a conversation as if we were complete strangers.",

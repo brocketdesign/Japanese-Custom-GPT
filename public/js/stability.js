@@ -28,6 +28,7 @@ window.novitaImageGeneration = async function(userId, chatId, userChatId, option
             imageType = option.imageType || 'sfw',
             placeholderId = option.placeholderId || null,
             customPrompt = option.customPrompt || false,
+            promptId = option.promptId || null,
             chatCreation = option.chatCreation || false
         } = option;
 
@@ -52,6 +53,7 @@ window.novitaImageGeneration = async function(userId, chatId, userChatId, option
                 placeholderId,
                 customPrompt,
                 image_base64,
+                promptId,
                 chatCreation
             })
         });

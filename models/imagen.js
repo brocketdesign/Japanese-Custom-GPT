@@ -305,7 +305,6 @@ async function deleteOldPendingAndFailedTasks(db) {
     const tasksCollection = db.collection('tasks');
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
     const result = await tasksCollection.deleteMany({ createdAt: { $lt: fiveMinutesAgo }, status: { $in: ['pending', 'failed'] } });
-    console.log(`Deleted ${result.deletedCount} old pending or failed tasks.`);
   } catch (error) {
     console.error('Error deleting old pending or failed tasks:', error);
   }

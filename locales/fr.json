@@ -332,6 +332,7 @@
   "share": "Partager",
   "delete": "Supprimer",
   "sendMessageTo": "Envoyer un message à ",
+  "customPromptPlaceholder": "Fournir les détails de l'image",
   "conversationStarter": {
     "starter": "Démarrage",
     "prompt": "Ceci est une invite pour une application web. Veuillez initier une conversation naturellement comme si nous étions des inconnus.",

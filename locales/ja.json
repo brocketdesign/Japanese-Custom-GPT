@@ -333,6 +333,7 @@
   "share":"共有する",
   "delete":"削除する",
   "sendMessageTo":"にメッセージを送る",
+  "customPromptPlaceholder": "画像の詳細を入力してください",
   "conversationStarter" : {
     "starter": "Starter",
     "prompt": "これはウェブアプリケーションのためのプロンプトです。私たちがまったく見知らぬ者同士であるかのように、自然に会話のきっかけを作ってください。",

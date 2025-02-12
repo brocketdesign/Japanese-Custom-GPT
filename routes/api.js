@@ -504,10 +504,15 @@ async function routes(fastify, options) {
                  Provide a short answer to thank me, stay in your character. Respond in ${request.lang}.
                  `.replace(/^\s+/gm, '').trim();
                 newMessage.name = 'master'
+            } else if (message.startsWith('[promptImage]')){
+                const [promptId, userMessage, nsfw] = message.replace('[promptImage]', '').split(';;;');
+                newMessage.content = userMessage;
+                newMessage.promptId = promptId;
+                newMessage.nsfw = nsfw;
+                newMessage.trigger_image_request = true;
             } else {
                 newMessage.content = message
             }    
-
             userData.messages.push(newMessage);
             userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
     
@@ -1042,14 +1047,23 @@ async function routes(fastify, options) {
             .filter((m,i,a) => m.name !== 'master' || i === a.findLastIndex(x => x.name === 'master')) // Keep the last master message only
             .filter((m) => m.image_request != true )
             
-      
           const lastMsgIndex = userData.messages.length - 1
           const lastUserMessage = userData.messages[lastMsgIndex]
           let currentUserMessage = { role: 'user', content: lastUserMessage.content }
           if (lastUserMessage.name) currentUserMessage.name = lastUserMessage.name
-      
+          if (lastUserMessage.trigger_image_request) currentUserMessage.image_request = lastUserMessage.trigger_image_request
+          if (lastUserMessage.nsfw) currentUserMessage.nsfw = lastUserMessage.nsfw
+          if (lastUserMessage.promptId) currentUserMessage.promptId = lastUserMessage.promptId
+          
           let genImage = null
-          if (currentUserMessage.name !== 'master' && currentUserMessage.name !== 'context') {
+          if(currentUserMessage?.image_request === true){
+            genImage = {}
+            genImage.image_request = currentUserMessage.image_request
+            genImage.nsfw = currentUserMessage.nsfw ? 'nsfw' : 'sfw'
+            genImage.promptId = currentUserMessage.promptId
+          }
+          
+          if (currentUserMessage.name !== 'master' && currentUserMessage.name !== 'context' && currentUserMessage?.image_request != true) {
             genImage = await checkImageRequest(userData.messages)
           }
       
@@ -1081,11 +1095,14 @@ async function routes(fastify, options) {
                     for (let i = 0; i < image_num; i++) {
                         fastify.sendNotificationToUser(userId, 'handleLoader', { imageId, action:'show' })
                     }
+                    if(genImage.promptId){
+                        const customPromptData = await getPromptById(db,genImage.promptId);
+                        genImage.customPrompt = customPromptData.prompt
+                    }
                     genImagePromptFromChat(chatDocument, userData.messages, genImage, language)
-                        .then((promptData) => {
-                        const prompt = promptData.prompt
+                        .then(async(promptData) => {
+                        let prompt = promptData.prompt
                         processPromptToTags(db,prompt);
-                        
                         const imageType = genImage.nsfw ? 'nsfw' : 'sfw'
                         const aspectRatio = null
                         generateImg({prompt, aspectRatio, userId, chatId, userChatId, imageType, image_num, chatCreation:false, placeholderId:imageId, translations:request.translations , fastify})
@@ -1094,12 +1111,14 @@ async function routes(fastify, options) {
                             console.log('error:', error);
                         });
                     })
-                    imgMessage[0].content = `\n\nComment my request and tell me that you are preparing an image for me.\n Do no describe the image only comment as your character would. Stay in your character, keep the same tone as previously. Chat on the subject.`.trim()
+                    imgMessage[0].content = `\n\nTell me how you feel, be expressive, and tell me that you are preparing an image for me.\n Do no describe the image only comment as your character would. Stay in your character, keep the same tone as previously. Chat on the subject.`.trim()
+                    currentUserMessage.name = 'context'
                 }
                
             }else{
                 genImage.image_request = false
-                imgMessage[0].content = `\n\n I asked for an other image but I am not a subscribed member.\n Tell me that I need to subscribe to Lamix Premium in order to receive unlimited images, even hot images. Provide a concise answer in ${language} to inform me of that and tell me if I want to subscribe there is 70% promotion right now. Stay in your character, keep the same tone as previously.`.trim()
+                imgMessage[0].content = `\n\n I asked for an other image but I am not a subscribed member.\n Tell me that I need to subscribe to Lamix Premium in order to receive unlimited images, even hot images. Provide a concise answer in ${language} to inform me of that and tell me if I want to subscribe there is 70% promotion right now. Stay in your character, keep the same tone as previously.`.trim();
+                currentUserMessage.name = 'context'
             }
 
             messagesForCompletion = [
@@ -1124,7 +1143,6 @@ async function routes(fastify, options) {
                 if (genImage?.image_request) {
                     newAssitantMessage.image_request = true
                 }
-
                 userData.messages.push(newAssitantMessage)
                 userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' })
                 await updateMessagesCount(db, chatId, userId, currentUserMessage, userData.updatedAt)
@@ -1446,7 +1464,9 @@ async function routes(fastify, options) {
         return completionMessage;
     }
     const commandToString = (command) => {
-         
+        if(command.customPrompt){
+            return command.customPrompt
+        }
         const nudeDetails = command.nude !== 'false' 
             ? `naked ${command.nude}` 
             : '';
@@ -1481,7 +1501,7 @@ async function routes(fastify, options) {
             `.replace(/^\s+/gm, '').trim();
 
         const instructionMessage = commandToString(command);
-            
+
         return [
             {
                 role: "system",
@@ -1511,10 +1531,10 @@ async function routes(fastify, options) {
     };
     
     async function genImagePromptFromChat(chatDocument, messages, command, language) {
-        const characterDescription = chatDocument?.imageDescription || chatDocument.enhancedPrompt || chatDocument.characterPrompt;
+        const characterDescription = chatDocument.enhancedPrompt || chatDocument?.imageDescription || chatDocument.characterPrompt;
 
         const lastMessages = messages
-            .filter(m => m.content && m.role !== 'assistant' && m.role !== 'system' && m.name !== 'master' && m.name !== 'context' && !m.content.startsWith('['))
+            .filter(m => m.content && m.role !== 'system' && m.name !== 'master' && m.name !== 'context' && !m.content.startsWith('['))
             .slice(-2);
 
         if (lastMessages.length < 1) {

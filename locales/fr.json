@@ -113,6 +113,7 @@
         "mails" : "Mails"
   },
   "admin_user": {
+    "language": "Langue",
     "profile": "Profil",
     "avatar": "Avatar",
     "export_csv": "Exporter en CSV",

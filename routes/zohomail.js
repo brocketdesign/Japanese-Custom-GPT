@@ -1,78 +1,47 @@
 const axios = require('axios');
-
-async function getAccessToken(authCode) {
-  const params = {
-    code: authCode,
-    client_id: process.env.ZOHO_CLIENT_ID,
-    client_secret: process.env.ZOHO_CLIENT_SECRET,
-    redirect_uri: 'https://app.chatlamix.com/zoho/callback',
-    grant_type: 'authorization_code'
-  };
-  const { data } = await axios.post('https://accounts.zoho.com/oauth/v2/token', null, { params });
-  return data; // { access_token, refresh_token, expires_in, ... }
-}
-
-async function refreshAccessToken(refreshToken) {
-  const params = {
-    refresh_token: refreshToken,
-    client_id: process.env.ZOHO_CLIENT_ID,
-    client_secret: process.env.ZOHO_CLIENT_SECRET,
-    grant_type: 'refresh_token'
-  };
-  const { data } = await axios.post('https://accounts.zoho.com/oauth/v2/token', null, { params });
-  return data; // { access_token, expires_in, [refresh_token] }
-}
-
-// Use the correct endpoint for subscribing contacts with JSON and form-urlencoded body.
-async function addContactToCampaign(contact, accessToken) {
-  const url = 'https://campaigns.zoho.com/api/v1.1/json/listsubscribe';
-  const headers = {
-    'Authorization': `Zoho-oauthtoken ${accessToken}`,
-    'Content-Type': 'application/x-www-form-urlencoded'
-  };
-  // contact should include mandatory parameters: listkey, contactinfo, etc.
-  const params = new URLSearchParams(contact);
-  const { data } = await axios.post(url, params, { headers });
-  return data;
-}
+const { refreshAccessToken, addContactToCampaign } = require('../models/zohomail');
 
 async function routes(fastify, options) {
   const tokensCollection = fastify.mongo.db.collection('zoho_tokens');
 
-  // Redirect to Zoho's OAuth page with the correct scope
   fastify.get('/zoho/auth', async (request, reply) => {
     const scope = 'ZohoCampaigns.contact.UPDATE';
     const authUrl = `https://accounts.zoho.com/oauth/v2/auth?scope=${encodeURIComponent(
       scope
     )}&client_id=${process.env.ZOHO_CLIENT_ID}&response_type=code&access_type=offline&redirect_uri=${encodeURIComponent(
-      'https://app.chatlamix.com/zoho/callback'
+      '/zoho/callback'
     )}`;
     reply.redirect(authUrl);
   });
 
-  // Callback endpoint to exchange auth code for tokens and store them
   fastify.get('/zoho/callback', async (request, reply) => {
     const { code } = request.query;
     try {
-      const tokenData = await getAccessToken(code);
+      const params = {
+        code,
+        client_id: process.env.ZOHO_CLIENT_ID,
+        client_secret: process.env.ZOHO_CLIENT_SECRET,
+        redirect_uri: '/zoho/callback',
+        grant_type: 'authorization_code'
+      };
+      const { data } = await axios.post('https://accounts.zoho.com/oauth/v2/token', null, { params });
       await tokensCollection.updateOne(
         { _id: 'zoho' },
         {
           $set: {
-            refresh_token: tokenData.refresh_token,
-            access_token: tokenData.access_token,
-            expires_at: Date.now() + tokenData.expires_in * 1000
+            refresh_token: data.refresh_token,
+            access_token: data.access_token,
+            expires_at: Date.now() + data.expires_in * 1000
           }
         },
         { upsert: true }
       );
-      reply.send(tokenData);
+      reply.send(data);
     } catch (error) {
       reply.code(500).send({ error: error.toString() });
     }
   });
 
-  // Endpoint to refresh the access token using the stored refresh token
   fastify.get('/zoho/refresh', async (request, reply) => {
     try {
       const tokenDoc = await tokensCollection.findOne({ _id: 'zoho' });
@@ -94,7 +63,6 @@ async function routes(fastify, options) {
     }
   });
 
-  // Endpoint to add a contact to a campaign. It checks for token expiration and refreshes if needed.
   fastify.post('/zoho/add-contact', async (request, reply) => {
     const { contact } = request.body;
     try {
@@ -102,7 +70,6 @@ async function routes(fastify, options) {
       if (!tokenDoc || !tokenDoc.access_token) {
         return reply.code(400).send({ error: 'No access token found' });
       }
-      // Check if access token expired; if so, refresh it.
       if (Date.now() >= tokenDoc.expires_at) {
         const tokenData = await refreshAccessToken(tokenDoc.refresh_token);
         const updateData = {

@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const axios = require('axios');
 const { checkLimits, checkUserAdmin, getUserData, updateUserLang, listFiles, uploadToS3 } = require('../models/tool');
 const { moderateImage } = require('../models/openai');
+const { refreshAccessToken, addContactToCampaign } = require('../models/zohomail');
 
 async function routes(fastify, options) {
   
@@ -13,73 +14,94 @@ async function routes(fastify, options) {
     try {
       const { nickname, email, password, gender, ageVerification } = request.body;
 
-      // Validate request data
       if (!email || !password) {
         return reply.status(400).send({ error: 'ユーザー名とパスワードは必須です' });
       }
-  
+
       const usersCollection = fastify.mongo.db.collection('users');
-      
-      // Check if the user already exists
       const user = await usersCollection.findOne({ email });
       if (user) {
         return reply.status(400).send({ error: 'ユーザーはすでに存在します' });
       }
-      
-      // Hash the password
-      const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Insert new user into the database
+      const hashedPassword = await bcrypt.hash(password, 10);
       const TempUser = request.user;
-      let tempUserId = TempUser._id
-      
-      const result = await usersCollection.insertOne(
-        { 
-          lang: request.lang,
-          nickname,
-          email, 
-          password: hashedPassword, 
-          gender, 
-          ageVerification,
-          createdAt:new Date(), 
-          tempUserId,
-          coins: 100
-        });
-  
+      let tempUserId = TempUser._id;
+
+      const result = await usersCollection.insertOne({
+        lang: request.lang,
+        nickname,
+        email,
+        password: hashedPassword,
+        gender,
+        ageVerification,
+        createdAt: new Date(),
+        tempUserId,
+        coins: 100
+      });
+
       if (!result.insertedId) {
         return reply.status(500).send({ error: 'ユーザーの登録に失敗しました' });
       }
-  
+
       const newUser = { _id: result.insertedId, email };
+      const userId = newUser._id;
 
       // Transfer temp chat to new user
-      const userId = newUser._id
       const collectionUserChat = fastify.mongo.db.collection('userChat');
       const collectionChat = fastify.mongo.db.collection('chats');
-
       const updateUserId = async (collectionChat, collectionUserChat, userId, tempUserId) => {
-    
-        // Update collectionUserChat
         const userChatResult = await collectionUserChat.updateMany(
-            { userId: new fastify.mongo.ObjectId(tempUserId) },
-            { $set: { userId: new fastify.mongo.ObjectId(userId), log_success:true } }
+          { userId: new fastify.mongo.ObjectId(tempUserId) },
+          { $set: { userId: new fastify.mongo.ObjectId(userId), log_success: true } }
         );
-        // Update collectionChat
         const chatResult = await collectionChat.updateMany(
-            { userId: new fastify.mongo.ObjectId(tempUserId) },
-            { $set: { userId: new fastify.mongo.ObjectId(userId) } }
+          { userId: new fastify.mongo.ObjectId(tempUserId) },
+          { $set: { userId: new fastify.mongo.ObjectId(userId) } }
         );
         return {
-            userChatUpdated: userChatResult.modifiedCount,
-            chatUpdated: chatResult.modifiedCount
+          userChatUpdated: userChatResult.modifiedCount,
+          chatUpdated: chatResult.modifiedCount
         };
-    };
-    
-      await updateUserId(collectionChat, collectionUserChat, userId, tempUserId)
+      };
+      await updateUserId(collectionChat, collectionUserChat, userId, tempUserId);
 
-      // Generate a token for the new user
+      // Zoho Campaign Integration: Add new user as a contact
+      try {
+        const tokensCollection = fastify.mongo.db.collection('zoho_tokens');
+        let tokenDoc = await tokensCollection.findOne({ _id: 'zoho' });
+        if (tokenDoc) {
+          // Check for token expiration and refresh if needed
+          if (Date.now() >= tokenDoc.expires_at) {
+            const tokenData = await refreshAccessToken(tokenDoc.refresh_token);
+            const updateData = {
+              access_token: tokenData.access_token,
+              expires_at: Date.now() + tokenData.expires_in * 1000
+            };
+            if (tokenData.refresh_token) {
+              updateData.refresh_token = tokenData.refresh_token;
+            }
+            await tokensCollection.updateOne({ _id: 'zoho' }, { $set: updateData });
+            tokenDoc.access_token = tokenData.access_token;
+          }
+          // Prepare Zoho contact data
+          const contactData = {
+            listkey: process.env.ZOHO_LISTKEY,
+            resfmt: 'json',
+            contactinfo: JSON.stringify({
+              Email: email,
+              First_Name: nickname
+            }),
+            source: 'web'
+          };
+          const zohoResponse = await addContactToCampaign(contactData, tokenDoc.access_token);
+          console.log('Zoho campaign response:', zohoResponse);
+        }
+      } catch (err) {
+        console.log('Zoho campaign error:', err);
+      }
+
       const token = jwt.sign(newUser, process.env.JWT_SECRET, { expiresIn: '24h' });
-  
       return reply
         .setCookie('token', token, { path: '/', httpOnly: true })
         .send({ status: 'ユーザーが正常に登録されました', redirect: '/chat/' });
@@ -88,7 +110,7 @@ async function routes(fastify, options) {
       return reply.status(500).send({ error: 'サーバーエラーが発生しました' });
     }
   });
-
+  
   fastify.post('/user/login', async (request, reply) => {
     try {
         // Validate and sanitize input

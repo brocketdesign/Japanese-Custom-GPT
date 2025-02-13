@@ -115,6 +115,7 @@ fastify.register(require('./routes/admin'));
 fastify.register(require('./routes/post'));
 fastify.register(require('./routes/notifications'));
 fastify.register(require('./routes/gallery'));
+fastify.register(require('./routes/zohomail'));
 
 fastify.get('/', async (request, reply) => {
   const db = fastify.mongo.db;

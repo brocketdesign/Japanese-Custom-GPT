@@ -5,7 +5,7 @@ async function getAccessToken(authCode) {
     code: authCode,
     client_id: process.env.ZOHO_CLIENT_ID,
     client_secret: process.env.ZOHO_CLIENT_SECRET,
-    redirect_uri: '/zoho/callback',
+    redirect_uri: 'https://app.chatlamix.com/zoho/callback',
     grant_type: 'authorization_code'
   };
   const { data } = await axios.post('https://accounts.zoho.com/oauth/v2/token', null, { params });
@@ -45,7 +45,7 @@ async function routes(fastify, options) {
     const authUrl = `https://accounts.zoho.com/oauth/v2/auth?scope=${encodeURIComponent(
       scope
     )}&client_id=${process.env.ZOHO_CLIENT_ID}&response_type=code&access_type=offline&redirect_uri=${encodeURIComponent(
-      '/zoho/callback'
+      'https://app.chatlamix.com/zoho/callback'
     )}`;
     reply.redirect(authUrl);
   });

@@ -89,8 +89,10 @@ async function routes(fastify, options) {
             listkey: process.env.ZOHO_LISTKEY,
             resfmt: 'json',
             contactinfo: JSON.stringify({
-              Email: email,
-              First_Name: nickname
+              CONTACTS: [{
+                EMAIL: email,
+                FIRSTNAME: nickname
+              }]
             }),
             source: 'web'
           };
@@ -110,7 +112,7 @@ async function routes(fastify, options) {
       return reply.status(500).send({ error: 'サーバーエラーが発生しました' });
     }
   });
-  
+
   fastify.post('/user/login', async (request, reply) => {
     try {
         // Validate and sanitize input

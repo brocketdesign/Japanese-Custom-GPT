@@ -790,12 +790,13 @@ $(document).ready(async function() {
                     style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
                         <i class="bi bi-arrow-clockwise"></i>
                     </span>
-                    <span type="button" class="badge bg-white text-secondary isAdmin" data-bs-toggle="modal" data-bs-target="#modal-${imageId}">
+                    ${window.isAdmin ? `
+                    <span type="button" class="badge bg-white text-secondary" data-bs-toggle="modal" data-bs-target="#modal-${imageId}">
                         <i class="bi bi-info-circle"></i>
                     </span>
-                    <div class="modal fade" id="modal-${imageId}" tabindex="-1" aria-labelledby="modal-${imageId}-label" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content border-0 shadow">
+                    <div style="height: 70vh;" class="modal fade" id="modal-${imageId}" tabindex="-1" aria-labelledby="modal-${imageId}-label" aria-hidden="true" data-bs-backdrop="false">
+                        <div class="modal-dialog" style="bottom: 80px;position: fixed;">
+                            <div class="modal-content border-0 shadow mx-auto" style="height: auto;">
                                 <div class="modal-header">
                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
@@ -804,7 +805,7 @@ $(document).ready(async function() {
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div>` : ''}
                     <span class="badge bg-white text-secondary share d-none"
                             data-title="${title}"
                             data-url="${imageUrl}"

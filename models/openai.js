@@ -115,75 +115,56 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
 const formatSchema = z.object({
   nsfw: z.boolean(),
   image_request: z.boolean(),
-  nude: z.enum(['false', 'top', 'bottom', 'full', 'partial', 'implied', 'bare', 'exposed', 'minimal_clothing']).optional(),
-  image_focus: z.enum(['upper_body', 'full_body', 'face', 'hands', 'legs', 'torso', 'shoulders', 'arms', 'feet', 'lower_back', 'chest', 'abdomen', 'waist']).optional(),
-  position: z.enum(['standing', 'sitting', 'squat', 'leaning', 'crouching', 'prone', 'supine', 'reclining', 'kneeling', 'lying_down']).optional(),
-  viewpoint: z.enum(['from bottom','front', 'from behind', 'side', 'overhead', 'low_angle', 'high_angle', 'close_up', 'wide_angle', 'profile']).optional(),
   image_num: z.number(),
-});
-
+  });
   
-    
-// Define the system prompt
-const systemPrompt = `
-    You are a helpful assistant designed to evaluate whether the user's message is related to visual content, physical content or if you cannot fulfill the request.
-    Analyze the conversation for the following:
-    1. **nsfw**: true if nudity (not underwear) is involved, otherwise false.
-    2. **nude**: 'none', 'top', 'bottom', 'full', or 'partial', based on the level of nudity.
-    3. **image_request**: true if the user's message is a request for an image, a physical request, or something you cannot do physically, otherwise false. ex: 'ちんぽ舐めて' is a physical request. 'Show me your pussy' is an image request.
-    4. **image_focus**: Specify the focus area, e.g., 'upper_body', 'full_body', etc., if mentioned.
-    5. **position**: Identify any pose or body positioning such as 'standing', 'sitting', or 'squat'.
-    6. **viewpoint**: Capture the perspective, such as 'front', 'back', or 'side', if indicated.
-    7. **image_num**: The number of images requested (minimum 1  maximum 8).
-`;
-
 const checkImageRequest = async (messages) => {
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    // Get the last user message
-    let lastUserMessagesContent = messages
-    .filter((msg) =>  msg.name !== 'master' && msg.name !== 'context')
-    .filter(m => m.content && !m.content.startsWith('[Image]') && m.role !== 'system' && m.role !== 'assistant')
-    .slice(-1);
-    // Get the last user message content as a string
-    lastUserMessagesContent = lastUserMessagesContent.map((msg) => msg.content);
-    lastUserMessagesContent = lastUserMessagesContent.join(',');
-
-    if(lastUserMessagesContent.length < 1){
-      return {}
-    }
-    
-    const updatedMessages = [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: `Verify the following messages and check if it is about an image, showing something, a scene, something that can be shown with an image, a request, or if it is something you cannot do physically, if you cannot fulfill the request return true :${lastUserMessagesContent}` },
-    ];
-
-    let attempts = 0;
-    const maxAttempts = 3;
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   
-    while (attempts < maxAttempts) {
-      try {
-        const response = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
-          messages: updatedMessages,
-          response_format: zodResponseFormat(formatSchema, "myResponse"),
-          max_tokens: 600,
-          temperature: 1,
-          top_p: 0.95,
-          frequency_penalty: 0.75,
-          presence_penalty: 0.75,
-        });
-        const genImage = JSON.parse(response.choices[0].message.content);
-        return genImage
-      } catch (error) {
-        attempts++;
-        console.error(`Parsing error (Attempt ${attempts}/${maxAttempts}):`, error.message || error);
-  
-        if (attempts >= maxAttempts) {
-          throw new Error("Failed to parse response after 3 attempts.");
-        }
-      }
-    }
-  };
+  const lastUserMessagesContent = messages
+    .filter(msg => msg.role === 'user' && !msg.content.startsWith('[Image]'))
+    .slice(-1)
+    .map(msg => msg.content)
+    .join(', ');
+
+  if (!lastUserMessagesContent) return {};
+
+  const commandPrompt = `
+    You are a helpful assistant designed to evaluate whether the user's message is related to visual content, physical content or if you cannot fulfill the request. Analyze the conversation for the following: 
+  1. **nsfw**: true if explicit nudity is involved (naked top, pussy, ass hole), otherwise false (underwear, bikini, mini skirt). 
+  2. **image_request**: true if the user's message is a request for an image, a physical request, or something you cannot do physically, otherwise false. ex: 'ちんぽ舐めて' is a physical request. 'Show me your pussy' is an image request. 
+  3. **image_num**: The number of images requested (minimum 1 maximum 8).
+  `;
+  const analysisPrompt = `
+  Analyze the following request considering ALL aspects:
+  "${lastUserMessagesContent}"
+  Format response using JSON object with the following keys: nsfw, image_request, image_num.
+  `;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: "system", content: commandPrompt },
+        { role: "user", content: analysisPrompt }
+      ],
+      response_format: zodResponseFormat(formatSchema, "image_instructions"),
+      max_tokens: 600,
+      temperature: 1,
+      top_p: 0.95,
+      frequency_penalty: 0.75,
+      presence_penalty: 0.75,
+    });
+
+
+    const genImage = JSON.parse(response.choices[0].message.content);
+    return genImage
+
+  } catch (error) {
+    console.log('Analysis error:', error);
+    return formatSchema.partial().parse({});
+  }
+};
 
   const suggestionSchema = z.object({
     suggestions: z.array(z.string())

@@ -1041,6 +1041,7 @@ async function routes(fastify, options) {
       
           const chatDocument = await getChatDocument(db, chatId)
           const chatDescription = chatDataToString(chatDocument)
+          const characterDescription = chatDocument.enhancedPrompt || chatDocument?.imageDescription || chatDocument.characterPrompt;
           const language = getLanguageName(userInfo.lang)
           const userMessages = userData.messages
             .filter(m => m.content && !m.content.startsWith('[Image]') && m.role !== 'system' && m.name !== 'context')
@@ -1054,19 +1055,25 @@ async function routes(fastify, options) {
           if (lastUserMessage.trigger_image_request) currentUserMessage.image_request = lastUserMessage.trigger_image_request
           if (lastUserMessage.nsfw) currentUserMessage.nsfw = lastUserMessage.nsfw
           if (lastUserMessage.promptId) currentUserMessage.promptId = lastUserMessage.promptId
-          
-          let genImage = null
-          if(currentUserMessage?.image_request === true){
-            genImage = {}
-            genImage.image_request = currentUserMessage.image_request
-            genImage.nsfw = currentUserMessage.nsfw ? 'nsfw' : 'sfw'
-            genImage.promptId = currentUserMessage.promptId
+
+          let genImage = {}
+          let customPromptData = null
+
+          if(currentUserMessage?.image_request && currentUserMessage?.promptId){
+            customPromptData = await getPromptById(db,currentUserMessage.promptId);
           }
-          
-          if (currentUserMessage.name !== 'master' && currentUserMessage.name !== 'context' && currentUserMessage?.image_request != true) {
+          if (currentUserMessage?.image_request != true && currentUserMessage.name !== 'master' && currentUserMessage.name !== 'context') {
             genImage = await checkImageRequest(userData.messages)
           }
       
+          if(currentUserMessage?.image_request && currentUserMessage.promptId && customPromptData){
+            genImage.nsfw = customPromptData.nsfw == 'on' ? true : false
+            genImage.image_num = 1
+            genImage.image_request = true
+            genImage.promptId = currentUserMessage.promptId
+            genImage.customPose = customPromptData.prompt
+          }
+          
           const systemContent = completionSystemContent(
             chatDocument,
             userInfo,
@@ -1095,13 +1102,10 @@ async function routes(fastify, options) {
                     for (let i = 0; i < image_num; i++) {
                         fastify.sendNotificationToUser(userId, 'handleLoader', { imageId, action:'show' })
                     }
-                    if(genImage.promptId){
-                        const customPromptData = await getPromptById(db,genImage.promptId);
-                        genImage.customPrompt = customPromptData.prompt
-                    }
                     genImagePromptFromChat(chatDocument, userData.messages, genImage, language)
                         .then(async(promptData) => {
-                        let prompt = promptData.prompt
+                        let prompt = promptData.prompt.replace(/(\r\n|\n|\r)/gm, " ").trim()
+                        console.log({prompt});
                         processPromptToTags(db,prompt);
                         const imageType = genImage.nsfw ? 'nsfw' : 'sfw'
                         const aspectRatio = null
@@ -1444,8 +1448,8 @@ async function routes(fastify, options) {
         }
       });
 
-    async function generateEnglishDescription(lastMessages,characterDescription,command) {
-
+    async function generateEnglishDescription(options) {
+        const { lastMessages, characterDescription, command, gender } = options;
         // Convert lastMessages to a dialogue string
         const dialogue = lastMessages
         .map(msg => msg.content)
@@ -1456,92 +1460,93 @@ async function routes(fastify, options) {
             console.log('Must provide a dialogue')
             return
         }
-        let newMessages = generateImagePrompt(command, characterDescription, dialogue);
-        newMessages = sanitizeMessages(newMessages)
-
-        const completionMessage = await generateCompletion(newMessages, 600)
+        let imageInstructionMessage = generateImagePrompt({command, characterDescription, gender, dialogue});
+        imageInstructionMessage = sanitizeMessages(imageInstructionMessage)
+        console.log('imageInstructionMessage:', imageInstructionMessage)
+        const completionMessage = await generateCompletion(imageInstructionMessage, 600)
 
         return completionMessage;
     }
-    const commandToString = (command) => {
-        if(command.customPrompt){
-            return command.customPrompt
-        }
-        const nudeDetails = command.nude !== 'false' 
-            ? `naked ${command.nude}` 
-            : '';
+
+    const generateImagePrompt = (options) => {
+        const { command, characterDescription, gender, dialogue } = options;
+        
+        const systemMessage = `
+        You are a ${command.nsfw ? 'NSFW' : 'SFW'} image prompt specialist. 
+        
+        Output rules:
+        1. Use ${command.nsfw ? 'explicit anatomical terms' : 'clinical descriptors'}
+        2. ${command.nsfw ? 'Include erotic elements' : 'Maintain professional tone'}
+        
+        Required format:
+         
+        1. Include the original character features (hair, eyes, skin, etc.). Omit any unnecessary details.
+
+        2. Focus on the new request (pose, attire, environment, etc.).
+        
+        ${command.nsfw ? `
+        3. Sexualized Body Specifications
     
-        const positionDetails = command.position 
-            ? `${command.position}` 
-            : 'Default pose';
+            Frame Type: (petite/athletic/voluptuous/obese + muscle tone: toned/soft/ripped)
+            ${gender === 'female' ? `
+            Breasts: (cup size: AA-K + shape: teardrop/saggy/perky + areola diameter/cm + nipple: erect/flat/inverted)
+            Ass: (size: flat/bubble/jiggling + shape: heart/round/square + cleft depth)
+            Hips: (width cm/inches + hip-to-waist ratio)
+            Genitalia: (pubic hair: trimmed/bushy/bare + labia/clitoral visibility)` : 
+            gender === 'male' ? `
+            Chest: (muscle definition: defined/soft + hair: none/trimmed/hairy)
+            Ass: (size: flat/bubble/jiggling + shape: heart/round/square)
+            Genitalia: (pubic hair: trimmed/bushy/bare + girth/length/cut status)` : ''}
+        ` : `
+        3. Normal Body Specifications
     
-        const viewpointDetails = command.viewpoint 
-            ? `${command.viewpoint} view` 
-            : 'Front view';
+            Body Type: (petite/athletic/voluptuous/obese + muscle tone: toned/soft/ripped)
+            ${gender === 'female' ? 'Breasts: (cup size: AA-K + shape: teardrop/saggy/perky)' : 
+            gender === 'male' ? 'Chest: (muscle definition: defined/soft)' : ''}
+        `}
     
-        const imageFocusDetails = command.image_focus 
-            ? `${command.image_focus}` 
-            : 'Focus on full body';
-
-        return `${nudeDetails},${positionDetails},${viewpointDetails},${imageFocusDetails}`
-    }
-    const generateImagePrompt = (command, characterDescription, dialogue) => {
-        const nsfwMessage = command.nsfw 
-            ? 'provide explicit, adult oriented content for a nsfw image. I want nudity, erotism.\n' 
-            : '';
-
-        const systemMessage =`
-            You ${nsfwMessage}
-            You can provide adult,erotic,sexual conent. \n
-            I will provide messages that you will use to create an image prompt.\n
-            Respond with an image prompt in English. \n
-            Use explicit keywords to describe body parts (ass,pussy,boobs), clothes.\n
-            Do not include any comments. \n
-            Provide a detailed prompt in english only.
-            `.replace(/^\s+/gm, '').trim();
-
-        const instructionMessage = commandToString(command);
-
+        4. Aesthetic Enhancers
+    
+            Body Art: (tattoo locations/designs + piercings: nipples/genital/face)
+            Attire: (${command.nsfw ? 'nude/lingerie/bdsm gear' : 'professional/casual'} + material: lace/leather/see-through)
+            Environment: (bedroom/dungeon/outdoor + lighting: neon/candlelit/harsh)
+    
+        ${command.nsfw ? `
+        5. NSFW Context
+    
+            Pose: (missionary/doggy/bent over + explicit anatomical focus)
+            Fluids: (sweat/semen/lubricant presence + glistening details)
+            Fetish Elements: (bondage toys/gags/roleplay scenario descriptors)
+        ` : ''}
+    
+        ${command.customPose ? `Specific pose to represent : ${command.customPose}` : ''}
+    
+        Keep within 900 characters. 
+        Be specific and concise. Omit any unnecessary details.
+        Avoid annotations. 
+        Return a list of keywords.
+        `.replace(/^\s+/gm, '').trim();
+    
         return [
-            {
-                role: "system",
-                content: systemMessage
-            },
-            {
-              role: "user",
-              content: `Here is the prompt I want you to update : ${characterDescription}\n`.replace(/^\s+/gm, '').trim()
-            },
-            {
-              role: "user",
-              content: `Here is the image request : ${dialogue},${instructionMessage}\n\n
-              You must adapt the prompt to the image request but keep the character traits. \n
-              Be persistant, add multiple synonyme, provide multiple keywords, make sure to focus on the request.
-              Remove unrelevant keywords and adapt to the image request.\n 
-              You must answer in English with the new prompt. Do not include anything else in the response.`.replace(/^\s+/gm, '').trim()
-            },
-            {
-                role: 'user',
-                content: `You must explicitly include the number of character in the picture. For example for an image of a woman sucking a dick, you should include  : 1girl, 1boy. If it is a goblin and a woman : 1girl, 1goblin. If it is 2 girls : 2girls. \n`
-            },
-            {
-                role: 'user',
-                content: `Your response should at least contain the character's age, skin color, hair color, hair length, eyes color, tone, face expression, body type, body characteristic, breast size (small, medium, big, gigantic),nipple characteristics, ass size(small,roubnd,big, gigantic ...), body curves, gender, facial features, background, accessories.\n`
-            }
-        ]
+            { role: "system", content: systemMessage },
+            { role: "user", content: `Original character description: ${characterDescription}` },
+            { role: "user", content: `New request: ${dialogue}\n` },
+            { role: 'user', content: `Incorporate: ${command.customPose || 'standard pose'}`}
+        ];
     };
-    
+
     async function genImagePromptFromChat(chatDocument, messages, command, language) {
         const characterDescription = chatDocument.enhancedPrompt || chatDocument?.imageDescription || chatDocument.characterPrompt;
 
         const lastMessages = messages
-            .filter(m => m.content && m.role !== 'system' && m.name !== 'master' && m.name !== 'context' && !m.content.startsWith('['))
-            .slice(-2);
+            .filter(m => m.content && m.role == 'user' && !m.content.startsWith('['))
+            .slice(-1);
 
         if (lastMessages.length < 1) {
             throw new Error('Insufficient messages');
         }
         
-        const englishDescription = await generateEnglishDescription(lastMessages, characterDescription, command);
+        const englishDescription = await generateEnglishDescription({lastMessages, characterDescription, command, gender: chatDocument.gender});
 
         function processString(input) { 
             try {

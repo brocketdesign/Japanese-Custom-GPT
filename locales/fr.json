@@ -28,6 +28,24 @@
     "features": "Avantages Premium"
   },
   "landing_page": {
+    "banner": {
+      "0": {
+        "title": "Créez le hentai de la plus haute qualité. Gratuitement.",
+        "subtitle": "Profitez de la génération d'images IA gratuite en discutant avec de magnifiques personnages IA."
+      },
+      "1": {
+        "title": "Le meilleur chat IA et générateur d'art fantastique",
+        "subtitle": "Discutez et créez de superbes personnages IA fantastiques !"
+      },
+      "2": {
+        "title": "Chat IA et créateur de modèles nouvelle génération",
+        "subtitle": "Concevez des modèles IA et parlez-leur instantanément !"
+      },
+      "3": {
+        "title": "Votre #1 chat IA et générateur d'images",
+        "subtitle": "Créez, discutez et donnez vie aux personnages IA !"
+      }
+    },
     "main_heading": "Créez les hentai de la meilleure qualité. Gratuitement.",
     "sub_heading": "Profitez de la génération gratuite d'images IA tout en discutant avec de magnifiques personnages IA.",
     "cta_button": "Commencez à générer",

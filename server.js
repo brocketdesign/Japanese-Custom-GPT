@@ -130,6 +130,8 @@ fastify.get('/', async (request, reply) => {
 
   
   if (user.isTemporary) {
+    let bannerNumber = parseInt(request.query.banner) || 0;
+    bannerNumber = Math.min(bannerNumber, 3);
     return reply.renderWithGtm(`index.hbs`, {
       title: translations.seo.title,
       seo: [
@@ -140,6 +142,7 @@ fastify.get('/', async (request, reply) => {
         { property: 'og:image', content: '/img/share.png' },
         { property: 'og:url', content: 'https://chatlamix/' },
       ],
+      bannerNumber
     });
   } else {
     return reply.redirect('/chat');

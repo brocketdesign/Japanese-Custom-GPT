@@ -1,5 +1,6 @@
 {
   "lang":"en", 
+    
   "websocket":{
     "connection_error":"Connection error",
     "connection_error_message":"An error occurred while connecting to the server. Please try again later.",
@@ -28,6 +29,24 @@
     "features": "Premium Benefits"
   },
   "landing_page": {
+    "banner": {
+      "0": {
+        "title": "Create the highest quality hentai. For free.",
+        "subtitle": "Enjoy free AI image generation while chatting with beautiful AI characters."
+      },
+      "1": {
+        "title": "The Best AI Chat & Fantasy Art Generator",
+        "subtitle": "Chat and create stunning fantasy AI characters!"
+      },
+      "2": {
+        "title": "Next-Gen AI Chat & Model Creator",
+        "subtitle": "Design AI models and talk to them instantly!"
+      },
+      "3": {
+        "title": "Your #1 AI Chat & Image Generator",
+        "subtitle": "Create, chat, and bring AI characters to life!"
+      }
+    },
     "main_heading": "Create the highest quality hentai. For free.",
     "sub_heading": "Enjoy free AI image generation while chatting with beautiful AI characters.",
     "cta_button": "Start Generating",

@@ -7,7 +7,7 @@
 <section>
     <style>
     #intro {
-        background-image: url('/img/topmain-comp.png');
+        background-image: url('/img/lpbanner/{{bannerNumber}}.png');
         background-size: contain;
         background-position: right;
         min-height: 760px;
@@ -26,10 +26,9 @@
         <div class="row container align-items-center h-100 m-auto">
             <div class="col-12 col-md-6 py-5">
                 <h1 class="mb-3 fw-bold u-color-grad text-start" id="headline-container">
-                    <p>{{translations.landing_page.main_heading}}</p>
                 </h1>
-                <div class="text-start animate__animated"  data-animate="animate__fadeIn">
-                    {{translations.landing_page.sub_heading}}
+                <div class="text-start animate__animated"  data-animate="animate__fadeIn" id="subheadline-container">
+                    {{translations.landing_page.banner.[bannerNumber].subtitle}}
                 </div>
                 <div class="text-center d-flex flex-column justify-content-start align-items-start mt-3 animate__animated"  data-animate="animate__fadeIn">
                     <a href="#" onclick="openLoginForm()" class="btn custom-gradient-bg text-white btn-lg m-2 px-5 py-3 mb-3 cta-button fw-bold" role="button" style="border-radius: 50px;">
@@ -37,7 +36,7 @@
                     </a>
                 </div>
                 <div class="col-12 py-3 d-block d-sm-none">
-                    <img src="/img/topmain-comp.png" alt="" width="100%" class="me-2 d-block d-sm-none animate__animated" data-animate="animate__zoomIn">
+                    <img src="img/lpbanner/{{bannerNumber}}.png" alt="" width="100%" class="me-2 d-block d-sm-none animate__animated" data-animate="animate__zoomIn">
                 </div>
             </div>
         </div>
@@ -316,6 +315,18 @@
         $(document).find('#social_proof button').click(function() {
             openLoginForm();
         });
+    </script>
+
+    <script>
+        const headline = document.getElementById('headline-container');
+        const subheadline = document.getElementById('subheadline-container');
+        const bannerNumber = `{{bannerNumber}}`;
+        const title = translations.landing_page.banner[bannerNumber].title;
+        const subtitle = translations.landing_page.banner[bannerNumber].subtitle;
+        console.log(title,subtitle);
+
+        headline.innerHTML = '<p>' + title + '</p>';
+        subheadline.innerHTML = subtitle;
     </script>
 </body>
 </html>

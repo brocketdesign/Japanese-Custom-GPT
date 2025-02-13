@@ -9,7 +9,7 @@ async function getAccessToken(authCode) {
     grant_type: 'authorization_code'
   };
   const { data } = await axios.post('https://accounts.zoho.com/oauth/v2/token', null, { params });
-  return data; // returns { access_token, refresh_token, expires_in, ... }
+  return data; // { access_token, refresh_token, expires_in, ... }
 }
 
 async function refreshAccessToken(refreshToken) {
@@ -20,24 +20,28 @@ async function refreshAccessToken(refreshToken) {
     grant_type: 'refresh_token'
   };
   const { data } = await axios.post('https://accounts.zoho.com/oauth/v2/token', null, { params });
-  return data; // returns { access_token, expires_in, [refresh_token] }
+  return data; // { access_token, expires_in, [refresh_token] }
 }
 
+// Use the correct endpoint for subscribing contacts with JSON and form-urlencoded body.
 async function addContactToCampaign(contact, accessToken) {
-  const url = 'https://campaigns.zoho.com/api/v1.1/addcontact';
+  const url = 'https://campaigns.zoho.com/api/v1.1/json/listsubscribe';
   const headers = {
     'Authorization': `Zoho-oauthtoken ${accessToken}`,
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/x-www-form-urlencoded'
   };
-  const { data } = await axios.post(url, contact, { headers });
+  // contact should include mandatory parameters: listkey, contactinfo, etc.
+  const params = new URLSearchParams(contact);
+  const { data } = await axios.post(url, params, { headers });
   return data;
 }
 
 async function routes(fastify, options) {
   const tokensCollection = fastify.mongo.db.collection('zoho_tokens');
 
+  // Redirect to Zoho's OAuth page with the correct scope
   fastify.get('/zoho/auth', async (request, reply) => {
-    const scope = 'ZohoCampaigns.contacts.UPDATE';
+    const scope = 'ZohoCampaigns.contact.UPDATE';
     const authUrl = `https://accounts.zoho.com/oauth/v2/auth?scope=${encodeURIComponent(
       scope
     )}&client_id=${process.env.ZOHO_CLIENT_ID}&response_type=code&access_type=offline&redirect_uri=${encodeURIComponent(
@@ -46,6 +50,7 @@ async function routes(fastify, options) {
     reply.redirect(authUrl);
   });
 
+  // Callback endpoint to exchange auth code for tokens and store them
   fastify.get('/zoho/callback', async (request, reply) => {
     const { code } = request.query;
     try {
@@ -67,6 +72,7 @@ async function routes(fastify, options) {
     }
   });
 
+  // Endpoint to refresh the access token using the stored refresh token
   fastify.get('/zoho/refresh', async (request, reply) => {
     try {
       const tokenDoc = await tokensCollection.findOne({ _id: 'zoho' });
@@ -88,6 +94,7 @@ async function routes(fastify, options) {
     }
   });
 
+  // Endpoint to add a contact to a campaign. It checks for token expiration and refreshes if needed.
   fastify.post('/zoho/add-contact', async (request, reply) => {
     const { contact } = request.body;
     try {
@@ -95,7 +102,7 @@ async function routes(fastify, options) {
       if (!tokenDoc || !tokenDoc.access_token) {
         return reply.code(400).send({ error: 'No access token found' });
       }
-      // Check if the access token is expired
+      // Check if access token expired; if so, refresh it.
       if (Date.now() >= tokenDoc.expires_at) {
         const tokenData = await refreshAccessToken(tokenDoc.refresh_token);
         const updateData = {

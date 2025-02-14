@@ -86,9 +86,10 @@
 </div>
 {{#if user.isTemporary}}
 {{else}}
+<div class="sticky-bottom onchat-off" style="bottom:0; left:0; right:0;">
     {{#if (eq user.subscriptionStatus 'active')}}
     {{else}}
-    <div class="sticky-bottom pt-0 pb-3 text-center onchat-off" style="bottom:0;left:0;right:0;">
+    <div class="pt-0 pb-3 text-center " style="bottom:0;left:0;right:0;">
         <button onclick="loadPlanPage()" class="btn d-flex justify-content-center align-items-center rounded-pill fw-bold custom-gradient-bg gap-2 px-2 py-1.5 text-sm text-white bg-white mx-auto" style="border: 1px solid #000;">
             <div>
             {{translations.premium}}
@@ -97,29 +98,29 @@
         </button>
     </div>
     {{/if}}
-    <!-- Navigation , Home , search, create, explore, profile-->
-<div class="sticky-bottom py-2 onchat-off" style="bottom:0; left:0; right:0; background-color: rgb(248, 249, 250);">
-  <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center w-100">
-      <a class="text-dark flex-fill text-center" href="#" onclick="showDiscovery()">
-        <i class="bi bi-house fs-4"></i>
-      </a>
-      <a class="text-dark flex-fill text-center" href="/search" target="_blank">
-        <i class="bi bi-search fs-4"></i>
-      </a>
-      <a class="text-dark flex-fill text-center" href="#" onclick="loadCharacterCreationPage()">
-        <i class="bi bi-plus-square fs-4"></i>
-      </a>
-      <a class="text-dark flex-fill text-center" href="/character" target="_blank">
-        <i class="bi bi-globe fs-4"></i>
-      </a>
-      <a class="text-dark flex-fill text-center" href="/user/{{user._id}}" target="_blank">
-        <div class="btn rounded-circle p-0">
-          <img src="{{#if user.profileUrl}}{{user.profileUrl}}{{else}}/img/avatar.png{{/if}}" class="rounded-circle avatar" height="35" width="35" alt="Avatar" loading="lazy" />
+    <div class="py-2" style="bottom:0; left:0; right:0; background-color: rgb(248, 249, 250);">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center w-100">
+            <a class="text-dark flex-fill text-center" href="#" onclick="showDiscovery()">
+                <i class="bi bi-house fs-4"></i>
+            </a>
+            <a class="text-dark flex-fill text-center" href="/search">
+                <i class="bi bi-search fs-4"></i>
+            </a>
+            <a class="text-dark flex-fill text-center" href="#" onclick="loadCharacterCreationPage()">
+                <i class="bi bi-plus-square fs-4"></i>
+            </a>
+            <a class="text-dark flex-fill text-center" href="/character">
+                <i class="bi bi-globe fs-4"></i>
+            </a>
+            <a class="text-dark flex-fill text-center" href="/user/{{user._id}}">
+                <div class="btn rounded-circle p-0">
+                <img src="{{#if user.profileUrl}}{{user.profileUrl}}{{else}}/img/avatar.png{{/if}}" class="rounded-circle avatar" height="35" width="35" alt="Avatar" loading="lazy" />
+                </div>
+            </a>
+            </div>
         </div>
-      </a>
     </div>
-  </div>
 </div>
 
 

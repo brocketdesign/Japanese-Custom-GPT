@@ -28,7 +28,8 @@
 }
 
 </style>
-<div class="mt-4">
+
+<div class="container mt-4">
   {{#if chat}}
     <!-- SEO Section -->
     <div class="row mx-0 {{#if user.isTemporary}}{{else}}d-none{{/if}}">
@@ -36,123 +37,118 @@
         <hr>
     </div>
   {{/if}}
-  <div class="row mx-0">
-    <!-- Chat Image Section -->
-    {{#if image}}
-    <div class="col-lg-8 mb-4">
-      <div class="card border-0 shadow-0">
-        {{#if isBlur}}
-          <div type="button" class="text-center mx-auto" onclick={{#if user.isTemporary}}'openLoginForm()'{{else}}'loadPlanPage()'{{/if}}>
-            <img data-src="{{image.imageUrl}}" 
-            class="card-img-top img-blur rounded shadow p-auto" 
-            alt="{{image.prompt}}" 
-            style="width:auto;max-width:100%;max-height:80vh;object-fit:contain;"
-            >
+    <div class="row mx-0">
+      {{#if image}}
+        <div class="col-lg-8 mb-4">
+          <div class="card border-0 shadow-0">
+            {{#if isBlur}}
+              <div type="button" class="text-center mx-auto" onclick={{#if user.isTemporary}}'openLoginForm()'{{else}}'loadPlanPage()'{{/if}}>
+                <img data-src="{{image.imageUrl}}" 
+                class="card-img-top img-blur rounded shadow p-auto" 
+                alt="{{image.prompt}}" 
+                style="width:auto;max-width:100%;max-height:80vh;object-fit:contain;"
+                >
+              </div>
+            {{else}}
+            <div class="mx-auto">
+                <img id="mainImage" 
+                src="{{image.imageUrl}}" 
+                class="card-img-top rounded shadow p-auto" 
+                alt="{{image.prompt}}" 
+                style="max-height:80vh;width:auto;max-width:100%;object-fit:contain;">
+            </div>
+            {{/if}}
+            <div class="card-body border rounded mt-3">
+              <h5 class="card-title"></h5>
+              <h6>{{translations.prompt}} :</h6>
+              <p class="card-prompt text-muted" style="font-size: 14px;">{{image.prompt}}</p>
+              <p class="bg-light p-2" style="font-size:12px;">{{translations.prompt_description}}</p>
+              <p class="card-text">{{image.comment}}</p>
+              <p class="text-muted"><span class="jp-date">{{image.createdAt}}</span></p>
+              <div class="d-flex justify-content-between align-items-center">
+                <button class="btn btn-light shadow-0 image-fav {{#if  (includesObjectId image.likedBy user._id) }}liked{{/if}}" data-id="{{image._id}}">
+                  <i class="bi bi-heart-fill me-2"></i>{{translations.like}}<span class="ct d-none">{{default image.likes 0}}</span>
+                </button>
+                <!--- A button to share on sns --->
+                <button class="btn btn-light shadow-0 share">
+                  <i class="bi bi-share me-2"></i>{{translations.share}}
+                </button>
+              </div>
+              <a {{#if user.isTemporary}}onclick="openLoginForm()"{{else}}href="/chat/{{chat._id}}"{{/if}} class="btn custom-gradient-bg w-100 mt-3"> <i class="bi bi-chat-dots me-2"></i> {{translations.startChatting}}</a>
+            </div>
           </div>
-        {{else}}
-        <div class="mx-auto">
-            <img id="mainImage" 
-            src="{{image.imageUrl}}" 
-            class="card-img-top rounded shadow p-auto" 
-            alt="{{image.prompt}}" 
-            style="max-height:80vh;width:auto;max-width:100%;object-fit:contain;">
         </div>
-        {{/if}}
-        <div class="card-body border rounded mt-3">
-          <h5 class="card-title"></h5>
-          <h6>{{translations.prompt}} :</h6>
-          <p class="card-prompt text-muted" style="font-size: 14px;">{{image.prompt}}</p>
-          <p class="bg-light p-2" style="font-size:12px;">{{translations.prompt_description}}</p>
-          <p class="card-text">{{image.comment}}</p>
-          <p class="text-muted"><span class="jp-date">{{image.createdAt}}</span></p>
-          <div class="d-flex justify-content-between align-items-center">
-            <button class="btn btn-light shadow-0 image-fav {{#if  (includesObjectId image.likedBy user._id) }}liked{{/if}}" data-id="{{image._id}}">
-              <i class="bi bi-heart-fill me-2"></i>{{translations.like}}<span class="ct d-none">{{default image.likes 0}}</span>
-            </button>
-            <!--- A button to share on sns --->
-            <button class="btn btn-light shadow-0 share">
-              <i class="bi bi-share me-2"></i>{{translations.share}}
-            </button>
-          </div>
-          <a {{#if user.isTemporary}}onclick="openLoginForm()"{{else}}href="/chat/{{chat._id}}"{{/if}} class="btn custom-gradient-bg w-100 mt-3"> <i class="bi bi-chat-dots me-2"></i> {{translations.startChatting}}</a>
-        </div>
-      </div>
-    </div>
-    {{/if}}
-    {{#if chat}}
-    <!-- Chat Profile Section -->
-    <div class="col mb-4">
-      <div class="card border shadow-0">
-        <div class="card-body text-center">
-          <div class="chat-profile mt-4">
-            <div class="row mx-0 mb-3">
-              <div id="chatProfileSection" class="text-center">
-                <div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative mb-2">
-                  <a {{#if user.isTemporary}}onclick="openLoginForm()"{{else}}href="/chat/{{chat._id}}"{{/if}} class="text-secondary" style="text-decoration:none;">  
-                    <img src="{{default chat.chatImageUrl '/img/avatar.png'}}" alt="Chat Thumbnail" class="rounded-circle" 
-                    style="width: 100px; height: 100px; object-fit: cover; object-position: top;">
-                  </a>
-                </div>
-                <a {{#if user.isTemporary}}onclick="openLoginForm()"{{else}}href="/chat/{{chat._id}}"{{/if}} class="text-secondary" style="text-decoration:none;">
-                  <h2>{{chat.name}}</h2>
-                </a>
-                  <p>{{chat.description}}</p>
-                  <!-- SEO Section -->
-                  <div class="row mx-0 text-start {{#if user.isTemporary}}{{else}}d-none{{/if}}">
-                      <span>{{translations.about_the_character}} {{chat.name}}</span>
-                      <hr>
-                      <p class="description">{{chat.description}}</p>
-                      <p>{{chat.rule}}</p>
-                  </div>
+      {{/if}}
+      {{#if chat}}
+        <!-- Chat Profile Section -->
+        <div class="col mb-4">
+          <div class="card border shadow-0">
+            <div class="card-body text-center">
+              <div class="chat-profile mt-4">
+                <div class="row mx-0 mb-3">
+                  <div id="chatProfileSection" class="text-center">
+                    <div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative mb-2">
+                      <a {{#if user.isTemporary}}onclick="openLoginForm()"{{else}}href="/chat/{{chat._id}}"{{/if}} class="text-secondary" style="text-decoration:none;">  
+                        <img src="{{default chat.chatImageUrl '/img/avatar.png'}}" alt="Chat Thumbnail" class="rounded-circle" 
+                        style="width: 100px; height: 100px; object-fit: cover; object-position: top;">
+                      </a>
+                    </div>
+                    <a {{#if user.isTemporary}}onclick="openLoginForm()"{{else}}href="/chat/{{chat._id}}"{{/if}} class="text-secondary" style="text-decoration:none;">
+                      <h2>{{chat.name}}</h2>
+                    </a>
+                    <p>{{chat.description}}</p>
+                    <!-- SEO Section -->
+                    <div class="row mx-0 text-start {{#if user.isTemporary}}{{else}}d-none{{/if}}">
+                        <span>{{translations.about_the_character}} {{chat.name}}</span>
+                        <hr>
+                        <p class="description">{{chat.description}}</p>
+                        <p>{{chat.rule}}</p>
+                    </div>
 
-                <a {{#if user.isTemporary}}onclick="openLoginForm()"{{else}}href="/chat/{{chat._id}}"{{/if}} class="btn custom-gradient-bg"> <i class="bi bi-chat-dots me-2"></i>  {{translations.startChatting}}</a>
+                    <a {{#if user.isTemporary}}onclick="openLoginForm()"{{else}}href="/chat/{{chat._id}}"{{/if}} class="btn custom-gradient-bg"> <i class="bi bi-chat-dots me-2"></i>  {{translations.startChatting}}</a>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+        <h3 class="text-start">{{translations.user_in_chat}}</h3>
+        <span class="text-muted">{{translations.user_in_chat_description}}</span>
+        <div class="container mt-4">
+          <div id="chat-users-gallery" class="d-flex overflow-auto p-2" style="white-space: nowrap;"></div>
+          <div id="chat-users-pagination-controls" class="mt-3"></div>
+        </div>
+      {{/if}}
     </div>
-  </div>
-  <h3 class="text-start">{{translations.user_in_chat}}</h3>
-  <span class="text-muted">{{translations.user_in_chat_description}}</span>
-
-  <div class="container mt-4">
-    <div id="chat-users-gallery" class="d-flex overflow-auto p-2" style="white-space: nowrap;"></div>
-    <div id="chat-users-pagination-controls" class="mt-3"></div>
-  </div>
-
-  {{/if}}
-
   <!-- Other Images Section -->
   {{#if chatId}}
-  <div class="container mb-5 px-0">
-    <div class="row mx-0">
-      <div class="col-12 mt-4 px-0">
-        <h4>{{translations.other_images}}</h4>
-        <span class="text-muted">{{translations.other_images_description}}</span>
-        <hr>
-        <div class="container-none">
-          <div class="row mx-0" id="chat-images-gallery"></div>
-          <div class="d-flex justify-content-center mt-4" id="chat-images-pagination-controls"></div>
+    <div class="container mb-5 px-0">
+      <div class="row mx-0">
+        <div class="col-12 mt-4 px-0">
+          <h4>{{translations.other_images}}</h4>
+          <span class="text-muted">{{translations.other_images_description}}</span>
+          <hr>
+          <div class="container-none">
+            <div class="row mx-0" id="chat-images-gallery"></div>
+            <div class="d-flex justify-content-center mt-4" id="chat-images-pagination-controls"></div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</div>
-{{else}}
- <h1 class="my-4 text-center">{{translations.ai_gravure_special_photos}}</h1>
-  <p>{{translations.ai_gravure_description}}</p>
-   
-  <div class="container mt-4 mb-5">
-    <div id="all-chats-container">
-      <!-- Chats with images will be appended here -->
+  {{else}}
+    <h1 class="my-4 text-center">{{translations.ai_gravure_special_photos}}</h1>
+    <p>{{translations.ai_gravure_description}}</p>
+    
+    <div class="container mt-4 mb-5">
+      <div id="all-chats-container">
+        <!-- Chats with images will be appended here -->
+      </div>
+      <div class="row mx-0" id="all-chats-images-gallery"></div>
+      <div class="d-flex justify-content-center mt-4" id="all-chats-images-pagination-controls"></div>
+      <button id="back-to-top" style="display: none;">トップに戻る</button>
     </div>
-
-    <div class="row mx-0" id="all-chats-images-gallery"></div>
-    <div class="d-flex justify-content-center mt-4" id="all-chats-images-pagination-controls"></div>
-    <button id="back-to-top" style="display: none;">トップに戻る</button>
-  </div>
-{{/if}}
+  {{/if}}
+</div>
 <style>
   footer{display: inline !important;}
   .sticky-bottom{display: inline-block !important;width: 100%;}

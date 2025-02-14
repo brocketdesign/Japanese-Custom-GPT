@@ -1438,7 +1438,9 @@ $(document).ready(async function() {
 
         var id = $(this).data('id');
         var imageNsfw = $(this).data('nsfw') ? 'nsfw' : 'sfw';
-        const imagePreview = $(this).find('img').attr('data-src') || $(this).find('img').attr('src');
+
+        const imagePreview = new URL($(this).find('img').attr('data-src') || $(this).find('img').attr('src'), window.location.origin).href;
+
         const subscriptionStatus = user.subscriptionStatus == 'active'
 
         // Allow for every user to generate images using the prompt

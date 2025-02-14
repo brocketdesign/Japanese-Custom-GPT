@@ -1105,7 +1105,6 @@ async function routes(fastify, options) {
                     genImagePromptFromChat(chatDocument, userData.messages, genImage, language)
                         .then(async(promptData) => {
                         let prompt = promptData.prompt.replace(/(\r\n|\n|\r)/gm, " ").trim()
-                        console.log({prompt});
                         processPromptToTags(db,prompt);
                         const imageType = genImage.nsfw ? 'nsfw' : 'sfw'
                         const aspectRatio = null
@@ -1153,8 +1152,8 @@ async function routes(fastify, options) {
                 await updateChatLastMessage(db, chatId, userId, completion, userData.updatedAt)
                 await updateUserChat(db, userId, userChatId, userData.messages, userData.updatedAt)
 
-                // Generate prompt suggestions premium only
-                if(subscriptionStatus){
+                // Generate prompt suggestions
+                if(true || subscriptionStatus){
                     suggestions = await generatePromptSuggestions(userData.messages,chatDescription,language)
                     fastify.sendNotificationToUser(userId, 'displaySuggestions', { suggestions, uniqueId })
                 }
@@ -1462,7 +1461,7 @@ async function routes(fastify, options) {
         }
         let imageInstructionMessage = generateImagePrompt({command, characterDescription, gender, dialogue});
         imageInstructionMessage = sanitizeMessages(imageInstructionMessage)
-        console.log('imageInstructionMessage:', imageInstructionMessage)
+
         const completionMessage = await generateCompletion(imageInstructionMessage, 600)
 
         return completionMessage;

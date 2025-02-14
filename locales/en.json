@@ -308,6 +308,7 @@
   "chatHistory": "Chat History",
   "createCharacter": "Create Character",
   "library": "Library",
+  "explore": "Explore",
   "chatList": "Chat List",
   "totalChats": "{{chats.length}}",
   "startChat": "Start Chat",

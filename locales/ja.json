@@ -294,6 +294,7 @@
   "chatHistory": "チャット履歴",
   "createCharacter": "キャラクター作成",
   "library": "ライブラリー",
+  "explore": "探索",
   "chatList": "チャット一覧",
   "totalChats": "{{chats.length}}",
   "startChat": "チャットを始める",

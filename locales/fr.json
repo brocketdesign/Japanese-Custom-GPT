@@ -294,6 +294,7 @@
   "chatHistory": "Historique des conversations",
   "createCharacter": "Créer un personnage",
   "library": "Bibliothèque",
+  "explore": "Explorer",
   "chatList": "Liste des discussions",
   "totalChats": "{{chats.length}}",
   "startChat": "Commencer une discussion",

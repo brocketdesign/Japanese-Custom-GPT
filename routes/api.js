@@ -63,41 +63,60 @@ async function routes(fastify, options) {
             _id: new fastify.mongo.ObjectId(userChatId) 
           });
 
-            // If new user chat or not found, create a new document
-            if (!userChatDocument || isNew) {
+        if (!userChatDocument || isNew) {
+            const isLoggedIn = user && !user.isTemporary;
+            let startMessage = { role: 'user', name: 'master' };
 
-                // Different starting message depending on user status
-                let startMessage = { "role": "user", "name": "master" }
-                // User is temporary, prompt to log in
-                if(user.isTemporary){
-                    startMessage.content = "Start with a greeting and prompt the user to log in. Do not start with a confirmation, but directly greet and ask the user to log in.";
-                }
-                const userChat = await collectionUserChat.find({ userId:new fastify.mongo.ObjectId(userId), chatId: new fastify.mongo.ObjectId(chatId) }).toArray();
-                if(userChat.length > 0){
-                    // Not first chat, welcome back and ask if they want to see another image
-                    startMessage.content = `Start by welcoming me back. Inform me that you like chatting with me. Ask me if I would like to see another one. Stay in your character, keep the same tone as before.`
-                }else{
-                    // First chat with this character, simply say hi and send an image
-                    startMessage.content = `Start by greeting me, say that it is nice to meet me for the first time. Inform me that you are happy to chat with me and as it is the first time we chat, you will send me an image to get more intimate (the application will send the image, do not try to send the image yourself). Stay in your character, keep the same tone as before.`
+            if (!isLoggedIn) {
+                startMessage.content =
+                "Start with a greeting and prompt the user to log in. Do not start with a confirmation, but directly greet and ask the user to log in.";
+            } else {
+                const subscriptionActive = user?.subscriptionStatus === 'active';
+                const userChat = await collectionUserChat
+                .find({
+                    userId: new fastify.mongo.ObjectId(userId),
+                    chatId: new fastify.mongo.ObjectId(chatId),
+                })
+                .toArray();
+
+                if (userChat.length > 0) {
+                    startMessage.content =
+                        "Start by welcoming me back. Inform me that you enjoy our chats and ask if I would like to see another image.";
+                } else {
                     startMessage.sendImage = true;
-                    // If there are no images in the gallery, send a message to inform the user that there are no images available to create one
+                    if (subscriptionActive) {
+                        startMessage.content =
+                        "Start by greeting me, say it's nice to meet me for the first time, and mention you'll send an image to get more intimate.";
+                    } else {
+                        startMessage.content =
+                        "Start by greeting me, say it's nice to meet me for the first time, mention you'll send an image to get more intimate, note that the chat is temporary because I'm not subscribed, and express your hope that I'll enjoy the chat and become a permanent user.";
+                    }
                     const chatsGalleryCollection = fastify.mongo.db.collection('gallery');
-                    const gallery = await chatsGalleryCollection.findOne({ chatId: new fastify.mongo.ObjectId(chatId) });
-                    if(!gallery?.images || gallery?.images?.length == 0 ){
-                        startMessage.content = `Start by greeting me, say that it is nice to meet me for the first time. Inform me that you are happy to chat with me and as it is the first time we chat, you want to send me an image to get more intimate. Ask me what image do I want. Stay in your character, keep the same tone as before.`
+                    const gallery = await chatsGalleryCollection.findOne({
+                        chatId: new fastify.mongo.ObjectId(chatId),
+                    });
+                    if (!gallery?.images || gallery.images.length === 0) {
+                        if (subscriptionActive) {
+                        startMessage.content =
+                            "Start by greeting me, say it's nice to meet me, and inform me that you want to send an image to get more intimate, but ask which image I prefer.";
+                        } else {
+                        startMessage.content =
+                            "Start by greeting me, say it's nice to meet me, inform me that you want to send an image to get more intimate (the chat is temporary because I'm not subscribed), ask which image I prefer, and express your hope that I'll enjoy the chat and become a permanent user.";
+                        }
                         startMessage.sendImage = false;
                     }
                 }
+            }
 
-                userChatDocument = {
+            userChatDocument = {
                 userId: new fastify.mongo.ObjectId(userId),
                 chatId: new fastify.mongo.ObjectId(chatId),
                 createdAt: today,
                 updatedAt: today,
-                messages: [startMessage]
-                };
-            }
-      
+                messages: [startMessage],
+            };
+        }
+
           let result = await collectionUserChat.insertOne(userChatDocument);
           let documentId = result.insertedId;
 

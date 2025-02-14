@@ -94,9 +94,9 @@ async function routes(fastify, options) {
       },
     ],
     features: {
-      en : ["Unlimited Daily Chats", "Create & Personalize Characters", "Early Access to New Features", "Generate Unlimited Images", "Access All Visuals", "Explore Endless Message Suggestions", "Generate NSFW Images"],
-      fr : ["Chats quotidiens illimités", "Créez et personnalisez des personnages", "Accès anticipé aux nouvelles fonctionnalités", "Générez des images illimitées", "Accédez à tous les visuels", "Explorez des suggestions de messages infinies", "Générez des images NSFW"],
-      ja : ["毎日無制限のチャット", "キャラクターの作成とパーソナライズ", "新機能への早期アクセス", "無制限の画像生成", "すべてのビジュアルにアクセス", "無限のメッセージ提案を探索", "NSFW 画像生成"]
+      en : ["Unlimited Daily Chats", "Create & Personalize Characters", "Early Access to New Features", "Generate Unlimited Images", "Access All Visuals", "Explore Endless Message Suggestions", "Generate NSFW Images", "Unlcock more than 10,000 images"],
+      fr : ["Chats quotidiens illimités", "Créez et personnalisez des personnages", "Accès anticipé aux nouvelles fonctionnalités", "Générez des images illimitées", "Accédez à tous les visuels", "Explorez des suggestions de messages infinies", "Générez des images NSFW", "Débloquez plus de 10 000 images"],
+      ja : ["毎日無制限のチャット", "キャラクターの作成とパーソナライズ", "新機能への早期アクセス", "無制限の画像生成", "すべてのビジュアルにアクセス", "無限のメッセージ提案を探索", "NSFW 画像生成", "10,000 枚以上の画像をアンロック"]
     }
   
 };

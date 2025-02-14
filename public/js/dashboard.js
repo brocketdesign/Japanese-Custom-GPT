@@ -218,15 +218,20 @@ $(document).ready(async function() {
                 }
             });
          };
-        // if user is not temporary
         if (!isTemporary) {
-            // Check if the user has already dismissed the popup
-            if (!localStorage.getItem('dismissedAddToHomeScreenPopup')) {
-                // Show the popup after a delay
-                setTimeout(showAddToHomeScreenPopup, 5000);
-            }
+          if (!localStorage.getItem('dismissedAddToHomeScreenPopup')) {
+              setTimeout(showAddToHomeScreenPopup, 5000);
+          }
         }
         
+    }
+
+    if (!isTemporary) {
+      if(!subscriptionStatus && !localStorage.getItem('dismissedUpgradePopup')){
+        loadPlanPage();
+        localStorage.setItem('dismissedUpgradePopup', 'true');
+        return
+      }
     }
     //checkAndRedirect();
     window.showUpgradePopup = function(limitType) {

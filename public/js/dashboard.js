@@ -656,7 +656,6 @@ window.updateChatImage = function(el) {
     data: { imageUrl },
     success: function(response) {
       updateChatBackgroundImage(imageUrl)
-      console.log(response);
     }
   });
 }
@@ -667,7 +666,20 @@ window.updateChatBackgroundImage = function(thumbnail) {
   if (currentImageUrl !== thumbnail) {
       $('#chat-container').css('background-image', `url(${thumbnail})`);
   }
+  resetPeopleChatCache(chatId);
 }
+
+window.resetPeopleChatCache = function(chatId) {
+  for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key.startsWith('peopleChatCache_')) {
+          const dataToString = localStorage.getItem(key);
+          if (!chatId || (dataToString && dataToString.includes(chatId))) {
+              localStorage.removeItem(key);
+          }
+      }
+  }
+};
 
 function handleImageSuccess(img, blob, imageUrl) {
     let objectUrl = URL.createObjectURL(blob);

@@ -1572,7 +1572,7 @@ function displaySuggestions(suggestions, uniqueId) {
 
     // Add new suggestions smoothly one by one
     suggestions.forEach((suggestion, index) => {
-        const button = $(`<button class="btn btn-light shadow m-1 rounded-pill">${suggestion}</button>`);
+        const button = $(`<button class="btn shadow m-1 rounded-pill" style="background: whitesmoke;">${suggestion}</button>`);
         button.on('click', function() {
             sendMessage(suggestion);
             $('#suggestions').empty();

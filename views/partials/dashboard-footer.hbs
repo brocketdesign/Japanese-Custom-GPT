@@ -497,14 +497,6 @@ if (urlParams.get('cancel-payment') === 'true') {
         window.history.replaceState({ path: newUrl }, '', newUrl);
     }
 }
-// Reset all localStorage values that start with 'peopleChatCache_'
-window.resetPeopleChatCache = function() {
-    for (let key in localStorage) {
-        if (key.startsWith('peopleChatCache_')) {
-            localStorage.removeItem(key);
-        }
-    }
-}
 window.showDiscovery = function() {
     if (!window.location.pathname.includes('/chat/')) {
         window.location.href = '/chat/';

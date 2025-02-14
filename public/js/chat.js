@@ -1441,10 +1441,7 @@ $(document).ready(async function() {
         const imagePreview = $(this).find('img').attr('data-src') || $(this).find('img').attr('src');
         const subscriptionStatus = user.subscriptionStatus == 'active'
 
-        if(!subscriptionStatus){
-            loadPlanPage();
-            return
-        }
+        // Allow for every user to generate images using the prompt
         // Add the prompt to the user's message to allow for image generation
         addPromptToMessage(id,imageNsfw,imagePreview);
     });

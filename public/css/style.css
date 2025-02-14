@@ -1127,29 +1127,44 @@
   font-size:54px;
   line-height:1
   }
-  
-  .onchat-off,.onchat-on {
-  display:none
+  #chat-page-list .gallery, #chat-page-list .message-count {
+    display: none;
   }
-  
-  .avatar {
-  object-fit:cover;
-  object-position:top;
-  width:35px
+
+  .chat-card-container .card-img-top {
+    transition: transform 0.3s ease-in-out;
+    transition: background-size 0.3s ease-in-out, background-position 0.3s ease-in-out;
+    background-repeat: no-repeat;
+    background-size: auto 120%;
   }
-  
+
+  .chat-card-container:hover .card-img-top {
+    transition: background-size 0.3 ease-in-out, background-position 0.3s ease-in-out;
+    background-size: auto 140% !important;
+  }
+
   .card-img-top.girls_avatar {
   object-fit:cover;
   object-position:top;
   width:100%;
   margin:auto;
   border-radius:15px;
-  height:350px;
+  height:280px;
   padding:0 5px;
   background-position:top;
-  background-size:cover
   }
   
+  .onchat-off,.onchat-on {
+    display:none
+    }
+    
+    .avatar {
+    object-fit:cover;
+    object-position:top;
+    width:35px
+    }
+  
+    
   .scroll-container {
   display:flex;
   flex-wrap:nowrap;
@@ -1527,8 +1542,9 @@
   .liked i {
   color:red
   }
-  
+
   @media (max-width: 600px) {
+
   .dropdown-menu {
   transform:translate3d(68px,36px,0px)!important
   }

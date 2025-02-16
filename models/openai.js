@@ -13,7 +13,7 @@ const apiDetails = {
   },
   novita: {
     apiUrl: 'https://api.novita.ai/v3/openai/chat/completions',
-    model: 'sao10k/l3-8b-lunaris',
+    model: 'deepseek/deepseek_v3',
     key: process.env.NOVITA_API_KEY
   },
 };

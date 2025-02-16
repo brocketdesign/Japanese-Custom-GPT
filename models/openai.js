@@ -13,19 +13,9 @@ const apiDetails = {
   },
   novita: {
     apiUrl: 'https://api.novita.ai/v3/openai/chat/completions',
-    model: 'deepseek/deepseek_v3',
-    key: process.env.NOVITA_API_KEY
-  },
-  novita_2: {
-    apiUrl: 'https://api.novita.ai/v3/openai/chat/completions',
     model: 'sao10k/l3-8b-lunaris',
     key: process.env.NOVITA_API_KEY
   },
-  venice: {
-    apiUrl: 'https://api.venice.ai/api/v1/chat/completions',
-    model:  'llama-3.1-405b', //'dolphin-2.9.2-qwen2-72b',
-    key: process.env.VENICE_API_KEY
-  }
 };
 
 let currentModel = apiDetails.novita; // Change this to switch models

@@ -1133,13 +1133,13 @@ async function routes(fastify, options) {
                             console.log('error:', error);
                         });
                     })
-                    imgMessage[0].content = `\n\nTell me how you feel, be expressive, and tell me that you are preparing an image for me.\n Do no describe the image only comment as your character would. Stay in your character, keep the same tone as previously. Chat on the subject.`.trim()
+                    imgMessage[0].content = `\n\nTell me how you feel, be expressive, and tell me that you are preparing an image for me.\n Do no describe the image only comment as your character would. Stay in your character, keep the same tone as previously. Chat on the subject. Respond in the language we were talking until now.`.trim()
                     currentUserMessage.name = 'context'
                 }
                
             }else{
                 genImage.image_request = false
-                imgMessage[0].content = `\n\n I asked for an other image but I am not a subscribed member.\n Tell me that I need to subscribe to Lamix Premium in order to receive unlimited images, even hot images. Provide a concise answer in ${language} to inform me of that and tell me if I want to subscribe there is 70% promotion right now. Stay in your character, keep the same tone as previously.`.trim();
+                imgMessage[0].content = `\n\n I asked for an other image but I am not a subscribed member.\n Tell me that I need to subscribe to Lamix Premium in order to receive unlimited images, even hot images. Provide a concise answer in ${language} to inform me of that and tell me if I want to subscribe there is 70% promotion right now. Stay in your character, keep the same tone as previously.  Respond in the language we were talking until now.`.trim();
                 currentUserMessage.name = 'context'
             }
 

@@ -503,7 +503,11 @@ $(document).ready(async function() {
             displayImageThumb(imageUrl)
         });
     }
-    function displayImageThumb(imageUrl){
+    function displayImageThumb(imageUrl,origineUserChatId = null){
+        const messageContainer = $(`#chatContainer[data-id=${origineUserChatId}]`)
+        if(origineUserChatId && messageContainer.length == 0){
+            return
+        }
         var card = $(`
             <div 
             onclick="showImagePreview(this)"
@@ -1346,7 +1350,7 @@ $(document).ready(async function() {
                 const image = messageElement.find('img[data-id="'+imageId+'"]');
                 blurImage(image)
             }else{
-                displayImageThumb(imageUrl)
+                displayImageThumb(imageUrl,origineUserChatId)
             }
         } 
 

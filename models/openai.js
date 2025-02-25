@@ -18,7 +18,7 @@ const apiDetails = {
   },
 };
 
-let currentModel = apiDetails.novita; // Change this to switch models
+let currentModel = apiDetails.novita;
 
 const moderateText = async (text) => {
   try {
@@ -159,6 +159,7 @@ const checkImageRequest = async (messages) => {
   const suggestionSchema = z.object({
     suggestions: z.array(z.string())
   });
+
 async function generatePromptSuggestions(messages,chatDescription,language) {
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -171,14 +172,9 @@ async function generatePromptSuggestions(messages,chatDescription,language) {
   const updatedMessages = [
     { role: 'system', content: `
       You are a creative assistant.
-      Return exactly 3 unique suggestions in ${language} as a JSON object with a "suggestions" key.
-      Your suggestions must include:
-      1. An erotic image suggestion relevant to the user's chat and the character description.
-      2. An erotic chat suggestion to make the conversation more engaging.
-      3. An interaction improvement suggestion to enhance the user's experience.
+      Return exactly 3 unique image suggestions in ${language} as a JSON object with a "suggestions" key.
       Make them short and relevant to the user's chat.
       You must provide suggestions from the user's perspective and suitable for a chat.
-      Example: ["send an image of you smiling", "what did you do today", "let's play together"].
       Respond in ${language}`.replace(/^\s+/gm, '').trim()
     },
     {
@@ -204,7 +200,7 @@ async function generatePromptSuggestions(messages,chatDescription,language) {
   }
 }
 
-  async function generatePromptTitle(prompt,language) {
+async function generatePromptTitle(prompt,language) {
     const messages = [
           {
             role: "system",

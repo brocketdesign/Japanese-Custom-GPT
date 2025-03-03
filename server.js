@@ -68,8 +68,8 @@ cron.schedule('0 0 * * *', async () => {
 });
 
 // Generate new chats daily for each model
-cron.schedule('0 3 * * *', async () => {
-  console.log('Running daily chat generation task...');
+cron.schedule('0 * * * *', async () => {
+  console.log('Running hourly chat generation task...');
   const db = fastify.mongo.db;
   
   try {

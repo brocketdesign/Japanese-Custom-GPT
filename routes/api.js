@@ -18,7 +18,8 @@ const {
     sanitizeMessages,
     fetchTags,
     processPromptToTags,
-    saveChatImageToDB
+    saveChatImageToDB,
+    checkUserAdmin
 } = require('../models/tool');
 const axios = require('axios');
 const OpenAI = require("openai");
@@ -145,7 +146,7 @@ async function routes(fastify, options) {
         const existingChat = await chatsCollection.findOne({ _id: chatId });
         
         if (existingChat) {
-        if (existingChat.userId.equals(userId)) {
+        if (existingChat?.userId?.equals(userId)) {
             console.log('Chat exists for user:', userId);
           return reply.code(200).send({ message: 'Chat exists', chat: existingChat });
         } else {
@@ -795,78 +796,78 @@ async function routes(fastify, options) {
         const db = fastify.mongo.db;
         
         const task = await db.collection('tasks').findOne({ taskId });
-    
+
         if (!task) {
             return reply.code(404).send({ error: 'Task not found' });
         }
-    
+
         const refundAmount = task.type === 'nsfw' ? 20 : 10;
 
         const user = await db.collection('users').findOne({ _id: new ObjectId(task.userId) });
-    
+
         if (!user) {
             return reply.code(404).send({ error: 'User not found' });
         }
-    
+
         console.log(`Refund ${refundAmount} coins to user ${task.userId}`)
         const updatedCoins = (user.coins || 0) + refundAmount;
-    
+
         await db.collection('users').updateOne(
             { _id: new ObjectId(task.userId) },
             { $set: { coins: updatedCoins } }
         );
-    
+
         return reply.send({ message: 'Refund processed', refundedAmount: refundAmount });
     });
     
     fastify.post('/api/refund-type/:imageType', async (request, reply) => {
         const { imageType } = request.params;
         const db = fastify.mongo.db;
-    
+
         const refundAmount = imageType === 'nsfw' ? 20 : 10;
 
         let user = request.user;
         const userId = user._id
         user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-    
+
         if (!user) {
             return reply.code(404).send({ error: 'User not found' });
         }
-    
+
         console.log(`Refund ${refundAmount} coins to user ${userId}`)
         const updatedCoins = (user.coins || 0) + refundAmount;
-    
+
         await db.collection('users').updateOne(
             { _id: new ObjectId(task.userId) },
             { $set: { coins: updatedCoins } }
         );
-    
+
         return reply.send({ message: 'Refund processed', refundedAmount: refundAmount });
     });
     
     fastify.post('/api/purchaseItem', async (request, reply) => {
         const { itemId, itemName, itemPrice, userId, chatId } = request.body;
-    
+
         try {
-    
+
             // Fetch the buyer (user making the purchase)
             const user = await fastify.mongo.db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-    
+
             if (!user) {
                 console.log('User not found:', userId);
                 return reply.code(404).send({ error: 'User not found' });
             }
-    
-    
+
+
             // Create new item record
             const newItem = {
                 itemName: itemName,
                 purchaseDate: new Date(),
                 userId: userId
             };
-    
+
             const itemResult = await fastify.mongo.db.collection('items').insertOne(newItem);
-    
+
             // Update buyer's data (deduct coins and add item to purchasedItems)
             await fastify.mongo.db.collection('users').updateOne(
                 { _id: new fastify.mongo.ObjectId(userId) },
@@ -879,20 +880,20 @@ async function routes(fastify, options) {
                     }
                 }
             );
-    
+
             console.log(`User ${userId} updated with new coin balance and purchased item`);
-    
+
             // Fetch the chat info to get the seller (chat owner)
             const chat = await fastify.mongo.db.collection('chats').findOne({ _id: new fastify.mongo.ObjectId(chatId) });
-    
+
             if (!chat) {
                 console.log('Chat not found:', chatId);
                 return reply.code(404).send({ error: 'Chat not found' });
             }
-    
+
             const chatOwnerId = chat.userId;
             console.log(`Chat owner found: ${chatOwnerId}`);
-    
+
             /*
             // Update seller's (chat owner's) coins if the buyer is not the seller
             if (chatOwnerId.toString() !== userId.toString()) {
@@ -905,7 +906,7 @@ async function routes(fastify, options) {
                 console.log('Buyer is the chat owner, no credit given to themselves.');
             }
             */
-    
+
             reply.send({ success: true });
         } catch (error) {
             console.log('Error during purchase:', error);
@@ -917,9 +918,9 @@ async function routes(fastify, options) {
         let command = JSON.parse(request.body.command);
 
          try {
-    
+
             const user = await fastify.mongo.db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-    
+
             if (!user) {
                 console.log('User not found:', userId);
                 return reply.code(404).send({ error: 'User not found' });
@@ -942,16 +943,16 @@ async function routes(fastify, options) {
     
     fastify.post('/api/submit-email', async (request, reply) => {
         const { email, userId } = request.body;
-    
+
         const collection = fastify.mongo.db.collection('userData');
-    
+
         const userObj = await collection.findOne({ userId });
-    
+
         if (!userObj) {
             console.log('User not found');
             return reply.status(500).send({ error: 'User not found' });
         }
-    
+
         // Check if the email already exists
         const existingEmail = await collection.findOne({ email });
         if (existingEmail) {
@@ -961,11 +962,11 @@ async function routes(fastify, options) {
         const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
         const query = { userId };
         const update = { $set: { email, createdAt: dateObj } };
-    
+
         try {
             await collection.updateOne(query, update);
             console.log('User email saved:', { userId, email });
-    
+
             return reply.send({ status: 'success' });
         } catch (error) {
             console.error('Failed to save user email:', error);
@@ -974,21 +975,21 @@ async function routes(fastify, options) {
     });
     fastify.post('/api/feedback', async (request, reply) => {
         const { reason, userId } = request.body;
-    
+
         if (!userId || !reason) {
             return reply.status(400).send({ error: 'UserId and reason are required' });
         }
-    
+
         const collection = fastify.mongo.db.collection('userData');
-    
+
         const query = { userId: userId };
         const update = { $set: { reason: reason } };
-    
+
         try {
             await collection.updateOne(query, update);
-    
+
             console.log('User reason updated:', { userId: userId, reason: reason });
-    
+
             return reply.send({ message: 'Feedback saved successfully' });
         } catch (error) {
             console.error('Failed to save user feedback:', error);
@@ -1057,7 +1058,7 @@ async function routes(fastify, options) {
           let userData = await getUserChatData(db, userId, userChatId)
           const subscriptionStatus = userInfo.subscriptionStatus == 'active' ? true : false
           if (!userData) { return reply.status(404).send({ error: 'User data not found' }) }
-      
+          const isAdmin = await checkUserAdmin(fastify, userId)
           const chatDocument = await getChatDocument(db, chatId)
           const chatDescription = chatDataToString(chatDocument)
           const characterDescription = chatDocument.enhancedPrompt || chatDocument?.imageDescription || chatDocument.characterPrompt;
@@ -1112,7 +1113,7 @@ async function routes(fastify, options) {
             if(userInfo.subscriptionStatus == 'active' || (userInfo.subscriptionStatus !== 'active' && all_tasks.length < 5)){
                 const imageId = Math.random().toString(36).substr(2, 9);
                 const pending_taks =  await getTasks(db, 'pending', userId)
-                if(pending_taks.length > 3){
+                if(pending_taks.length > 5 && !isAdmin){
                   fastify.sendNotificationToUser(userId, 'showNotification', { message:request.translations.too_many_pending_images , icon:'warning' });
                 }else{
                     fastify.sendNotificationToUser(userId, 'addIconToLastUserMessage')
@@ -2529,84 +2530,6 @@ async function routes(fastify, options) {
             }
           });
           
-    fastify.post('/api/generate-model-chat', async (request, reply) => {
-        try {
-            const { modelId } = request.body;
-            const user = request.user;
-            
-            // Check if the user is an admin
-            const isAdmin = await checkUserAdmin(fastify, user._id);
-            if (!isAdmin) {
-                return reply.status(403).send({ error: 'Access denied. Admin privileges required.' });
-            }
-            
-            const db = fastify.mongo.db;
-            
-            // Find the model in the database
-            const modelsCollection = db.collection('myModels');
-            let model;
-            
-            if (modelId) {
-                // Generate for a specific model
-                model = await modelsCollection.findOne({ modelId: modelId });
-                
-                if (!model) {
-                    return reply.status(404).send({ error: 'Model not found' });
-                }
-                
-                // Get prompt from Civitai
-                const prompt = await fetchRandomCivitaiPrompt(model.model);
-                
-                if (!prompt) {
-                    return reply.status(404).send({ error: 'No suitable prompt found for this model' });
-                }
-                
-                // Create a new chat - Pass current user for image generation
-                const chat = await createModelChat(db, model, prompt, request.lang, fastify, user);
-                
-                if (!chat) {
-                    return reply.status(500).send({ error: 'Failed to create chat for model' });
-                }
-                
-                return reply.send({ success: true, chat });
-            } else {
-                // Generate for all models
-                const models = await modelsCollection.find({}).toArray();
-                const results = [];
-                
-                for (const model of models) {
-                    try {
-                        // Get prompt from Civitai
-                        const prompt = await fetchRandomCivitaiPrompt(model.model);
-                        
-                        if (!prompt) {
-                            results.push({ model: model.model, status: 'failed', reason: 'No suitable prompt found' });
-                            continue;
-                        }
-                        
-                        // Create a new chat - Pass current user for image generation
-                        const chat = await createModelChat(db, model, prompt, request.lang, fastify, user);
-                        
-                        if (!chat) {
-                            results.push({ model: model.model, status: 'failed', reason: 'Failed to create chat' });
-                        } else {
-                            results.push({ model: model.model, status: 'success', chatId: chat._id });
-                        }
-                        
-                        // Wait longer between requests to allow for image generation
-                        await new Promise(resolve => setTimeout(resolve, 5000));
-                    } catch (error) {
-                        results.push({ model: model.model, status: 'error', error: error.message });
-                    }
-                }
-                
-                return reply.send({ success: true, results });
-            }
-        } catch (error) {
-            console.error('Error generating model chat:', error);
-            return reply.status(500).send({ error: 'Internal server error', details: error.message });
-        }
-    });
 
 }
 

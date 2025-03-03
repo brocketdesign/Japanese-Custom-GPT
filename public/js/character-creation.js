@@ -611,7 +611,7 @@ window.generateCharacterImage = function( url, nsfw) {
     colDiv.append(imgElement);
     $('#imageContainer').append(colDiv);
 
-    getTimer(chatCreationId)
+    //getTimer(chatCreationId)
 }
 
 // After the image is generated, save the image and redirect to the chat

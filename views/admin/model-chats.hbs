@@ -27,6 +27,7 @@
               <table class="table table-hover">
                 <thead>
                   <tr>
+                    <th>Thumbnail</th>
                     <th>Model</th>
                     <th>Style</th>
                     <th>Version</th>
@@ -37,6 +38,9 @@
                 <tbody>
                   {{#each models}}
                     <tr>
+                      <td>
+                        <img src="{{image}}" alt="{{model}}" class="rounded-circle img-thumbnail" style="width: 60px;height:60px; object-fit: cover;">
+                      </td>
                       <td>{{model}}</td>
                       <td>{{style}}</td>
                       <td>{{version}}</td>
@@ -70,6 +74,7 @@
               <table class="table table-hover">
                 <thead>
                   <tr>
+                    <th>Thumbnail</th>
                     <th>Character Name</th>
                     <th>Model</th>
                     <th>Created</th>
@@ -79,6 +84,9 @@
                 <tbody>
                   {{#each recentChats}}
                     <tr>
+                      <td>
+                        <img src="{{chatImageUrl}}" alt="{{model}}" class="rounded-circle img-thumbnail" style="width: 60px;height:60px; object-fit: cover;">
+                      </td>
                       <td>{{name}}</td>
                       <td>{{imageModel}}</td>
                       <td>{{formatDate createdAt}}</td>
@@ -182,13 +190,10 @@
           showCloseButton: true,
           closeButtonHtml: '&times;'
         }).then((result) => {
-          if (result.isDismissed && !result.isConfirmed && !result.isDenied) {
-            // User closed the dialog without making a choice
-            return;
-          }
-          
-          const nsfw = result.isConfirmed;
-          
+          let nsfw = false;
+          if(result.isConfirmed){
+            nsfw = true;
+          }          
           // Show loading indicator
           $('#loadingModal').modal('show');
           btn.prop('disabled', true);
@@ -215,7 +220,6 @@
                   icon: 'success',
                   confirmButtonText: 'Great!'
                 }).then(() => {
-                  location.reload();
                 });
               } else {
                 Swal.fire({
@@ -252,46 +256,59 @@
           cancelButtonText: 'Cancel'
         }).then((result) => {
           if (result.isConfirmed) {
-            // Show loading indicator
-            $('#loadingModal').modal('show');
-            
-            $.ajax({
-              url: '/api/generate-model-chat',
-              type: 'POST',
-              data: {},
-              dataType: 'json',
-              success: function(data) {
-                $('#loadingModal').modal('hide');
+            // Ask user about NSFW setting first
+            Swal.fire({
+              title: 'NSFW Setting',
+              text: 'Include NSFW content in generated chats?',
+              icon: 'question',
+              showCancelButton: true,
+              confirmButtonText: 'Yes, include NSFW',
+              cancelButtonText: 'No, SFW only'
+            }).then((nsfwResult) => {
+              if (!nsfwResult.isDismissed) {
+                const nsfw = nsfwResult.isConfirmed;
+                // Show loading indicator
+                $('#loadingModal').modal('show');
                 
-                if (data.success) {
-                  const successes = data.results.filter(r => r.status === 'success').length;
-                  const failures = data.results.filter(r => r.status !== 'success').length;
-                  
-                  Swal.fire({
-                    title: 'Generation Complete',
-                    text: `Successfully generated ${successes} chats. Failed: ${failures}.`,
-                    icon: 'success',
-                    confirmButtonText: 'Great!'
-                  }).then(() => {
-                    location.reload();
-                  });
-                } else {
-                  Swal.fire({
-                    title: 'Error!',
-                    text: data.error || 'Failed to generate chats',
-                    icon: 'error',
-                    confirmButtonText: 'OK'
-                  });
-                }
-              },
-              error: function(xhr) {
-                $('#loadingModal').modal('hide');
-                
-                Swal.fire({
-                  title: 'Error!',
-                  text: xhr.responseJSON?.error || 'An unknown error occurred',
-                  icon: 'error',
-                  confirmButtonText: 'OK'
+                $.ajax({
+                  url: '/admin/model-chats/generate',
+                  type: 'POST',
+                  data: { nsfw },
+                  dataType: 'json',
+                  success: function(data) {
+                    $('#loadingModal').modal('hide');
+                    
+                    if (data.success) {
+                      const successes = data.results.filter(r => r.status === 'success').length;
+                      const failures = data.results.filter(r => r.status !== 'success').length;
+                      
+                      Swal.fire({
+                        title: 'Generation Complete',
+                        text: `Successfully generated ${successes} chats. Failed: ${failures}.`,
+                        icon: 'success',
+                        confirmButtonText: 'Great!'
+                      }).then(() => {
+                        location.reload();
+                      });
+                    } else {
+                      Swal.fire({
+                        title: 'Error!',
+                        text: data.error || 'Failed to generate chats',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                      });
+                    }
+                  },
+                  error: function(xhr) {
+                    $('#loadingModal').modal('hide');
+                    
+                    Swal.fire({
+                      title: 'Error!',
+                      text: xhr.responseJSON?.error || 'An unknown error occurred',
+                      icon: 'error',
+                      confirmButtonText: 'OK'
+                    });
+                  }
                 });
               }
             });

@@ -1,4 +1,3 @@
-
 const { generatePromptTitle } = require('./openai')
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const { ObjectId } = require('mongodb');
@@ -362,6 +361,7 @@ async function checkTaskStatus(taskId, fastify) {
     if (imageData.nsfw_detection_result && imageData.nsfw_detection_result.valid && imageData.nsfw_detection_result.confidence >= 50) {
       nsfw = true;
     }
+
     const saveResult = await saveImageToDB({
       taskId,
       userId: task.userId,
@@ -375,6 +375,7 @@ async function checkTaskStatus(taskId, fastify) {
       nsfw,
       fastify
     });
+
     return { nsfw, imageId: saveResult.imageId, imageUrl: imageData.imageUrl, prompt: task.prompt, title: task.title };
   }));
 
@@ -507,11 +508,6 @@ async function updateTitle({ taskId, newTitle, fastify, userId, chatId, placehol
 async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title, imageUrl, aspectRatio, blurredImageUrl = null, nsfw = false, fastify}) {
     const db = fastify.mongo.db;
     try {
-
-      if (!userChatId || !ObjectId.isValid(userChatId)) {
-        return { imageUrl };
-      }
-      
       const chatsGalleryCollection = db.collection('gallery');
 
       // Check if the image has already been saved for this task
@@ -551,13 +547,17 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
         },
         { upsert: true }
       );
-  
+
       const chatsCollection = db.collection('chats');
       await chatsCollection.updateOne(
         { _id: new ObjectId(chatId) },
         { $inc: { imageCount: 1 } }
       );
   
+      if (!userChatId || !ObjectId.isValid(userChatId)) {
+        return { imageUrl };
+      }
+
       const userDataCollection = db.collection('userChat');
       const userData = await userDataCollection.findOne({ 
         userId: new ObjectId(userId), 
@@ -583,8 +583,9 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
       return { imageId, imageUrl };
   
     } catch (error) {
-      console.error(error);
-      throw new Error('An error occurred while saving the image');
+      console.log(error);
+      console.log('Error saving image to DB:', error.message);
+      return false
     }
   }
 
@@ -633,5 +634,5 @@ async function checkImageDescription(db, chatId) {
     checkImageDescription,
     getTasks,
     deleteOldTasks,
-    deleteAllTasks
+    deleteAllTasks,
   };

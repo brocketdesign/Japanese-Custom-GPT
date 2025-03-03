@@ -513,34 +513,69 @@ const modelCardTemplate = hbs.compile(`
       const { modelId, nsfw } = request.body;
       const db = fastify.mongo.db;
       
-      // Find the model in the database
-      const modelsCollection = db.collection('myModels');
-      const model = await modelsCollection.findOne({ modelId });
-      
-      if (!model) {
-        return reply.status(404).send({ error: 'Model not found' });
-      }
-      
-      // Get prompt from Civitai
-      const civitaiData = await fetchRandomCivitaiPrompt(model.model,nsfw);
+      // If modelId is provided, generate chat for a specific model
+      if (modelId) {
+        // Find the model in the database
+        const modelsCollection = db.collection('myModels');
+        const model = await modelsCollection.findOne({ modelId });
+        
+        if (!model) {
+          return reply.status(404).send({ error: 'Model not found' });
+        }
+        
+        // Get prompt from Civitai
+        const civitaiData = await fetchRandomCivitaiPrompt(model.model, nsfw);
 
-      if (!civitaiData) {
-        return reply.status(404).send({ error: 'No suitable prompt found for this model' });
-      }
-      
-      // Create a new chat - Pass the current user for image generation
-      const chat = await createModelChat(db, model, civitaiData, request.lang, fastify, request.user);
+        if (!civitaiData) {
+          return reply.status(404).send({ error: 'No suitable prompt found for this model' });
+        }
+        
+        // Create a new chat - Pass the current user for image generation
+        const chat = await createModelChat(db, model, civitaiData, request.lang, fastify, request.user);
 
-      if (!chat) {
-        return reply.status(500).send({ error: 'Failed to create chat for model' });
+        if (!chat) {
+          return reply.status(500).send({ error: 'Failed to create chat for model' });
+        }
+        // Add civitaiData to the chat
+        chat.civitaiData = civitaiData;
+        return reply.send({ success: true, chat });
+      } else {
+        // Generate for all models
+        const modelsCollection = db.collection('myModels');
+        const models = await modelsCollection.find({}).toArray();
+        const results = [];
+        
+        for (const model of models) {
+          try {
+            // Get prompt from Civitai
+            const prompt = await fetchRandomCivitaiPrompt(model.model, nsfw);
+            
+            if (!prompt) {
+              results.push({ model: model.model, status: 'failed', reason: 'No suitable prompt found' });
+              continue;
+            }
+            
+            // Create a new chat - Pass current user for image generation
+            const chat = await createModelChat(db, model, prompt, request.lang, fastify, request.user);
+            
+            if (!chat) {
+              results.push({ model: model.model, status: 'failed', reason: 'Failed to create chat' });
+            } else {
+              results.push({ model: model.model, status: 'success', chatId: chat._id });
+            }
+            
+            // Wait longer between requests to allow for image generation
+            await new Promise(resolve => setTimeout(resolve, 5000));
+          } catch (error) {
+            results.push({ model: model.model, status: 'error', error: error.message });
+          }
+        }
+        
+        return reply.send({ success: true, results });
       }
-      // Add civitaiData to the chat
-      chat.civitaiData = civitaiData
-      return reply.send({ success: true, chat });
-      
     } catch (error) {
       console.error('Error generating model chat:', error);
-      return reply.status(500).send({ error: 'Internal server error' });
+      return reply.status(500).send({ error: 'Internal server error', details: error.message });
     }
   });
   

@@ -452,8 +452,8 @@ async function routes(fastify, options) {
           { $project: { _id: 0, image: '$images', chatId: 1 } }  // Project image and chatId
         ])
         .toArray()
-  
-      // Get total image count for pagination info
+
+        // Get total image count for pagination info
       const totalImagesCount = await chatsGalleryCollection
         .aggregate([
           { $match: { chatId } },

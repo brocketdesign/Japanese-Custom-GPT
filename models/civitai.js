@@ -31,8 +31,10 @@ async function fetchRandomCivitaiPrompt(modelName, nsfw = false) {
     const baseModelName = modelName.replace(/\.safetensors$/, '').replace(/v\d+/, '').trim();
     
     // Configure the API request
-    const nsfwParam = nsfw ? '&nsfw=true' : '&nsfw=false';
-    const url = `https://civitai.com/api/v1/images?limit=30&modelVersionName=${encodeURIComponent(baseModelName)}${nsfwParam}`;
+    const nsfwParam = nsfw == 'true' ? '&nsfw=true' : '&nsfw=false';
+    // Random limit from 30 to 100
+    const limit = Math.floor(Math.random() * 71) + 30;
+    const url = `https://civitai.com/api/v1/images?limit=${limit}&modelVersionName=${encodeURIComponent(baseModelName)}${nsfwParam}`;
     
     console.log(`Fetching Civitai prompts for model: ${baseModelName}`);
     console.log(`Request URL: ${url}`);
@@ -50,12 +52,23 @@ async function fetchRandomCivitaiPrompt(modelName, nsfw = false) {
     }
     
     // Select a random prompt from the results
+    console.log(`Found ${response.data.items.length} prompts for model: ${baseModelName}`);
     const randomIndex = Math.floor(Math.random() * response.data.items.length);
+    console.log(`Selected prompt index: ${randomIndex}`);
     const selectedItem = response.data.items[randomIndex];
-    
+    function processString(input) { 
+        try {
+            return [...new Set(input.slice(0, 900).split(',').map(s => s.trim()))].join(', '); 
+        } catch (error) {
+            console.error('Error processing string:', error);
+            console.log({input})
+            return input;
+        }
+    }
+    const processedPrompt = processString(selectedItem.meta?.prompt || '');
     return {
       imageUrl: selectedItem.url,
-      prompt: selectedItem.meta?.prompt || '',
+      prompt: processedPrompt || '',
       negativePrompt: selectedItem.meta?.negativePrompt || '',
       model: selectedItem.meta?.Model || baseModelName,
       sampler: selectedItem.meta?.sampler || 'Euler a',
@@ -218,7 +231,7 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
           chatId: chatId,
           userChatId: null, // No user chat ID for system-generated images
           imageType: imageType,
-          image_num: 1,
+          image_num: 2, // Generate 2 images for system-generated chats
           chatCreation: true,
           placeholderId: chatId.toString(),
           translations: {

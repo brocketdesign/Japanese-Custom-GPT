@@ -36,4 +36,39 @@ module.exports = function registerHelpers() {
   handlebars.registerHelper('capitalize', (str) => 
     (typeof str !== 'string' ? '' : str.charAt(0).toUpperCase() + str.slice(1))
   );
+  handlebars.registerHelper('ifEquals', function(arg1, arg2, options) {
+    return (arg1 === arg2) ? options.fn(this) : options.inverse(this);
+  });
+
+  handlebars.registerHelper('ifNotEquals', function(arg1, arg2, options) {
+    return (arg1 !== arg2) ? options.fn(this) : options.inverse(this);
+  });
+
+  handlebars.registerHelper('getPaymentAmount', function(product_id) {
+    switch (product_id) {
+      case 'com.cryptoinfojapan.aidate.monthly':
+        return 990;
+      case 'com.cryptoinfojapan.aidate.yearly':
+        return 9900;
+      case 'com.cryptoinfojapan.aidate.monthly.promo':
+        return 390;
+      case 'com.cryptoinfojapan.aidate.yearly.promo':
+        return 3900;
+      default:
+        return 0;
+    }
+  });
+
+  handlebars.registerHelper('formatDate', function(date) {
+    if (!date) return '';
+    
+    const dateObj = new Date(date);
+    return dateObj.toLocaleDateString('ja-JP', {
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  });
 };

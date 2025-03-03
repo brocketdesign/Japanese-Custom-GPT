@@ -1902,7 +1902,10 @@ async function routes(fastify, options) {
           }          
       
           if (style) {
-            query.imageStyle = style;
+            query.$or = [
+              { imageStyle: { $regex: style, $options: 'i' } },
+              { imageStyle: { $exists: false } }
+            ];
           }
       
           if (model) {
@@ -2526,6 +2529,85 @@ async function routes(fastify, options) {
             }
           });
           
+    fastify.post('/api/generate-model-chat', async (request, reply) => {
+        try {
+            const { modelId } = request.body;
+            const user = request.user;
+            
+            // Check if the user is an admin
+            const isAdmin = await checkUserAdmin(fastify, user._id);
+            if (!isAdmin) {
+                return reply.status(403).send({ error: 'Access denied. Admin privileges required.' });
+            }
+            
+            const db = fastify.mongo.db;
+            
+            // Find the model in the database
+            const modelsCollection = db.collection('myModels');
+            let model;
+            
+            if (modelId) {
+                // Generate for a specific model
+                model = await modelsCollection.findOne({ modelId: modelId });
+                
+                if (!model) {
+                    return reply.status(404).send({ error: 'Model not found' });
+                }
+                
+                // Get prompt from Civitai
+                const prompt = await fetchRandomCivitaiPrompt(model.model);
+                
+                if (!prompt) {
+                    return reply.status(404).send({ error: 'No suitable prompt found for this model' });
+                }
+                
+                // Create a new chat - Pass current user for image generation
+                const chat = await createModelChat(db, model, prompt, request.lang, fastify, user);
+                
+                if (!chat) {
+                    return reply.status(500).send({ error: 'Failed to create chat for model' });
+                }
+                
+                return reply.send({ success: true, chat });
+            } else {
+                // Generate for all models
+                const models = await modelsCollection.find({}).toArray();
+                const results = [];
+                
+                for (const model of models) {
+                    try {
+                        // Get prompt from Civitai
+                        const prompt = await fetchRandomCivitaiPrompt(model.model);
+                        
+                        if (!prompt) {
+                            results.push({ model: model.model, status: 'failed', reason: 'No suitable prompt found' });
+                            continue;
+                        }
+                        
+                        // Create a new chat - Pass current user for image generation
+                        const chat = await createModelChat(db, model, prompt, request.lang, fastify, user);
+                        
+                        if (!chat) {
+                            results.push({ model: model.model, status: 'failed', reason: 'Failed to create chat' });
+                        } else {
+                            results.push({ model: model.model, status: 'success', chatId: chat._id });
+                        }
+                        
+                        // Wait longer between requests to allow for image generation
+                        await new Promise(resolve => setTimeout(resolve, 5000));
+                    } catch (error) {
+                        results.push({ model: model.model, status: 'error', error: error.message });
+                    }
+                }
+                
+                return reply.send({ success: true, results });
+            }
+        } catch (error) {
+            console.error('Error generating model chat:', error);
+            return reply.status(500).send({ error: 'Internal server error', details: error.message });
+        }
+    });
+
 }
 
 module.exports = routes;

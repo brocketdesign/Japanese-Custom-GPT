@@ -5,6 +5,7 @@ const  { checkUserAdmin } = require('../models/tool')
 const cleanupNonRegisteredUsers = require('../models/cleanupNonRegisteredUsers');
 const axios = require('axios');
 const hbs = require('handlebars');
+const { fetchRandomCivitaiPrompt, createModelChat } = require('../models/civitai');
 
 const fetchModels = async (query = '', cursor = '') => {
   try {
@@ -400,6 +401,147 @@ const modelCardTemplate = hbs.compile(`
     const db = fastify.mongo.db;
     const models = await db.collection('myModels').find({}).toArray();
     return res.view('/admin/models',{user,models});
+  });
+
+  fastify.get('/admin/model-chats', async (request, reply) => {
+    try {
+      const isAdmin = await checkUserAdmin(fastify, request.user._id);
+      if (!isAdmin) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+
+      const db = fastify.mongo.db;
+      const chatsCollection = db.collection('chats');
+      const modelsCollection = db.collection('myModels');
+      const translations = request.translations;
+
+      // Get all models
+      const models = await modelsCollection.find({}).toArray();
+      
+      // Get system generated chats from the past week
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      
+      const recentChats = await chatsCollection.find({
+        systemGenerated: true,
+        chatImageUrl: { $exists: true },
+        createdAt: { $gte: oneWeekAgo }
+      }).sort({ createdAt: -1 }).toArray();
+      
+      // Group chats by model
+      const chatsByModel = {};
+      for (const chat of recentChats) {
+        if (!chatsByModel[chat.imageModel]) {
+          chatsByModel[chat.imageModel] = [];
+        }
+        chatsByModel[chat.imageModel].push(chat);
+      }
+
+      // Add model data
+      const modelsWithChats = models.map(model => {
+        return {
+          ...model,
+          chats: chatsByModel[model.model] || [],
+          hasRecentChat: (chatsByModel[model.model] || []).some(chat => {
+            const chatDate = new Date(chat.createdAt);
+            const today = new Date();
+            return chatDate.toDateString() === today.toDateString();
+          })
+        };
+      });
+
+      return reply.view('/admin/model-chats', {
+        title: translations.admin_model_chats?.title || 'Model Chats',
+        user: request.user,
+        models: modelsWithChats,
+        recentChats,
+        translations
+      });
+    } catch (error) {
+      console.error('Error loading model chats:', error);
+      return reply.status(500).send({ error: 'Internal Server Error' });
+    }
+  });
+
+  // Route to get a prompt preview from Civitai for a model
+  fastify.post('/api/preview-prompt', async (request, reply) => {
+    try {
+      const isAdmin = await checkUserAdmin(fastify, request.user._id);
+      if (!isAdmin) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+
+      const { modelId, modelName } = request.body;
+      let modelNameToSearch = modelName;
+      
+      // If modelId is provided, look up the actual model name from the database
+      if (modelId) {
+        const db = fastify.mongo.db;
+        const modelsCollection = db.collection('myModels');
+        const model = await modelsCollection.findOne({ modelId });
+        if (model) {
+          modelNameToSearch = model.model;
+        }
+      }
+      
+      if (!modelNameToSearch) {
+        return reply.status(400).send({ error: 'Model name is required' });
+      }
+      
+      // Fetch a random prompt from Civitai
+      const prompt = await fetchRandomCivitaiPrompt(modelNameToSearch);
+      
+      if (!prompt) {
+        return reply.status(404).send({ error: 'No suitable prompt found for this model' });
+      }
+      
+      // Return the prompt with its image URL
+      return reply.send({ prompt });
+    } catch (error) {
+      console.error('Error fetching preview prompt:', error);
+      return reply.status(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  fastify.post('/admin/model-chats/generate', async (request, reply) => {
+    try {
+      const isAdmin = await checkUserAdmin(fastify, request.user._id);
+      if (!isAdmin) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+
+      const { modelId, nsfw } = request.body;
+      const db = fastify.mongo.db;
+      
+      // Find the model in the database
+      const modelsCollection = db.collection('myModels');
+      const model = await modelsCollection.findOne({ modelId });
+      
+      if (!model) {
+        return reply.status(404).send({ error: 'Model not found' });
+      }
+      
+      // Get prompt from Civitai
+      const civitaiData = await fetchRandomCivitaiPrompt(model.model,nsfw);
+
+      if (!civitaiData) {
+        return reply.status(404).send({ error: 'No suitable prompt found for this model' });
+      }
+      
+      // Create a new chat - Pass the current user for image generation
+      const chat = await createModelChat(db, model, civitaiData, request.lang, fastify, request.user);
+      console.log('Chat created:', chat);
+      if (!chat) {
+        return reply.status(500).send({ error: 'Failed to create chat for model' });
+      }
+      // Add civitaiData to the chat
+      chat.civitaiData = civitaiData
+      return reply.send({ success: true, chat });
+      
+    } catch (error) {
+      console.error('Error generating model chat:', error);
+      return reply.status(500).send({ error: 'Internal server error' });
+    }
   });
   
 }    

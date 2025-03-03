@@ -49,10 +49,10 @@ const default_prompt = {
     height: 1216,
     sampler_name: "Euler a",
     guidance_scale: 7.5,
-    steps: 30,
+    steps: 20,
     image_num: 1,
     clip_skip: 0,
-    strength: 0.9,
+    strength: 0.6,
     seed: -1,
     loras: [],
   }

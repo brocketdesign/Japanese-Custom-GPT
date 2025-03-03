@@ -1,5 +1,30 @@
 {
   "lang":"ja",  
+
+  "admin_model_chats": {
+    "title": "自動キャラクター",
+    "recent_chats": "最近のチャット",
+    "models": "モデル",
+    "name": "名前",
+    "model": "モデル",
+    "date": "作成日",
+    "style": "スタイル",
+    "recent_chats_count": "最近のチャット数",
+    "today_chat": "今日のチャット",
+    "actions": "アクション",
+    "generate": "生成",
+    "generating_chat": "チャットを生成中",
+    "fetching_prompt": "プロンプトを取得中",
+    "preview": "プレビュー",
+    "source": "ソース",
+    "prompt": "プロンプト",
+    "no_prompt": "このモデルに適切なプロンプトが見つかりませんでした",
+    "error_fetching": "プロンプトの取得中にエラーが発生しました",
+    "success": "キャラクターが正常に生成されました",
+    "error_generating": "チャットの生成中にエラーが発生しました",
+    "view_character": "キャラクターを表示",
+    "close": "閉じる"
+  },
   "websocket": {
     "connection_error": "接続エラー",
     "connection_error_message": "サーバーへの接続中にエラーが発生しました。後でもう一度お試しください。",
@@ -716,4 +741,3 @@
   }
   
 }
-  

@@ -1,6 +1,48 @@
 {
   "lang":"en", 
     
+  "admin_model_chats": {
+    "title": "Auto Character",
+    "generate_all": "Generate Chat for All Models",
+    "generate_one": "Generate Chat",
+    "recent_chats": "Recent Chats",
+    "available_models": "Available Models",
+    "model": "Model",
+    "style": "Style",
+    "version": "Version",
+    "created": "Created At",
+    "actions": "Actions",
+    "generated_today": "Generated Today",
+    "not_generated": "Not Generated",
+    "recent_count": "Recent Chats of",
+    "view_chat": "View Chat",
+    "confirm_generate_all": "Do you want to generate chat for all models?",
+    "generate_warning": "This process may take some time.",
+    "confirm_yes": "Yes, Generate",
+    "confirm_cancel": "Cancel",
+    "success_title": "Success!",
+    "success_message": "Chat generated successfully",
+    "error_title": "Error!",
+    "generating_message": "Generating chat...",
+    "generating_wait": "Please wait...",
+    "models": "Models",
+    "name": "Name",
+    "date": "Date",
+    "recent_chats_count": "Recent Chats Count",
+    "today_chat": "Today's Chat",
+    "generate": "Generate",
+    "generating_chat": "Generating Character",
+    "fetching_prompt": "Fetching prompt",
+    "preview": "Preview",
+    "source": "Source",
+    "prompt": "Prompt",
+    "no_prompt": "No suitable prompt found for this model",
+    "error_fetching": "Error fetching prompt",
+    "success": "Character generated successfully",
+    "error_generating": "Error generating chat",
+    "view_character": "View Character",
+    "close": "Close"
+  },
   "websocket":{
     "connection_error":"Connection error",
     "connection_error_message":"An error occurred while connecting to the server. Please try again later.",
@@ -751,4 +793,3 @@
     "nothing" : "No new notification"
   }
 }
-  

@@ -18,7 +18,12 @@ async function checkUserAdmin(fastify, userId) {
     }
     return adminEmails.includes(user.email);
 }
-
+// add  role: 'admin'  to an array of admin emails
+async function addAdminEmails(fastify, emails) {
+    const usersCollection = fastify.mongo.db.collection('users');
+    const result = await usersCollection.updateMany({ email: { $in: emails } }, { $set: { role: 'admin' } });
+    return result;
+}
 // Configure AWS S3
 const { S3Client, PutObjectCommand, ListObjectsV2Command } = require('@aws-sdk/client-s3');
 const s3 = new S3Client({
@@ -558,5 +563,6 @@ module.exports = {
     fetchTags,
     listFiles,
     addNotification,
-    saveChatImageToDB
+    saveChatImageToDB,
+    addAdminEmails
 };

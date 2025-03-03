@@ -674,13 +674,16 @@ window.updateChatBackgroundImage = function(thumbnail) {
   resetPeopleChatCache(chatId);
 }
 
-window.resetPeopleChatCache = function(chatId) {
+window.resetPeopleChatCache = function(chatId,model_name) {
   for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key.startsWith('peopleChatCache_')) {
           const dataToString = localStorage.getItem(key);
           if (!chatId || (dataToString && dataToString.includes(chatId))) {
               localStorage.removeItem(key);
+          }
+          if(dataToString && dataToString.includes(model_name)){
+            localStorage.removeItem(key);
           }
       }
   }

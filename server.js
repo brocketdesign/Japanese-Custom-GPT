@@ -14,6 +14,7 @@ const {
 } = require('./models/cleanupNonRegisteredUsers');
 const { checkUserAdmin, getUserData, updateCounter, fetchTags } = require('./models/tool');
 const { deleteOldTasks, deleteAllTasks } = require('./models/imagen');
+const { createModelChat, fetchRandomCivitaiPrompt } = require('./models/civitai');
 
 fastify.register(require('@fastify/mongodb'), {
   forceClose: true,
@@ -47,6 +48,7 @@ fastify.ready(() => {
   });
 });
 
+// Daily cron jobs for cleanup and maintenance
 cron.schedule('0 0 * * *', async () => {
   const db = fastify.mongo.db; // Access the database object after plugin registration
   try {
@@ -62,6 +64,74 @@ cron.schedule('0 0 * * *', async () => {
     console.log('Counter has been reset to 0.');
   } catch (err) {
     console.log('Failed to execute cron tasks or access database:', err);
+  }
+});
+
+// Generate new chats daily for each model
+cron.schedule('0 3 * * *', async () => {
+  console.log('Running daily chat generation task...');
+  const db = fastify.mongo.db;
+  
+  try {
+    // Check if the database is accessible
+    await db.command({ ping: 1 });
+    
+    // Get all available models
+    const modelsCollection = db.collection('myModels');
+    const models = await modelsCollection.find({}).toArray();
+    
+    console.log(`Found ${models.length} models to generate chats for`);
+    
+    // Find an admin user to use for image generation
+    const usersCollection = db.collection('users');
+    const adminUser = await usersCollection.findOne({ role: 'admin' });
+    
+    if (!adminUser) {
+      console.log('No admin user found for automated chat generation');
+      return;
+    }
+    
+    // Create chat for each model
+    for (const model of models) {
+      try {
+        // Check if we already generated a chat for this model today
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const chatsCollection = db.collection('chats');
+        const existingChat = await chatsCollection.findOne({
+          imageModel: model.model,
+          createdAt: { $gte: today },
+          systemGenerated: true
+        });
+        
+        if (existingChat) {
+          console.log(`Already generated a chat for model ${model.model} today. Skipping.`);
+          continue;
+        }
+        
+        // Get prompt from Civitai
+        const prompt = await fetchRandomCivitaiPrompt(model.model);
+        
+        if (!prompt) {
+          console.log(`No suitable prompt found for model ${model.model}. Skipping.`);
+          continue;
+        }
+        
+        // Create a new chat - Pass admin user for image generation
+        await createModelChat(db, model, prompt, 'ja', fastify, adminUser);
+        
+        // Wait a bit between requests to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 5000)); // Increased wait time for image generation
+      } catch (modelError) {
+        console.error(`Error processing model ${model.model}:`, modelError);
+        // Continue with next model
+      }
+    }
+    
+    console.log('Daily chat generation completed');
+  } catch (err) {
+    console.error('Failed to execute daily chat generation:', err);
   }
 });
 

@@ -119,7 +119,7 @@ cron.schedule('0 3 * * *', async () => {
         }
         
         // Create a new chat - Pass admin user for image generation
-        await createModelChat(db, model, prompt, 'ja', fastify, adminUser);
+        await createModelChat(db, model, prompt, 'en', fastify, adminUser);
         
         // Wait a bit between requests to avoid rate limiting
         await new Promise(resolve => setTimeout(resolve, 5000)); // Increased wait time for image generation

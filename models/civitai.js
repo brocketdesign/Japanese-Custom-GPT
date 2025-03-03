@@ -32,7 +32,7 @@ async function fetchRandomCivitaiPrompt(modelName, nsfw = false) {
     
     // Configure the API request
     const nsfwParam = nsfw ? '&nsfw=true' : '&nsfw=false';
-    const url = `https://civitai.com/api/v1/images?limit=100&modelVersionName=${encodeURIComponent(baseModelName)}${nsfwParam}`;
+    const url = `https://civitai.com/api/v1/images?limit=30&modelVersionName=${encodeURIComponent(baseModelName)}${nsfwParam}`;
     
     console.log(`Fetching Civitai prompts for model: ${baseModelName}`);
     console.log(`Request URL: ${url}`);

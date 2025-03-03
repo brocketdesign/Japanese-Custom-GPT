@@ -530,7 +530,7 @@ const modelCardTemplate = hbs.compile(`
       
       // Create a new chat - Pass the current user for image generation
       const chat = await createModelChat(db, model, civitaiData, request.lang, fastify, request.user);
-      console.log('Chat created:', chat);
+
       if (!chat) {
         return reply.status(500).send({ error: 'Failed to create chat for model' });
       }

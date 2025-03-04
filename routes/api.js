@@ -142,13 +142,17 @@ async function routes(fastify, options) {
         
         const userId = new fastify.mongo.ObjectId(request.user._id);
         const chatsCollection = fastify.mongo.db.collection('chats');
-        
+        const isAdmin = await checkUserAdmin(fastify, userId);
         const existingChat = await chatsCollection.findOne({ _id: chatId });
         
         if (existingChat) {
-        if (existingChat?.userId?.equals(userId)) {
-            console.log('Chat exists for user:', userId);
-          return reply.code(200).send({ message: 'Chat exists', chat: existingChat });
+        if (existingChat?.userId?.equals(userId) || isAdmin) {
+            if(isAdmin){
+                console.log(`Admin edition chat`);
+            }else{
+                console.log('Chat exists for user:', userId);
+            }
+            return reply.code(200).send({ message: 'Chat exists', chat: existingChat });
         } else {
           // Create a new chat if the current userId is not the chat userId
           console.log('Creating new chat for user:', userId);

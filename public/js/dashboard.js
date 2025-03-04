@@ -1161,7 +1161,6 @@ window.displayPeopleChat = async function (page = 1, option = {}, callback, relo
   }
 
   // Otherwise fetch from server
-  console.log(`Fetching page ${page} from server...`)
   try {
     const response = await fetch(
       `/api/chats?page=${page}&style=${imageStyle}&model=${imageModel}&modelId=${modelId}&q=${query}&userId=${userId}`
@@ -1524,7 +1523,6 @@ window.loadAllChatImages = function (page = 1, reload = false) {
       }
   
       // Otherwise, fetch from server
-      console.log(`Fetching page ${page} from server...`)
       $.ajax({
         url: `/chats/images?page=${page}`,
         method: 'GET',

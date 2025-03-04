@@ -280,46 +280,44 @@ window.fetchAndAppendModels = function() {
     let apiUrl = '/api/models'
     $.get(apiUrl, function(response) {
         if (response.success) {
-        response.models.forEach(model => {
-            
-            const premiumIndicator = model.premium 
-                ? `<div class="position-absolute top-0 start-0">
-                    <span class="badge custom-gradient-bg">
-                        <i class="bi bi-gem"></i>
-                    </span>
-                </div>`
-                : '';
-            const modelElement = `
-            <div class="position-relative">
-                ${premiumIndicator}
-                <img src="${model.image}" alt="${model.style}" 
-                    class="${subscriptionStatus || !model.premium ? '' : 'is-premium'} style-option rounded me-2" 
-                    data-id="${model.modelId}" 
-                    data-style="${model.style}" 
-                    data-model="${model.model}" 
-                    data-version="${model.version}"
-                    data-count="${model.chatCount}"
-                    data-premium="${model.premium}"
-                >
-            </div>
-            `;
-            if(!subscriptionStatus){
-                if(subscriptionStatus || !model.premium){
-                    $(document).find('#imageStyleSelection').prepend(modelElement);
-                    $(document).find('#imageStyleSelectionCharacterCreation').prepend(modelElement);
+            response.models.forEach(model => {
+                
+                const premiumIndicator = model.premium 
+                    ? `<div class="position-absolute top-0 start-0">
+                        <span class="badge custom-gradient-bg">
+                            <i class="bi bi-gem"></i>
+                        </span>
+                    </div>`
+                    : '';
+                const modelElement = `
+                <div class="position-relative">
+                    ${premiumIndicator}
+                    <img src="${model.image}" alt="${model.style}" 
+                        class="${subscriptionStatus || !model.premium ? '' : 'is-premium'} style-option rounded me-2" 
+                        data-id="${model.modelId}" 
+                        data-style="${model.style}" 
+                        data-model="${model.model}" 
+                        data-version="${model.version}"
+                        data-count="${model.chatCount}"
+                        data-premium="${model.premium}"
+                    >
+                </div>
+                `;
+                if(!subscriptionStatus){
+                    if(subscriptionStatus || !model.premium){
+                        $(document).find('#imageStyleSelection').prepend(modelElement);
+                        $(document).find('#imageStyleSelectionCharacterCreation').prepend(modelElement);
+                    }else{
+                        $(document).find('#imageStyleSelection').append(modelElement);
+                        $(document).find('#imageStyleSelectionCharacterCreation').append(modelElement);
+                    }
                 }else{
                     $(document).find('#imageStyleSelection').append(modelElement);
                     $(document).find('#imageStyleSelectionCharacterCreation').append(modelElement);
                 }
-            }else{
-                $(document).find('#imageStyleSelection').append(modelElement);
-                $(document).find('#imageStyleSelectionCharacterCreation').append(modelElement);
-            }
-        });
-            if($(document).find('#imageStyleTabs').length > 0){
+            });
+            if($(document).find('#imageStyleTabs').length > 0 && !$('#characterCreationModal').hasClass('show')){
                 showNavTabs();
-            }else {
-                $(document).find('.style-option').eq(0).click();
             }
         } else {
         window.showNotification('Failed to fetch models', 'error');

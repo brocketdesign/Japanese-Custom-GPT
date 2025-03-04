@@ -144,7 +144,7 @@ async function generateCharacterFromPrompt(prompt, language = 'japanese') {
  * @param {Object} user - Current user making the request
  * @returns {Promise<Object>} - The created chat document
  */
-async function createModelChat(db, model, promptData, language = 'en', fastify = null, user = null) {
+async function createModelChat(db, model, promptData, language = 'en', fastify = null, user = null, nsfw = false) {
   try {
     const chatsCollection = db.collection('chats');
     const tagsCollection = db.collection('tags');
@@ -154,7 +154,7 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
     
     // Create tags from prompt
     const promptTags = extractTagsFromPrompt(promptData.prompt);
-    
+
     // Create a new chat document
     const chatData = {
       name: characterData.name,
@@ -164,7 +164,7 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
         preferences: promptTags.slice(0, 3),
         expression_style: {
           tone: characterData.speaking_style,
-          vocabulary: language === 'ja' ? 'Japanese with occasional English words' : 'English',
+          vocabulary: language,
           unique_feature: characterData.personality_traits[0] || 'Friendly'
         }
       },
@@ -175,6 +175,7 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
       gender: characterData.gender,
       language,
       imageModel: model.model,
+      modelId: model.modelId,
       createdAt: new Date(),
       updatedAt: new Date(),
       createdBy: 'system',
@@ -222,16 +223,16 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
           return { ...chatData, _id: chatId };
         }
         
-        const imageType = 'sfw'; // Default to SFW images for system-generated chats
+        const imageType = nsfw == 'true' ? 'nsfw' : 'sfw';
         const imageConfig = {
           title: characterData.name,
-          prompt: promptData.prompt,
+          prompt: chatData.gender +','+ promptData.prompt,
           aspectRatio: "portrait", // Default to portrait for character images
           userId: userId,
           chatId: chatId,
           userChatId: null, // No user chat ID for system-generated images
           imageType: imageType,
-          image_num: 2, // Generate 2 images for system-generated chats
+          image_num: 4, // Generate 2 images for system-generated chats
           chatCreation: true,
           placeholderId: chatId.toString(),
           translations: {

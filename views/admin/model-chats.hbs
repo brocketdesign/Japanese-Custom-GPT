@@ -265,8 +265,10 @@
               confirmButtonText: 'Yes, include NSFW',
               cancelButtonText: 'No, SFW only'
             }).then((nsfwResult) => {
-              if (!nsfwResult.isDismissed) {
-                const nsfw = nsfwResult.isConfirmed;
+                let nsfw = false;
+                if(nsfwResult.isConfirmed){
+                  nsfw = true;
+                }          
                 // Show loading indicator
                 $('#loadingModal').modal('show');
                 
@@ -310,7 +312,7 @@
                     });
                   }
                 });
-              }
+              
             });
           }
         });

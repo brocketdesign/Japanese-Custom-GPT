@@ -117,11 +117,10 @@ $(document).ready(function() {
                 type: 'GET',
                 dataType: 'json',
                 success: function(chatData) {
-                    console.log('Fetched chat data:', chatData);
 
-                    // Populate Step 1: キャラクターの外見
                     if (chatData.modelId) {
                         $('#modelId').val(chatData.modelId);
+                        $(document).find(`.style-option[data-id="${chatData.modelId}"]`).click();
                     }
 
                     if (chatData.imageStyle) {
@@ -129,6 +128,7 @@ $(document).ready(function() {
                     }
                     if (chatData.imageModel) {
                         $('#imageModel').val(chatData.imageModel);
+                        $(document).find(`.style-option[data-model="${chatData.imageModel}"]`).click();
                     }
                     if (chatData.imageVersion) {
                         $('#imageVersion').val(chatData.imageVersion);

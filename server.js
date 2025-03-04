@@ -94,22 +94,6 @@ cron.schedule('0 * * * *', async () => {
     // Create chat for each model
     for (const model of models) {
       try {
-        // Check if we already generated a chat for this model today
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        const chatsCollection = db.collection('chats');
-        const existingChat = await chatsCollection.findOne({
-          imageModel: model.model,
-          createdAt: { $gte: today },
-          systemGenerated: true
-        });
-        
-        if (existingChat) {
-          console.log(`Already generated a chat for model ${model.model} today. Skipping.`);
-          continue;
-        }
-        
         // Get prompt from Civitai
         const prompt = await fetchRandomCivitaiPrompt(model.model);
         

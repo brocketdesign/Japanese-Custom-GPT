@@ -179,7 +179,7 @@ async function generatePromptSuggestions(messages,chatDescription,language) {
     },
     {
       role: 'assistant',
-      content: 'To help you provide more accurate suggestions, here is the character description: ' + chatDescription
+      content: 'When providing suggestions, do not write the entire sentence, just the suggestion idea. For example : " I like to eat ice cream "" -> "ice cream" '.replace(/^\s+/gm, '').trim()
     },
     ...lastUserMessagesContent,
   ];

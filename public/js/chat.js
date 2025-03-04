@@ -1880,54 +1880,91 @@ $(document).on('click','#menu-chat, .menu-chat-sm',function(){
 });
 
 function displayChatList(reset, userId) {
-  if ($('#chat-list').length === 0 || $('#chat-widget-container').length > 0) return;
-  if (reset) {
-    currentPage = 1;
-    chatListData = [];
-    sessionStorage.removeItem('chatListData');
-    $('#chat-list').empty();
-    $('#chat-list').append(`
-        <div id="chat-list-spinner" class="spinner-border text-secondary" role="status" style="position: absolute; top: 45%; left: 45%; display: none;">
-            <span class="visually-hidden">Loading...</span>
-        </div>`)
-  }
-
-  fetchChatListData(currentPage);
-
-  function fetchChatListData(page) {
-    chatListData = JSON.parse(sessionStorage.getItem('chatListData')) || [];
-    currentPage = parseInt(sessionStorage.getItem('currentPage')) || 1;
-    pagination = sessionStorage.getItem('pagination') ? JSON.parse(sessionStorage.getItem('pagination')) : { total: 0, totalPages: 0 };
-    if (initChatList && pagination && currentPage >= page && chatListData.length > 1) {
-      displayChats(chatListData, pagination);
-      return;
+    if ($('#chat-list').length === 0 || $('#chat-widget-container').length > 0) return;
+    if (reset) {
+      currentPage = 1;
+      chatListData = [];
+      sessionStorage.removeItem('chatListData');
+      sessionStorage.removeItem('currentPage');
+      sessionStorage.removeItem('pagination');
+      $('#chat-list').empty();
+      $('#chat-list').append(`
+          <div id="chat-list-spinner" class="spinner-border text-secondary" role="status" style="position: absolute; top: 45%; left: 45%; display: none;">
+              <span class="visually-hidden">Loading...</span>
+          </div>`)
     }
-    if (page === 1) $('#chat-list-spinner').show();
-    $.ajax({
-      type: 'GET',
-      url: '/api/chat-list/' + userId,
-      data: { page: page, limit: chatsPerPage },
-      success: function(data) {
-        const { chats, pagination } = data;
-        chatListData = chatListData.concat(chats);
-        sessionStorage.setItem('chatListData', JSON.stringify(chatListData));
-        sessionStorage.setItem('pagination', JSON.stringify(pagination));
-        displayChats(chats, pagination);
-      },
-      complete: function() { $('#chat-list-spinner').hide(); }
-    });
-  }
-
-  function displayChats(chats, pagination) {
-    chats.forEach(function(chat){
-      var chatHtml = constructChatItemHtml(chat, false);
-      $('#chat-list').append(chatHtml);
-    });
-    updateCurrentChat(chatId, userId);
-    updateChatCount(pagination.total);
-    checkShowMoreButton(pagination);
-  }
-
+  
+    fetchChatListData(currentPage);
+  
+    function fetchChatListData(page) {
+      // Get cached data
+      chatListData = JSON.parse(sessionStorage.getItem('chatListData')) || [];
+      currentPage = parseInt(sessionStorage.getItem('currentPage')) || 1;
+      pagination = JSON.parse(sessionStorage.getItem('pagination')) || { total: 0, totalPages: 0 };
+      
+      // Only use cached data if we have enough data and we're not resetting
+      if (initChatList && chatListData.length > 0 && page === 1) {
+        displayChats(chatListData, pagination);
+        return;
+      }
+      
+      $('#chat-list-spinner').show();
+      
+      $.ajax({
+        type: 'GET',
+        url: '/api/chat-list/' + userId,
+        data: { page: page, limit: chatsPerPage },
+        success: function(data) {
+          const { chats, pagination } = data;
+          
+          // For page 1, replace the entire list
+          // For subsequent pages, append new chats
+          if (page === 1) {
+            chatListData = chats;
+            $('#chat-list').empty().append(`
+              <div id="chat-list-spinner" class="spinner-border text-secondary" role="status" style="position: absolute; top: 45%; left: 45%; display: none;">
+                  <span class="visually-hidden">Loading...</span>
+              </div>`);
+          } else {
+            // Filter out any duplicates before adding new chats
+            const newChats = chats.filter(newChat => 
+              !chatListData.some(existingChat => existingChat._id === newChat._id)
+            );
+            chatListData = chatListData.concat(newChats);
+          }
+          
+          sessionStorage.setItem('chatListData', JSON.stringify(chatListData));
+          sessionStorage.setItem('currentPage', page);
+          sessionStorage.setItem('pagination', JSON.stringify(pagination));
+          
+          // Only display the newly fetched chats
+          displayChats(chats, pagination);
+        },
+        error: function(xhr, status, error) {
+          console.error('Error fetching chat list:', error);
+          $('#chat-list-spinner').hide();
+        },
+        complete: function() {
+          $('#chat-list-spinner').hide();
+        }
+      });
+    }
+  
+    function displayChats(chats, pagination) {
+      // Don't append if these are duplicate chats
+      chats.forEach(function(chat){
+        // Check if this chat is already displayed
+        if ($(`#chat-list .chat-list.item[data-id="${chat._id}"]`).length === 0) {
+          var chatHtml = constructChatItemHtml(chat, chat._id === chatId);
+          $('#chat-list').append(chatHtml);
+        }
+      });
+      
+      updateCurrentChat(chatId, userId);
+      updateChatCount(pagination.total);
+      checkShowMoreButton(pagination);
+    }
+  
   function updateChatCount(count) {
     $('#user-chat-count').html('(' + count + ')');
   }
@@ -2027,18 +2064,6 @@ function constructChatItemHtml(chat, isActive) {
                             <i class="bi bi-three-dots text-secondary"></i>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-start chat-option-menu bg-light shadow rounded mx-3" aria-labelledby="dropdownMenuButton_${chat._id}">
-                            <li>
-                                <button class="dropdown-item text-secondary chart-button" data-id="${chat._id}">
-                                    <i class="bi bi-info-circle me-2"></i>
-                                    <span class="text-muted" style="font-size:12px;">${window.translations.info}</span>
-                                </button>
-                            </li>
-                            <li>
-                                <button class="dropdown-item text-secondary tag-button" data-id="${chat._id}">
-                                    <i class="bi bi-share me-2"></i>
-                                    <span class="text-muted" style="font-size:12px;">${window.translations.share}</span>
-                                </button>
-                            </li>
                             <li>
                                 <a href="#" class="dropdown-item text-secondary" onclick="loadCharacterCreationPage('${chat._id}')">
                                     <i class="bi bi-pencil me-2"></i>

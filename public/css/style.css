@@ -1546,7 +1546,7 @@
   @media (max-width: 600px) {
 
   .dropdown-menu {
-  transform:translate3d(68px,36px,0px)!important
+  transform:translate3d(20px,36px,0px)!important
   }
   
   .avatar-menu.dropdown-menu {

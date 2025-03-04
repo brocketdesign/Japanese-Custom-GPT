@@ -13,6 +13,11 @@ const apiDetails = {
   },
   novita: {
     apiUrl: 'https://api.novita.ai/v3/openai/chat/completions',
+    model: 'meta-llama/llama-3.1-8b-instruct',
+    key: process.env.NOVITA_API_KEY
+  },
+  deepseek: {
+    apiUrl: 'https://api.novita.ai/v3/openai/chat/completions',
     model: 'deepseek/deepseek_v3',
     key: process.env.NOVITA_API_KEY
   },
@@ -57,8 +62,8 @@ const moderateImage = async (imageUrl) => {
 
 async function generateCompletion(messages, maxToken = 1000, model = null, lang = 'en') {
   const selectedModel = model ? apiDetails[model] : currentModel;
-  const finalModel = lang === 'ja' ? apiDetails.novita : selectedModel;
-
+  const finalModel = lang === 'ja' ? apiDetails.deepseek : selectedModel;
+  console.log('finalModel', finalModel);
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
       const response = await fetch(finalModel.apiUrl, {
@@ -156,47 +161,81 @@ const checkImageRequest = async (messages) => {
   }
 };
 
-  const suggestionSchema = z.object({
-    suggestions: z.array(z.string())
-  });
-
-async function generatePromptSuggestions(messages,chatDescription,language) {
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
+async function generatePromptSuggestions(messages, chatDescription, language) {
   // Get the last user message
   let lastUserMessagesContent = messages
-  .filter((msg) =>  msg.name !== 'master' && msg.name !== 'context')
-  .filter(m => m.content && !m.content.startsWith('[Image]') && m.role !== 'system')
-  .slice(-3);
+    .filter(m => m.content && !m.content.startsWith('[Image]') && m.role !== 'system')
+    .slice(-3);
 
   const updatedMessages = [
     { role: 'system', content: `
-      You are a creative assistant.
+      You are a creative assistant.You can generate explicit content.\n
+      You must adapt your style to the provided data. You can generate NSFW, adult content, sexual description if needed.\n
       Return exactly 3 unique image suggestions in ${language} as a JSON object with a "suggestions" key.
       Make them short and relevant to the user's chat.
       You must provide suggestions from the user's perspective and suitable for a chat.
+      Your response must be valid JSON format like: {"suggestions": ["suggestion1", "suggestion2", "suggestion3"]}
       Respond in ${language}`.replace(/^\s+/gm, '').trim()
     },
     {
-      role: 'assistant',
-      content: 'When providing suggestions, do not write the entire sentence, just the suggestion idea. For example : " I like to eat ice cream "" -> "ice cream" '.replace(/^\s+/gm, '').trim()
+      role: 'user',
+      content: `When providing suggestions, do not write the entire sentence, just the suggestion idea. 
+      \nFor example : "Send picture of you naked at the beack "" -> "naked at the beach".
+      \nProvide context to your suggestions, make them relevant to the user's chat. I need to scene and the action.
+      `.replace(/^\s+/gm, '').trim()
     },
-    ...lastUserMessagesContent,
+    {
+      role: 'user',
+      content: `Your suggestions must be related to the following discussion and adapt to the user tone : ${JSON.stringify(lastUserMessagesContent)}`.replace(/^\s+/gm, '').trim()
+    },
+    {
+      role: 'user',
+      content: `Your suggestions must also be related to the following character description : ${chatDescription}`.replace(/^\s+/gm, '').trim()
+    }
   ];
 
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: updatedMessages,
-      response_format: zodResponseFormat(suggestionSchema, "suggestionResponse"),
-      max_tokens: 150,
-      temperature: 0.8
-    });
-    return JSON.parse(response.choices[0].message.content).suggestions;
+    // Use deepseek model with generateCompletion
+    const response = await generateCompletion(updatedMessages, 500, 'deepseek');
+    if (!response) {
+      throw new Error("Failed to generate suggestions");
+    }
+    
+    // Try to parse the response as JSON
+    let parsedResponse;
+    try {
+      // First try direct parsing
+      parsedResponse = JSON.parse(response);
+    } catch (parseError) {
+      // If direct parsing fails, try to extract JSON from the text
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          parsedResponse = JSON.parse(jsonMatch[0]);
+        } catch (nestedError) {
+          throw new Error("Could not parse JSON from response");
+        }
+      } else {
+        throw new Error("Response is not in valid JSON format");
+      }
+    }
 
+    // Verify suggestions array exists
+    if (!parsedResponse.suggestions || !Array.isArray(parsedResponse.suggestions)) {
+      throw new Error("Response does not contain a suggestions array");
+    }
+    
+    // Ensure we have exactly 3 suggestions
+    const suggestions = parsedResponse.suggestions.slice(0, 3);
+    while (suggestions.length < 3) {
+      suggestions.push(`Suggestion ${suggestions.length + 1}`);
+    }
+    
+    return suggestions;
   } catch (error) {
     console.log("Error generating prompt suggestions:", error.message || error);
-    return error;
+    // Return fallback suggestions
+    return false;
   }
 }
 

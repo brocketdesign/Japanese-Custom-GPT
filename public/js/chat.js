@@ -1575,19 +1575,13 @@ function displaySuggestions(suggestions, uniqueId) {
 
     // Add new suggestions smoothly one by one
     suggestions.forEach((suggestion, index) => {
-        const button = $(`<button class="btn shadow m-1 rounded-pill" style="background: whitesmoke;">${suggestion}</button>`);
+        const button = $(`<button class="btn shadow m-1 rounded-pill text-capitalize text-white" style="background: color(srgb 0.2567 0.2909 0.325 / 0.81);">${suggestion}</button>`);
         button.on('click', function() {
             sendMessage(suggestion);
-            $('#suggestions').empty();
+            $(this).fadeOut();
         });
         suggestionContainer.prepend(button.hide().fadeIn());
     });
-
-    // Ensure only the most recent 6 suggestions are displayed
-    const allSuggestions = suggestionContainer.children();
-    if (allSuggestions.length > 6) {
-        allSuggestions.slice(6).fadeOut().remove();
-    }
 }
 
 // call fetchchatdata function accross other scripts

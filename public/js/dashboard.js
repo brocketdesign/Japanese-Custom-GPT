@@ -1320,7 +1320,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                               <span class="btn btn-outline-secondary redirectToChat w-100 mb-2" onclick="redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')"> <i class="bi bi-chat-dots me-2"></i> ${window.translations.startChatting}</span>
                               <div class="d-flex align-items-center justify-content-between">
                                   <h5 class="card-title character-title mb-0">${chat.name || chat.chatName}</h5>
-                                  <a href="/user/${chat.userId}" class="text-muted" style="font-size:12px;">${chat.nickname}</a>
+                                  ${chat.nickname ? `<a href="/user/${chat.userId}" class="text-muted" style="font-size:12px;">${chat.nickname}</a>`:'' }
                               </div>
                               <a href="/character/${chat.chatId || chat._id}" class="text-muted" style="text-decoration: none;">
                                   <span style="font-size:12px;">${chat?.first_message || chat.description}</span>

@@ -32,7 +32,6 @@ const { title } = require('process');
 const { chat } = require('googleapis/build/src/apis/chat');
 const sessions = new Map();
 
-const aiModel = `meta-llama/llama-3.1-8b-instruct`
 const free_models = ['293564'];
 
 async function routes(fastify, options) {
@@ -313,7 +312,7 @@ async function routes(fastify, options) {
         // Pass `details` if you want to incorporate it into the prompt generation
         const systemPayload = createSystemPayload(prompt, gender, details_description);
 
-        const enhancedPrompt = await generateCompletion(systemPayload, 600)
+        const enhancedPrompt = await generateCompletion(systemPayload, 600, 'deepseek')
 
         // Access MongoDB and update the chat document
         const db = fastify.mongo.db;
@@ -1486,7 +1485,7 @@ async function routes(fastify, options) {
         let imageInstructionMessage = generateImagePrompt({command, characterDescription, gender, dialogue});
         imageInstructionMessage = sanitizeMessages(imageInstructionMessage)
 
-        const completionMessage = await generateCompletion(imageInstructionMessage, 600)
+        const completionMessage = await generateCompletion(imageInstructionMessage, 600, 'deepseek')
 
         return completionMessage;
     }
@@ -1587,12 +1586,13 @@ async function routes(fastify, options) {
     fastify.post('/api/generate-completion', async (request, reply) => {
         const { systemPrompt, userMessage } = request.body;
         try {
-            const completion = await generateCompletion(systemPrompt, userMessage,aiModel);
+            const completion = await generateCompletion(systemPrompt, userMessage, 'deepseek');
             return reply.send({ completion });
         } catch (error) {
             return reply.status(500).send({ error: 'Error generating completion' });
         }
     });
+    
     fastify.get('/characters/:gender/:category', async (request, reply) => {
         try {
             const { gender, category } = request.params;

@@ -226,7 +226,10 @@ const analyzeConversationContext = async (messages, userInfo) => {
   Number of images shared in the conversation: ${imageCount}.
   Time difference between the last two messages: ${timeDifference} minutes.
   Last relationship update: "${lastAssistantRelation}".
-  Make sure the character is okay with the relationship update before proceeding. Do not necessarily follow the user's request. You must have a personality and a relationship with the user.
+
+  Make sure the character is okay with the relationship update before proceeding. 
+  \nDo not necessarily follow the user's request. You must have a personality and a relationship with the user adn it depend on the image number.
+  \nThe more images the more intimate, low images number (<10) lower intimitie.
   
   Format response using JSON object with all fields from the schema.
   You must respond in the language of the conversation.

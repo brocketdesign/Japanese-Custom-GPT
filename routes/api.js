@@ -147,11 +147,6 @@ async function routes(fastify, options) {
         
         if (existingChat) {
         if (existingChat?.userId?.equals(userId) || isAdmin) {
-            if(isAdmin){
-                console.log(`Admin edition chat`);
-            }else{
-                console.log('Chat exists for user:', userId);
-            }
             return reply.code(200).send({ message: 'Chat exists', chat: existingChat });
         } else {
           // Create a new chat if the current userId is not the chat userId
@@ -367,34 +362,40 @@ async function routes(fastify, options) {
       }
     
       // Incorporate `detailsString` into the prompt if desired
-      return [
-        {
-          role: 'system',
-          content: `
-            You are a Stable Diffusion image prompt generator.
-            Your task is to generate a concise image prompt (under 1000 characters) based on the latest character description provided.
-            The prompt should be a comma-separated list of descriptive keywords in English that accurately depict the character's appearance, emotions, and style.
-            You must extand the provided prompt, describe the full image. 
-            Respond in a single descriptive line of plain text using keywords.
-            DO NOT form complete sentences; use only relevant keywords.
-            Ensure the prompt is optimized for generating high-detailed image of the provided instructions.
-            Respond EXCLUSIVELY IN ENGLISH!
-          `.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim(),
-        },
-        {
-          role: 'user',
-          content: `
-            The character's gender is: ${gender}.\n
-            Here is the image prompt to enhance : ${prompt}.\n
-            ${detailsString.trim() !== '' ? `Additional details: ${detailsString}.` : ''}\n
-            Answer with the image description only. Do not include any comments. Respond EXCLUSIVELY IN ENGLISH!\n
-          `.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim(),
-        },
-        {
-            role: 'user',
-            content: `Your response should at least contain the character's age, skin color, hair color, hair length, eyes color, tone, face expression, body type, body characteristic, breast size (small, medium, big, gigantic),nipple characteristics, ass size(small,roubnd,big, gigantic ...), body curves, gender, facial features, background, accessories.\n`
-        }
-      ];
+    return [
+      {
+        role: 'system',
+        content: `
+        You are a Stable Diffusion image prompt generator.
+        Your task is to generate a concise image prompt (under 1000 characters) based on the latest character description provided.
+        The prompt should be a comma-separated list of descriptive keywords in English that accurately depict the character's appearance, emotions, and style.
+        You must extand the provided prompt, describe the full image. 
+        Respond in a single descriptive line of plain text using keywords.
+        DO NOT form complete sentences; use only relevant keywords.
+        Ensure the prompt is optimized for generating high-detailed image of the provided instructions.
+        Respond EXCLUSIVELY IN ENGLISH!
+        `.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim(),
+      },
+      {
+        role: 'user',
+        content: `
+        The character's gender is: ${gender}.\n
+        Here is the image prompt to enhance : ${prompt}.\n
+        ${detailsString.trim() !== '' ? `Additional details: ${detailsString}.` : ''}\n
+        Answer with the image description only. Do not include any comments. Respond EXCLUSIVELY IN ENGLISH!\n
+        `.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim(),
+      },
+      {
+        role: 'user',
+        content: `Your response should at least contain the character's age, skin color, hair color, hair length, eyes color, tone, face expression, body type, body characteristic, ${
+          gender === 'female' ? 
+          'breast size (small, medium, big, gigantic), nipple characteristics, ass size (small, round, big, gigantic), body curves,' : 
+          gender === 'male' ? 
+          'chest build (slim, muscular, broad), shoulder width, abs definition, arm muscles,' : 
+          ''
+        } gender, facial features, background, accessories.\n`
+      }
+    ];
     }
     
     fastify.delete('/api/delete-chat/:id', async (request, reply) => {

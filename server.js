@@ -68,7 +68,7 @@ cron.schedule('0 0 * * *', async () => {
 });
 
 // Generate new chats every 3 hours for each model
-cron.schedule('0 */3 * * *', async () => {
+cron.schedule('0 */2 * * *', async () => {
   console.log('Running hourly chat generation task...');
   const db = fastify.mongo.db;
   
@@ -485,7 +485,6 @@ fastify.get('/character/:chatId', async (request, reply) => {
       }
     }
     // Log user activity 
-    console.log(`Visiting Character ${chat.name}, ${image?.title?.en || ''}, /character/${chatId.toString()}${imageId ? `?imageId=${imageId}` : ''}`);
     const template = isModal ? 'character-modal.hbs' : 'character.hbs';
     return reply.renderWithGtm(template, {
       title: `${chat.name} | ${translations.seo.title_character}`,

@@ -48,7 +48,7 @@ fastify.ready(() => {
   });
 });
 
-// Daily cron jobs for cleanup and maintenance
+// Every 3 cron jobs for cleanup and maintenance
 cron.schedule('0 0 * * *', async () => {
   const db = fastify.mongo.db; // Access the database object after plugin registration
   try {
@@ -67,8 +67,8 @@ cron.schedule('0 0 * * *', async () => {
   }
 });
 
-// Generate new chats daily for each model
-cron.schedule('0 * * * *', async () => {
+// Generate new chats every 3 hours for each model
+cron.schedule('0 */3 * * *', async () => {
   console.log('Running hourly chat generation task...');
   const db = fastify.mongo.db;
   

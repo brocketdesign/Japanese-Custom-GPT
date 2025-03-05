@@ -52,6 +52,14 @@ function initializeWebSocket() {
           fetchChatData(chatId,user._id)
         }
       }
+      // Handle relationship update between user and character
+      if (data.notification.type == 'updateRelation') {
+        const { relation, userChatId } = data.notification;
+        if (relation && userChatId) {
+          $(`#relationshipStatus[data-id="${userChatId}"]`).text(relation).show();
+        }
+      }
+
       // Display image icon in last user message
       if (data.notification.type == 'addIconToLastUserMessage') {
         addIconToLastUserMessage();

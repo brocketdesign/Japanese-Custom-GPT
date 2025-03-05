@@ -203,6 +203,7 @@ $(document).ready(async function() {
         if(userChatId){
             sessionStorage.setItem('userChatId', userChatId);
             $('#chatContainer').attr('data-id',userChatId)
+            $('#relationshipStatus').attr('data-id',userChatId).hide();
         }
 
         var currentUrl = window.location.href;
@@ -393,6 +394,12 @@ $(document).ready(async function() {
                 $('#chatContainer').animate({
                     scrollTop: $('#chatContainer').prop("scrollHeight") + 500
                 }, 500);
+
+                const lastAssistantRelationship = userChat.messages[userChat.messages.length - 1]?.custom_relation;
+                if (lastAssistantRelationship) {
+                    $(`#relationshipStatus[data-id="${userChatId}"]`).show();
+                    $(`#relationshipStatus[data-id="${userChatId}"]`).text(lastAssistantRelationship);
+                }
             }, 1000);
         });
 
@@ -699,7 +706,7 @@ $(document).ready(async function() {
     
         let chatContainer = $('#chatContainer');
         chatContainer.empty();
-    
+
         for (let i = 0; i < userChat.length; i++) {
             let messageHtml = '';
             let chatMessage = userChat[i];

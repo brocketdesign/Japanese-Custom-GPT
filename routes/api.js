@@ -4,7 +4,8 @@ const {
     generatePromptTitle,
     fetchOpenAICompletion,
     generateCompletion,
-    generatePromptSuggestions
+    generatePromptSuggestions,
+    analyzeConversationContext
 } = require('../models/openai')
 const { 
     generateImg,
@@ -23,7 +24,7 @@ const {
 } = require('../models/tool');
 const axios = require('axios');
 const OpenAI = require("openai");
-const { z } = require("zod");
+const { z, custom } = require("zod");
 const { zodResponseFormat } = require("openai/helpers/zod");
 const path = require('path');
 const fs = require('fs');
@@ -536,6 +537,7 @@ async function routes(fastify, options) {
             } else {
                 newMessage.content = message
             }    
+            newMessage.timestamp = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
             userData.messages.push(newMessage);
             userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
     
@@ -1042,20 +1044,18 @@ async function routes(fastify, options) {
         - Do not translate anything.\n
         - Do not include notes, annotations, or lists in your response.\n
         - Adapt to the user chat subject, deepen the conversation.\n
-        - Provide short answers switable for a chat.\n
+        - Provide extra short answers switable for a chat.\n
     
         `.replace(/^\s+/gm, '').trim();
     }
-
     fastify.post('/api/openai-chat-completion', async (request, reply) => {
-
         try {
           const db = fastify.mongo.db
           const { chatId, userChatId, isHidden, uniqueId } = request.body
           let userId = request.body.userId
           if(!userId){ 
-              const user = request.user;
-              userId = user._id
+            const user = request.user;
+            userId = user._id
           }
           const userInfo = await getUserInfo(db, userId)
           let userData = await getUserChatData(db, userId, userChatId)
@@ -1073,18 +1073,29 @@ async function routes(fastify, options) {
             
           const lastMsgIndex = userData.messages.length - 1
           const lastUserMessage = userData.messages[lastMsgIndex]
-          let currentUserMessage = { role: 'user', content: lastUserMessage.content }
+          const lastAssistantRelation = userData.messages
+            .filter(msg => msg.role === 'assistant')
+            .slice(-1)
+            .map(msg => msg.custom_relation)
+            .join(', ');
+
+            let currentUserMessage = { role: 'user', content: lastUserMessage.content }
           if (lastUserMessage.name) currentUserMessage.name = lastUserMessage.name
           if (lastUserMessage.trigger_image_request) currentUserMessage.image_request = lastUserMessage.trigger_image_request
           if (lastUserMessage.nsfw) currentUserMessage.nsfw = lastUserMessage.nsfw
           if (lastUserMessage.promptId) currentUserMessage.promptId = lastUserMessage.promptId
+      
+          // Run conversation context analysis
+          const conversationAnalysis = await analyzeConversationContext(userData.messages, userInfo);
 
           let genImage = {}
           let customPromptData = null
-
+      
           if(currentUserMessage?.image_request && currentUserMessage?.promptId){
             customPromptData = await getPromptById(db,currentUserMessage.promptId);
           }
+          
+          // Use conversation analysis to detect image requests if not explicitly set
           if (currentUserMessage?.image_request != true && currentUserMessage.name !== 'master' && currentUserMessage.name !== 'context') {
             genImage = await checkImageRequest(userData.messages)
           }
@@ -1096,19 +1107,34 @@ async function routes(fastify, options) {
             genImage.promptId = currentUserMessage.promptId
             genImage.customPose = customPromptData.prompt
           }
-          
-          const systemContent = completionSystemContent(
+
+          // Enhance system content with conversation analysis
+          let enhancedSystemContent = systemContent = completionSystemContent(
             chatDocument,
             userInfo,
             chatDescription,
             getCurrentTimeInJapanese(),
             language
           )
-          const systemMsg = [{ role: 'system', content: systemContent }]
+          
+          // Add relationship and tone information if available
+          if (conversationAnalysis?.custom_relation) {
+            if(lastAssistantRelation != conversationAnalysis.custom_relation){
+                fastify.sendNotificationToUser(userId, 'updateRelation', { relation: conversationAnalysis.custom_relation, userChatId })
+            }
+            const contextMessage = {
+                role: 'user',
+                name: 'context',
+                content: `Relationship dynamic: ${conversationAnalysis.custom_relation}. Tone: ${conversationAnalysis.conversation_tone || 'normal'}. ${conversationAnalysis.custom_instruction ? `Instruction: ${conversationAnalysis.custom_instruction}` : ''}`
+            };
+            userMessages.push(contextMessage);
+          }
+
+          const systemMsg = [{ role: 'system', content: enhancedSystemContent }]
       
           let messagesForCompletion = []
           let imgMessage =  [{ role: 'user', name: 'master' }]
-
+      
           if (genImage?.image_request) {
             currentUserMessage.image_request = true
             userData.messages[lastMsgIndex] = currentUserMessage
@@ -1120,7 +1146,7 @@ async function routes(fastify, options) {
                   fastify.sendNotificationToUser(userId, 'showNotification', { message:request.translations.too_many_pending_images , icon:'warning' });
                 }else{
                     fastify.sendNotificationToUser(userId, 'addIconToLastUserMessage')
-    
+      
                     const image_num = Math.min(Math.max(genImage?.image_num || 1, 1), 8);
                     for (let i = 0; i < image_num; i++) {
                         fastify.sendNotificationToUser(userId, 'handleLoader', { imageId, action:'show' })
@@ -1146,7 +1172,7 @@ async function routes(fastify, options) {
                 imgMessage[0].content = `\n\n I asked for an other image but I am not a subscribed member.\n Tell me that I need to subscribe to Lamix Premium in order to receive unlimited images, even hot images. Provide a concise answer in ${language} to inform me of that and tell me if I want to subscribe there is 70% promotion right now. Stay in your character, keep the same tone as previously.  Respond in the language we were talking until now.`.trim();
                 currentUserMessage.name = 'context'
             }
-
+      
             messagesForCompletion = [
               ...systemMsg,
               ...userMessages,
@@ -1158,11 +1184,11 @@ async function routes(fastify, options) {
                 ...userMessages
             ]
           }
-          
+
           generateCompletion(messagesForCompletion, 600, null, request.lang).then(async (completion) => {
             if(completion){
                 fastify.sendNotificationToUser(userId, 'displayCompletionMessage', { message: completion, uniqueId })
-                const newAssitantMessage = { role: 'assistant', content: completion }
+                const newAssitantMessage = { role: 'assistant', content: completion, timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) , custom_relation: conversationAnalysis.custom_relation }
                 if(currentUserMessage.name){
                     newAssitantMessage.name = currentUserMessage.name
                 }
@@ -1174,7 +1200,7 @@ async function routes(fastify, options) {
                 await updateMessagesCount(db, chatId, userId, currentUserMessage, userData.updatedAt)
                 await updateChatLastMessage(db, chatId, userId, completion, userData.updatedAt)
                 await updateUserChat(db, userId, userChatId, userData.messages, userData.updatedAt)
-
+      
                 // Generate prompt suggestions
                 if(true || subscriptionStatus){
                     suggestions = await generatePromptSuggestions(userData.messages,chatDescription,language)
@@ -1189,7 +1215,7 @@ async function routes(fastify, options) {
               chatsGalleryCollection.findOne({ chatId: new fastify.mongo.ObjectId(chatId) }).then(async (gallery) => {
                   // Select a random image from the gallery
                   const image = gallery.images[Math.floor(Math.random() * gallery.images.length)];
-  
+      
                   const data = {userChatId, imageId:image._id, imageUrl:image.imageUrl, title:image.title, prompt:image.prompt, nsfw:image.nsfw}
                   fastify.sendNotificationToUser(userId,'imageGenerated', data)
                   
@@ -1205,7 +1231,6 @@ async function routes(fastify, options) {
           reply.status(500).send({ error: 'Error fetching OpenAI completion' })
         }
       })
-      
 
     // -------------------- Helper functions --------------------
 

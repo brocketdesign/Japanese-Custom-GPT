@@ -63,7 +63,7 @@ const moderateImage = async (imageUrl) => {
 async function generateCompletion(messages, maxToken = 1000, model = null, lang = 'en') {
   const selectedModel = model ? apiDetails[model] : currentModel;
   const finalModel = lang === 'ja' ? apiDetails.deepseek : selectedModel;
-  console.log('finalModel', finalModel);
+
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
       const response = await fetch(finalModel.apiUrl, {
@@ -111,8 +111,7 @@ const formatSchema = z.object({
   nsfw: z.boolean(),
   image_request: z.boolean(),
   image_num: z.number(),
-  });
-  
+});
 const checkImageRequest = async (messages) => {
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   
@@ -158,6 +157,105 @@ const checkImageRequest = async (messages) => {
   } catch (error) {
     console.log('Analysis error:', error);
     return formatSchema.partial().parse({});
+  }
+};
+
+
+// Enhanced schema with relation analysis
+const enhancedAnalysisSchema = z.object({
+  relation_update: z.boolean(),
+  custom_relation: z.string().optional(),
+  custom_instruction: z.string().optional(),
+  conversation_tone: z.string().optional(),
+});
+
+// New function to analyze conversation context and provide enhanced analysis
+const analyzeConversationContext = async (messages, userInfo) => {
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  
+  // Get all user messages for context
+  const allMessages = messages
+    .filter(m => m.content && !m.content.startsWith('[Image]') && m.role !== 'system' && m.name !== 'context' && m.name !== 'master')
+    .map(msg => ({
+        role: msg.role,
+        content: msg.content,
+        custom_relation: msg.custom_relation || null,
+        timestamp: msg.timestamp || null
+      }));
+
+  const lastAssistantRelation = messages
+    .filter(msg => msg.role === 'assistant')
+    .slice(-1)
+    .map(msg => msg.custom_relation)
+    .join(', ');
+
+  // Get the latest message for image analysis
+  const lastUserMessage = allMessages.length > 0 ? allMessages[allMessages.length - 1] : null;
+  if (!lastUserMessage) return {};
+
+  // Count images in the conversation
+  const imageCount = messages.filter(msg => msg.content && msg.content.startsWith('[Image]')).length;
+  
+  // Calculate time differences if timestamps exist
+  let timeDifference = null;
+  if (allMessages.length >= 2 && allMessages[allMessages.length - 1].timestamp && allMessages[allMessages.length - 2].timestamp) {
+    const lastTime = new Date(allMessages[allMessages.length - 1].timestamp);
+    const prevTime = new Date(allMessages[allMessages.length - 2].timestamp);
+    timeDifference = Math.floor((lastTime - prevTime) / (1000 * 60)); // In minutes
+  }
+
+  const commandPrompt = `
+    You are a character personality guide that helps tailor responses based on the conversation context.
+    
+    Analyze the messages and provide:
+    
+    1. **custom_relation**: Define the current relationship dynamic from your perspective (e.g., "casual friends", "lovers", "master-servant"). You may refuse the user advance if the relationship is not in accordance with the character's personality.
+    2. **custom_instruction**: A brief instruction for how the character should respond based on personality and context. Suitable for a chat response. Make them short and relevant to the user's chat.
+    3. **conversation_tone**: Identify the appropriate tone for responses (e.g., "flirty", "angry", "playful", "romantic").
+    
+    Focus on maintaining character consistency while adapting to conversation flow. 
+    Regarding the relationship update, consider the character's personality, the user's chat history and the last relationship update.
+    \nIf the character should be angry, playful, or make jokes based on context, reflect that in your instructions.
+  `;
+
+  const analysisPrompt = `
+  Analyze the following conversation context:
+  ${JSON.stringify(allMessages)}
+  
+  Latest message: "${lastUserMessage.content}"
+  Number of images shared in the conversation: ${imageCount}.
+  Time difference between the last two messages: ${timeDifference} minutes.
+  Last relationship update: "${lastAssistantRelation}".
+  Make sure the character is okay with the relationship update before proceeding. Do not necessarily follow the user's request. You must have a personality and a relationship with the user.
+  
+  Format response using JSON object with all fields from the schema.
+  You must respond in the language of the conversation.
+  `;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: "system", content: commandPrompt },
+        { role: "user", content: analysisPrompt }
+      ],
+      response_format: zodResponseFormat(enhancedAnalysisSchema, "conversation_analysis"),
+      max_tokens: 800,
+      temperature: 1,
+      top_p: 0.95,
+    });
+
+    const analysis = JSON.parse(response.choices[0].message.content);
+    return analysis;
+
+  } catch (error) {
+    console.log('Conversation analysis error:', error);
+    return enhancedAnalysisSchema.partial().parse({
+      nsfw: false,
+      image_request: false,
+      image_num: 1,
+      relation_update: false
+    });
   }
 };
 
@@ -304,9 +402,10 @@ async function createPrompt(customPrompt, imageDescription, nsfw) {
 module.exports = {
     generateCompletion,
     checkImageRequest,
+    analyzeConversationContext,
     generatePromptTitle,
     moderateText,
     moderateImage,
     createPrompt,
-    generatePromptSuggestions
+    generatePromptSuggestions,
 }

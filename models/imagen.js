@@ -388,37 +388,36 @@ async function checkTaskStatus(taskId, fastify) {
 }
 // Function to trigger the Novita API for text-to-image generation
 async function fetchNovitaMagic(data) {
-    try {
+  try {
     let apiUrl = 'https://api.novita.ai/v3/async/txt2img';
-    if(data.image_base64){
+    if (data.image_base64) {
       apiUrl = 'https://api.novita.ai/v3/async/img2img';
     }
 
     const response = await axios.post(apiUrl, {
-        extra: {
-          response_image_type: 'jpeg',
-          enable_nsfw_detection: true,
-          nsfw_detection_level: 0,
-        },
-        request: data,
+      extra: {
+        response_image_type: 'jpeg',
+        enable_nsfw_detection: true,
+        nsfw_detection_level: 0,
+      },
+      request: data,
     }, {
-        headers: {
+      headers: {
         Authorization: `Bearer ${process.env.NOVITA_API_KEY}`,
         'Content-Type': 'application/json',
-        },
+      },
     });
 
     if (response.status !== 200) {
-      console.log(`Error - ${response.data}`);
-      return false
+      console.log(`Error - ${response.data.reason}`);
+      return false;
     }
 
-      return response.data.task_id;
-    } catch (error) {
-      console.log(error)
-      console.error('Error fetching Novita image:', error.message);
-      return false
-    }
+    return response.data.task_id;
+  } catch (error) {
+    console.error('Error fetching Novita image:', error.message);
+    return false;
+  }
 }
 
   // Configure AWS S3

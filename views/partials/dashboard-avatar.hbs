@@ -93,12 +93,22 @@
                 </li>
                 <li class="{{#if isAdmin }}{{else}}d-none{{/if}}">
                     <a class="dropdown-item text-secondary" href="/admin/model-chats">
-                        <i class="bi bi-chat me-3"></i>{{translations.admin_model_chats.title}}
+                        <i class="bi bi-clock me-3"></i>{{translations.admin_model_chats.title}}
                     </a>
                 </li>
                 <li class="{{#if isAdmin }}{{else}}d-none{{/if}}">
                     <a class="dropdown-item text-secondary" href="/admin/notifications">
                         <i class="bi bi-bell me-3"></i>{{translations.admin.notifications}}
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item text-secondary" id="toggleNSFW" href="#" onclick="toggleNSFW()">
+                        <span>
+                            <i class="bi bi-eye-slash me-3"></i>{{translations.avatar.toggleNSFW}}
+                        </span>
+                        <span class="d-none">
+                            <i class="bi bi-eye me-3"></i>{{translations.avatar.toggleSFW}}
+                        </span>
                     </a>
                 </li>
                 <li>

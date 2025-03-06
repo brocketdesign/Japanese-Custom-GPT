@@ -76,7 +76,20 @@ async function generateImg({title, prompt, aspectRatio, userId, chatId, userChat
     // Select prompts and model based on imageStyle
     const selectedStyle = default_prompt[imageVersion] || default_prompt['sdxl'];
     const imageModel = chat.imageModel || 'novaAnimeXL_ponyV20_461138';
-  
+    
+    const gender = chat.gender
+
+    // Custom negative prompt by gender
+    let genderNegativePrompt = '';
+    if(gender == 'female'){
+      genderNegativePrompt = 'muscular,manly,'
+    }
+    if(gender == 'male'){
+      genderNegativePrompt = 'feminine,womanly,'
+    }
+    if(gender == 'nonBinary'){
+      genderNegativePrompt = 'manly,womanly,'
+    }
     // Prepare task based on imageType
     let image_request;
     if (imageType === 'sfw') {
@@ -86,7 +99,7 @@ async function generateImg({title, prompt, aspectRatio, userId, chatId, userChat
         sampler_name: selectedStyle.sfw.sampler_name || '',
         loras: selectedStyle.sfw.loras,
         prompt: (selectedStyle.sfw.prompt + prompt).replace(/^\s+/gm, '').trim(),
-        negative_prompt: selectedStyle.sfw.negative_prompt,
+        negative_prompt: selectedStyle.sfw.negative_prompt + ',' + genderNegativePrompt,
         width: selectedStyle.width || params.width,
         height: selectedStyle.height || params.height,
         blur: false
@@ -98,7 +111,7 @@ async function generateImg({title, prompt, aspectRatio, userId, chatId, userChat
         sampler_name: selectedStyle.nsfw.sampler_name || '',
         loras: selectedStyle.nsfw.loras,
         prompt: selectedStyle.nsfw.prompt + prompt,
-        negative_prompt: selectedStyle.nsfw.negative_prompt,
+        negative_prompt: selectedStyle.nsfw.negative_prompt + ',' + genderNegativePrompt,
         width: selectedStyle.width || params.width,
         height: selectedStyle.height || params.height,
         blur: !isSubscribed
@@ -111,7 +124,7 @@ async function generateImg({title, prompt, aspectRatio, userId, chatId, userChat
       requestData.image_base64 = image_base64;
     }
     console.log('Starting image generation...'+requestData.model_name);
-
+    console.log('Prompt:', requestData.prompt);
     // Send request to Novita and get taskId
     const novitaTaskId = await fetchNovitaMagic(requestData);
     // Save start time

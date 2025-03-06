@@ -531,6 +531,8 @@
     "characters": "Characters",
     "createCharacter": "Create Character",
     "settings": "Settings",
+    "toggleNSFW": "Toggle NSFW",
+    "toggleSFW": "Toggle SFW",
     "logout": "Logout"
   },
   "tabs": {

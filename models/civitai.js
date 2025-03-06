@@ -7,16 +7,6 @@ const { z } = require('zod');
 const { OpenAI } = require("openai");
 const { zodResponseFormat } = require("openai/helpers/zod");
 
-// Define Zod schema for character data
-const characterSchema = z.object({
-  name: z.string(),
-  short_intro: z.string(),
-  personality_traits: z.array(z.string()),
-  tags: z.array(z.string()),
-  speaking_style: z.string(),
-  first_message: z.string(),
-  gender: z.enum(['male', 'female', 'non-binary'])
-});
 
 /**
  * Fetch a random prompt from Civitai API based on model name
@@ -87,6 +77,17 @@ async function fetchRandomCivitaiPrompt(modelName, nsfw = false) {
  * @param {string} language - The language for response
  * @returns {Promise<Object>} - A character profile
  */
+// Define Zod schema for character data
+const characterSchema = z.object({
+  name: z.string(),
+  short_intro: z.string(),
+  personality_traits: z.array(z.string()),
+  tags: z.array(z.string()),
+  speaking_style: z.string(),
+  first_message: z.string(),
+  gender: z.enum(['male', 'female', 'nonBinary'])
+});
+
 async function generateCharacterFromPrompt(prompt, language = 'japanese') { 
   try {
     const openai = new OpenAI();
@@ -180,6 +181,7 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
       updatedAt: new Date(),
       createdBy: 'system',
       systemGenerated: true,
+      nsfw: nsfw,
       visibility: 'public',
       imageVersion: model.version || 'sd'
     };

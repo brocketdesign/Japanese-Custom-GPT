@@ -18,6 +18,51 @@
         <div class="card mb-4">
           <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">Cron Job Settings</h5>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <form id="cronSettingsForm">
+                  <div class="mb-3">
+                    <label for="cronSchedule" class="form-label">Cron Schedule</label>
+                    <input type="text" class="form-control" id="cronSchedule" value="{{cronSettings.schedule}}" placeholder="0 */2 * * *">
+                    <div class="form-text">Format: minute hour day_of_month month day_of_week (e.g. "0 */2 * * *" for every 2 hours)</div>
+                  </div>
+                  <div class="mb-3">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="cronEnabled" {{#if cronSettings.enabled}}checked{{/if}}>
+                      <label class="form-check-label" for="cronEnabled">Enable automatic generation</label>
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="cronNsfw" {{#if cronSettings.nsfw}}checked{{/if}}>
+                      <label class="form-check-label" for="cronNsfw">Include NSFW content</label>
+                    </div>
+                  </div>
+                  <button type="submit" class="btn btn-primary">Save Settings</button>
+                </form>
+              </div>
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-body">
+                    <h5 class="card-title">Schedule Information</h5>
+                    <p><strong>Status:</strong> <span id="jobStatus" class="badge {{#if cronSettings.enabled}}bg-success{{else}}bg-danger{{/if}}">{{#if cronSettings.enabled}}Active{{else}}Inactive{{/if}}</span></p>
+                    <p><strong>Next Run:</strong> <span id="nextRun">{{cronSettings.nextRun}}</span></p>
+                    <p><strong>Last Run:</strong> <span id="lastRun">{{cronSettings.lastRun}}</span></p>
+                    <p><strong>Content Type:</strong> <span id="contentType">{{#if cronSettings.nsfw}}NSFW Included{{else}}SFW Only{{/if}}</span></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card mb-4">
+          <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
               <h5 class="mb-0">Available Models</h5>
               <button id="generateAllChats" class="btn btn-primary">Generate All Model Chats</button>
             </div>
@@ -36,7 +81,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  {{#each models}}
+                  {{#each models}} 
                     <tr>
                       <td>
                         <img src="{{image}}" alt="{{model}}" class="rounded-circle img-thumbnail" style="width: 60px;height:60px; object-fit: cover;">
@@ -114,7 +159,7 @@
           <h5 class="modal-title" id="generateChatModalLabel">Generating Chat</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body bg-light">
           <div class="text-center mb-3" id="modelInfo">
             <strong>Model:</strong> <span id="modelName"></span>
           </div>
@@ -168,87 +213,199 @@
       </div>
     </div>
   </div>
+
+  <!-- Loading modal for generate all -->
+  <div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body text-center py-5">
+          <div class="spinner-border mb-3" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <h5>Generating chats for all models...</h5>
+          <p>This may take several minutes. Please don't close this window.</p>
+        </div>
+      </div>
+    </div>
+  </div>
   
   {{>dashboard-footer}}
   
   <script>
     $(document).ready(function() {
-      // Single model chat generation
-      $('.generate-chat-btn').on('click', function() {
-        const modelId = $(this).data('model-id');
-        const modelName = $(this).data('model-name');
-        const btn = $(this);
+      // Cron settings form submission
+      $('#cronSettingsForm').on('submit', function(e) {
+        e.preventDefault();
         
-        // Ask user about NSFW setting first
-        Swal.fire({
-          title: 'Generate Chat Settings',
-          html: 'Include NSFW content?',
-          icon: 'question',
-          showCancelButton: true,
-          confirmButtonText: 'Yes, include NSFW',
-          cancelButtonText: 'No, SFW only',
-          showCloseButton: true,
-          closeButtonHtml: '&times;'
-        }).then((result) => {
-          let nsfw = false;
-          if(result.isConfirmed){
-            nsfw = true;
-          }          
-          // Show loading indicator
-          $('#loadingModal').modal('show');
-          btn.prop('disabled', true);
-          
-          $.ajax({
-            url: '/admin/model-chats/generate',
-            type: 'POST',
-            data: { modelId, nsfw },
-            dataType: 'json',
-            success: function(data) {
-              $('#loadingModal').modal('hide');
-              btn.prop('disabled', false);
-
-              if (data.success) {
-                resetPeopleChatCache(null, data.chat.imageModel)
-                Swal.fire({
-                  title: 'Success!',
-                  html: `<div class="text-center">
-                    <p>Successfully generated chat for <strong>${modelName}</strong>.</p>
-                    <h4> Civitai Data </h4>
-                    <p> <strong> Prompt: </strong> ${data.chat.characterPrompt} </p>
-                    <p> <strong> Image: </strong> <img src="${data.chat.civitaiData.imageUrl}" class="img-fluid" style="max-height: 300px;"> </p>
-                    </div>`,
-                  icon: 'success',
-                  confirmButtonText: 'Great!'
-                }).then(() => {
-                });
-              } else {
-                Swal.fire({
-                  title: 'Error!',
-                  text: data.error || 'Failed to generate chat',
-                  icon: 'error',
-                  confirmButtonText: 'OK'
-                });
-              }
-            },
-            error: function(xhr) {
-              $('#loadingModal').modal('hide');
-              btn.prop('disabled', false);
+        const settings = {
+          schedule: $('#cronSchedule').val(),
+          enabled: $('#cronEnabled').is(':checked'),
+          nsfw: $('#cronNsfw').is(':checked')
+        };
+        
+        $.ajax({
+          url: '/admin/model-chats/cron-settings',
+          type: 'POST',
+          data: settings,
+          dataType: 'json',
+          success: function(data) {
+            if (data.success) {
+              Swal.fire({
+                title: 'Success!',
+                text: 'Cron settings updated successfully.',
+                icon: 'success',
+                confirmButtonText: 'Great!'
+              });
               
+              // Update status display
+              $('#jobStatus').removeClass('bg-success bg-danger')
+                .addClass(settings.enabled ? 'bg-success' : 'bg-danger')
+                .text(settings.enabled ? 'Active' : 'Inactive');
+              
+              $('#contentType').text(settings.nsfw ? 'NSFW Included' : 'SFW Only');
+              $('#nextRun').text(data.nextRun || 'N/A');
+              $('#lastRun').text(data.lastRun || 'N/A');
+            } else {
               Swal.fire({
                 title: 'Error!',
-                text: xhr.responseJSON?.error || 'An unknown error occurred',
+                text: data.error || 'Failed to update cron settings',
                 icon: 'error',
                 confirmButtonText: 'OK'
               });
+            }
+          },
+          error: function(xhr) {
+            Swal.fire({
+              title: 'Error!',
+              text: xhr.responseJSON?.error || 'An unknown error occurred',
+              icon: 'error',
+              confirmButtonText: 'OK'
+            });
+          }
+        });
+      });
+      
+      // Generate individual chat button click
+      $('.generate-chat-btn').on('click', function() {
+        const modelId = $(this).data('model-id');
+        const modelName = $(this).data('model-name');
+        let promptKey = null;
+        
+        // Ask about NSFW first
+        Swal.fire({
+          title: 'Include NSFW Content?',
+          text: 'Do you want to include NSFW content in this chat?',
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonText: 'Yes, include NSFW',
+          cancelButtonText: 'No, SFW only'
+        }).then((nsfwResult) => {
+          const nsfw = nsfwResult.isConfirmed;
+          
+          // After NSFW choice, show modal and fetch preview
+          $('#modelName').text(modelName);
+          $('#loadingPrompt').removeClass('d-none');
+          $('#promptPreview').addClass('d-none');
+          $('#noPrompt').addClass('d-none');
+          $('#errorFetching').addClass('d-none');
+          $('#generationResult').addClass('d-none');
+          $('#generateBtn').addClass('d-none');
+          $('#viewCharacterLink').addClass('d-none');
+          
+          $('#generateChatModal').modal('show');
+          
+          // Fetch a preview prompt with NSFW parameter
+          $.ajax({
+            url: '/api/preview-prompt',
+            type: 'POST',
+            data: { modelId, modelName, nsfw },
+            dataType: 'json',
+            success: function(data) {
+              $('#loadingPrompt').addClass('d-none');
+              
+              if (data.error) {
+                $('#errorFetching').removeClass('d-none').text(data.error);
+                return;
+              }
+              
+              if (!data.prompt) {
+                $('#noPrompt').removeClass('d-none');
+                return;
+              }
+              
+              // Store the promptKey for later use
+              promptKey = data.promptKey;
+              
+              // Show prompt preview
+              $('#promptPreview').removeClass('d-none');
+              $('#promptImage').attr('src', data.prompt.imageUrl);
+              $('#promptText').text(data.prompt.prompt);
+              $('#generateBtn').removeClass('d-none')
+                .data('model-id', modelId)
+                .data('nsfw', nsfw)
+                .data('prompt-key', promptKey); // Store the promptKey
+            },
+            error: function() {
+              $('#loadingPrompt').addClass('d-none');
+              $('#errorFetching').removeClass('d-none');
             }
           });
         });
       });
       
-      // Generate all chats
+      // Generate button in modal click
+      $('#generateBtn').on('click', function() {
+        const modelId = $(this).data('model-id');
+        const nsfw = $(this).data('nsfw');
+        const promptKey = $(this).data('prompt-key');
+        
+        $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...');
+        
+        // Generate the chat using the same prompt as the preview
+        $.ajax({
+          url: '/admin/model-chats/generate',
+          type: 'POST',
+          data: { modelId, nsfw, promptKey },
+          dataType: 'json',
+          success: function(data) {
+            $('#generateBtn').prop('disabled', false).text('Generate');
+            
+            if (data.error) {
+              $('#generationResult').removeClass('d-none alert-success').addClass('alert-danger');
+              $('#generationMessage').text(data.error);
+              return;
+            }
+            
+            if (data.success) {
+              const chat = data.chat;
+              $('#generationResult').removeClass('d-none alert-danger').addClass('alert-success');
+              $('#generationMessage').text('Character generated successfully!');
+              
+              if (chat && chat._id) {
+                $('#viewCharacterLink').removeClass('d-none').attr('href', '/chat/' + chat._id);
+              }
+              
+              // Reload the page after a delay to show the new chat
+              setTimeout(function() {
+                location.reload();
+              }, 3000);
+            } else {
+              $('#generationResult').removeClass('d-none alert-success').addClass('alert-danger');
+              $('#generationMessage').text('Failed to generate character.');
+            }
+          },
+          error: function(xhr) {
+            $('#generateBtn').prop('disabled', false).text('Generate');
+            $('#generationResult').removeClass('d-none alert-success').addClass('alert-danger');
+            $('#generationMessage').text(xhr.responseJSON?.error || 'An unknown error occurred');
+          }
+        });
+      });
+      
+      // Generate all chats button click
       $('#generateAllChats').on('click', function() {
         Swal.fire({
-          title: 'Generate All Chats?',
+          title: 'Generate All Model Chats?',
           text: 'This will generate chats for all models and may take some time.',
           icon: 'question',
           showCancelButton: true,
@@ -258,61 +415,58 @@
           if (result.isConfirmed) {
             // Ask user about NSFW setting first
             Swal.fire({
-              title: 'NSFW Setting',
-              text: 'Include NSFW content in generated chats?',
+              title: 'Include NSFW Content?',
+              text: 'Do you want to include NSFW content in generated chats?',
               icon: 'question',
               showCancelButton: true,
               confirmButtonText: 'Yes, include NSFW',
               cancelButtonText: 'No, SFW only'
             }).then((nsfwResult) => {
-                let nsfw = false;
-                if(nsfwResult.isConfirmed){
-                  nsfw = true;
-                }          
-                // Show loading indicator
-                $('#loadingModal').modal('show');
-                
-                $.ajax({
-                  url: '/admin/model-chats/generate',
-                  type: 'POST',
-                  data: { nsfw },
-                  dataType: 'json',
-                  success: function(data) {
-                    $('#loadingModal').modal('hide');
-                    
-                    if (data.success) {
-                      const successes = data.results.filter(r => r.status === 'success').length;
-                      const failures = data.results.filter(r => r.status !== 'success').length;
-                      
-                      Swal.fire({
-                        title: 'Generation Complete',
-                        text: `Successfully generated ${successes} chats. Failed: ${failures}.`,
-                        icon: 'success',
-                        confirmButtonText: 'Great!'
-                      }).then(() => {
-                        location.reload();
-                      });
-                    } else {
-                      Swal.fire({
-                        title: 'Error!',
-                        text: data.error || 'Failed to generate chats',
-                        icon: 'error',
-                        confirmButtonText: 'OK'
-                      });
-                    }
-                  },
-                  error: function(xhr) {
-                    $('#loadingModal').modal('hide');
+              const nsfw = nsfwResult.isConfirmed;
+              
+              // Show loading indicator
+              $('#loadingModal').modal('show');
+              
+              $.ajax({
+                url: '/admin/model-chats/generate',
+                type: 'POST',
+                data: { nsfw },
+                dataType: 'json',
+                success: function(data) {
+                  $('#loadingModal').modal('hide');
+                  
+                  if (data.success) {
+                    const successes = data.results.filter(r => r.status === 'success').length;
+                    const failures = data.results.filter(r => r.status !== 'success').length;
                     
                     Swal.fire({
+                      title: 'Generation Complete',
+                      text: `Successfully generated ${successes} chats. Failed: ${failures}.`,
+                      icon: 'success',
+                      confirmButtonText: 'Great!'
+                    }).then(() => {
+                      location.reload();
+                    });
+                  } else {
+                    Swal.fire({
                       title: 'Error!',
-                      text: xhr.responseJSON?.error || 'An unknown error occurred',
+                      text: data.error || 'Failed to generate chats',
                       icon: 'error',
                       confirmButtonText: 'OK'
                     });
                   }
-                });
-              
+                },
+                error: function(xhr) {
+                  $('#loadingModal').modal('hide');
+                  
+                  Swal.fire({
+                    title: 'Error!',
+                    text: xhr.responseJSON?.error || 'An unknown error occurred',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                  });
+                }
+              });
             });
           }
         });

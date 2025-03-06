@@ -1911,6 +1911,7 @@ async function routes(fastify, options) {
           const model = request.query.model || null;
           const modelId = request.query.modelId || null;
           const searchQuery = request.query.q !== 'false' ? request.query.q : null;
+          const nsfw = request.query.nsfw === 'true' ? true : false;
 
           const limit = 12;
           const skip = (page - 1) * limit;

@@ -15,6 +15,11 @@ const {
 const { checkUserAdmin, getUserData, updateCounter, fetchTags } = require('./models/tool');
 const { deleteOldTasks, deleteAllTasks } = require('./models/imagen');
 const { createModelChat, fetchRandomCivitaiPrompt } = require('./models/civitai');
+const { cronJobs, configureCronJob, initializeCronJobs } = require('./models/cronManager');
+
+// Expose cron jobs and configuration to routes
+fastify.decorate('cronJobs', cronJobs);
+fastify.decorate('configureCronJob', configureCronJob);
 
 fastify.register(require('@fastify/mongodb'), {
   forceClose: true,
@@ -37,7 +42,7 @@ const fastifyPluginGlobals = require('./plugins/globals');
 fastify.register(fastifyPluginGlobals);
 
 // Wait for the database connection to be established 
-fastify.ready(() => { 
+fastify.ready(async () => { 
   deleteAllTasks(fastify.mongo.db);
   const awsimages = fastify.mongo.db.collection('awsimages');
   awsimages.deleteMany({}, function(err, obj) {
@@ -46,6 +51,9 @@ fastify.ready(() => {
       console.log(obj.result.n + " document(s) deleted");
     }
   });
+  
+  // Initialize configured cron jobs
+  await initializeCronJobs(fastify);
 });
 
 // Every 3 cron jobs for cleanup and maintenance
@@ -64,58 +72,6 @@ cron.schedule('0 0 * * *', async () => {
     console.log('Counter has been reset to 0.');
   } catch (err) {
     console.log('Failed to execute cron tasks or access database:', err);
-  }
-});
-
-// Generate new chats every 3 hours for each model
-cron.schedule('0 */2 * * *', async () => {
-  console.log('Running hourly chat generation task...');
-  const db = fastify.mongo.db;
-  
-  try {
-    // Check if the database is accessible
-    await db.command({ ping: 1 });
-    
-    // Get all available models
-    const modelsCollection = db.collection('myModels');
-    const models = await modelsCollection.find({}).toArray();
-    
-    console.log(`Found ${models.length} models to generate chats for`);
-    
-    // Find an admin user to use for image generation
-    const usersCollection = db.collection('users');
-    const adminUser = await usersCollection.findOne({ role: 'admin' });
-    
-    if (!adminUser) {
-      console.log('No admin user found for automated chat generation');
-      return;
-    }
-    
-    // Create chat for each model
-    for (const model of models) {
-      try {
-        // Get prompt from Civitai
-        const prompt = await fetchRandomCivitaiPrompt(model.model);
-        
-        if (!prompt) {
-          console.log(`No suitable prompt found for model ${model.model}. Skipping.`);
-          continue;
-        }
-        
-        // Create a new chat - Pass admin user for image generation
-        await createModelChat(db, model, prompt, 'en', fastify, adminUser);
-        
-        // Wait a bit between requests to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 5000)); // Increased wait time for image generation
-      } catch (modelError) {
-        console.error(`Error processing model ${model.model}:`, modelError);
-        // Continue with next model
-      }
-    }
-    
-    console.log('Daily chat generation completed');
-  } catch (err) {
-    console.error('Failed to execute daily chat generation:', err);
   }
 });
 

@@ -413,7 +413,21 @@ const modelCardTemplate = hbs.compile(`
       const db = fastify.mongo.db;
       const chatsCollection = db.collection('chats');
       const modelsCollection = db.collection('myModels');
+      const settingsCollection = db.collection('systemSettings');
       const translations = request.translations;
+
+      // Get cron settings
+      const cronSettings = await settingsCollection.findOne({ type: 'modelChatCron' }) || {
+        schedule: '0 */2 * * *',
+        enabled: false,
+        nsfw: false
+      };
+      
+      // If the cronManager module is available and job exists, get next run time
+      if (fastify.cronJobs && cronSettings.enabled && cronSettings.schedule) {
+        const { getNextRunTime } = require('../models/cronManager');
+        cronSettings.nextRun = getNextRunTime('modelChatGenerator');
+      }
 
       // Get all models
       const models = await modelsCollection.find({}).toArray();
@@ -455,11 +469,134 @@ const modelCardTemplate = hbs.compile(`
         user: request.user,
         models: modelsWithChats,
         recentChats,
+        cronSettings,
         translations
       });
     } catch (error) {
       console.error('Error loading model chats:', error);
       return reply.status(500).send({ error: 'Internal Server Error' });
+    }
+  });
+
+  // Add the new route to handle cron settings update
+  fastify.post('/admin/model-chats/cron-settings', async (request, reply) => {
+    try {
+      const isAdmin = await checkUserAdmin(fastify, request.user._id);
+      if (!isAdmin) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+
+      const { schedule, enabled, nsfw } = request.body;
+      const db = fastify.mongo.db;
+      const settingsCollection = db.collection('systemSettings');
+
+      // Validate schedule format (basic validation)
+      if (!schedule || typeof schedule !== 'string' || !schedule.trim()) {
+        return reply.status(400).send({ error: 'Invalid cron schedule format' });
+      }
+
+      // Update settings in the database
+      await settingsCollection.updateOne(
+        { type: 'modelChatCron' },
+        {
+          $set: {
+            schedule,
+            enabled: enabled === true || enabled === 'true',
+            nsfw: nsfw === true || nsfw === 'true',
+            updatedAt: new Date()
+          }
+        },
+        { upsert: true }
+      );
+
+      // Create the model chat generation task
+      const modelChatGenerationTask = async () => {
+        console.log('Running scheduled chat generation task...');
+        const db = fastify.mongo.db;
+        
+        try {
+          // Check if the database is accessible
+          await db.command({ ping: 1 });
+          
+          // Get all available models
+          const modelsCollection = db.collection('myModels');
+          const models = await modelsCollection.find({}).toArray();
+          
+          console.log(`Found ${models.length} models to generate chats for`);
+          
+          // Find an admin user to use for image generation
+          const usersCollection = db.collection('users');
+          const adminUser = await usersCollection.findOne({ role: 'admin' });
+          
+          if (!adminUser) {
+            console.log('No admin user found for automated chat generation');
+            return;
+          }
+          
+          // Update last run time
+          await settingsCollection.updateOne(
+            { type: 'modelChatCron' },
+            { $set: { lastRun: new Date() } }
+          );
+          
+          // Create chat for each model
+          for (const model of models) {
+            try {
+              // Get prompt from Civitai
+              const nsfwSetting = (nsfw === true || nsfw === 'true');
+              const prompt = await fetchRandomCivitaiPrompt(model.model, nsfwSetting);
+              
+              if (!prompt) {
+                console.log(`No suitable prompt found for model ${model.model}. Skipping.`);
+                continue;
+              }
+              
+              // Create a new chat - Pass admin user for image generation
+              await createModelChat(db, model, prompt, 'en', fastify, adminUser, nsfwSetting);
+              
+              // Wait a bit between requests to avoid rate limiting
+              await new Promise(resolve => setTimeout(resolve, 5000));
+            } catch (modelError) {
+              console.error(`Error processing model ${model.model}:`, modelError);
+              // Continue with next model
+            }
+          }
+          
+          console.log('Scheduled chat generation completed');
+        } catch (err) {
+          console.error('Failed to execute scheduled chat generation:', err);
+        }
+      };
+
+      // Configure the cron job
+      const isEnabled = enabled === true || enabled === 'true';
+      const success = fastify.configureCronJob(
+        'modelChatGenerator', 
+        schedule, 
+        isEnabled,
+        modelChatGenerationTask
+      );
+
+      // Get next run time if job was successfully set up
+      let nextRun = null;
+      if (success && isEnabled) {
+        const { getNextRunTime } = require('../models/cronManager');
+        nextRun = getNextRunTime('modelChatGenerator');
+      }
+
+      // Get the last run from the database
+      const settings = await settingsCollection.findOne({ type: 'modelChatCron' });
+      const lastRun = settings?.lastRun ? settings.lastRun.toLocaleString() : null;
+
+      return reply.send({ 
+        success: true, 
+        message: 'Cron settings updated successfully',
+        nextRun,
+        lastRun
+      });
+    } catch (error) {
+      console.error('Error updating cron settings:', error);
+      return reply.status(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -471,7 +608,7 @@ const modelCardTemplate = hbs.compile(`
         return reply.status(403).send({ error: 'Access denied' });
       }
 
-      const { modelId, modelName } = request.body;
+      const { modelId, modelName, nsfw } = request.body;
       let modelNameToSearch = modelName;
       
       // If modelId is provided, look up the actual model name from the database
@@ -488,15 +625,30 @@ const modelCardTemplate = hbs.compile(`
         return reply.status(400).send({ error: 'Model name is required' });
       }
       
-      // Fetch a random prompt from Civitai
-      const prompt = await fetchRandomCivitaiPrompt(modelNameToSearch);
+      // Fetch a random prompt from Civitai with NSFW parameter
+      const prompt = await fetchRandomCivitaiPrompt(modelNameToSearch, nsfw);
       
       if (!prompt) {
         return reply.status(404).send({ error: 'No suitable prompt found for this model' });
       }
       
-      // Return the prompt with its image URL
-      return reply.send({ prompt });
+      // Store the prompt in the database for later use
+      const db = fastify.mongo.db;
+      const promptsCache = db.collection('promptsCache');
+      
+      // Create a unique key for this prompt
+      const promptKey = `${modelId || modelName}_${Date.now()}`;
+      
+      await promptsCache.insertOne({
+        key: promptKey,
+        prompt: prompt,
+        modelId,
+        createdAt: new Date(),
+        expiresAt: new Date(Date.now() + 30 * 60 * 1000) // Expires in 30 minutes
+      });
+      
+      // Return the prompt with its image URL and the key
+      return reply.send({ prompt, promptKey });
     } catch (error) {
       console.error('Error fetching preview prompt:', error);
       return reply.status(500).send({ error: 'Internal server error' });
@@ -510,8 +662,21 @@ const modelCardTemplate = hbs.compile(`
         return reply.status(403).send({ error: 'Access denied' });
       }
 
-      const { modelId, nsfw } = request.body;
+      const { modelId, nsfw, promptKey } = request.body;
       const db = fastify.mongo.db;
+      let civitaiData = null;
+      
+      // If promptKey is provided, retrieve the cached prompt
+      if (promptKey) {
+        const promptsCache = db.collection('promptsCache');
+        const cachedPrompt = await promptsCache.findOne({ key: promptKey });
+        
+        if (cachedPrompt) {
+          civitaiData = cachedPrompt.prompt;
+          // Delete the cached prompt after use
+          await promptsCache.deleteOne({ key: promptKey });
+        }
+      }
       
       // If modelId is provided, generate chat for a specific model
       if (modelId) {
@@ -523,8 +688,10 @@ const modelCardTemplate = hbs.compile(`
           return reply.status(404).send({ error: 'Model not found' });
         }
         
-        // Get prompt from Civitai
-        const civitaiData = await fetchRandomCivitaiPrompt(model.model, nsfw);
+        // If we don't have a cached prompt, get a new one
+        if (!civitaiData) {
+          civitaiData = await fetchRandomCivitaiPrompt(model.model, nsfw);
+        }
 
         if (!civitaiData) {
           return reply.status(404).send({ error: 'No suitable prompt found for this model' });
@@ -536,6 +703,7 @@ const modelCardTemplate = hbs.compile(`
         if (!chat) {
           return reply.status(500).send({ error: 'Failed to create chat for model' });
         }
+        
         // Add civitaiData to the chat
         chat.civitaiData = civitaiData;
         return reply.send({ success: true, chat });
@@ -577,7 +745,7 @@ const modelCardTemplate = hbs.compile(`
       console.error('Error generating model chat:', error);
       return reply.status(500).send({ error: 'Internal server error', details: error.message });
     }
-  });
+  }); 
   
 }    
 

@@ -42,6 +42,7 @@ async function onLanguageChange(lang) {
     if (updateResponse.success) {
         await loadTranslations(lang);
         $('#languageDropdown').text(getLanguageDisplayName(lang));
+        resetPeopleChatCache();
         if(MODE !== 'local'){
             window.location.href = `https://${lang}.chatlamix.com/`
         }else{
@@ -1121,6 +1122,11 @@ window.displayPeopleChat = async function (page = 1, option = {}, callback, relo
 
   const searchId = `${imageStyle}-${imageModel}-${query}-${userId}`
 
+  let nsfw = $.cookie('nsfw') === 'true' || false
+  if (option.nsfw) {
+    nsfw = true
+  }
+
   // LocalStorage key
   const cacheKey = `peopleChatCache_${searchId}`
   // Init or retrieve cache for this searchId
@@ -1163,7 +1169,7 @@ window.displayPeopleChat = async function (page = 1, option = {}, callback, relo
   // Otherwise fetch from server
   try {
     const response = await fetch(
-      `/api/chats?page=${page}&style=${imageStyle}&model=${imageModel}&modelId=${modelId}&q=${query}&userId=${userId}`
+      `/api/chats?page=${page}&style=${imageStyle}&model=${imageModel}&modelId=${modelId}&q=${query}&userId=${userId}&nsfw=${nsfw}`
     )
     const data = await response.json()
     data.premium = premium
@@ -1271,9 +1277,11 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                   `;
               }
           }
-
+          const nsfw = chat?.nsfw || false
+          const moderationFlagged = chat?.moderation?.results[0]?.flagged || false
+          const finalNsfwResult = nsfw || moderationFlagged
           htmlContent += `
-          <div class="chat-card-container col-6 col-sm-3 col-lg-2 mb-2" ${searchId?`data-id="${searchId}"`:''}>
+          <div class="chat-card-container col-6 col-sm-3 col-lg-2 mb-2 flagged-${finalNsfwResult}" ${searchId?`data-id="${searchId}"`:''}>
               <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 redirectToChat" style="cursor:pointer;"  onclick="redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')" data-id="${chat.chatId || chat._id}" data-image="${chat.chatImageUrl}">
                   <div data-bg="${chat.chatImageUrl || '/img/logo.webp'}" class="card-img-top girls_avatar position-relative lazy-bg" alt="${chat.name || chat.chatName}">
                       <div id="spinner-${chat.chatId || chat._id}" 

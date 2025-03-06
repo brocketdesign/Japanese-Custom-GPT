@@ -500,6 +500,8 @@
     "characters": "キャラクター",
     "createCharacter": "キャラクター作成",
     "settings": "設定",
+    "toggleNSFW": "NSFWを切り替える",
+    "toggleSFW": "SFWを切り替える",
     "logout": "ログアウト"
   },
   "tabs": {

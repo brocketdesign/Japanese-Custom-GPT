@@ -516,6 +516,8 @@
       "characters": "Personnages",
       "createCharacter": "Créer un personnage",
       "settings": "Paramètres",
+      "toggleNSFW": "NSFW", 
+      "toggleSFW": "SFW",
       "logout": "Se déconnecter"
     },
     "tabs": {

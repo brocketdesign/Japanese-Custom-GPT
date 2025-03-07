@@ -57,7 +57,7 @@ const default_prompt = {
   }
 
 // Module to generate an image
-async function generateImg({title, prompt, aspectRatio, userId, chatId, userChatId, imageType, image_num, image_base64, chatCreation, placeholderId, translations, fastify}) {
+async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, chatId, userChatId, imageType, image_num, image_base64, chatCreation, placeholderId, translations, fastify}) {
     const db = fastify.mongo.db;
   
     // Fetch the user
@@ -99,7 +99,7 @@ async function generateImg({title, prompt, aspectRatio, userId, chatId, userChat
         sampler_name: selectedStyle.sfw.sampler_name || '',
         loras: selectedStyle.sfw.loras,
         prompt: (selectedStyle.sfw.prompt + prompt).replace(/^\s+/gm, '').trim(),
-        negative_prompt: selectedStyle.sfw.negative_prompt + ',' + genderNegativePrompt,
+        negative_prompt: (negativePrompt || selectedStyle.sfw.negative_prompt) + ',' + genderNegativePrompt,
         width: selectedStyle.width || params.width,
         height: selectedStyle.height || params.height,
         blur: false
@@ -111,7 +111,7 @@ async function generateImg({title, prompt, aspectRatio, userId, chatId, userChat
         sampler_name: selectedStyle.nsfw.sampler_name || '',
         loras: selectedStyle.nsfw.loras,
         prompt: selectedStyle.nsfw.prompt + prompt,
-        negative_prompt: selectedStyle.nsfw.negative_prompt + ',' + genderNegativePrompt,
+        negative_prompt: (negativePrompt || selectedStyle.nsfw.negative_prompt) + ',' + genderNegativePrompt,
         width: selectedStyle.width || params.width,
         height: selectedStyle.height || params.height,
         blur: !isSubscribed
@@ -124,7 +124,7 @@ async function generateImg({title, prompt, aspectRatio, userId, chatId, userChat
       requestData.image_base64 = image_base64;
     }
     console.log('Starting image generation...'+requestData.model_name);
-    console.log('Prompt:', requestData.prompt);
+    
     // Send request to Novita and get taskId
     const novitaTaskId = await fetchNovitaMagic(requestData);
     // Save start time

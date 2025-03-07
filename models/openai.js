@@ -170,7 +170,7 @@ const enhancedAnalysisSchema = z.object({
 });
 
 // New function to analyze conversation context and provide enhanced analysis
-const analyzeConversationContext = async (messages, userInfo) => {
+const analyzeConversationContext = async (messages, userInfo, language) => {
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   
   // Get all user messages for context
@@ -209,10 +209,11 @@ const analyzeConversationContext = async (messages, userInfo) => {
     
     Analyze the messages and provide:
     
-    1. **custom_relation**: Define the current relationship dynamic from your perspective (e.g., "casual friends", "lovers", "master-servant"). You may refuse the user advance if the relationship is not in accordance with the character's personality.
+    1. **custom_relation**: Define the current relationship dynamic from your perspective. Respond in 3 words maximum. Respond in ${language}.
     2. **custom_instruction**: A brief instruction for how the character should respond based on personality and context. Suitable for a chat response. Make them short and relevant to the user's chat.
     3. **conversation_tone**: Identify the appropriate tone for responses (e.g., "flirty", "angry", "playful", "romantic").
-    
+     
+    You may refuse the user advance if the relationship is not in accordance with the character's personality.
     Focus on maintaining character consistency while adapting to conversation flow. 
     Regarding the relationship update, consider the character's personality, the user's chat history and the last relationship update.
     \nIf the character should be angry, playful, or make jokes based on context, reflect that in your instructions.
@@ -232,7 +233,7 @@ const analyzeConversationContext = async (messages, userInfo) => {
   \nThe more images the more intimate, low images number (<10) lower intimitie.
   
   Format response using JSON object with all fields from the schema.
-  You must respond in the language of the conversation.
+
   `;
 
   try {

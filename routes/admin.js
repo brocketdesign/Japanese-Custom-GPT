@@ -544,7 +544,7 @@ const modelCardTemplate = hbs.compile(`
             try {
               // Get prompt from Civitai
               const nsfwSetting = (nsfw === true || nsfw === 'true');
-              const prompt = await fetchRandomCivitaiPrompt(model.model, nsfwSetting);
+              const prompt = await fetchRandomCivitaiPrompt(model, nsfwSetting);
               
               if (!prompt) {
                 console.log(`No suitable prompt found for model ${model.model}. Skipping.`);
@@ -617,7 +617,7 @@ const modelCardTemplate = hbs.compile(`
         const modelsCollection = db.collection('myModels');
         const model = await modelsCollection.findOne({ modelId });
         if (model) {
-          modelNameToSearch = model.model;
+          modelNameToSearch = model;
         }
       }
       
@@ -690,7 +690,7 @@ const modelCardTemplate = hbs.compile(`
         
         // If we don't have a cached prompt, get a new one
         if (!civitaiData) {
-          civitaiData = await fetchRandomCivitaiPrompt(model.model, nsfw);
+          civitaiData = await fetchRandomCivitaiPrompt(model, nsfw);
         }
 
         if (!civitaiData) {
@@ -716,7 +716,7 @@ const modelCardTemplate = hbs.compile(`
         for (const model of models) {
           try {
             // Get prompt from Civitai
-            const prompt = await fetchRandomCivitaiPrompt(model.model, nsfw);
+            const prompt = await fetchRandomCivitaiPrompt(model, nsfw);
             
             if (!prompt) {
               results.push({ model: model.model, status: 'failed', reason: 'No suitable prompt found' });

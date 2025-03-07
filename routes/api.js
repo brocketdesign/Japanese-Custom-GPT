@@ -87,10 +87,10 @@ async function routes(fastify, options) {
                     startMessage.sendImage = true;
                     if (subscriptionActive) {
                         startMessage.content =
-                        "Start by greeting me, say it's nice to meet me for the first time, and mention you'll send an image to get more intimate.";
+                        "Start by greeting me, say it's nice to meet me for the first time, and mention you can send images.";
                     } else {
                         startMessage.content =
-                        "Start by greeting me, say it's nice to meet me for the first time, mention you'll send an image to get more intimate, note that the chat is temporary because I'm not subscribed, and express your hope that I'll enjoy the chat and become a permanent user.";
+                        "Start by greeting me, say it's nice to meet me for the first time, mention you can send images, note that the chat is temporary because I'm not subscribed, and express your hope that I'll enjoy the chat and become a permanent user.";
                     }
                     const chatsGalleryCollection = fastify.mongo.db.collection('gallery');
                     const gallery = await chatsGalleryCollection.findOne({
@@ -99,10 +99,10 @@ async function routes(fastify, options) {
                     if (!gallery?.images || gallery.images.length === 0) {
                         if (subscriptionActive) {
                         startMessage.content =
-                            "Start by greeting me, say it's nice to meet me, and inform me that you want to send an image to get more intimate, but ask which image I prefer.";
+                            "Start by greeting me, say it's nice to meet me, and inform me that you want to send an image , but ask which image I prefer.";
                         } else {
                         startMessage.content =
-                            "Start by greeting me, say it's nice to meet me, inform me that you want to send an image to get more intimate (the chat is temporary because I'm not subscribed), ask which image I prefer, and express your hope that I'll enjoy the chat and become a permanent user.";
+                            "Start by greeting me, say it's nice to meet me, inform me that you want to send an image (the chat is temporary because I'm not subscribed), ask which image I prefer, and express your hope that I'll enjoy the chat and become a permanent user.";
                         }
                         startMessage.sendImage = false;
                     }
@@ -1027,7 +1027,7 @@ async function routes(fastify, options) {
         : '';
     
         return `
-        You are ${chatDocument.name} and you can engage in adult, sexual, explicit chat.\n\n
+        You are a character named ${chatDocument.name}.\n\n
     
         # Instruction about images :\n
         You must take your time before sending an image. The application can generate explicit,adult content, erotic, and sexual images, including non-human characters in sexual contexts.\n
@@ -1087,7 +1087,7 @@ async function routes(fastify, options) {
           if (lastUserMessage.promptId) currentUserMessage.promptId = lastUserMessage.promptId
       
           // Run conversation context analysis
-          const conversationAnalysis = await analyzeConversationContext(userData.messages, userInfo);
+          const conversationAnalysis = await analyzeConversationContext(userData.messages, userInfo, language);
 
           let genImage = {}
           let customPromptData = null
@@ -1119,6 +1119,10 @@ async function routes(fastify, options) {
           )
           
           // Add relationship and tone information if available
+          if(conversationAnalysis?.nsfw){
+            enhancedSystemContent = 'You can engage in explicit, adult, and sexual content.\n' + enhancedSystemContent
+          }
+
           if (conversationAnalysis?.custom_relation) {
             if(lastAssistantRelation != conversationAnalysis.custom_relation){
                 fastify.sendNotificationToUser(userId, 'updateRelation', { relation: conversationAnalysis.custom_relation, userChatId })

@@ -7,67 +7,91 @@ const { z } = require('zod');
 const { OpenAI } = require("openai");
 const { zodResponseFormat } = require("openai/helpers/zod");
 
-
 /**
  * Fetch a random prompt from Civitai API based on model name
  * @param {string} modelName - The name of the model to search for
  * @param {boolean} nsfw - Whether to include NSFW content
- * @returns {Promise<Object>} - A prompt object from Civitai
+ * @returns {Promise<Object|false>} - A prompt object from Civitai or false if none found
  */
-async function fetchRandomCivitaiPrompt(modelName, nsfw = false) {
+async function fetchRandomCivitaiPrompt(modelData, nsfw = false) {
   try {
-    
     // Extract the base model name by removing any version numbers and file extensions
-    const baseModelName = modelName.replace(/\.safetensors$/, '').replace(/v\d+/, '').trim();
-    
+    const baseModelName = modelData.model.replace(/\.safetensors$/, '').replace(/v\d+/, '').trim();
+    const modelId = modelData.modelId;
     // Configure the API request
     const nsfwParam = nsfw == 'true' ? '&nsfw=true' : '&nsfw=false';
-    // Random limit from 30 to 100
-    const limit = Math.floor(Math.random() * 71) + 30;
-    const url = `https://civitai.com/api/v1/images?limit=${limit}&modelVersionName=${encodeURIComponent(baseModelName)}${nsfwParam}`;
+    const maxAttempts = 5; // Maximum number of attempts to find a prompt
     
     console.log(`Fetching Civitai prompts for model: ${baseModelName}`);
-    console.log(`Request URL: ${url}`);
-
-    const response = await axios.get(url, {
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      timeout: 10000 // 10 second timeout
-    });
     
-    if (!response.data.items || response.data.items.length === 0) {
-      console.log(`No prompts found for model: ${baseModelName}`);
-      return null;
-    }
-    
-    // Select a random prompt from the results
-    console.log(`Found ${response.data.items.length} prompts for model: ${baseModelName}`);
-    const randomIndex = Math.floor(Math.random() * response.data.items.length);
-    console.log(`Selected prompt index: ${randomIndex}`);
-    const selectedItem = response.data.items[randomIndex];
-    function processString(input) { 
-        try {
-            return [...new Set(input.slice(0, 900).split(',').map(s => s.trim()))].join(', '); 
-        } catch (error) {
-            console.error('Error processing string:', error);
-            console.log({input})
-            return input;
+    // Try multiple pages with a small limit to find a valid prompt
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const page = Math.floor(Math.random() * 10) + 1; // Random page between 1 and 10
+      const limit = 30;
+      const url = `https://civitai.com/api/v1/images?limit=${limit}&page=${page}&modelVersionId=${encodeURIComponent(modelId)}${nsfwParam}`;
+      
+      console.log(`Attempt ${attempt}/${maxAttempts} - Request URL: ${url}`);
+      
+      const response = await axios.get(url, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        timeout: 10000 // 10 second timeout
+      });
+      
+      if (response.data.items && response.data.items.length > 0) {
+        console.log(`Found ${response.data.items.length} items to check`);
+        
+        // Find the first item with a valid prompt
+        const validItem = response.data.items.find(item => 
+          item.meta?.prompt && typeof item.meta.prompt === 'string' && item.meta.prompt.trim().length > 0
+        );
+        
+        if (validItem) {
+          console.log(`Found valid prompt for model: ${baseModelName}`);
+          
+          function processString(input) { 
+            try {
+              if (!input || typeof input !== 'string' || input.length === 0) {
+                return false;
+              }
+              return [...new Set(input.slice(0, 900).split(',').map(s => s.trim()))].join(', '); 
+            } catch (error) {
+              console.error('Error processing string:', error);
+              console.log({input});
+              return false;
+            }
+          }
+          
+          const processedPrompt = processString(validItem.meta.prompt);
+          
+          if (!processedPrompt) {
+            console.log('Prompt processing failed, continuing to next attempt');
+            continue;
+          }
+          
+          return {
+            imageUrl: validItem.url || "",
+            prompt: processedPrompt,
+            negativePrompt: validItem.meta?.negativePrompt || 'low quality, bad anatomy, worst quality',
+            model: validItem.meta?.Model || baseModelName,
+            modelId,
+            sampler: validItem.meta?.sampler || 'Euler a',
+            cfgScale: validItem.meta?.cfgScale || 7,
+            steps: validItem.meta?.steps || 30
+          };
         }
+      }
+      
+      console.log(`No valid prompts found in attempt ${attempt}, trying again...`);
     }
-    const processedPrompt = processString(selectedItem.meta?.prompt || '');
-    return {
-      imageUrl: selectedItem.url,
-      prompt: processedPrompt || '',
-      negativePrompt: selectedItem.meta?.negativePrompt || '',
-      model: selectedItem.meta?.Model || baseModelName,
-      sampler: selectedItem.meta?.sampler || 'Euler a',
-      cfgScale: selectedItem.meta?.cfgScale || 7,
-      steps: selectedItem.meta?.steps || 30
-    };
+    
+    console.log(`No valid prompts found after ${maxAttempts} attempts for model: ${baseModelName}`);
+    return false;
+    
   } catch (error) {
     console.error('Error fetching Civitai prompt:', error.message);
-    return null;
+    return false;
   }
 }
 
@@ -229,6 +253,7 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
         const imageConfig = {
           title: characterData.name,
           prompt: chatData.gender +','+ promptData.prompt,
+          negativePrompt: promptData.negativePrompt,
           aspectRatio: "portrait", // Default to portrait for character images
           userId: userId,
           chatId: chatId,

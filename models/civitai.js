@@ -39,17 +39,18 @@ async function fetchRandomCivitaiPrompt(modelData, nsfw = false) {
         timeout: 10000 // 10 second timeout
       });
       
-      if (response.data.items && response.data.items.length > 0) {
-        console.log(`Found ${response.data.items.length} items to check`);
-        
-        // Find the first item with a valid prompt
-        const validItem = response.data.items.find(item => 
+      if (response.data.items && response.data.items.length > 0) {        
+        // Filter all items with valid prompts
+        const validItems = response.data.items.filter(item => 
           item.meta?.prompt && typeof item.meta.prompt === 'string' && item.meta.prompt.trim().length > 0
         );
+
+        // Select a random item from the filtered valid items
+        const validItem = validItems.length > 0 ? 
+          validItems[Math.floor(Math.random() * validItems.length)] : 
+          undefined;
         
-        if (validItem) {
-          console.log(`Found valid prompt for model: ${baseModelName}`);
-          
+        if (validItem) {          
           function processString(input) { 
             try {
               if (!input || typeof input !== 'string' || input.length === 0) {

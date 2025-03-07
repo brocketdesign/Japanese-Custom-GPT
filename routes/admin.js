@@ -11,7 +11,7 @@ const fetchModels = async (query = '', cursor = '') => {
   try {
     const url = `https://api.novita.ai/v3/model?filter.visibility=public&pagination.limit=10${
       cursor ? `&pagination.cursor=${cursor}` : ''
-    }${query ? `&filter.querystring=${encodeURIComponent(query)}` : ''}`;
+    }${query ? `&filter.querystring=${encodeURIComponent(query)}` : ''}`; 
 
     const response = await axios.get(url, {
       headers: {

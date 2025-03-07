@@ -136,8 +136,8 @@
                       <td>{{imageModel}}</td>
                       <td>{{formatDate createdAt}}</td>
                       <td>
-                        <a href="/chat/{{_id}}" class="btn btn-sm btn-outline-secondary" target="_blank">
-                          View Chat
+                        <a href="/character/{{_id}}" class="btn btn-sm btn-outline-secondary" target="_blank">
+                          View Character
                         </a>
                       </td>
                     </tr>
@@ -160,10 +160,14 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body bg-light">
-          <div class="text-center mb-3" id="modelInfo">
-            <strong>Model:</strong> <span id="modelName"></span>
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="text-start mb-3" id="modelInfo">
+              <strong>Model:</strong> <span id="modelName"></span>
+            </div>
+            <button id="getAnotherPreview" class="btn btn-secondary mb-3">
+              <i class="bi bi-arrow-repeat"></i> Get Another Preview
+            </button>
           </div>
-          
           <div id="loadingPrompt" class="text-center">
             <div class="spinner-border" role="status">
               <span class="visually-hidden">Loading...</span>
@@ -175,7 +179,7 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="card mb-3">
-                  <img id="promptImage" src="" class="card-img-top" alt="Character preview">
+                  <img id="promptImage" src="" class="card-img-top" alt="Character preview" style="max-height: 400px; object-fit: contain;">
                   <div class="card-body">
                     <h5 class="card-title">Preview</h5>
                     <p class="card-text"><small class="text-muted">Source: Civitai</small></p>
@@ -184,11 +188,11 @@
               </div>
               <div class="col-md-6">
                 <h5>Prompt:</h5>
-                <div class="border p-3 mb-3" style="max-height: 300px; overflow-y: auto;">
+                <div class="bg-white border p-3 mb-3" style="max-height: 100px; overflow-y: auto;">
                   <p id="promptText"></p>
                 </div>
                 <h5>Negative Prompt:</h5>
-                <div class="border p-3" style="max-height: 300px; overflow-y: auto;">
+                <div class="bg-white border p-3" style="max-height: 100px; overflow-y: auto;">
                   <p id="promptNegative"></p> 
                 </div>
               </div>
@@ -319,43 +323,62 @@
           $('#generateChatModal').modal('show');
           
           // Fetch a preview prompt with NSFW parameter
-          $.ajax({
-            url: '/api/preview-prompt',
-            type: 'POST',
-            data: { modelId, modelName, nsfw },
-            dataType: 'json',
-            success: function(data) {
-              $('#loadingPrompt').addClass('d-none');
-              
-              if (data.error) {
-                $('#errorFetching').removeClass('d-none').text(data.error);
-                return;
-              }
-              
-              if (!data.prompt) {
-                $('#noPrompt').removeClass('d-none');
-                return;
-              }
-              
-              // Store the promptKey for later use
-              promptKey = data.promptKey;
-              
-              // Show prompt preview
-              $('#promptPreview').removeClass('d-none');
-              $('#promptImage').attr('src', data.prompt.imageUrl);
-              $('#promptText').text(data.prompt.prompt);
-              $('#promptNegative').text(data.prompt.negativePrompt);
-              $('#generateBtn').removeClass('d-none')
-                .data('model-id', modelId)
-                .data('nsfw', nsfw)
-                .data('prompt-key', promptKey); // Store the promptKey
-            },
-            error: function() {
-              $('#loadingPrompt').addClass('d-none');
-              $('#errorFetching').removeClass('d-none');
-            }
-          });
+          fetchPreviewPrompt(modelId, modelName, nsfw);
         });
+      });
+      
+      // Extract prompt fetching into a separate function that can be reused
+      function fetchPreviewPrompt(modelId, modelName, nsfw) {
+        $('#loadingPrompt').removeClass('d-none');
+        $('#promptPreview').addClass('d-none');
+        $('#generateBtn').addClass('d-none');
+        
+        $.ajax({
+          url: '/api/preview-prompt',
+          type: 'POST',
+          data: { modelId, modelName, nsfw },
+          dataType: 'json',
+          success: function(data) {
+            $('#loadingPrompt').addClass('d-none');
+            
+            if (data.error) {
+              $('#errorFetching').removeClass('d-none').text(data.error);
+              return;
+            }
+            
+            if (!data.prompt) {
+              $('#noPrompt').removeClass('d-none');
+              return;
+            }
+            
+            // Store the promptKey for later use
+            promptKey = data.promptKey;
+            
+            // Show prompt preview
+            $('#promptPreview').removeClass('d-none');
+            $('#promptImage').attr('src', data.prompt.imageUrl);
+            $('#promptText').text(data.prompt.prompt);
+            $('#promptNegative').text(data.prompt.negativePrompt);
+            $('#generateBtn').removeClass('d-none')
+              .data('model-id', modelId)
+              .data('nsfw', nsfw)
+              .data('prompt-key', promptKey);
+          },
+          error: function() {
+            $('#loadingPrompt').addClass('d-none');
+            $('#errorFetching').removeClass('d-none');
+          }
+        });
+      }
+      
+      // Get another preview button
+      $('#getAnotherPreview').on('click', function() {
+        const modelId = $('#generateBtn').data('model-id');
+        const nsfw = $('#generateBtn').data('nsfw');
+        const modelName = $('#modelName').text();
+        
+        // Fetch another preview for the same model
+        fetchPreviewPrompt(modelId, modelName, nsfw);
       });
       
       // Generate button in modal click
@@ -390,10 +413,6 @@
                 $('#viewCharacterLink').removeClass('d-none').attr('href', '/chat/' + chat._id);
               }
               
-              // Reload the page after a delay to show the new chat
-              setTimeout(function() {
-                location.reload();
-              }, 3000);
             } else {
               $('#generationResult').removeClass('d-none alert-success').addClass('alert-danger');
               $('#generationMessage').text('Failed to generate character.');

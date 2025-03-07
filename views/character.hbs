@@ -32,7 +32,7 @@
 <div class="container mt-4">
   {{#if chat}}
     <!-- SEO Section -->
-    <div class="row mx-0 {{#if user.isTemporary}}{{else}}d-none{{/if}}">
+    <div class="row mx-0 }">
         <h1>{{translations.character_and_ai_chat}} {{chat.name}}</h1>
         <hr>
     </div>
@@ -98,7 +98,7 @@
                     </a>
                     <p>{{chat.description}}</p>
                     <!-- SEO Section -->
-                    <div class="row mx-0 text-start {{#if user.isTemporary}}{{else}}d-none{{/if}}">
+                    <div class="row mx-0 text-start">
                         <span>{{translations.about_the_character}} {{chat.name}}</span>
                         <hr>
                         <p class="description">{{chat.description}}</p>

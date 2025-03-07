@@ -29,9 +29,7 @@ async function fetchRandomCivitaiPrompt(modelData, nsfw = false) {
       const page = Math.floor(Math.random() * 10) + 1; // Random page between 1 and 10
       const limit = 30;
       const url = `https://civitai.com/api/v1/images?limit=${limit}&page=${page}&modelVersionId=${encodeURIComponent(modelId)}${nsfwParam}`;
-      
-      console.log(`Attempt ${attempt}/${maxAttempts} - Request URL: ${url}`);
-      
+            
       const response = await axios.get(url, {
         headers: {
           'Content-Type': 'application/json'

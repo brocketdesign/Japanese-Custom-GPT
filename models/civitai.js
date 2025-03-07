@@ -22,7 +22,7 @@ async function fetchRandomCivitaiPrompt(modelData, nsfw = false) {
     const nsfwParam = nsfw == 'true' ? '&nsfw=true' : '&nsfw=false';
     const maxAttempts = 5; // Maximum number of attempts to find a prompt
     
-    console.log(`Fetching Civitai prompts for model: ${baseModelName}`);
+    //console.log(`Fetching Civitai prompts for model: ${baseModelName}`);
     
     // Try multiple pages with a small limit to find a valid prompt
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {

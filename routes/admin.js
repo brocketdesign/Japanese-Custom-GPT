@@ -440,7 +440,7 @@ const modelCardTemplate = hbs.compile(`
         systemGenerated: true,
         chatImageUrl: { $exists: true },
         createdAt: { $gte: oneWeekAgo }
-      }).sort({ createdAt: -1 }).toArray();
+      }).sort({ createdAt: -1 }).limit(20).toArray();
       
       // Group chats by model
       const chatsByModel = {};

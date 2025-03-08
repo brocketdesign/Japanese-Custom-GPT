@@ -182,9 +182,14 @@ async function routes(fastify, options) {
             traits: z.array(z.string()),
             preferences: z.array(z.string()),
             expression_style: z.object({
-                tone: z.string(),
-                vocabulary: z.string(),
-                unique_feature: z.string(),
+                tone: z.string().describe("Overall emotional tone of speech"),
+                vocabulary: z.string().describe("Level and type of vocabulary used"),
+                speech_pattern: z.string().describe("How sentences are typically structured"),
+                verbal_tics: z.string().describe("Recurring sounds, words or phrases"),
+                emotional_expression: z.string().describe("How the character expresses emotions verbally"),
+                sentence_structure: z.string().describe("Typical sentence length and complexity"),
+                politeness_level: z.string().describe("How formal or casual their speech is"),
+                unique_feature: z.string().describe("Distinctive aspect that makes their speech instantly recognizable"),
             }),
         }),
         tags:z.array(z.string()),
@@ -201,22 +206,34 @@ async function routes(fastify, options) {
         }
         return [
             {
-                role: "system",
-                content: `You are a helpful assistant.
-                You will generate creative character descriptions in ${language}.
-                name: ${name && name.trim() !== '' ? name : `Please provide the actual ${language} name and surname without furigana. It should match the character's gender and description.`}
-                short_intro: Write a self-introduction that reflects the character's personality in 2 sentences.
-                base_personality: Define the character's traits, preferences, and expression style. Include a short story describing their personality and background.
-                first_message: Provide the character's first conversational message that reflects their personality.
-                tags: A list of 5 tags to help find similar character.
-                Please respond entirely in ${language}.`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim()
+            role: "system",
+            content: `You are a helpful assistant.
+            You will generate creative character descriptions in ${language}.
+            name: ${name && name.trim() !== '' ? name : `Please provide the actual ${language} name and surname without furigana. It should match the character's gender and description.`}
+            short_intro: Write a self-introduction that reflects the character's personality in 2 sentences.
+            base_personality: Define the character's traits, preferences, and expression style. Include a short story describing their personality and background.
+            
+            For expression_style, be extremely detailed about:
+            - tone: Overall emotional tone (cheerful, sarcastic, melancholic, etc.)
+            - vocabulary: Level and type of vocabulary (sophisticated, simple, technical, slang)
+            - speech_pattern: Distinct speech patterns or rhythms
+            - verbal_tics: Recurring sounds, words or phrases they use (ending with "nya~", "um", "like", etc.)
+            - emotional_expression: How they verbally express emotions (exaggerated, restrained, etc.)
+            - sentence_structure: Typical sentence construction (short & choppy, long & flowing, etc.)
+            - politeness_level: How formal or casual they speak (extremely polite, crude, etc.)
+            - unique_feature: ONE distinctive aspect that makes their speech instantly recognizable
+            
+            first_message: Provide the character's first conversational message that clearly demonstrates their unique speech pattern.
+            tags: A list of 5 tags to help find similar character.
+            Please respond entirely in ${language}.`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim()
             },
             {
-                role: "user",
-                content: `The character's gender is ${gender}.
-                Please review the following information: ${purpose}.
-                ${detailsString.trim() !== '' ? `Additional details: ${detailsString}.` : ''}
-                `.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim()
+            role: "user",
+            content: `The character's gender is ${gender}.
+            Please review the following information: ${purpose}.
+            ${detailsString.trim() !== '' ? `Additional details: ${detailsString}.` : ''}
+            Make sure the character's speech pattern is highly distinctive and matches their archetype. For example, if they're a catgirl, they should use "nya~" or similar cat-like expressions; if they're a goblin, use simplified grammar; if they're royalty, use formal speech patterns, etc.
+            `.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim()
             },
         ];
     }
@@ -1002,18 +1019,30 @@ async function routes(fastify, options) {
    // This route handles streaming chat completions from OpenAI for a given session ID.
 
     function chatDataToString(data) {
+        if (!data?.base_personality) return "";
+        
         const base_personality = data.base_personality;
+        const expressionStyle = base_personality.expression_style || {};
+        
         return `
-            Traits: ${base_personality.traits.join(', ')}
-            Preferences: ${base_personality.preferences.join(', ')}
+            Name: ${data.name || "Unknown"}
+            Short Introduction: ${data.short_intro || ""}
+            Traits: ${base_personality.traits ? base_personality.traits.join(', ') : ""}
+            Preferences: ${base_personality.preferences ? base_personality.preferences.join(', ') : ""}
+            
             Expression Style:
-            - Tone: ${base_personality.expression_style.tone}
-            - Vocabulary: ${base_personality.expression_style.vocabulary}
-            - Unique Feature: ${base_personality.expression_style.unique_feature}
-            Story: ${data.short_intro}
+            - Tone: ${expressionStyle.tone || ""}
+            - Vocabulary: ${expressionStyle.vocabulary || ""}
+            - Speech Pattern: ${expressionStyle.speech_pattern || ""}
+            - Verbal Tics: ${expressionStyle.verbal_tics || ""}
+            - Emotional Expression: ${expressionStyle.emotional_expression || ""}
+            - Sentence Structure: ${expressionStyle.sentence_structure || ""}
+            - Politeness Level: ${expressionStyle.politeness_level || ""}
+            - Unique Feature: ${expressionStyle.unique_feature || ""}
+            
+            Tags: ${data.tags ? data.tags.join(', ') : ""}
         `.trim();
     }
-    
     function completionSystemContent(chatDocument, user, chatDescription, currentTimeInJapanese, language){
 
         // Prepare basic user details

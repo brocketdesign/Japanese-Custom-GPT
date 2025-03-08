@@ -354,9 +354,7 @@ fastify.get('/character', async (request, reply) => {
 
     return reply.renderWithGtm('character.hbs', {
       title: 'AIグラビアから送られてくる特別な写真 | LAMIX | 日本語 | 無料AI画像生成 | 無料AIチャット',
-      
-      
-      
+
       seo: [
         { name: 'description', content: translations.seo.description_character },
         { name: 'keywords', content: translations.seo.keywords },
@@ -392,6 +390,7 @@ fastify.get('/character/:chatId', async (request, reply) => {
     }
 
     const chat = await chatsCollection.findOne({ _id: chatId });
+    console.log('Chat:', chat);
     if (!chat) {
       return reply.code(404).send({ error: 'Chat not found' });
     }

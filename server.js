@@ -390,7 +390,6 @@ fastify.get('/character/:chatId', async (request, reply) => {
     }
 
     const chat = await chatsCollection.findOne({ _id: chatId });
-    console.log('Chat:', chat);
     if (!chat) {
       return reply.code(404).send({ error: 'Chat not found' });
     }
@@ -439,6 +438,7 @@ fastify.get('/character/:chatId', async (request, reply) => {
         return reply.code(404).send({ error: 'Image not found' });
       }
     }
+
     // Log user activity 
     const template = isModal ? 'character-modal.hbs' : 'character.hbs';
     return reply.renderWithGtm(template, {

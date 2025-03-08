@@ -241,20 +241,15 @@ async function routes(fastify, options) {
     fastify.post('/api/openai-chat-creation', async (request, reply) => {
         try {
             // Validate request body
-            const { chatId, name, purpose, prompt, gender, details_personality } = request.body;
+            const { chatId, name, purpose, prompt, gender, details_personality, language: requestLanguage, system_generated, nsfw } = request.body;
 
-            if (!chatId || !purpose || !gender) {
-                return reply.status(400).send({ error: 'Invalid request body. "prompt" and "gender" are required.' });
+            if (!purpose || !gender) {
+                return reply.status(400).send({ error: 'Invalid request body. "purpose" and "gender" are required.' });
             }
 
-            // Fetch user data
-            const user = request.user;
-            if (!user) {
-                return reply.status(404).send({ error: 'User not found.' });
-            }
-
-            const userId = user._id;
-            const language = request.lang
+            // Determine language - use request parameter, fallback to user language
+            const language = requestLanguage || request.lang;
+            
             // Prepare payload
             const systemPayload = createSystemPayloadChatRule(purpose, gender, name, details_personality, language);
 
@@ -272,13 +267,20 @@ async function routes(fastify, options) {
 
             const chatData = JSON.parse(completionResponse.choices[0].message.content)
             // Respond with the validated character data
-            chatData.language = language
-            chatData.gender = gender
-            chatData.characterPrompt = prompt
+            chatData.language = language;
+            chatData.gender = gender;
+            chatData.characterPrompt = prompt;
+            
+            // If there's no chatId, just return the character data without DB operations
+            if (!chatId) {
+                return reply.send(chatData);
+            }
+            
+            // If chatId exists, continue with DB operations
             
             // Save generated tags
             const tagsCollection = fastify.mongo.db.collection('tags');
-            const generatedTags = chatData.tags
+            const generatedTags = chatData.tags;
             for (const tag of generatedTags) {
                 await tagsCollection.updateOne(
                     { name: tag },
@@ -289,6 +291,13 @@ async function routes(fastify, options) {
 
             if (details_personality) {
                 chatData.details_personality = details_personality; // store details in the DB if provided
+            }
+
+            // Flag if this is a system-generated chat
+            if (system_generated) {
+                chatData.systemGenerated = true;
+                chatData.nsfw = nsfw;
+                chatData.visibility = 'public';
             }
 
             const collectionChats = fastify.mongo.db.collection('chats');

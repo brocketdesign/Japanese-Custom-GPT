@@ -103,11 +103,6 @@ async function fetchRandomCivitaiPrompt(modelData, nsfw = false) {
 // Define Zod schema for character data
 const characterSchema = z.object({
   name: z.string(),
-  short_intro: z.string(),
-  personality_traits: z.array(z.string()),
-  tags: z.array(z.string()),
-  speaking_style: z.string(),
-  first_message: z.string(),
   gender: z.enum(['male', 'female', 'nonBinary'])
 });
 
@@ -126,11 +121,52 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
     const chatsCollection = db.collection('chats');
     const tagsCollection = db.collection('tags');
     
-    // Generate character using API endpoint instead of direct function call
+    // Step 1: First use OpenAI to get basic character info
+    let initialCharacterData;
+    try {
+      const openai = new OpenAI();
+      
+      const systemPrompt = `You are a creative character designer. Based on the prompt description, create a detailed character profile in ${language}.
+      Include the following: 
+      - A unique name appropriate for the character design and gender
+      - Brief character backstory (2-3 sentences)
+      - Personality traits (3 main traits)
+      - A list of tags to find the character in search
+      - Speaking style (formal/casual/slang/etc)
+      - Default first interaction message
+      
+      Response will be used as JSON with name, short_intro, personality_traits array, tags array, speaking_style, first_message, and gender fields.`;
+      
+      const userPrompt = `Create a character based on this image prompt: ${promptData.prompt}`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        response_format: zodResponseFormat(characterSchema, "character"),
+        temperature: 0.8,
+        max_tokens: 800
+      });
+
+      // Parse the response with Zod schema
+      initialCharacterData = JSON.parse(response.choices[0].message.content);
+      
+      console.log(`Initial character data generated: ${initialCharacterData.name} (${initialCharacterData.gender})`);
+    } catch (initialError) {
+      console.error('Error generating initial character data:', initialError);
+      return false;
+    }
+    
+    // Step 2: Use the initial character data to call the API
     let characterData;
     try {
       // API call to the openai-chat-creation endpoint
       const apiResponse = await axios.post(`${process.env.API_URL || 'http://localhost:3000'}/api/openai-chat-creation`, {
+        purpose: promptData.prompt,
+        gender: initialCharacterData.gender,
+        name: initialCharacterData.name,
         prompt: promptData.prompt,
         language: language,
         system_generated: true,
@@ -142,18 +178,10 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
       if (!characterData || !characterData.name) {
         throw new Error('Invalid character data received from API');
       }
+      console.log('Full character data received from API:', characterData.name);
     } catch (apiError) {
       console.error('Error calling openai-chat-creation API:', apiError);
-      // Fallback character if API call fails
-      characterData = {
-        name: "AI Character",
-        short_intro: "A digital character created by AI.",
-        personality_traits: ["Friendly", "Helpful", "Curious"],
-        tags: extractTagsFromPrompt(promptData.prompt).slice(0, 5),
-        speaking_style: "Casual and approachable",
-        first_message: "Hi there! Nice to meet you!",
-        gender: "female"
-      };
+      return false;
     }
     
     // Create tags from prompt
@@ -163,7 +191,7 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
     const chatData = {
       name: characterData.name,
       short_intro: characterData.short_intro || characterData.description,
-      base_personality: {
+      base_personality: characterData.base_personality || {
         traits: characterData.personality_traits || [],
         preferences: promptTags.slice(0, 3),
         expression_style: {

@@ -18,7 +18,7 @@ const apiDetails = {
   },
   deepseek: {
     apiUrl: 'https://api.novita.ai/v3/openai/chat/completions',
-    model: 'deepseek/deepseek_v3',
+    model: 'deepseek/deepseek-v3-turbo',
     key: process.env.NOVITA_API_KEY
   },
 };
@@ -345,24 +345,22 @@ async function generatePromptTitle(prompt,language) {
     const messages = [
           {
             role: "system",
-            content: `Your are a useful assistant that take a prompt and return a comment related to the prompt.\n
-            I will provide a prompt and you will return a short descriptive comment for it.\n
-            You must answer in ${language} and provide a comment that is relevant to the prompt, and suitable to social media, include the prompt keywords for SEO purposes.\n
+            content: `Your are a useful assistant that take a prompt and return a creative comment related to the prompt.\n
+            I will provide a prompt and you will return a short comment for it.\n
+            You must answer in ${language} and provide a short comment that is relevant to the prompt from the character perspective.\n
             Be creative with adult content, alway return a short comment (one sentence) that is relevant to the prompt.`.replace(/^\s+/gm, '').trim()       
           },
           {
               role: "user",
-              content: `Here is the prompt I want you to provide a descriptive comment for : ${prompt}.`.replace(/^\s+/gm, '').trim()
+              content: `Here is the prompt I want you to provide a short comment for : ${prompt}.`.replace(/^\s+/gm, '').trim()
           },
           {
               role: "user",
-              content: `I have lots of images, I need a short comment that help me find the image.\n 
-              Try to describe using keywords.\n 
-              Write the comment at the first person as if you were the character in the picture.`.replace(/^\s+/gm, '').trim()
+              content: `Be creative. \n Imagine you are the character in the prompt and write a comment as if you were the character.`.replace(/^\s+/gm, '').trim()
           },
     ]
 
-    const completionMessage = await generateCompletion(messages, 600, 'openai')
+    const completionMessage = await generateCompletion(messages, 600, 'deepseek');
     return completionMessage.replace(/['"]+/g, '');
     
 }

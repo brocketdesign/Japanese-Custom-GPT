@@ -1,8 +1,6 @@
 const { ObjectId } = require('mongodb');
 const {
     checkImageRequest, 
-    generatePromptTitle,
-    fetchOpenAICompletion,
     generateCompletion,
     generatePromptSuggestions,
     analyzeConversationContext
@@ -459,7 +457,6 @@ async function routes(fastify, options) {
                 response.chat = false;
                 return reply.send(response);  // Chat not found, but no error is thrown or logged
             }
-            console.log('Chat found:', chat);
             response.chat = chat;
             if(chat.chatImageUrl){
                 const image_url = new URL(chat.chatImageUrl);

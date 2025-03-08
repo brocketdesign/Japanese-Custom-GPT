@@ -44,8 +44,8 @@ const default_prompt = {
     model_name: "novaAnimeXL_ponyV20_461138.safetensors",
     prompt: '',
     negative_prompt: '',
-    width: 832,
-    height: 1216,
+    width: 701,
+    height: 1024,
     sampler_name: "Euler a",
     guidance_scale: 7,
     steps: 20,
@@ -72,8 +72,6 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, 
     // Fetch imageVersion from chat or use default
     const chat = await db.collection('chats').findOne({ _id: new ObjectId(chatId) });
     const imageVersion = chat.imageVersion || 'sdxl';
-  
-    // Select prompts and model based on imageStyle
     const selectedStyle = default_prompt[imageVersion] || default_prompt['sdxl'];
     const imageModel = chat.imageModel || 'novaAnimeXL_ponyV20_461138';
     
@@ -100,8 +98,8 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, 
         loras: selectedStyle.sfw.loras,
         prompt: (selectedStyle.sfw.prompt + prompt).replace(/^\s+/gm, '').trim(),
         negative_prompt: (negativePrompt || selectedStyle.sfw.negative_prompt) + ',' + genderNegativePrompt,
-        width: selectedStyle.width || params.width,
-        height: selectedStyle.height || params.height,
+        width: selectedStyle.sfw.width || params.width,
+        height: selectedStyle.sfw.height || params.height,
         blur: false
       };
     } else {
@@ -112,8 +110,8 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, 
         loras: selectedStyle.nsfw.loras,
         prompt: selectedStyle.nsfw.prompt + prompt,
         negative_prompt: (negativePrompt || selectedStyle.nsfw.negative_prompt) + ',' + genderNegativePrompt,
-        width: selectedStyle.width || params.width,
-        height: selectedStyle.height || params.height,
+        width: selectedStyle.nsfw.width || params.width,
+        height: selectedStyle.nsfw.height || params.height,
         blur: !isSubscribed
       };
     }
@@ -123,6 +121,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, 
     if(image_base64){
       requestData.image_base64 = image_base64;
     }
+    // Display size
     console.log('Starting image generation...'+requestData.model_name);
     
     // Send request to Novita and get taskId
@@ -158,24 +157,19 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, 
 
     let newTitle = title;
     if (!title) {
-      const title_en =  generatePromptTitle(requestData.prompt, 'english');
-      const title_ja =  generatePromptTitle(requestData.prompt, 'japanese');
-      const title_fr =  generatePromptTitle(requestData.prompt, 'french');
+      const lang = user.language || 'english';
+      // Only generate title for user's language
+      const userLangTitle = await generatePromptTitle(requestData.prompt, lang);
+      
+      // Create title object with just the user's language
       newTitle = {
-        en: title_en,
-        ja: title_ja,
-        fr: title_fr
+        en: lang === 'english' ? userLangTitle : '',
+        ja: lang === 'japanese' ? userLangTitle : '',
+        fr: lang === 'french' ? userLangTitle : ''
       };
-      // Wait for all titles and update task with title
-      const title_promises = [title_en, title_ja, title_fr];
-      Promise.all(title_promises).then((titles) => {
-        newTitle = {
-          en: titles[0],
-          ja: titles[1],
-          fr: titles[2]
-        };
-        updateTitle({ taskId:novitaTaskId , newTitle, fastify, userId, chatId, placeholderId });
-      });
+      
+      // Update task with the title
+      updateTitle({ taskId: novitaTaskId, newTitle, fastify, userId, chatId, placeholderId });
     }
   
     // Poll the task status

@@ -661,7 +661,7 @@ window.updateChatImage = function(el) {
     type: 'PUT',
     data: { imageUrl },
     success: function(response) {
-      updateChatBackgroundImage(imageUrl)
+      updateChatBackgroundImage(imageUrl);
     }
   });
 }

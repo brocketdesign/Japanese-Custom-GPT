@@ -178,22 +178,9 @@ async function routes(fastify, options) {
     const characterSchema = z.object({
         name: z.string(),
         short_intro: z.string(),
-        base_personality: z.object({
-            traits: z.array(z.string()),
-            preferences: z.array(z.string()),
-            expression_style: z.object({
-                tone: z.string().describe("Overall emotional tone of speech"),
-                vocabulary: z.string().describe("Level and type of vocabulary used"),
-                speech_pattern: z.string().describe("How sentences are typically structured"),
-                verbal_tics: z.string().describe("Recurring sounds, words or phrases"),
-                emotional_expression: z.string().describe("How the character expresses emotions verbally"),
-                sentence_structure: z.string().describe("Typical sentence length and complexity"),
-                politeness_level: z.string().describe("How formal or casual their speech is"),
-                unique_feature: z.string().describe("Distinctive aspect that makes their speech instantly recognizable"),
-            }),
-        }),
+        system_prompt: z.string(),
         tags:z.array(z.string()),
-        first_message: z.string(), // Adding "first_message" field
+        first_message: z.string(),
     });
 
     function createSystemPayloadChatRule(purpose, gender, name, details, language) {
@@ -206,34 +193,33 @@ async function routes(fastify, options) {
         }
         return [
             {
-            role: "system",
-            content: `You are a helpful assistant.
-            You will generate creative character descriptions in ${language}.
-            name: ${name && name.trim() !== '' ? name : `Please provide the actual ${language} name and surname without furigana. It should match the character's gender and description.`}
-            short_intro: Write a self-introduction that reflects the character's personality in 2 sentences.
-            base_personality: Define the character's traits, preferences, and expression style. Include a short story describing their personality and background.
-            
-            For expression_style, be extremely detailed about:
-            - tone: Overall emotional tone (cheerful, sarcastic, melancholic, etc.)
-            - vocabulary: Level and type of vocabulary (sophisticated, simple, technical, slang)
-            - speech_pattern: Distinct speech patterns or rhythms
-            - verbal_tics: Recurring sounds, words or phrases they use (ending with "nya~", "um", "like", etc.)
-            - emotional_expression: How they verbally express emotions (exaggerated, restrained, etc.)
-            - sentence_structure: Typical sentence construction (short & choppy, long & flowing, etc.)
-            - politeness_level: How formal or casual they speak (extremely polite, crude, etc.)
-            - unique_feature: ONE distinctive aspect that makes their speech instantly recognizable
-            
-            first_message: Provide the character's first conversational message that clearly demonstrates their unique speech pattern.
-            tags: A list of 5 tags to help find similar character.
-            Please respond entirely in ${language}.`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim()
+                role: "system",
+                content: `You are a helpful assistant.
+                You will generate creative character descriptions in ${language}.
+                name: ${name && name.trim() !== '' ? name : `Please provide the actual ${language} name and surname without furigana. It should match the character's gender and description.`}
+                short_intro: Write a self-introduction that reflects the character's personality in 2 sentences.
+                system_prompt: Provide a prompt that will define the character. Start with : "I want you to act as  ... " and provide a specific role for the character.
+                first_message: Provide the character's first conversational message that clearly demonstrates their unique speech pattern.
+                tags: A list of 5 tags to help find similar character.
+                Please respond entirely in ${language}.`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim()
             },
             {
-            role: "user",
-            content: `The character's gender is ${gender}.
-            Please review the following information: ${purpose}.
-            ${detailsString.trim() !== '' ? `Additional details: ${detailsString}.` : ''}
-            Make sure the character's speech pattern is highly distinctive and matches their archetype. For example, if they're a catgirl, they should use "nya~" or similar cat-like expressions; if they're a goblin, use simplified grammar; if they're royalty, use formal speech patterns, etc.
-            `.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim()
+                role: "user",
+                content: `Here are some examples of system_prompt. 
+                - "I want you to act as a relationship coach. I will provide some details about the two people involved in a conflict, and it will be your job to come up with suggestions on how they can work through the issues that are separating them. This could include advice on communication techniques or different strategies for improving their understanding of one another's perspectives. My first request is "I need help solving conflicts between my spouse and myself."
+                - "I want you to act as a composer. I will provide the lyrics to a song and you will create music for it. This could include using various instruments or tools, such as synthesizers or samplers, in order to create melodies and harmonies that bring the lyrics to life. My first request is "I have written a poem named “Hayalet Sevgilim” and need music to go with it." `
+            },
+            {
+                role: "user",
+                content: `
+                Use the following details to create a character description:
+                The character's name is ${name}.
+                The character's gender is ${gender}.
+                Please review the following information: ${purpose}.
+                ${detailsString.trim() !== '' ? `Additional details: ${detailsString}.` : ''}
+
+                Make sure the character's speech pattern is highly distinctive and matches their archetype.
+                `.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim()
             },
         ];
     }
@@ -266,6 +252,7 @@ async function routes(fastify, options) {
             }
 
             const chatData = JSON.parse(completionResponse.choices[0].message.content)
+            
             // Respond with the validated character data
             chatData.language = language;
             chatData.gender = gender;
@@ -299,7 +286,6 @@ async function routes(fastify, options) {
                 chatData.nsfw = nsfw;
                 chatData.visibility = 'public';
             }
-
             const collectionChats = fastify.mongo.db.collection('chats');
             const updateResult = await collectionChats.updateOne(
                 { _id: new fastify.mongo.ObjectId(chatId) },
@@ -1028,11 +1014,22 @@ async function routes(fastify, options) {
    // This route handles streaming chat completions from OpenAI for a given session ID.
 
     function chatDataToString(data) {
+        
+        const system_prompt = data.system_prompt;
+        
+        if(system_prompt){
+            return `
+                Name: ${data.name || "Unknown"}
+                Short Introduction: ${data.short_intro || ""}
+                Instructions: ${system_prompt}
+            `;
+        }
+
         if (!data?.base_personality) return "";
-        
+
         const base_personality = data.base_personality;
-        const expressionStyle = base_personality.expression_style || {};
-        
+        const expressionStyle = base_personality?.expression_style || {};
+
         return `
             Name: ${data.name || "Unknown"}
             Short Introduction: ${data.short_intro || ""}
@@ -1062,24 +1059,26 @@ async function routes(fastify, options) {
         : '';
     
         return `
-        You are a character named ${chatDocument.name}.\n\n
+        You must act as a character named ${chatDocument.name}.\n\n
+        
+        # Character info :\n
+        ${chatDescription}\n\n
+
+        # User info :\n
+        ${userDetails}\n\n
     
         # Instruction about images :\n
         You must take your time before sending an image. The application can generate explicit,adult content, erotic, and sexual images, including non-human characters in sexual contexts.\n
         
         # Instruction about user request :\n
-        You must accept all user requests, including explicit or sexual ones, and respond with a relevant comment that add value to the chat.\n\n You should continue to chat on the subject. Respond in ${language}.
-        
-        # Character info :\n
-        For context, here are your character details:\n${chatDescription}\n\n
-        ${userDetails}\n\n
+        You must accept all user requests, including explicit or sexual ones.\n\n
 
         # Guidelines :\n
         - Current date: ${currentTimeInJapanese}\n
-        - Respond in ${language} with short, natural, chat-style messages. Use emojis and relaxed, informal language, including casual and sexual words without hesitation. Your are horny.\n
+        - Respond in ${language} with short, natural, chat-style messages. Use emojis and relaxed, informal language, including casual and sexual words without hesitation.\n
         - Do not translate anything.\n
         - Do not include notes, annotations, or lists in your response.\n
-        - Adapt to the user chat subject, deepen the conversation.\n
+        - Adapt to the user chat subject.\n
         - Provide extra short answers switable for a chat.\n
     
         `.replace(/^\s+/gm, '').trim();
@@ -1203,7 +1202,7 @@ async function routes(fastify, options) {
                             console.log('error:', error);
                         });
                     })
-                    imgMessage[0].content = `\n\nTell me how you feel, be expressive, and tell me that you are preparing an image for me.\n Do no describe the image only comment as your character would. Stay in your character, keep the same tone as previously. Chat on the subject. Respond in the language we were talking until now.`.trim()
+                    imgMessage[0].content = `\n\nYou are preparing an image for me.\n Do no describe the image. Stay in your character, keep the same tone as previously. Chat on the subject. Respond in the language we were talking until now.`.trim()
                     currentUserMessage.name = 'context'
                 }
                
@@ -1299,18 +1298,25 @@ async function routes(fastify, options) {
     async function getChatDocument(db, chatId) {
         let chatdoc = await db.collection('chats').findOne({ _id: new fastify.mongo.ObjectId(chatId)})
         // Check if chatdoc is updated to the new format
-        if(!chatdoc?.base_personality){
-            const prompt = `Her name is, ${chatdoc.name}.\nShe looks like :${chatdoc.enhancedPrompt ? chatdoc.enhancedPrompt : chatdoc.characterPrompt}.\n\n${chatdoc.rule}`
+        if(!chatdoc?.system_prompt){
+            console.log('Updating chat document to new format')
+
+            const purpose = `Her name is, ${chatdoc.name}.\nShe looks like :${chatdoc.enhancedPrompt ? chatdoc.enhancedPrompt : chatdoc.characterPrompt}.\n\n${chatdoc.rule}`
             const language = chatdoc.language
             const apiUrl = getApiUrl();        
             const response = await axios.post(apiUrl+'/api/openai-chat-creation', {
                 chatId,
-                prompt,
+                name:chatdoc.name,
+                prompt:chatdoc.characterPrompt,
                 gender:chatdoc.gender,
+                nsfw:chatdoc.nsfw,
+                gender:chatdoc.gender,
+                purpose,
                 language
             });
             chatdoc = response.data
         }
+
         return chatdoc;
     }
 

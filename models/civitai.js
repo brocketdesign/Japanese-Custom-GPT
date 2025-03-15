@@ -126,18 +126,11 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
     try {
       const openai = new OpenAI();
       
-      const systemPrompt = `You are a creative character designer. Based on the prompt description, create a detailed character profile in ${language}.
-      Include the following: 
-      - A unique name appropriate for the character design and gender
-      - Brief character backstory (2-3 sentences)
-      - Personality traits (3 main traits)
-      - A list of tags to find the character in search
-      - Speaking style (formal/casual/slang/etc)
-      - Default first interaction message
+      const systemPrompt = `You are a prompt analyzer. 
+      Based on the prompt description, you help define if the character is a 'male', 'female', 'nonBinary' and provide a name (firstname and lastname).
+      `;
       
-      Response will be used as JSON with name, short_intro, personality_traits array, tags array, speaking_style, first_message, and gender fields.`;
-      
-      const userPrompt = `Create a character based on this image prompt: ${promptData.prompt}`;
+      const userPrompt = `Analyze the following image prompt: ${promptData.prompt}`;
 
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
@@ -174,7 +167,7 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
       });
       
       characterData = apiResponse.data;
-      
+
       if (!characterData || !characterData.name) {
         throw new Error('Invalid character data received from API');
       }
@@ -191,15 +184,7 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
     const chatData = {
       name: characterData.name,
       short_intro: characterData.short_intro || characterData.description,
-      base_personality: characterData.base_personality || {
-        traits: characterData.personality_traits || [],
-        preferences: promptTags.slice(0, 3),
-        expression_style: {
-          tone: characterData.speaking_style || 'Casual',
-          vocabulary: language,
-          unique_feature: characterData.personality_traits?.[0] || 'Friendly'
-        }
-      },
+      system_prompt: characterData.system_prompt,
       tags: characterData.tags || promptTags,
       first_message: characterData.first_message,
       characterPrompt: promptData.prompt,

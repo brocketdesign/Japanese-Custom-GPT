@@ -15,11 +15,13 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
 
     // Cache translations to avoid redundant file reads
     const translationsCache = {};
+    const clerkTranslationsCache = {}; // Add cache for clerk translations
 
     // Decorate Fastify with user, lang, and translations functions
     fastify.decorate('getUser', getUser);
     fastify.decorate('getLang', getLang);
     fastify.decorate('getTranslations', getTranslations);
+    fastify.decorate('getClerkTranslations', getClerkTranslations); // Add clerk translations decorator
 
     // Attach `lang` and `user` dynamically
     Object.defineProperty(fastify, 'lang', {
@@ -36,6 +38,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
 
     // Decorate request
     fastify.decorateRequest('translations', null);
+    fastify.decorateRequest('clerkTranslations', null); // Add clerk translations to request
     fastify.decorateRequest('lang', null);
     fastify.decorateRequest('user', null);
     fastify.decorateRequest('isAdmin', null);
@@ -78,12 +81,36 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         }
         return translationsCache[currentLang];
     }
+    
+    /** Load Clerk translations for a specific language (cached for performance) */
+    function getClerkTranslations(currentLang) {
+        if (!currentLang) currentLang = 'en';
+        
+        if (!clerkTranslationsCache[currentLang]) {
+            const clerkTranslationFile = path.join(__dirname, '..', 'locales', 'clerk', `${currentLang}.ts`);
+            if (fs.existsSync(clerkTranslationFile)) {
+                try {
+                    // Use require to import the TypeScript file
+                    const translationModule = require(clerkTranslationFile);
+                    // Assuming the translation is the default export
+                    clerkTranslationsCache[currentLang] = translationModule.default || translationModule;
+                } catch (e) {
+                    fastify.log.error(`Error reading Clerk translations for ${currentLang}:`, e);
+                    clerkTranslationsCache[currentLang] = {};
+                }
+            } else {
+                clerkTranslationsCache[currentLang] = {}; // Fallback to empty object if translation file is missing
+            }
+        }
+        return clerkTranslationsCache[currentLang];
+    }
 
     /** Middleware: Set request language and user */
     async function setRequestLangAndUser(request, reply) {
         request.user = await fastify.getUser(request, reply);
         request.lang = request.user.lang || await fastify.getLang(request, reply);
         request.translations = fastify.getTranslations(request.lang);
+        request.clerkTranslations = fastify.getClerkTranslations(request.lang);
         request.isAdmin = await checkUserAdmin(fastify, request.user._id) || false;
     }
 
@@ -93,6 +120,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             mode: process.env.MODE,
             apiurl: process.env.API_URL,
             translations: request.translations,
+            clerkTranslations: request.clerkTranslations, // Add clerk translations to locals
             lang: request.lang,
             user: request.user,
             isAdmin: request.isAdmin
@@ -102,7 +130,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     /** Authenticate user via JWT */
     async function getAuthenticatedUser(request, userCollection) {
         const token = request?.cookies?.token;
-        
+
         if (!token) return null;
 
         try {

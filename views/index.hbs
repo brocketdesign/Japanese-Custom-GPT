@@ -44,21 +44,12 @@
     footer{display: inline !important;}
 </style>
  {{> dashboard-footer}}
-
-    <script>
-        // Redirect to the authentication page when a button is clicked
-        $(document).find('#social_proof button').click(function() {
-            openLoginForm();
-        });
-    </script>
-
     <script>
         const headline = document.getElementById('headline-container');
         const subheadline = document.getElementById('subheadline-container');
         const bannerNumber = `{{bannerNumber}}`;
         const title = translations.landing_page.banner[bannerNumber].title;
         const subtitle = translations.landing_page.banner[bannerNumber].subtitle;
-        console.log(title,subtitle);
 
         headline.innerHTML = '<p>' + title + '</p>';
         subheadline.innerHTML = subtitle;

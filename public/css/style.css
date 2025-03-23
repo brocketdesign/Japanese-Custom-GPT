@@ -1542,7 +1542,10 @@
   .liked i {
   color:red
   }
-
+  .cl-cardBox.cl-signIn-start {
+    box-shadow: none;
+    }
+    
   @media (max-width: 600px) {
 
   .dropdown-menu {

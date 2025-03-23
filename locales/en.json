@@ -1,6 +1,5 @@
 {
   "lang":"en", 
-    
   "admin_model_chats": {
     "title": "Auto Character",
     "generate_all": "Generate Chat for All Models",

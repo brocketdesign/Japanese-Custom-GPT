@@ -281,20 +281,29 @@
             processData: false,
             contentType: false,
             success: function(response) {
-              Swal.fire({
-                icon: 'success',
-                title: '成功',
-                text: response.status,
-              });
+              // Update the Clerk user profile image
+              if (window.Clerk) {
+                const userId = Clerk.user.id;
+                const file = new File([profileImage], profileImage.name, { type: profileImage.type });
+
+                Clerk.user.setProfileImage({
+                  userId,
+                  file
+                })
+                  .then(response => {
+                  console.log("Clerk user profile image updated:", response);
+                  })
+                  .catch(error => {
+                  console.error("Error updating Clerk user profile image:", error);
+                  });
+              }
+
             },
             error: function(jqXHR) {
-              Swal.fire({
-                icon: 'error',
-                title: 'エラー',
-                text: jqXHR.responseJSON.error,
-              });
+              console.log(jqXHR.responseJSON.error)
             }
           });
+
         }
 
     });

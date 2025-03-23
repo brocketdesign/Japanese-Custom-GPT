@@ -9,430 +9,129 @@ const { moderateImage } = require('../models/openai');
 const { refreshAccessToken, addContactToCampaign } = require('../models/zohomail');
 
 async function routes(fastify, options) {
-  
-  fastify.post('/user/register', async (request, reply) => {
-    try {
-      const { nickname, email, password, gender, ageVerification } = request.body;
 
-      if (!email || !password) {
-        return reply.status(400).send({ error: 'ユーザー名とパスワードは必須です' });
+    fastify.get('/user/clerk-auth', async (request, reply) => {
+      try {
+      const clerkId = request.headers['x-clerk-user-id'];
+      console.log(`clerkId from header: ${clerkId}`);
+
+      if (!clerkId) {
+        console.warn('No clerkId found in header');
+        return reply.status(401).send({ error: 'Unauthorized' });
       }
 
       const usersCollection = fastify.mongo.db.collection('users');
-      const user = await usersCollection.findOne({ email });
-      if (user) {
-        return reply.status(400).send({ error: 'ユーザーはすでに存在します' });
-      }
+      let user = await usersCollection.findOne({ clerkId });
+      console.log(`User found with clerkId ${clerkId}: ${!!user}`);
 
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const TempUser = request.user;
-      let tempUserId = TempUser._id;
-
-      const result = await usersCollection.insertOne({
-        lang: request.lang,
-        nickname,
-        email,
-        password: hashedPassword,
-        gender,
-        ageVerification,
+      if (!user) {
+        // Create a new user
+        user = {
+        clerkId,
         createdAt: new Date(),
-        tempUserId,
-        coins: 100
-      });
-
-      if (!result.insertedId) {
-        return reply.status(500).send({ error: 'ユーザーの登録に失敗しました' });
-      }
-
-      const newUser = { _id: result.insertedId, email };
-      const userId = newUser._id;
-
-      // Transfer temp chat to new user
-      const collectionUserChat = fastify.mongo.db.collection('userChat');
-      const collectionChat = fastify.mongo.db.collection('chats');
-      const updateUserId = async (collectionChat, collectionUserChat, userId, tempUserId) => {
-        const userChatResult = await collectionUserChat.updateMany(
-          { userId: new fastify.mongo.ObjectId(tempUserId) },
-          { $set: { userId: new fastify.mongo.ObjectId(userId), log_success: true } }
-        );
-        const chatResult = await collectionChat.updateMany(
-          { userId: new fastify.mongo.ObjectId(tempUserId) },
-          { $set: { userId: new fastify.mongo.ObjectId(userId) } }
-        );
-        return {
-          userChatUpdated: userChatResult.modifiedCount,
-          chatUpdated: chatResult.modifiedCount
+        coins: 100,
+        lang: request.lang,
         };
-      };
-      await updateUserId(collectionChat, collectionUserChat, userId, tempUserId);
+        const result = await usersCollection.insertOne(user);
+        user._id = result.insertedId;
+        console.log(`New user created with clerkId ${clerkId} and _id ${user._id}`);
+      }
+      await updateUserLang(fastify.mongo.db, user._id,request.lang)
+      const token = jwt.sign({ _id: user._id, clerkId: user.clerkId }, process.env.JWT_SECRET, { expiresIn: '24h' });
+      console.log(`JWT token created for user ${user._id}`);
 
-      // Zoho Campaign Integration: Add new user as a contact
-      try {
-        const tokensCollection = fastify.mongo.db.collection('zoho_tokens');
-        let tokenDoc = await tokensCollection.findOne({ _id: 'zoho' });
-        if (tokenDoc) {
-          // Check for token expiration and refresh if needed
-          if (Date.now() >= tokenDoc.expires_at) {
-            const tokenData = await refreshAccessToken(tokenDoc.refresh_token);
-            const updateData = {
-              access_token: tokenData.access_token,
-              expires_at: Date.now() + tokenData.expires_in * 1000
-            };
-            if (tokenData.refresh_token) {
-              updateData.refresh_token = tokenData.refresh_token;
-            }
-            await tokensCollection.updateOne({ _id: 'zoho' }, { $set: updateData });
-            tokenDoc.access_token = tokenData.access_token;
-          }
-          // Prepare Zoho contact data
-          const contactData = {
-            listkey: process.env.ZOHO_LISTKEY,
-            resfmt: 'json',
-            contactinfo: JSON.stringify({
-              CONTACTS: [{
-                EMAIL: email,
-                FIRSTNAME: nickname
-              }]
-            }),
-            source: 'web'
-          };
-          const zohoResponse = await addContactToCampaign(contactData, tokenDoc.access_token);
-          console.log('Zoho campaign response:', zohoResponse);
-        }
+      return reply
+        .setCookie('token', token, { path: '/', httpOnly: true })
+        .send({ redirect: '/chat/' });
+
       } catch (err) {
-        console.log('Zoho campaign error:', err);
+      console.error(`Error in /user/clerk-auth: ${err.message}`, err);
+      return reply.status(500).send({ error: 'Server error' });
       }
+    });
 
-      const token = jwt.sign(newUser, process.env.JWT_SECRET, { expiresIn: '24h' });
-      return reply
-        .setCookie('token', token, { path: '/', httpOnly: true })
-        .send({ status: 'ユーザーが正常に登録されました', redirect: '/chat/' });
-    } catch (err) {
-      console.log(err);
-      return reply.status(500).send({ error: 'サーバーエラーが発生しました' });
-    }
-  });
-
-  fastify.post('/user/login', async (request, reply) => {
+  fastify.post('/user/clerk-update', async (request, reply) => {
     try {
-        // Validate and sanitize input
-        const { email, password } = request.body || {};
-        if (!email || !password) {
-            return reply.status(400).send({ error: 'メールとパスワードは必須です' });
-        }
-
-        const sanitizedEmail = email.trim().toLowerCase();
-        const usersCollection = fastify.mongo.db.collection('users');
-
-        // Find user by email
-        const user = await usersCollection.findOne({ email: sanitizedEmail });
-        if (!user) {
-            return reply.status(401).send({ error: '無効なユーザー名またはパスワード' });
-        }
-
-        // Verify password
-        const passwordMatch = await bcrypt.compare(password, user.password);
-        if (!passwordMatch) {
-            return reply.status(401).send({ error: '無効なユーザー名またはパスワード' });
-        }
-
-        // Optionally update the user's language preference, if provided
-        if (request.lang) {
-            try {
-                await updateUserLang(fastify.mongo.db, user._id, request.lang);
-            } catch (langError) {
-                return reply.status(500).send({ error: '言語設定の更新中にエラーが発生しました' });
-            }
-        }
-
-        // Generate JWT
-        const token = jwt.sign(
-            { _id: user._id, email: user.email },
-            process.env.JWT_SECRET,
-            { expiresIn: '24h' }
-        );
-
-        // Respond with token and clear tempUser cookie
-        // Clear all cookies
-        const cookies = request.cookies;
-        for (const cookieName in cookies) {
-            reply.clearCookie(cookieName, { path: '/' });
-        }
-
-        return reply
-            .clearCookie('tempUser', { path: '/' })
-            .setCookie('token', token, { path: '/', httpOnly: true })
-            .send({ redirect: '/chat/' });
-    } catch (error) {
-        // Catch unexpected errors
-        console.error('Login route error:', error);
-        return reply.status(500).send({ error: 'サーバーエラーが発生しました' });
-    }
-});
-
-
-  // Google authentication configuration
-  const googleClientId = process.env.GOOGLE_CLIENT_ID;
-  const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
-
-
-// Google authentication route
-fastify.get('/user/google-auth', async (request, reply) => {
-  const protocol = 'https';
-  const host = request.headers.host.replace('192.168.10.115', 'localhost');
-  const googleRedirectUri = `${protocol}://${host}/user/google-auth/callback`;
-  
-  const url = `https://accounts.google.com/o/oauth2/v2/auth?` +
-    `client_id=${googleClientId}&` +
-    `redirect_uri=${encodeURIComponent(googleRedirectUri)}&` +
-    `response_type=code&` +
-    `scope=openid%20email%20profile`;
-
-  return reply.redirect(url);
-});
-
-// Google authentication callback route
-fastify.get('/user/google-auth/callback', async (request, reply) => {
-  try {
-    const protocol = 'https';
-    const host = request.headers.host.replace('192.168.10.115', 'localhost');
-    const googleRedirectUri = `${protocol}://${host}/user/google-auth/callback`;
-    
-    const code = request.query.code;
-    const tokenResponse = await axios.post(`https://oauth2.googleapis.com/token`, {
-      code,
-      client_id: googleClientId,
-      client_secret: googleClientSecret,
-      redirect_uri: googleRedirectUri,
-      grant_type: 'authorization_code',
-    });
-
-    const token = tokenResponse.data.access_token;
-    const userInfoResponse = await axios.get('https://openidconnect.googleapis.com/v1/userinfo', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    const userInfo = userInfoResponse.data;
-    const email = userInfo.email;
-    const googleId = userInfo.sub; // Get the Google ID from the user info response
-    const usersCollection = fastify.mongo.db.collection('users');
-
-    // Check if the user already exists
-    const user = await usersCollection.findOne({ email });
-    if (!user) {
-      // Create a new user if they don't exist
-      const hashedPassword = await bcrypt.hash(Math.random().toString(36).substr(2, 10), 10);
-      
-      const TempUser = request.user;
-      let tempUserId = TempUser._id
-
-      //tempNickname should be the first 10 characters of the email before the @ symbol
-      const tempNickname = email.split('@')[0].substr(0, 10);
-      const result = await usersCollection.insertOne({ 
-        lang: request.lang,
-        email, 
-        password: hashedPassword, 
-        nickname: tempNickname,
-        googleId, 
-        createdAt: new Date() , 
-        tempUserId,
-        coins: 100
-      });
-      const userId = result.insertedId;
-      // Transfer temp chat to new user
-      const collectionUserChat = fastify.mongo.db.collection('userChat');
-      const collectionChat = fastify.mongo.db.collection('chats');
-
-      const updateUserId = async (collectionChat, collectionUserChat, userId, tempUserId) => {
-    
-        // Update collectionUserChat
-        const userChatResult = await collectionUserChat.updateMany(
-            { userId: new fastify.mongo.ObjectId(tempUserId) },
-            { $set: { userId: new fastify.mongo.ObjectId(userId), log_success: true } }
-        );
-        // Update collectionChat
-        const chatResult = await collectionChat.updateMany(
-            { userId: new fastify.mongo.ObjectId(tempUserId) },
-            { $set: { userId: new fastify.mongo.ObjectId(userId) } }
-        );
-        return {
-            userChatUpdated: userChatResult.modifiedCount,
-            chatUpdated: chatResult.modifiedCount
-        };
-    };
-    
-      await updateUserId(collectionChat, collectionUserChat, userId, tempUserId)
-      const token = jwt.sign({ _id: userId, email }, process.env.JWT_SECRET, { expiresIn: '24h' });
-      return reply
-      .setCookie('token', token, { path: '/', httpOnly: true })
-      .redirect('/chat/')
-      .send({ status: 'ユーザーが正常に登録されました' });
-    } else {
-      // Update the user's Google ID if it's not already set
-      if (!user.googleId) {
-        await usersCollection.updateOne({ _id: user._id }, { $set: { googleId } });
+      const clerkUser = request.body;
+      if(!clerkUser){
+        return reply.send({error:`User not founded`})
       }
-      // Login the user if they already exist
-      await updateUserLang(fastify.mongo.db, user._id,request.lang)
-      const token = jwt.sign({ _id: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '24h' });
-      return reply
-      .setCookie('token', token, { path: '/', httpOnly: true })
-      .redirect('/chat/')
-    }
-  } catch (err) {
-    fastify.log.error(err);
-    return reply.status(500).send({ error: 'サーバーエラーが発生しました' });
-  }
-});
+      const clerkId = clerkUser.id;
 
-fastify.get('/user/line-auth', async (request, reply) => {
-  const protocol = 'https';
-  const host = request.headers.host.replace('192.168.10.115', 'localhost');
-  const lineConfig = {
-    channelId: process.env.LINE_CHANNEL_ID,
-    channelSecret: process.env.LINE_CHANNEL_SECRET,
-    redirectUri: `${protocol}://${host}/user/line-auth/callback`,
-  };
-  const state = crypto.randomBytes(16).toString('hex');
-  const nonce = crypto.randomBytes(16).toString('hex');
-  const scope = 'profile openid email';
-  const response_type = 'code';
-
-  const url = `https://access.line.me/oauth2/v2.1/authorize?` +
-    `response_type=${response_type}&` +
-    `client_id=${lineConfig.channelId}&` +
-    `redirect_uri=${encodeURIComponent(lineConfig.redirectUri)}&` +
-    `scope=${scope}&` +
-    `state=${state}&` +
-    `nonce=${nonce}`;
-
-  return reply.redirect(url);
-});
-
-fastify.get('/user/line-auth/callback', async (request, reply) => {
-  try {
-    const protocol = 'https';
-    const host = request.headers.host.replace('192.168.10.115', 'localhost');
-    const lineConfig = {
-      channelId: process.env.LINE_CHANNEL_ID,
-      channelSecret: process.env.LINE_CHANNEL_SECRET,
-      redirectUri: `${protocol}://${host}/user/line-auth/callback`,
-    };
-    const { code, state, nonce } = request.query;
-
-    const tokenResponse = await axios.post(`https://api.line.me/oauth2/v2.1/token`, 
-    `grant_type=authorization_code&code=${code}&redirect_uri=${encodeURIComponent(lineConfig.redirectUri)}&client_id=${lineConfig.channelId}&client_secret=${lineConfig.channelSecret}`, 
-    {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
+      if (!clerkId) {
+        console.warn('No clerkId found in request body');
+        return reply.status(400).send({ error: 'clerkId is required' });
       }
-    });
 
-    const token = tokenResponse.data.access_token;
-    const idToken = tokenResponse.data.id_token;
+      // Fetch user data from Clerk
+      const clerkApiUrl = `https://api.clerk.com/v1/users/${clerkId}`;
+      const clerkSecretKey = process.env.CLERK_SECRET_KEY;
 
-    const decodedIdToken = jwt.verify(idToken, lineConfig.channelSecret, {
-      algorithms: ['HS256'],
-    });
+      if (!clerkSecretKey) {
+        console.error('CLERK_SECRET_KEY is not set in environment variables.');
+        return reply.status(500).send({ error: 'Clerk secret key not configured' });
+      }
 
-    const userId = decodedIdToken.sub;
-    const email = decodedIdToken.email;  // Get the email from the decoded ID token
-
-    const usersCollection = fastify.mongo.db.collection('users');
-
-    // Check if the user already exists
-    const user = await usersCollection.findOne({ userId });
-    if (!user) {
-      // Create a new user if they don't exist
-      const hashedPassword = await bcrypt.hash(Math.random().toString(36).substr(2, 10), 10);
-      
-      const TempUser = request.user;
-      let tempUserId = TempUser._id
-      //tempNickname should be the first 10 characters of the email before the @ symbol
-      const tempNickname = email.split('@')[0].substr(0, 10);
-      const result = await usersCollection.insertOne({ 
-        lang: request.lang,
-        userId, 
-        email, 
-        password: hashedPassword, 
-        nickname: tempNickname,
-        createdAt: new Date(), 
-        tempUserId ,
-        coins: 100
-      });
-      const newUserId = result.insertedId;
-      // Transfer temp chat to new user
-      const userId = newUserId
-      const collectionUserChat = fastify.mongo.db.collection('userChat');
-      const collectionChat = fastify.mongo.db.collection('chats');
-
-      const updateUserId = async (collectionChat, collectionUserChat, userId, tempUserId) => {
-    
-        // Update collectionUserChat
-        const userChatResult = await collectionUserChat.updateMany(
-            { userId: new fastify.mongo.ObjectId(tempUserId) },
-            { $set: { userId: new fastify.mongo.ObjectId(userId), log_success:true } }
-        );
-        // Update collectionChat
-        const chatResult = await collectionChat.updateMany(
-            { userId: new fastify.mongo.ObjectId(tempUserId) },
-            { $set: { userId: new fastify.mongo.ObjectId(userId) } }
-        );
-        return {
-            userChatUpdated: userChatResult.modifiedCount,
-            chatUpdated: chatResult.modifiedCount
-        };
-      };
-    
-      await updateUserId(collectionChat, collectionUserChat, userId, tempUserId)
-
-      const token = jwt.sign({ _id: newUserId, userId }, process.env.JWT_SECRET, { expiresIn: '24h' });
-      return reply
-        .setCookie('token', token, { path: '/', httpOnly: true })
-        .redirect('/chat/')
-        .send({ status: 'ユーザーが正常に登録されました' });
-    } else {
-      // Login the user if they already exist
-      await updateUserLang(fastify.mongo.db, user._id,request.lang)
-      const token = jwt.sign({ _id: user._id, userId: user.userId }, process.env.JWT_SECRET, { expiresIn: '24h' });
-      return reply
-        .setCookie('token', token, { path: '/', httpOnly: true })
-        .redirect('/chat/');
-    }
-  } catch (err) {
-    fastify.log.error(err.response ? err.response.data : err.message);
-    return reply.status(500).send({ error: 'サーバーエラーが発生しました' });
-  }
-});
-
-  // Keep the old logout route
-  fastify.post('/user/logout', async (request, reply) => {
-
-    // Clear all cookies
-    const cookies = request.cookies;
-    for (const cookieName in cookies) {
-        reply.clearCookie(cookieName, { path: '/' });
-    }
-
-    // Send response with instructions to clear localStorage
-    return reply
-        .send({
-            status: 'ログアウトに成功しました',
-            clearLocalStorage: true 
+      try {
+        const response = await axios.get(clerkApiUrl, {
+          headers: {
+            'Authorization': `Bearer ${clerkSecretKey}`,
+            'Content-Type': 'application/json',
+          },
         });
-  });
 
+        if (response.status !== 200) {
+          console.error(`Failed to fetch user data from Clerk API. Status: ${response.status}`);
+          return reply.status(500).send({ error: 'Failed to fetch user data from Clerk' });
+        }
+
+        const clerkUserData = response.data;
+
+        const usersCollection = fastify.mongo.db.collection('users');
+        const user = await usersCollection.findOne({ clerkId });
+
+        if (!user) {
+          console.warn(`No user found with clerkId ${clerkId}`);
+          return reply.status(404).send({ error: 'User not found' });
+        }
+
+        // Update user data
+        const updateData = {
+          username: clerkUserData.username,
+          nickname: clerkUserData.username,
+          firstName: clerkUserData.first_name,
+          lastName: clerkUserData.last_name,
+          fullName: clerkUserData.full_name,
+          email: clerkUserData.email_addresses[0].email_address,
+        };
+        console.log(`Updating user with clerkId ${clerkId}:`, updateData);
+        const result = await usersCollection.updateOne(
+          { clerkId },
+          { $set: updateData }
+        );
+
+        if (result.modifiedCount === 0) {
+          console.warn(`User with clerkId ${clerkId} not updated`);
+        }
+
+        return reply.send({ status: 'User information successfully updated' });
+      } catch (axiosError) {
+        console.error('Error fetching user data from Clerk:', axiosError.message);
+        return reply.status(500).send({ error: 'Failed to fetch user data from Clerk' });
+      }
+    } catch (err) {
+      console.error(`Error in /user/clerk-update: ${err.message}`, err);
+      return reply.status(500).send({ error: 'Server error' });
+    }
+  });
   fastify.post('/user/update-info/:currentUserId', async (request, reply) => {
     try {
-      
-  
+
       if (!request.isMultipart?.()) {
         console.error('Request is not multipart/form-data');
         return reply.status(400).send({ error: 'Request must be multipart/form-data' });
       }
-  
+
       const currentUserId = request.params.currentUserId;
       const formData = {
         email: null,
@@ -445,7 +144,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
         profileUrl: null,
         ageVerification: null
       };
-  
+
       async function processImage(url, onSuccess) {
         const moderation = await moderateImage(url);
         if (!moderation.results[0].flagged) {
@@ -455,7 +154,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
           fastify.sendNotificationToUser(request.user._id, 'imageModerationFlagged', { flagged: true, currentUserId });
         }
       }
-  
+
       // Process each part as it arrives.
       for await (const part of request.parts()) {
         if (part.fieldname && part.value) {
@@ -469,7 +168,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
           const buffer = Buffer.concat(chunks);
           const hash = createHash('sha256').update(buffer).digest('hex');
           const awsimages = fastify.mongo.db.collection('awsimages');
-  
+
           const existingFile = await awsimages.findOne({ hash });
           if (existingFile) {
             const imageUrl = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFile.key}`;
@@ -477,7 +176,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
             await processImage(imageUrl, async (url) => { formData.profileUrl = url; });
             continue;
           }
-  
+
           let existingFiles;
           try {
             existingFiles = await listFiles(hash);
@@ -485,7 +184,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
             console.error('Failed to list objects in S3:', error);
             return reply.status(500).send({ error: 'Failed to check existing profile images' });
           }
-  
+
           if (existingFiles.Contents?.length > 0) {
             const imageUrl = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${existingFiles.Contents[0].Key}`;
             console.log('Profile image already exists in S3');
@@ -506,20 +205,20 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
           }
         }
       }
-  
+
       console.log('All parts processed');
-  
+
       if (!currentUserId) {
         console.error('Missing currentUserId');
         return reply.status(400).send({ error: 'Missing currentUserId' });
       }
       console.log('currentUserId:', currentUserId);
-  
+
       const { token } = request.cookies;
       if (!token) {
         return reply.status(401).send({ error: 'Authentication token is missing' });
       }
-  
+
       const updateData = {};
       if (formData.email) updateData.email = formData.email;
       if (formData.nickname) updateData.nickname = formData.nickname;
@@ -534,32 +233,32 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       if (formData.gender) updateData.gender = formData.gender;
       if (formData.profileUrl) updateData.profileUrl = formData.profileUrl;
       if (formData.ageVerification) updateData.ageVerification = formData.ageVerification === 'true';
-  
+
       if (Object.keys(updateData).length === 0) {
         return reply.status(400).send({ error: 'No data to update' });
       }
-  
+
       console.log('Updating user info:', updateData);
       const usersCollection = fastify.mongo.db.collection('users');
       const updateResult = await usersCollection.updateOne(
         { _id: new fastify.mongo.ObjectId(currentUserId) },
         { $set: updateData }
       );
-  
+
       if (updateResult.modifiedCount === 0) {
         console.warn('User info update failed');
       }
       const user = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(currentUserId) });
       delete user.password;
       delete user.purchasedItems;
-  
+
       return reply.send({ user, status: 'User information successfully updated' });
     } catch (error) {
       console.error('Error in update-info route:', error);
       return reply.status(500).send({ error: 'An internal server error occurred' });
     }
   });
-  
+
 
   // Keep the old update-password route
   fastify.post('/user/update-password', async (request, reply) => {
@@ -634,7 +333,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     const db = fastify.mongo.db
     const collectionChat = db.collection('chats');
     const collectionUser = db.collection('users');
-  
+
     try {
       let currentUser = request.user;
       const currentUserId = currentUser?._id;
@@ -650,7 +349,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       if(!userData.isTemporary){
        isAdmin = await checkUserAdmin(fastify, currentUser._id);
       }
-      
+
       const translations = request.translations;
 
       return reply.renderWithGtm('/user-profile.hbs', {
@@ -668,45 +367,45 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       return reply.status(500).send({ error: 'An error occurred' });
     }
   });
-  
-  
+
+
   fastify.get('/user/chat-data/:userId', async (request, reply) => {
     const { userId } = request.params;
     const db = fastify.mongo.db
     const collectionChat = db.collection('chats');
     const collectionUser = db.collection('users');
-  
+
     try {
       let currentUser = request.user
       const currentUserId = currentUser?._id
       if (!currentUser?.isTemporary && currentUserId) await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(currrentUserId) });
       const user = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(userId) });
       if (!user) return reply.status(404).send({ error: 'User not found' });
-  
+
       let personas = user.personas || [];
       const validPersonaIds = (await collectionChat.find({ _id: { $in: personas.map(id => new fastify.mongo.ObjectId(id)) } }).toArray()).map(p => p._id.toString());
-      
+
       if (user.persona && !validPersonaIds.includes(user.persona.toString())) user.persona = null;
       if (user.persona) validPersonaIds.push(user.persona.toString());
-  
+
       personas = await collectionChat.find({ _id: { $in: [...new Set(validPersonaIds)].map(id => new fastify.mongo.ObjectId(id)) } }).toArray();
-  
+
       await collectionUser.updateOne(
         { _id: new fastify.mongo.ObjectId(userId) },
         { $set: { personas: validPersonaIds, persona: user.persona || validPersonaIds[0] || null } }
       );
-  
+
       const chatQuery = {
         $or: [{ userId }, { userId: new fastify.mongo.ObjectId(userId) }],
         visibility: currentUser?._id.toString() === userId ? { $in: ["public", "private"] } : "public"
       };
-  
+
       const userChats = await collectionChat.find(chatQuery).sort({_id:-1}).toArray();
       const [publicChatCount, privateChatCount] = await Promise.all([
         collectionChat.countDocuments({ ...chatQuery, visibility: "public" }),
         collectionChat.countDocuments({ ...chatQuery, visibility: "private" })
       ]);
-  
+
       return reply.send({
         isAdmin: currentUser?._id.toString() === userId,
         user: currentUser,
@@ -736,7 +435,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
     const db = fastify.mongo.db
     const usersCollection = db.collection('users');
     const translations = request.translations
-    
+
     let currentUser = request.user;
     const currentUserId = new fastify.mongo.ObjectId(currentUser?._id);
     const targetUserId = new fastify.mongo.ObjectId(request.params.userId);
@@ -763,7 +462,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
         // Check current follow count before decrementing
         let currentUserData = await usersCollection.findOne({ _id: currentUserId });
         let targetUserData = await usersCollection.findOne({ _id: targetUserId });
-  
+
         if (currentUserData.followCount > 0) {
           await usersCollection.updateOne(
             { _id: currentUserId },
@@ -776,7 +475,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
             { $pull: { followers: currentUserId }, $inc: { followerCount: -1 } }
           );
         }
-  
+
         reply.send({ message: 'フォローを解除しました！' });
       }
     } catch (err) {
@@ -791,39 +490,39 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       const page = parseInt(request.query.page) || 1;
       const limit = 12; // Number of users per page
       const skip = (page - 1) * limit;
-  
+
       const db = fastify.mongo.db
       const usersCollection = db.collection('users');
-  
+
       // Find the user and either get their followers or following list
       const user = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
-  
+
       if (!user) {
         return reply.code(404).send({ error: 'User not found' });
       }
-  
+
       const list = type === 'followers' ? user.followers : user.following;
       const totalItems = list ? list.length : 0;
-  
+
       if (!list || totalItems === 0) {
         return reply.code(404).send({ users: [], page, totalPages: 0 });
       }
-  
+
       // Get paginated followers or following
       const paginatedUserIds = list.slice(skip, skip + limit);
       const paginatedUsers = await usersCollection
         .find({ _id: { $in: paginatedUserIds.map(id => new fastify.mongo.ObjectId(id)) } })
         .toArray();
-  
+
       // Format users for response
       const formattedUsers = paginatedUsers.map(user => ({
         userId: user._id,
         userName: user.nickname || 'Unknown User',
         profilePicture: user.profileUrl || '/img/avatar.png',
       }));
-  
+
       const totalPages = Math.ceil(totalItems / limit);
-  
+
       // Send paginated response
       reply.send({
         users: formattedUsers,
@@ -840,32 +539,32 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       // Get current user
       let currentUser = request.user;
       const currentUserId = currentUser?._id;
-  
+
       const db = fastify.mongo.db
       if (!currentUser?.isTemporary && currentUserId) currentUser = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(currentUserId) });
-  
+
       const { userId } = request.params;
       const type = request.query.type || 'followers'; // Default to 'followers' if type not provided
-  
+
       // Find the specified user
       const user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-  
+
       if (!user) {
         return reply.code(404).send({ error: 'User not found' });
       }
-  
+
       // Determine which list to return (followers or following)
       let list = type === 'followers' ? user.followers : user.following;
-  
+
       if (!list || list.length === 0) {
         list = []; // Ensure it's an empty array if there are no followers or following
-      }      
-  
+      }
+
       // Fetch the users in the followers or following list
       const users = await db.collection('users')
       .find({ _id: { $in: list.map(id => new fastify.mongo.ObjectId(id)) } })
-      .toArray() || [];    
-  
+      .toArray() || [];
+
       const formattedUsers = users.map(user => ({
         userId: user._id.toString(),
         userName: user.nickname || 'Unknown User',
@@ -905,7 +604,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
         },
         type: type,
         users: formattedUsers,
-      });      
+      });
     } catch (err) {
       console.error('Error:', err);
       reply.code(500).send({ error: 'Internal Server Error' });
@@ -916,10 +615,10 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       const page = parseInt(request.query.page, 10) || 1;
       const limit = 5;
       const skip = (page - 1) * limit;
-  
+
       const db = fastify.mongo.db
       const usersCollection = db.collection('users');
-  
+
       const usersCursor = await usersCollection
         .find({isTemporary: {$exists:false},nickname: {$exists:true},profileUrl: {$exists:true}})
         .sort({ _id: -1 })
@@ -936,10 +635,10 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
         userName: user.nickname || 'Unknown User',
         profilePicture: user.profileUrl || '/img/avatar.png',
       }));
-  
+
       const totalUsersCount = await usersCollection.countDocuments({});
       const totalPages = Math.ceil(totalUsersCount / limit);
-  
+
       reply.send({
         users: usersData,
         page,
@@ -949,7 +648,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       reply.code(500).send({ error: 'Internal Server Error' });
     }
   });
-  
+
   fastify.get('/user/is-admin/:userId', async (req, reply) => {
     try {
       let user = req.user;
@@ -962,7 +661,7 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
       return reply.status(500).send({ error: err.message });
     }
   });
-  
+
   fastify.get('/users/:userId/notifications', async (request, reply) => {
     const user = request.user;
     const targetUserId = new ObjectId(request.params.userId);
@@ -987,7 +686,24 @@ fastify.get('/user/line-auth/callback', async (request, reply) => {
 
       reply.send(notifications);
   });
+  // Logout route clears the token cookie and other cookies
+  fastify.post('/user/logout', async (request, reply) => {
+    try {
+      const cookies = request.cookies;
+
+      for (const cookieName in cookies) {
+        reply.clearCookie(cookieName, { path: '/' });
+      }
+
+      return reply.send({ success: true });
+    } catch (error) {
+      console.error('Logout error:', error);
+      return reply.status(500).send({ error: 'Logout failed' });
+    }
+  });
+
 }
+
 
 
 module.exports = routes;

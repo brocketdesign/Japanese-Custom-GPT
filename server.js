@@ -138,8 +138,9 @@ fastify.get('/', async (request, reply) => {
   let chatCount = await collectionChat.distinct('chatImageUrl', { userId: new fastify.mongo.ObjectId(userId) });
   chatCount = chatCount.length;
 
-  
-  if (user.isTemporary) {
+  const signOut = request.query.signOut == 'true' || false;
+  console.log('signOut', signOut);
+  if (signOut || user.isTemporary) {
     let bannerNumber = parseInt(request.query.banner) || 0;
     bannerNumber = Math.min(bannerNumber, 3);
     return reply.renderWithGtm(`index.hbs`, {
@@ -156,20 +157,6 @@ fastify.get('/', async (request, reply) => {
     });
   } else {
     return reply.redirect('/chat');
-  }
-});
-
-fastify.get('/authenticate', async (request, reply) => {
-  let { translations, lang, user } = request;
-  const withMail = request.query.withMail;
-  const template = withMail ? 'authenticate-v1.hbs' : 'authenticate.hbs';
-  if (user.isTemporary || request.query.register) {
-    return reply.renderWithGtm(template, {
-      title: 'AIフレンズ',
-      register: !!request.query.register,
-    });
-  } else {
-    return reply.redirect('/dashboard');
   }
 });
 
@@ -207,7 +194,10 @@ fastify.get('/chat/:chatId', async (request, reply) => {
   const collectionUser = db.collection('users');
   const userData = await getUserData(userId, collectionUser, collectionChat, user);
 
-  if (user.isTemporary || !userData) {
+  const signIn = request.query.signIn == 'true' || false;
+  const signOut = request.query.signOut == 'true' || false;
+  console.log({ signIn, signOut });
+  if (!signIn && (signOut || user.isTemporary || !userData)) {
     return reply.redirect('/');
   }
 

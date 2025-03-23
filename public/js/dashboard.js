@@ -1,4 +1,3 @@
-
 // Global states
 var swiperInstance;
 var currentSwiperIndex = 0;
@@ -415,33 +414,6 @@ window.togglePostFavorite = function(el) {
   });
 };
 
-window.logoutUser = function() {
-  $.ajax({
-    url: '/user/logout',
-    type: 'POST',
-    success: function(response) {
-      // Clear all cookies
-      Object.keys($.cookie()).forEach(function(cookie) {
-        $.removeCookie(cookie, { path: '/' });
-      });
-
-      // Clear all localStorage data
-      localStorage.clear();
-      sessionStorage.clear();
-
-      // Redirect to the homepage
-      window.location.href = '/';
-    },
-    error: function() {
-      Swal.fire({
-        title: 'エラー',
-        text: 'ログアウトに失敗しました',
-        icon: 'error'
-      });
-    }
-  });
-};
-
 window.toggleImageFavorite = function(el) {
   const isTemporary = !!user.isTemporary;
   if (isTemporary) { showRegistrationForm(); return; }
@@ -810,7 +782,7 @@ function generateUserPagination(currentPage, totalPages) {
         paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadUsers(${currentPage - 1})">${window.translations.prev}</button>`;
 
         if (currentPage > sidePagesToShow + 1) {
-            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadUsers(1)">1</button>`;
+            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadUsers(${currentPage - sidePagesToShow})">1</button>`;
             if (currentPage > sidePagesToShow + 2) paginationHtml += `<span class="mx-1">...</span>`;
         }
 
@@ -2821,33 +2793,14 @@ function openCharacterModal(modalChatId, event) {
     });
 }
 
-// Open authenticate page in a modal
-function openLoginForm(withMail = false) {
-    if (modalStatus.isLoginLoading) return;
-    modalStatus.isLoginLoading = true;
-
-    closeAllModals();
-
-    const loginModalElement = document.getElementById('loginModal');
-    $('#login-container').html('<div class="position-absolute d-flex justify-content-center align-items-center" style="inset:0;"><div class="spinner-border" role="status"></div></div>');
-    const loginModal = new bootstrap.Modal(loginModalElement);
-    loginModal.show();
-
-    const url = withMail == 'true' ? '/authenticate?withMail=true' : '/authenticate';
-    $.ajax({
-        url: url,
-        method: 'GET',
-        success: function(data) {
-            $('#login-container').html(data);
-            modalStatus.isLoginLoading = false;
-        },
-        error: function(err) {
-            console.error('Failed to open login modal', err);
-            modalStatus.isLoginLoading = false;
-        }
-    });
-}
-
+// Function to open the Clerk user profile page
+window.openUserProfile = function() {
+  if (window.Clerk) {
+    window.Clerk.openUserProfile();
+  } else {
+    console.error('Clerk is not initialized');
+  }
+};
 window.handleClickRegisterOrPay = function(event, isTemporary) {
   event.preventDefault();
   if (isTemporary) {

@@ -24,7 +24,7 @@
             <div class="modal-header">
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body bg-dark p-0 m-0" id="login-container"></div>
+            <div class="modal-body bg-white p-0 m-0" id="login-container" style="border-radius: 9%;"></div>
         </div>
     </div>
 </div>
@@ -206,16 +206,15 @@
     window.isAdmin = {{isAdmin}};
     window.imageId = null;
     window.translations = {{{json translations}}};
+    window.clerkTranslations = {{{json clerkTranslations}}};
     window.lang = window.translations.lang;
 </script>
 <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ja.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
-<script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
 <script src="https://js.stripe.com/v3/"></script>
 <script src="/js/moment-with-locales.js"></script>
 <script src="/js/dashboard.js"></script>
@@ -230,32 +229,32 @@
 <script>
     
     document.addEventListener('DOMContentLoaded', function() {
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.remove('hidden'); // Remove the hidden class
-                entry.target.classList.add('animate__animated');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.remove('hidden'); // Remove the hidden class
+                    entry.target.classList.add('animate__animated');
 
-                const sanitizedAnimate = entry.target.dataset.animate.replace(/[^a-zA-Z0-9-_]/g, '');
-                entry.target.classList.add(sanitizedAnimate); // Apply sanitized animation class
+                    const sanitizedAnimate = entry.target.dataset.animate.replace(/[^a-zA-Z0-9-_]/g, '');
+                    entry.target.classList.add(sanitizedAnimate); // Apply sanitized animation class
 
-                if (entry.target.dataset.delay && entry.target.dataset.delay !== '') {
-                    const sanitizedDelay = entry.target.dataset.delay.replace(/[^a-zA-Z0-9-_]/g, '');
-                    entry.target.classList.add(sanitizedDelay); // Apply sanitized delay
+                    if (entry.target.dataset.delay && entry.target.dataset.delay !== '') {
+                        const sanitizedDelay = entry.target.dataset.delay.replace(/[^a-zA-Z0-9-_]/g, '');
+                        entry.target.classList.add(sanitizedDelay); // Apply sanitized delay
+                    }
+
+                    observer.unobserve(entry.target); // Stop observing after animation
                 }
-
-                observer.unobserve(entry.target); // Stop observing after animation
-            }
+            });
+        }, {
+            threshold: 0.1 // Adjust the threshold as needed
         });
-    }, {
-        threshold: 0.1 // Adjust the threshold as needed
-    });
 
-    document.querySelectorAll('[data-animate]').forEach(element => {
-        element.classList.add('hidden'); // Add the hidden class initially
-        observer.observe(element);
+        document.querySelectorAll('[data-animate]').forEach(element => {
+            element.classList.add('hidden'); // Add the hidden class initially
+            observer.observe(element);
+        });
     });
-});
 
 window.loadTranslations = async function (lang) {
     const localTranslations = localStorage.getItem('translations');
@@ -518,27 +517,44 @@ window.showDiscovery = function() {
     resetChatUrl();
     window.postMessage('resizeIframe', '*');
 }
-
 window.showNotification = function(message, icon) {
-    Swal.fire({
-        position: 'top',
-        icon: icon,
-        title: message,
-        showConfirmButton: false,
-        timer: 3000,
-        toast: true,
-        customClass: {
-            title: 'swal2-custom-title',
-            popup: 'swal2-custom-popup'
-        },
-        showClass: {
-            popup: 'animate__animated animate__slideInDown'
-        },
-        hideClass: {
-            popup: 'animate__animated animate__slideOutUp'
+    let alertClass = 'alert-primary';
+    switch (icon) {
+        case 'success':
+            alertClass = 'alert-success';
+            break;
+        case 'error':
+            alertClass = 'alert-danger';
+            break;
+        case 'warning':
+            alertClass = 'alert-warning';
+            break;
+        case 'info':
+            alertClass = 'alert-info';
+            break;
+    }
+
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `;
+
+    const alertContainer = document.createElement('div');
+    alertContainer.innerHTML = alertHtml;
+
+    document.body.appendChild(alertContainer);
+
+    setTimeout(() => {
+        const alertEl = document.querySelector('.alert');
+        if (alertEl) {
+            const bsAlert = new bootstrap.Alert(alertEl);
+            bsAlert.close();
         }
-    });
+    }, 3000);
 }
+showNotification('Welcome to Chatlamix!','info')
 
 window.fetchUser = async function() {
     try {
@@ -562,7 +578,80 @@ window.fetchMode = async function() {
         return null
     }
 };
+window.logoutUser = async function(Clerk) {
+    try {
+        // Sign out with Clerk
+        await Clerk.signOut();
+        console.log('Clerk sign out completed');
+                    
+        // Clear all cookies
+        Object.keys($.cookie()).forEach(function(cookie) {
+            $.removeCookie(cookie, { path: '/' });
+        });
+        console.log('Cookies cleared');
 
+        // Clear cookie on server
+        await $.ajax({
+            url: '/user/logout',
+            method: 'POST',
+            success: function() {
+                console.log('Server cookie cleared');
+            },
+            error: function() {
+                console.error('Failed to clear server cookie');
+            }
+        });
+
+        // Clear all localStorage data
+        localStorage.clear();
+        sessionStorage.clear();
+        console.log('Local storage cleared');
+
+        return Promise.resolve();
+    } catch (error) {
+        console.error('Error during logout:', error);
+        return Promise.reject(error);
+    }
+}
+// Function to handle Clerk sign-in completion
+window.handleClerkSignIn = function(Clerk) {
+    if(!Clerk.session){
+        console.error('Clerk session not found');
+        return
+    }
+    // Get session token from Clerk
+    const sessionToken = Clerk.session.lastActiveSessionId;
+    
+    // Send request to backend with Clerk session token
+    fetch('/user/clerk-auth', {
+        method: 'GET',
+        headers: {
+            'x-clerk-user-id': Clerk.user.id
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.redirect) {
+            window.location.href = data.redirect;
+        }
+    })
+    .catch(error => {
+        console.error('Authentication error:', error);
+    });
+    
+    return false; // Prevent Clerk's default redirect
+}
+
+window.handleClerkUserUpdate = function() {
+    // Send user data to backend
+    fetch('/user/clerk-update', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(window.Clerk.user)
+    })
+}
 $(document).ready(function(){
     fetchAndAppendModels();
     // User info popup
@@ -607,7 +696,7 @@ $(document).ready(function(){
     }
     
     function handleUserInfo(value,callback){
-        const { nickname, birthYear, birthMonth, birthDay, gender, ageVerification } = value;
+        const { nickname, birthYear, birthMonth, birthDay, gender, ageVerification, userId } = value;
         const formData = new FormData();
         formData.append('nickname', nickname);
         formData.append('birthYear', birthYear);
@@ -615,9 +704,9 @@ $(document).ready(function(){
         formData.append('birthDay', birthDay);
         formData.append('gender', gender);
         formData.append('ageVerification', ageVerification);
-
+    //Also pdate clerck
         $.ajax({
-            url: '/user/update-info',
+            url: '/user/update-info/'+userId,
             type: 'POST',
             processData: false,
             contentType: false,
@@ -635,77 +724,97 @@ $(document).ready(function(){
         showPopupUserInfo();
     }
     function showPopupUserInfo(callback) {
-        Swal.fire({
-            html: UserInfoForm(),
-            focusConfirm: false,
-            confirmButtonText: window.translations.setting.saveUserInfo || '送信',
-            allowOutsideClick: false,
-            showCancelButton: false,
-            customClass: {
-                confirmButton: 'bg-secondary px-5',
-                popup: 'bg-white border-top-custom-gradient rounded shadow',
-                confirmButton : 'btn btn-md custom-gradient-bg shadow-0 border-0'
-            },
-            showClass: {
-                popup: 'animate__animated animate__fadeIn'
-            },
-            hideClass: {
-                popup: 'animate__animated animate__fadeOut'
-            },
-            didOpen: () => {
-                flatpickr("#birthdate", {
-                    locale: "ja",
-                    dateFormat: "Y年m月d日",
-                    maxDate: new Date(),
-                    defaultDate: new Date(new Date().setFullYear(new Date().getFullYear() - 18)),
-                });
-                if (callback) callback();
-            },
-            preConfirm: () => {
-                const nickname = $('#nickname').val();
-                const birthdate = $('#birthdate').val();
-                const gender = $('#gender').val();
-                const ageVerification = $('#ageVerification').is(':checked');
+        // Create the modal dynamically
+        const modalHtml = `
+        <div class="modal fade" id="userInfoModal" tabindex="-1" aria-labelledby="userInfoModalLabel" aria-hidden="true">
+            <div class="modal-dialog mx-0">
+                <div class="modal-content mx-auto">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="userInfoModalLabel">${translations.userinfo.thankYou}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        ${UserInfoForm()}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${translations.setting.cancel || 'キャンセル'}</button>
+                        <button type="button" class="btn btn-primary" id="saveUserInfo">${translations.setting.saveUserInfo || '送信'}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        `;
     
-                if (!nickname || !birthdate || !gender)  {
-                    Swal.showValidationMessage('すべてのフィールドを入力してください');
-                    return false;
-                }
+        // Append the modal to the body
+        $('body').append(modalHtml);
     
-                if (!ageVerification) {
-                    Swal.showValidationMessage('18歳以上であることを確認してください');
-                    return false;
-                }
-    
-                const dateParts = birthdate.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
-                if (!dateParts) {
-                    Swal.showValidationMessage('有効な生年月日を選択してください');
-                    return false;
-                }
-                const birthYear = dateParts[1];
-                const birthMonth = dateParts[2];
-                const birthDay = dateParts[3];
-    
-                const today = new Date();
-                const birthDate = new Date(birthYear, birthMonth - 1, birthDay);
-                let age = today.getFullYear() - birthDate.getFullYear();
-                const m = today.getMonth() - birthDate.getMonth();
-                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-                    age--;
-                }
-    
-                if (age < 18) {
-                    Swal.showValidationMessage('18歳以上である必要があります');
-                    return false;
-                }
-    
-                handleUserInfo({ nickname, birthYear, birthMonth, birthDay, gender, ageVerification }, function(response){
-                    window.user = response.user;
-                });
-            }
-        }).then((result) => {
-            
+        // Initialize Flatpickr
+        flatpickr("#birthdate", {
+            locale: "ja",
+            dateFormat: "Y年m月d日",
+            maxDate: new Date(),
+            defaultDate: new Date(new Date().setFullYear(new Date().getFullYear() - 18)),
         });
+    
+        // Show the modal
+        const userInfoModal = new bootstrap.Modal(document.getElementById('userInfoModal'));
+        userInfoModal.show();
+    
+        // Handle save button click
+        $('#saveUserInfo').on('click', function() {
+            const nickname = $('#nickname').val();
+            const birthdate = $('#birthdate').val();
+            const gender = $('#gender').val();
+            const ageVerification = $('#ageVerification').is(':checked');
+    
+            if (!nickname || !birthdate || !gender)  {
+                showNotification('すべてのフィールドを入力してください', 'warning');
+                return;
+            }
+    
+            if (!ageVerification) {
+                showNotification('18歳以上であることを確認してください', 'warning');
+                return;
+            }
+    
+            const dateParts = birthdate.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+            if (!dateParts) {
+                showNotification('有効な生年月日を選択してください', 'warning');
+                return;
+            }
+            const birthYear = dateParts[1];
+            const birthMonth = dateParts[2];
+            const birthDay = dateParts[3];
+    
+            const today = new Date();
+            const birthDate = new Date(birthYear, birthMonth - 1, birthDay);
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+    
+            if (age < 18) {
+                showNotification('18歳以上である必要があります', 'warning');
+                return;
+            }
+    
+            handleUserInfo({ nickname, birthYear, birthMonth, birthDay, gender, ageVerification, userId:user._id }, function(response){
+                window.user = response.user;
+                userInfoModal.hide();
+                // Clean up the modal from the DOM
+                $('#userInfoModal').remove();
+                $('.modal-backdrop').remove();
+            });
+        });
+    
+        // Clean up the modal from the DOM when it's hidden
+        $('#userInfoModal').on('hidden.bs.modal', function () {
+            $(this).remove();
+            $('.modal-backdrop').remove();
+        });
+    
+        if (callback) callback();
     }
     
     // Make toggleNSFW function available globally
@@ -751,3 +860,46 @@ $(document).ready(function(){
 })
 </script>
     
+    <script>
+        // Open authenticate page in a modal
+        window.openLoginForm = function() {
+        // Redirect to /chat after login
+        window.location.href = 'https://good-termite-56.clerk.accounts.dev/sign-in?redirect_url=' + encodeURIComponent(window.location.origin + '/chat?signIn=true');
+        };
+    </script>
+    <script
+        async
+        crossorigin="anonymous"
+        data-clerk-publishable-key="pk_test_Z29vZC10ZXJtaXRlLTU2LmNsZXJrLmFjY291bnRzLmRldiQ"
+        src="https://good-termite-56.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
+        type="text/javascript"
+    ></script>
+
+    <script>
+        window.addEventListener('load', async function () {
+            const clerkLang = Object.keys(clerkTranslations)[0]
+            await Clerk.load({localization: clerkTranslations[clerkLang]})
+
+            if(user.isTemporary){
+                handleClerkSignIn(Clerk);
+            }
+            // Call route efater updating user info
+            Clerk.closeUserProfile(handleClerkUserUpdate());
+
+            // Attach logoutUser to .logout
+            $('.logout').on('click', async function(){
+                logoutUser(Clerk).then(() => {
+                    console.log('User logged out');
+                    // Redirect to the homepage
+                    window.location.href = '/?signOut=true';
+                    console.log('Redirecting to homepage');
+                }).catch(error => {
+                    console.error('Error logging out:', error);
+                });
+            })
+
+            // Assing Clerk to window
+            window.Clerk = Clerk
+            console.log(window.Clerk)
+        })
+    </script>

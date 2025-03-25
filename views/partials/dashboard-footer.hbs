@@ -535,7 +535,7 @@ window.showNotification = function(message, icon) {
     }
 
     const alertHtml = `
-        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+        <div class="alert ${alertClass} alert-dismissible fade show position-absolute" style="margin-left:10px;margin-top:60px;" role="alert">
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
@@ -544,7 +544,7 @@ window.showNotification = function(message, icon) {
     const alertContainer = document.createElement('div');
     alertContainer.innerHTML = alertHtml;
 
-    document.body.appendChild(alertContainer);
+    document.body.prepend(alertContainer);
 
     setTimeout(() => {
         const alertEl = document.querySelector('.alert');
@@ -554,7 +554,6 @@ window.showNotification = function(message, icon) {
         }
     }, 3000);
 }
-showNotification('Welcome to Chatlamix!','info')
 
 window.fetchUser = async function() {
     try {
@@ -590,24 +589,27 @@ window.logoutUser = async function(Clerk) {
         });
         console.log('Cookies cleared');
 
-        // Clear cookie on server
-        await $.ajax({
-            url: '/user/logout',
-            method: 'POST',
-            success: function() {
-                console.log('Server cookie cleared');
-            },
-            error: function() {
-                console.error('Failed to clear server cookie');
-            }
+        // Clear cookie on server - use Promise to ensure completion
+        return new Promise((resolve, reject) => {
+            $.ajax({
+                url: '/user/logout',
+                method: 'POST',
+                success: function(response) {
+                    console.log('Server cookie cleared successfully', response);
+                    
+                    // Clear all localStorage data
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    console.log('Local storage cleared');
+                    
+                    resolve();
+                },
+                error: function(error) {
+                    console.error('Failed to clear server cookie', error);
+                    reject(error);
+                }
+            });
         });
-
-        // Clear all localStorage data
-        localStorage.clear();
-        sessionStorage.clear();
-        console.log('Local storage cleared');
-
-        return Promise.resolve();
     } catch (error) {
         console.error('Error during logout:', error);
         return Promise.reject(error);
@@ -863,8 +865,16 @@ $(document).ready(function(){
     <script>
         // Open authenticate page in a modal
         window.openLoginForm = function() {
-        // Redirect to /chat after login
-        window.location.href = 'https://good-termite-56.clerk.accounts.dev/sign-in?redirect_url=' + encodeURIComponent(window.location.origin + '/chat?signIn=true');
+            // Use Clerk's provided method instead of direct URL navigation
+            if (window.Clerk) {
+                Clerk.openSignIn({
+                    redirectUrl: window.location.origin + '/chat?signIn=true'
+                });
+            } else {
+                console.error('Clerk is not initialized yet');
+                // Fallback option if Clerk isn't loaded
+                window.location.href = '/auth/login?redirect=' + encodeURIComponent(window.location.origin + '/chat?signIn=true');
+            }
         };
     </script>
     <script
@@ -887,19 +897,23 @@ $(document).ready(function(){
             Clerk.closeUserProfile(handleClerkUserUpdate());
 
             // Attach logoutUser to .logout
-            $('.logout').on('click', async function(){
-                logoutUser(Clerk).then(() => {
-                    console.log('User logged out');
-                    // Redirect to the homepage
-                    window.location.href = '/?signOut=true';
+            $('.logout').on('click', async function(e){
+                e.preventDefault(); // Prevent default action
+                
+                try {
+                    await logoutUser(Clerk);
+                    console.log('User logged out successfully');
+                    
+                    // Force a complete page reload to the homepage
+                    window.location.replace('/?signOut=true');
                     console.log('Redirecting to homepage');
-                }).catch(error => {
-                    console.error('Error logging out:', error);
-                });
+                } catch (error) {
+                    console.error('Error during logout process:', error);
+                    alert('Logout failed. Please try again.');
+                }
             })
 
             // Assing Clerk to window
             window.Clerk = Clerk
-            console.log(window.Clerk)
         })
     </script>

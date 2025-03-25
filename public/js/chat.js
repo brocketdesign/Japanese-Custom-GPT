@@ -252,7 +252,7 @@ $(document).ready(async function() {
         $('#suggestions').addClass('d-flex').show();
         $('#startButtonContained, #introChat').hide();
         $('#gen-ideas').removeClass('done');
-        Swal.close();
+        
     
         const cleanup = () => {
             removePromptFromMessage();

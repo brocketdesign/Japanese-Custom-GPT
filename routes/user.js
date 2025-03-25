@@ -104,7 +104,7 @@ async function routes(fastify, options) {
           fullName: clerkUserData.full_name,
           email: clerkUserData.email_addresses[0].email_address,
         };
-        console.log(`Updating user with clerkId ${clerkId}:`, updateData);
+
         const result = await usersCollection.updateOne(
           { clerkId },
           { $set: updateData }

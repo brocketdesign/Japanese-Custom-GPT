@@ -2,7 +2,7 @@
 <html lang="ja">
     {{> dashboard-header}}
 <body>
-    {{> dashboard-nav}}
+    {{> dashboard-nav}} 
 <!-- Template to List Users -->
 <div class="container mt-5">
     <h2 class="mb-4">{{title}}</h2>
@@ -43,6 +43,25 @@
         </div>
         </div>
     </div>
+    </div>
+
+    <!-- Modal for delete confirmation -->
+    <div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content mx-auto">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteUserModalLabel">{{translations.admin_user.delete}}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>{{translations.admin_user.delete_confirm}}</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{translations.admin_user.cancel}}</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteUser">{{translations.admin_user.delete}}</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="table-responsive">
@@ -185,33 +204,64 @@
                     }
                 });
             });
+
+            // Store the user ID to be deleted
+            let userIdToDelete;
+            
             $('.delete-user').on('click', function() {
-                var userId = $(this).data('user-id');
-                Swal.fire({
-                    title: 'Are you sure?',
-                    text: 'You are about to delete a user. This action is irreversible.',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Yes, delete user',
-                    cancelButtonText: 'Cancel'
-                }).then((result) => {
-                    if (result.value) {
+                userIdToDelete = $(this).data('user-id');
+                // Show the Bootstrap modal instead of SweetAlert
+                var deleteModal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
+                deleteModal.show();
+            });
+            
+            // Handle the confirm delete action
+            $('#confirmDeleteUser').on('click', function() {
+                if (userIdToDelete) {
                     $.ajax({
                         type: 'DELETE',
-                        url: '/admin/users/' + userId,
+                        url: '/admin/users/' + userIdToDelete,
                         success: function() {
-                        console.log('User deleted successfully!');
-                        $(`tr[data-user-id="${userId}"]`).hide()
-                        // You can also add code to remove the user from the table here
-                        //Swal.fire('Deleted!', 'User has been deleted.','success');
+                            console.log('User deleted successfully!');
+                            $(`tr[data-user-id="${userIdToDelete}"]`).hide();
+                            // Hide the modal
+                            $('#deleteUserModal').modal('hide');
                         },
                         error: function(xhr, status, error) {
-                        console.log('Error deleting user:', error);
-                        Swal.fire('Error!', 'Failed to delete user.', 'error');
+                            console.log('Error deleting user:', error);
+                            // Hide the current modal
+                            $('#deleteUserModal').modal('hide');
+                            
+                            // Show error message in a new Bootstrap modal
+                            const errorModal = `
+                                <div class="modal" tabindex="-1" id="errorModal">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content mx-auto">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Error!</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Failed to delete user.</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            // Append the error modal if it doesn't exist yet
+                            if (!$('#errorModal').length) {
+                                $('body').append(errorModal);
+                            }
+                            
+                            // Show the error modal
+                            new bootstrap.Modal(document.getElementById('errorModal')).show();
                         }
                     });
-                    }
-                });
+                }
             });
         });
     </script>

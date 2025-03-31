@@ -1,0 +1,55 @@
+<!-- filepath: /Users/user/Documents/GitHub/Japanese-Custom-GPT/views/signout.hbs -->
+<!DOCTYPE html>
+<html lang="{{lang}}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{translations.signout.title}}</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+        }
+        .signout-container {
+            text-align: center;
+            padding: 2rem;
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            max-width: 90%;
+            width: 400px;
+        }
+        .success-icon {
+            color: #198754;
+            font-size: 4rem;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="signout-container">
+        <h2 class="mb-4">{{translations.signout.heading}}</h2>
+        <p class="mb-3">{{translations.signout.message}}</p>
+        
+        <div class="my-4">
+            <i class="bi bi-check-circle-fill success-icon"></i>
+        </div>
+        
+        <p>{{translations.signout.goodbye}}</p>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+</body>
+<style>
+    footer, .sticky-bottom{display: none !important;}
+</style>
+    {{> dashboard-footer}}
+</html>

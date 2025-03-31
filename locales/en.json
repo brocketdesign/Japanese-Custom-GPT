@@ -1,5 +1,18 @@
 {
   "lang":"en", 
+  "signin": {
+    "title": "Sign In - Redirecting",
+    "heading": "Sign In Successful",
+    "message": "Your authentication was successful",
+    "loading": "Loading...",
+    "wait": "Please wait while we redirect you to your dashboard..."
+  },
+  "signout": {
+    "title": "Sign Out",
+    "heading": "Signed Out Successfully",
+    "message": "You have been signed out of your account.",
+    "goodbye": "Thank you for using our service. Have a great day!"
+  },
   "admin_model_chats": {
     "title": "Auto Character",
     "generate_all": "Generate Chat for All Models",
@@ -173,6 +186,11 @@
         "mails" : "Mails"
   },
   "admin_user": {
+    "delete_confirm": "You are about to delete a user. This action is irreversible.",
+    "cancel": "Cancel",
+    "error_title": "Error!",
+    "delete_error": "Failed to delete user.",
+    "close": "Close",
     "language": "Language",
     "profile": "Profile",
     "avatar": "Avatar",
@@ -524,6 +542,7 @@
     "cancelSubscription": "Cancel Subscription"
   },
   "avatar": {
+    "editProfile": "Edit Profile",
     "subscription": "Subscription",
     "myPlan": "My Plan",
     "profile": "Profile",

@@ -579,43 +579,46 @@ window.fetchMode = async function() {
 };
 window.logoutUser = async function(Clerk) {
     try {
-        // Sign out with Clerk
-        await Clerk.signOut();
+        // First, sign out with Clerk - this is important to do BEFORE clearing cookies
+        // Use the redirectUrl: false option to prevent automatic redirects
+        await Clerk.signOut({ redirectUrl: window.location.origin + '/signout-redirection?signOut=true' });
         console.log('Clerk sign out completed');
-                    
-        // Clear all cookies
-        Object.keys($.cookie()).forEach(function(cookie) {
-            $.removeCookie(cookie, { path: '/' });
-        });
-        console.log('Cookies cleared');
-
-        // Clear cookie on server - use Promise to ensure completion
-        return new Promise((resolve, reject) => {
-            $.ajax({
-                url: '/user/logout',
-                method: 'POST',
-                success: function(response) {
-                    console.log('Server cookie cleared successfully', response);
-                    
-                    // Clear all localStorage data
-                    localStorage.clear();
-                    sessionStorage.clear();
-                    console.log('Local storage cleared');
-                    
-                    resolve();
-                },
-                error: function(error) {
-                    console.error('Failed to clear server cookie', error);
-                    reject(error);
-                }
-            });
-        });
+        
     } catch (error) {
         console.error('Error during logout:', error);
-        return Promise.reject(error);
+        return Promise.resolve(false);
     }
+};
+window.handleSignOut = function() {
+
+    // Then clear cookies and localStorage after Clerk signOut completes
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            url: '/user/logout',
+            method: 'POST',
+            success: function(response) {
+                console.log('Server cookies cleared successfully');
+                
+                // Clear all cookies manually after server-side logout
+                Object.keys($.cookie()).forEach(function(cookie) {
+                    $.removeCookie(cookie, { path: '/' });
+                });
+                
+                // Clear localStorage and sessionStorage
+                localStorage.clear();
+                sessionStorage.clear();
+                console.log('Local storage cleared');
+                
+                resolve(true);
+            },
+            error: function(error) {
+                console.error('Failed to clear server cookies:', error);
+                // Still resolve to continue logout process
+                resolve(false);
+            }
+        });
+    });
 }
-// Function to handle Clerk sign-in completion
 window.handleClerkSignIn = function(Clerk) {
     if(!Clerk.session){
         console.error('Clerk session not found');
@@ -653,7 +656,27 @@ window.handleClerkUserUpdate = function() {
         },
         body: JSON.stringify(window.Clerk.user)
     })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status) {
+            console.log('User data synchronized successfully');
+            // Refresh user data if needed
+            if (window.fetchUser) {
+                window.fetchUser().then(userData => {
+                    if (userData) {
+                        window.user = userData;
+                    }
+                });
+            }
+        } else if (data.error) {
+            console.error('Error synchronizing user data:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Failed to update user data:', error);
+    });
 }
+
 $(document).ready(function(){
     fetchAndAppendModels();
     // User info popup
@@ -868,12 +891,12 @@ $(document).ready(function(){
             // Use Clerk's provided method instead of direct URL navigation
             if (window.Clerk) {
                 Clerk.openSignIn({
-                    redirectUrl: window.location.origin + '/chat?signIn=true'
+                    redirectUrl: window.location.origin + '/signin-redirection?signIn=true'
                 });
             } else {
                 console.error('Clerk is not initialized yet');
                 // Fallback option if Clerk isn't loaded
-                window.location.href = '/auth/login?redirect=' + encodeURIComponent(window.location.origin + '/chat?signIn=true');
+                window.location.href = '/auth/login?redirect=' + encodeURIComponent(window.location.origin + '/signin-redirection?signIn=true');
             }
         };
     </script>
@@ -887,33 +910,48 @@ $(document).ready(function(){
 
     <script>
         window.addEventListener('load', async function () {
-            const clerkLang = Object.keys(clerkTranslations)[0]
-            await Clerk.load({localization: clerkTranslations[clerkLang]})
-
+            const clerkLang = Object.keys(clerkTranslations)[0];
+            await Clerk.load({localization: clerkTranslations[clerkLang]});
+            const signOutParam = new URLSearchParams(window.location.search).get('signOut');
+            console.log({signOutParam})
+            if(signOutParam){
+                handleSignOut()
+                .then(() => {
+                    window.location.href = window.location.origin;
+                });
+            }
             if(user.isTemporary){
                 handleClerkSignIn(Clerk);
             }
-            // Call route efater updating user info
+            
+            // Call route after updating user info
             Clerk.closeUserProfile(handleClerkUserUpdate());
 
             // Attach logoutUser to .logout
-            $('.logout').on('click', async function(e){
+            $('.logout').on('click', function(e) {
                 e.preventDefault(); // Prevent default action
                 
-                try {
-                    await logoutUser(Clerk);
-                    console.log('User logged out successfully');
-                    
-                    // Force a complete page reload to the homepage
-                    window.location.replace('/?signOut=true');
-                    console.log('Redirecting to homepage');
-                } catch (error) {
-                    console.error('Error during logout process:', error);
-                    alert('Logout failed. Please try again.');
-                }
-            })
+                // Show a loading indicator
+                const $logoutButton = $(this);
+                $logoutButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ログアウト中...');
+                
+                // Implement a forced timeout in case logout hangs
+                const logoutTimeout = setTimeout(function() {
+                    window.location.href = '/?signOut=true&timeout=true';
+                }, 5000); // 5 second timeout
+                
+                logoutUser(Clerk)
+                    .then(() => {
+                        clearTimeout(logoutTimeout);
+                        console.log('Logout completed successfully, redirecting');
+                    })
+                    .catch((error) => {
+                        clearTimeout(logoutTimeout);
+                        console.error('Error during logout:', error);
+                    });
+            });
 
-            // Assing Clerk to window
-            window.Clerk = Clerk
+            // Assign Clerk to window
+            window.Clerk = Clerk;
         })
     </script>

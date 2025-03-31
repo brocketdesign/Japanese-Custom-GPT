@@ -229,7 +229,7 @@ function getAmount(currency, billingCycle,month_count, lang) {
         },
         locale: request.lang,
       });
-  
+      console.log(session)
       // Return the session URL to redirect the user
       return reply.send({ url: session.url });
     } catch (error) {
@@ -294,7 +294,7 @@ function getAmount(currency, billingCycle,month_count, lang) {
         },
         { upsert: true } 
       );
-      await fastify.mongo.db.collection('users').updateOne(
+      const result = await fastify.mongo.db.collection('users').updateOne(
         { _id: new fastify.mongo.ObjectId(user._id) },
         {
           $set: { 
@@ -304,6 +304,12 @@ function getAmount(currency, billingCycle,month_count, lang) {
           }
         }
       );
+      
+      if (result.modifiedCount === 0) {
+        console.log('Failed to update user subscription status');
+        return reply.redirect(`${frontEnd}/chat/?newSubscription=false&error=true`);
+      }
+
       if((subscription.items.data[0].price.id === premiumMonthlyId || subscription.items.data[0].price.id === premiumYearlyId)){
         // Add 1000 coins to the user's account
         await fastify.mongo.db.collection('users').updateOne(

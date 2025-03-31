@@ -65,7 +65,7 @@ async function routes(fastify, options) {
             const isAdmin = await checkUserAdmin(fastify, request.user._id);
             if (!isAdmin) {
                 return reply.status(403).send({ error: 'Access denied' });
-            }
+            } 
             const usersCollection = fastify.mongo.db.collection('users');
             const chatsCollection = fastify.mongo.db.collection('userChat');
             

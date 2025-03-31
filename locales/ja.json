@@ -1,5 +1,18 @@
 {
   "lang":"ja",
+  "signin": {
+    "title": "サインイン - リダイレクト中",
+    "heading": "サインインに成功しました",
+    "message": "認証に成功しました",
+    "loading": "読み込み中...",
+    "wait": "ダッシュボードにリダイレクトしています。しばらくお待ちください..."
+  },
+  "signout": {
+    "title": "サインアウト",
+    "heading": "サインアウトが完了しました",
+    "message": "アカウントからサインアウトしました。",
+    "goodbye": "ご利用ありがとうございました。良い一日をお過ごしください！"
+  },
   "admin_model_chats": {
     "title": "自動キャラクター",
     "recent_chats": "最近のチャット",
@@ -155,6 +168,11 @@
         "mails" : "メール"
   },
   "admin_user": {
+    "delete_confirm": "ユーザーを削除しようとしています。この操作は元に戻せません。",
+    "cancel": "キャンセル",
+    "error_title": "エラー！",
+    "delete_error": "ユーザーの削除に失敗しました。",
+    "close": "閉じる",
     "language": "言語",
     "profile": "プロフィール",
     "avatar": "アバター",
@@ -493,6 +511,7 @@
     "cancelSubscription": "サブスクリプションをキャンセルする"
   },
   "avatar": {
+    "editProfile": "プロフィールを編集",
     "subscription": "サブスクリプション",
     "myPlan": "私のプラン",
     "profile": "プロフィール",

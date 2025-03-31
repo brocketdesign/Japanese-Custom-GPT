@@ -139,7 +139,7 @@ fastify.get('/', async (request, reply) => {
   chatCount = chatCount.length;
 
   const signOut = request.query.signOut == 'true' || false;
-  console.log('signOut', signOut);
+
   if (signOut || user.isTemporary) {
     let bannerNumber = parseInt(request.query.banner) || 0;
     bannerNumber = Math.min(bannerNumber, 3);
@@ -158,6 +158,29 @@ fastify.get('/', async (request, reply) => {
   } else {
     return reply.redirect('/chat');
   }
+});
+
+fastify.get('/signin-redirection', async (request, reply) => {
+  const db = fastify.mongo.db;
+  let { translations, lang, user } = request;
+  const userId = user._id;
+  user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+
+  return reply.renderWithGtm(`signin.hbs`, {
+    title: 'LAMIXAI画像生成',
+  });
+});
+
+fastify.get('/signout-redirection', async (request, reply) => {
+  console.log('signout-redirection')
+  const db = fastify.mongo.db;
+  let { translations, lang, user } = request;
+  const userId = user._id;
+  user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+
+  return reply.renderWithGtm(`signout.hbs`, {
+    title: 'LAMIXAI画像生成',
+  });
 });
 
 fastify.get('/my-plan', async (request, reply) => {
@@ -196,6 +219,7 @@ fastify.get('/chat/:chatId', async (request, reply) => {
 
   const signIn = request.query.signIn == 'true' || false;
   const signOut = request.query.signOut == 'true' || false;
+  console.log('Chat')
   console.log({ signIn, signOut });
   if (!signIn && (signOut || user.isTemporary || !userData)) {
     return reply.redirect('/');

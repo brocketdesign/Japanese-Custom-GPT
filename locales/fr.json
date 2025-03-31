@@ -1,5 +1,18 @@
 {
   "lang":"fr",
+  "signin": {
+    "title": "Connexion - Redirection",
+    "heading": "Connexion réussie",
+    "message": "Votre authentification a réussi",
+    "loading": "Chargement...",
+    "wait": "Veuillez patienter pendant que nous vous redirigeons vers votre tableau de bord..."
+  },
+  "signout": {
+    "title": "Déconnexion",
+    "heading": "Déconnexion réussie",
+    "message": "Vous avez été déconnecté de votre compte.",
+    "goodbye": "Merci d'avoir utilisé notre service. Passez une excellente journée !"
+  },
   "admin_model_chats": {
     "title": "Auto Character",
     "generate_all": "Générer des discussions pour tous les modèles",
@@ -173,6 +186,11 @@
         "mails" : "Mails"
   },
   "admin_user": {
+    "delete_confirm": "Vous êtes sur le point de supprimer un utilisateur. Cette action est irréversible.",
+    "cancel": "Annuler",
+    "error_title": "Erreur !",
+    "delete_error": "Échec de la suppression de l'utilisateur.",
+    "close": "Fermer",
     "language": "Langue",
     "profile": "Profil",
     "avatar": "Avatar",
@@ -510,6 +528,7 @@
       "cancelSubscription": "Annuler l'abonnement"
     },
     "avatar": {
+      "editProfile": "Modifier le profil",
       "subscription": "Abonnement",
       "myPlan": "Mon plan",
       "profile": "Profil",

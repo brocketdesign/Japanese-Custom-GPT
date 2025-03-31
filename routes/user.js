@@ -20,23 +20,103 @@ async function routes(fastify, options) {
         return reply.status(401).send({ error: 'Unauthorized' });
       }
 
+      // Fetch user data from Clerk
+      const clerkApiUrl = `https://api.clerk.com/v1/users/${clerkId}`;
+      const clerkSecretKey = process.env.CLERK_SECRET_KEY;
+
+      if (!clerkSecretKey) {
+        console.error('CLERK_SECRET_KEY is not set in environment variables.');
+        return reply.status(500).send({ error: 'Clerk secret key not configured' });
+      }
+
+      let clerkUserData;
+      try {
+        const response = await axios.get(clerkApiUrl, {
+          headers: {
+            'Authorization': `Bearer ${clerkSecretKey}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.status !== 200) {
+          console.error(`Failed to fetch user data from Clerk API. Status: ${response.status}`);
+          return reply.status(500).send({ error: 'Failed to fetch user data from Clerk' });
+        }
+
+        clerkUserData = response.data;
+      } catch (axiosError) {
+        console.error('Error fetching user data from Clerk:', axiosError.message);
+        return reply.status(500).send({ error: 'Failed to fetch user data from Clerk' });
+      }
+
       const usersCollection = fastify.mongo.db.collection('users');
       let user = await usersCollection.findOne({ clerkId });
       console.log(`User found with clerkId ${clerkId}: ${!!user}`);
 
       if (!user) {
-        // Create a new user
+        // Create a new user with Clerk data
         user = {
-        clerkId,
-        createdAt: new Date(),
-        coins: 100,
-        lang: request.lang,
+          clerkId,
+          createdAt: new Date(),
+          coins: 100,
+          lang: request.lang,
+          username: clerkUserData.username,
+          nickname: clerkUserData.username,
+          firstName: clerkUserData.first_name,
+          lastName: clerkUserData.last_name,
+          fullName: clerkUserData.full_name,
+          email: clerkUserData.email_addresses[0]?.email_address,
+          subscriptionStatus: 'inactive', // Set default subscription status
         };
         const result = await usersCollection.insertOne(user);
         user._id = result.insertedId;
         console.log(`New user created with clerkId ${clerkId} and _id ${user._id}`);
+      } else {
+        // Check if database username matches Clerk username
+        if (user.username !== clerkUserData.username || user.nickname !== clerkUserData.username) {
+          // Update database user with Clerk data
+          const updateData = {
+            username: clerkUserData.username,
+            nickname: clerkUserData.username,
+            firstName: clerkUserData.first_name,
+            lastName: clerkUserData.last_name,
+            fullName: clerkUserData.full_name,
+            email: clerkUserData.email_addresses[0]?.email_address,
+          };
+          
+          await usersCollection.updateOne(
+            { clerkId },
+            { $set: updateData }
+          );
+          
+          // Update the user object with the new data
+          Object.assign(user, updateData);
+          console.log(`Updated user with clerkId ${clerkId} to match Clerk data`);
+        }
+        
+        // Check for subscription status if not present
+        if (!user.subscriptionStatus) {
+          const subscriptionInfo = await fastify.mongo.db.collection('subscriptions').findOne({
+            _id: new fastify.mongo.ObjectId(user._id)
+          });
+          
+          if (subscriptionInfo && subscriptionInfo.subscriptionStatus === 'active') {
+            await usersCollection.updateOne(
+              { _id: user._id },
+              { $set: { subscriptionStatus: 'active' } }
+            );
+            user.subscriptionStatus = 'active';
+          } else {
+            await usersCollection.updateOne(
+              { _id: user._id },
+              { $set: { subscriptionStatus: 'inactive' } }
+            );
+            user.subscriptionStatus = 'inactive';
+          }
+        }
       }
-      await updateUserLang(fastify.mongo.db, user._id,request.lang)
+      
+      await updateUserLang(fastify.mongo.db, user._id, request.lang);
       const token = jwt.sign({ _id: user._id, clerkId: user.clerkId }, process.env.JWT_SECRET, { expiresIn: '24h' });
       console.log(`JWT token created for user ${user._id}`);
 
@@ -95,15 +175,26 @@ async function routes(fastify, options) {
           return reply.status(404).send({ error: 'User not found' });
         }
 
-        // Update user data
+        // Update user data in database
         const updateData = {
           username: clerkUserData.username,
           nickname: clerkUserData.username,
           firstName: clerkUserData.first_name,
           lastName: clerkUserData.last_name,
           fullName: clerkUserData.full_name,
-          email: clerkUserData.email_addresses[0].email_address,
+          email: clerkUserData.email_addresses[0]?.email_address,
         };
+        
+        // Check for subscription status
+        const subscriptionInfo = await fastify.mongo.db.collection('subscriptions').findOne({
+          _id: new ObjectId(user._id)
+        });
+        
+        if (subscriptionInfo && subscriptionInfo.subscriptionStatus === 'active') {
+          updateData.subscriptionStatus = 'active';
+        } else {
+          updateData.subscriptionStatus = 'inactive';
+        }
 
         const result = await usersCollection.updateOne(
           { clerkId },
@@ -112,6 +203,13 @@ async function routes(fastify, options) {
 
         if (result.modifiedCount === 0) {
           console.warn(`User with clerkId ${clerkId} not updated`);
+        } else {
+          console.log(`Database user with clerkId ${clerkId} updated successfully`);
+        }
+
+        // If user has updated their nickname in our system, update it in Clerk too
+        if (user.nickname && user.nickname !== clerkUserData.username) {
+          await updateClerkUsername(clerkId, user.nickname, clerkSecretKey);
         }
 
         return reply.send({ status: 'User information successfully updated' });
@@ -124,6 +222,35 @@ async function routes(fastify, options) {
       return reply.status(500).send({ error: 'Server error' });
     }
   });
+
+  // Helper function to update Clerk username
+  async function updateClerkUsername(clerkId, username, clerkSecretKey) {
+    try {
+      const clerkApiUrl = `https://api.clerk.com/v1/users/${clerkId}`;
+      
+      const response = await axios.patch(clerkApiUrl, 
+        { username },
+        {
+          headers: {
+            'Authorization': `Bearer ${clerkSecretKey}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (response.status !== 200) {
+        console.error(`Failed to update username in Clerk. Status: ${response.status}`);
+        return false;
+      }
+      
+      console.log(`Clerk username updated to ${username} for user ${clerkId}`);
+      return true;
+    } catch (error) {
+      console.error('Error updating Clerk username:', error.message);
+      return false;
+    }
+  }
+
   fastify.post('/user/update-info/:currentUserId', async (request, reply) => {
     try {
 
@@ -695,10 +822,11 @@ async function routes(fastify, options) {
         reply.clearCookie(cookieName, { path: '/' });
       }
 
-      return reply.send({ success: true });
+      // Ensure we're not sending any redirect headers
+      return reply.code(200).send({ success: true, message: 'Logout successful' });
     } catch (error) {
-      console.error('Logout error:', error);
-      return reply.status(500).send({ error: 'Logout failed' });
+      console.log('Logout error:', error);
+      return reply.code(500).send({ error: 'Logout failed', message: error.message });
     }
   });
 

@@ -238,7 +238,7 @@ async function pollTaskStatus(taskId, fastify) {
     const intervalId = setInterval(async () => {
       try {
         const taskStatus = await checkTaskStatus(taskId, fastify);
-        
+
         if(!taskStatus){
           clearInterval(intervalId);
           reject('Task not found');

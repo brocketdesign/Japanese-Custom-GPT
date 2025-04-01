@@ -229,7 +229,7 @@ function getAmount(currency, billingCycle,month_count, lang) {
         },
         locale: request.lang,
       });
-      console.log(session)
+
       // Return the session URL to redirect the user
       return reply.send({ url: session.url });
     } catch (error) {

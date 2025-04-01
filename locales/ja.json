@@ -65,6 +65,7 @@
       "features": "プレミアムの利点"
     },
   "landing_page": {
+    "old_login_page" : "ログイン",
     "banner": {
       "0": {
         "title": "無料で素晴らしいAI生成アートを作成しましょう。",
@@ -406,6 +407,20 @@
     "prompt": "ユーザーに挨拶し、その後自分の名前を名乗って自己紹介してください。"
   },
   "login": "ログイン",
+  "old_login": {
+    "title": "ログイン",
+    "email": "メールアドレス",
+    "password": "パスワード",
+    "rememberMe": "ログイン情報を保存",
+    "forgotPassword": "パスワードをお忘れですか？",
+    "old_loginButton": "ログイン",
+    "noAccount": "アカウントをお持ちでない方はこちら",
+    "genericError": "ログインに失敗しました。認証情報を確認して再試行してください。",
+    "networkError": "ネットワークエラーが発生しました。接続を確認して再試行してください。",
+    "missing_credentials": "メールアドレスとパスワードが必要です",
+    "invalid_credentials": "メールアドレスまたはパスワードが無効です",
+    "server_error": "ログイン中にエラーが発生しました。後でもう一度お試しください。"
+  },
   "loginRegister": "ログイン/会員登録",
   "enjoyConversations": "無料アカウントで、会話をもっと楽しもう!",
   "continueWithGoogle": "で続ける",
@@ -520,7 +535,8 @@
     "settings": "設定",
     "toggleNSFW": "NSFWを切り替える",
     "toggleSFW": "SFWを切り替える",
-    "logout": "ログアウト"
+    "logout": "ログアウト",
+    "logout_processing": "ログアウト処理中..."
   },
   "tabs": {
     "posts": "投稿一覧",

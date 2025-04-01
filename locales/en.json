@@ -83,6 +83,7 @@
     "features": "Premium Benefits"
   },
   "landing_page": {
+    "old_login_page" : "Login with mail",
     "banner": {
       "0": {
         "title": "Create stunning AI-generated art. For free.",
@@ -436,6 +437,20 @@
     "starter": "Starter",
     "prompt": "Greet the user, then introduce yourself by stating your name."
   },
+  "old_login": {
+    "title": "Login",
+    "email": "Email Address",
+    "password": "Password",
+    "rememberMe": "Remember Me",
+    "forgotPassword": "Forgot Password?",
+    "old_loginButton": "Login",
+    "noAccount": "Need an account? Sign up!",
+    "genericError": "Login failed. Please check your credentials and try again.",
+    "networkError": "Network error. Please check your connection and try again.",
+    "missing_credentials": "Email and password are required",
+    "invalid_credentials": "Invalid email or password",
+    "server_error": "An error occurred during login. Please try again later."
+  },
   "login": "Login",
   "loginRegister": "Login/Register",
   "enjoyConversations": "Enjoy more conversations with AI characters using a free account!",
@@ -551,7 +566,8 @@
     "settings": "Settings",
     "toggleNSFW": "Toggle NSFW",
     "toggleSFW": "Toggle SFW",
-    "logout": "Logout"
+    "logout": "Logout",
+    "logout_processing": "Processing logout..."
   },
   "tabs": {
     "posts": "Posts",

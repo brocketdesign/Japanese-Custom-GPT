@@ -636,14 +636,13 @@ window.handleClerkSignIn = function(Clerk) {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.redirect) {
-            window.location.href = data.redirect;
+        if (data.redirectUrl) {
+            window.location.href = data.redirectUrl;
         }
     })
     .catch(error => {
         console.error('Authentication error:', error);
     });
-    
     return false; // Prevent Clerk's default redirect
 }
 
@@ -933,17 +932,18 @@ $(document).ready(function(){
                 
                 // Show a loading indicator
                 const $logoutButton = $(this);
-                $logoutButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ログアウト中...');
+                $logoutButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>' + translations.avatar.logout_processing);
                 
                 // Implement a forced timeout in case logout hangs
                 const logoutTimeout = setTimeout(function() {
-                    window.location.href = '/?signOut=true&timeout=true';
+                    window.location.href = '/signout-redirection?signOut=true&timeout=true';
                 }, 5000); // 5 second timeout
                 
                 logoutUser(Clerk)
                     .then(() => {
                         clearTimeout(logoutTimeout);
                         console.log('Logout completed successfully, redirecting');
+                        window.location.href = '/signout-redirection?signOut=true&timeout=true';
                     })
                     .catch((error) => {
                         clearTimeout(logoutTimeout);

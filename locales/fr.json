@@ -83,6 +83,7 @@
     "features": "Avantages Premium"
   },
   "landing_page": {
+    "old_login_page" : "Page de connexion",
     "banner": {
       "0": {
         "title": "Créez des œuvres d'art époustouflantes générées par l'IA. Gratuitement.",
@@ -423,6 +424,20 @@
     "prompt": "Saluez l'utilisateur, puis présentez-vous en indiquant votre nom."
   },
   "login": "Connexion",
+  "old_login": {
+    "title": "Connexion",
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "rememberMe": "Se souvenir de moi",
+    "forgotPassword": "Mot de passe oublié ?",
+    "old_loginButton": "Se connecter",
+    "noAccount": "Pas encore de compte ? Inscrivez-vous !",
+    "genericError": "Échec de la connexion. Veuillez vérifier vos identifiants et réessayer.",
+    "networkError": "Erreur réseau. Veuillez vérifier votre connexion et réessayer.",
+    "missing_credentials": "L'e-mail et le mot de passe sont requis",
+    "invalid_credentials": "E-mail ou mot de passe invalide",
+    "server_error": "Une erreur s'est produite lors de la connexion. Veuillez réessayer plus tard."
+  },
   "loginRegister": "Connexion/Inscription",
   "enjoyConversations": "Profitez de plus de conversations avec des personnages IA en utilisant un compte gratuit !",
   "continueWithGoogle": "Continuer avec Google",
@@ -535,9 +550,10 @@
       "characters": "Personnages",
       "createCharacter": "Créer un personnage",
       "settings": "Paramètres",
-      "toggleNSFW": "NSFW", 
-      "toggleSFW": "SFW",
-      "logout": "Se déconnecter"
+      "toggleNSFW": "Basculer vers NSFW",
+      "toggleSFW": "Basculer vers SFW",
+      "logout": "Se déconnecter",
+      "logout_processing": "Déconnexion en cours..."
     },
     "tabs": {
       "posts": "Publications",

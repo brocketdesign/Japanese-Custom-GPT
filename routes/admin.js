@@ -60,56 +60,56 @@ async function routes(fastify, options) {
     return reply.view('/admin/notifications', { notifications: formattedNotifications });
   });
   
-    fastify.get('/admin/users',  async (request, reply) => {
+  fastify.get('/admin/users', async (request, reply) => {
+    try {
+      const isAdmin = await checkUserAdmin(fastify, request.user._id);
+      if (!isAdmin) {
+        return reply.status(403).send({ error: 'Access denied' });
+      } 
+      const usersCollection = fastify.mongo.db.collection('users');
+      const chatsCollection = fastify.mongo.db.collection('userChat');
+         
+      const getUniqueUsers = async () => {
         try {
-            const isAdmin = await checkUserAdmin(fastify, request.user._id);
-            if (!isAdmin) {
-                return reply.status(403).send({ error: 'Access denied' });
-            } 
-            const usersCollection = fastify.mongo.db.collection('users');
-            const chatsCollection = fastify.mongo.db.collection('userChat');
-            
-            const getUniqueUsers = async () => {
-                try {
-                    // Get the unique userId's from the chats collection
-                    const userIds = await usersCollection.distinct('_id');
-            
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    const yesterday = new Date(today);
-                    yesterday.setDate(today.getDate() - 1);
-                    
-                    today.toLocaleDateString('ja-JP');
-                    yesterday.toLocaleDateString('ja-JP');                    
-            
-                    // Query the users collection to get the user details for the unique userIds
-                    const users = await usersCollection.find({
-                        _id: { $in: userIds },
-                        createdAt: { $gte: yesterday, $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000) }
-                    }).toArray();
-            
-                    return users;
-                } catch (error) {
-                    console.error('Error fetching unique users:', error);
-                    throw error;
-                }
-            };
-            
-            
-            const users = await getUniqueUsers()
-            const translations = request.translations
-            return reply.view('/admin/users',{
-              user: request.user,
-              users,
-              title:translations.admin_user.recent_users, 
-              translations
-            })
+          // Get the unique userId's from the chats collection
+          const userIds = await usersCollection.distinct('_id');
+  
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const yesterday = new Date(today);
+          yesterday.setDate(today.getDate() - 1);
+          
+          today.toLocaleDateString('ja-JP');
+          yesterday.toLocaleDateString('ja-JP');                    
+  
+          // Query the users collection to get the user details for the unique userIds
+          const users = await usersCollection.find({
+            _id: { $in: userIds },
+            createdAt: { $gte: yesterday, $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000) }
+          }).toArray();
+  
+          return users;
         } catch (error) {
-            return reply.status(500).send({ error: error.message });
+          console.error('Error fetching unique users:', error);
+          throw error;
         }
-    });
-    fastify.put('/admin/users/:userId/subscription', async (request, reply) => {
-      try {
+      };
+            
+      const users = await getUniqueUsers();
+      const translations = request.translations;
+      return reply.view('/admin/users',{
+        user: request.user,
+        users,
+        title: translations.admin_user.recent_users, 
+        translations
+      });
+    } catch (error) {
+      return reply.status(500).send({ error: error.message });
+    }
+  });
+
+  fastify.put('/admin/users/:userId/subscription', async (request, reply) => {
+    try {
       const isAdmin = await checkUserAdmin(fastify, request.user._id);
       if (!isAdmin) {
         return reply.status(403).send({ error: 'Access denied' });
@@ -134,156 +134,160 @@ async function routes(fastify, options) {
       }
 
       return reply.status(200).send({ message: 'Subscription updated successfully', subscriptionStatus });
-      } catch (error) {
+    } catch (error) {
       return reply.status(500).send({ error: 'Internal Server Error' });
+    }
+  });
+
+  fastify.delete('/admin/users/:id', async (request, reply) => {
+    try {
+      const isAdmin = await checkUserAdmin(fastify, request.user._id);
+      if (!isAdmin) {
+        return reply.status(403).send({ error: 'Access denied' });
       }
-    });
-    fastify.delete('/admin/users/:id',  async (request, reply) => {
-        try {
-          const isAdmin = await checkUserAdmin(fastify, request.user._id);
-          if (!isAdmin) {
-            return reply.status(403).send({ error: 'Access denied' });
-          }
-          const userId = request.params.id;
-          const usersCollection = fastify.mongo.db.collection('users');
+      const userId = request.params.id;
+      const usersCollection = fastify.mongo.db.collection('users');
+      const userDataStoryCollection = fastify.mongo.db.collection('userData');
 
-          const userDataStoryCollection = fastify.mongo.db.collection('userData');
-
-          const result = await usersCollection.deleteOne({ _id: new ObjectId(userId) });
-          if (result.deletedCount === 0) {
-            return reply.status(404).send({ error: 'User not found' });
-          }
-          return reply.status(200).send({ message: 'User deleted successfully' });
-        } catch (error) {
-          return reply.status(500).send({ error: 'Internal Server Error' });
-        }
-    });
-    fastify.get('/admin/users/registered',  async (request, reply) => {
-        try {
-            const isAdmin = await checkUserAdmin(fastify, request.user._id);
-            if (!isAdmin) {
-                return reply.status(403).send({ error: 'Access denied' });
-            }
-
-            const usersCollection = fastify.mongo.db.collection('users');        
-            
-            const users =  await usersCollection.find({
-                email: { $exists: true }
-            }).sort({createdAt:-1}).toArray();;
-            const totalUsers = users.length;
-            const femaleCount = users.filter(user => user.gender === 'female').length;
-            const maleCount = users.filter(user => user.gender === 'male').length;
-            
-            const femalePercentage = parseInt((femaleCount / totalUsers) * 100);
-            const malePercentage = parseInt((maleCount / totalUsers) * 100);
-            const translations = request.translations
-
-            return reply.view('/admin/users',{
-                user: request.user,
-                users,
-                translations,
-                mode: process.env.MODE,
-                apiurl: process.env.API_URL,
-                femaleCount, 
-                femalePercentage, 
-                maleCount,
-                malePercentage,
-                title:translations.admin_user.registered_users})
-        } catch (error) {
-            return reply.status(500).send({ error: error.message });
-        }
-    });
-    fastify.get('/admin/users/csv', async (request, reply) => {
-      try {
-        const isAdmin = await checkUserAdmin(fastify, request.user._id);
-        if (!isAdmin) return reply.status(403).send({ error: 'Access denied' });
-        
-        let fields = request.query.fields ? request.query.fields.split(',') : [];
-        if (!fields.length) fields = ['createdAt', 'email', 'nickname', 'gender', 'subscriptionStatus'];
-        const projection = {};
-        fields.forEach(field => projection[field] = 1);
-        
-        const users = await fastify.mongo.db.collection('users')
-          .find({ email: { $exists: true } })
-          .project(projection)
-          .toArray();
-        
-        const header = fields.join(',');
-        const rows = users.map(u => fields.map(f => u[f] || '').join(','));
-        const csv = [header, ...rows].join('\n');
-        
-        reply.header('Content-Type', 'text/csv')
-             .header('Content-Disposition', 'attachment; filename="users.csv"')
-             .send(csv);
-      } catch (error) {
-        reply.status(500).send({ error: error.message });
+      const result = await usersCollection.deleteOne({ _id: new ObjectId(userId) });
+      if (result.deletedCount === 0) {
+        return reply.status(404).send({ error: 'User not found' });
       }
-    });
+      return reply.status(200).send({ message: 'User deleted successfully' });
+    } catch (error) {
+      return reply.status(500).send({ error: 'Internal Server Error' });
+    }
+  });
+
+  fastify.get('/admin/users/registered', async (request, reply) => {
+    try {
+      const isAdmin = await checkUserAdmin(fastify, request.user._id);
+      if (!isAdmin) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+
+      const usersCollection = fastify.mongo.db.collection('users');        
+      
+      const users = await usersCollection.find({
+        email: { $exists: true }
+      }).sort({createdAt:-1}).toArray();
+      
+      const totalUsers = users.length;
+      const femaleCount = users.filter(user => user.gender === 'female').length;
+      const maleCount = users.filter(user => user.gender === 'male').length;
+      
+      const femalePercentage = parseInt((femaleCount / totalUsers) * 100);
+      const malePercentage = parseInt((maleCount / totalUsers) * 100);
+      const translations = request.translations;
+
+      return reply.view('/admin/users',{
+        user: request.user,
+        users,
+        translations,
+        mode: process.env.MODE,
+        apiurl: process.env.API_URL,
+        femaleCount, 
+        femalePercentage, 
+        maleCount,
+        malePercentage,
+        title: translations.admin_user.registered_users
+      });
+    } catch (error) {
+      return reply.status(500).send({ error: error.message });
+    }
+  });
+
+  fastify.get('/admin/users/csv', async (request, reply) => {
+    try {
+      const isAdmin = await checkUserAdmin(fastify, request.user._id);
+      if (!isAdmin) return reply.status(403).send({ error: 'Access denied' });
+      
+      let fields = request.query.fields ? request.query.fields.split(',') : [];
+      if (!fields.length) fields = ['createdAt', 'email', 'nickname', 'gender', 'subscriptionStatus'];
+      const projection = {};
+      fields.forEach(field => projection[field] = 1);
+      
+      const users = await fastify.mongo.db.collection('users')
+        .find({ email: { $exists: true } })
+        .project(projection)
+        .toArray();
+      
+      const header = fields.join(',');
+      const rows = users.map(u => fields.map(f => u[f] || '').join(','));
+      const csv = [header, ...rows].join('\n');
+      
+      reply.header('Content-Type', 'text/csv')
+           .header('Content-Disposition', 'attachment; filename="users.csv"')
+           .send(csv);
+    } catch (error) {
+      reply.status(500).send({ error: error.message });
+    }
+  });
     
-    fastify.get('/admin/chat/:userId',  async (request, reply) => {
-        try {
-          // Check if the user is an admin
-          const isAdmin = await checkUserAdmin(fastify, request.user._id);
-          if (!isAdmin) {
-            return reply.status(403).send({ error: 'Access denied' });
-          }
-      
-          // Convert the userId from the route parameter to ObjectId
-          const userId = new fastify.mongo.ObjectId(request.params.userId);
-      
-          // Access the userChat collection
-          const collectionChat = fastify.mongo.db.collection('userChat');
-      
-          // Fetch userChat documents
-        const userChats = await collectionChat.find({ userId }).toArray();
+  fastify.get('/admin/chat/:userId', async (request, reply) => {
+    try {
+      // Check if the user is an admin
+      const isAdmin = await checkUserAdmin(fastify, request.user._id);
+      if (!isAdmin) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+  
+      // Convert the userId from the route parameter to ObjectId
+      const userId = new fastify.mongo.ObjectId(request.params.userId);
+  
+      // Access the userChat collection
+      const collectionChat = fastify.mongo.db.collection('userChat');
+  
+      // Fetch userChat documents
+      const userChats = await collectionChat.find({ userId }).toArray();
 
-        // Extract unique chatIds
-        const chatIds = userChats.map(chat => chat.chatId);
+      // Extract unique chatIds
+      const chatIds = userChats.map(chat => chat.chatId);
 
-        // Fetch corresponding chat names
-        const collectionChats = fastify.mongo.db.collection('chats');
-        const chatsDetails = await collectionChats.find({ _id: { $in: chatIds } }).toArray();
+      // Fetch corresponding chat names
+      const collectionChats = fastify.mongo.db.collection('chats');
+      const chatsDetails = await collectionChats.find({ _id: { $in: chatIds } }).toArray();
 
-        // Create a map of chatId to chatName
-        const chatMap = {};
-        chatsDetails.forEach(chat => {
+      // Create a map of chatId to chatName
+      const chatMap = {};
+      chatsDetails.forEach(chat => {
         chatMap[chat._id.toString()] = chat.name;
-        });
+      });
 
-        // Attach chatName to each userChat
-        const enrichedChats = userChats.map(chat => ({
+      // Attach chatName to each userChat
+      const enrichedChats = userChats.map(chat => ({
         ...chat,
         name: chatMap[chat.chatId.toString()] || 'Unknown Chat'
-        }));
+      }));
 
-        return reply.view('/admin/chats', { 
-          user: request.user,
-          chats: enrichedChats 
-        });
-        } catch (error) {
-          console.error('Error fetching chats:', error);
-          return reply.status(500).send({ error: error.message });
-        }
+      return reply.view('/admin/chats', { 
+        user: request.user,
+        chats: enrichedChats 
       });
+    } catch (error) {
+      console.error('Error fetching chats:', error);
+      return reply.status(500).send({ error: error.message });
+    }
+  });
       
+  fastify.get('/admin/users/cleanup', async (request, reply) => {
+    try {
+      const isAdmin = await checkUserAdmin(fastify, request.user._id);
+      if (!isAdmin) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
 
-    fastify.get('/admin/users/cleanup', async (request, reply) => {
-        try {
-            const isAdmin = await checkUserAdmin(fastify, request.user._id);
-            if (!isAdmin) {
-                return reply.status(403).send({ error: 'Access denied' });
-            }
-    
-            const db = fastify.mongo.db;
-            const resultMessage = await cleanupNonRegisteredUsers(db);
-    
-            return reply.send({ message: resultMessage });
-        } catch (error) {
-            console.log(error);
-            return reply.status(500).send({ error: error.message });
-        }
-    });
-    fastify.get('/admin/prompts', async (request, reply) => {
+      const db = fastify.mongo.db;
+      const resultMessage = await cleanupNonRegisteredUsers(db);
+
+      return reply.send({ message: resultMessage });
+    } catch (error) {
+      console.log(error);
+      return reply.status(500).send({ error: error.message });
+    }
+  });
+
+  fastify.get('/admin/prompts', async (request, reply) => {
     try {
       let user = request.user;
       const userId = user._id;
@@ -308,70 +312,44 @@ async function routes(fastify, options) {
     }
   });
 
-const fetchModels = async (query = '', cursor = '') => {
-
-  try {
-    const url = `https://api.novita.ai/v3/model?filter.visibility=public&filter.types=checkpoint&pagination.limit=12${
-      cursor ? `&pagination.cursor=${cursor}` : ''
-    }${query ? `&filter.query=${encodeURIComponent(query)}` : ''}`;
-
-    const response = await axios.get(url, {
-      headers: {
-        Authorization: `Bearer ${process.env.NOVITA_API_KEY}`,
-      },
-    });
-
-    response.data.models = response.data.models.map(model => ({
-      ...model,
-      base_model: model.is_sdxl ? 'sdxl' : 'sd'
-    }));
-
-    return  response.data;
-    
-  } catch (error) {
-    console.error('Error fetching models:', error.message);
-    return { models: [], pagination: {} };
-  }
-};
-
-const modelCardTemplate = hbs.compile(`
-  {{#each models}}
-    <div class="col-md-4 mb-3 animate__animated animate__fadeIn">
-      <div class="card border-0 h-100 position-relative">
-        <div class="card-img-container" style="overflow: hidden;">
-          <img src="{{cover_url}}" class="card-img-top w-100" alt="{{model_name}}" style="object-fit: cover; height: 100%;" />
-        </div>
-        <div class="card-body d-flex justify-content-between position-absolute w-100 py-2 text-white" style="bottom: 0; background-color: rgba(0, 0, 0, 0.25);">
-          <h5 class="card-title text-truncate">{{model_name}}</h5>
-          <div class="form-check form-switch">
-            <input class="form-check-input model-switch" type="checkbox" 
-              data-model-id="{{id}}" 
-              data-model="{{sd_name}}"
-              data-style="{{tags.[0]}}" 
-              data-version="{{base_model}}"
-              data-image="{{cover_url}}">
+  const modelCardTemplate = hbs.compile(`
+    {{#each models}}
+      <div class="col-md-4 mb-3 animate__animated animate__fadeIn">
+        <div class="card border-0 h-100 position-relative">
+          <div class="card-img-container" style="overflow: hidden;">
+            <img src="{{cover_url}}" class="card-img-top w-100" alt="{{model_name}}" style="object-fit: cover; height: 100%;" />
           </div>
-          <i class="bi bi-info-circle" data-bs-toggle="modal" data-bs-target="#infoModal-{{id}}" style="cursor: pointer;"></i>
-        </div>
-      </div>
-    </div>
-    <div class="modal fade" id="infoModal-{{id}}" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">{{name}}</h5>
-          </div>
-          <div class="modal-body">
-            <p><strong>Hash:</strong> {{hash_sha256}}</p>
-            <p><strong>Base Model:</strong> {{base_model}}</p>
-            <p><strong>Model Name:</strong> {{model_name}}</p>
-            <p><strong>Tags:</strong> {{tags}}</p>
+          <div class="card-body d-flex justify-content-between position-absolute w-100 py-2 text-white" style="bottom: 0; background-color: rgba(0, 0, 0, 0.25);">
+            <h5 class="card-title text-truncate">{{model_name}}</h5>
+            <div class="form-check form-switch">
+              <input class="form-check-input model-switch" type="checkbox" 
+                data-model-id="{{id}}" 
+                data-model="{{sd_name}}"
+                data-style="{{tags.[0]}}" 
+                data-version="{{base_model}}"
+                data-image="{{cover_url}}">
+            </div>
+            <i class="bi bi-info-circle" data-bs-toggle="modal" data-bs-target="#infoModal-{{id}}" style="cursor: pointer;"></i>
           </div>
         </div>
       </div>
-    </div>
-  {{/each}}
-`);
+      <div class="modal fade" id="infoModal-{{id}}" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">{{name}}</h5>
+            </div>
+            <div class="modal-body">
+              <p><strong>Hash:</strong> {{hash_sha256}}</p>
+              <p><strong>Base Model:</strong> {{base_model}}</p>
+              <p><strong>Model Name:</strong> {{model_name}}</p>
+              <p><strong>Tags:</strong> {{tags}}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    {{/each}}
+  `);
   
   fastify.post('/admin/models', async (request, reply) => {
     const { cursor, search } = request.query;
@@ -746,8 +724,332 @@ const modelCardTemplate = hbs.compile(`
       return reply.status(500).send({ error: 'Internal server error', details: error.message });
     }
   }); 
-  
-}    
 
+  // Add new route to check if a user exists in Clerk
+  fastify.get('/admin/clerk/check-user', async (request, reply) => {
+    try {
+      const isAdmin = await checkUserAdmin(fastify, request.user._id);
+      if (!isAdmin) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+      
+      const { email } = request.query;
+      if (!email) {
+        return reply.status(400).send({ error: 'Email is required' });
+      }
+      
+      // Fetch user data from Clerk API
+      const clerkApiUrl = 'https://api.clerk.com/v1/users';
+      const clerkSecretKey = process.env.CLERK_SECRET_KEY;
+      
+      if (!clerkSecretKey) {
+        return reply.status(500).send({ error: 'Clerk secret key not configured' });
+      }
+      
+      const response = await axios.get(`${clerkApiUrl}?email_address=${encodeURIComponent(email)}`, {
+        headers: {
+          'Authorization': `Bearer ${clerkSecretKey}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.data && response.data.data && response.data.data.length > 0) {
+        // User exists in Clerk
+        return reply.send({ 
+          exists: true, 
+          clerkId: response.data.data[0].id 
+        });
+      } else {
+        // User does not exist in Clerk
+        return reply.send({ exists: false });
+      }
+    } catch (error) {
+      console.error('Error checking Clerk user:', error);
+      return reply.status(500).send({ error: 'Failed to check user in Clerk' });
+    }
+  });
+  
+  // Add new route to add a user to Clerk
+  fastify.post('/admin/clerk/add-user', async (request, reply) => {
+    try {
+      const isAdmin = await checkUserAdmin(fastify, request.user._id);
+      if (!isAdmin) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+      
+      const { userId, sendEmailInvite, skipPasswordCreation } = request.body;
+      if (!userId) {
+        return reply.status(400).send({ error: 'User ID is required' });
+      }
+      
+      // Get user details from database
+      const usersCollection = fastify.mongo.db.collection('users');
+      const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+      
+      if (!user) {
+        return reply.status(404).send({ error: 'User not found' });
+      }
+      
+      if (!user.email) {
+        return reply.status(400).send({ error: 'User does not have an email address' });
+      }
+      
+      // Create user in Clerk API
+      const clerkApiUrl = 'https://api.clerk.com/v1/users';
+      const clerkSecretKey = process.env.CLERK_SECRET_KEY;
+      
+      if (!clerkSecretKey) {
+        return reply.status(500).send({ error: 'Clerk secret key not configured' });
+      }
+      
+      console.log('User data being sent to Clerk:', user);
+      
+      // Create the payload for Clerk API
+      const payload = {
+        email_addresses: [{ 
+          email_address: user.email 
+        }],
+        first_name: user.firstName || user.nickname || '',
+        last_name: user.lastName || '',
+        username: user.username || user.nickname
+      };
+      
+      // Add password if available, or handle password requirement based on skipPasswordCreation
+      if (user.password) {
+        // Use a temporary password if user has a hashed password in our database
+        // Note: Since we can't unhash the password, we'll need to use a temporary one
+        const tempPassword = Math.random().toString(36).slice(-8);
+        payload.password = tempPassword;
+      } else if (!skipPasswordCreation) {
+        // If not skipping password creation and no password exists, use a random one
+        const tempPassword = Math.random().toString(36).slice(-8);
+        payload.password = tempPassword;
+      } else {
+        // If skipping password creation
+        payload.password_enabled = false;
+        payload.skip_password_requirement = true;
+        payload.skip_password_checks = true;
+      }
+      
+      // Add email invitation option
+      if (sendEmailInvite) {
+        payload.send_email_invitation = true;
+      }
+      
+      console.log('Sending payload to Clerk:', JSON.stringify(payload));
+      const response = await axios.post(clerkApiUrl, payload, {
+        headers: {
+          'Authorization': `Bearer ${clerkSecretKey}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.data && response.data.id) {
+        // Update user record with Clerk ID
+        await usersCollection.updateOne(
+          { _id: new ObjectId(userId) },
+          { $set: { clerkId: response.data.id } }
+        );
+        
+        return reply.send({ 
+          success: true, 
+          clerkId: response.data.id 
+        });
+      } else {
+        return reply.status(500).send({ error: 'Failed to create user in Clerk' });
+      }
+    } catch (error) {
+      console.error('Error adding user to Clerk:', error);
+      let errorMessage = 'Failed to add user to Clerk';
+       
+      // Extract detailed error message from Clerk API response
+      if (error.response && error.response.data) {
+        console.log('Clerk API error response:', JSON.stringify(error.response.data));
+        
+        if (error.response.data.errors && error.response.data.errors.length > 0) {
+          errorMessage = error.response.data.errors.map(e => e.message || e.long_message || JSON.stringify(e)).join(', ');
+        }
+      }
+      
+      return reply.status(500).send({ error: errorMessage });
+    }
+  });
+
+  // Add new route for bulk adding users to Clerk
+  fastify.post('/admin/clerk/bulk-add-users', async (request, reply) => {
+    try {
+      const isAdmin = await checkUserAdmin(fastify, request.user._id);
+      if (!isAdmin) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+      
+      const { users, sendEmailInvite, skipPasswordCreation } = request.body;
+      if (!users || !Array.isArray(users) || users.length === 0) {
+        return reply.status(400).send({ error: 'No users provided' });
+      }
+      
+      // Set progress tracking in a global variable
+      fastify.bulkClerkProgress = {
+        total: users.length,
+        processed: 0,
+        added: 0,
+        existing: 0,
+        failed: 0,
+        results: []
+      };
+      
+      // Process users in batches to avoid overwhelming the Clerk API
+      const batchSize = 5;
+      const results = [];
+      
+      for (let i = 0; i < users.length; i += batchSize) {
+        const batch = users.slice(i, i + batchSize);
+        
+        // Process each user in the batch concurrently
+        const promises = batch.map(async (user) => {
+          try {
+            if (!user.email) {
+              fastify.bulkClerkProgress.processed++;
+              fastify.bulkClerkProgress.failed++;
+              return { userId: user.userId, error: 'No email address', added: false };
+            }
+            
+            // Check if user already has a clerkId in our database
+            const dbUser = await fastify.mongo.db.collection('users').findOne({ _id: new ObjectId(user.userId) });
+            if (!dbUser) {
+              fastify.bulkClerkProgress.processed++;
+              fastify.bulkClerkProgress.failed++;
+              return { userId: user.userId, error: 'User not found in database', added: false };
+            }
+            
+            if (dbUser.clerkId) {
+              fastify.bulkClerkProgress.processed++;
+              fastify.bulkClerkProgress.existing++;
+              return { userId: user.userId, clerkId: dbUser.clerkId, added: false, existing: true };
+            }
+            
+            // Check if user already exists in Clerk by email
+            const checkResponse = await axios.get(`https://api.clerk.com/v1/users?email_address=${encodeURIComponent(user.email)}`, {
+              headers: {
+                'Authorization': `Bearer ${process.env.CLERK_SECRET_KEY}`,
+                'Content-Type': 'application/json',
+              },
+            });
+            
+            if (checkResponse.data && checkResponse.data.data && checkResponse.data.data.length > 0) {
+              // User already exists in Clerk
+              const clerkId = checkResponse.data.data[0].id;
+              
+              // Update user record with Clerk ID if needed
+              await fastify.mongo.db.collection('users').updateOne(
+                { _id: new ObjectId(user.userId) },
+                { $set: { clerkId } }
+              );
+              
+              fastify.bulkClerkProgress.processed++;
+              fastify.bulkClerkProgress.existing++;
+              return { userId: user.userId, clerkId, added: false, existing: true };
+            }
+            
+            // Create user in Clerk API
+            const payload = {
+              email_addresses: [{ email_address: dbUser.email }],
+              first_name: dbUser.firstName || dbUser.nickname || '',
+              last_name: dbUser.lastName || '',
+              username: dbUser.username || dbUser.nickname,
+              password_enabled: !skipPasswordCreation,
+              skip_password_requirement: skipPasswordCreation,
+              skip_password_checks: skipPasswordCreation,
+              send_email_invitation: sendEmailInvite
+            };
+            
+            const response = await axios.post('https://api.clerk.com/v1/users', payload, {
+              headers: {
+                'Authorization': `Bearer ${process.env.CLERK_SECRET_KEY}`,
+                'Content-Type': 'application/json',
+              },
+            });
+            
+            if (response.data && response.data.id) {
+              // Update user record with Clerk ID
+              await fastify.mongo.db.collection('users').updateOne(
+                { _id: new ObjectId(user.userId) },
+                { $set: { clerkId: response.data.id } }
+              );
+              
+              fastify.bulkClerkProgress.processed++;
+              fastify.bulkClerkProgress.added++;
+              return { userId: user.userId, clerkId: response.data.id, added: true };
+            } else {
+              fastify.bulkClerkProgress.processed++;
+              fastify.bulkClerkProgress.failed++;
+              return { userId: user.userId, error: 'Failed to create user in Clerk', added: false };
+            }
+          } catch (error) {
+            console.error(`Error processing user ${user.userId}:`, error);
+            let errorMessage = 'Failed to add user to Clerk';
+            if (error.response && error.response.data && error.response.data.errors) {
+              errorMessage = error.response.data.errors.map(e => e.message).join(', ');
+            }
+            
+            fastify.bulkClerkProgress.processed++;
+            fastify.bulkClerkProgress.failed++;
+            return { userId: user.userId, error: errorMessage, added: false };
+          }
+        });
+        
+        const batchResults = await Promise.all(promises);
+        results.push(...batchResults);
+        fastify.bulkClerkProgress.results = results;
+        
+        // Add a small delay between batches to avoid rate limiting
+        if (i + batchSize < users.length) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+      
+      return reply.send({ 
+        success: true, 
+        total: users.length,
+        added: fastify.bulkClerkProgress.added,
+        existing: fastify.bulkClerkProgress.existing,
+        failed: fastify.bulkClerkProgress.failed,
+        results
+      });
+    } catch (error) {
+      console.error('Error in bulk add to Clerk:', error);
+      return reply.status(500).send({ error: 'Failed to process bulk add to Clerk' });
+    }
+  });
+
+  // Get bulk progress
+  fastify.get('/admin/clerk/bulk-progress', async (request, reply) => {
+    try {
+      const isAdmin = await checkUserAdmin(fastify, request.user._id);
+      if (!isAdmin) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+      
+      const progress = fastify.bulkClerkProgress || {
+        total: 0,
+        processed: 0,
+        progress: 0
+      };
+      
+      const progressPercent = progress.total > 0 
+        ? Math.floor((progress.processed / progress.total) * 100) 
+        : 0;
+      
+      return reply.send({
+        total: progress.total,
+        processed: progress.processed,
+        progress: progressPercent
+      });
+    } catch (error) {
+      console.error('Error getting bulk progress:', error);
+      return reply.status(500).send({ error: 'Failed to get bulk progress' });
+    }
+  });
+}
 
 module.exports = routes;

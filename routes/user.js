@@ -10,25 +10,25 @@ const { refreshAccessToken, addContactToCampaign } = require('../models/zohomail
 
 async function routes(fastify, options) {
 
-    fastify.get('/user/clerk-auth', async (request, reply) => {
-      try {
+  fastify.get('/user/clerk-auth', async (request, reply) => {
+    try {
       const clerkId = request.headers['x-clerk-user-id'];
       console.log(`clerkId from header: ${clerkId}`);
-
+  
       if (!clerkId) {
         console.warn('No clerkId found in header');
         return reply.status(401).send({ error: 'Unauthorized' });
       }
-
+  
       // Fetch user data from Clerk
       const clerkApiUrl = `https://api.clerk.com/v1/users/${clerkId}`;
       const clerkSecretKey = process.env.CLERK_SECRET_KEY;
-
+  
       if (!clerkSecretKey) {
         console.error('CLERK_SECRET_KEY is not set in environment variables.');
         return reply.status(500).send({ error: 'Clerk secret key not configured' });
       }
-
+  
       let clerkUserData;
       try {
         const response = await axios.get(clerkApiUrl, {
@@ -37,22 +37,22 @@ async function routes(fastify, options) {
             'Content-Type': 'application/json',
           },
         });
-
+  
         if (response.status !== 200) {
           console.error(`Failed to fetch user data from Clerk API. Status: ${response.status}`);
           return reply.status(500).send({ error: 'Failed to fetch user data from Clerk' });
         }
-
+  
         clerkUserData = response.data;
       } catch (axiosError) {
         console.error('Error fetching user data from Clerk:', axiosError.message);
         return reply.status(500).send({ error: 'Failed to fetch user data from Clerk' });
       }
-
+  
       const usersCollection = fastify.mongo.db.collection('users');
       let user = await usersCollection.findOne({ clerkId });
       console.log(`User found with clerkId ${clerkId}: ${!!user}`);
-
+  
       if (!user) {
         // Create a new user with Clerk data
         user = {
@@ -83,23 +83,23 @@ async function routes(fastify, options) {
             fullName: clerkUserData.full_name,
             email: clerkUserData.email_addresses[0]?.email_address,
           };
-          
+  
           await usersCollection.updateOne(
             { clerkId },
             { $set: updateData }
           );
-          
+  
           // Update the user object with the new data
           Object.assign(user, updateData);
           console.log(`Updated user with clerkId ${clerkId} to match Clerk data`);
         }
-        
+  
         // Check for subscription status if not present
         if (!user.subscriptionStatus) {
           const subscriptionInfo = await fastify.mongo.db.collection('subscriptions').findOne({
             _id: new fastify.mongo.ObjectId(user._id)
           });
-          
+  
           if (subscriptionInfo && subscriptionInfo.subscriptionStatus === 'active') {
             await usersCollection.updateOne(
               { _id: user._id },
@@ -115,20 +115,21 @@ async function routes(fastify, options) {
           }
         }
       }
-      
+  
       await updateUserLang(fastify.mongo.db, user._id, request.lang);
       const token = jwt.sign({ _id: user._id, clerkId: user.clerkId }, process.env.JWT_SECRET, { expiresIn: '24h' });
       console.log(`JWT token created for user ${user._id}`);
-
-      return reply
-        .setCookie('token', token, { path: '/', httpOnly: true })
-        .send({ redirect: '/chat/' });
-
-      } catch (err) {
-      console.error(`Error in /user/clerk-auth: ${err.message}`, err);
+  
+      // Set the cookie and redirect
+      reply.setCookie('token', token, { path: '/', httpOnly: true });
+      console.log('Redirect to /chat/')
+      return reply.send({ redirectUrl: '/chat/' });
+  
+    } catch (err) {
+      console.log(`Error in /user/clerk-auth: ${err.message}`, err);
       return reply.status(500).send({ error: 'Server error' });
-      }
-    });
+    }
+  });
 
   fastify.post('/user/clerk-update', async (request, reply) => {
     try {
@@ -184,7 +185,7 @@ async function routes(fastify, options) {
           fullName: clerkUserData.full_name,
           email: clerkUserData.email_addresses[0]?.email_address,
         };
-        
+         
         // Check for subscription status
         const subscriptionInfo = await fastify.mongo.db.collection('subscriptions').findOne({
           _id: new ObjectId(user._id)
@@ -454,7 +455,7 @@ async function routes(fastify, options) {
       console.log(error)
     }
   });
-
+ 
   fastify.get('/user/:userId', async (request, reply) => {
     const { userId } = request.params;
     const db = fastify.mongo.db
@@ -830,8 +831,63 @@ async function routes(fastify, options) {
     }
   });
 
+  // Login route to authenticate users with email and password
+  fastify.post('/user/login', async (request, reply) => {
+    try {
+        const { email, password, rememberMe } = request.body;
+        const translations = request.translations;
+        if (!email || !password) {
+            return reply.status(400).send({ error: translations.old_login.missing_credentials });
+        }
+        
+        const usersCollection = fastify.mongo.db.collection('users');
+        const user = await usersCollection.findOne({ email });
+        
+        if (!user) {
+            return reply.status(401).send({ error: translations.old_login.invalid_credentials });
+        }
+        
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        
+        if (!isPasswordValid) {
+            return reply.status(401).send({ error: translations.old_login.invalid_credentials });
+        }
+        
+        // Update user's language preference
+        await updateUserLang(fastify.mongo.db, user._id, request.lang);
+        
+        // Set token expiration based on rememberMe
+        const expiresIn = rememberMe ? '7d' : '24h';
+        
+        // Generate JWT token
+        const token = jwt.sign(
+            { _id: user._id }, 
+            process.env.JWT_SECRET, 
+            { expiresIn }
+        );
+        
+        // Set cookie and return success response without redirect
+        reply.setCookie('token', token, { 
+            path: '/', 
+            httpOnly: true,
+            maxAge: rememberMe ? 7 * 24 * 60 * 60 : 24 * 60 * 60 // in seconds
+        });
+        
+        return reply.send({ 
+            success: true,
+            user: {
+                _id: user._id,
+                nickname: user.nickname,
+                email: user.email
+            }
+        });
+            
+    } catch (err) {
+        console.error(`Error in /user/login: ${err.message}`, err);
+        return reply.status(500).send({ error: translations.old_login.server_error });
+    }
+  });
+    
 }
-
-
 
 module.exports = routes;

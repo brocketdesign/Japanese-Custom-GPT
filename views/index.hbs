@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{translations.lang}}">
    {{> dashboard-header}}
 <body>
     {{> dashboard-nav}}
@@ -33,6 +33,10 @@
                 <div class="text-center d-flex flex-column justify-content-start align-items-start mt-3 animate__animated"  data-animate="animate__fadeIn">
                     <a href="#" onclick="openLoginForm()" class="btn custom-gradient-bg text-white btn-lg m-2 px-5 py-3 mb-3 cta-button fw-bold" role="button" style="border-radius: 50px;">
                         {{translations.landing_page.cta_button}}
+                    </a>
+                    <!-- Old login page link -->
+                    <a href="/login" class="btn btn-outline-secondary btn-sm ms-3 px-5 py-1 mb-3 cta-button fw-bold" role="button" style="border-radius: 50px;">
+                        {{translations.landing_page.old_login_page}}
                     </a>
                 </div>
             </div>

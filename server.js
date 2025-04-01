@@ -183,6 +183,18 @@ fastify.get('/signout-redirection', async (request, reply) => {
   });
 });
 
+// old login
+fastify.get('/login', async (request, reply) => {
+  const db = fastify.mongo.db;
+  let { translations, lang, user } = request;
+  const userId = user._id;
+  user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+
+  return reply.renderWithGtm(`login.hbs`, {
+    title: 'LAMIXAI画像生成',
+  });
+});
+
 fastify.get('/my-plan', async (request, reply) => {
   const db = fastify.mongo.db;
   let { translations, lang, user } = request;
@@ -219,8 +231,7 @@ fastify.get('/chat/:chatId', async (request, reply) => {
 
   const signIn = request.query.signIn == 'true' || false;
   const signOut = request.query.signOut == 'true' || false;
-  console.log('Chat')
-  console.log({ signIn, signOut });
+
   if (!signIn && (signOut || user.isTemporary || !userData)) {
     return reply.redirect('/');
   }

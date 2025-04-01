@@ -12,6 +12,10 @@
             <a href="/admin/users/registered" class="btn btn-outline-dark me-2">{{translations.admin_user.registered_users}}</a>
             <!-- Button to open modal -->
             <span id="openCsvModal" class="btn btn-primary">{{translations.admin_user.export_csv}}</span>
+            <!-- New Button for Bulk Clerk Add -->
+            <button id="bulkAddToClerk" class="btn btn-success ms-2">
+                <i class="bi bi-people-fill me-1"></i> Add All to Clerk
+            </button>
         </div>
         <div>
             <span class="badge bg-dark"><i class="bi bi-people me-2"></i>{{users.length}}</span>
@@ -44,7 +48,6 @@
         </div>
     </div>
     </div>
-
     <!-- Modal for delete confirmation -->
     <div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -64,6 +67,97 @@
         </div>
     </div>
 
+    <!-- Modal for adding user to Clerk -->
+    <div class="modal fade" id="addToClerkModal" tabindex="-1" aria-labelledby="addToClerkModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content mx-auto">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addToClerkModalLabel">Add User to Clerk</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Add <span id="clerkUserEmail" class="fw-bold"></span> to Clerk authentication system?</p>
+                    <div class="mb-3">
+                        <input type="hidden" id="clerkUserId">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" value="" id="sendEmailInvite" checked>
+                            <label class="form-check-label" for="sendEmailInvite">
+                                Send email invitation invitation
+                            </label>
+                        </div>
+                        <small class="form-text text-muted d-block">
+                            Clerk will automatically send an invitation email to the user
+                        </small>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="" id="skipPasswordCreation">
+                            <label class="form-check-label" for="skipPasswordCreation">
+                                Skip password creation
+                            </label>
+                            <small class="form-text text-muted d-block">
+                                When checked, users can sign in using OAuth only (Google, etc.)
+                            </small>
+                        </div>
+                    </div>
+                    <div id="clerkAddStatus" class="alert d-none"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmAddToClerk">Add to Clerk</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for bulk adding users to Clerk -->
+    <div class="modal fade" id="bulkAddToClerkModal" tabindex="-1" aria-labelledby="bulkAddToClerkModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content mx-auto">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="bulkAddToClerkModalLabel">Bulk Add to Clerk</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>This will check all users and add those not in Clerk to the Clerk authentication system.</p>
+                    <div class="mb-3">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" value="" id="bulkSendEmailInvite" checked>
+                            <label class="form-check-label" for="bulkSendEmailInvite">
+                                Have Clerk send email invitations
+                            </label>
+                            <small class="form-text text-muted d-block">
+                                When checked, Clerk will automatically send invitation emails to users
+                            </small>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="" id="bulkSkipPasswordCreation">
+                            <label class="form-check-label" for="bulkSkipPasswordCreation">
+                                Skip password creation
+                            </label>
+                            <small class="form-text text-muted d-block">
+                                When checked, users can sign in using OAuth only (Google, etc.)
+                            </small>
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <small>
+                            <i class="bi bi-info-circle me-1"></i>
+                            You can add users to Clerk without sending invitation emails by unchecking the first option. 
+                            Users will still be able to sign in if they visit your application, but won't receive an automatic invitation.
+                        </small>
+                    </div>
+                    <div id="bulkAddProgress" class="progress d-none">
+                        <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                    </div>
+                    <div id="bulkAddStatus" class="mt-3"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmBulkAddToClerk">Start Process</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="table-responsive">
         <table class="table table-striped">
             <thead>
@@ -76,7 +170,8 @@
                     <th>{{translations.admin_user.language}}</th>
                     <th>{{translations.admin_user.subscription}}</th>
                     <th>{{translations.admin_user.actions}}</th>
-                    <th>{{translations.admin_user.profile}} </th>
+                    <th>{{translations.admin_user.profile}}</th>
+                    <th>Clerk</th>
                 </tr>
             </thead>
             <tbody>
@@ -127,6 +222,18 @@
                             <i class="bi bi-box-arrow-up-right"></i>
                         </a>
                     </td>
+                    <!-- New column for Clerk actions -->
+                    <td>
+                        {{#if this.clerkId}}
+                            <button class="btn btn-success check-clerk-status" data-user-id="{{this._id}}" data-user-email="{{this.email}}" data-clerk-id="{{this.clerkId}}">
+                                <i class="bi bi-check"></i>
+                            </button>
+                        {{else}}
+                            <button class="btn btn-outline-info check-clerk-status" data-user-id="{{this._id}}" data-user-email="{{this.email}}">
+                                <i class="bi bi-key"></i>
+                            </button>
+                        {{/if}}
+                    </td>
                 </tr>
                 {{/each}}
             </tbody>
@@ -160,109 +267,297 @@
             var query = fields.length ? '?fields=' + fields : '';
             window.location.href = '/admin/users/csv' + query;
         });
-    });
 
-        $(document).ready(function() {
-            function convertToJapaneseDate(dateString) {
-                var options = { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric', 
-                    weekday: 'long',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    hour12: false // Use 24-hour format
-                };
-                var date = new Date(dateString);
-                return date.toLocaleDateString('ja-JP', options);
+        // Function to check if user exists in Clerk
+        function checkClerkStatus(userId, email, clerkId) {
+            if (!email) {
+                Swal.fire('Error', 'User does not have an email address', 'error');
+                return;
             }
-            $('.jp-d').each(function() {
-                var originalDate = $(this).text();
-                var japaneseDate = convertToJapaneseDate(originalDate);
-                $(this).text(japaneseDate);
-            });
-            $('.ip-agent').each(function() {
-                var original = $(this).text();
-                var newText = original.split('-')[0]
-                $(this).text(newText);
-            });
-            $('.subscriptionToggle').on('click', function() {
-                var userId = $(this).data('user-id');
-                $.ajax({
-                    type: 'PUT',
-                    url: '/admin/users/' + userId + '/subscription',
-                    success: function(response) {
-                        console.log('Subscription toggled successfully!');
-                        const subscriptionStatus = response.subscriptionStatus;
-                        // Update the subscription status in the table
-                        $(`tr[data-user-id="${userId}"] .subscriptionStatus`).text(subscriptionStatus);
-                    },
-                    error: function(xhr, status, error) {
-                        console.log('Error toggling subscription:', error);
-                        Swal.fire('Error!', 'Failed to toggle subscription.', 'error');
+            
+            // If we already know the user has a clerkId, show that info
+            if (clerkId) {
+                Swal.fire('User Found', `User already exists in Clerk with ID: ${clerkId}`, 'info');
+                return;
+            }
+            
+            $.ajax({
+                url: '/admin/clerk/check-user',
+                type: 'GET',
+                data: { email },
+                success: function(response) {
+                    if (response.exists) {
+                        // Update button to show user is already in Clerk
+                        $(`button.check-clerk-status[data-user-id="${userId}"]`)
+                            .removeClass('btn-outline-info')
+                            .addClass('btn-success')
+                            .html('<i class="bi bi-check"></i>')
+                            .attr('data-clerk-id', response.clerkId);
+                            
+                        Swal.fire('User Found', `User already exists in Clerk with ID: ${response.clerkId}`, 'info');
+                    } else {
+                        // Show modal to add user to Clerk
+                        $('#clerkUserId').val(userId);
+                        $('#clerkUserEmail').text(email);
+                        $('#clerkAddStatus').addClass('d-none').removeClass('alert-success alert-danger');
+                        $('#addToClerkModal').modal('show');
                     }
-                });
+                },
+                error: function(xhr) {
+                    Swal.fire('Error', xhr.responseJSON?.error || 'Failed to check Clerk status', 'error');
+                }
             });
+        }
 
-            // Store the user ID to be deleted
-            let userIdToDelete;
+        // Click handler for checking Clerk status
+        $('.check-clerk-status').click(function() {
+            const userId = $(this).data('user-id');
+            const email = $(this).data('user-email');
+            const clerkId = $(this).data('clerk-id');
+            checkClerkStatus(userId, email, clerkId);
+        });
+
+        // Click handler for adding user to Clerk
+        $('#confirmAddToClerk').click(function() {
+            const userId = $('#clerkUserId').val();
+            const sendEmailInvite = $('#sendEmailInvite').is(':checked');
+            const skipPasswordCreation = $('#skipPasswordCreation').is(':checked');
             
-            $('.delete-user').on('click', function() {
-                userIdToDelete = $(this).data('user-id');
-                // Show the Bootstrap modal instead of SweetAlert
-                var deleteModal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
-                deleteModal.show();
-            });
+            // Disable button and show loading state
+            $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...');
             
-            // Handle the confirm delete action
-            $('#confirmDeleteUser').on('click', function() {
-                if (userIdToDelete) {
-                    $.ajax({
-                        type: 'DELETE',
-                        url: '/admin/users/' + userIdToDelete,
-                        success: function() {
-                            console.log('User deleted successfully!');
-                            $(`tr[data-user-id="${userIdToDelete}"]`).hide();
-                            // Hide the modal
-                            $('#deleteUserModal').modal('hide');
-                        },
-                        error: function(xhr, status, error) {
-                            console.log('Error deleting user:', error);
-                            // Hide the current modal
-                            $('#deleteUserModal').modal('hide');
-                            
-                            // Show error message in a new Bootstrap modal
-                            const errorModal = `
-                                <div class="modal" tabindex="-1" id="errorModal">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content mx-auto">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title">Error!</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <p>Failed to delete user.</p>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                            
-                            // Append the error modal if it doesn't exist yet
-                            if (!$('#errorModal').length) {
-                                $('body').append(errorModal);
-                            }
-                            
-                            // Show the error modal
-                            new bootstrap.Modal(document.getElementById('errorModal')).show();
-                        }
-                    });
+            $.ajax({
+                url: '/admin/clerk/add-user',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    userId,
+                    sendEmailInvite,
+                    skipPasswordCreation
+                }),
+                success: function(response) {
+                    $('#clerkAddStatus')
+                        .removeClass('d-none alert-danger')
+                        .addClass('alert-success')
+                        .html(`User added to Clerk successfully! Clerk ID: ${response.clerkId}`);
+                    // Update button in table to show success
+                    $(`button.check-clerk-status[data-user-id="${userId}"]`)
+                        .removeClass('btn-outline-info')
+                        .addClass('btn-success')
+                        .html('<i class="bi bi-check"></i>');
+                        
+                    // Re-enable button table to show success table to show success
+                    $('#confirmAddToClerk').prop('disabled', false).text('Add to Clerk');
+                },
+                error: function(xhr) {
+                    $('#clerkAddStatus')
+                        .removeClass('d-none alert-success')
+                        .addClass('alert-danger')
+                        .text(xhr.responseJSON?.error || 'Failed to add user to Clerk');
+                    // Re-enable button
+                    $('#confirmAddToClerk').prop('disabled', false).text('Add to Clerk');
                 }
             });
         });
+
+        // Click handler for opening bulk add modal
+        $('#bulkAddToClerk').click(function() {
+            $('#bulkAddProgress').addClass('d-none');
+            $('#bulkAddStatus').empty();
+            $('#bulkAddToClerkModal').modal('show');
+        });
+
+        // Click handler for bulk adding users to Clerk
+        $('#confirmBulkAddToClerk').click(function() {
+            const sendEmailInvite = $('#bulkSendEmailInvite').is(':checked');
+            const skipPasswordCreation = $('#bulkSkipPasswordCreation').is(':checked');
+            
+            // Get all user IDs and emails from the table
+            const users = [];
+            $('.check-clerk-status').each(function() {
+                // Skip users who already have a clerkId
+                if (!$(this).data('clerk-id')) {
+                    users.push({
+                        userId: $(this).data('user-id'),
+                        email: $(this).data('user-email')
+                    });
+                }
+            });
+            const totalUsers = users.length;
+            if (totalUsers === 0) {
+                $('#bulkAddStatus').html('<div class="alert alert-warning">No users found to process</div>');
+                return;
+            }
+            // Disable button and show progress
+            $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...');
+            $('#bulkAddProgress').removeClass('d-none');
+            $('#bulkAddStatus').html('<div class="mt-3">Processing users...</div>');
+            
+            // Start the bulk process
+            $.ajax({
+                url: '/admin/clerk/bulk-add-users',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    users,
+                    sendEmailInvite,
+                    skipPasswordCreation
+                }),
+                success: function(response) {
+                    updateBulkProgress(100);
+                    
+                    let statusHtml = '<div class="alert alert-success mt-3">';
+                    statusHtml += `<p>Processed ${response.total} users</p>`;
+                    statusHtml += `<p>Added to Clerk: ${response.added}</p>`;
+                    statusHtml += `<p>Already in Clerk: ${response.existing}</p>`;
+                    statusHtml += `<p>Failed: ${response.failed}</p>`;
+                    statusHtml += '</div>';
+                    
+                    $('#bulkAddStatus').html(statusHtml);
+                    
+                    // Update UI for buttons
+                    response.results.forEach(result => {
+                        if (result.added) {
+                            $(`button.check-clerk-status[data-user-id="${result.userId}"]`)
+                                .removeClass('btn-outline-info')
+                                .addClass('btn-success')
+                                .html('<i class="bi bi-check"></i>');
+                        }
+                    });
+                    
+                    // Re-enable button
+                    $('#confirmBulkAddToClerk').prop('disabled', false).text('Start Process');
+                },
+                error: function(xhr) {
+                    $('#bulkAddStatus').html(`<div class="alert alert-danger mt-3">${xhr.responseJSON?.error || 'Failed to process bulk add'}</div>`);
+                    $('#confirmBulkAddToClerk').prop('disabled', false).text('Start Process');
+                }
+            });
+            
+            // Setup progress monitoring
+            let progress = 0;
+            const progressInterval = setInterval(function() {
+                $.ajax({
+                    url: '/admin/clerk/bulk-progress',
+                    type: 'GET',
+                    success: function(response) {
+                        updateBulkProgress(response.progress);
+                        if (response.progress >= 100) {
+                            clearInterval(progressInterval);
+                        }
+                    }
+                });
+            }, 1000);
+            
+            function updateBulkProgress(percent) {
+                const progressBar = $('#bulkAddProgress .progress-bar');
+                progressBar.css('width', percent + '%');
+                progressBar.attr('aria-valuenow', percent);
+                progressBar.text(percent + '%');
+            }
+        });
+
+        function convertToJapaneseDate(dateString) {
+            var options = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric', 
+                weekday: 'long', 
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit', 
+                hour12: false // Use 24-hour format
+            };
+            var date = new Date(dateString);
+            return date.toLocaleDateString('ja-JP', options);
+        }
+        
+        $('.jp-d').each(function() {
+            var originalDate = $(this).text();
+            var japaneseDate = convertToJapaneseDate(originalDate);
+            $(this).text(japaneseDate);
+        });
+        
+        $('.ip-agent').each(function() {
+            var original = $(this).text();
+            var newText = original.split('-')[0];
+            $(this).text(newText);
+        });
+
+        $('.subscriptionToggle').on('click', function() {
+            var userId = $(this).data('user-id');
+            $.ajax({
+                type: 'PUT',
+                url: '/admin/users/' + userId + '/subscription',
+                success: function(response) {
+                    console.log('Subscription toggled successfully!');
+                    const subscriptionStatus = response.subscriptionStatus;
+                    // Update the subscription status in the table
+                    $(`tr[data-user-id="${userId}"] .subscriptionStatus`).text(subscriptionStatus);
+                },
+                error: function(xhr, status, error) {
+                    console.log('Error toggling subscription:', error);
+                    Swal.fire('Error!', 'Failed to toggle subscription.', 'error');
+                }
+            });
+        });
+
+        // Store the user ID to be deleted
+        let userIdToDelete;
+
+        $('.delete-user').on('click', function() {
+            userIdToDelete = $(this).data('user-id');
+            // Show the Bootstrap modal instead of SweetAlert
+            var deleteModal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
+            deleteModal.show();
+        });
+
+        // Handle the confirm delete action
+        $('#confirmDeleteUser').on('click', function() {
+            if (userIdToDelete) {
+                $.ajax({
+                    type: 'DELETE',
+                    url: '/admin/users/' + userIdToDelete,
+                    success: function() {
+                        console.log('User deleted successfully!');
+                        $(`tr[data-user-id="${userIdToDelete}"]`).hide();
+                        // Hide the modal
+                        $('#deleteUserModal').modal('hide');
+                    },
+                    error: function(xhr, status, error) {
+                        console.log('Error deleting user:', error);
+                        // Hide the current modal
+                        $('#deleteUserModal').modal('hide');
+                        
+                        // Show error message in a new Bootstrap modal
+                        const errorModal = `
+                            <div class="modal" tabindex="-1" id="errorModal">
+                                <div class="modal-dialog">
+                                    <div class="modal-content mx-auto">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Error!</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>Failed to delete user.</p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        // Append the error modal if it doesn't exist yet
+                        if (!$('#errorModal').length) {
+                            $('body').append(errorModal);
+                        }
+                        // Show the error modal
+                        new bootstrap.Modal(document.getElementById('errorModal')).show();
+                    }
+                });
+            }
+        });
+    });
     </script>
 </html>

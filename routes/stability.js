@@ -34,7 +34,17 @@ fastify.post('/novita/generate-img', async (request, reply) => {
       
       let imageDescriptionResponse = await checkImageDescription(db, chatId);
       const imageDescription = imageDescriptionResponse.imageDescription
-      newPrompt = imageDescription +','+ customPrompt 
+      newPrompt = !!imageDescription ? imageDescription +','+ customPrompt : customPrompt; 
+      // Prompt must be shorter than 900 characters
+      if (newPrompt.length > 900) {
+        const shorterPrompt = await createPrompt(customPrompt, imageDescription, nsfw)
+        if(shorterPrompt){
+          newPrompt = shorterPrompt.substring(0, 900);
+        }else{
+          newPrompt = newPrompt.substring(0, 900);
+        }
+        
+      }
     }
 
     const result = generateImg({title, prompt:newPrompt, aspectRatio, userId, chatId, userChatId, imageType, image_num: chatCreation ? 4 : 1 , image_base64, chatCreation, placeholderId, translations:request.translations , fastify})

@@ -232,7 +232,7 @@ const completedTasks = new Set();
 async function pollTaskStatus(taskId, fastify) {
   const startTime = Date.now();
   const interval = 3000;
-  const timeout = 120000; // 1 minute
+  const timeout = 2 * 60 * 1000; // 2 minutes
 
   return new Promise((resolve, reject) => {
     const intervalId = setInterval(async () => {
@@ -351,6 +351,7 @@ async function checkTaskStatus(taskId, fastify) {
   }
 
   const result = await fetchNovitaResult(task.taskId);
+
   if (!result) {
     return { taskId: task.taskId, status: 'processing' };
   }

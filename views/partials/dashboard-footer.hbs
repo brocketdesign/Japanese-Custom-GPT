@@ -890,7 +890,8 @@ $(document).ready(function(){
             // Use Clerk's provided method instead of direct URL navigation
             if (window.Clerk) {
                 Clerk.openSignIn({
-                    redirectUrl: window.location.origin + '/signin-redirection?signIn=true'
+                    redirectUrl: window.location.origin + '/signin-redirection?signIn=true',
+                    language: window.lang,
                 });
             } else {
                 console.error('Clerk is not initialized yet');

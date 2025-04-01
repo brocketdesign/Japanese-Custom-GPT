@@ -128,7 +128,7 @@ async function routes(fastify, options) {
         { _id: new ObjectId(userId) },
         { $set: { subscriptionStatus } }
       );
-
+      console.log(`Updating subscription status for user ${userId} to ${subscriptionStatus}`);
       if (result.matchedCount === 0) {
         return reply.status(404).send({ error: 'User not found' });
       }

@@ -187,10 +187,10 @@ async function routes(fastify, options) {
         };
          
         // Check for subscription status
-        const subscriptionInfo = await fastify.mongo.db.collection('subscriptions').findOne({
+        const subscriptionInfo = await fastify.mongo.db.collection('users').findOne({
           _id: new ObjectId(user._id)
         });
-        
+        console.log(`Subscription info for user ${user._id}:`, subscriptionInfo.subscriptionStatus);
         if (subscriptionInfo && subscriptionInfo.subscriptionStatus === 'active') {
           updateData.subscriptionStatus = 'active';
         } else {

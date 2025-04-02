@@ -205,9 +205,13 @@
     window.userId = window.user._id;
     window.isAdmin = {{isAdmin}};
     window.imageId = null;
-    window.translations = {{{json translations}}};
-    window.clerkTranslations = {{{json clerkTranslations}}};
     window.lang = window.translations.lang;
+</script>
+<script>
+    window.translations = {{{json translations}}};
+</script>
+<script>
+    window.clerkTranslations = {{{json clerkTranslations}}};
 </script>
 <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -915,7 +919,6 @@ $(document).ready(function(){
             const clerkLang = Object.keys(clerkTranslations)[0];
             await Clerk.load({localization: clerkTranslations[clerkLang]});
             const signOutParam = new URLSearchParams(window.location.search).get('signOut');
-            console.log({signOutParam})
             if(signOutParam){
                 handleSignOut()
                 .then(() => {

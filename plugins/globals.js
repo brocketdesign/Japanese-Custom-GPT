@@ -87,7 +87,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         if (!currentLang) currentLang = 'en';
         
         if (!clerkTranslationsCache[currentLang]) {
-            const clerkTranslationFile = path.join(__dirname, '..', 'locales', 'clerk', `${currentLang}.ts`);
+            const clerkTranslationFile = path.join(__dirname, '..', 'locales', `clerk_${currentLang}.ts`);
             if (fs.existsSync(clerkTranslationFile)) {
                 try {
                     // Use require to import the TypeScript file

@@ -887,11 +887,13 @@ $(document).ready(function(){
     <script>
         // Open authenticate page in a modal
         window.openLoginForm = function() {
+            // Check if url as a language subdomain https://ja.chatlamix.com/
+            const langUrl = window.location.hostname.split('.')[0];
             // Use Clerk's provided method instead of direct URL navigation
             if (window.Clerk) {
                 Clerk.openSignIn({
                     redirectUrl: window.location.origin + '/signin-redirection?signIn=true',
-                    language: window.lang,
+                    language: window.lang || langUrl || 'ja',
                 });
             } else {
                 console.error('Clerk is not initialized yet');

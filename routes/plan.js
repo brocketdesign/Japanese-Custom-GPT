@@ -304,7 +304,7 @@ function getAmount(currency, billingCycle,month_count, lang) {
           }
         }
       );
-      
+       
       if (result.modifiedCount === 0) {
         console.log('Failed to update user subscription status');
         return reply.redirect(`${frontEnd}/chat/?newSubscription=false&error=true`);

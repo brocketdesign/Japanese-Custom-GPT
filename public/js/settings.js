@@ -159,6 +159,7 @@ $(document).ready(function() {
       const subscriptionEndDate = new Date(data.plan.subscriptionEndDate)
       const subscriptionStartDate = new Date(data.plan.subscriptionStartDate)
       $.get('/plan/list/'+billingCycle, function(planData){
+
         message = `<span class="fw-bold">${planData.plan.name}</span><br>
              <span style="font-size:12px;">${translations.plan_page.subscription_start_date}: ${moment(subscriptionStartDate).locale(lang).format('LL')}</span><br>
              <span style="font-size:12px;">${translations.plan_page.subscription_renewal_date}: ${moment(subscriptionEndDate).locale(lang).format('LL')}</span>`

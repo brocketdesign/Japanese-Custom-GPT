@@ -94,7 +94,47 @@
                     </div>
                 </section>
 
-
+                <!-- Card menu -->
+                <div class="card-menu-container my-3">
+                    <div class="d-flex overflow-auto px-3 py-5" style="scrollbar-width: thin;justify-content: space-between;">
+                        <!-- Create Character Card -->
+                        <div class="character-create-card shadow-sm rounded p-3 text-center mx-2 flex-shrink-0" 
+                             onclick="loadCharacterCreationPage()"
+                             style="cursor: pointer; transition: all 0.3s ease; border: 1px solid rgba(0,0,0,0.1); width: 220px;">
+                            <div class="character-create-icon bg-light rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" 
+                                 style="width: 80px; height: 80px; transition: all 0.3s ease;">
+                                <i class="bi bi-plus-lg fs-2 text-primary"></i>
+                            </div>
+                            <h5 class="mb-2">{{translations.createCharacter}}</h5>
+                            <p class="text-muted small mb-0">{{translations.createCharacterDescription}}</p>
+                        </div>
+                        
+                        <!-- Explore Characters Card -->
+                        <div class="character-create-card shadow-sm rounded p-3 text-center mx-2 flex-shrink-0" 
+                             onclick="window.location.href='/character'"
+                             style="cursor: pointer; transition: all 0.3s ease; border: 1px solid rgba(0,0,0,0.1); width: 220px;">
+                            <div class="character-create-icon bg-light rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" 
+                                 style="width: 80px; height: 80px; transition: all 0.3s ease;">
+                                <i class="bi bi-globe fs-2 text-success"></i>
+                            </div>
+                            <h5 class="mb-2">{{translations.explore}}</h5>
+                            <p class="text-muted small mb-0">{{translations.exploreDescription}}</p>
+                        </div>
+                        
+                        <!-- User Profile Card -->
+                        <div class="character-create-card shadow-sm rounded p-3 text-center mx-2 flex-shrink-0" 
+                             onclick="window.location.href='/user/{{user._id}}'"
+                             style="cursor: pointer; transition: all 0.3s ease; border: 1px solid rgba(0,0,0,0.1); width: 220px;">
+                            <div class="character-create-icon bg-light rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" 
+                                 style="width: 80px; height: 80px; transition: all 0.3s ease;">
+                                <i class="bi bi-person fs-2 text-info"></i>
+                            </div>
+                            <h5 class="mb-2">{{translations.userProfile}}</h5>
+                            <p class="text-muted small mb-0">{{translations.userProfileDescription}}</p>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Image Style Selection -->
                 <div id="imageStyleSelection" class="d-none"></div>
                 <div class="col-auto px-3">
@@ -452,7 +492,7 @@ $(document).ready(function() {
                 });
             });
     });
- window.showImagePreview = function(el) {
+window.showImagePreview = function(el) {
     if($(el).hasClass('isBlurred')){
         loadPlanPage();
         return;
@@ -487,36 +527,6 @@ $(document).ready(function() {
             </div>
         `;
         $('body').append(modalHTML);
-        
-        // Add one-time event listener for Swiper initialization
-        $('#imagePreviewModal').on('shown.bs.modal', function onModalShown() {
-            // Remove the event listener to prevent multiple initializations
-            $('#imagePreviewModal').off('shown.bs.modal', onModalShown);
-            
-            // Initialize Swiper with a slight delay to ensure DOM is ready
-            setTimeout(() => {
-                const swiper = new Swiper('.swiper-container', {
-                    loop: true,
-                    initialSlide: initialSlideIndex,
-                    navigation: {
-                        nextEl: '.swiper-button-next',
-                        prevEl: '.swiper-button-prev',
-                    },
-                    zoom: {
-                        maxRatio: 3,
-                        toggle: true,
-                    },
-                    slidesPerView: 1,
-                    responsive: true,
-                    breakpoints: {
-                        1024: {
-                            slidesPerView: 3,
-                        },
-                    },
-                    spaceBetween: 0,
-                });
-            }, 50);
-        });
     }
     
     // Clear existing slides and add new ones
@@ -533,6 +543,32 @@ $(document).ready(function() {
     
     // Initialize the modal
     const imageModal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+    
+    // When modal is shown, initialize Swiper with the correct slide
+    $('#imagePreviewModal').on('shown.bs.modal', function() {
+        if (window.imageSwiper) {
+            window.imageSwiper.destroy(true, true);
+        }
+        
+        window.imageSwiper = new Swiper('.swiper-container', {
+            loop: images.length > 1,
+            initialSlide: initialSlideIndex,
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+            zoom: {
+                maxRatio: 3,
+                toggle: true,
+            },
+            slidesPerView: 1,
+            spaceBetween: 0,
+        });
+        
+        // Make sure to show the correct slide
+        window.imageSwiper.slideTo(initialSlideIndex, 0, false);
+    });
+    
     imageModal.show();
 }
 

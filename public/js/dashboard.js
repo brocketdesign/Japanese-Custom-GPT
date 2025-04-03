@@ -438,6 +438,10 @@ window.toggleImageFavorite = function(el) {
         showNotification('いいねを取り消しました！', 'success');
         $this.find('.ct').text(parseInt($this.find('.ct').text()) - 1);
       }
+      // delete the local storage item userImages_${userId}
+      const userId = user._id;
+      const cacheKey = `userImages_${userId}`;
+      localStorage.setItem(cacheKey, {});
     },
     error: function() {
       $this.toggleClass('liked');

@@ -98,22 +98,22 @@
         </button>
     </div>
     {{/if}}
-    <div class="py-2" style="bottom:0; left:0; right:0; background-color: rgb(248, 249, 250);">
+    <div class="py-2 bg-dark" style="bottom:0; left:0; right:0;">
         <div class="container-none">
             <div class="d-flex justify-content-evenly align-items-center w-100">
-            <a class="text-dark flex-fill text-center" href="#" onclick="showDiscovery()">
+            <a class="text-white flex-fill text-center" href="#" onclick="showDiscovery()">
                 <i class="bi bi-house fs-4"></i>
             </a>
-            <a class="text-dark flex-fill text-center" href="/search">
+            <a class="text-white flex-fill text-center" href="/search">
                 <i class="bi bi-search fs-4"></i>
             </a>
-            <a class="text-dark flex-fill text-center" href="#" onclick="loadCharacterCreationPage()">
+            <a class="text-white flex-fill text-center" href="#" onclick="loadCharacterCreationPage()">
                 <i class="bi bi-plus-square fs-4"></i>
             </a>
-            <a class="text-dark flex-fill text-center" href="/character">
+            <a class="text-white flex-fill text-center" href="/character">
                 <i class="bi bi-globe fs-4"></i>
             </a>
-            <a class="text-dark flex-fill text-center" href="/user/{{user._id}}">
+            <a class="text-white flex-fill text-center" href="/user/{{user._id}}">
                 <div class="btn rounded-circle p-0 shadow-0">
                 <img src="{{#if user.profileUrl}}{{user.profileUrl}}{{else}}/img/avatar.png{{/if}}" class="rounded-circle avatar" height="35" width="35" alt="Avatar" loading="lazy" />
                 </div>
@@ -205,10 +205,10 @@
     window.userId = window.user._id;
     window.isAdmin = {{isAdmin}};
     window.imageId = null;
-    window.lang = window.translations.lang;
 </script>
 <script>
     window.translations = {{{json translations}}};
+    window.lang = window.translations.lang;
 </script>
 <script>
     window.clerkTranslations = {{{json clerkTranslations}}};
@@ -219,6 +219,7 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ja.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://js.stripe.com/v3/"></script>
 <script src="/js/moment-with-locales.js"></script>
 <script src="/js/dashboard.js"></script>
@@ -539,7 +540,7 @@ window.showNotification = function(message, icon) {
     }
 
     const alertHtml = `
-        <div class="alert ${alertClass} alert-dismissible fade show position-absolute" style="margin-left:10px;margin-top:60px;" role="alert">
+        <div class="alert ${alertClass} alert-dismissible fade show position-absolute" style="margin-left:10px;margin-top:60px;z-index:9999;" role="alert">
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>

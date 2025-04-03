@@ -1,5 +1,9 @@
 {
   "lang":"fr",
+  "createCharacterDescription": "Créez votre propre personnage et commencez à discuter avec lui !",
+  "userProfile": "Profil utilisateur",
+  "userProfileDescription": "Voir les images que vous avez aimées et les personnages créés.",
+  "exploreDescription": "Explorez les dernières publications et les personnages créés par d'autres utilisateurs.",
   "signin": {
     "title": "Connexion - Redirection",
     "heading": "Connexion réussie",

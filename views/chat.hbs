@@ -143,6 +143,7 @@
                     </ul>
                 </div>
 
+                <div id="tags-container" class="tag-list mx-4 pt-2"></div>
 
                 <!-- Content Section -->
                 <section id="chat-page-list" class="container-fluid px-0">
@@ -160,7 +161,7 @@
                         <div class="px-2 position-relative" style="flex-grow:1;height: 100%;overflow: scroll;">
                             <div id="relationshipStatus" class="badge rounded-pill text-white position-absolute" style="background:#151213b0; top: 0px; right: 10px; z-index: 9;display:none;"></div>
                             <div id="chatContainer" data-id="" class="pt-2 fade-content" style="padding-bottom: 150px !important;"></div>
-                            <div id="chatInput" class="input-group rounded-0 rounded-bottom" style="position: absolute;bottom: 0;left: 0;right: 0;padding: 0px 15px 5px 15px;">
+                            <div id="chatInput" class="input-group rounded-0 rounded-bottom" style="position: absolute;bottom: 15px;left: 0;right: 0;padding: 0px 15px 5px 15px;">
                                 <div class="d-flex justify-content-between align-items-center w-100">
                                     <div>
                                         <button type="button" class="btn btn-md bg-light shadow-0 border-0 mb-2 mx-1" id="audio-play">
@@ -683,20 +684,6 @@ window.showImagePreview = function(el) {
 });
 
 
-window.redirectToChat = function(chatId,chatImage) {
-    if($(`#spinner-${chatId}`).hasClass('on')){
-        return
-    }
-    if(chatImage){
-        $('#chat-container').css('background-image', chatImage);
-    }
-    $(`#spinner-${chatId}`).addClass('on').show()
-    const user = {{{json user}}}
-    const userId = user._id
-    fetchChatData(chatId,userId,null,function(){
-        $(`#spinner-${chatId}`).removeClass('on').hide()
-    })
-}
 $('.date-time').each(function() {
     var dateText = $(this).text();
     var trimmedDate = dateText.split(' ')[0]; // Get the date part only

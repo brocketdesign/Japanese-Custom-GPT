@@ -325,10 +325,9 @@ $(document).ready(async function() {
             console.error('Failed to fetch plans:', error);
         }
         });
-    
-  
     }
-      
+    startCountdown();
+    displayTags();
 });
 
 $(document).on('click', '.close-alert', function (e) {
@@ -699,6 +698,7 @@ async function checkIfAdmin(userId) {
       return false;
     }
 }
+
   function unlockImage(id, type, el) {
     loadPlanPage();
     return
@@ -2583,37 +2583,91 @@ function generateUserPostsPagination(userId, totalPages) {
         );
     }
 }
-
 window.startCountdown = function() {
-    const countdownElement = $('#countdown-timer');
-    const storedEndTime = localStorage.getItem('countdownEndTime');
-    const now = Date.now();
-    let endTime = storedEndTime ? parseInt(storedEndTime) : now + 30 * 60 * 1000;
+  const countdownElements = $('.countdown-timer');
+  let storedEndTime = localStorage.getItem('countdownEndTime');
+  const now = Date.now();
 
-    if (!storedEndTime) localStorage.setItem('countdownEndTime', endTime);
+  if (!storedEndTime) {
+    storedEndTime = now + 30 * 60 * 1000;
+    localStorage.setItem('countdownEndTime', storedEndTime);
+  } else {
+    storedEndTime = parseInt(storedEndTime);
+  }
 
-    const interval = setInterval(() => updateCountdown(endTime, interval), 10); // Update every 10ms
-    updateCountdown(endTime, interval);
+  countdownElements.each(function() {
+    const element = $(this);
+    const id = element.attr('id') || `countdown-${Math.random().toString(36).substr(2, 9)}`;
+    element.attr('id', id);
+
+    const interval = setInterval(() => updateCountdown(element, storedEndTime, interval), 10); // Update every 10ms
+    updateCountdown(element, storedEndTime, interval);
+  });
 }
 
-window.updateCountdown = function(endTime, interval) {
-    const countdownElement = $('#countdown-timer');
-    const remaining = endTime - Date.now();
+window.updateCountdown = function(element, endTime, interval) {
+  const remaining = endTime - Date.now();
 
-    if (remaining <= 0) {
-        countdownElement.text('00:00.00');
-        localStorage.removeItem('countdownEndTime');
-        clearInterval(interval);
-        return;
+  if (remaining <= 0) {
+    element.text('00:00.00');
+    localStorage.removeItem('countdownEndTime');
+    clearInterval(interval);
+    loadPlanPage();
+    return;
+  }
+
+  const minutes = Math.floor(remaining / (60 * 1000));
+  const seconds = Math.floor((remaining % (60 * 1000)) / 1000);
+  const milliseconds = Math.floor((remaining % 1000) / 10); // Convert to two-digit milliseconds
+  element.text(
+    `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(2, '0')}`
+  );
+}
+
+
+    // jQuery function to display tags
+    function displayTags(imageStyle) {
+      let tags;
+      if (!tags || !tags.length) {
+          $.get(`/api/tags`, function(response) {
+          const totalPages = response.totalPages;
+          const randomPage = Math.floor(Math.random() * totalPages) + 1; // Random page number between 1 and totalPages
+          $.get(`/api/tags?page=${randomPage}`, function(response) {
+              tags = response.tags;
+              tags = tags.slice(0,10)
+              renderTags(tags,imageStyle);
+          });
+          });
+      } else {
+          renderTags(tags,imageStyle);
+      }
+  }
+
+
+  window.renderTags = function(tags, imageStyle) {
+    $('#tags-container').empty();
+    
+    if (!tags.length) {
+      $('#tags-container').html('');
+      return;
     }
+    tags = tags.filter(tag => tag !== '');
+    const html = `
+      <div class="tags-wrapper py-2">
+        <div class="tags-cloud d-flex flex-wrap gap-2 justify-content-center">
+          ${tags.map(tag => 
+            `<a href="/search?q=${encodeURIComponent(tag)}&imageStyle=${imageStyle}" 
+                class="tag-item px-3 py-2 rounded-pill text-decoration-none"
+                data-tag="${tag}">
+                #${tag}
+             </a>`
+          ).join('')}
+        </div>
+      </div>`;
+    $('#tags-container').html(html);
+    
+  }
 
-    const minutes = Math.floor(remaining / (60 * 1000));
-    const seconds = Math.floor((remaining % (60 * 1000)) / 1000);
-    const milliseconds = Math.floor((remaining % 1000) / 10); // Convert to two-digit milliseconds
-    countdownElement.text(
-        `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(2, '0')}`
-    );
-}
 // Object to manage modal loading status
 const modalStatus = {
     isSettingsLoading: false,

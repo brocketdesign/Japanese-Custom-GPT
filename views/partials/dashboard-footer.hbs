@@ -86,14 +86,15 @@
 </div>
 {{#if user.isTemporary}}
 {{else}}
-<div class="sticky-bottom onchat-off" style="bottom:0; left:0; right:0;">
+<div class="sticky-bottom" style="bottom:0; left:0; right:0;">
     {{#if (eq user.subscriptionStatus 'active')}}
     {{else}}
-    <div class="pt-0 pb-3 text-center " style="bottom:0;left:0;right:0;">
-        <button onclick="loadPlanPage()" class="btn d-flex justify-content-center align-items-center rounded-pill fw-bold custom-gradient-bg gap-2 px-2 py-1.5 text-sm text-white bg-white mx-auto" style="border: 1px solid #000;">
+    <div class="text-center onchat-off" style="bottom:0;left:0;right:0;">
+        <button onclick="loadPlanPage()" class="btn d-flex justify-content-center align-items-center rounded-0 fw-bold custom-gradient-bg gap-2 px-2 py-3 fs-3 text-white bg-white mx-auto w-100" style="border: 1px solid #000;">
             <div>
             {{translations.premium}}
             <span class="text-rose-400 text-sm  text-danger">{{translations.discount}}</span>
+             <span id="countdown-timer-bottom" class="countdown-timer ms-2"></span>
             </div>
         </button>
     </div>
@@ -499,6 +500,27 @@ if (urlParams.get('cancel-payment') === 'true') {
         window.history.replaceState({ path: newUrl }, '', newUrl);
     }
 }
+
+window.redirectToChat = function(chatId,chatImage) {
+    if($(`#spinner-${chatId}`).hasClass('on')){
+        return
+    }
+    if(chatImage){
+        $('#chat-container').css('background-image', chatImage);
+    }
+    $(`#spinner-${chatId}`).addClass('on').show()
+    const user = {{{json user}}}
+    const userId = user._id
+    // if on chat page fetchChatData else redirect to chat/${chatID}
+    if (window.location.pathname.includes('/chat/')) {
+        fetchChatData(chatId,userId,null,function(){
+            $(`#spinner-${chatId}`).removeClass('on').hide()
+        })
+    } else {
+        window.location.href = `/chat/${chatId}`;
+    }
+}
+
 window.showDiscovery = function() {
     if (!window.location.pathname.includes('/chat/')) {
         window.location.href = '/chat/';

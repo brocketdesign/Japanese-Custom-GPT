@@ -2002,7 +2002,21 @@ async function routes(fastify, options) {
               }));
             }
           }
-
+          // Make sure characterPrompt or enhancedPrompt is not empty
+            query.$and = [
+                {
+                    $or: [
+                    { characterPrompt: { $exists: true, $ne: '' } },
+                    { enhancedPrompt: { $exists: true, $ne: '' } }
+                    ]
+                },
+                {
+                    $or: [
+                    { characterPrompt: { $exists: true } },
+                    { enhancedPrompt: { $exists: true } }
+                    ]
+                }
+            ];
           const recentCursor = await chatsCollection.aggregate([
             { $match: query },
             { $group: { _id: "$chatImageUrl", doc: { $first: "$$ROOT" } } },
@@ -2011,7 +2025,7 @@ async function routes(fastify, options) {
             { $skip: skip },
             { $limit: limit }
           ]).toArray();
-      
+
           if (!recentCursor.length) {
             return reply.code(404).send({ recent: [], page, totalPages: 0 });
           }

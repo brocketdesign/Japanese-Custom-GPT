@@ -493,85 +493,93 @@ $(document).ready(function() {
                 });
             });
     });
-window.showImagePreview = function(el) {
+    
+    window.showImagePreview = function(el) {
     if($(el).hasClass('isBlurred')){
         loadPlanPage();
-        return;
-    }
+            return;
+        }
 
-    // Get all images from the chat
-    const images = $('.assistant-image-box img').map(function() {
-        return $(this).attr('src');
-    }).get();
+        // Get all images from the chat
+        const images = $('.assistant-image-box img').map(function() {
+            return $(this).attr('src');
+        }).get();
 
-    const clickedImageUrl = $(el).find('img').attr('src') || $(el).attr('data-src');
-    const initialSlideIndex = images.indexOf(clickedImageUrl);
-    
-    // Create modal if it doesn't exist yet
-    if ($('#imagePreviewModal').length === 0) {
-        const modalHTML = `
-            <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-fullscreen">
-                    <div class="modal-content bg-dark mx-auto w-100">
-                        <div class="modal-header border-0">
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body p-0">
-                            <div class="swiper-container" style="height: 100%; width: 100%;">
-                                <div class="swiper-wrapper"></div>
-                                <div class="swiper-button-next text-white" style="opacity:0.8;"></div>
-                                <div class="swiper-button-prev text-white" style="opacity:0.8;"></div>
+        const clickedImageUrl = $(el).find('img').attr('src') || $(el).attr('data-src');
+        
+        // Create modal if it doesn't exist yet
+        if ($('#imagePreviewModal').length === 0) {
+            const modalHTML = `
+                <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-fullscreen">
+                        <div class="modal-content bg-dark mx-auto w-100">
+                            <div class="modal-header border-0">
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body p-0">
+                                <div class="swiper-container" style="height: 100%; width: 100%;">
+                                    <div class="swiper-wrapper"></div>
+                                    <div class="swiper-button-next text-white" style="opacity:0.8;"></div>
+                                    <div class="swiper-button-prev text-white" style="opacity:0.8;"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        `;
-        $('body').append(modalHTML);
-    }
-    
-    // Clear existing slides and add new ones
-    const swiperWrapper = $('#imagePreviewModal .swiper-wrapper');
-    swiperWrapper.empty();
-    
-    images.forEach(imageUrl => {
-        swiperWrapper.append(`
-            <div class="swiper-slide d-flex align-items-center justify-content-center">
-                <img src="${imageUrl}" class="img-fluid" style="max-height: 90vh; object-fit: contain;">
-            </div>
-        `);
-    });
-    
-    // Initialize the modal
-    const imageModal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
-    
-    // When modal is shown, initialize Swiper with the correct slide
-    $('#imagePreviewModal').on('shown.bs.modal', function() {
-        if (window.imageSwiper) {
-            window.imageSwiper.destroy(true, true);
+            `;
+            $('body').append(modalHTML);
+            
+            // Only add the event listener once when creating the modal
+            $('#imagePreviewModal').on('shown.bs.modal', function() {
+                if (window.imageSwiper) {
+                    window.imageSwiper.destroy(true, true);
+                }
+                
+                window.imageSwiper = new Swiper('.swiper-container', {
+                    loop: images.length > 1,
+                    initialSlide: 0, // Always start at first slide
+                    navigation: {
+                        nextEl: '.swiper-button-next',
+                        prevEl: '.swiper-button-prev',
+                    },
+                    zoom: {
+                        maxRatio: 3,
+                        toggle: true,
+                    },
+                    slidesPerView: 1,
+                    spaceBetween: 0,
+                });
+                
+                // Show all slides immediately
+                $('.swiper-slide').show();
+            });
         }
         
-        window.imageSwiper = new Swiper('.swiper-container', {
-            loop: images.length > 1,
-            initialSlide: initialSlideIndex,
-            navigation: {
-                nextEl: '.swiper-button-next',
-                prevEl: '.swiper-button-prev',
-            },
-            zoom: {
-                maxRatio: 3,
-                toggle: true,
-            },
-            slidesPerView: 1,
-            spaceBetween: 0,
+        // Clear existing slides and add new ones
+        const swiperWrapper = $('#imagePreviewModal .swiper-wrapper');
+        swiperWrapper.empty();
+        
+        // Reorder images to put the clicked image first
+        const orderedImages = [clickedImageUrl];
+        images.forEach(imageUrl => {
+            if (imageUrl !== clickedImageUrl) {
+                orderedImages.push(imageUrl);
+            }
         });
         
-        // Make sure to show the correct slide
-        window.imageSwiper.slideTo(initialSlideIndex, 0, false);
-    });
-    
-    imageModal.show();
-}
+        // Now add the slides in the correct order
+        orderedImages.forEach(imageUrl => {
+            swiperWrapper.append(`
+                <div class="swiper-slide d-flex align-items-center justify-content-center">
+                    <img src="${imageUrl}" class="img-fluid" style="max-height: 90vh; object-fit: contain;">
+                </div>
+            `);
+        });
+        
+        // Initialize the modal
+        const imageModal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+        imageModal.show();
+    }
 
     $(document).on('click', '.tag-button', function(e) {
         e.preventDefault();

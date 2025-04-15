@@ -10,17 +10,17 @@ const default_prompt = {
       sfw: {
         sampler_name: "Euler a",
         prompt: `score_9, score_8_up, masterpiece, best quality, (ultra-detailed), (perfect hands:0.1), (sfw), censored, `,
-        negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, nipple, topless, nsfw, naked, nude, sex, worst quality, low quality,young,child,dick,bad quality,worst quality,worst detail,sketch`,
-        width: 1024,
-        height: 1360,
+        negative_prompt: `score_4, score_5, 3d, jpeg artifacts, username, watermark, signature, normal quality, worst quality, large head, low quality, text, error, missing fingers, extra digits, fewer digits, bad eye`,
+        width: 896,
+        height: 1152,
         loras: []
       },
       nsfw: {
         sampler_name: "Euler a",
         prompt: `score_9, score_8_up, masterpiece, best quality, (ultra-detailed), (perfect hands:0.1),`,
-        negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, worst quality, low quality,young,child,dick,bad quality,worst quality,worst detail,sketch`,
-        width: 1024,
-        height: 1360,
+        negative_prompt: `score_4, score_5, 3d, jpeg artifacts, username, watermark, signature, normal quality, worst quality, large head, low quality, text, error, missing fingers, extra digits, fewer digits, bad eye`,
+        width: 896,
+        height: 1152,
         loras: []
       }
     },
@@ -50,8 +50,8 @@ const default_prompt = {
     guidance_scale: 7,
     steps: 20,
     image_num: 1,
-    clip_skip: 0,
-    strength: 0.6,
+    clip_skip: 1,
+    strength: 0.65,
     seed: -1,
     loras: [],
   }
@@ -123,11 +123,10 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, 
     }
     // Display size
     console.log('Starting image generation...'+requestData.model_name);
-    
+    console.log(requestData)
     // Send request to Novita and get taskId
     const novitaTaskId = await fetchNovitaMagic(requestData);
-    // Save start time
-    const startTime = Date.now();
+    
     // Store task details in DB
     const checkTaskValidity = await db.collection('tasks').insertOne({
       taskId: novitaTaskId,
@@ -175,8 +174,6 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, 
     // Poll the task status
     pollTaskStatus(novitaTaskId, fastify)
     .then(taskStatus => {
-      // Save time difference
-      saveAverageTaskTime(db, Date.now() - startTime, requestData.model_name);
       fastify.sendNotificationToUser(userId, 'handleLoader', { imageId:placeholderId, action:'remove' })
       fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId:placeholderId, spin: false })
       if(chatCreation){ 
@@ -221,43 +218,62 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, 
       fastify.sendNotificationToUser(userId, 'resetCharacterForm');
     });
 
-    console.log('Task status:', novitaTaskId);
     return { taskId: novitaTaskId };
 
   }
+  // Module to check the status of a task at regular intervals
+  const completedTasks = new Set();
 
-// Module to check the status of a task at regular intervals
-const completedTasks = new Set();
+  async function pollTaskStatus(taskId, fastify) {
+    let startTime = Date.now();
+    const interval = 3000;
+    const timeout = 2 * 60 * 1000; // 2 minutes
+    let taskStarted = false;
+    const db = fastify.mongo.db;
 
-async function pollTaskStatus(taskId, fastify) {
-  const startTime = Date.now();
-  const interval = 3000;
-  const timeout = 2 * 60 * 1000; // 2 minutes
+    return new Promise((resolve, reject) => {
+      const intervalId = setInterval(async () => {
+        try {
+          const taskStatus = await checkTaskStatus(taskId, fastify);
+          console.log (`progress_percent: ${taskStatus.progress}`);
+          if(!taskStatus){
+            clearInterval(intervalId);
+            reject('Task not found');
+            return;
+          }
 
-  return new Promise((resolve, reject) => {
-    const intervalId = setInterval(async () => {
-      try {
-        const taskStatus = await checkTaskStatus(taskId, fastify);
+          if (taskStatus.status === 'processing' && !taskStarted) {
+            console.log(`Task ${taskId} started`);
+            startTime = Date.now();
+            taskStarted = true;
+          }
 
-        if(!taskStatus){
+          if (taskStatus.status === 'completed') {
+            clearInterval(intervalId);
+            if (!completedTasks.has(taskId)) {
+              completedTasks.add(taskId);
+              // Access requestData from the scope where it's defined
+              const task = await db.collection('tasks').findOne({ taskId });
+              if (task) {
+                saveAverageTaskTime(db, Date.now() - startTime, task.model_name);
+                // log the taskId and time taken
+                console.log(`Task ${taskId} completed in ${Date.now() - startTime} ms`);
+              }
+              resolve(taskStatus);
+            } else {
+              console.log(`Task ${taskId} already completed, skipping.`);
+            }
+          } else if (Date.now() - startTime > timeout && taskStarted) {
+            clearInterval(intervalId);
+            reject('Task polling timed out.');
+          }
+        } catch (error) {
           clearInterval(intervalId);
-          reject('Task not found');
+          reject(error);
         }
-        if (taskStatus.status === 'completed') {
-          clearInterval(intervalId);
-          completedTasks.add(taskId);
-          resolve(taskStatus);
-        } else if (Date.now() - startTime > timeout) {
-          clearInterval(intervalId);
-          reject('Task polling timed out.');
-        }
-      } catch (error) {
-        clearInterval(intervalId);
-        reject(error);
-      }
-    }, interval);
-  });
-}
+      }, interval);
+    });
+  }
 
 // Module to check the status of a task
 async function getTasks(db, status, userId) {
@@ -335,12 +351,13 @@ async function deleteAllTasks(db) {
   } catch (error) {
     console.error('Error deleting tasks:', error);
   }
-} 
+}
+
 async function checkTaskStatus(taskId, fastify) {
   const db = fastify.mongo.db;
   const tasksCollection = db.collection('tasks');
   const task = await tasksCollection.findOne({ taskId });
-
+  let processingPercent = 0;
   if (!task) {
     console.log(`Task not found: ${taskId}`);
     return false;
@@ -352,8 +369,9 @@ async function checkTaskStatus(taskId, fastify) {
 
   const result = await fetchNovitaResult(task.taskId);
 
-  if (!result) {
-    return { taskId: task.taskId, status: 'processing' };
+  if (result && result.status === 'processing') {
+    processingPercent = result.progress;
+    return { taskId: task.taskId, status: 'processing', progress: processingPercent};
   }
   if(result.error){
     await tasksCollection.updateOne(
@@ -462,6 +480,7 @@ async function fetchNovitaResult(task_id) {
     }
 
     const taskStatus = response.data.task.status;
+    const progressPercent = response.data.task.progress_percent;
 
     if (taskStatus === 'TASK_STATUS_SUCCEED') {
         const images = response.data.images;
@@ -483,7 +502,7 @@ async function fetchNovitaResult(task_id) {
         console.log(`Task failed with reason: ${response.data.task.reason}`);
         return { error: response.data.task.reason, status: 'failed' };
     } else {
-        return null;
+        return {status: 'processing', progress: progressPercent};
     }
 
     } catch (error) {

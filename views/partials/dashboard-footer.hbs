@@ -281,7 +281,7 @@ window.loadTranslations = async function (lang) {
 
 window.fetchAndAppendModels = function() {
     const chatDiscovery = document.getElementById('chat-discovery');
-    const subscriptionStatus = user.subscriptionStatus == 'active'
+    const subscriptionStatus = user.subscriptionStatus == 'active' || isAdmin
     let apiUrl = '/api/models'
     $.get(apiUrl, function(response) {
         if (response.success) {

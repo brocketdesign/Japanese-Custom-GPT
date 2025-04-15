@@ -335,7 +335,7 @@ async function routes(fastify, options) {
       </div>
       <div class="modal fade" id="infoModal-{{id}}" tabindex="-1">
         <div class="modal-dialog">
-          <div class="modal-content">
+          <div class="modal-content mx-auto">
             <div class="modal-header">
               <h5 class="modal-title">{{name}}</h5>
             </div>
@@ -378,6 +378,7 @@ async function routes(fastify, options) {
     let user = req.user;
     const db = fastify.mongo.db;
     const models = await db.collection('myModels').find({}).toArray();
+    const isAdmin = await checkUserAdmin(fastify, user._id);
     return res.view('/admin/models',{user,models});
   });
 

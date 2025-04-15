@@ -13,7 +13,7 @@ const apiDetails = {
   },
   novita: {
     apiUrl: 'https://api.novita.ai/v3/openai/chat/completions',
-    model: 'meta-llama/llama-3.1-8b-instruct',
+    model: 'meta-llama/llama-3.2-3b-instruct',
     key: process.env.NOVITA_API_KEY
   },
   deepseek: {

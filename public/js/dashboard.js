@@ -1316,7 +1316,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
           </div>`;
       }
   });
-
+  // Append the generated HTML to the gallery
   $(document).find('#chat-gallery').append(htmlContent);
 };
 
@@ -2656,7 +2656,7 @@ window.updateCountdown = function(element, endTime, interval) {
       <div class="tags-wrapper py-2">
         <div class="tags-cloud d-flex flex-wrap gap-2 justify-content-center">
           ${tags.map(tag => 
-            `<a href="/search?q=${encodeURIComponent(tag)}&imageStyle=${imageStyle}" 
+            `<a href="/search?q=${encodeURIComponent(tag)}" 
                 class="tag-item px-3 py-2 rounded-pill text-decoration-none"
                 data-tag="${tag}">
                 #${tag}

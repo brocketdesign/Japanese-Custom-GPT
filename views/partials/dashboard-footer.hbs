@@ -323,6 +323,14 @@ window.fetchAndAppendModels = function() {
             });
             if($(document).find('#imageStyleTabs').length > 0 && !$('#characterCreationModal').hasClass('show')){
                 showNavTabs();
+            }else{
+                // CLick on the first model if no imageModel is set in the url 
+                const imageModelId = localStorage.getItem('imageModelId');
+                if(imageModelId){
+                    $(document).find(`#imageStyleSelection .style-option[data-id="${imageModelId}"]`).click();
+                }else{
+                    $(document).find('#imageStyleSelection .style-option').first().click();
+                }
             }
         } else {
         window.showNotification('Failed to fetch models', 'error');
@@ -544,43 +552,55 @@ window.showDiscovery = function() {
     resetChatUrl();
     window.postMessage('resizeIframe', '*');
 }
-window.showNotification = function(message, icon) {
-    let alertClass = 'alert-primary';
-    switch (icon) {
-        case 'success':
-            alertClass = 'alert-success';
-            break;
-        case 'error':
-            alertClass = 'alert-danger';
-            break;
-        case 'warning':
-            alertClass = 'alert-warning';
-            break;
-        case 'info':
-            alertClass = 'alert-info';
-            break;
-    }
+window.showNotification = (message, type = 'info') => {
+  // 1) Map types → bg/text classes & icons
+  const styleMap = {
+    success: { bg: 'bg-success', text: 'text-white', icon: 'bi-check-circle-fill' },
+    error:   { bg: 'bg-danger',  text: 'text-white', icon: 'bi-exclamation-triangle-fill' },
+    warning: { bg: 'bg-warning', text: 'text-dark',  icon: 'bi-exclamation-circle-fill' },
+    info:    { bg: 'bg-info',    text: 'text-dark',  icon: 'bi-info-circle-fill' },
+  };
+  const { bg, text, icon } = styleMap[type] || styleMap.info;
 
-    const alertHtml = `
-        <div class="alert ${alertClass} alert-dismissible fade show position-absolute" style="margin-left:10px;margin-top:60px;z-index:9999;" role="alert">
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    `;
+  // 2) Ensure container exists
+  let container = document.getElementById('notification-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'notification-container';
+    container.className = 'p-3'; // padding inside the container
+    document.body.appendChild(container);
+  }
 
-    const alertContainer = document.createElement('div');
-    alertContainer.innerHTML = alertHtml;
+  // 3) Build the toast element
+  const toastEl = document.createElement('div');
+  toastEl.className = `toast align-items-center ${bg} ${text} border-0`;
+  toastEl.setAttribute('role', 'alert');
+  toastEl.setAttribute('aria-live', 'assertive');
+  toastEl.setAttribute('aria-atomic', 'true');
+  toastEl.innerHTML = `
+    <div class="d-flex">
+      <div class="toast-body">
+        <i class="bi ${icon} me-2"></i>${message}
+      </div>
+      <button
+        type="button"
+        class="btn-close btn-close-white me-2 m-auto"
+        data-bs-dismiss="toast"
+        aria-label="Close"
+      ></button>
+    </div>
+  `;
 
-    document.body.prepend(alertContainer);
+  container.appendChild(toastEl);
 
-    setTimeout(() => {
-        const alertEl = document.querySelector('.alert');
-        if (alertEl) {
-            const bsAlert = new bootstrap.Alert(alertEl);
-            bsAlert.close();
-        }
-    }, 3000);
-}
+  // 4) Show it
+  const toast = new bootstrap.Toast(toastEl, { delay: 3000, autohide: true });
+  toast.show();
+
+  // 5) Clean up when hidden
+  toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+};
+
 
 window.fetchUser = async function() {
     try {

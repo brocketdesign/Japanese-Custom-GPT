@@ -186,12 +186,17 @@ async function routes(fastify, options) {
       const chatsGalleryCollection = db.collection('gallery');
       const chatsCollection = db.collection('chats');
   
+      const chatQuery = { $or: [{ language }, { language: request.lang }] };
+      if (styleStr && styleStr !== 'undefined' && styleStr !== 'null') {
+        chatQuery.imageStyle = styleStr;
+      }
+
       const chatIds = await chatsCollection
-        .find({ $or: [{ language }, { language: request.lang }], imageStyle: styleStr })
+        .find(chatQuery)
         .project({ _id: 1 })
         .toArray()
         .then(chats => chats.map(c => c._id));
-  
+
       const queryWords = queryStr.split(' ').filter(word => word.replace(/[^\w\s]/gi, '').trim() !== '');
       const matchCriteria = {
         'images.imageUrl': { $exists: true, $ne: null },
@@ -222,10 +227,11 @@ async function routes(fastify, options) {
       const grouped = {};
       const limitedDocs = [];
       for (const doc of allChatImagesDocs) {
-        if (!grouped[doc.chatId]) grouped[doc.chatId] = 0;
-        if (grouped[doc.chatId] < 3) {
+        const chatIdStr = String(doc.chatId);
+        if (!grouped[chatIdStr]) grouped[chatIdStr] = 0;
+        if (grouped[chatIdStr] < 3) {
           limitedDocs.push(doc);
-          grouped[doc.chatId]++;
+          grouped[chatIdStr]++;
         }
       }
   
@@ -237,19 +243,20 @@ async function routes(fastify, options) {
   
       const chatsData = await chatsCollection.find({ _id: { $in: chatIds } }).toArray();
       const imagesWithChatData = limitedDocs.map(doc => {
-        const chat = chatsData.find(c => c._id.equals(doc.chatId));
+        // Compare chat IDs as strings to avoid .equals error
+        const chat = chatsData.find(c => String(c._id) === String(doc.chatId));
         return {
           ...doc.image,
           chatId: doc.chatId,
           chatName: chat?.name,
           chatImageUrl: chat?.chatImageUrl || '/img/default-thumbnail.png',
-          chatTags: chat.tags || [],
-          messagesCount: chat.messagesCount || 0,
-          first_message: chat.first_message || '',
-          description: chat.description || '',
-          galleries: chat.galleries || [],
-          nickname: chat.nickname || '',
-          imageCount: chat.imageCount
+          chatTags: chat?.tags || [],
+          messagesCount: chat?.messagesCount || 0,
+          first_message: chat?.first_message || '',
+          description: chat?.description || '',
+          galleries: chat?.galleries || [],
+          nickname: chat?.nickname || '',
+          imageCount: chat?.imageCount
         };
       });
   

@@ -3,15 +3,6 @@
   {{> dashboard-header}}
 <body>
     {{> dashboard-nav}}
-  <style>
-    .style-option {
-        width: 75px;
-        cursor:pointer;
-    }
-    .style-option.selected {
-        border: 2px solid #000;
-    }
-  </style>
   <section class="container my-5">                            
     <p class="u-color-grad" style="font-size: 54px;"><img src="/img/logo.webp" alt="" class="me-2" width="40px">Lamix</p>
     <span class="text-muted">{{translations.ai_character_conversation}}</span>
@@ -26,16 +17,10 @@
                 <button type="submit" class="btn btn-primary">{{translations.search_button}}</button>
             </div>
         </div>
-        <div class="col-md-12">
-            <h3>{{translations.image_style}}</h3>
-            <p class="text-muted">{{translations.newCharacter.imageStyleSelectionDescription}}</p>
-            <div id="imageStyleSelection" class="d-flex" style="overflow-x: auto;">
-            </div>
-            <input type="hidden" id="imageStyle" name="imageStyle" value="anime">
-            <input type="hidden" id="imageModel" name="imageModel" value="novaAnimeXL_ponyV20_461138">
-        </div>
     </form>
+
     <hr>
+    
     <h3>{{translations.chat_gallery}}</h3>
     <p class="text-muted">{{translations.chat_gallery_description}}</p>
     <div id="chat-gallery" class="row mx-0 mt-4"></div>
@@ -61,54 +46,27 @@
     <style>
   footer{display: inline !important;}
   .sticky-bottom{display: inline-block !important;width: 100%;}
+  .flagged-true { display: inline-block !important; }
   </style>
   {{> dashboard-footer}}
   <script>
     const user = {{{json user}}}
     const query = '{{query}}';
-    const imageStyle = '{{imageStyle}}';
-    const imageModel = '{{imageModel}}'
     const data = {{{json data}}} || [];
     $(document).ready(function() {
-        let visibleChatId = data.recent.map(chat => chat._id);
-
-        $(document).on('click','.style-option',function(event){
-            if($(this).hasClass('is-premium') && user.isTemporary){
-                openLoginForm()
-                return
-            }
-            if($(this).hasClass('is-premium') && !user.isTemporary && user.subscriptionStatus !== 'active'){
-                loadPlanPage()
-                return
-            }
-            $('.style-option').removeClass('selected');
-            $(this).addClass('selected');
-            $('#imageStyle').val($(this).data('value'));
-            $('#imageModel').val($(this).data('model'));
-            
-            // Update the history state
-            const newUrl = `/search?query=${encodeURIComponent(query)}&imageStyle=${$(this).data('value')}&imageModel=${$(this).data('model')}`;
-            history.pushState(null, '', newUrl);
-            displayTags($(this).data('value'))         
-
-            $('#chat-gallery').empty();
-            $('.all-chats-images-gallery').empty();
-            visibleChatId = []
-            displayPeopleChat(1, { imageStyle:$(this).data('value'), imageModel:$(this).data('model'), query },function(displayedChatId){
-                visibleChatId = displayedChatId
-                resultImageSearch(1, query, imageStyle, function(images) {
-                    const uniqueChatIds = [...new Set(images.map(image => image.chatId).filter(id => !visibleChatId.includes(id)))];
-                    const chatData = uniqueChatIds.map(id => images.find(image => image.chatId === id));
-                    displayChats(chatData)
-                });
+        let visibleChatId = (data.recent || []).map(chat => String(chat._id));
+        displayPeopleChat(1, { query }, function(displayedChatId){
+            // Ensure all IDs are strings for comparison
+            visibleChatId = (displayedChatId || []).map(id => String(id));
+            resultImageSearch(1, query, null, function(images) {
+                // Only display chats for images whose chatId is not in visibleChatId
+                const chatIdsFromImages = images.map(image => String(image.chatId));
+                const uniqueChatIds = [...new Set(chatIdsFromImages.filter(id => !visibleChatId.includes(id)))];
+                const chatData = uniqueChatIds.map(id => images.find(image => String(image.chatId) === id));
+                displayChats(chatData);
             });
         });
-
-        if(query && query.trim() != ''){
-            $(`.style-option[data-value="${imageStyle}"]`).click()
-        }
-        
-        displayTags(imageStyle)
+        displayTags(null);
     });
     
     // jQuery function to display tags

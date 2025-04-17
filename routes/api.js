@@ -2017,7 +2017,8 @@ async function routes(fastify, options) {
                     ]
                 }
             ];
-          const recentCursor = await chatsCollection.aggregate([
+
+            const recentCursor = await chatsCollection.aggregate([
             { $match: query },
             { $group: { _id: "$chatImageUrl", doc: { $first: "$$ROOT" } } },
             { $replaceRoot: { newRoot: "$doc" } },

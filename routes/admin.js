@@ -7,11 +7,15 @@ const axios = require('axios');
 const hbs = require('handlebars');
 const { fetchRandomCivitaiPrompt, createModelChat } = require('../models/civitai');
 
-const fetchModels = async (query = '', cursor = '') => {
+const fetchModels = async (query = false, cursor = false) => {
   try {
-    const url = `https://api.novita.ai/v3/model?filter.visibility=public&pagination.limit=10${
-      cursor ? `&pagination.cursor=${cursor}` : ''
-    }${query ? `&filter.querystring=${encodeURIComponent(query)}` : ''}`; 
+    let url = 'https://api.novita.ai/v3/model?filter.visibility=public&filter.source=civitai&pagination.limit=30&filter.types=checkpoint&filter.is_sdxl=true';
+    if (cursor) {
+      url += `&pagination.cursor=${cursor}`;
+    }
+    if (query) {
+      url += `&filter.query=${encodeURIComponent(query)}`;
+    }
 
     const response = await axios.get(url, {
       headers: {
@@ -21,7 +25,7 @@ const fetchModels = async (query = '', cursor = '') => {
 
     return response.data;
   } catch (error) {
-    console.error('Error fetching models:', error.message);
+    console.log('Error fetching models:', error.message);
     return { models: [], pagination: {} };
   }
 };

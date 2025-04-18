@@ -11,16 +11,18 @@ const default_prompt = {
         sampler_name: "Euler a",
         prompt: `score_9, score_8_up, masterpiece, best quality, (ultra-detailed), (perfect hands:0.1), (sfw), censored, `,
         negative_prompt: `score_4, score_5, 3d, jpeg artifacts, username, watermark, signature, normal quality, worst quality, large head, low quality, text, error, missing fingers, extra digits, fewer digits, bad eye`,
-        width: 896,
-        height: 1152,
+        width: 1024,
+        height: 1360,
+        seed: -1,
         loras: []
       },
       nsfw: {
         sampler_name: "Euler a",
         prompt: `score_9, score_8_up, masterpiece, best quality, (ultra-detailed), (perfect hands:0.1),`,
         negative_prompt: `score_4, score_5, 3d, jpeg artifacts, username, watermark, signature, normal quality, worst quality, large head, low quality, text, error, missing fingers, extra digits, fewer digits, bad eye`,
-        width: 896,
-        height: 1152,
+        width: 1024,
+        height: 1360,
+        seed: -1,
         loras: []
       }
     },
@@ -30,12 +32,26 @@ const default_prompt = {
         prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, (sfw), dressed, clothe on, natural lighting, `,
         negative_prompt: `BraV4Neg,paintings,sketches,(worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)),logo, nsfw,nude, topless, worst quality, low quality,disform,weird body,multiple hands,young,child,dick,bad quality,worst quality,worst detail,sketch `,
         loras: [{"model_name":"more_details_59655.safetensors","strength":0.2},{ model_name: 'JapaneseDollLikeness_v15_28382.safetensors', strength: 0.7 },{"model_name":"PerfectFullBreasts-fCV3_59759.safetensors","strength":0.7}],
+        seed: -1,
       },
       nsfw: {
         sampler_name: "DPM++ 2M Karras",
         prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, (nsfw),uncensored, `,
         negative_prompt: `BraV4Neg,paintings,sketches,(worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)),logo,disform,weird body,multiple hands,young,child,dick,bad quality,worst quality,worst detail,sketch`,
         loras: [{"model_name":"more_details_59655.safetensors","strength":0.2},{ model_name: 'JapaneseDollLikeness_v15_28382.safetensors', strength: 0.7 },{"model_name":"PerfectFullBreasts-fCV3_59759.safetensors","strength":0.7}],
+        seed: -1,
+      }
+    },
+    flux: {
+      sfw:{
+        sampler_name: 'euler',
+        prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, (sfw), dressed, clothe on, natural lighting, `,
+        seed: 0,
+      },
+      nsfw:{
+        sampler_name: 'euler',
+        prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, (nsfw),uncensored, `,
+        seed: 0,
       }
     }
   };    
@@ -48,16 +64,15 @@ const default_prompt = {
     height: 1024,
     sampler_name: "Euler a",
     guidance_scale: 7,
-    steps: 20,
+    steps: 21,
     image_num: 1,
     clip_skip: 1,
     strength: 0.65,
-    seed: -1,
     loras: [],
   }
 
 // Module to generate an image
-async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, chatId, userChatId, imageType, image_num, image_base64, chatCreation, placeholderId, translations, fastify}) {
+async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, chatId, userChatId, imageType, image_num, image_base64, chatCreation, placeholderId, translations, fastify, flux = false}) {
     const db = fastify.mongo.db;
   
     // Fetch the user
@@ -72,7 +87,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, 
     // Fetch imageVersion from chat or use default
     const chat = await db.collection('chats').findOne({ _id: new ObjectId(chatId) });
     const imageVersion = chat.imageVersion || 'sdxl';
-    const selectedStyle = default_prompt[imageVersion] || default_prompt['sdxl'];
+    const selectedStyle = !flux ? default_prompt[imageVersion] || default_prompt['sdxl'] : default_prompt.flux;
     const imageModel = chat.imageModel || 'novaAnimeXL_ponyV20_461138';
     
     const gender = chat.gender
@@ -88,6 +103,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, 
     if(gender == 'nonBinary'){
       genderNegativePrompt = 'manly,womanly,'
     }
+
     // Prepare task based on imageType
     let image_request;
     if (imageType === 'sfw') {
@@ -96,11 +112,12 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, 
         model_name: imageModel.replace('.safetensors', '') + '.safetensors',
         sampler_name: selectedStyle.sfw.sampler_name || '',
         loras: selectedStyle.sfw.loras,
-        prompt: (selectedStyle.sfw.prompt + prompt).replace(/^\s+/gm, '').trim(),
-        negative_prompt: (negativePrompt || selectedStyle.sfw.negative_prompt) + ',' + genderNegativePrompt,
+        prompt: (selectedStyle.sfw.prompt ? selectedStyle.sfw.prompt + prompt : prompt).replace(/^\s+/gm, '').trim(),
+        negative_prompt: ((negativePrompt || selectedStyle.sfw.negative_prompt) ? (negativePrompt || selectedStyle.sfw.negative_prompt)  + ',' : '') + genderNegativePrompt,
         width: selectedStyle.sfw.width || params.width,
         height: selectedStyle.sfw.height || params.height,
-        blur: false
+        blur: false,
+        seed: selectedStyle.sfw.seed,
       };
     } else {
       image_request = {
@@ -108,24 +125,24 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, 
         model_name: imageModel.replace('.safetensors', '') + '.safetensors',
         sampler_name: selectedStyle.nsfw.sampler_name || '',
         loras: selectedStyle.nsfw.loras,
-        prompt: selectedStyle.nsfw.prompt + prompt,
-        negative_prompt: (negativePrompt || selectedStyle.nsfw.negative_prompt) + ',' + genderNegativePrompt,
+        prompt: (selectedStyle.nsfw.prompt ? selectedStyle.nsfw.prompt + prompt : prompt),
+        negative_prompt: ((negativePrompt || selectedStyle.nsfw.negative_prompt) ? (negativePrompt || selectedStyle.nsfw.negative_prompt)  + ',' : '') + genderNegativePrompt,
         width: selectedStyle.nsfw.width || params.width,
         height: selectedStyle.nsfw.height || params.height,
-        blur: !isSubscribed
+        blur: !isSubscribed,
+        seed: selectedStyle.nsfw.seed,
       };
     }
-  
+
     // Prepare params
     let requestData = { ...params, ...image_request, image_num };
     if(image_base64){
       requestData.image_base64 = image_base64;
     }
-    // Display size
-    console.log('Starting image generation...'+requestData.model_name);
-    console.log(requestData)
+    console.log('Request Data:', requestData);
+
     // Send request to Novita and get taskId
-    const novitaTaskId = await fetchNovitaMagic(requestData);
+    const novitaTaskId = await fetchNovitaMagic(requestData, flux);
     
     // Store task details in DB
     const checkTaskValidity = await db.collection('tasks').insertOne({
@@ -235,7 +252,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, 
       const intervalId = setInterval(async () => {
         try {
           const taskStatus = await checkTaskStatus(taskId, fastify);
-          console.log (`progress_percent: ${taskStatus.progress}`);
+          console.log (`progress_percent: ${taskStatus.progress}; status: ${taskStatus.status}`);
           if(!taskStatus){
             clearInterval(intervalId);
             reject('Task not found');
@@ -413,35 +430,49 @@ async function checkTaskStatus(taskId, fastify) {
   return { taskId: task.taskId, userId: task.userId, userChatId: task.userChatId, status: 'completed', images: savedImages };
 }
 // Function to trigger the Novita API for text-to-image generation
-async function fetchNovitaMagic(data) {
+async function fetchNovitaMagic(data, flux = false) {
   try {
     let apiUrl = 'https://api.novita.ai/v3/async/txt2img';
     if (data.image_base64) {
       apiUrl = 'https://api.novita.ai/v3/async/img2img';
     }
-
-    const response = await axios.post(apiUrl, {
-      extra: {
-        response_image_type: 'jpeg',
-        enable_nsfw_detection: true,
-        nsfw_detection_level: 0,
-      },
-      request: data,
-    }, {
+    if (flux) {
+      apiUrl = 'https://api.novita.ai/v3beta/flux-1-schnell';
+      data.response_image_type = 'jpeg';
+    }
+    
+    let requestBody = {
       headers: {
         Authorization: `Bearer ${process.env.NOVITA_API_KEY}`,
         'Content-Type': 'application/json',
       },
-    });
+    }
+    if (flux) {
+      requestBody.data = data
+    }else{
+      requestBody.data = {
+        extra: {
+          response_image_type: 'jpeg',
+          enable_nsfw_detection: false,
+          nsfw_detection_level: 0,
+        },
+        request: data,
+      }
+    }
 
+    const response = await axios.post(apiUrl, requestBody.data, {
+      headers: requestBody.headers,
+    });
     if (response.status !== 200) {
       console.log(`Error - ${response.data.reason}`);
       return false;
     }
 
-    return response.data.task_id;
+    const taskId = !flux ? response.data.task_id : response.data.task.task_id;
+    return taskId;
   } catch (error) {
     console.error('Error fetching Novita image:', error.message);
+    console.log(error)
     return false;
   }
 }

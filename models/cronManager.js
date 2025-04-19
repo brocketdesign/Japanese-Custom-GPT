@@ -4,6 +4,8 @@
 const cron = require('node-cron');
 const { fetchRandomCivitaiPrompt, createModelChat } = require('./civitai');
 const parser = require('cron-parser');
+const { pollTaskStatus } = require('./imagen');
+const { handleTaskCompletion } = require('./imagen'); // <-- import the handler
 
 // Store active cron jobs
 const cronJobs = {};
@@ -47,7 +49,7 @@ const configureCronJob = (jobName, schedule, enabled, task) => {
     }
   }
   
-  return false;
+  return false; 
 };
 
 /**
@@ -125,6 +127,46 @@ const createModelChatGenerationTask = (fastify) => {
 };
 
 /**
+ * Process background image generation tasks every minute
+ * @param {Object} fastify - Fastify instance
+ */
+const processBackgroundTasks = (fastify) => async () => {
+  const db = fastify.mongo.db;
+  const tasksCollection = db.collection('tasks');
+  const backgroundTasks = await tasksCollection.find({ status: 'background' }).toArray();
+  console.log(`Found ${backgroundTasks.length} background tasks to process...`);
+  if (!backgroundTasks.length) return;
+  console.log(`[CRON] Processing ${backgroundTasks.length} background tasks...`);
+  for (const task of backgroundTasks) {
+    try {
+      // Try to poll the task status again (reuse pollTaskStatus from imagen.js)
+      const taskStatus = await pollTaskStatus(task.taskId, fastify);
+      // If successful, pollTaskStatus will update the task and notify the user
+      // If completed, handle notifications and image saving
+      if (taskStatus && taskStatus.status === 'completed') {
+        const userDoc = await db.collection('users').findOne({ _id: task.userId });
+        const chatDoc = await db.collection('chats').findOne({ _id: task.chatId });
+        const translations = fastify.getTranslations(userDoc.language || 'en');
+        await handleTaskCompletion(
+          { ...taskStatus, userId: task.userId, userChatId: task.userChatId },
+          fastify,
+          {
+            chatCreation: !!chatDoc,
+            translations,
+            userId: task.userId.toString(),
+            chatId: task.chatId.toString(),
+            placeholderId: null
+          }
+        );
+      }
+    } catch (err) {
+      // If still not complete, leave as background for next run
+      console.log(`[CRON] Task ${task.taskId} still in background:`, err?.message || err);
+    }
+  }
+};
+
+/**
  * Initialize cron jobs from database settings
  * 
  * @param {Object} fastify - Fastify instance
@@ -159,6 +201,14 @@ const initializeCronJobs = async (fastify) => {
       modelChatCronSettings.schedule, 
       modelChatCronSettings.enabled,
       modelChatGenerationTask
+    );
+
+    // Add background task processor (every minute)
+    configureCronJob(
+      'backgroundTaskProcessor',
+      '*/1 * * * *',
+      true,
+      processBackgroundTasks(fastify)
     );
     
     console.log('Cron jobs initialized');
@@ -210,6 +260,7 @@ module.exports = {
   configureCronJob,
   initializeCronJobs,
   createModelChatGenerationTask,
+  processBackgroundTasks,
   getJobInfo,
   getNextRunTime
 };

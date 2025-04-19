@@ -1254,7 +1254,9 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
               }
           }
           const nsfw = chat?.nsfw || false
-          const moderationFlagged = chat?.moderation?.results[0]?.flagged || false
+            const moderationFlagged = Array.isArray(chat?.moderation?.results) && chat.moderation.results.length > 0
+            ? !!chat.moderation.results[0].flagged
+            : false;
           const finalNsfwResult = nsfw || moderationFlagged
           htmlContent += `
           <div class="chat-card-container col-6 col-sm-3 col-lg-2 mb-2 flagged-${finalNsfwResult}" ${searchId?`data-id="${searchId}"`:''}>
@@ -1288,7 +1290,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                               </div>
                           </a>
                           ${galleryIco}
-                          ${chat.messagesCount ? `<div style="opacity:0.8;">
+                          ${chat.messagesCount ? `<div class="message-count" style="opacity:0.8;">
                             <span 
                             class="btn btn-light text-dark shadow-0 message-count mt-1 border-0 position-relative" 
                             style="min-width: 30px; font-size: 12px;">
@@ -1518,7 +1520,7 @@ window.loadAllChatImages = function (page = 1, reload = false) {
           cacheData.pages = allChatsImagesCache
           localStorage.setItem(cacheKey, JSON.stringify(cacheData))
   
-          // Update current page, then set up infinite scroll
+          // Update currentPage, then set up infinite scroll
           allChatsCurrentPage = data.page
           generateAllChatsImagePagination(data.totalPages)
           resolve()

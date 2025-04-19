@@ -1,5 +1,7 @@
 {
   "lang":"ja",
+  "tagList": "タグ一覧",
+  "popularChats": "人気のチャット",
   "createCharacterDescription": "自分のキャラクターを作成して、チャットを始めましょう！",
   "userProfile": "ユーザープロフィール",
   "userProfileDescription": "いいねした画像や作成したキャラクターを確認できます。",
@@ -697,7 +699,9 @@
     "markdownInfo": "マークダウン形式で詳細を記入できます。",
     "back": "戻る",
     "complete": "完了",
-    "allFieldsRequired": "すべてのフィールドを入力してください"
+    "allFieldsRequired": "すべてのフィールドを入力してください",
+    "backgroundProcessing_title": "バックグラウンド処理",
+    "backgroundProcessing_message": "画像生成タスクはバックグラウンドで続行され、完了次第通知されます。"
   },
   "imageGenerationForm": "画像生成フォーム",
   "selectImageType": "画像の種類を選択",

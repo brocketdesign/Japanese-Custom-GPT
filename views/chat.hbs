@@ -134,23 +134,24 @@
                         </div>
                     </div>
                 </div>
-                
-                <!-- Image Style Selection -->
-                <div id="imageStyleSelection" class="d-none"></div>
-                <div class="col-auto px-3">
-                    <ul class="nav nav-tabs justify-content-start" style="overflow-x: scroll; overflow-y: hidden; flex-wrap: nowrap;" id="imageStyleTabs" role="tablist">
-                        <!-- Tabs will be dynamically generated here -->
-                    </ul>
+
+                <!-- Tag List -->
+                <div class="mx-4 my-4">
+                    <h5 class="fw-bold mb-3">{{translations.tagList}}</h5>
+                    <div id="tags-container" class="tag-list mx-4 pt-2"></div>
                 </div>
 
-                <div id="tags-container" class="tag-list mx-4 pt-2"></div>
-
-                <!-- Content Section -->
-                <section id="chat-page-list" class="container-fluid px-0">
-                    <div id="chat-gallery" class="row mx-0"></div>
-                    <div id="chat-pagination-controls" class="d-flex justify-content-center my-3"></div>
-                </section>
-
+                <!-- Popular chat -->
+                <div class="mx-4 my-4" id="popular-chats-section">
+                    <h5 class="fw-bold mb-3">{{translations.popularChats}}</h5>
+                    <div id="chat-gallery" class="row popular-chats-gallery"></div>
+                    <div id="popular-chats-pagination-controls" class="my-3"></div>
+                </div>
+                <style>
+                    .popular-chats-gallery .gallery, .popular-chats-gallery .message-count{
+                        display: none !important;
+                    }
+                </style>
             </section>
             <div class="container chat-contain px-0 onchat-on">
                 <div id="chat-container" class="card shadow-0 border-0 rounded-0" style="background-position: top center;background-repeat: no-repeat;">
@@ -539,7 +540,7 @@ $(document).ready(function() {
                     loop: images.length > 1,
                     initialSlide: 0, // Always start at first slide
                     navigation: {
-                        nextEl: '.swiper-button-next',
+                        nextEl: '.swiper-button-next', 
                         prevEl: '.swiper-button-prev',
                     },
                     zoom: {
@@ -689,8 +690,103 @@ $(document).ready(function() {
             $('.custom-card').show();
         }
     });
-});
 
+    // --- Popular Chats Infinite Scroll with Session Storage Caching ---
+    let popularChatsPage = 1;
+    let popularChatsLoading = false;
+    let popularChatsTotalPages = 1;
+    const POPULAR_CHATS_CACHE_KEY = 'popularChatsCache';
+    const POPULAR_CHATS_CACHE_TIME_KEY = 'popularChatsCacheTime';
+    const POPULAR_CHATS_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours in ms
+
+    // Helper to get cache
+    function getPopularChatsCache() {
+        const cache = sessionStorage.getItem(POPULAR_CHATS_CACHE_KEY);
+        const cacheTime = sessionStorage.getItem(POPULAR_CHATS_CACHE_TIME_KEY);
+        if (!cache || !cacheTime) return null;
+        if (Date.now() - parseInt(cacheTime, 10) > POPULAR_CHATS_CACHE_TTL) {
+            sessionStorage.removeItem(POPULAR_CHATS_CACHE_KEY);
+            sessionStorage.removeItem(POPULAR_CHATS_CACHE_TIME_KEY);
+            return null;
+        }
+        try {
+            return JSON.parse(cache);
+        } catch {
+            return null;
+        }
+    }
+
+    // Helper to set cache
+    function setPopularChatsCache(page, data) {
+        let cache = getPopularChatsCache() || {};
+        cache[page] = data;
+        sessionStorage.setItem(POPULAR_CHATS_CACHE_KEY, JSON.stringify(cache));
+        sessionStorage.setItem(POPULAR_CHATS_CACHE_TIME_KEY, Date.now().toString());
+    }
+
+    async function loadPopularChats(page = 1, reload = false) {
+        if (popularChatsLoading) return;
+        popularChatsLoading = true;
+        $('#popular-chats-pagination-controls').html('<div class="text-center"><div class="spinner-border" role="status"></div></div>');
+
+        let cache = getPopularChatsCache();
+        let data = cache && cache[page];
+
+        if (data) {
+            if (reload) $('#popular-chats-gallery').empty();
+            window.displayChats(data.chats, 'popular', false);
+            popularChatsTotalPages = data.totalPages || 1;
+            if (page >= popularChatsTotalPages) {
+                $('#popular-chats-pagination-controls').html('');
+            } else {
+                $('#popular-chats-pagination-controls').html('<div class="text-center"><div class="spinner-border" role="status"></div></div>');
+            }
+            popularChatsLoading = false;
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/popular-chats?page=${page}`);
+            if (!res.ok) {
+                $('#popular-chats-pagination-controls').html('');
+                popularChatsLoading = false;
+                return;
+            }
+            data = await res.json();
+            setPopularChatsCache(page, data);
+            if (reload) $('#popular-chats-gallery').empty();
+            window.displayChats(data.chats, 'popular', false);
+            popularChatsTotalPages = data.totalPages || 1;
+            if (page >= popularChatsTotalPages) {
+                $('#popular-chats-pagination-controls').html('');
+            } else {
+                $('#popular-chats-pagination-controls').html('<div class="text-center"><div class="spinner-border" role="status"></div></div>');
+            }
+        } catch (e) {
+            $('#popular-chats-pagination-controls').html('');
+        }
+        popularChatsLoading = false;
+    }
+
+    // Initial load (always loads page 1)
+    loadPopularChats();
+
+    // Infinite scroll for popular chats
+    $(window).on('scroll.popularChats', function() {
+        if (
+            !popularChatsLoading &&
+            popularChatsPage < popularChatsTotalPages &&
+            $(window).scrollTop() + $(window).height() >= $(document).height() - 200
+        ) {
+            popularChatsPage++;
+            loadPopularChats(popularChatsPage);
+        }
+    });
+
+    // Optional: reload on tab switch or other triggers
+    // Example: $('#reload-popular-chats').on('click', function(){ popularChatsPage=1; loadPopularChats(1, true); });
+
+});
 
 $('.date-time').each(function() {
     var dateText = $(this).text();

@@ -1,5 +1,7 @@
 {
   "lang":"fr",
+  "tagList": "Liste des tags",
+  "popularChats": "Populaires",
   "createCharacterDescription": "Créez votre propre personnage et commencez à discuter avec lui !",
   "userProfile": "Profil utilisateur",
   "userProfileDescription": "Voir les images que vous avez aimées et les personnages créés.",

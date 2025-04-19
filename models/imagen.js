@@ -10,7 +10,7 @@ const default_prompt = {
       sfw: {
         sampler_name: "Euler a",
         prompt: `score_9, score_8_up, masterpiece, best quality, (ultra-detailed), (perfect hands:0.1), (sfw), censored, `,
-        negative_prompt: `score_4, score_5, 3d, jpeg artifacts, username, watermark, signature, normal quality, worst quality, large head, low quality, text, error, missing fingers, extra digits, fewer digits, bad eye`,
+        negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, nipple, topless, nsfw, naked, nude, sex, worst quality, low quality,young,child,dick,bad quality,worst quality,worst detail,sketch`,
         width: 1024,
         height: 1360,
         seed: -1,
@@ -19,7 +19,7 @@ const default_prompt = {
       nsfw: {
         sampler_name: "Euler a",
         prompt: `score_9, score_8_up, masterpiece, best quality, (ultra-detailed), (perfect hands:0.1),`,
-        negative_prompt: `score_4, score_5, 3d, jpeg artifacts, username, watermark, signature, normal quality, worst quality, large head, low quality, text, error, missing fingers, extra digits, fewer digits, bad eye`,
+        negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, worst quality, low quality,young,child,dick,bad quality,worst quality,worst detail,sketch`,
         width: 1024,
         height: 1360,
         seed: -1,
@@ -66,7 +66,7 @@ const default_prompt = {
     guidance_scale: 7,
     steps: 21,
     image_num: 1,
-    clip_skip: 1,
+    clip_skip: 0,
     strength: 0.65,
     loras: [],
   }
@@ -189,47 +189,15 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, 
     }
   
     // Poll the task status
-    pollTaskStatus(novitaTaskId, fastify)
+    pollTaskStatus(novitaTaskId, fastify) 
     .then(taskStatus => {
       fastify.sendNotificationToUser(userId, 'handleLoader', { imageId:placeholderId, action:'remove' })
       fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId:placeholderId, spin: false })
-      if(chatCreation){ 
-        fastify.sendNotificationToUser(userId, 'resetCharacterForm');
-        fastify.sendNotificationToUser(userId, 'showNotification', {message:translations.newCharacter.imageCompletionDone_message, icon:'success'});
-        // Add notification
-        const notification = { title: translations.newCharacter.imageCompletionDone_title , message: translations.newCharacter.imageCompletionDone_message, link: `/chat/edit/${chatId}`, ico: 'success' };
-        addNotification(fastify, userId, notification).then(() => {        
-          fastify.sendNotificationToUser(userId, 'updateNotificationCountOnLoad', {userId});
-        });
-       }
-      const { images } = taskStatus;
-      images.forEach((image, index) => {
-          const { imageId, imageUrl, prompt, title, nsfw } = image;
-          const { userId, userChatId } = taskStatus;
-          if(chatCreation){
-            fastify.sendNotificationToUser(userId, 'characterImageGenerated', {
-              imageUrl,
-              nsfw
-            });
-            if(index == 0){
-              saveChatImageToDB(db, chatId, imageUrl)
-            }
-          }else{
-            fastify.sendNotificationToUser(userId, 'imageGenerated', {
-              imageUrl,
-              imageId,
-              userChatId,
-              title,
-              prompt,
-              nsfw
-            });
-          }
-      });
+      handleTaskCompletion(taskStatus, fastify, { chatCreation, translations, userId, chatId, placeholderId });
     })
     .catch(error => {
       // error handling here
       console.error('Error initiating image generation:', error);
-      fastify.sendNotificationToUser(userId, 'showNotification', { message:translations.newCharacter.errorInitiatingImageGeneration, icon:'error' });
       fastify.sendNotificationToUser(userId, 'handleLoader', { imageId:placeholderId, action:'remove' })
       fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId:placeholderId, spin: false })
       fastify.sendNotificationToUser(userId, 'resetCharacterForm');
@@ -238,59 +206,123 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, 
     return { taskId: novitaTaskId };
 
   }
-  // Module to check the status of a task at regular intervals
-  const completedTasks = new Set();
 
-  async function pollTaskStatus(taskId, fastify) {
-    let startTime = Date.now();
-    const interval = 3000;
-    const timeout = 2 * 60 * 1000; // 2 minutes
-    let taskStarted = false;
-    const db = fastify.mongo.db;
+    // Module to check the status of a task at regular intervals
+    const completedTasks = new Set();
 
-    return new Promise((resolve, reject) => {
-      const intervalId = setInterval(async () => {
-        try {
-          const taskStatus = await checkTaskStatus(taskId, fastify);
-          console.log (`progress_percent: ${taskStatus.progress}; status: ${taskStatus.status}`);
-          if(!taskStatus){
-            clearInterval(intervalId);
-            reject('Task not found');
-            return;
-          }
+    async function pollTaskStatus(taskId, fastify) {
+      let startTime = Date.now();
+      const interval = 3000;
+      const timeout = 2 * 60 * 1000; // 2 minutes
+      let taskStarted = false;
+      const db = fastify.mongo.db;
+      let zeroProgressAttempts = 0;
+      const maxZeroProgressAttempts = 10;
 
-          if (taskStatus.status === 'processing' && !taskStarted) {
-            console.log(`Task ${taskId} started`);
-            startTime = Date.now();
-            taskStarted = true;
-          }
-
-          if (taskStatus.status === 'completed') {
-            clearInterval(intervalId);
-            if (!completedTasks.has(taskId)) {
-              completedTasks.add(taskId);
-              // Access requestData from the scope where it's defined
-              const task = await db.collection('tasks').findOne({ taskId });
-              if (task) {
-                saveAverageTaskTime(db, Date.now() - startTime, task.model_name);
-                // log the taskId and time taken
-                console.log(`Task ${taskId} completed in ${Date.now() - startTime} ms`);
-              }
-              resolve(taskStatus);
-            } else {
-              console.log(`Task ${taskId} already completed, skipping.`);
+      return new Promise((resolve, reject) => {
+        const intervalId = setInterval(async () => {
+          try {
+            const taskStatus = await checkTaskStatus(taskId, fastify);
+            console.log (`progress_percent: ${taskStatus.progress}; status: ${taskStatus.status}; attempts: ${zeroProgressAttempts}/${maxZeroProgressAttempts}`);
+            if(!taskStatus){
+              clearInterval(intervalId);
+              reject('Task not found');
+              return;
             }
-          } else if (Date.now() - startTime > timeout && taskStarted) {
+
+            if (taskStatus.status === 'processing' && !taskStarted) {
+              console.log(`Task ${taskId} started`);
+              startTime = Date.now();
+              taskStarted = true;
+            }
+
+            // Check for zero progress attempts
+            if (taskStatus.status === 'processing' && (taskStatus.progress === 0 || taskStatus.progress === undefined)) {
+              zeroProgressAttempts++;
+              if (zeroProgressAttempts >= maxZeroProgressAttempts) {
+                clearInterval(intervalId);
+                // notify user and move to background processing
+                const taskRec = await db.collection('tasks').findOne({ taskId });
+                const userDoc = await db.collection('users').findOne({ _id: taskRec.userId });
+                const translations = fastify.getTranslations(userDoc.lang || 'en');
+                fastify.sendNotificationToUser(userDoc._id.toString(), 'showNotification', { title: translations.newCharacter.backgroundProcessing_title, message: translations.newCharacter.backgroundProcessing_message, icon: 'info' });
+                await db.collection('tasks').updateOne({ taskId }, { $set: { status: 'background', updatedAt: new Date() } });
+                reject({ status: 'background', taskId });
+                return;
+              }
+            } else if (taskStatus.status === 'processing') {
+              zeroProgressAttempts = 0; // Reset if progress moves
+            }
+
+            if (taskStatus.status === 'completed') {
+              clearInterval(intervalId);
+              if (!completedTasks.has(taskId)) {
+                completedTasks.add(taskId);
+                // Access requestData from the scope where it's defined
+                const task = await db.collection('tasks').findOne({ taskId });
+                if (task) {
+                  saveAverageTaskTime(db, Date.now() - startTime, task.model_name);
+                  // log the taskId and time taken
+                  console.log(`Task ${taskId} completed in ${Date.now() - startTime} ms`);
+                }
+                resolve(taskStatus);
+              } else {
+                console.log(`Task ${taskId} already completed, skipping.`);
+              }
+            } else if (Date.now() - startTime > timeout && taskStarted) {
+              clearInterval(intervalId);
+              // notify user and move to background processing
+              const taskRec = await db.collection('tasks').findOne({ taskId });
+              const userDoc = await db.collection('users').findOne({ _id: taskRec.userId });
+              const translations = fastify.getTranslations(userDoc.lang || 'en');
+              fastify.sendNotificationToUser(userDoc._id.toString(), 'showNotification', { title: translations.newCharacter.backgroundProcessing_title, message: translations.newCharacter.backgroundProcessing_message, icon: 'info' });
+              await db.collection('tasks').updateOne({ taskId }, { $set: { status: 'background', updatedAt: new Date() } });
+              reject({ status: 'background', taskId });
+            }
+          } catch (error) {
             clearInterval(intervalId);
-            reject('Task polling timed out.');
+            reject(error);
           }
-        } catch (error) {
-          clearInterval(intervalId);
-          reject(error);
-        }
-      }, interval);
+        }, interval);
+      });
+    }
+
+// Extract notification and image-saving logic to a reusable function
+async function handleTaskCompletion(taskStatus, fastify, options = {}) {
+  const { chatCreation, translations, userId, chatId, placeholderId } = options;
+  const { images } = taskStatus;
+  images.forEach((image, index) => {
+    const { imageId, imageUrl, prompt, title, nsfw } = image;
+    const { userId, userChatId } = taskStatus;
+    if (chatCreation) {
+      fastify.sendNotificationToUser(userId, 'characterImageGenerated', {
+        imageUrl,
+        nsfw
+      });
+      if (index == 0) {
+        saveChatImageToDB(fastify.mongo.db, chatId, imageUrl)
+      }
+    } else {
+      fastify.sendNotificationToUser(userId, 'imageGenerated', {
+        imageUrl,
+        imageId,
+        userChatId,
+        title,
+        prompt,
+        nsfw
+      });
+    }
+  });
+  if (chatCreation) {
+    fastify.sendNotificationToUser(userId, 'resetCharacterForm');
+    fastify.sendNotificationToUser(userId, 'showNotification', { message: translations.newCharacter.imageCompletionDone_message, icon: 'success' });
+    // Add notification
+    const notification = { title: translations.newCharacter.imageCompletionDone_title, message: translations.newCharacter.imageCompletionDone_message, link: `/chat/edit/${chatId}`, ico: 'success' };
+    addNotification(fastify, userId, notification).then(() => {
+      fastify.sendNotificationToUser(userId, 'updateNotificationCountOnLoad', { userId });
     });
   }
+}
 
 // Module to check the status of a task
 async function getTasks(db, status, userId) {
@@ -692,4 +724,6 @@ async function checkImageDescription(db, chatId) {
     getTasks,
     deleteOldTasks,
     deleteAllTasks,
+    pollTaskStatus,
+    handleTaskCompletion
   };

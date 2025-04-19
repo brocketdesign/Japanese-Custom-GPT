@@ -83,7 +83,7 @@ function initializeWebSocket() {
           id:imageId,
           title,
           prompt,
-          imageId,
+          imageId, 
           nsfw
         });
       }

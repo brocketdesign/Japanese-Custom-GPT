@@ -13,7 +13,7 @@ const {
   deleteTemporaryChats,
 } = require('./models/cleanupNonRegisteredUsers');
 const { checkUserAdmin, getUserData, updateCounter, fetchTags } = require('./models/tool');
-const { deleteOldTasks, deleteAllTasks } = require('./models/imagen');
+const { deleteOldTasks } = require('./models/imagen');
 const { createModelChat, fetchRandomCivitaiPrompt } = require('./models/civitai');
 const { cronJobs, configureCronJob, initializeCronJobs } = require('./models/cronManager');
 
@@ -43,7 +43,6 @@ fastify.register(fastifyPluginGlobals);
 
 // Wait for the database connection to be established 
 fastify.ready(async () => { 
-  deleteAllTasks(fastify.mongo.db);
   const awsimages = fastify.mongo.db.collection('awsimages');
   awsimages.deleteMany({}, function(err, obj) {
     if (err) throw err;
@@ -218,7 +217,7 @@ fastify.get('/my-plan', async (request, reply) => {
 fastify.get('/chat', (request, reply) => {
   reply.redirect('/chat/');
 });
-
+ 
 fastify.get('/chat/:chatId', async (request, reply) => {
   const db = fastify.mongo.db;
   

@@ -1,5 +1,7 @@
 {
   "lang":"en", 
+  "tagList": "Tag List",
+  "popularChats": "Popular Chats",
   "createCharacterDescription": "Create your own character and start chatting with them!",
   "userProfile": "User Profile",
   "userProfileDescription": "See the images you liked and the characters created.",
@@ -751,7 +753,9 @@
     "imageGenerationFailed": "Image generation failed.",
     "imageGenerationTimeout": "Image generation timed out. Please try again.",
     "aiHiddenMessage": "I liked one of your pictures",
-    "aiInstruction": "Thank me and comment about the moment you took the picture."
+    "aiInstruction": "Thank me and comment about the moment you took the picture.",
+    "backgroundProcessing_title": "Background processing",
+    "backgroundProcessing_message": "Your image generation task will continue in the background and you will be notified once it's complete."
   },
   "imageGenerationForm": "Image Generation Form",
   "selectImageType": "Select Image Type",

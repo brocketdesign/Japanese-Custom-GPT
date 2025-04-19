@@ -1683,3 +1683,7 @@
   flex-direction: column;
   gap: 0.5rem;
 }
+
+#imagePreviewModal {
+  z-index: 10000;
+  }

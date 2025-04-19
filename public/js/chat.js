@@ -2105,6 +2105,7 @@ window.resetChatUrl = function() {
     var urlParts = currentUrl.split('/');
     urlParts[urlParts.length - 1] = '';
     var newUrl = urlParts.join('/');
+    sessionStorage.setItem('lastChatId', null);
     if($('#chat-widget-container').length == 0){
         window.history.replaceState({ path: newUrl }, '', newUrl);
     }

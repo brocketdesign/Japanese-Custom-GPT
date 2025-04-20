@@ -14,7 +14,16 @@ function getIdFromUrl(url) {
     }
 }
 
-let chatId = getIdFromUrl(window.location.href) || sessionStorage.getItem('lastChatId') || getIdFromUrl($.cookie('redirect_url')) || $(`#lamix-chat-widget`).data('id');
+let chatId = getIdFromUrl(window.location.href) 
+    || sessionStorage.getItem('lastChatId') 
+    || getIdFromUrl($.cookie('redirect_url')) 
+    || $(`#lamix-chat-widget`).data('id');
+
+// Ensure chatId is not a falsy string (e.g., '', null, undefined, 'null', 'undefined')
+if (!chatId || chatId === 'null' || chatId === 'undefined') {
+    chatId = null;
+}
+
 let userChatId = sessionStorage.getItem('userChatId');
 
 $(document).ready(async function() {

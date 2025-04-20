@@ -2695,58 +2695,118 @@ async function routes(fastify, options) {
     fastify.get('/api/popular-chats', async (request, reply) => {
         try {
             const page = Math.max(1, parseInt(request.query.page, 10) || 1); // Default to page 1
-            const limit = 50;
+            const limit = 50; // Keep this consistent with caching logic
             const skip = (page - 1) * limit;
-            const language = request.lang; 
+            const language = request.lang; // Get language from request
 
-            // Only chats with images and a name
-            const pipeline = [
-                { $match: { chatImageUrl: { $exists: true, $ne: '' }, name: { $exists: true, $ne: '' }, language } },
-                {
-                    $lookup: {
-                        from: 'gallery',
-                        localField: '_id',
-                        foreignField: 'chatId',
-                        as: 'gallery'
+            const pagesToCache = 5; // Must match the value in cronManager.js
+            const cacheLimit = pagesToCache * limit;
+
+            const db = fastify.mongo.db;
+            const cacheCollection = db.collection('popularChatsCache');
+            const chatsCollection = db.collection('chats'); // Keep for fallback
+
+            let chats = [];
+            let totalCount = 0;
+            let totalPages = 0;
+            let usingCache = false;
+
+            // Check if the requested page is within the cached range
+            if (page <= pagesToCache) {
+                // Try fetching from cache first, filtering by language
+                const cacheQuery = { language: language }; // Filter cache by language
+                totalCount = await cacheCollection.countDocuments(cacheQuery);
+
+                if (totalCount > 0) {
+                    chats = await cacheCollection.find(cacheQuery)
+                        .sort({ cacheRank: 1 }) // Sort by the rank assigned during caching
+                        .skip(skip)
+                        .limit(limit)
+                        .toArray();
+
+                    if (chats.length > 0) {
+                        totalPages = Math.ceil(totalCount / limit);
+                        usingCache = true;
+                        console.log(`[API /popular-chats] Served page ${page} for lang ${language} from cache.`);
+                    } else {
+                         // Cache exists but no results for this specific page/language, might happen if cache is small
+                         console.log(`[API /popular-chats] Cache hit for lang ${language}, but no results for page ${page}. Falling back.`);
                     }
-                },
-                {
-                    $addFields: {
-                        imageCount: {
-                            $cond: [
-                                { $gt: [ { $size: '$gallery' }, 0 ] },
-                                { $size: { $ifNull: [ { $arrayElemAt: [ '$gallery.images', 0 ] }, [] ] } },
-                                0
-                            ]
+                } else {
+                    console.log(`[API /popular-chats] Cache miss for lang ${language}. Falling back.`);
+                }
+            } else {
+                 console.log(`[API /popular-chats] Page ${page} exceeds cache limit (${pagesToCache}). Falling back.`);
+            }
+
+
+            // Fallback to direct DB query if not using cache or cache fetch failed
+            if (!usingCache) {
+                console.log(`[API /popular-chats] Falling back to direct DB query for page ${page}, lang ${language}.`);
+                const pipeline = [
+                    // Match language and basic requirements
+                    { $match: { chatImageUrl: { $exists: true, $ne: '' }, name: { $exists: true, $ne: '' }, language } },
+                    {
+                        $lookup: {
+                            from: 'gallery',
+                            localField: '_id',
+                            foreignField: 'chatId',
+                            as: 'gallery'
+                        }
+                    },
+                    {
+                        $addFields: {
+                            imageCount: {
+                                $cond: [
+                                    { $gt: [ { $size: '$gallery' }, 0 ] },
+                                    { $size: { $ifNull: [ { $arrayElemAt: [ '$gallery.images', 0 ] }, [] ] } },
+                                    0
+                                ]
+                            }
+                        }
+                    },
+                    { $sort: { imageCount: -1, _id: -1 } },
+                    { $skip: skip },
+                    { $limit: limit },
+                     // Add user lookup directly in aggregation
+                    {
+                        $lookup: {
+                            from: 'users',
+                            localField: 'userId',
+                            foreignField: '_id',
+                            as: 'userInfo'
+                        }
+                    },
+                    {
+                        $addFields: {
+                            userInfo: { $arrayElemAt: ['$userInfo', 0] }
+                        }
+                    },
+                    {
+                        $addFields: {
+                            nickname: '$userInfo.nickname',
+                            profileUrl: '$userInfo.profileUrl'
+                        }
+                    },
+                    {
+                        $project: { // Project necessary fields
+                            _id: 1, name: 1, chatImageUrl: 1, imageCount: 1, userId: 1, nickname: 1, profileUrl: 1, language: 1,
+                            // Remove fields not needed in response
+                            gallery: 0, userInfo: 0
                         }
                     }
-                },
-                { $sort: { imageCount: -1, _id: -1 } },
-                { $skip: skip },
-                { $limit: limit }
-            ];
+                ];
 
-            const chats = await fastify.mongo.db.collection('chats').aggregate(pipeline).toArray();
+                chats = await chatsCollection.aggregate(pipeline).toArray();
 
-            // Attach user info (nickname/profileUrl) if needed
-            const userIds = chats.map(chat => chat.userId).filter(Boolean);
-            let usersMap = {};
-            if (userIds.length) {
-                const users = await fastify.mongo.db.collection('users').find({ _id: { $in: userIds.map(id => new fastify.mongo.ObjectId(id)) } }).toArray();
-                usersMap = Object.fromEntries(users.map(u => [u._id.toString(), u]));
+                // Count total for pagination (only if fallback is used)
+                totalCount = await chatsCollection.countDocuments({ chatImageUrl: { $exists: true, $ne: '' }, name: { $exists: true, $ne: '' }, language });
+                totalPages = Math.ceil(totalCount / limit);
             }
-            chats.forEach(chat => {
-                const u = usersMap[chat.userId?.toString()];
-                chat.nickname = u?.nickname || null;
-                chat.profileUrl = u?.profileUrl || null;
-            });
 
-            // Count total for pagination
-            const totalCount = await fastify.mongo.db.collection('chats').countDocuments({ chatImageUrl: { $exists: true, $ne: '' }, name: { $exists: true, $ne: '' } });
-            const totalPages = Math.ceil(totalCount / limit);
-
-            reply.send({ chats, page, totalPages });
+            reply.send({ chats, page, totalPages, usingCache }); // Add usingCache flag for debugging/info
         } catch (err) {
+            console.error('[API /popular-chats] Error:', err); // Log the error
             reply.code(500).send('Internal Server Error');
         }
     });

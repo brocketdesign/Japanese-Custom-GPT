@@ -15,7 +15,7 @@ const {
 const { checkUserAdmin, getUserData, updateCounter, fetchTags } = require('./models/tool');
 const { deleteOldTasks } = require('./models/imagen');
 const { createModelChat, fetchRandomCivitaiPrompt } = require('./models/civitai');
-const { cronJobs, configureCronJob, initializeCronJobs } = require('./models/cronManager');
+const { cronJobs, configureCronJob, initializeCronJobs, cachePopularChatsTask } = require('./models/cronManager');
 
 // Expose cron jobs and configuration to routes
 fastify.decorate('cronJobs', cronJobs);
@@ -50,7 +50,7 @@ fastify.ready(async () => {
       console.log(obj.result.n + " document(s) deleted");
     }
   });
-  
+
   // Initialize configured cron jobs
   await initializeCronJobs(fastify);
 });

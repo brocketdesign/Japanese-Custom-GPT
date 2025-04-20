@@ -6,6 +6,7 @@ const { fetchRandomCivitaiPrompt, createModelChat } = require('./civitai');
 const parser = require('cron-parser');
 const { pollTaskStatus } = require('./imagen');
 const { handleTaskCompletion } = require('./imagen'); // <-- import the handler
+const { ObjectId } = require('mongodb'); // <-- Add ObjectId
 
 // Store active cron jobs
 const cronJobs = {};
@@ -171,6 +172,105 @@ const processBackgroundTasks = (fastify) => async () => {
 };
 
 /**
+ * Cache popular chats task
+ * Fetches top popular chats and stores them in a cache collection.
+ * @param {Object} fastify - Fastify instance
+ */
+const cachePopularChatsTask = (fastify) => async () => {
+    console.log('[CRON] Starting popular chats caching task...');
+    const db = fastify.mongo.db;
+    const chatsCollection = db.collection('chats');
+    const cacheCollection = db.collection('popularChatsCache');
+    const usersCollection = db.collection('users'); // <-- Add users collection
+
+    const pagesToCache = 5;
+    const limitPerPage = 50; // Match the API limit or adjust as needed
+    const totalToCache = pagesToCache * limitPerPage;
+
+    try {
+        // Fetch top chats using aggregation (similar to API route)
+        // Fetch all languages initially, or run per language if needed
+        const pipeline = [
+            { $match: { chatImageUrl: { $exists: true, $ne: '' }, name: { $exists: true, $ne: '' } } },
+            {
+                $lookup: {
+                    from: 'gallery',
+                    localField: '_id',
+                    foreignField: 'chatId',
+                    as: 'gallery'
+                }
+            },
+            {
+                $addFields: {
+                    imageCount: {
+                        $cond: [
+                            { $gt: [ { $size: '$gallery' }, 0 ] },
+                            { $size: { $ifNull: [ { $arrayElemAt: [ '$gallery.images', 0 ] }, [] ] } },
+                            0
+                        ]
+                    }
+                }
+            },
+            { $sort: { imageCount: -1, _id: -1 } },
+            { $limit: totalToCache },
+            // Add user lookup directly in aggregation
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'userId',
+                    foreignField: '_id',
+                    as: 'userInfo'
+                }
+            },
+            {
+                $addFields: {
+                    userInfo: { $arrayElemAt: ['$userInfo', 0] }
+                }
+            },
+            {
+                $addFields: {
+                    nickname: '$userInfo.nickname',
+                    profileUrl: '$userInfo.profileUrl'
+                }
+            },
+            {
+                $project: { // Project only necessary fields for cache
+                    _id: 1,
+                    name: 1,
+                    chatImageUrl: 1,
+                    imageCount: 1,
+                    userId: 1,
+                    nickname: 1,
+                    profileUrl: 1,
+                    language: 1 // Keep language if caching per language or filtering later
+                    // Add other fields needed by the popular chats display
+                }
+            }
+        ];
+
+        const popularChats = await chatsCollection.aggregate(pipeline).toArray();
+
+        if (popularChats.length > 0) {
+            // Clear existing cache
+            await cacheCollection.deleteMany({});
+            // Insert new cache data with rank
+            const chatsToInsert = popularChats.map((chat, index) => ({
+                ...chat,
+                cacheRank: index, // Add rank for sorting
+                cachedAt: new Date()
+            }));
+            await cacheCollection.insertMany(chatsToInsert);
+            console.log(`[CRON] Successfully cached ${popularChats.length} popular chats.`);
+        } else {
+            console.log('[CRON] No popular chats found to cache.');
+        }
+
+    } catch (err) {
+        console.error('[CRON] Error caching popular chats:', err);
+    }
+};
+
+/**
  * Initialize cron jobs from database settings
  * 
  * @param {Object} fastify - Fastify instance
@@ -213,6 +313,14 @@ const initializeCronJobs = async (fastify) => {
       '*/1 * * * *',
       true,
       processBackgroundTasks(fastify)
+    );
+
+    // Add popular chats caching task (daily at 1 AM)
+    configureCronJob(
+        'popularChatsCacher',
+        '0 1 * * *', // Runs every day at 1:00 AM
+        true, // Enable this job
+        cachePopularChatsTask(fastify)
     );
     
     console.log('Cron jobs initialized');
@@ -265,6 +373,7 @@ module.exports = {
   initializeCronJobs,
   createModelChatGenerationTask,
   processBackgroundTasks,
+  cachePopularChatsTask,
   getJobInfo,
   getNextRunTime
 };

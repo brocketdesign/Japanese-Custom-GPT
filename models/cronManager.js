@@ -134,13 +134,17 @@ const processBackgroundTasks = (fastify) => async () => {
   const db = fastify.mongo.db;
   const tasksCollection = db.collection('tasks');
   const backgroundTasks = await tasksCollection.find({ status: 'background' }).toArray();
-  console.log(`Found ${backgroundTasks.length} background tasks to process...`);
+  console.log(`[CRON] Found ${backgroundTasks.length} background tasks to process...`);
   if (!backgroundTasks.length) return;
   console.log(`[CRON] Processing ${backgroundTasks.length} background tasks...`);
   for (const task of backgroundTasks) {
     try {
       // Try to poll the task status again (reuse pollTaskStatus from imagen.js)
       const taskStatus = await pollTaskStatus(task.taskId, fastify);
+      if (taskStatus && taskStatus.status === 'background') {
+        console.log(`[CRON] Task ${task.taskId} still in background, skipping...`);
+        continue;
+      }
       // If successful, pollTaskStatus will update the task and notify the user
       // If completed, handle notifications and image saving
       if (taskStatus && taskStatus.status === 'completed') {
@@ -151,17 +155,17 @@ const processBackgroundTasks = (fastify) => async () => {
           { ...taskStatus, userId: task.userId, userChatId: task.userChatId },
           fastify,
           {
-            chatCreation: !!chatDoc,
+            chatCreation: task.chatCreation, // <-- use the value from the task document
             translations,
             userId: task.userId.toString(),
             chatId: task.chatId.toString(),
-            placeholderId: null
+            placeholderId: task.placeholderId // <-- pass the correct placeholderId
           }
         );
       }
     } catch (err) {
       // If still not complete, leave as background for next run
-      console.log(`[CRON] Task ${task.taskId} still in background:`, err?.message || err);
+      console.log(`[CRON] Task ${task.taskId}:`, err?.message || err);
     }
   }
 };

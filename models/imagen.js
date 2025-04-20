@@ -157,6 +157,8 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, 
       chatId: new ObjectId(chatId),
       userChatId: userChatId ? new ObjectId(userChatId) : null,
       blur: image_request.blur,
+      chatCreation,
+      placeholderId,
       createdAt: new Date(),
       updatedAt: new Date()
     });
@@ -191,8 +193,10 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, 
     // Poll the task status
     pollTaskStatus(novitaTaskId, fastify) 
     .then(taskStatus => {
-      fastify.sendNotificationToUser(userId, 'handleLoader', { imageId:placeholderId, action:'remove' })
-      fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId:placeholderId, spin: false })
+      if (taskStatus.status === 'background') {
+        console.log(`Task ${taskStatus.taskId} moved to background`);
+        return;
+      }
       handleTaskCompletion(taskStatus, fastify, { chatCreation, translations, userId, chatId, placeholderId });
     })
     .catch(error => {
@@ -223,7 +227,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, 
         const intervalId = setInterval(async () => {
           try {
             const taskStatus = await checkTaskStatus(taskId, fastify);
-            console.log (`progress_percent: ${taskStatus.progress}; status: ${taskStatus.status}; attempts: ${zeroProgressAttempts}/${maxZeroProgressAttempts}`);
+            console.log (`${taskStatus.progress != undefined ? `progress_percent: ${taskStatus.progress};`:''} status: ${taskStatus.status}; attempts: ${zeroProgressAttempts +1}/${maxZeroProgressAttempts}`);
             if(!taskStatus){
               clearInterval(intervalId);
               reject('Task not found');
@@ -244,10 +248,8 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, 
                 // notify user and move to background processing
                 const taskRec = await db.collection('tasks').findOne({ taskId });
                 const userDoc = await db.collection('users').findOne({ _id: taskRec.userId });
-                const translations = fastify.getTranslations(userDoc.lang || 'en');
-                fastify.sendNotificationToUser(userDoc._id.toString(), 'showNotification', { title: translations.newCharacter.backgroundProcessing_title, message: translations.newCharacter.backgroundProcessing_message, icon: 'info' });
                 await db.collection('tasks').updateOne({ taskId }, { $set: { status: 'background', updatedAt: new Date() } });
-                reject({ status: 'background', taskId });
+                resolve({ status: 'background', taskId });
                 return;
               }
             } else if (taskStatus.status === 'processing') {
@@ -274,10 +276,8 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, 
               // notify user and move to background processing
               const taskRec = await db.collection('tasks').findOne({ taskId });
               const userDoc = await db.collection('users').findOne({ _id: taskRec.userId });
-              const translations = fastify.getTranslations(userDoc.lang || 'en');
-              fastify.sendNotificationToUser(userDoc._id.toString(), 'showNotification', { title: translations.newCharacter.backgroundProcessing_title, message: translations.newCharacter.backgroundProcessing_message, icon: 'info' });
               await db.collection('tasks').updateOne({ taskId }, { $set: { status: 'background', updatedAt: new Date() } });
-              reject({ status: 'background', taskId });
+              resolve({ status: 'background', taskId });
             }
           } catch (error) {
             clearInterval(intervalId);
@@ -287,37 +287,59 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, 
       });
     }
 
-// Extract notification and image-saving logic to a reusable function
+// Handle task completion: send notifications and save images as needed
 async function handleTaskCompletion(taskStatus, fastify, options = {}) {
   const { chatCreation, translations, userId, chatId, placeholderId } = options;
   const { images } = taskStatus;
-  images.forEach((image, index) => {
-    const { imageId, imageUrl, prompt, title, nsfw } = image;
-    const { userId, userChatId } = taskStatus;
-    if (chatCreation) {
-      fastify.sendNotificationToUser(userId, 'characterImageGenerated', {
-        imageUrl,
-        nsfw
-      });
-      if (index == 0) {
-        saveChatImageToDB(fastify.mongo.db, chatId, imageUrl)
+
+  console.log({ chatCreation, userId, chatId, placeholderId });
+
+  if (typeof fastify.sendNotificationToUser !== 'function') {
+    console.error('fastify.sendNotificationToUser is not a function');
+    return;
+  }
+
+  fastify.sendNotificationToUser(userId, 'handleLoader', { imageId: placeholderId, action: 'remove' });
+  fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId: placeholderId, spin: false });
+
+  if (Array.isArray(images)) {
+    for (let index = 0; index < images.length; index++) {
+      const image = images[index];
+      const { imageId, imageUrl, prompt, title, nsfw } = image;
+      const { userId: taskUserId, userChatId } = taskStatus;
+
+      if (chatCreation) {
+        fastify.sendNotificationToUser(userId, 'characterImageGenerated', { imageUrl, nsfw });
+        if (index === 0) {
+          console.log('Saving image as character thumbnail fastify.sendNotificationToUser:', userId, imageUrl);
+          await saveChatImageToDB(fastify.mongo.db, chatId, imageUrl);
+        }
+      } else {
+        console.log('Sending image to user:', userId, imageUrl);
+        fastify.sendNotificationToUser(userId, 'imageGenerated', {
+          imageUrl,
+          imageId,
+          userChatId,
+          title,
+          prompt,
+          nsfw
+        });
       }
-    } else {
-      fastify.sendNotificationToUser(userId, 'imageGenerated', {
-        imageUrl,
-        imageId,
-        userChatId,
-        title,
-        prompt,
-        nsfw
-      });
     }
-  });
+  }
+
   if (chatCreation) {
     fastify.sendNotificationToUser(userId, 'resetCharacterForm');
-    fastify.sendNotificationToUser(userId, 'showNotification', { message: translations.newCharacter.imageCompletionDone_message, icon: 'success' });
-    // Add notification
-    const notification = { title: translations.newCharacter.imageCompletionDone_title, message: translations.newCharacter.imageCompletionDone_message, link: `/chat/edit/${chatId}`, ico: 'success' };
+    fastify.sendNotificationToUser(userId, 'showNotification', {
+      message: translations.newCharacter.imageCompletionDone_message,
+      icon: 'success'
+    });
+    const notification = {
+      title: translations.newCharacter.imageCompletionDone_title,
+      message: translations.newCharacter.imageCompletionDone_message,
+      link: `/chat/edit/${chatId}`,
+      ico: 'success'
+    };
     addNotification(fastify, userId, notification).then(() => {
       fastify.sendNotificationToUser(userId, 'updateNotificationCountOnLoad', { userId });
     });
@@ -485,7 +507,7 @@ async function fetchNovitaMagic(data, flux = false) {
       requestBody.data = {
         extra: {
           response_image_type: 'jpeg',
-          enable_nsfw_detection: false,
+          enable_nsfw_detection: true,
           nsfw_detection_level: 0,
         },
         request: data,

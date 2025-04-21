@@ -1239,13 +1239,36 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
             ? !!chat.moderation.results[0].flagged
             : false;
           const finalNsfwResult = nsfw || moderationFlagged
+
+          // --- Begin: Random sample image selection logic ---
+          let sampleImages = [];
+          // Prefer chat.sampleImages if present (from backend cache), fallback to empty array
+          if (Array.isArray(chat.sampleImages) && chat.sampleImages.length > 0) {
+            sampleImages = chat.sampleImages
+              .filter(img => img && img.imageUrl) // filter valid images
+              .map(img => img.imageUrl);
+          }
+          // Always include chatImageUrl if present
+          if (chat.chatImageUrl) {
+            sampleImages.push(chat.chatImageUrl);
+          }
+          // Remove duplicates and falsy values
+          sampleImages = [...new Set(sampleImages.filter(Boolean))];
+          // If nothing, fallback to default
+          if (sampleImages.length === 0) {
+            sampleImages = ['/img/logo.webp'];
+          }
+          // Pick a random sample image
+          const randomSampleImage = sampleImages[Math.floor(Math.random() * sampleImages.length)];
+          // --- End: Random sample image selection logic ---
+
           htmlContent += `
-            <div class="gallery-card col-6 col-sm-4 col-lg-3 mb-4" style="cursor: pointer;">
+            <div class="gallery-card col-12 col-sm-3 col-lg-3 mb-4" style="cursor: pointer;">
             <div class="card shadow border-0 h-100 position-relative gallery-hover" style="overflow: hidden;" 
               onclick="redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')">
-              <div class="gallery-image-wrapper position-relative" style="aspect-ratio: 1/1; background: #f8f9fa;">
+              <div class="gallery-image-wrapper position-relative" style="aspect-ratio: 4/5; background: #f8f9fa;">
               <img 
-                src="${chat.chatImageUrl || '/img/logo.webp'}" 
+                src="${randomSampleImage}" 
                 alt="${chat.name || chat.chatName}" 
                 class="card-img-top gallery-img transition rounded-top"
                 style="object-fit: cover; width: 100%; height: 100%; min-height: 220px;"
@@ -1289,7 +1312,6 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
   // Append the generated HTML to the gallery
   $(document).find('#chat-gallery').append(htmlContent);
 };
-
 
 window.loadAllUserPosts = async function (page = 1) {
     const currentUser = user

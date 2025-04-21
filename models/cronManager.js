@@ -173,109 +173,119 @@ const processBackgroundTasks = (fastify) => async () => {
 
 /**
  * Cache popular chats task
- * Fetches top popular chats and stores them in a cache collection.
+ * Fetches top popular chats and stores them in a cache collection, including up to 5 non-NSFW sample images per chat.
  * @param {Object} fastify - Fastify instance
  */
 const cachePopularChatsTask = (fastify) => async () => {
-    console.log('[CRON] Starting popular chats caching task...');
-    const db = fastify.mongo.db;
-    const chatsCollection = db.collection('chats');
-    const cacheCollection = db.collection('popularChatsCache');
-    const usersCollection = db.collection('users'); // <-- Add users collection
+  console.log('[CRON] Starting popular chats caching task...');
+  const db = fastify.mongo.db;
+  const chatsCollection = db.collection('chats');
+  const cacheCollection = db.collection('popularChatsCache');
+  const usersCollection = db.collection('users');
+  const galleryCollection = db.collection('gallery');
 
-    const pagesToCache = 5;
-    const limitPerPage = 50; // Match the API limit or adjust as needed
-    const totalToCache = pagesToCache * limitPerPage;
+  const pagesToCache = 5;
+  const limitPerPage = 50;
+  const totalToCache = pagesToCache * limitPerPage;
 
-    try {
-        // Fetch top chats using aggregation (similar to API route)
-        // Fetch all languages initially, or run per language if needed
-        const pipeline = [
-            { $match: { chatImageUrl: { $exists: true, $ne: '' }, name: { $exists: true, $ne: '' } } },
-            {
-                $lookup: {
-                    from: 'gallery',
-                    localField: '_id',
-                    foreignField: 'chatId',
-                    as: 'gallery'
-                }
-            },
-            {
-                $addFields: {
-                    imageCount: {
-                        $cond: [
-                            { $gt: [ { $size: '$gallery' }, 0 ] },
-                            { $size: { $ifNull: [ { $arrayElemAt: [ '$gallery.images', 0 ] }, [] ] } },
-                            0
-                        ]
-                    }
-                }
-            },
-            { $sort: { imageCount: -1, _id: -1 } },
-            { $limit: totalToCache },
-            // Add user lookup directly in aggregation
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: 'userId',
-                    foreignField: '_id',
-                    as: 'userInfo'
-                }
-            },
-            {
-                $addFields: {
-                    userInfo: { $arrayElemAt: ['$userInfo', 0] }
-                }
-            },
-            {
-                $addFields: {
-                    nickname: '$userInfo.nickname',
-                    profileUrl: '$userInfo.profileUrl',
-                    // Add premium status if available
-                    premium: '$userInfo.subscriptionStatus',
-                }
-            },
-            {
-                $project: { // Project only necessary fields for cache, matching window.displayChats
-                    _id: 1,
-                    name: 1,
-                    chatImageUrl: 1,
-                    imageCount: 1,
-                    userId: 1,
-                    nickname: 1,
-                    profileUrl: 1,
-                    tags: 1,
-                    chatTags: 1,
-                    messagesCount: 1,
-                    premium: { $cond: [ { $eq: ['$premium', 'active'] }, true, false ] },
-                    nsfw: 1,
-                    moderation: 1,
-                    language: 1 // Keep language if caching per language or filtering later
-                }
-            }
-        ];
-
-        const popularChats = await chatsCollection.aggregate(pipeline).toArray();
-
-        if (popularChats.length > 0) {
-            // Clear existing cache
-            await cacheCollection.deleteMany({});
-            // Insert new cache data with rank
-            const chatsToInsert = popularChats.map((chat, index) => ({
-                ...chat,
-                cacheRank: index, // Add rank for sorting
-                cachedAt: new Date()
-            }));
-            await cacheCollection.insertMany(chatsToInsert);
-            console.log(`[CRON] Successfully cached ${popularChats.length} popular chats.`);
-        } else {
-            console.log('[CRON] No popular chats found to cache.');
+  try {
+    const pipeline = [
+      { $match: { chatImageUrl: { $exists: true, $ne: '' }, name: { $exists: true, $ne: '' } } },
+      {
+        $lookup: {
+          from: 'gallery',
+          localField: '_id',
+          foreignField: 'chatId',
+          as: 'gallery'
         }
+      },
+      {
+        $addFields: {
+          imageCount: {
+            $cond: [
+              { $gt: [ { $size: '$gallery' }, 0 ] },
+              { $size: { $ifNull: [ { $arrayElemAt: [ '$gallery.images', 0 ] }, [] ] } },
+              0
+            ]
+          }
+        }
+      },
+      { $sort: { imageCount: -1, _id: -1 } },
+      { $limit: totalToCache },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'userInfo'
+        }
+      },
+      {
+        $addFields: {
+          userInfo: { $arrayElemAt: ['$userInfo', 0] }
+        }
+      },
+      {
+        $addFields: {
+          nickname: '$userInfo.nickname',
+          profileUrl: '$userInfo.profileUrl',
+          premium: '$userInfo.subscriptionStatus',
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          chatImageUrl: 1,
+          imageCount: 1,
+          userId: 1,
+          nickname: 1,
+          profileUrl: 1,
+          tags: 1,
+          chatTags: 1,
+          messagesCount: 1,
+          premium: { $cond: [ { $eq: ['$premium', 'active'] }, true, false ] },
+          nsfw: 1,
+          moderation: 1,
+          language: 1
+        }
+      }
+    ];
 
-    } catch (err) {
-        console.error('[CRON] Error caching popular chats:', err);
+    const popularChats = await chatsCollection.aggregate(pipeline).toArray();
+
+    if (popularChats.length > 0) {
+      // For each chat, fetch up to 5 non-NSFW sample images from the gallery
+      const chatsWithSamples = await Promise.all(popularChats.map(async (chat) => {
+        const galleryDoc = await galleryCollection.findOne({ chatId: chat._id });
+        let sampleImages = [];
+        if (galleryDoc && Array.isArray(galleryDoc.images)) {
+          // Filter out NSFW images (assuming each image has an 'nsfw' boolean property)
+          sampleImages = galleryDoc.images.filter(img => !img.nsfw).slice(0, 5);
+        }
+        return {
+          ...chat,
+          sampleImages,
+        };
+      }));
+
+      await cacheCollection.deleteMany({});
+      const chatsToInsert = chatsWithSamples.map((chat, index) => ({
+        ...chat,
+        cacheRank: index,
+        cachedAt: new Date()
+      }));
+      await cacheCollection.insertMany(chatsToInsert);
+      console.log(`[CRON] Successfully cached ${chatsWithSamples.length} popular chats with non-NSFW sample images.`);
+    } else {
+      console.log('[CRON] No popular chats found to cache.');
     }
+
+  } catch (err) {
+    console.error('[CRON] Error caching popular chats:', err);
+  }
 };
+
 
 /**
  * Initialize cron jobs from database settings

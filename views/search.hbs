@@ -23,7 +23,48 @@
     
     <h3>{{translations.chat_gallery}}</h3>
     <p class="text-muted">{{translations.chat_gallery_description}}</p>
-    <div id="chat-gallery" class="row mx-0 mt-4"></div>
+    <div id="chat-gallery" class="row mx-0 mt-4">
+      {{#each chatResults}}
+        <div class="gallery-card col-12 col-sm-3 col-lg-3 mb-4 {{#if premium}}premium-chat{{/if}} {{#if gender}}chat-gender-{{gender}}{{/if}}" style="cursor: pointer;">
+          <div class="card shadow border-0 h-100 position-relative gallery-hover" style="overflow: hidden;" onclick="window.location.href='/chat/{{_id}}'">
+            <div class="gallery-image-wrapper position-relative" style="aspect-ratio: 4/5; background: #f8f9fa;">
+              <img src="{{chatImageUrl}}" alt="{{name}}" class="card-img-top gallery-img transition rounded-top" style="object-fit: cover; width: 100%; height: 100%; min-height: 220px;" loading="lazy">
+              {{#if nsfw}}
+                <div class="gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center" style="background: rgba(0,0,0,0.55); z-index:2;">
+                  <span class="badge bg-danger mb-2" style="font-size: 1rem;"><i class="bi bi-exclamation-triangle"></i> NSFW</span>
+                </div>
+              {{/if}}
+              <div class="gallery-badges position-absolute top-0 end-0 m-2 d-flex flex-column align-items-end" style="z-index:3;">
+                {{#if premium}}<span class="custom-gradient-bg badge bg-gradient-primary mb-1"> {{../translations.premium}}</span>{{/if}}
+                {{#if imageCount}}<span class="badge bg-dark mb-1"><i class="bi bi-images"></i> {{imageCount}}</span>{{/if}}
+                {{#if messagesCount}}<span class="badge bg-secondary"><i class="bi bi-chat-dots"></i> {{messagesCount}}</span>{{/if}}
+              </div>
+              {{#if tags}}
+                <div class="gallery-tags position-absolute bottom-0 start-0 w-100 px-2 pb-2 d-flex flex-wrap gap-1" style="z-index:3;">
+                  {{#each tags}}
+                    <a href="/search?q={{encodeURIComponent this}}" class="badge bg-light text-dark border text-decoration-none">#{{this}}</a>
+                  {{/each}}
+                </div>
+              {{/if}}
+            </div>
+            <div class="card-body py-3 px-3 d-flex flex-column justify-content-between">
+              <div class="d-flex align-items-center mb-2">
+                <img src="{{chatImageUrl}}" alt="{{name}}" class="rounded-circle me-2 border" width="40" height="40">
+                <div>
+                  <h5 class="card-title mb-0 fw-semibold text-truncate" title="{{name}}">{{name}}</h5>
+                  {{#if nickname}}<a href="/user/{{userId}}" class="text-muted small">@{{nickname}}</a>{{/if}}
+                </div>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mt-auto">
+                <button class="btn btn-outline-primary btn-sm persona {{#if premium}}border-warning{{/if}}" data-id="{{_id}}" title="Add to Persona">
+                  <i class="far fa-user-circle"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      {{/each}}
+    </div>
     <div id="chat-pagination-controls" class="d-flex justify-content-center my-3"></div>
     <div class="d-flex justify-content-center mt-4">
         <a href="/chat" class="btn custom-gradient-bg w-100">{{translations.startChatting}}</a>
@@ -31,7 +72,23 @@
     <hr>
 
     <h3>{{translations.result_image_query}} | {{query}}</h3>
-    <div class="all-chats-images-gallery row" data-query="{{query}}"></div>
+    <div class="all-chats-images-gallery row" data-query="{{query}}">
+      {{#each imageResults}}
+        <div class="col-6 col-md-3 col-lg-2 mb-2">
+          <div class="card shadow-0">
+            {{#if isBlur}}
+              <div type="button" onclick="handleClickRegisterOrPay(event,{{../user.isTemporary}})">
+                <img data-src="{{imageUrl}}" class="card-img-top img-blur" style="object-fit: cover;">
+              </div>
+            {{else}}
+              <a href="/character/{{chatId}}?imageId={{_id}}" class="text-muted text-decoration-none">
+                <img src="{{imageUrl}}" alt="{{prompt}}" class="card-img-top">
+              </a>
+            {{/if}}
+          </div>
+        </div>
+      {{/each}}
+    </div>
     <div class="d-flex justify-content-center mt-4">
         <a href="/character" class="btn custom-gradient-bg w-100">{{translations.view_all_character}}</a>
     </div>
@@ -50,43 +107,25 @@
   </style>
   {{> dashboard-footer}}
   <script>
-    const user = {{{json user}}}
-    const query = '{{query}}';
-    const data = {{{json data}}} || [];
-    $(document).ready(function() {
-        let visibleChatId = (data.recent || []).map(chat => String(chat._id));
-        displayPeopleChat(1, { query }, function(displayedChatId){
-            // Ensure all IDs are strings for comparison
-            visibleChatId = (displayedChatId || []).map(id => String(id));
-            resultImageSearch(1, query, null, function(images) {
-                // Only display chats for images whose chatId is not in visibleChatId
-                const chatIdsFromImages = images.map(image => String(image.chatId));
-                const uniqueChatIds = [...new Set(chatIdsFromImages.filter(id => !visibleChatId.includes(id)))];
-                const chatData = uniqueChatIds.map(id => images.find(image => String(image.chatId) === id));
-                displayChats(chatData);
-            });
-        });
-        displayTags(null);
-    });
-    
-    // jQuery function to display tags
+    // Only keep tag rendering logic
     function displayTags(imageStyle) {
-        let tags;
-        if (!tags || !tags.length) {
-            $.get(`/api/tags`, function(response) {
-            const totalPages = response.totalPages;
-            const randomPage = Math.floor(Math.random() * totalPages) + 1; // Random page number between 1 and totalPages
-            $.get(`/api/tags?page=${randomPage}`, function(response) {
-                tags = response.tags;
-                renderTags(tags,imageStyle);
-            });
-            });
-        } else {
-            renderTags(tags,imageStyle);
-        }
+      let tags;
+      if (!tags || !tags.length) {
+          $.get(`/api/tags`, function(response) {
+          const totalPages = response.totalPages;
+          const randomPage = Math.floor(Math.random() * totalPages) + 1;
+          $.get(`/api/tags?page=${randomPage}`, function(response) {
+              tags = response.tags;
+              renderTags(tags,imageStyle);
+          });
+          });
+      } else {
+          renderTags(tags,imageStyle);
+      }
     }
-
-
+    $(document).ready(function() {
+      displayTags(null);
+    });
   </script>
 </body>
 </html>

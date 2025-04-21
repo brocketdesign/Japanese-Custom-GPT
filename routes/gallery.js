@@ -178,51 +178,71 @@ async function routes(fastify, options) {
       const user = request.user;
       const language = getLanguageName(user?.lang);
       const queryStr = request.query.query || '';
-      const styleStr = request.query.style !== 'undefined' ? request.query.style : 'anime';
       const page = parseInt(request.query.page) || 1;
       const limit = 24;
       const skip = (page - 1) * limit;
       const db = fastify.mongo.db;
       const chatsGalleryCollection = db.collection('gallery');
       const chatsCollection = db.collection('chats');
-  
-      const chatQuery = { $or: [{ language }, { language: request.lang }] };
-      if (styleStr && styleStr !== 'undefined' && styleStr !== 'null') {
-        chatQuery.imageStyle = styleStr;
-      }
 
-      const chatIds = await chatsCollection
-        .find(chatQuery)
-        .project({ _id: 1 })
-        .toArray()
-        .then(chats => chats.map(c => c._id));
-
+      // Prepare search words
       const queryWords = queryStr.split(' ').filter(word => word.replace(/[^\w\s]/gi, '').trim() !== '');
+
+      // Build match criteria for images
       const matchCriteria = {
-        'images.imageUrl': { $exists: true, $ne: null },
-        chatId: { $in: chatIds }
+        'images.imageUrl': { $exists: true, $ne: null }
       };
-  
       if (queryWords.length > 0) {
         matchCriteria.$or = queryWords.map(word => ({ 'images.prompt': { $regex: word, $options: 'i' } }));
       }
-  
+
+      // Only match chats with the correct language
+      const chatLanguageMatch = [
+        {
+          $lookup: {
+            from: 'chats',
+            localField: 'chatId',
+            foreignField: '_id',
+            as: 'chat'
+          }
+        },
+        { $unwind: '$chat' },
+        {
+          $match: {
+            $or: [
+              { 'chat.language': language },
+              { 'chat.language': request.lang }
+            ]
+          }
+        }
+      ];
+
+      // Aggregate images matching prompt and chat language
       const [allChatImagesDocs, totalCountDocs] = await Promise.all([
         chatsGalleryCollection.aggregate([
           { $unwind: '$images' },
           { $match: matchCriteria },
+          ...chatLanguageMatch,
           { $sort: { _id: -1 } },
           { $skip: skip },
           { $limit: limit },
-          { $project: { _id: 0, image: '$images', chatId: 1 } }
+          {
+            $project: {
+              _id: 0,
+              image: '$images',
+              chatId: 1,
+              chat: 1
+            }
+          }
         ]).toArray(),
         chatsGalleryCollection.aggregate([
           { $unwind: '$images' },
           { $match: matchCriteria },
+          ...chatLanguageMatch,
           { $count: 'total' }
         ]).toArray()
       ]);
-  
+
       // Group images by chatId and limit 3 per chat
       const grouped = {};
       const limitedDocs = [];
@@ -234,32 +254,31 @@ async function routes(fastify, options) {
           grouped[chatIdStr]++;
         }
       }
-  
+
       const totalImages = totalCountDocs.length ? totalCountDocs[0].total : 0;
       const totalPages = Math.ceil(totalImages / limit);
       if (!totalImages) {
         return reply.code(404).send({ images: [], page, totalPages: 0 });
       }
-  
-      const chatsData = await chatsCollection.find({ _id: { $in: chatIds } }).toArray();
+
+      // Use chat data from aggregation result
       const imagesWithChatData = limitedDocs.map(doc => {
-        // Compare chat IDs as strings to avoid .equals error
-        const chat = chatsData.find(c => String(c._id) === String(doc.chatId));
+        const chat = doc.chat || {};
         return {
           ...doc.image,
           chatId: doc.chatId,
-          chatName: chat?.name,
-          chatImageUrl: chat?.chatImageUrl || '/img/default-thumbnail.png',
-          chatTags: chat?.tags || [],
-          messagesCount: chat?.messagesCount || 0,
-          first_message: chat?.first_message || '',
-          description: chat?.description || '',
-          galleries: chat?.galleries || [],
-          nickname: chat?.nickname || '',
-          imageCount: chat?.imageCount
+          chatName: chat.name,
+          chatImageUrl: chat.chatImageUrl || '/img/default-thumbnail.png',
+          chatTags: chat.tags || [],
+          messagesCount: chat.messagesCount || 0,
+          first_message: chat.first_message || '',
+          description: chat.description || '',
+          galleries: chat.galleries || [],
+          nickname: chat.nickname || '',
+          imageCount: chat.imageCount
         };
       });
-  
+
       reply.send({
         images: imagesWithChatData,
         page,

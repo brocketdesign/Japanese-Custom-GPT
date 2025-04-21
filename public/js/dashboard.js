@@ -1422,7 +1422,7 @@ window.searchImages = async function () {
         const container = $(this)
         const query = container.attr('data-query')
         const style = container.attr('data-style')
-        resultImageSearch(1,query,style)
+        resultImageSearch(1,query,style); 
     })
 }
 window.resultImageSearch = async function (page = 1,query,style = 'anime', callback) {

@@ -522,38 +522,53 @@ fastify.get('/search', async (request, reply) => {
     const userId = user._id;
     user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
-    
-    const page = request.query.page || 1;
-    const query = request.query.q || request.query.query || null;
+    const page = parseInt(request.query.page) || 1;
+    const query = request.query.q || request.query.query || '';
     const imageStyle = request.query.imageStyle || 'anime';
 
-    console.log('Page: ', page);
-    console.log('Query: ', query);
-    console.log('Image Style: ', imageStyle);
-
+    // Fetch chat results (reuse /api/chats logic)
     const baseUrl = process.env.MODE === 'local' ? 'http://localhost:3000' : `${request.protocol}://${request.hostname}`;
-    const response = await fetch(`${baseUrl}/api/chats?page=${page}&type=${imageStyle}&q=${encodeURIComponent(query)}`);
+    const chatRes = await fetch(`${baseUrl}/api/chats?page=${page}&style=${imageStyle}&q=${encodeURIComponent(query)}`);
+    const chatData = chatRes.ok ? await chatRes.json() : { recent: [], page: 1, totalPages: 0 };
 
-    if (!response.ok) {
-      console.log(`Failed to fetch chats: ${response.statusText}`);
-    }
+    // Compute correct nsfw for each chat
+    const processedChatResults = (chatData.recent || []).map(chat => {
+      const nsfw = chat?.nsfw || false;
+      const moderationFlagged = Array.isArray(chat?.moderation?.results) && chat.moderation.results.length > 0
+        ? !!chat.moderation.results[0].flagged
+        : false;
+      const finalNsfwResult = nsfw || moderationFlagged;
+      return { ...chat, nsfw: finalNsfwResult };
+    });
 
-    const data = await response.json();
+    // Fetch image results (reuse /chats/images/search logic)
+    const imageRes = await fetch(`${baseUrl}/chats/images/search?page=${page}&query=${encodeURIComponent(query)}&style=${imageStyle}`);
+    const imageData = imageRes.ok ? await imageRes.json() : { images: [] };
+
+    // Compute isBlur for each image
+    const unlockedItems = (user.unlockedItems || []).map(id => id.toString());
+    const subscriptionStatus = user.subscriptionStatus === 'active';
+    const processedImageResults = (imageData.images || []).map(item => {
+      const unlocked = unlockedItems.includes(item._id?.toString?.());
+      const isBlur = !unlocked && item.nsfw && !subscriptionStatus;
+      return { ...item, isBlur };
+    });
 
     let seoTitle = translations.seo_title_default; 
     let seoDescription = translations.seo_description_default;
-    
     if (query) {
       seoTitle = translations.seo_title_query.replace('${query}', query);
       seoDescription = translations.seo_description_query.replace('${query}', query);
     }
-    
 
     return reply.renderWithGtm('search.hbs', {
       title: seoTitle,
-      data,
+      chatResults: processedChatResults,
+      imageResults: processedImageResults,
       query,
       imageStyle,
+      user,
+      translations,
       seo: [
         { name: 'description', content: seoDescription },
         { name: 'keywords', content: `${query ? query + ', ' : ''}${translations.seo.keywords}` },

@@ -72,3 +72,10 @@ module.exports = function registerHelpers() {
     });
   });
 };
+
+handlebars.registerHelper('encodeURIComponent', function(str) {
+  return encodeURIComponent(str);
+});
+handlebars.registerHelper('decodeURIComponent', function(str) {
+  return decodeURIComponent(str);
+});

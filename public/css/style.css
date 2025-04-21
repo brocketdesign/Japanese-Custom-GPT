@@ -1659,7 +1659,8 @@
   white-space: nowrap;
 }
 .tag-item:hover {
-  background: #6c757d;
+  background: #9e7dde !important;
+  border-color: #9e7dde !important;
   color: white;
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);

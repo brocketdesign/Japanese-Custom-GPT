@@ -1,5 +1,14 @@
 {
   "lang":"en", 
+  "sort" :{
+    "premiumLabel":"💎 Premium",
+    "showPremium": "Show Premium",
+    "hidePremium": "Hide Premium",
+    "genderLabel":"Gender",
+    "female" :"Female",
+    "male" :"Male",
+    "nonBinary" :"Non-binary"
+  },
   "tagList": "Tag List",
   "popularChats": "Popular Chats",
   "createCharacterDescription": "Create your own character and start chatting with them!",

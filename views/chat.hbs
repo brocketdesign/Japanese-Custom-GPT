@@ -144,6 +144,37 @@
                 <!-- Popular chat -->
                 <div class="mx-4 my-4" id="popular-chats-section">
                     <h5 class="fw-bold mb-3">{{translations.popularChats}}</h5>
+                    <!-- Sorting Tools: Premium/Free & Gender Filters (Responsive) -->
+                    <div class="sorting-tools mb-3"></div>
+                        <div class="row g-2 align-items-center">
+                            <!-- Premium/Free Toggle -->
+                            <div class="col-12 col-md-auto d-flex align-items-center gap-2 justify-content-start justify-content-md-start mb-2 mb-md-0">
+                                <span class="me-2 text-muted" style="font-size: 15px;">
+                                    {{translations.sort.premiumLabel}}
+                                </span>
+                                <button id="popular-chats-premium" class="btn btn-outline-secondary px-3 py-1 flex-shrink-0" style="border-radius: 30px; font-size: 14px;">
+                                    {{translations.sort.hidePremium}}
+                                </button>
+                            </div>
+                            <!-- Gender Filter Buttons -->
+                            <div class="col-12 col-md d-flex align-items-center gap-2 flex-wrap justify-content-between justify-content-md-start">
+                                <span class="me-2 text-muted" style="font-size: 15px;">
+                                    <i class="bi bi-gender-ambiguous"></i> {{translations.sort.genderLabel}}
+                                </span>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button id="popular-chats-gender-female" class="btn btn-outline-primary px-3 py-1" style="border-radius: 30px; font-size: 14px;">
+                                        <i class="bi bi-gender-female me-1"></i>{{translations.sort.female}}
+                                    </button>
+                                    <button id="popular-chats-gender-male" class="btn btn-outline-info px-3 py-1" style="border-radius: 30px; font-size: 14px;">
+                                        <i class="bi bi-gender-male me-1"></i>{{translations.sort.male}}
+                                    </button>
+                                    <button id="popular-chats-gender-nonbinary" class="btn btn-outline-success px-3 py-1" style="border-radius: 30px; font-size: 14px;">
+                                        <i class="bi bi-gender-trans me-1"></i>{{translations.sort.nonBinary}}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div id="chat-gallery" class="row popular-chats-gallery"></div>
                     <div id="popular-chats-pagination-controls" class="my-3"></div>
                 </div>
@@ -777,7 +808,72 @@ $(document).ready(function() {
     // Example: $('#reload-popular-chats').on('click', function(){ popularChatsPage=1; loadPopularChats(1, true); });
 
 });
+/* --- Sorting and Filtering for Popular Chats --- */
 
+// Premium filter state
+let premiumChatsHidden = Cookies.get('premiumChatsHidden') === 'true';
+let currentGenderFilter = Cookies.get('currentGenderFilter') || null;
+
+// Restore button states on page load
+$(function() {
+    // Set premium button text and state
+    $('#popular-chats-premium').text(
+        premiumChatsHidden ? '{{translations.sort.showPremium}}' : '{{translations.sort.hidePremium}}'
+    );
+    // Set gender button active state
+    if (currentGenderFilter) {
+        $('.sorting-tools button').removeClass('active');
+        $(`#popular-chats-gender-${currentGenderFilter}`).addClass('active');
+    }
+    updateChatFilters();
+});
+
+$(document).on('click', '#popular-chats-premium', function() {
+    premiumChatsHidden = !premiumChatsHidden;
+    Cookies.set('premiumChatsHidden', premiumChatsHidden, { expires: 7 });
+    updateChatFilters();
+    $(this).text(premiumChatsHidden ? '{{translations.sort.showPremium}}' : '{{translations.sort.hidePremium}}');
+});
+
+// Gender filter state
+$(document).on('click', '#popular-chats-gender-female, #popular-chats-gender-male, #popular-chats-gender-nonbinary', function() {
+    currentGenderFilter = this.id.replace('popular-chats-gender-', '');
+    Cookies.set('currentGenderFilter', currentGenderFilter, { expires: 7 });
+    $('.sorting-tools button').removeClass('active');
+    $(this).addClass('active');
+    updateChatFilters();
+});
+// Reset gender filter
+$(document).on('click', '.sorting-tools .btn:not([id^="popular-chats-gender-"])', function() {
+    currentGenderFilter = null;
+    Cookies.remove('currentGenderFilter');
+    $('.sorting-tools button').removeClass('active');
+    updateChatFilters();
+});
+
+// Filtering logic
+function updateChatFilters() {
+    // Premium filter
+    $('.gallery-card').each(function() {
+        const isPremium = $(this).hasClass('premium-chat');
+        const genderClass = $(this).attr('class').match(/chat-gender-([a-z]+)/);
+        const gender = genderClass ? genderClass[1] : null;
+
+        let show = true;
+        if (premiumChatsHidden && isPremium) show = false;
+        if (currentGenderFilter && gender !== currentGenderFilter) show = false;
+
+        $(this).toggle(show);
+    });
+}
+
+// Ensure filters are applied after chats are rendered
+const _displayChats = window.displayChats;
+window.displayChats = function() {
+    if (typeof _displayChats === 'function') _displayChats.apply(this, arguments);
+    updateChatFilters();
+};
+/* --- End Sorting and Filtering --- */
 $('.date-time').each(function() {
     var dateText = $(this).text();
     var trimmedDate = dateText.split(' ')[0]; // Get the date part only

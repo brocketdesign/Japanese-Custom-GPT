@@ -672,22 +672,41 @@ function handleImageSuccess(img, blob, imageUrl) {
 }
 
 function createOverlay(img, imageUrl) {
-    let overlay = $('<div></div>').addClass('d-flex flex-column align-items-center justify-content-center animate__animated animate__fadeIn').css({
-        position: 'absolute', top: '0', left: '0', width: '100%', height: '100%', 'background-color': 'rgba(19, 19, 19, 0.19)', color: 'white'
-    });
-    let buttonElement = $('<button></button>').text(window.translations['blurButton'] || '画像を見る').addClass('btn btn-sm btn-outline-light mt-3 animate__animated animate__pulse').css({'font-size': '14px', 'border-radius':'50px', cursor: 'pointer'}).on('click', function() {
-        //$(img).attr('src', imageUrl);
-        //overlay.remove();
-    });
-    let textElement = $('<div></div>').addClass('fw-bold').css({'font-size': '12px', 'text-shadow': '0 0 5px black'});
-    overlay.append(buttonElement, textElement);
-    $(img).wrap('<div style="position: relative; display: inline-block;"></div>').after(overlay);
-}
+  // Overlay matches displayChats NSFW overlay design, but keeps original text/button
+  let overlay = $('<div></div>')
+      .addClass('gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center animate__animated animate__fadeIn')
+      .css({
+          background: 'rgba(0,0,0,0.55)',
+          zIndex: 2
+      });
 
-  $(document).on('contextmenu', '.img-blur', function(e) {
-    e.preventDefault();
-  });
-  
+  // NSFW badge (matches displayChats)
+  let badge = $('<span></span>')
+      .addClass('badge bg-danger mb-2')
+      .css('font-size', '1rem')
+      .html('<i class="bi bi-exclamation-triangle"></i> NSFW');
+
+  // Button and text (from original createOverlay)
+  let buttonElement = $('<button></button>')
+      .text(window.translations['blurButton'] || '画像を見る')
+      .addClass('btn btn-sm btn-outline-light mt-3 animate__animated animate__pulse')
+      .css({ 'font-size': '14px', 'border-radius': '50px', cursor: 'pointer' })
+      .on('click', function () {
+          // Optionally: reveal image or handle click
+          // $(img).attr('src', imageUrl);
+          // overlay.remove();
+      });
+
+  let textElement = $('<div></div>')
+      .addClass('fw-bold')
+      .css({ 'font-size': '12px', 'text-shadow': '0 0 5px black' });
+
+  overlay.append(badge, buttonElement, textElement);
+
+  $(img)
+      .wrap('<div style="position: relative; display: inline-block;"></div>')
+      .after(overlay);
+}
   
 async function checkIfAdmin(userId) {
     try {
@@ -1263,7 +1282,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
           // --- End: Random sample image selection logic ---
 
           htmlContent += `
-            <div class="gallery-card col-12 col-sm-3 col-lg-3 mb-4" style="cursor: pointer;">
+            <div class="gallery-card col-12 col-sm-3 col-lg-3 mb-4 ${chat.premium ? "premium-chat":''} ${chat.gender ? 'chat-gender-'+chat.gender:''}" style="cursor: pointer;">
             <div class="card shadow border-0 h-100 position-relative gallery-hover" style="overflow: hidden;" 
               onclick="redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')">
               <div class="gallery-image-wrapper position-relative" style="aspect-ratio: 4/5; background: #f8f9fa;">
@@ -2626,7 +2645,7 @@ window.updateCountdown = function(element, endTime, interval) {
           const randomPage = Math.floor(Math.random() * totalPages) + 1; // Random page number between 1 and totalPages
           $.get(`/api/tags?page=${randomPage}`, function(response) {
               tags = response.tags;
-              tags = tags.slice(0,10)
+              tags = tags.slice(0,30)
               renderTags(tags,imageStyle);
           });
           });

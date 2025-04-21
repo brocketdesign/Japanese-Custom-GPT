@@ -230,11 +230,13 @@ const cachePopularChatsTask = (fastify) => async () => {
             {
                 $addFields: {
                     nickname: '$userInfo.nickname',
-                    profileUrl: '$userInfo.profileUrl'
+                    profileUrl: '$userInfo.profileUrl',
+                    // Add premium status if available
+                    premium: '$userInfo.subscriptionStatus',
                 }
             },
             {
-                $project: { // Project only necessary fields for cache
+                $project: { // Project only necessary fields for cache, matching window.displayChats
                     _id: 1,
                     name: 1,
                     chatImageUrl: 1,
@@ -242,8 +244,13 @@ const cachePopularChatsTask = (fastify) => async () => {
                     userId: 1,
                     nickname: 1,
                     profileUrl: 1,
+                    tags: 1,
+                    chatTags: 1,
+                    messagesCount: 1,
+                    premium: { $cond: [ { $eq: ['$premium', 'active'] }, true, false ] },
+                    nsfw: 1,
+                    moderation: 1,
                     language: 1 // Keep language if caching per language or filtering later
-                    // Add other fields needed by the popular chats display
                 }
             }
         ];

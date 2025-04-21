@@ -1234,88 +1234,56 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
 
   chatData.forEach(chat => {
       if (chat.name || chat.chatName) {
-          let galleryIco = '';
-          let image_count = 0;
-
-          if (chat.galleries && chat.galleries.length > 0) {
-              chat.galleries.forEach(gallery => {
-                  if (gallery.images && gallery.images.length > 0) {
-                      image_count += gallery.images.length;
-                  }
-              });
-              if (image_count > 0) {
-                  galleryIco = `
-                      <div class="gallery" data-id="${chat.chatId || chat._id}">
-                          <span class="btn btn-dark" style="background-color: rgba(66, 70, 59, 0.84);">
-                              <i class="bi bi-images me-1"></i><span style="font-size:12px;">${image_count}</span>
-                          </span>
-                      </div>
-                  `;
-              }
-          }
           const nsfw = chat?.nsfw || false
-            const moderationFlagged = Array.isArray(chat?.moderation?.results) && chat.moderation.results.length > 0
+          const moderationFlagged = Array.isArray(chat?.moderation?.results) && chat.moderation.results.length > 0
             ? !!chat.moderation.results[0].flagged
             : false;
           const finalNsfwResult = nsfw || moderationFlagged
           htmlContent += `
-          <div class="chat-card-container col-6 col-sm-3 col-lg-2 mb-2 flagged-${finalNsfwResult}" ${searchId?`data-id="${searchId}"`:''}>
-              <div class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 redirectToChat" style="cursor:pointer;"  onclick="redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')" data-id="${chat.chatId || chat._id}" data-image="${chat.chatImageUrl}">
-                  <div data-bg="${chat.chatImageUrl || '/img/logo.webp'}" class="card-img-top girls_avatar position-relative lazy-bg" alt="${chat.name || chat.chatName}">
-                      <div id="spinner-${chat.chatId || chat._id}" 
-                      class="position-absolute spinner-grow spinner-grow-sm text-light" 
-                      role="status" 
-                      style="inset:0;margin: auto;display:none;"></div>
-                      <div class="position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px;right:10px;">
-                          ${(chat.tags || chat.chatTags || []).length ? `<div class="tags d-flex justify-content-between align-items-center flex-wrap">${ (chat.tags ? chat.tags : chat.chatTags ).map(tag => `<span class="badge bg-dark mt-1">${tag}</span>`).join('')}</div>` : ''}
-                      </div>
-                      <div class="position-absolute text-start" style="top:10px;left:10px">
-                        ${chat.premium ? `<div style="opacity:0.8;">
-                          <span class="badge custom-gradient-bg mt-1">
-                          <i class="bi bi-gem"></i></span>
-                          </div>` : ''}
-                      </div>
-                      <div class="position-absolute text-end" style="top:10px;right:10px">
-                          <div class="persona" style="color:rgb(165 164 164);opacity:0.8;" data-id="${chat.chatId || chat._id}">
-                              <span class="badge bg-dark" style="width: 30px;"><i class="far fa-user-circle"></i></span>
-                          </div>
-                          <a ${modal ? `onclick="openCharacterModal('${chat.chatId || chat._id}',event)"` : `href="/character/${chat.chatId || chat._id}"`}>
-                              <div class="gallery" style="opacity:0.8;" data-id="${chat.chatId || chat._id}">
-                                  <span 
-                                  class="btn btn-light text-dark shadow-0 border-0 position-relative"
-                                  style="min-width: 30px; font-size: 12px;">
-                                    <i class="bi bi-images me-2"></i>
-                                    <span class="position-absolute" style="font-size:12px;top:0;right:3px;">${chat.imageCount || 0}</span>
-                                  </span>
-                              </div>
-                          </a>
-                          ${galleryIco}
-                          ${chat.messagesCount ? `<div class="message-count" style="opacity:0.8;">
-                            <span 
-                            class="btn btn-light text-dark shadow-0 message-count mt-1 border-0 position-relative" 
-                            style="min-width: 30px; font-size: 12px;">
-                              <i class="bi bi-chat me-2"></i>
-                              <span class="position-absolute" style="font-size:12px;top:0;right:3px;">${chat.messagesCount}</span>
-                            </span>
-                            </div>` : ''}
-                      </div>
-                  </div>
-                  <div class="card-body bg-transparent border-0 pb-0 px-0 mx-0 text-start">
-                      <div class="row mx-0 px-0">
-                          <div class="col-12 mx-0 px-0">
-                              <span class="btn btn-outline-secondary redirectToChat w-100 mb-2" onclick="redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')"> <i class="bi bi-chat-dots me-2"></i> ${window.translations.startChatting}</span>
-                              <div class="d-flex align-items-center justify-content-between">
-                                  <h5 class="card-title character-title mb-0">${chat.name || chat.chatName}</h5>
-                                  ${chat.nickname ? `<a href="/user/${chat.userId}" class="text-muted" style="font-size:12px;">${chat.nickname}</a>`:'' }
-                              </div>
-                              <a href="/character/${chat.chatId || chat._id}" class="text-muted" style="text-decoration: none;">
-                                  <span style="font-size:12px;">${chat?.first_message || chat.description}</span>
-                              </a>
-                          </div>
-                      </div>
-                  </div>
+            <div class="gallery-card col-6 col-sm-4 col-lg-3 mb-4" style="cursor: pointer;">
+            <div class="card shadow border-0 h-100 position-relative gallery-hover" style="overflow: hidden;" 
+              onclick="redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')">
+              <div class="gallery-image-wrapper position-relative" style="aspect-ratio: 1/1; background: #f8f9fa;">
+              <img 
+                src="${chat.chatImageUrl || '/img/logo.webp'}" 
+                alt="${chat.name || chat.chatName}" 
+                class="card-img-top gallery-img transition rounded-top"
+                style="object-fit: cover; width: 100%; height: 100%; min-height: 220px;"
+                loading="lazy"
+              >
+              ${finalNsfwResult ? `
+                <div class="gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center" style="background: rgba(0,0,0,0.55); z-index:2;">
+                <span class="badge bg-danger mb-2" style="font-size: 1rem;"><i class="bi bi-exclamation-triangle"></i> NSFW</span>
+                </div>
+              ` : ''}
+              <div class="gallery-badges position-absolute top-0 end-0 m-2 d-flex flex-column align-items-end" style="z-index:3;">
+                ${chat.premium ? `<span class="custom-gradient-bg badge bg-gradient-primary mb-1"> ${translations.premium}</span>` : ''}
+                ${chat.imageCount ? `<span class="badge bg-dark mb-1"><i class="bi bi-images"></i> ${chat.imageCount}</span>` : ''}
+                ${chat.messagesCount ? `<span class="badge bg-secondary"><i class="bi bi-chat-dots"></i> ${chat.messagesCount}</span>` : ''}
               </div>
-          </div>`;
+              ${(chat.tags || chat.chatTags || []).length ? `
+                <div class="gallery-tags position-absolute bottom-0 start-0 w-100 px-2 pb-2 d-flex flex-wrap gap-1" style="z-index:3;">
+                ${(chat.tags ? chat.tags : chat.chatTags).map(tag => `<a href="/search?q=${encodeURIComponent(tag)}" class="badge bg-light text-dark border text-decoration-none">#${tag}</a>`).join('')}
+                </div>
+              ` : ''}
+              </div>
+              <div class="card-body py-3 px-3 d-flex flex-column justify-content-between">
+              <div class="d-flex align-items-center mb-2">
+                <img src="${chat.chatImageUrl || '/img/avatar.png'}" alt="${chat.name || chat.chatName}" class="rounded-circle me-2 border" width="40" height="40">
+                <div>
+                <h5 class="card-title mb-0 fw-semibold text-truncate" title="${chat.name || chat.chatName}">${chat.name || chat.chatName}</h5>
+                ${chat.nickname ? `<a href="/user/${chat.userId}" class="text-muted small">@${chat.nickname}</a>` : ''}
+                </div>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mt-auto">
+                <button class="btn btn-outline-primary btn-sm persona ${chat.premium ? 'border-warning' : ''}" data-id="${chat.chatId || chat._id}" title="Add to Persona">
+                <i class="far fa-user-circle"></i>
+                </button>
+              </div>
+              </div>
+            </div>
+            </div>
+            `;
       }
   });
   // Append the generated HTML to the gallery

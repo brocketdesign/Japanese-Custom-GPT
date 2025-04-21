@@ -286,6 +286,7 @@ fastify.get('/chat/edit/:chatId', async (request, reply) => {
     const isTemporaryChat = !request.params.chatId;
 
     request.query.limit = 20;
+    request.query.page = 'random';
     const { tags, page, totalPages } = await fetchTags(db,request);
     // Assure that tags are unique by first converting them to lowercasing and then to a set then back to an array
     const uniqueTags = [...new Set(tags.map(tag => tag.toLowerCase()))];

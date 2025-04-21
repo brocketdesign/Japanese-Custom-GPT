@@ -409,37 +409,57 @@ async function getUserData(userId, collectionUser, collectionChat, currentUser) 
       throw new Error('Internal Server Error');
     }
   };
+async function fetchTags(db, request) {
+    const user = request.user;
+    let language = getLanguageName(user?.lang);
+    const tagsCollection = db.collection('tags');
+    const chatsCollection = db.collection('chats');
 
-  async function fetchTags(db,request) {
-      const user = request.user;
-      let language = getLanguageName(user?.lang);
-      const tagsCollection = db.collection('tags');
-      const chatsCollection = db.collection('chats');
-      
-      const page = parseInt(request.query.page) || 1;
-      const limit = parseInt(request.query.limit) || 200;
-      const skip = (page - 1) * limit;
-      
-      let tags = await tagsCollection
-      .find({ $or: [{ language }, { language: request.lang }] })
-      .skip(skip)
-      .limit(limit)
-      .toArray();
+    let page = request.query.page;
+    const limit = parseInt(request.query.limit) || 200;
 
-      if (!tags.length) {
-      let tagsFromChats = await chatsCollection.distinct('tags', { $or: [{ language }, { language: request.lang }] });
-      tagsFromChats = tagsFromChats.flat().filter(Boolean);
-      await tagsCollection.insertMany(tagsFromChats.map(tag => ({ name: tag, language: request.lang })));
-      tags = tagsFromChats.slice(skip, skip + limit);
-      } else {
-      tags = tags.map(tag => tag.name);
-      }
+    // Efficient random fetch using aggregation for 'random' page
+    if (page === 'random') {
+        // Use aggregation with $sample for random selection
+        const randomTags = await tagsCollection.aggregate([
+            { $match: { $or: [{ language }, { language: request.lang }] } },
+            { $sample: { size: limit } },
+            { $project: { name: 1, _id: 0 } }
+        ]).toArray();
 
-      const totalTags = await tagsCollection.countDocuments({ $or: [{ language }, { language: request.lang }] });
-      const totalPages = Math.ceil(totalTags / limit);
-
-      return { tags, page, totalPages };
-  }
+        // If not enough tags, try to populate from chats
+        if (randomTags.length < limit) {
+            let tagsFromChats = await chatsCollection.distinct('tags', { $or: [{ language }, { language: request.lang }] });
+            tagsFromChats = tagsFromChats.flat().filter(Boolean);
+            // Insert missing tags
+            const newTags = tagsFromChats.map(tag => ({ name: tag, language: request.lang }));
+            if (newTags.length) {
+                await tagsCollection.insertMany(newTags, { ordered: false }).catch(() => {});
+            }
+            // Try again
+            const retryTags = await tagsCollection.aggregate([
+                { $match: { $or: [{ language }, { language: request.lang }] } },
+                { $sample: { size: limit } },
+                { $project: { name: 1, _id: 0 } }
+            ]).toArray();
+            return { tags: retryTags.map(t => t.name), page: 'random', totalPages: 1 };
+        }
+        return { tags: randomTags.map(t => t.name), page: 'random', totalPages: 1 };
+    } else {
+        // For paged fetch, use skip/limit and count only
+        page = parseInt(page) || 1;
+        const query = { $or: [{ language }, { language: request.lang }] };
+        const totalTags = await tagsCollection.countDocuments(query);
+        const totalPages = Math.ceil(totalTags / limit);
+        const tags = await tagsCollection
+            .find(query)
+            .project({ name: 1, _id: 0 })
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .toArray();
+        return { tags: tags.map(t => t.name), page, totalPages };
+    }
+}
 const processPromptToTags = async (db, prompt) => {
     if (!prompt) {
         throw new Error('Prompt is required');

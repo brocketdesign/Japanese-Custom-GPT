@@ -1945,7 +1945,6 @@ async function routes(fastify, options) {
           reply.code(500).send('Internal Server Error');
         }
       });
-
       fastify.get('/api/chats', async (request, reply) => {
         try {
           // ─── Helper: escape user input before any RegExp construction ───
@@ -2091,13 +2090,21 @@ async function routes(fastify, options) {
       
           // ─── Attach user info to each chat ───
           const usersColl = fastify.mongo.db.collection('users');
-          const recentWithUser = await Promise.all(
+          const galleryColl = fastify.mongo.db.collection('gallery');
+          const recentWithUserAndSamples = await Promise.all(
             chats.map(async chat => {
               const u = await usersColl.findOne({ _id: new fastify.mongo.ObjectId(chat.userId) });
+              // Add sampleImages (up to 5 non-NSFW images from gallery)
+              let sampleImages = [];
+              const galleryDoc = await galleryColl.findOne({ chatId: new ObjectId(chat._id) });
+              if (galleryDoc && Array.isArray(galleryDoc.images)) {
+                sampleImages = galleryDoc.images.filter(img => !img.nsfw).slice(0, 5);
+              }
               return {
                 ...chat,
                 nickname:   u?.nickname   || null,
-                profileUrl: u?.profileUrl || null
+                profileUrl: u?.profileUrl || null,
+                sampleImages
               };
             })
           );
@@ -2115,10 +2122,10 @@ async function routes(fastify, options) {
             .then(res => res[0]?.count || 0);
       
           const totalPages = Math.ceil(totalCount / limit);
-      
+
           // ─── Send back our paged, deduped, sorted results ───
           reply.send({
-            recent:     recentWithUser,
+            recent:     recentWithUserAndSamples,
             page,
             totalPages
           });
@@ -2128,7 +2135,6 @@ async function routes(fastify, options) {
           reply.code(500).send('Internal Server Error');
         }
       });
-      
     fastify.get('/api/user-data', async (request, reply) => {
         if (process.env.MODE != 'local') {
             return reply.send([]);

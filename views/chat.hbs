@@ -755,6 +755,13 @@ $(document).ready(function() {
 
         if (data) {
             if (reload) $('#popular-chats-gallery').empty();
+            // Shuffle the chats array before displaying
+            if (Array.isArray(data.chats)) {
+                data.chats = data.chats
+                    .map(value => ({ value, sort: Math.random() }))
+                    .sort((a, b) => a.sort - b.sort)
+                    .map(({ value }) => value);
+            }
             window.displayChats(data.chats, 'popular', false);
             popularChatsTotalPages = data.totalPages || 1;
             if (page >= popularChatsTotalPages) {
@@ -776,6 +783,13 @@ $(document).ready(function() {
             data = await res.json();
             setPopularChatsCache(page, data);
             if (reload) $('#popular-chats-gallery').empty();
+            // Shuffle the chats array before displaying
+            if (Array.isArray(data.chats)) {
+                data.chats = data.chats
+                    .map(value => ({ value, sort: Math.random() }))
+                    .sort((a, b) => a.sort - b.sort)
+                    .map(({ value }) => value);
+            }
             window.displayChats(data.chats, 'popular', false);
             popularChatsTotalPages = data.totalPages || 1;
             if (page >= popularChatsTotalPages) {

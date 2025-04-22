@@ -144,7 +144,7 @@
                 <!-- Popular chat -->
                 <div class="mx-4 my-4" id="popular-chats-section">
                     <h5 class="fw-bold mb-3">{{translations.popularChats}}</h5>
-                    <!-- Sorting Tools: Premium/Free & Gender Filters (Responsive) -->
+                    <!-- Sorting Tools: Premium/Free, Gender & NSFW Filters (Responsive) -->
                     <div class="sorting-tools mb-3"></div>
                         <div class="row g-2 align-items-center">
                             <!-- Premium/Free Toggle -->
@@ -172,6 +172,15 @@
                                         <i class="bi bi-gender-trans me-1"></i>{{translations.sort.nonBinary}}
                                     </button>
                                 </div>
+                            </div>
+                            <!-- NSFW Filter Button -->
+                            <div class="col-12 col-md-auto d-flex align-items-center gap-2 justify-content-start justify-content-md-start mb-2 mb-md-0">
+                                <span class="me-2 text-muted" style="font-size: 15px;">
+                                    <i class="bi bi-exclamation-triangle"></i> NSFW
+                                </span>
+                                <button id="popular-chats-nsfw" class="btn btn-outline-danger px-3 py-1 flex-shrink-0" style="border-radius: 30px; font-size: 14px;">
+                                    {{translations.sort.hideNSFW}}
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -828,6 +837,9 @@ $(document).ready(function() {
 let premiumChatsHidden = Cookies.get('premiumChatsHidden') === 'true';
 let currentGenderFilter = Cookies.get('currentGenderFilter') || null;
 
+// NSFW filter state
+let nsfwChatsHidden = Cookies.get('nsfwChatsHidden') === 'true';
+
 // Restore button states on page load
 $(function() {
     // Set premium button text and state
@@ -839,6 +851,10 @@ $(function() {
         $('.sorting-tools button').removeClass('active');
         $(`#popular-chats-gender-${currentGenderFilter}`).addClass('active');
     }
+    // Set NSFW button text and state
+    $('#popular-chats-nsfw').text(
+        nsfwChatsHidden ? '{{translations.sort.showNSFW}}' : '{{translations.sort.hideNSFW}}'
+    );
     updateChatFilters();
 });
 
@@ -865,6 +881,14 @@ $(document).on('click', '.sorting-tools .btn:not([id^="popular-chats-gender-"])'
     updateChatFilters();
 });
 
+// NSFW filter state
+$(document).on('click', '#popular-chats-nsfw', function() {
+    nsfwChatsHidden = !nsfwChatsHidden;
+    Cookies.set('nsfwChatsHidden', nsfwChatsHidden, { expires: 7 });
+    updateChatFilters();
+    $(this).text(nsfwChatsHidden ? '{{translations.sort.showNSFW}}' : '{{translations.sort.hideNSFW}}');
+});
+
 // Filtering logic
 function updateChatFilters() {
     // Premium filter
@@ -872,10 +896,12 @@ function updateChatFilters() {
         const isPremium = $(this).hasClass('premium-chat');
         const genderClass = $(this).attr('class').match(/chat-gender-([a-z]+)/);
         const gender = genderClass ? genderClass[1] : null;
+        const isNSFW = $(this).hasClass('nsfw-true');
 
         let show = true;
         if (premiumChatsHidden && isPremium) show = false;
         if (currentGenderFilter && gender !== currentGenderFilter) show = false;
+        if (nsfwChatsHidden && isNSFW) show = false;
 
         $(this).toggle(show);
     });

@@ -9,14 +9,27 @@
     <h3>{{translations.free_ai_chat_and_image_generation}}</h3>
     <p>{{translations.seo.description}}</p>
     <hr>
+
     <h1 class="mb-4">{{title}}</h1>
     <form id="search-form" action="/search" method="get" class="row g-3">
-        <div class="col-md-4">
-            <div class="input-group">
-                <input type="text" name="q" value="{{query}}" class="form-control" placeholder="{{translations.search_placeholder}}">
-                <button type="submit" class="btn btn-primary">{{translations.search_button}}</button>
-            </div>
-        </div>
+      <div class="col-md-6 col-lg-5">
+      <div class="input-group shadow-sm">
+        <span class="input-group-text bg-white border-end-0">
+        <i class="bi bi-search text-muted"></i>
+        </span>
+        <input 
+        type="text" 
+        name="q" 
+        value="{{query}}" 
+        class="form-control border-start-0" 
+        placeholder="{{translations.search_placeholder}}" 
+        aria-label="{{translations.search_placeholder}}">
+        <button type="submit" class="btn btn-primary">
+        <i class="bi bi-arrow-right-circle"></i>
+        <span class="visually-hidden">{{translations.search_button}}</span>
+        </button>
+      </div>
+      </div>
     </form>
 
     <hr>

@@ -7,7 +7,9 @@
     "genderLabel": "Genre",
     "female": "Femme",
     "male": "Homme",
-    "nonBinary": "Non-binaire"
+    "nonBinary": "Non-binaire",
+    "hideNSFW": "Masquer NSFW",
+    "showNSFW": "Afficher NSFW"
   },
   "tagList": "Liste des tags",
   "popularChats": "Populaires",

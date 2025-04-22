@@ -1250,14 +1250,14 @@ function updateChatPaginationControls(totalPages, searchId) {
 
 window.displayChats = function (chatData, searchId = null, modal = false) {
   let htmlContent = '';
-  const subscriptionStatus = user?.subscriptionStatus == 'active' || false
   chatData.forEach(chat => {
       if (chat.name || chat.chatName) {
-          const nsfw = chat?.nsfw || false
-          const moderationFlagged = Array.isArray(chat?.moderation?.results) && chat.moderation.results.length > 0
+            // Normalize nsfw to boolean (handles string "true"/"false" and boolean)
+            const nsfw = chat?.nsfw === true || chat?.nsfw === 'true';
+            const moderationFlagged = Array.isArray(chat?.moderation?.results) && chat.moderation.results.length > 0
             ? !!chat.moderation.results[0].flagged
             : false;
-          const finalNsfwResult = nsfw || moderationFlagged
+            const finalNsfwResult = nsfw || moderationFlagged;
 
           // --- Begin: Random sample image selection logic ---
           let sampleImages = [];
@@ -1282,7 +1282,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
           // --- End: Random sample image selection logic ---
 
             htmlContent += `
-            <div class="gallery-card col-12 col-sm-3 col-lg-3 mb-4 ${chat.premium ? "premium-chat":''} ${chat.gender ? 'chat-gender-'+chat.gender:''}" style="cursor: pointer;">
+            <div class="gallery-card col-12 col-sm-3 col-lg-3 mb-4 ${chat.premium ? "premium-chat":''} ${chat.gender ? 'chat-gender-'+chat.gender:''} nsfw-${finalNsfwResult}" style="cursor: pointer;">
             <div class="card shadow border-0 h-100 position-relative gallery-hover" style="overflow: hidden;" 
               onclick="${chat.premium ? `(window.user && window.user.subscriptionStatus === 'active' ? redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}') : loadPlanPage())` : `redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')`}">
               <div class="gallery-image-wrapper position-relative" style="aspect-ratio: 4/5; background: #f8f9fa;">
@@ -1293,8 +1293,8 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
               style="object-fit: cover; width: 100%; height: 100%; min-height: 220px;"
               loading="lazy"
               >
-              ${finalNsfwResult ? `
-              <div class="gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center" style="background: rgba(0,0,0,0.55); z-index:2;">
+              ${finalNsfwResult && (window.user && window.user.subscriptionStatus !== 'active') ? `
+              <div data-finalNsfwResult=${finalNsfwResult} class="gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center" style="background: rgba(0,0,0,0.55); z-index:2;">
               <span class="badge bg-danger mb-2" style="font-size: 1rem;"><i class="bi bi-exclamation-triangle"></i> NSFW</span>
               </div>
               ` : ''}
@@ -1321,6 +1321,16 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
               <button class="btn btn-outline-primary btn-sm persona ${chat.premium ? 'border-warning' : ''}" data-id="${chat.chatId || chat._id}" title="Add to Persona">
               <i class="far fa-user-circle"></i>
               </button>
+              ${
+              window.isAdmin
+                ? `<button 
+                  class="btn btn-light ms-2 chat-nsfw-toggle ${finalNsfwResult ? 'nsfw' : 'sfw'}" 
+                  data-id="${chat.chatId || chat._id}" 
+                  onclick="toggleChatNSFW(this)">
+                  <i class="bi ${finalNsfwResult ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
+                </button>`
+                : ''
+              }
               </div>
               </div>
             </div>
@@ -1332,6 +1342,49 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
   $(document).find('#chat-gallery').append(htmlContent);
 };
 
+window.toggleChatNSFW = function(el) {
+  //Avoid propagation
+  event.stopPropagation();
+  const isTemporary = !!user.isTemporary;
+  // if (isTemporary) { showRegistrationForm(); return; }
+
+  const $this = $(el);
+  const chatId = $this.data('id');
+  const isNSFW = $this.hasClass('nsfw'); // Check if already marked as NSFW
+
+  const nsfwStatus = !isNSFW; // Toggle NSFW status
+
+  $this.toggleClass('nsfw'); // Toggle NSFW class for UI change
+
+  // Update the button icon based on the NSFW status
+  const icon = nsfwStatus 
+    ? '<i class="bi bi-eye-slash-fill"></i>'   // NSFW icon (eye-slash for hidden content)
+    : '<i class="bi bi-eye-fill"></i>';        // Non-NSFW icon (eye for visible content)
+
+  $this.html(icon); // Update the button's icon
+
+  $.ajax({
+    url: `/api/chat/${chatId}/nsfw`, // Endpoint for updating NSFW status
+    method: 'PUT',
+    contentType: 'application/json',
+    data: JSON.stringify({ nsfw: nsfwStatus }), // Send NSFW status in request body
+    success: function () {
+      // Show success notification in Japanese
+      if (nsfwStatus) {
+        showNotification('NSFWに設定されました！', 'success');
+      } else {
+        showNotification('NSFW設定が解除されました！', 'success');
+      }
+    },
+    error: function () {
+      $this.toggleClass('nsfw'); // Revert the class change if request fails
+      $this.html(isNSFW 
+        ? '<i class="bi bi-eye-fill"></i>' 
+        : '<i class="bi bi-eye-slash-fill"></i>'); // Revert the icon as well
+      showNotification('リクエストに失敗しました。', 'error');
+    }
+  });
+}
 window.loadAllUserPosts = async function (page = 1) {
     const currentUser = user
     console.log(currentUser)

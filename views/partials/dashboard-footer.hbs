@@ -887,47 +887,6 @@ $(document).ready(function(){
     
         if (callback) callback();
     }
-    
-    // Make toggleNSFW function available globally
-    window.toggleNSFW = function() {
-        const nsfw = $.cookie('nsfw') === 'true';
-        const newNsfw = !nsfw;
-        $.cookie('nsfw', newNsfw, { expires: 365, path: '/' });
-        
-        const $toggleNSFW = $('#toggleNSFW');
-        
-        if (newNsfw) {
-            // Show NSFW content - switch to "Show SFW" option
-            $toggleNSFW.find('span:first-child').addClass('d-none');
-            $toggleNSFW.find('span:last-child').removeClass('d-none');
-        } else {
-            // Hide NSFW content - switch to "Show NSFW" option
-            $toggleNSFW.find('span:first-child').removeClass('d-none');
-            $toggleNSFW.find('span:last-child').addClass('d-none');
-        }
-        
-        // Refresh the current page to apply the filter
-        if (window.location.pathname.includes('/chat') || window.location.pathname.includes('/character') || window.location.pathname.includes('/search')) {
-            resetPeopleChatCache();
-            window.location.reload();
-        }
-        
-        return false; // Prevent default anchor behavior
-    };
-
-    // Initialize NSFW toggle state on page load
-    const nsfw = $.cookie('nsfw') === 'true';
-    const $toggleNSFW = $('#toggleNSFW');
-    
-    if (nsfw) {
-        $toggleNSFW.find('span:first-child').addClass('d-none');
-        $toggleNSFW.find('span:last-child').removeClass('d-none');
-    } else {
-        $toggleNSFW.find('span:first-child').removeClass('d-none');
-        $toggleNSFW.find('span:last-child').addClass('d-none');
-        // Update CSS rule
-        $('head').append('<style>.flagged-true { display: none; }</style>');
-    }
 })
 </script>
     

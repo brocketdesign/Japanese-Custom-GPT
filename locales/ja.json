@@ -7,7 +7,9 @@
     "genderLabel": "性別",
     "female": "女性",
     "male": "男性",
-    "nonBinary": "ノンバイナリー"
+    "nonBinary": "ノンバイナリー",
+    "hideNSFW": "NSFWを非表示",
+    "showNSFW": "NSFWを表示"
   },
   "tagList": "タグ一覧",
   "popularChats": "人気のチャット",

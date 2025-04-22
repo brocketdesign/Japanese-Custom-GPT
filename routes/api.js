@@ -437,6 +437,34 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to delete story' });
         }
     });
+    fastify.put('/api/chat/:chatId/nsfw', async (request, reply) => {
+        try {
+          const { chatId } = request.params;
+          const { nsfw } = request.body;
+          const user = request.user;
+          const userId = new fastify.mongo.ObjectId(user._id);
+      
+          // Check admin rights
+          const isAdmin = await checkUserAdmin(fastify, userId);
+          if (!isAdmin) {
+            return reply.status(403).send({ error: 'Forbidden' });
+          }
+      
+          const chatsCollection = fastify.mongo.db.collection('chats');
+          const result = await chatsCollection.updateOne(
+            { _id: new fastify.mongo.ObjectId(chatId) },
+            { $set: { nsfw: !!nsfw } }
+          );
+      
+          if (result.modifiedCount === 1) {
+            reply.send({ success: true });
+          } else {
+            reply.status(404).send({ error: 'Chat not found or not updated' });
+          }
+        } catch (error) {
+          reply.status(500).send({ error: 'Failed to update NSFW status' });
+        }
+      });
     fastify.post('/api/chat/', async (request, reply) => {
         let { userId, chatId, userChatId } = request.body;
         const collection = fastify.mongo.db.collection('chats');

@@ -16,7 +16,7 @@
         <div class="sidebar hidden bg-light shadow-0 d-flex flex-column">
             <div class="tools d-flex align-items-start flex-column sticky-top bg-light py-2">
                 <div class="d-none w-100 m-2">
-                    <button class="menu-chat-sm d-sm-none btn bg-white shadow-0"><i class="bi bi-list"></i></button>
+                    <button class="menu-chat-sm d-sm-none btn bg-dark shadow-0"><i class="bi bi-list"></i></button>
                     <button 
                     class="new-chat d-sm-none btn btn-light"
                     onclick="handleChatReset(this)"
@@ -48,15 +48,15 @@
                 <div class="container-fluid">
                     <div class="d-flex align-items-center justify-content-center m-auto">
                         <div style="position: absolute;left: 20px;top: 10px;">
-                            <button class="menu-chat-sm d-sm-none btn btn-light"><i class="bi bi-list"></i></button>
-                            <button id="menu-chat" class="d-none d-sm-inline-block btn btn-light"><i class="bi bi-list"></i></button>
+                            <button class="menu-chat-sm d-sm-none btn btn-dark"><i class="bi bi-list"></i></button>
+                            <button id="menu-chat" class="d-none d-sm-inline-block btn btn-dark"><i class="bi bi-list"></i></button>
 
                             <button 
-                            class="new-chat d-sm-none btn btn-light"
+                            class="new-chat d-sm-none btn btn-dark"
                             onclick="handleChatReset(this)"><i class="bi bi-pencil-square"></i></button>
                             <button 
                             id="new-chat" 
-                            class="new-chat d-none d-sm-inline-block btn btn-light"
+                            class="new-chat d-none d-sm-inline-block btn btn-dark"
                             onclick="handleChatReset(this)"><i class="bi bi-pencil-square"></i></button>
                         </div>
                         <div class="d-flex flex-row" style="cursor:pointer" onclick="showDiscovery()">
@@ -136,7 +136,7 @@
                 </div>
 
                 <!-- Tag List -->
-                <div class="mx-4 my-4">
+                <div class="mx-4 my-4 tag-list-container">
                     <h5 class="fw-bold mb-3">{{translations.tagList}}</h5>
                     <div id="tags-container" class="tag-list mx-4 pt-2"></div>
                 </div>

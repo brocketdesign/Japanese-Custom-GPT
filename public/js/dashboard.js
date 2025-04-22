@@ -2660,8 +2660,10 @@ window.updateCountdown = function(element, endTime, interval) {
     
     if (!tags.length) {
       $('#tags-container').html('');
+      $('.tag-list-container').hide();
       return;
     }
+    $('.tag-list-container').show();
     tags = tags.filter(tag => tag !== '');
     const html = `
       <div class="tags-wrapper py-2">

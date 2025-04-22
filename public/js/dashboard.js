@@ -440,7 +440,7 @@ window.toggleImageFavorite = function(el) {
       // delete the local storage item userImages_${userId}
       const userId = user._id;
       const cacheKey = `userImages_${userId}`;
-      localStorage.setItem(cacheKey, {});
+      localStorage.removeItem(cacheKey);
     },
     error: function() {
       $this.toggleClass('liked');
@@ -1508,7 +1508,11 @@ window.resultImageSearch = async function (page = 1,query,style = 'anime', callb
                             <button class="btn btn-light image-nsfw-toggle ${!isAdmin?'d-none':''} ${item?.nsfw ? 'nsfw':'sfw'}" data-id="${item._id}">
                                 <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill':'bi-eye-fill'}"></i> 
                             </button>
-                            <span class="btn btn-light float-end image-fav ${isLiked ? 'liked':''}" data-id="${item._id}">
+                            <span 
+                            class="btn btn-light float-end image-fav ${isLiked ? 'liked':''}" 
+                            data-id="${item._id}" 
+                            onclick="toggleImageFavorite(this)"
+                            >
                                 <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
                             </span>
                         </div>
@@ -1643,7 +1647,7 @@ window.loadAllChatImages = function (page = 1, reload = false) {
       const unlockedItem = isUnlocked(user, item._id, item.userId)
       const isBlur = !unlockedItem && item?.nsfw && !subscriptionStatus
       const isLiked = item?.likedBy?.some((id) => id.toString() === currentUserId.toString())
-  
+
       chatGalleryHtml += `
         <div class="col-6 col-md-3 col-lg-2 mb-2">
           <div class="card shadow-0">
@@ -1664,7 +1668,11 @@ window.loadAllChatImages = function (page = 1, reload = false) {
                      <button class="btn btn-light image-nsfw-toggle ${!isAdmin ? 'd-none' : ''} ${item?.nsfw ? 'nsfw' : 'sfw'}" data-id="${item._id}">
                        <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
                      </button>
-                     <span class="btn btn-light float-end image-fav ${isLiked ? 'liked' : ''}" data-id="${item._id}">
+                     <span 
+                     class="btn btn-light float-end image-fav ${isLiked ? 'liked' : ''}" 
+                     data-id="${item._id}" 
+                     onclick="toggleImageFavorite(this)" 
+                     >
                        <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
                      </span>
                    </div>`
@@ -1808,7 +1816,11 @@ window.loadUserImages = function (userId, page = 1, reload = false) {
                      <a href="/chat/${item.chatId}?imageId=${item._id}" class="btn btn-outline-secondary">
                        <i class="bi bi-chat-dots me-2"></i> ${translations.startChat}
                      </a>
-                     <span class="btn btn-light float-end image-fav ${liked ? 'liked' : ''}" data-id="${item._id}">
+                     <span 
+                     class="btn btn-light float-end image-fav ${liked ? 'liked' : ''}" 
+                     data-id="${item._id}" 
+                     onclick="toggleImageFavorite(this)"
+                     >
                        <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
                      </span>
                    </div>`
@@ -2208,10 +2220,10 @@ window.loadChatImages = function (chatId, page = 1, reload = false, isModal = fa
     let chatGalleryHtml = ''
 
     images.forEach((item) => {
-      const unlockedItem = isUnlocked(user, item._id, item.userId)
+      const unlockedItem = isUnlocked(user, item._id, user._id)
       const isBlur = !unlockedItem && item?.nsfw && !subscriptionStatus
       const isLiked = item?.likedBy?.some((id) => id.toString() === currentUserId.toString())
-  
+
       // If not blurred & not in loadedImages => push into loadedImages
       if (!isBlur && !loadedImages.some((img) => img._id === item._id)) {
         loadedImages.push(item)
@@ -2239,7 +2251,11 @@ window.loadChatImages = function (chatId, page = 1, reload = false, isModal = fa
                       >
                        <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
                      </button>
-                     <span class="btn btn-light float-end col-6 image-fav ${isLiked ? 'liked' : ''}" data-id="${item._id}">
+                     <span 
+                      class="btn btn-light float-end col-6 image-fav ${isLiked ? 'liked' : ''}" 
+                      data-id="${item._id}"
+                      onclick="toggleImageFavorite(this)"
+                      >
                        <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
                      </span>
                    </div>`
@@ -2354,7 +2370,7 @@ $(document).ready(function () {
               const isLiked = Array.isArray(item.likedBy)
                 ? item.likedBy.some(id => id.toString() === currentUserId.toString())
                 : false;
-  
+              
               chatImagesHtml += `
                 <div class="horizontal-image-wrapper col-12 col-md-4 col-lg-2 mb-2">
                   <div class="card shadow-0">
@@ -2412,6 +2428,7 @@ $(document).ready(function () {
                                 isLiked ? 'liked' : ''
                               }" 
                               data-id="${item._id}"
+                              onclick="toggleImageFavorite(this)"
                             >
                               <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
                             </span>
@@ -2440,6 +2457,8 @@ $(document).ready(function () {
           });
   
           // Append the generated HTML for all chats
+
+          
           $('#all-chats-container').append(chatsHtml);
   
           // Attach horizontal scrolling listeners
@@ -2535,6 +2554,7 @@ $(document).ready(function () {
                                   isLiked ? 'liked' : ''
                                 }" 
                                 data-id="${item._id}"
+                                onclick="toggleImageFavorite(this)"
                               >
                                 <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
                               </span>

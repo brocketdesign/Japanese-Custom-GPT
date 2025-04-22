@@ -2,7 +2,7 @@ const { ObjectId } = require('mongodb');
 const { getLanguageName } = require('../models/tool');
 
 async function routes(fastify, options) {
-  fastify.post('/gallery/:imageId/like-toggle', async (request, reply) => {
+  fastify.post('/gallery/:imageId/like-toggle', async (request, reply) => { 
     try {
       const imageId = new fastify.mongo.ObjectId(request.params.imageId);
       const { action } = request.body; // 'like' or 'unlike'

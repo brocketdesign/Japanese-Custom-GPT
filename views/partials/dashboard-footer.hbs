@@ -289,7 +289,6 @@ window.fetchAndAppendModels = function() {
             // 1. Collect unique styles
             const stylesSet = new Set();
             response.models.forEach(model => {
-                console.log(model);
                 stylesSet.add(model.style);
             });
 

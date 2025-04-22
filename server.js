@@ -546,8 +546,8 @@ fastify.get('/search', async (request, reply) => {
     const imageData = imageRes.ok ? await imageRes.json() : { images: [] };
 
     // Compute isBlur for each image
-    const unlockedItems = (user.unlockedItems || []).map(id => id.toString());
-    const subscriptionStatus = user.subscriptionStatus === 'active';
+    const unlockedItems = (user && user.unlockedItems || []).map(id => id.toString());
+    const subscriptionStatus = user && user.subscriptionStatus === 'active';
     const processedImageResults = (imageData.images || []).map(item => {
       const unlocked = unlockedItems.includes(item._id?.toString?.());
       const isBlur = !unlocked && item.nsfw && !subscriptionStatus;

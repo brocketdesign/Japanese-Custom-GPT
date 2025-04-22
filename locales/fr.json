@@ -1,5 +1,6 @@
 {
   "lang":"fr",
+  "photorealistic":"Photoréaliste",
   "sort": {
     "premiumLabel": "💎 Premium",
     "showPremium": "Afficher Premium",
@@ -697,7 +698,8 @@
         "enable_enhanced_prompt": "Activer l'invite améliorée",
         "character_prompt": "Invite pour le personnage",
         "image_style": "Style de l'image",
-        "image_generation_message": "Génération de 2 images en cours. Veuillez patienter environ une minute.",
+        "image_model" : "Modèle d'image",
+        "image_generation_message": "Génération de 4 images en cours. Veuillez patienter environ une minute.",
         "stepProgress": "Étape",
         "characterCreationForm": "Formulaire de création de personnage",
         "characterPromptLabel": "Invite pour le personnage",

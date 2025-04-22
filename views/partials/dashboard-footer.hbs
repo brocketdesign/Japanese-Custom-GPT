@@ -278,15 +278,51 @@ window.loadTranslations = async function (lang) {
     }
 
 }
-
 window.fetchAndAppendModels = function() {
     const chatDiscovery = document.getElementById('chat-discovery');
-    const subscriptionStatus = user.subscriptionStatus == 'active' || isAdmin
-    let apiUrl = '/api/models'
+    const subscriptionStatus = user.subscriptionStatus == 'active' || isAdmin;
+    let apiUrl = '/api/models';
+
+    // Fetch models first
     $.get(apiUrl, function(response) {
         if (response.success) {
+            // 1. Collect unique styles
+            const stylesSet = new Set();
             response.models.forEach(model => {
-                
+                console.log(model);
+                stylesSet.add(model.style);
+            });
+
+            // 2. Build style filter buttons
+            const styleButtons = [];
+            // "All" button
+            styleButtons.push(`
+                <button class="btn btn-outline-secondary btn-sm me-2 style-filter-btn active" data-style="all">
+                    ${translations.all || 'All'}
+                </button>
+            `);
+            stylesSet.forEach(style => {
+                // Use translation if available, fallback to style name
+                let styleLabel = (translations[style] || style);
+                styleButtons.push(`
+                    <button class="btn btn-outline-secondary btn-sm me-2 style-filter-btn" data-style="${style}">
+                        ${styleLabel}
+                    </button>
+                `);
+            });
+
+            // 3. Insert style filter buttons above the containers
+            if ($('#styleFilterContainer').length === 0) {
+                const filterHtml = `<div id="styleFilterContainer" class="mb-2 d-flex flex-wrap">${styleButtons.join('')}</div>`;
+                if ($('#imageStyleSelectionCharacterCreation').length) {
+                    $('#imageStyleSelectionCharacterCreation').before(filterHtml);
+                } else if ($('#imageStyleSelection').length) {
+                    $('#imageStyleSelection').before(filterHtml);
+                }
+            }
+
+            // 4. Render model images
+            response.models.forEach(model => {
                 const premiumIndicator = model.premium 
                     ? `<div class="position-absolute top-0 start-0">
                         <span class="badge custom-gradient-bg">
@@ -295,7 +331,7 @@ window.fetchAndAppendModels = function() {
                     </div>`
                     : '';
                 const modelElement = `
-                <div class="position-relative">
+                <div class="position-relative model-style-item" data-style="${model.style}">
                     ${premiumIndicator}
                     <img src="${model.image}" alt="${model.style}" 
                         class="${subscriptionStatus || !model.premium ? '' : 'is-premium'} style-option rounded me-2" 
@@ -321,10 +357,30 @@ window.fetchAndAppendModels = function() {
                     $(document).find('#imageStyleSelectionCharacterCreation').append(modelElement);
                 }
             });
+
+            // 5. Style filter logic
+            $(document).off('click', '.style-filter-btn').on('click', '.style-filter-btn', function() {
+                $('.style-filter-btn').removeClass('active');
+                $(this).addClass('active');
+                const selectedStyle = $(this).data('style');
+                if (selectedStyle === 'all') {
+                    $('.model-style-item').show();
+                } else {
+                    $('.model-style-item').each(function() {
+                        if ($(this).data('style') === selectedStyle) {
+                            $(this).show();
+                        } else {
+                            $(this).hide();
+                        }
+                    });
+                }
+            });
+
+            // 6. Continue with tab logic
             if($(document).find('#imageStyleTabs').length > 0 && !$('#characterCreationModal').hasClass('show')){
                 showNavTabs();
             }else{
-                // CLick on the first model if no imageModel is set in the url 
+                // Click on the first model if no imageModel is set in the url 
                 const imageModelId = localStorage.getItem('imageModelId');
                 if(imageModelId){
                     $(document).find(`#imageStyleSelection .style-option[data-id="${imageModelId}"]`).click();
@@ -333,7 +389,7 @@ window.fetchAndAppendModels = function() {
                 }
             }
         } else {
-        window.showNotification('Failed to fetch models', 'error');
+            window.showNotification('Failed to fetch models', 'error');
         }
     });
 };

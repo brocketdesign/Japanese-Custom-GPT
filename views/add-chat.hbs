@@ -19,7 +19,7 @@
                                 <p class="text-start">
                                     {{translations.newCharacter.imageStyleSelectionDescription}}
                                 </p>
-                                <label class="form-label">{{translations.newCharacter.image_style}}</label>
+                                <label class="form-label">{{translations.newCharacter.image_model}}</label>
                                 <div id="imageStyleSelectionCharacterCreation" class="d-flex flex-row flex-nowrap overflow-auto mb-4"></div>
                                 <input type="hidden" id="modelId" name="modelId" required>
                                 <input type="hidden" id="imageStyle" name="imageStyle" required>
@@ -49,7 +49,7 @@
                                     <label for="characterPrompt" class="form-label"><i class="bi bi-asterisk text-danger me-2"></i>{{translations.newCharacter.character_prompt}}</label>
                                     <!-- List of tags -->
                                     <div class="mb-2">
-                                        <label for="tags" class="form-label">{{translations.newCharacter.tagsLabel}}:</label>
+                                        <label for="tags" class="form-label d-none">{{translations.newCharacter.tagsLabel}}:</label>
                                         <div class="scroll-container">
                                             {{#each tags}}
                                                 <span type="button" class="badge bg-light text-secondary me-1 add-tag fw-light border">{{this}}</span>
@@ -81,126 +81,6 @@
                                         rows="3"
                                         readonly
                                     ></textarea>
-                                </div>
-
-                                <div class="accordion" id="characterDescriptionAccordion">
-                                    <div class="accordion-item">
-                                        <h2 class="accordion-header" id="headingOne">
-                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                                            <input class="form-check-input" type="checkbox" value="" id="characterDescriptionCheck">{{translations.newCharacter.character_overview}}
-                                        </button>
-                                        </h2>
-                                        <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#characterDescriptionAccordion">
-                                            <div class="accordion-body row">
-                                                <a href="#" onclick="loadPlanPage()" class="is-premium card py-2 custom-gradient-bg mb-3">{{translations.unlock_more_customization_fields}}</a>
-                                                
-                                                <!-- Age -->
-                                                <div class="col-auto mb-3">
-                                                    <label for="age" class="form-label">{{translations.newCharacter.ageLabel}}:</label>
-                                                    <select class="form-select w-auto" id="age" name="age">
-                                                        <option value="" disabled selected>{{translations.newCharacter.agePlaceholder}}</option>
-                                                        <!-- Adult Age Range -->
-                                                        <option value="18-24">{{translations.newCharacter.ageYoungAdult}}</option>
-                                                        <option value="25-34">{{translations.newCharacter.ageAdultEarly}}</option>
-                                                        <option value="35-44">{{translations.newCharacter.ageAdultMid}}</option>
-                                                        <option value="45-54">{{translations.newCharacter.ageAdultLate}}</option>
-                                                        <option value="55+">{{translations.newCharacter.ageSenior}}</option>
-                                                    </select>
-                                                </div>
-
-                                                <!-- Build -->
-                                                <div class="col-auto mb-3">
-                                                    <label for="build" class="form-label">{{translations.newCharacter.buildLabel}}:</label>
-                                                    <select class="form-select" id="build" name="build">
-                                                        <option value="slim">{{translations.newCharacter.slim}}</option>
-                                                        <option value="muscular">{{translations.newCharacter.muscular}}</option>
-                                                        <option value="athletic">{{translations.newCharacter.athletic}}</option>
-                                                        <option value="stocky">{{translations.newCharacter.stocky}}</option>
-                                                    </select>
-                                                </div>
-
-                                                <!-- Skin Tone -->
-                                                <div class="col-auto mb-3">
-                                                    <label for="skinTone" class="form-label">{{translations.newCharacter.skinToneLabel}}:</label>
-                                                    <select class="form-select" id="skinTone" name="skinTone">
-                                                        <option value="fair">{{translations.newCharacter.fair}}</option>
-                                                        <option value="medium">{{translations.newCharacter.medium}}</option>
-                                                        <option value="dark">{{translations.newCharacter.dark}}</option>
-                                                    </select>
-                                                </div>
-
-                                                <!-- Eye Color -->
-                                                <div class="col-auto mb-3">
-                                                    <label for="eyeColor" class="form-label">{{translations.newCharacter.eyeColorLabel}}:</label>
-                                                    <select class="form-select" id="eyeColor" name="eyeColor">
-                                                        <option value="blue">{{translations.newCharacter.blue}}</option>
-                                                        <option value="brown">{{translations.newCharacter.brown}}</option>
-                                                        <option value="green">{{translations.newCharacter.green}}</option>
-                                                        <option value="gray">{{translations.newCharacter.gray}}</option>
-                                                    </select>
-                                                </div>
-
-                                                <!-- Hair Color -->
-                                                <div class="col-auto mb-3">
-                                                    <label for="hairColor" class="form-label">{{translations.newCharacter.hairColorLabel}}:</label>
-                                                    <select class="form-select" id="hairColor" name="hairColor">
-                                                        <option value="blonde">{{translations.newCharacter.blonde}}</option>
-                                                        <option value="black">{{translations.newCharacter.black}}</option>
-                                                        <option value="red">{{translations.newCharacter.red}}</option>
-                                                        <option value="brown">{{translations.newCharacter.brown}}</option>
-                                                        <option value="gray">{{translations.newCharacter.gray}}</option>
-                                                    </select>
-                                                </div>
-
-                                                <!-- Hair Length -->
-                                                <div class="col-auto mb-3">
-                                                    <label for="hairLength" class="form-label">{{translations.newCharacter.hairLengthLabel}}:</label>
-                                                    <select class="form-select" id="hairLength" name="hairLength">
-                                                        <option value="short">{{translations.newCharacter.short}}</option>
-                                                        <option value="medium">{{translations.newCharacter.medium}}</option>
-                                                        <option value="long">{{translations.newCharacter.long}}</option>
-                                                        <option value="bald">{{translations.newCharacter.bald}}</option>
-                                                    </select>
-                                                </div>
-
-                                                <!-- Hair Style -->
-                                                <div class="col-12 col-sm-6 mb-3">
-                                                    <label for="hairStyle" class="form-label">{{translations.newCharacter.hairStyleLabel}}:</label>
-                                                    <textarea class="form-control" id="hairStyle" name="hairStyle" placeholder="{{translations.newCharacter.hairStylePlaceholder}}"></textarea>
-                                                </div>
-
-                                                <!-- Facial Features -->
-                                                <div class="col-12 col-sm-6 mb-3">
-                                                    <label for="facialFeatures" class="form-label">{{translations.newCharacter.facialFeaturesLabel}}:</label>
-                                                    <textarea class="form-control" id="facialFeatures" name="facialFeatures" placeholder="{{translations.newCharacter.facialFeaturesPlaceholder}}"></textarea>
-                                                </div>
-
-                                                <!-- Clothing Style -->
-                                                <div class="col-12 col-sm-6 mb-3">
-                                                    <label for="clothingStyle" class="form-label">{{translations.newCharacter.clothingStyleLabel}}:</label>
-                                                    <textarea class="form-control" id="clothingStyle" name="clothingStyle" placeholder="{{translations.newCharacter.clothingStylePlaceholder}}"></textarea>
-                                                </div>
-
-                                                <!-- Accessories -->
-                                                <div class="col-12 col-sm-6 mb-3">
-                                                    <label for="accessories" class="form-label">{{translations.newCharacter.accessoriesLabel}}:</label>
-                                                    <textarea class="form-control" id="accessories" name="accessories" placeholder="{{translations.newCharacter.accessoriesPlaceholder}}"></textarea>
-                                                </div>
-
-                                                <!-- Tattoos/Body Art -->
-                                                <div class="col-12 col-sm-6 mb-3">
-                                                    <label for="tattoos" class="form-label">{{translations.newCharacter.tattoosLabel}}:</label>
-                                                    <textarea class="form-control" id="tattoos" name="tattoos" placeholder="{{translations.newCharacter.tattoosPlaceholder}}"></textarea>
-                                                </div>
-
-                                                <!-- Special Features -->
-                                                <div class="col-12 col-sm-6 mb-3">
-                                                    <label for="specialFeatures" class="form-label">{{translations.newCharacter.specialFeaturesLabel}}:</label>
-                                                    <textarea class="form-control" id="specialFeatures" name="specialFeatures" placeholder="{{translations.newCharacter.specialFeaturesPlaceholder}}"></textarea>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
 
                                 <!-- Field to upload an image with an area -->
@@ -236,83 +116,6 @@
                                         <label for="chatPurpose" class="form-label">{{translations.newCharacter.characterDetailsLabel}}</label>
                                     </div>
                                     <textarea class="form-control mb-2" id="chatPurpose" name="content" rows="3" placeholder="{{translations.newCharacter.characterDetailsPlaceholder}}"></textarea>
-                                </div>
-
-                                <div class="accordion" id="personalityAccordion">
-                                    <div class="accordion-item">
-                                        <h2 class="accordion-header" id="personalityHeadingOne">
-                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#personalityCollapseOne" aria-expanded="true" aria-controls="personalityCollapseOne">
-                                            <input class="form-check-input" type="checkbox" value="" id="personalityCheck">{{translations.newCharacter.detailed_personality}}
-                                        </button>
-                                        </h2>
-                                        <div id="personalityCollapseOne" class="accordion-collapse collapse" aria-labelledby="personalityHeadingOne" data-bs-parent="#personalityAccordion">
-                                            <div class="accordion-body row">
-                                                <a href="#" onclick="loadPlanPage()" class="is-premium  card py-2  custom-gradient-bg  mb-3">{{translations.unlock_more_customization_fields}}</a>
-                                            
-                                                <!-- Personality Feature -->
-                                                <div class="col-auto mb-3">
-                                                    <label for="personality" class="form-label">{{translations.newCharacter.personalityLabel}}:</label>
-                                                    <select class="form-select" id="personality" name="personality">
-                                                        <option value="optimistic">{{translations.newCharacter.optimistic}}</option>
-                                                        <option value="pessimistic">{{translations.newCharacter.pessimistic}}</option>
-                                                        <option value="realistic">{{translations.newCharacter.realistic}}</option>
-                                                        <option value="idealistic">{{translations.newCharacter.idealistic}}</option>
-                                                    </select>
-                                                </div>
-
-                                                <!-- Tone Feature -->
-                                                <div class="col-auto mb-3">
-                                                    <label for="tone" class="form-label">{{translations.newCharacter.toneLabel}}:</label>
-                                                    <select class="form-select" id="tone" name="tone">
-                                                        <option value="friendly">{{translations.newCharacter.friendly}}</option>
-                                                        <option value="serious">{{translations.newCharacter.serious}}</option>
-                                                        <option value="sarcastic">{{translations.newCharacter.sarcastic}}</option>
-                                                        <option value="humorous">{{translations.newCharacter.humorous}}</option>
-                                                    </select>
-                                                </div>
-
-                                                <!-- Morality -->
-                                                <div class="col-auto mb-3">
-                                                    <label for="morality" class="form-label">{{translations.newCharacter.moralityLabel}}:</label>
-                                                    <select class="form-select" id="morality" name="morality">
-                                                        <option value="good">{{translations.newCharacter.good}}</option>
-                                                        <option value="neutral">{{translations.newCharacter.neutral}}</option>
-                                                        <option value="evil">{{translations.newCharacter.evil}}</option>
-                                                    </select>
-                                                </div>
-
-                                                <!-- Motivation -->
-                                                <div class="col-12 col-sm-6 mb-3">
-                                                    <label for="motivation" class="form-label">{{translations.newCharacter.motivationLabel}}:</label>
-                                                    <textarea class="form-control" id="motivation" name="motivation" placeholder="{{translations.newCharacter.motivationPlaceholder}}"></textarea>
-                                                </div>
-
-                                                <!-- Strengths -->
-                                                <div class="col-12 col-sm-6 mb-3">
-                                                    <label for="strengths" class="form-label">{{translations.newCharacter.strengthsLabel}}:</label>
-                                                    <textarea class="form-control" id="strengths" name="strengths" placeholder="{{translations.newCharacter.strengthsPlaceholder}}"></textarea>
-                                                </div>
-
-                                                <!-- Weaknesses -->
-                                                <div class="col-12 col-sm-6 mb-3">
-                                                    <label for="weaknesses" class="form-label">{{translations.newCharacter.weaknessesLabel}}:</label>
-                                                    <textarea class="form-control" id="weaknesses" name="weaknesses" placeholder="{{translations.newCharacter.weaknessesPlaceholder}}"></textarea>
-                                                </div>
-
-                                                <!-- Fears -->
-                                                <div class="col-12 col-sm-6 mb-3">
-                                                    <label for="fears" class="form-label">{{translations.newCharacter.fearsLabel}}:</label>
-                                                    <textarea class="form-control" id="fears" name="fears" placeholder="{{translations.newCharacter.fearsPlaceholder}}"></textarea>
-                                                </div>
-
-                                                <!-- Secrets -->
-                                                <div class="col-12 col-sm-6 mb-3">
-                                                    <label for="secrets" class="form-label">{{translations.newCharacter.secretsLabel}}:</label>
-                                                    <textarea class="form-control" id="secrets" name="secrets" placeholder="{{translations.newCharacter.secretsPlaceholder}}"></textarea>
-                                                </div>
-                                        </div>
-                                    </div>
-                                </div>
                                 </div>
                             </div>
                                                     

@@ -277,7 +277,7 @@ fastify.get('/chat/edit/:chatId', async (request, reply) => {
 
     const chats = await chatsCollection.distinct('chatImageUrl', { userId });
 
-    if(user.subscriptionStatus !== 'active' && chats.length > 0){
+    if((user && user.subscriptionStatus !== 'active') && chats.length > 0){
       return false;
     }
 

@@ -1,13 +1,8 @@
-
 $(document).ready(function() {
     fetchAndAppendModels();
 });
 
 $(document).ready(function () {
-    $('#characterDescriptionAccordion, #personalityAccordion').on('show.bs.collapse hide.bs.collapse', function (e) {
-        const checkId = $(this).attr('id').replace('Accordion','Check')
-        $('#' + checkId).prop('checked', e.type === 'show');
-    });
     $('#enableEnhancedPrompt').on('click',function(){
         $('#enhancedPrompt').toggle()
     })
@@ -71,14 +66,6 @@ $(document).ready(function() {
 
     if(subscriptionStatus){
         $('.is-premium').each(function(){$(this).toggleClass('d-none')})
-    }else{
-        function disableInputs(containerId) {
-            $(containerId).find('input, select, textarea').each(function () {
-                $(this).prop('disabled', true);
-            });
-        }
-        disableInputs('#characterDescriptionAccordion');
-        disableInputs('#personalityAccordion');
     }
     $('input, textarea').val('');
 
@@ -157,11 +144,6 @@ $(document).ready(function() {
 
                     if (chatData.gender) {
                         $('#gender').val(chatData.gender);
-                    }
-
-                    if (chatData?.base_personality && chatData?.short_intro) {
-                        $('#chatPurpose').val(chatData?.short_intro);
-                        resizeTextarea($('#chatPurpose')[0]);
                     }
 
                     if (chatData.name) {
@@ -250,28 +232,6 @@ $(document).ready(function() {
             });
         }
 
-        function returnDetails(containerId) {
-            const details = {};
-            $(containerId).find('input, select, textarea').each(function () {
-                const element = $(this), name = element.attr('name');
-                if (name) {
-                    let value = element.is(':checkbox') ? element.is(':checked')
-                            : element.is(':radio') ? (element.is(':checked') ? element.val() : null)
-                            : element.val()?.trim();
-                    if (value !== null && value !== '') details[name] = value;
-                }
-            });
-            return details;
-        }
-
-        function returnCharacterDetails() {
-            return returnDetails('#characterDescriptionAccordion');
-        }
-
-        function returnCharacterPersonalityDetails() {
-            return returnDetails('#personalityAccordion');
-        }
-
         async function checkChat(chatCreationId) {
             try {
                 const response = await $.post('/api/check-chat', { chatId:chatCreationId });
@@ -339,7 +299,6 @@ $(document).ready(function() {
             return;
         }
 
-        const characterDetails = returnCharacterDetails();
         const isEnhanceEnabled = $('#enableEnhancedPrompt').is(':checked');
 
         const $button = $(this);
@@ -389,10 +348,6 @@ $(document).ready(function() {
                         gender,
                         chatId:chatCreationId,
                     };
-
-                    if (subscriptionStatus && $('#characterDescriptionCheck').is(':checked')) {
-                        customData.details_description = characterDetails;
-                    }
 
                     customData = JSON.stringify(customData);
 
@@ -451,7 +406,6 @@ $(document).ready(function() {
 
 
         async function generateCharacterPersonnality(callback) {
-            const personalityDetails = returnCharacterPersonalityDetails();        
             let name = $('#chatName').val();
             let purpose = $('#chatPurpose').val().trim() !== '' ? $('#chatPurpose').val().trim() : $('#characterPrompt').val().trim();   
             let prompt = $('#characterPrompt').val().trim();
@@ -467,10 +421,6 @@ $(document).ready(function() {
                 gender,
                 chatId:chatCreationId,
             };
-
-            if (subscriptionStatus && $('#personalityCheck').is(':checked')) {
-                customData.details_personality = personalityDetails;
-            }
 
             customData = JSON.stringify(customData);
 

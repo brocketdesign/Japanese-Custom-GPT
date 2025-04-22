@@ -233,7 +233,14 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, 
               reject('Task not found');
               return;
             }
-
+            if(taskStatus.status === 'failed') {
+              clearInterval(intervalId);
+              const taskRec = await db.collection('tasks').findOne({ taskId });
+              const userDoc = await db.collection('users').findOne({ _id: taskRec.userId });
+              await db.collection('tasks').updateOne({ taskId }, { $set: { status: 'failed', updatedAt: new Date() } });
+              reject({ status: 'failed', taskId });
+              return;
+            }
             if (taskStatus.status === 'processing' && !taskStarted) {
               console.log(`Task ${taskId} started`);
               startTime = Date.now();

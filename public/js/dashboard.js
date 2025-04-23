@@ -739,7 +739,17 @@ async function checkIfAdmin(userId) {
   }
   
   function isUnlocked(currentUser, id, ownerId) {
-    return currentUser?.unlockedItems?.includes(id) || currentUser._id == ownerId
+    if (!currentUser) {
+        console.warn('isUnlocked: currentUser is undefined', { id, ownerId });
+        return false;
+    }
+    if(currentUser.isTemporary){
+        console.warn('isUnlocked: currentUser is temporary', { id, ownerId });
+        return false;
+    }
+    const unlocked = Array.isArray(currentUser.unlockedItems) && currentUser.unlockedItems.includes(id);
+    const isOwner = currentUser._id == ownerId;
+    return unlocked || isOwner;
   }
   
 // Helper function to scroll to the top
@@ -2221,7 +2231,10 @@ window.loadChatImages = function (chatId, page = 1, reload = false, isModal = fa
 
     images.forEach((item) => {
       const unlockedItem = isUnlocked(user, item._id, user._id)
+      console.log('unlockedItem:', unlockedItem)
       const isBlur = !unlockedItem && item?.nsfw && !subscriptionStatus
+      // Debug blur condition
+       console.log('isBlur:', isBlur, 'unlockedItem:', unlockedItem, 'item.nsfw:', item?.nsfw, 'subscriptionStatus:', subscriptionStatus)
       const isLiked = item?.likedBy?.some((id) => id.toString() === currentUserId.toString())
 
       // If not blurred & not in loadedImages => push into loadedImages

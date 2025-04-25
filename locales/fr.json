@@ -100,8 +100,8 @@
     "choose_your_plan_description": "100% anonyme. Vous pouvez annuler à tout moment.",
     "features": "Avantages Premium"
   },
-  "landing_page": {
-    "old_login_page" : "Page de connexion",
+  "lp": {
+    "old_login_page": "Page de connexion",
     "banner": {
       "0": {
         "title": "Créez des œuvres d'art époustouflantes générées par l'IA. Gratuitement.",
@@ -120,48 +120,43 @@
         "subtitle": "Créez, discutez et donnez vie aux personnages IA !"
       }
     },
-    "main_heading": "Créez les hentai de la meilleure qualité. Gratuitement.",
-    "sub_heading": "Profitez de la génération gratuite d'images IA tout en discutant avec de magnifiques personnages IA.",
     "cta_button": "Commencez à générer",
-    "main_heading2": "Aucune honte dans votre jeu. Lamix peut tout générer.",
-    "sub_heading2": "Ces images ont toutes été générées par Lamix. Vous pouvez créer vos propres images gratuitement.",
     "cta_button2": "Commencez à discuter",
-    "main_heading3": "50 000+ amateurs d'art utilisent Lamix pour générer de meilleures images",
-    "sub_heading3": "Vous pouvez aimer, partager et commenter les images créées par d'autres utilisateurs.",
-    "cta_button3": "Commencez à générer",
-    "main_heading4": "Imaginez, et l'image idéale est juste devant vous !",
-    "sub_heading4": "Avec Lamix, sélectionnez simplement votre pose préférée dans le menu ou décrivez l'image souhaitée dans le chat, et le personnage générera facilement l'image.",
-    "cta_button4": "Commencez gratuitement maintenant",
-    "social_proof": {
-      "name1": "PixelMaster",
-      "title1": "Super application pour créer des images IA ! 🎨✨",
-      "articles": "Images",
-      "articles_count1": "120",
-      "followers": "Abonnés",
-      "followers_count1": "15,2k",
-      "rating": "Évaluation",
-      "rating_value1": "4.9",
-      "chat": "Discuter",
-      "follow": "Suivre",
-    
-      "name2": "ArtWizard",
-      "title2": "Génial pour le marketing visuel ! 📈👍",
-      "articles_count2": "85",
-      "followers_count2": "10,8k",
-      "rating_value2": "4.8",
-    
-      "name3": "DesignGuru",
-      "title3": "Parfait pour les designers ! 💻🎨",
-      "articles_count3": "45",
-      "followers_count3": "7,4k",
-      "rating_value3": "4.7",
-    
-      "name4": "ContentKing",
-      "title4": "Idéal pour du contenu captivant ! 📸🔥",
-      "articles_count4": "65",
-      "followers_count4": "9,6k",
-      "rating_value4": "4.6"
-    }
+    "cta_button3": "Essayez Lamix maintenant",
+    "meet_heading": "Rencontrez votre compagnon IA parfait avec Lamix",
+    "meet_subheading": "Plongez dans une expérience IA sans censure et trouvez une compagnie comme jamais auparavant. Engagez des conversations personnalisées et intelligentes avec votre personnage IA idéal.",
+    "why_heading": "Pourquoi choisir Lamix ?",
+    "why_subheading": "Flexibilité inégalée, commodité et expression sans censure",
+    "feature1_title": "Gratuit à utiliser",
+    "feature1_text": "Testez le chat et la génération d'images gratuitement et créez un personnage. Passez à la version premium pour des personnages illimités et plus de fonctionnalités.",
+    "feature2_title": "Compatible mobile",
+    "feature2_text": "Emportez vos discussions partout avec vous. Lamix fonctionne parfaitement sur votre téléphone ou tablette.",
+    "feature3_title": "Contenu sans censure",
+    "feature3_text": "Profitez de conversations et de génération d'images totalement sans censure, sans aucune limitation.",
+    "feature4_title": "Sûr et sécurisé",
+    "feature4_text": "Vos conversations sont privées et protégées, vous permettant de discuter en toute tranquillité.",
+    "how_heading": "Comment discuter avec un personnage IA sur Lamix",
+    "how_subheading": "Commencez à discuter avec votre compagnon IA sans censure en seulement trois étapes simples",
+    "how_step1_title": "1. Créez un compte",
+    "how_step1_text": "Inscrivez-vous et accédez instantanément à toutes les fonctionnalités de Lamix.",
+    "how_step2_title": "2. Choisissez un personnage IA",
+    "how_step2_text": "Sélectionnez parmi notre collection variée de compagnons IA.",
+    "how_step3_title": "3. Commencez une conversation",
+    "how_step3_text": "Commencez par une phrase d'ouverture et profitez d'interactions sans censure.",
+    "testimonials_heading": "Ce que les utilisateurs disent de Lamix",
+    "testimonial1_name": "Alex M.",
+    "testimonial1_text": "\"Lamix offre des conversations IA vraiment sans censure. La liberté de m'exprimer sans limites a fait de cette plateforme mon chat préféré. Je recommande vivement !\"",
+    "testimonial2_name": "Sarah K.",
+    "testimonial2_text": "\"J'ai essayé plusieurs applications de chat IA, mais Lamix se distingue par son contenu sans censure et son design intuitif. L'expérience mobile est fluide, c'est tellement pratique à utiliser partout.\"",
+    "testimonial3_name": "James T.",
+    "testimonial3_text": "\"La génération d'images sur Lamix est incroyable ! Pouvoir créer des images sans censure et avoir des conversations sans restriction rend cette plateforme unique. Les développeurs comprennent vraiment ce que veulent les utilisateurs.\"",
+    "faq_heading": "Questions fréquentes",
+    "faq1_q": "Lamix est-il vraiment gratuit ?",
+    "faq1_a": "Oui, Lamix est entièrement gratuit, sans frais cachés. Vous pouvez commencer à discuter avec des personnages IA immédiatement.",
+    "faq2_q": "Que signifie \"sans censure\" sur Lamix ?",
+    "faq2_a": "Lamix offre des conversations et une génération d'images vraiment sans restriction, sans les filtres de contenu habituels des autres plateformes IA. Nos personnages IA peuvent aborder tous les sujets que vous souhaitez.",
+    "faq3_q": "Lamix est-il disponible sur mobile ?",
+    "faq3_a": "Oui, Lamix est entièrement optimisé pour les appareils mobiles. Vous pouvez profiter de toutes les fonctionnalités sur votre smartphone ou tablette avec une expérience fluide."
   },
   "advice" :{
     "advice_title_1": "Choisir un personnage",
@@ -834,7 +829,4 @@
           "viewed": "Marquer comme vue",
           "nothing": "Aucune nouvelle notification"
         }
-      
-      
-    
-}
+      }

@@ -7,7 +7,7 @@
 <section>
     <style>
     #intro {
-        background-image: url('/img/lpbanner/{{bannerNumber}}.png');
+        background-image: url('/img/lpbanner/{{#unless (eq translations.lang "en")}}2{{else}}{{bannerNumber}}{{/unless}}.png');
         background-size: contain;
         background-position: right;
         min-height: 760px;
@@ -28,15 +28,15 @@
                 <h1 class="mb-3 fw-bold u-color-grad text-start" id="headline-container">
                 </h1>
                 <div class="text-start animate__animated"  data-animate="animate__fadeIn" id="subheadline-container">
-                    {{translations.landing_page.banner.[bannerNumber].subtitle}}
+                    {{translations.lp.banner.[bannerNumber].subtitle}}
                 </div>
                 <div class="text-center d-flex flex-column justify-content-start align-items-start mt-3 animate__animated"  data-animate="animate__fadeIn">
                     <a href="#" onclick="openLoginForm()" class="btn custom-gradient-bg text-white btn-lg m-2 px-5 py-3 mb-3 cta-button fw-bold" role="button" style="border-radius: 50px;">
-                        {{translations.landing_page.cta_button}}
+                        {{translations.lp.cta_button}}
                     </a>
                     <!-- Old login page link -->
                     <a href="/login" class="btn btn-outline-secondary btn-sm ms-3 px-5 py-1 mb-3 cta-button fw-bold" role="button" style="border-radius: 50px;">
-                        {{translations.landing_page.old_login_page}}
+                        {{translations.lp.old_login_page}}
                     </a>
                 </div>
             </div>
@@ -54,6 +54,229 @@
     </div>
 </section>
 {{/if}}
+{{#unless (eq translations.lang "ja")}}
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold u-color-grad">{{translations.lp.meet_heading}}</h2>
+            <p class="lead">{{translations.lp.meet_subheading}}</p>
+        </div>
+
+        <!-- Why Choose Us Section -->
+        <div class="text-center mb-5">
+            <h3 class="mb-4">{{translations.lp.why_heading}}</h3>
+            <p>{{translations.lp.why_subheading}}</p>
+        </div>
+
+        <!-- Features Section -->
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="fas fa-dollar-sign fa-3x mb-3 text-primary"></i>
+                        <h4 class="card-title">{{translations.lp.feature1_title}}</h4>
+                        <p class="card-text">{{translations.lp.feature1_text}}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="fas fa-mobile-alt fa-3x mb-3 text-primary"></i>
+                        <h4 class="card-title">{{translations.lp.feature2_title}}</h4>
+                        <p class="card-text">{{translations.lp.feature2_text}}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="fas fa-unlock fa-3x mb-3 text-primary"></i>
+                        <h4 class="card-title">{{translations.lp.feature3_title}}</h4>
+                        <p class="card-text">{{translations.lp.feature3_text}}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="fas fa-shield-alt fa-3x mb-3 text-primary"></i>
+                        <h4 class="card-title">{{translations.lp.feature4_title}}</h4>
+                        <p class="card-text">{{translations.lp.feature4_text}}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How to Use Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold u-color-grad">{{translations.lp.how_heading}}</h2>
+            <p class="lead">{{translations.lp.how_subheading}}</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <img src="img/lp_en/desktop-1.png" class="card-img-top d-block" alt="Step 1">
+                    <div class="card-body text-center">
+                        <h3 class="card-title">{{translations.lp.how_step1_title}}</h3>
+                        <p class="card-text">{{translations.lp.how_step1_text}}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <img src="img/lp_en/desktop-2.png" class="card-img-top d-block" alt="Step 2">
+                    <div class="card-body text-center">
+                        <h3 class="card-title">{{translations.lp.how_step2_title}}</h3>
+                        <p class="card-text">{{translations.lp.how_step2_text}}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <img src="img/lp_en/desktop-3.png" class="card-img-top d-block" alt="Step 3">
+                    <div class="card-body text-center">
+                        <h3 class="card-title">{{translations.lp.how_step3_title}}</h3>
+                        <p class="card-text">{{translations.lp.how_step3_text}}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-5">
+            <a href="#" onclick="openLoginForm()" class="btn custom-gradient-bg text-white btn-lg px-5 py-3 fw-bold" role="button" style="border-radius: 50px;">
+                {{translations.lp.cta_button2}}
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold u-color-grad">{{translations.lp.testimonials_heading}}</h2>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="flex-grow-1">
+                                <h5 class="mb-0">{{translations.lp.testimonial1_name}}</h5>
+                                <div class="text-warning">★★★★★</div>
+                            </div>
+                        </div>
+                        <p class="card-text">{{translations.lp.testimonial1_text}}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="flex-grow-1">
+                                <h5 class="mb-0">{{translations.lp.testimonial2_name}}</h5>
+                                <div class="text-warning">★★★★★</div>
+                            </div>
+                        </div>
+                        <p class="card-text">{{translations.lp.testimonial2_text}}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="flex-grow-1">
+                                <h5 class="mb-0">{{translations.lp.testimonial3_name}}</h5>
+                                <div class="text-warning">★★★★★</div>
+                            </div>
+                        </div>
+                        <p class="card-text">{{translations.lp.testimonial3_text}}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold u-color-grad">{{translations.lp.faq_heading}}</h2>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="faqOne">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                {{translations.lp.faq1_q}}
+                            </button>
+                        </h2>
+                        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="faqOne" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                {{translations.lp.faq1_a}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="faqTwo">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                {{translations.lp.faq2_q}}
+                            </button>
+                        </h2>
+                        <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="faqTwo" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                {{translations.lp.faq2_a}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="faqThree">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                {{translations.lp.faq3_q}}
+                            </button>
+                        </h2>
+                        <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="faqThree" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                {{translations.lp.faq3_a}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-5">
+            <a href="#" onclick="openLoginForm()" class="btn custom-gradient-bg text-white btn-lg px-5 py-3 fw-bold" role="button" style="border-radius: 50px;">
+                {{translations.lp.cta_button3}}
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Desktop Images (Hidden on Mobile) -->
+<div class="d-block">
+    <div class="row flex-nowrap overflow-auto" style="white-space: nowrap;">
+        {{#each (range 4 10)}}
+            <div class="col-4 col-sm-3 col-lg-2 px-0" style="display: inline-block;">
+                <img src="img/lp_en/desktop-{{this}}.png" class="img-fluid mb-3" alt="Desktop image {{this}}">
+            </div>
+        {{/each}}
+    </div>
+</div>
+{{/unless}}
+
 <style>
     footer{display: inline !important;}
 </style>
@@ -62,8 +285,8 @@
         const headline = document.getElementById('headline-container');
         const subheadline = document.getElementById('subheadline-container');
         const bannerNumber = `{{bannerNumber}}`;
-        const title = translations.landing_page.banner[bannerNumber].title;
-        const subtitle = translations.landing_page.banner[bannerNumber].subtitle;
+        const title = translations.lp.banner[bannerNumber].title;
+        const subtitle = translations.lp.banner[bannerNumber].subtitle;
 
         headline.innerHTML = '<p>' + title + '</p>';
         subheadline.innerHTML = subtitle;

@@ -43,7 +43,17 @@
         </div>
     </div>
 </section>
-
+{{#if (eq translations.lang "ja")}}
+<section>
+    <div class="lp_{{translations.lang}} mobile d-md-none d-block">
+        <div class="d-md-none d-block">
+            {{#each (range 1 10)}}
+                <img src="img/lp_{{../translations.lang}}/mobile-{{this}}.png" class="img-fluid mb-3" alt="Mobile image {{this}}">
+            {{/each}}
+        </div>
+    </div>
+</section>
+{{/if}}
 <style>
     footer{display: inline !important;}
 </style>

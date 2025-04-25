@@ -5,7 +5,7 @@ const cron = require('node-cron');
 const { fetchRandomCivitaiPrompt, createModelChat } = require('./civitai');
 const parser = require('cron-parser');
 const { pollTaskStatus } = require('./imagen');
-const { handleTaskCompletion } = require('./imagen'); // <-- import the handler
+const { handleTaskCompletion, checkTaskStatus } = require('./imagen'); // <-- import the handler
 const { ObjectId } = require('mongodb'); // <-- Add ObjectId
 
 // Store active cron jobs
@@ -141,7 +141,7 @@ const processBackgroundTasks = (fastify) => async () => {
   for (const task of backgroundTasks) {
     try {
       // Try to poll the task status again (reuse pollTaskStatus from imagen.js)
-      const taskStatus = await pollTaskStatus(task.taskId, fastify);
+      const taskStatus = await checkTaskStatus(task.taskId, fastify);
       if (taskStatus && taskStatus.status === 'background') {
         console.log(`[CRON] Task ${task.taskId} still in background, skipping...`);
         continue;
@@ -150,7 +150,6 @@ const processBackgroundTasks = (fastify) => async () => {
       // If completed, handle notifications and image saving
       if (taskStatus && taskStatus.status === 'completed') {
         const userDoc = await db.collection('users').findOne({ _id: task.userId });
-        const chatDoc = await db.collection('chats').findOne({ _id: task.chatId });
         const translations = fastify.getTranslations(userDoc.language || 'en');
         await handleTaskCompletion(
           { ...taskStatus, userId: task.userId, userChatId: task.userChatId },
@@ -165,7 +164,6 @@ const processBackgroundTasks = (fastify) => async () => {
         );
       }
     } catch (err) {
-      // If still not complete, leave as background for next run
       console.log(`[CRON] Task ${task.taskId}:`, err?.message || err);
     }
   }

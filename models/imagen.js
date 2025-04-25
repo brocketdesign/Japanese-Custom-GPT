@@ -19,7 +19,7 @@ const default_prompt = {
       nsfw: {
         sampler_name: "Euler a",
         prompt: `score_9, score_8_up, masterpiece, best quality, (ultra-detailed), (perfect hands:0.1),`,
-        negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, worst quality, low quality,young,child,dick,bad quality,worst quality,worst detail,sketch`,
+        negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, worst quality, low quality,child,bad quality,worst quality,worst detail,sketch`,
         width: 1024,
         height: 1360,
         seed: -1,
@@ -37,7 +37,7 @@ const default_prompt = {
       nsfw: {
         sampler_name: "DPM++ 2M Karras",
         prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, (nsfw),uncensored, `,
-        negative_prompt: `BraV4Neg,paintings,sketches,(worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)),logo,disform,weird body,multiple hands,young,child,dick,bad quality,worst quality,worst detail,sketch`,
+        negative_prompt: `BraV4Neg,paintings,sketches,(worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)),logo,disform,weird body,multiple hands,child,bad quality,worst quality,worst detail,sketch`,
         loras: [{"model_name":"more_details_59655.safetensors","strength":0.2},{ model_name: 'JapaneseDollLikeness_v15_28382.safetensors', strength: 0.7 },{"model_name":"PerfectFullBreasts-fCV3_59759.safetensors","strength":0.7}],
         seed: -1,
       }
@@ -221,7 +221,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, 
       let taskStarted = false;
       const db = fastify.mongo.db;
       let zeroProgressAttempts = 0;
-      const maxZeroProgressAttempts = 10;
+      const maxZeroProgressAttempts = 5;
 
       return new Promise((resolve, reject) => {
         const intervalId = setInterval(async () => {
@@ -297,9 +297,9 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, 
 // Handle task completion: send notifications and save images as needed
 async function handleTaskCompletion(taskStatus, fastify, options = {}) {
   const { chatCreation, translations, userId, chatId, placeholderId } = options;
-  const { images } = taskStatus;
-
-  console.log({ chatCreation, userId, chatId, placeholderId });
+  const images = (taskStatus.result && Array.isArray(taskStatus.result.images))
+    ? taskStatus.result.images
+    : (Array.isArray(taskStatus.images) ? taskStatus.images : []);
 
   if (typeof fastify.sendNotificationToUser !== 'function') {
     console.error('fastify.sendNotificationToUser is not a function');
@@ -754,5 +754,6 @@ async function checkImageDescription(db, chatId) {
     deleteOldTasks,
     deleteAllTasks,
     pollTaskStatus,
-    handleTaskCompletion
+    handleTaskCompletion,
+    checkTaskStatus
   };

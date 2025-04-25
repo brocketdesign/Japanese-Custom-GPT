@@ -2,11 +2,6 @@ $(document).ready(function() {
     fetchAndAppendModels();
 });
 
-$(document).ready(function () {
-    $('#enableEnhancedPrompt').on('click',function(){
-        $('#enhancedPrompt').toggle()
-    })
-});
 $(document).off().on('click', '.add-tag', function() {
     const tag = $(this).text();
     const $characterPrompt = $('#characterPrompt');

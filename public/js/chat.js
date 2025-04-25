@@ -1479,7 +1479,6 @@ $(document).ready(async function() {
     }
 
     function removePromptFromMessage() {
-        console.log('removePromptFromMessage');
         const userMessage = $('#userMessage');
         userMessage.css('background-image', 'none');
         userMessage.removeClass('prompt-image');

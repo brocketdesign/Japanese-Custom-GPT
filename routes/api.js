@@ -88,7 +88,7 @@ async function routes(fastify, options) {
                         "Start by greeting me, say it's nice to meet me for the first time, and mention you can send images.";
                     } else {
                         startMessage.content =
-                        "Start by greeting me, say it's nice to meet me for the first time, mention you can send images, note that the chat is temporary because I'm not subscribed, and express your hope that I'll enjoy the chat and become a permanent user.";
+                        "Start by greeting me, say it's nice to meet me for the first time, and mention you can send images.";
                     }
                     const chatsGalleryCollection = fastify.mongo.db.collection('gallery');
                     const gallery = await chatsGalleryCollection.findOne({

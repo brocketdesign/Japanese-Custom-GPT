@@ -141,6 +141,15 @@
                     <div id="tags-container" class="tag-list mx-4 pt-2"></div>
                 </div>
 
+                <!-- Top Free Chats Section -->
+                <div class="mx-4 my-4" id="top-free-chats-section">
+                    <h5 class="fw-bold mb-3">{{translations.topFreeChats}}</h5>
+                    <div id="top-free-chats-spinner" class="spinner-border text-secondary" role="status" style="display: none;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div id="top-free-chats-gallery" class="row"></div>
+                </div>
+
                 <!-- Popular chat -->
                 <div class="mx-4 my-4" id="popular-chats-section">
                     <h5 class="fw-bold mb-3">{{translations.popularChats}}</h5>
@@ -720,6 +729,32 @@ $(document).ready(function() {
             $('.custom-card').show();
         }
     });
+
+    // --- Top Free Chats ---
+    async function loadTopFreeChats() {
+        try {
+            const res = await fetch(`/api/top-free-chats`);
+            if (!res.ok) {
+                $('#top-free-chats-gallery').html('<p>Error loading top free chats.</p>'); // Or hide the section
+                return;
+            }
+            const data = await res.json();
+            if (data.chats && data.chats.length > 0) {
+                // Always clear and show only the new 3 random chats
+                $('#top-free-chats-gallery').empty();
+                // No shuffle here, server already returns random 3
+                window.displayChats(data.chats, 'top-free', false); // Use a unique prefix like 'top-free'
+                $('#top-free-chats-section').show(); // Show the section if chats are loaded
+            } else {
+                $('#top-free-chats-section').hide(); // Hide section if no chats
+            }
+        } catch (e) {
+            console.error("Error loading top free chats:", e);
+            $('#top-free-chats-gallery').html('<p>Error loading top free chats.</p>'); // Or hide
+        }
+    }
+    // Load top free chats on document ready
+    loadTopFreeChats();
 
     // --- Popular Chats Infinite Scroll with Session Storage Caching ---
     let popularChatsPage = 1;

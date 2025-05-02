@@ -1348,6 +1348,10 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
             `;
       }
   });
+  if(searchId == 'top-free'){
+    $('#top-free-chats-gallery').append(htmlContent);
+    return
+  }
   // Append the generated HTML to the gallery
   $(document).find('#chat-gallery').append(htmlContent);
 };

@@ -73,15 +73,73 @@
   "premium": " 💎 プレミアム",
   "discount": "70%オフ",
   "new_user_discount": "💎 新規ユーザーに70%割引",
-  "plan_page" :{
+  "plan_page": {
     "subscription_start_date": "サブスクリプション開始日",
     "subscription_end_date": "サブスクリプション終了日",
     "subscription_renewal_date": "サブスクリプション更新日",
-      "subscription": "サブスクリプション",
-      "choose_your_plan": "プランを選択",
-      "choose_your_plan_description": "100%匿名。いつでもキャンセルできます。",
-      "features": "プレミアムの利点"
+    "subscription": "サブスクリプション",
+    "choose_your_plan": "プランを選択",
+    "choose_your_plan_description": "100%匿名。いつでもキャンセルできます。",
+    "features": "プレミアムの利点"
+  },
+  "lp": {
+    "old_login_page": "メールでログイン",
+    "banner": {
+      "0": {
+        "title": "素晴らしいAI生成アートを無料で作成。",
+        "subtitle": "ユニークなAIキャラクターとチャットしながら、無料でAI画像生成を楽しもう。"
+      },
+      "1": {
+        "title": "最高のAIチャット＆ファンタジーアートジェネレーター",
+        "subtitle": "チャットして、驚くほど美しいファンタジーAIキャラクターを作成！"
+      },
+      "2": {
+        "title": "次世代AIチャット＆モデルクリエイター",
+        "subtitle": "AIモデルをデザインして、すぐに会話を楽しもう！"
+      },
+      "3": {
+        "title": "No.1 AIチャット＆画像生成ツール",
+        "subtitle": "作成、チャット、AIキャラクターに命を吹き込もう！"
+      }
     },
+    "cta_button": "生成を開始",
+    "cta_button2": "今すぐチャットを開始",
+    "cta_button3": "今すぐLamixを試す",
+    "meet_heading": "Lamixで理想のAIコンパニオンに出会おう",
+    "meet_subheading": "これまでにないパーソナライズされた知的な会話を楽しみ、理想のAIキャラクターとつながろう。",
+    "why_heading": "なぜLamixを選ぶのか？",
+    "why_subheading": "無制限の柔軟性、利便性、そして自由な表現",
+    "feature1_title": "無料で利用可能",
+    "feature1_text": "チャットと画像生成を無料で試し、1つのキャラクターを作成できます。無制限のキャラクターや追加機能を利用するにはプレミアムにアップグレードしてください。",
+    "feature2_title": "モバイル対応",
+    "feature2_text": "どこにいてもチャットを楽しめます。Lamixはスマホやタブレットでもシームレスに動作します。",
+    "feature3_title": "無制限のコンテンツ",
+    "feature3_text": "完全に無制限の会話と画像生成を体験できます。",
+    "feature4_title": "安全で安心",
+    "feature4_text": "会話はプライベートで保護されており、安心してチャットを楽しめます。",
+    "how_heading": "LamixでAIキャラクターとチャットする方法",
+    "how_subheading": "たった3つの簡単なステップで、AIコンパニオンとのチャットを始めよう",
+    "how_step1_title": "1. アカウントを作成",
+    "how_step1_text": "サインアップして、Lamixのすべての機能に即アクセス。",
+    "how_step2_title": "2. AIキャラクターを選択",
+    "how_step2_text": "多様なAIコンパニオンのコレクションから選択してください。",
+    "how_step3_title": "3. 会話を開始",
+    "how_step3_text": "最初の一言を送って、自由な会話を楽しもう。",
+    "testimonials_heading": "Lamixに関するユーザーの声",
+    "testimonial1_name": "アレックス M.",
+    "testimonial1_text": "Lamixは本当に自由なAI会話を提供してくれます。制限なく自分を表現できるのが気に入っています。非常におすすめです！",
+    "testimonial2_name": "サラ K.",
+    "testimonial2_text": "いくつかのAIチャットアプリを試しましたが、Lamixは無制限のコンテンツと直感的なデザインで際立っています。モバイル体験もシームレスで、どこでも使いやすいです。",
+    "testimonial3_name": "ジェームズ T.",
+    "testimonial3_text": "Lamixの画像生成は素晴らしいです！無制限の画像生成と自由な会話が、このプラットフォームをユニークにしています。開発者は本当にユーザーのニーズを理解しています。",
+    "faq_heading": "よくある質問",
+    "faq1_q": "Lamixは本当に無料で使えますか？",
+    "faq1_a": "はい、Lamixは完全に無料で利用できます。隠れた費用や料金はありません。すぐにAIキャラクターとのチャットを始められます。",
+    "faq2_q": "Lamixの「無制限」とはどういう意味ですか？",
+    "faq2_a": "Lamixでは、他のAIプラットフォームで一般的なコンテンツフィルターなしで、完全に自由な会話と画像生成を楽しめます。AIキャラクターは、あなたが望むどんなトピックにも対応できます。",
+    "faq3_q": "Lamixはモバイルデバイスで利用できますか？",
+    "faq3_a": "はい、Lamixはモバイルデバイスに完全対応しています。スマートフォンやタブレットで、すべての機能をシームレスに楽しめます。"
+  },
   "landing_page": {
     "old_login_page" : "ログイン",
     "banner": {

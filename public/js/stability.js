@@ -137,15 +137,16 @@ window.handleRegenSpin = function (imageId, spin) {
     }
 }
 // Display and remove image loader with provided data-id
-window.displayOrRemoveImageLoader = function (imageId, action) {
+window.displayOrRemoveImageLoader = function (imageId, action, imagePreview) {
     if (action === 'remove') {
         $(`#chat-recommend [data-id=${imageId}]`).remove();
     } else {
-        const placeholder = "/img/image-placeholder.gif";
+        const loadingSpinerGif = "/img/image-placeholder.gif";
         const card = $(`
             <div data-id="${imageId}" class="assistant-image-box card custom-card bg-transparent shadow-0 border-0 px-1 mx-1 col-auto" style="cursor:pointer;">
-                <div style="background-image:url(${placeholder});border:4px solid white;background-size:cover;" class="card-img-top rounded-avatar position-relative m-auto">
-                </div>
+            <div style="background-image:url(${imagePreview});border:4px solid white;background-size:cover;" class="card-img-top rounded-avatar position-relative m-auto">
+                <img src="${loadingSpinerGif}" alt="Loading..." class="position-absolute top-50 start-50 translate-middle" style="z-index:2;"/>
+            </div>
             </div>
         `);
         $('#chat-recommend').append(card);

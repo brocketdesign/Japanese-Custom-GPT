@@ -48,16 +48,15 @@
                 <div class="container-fluid">
                     <div class="d-flex align-items-center justify-content-center m-auto">
                         <div style="position: absolute;left: 20px;top: 10px;">
+
+                            <button 
+                            class="btn btn-dark onchat-on" 
+                            style="display: none;"
+                            onclick="showDiscovery()"><i class="bi bi-arrow-left"></i></button>
+
                             <button class="menu-chat-sm d-sm-none btn btn-dark"><i class="bi bi-list"></i></button>
                             <button id="menu-chat" class="d-none d-sm-inline-block btn btn-dark"><i class="bi bi-list"></i></button>
 
-                            <button 
-                            class="new-chat d-sm-none btn btn-dark"
-                            onclick="handleChatReset(this)"><i class="bi bi-pencil-square"></i></button>
-                            <button 
-                            id="new-chat" 
-                            class="new-chat d-none d-sm-inline-block btn btn-dark"
-                            onclick="handleChatReset(this)"><i class="bi bi-pencil-square"></i></button>
                         </div>
                         <div class="d-flex flex-row" style="cursor:pointer" onclick="showDiscovery()">
                             <img src="/img/logo.webp" alt="" class="mx-3" width="40px">
@@ -135,20 +134,21 @@
                     </div>
                 </div>
 
-                <!-- Tag List -->
-                <div class="mx-4 my-4 tag-list-container">
-                    <h5 class="fw-bold mb-3">{{translations.tagList}}</h5>
-                    <div id="tags-container" class="tag-list mx-4 pt-2"></div>
-                </div>
-
                 <!-- Top Free Chats Section -->
                 <div class="mx-4 my-4" id="top-free-chats-section">
                     <h5 class="fw-bold mb-3">{{translations.topFreeChats}}</h5>
                     <div id="top-free-chats-spinner" class="spinner-border text-secondary" role="status" style="display: none;">
                         <span class="visually-hidden">Loading...</span>
                     </div>
-                    <div id="top-free-chats-gallery" class="row"></div>
+                    <div id="top-free-chats-gallery" class="d-flex flex-row flex-nowrap overflow-auto" style="gap: 1rem;"></div>
                 </div>
+                
+                <!-- Tag List -->
+                <div class="mx-4 my-4 tag-list-container">
+                    <h5 class="fw-bold mb-3">{{translations.tagList}}</h5>
+                    <div id="tags-container" class="tag-list mx-4 pt-2"></div>
+                </div>
+
 
                 <!-- Popular chat -->
                 <div class="mx-4 my-4" id="popular-chats-section">
@@ -250,12 +250,12 @@
                                     <button id="sendMessage" class="btn btn-light px-4 border-0"><i class="bi bi-send"></i></button>
                                 </div>
 
-                                <div id="promptContainer" class="shadow" style="position: absolute; bottom: 0px; width: 100%; max-height: 65vh; background: rgb(255, 255, 255); overflow-y: auto;left: 0;right: 0;z-index: 10;display:none;">
-                                    <div class="position-sticky sticky-top shadow d-flex justify-content-end align-items-center bg-white form-check text-start mb-2 py-2 ps-3">
+                                <div id="promptContainer" class="shadow" style="position: absolute; bottom: 0px; width: 95%; margin: auto; max-height: 65vh; background: rgb(255, 255, 255); overflow-y: auto;left: 0;right: 0;z-index: 10;border-radius: 15px 15px 0 0;display:none;">
+                                    <div class="d-none position-sticky sticky-top shadow d-flex justify-content-end align-items-center bg-white form-check text-start mb-2 py-2 ps-3">
                                         <button id="close-promptContainer" class="btn shadow-0"><i class="bi bi-x"></i></button>
                                     </div>
-                                    <div id="promptList" class="row mx-0 pb-2">
-                                        <h4 class="text-center w-100">{{translations.selectPose}}</h4>
+                                    <div id="promptList" class="row mx-0">
+                                        <h4 class="text-center w-100 mt-2">{{translations.selectPose}}</h4>
                                         <p class="text-center text-muted w-100">{{translations.selectPose_description}}</p><!-- Prompts will be dynamically generated here -->
                                         {{#each promptData}}
                                             <div class="prompt-card col-6 col-sm-3 border-0 shadow-0 mb-1" 

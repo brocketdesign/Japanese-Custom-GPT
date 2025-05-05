@@ -15,7 +15,7 @@ fastify.post('/novita/generate-img', async (request, reply) => {
   try {
     const all_tasks =  await getTasks(db,null, userId)
     if(request.user.subscriptionStatus !== 'active' && all_tasks.length >= 5){
-      fastify.sendNotificationToUser(userId, 'showNotification', { message:request.translations.free_usage_image_limit , icon:'warning' })
+      fastify.sendNotificationToUser(userId, 'loadPlanPage')
       return reply.status(500).send({ error: 'You reached the limit of the free usage' });
     }
     const pending_taks =  await getTasks(db, 'pending', userId)

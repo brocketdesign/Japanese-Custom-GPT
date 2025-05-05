@@ -1647,7 +1647,7 @@
 
 .tags-wrapper {
   width: 100%;
-  overflow-x: auto;
+  overflow-x: hidden;
 }
 .tag-item {
   background: rgba(108, 117, 125, 0.12);

@@ -226,13 +226,6 @@ $(document).ready(async function() {
         
     }
 
-    if (!isTemporary) {
-      if(!subscriptionStatus && !localStorage.getItem('dismissedUpgradePopup')){
-        loadPlanPage();
-        localStorage.setItem('dismissedUpgradePopup', 'true');
-        return
-      }
-    }
     //checkAndRedirect();
     window.showUpgradePopup = function(limitType) {
     
@@ -1292,7 +1285,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
           // --- End: Random sample image selection logic ---
 
             htmlContent += `
-            <div class="gallery-card col-12 col-sm-3 col-lg-3 mb-4 ${chat.premium ? "premium-chat":''} ${chat.gender ? 'chat-gender-'+chat.gender:''} nsfw-${finalNsfwResult}" style="cursor: pointer;">
+            <div class="gallery-card ${searchId == 'top-free' ? 'col-6' : 'col-12'} col-sm-3 col-lg-3 mb-4 ${chat.premium ? "premium-chat":''} ${chat.gender ? 'chat-gender-'+chat.gender:''} nsfw-${finalNsfwResult}" style="cursor: pointer;">
             <div class="card shadow border-0 h-100 position-relative gallery-hover" style="overflow: hidden;" 
               onclick="${chat.premium ? `(window.user && window.user.subscriptionStatus === 'active' ? redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}') : loadPlanPage())` : `redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')`}">
               <div class="gallery-image-wrapper position-relative" style="aspect-ratio: 4/5; background: #f8f9fa;">
@@ -1319,7 +1312,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
               </div>
               ` : ''}
               </div>
-              <div class="card-body py-3 px-3 d-flex flex-column justify-content-between">
+              <div class="${searchId == 'top-free' ? 'd-none' : ''} card-body py-3 px-3 d-flex flex-column justify-content-between">
               <div class="d-flex align-items-center mb-2">
               <img src="${chat.chatImageUrl || '/img/avatar.png'}" alt="${chat.name || chat.chatName}" class="rounded-circle me-2 border" width="40" height="40">
               <div>

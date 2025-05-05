@@ -121,6 +121,10 @@ function initializeWebSocket() {
         const { suggestions, uniqueId } = data.notification;
         displaySuggestions(suggestions, uniqueId);
       }
+      // Load Plan Modal
+      if (data.notification.type == 'loadPlanPage') {
+        loadPlanPage();
+      }
     } else {
       //console.log('Message from server:', event.data);
     }

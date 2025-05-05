@@ -742,6 +742,7 @@ async function checkIfAdmin(userId) {
     }
     const unlocked = Array.isArray(currentUser.unlockedItems) && currentUser.unlockedItems.includes(id);
     const isOwner = currentUser._id == ownerId;
+    console.log({ unlocked, isOwner, id, ownerId });
     return unlocked || isOwner;
   }
   
@@ -1405,8 +1406,7 @@ window.loadAllUserPosts = async function (page = 1) {
       success: function (data) {
         let galleryHtml = '';
         data.posts.forEach(item => {
-            const unlockedItem = isUnlocked(currentUser, item.post.postId, item.userId)
-            let isBlur = unlockedItem ? false : item?.post?.nsfw && !subscriptionStatus 
+            let isBlur = item?.post?.nsfw && !subscriptionStatus 
             const isLiked = item?.post?.likedBy?.some(id => id.toString() === currentUserId.toString());
 
             galleryHtml += `
@@ -1496,8 +1496,7 @@ window.resultImageSearch = async function (page = 1,query,style = 'anime', callb
       success: function (data) {
         let chatGalleryHtml = '';
         data.images.forEach(item => {
-            const unlockedItem = isUnlocked(currentUser, item._id,item.userId)
-            let isBlur = unlockedItem ? false : item?.nsfw && !subscriptionStatus 
+            let isBlur = item?.nsfw && !subscriptionStatus 
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             chatGalleryHtml += `
                 <div class="col-6 col-md-3 col-lg-2 mb-2">
@@ -1651,8 +1650,7 @@ window.loadAllChatImages = function (page = 1, reload = false) {
     let chatGalleryHtml = ''
   
     images.forEach((item) => {
-      const unlockedItem = isUnlocked(user, item._id, item.userId)
-      const isBlur = !unlockedItem && item?.nsfw && !subscriptionStatus
+      const isBlur = item?.nsfw && !subscriptionStatus
       const isLiked = item?.likedBy?.some((id) => id.toString() === currentUserId.toString())
 
       chatGalleryHtml += `
@@ -1797,8 +1795,7 @@ window.loadUserImages = function (userId, page = 1, reload = false) {
   
     let html = ''
     images.forEach((item) => {
-      const unlocked = isUnlocked(user, item._id, item.userId)
-      const blurred = !unlocked && item.nsfw && !subscriptionActive
+      const blurred =  item.nsfw && !subscriptionActive
       const liked = item.likedBy?.some((id) => id.toString() === currentUserId.toString())
       html += `
         <div class="col-6 col-md-3 col-lg-2 mb-2">
@@ -1850,8 +1847,7 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
       success: function (data) {
         let galleryHtml = '';
         data.posts.forEach(item => {
-            const unlockedItem = isUnlocked(currentUser, item._id, item.userId)
-            let isBlur = unlockedItem ? false : item?.image?.nsfw && !subscriptionStatus 
+            let isBlur = item?.image?.nsfw && !subscriptionStatus 
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             galleryHtml += `
                 <div class="col-12 col-md-6 col-lg-4 mb-2">
@@ -2226,12 +2222,8 @@ window.loadChatImages = function (chatId, page = 1, reload = false, isModal = fa
     const currentUserId = user._id
     let chatGalleryHtml = ''
 
-    images.forEach((item) => {
-      const unlockedItem = isUnlocked(user, item._id, user._id)
-      console.log('unlockedItem:', unlockedItem)
-      const isBlur = !unlockedItem && item?.nsfw && !subscriptionStatus
-      // Debug blur condition
-       console.log('isBlur:', isBlur, 'unlockedItem:', unlockedItem, 'item.nsfw:', item?.nsfw, 'subscriptionStatus:', subscriptionStatus)
+    images.forEach(async(item) => {
+      const isBlur = item?.nsfw && !subscriptionStatus
       const isLiked = item?.likedBy?.some((id) => id.toString() === currentUserId.toString())
 
       // If not blurred & not in loadedImages => push into loadedImages
@@ -2374,8 +2366,7 @@ $(document).ready(function () {
                 // Display a maximum of 12 images per chat
                 if (index >= 12) return;
               // Check unlock logic (adapt to your own logic)
-              const unlockedItem = isUnlocked(currentUser, item._id, item.userId);
-              const isBlur = unlockedItem ? false : item.nsfw && !subscriptionStatus;
+              const isBlur = item.nsfw && !subscriptionStatus;
               // Check if user has “liked” this image
               const isLiked = Array.isArray(item.likedBy)
                 ? item.likedBy.some(id => id.toString() === currentUserId.toString())
@@ -2511,8 +2502,7 @@ $(document).ready(function () {
               let additionalImagesHtml = '';
   
               data.images.forEach((item, index) => {
-                const unlockedItem = isUnlocked(currentUser, item._id, item.userId);
-                const isBlur = unlockedItem ? false : item.nsfw && !subscriptionStatus;
+                const isBlur = item.nsfw && !subscriptionStatus;
                 const isLiked = Array.isArray(item.likedBy)
                   ? item.likedBy.some(id => id.toString() === currentUserId.toString())
                   : false;

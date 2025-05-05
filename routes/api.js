@@ -2739,7 +2739,7 @@ async function routes(fastify, options) {
                     let servedFromCache = false;
 
                     // 1. Check cache
-                    const cacheDoc = false //await cacheCollection.findOne({ language });
+                    const cacheDoc = await cacheCollection.findOne({ language });
                     const now = Date.now();
                     const cacheExpiry = 24 * 60 * 60 * 1000; // 24 hours
 

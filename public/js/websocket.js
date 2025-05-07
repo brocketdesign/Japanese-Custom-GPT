@@ -12,7 +12,6 @@ function initializeWebSocket() {
   }
 
   socket.onopen = () => {
-    console.log('WebSocket connection established');
     reconnectAttempts = 0; // Reset reconnect attempts
 
     if($('#chatContainer').is(':visible')) {
@@ -23,107 +22,118 @@ function initializeWebSocket() {
   socket.onmessage = (event) => {
     const data = JSON.parse(event.data);
     if (data.notification) {
-      // log message
-      if (data.notification.type == 'log') {
-        console.log(data.notification.message);
-      }
-      // handle showNotification (message, icon)
-      if (data.notification.type == 'showNotification') {
-        const { message, icon } = data.notification;
-        showNotification( message, icon );
-      }
-      // handle imageModerationFlagged
-      if (data.notification.type == 'imageModerationFlagged') {
-        const { flagged, currentUserId } = data.notification;
-        if(flagged){
-          $(`[data-user-id="${currentUserId}"] #imageModerationFlagged`).show();
-          $(`[data-user-id="${currentUserId}"] #profileImage`).addClass('flagged');
-          $(`[data-user-id="${currentUserId}"] #profileImage`).attr('src', '/img/avatar.png');
-        }else{
-          $(`[data-user-id="${currentUserId}"] #imageModerationFlagged`).hide();
+      switch (data.notification.type) {
+        case 'log':
+          console.log(data.notification.message);
+          break;
+        case 'showNotification': {
+          const { message, icon } = data.notification;
+          showNotification(message, icon);
+          break;
         }
-      }
-      // Add a new notification
-      if(data.notification.type == 'updateNotificationCountOnLoad') {
-        const { userId } = data.notification;
-        updateNotificationCountOnLoad(userId);
+        case 'imageModerationFlagged': {
+          const { flagged, currentUserId } = data.notification;
+          if(flagged){
+            $(`[data-user-id="${currentUserId}"] #imageModerationFlagged`).show();
+            $(`[data-user-id="${currentUserId}"] #profileImage`).addClass('flagged');
+            $(`[data-user-id="${currentUserId}"] #profileImage`).attr('src', '/img/avatar.png');
+          }else{
+            $(`[data-user-id="${currentUserId}"] #imageModerationFlagged`).hide();
+          }
+          break;
+        }
+        case 'updateNotificationCountOnLoad': {
+          const { userId } = data.notification;
+          updateNotificationCountOnLoad(userId);
 
-        if($('#chatContainer').is(':visible')) {
-          fetchChatData(chatId,user._id)
+          if($('#chatContainer').is(':visible')) {
+            fetchChatData(chatId,user._id)
+          }
+          break;
         }
-      }
-      // Handle relationship update between user and character
-      if (data.notification.type == 'updateRelation') {
-        const { relation, userChatId } = data.notification;
-        if (relation && userChatId) {
-          $(`#relationshipStatus[data-id="${userChatId}"]`).text(relation).show();
+        case 'updateRelation': {
+          const { relation, userChatId } = data.notification;
+          if (relation && userChatId) {
+            $(`#relationshipStatus[data-id="${userChatId}"]`).text(relation).show();
+          }
+          break;
         }
-      }
-
-      // Display image icon in last user message
-      if (data.notification.type == 'addIconToLastUserMessage') {
-        addIconToLastUserMessage();
-      }
-      // Display or remove loader
-      if(data.notification.type == 'handleLoader') {
-        const {imageId, action } = data.notification;
-        displayOrRemoveImageLoader(imageId, action);
-      }
-      // Display or remove spinner
-      if(data.notification.type == 'handleRegenSpin') {
-        const {imageId, spin} = data.notification;
-        handleRegenSpin(imageId, spin);
-      }
-      // Display generated image
-      if(data.notification.type == 'imageGenerated') {
-        const { userChatId, imageId, imageUrl, title, prompt, nsfw } = data.notification;
-        generateImage({
-          userChatId,
-          url: imageUrl,
-          id:imageId,
-          title,
-          prompt,
-          imageId, 
-          nsfw
-        });
-      }
-      // Display character image
-      if(data.notification.type == 'characterImageGenerated' && $('#imageContainer').length > 0) {
-        const { imageUrl, nsfw } = data.notification;
-        generateCharacterImage(imageUrl,nsfw);
-      }
-      // Reset character form
-      if(data.notification.type == 'resetCharacterForm' && $('#imageContainer').length > 0) {
-        resetCharacterForm();
-      }
-      // Updade image title dynamically
-      if(data.notification.type == 'updateImageTitle') {
-        const { imageId, title } = data.notification;
-        updateImageTitle(imageId, title);
-      }
-      // Update character generation message
-      if(data.notification.type == 'updateCharacterGenerationMessage' &&  $('.genexp').length) {
-        const { mess } = data.notification;
-        updateCharacterGenerationMess(mess);
-      }
-      // Display completion message
-      if(data.notification.type == 'displayCompletionMessage') {
-        const { message, uniqueId } = data.notification;
-        displayCompletionMessage(message, uniqueId);
-      }
-      // Hide completion message
-      if(data.notification.type == 'hideCompletionMessage') {
-        const { uniqueId } = data.notification;
-        hideCompletionMessage(uniqueId);
-      }
-      // Display suggestions
-      if (data.notification.type == 'displaySuggestions') {
-        const { suggestions, uniqueId } = data.notification;
-        displaySuggestions(suggestions, uniqueId);
-      }
-      // Load Plan Modal
-      if (data.notification.type == 'loadPlanPage') {
-        loadPlanPage();
+        case 'addIconToLastUserMessage':
+          addIconToLastUserMessage();
+          break;
+        case 'handleLoader': {
+          const {imageId, action } = data.notification;
+          displayOrRemoveImageLoader(imageId, action);
+          break;
+        }
+        case 'handleRegenSpin': {
+          const {imageId, spin} = data.notification;
+          handleRegenSpin(imageId, spin);
+          break;
+        }
+        case 'imageGenerated': {
+          const { userChatId, imageId, imageUrl, title, prompt, nsfw } = data.notification;
+          generateImage({
+            userChatId,
+            url: imageUrl,
+            id:imageId,
+            title,
+            prompt,
+            imageId, 
+            nsfw
+          });
+          break;
+        }
+        case 'characterImageGenerated':
+          if ($('#imageContainer').length > 0) {
+            const { imageUrl, nsfw } = data.notification;
+            generateCharacterImage(imageUrl,nsfw);
+          }
+          break;
+        case 'resetCharacterForm':
+          if ($('#imageContainer').length > 0) {
+            resetCharacterForm();
+          }
+          break;
+        case 'updateImageTitle': {
+          const { imageId, title } = data.notification;
+          updateImageTitle(imageId, title);
+          break;
+        }
+        case 'updateCharacterGenerationMessage':
+          if ($('.genexp').length) {
+            const { mess } = data.notification;
+            updateCharacterGenerationMess(mess);
+          }
+          break;
+        case 'displayCompletionMessage': {
+          const { message, uniqueId } = data.notification;
+          displayCompletionMessage(message, uniqueId);
+          break;
+        }
+        case 'hideCompletionMessage': {
+          const { uniqueId } = data.notification;
+          hideCompletionMessage(uniqueId);
+          break;
+        }
+        case 'displaySuggestions': {
+          const { suggestions, uniqueId } = data.notification;
+          displaySuggestions(suggestions, uniqueId);
+          break;
+        }
+        case 'loadPlanPage':
+          loadPlanPage();
+          break;
+        case 'updateCustomPrompt': {
+          const { promptId } = data.notification;
+          if (window.updateCustomPrompt) {
+            window.updateCustomPrompt(promptId);
+          }
+          break;
+        }
+        default:
+          //console.log('Message from server:', event.data);
+          break;
       }
     } else {
       //console.log('Message from server:', event.data);
@@ -131,10 +141,8 @@ function initializeWebSocket() {
   };
 
   socket.onclose = () => {
-    console.log('WebSocket connection closed');
     if (reconnectAttempts < maxReconnectAttempts) {
       setTimeout(() => {
-        console.log(`Reconnecting... Attempt ${reconnectAttempts + 1}`);
         reconnectAttempts++;
         initializeWebSocket();
       }, reconnectInterval);

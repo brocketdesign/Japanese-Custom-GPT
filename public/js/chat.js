@@ -313,7 +313,74 @@ $(document).ready(async function() {
     $(document).on('click','#unlock-result',function(){
         promptForEmail()
     })
-    
+
+        // Function to initialize the custom prompt (deactivate the ones that are not in the userChat but the first one)
+        async function initializeCustomPrompts(userChatId) {
+            try {
+                // Fetch the array of custom prompt IDs for this userChat
+                const res = await fetch(`/api/custom-prompts/${userChatId}`);
+                if (!res.ok) {
+                    // Fallback: if fetch fails, try to activate the first prompt card if any
+                    const $allPrompts = $('.prompt-card');
+                    if ($allPrompts.length > 0) {
+                        $allPrompts.removeClass('active').addClass('inactive');
+                        $allPrompts.first().addClass('active').removeClass('inactive');
+                    }
+                    return;
+                }
+                const promptIds = await res.json(); // promptIds can be null or an array
+
+                const $customPrompts = $('.prompt-card');
+                if ($customPrompts.length === 0) {
+                    return;
+                }
+
+                // Deactivate all prompts initially
+                $customPrompts.removeClass('active').addClass('inactive');
+
+                if (!promptIds || promptIds.length === 0) {
+                    // Case 1: promptIds is empty or null
+                    // Activate only the first card
+                    $customPrompts.first().addClass('active').removeClass('inactive');
+                } else {
+                    // Case 2: promptIds is not empty
+                    let lastActivatedIndex = -1;
+
+                    $customPrompts.each(function(index) {
+                        const promptId = $(this).data('id');
+                        if (promptIds.includes(promptId)) {
+                            $(this).addClass('active').removeClass('inactive');
+                            if (index > lastActivatedIndex) {
+                               lastActivatedIndex = index;
+                            }
+                        }
+                    });
+                    
+                    // After activating all prompts from promptIds, find the actual last one that was set to active
+                    let maxIndexFromPromptIds = -1;
+                    $customPrompts.each(function(index){
+                        if(promptIds.includes($(this).data('id'))){
+                            if(index > maxIndexFromPromptIds){
+                                maxIndexFromPromptIds = index;
+                            }
+                        }
+                    });
+
+                    // Activate the next card after the last one found in promptIds
+                    if (maxIndexFromPromptIds !== -1 && maxIndexFromPromptIds + 1 < $customPrompts.length) {
+                        $($customPrompts[maxIndexFromPromptIds + 1]).addClass('active').removeClass('inactive');
+                    }
+                }
+            } catch (e) {
+                // Fallback in case of other errors: try to activate the first prompt card if any
+                const $allPromptsOnError = $('.prompt-card');
+                if ($allPromptsOnError.length > 0) {
+                    $allPromptsOnError.removeClass('active').addClass('inactive');
+                    $allPromptsOnError.first().addClass('active').removeClass('inactive');
+                }
+            }
+        }
+
     async function handleChatSuccess(data, fetch_reset, fetch_userId, userChatId) {
         $(document).find(`.chat-list.item[data-id="${chatId}"]`).addClass('active').siblings().removeClass('active');
 
@@ -346,6 +413,7 @@ $(document).ready(async function() {
 
         updateParameters(chatId, fetch_userId, userChatId);
         showChat();
+        initializeCustomPrompts(userChatId)
         showPrompts();
     }
     
@@ -847,6 +915,7 @@ $(document).ready(async function() {
             </div>
         `;
     }
+    
     window.openShareModal = function(el) {
         const title = $(el).data('title');
         const url = $(el).data('url');
@@ -1436,7 +1505,6 @@ $(document).ready(async function() {
             callback();
         }
     };       
-
     // Helper function to hide and show #promptContainer using the 'visible' class
     function showPrompts() {
         $('#promptContainer').hide().addClass('visible').slideDown('fast');
@@ -1461,22 +1529,23 @@ $(document).ready(async function() {
     $('#close-promptContainer').on('click', function() {
         hidePrompts();
     });
-    
-    $('.prompt-card').off('click').on('click', function() {
-        $('.prompt-card').removeClass('selected'); 
-        $(this).addClass('selected');
 
-        var promptId = $(this).data('id');
-        var imageNsfw = $(this).data('nsfw') ? 'nsfw' : 'sfw';
+        $(document).find('.prompt-card').off('click').on('click', function() {
 
-        const imagePreview = new URL($(this).find('img').attr('data-src') || $(this).find('img').attr('src'), window.location.origin).href;
-       
+            $('.prompt-card').removeClass('selected'); 
+            $(this).addClass('selected');
 
-        const subscriptionStatus = user.subscriptionStatus == 'active'
+            var promptId = $(this).data('id');
+            var imageNsfw = $(this).data('nsfw') ? 'nsfw' : 'sfw';
 
-        sendPromptImageDirectly(promptId, imageNsfw, imagePreview);
-        hidePrompts();
-    });
+            const imagePreview = new URL($(this).find('img').attr('data-src') || $(this).find('img').attr('src'), window.location.origin).href;
+           
+            const subscriptionStatus = user.subscriptionStatus == 'active';
+
+
+            sendPromptImageDirectly(promptId, imageNsfw, imagePreview);
+            hidePrompts();
+        });
 
     function sendPromptImageDirectly(promptId, imageNsfw, imagePreview) {
         const placeholderId = new Date().getTime() + "_" + promptId;
@@ -2156,12 +2225,14 @@ window.showChat = function() {
     }); 
 }
 
-function initializeAudio(){
+window.initializeAudio = function() {
     let autoPlay = localStorage.getItem('audioAutoPlay') === 'true';
+    console.log('[initializeAudio] autoPlay:', autoPlay);
     $('#audio-icon').addClass(autoPlay ? 'fa-volume-up' : 'fa-volume-mute');
     $('#audio-play').click(function() {
         autoPlay = !autoPlay;
         localStorage.setItem('audioAutoPlay', autoPlay);
+        console.log('[audio-play click] autoPlay toggled to:', autoPlay);
         $('#audio-icon').toggleClass('fa-volume-up fa-volume-mute');
     });
-}
+};

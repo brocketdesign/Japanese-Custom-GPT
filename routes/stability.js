@@ -27,6 +27,11 @@ fastify.post('/novita/generate-img', async (request, reply) => {
     let newPrompt = prompt
     if(customPrompt && promptId){
       const promptData = await getPromptById(db,promptId);
+      savePromptIdtoChat(db, chatId, userChatId, promptId)
+      .then((response) => {
+        console.log('Prompt ID saved to chat:', response);
+        fastify.sendNotificationToUser(userId, 'updateCustomPrompt', { promptId: promptId })
+      })
       const customPrompt = promptData.prompt;
       const nsfw = promptData.nsfw == 'on' ? true : false;
       imageType = nsfw ? 'nsfw' : 'sfw'
@@ -148,6 +153,40 @@ fastify.post('/novita/moderate', async (request, reply) => {
   reply.status(500).send({ error: 'Internal Server Error' });
   }
 });
+
+async function savePromptIdtoChat(db, chatId, userChatId, promptId) {
+  const collectionUserChats = db.collection('userChat');
+
+  console.log('[savePromptIdtoChat] called with:', { chatId, userChatId, promptId });
+
+  let userChatObjectId;
+  try {
+      userChatObjectId = new ObjectId(userChatId);
+  } catch (error) {
+      console.error('[savePromptIdtoChat] Invalid userChatId:', userChatId, error);
+      throw new Error(`無効なID形式です (userChatId: ${userChatId})`);
+  }
+
+  try {
+    const userChatUpdateResult = await collectionUserChats.updateOne(
+        { _id: userChatObjectId },
+        { $addToSet: { customPromptIds: promptId } }
+    );
+
+    console.log('[savePromptIdtoChat] Update result for userChat collection:', userChatUpdateResult);
+    if (userChatUpdateResult.matchedCount === 0) {
+        const errorMessage = `指定されたユーザーチャットが見つかりませんでした (userChatId: ${userChatId})`;
+        console.error(`[savePromptIdtoChat] ${errorMessage}`);
+        throw new Error(errorMessage);
+    }
+    
+    return { userChatUpdateResult };
+
+  } catch (err) {
+    console.error('[savePromptIdtoChat] Error during database update:', err.message);
+    throw err; 
+  }
+}
 
   async function saveModerationToDB(db, chatId, moderation, characterPrompt){
     const collectionChats = db.collection('chats'); // Replace 'chats' with your actual collection name

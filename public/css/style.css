@@ -1765,3 +1765,15 @@
   text-decoration: none;
   box-shadow: 0 2px 8px rgba(0,123,255,0.08);
 }
+
+.prompt-card.inactive {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.prompt-card.inactive .custom-badge {
+  display: none;
+}
+.prompt-card.active {
+  opacity: 1;
+  pointer-events: auto;
+}

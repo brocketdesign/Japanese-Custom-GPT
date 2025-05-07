@@ -1,98 +1,141 @@
 <!DOCTYPE html>
 <html lang="ja">
-{{> dashboard-header}}
-<body>
+<head>
+  {{> dashboard-header}}
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    /* Optional: Custom styles for sortable dragging */
+    .sortable-ghost {
+      opacity: 0.4;
+      background-color: #f0f0f0;
+    }
+    .sortable-chosen {
+      /* Styles for the chosen item */
+    }
+    .handle {
+      cursor: grab;
+    }
+  </style>
+</head>
+<body class="bg-gray-100">
 {{> dashboard-nav}}
 
-<div class="container mt-4">
-  <h1 class="mb-4">プロンプト管理</h1>
-  <button id="newPromptBtn" class="btn btn-primary">New Prompt</button>
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>画像</th>
-        <th>タイトル</th>
-        <th>プロンプト</th>
-        <th>NSFW</th>
-        <th>アクション</th>
-      </tr>
-    </thead>
-    <tbody>
-      {{#each prompts}}
-      <tr data-id="{{this._id}}">
-        <td><img src="{{this.image}}" alt="{{this.title}}" class="img-thumbnail" style="width: 100px;"></td>
-        <td>{{this.title}}</td>
-        <td>{{this.prompt}}</td>
-        <td>{{this.nsfw}}</td>
-        <td>
-          <button class="btn btn-info btn-sm preview-btn" data-id="{{this._id}}">プレビュー</button>
-          <button class="btn btn-warning btn-sm edit-btn" data-id="{{this._id}}">編集</button>
-          <button class="btn btn-danger btn-sm delete-btn" data-id="{{this._id}}">削除</button>
-        </td>
-      </tr>
-      {{/each}}
-    </tbody>
-  </table>
+<div class="container mx-auto mt-8 p-4">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-gray-800">プロンプト管理</h1>
+    <div>
+      <button id="reorderPromptsBtn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out mr-2">
+        Change Order
+      </button>
+      <button id="newPromptBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out">
+        New Prompt
+      </button>
+    </div>
+  </div>
+
+  <div class="bg-white shadow-md rounded-lg overflow-hidden">
+    <table class="min-w-full leading-normal">
+      <thead>
+        <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+          <th class="py-3 px-4 text-left">Order</th>
+          <th class="py-3 px-4 text-left">画像</th>
+          <th class="py-3 px-4 text-left">タイトル</th>
+          <th class="py-3 px-4 text-left">プロンプト (抜粋)</th>
+          <th class="py-3 px-4 text-left">NSFW</th>
+          <th class="py-3 px-4 text-center">アクション</th>
+        </tr>
+      </thead>
+      <tbody id="promptsTableBody" class="text-gray-700 text-sm">
+        {{! Prompts will be rendered here by JavaScript }}
+      </tbody>
+    </table>
+  </div>
 </div>
 
-<div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5">プロンプトプレビュー</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
-      </div>
-      <div class="modal-body">
-        <img id="previewImage" src="" alt="" class="img-fluid mb-3">
-        <h5 id="previewTitle"></h5>
-        <p id="previewPrompt"></p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
-      </div>
+<!-- Reorder Modal -->
+<div id="reorderModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+  <div class="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center pb-3 border-b">
+      <h3 class="text-xl font-semibold text-gray-900">Reorder Prompts</h3>
+      <button id="closeReorderModal" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center">
+        <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 111.414 1.414L11.414 10l4.293 4.293a1 1 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+        <span class="sr-only">Close modal</span>
+      </button>
+    </div>
+    <div id="reorderPromptsGrid" class="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 p-4 max-h-96 overflow-y-auto">
+      {{! Prompt items will be dynamically inserted here for reordering }}
+    </div>
+    <div class="mt-6 flex justify-end space-x-3 border-t pt-4">
+      <button id="cancelReorderBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
+        Cancel
+      </button>
+      <button id="saveOrderBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        Save Order
+      </button>
     </div>
   </div>
 </div>
 
-<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
+<!-- Preview Modal -->
+<div id="previewModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+  <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center pb-3">
+      <h3 class="text-xl font-semibold text-gray-900">プロンプトプレビュー</h3>
+      <button id="closePreviewModal" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 111.414 1.414L11.414 10l4.293 4.293a1 1 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+      </button>
+    </div>
+    <div class="mt-2">
+      <img id="previewImage" src="" alt="Preview" class="w-full h-auto rounded mb-4">
+      <h5 id="previewTitle" class="text-lg font-bold text-gray-800 mb-2"></h5>
+      <p id="previewPrompt" class="text-sm text-gray-600"></p>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+  <div class="relative top-10 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
     <form id="editForm" enctype="multipart/form-data">
-      <div class="modal-content m-auto">
-        <div class="modal-header">
-          <h1 class="modal-title fs-5">プロンプト編集</h1>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
+      <div class="flex justify-between items-center pb-3">
+        <h3 class="text-xl font-semibold text-gray-900">プロンプト編集</h3>
+        <button id="closeEditModal" type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 111.414 1.414L11.414 10l4.293 4.293a1 1 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+        </button>
+      </div>
+      <div class="mt-2 space-y-4">
+        <input type="hidden" id="editId" name="id">
+        <div>
+          <label for="editTitle" class="block text-sm font-medium text-gray-700">タイトル</label>
+          <input type="text" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" id="editTitle" name="title" required>
         </div>
-        <div class="modal-body">
-          <input type="hidden" id="editId" name="id">
-          <div class="mb-3">
-            <label for="editTitle" class="form-label">タイトル</label>
-            <input type="text" class="form-control" id="editTitle" name="title" required>
-          </div>
-          <div class="mb-3">
-            <label for="editPrompt" class="form-label">プロンプト</label>
-            <textarea class="form-control" id="editPrompt" name="prompt" rows="5" required></textarea>
-          </div>
-          <div class="mb-3">
-            <label for="editImage" class="form-label">画像をアップロード</label>
-            <input type="file" class="form-control" id="editImage" name="image" accept="image/*">
-          </div>
-          <div class="col-auto mb-3">
-              <label for="editGender" class="form-label">{{translations.newCharacter.genderLabel}}:</label>
-              <select class="form-select" id="editGender" name="editGender">
-                  <option value="female">{{translations.newCharacter.female}}</option>
-                  <option value="male">{{translations.newCharacter.male}}</option>
-                  <option value="nonBinary">{{translations.newCharacter.nonBinary}}</option>
-              </select>
-          </div>
-          <div class="mb-3">
-            <label for="editNsfw" class="form-label">NSFW</label>
-            <input type="checkbox" id="editNsfw" name="nsfw">
-          </div>
+        <div>
+          <label for="editPrompt" class="block text-sm font-medium text-gray-700">プロンプト</label>
+          <textarea class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" id="editPrompt" name="prompt" rows="5" required></textarea>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
-          <button type="submit" class="btn btn-primary">保存</button>
+        <div>
+          <label for="editImage" class="block text-sm font-medium text-gray-700">画像をアップロード (変更する場合のみ)</label>
+          <input type="file" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" id="editImage" name="image" accept="image/*">
         </div>
+        <div>
+          <label for="editGender" class="block text-sm font-medium text-gray-700">{{translations.newCharacter.genderLabel}}:</label>
+          <select class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" id="editGender" name="gender">
+              <option value="female">{{translations.newCharacter.female}}</option>
+              <option value="male">{{translations.newCharacter.male}}</option>
+              <option value="nonBinary">{{translations.newCharacter.nonBinary}}</option>
+          </select>
+        </div>
+        <div class="flex items-center">
+          <input type="checkbox" id="editNsfw" name="nsfw" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+          <label for="editNsfw" class="ml-2 block text-sm text-gray-900">NSFW</label>
+        </div>
+      </div>
+      <div class="mt-6 flex justify-end space-x-3">
+        <button type="button" id="cancelEditBtn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">キャンセル</button>
+        <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">保存</button>
       </div>
     </form>
   </div>
@@ -100,66 +143,267 @@
 
 {{> dashboard-footer}}
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  $(document).ready(function() {
-    $('.preview-btn').on('click', function() {
+  // Helper function for notifications (using SweetAlert2)
+  function showNotification(message, type = 'success') {
+    Swal.fire({
+      title: type === 'success' ? '成功' : 'エラー',
+      text: message,
+      icon: type,
+      timer: 2000,
+      showConfirmButton: false
+    });
+  }
+
+  // Store prompts data globally for easier access
+  let currentPrompts = [];
+  let reorderSortable = null;
+  const reorderModal = $('#reorderModal'); // <-- Move this here, top-level
+
+  function renderPromptsTable(prompts) {
+    const tableBody = $('#promptsTableBody');
+    tableBody.empty(); // Clear existing rows
+    if (!prompts || prompts.length === 0) { // Added a check for undefined or empty prompts
+      tableBody.append('<tr><td colspan="6" class="text-center py-4">No prompts found.</td></tr>');
+      return;
+    }
+    // Ensure prompts are sorted by the 'order' field before rendering
+    const sortedPrompts = prompts.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+    sortedPrompts.forEach(prompt => {
+      const row = `
+        <tr data-id="${prompt._id}" class="border-b border-gray-200 hover:bg-gray-100">
+          <td class="py-3 px-4 text-left handle"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 inline-block mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg> ${prompt.order !== undefined ? prompt.order : 'N/A'}</td>
+          <td class="py-3 px-4 text-left"><img src="${prompt.image || '/img/placeholder-image-2.gif'}" alt="${prompt.title}" class="w-20 h-20 object-cover rounded"></td>
+          <td class="py-3 px-4 text-left font-semibold">${prompt.title}</td>
+          <td class="py-3 px-4 text-left truncate max-w-xs">${prompt.prompt}</td>
+          <td class="py-3 px-4 text-left">${prompt.nsfw ? 'Yes' : 'No'}</td>
+          <td class="py-3 px-4 text-center">
+            <button class="preview-btn text-blue-500 hover:text-blue-700 mr-2" data-id="${prompt._id}">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 inline-block"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+            </button>
+            <button class="edit-btn text-yellow-500 hover:text-yellow-700 mr-2" data-id="${prompt._id}">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 inline-block"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
+            </button>
+            <button class="delete-btn text-red-500 hover:text-red-700" data-id="${prompt._id}">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 inline-block"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12.56 0c1.153 0 2.243.096 3.222.261m3.478-.397L12 4.648l-1.176-.754M12 4.648V2.25m0 0l-.375.375M12 2.25l.375.375M12 15.75v2.25M12 21v-2.25" /></svg>
+            </button>
+          </td>
+        </tr>
+      `;
+      tableBody.append(row);
+    });
+    attachActionListeners(); // Re-attach listeners to new rows
+  }
+
+  function attachActionListeners() {
+    $('.preview-btn').off('click').on('click', function() {
       var id = $(this).data('id');
       $.ajax({
         url: '/api/prompts/' + id,
         type: 'GET',
-        success: function(data) {
-          $('#previewImage').attr('src', data.image);
-          $('#previewTitle').text(data.title);
-          $('#previewPrompt').text(data.prompt);
-          var previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
-          previewModal.show();
+        success: function(prompt) {
+          $('#previewImage').attr('src', prompt.image || '/img/placeholder-image-2.gif');
+          $('#previewTitle').text(prompt.title);
+          $('#previewPrompt').text(prompt.prompt);
+          $('#previewModal').removeClass('hidden');
         },
         error: function() {
-          showNotification('プレビューの取得中にエラーが発生しました。','error');
+          showNotification('Error fetching prompt details.', 'error');
         }
       });
+    });
+
+    $('.edit-btn').off('click').on('click', function() {
+      var id = $(this).data('id');
+      $.ajax({
+        url: '/api/prompts/' + id,
+        type: 'GET',
+        success: function(prompt) {
+          $('#editId').val(prompt._id);
+          $('#editTitle').val(prompt.title);
+          $('#editPrompt').val(prompt.prompt);
+          $('#editGender').val(prompt.gender || 'female');
+          $('#editNsfw').prop('checked', prompt.nsfw || false);
+          $('#editImage').val('');
+          $('#editModal').removeClass('hidden');
+        },
+        error: function() {
+          showNotification('Error fetching prompt details for editing.', 'error');
+        }
+      });
+    });
+
+    $('.delete-btn').off('click').on('click', function() {
+      var id = $(this).data('id');
+      Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'キャンセル'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          $.ajax({
+            url: '/api/prompts/' + id,
+            type: 'DELETE',
+            success: function() {
+              showNotification('Prompt deleted successfully.');
+              currentPrompts = currentPrompts.filter(p => p._id !== id);
+              renderPromptsTable(currentPrompts);
+            },
+            error: function() {
+              showNotification('Error deleting prompt.', 'error');
+            }
+          });
+        }
+      });
+    });
+
+    $('#reorderPromptsBtn').on('click', function() {
+      const grid = $('#reorderPromptsGrid');
+      grid.empty();
+      // Ensure currentPrompts is sorted by 'order' before populating the modal
+      const sortedPromptsForModal = [...currentPrompts].sort((a, b) => (a.order || 0) - (b.order || 0));
+
+      sortedPromptsForModal.forEach(prompt => {
+        const item = `
+          <div data-id="${prompt._id}" class="border p-2 rounded shadow-sm bg-white cursor-grab flex flex-col items-center text-center">
+            <img src="${prompt.image || '/img/placeholder-image-2.gif'}" alt="${prompt.title}" class="w-24 h-24 object-cover rounded mb-2">
+            <p class="text-xs font-semibold">${prompt.title}</p>
+            <p class="text-xs text-gray-500">Order: ${prompt.order !== undefined ? prompt.order : 'N/A'}</p>
+          </div>
+        `;
+        grid.append(item);
+      });
+
+      if (reorderSortable) {
+        reorderSortable.destroy();
+      }
+      reorderSortable = new Sortable(reorderPromptsGrid, {
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+      });
+      reorderModal.removeClass('hidden');
+    });
+
+    $('#closeReorderModal, #cancelReorderBtn').on('click', function() {
+      reorderModal.addClass('hidden');
+    });
+
+    $('#saveOrderBtn').on('click', function() {
+      if (!reorderSortable) return;
+      const orderedIds = reorderSortable.toArray();
+
+      $.ajax({
+        url: '/api/prompts/reorder',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ orderedIds: orderedIds }), // Ensure this matches backend expectation
+        success: function(response) { // Changed to receive response
+          showNotification('Prompts reordered successfully.');
+          reorderModal.addClass('hidden');
+          // Update currentPrompts with the new order from the response
+          // Assuming the backend returns the updated list or at least success and we re-fetch
+          $.ajax({
+            url: '/api/prompts',
+            type: 'GET',
+            success: function(prompts) {
+              currentPrompts = prompts; // Update global store
+              renderPromptsTable(currentPrompts); // Re-render table with new order
+            },
+            error: function() {
+              showNotification('Error re-fetching prompts after reorder.', 'error');
+            }
+          });
+        },
+        error: function(xhr) {
+          const errorMsg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error reordering prompts.';
+          showNotification(errorMsg, 'error');
+        }
+      });
+    });
+  }
+
+  $(document).ready(function() {
+    const previewModal = $('#previewModal');
+    const editModal = $('#editModal');
+    const reorderPromptsGrid = document.getElementById('reorderPromptsGrid');
+
+    $.ajax({
+      url: '/api/prompts',
+      type: 'GET',
+      success: function(prompts) {
+        currentPrompts = prompts.sort((a, b) => a.order - b.order);
+        renderPromptsTable(currentPrompts);
+      },
+      error: function() {
+        showNotification('Error fetching prompts.', 'error');
+        renderPromptsTable([]);
+      }
+    });
+
+    $('#closePreviewModal').on('click', function() {
+      previewModal.addClass('hidden');
     });
 
     $('#newPromptBtn').on('click', function() {
       Swal.fire({
         title: '新しいプロンプトを作成する',
         html:
-          '<form id="newPromptForm" enctype="multipart/form-data">' +
-            '<div class="mb-3">' +
-              '<label for="newTitle" class="form-label">タイトル</label>' +
-              '<input type="text" class="form-control" id="newTitle" name="title" required>' +
+          '<form id="newPromptForm" enctype="multipart/form-data" class="space-y-4">' +
+            '<div>' +
+              '<label for="newTitle" class="block text-sm font-medium text-gray-700">タイトル</label>' +
+              '<input type="text" class="swal2-input w-full" id="newTitle" name="title" required>' +
             '</div>' +
-            '<div class="mb-3">' +
-              '<label for="newPrompt" class="form-label">プロンプト</label>' +
-              '<textarea class="form-control" id="newPrompt" name="prompt" rows="3" required></textarea>' +
+            '<div>' +
+              '<label for="newPrompt" class="block text-sm font-medium text-gray-700">プロンプト</label>' +
+              '<textarea class="swal2-textarea w-full" id="newPrompt" name="prompt" rows="3" required></textarea>' +
             '</div>' +
-            '<div class="mb-3">' +
-              '<label for="newImage" class="form-label">画像をアップロード</label>' +
-              '<input type="file" class="form-control" id="newImage" name="image" accept="image/*" required>' +
+            '<div>' +
+              '<label for="newImage" class="block text-sm font-medium text-gray-700">画像をアップロード</label>' +
+              '<input type="file" class="swal2-file w-full" id="newImage" name="image" accept="image/*" required>' +
             '</div>' +
-            '<div class="col-auto mb-3">' +
-              '<label for="newGender" class="form-label">{{translations.newCharacter.genderLabel}}:</label>' +
-              '<select class="form-select" id="newGender" name="gender">' +
-          '<option value="female">{{translations.newCharacter.female}}</option>' +
-          '<option value="male">{{translations.newCharacter.male}}</option>' +
-          '<option value="nonBinary">{{translations.newCharacter.nonBinary}}</option>' +
+            '<div>' +
+              '<label for="newGender" class="block text-sm font-medium text-gray-700">{{translations.newCharacter.genderLabel}}:</label>' +
+              '<select class="swal2-select w-full" id="newGender" name="gender">' +
+                '<option value="female">{{translations.newCharacter.female}}</option>' +
+                '<option value="male">{{translations.newCharacter.male}}</option>' +
+                '<option value="nonBinary">{{translations.newCharacter.nonBinary}}</option>' +
               '</select>' +
             '</div>' +
-            '<div class="mb-3">' +
-              '<label for="newNsfw" class="form-label">NSFW</label>' +
-              '<input type="checkbox" id="newNsfw" name="nsfw">' +
+            '<div class="flex items-center">' +
+              '<input type="checkbox" id="newNsfw" name="nsfw" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">' +
+              '<label for="newNsfw" class="ml-2 block text-sm text-gray-900">NSFW</label>' +
             '</div>' +
           '</form>',
         showCancelButton: true,
         confirmButtonText: '保存',
         cancelButtonText: 'キャンセル',
+        focusConfirm: false,
+        customClass: {
+            popup: 'w-full max-w-lg p-6 space-y-4',
+            input: 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm',
+            textarea: 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm',
+            file: 'mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100',
+            select: 'mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'
+        },
         preConfirm: () => {
           const form = $('#newPromptForm')[0];
           if (!form.checkValidity()) {
             Swal.showValidationMessage('全ての必須フィールドを入力してください。');
+            Array.from(form.elements).forEach(el => {
+                if (!el.checkValidity()) {
+                    $(el).addClass('border-red-500');
+                } else {
+                    $(el).removeClass('border-red-500');
+                }
+            });
+            return false;
           }
           return new FormData(form);
         }
@@ -173,44 +417,27 @@
             contentType: false,
             processData: false,
             success: function() {
-              Swal.fire('成功', 'プロンプトが作成されました。', 'success').then(() => {
-                location.reload();
-              });
+              showNotification('プロンプトが作成されました。', 'success');
+              setTimeout(() => location.reload(), 1500);
             },
             error: function() {
-              Swal.fire('エラー', 'プロンプトの作成中にエラーが発生しました。', 'error');
+              showNotification('プロンプトの作成中にエラーが発生しました。', 'error');
             }
           });
         }
       });
     });
 
-    $('.edit-btn').on('click', function() {
-      var id = $(this).data('id');
-      $.ajax({
-        url: '/api/prompts/' + id,
-        type: 'GET',
-        success: function(data) {
-          console.log(data)
-          $('#editId').val(data._id);
-          $('#editTitle').val(data.title);
-          $('#editPrompt').val(data.prompt);
-          $('#editNsfw').prop('checked', data.nsfw || false);
-          var editModal = new bootstrap.Modal(document.getElementById('editModal'));
-          editModal.show();
-        },
-        error: function() {
-          showNotification('編集データの取得中にエラーが発生しました。','error');
-        }
-      });
+    $('#closeEditModal, #cancelEditBtn').on('click', function() {
+      editModal.addClass('hidden');
     });
 
     $('#editForm').on('submit', function(e) {
       e.preventDefault();
       var id = $('#editId').val();
       var formData = new FormData(this);
-      // Remove image if not selected
-      if (!$('#editImage')[0].files.length) {
+
+      if ($('#editImage')[0].files.length === 0) {
         formData.delete('image');
       }
 
@@ -218,32 +445,38 @@
         url: '/api/prompts/' + id,
         type: 'PUT',
         data: formData,
-        contentType: false,
         processData: false,
-        success: function() {
-          showNotification('プロンプトが更新されました。','success');
-          location.reload();
+        contentType: false,
+        success: function(updatedPrompt) {
+          showNotification('Prompt updated successfully.');
+          editModal.addClass('hidden');
+          const index = currentPrompts.findIndex(p => p._id === id);
+          if (index !== -1) {
+            currentPrompts[index] = updatedPrompt;
+          } else {
+            currentPrompts.push(updatedPrompt);
+          }
+          currentPrompts.sort((a, b) => a.order - b.order);
+          renderPromptsTable(currentPrompts);
         },
         error: function() {
-          showNotification('プロンプトの更新中にエラーが発生しました。','error');
+          showNotification('Error updating prompt.', 'error');
         }
       });
     });
 
-    $('.delete-btn').on('click', function() {
-      if (!confirm('本当にこのプロンプトを削除しますか？')) return;
-      var id = $(this).data('id');
-      $.ajax({
-        url: '/api/prompts/' + id,
-        type: 'DELETE',
-        success: function() {
-          showNotification('プロンプトが削除されました。','success');
-          location.reload();
-        },
-        error: function() {
-          showNotification('プロンプトの削除中にエラーが発生しました。','error');
+    $(document).on('keydown', function(event) {
+        if (event.key === "Escape") {
+            if (!previewModal.hasClass('hidden')) {
+                previewModal.addClass('hidden');
+            }
+            if (!editModal.hasClass('hidden')) {
+                editModal.addClass('hidden');
+            }
+            if (!reorderModal.hasClass('hidden')) {
+                reorderModal.addClass('hidden');
+            }
         }
-      });
     });
   });
 </script>

@@ -1,5 +1,6 @@
 {
   "lang":"en", 
+  "promptCardActivated": "A new prompt card is available!",
   "photorealistic":"Photorealistic",
   "sort" :{
     "premiumLabel":"💎 Premium",

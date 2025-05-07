@@ -2953,3 +2953,21 @@ window.handleClickRegisterOrPay = function(event, isTemporary) {
       loadPlanPage();
   }
 }
+    // Function to update the UI when a specific custom prompt is activated
+    // This is typically called via a WebSocket notification
+    window.updateCustomPrompt = function(promptId) { 
+      const $promptCard = $(`.prompt-card[data-id="${promptId}"]`);
+      if ($promptCard.length) {
+          // Find the next prompt-card after the current one
+          const $nextPrompt = $promptCard.next('.prompt-card');
+          if ($nextPrompt.length) {
+              $nextPrompt.addClass('active').removeClass('inactive');
+              console.log('[updateCustomPrompt] Activated next prompt-card:', $nextPrompt);
+              showNotification(translations['promptCardActivated'], 'success');
+          } else {
+              console.warn(`No next prompt-card found after promptId ${promptId}.`);
+          }
+      } else {
+          console.warn(`Prompt card with ID ${promptId} not found to update active state.`);
+      }
+  };

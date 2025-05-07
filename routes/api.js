@@ -2523,22 +2523,38 @@ async function routes(fastify, options) {
           const parts = request.parts();
           let title = '';
           let promptText = '';
-          let nsfw;
+          let nsfw = false; // Default to false
+          let gender = '';
           let imageUrl = '';
+          
+          // Calculate order for the new prompt
+          const order = await collection.countDocuments({});
+
           for await (const part of parts) {
-            if (part.fieldname === 'title') title = part.value;
-            if (part.fieldname === 'prompt') promptText = part.value;
-            if (part.fieldname === 'nsfw') nsfw = part.value;
-            if (part.fieldname === 'image') {
+            if (part.file && part.fieldname === 'image') {
               imageUrl = await handleFileUpload(part, db);
+            } else if (part.fieldname === 'title') {
+              title = part.value;
+            } else if (part.fieldname === 'prompt') {
+              promptText = part.value;
+            } else if (part.fieldname === 'nsfw') {
+              nsfw = true; // Checkbox was checked
+            } else if (part.fieldname === 'gender') {
+              gender = part.value;
             }
           }
           
+          if (!title || !promptText || !imageUrl) {
+            return reply.status(400).send({ success: false, message: 'Title, prompt, and image are required.' });
+          }
+
           await collection.insertOne({
             title,
             prompt: promptText,
             nsfw,
+            gender,
             image: imageUrl,
+            order, // Add order field
             createdAt: new Date(),
           });
           
@@ -2553,7 +2569,8 @@ async function routes(fastify, options) {
         fastify.get('/api/prompts', async (request, reply) => {
             try {
             const db = fastify.mongo.db;
-            const prompts = await db.collection('prompts').find({}).sort({_id:-1}).toArray();
+            // Sort by order, then by _id for consistent ordering if order numbers are not unique (though they should be)
+            const prompts = await db.collection('prompts').find({}).sort({order: 1, _id: -1}).toArray();
             reply.send(prompts);
             } catch (error) {
             console.error('Error fetching prompts:', error);
@@ -2566,7 +2583,11 @@ async function routes(fastify, options) {
             try {
             const db = fastify.mongo.db;
             const { id } = request.params;
-            const prompt = await getPromptById(db, id)
+            // Assuming getPromptById is a simple findOne
+            const prompt = await db.collection('prompts').findOne({ _id: new fastify.mongo.ObjectId(id) });
+            if (!prompt) {
+                return reply.status(404).send({ success: false, message: 'Prompt not found' });
+            }
             reply.send(prompt);
             } catch (error) {
             console.error('Error fetching prompt:', error);
@@ -2577,48 +2598,51 @@ async function routes(fastify, options) {
         // Update Prompt
         fastify.put('/api/prompts/:id', async (request, reply) => {
             try {
-            const db = fastify.mongo.db;
-            const { id } = request.params;
-            const parts = request.parts();
-            let title = '';
-            let promptText = '';
-            let nsfw;
-            let imageUrl = '';
-        
-            for await (const part of parts) {
-                if (part.fieldname === 'title') title = part.value;
-                if (part.fieldname === 'prompt') promptText = part.value;
-                if (part.fieldname === 'nsfw') nsfw = part.value;
-                if (part.fieldname === 'image') {
-                imageUrl = await handleFileUpload(part, db);
+                const db = fastify.mongo.db;
+                const { id } = request.params;
+                const parts = request.parts();
+                
+                const updatePayload = { $set: { updatedAt: new Date() } };
+                let nsfwFromPayload = false; // Assume false unless checkbox is checked
+                let imageFieldPresent = false;
+
+                for await (const part of parts) {
+                    if (part.file) {
+                        if (part.fieldname === 'image' && part.file.filename) {
+                            const imageUrl = await handleFileUpload(part, db);
+                            if (imageUrl) updatePayload.$set.image = imageUrl;
+                            imageFieldPresent = true;
+                        }
+                    } else {
+                        // Non-file parts
+                        if (part.fieldname === 'title') updatePayload.$set.title = part.value;
+                        if (part.fieldname === 'prompt') updatePayload.$set.prompt = part.value;
+                        if (part.fieldname === 'gender') updatePayload.$set.gender = part.value;
+                        if (part.fieldname === 'nsfw') nsfwFromPayload = true; // 'on' if checked
+                    }
                 }
-            }
+                updatePayload.$set.nsfw = nsfwFromPayload;
+
+                // If 'image' was not part of the form data at all, don't try to update it (even to null)
+                // The logic with handleFileUpload should ensure image is only set if a file is uploaded.
+                // If no image is sent, updatePayload.$set.image will not be set, preserving the old one.
+
+                const result = await db.collection('prompts').updateOne(
+                    { _id: new fastify.mongo.ObjectId(id) },
+                    updatePayload
+                );
         
-            const updateData = {
-                title,
-                prompt: promptText,
-                nsfw,
-                updatedAt: new Date(),
-            };
-            if (imageUrl) updateData.image = imageUrl;
+                if (result.matchedCount === 0) {
+                    return reply.status(404).send({ success: false, message: 'Prompt not found' });
+                }
         
-            const result = await db.collection('prompts').updateOne(
-                { _id: new fastify.mongo.ObjectId(id) },
-                { $set: updateData }
-            );
-        
-            if (result.matchedCount === 0) {
-                return reply.status(404).send({ success: false, message: 'Prompt not found' });
-            }
-        
-            reply.send({ success: true, message: 'Prompt updated successfully' });
+                reply.send({ success: true, message: 'Prompt updated successfully' });
             } catch (error) {
-            console.error('Error updating prompt:', error);
-            reply.status(500).send({ success: false, message: 'Error updating prompt' });
+                console.error('Error updating prompt:', error);
+                reply.status(500).send({ success: false, message: 'Error updating prompt' });
             }
         });
-        
-        // Delete Prompt
+
         fastify.delete('/api/prompts/:id', async (request, reply) => {
             try {
             const db = fastify.mongo.db;
@@ -2633,6 +2657,37 @@ async function routes(fastify, options) {
             reply.status(500).send({ success: false, message: 'Error deleting prompt' });
             }
         });
+
+        fastify.post('/api/prompts/reorder', async (request, reply) => {
+          try {
+            const db = fastify.mongo.db;
+            const { orderedIds } = request.body; // Changed from promptIds to orderedIds
+    
+            if (!Array.isArray(orderedIds)) { // Changed from promptIds to orderedIds
+              return reply.status(400).send({ success: false, message: 'Invalid payload: orderedIds must be an array.' });
+            }
+    
+            const collection = db.collection('prompts');
+            const operations = orderedIds.map((id, index) => { // Changed from promptIds to orderedIds
+              return {
+                updateOne: {
+                  filter: { _id: new fastify.mongo.ObjectId(id) },
+                  update: { $set: { order: index } }
+                }
+              };
+            });
+    
+            if (operations.length > 0) {
+              await collection.bulkWrite(operations);
+            }
+    
+            reply.send({ success: true, message: 'Prompts reordered successfully.' });
+          } catch (error) {
+            console.error('Error reordering prompts:', error);
+            reply.status(500).send({ success: false, message: 'Error reordering prompts.' });
+          }
+        });
+
         fastify.get('/api/tags', async (request, reply) => {
             try {
             const db = fastify.mongo.db;
@@ -3000,6 +3055,35 @@ async function routes(fastify, options) {
         }
     });
 
+        fastify.get('/api/custom-prompts/:userChatId', async (request, reply) => {
+            try {
+                const { userChatId } = request.params;
+                console.log('[GET /api/custom-prompts/:userChatId] userChatId:', userChatId);
+
+                if (!userChatId || !ObjectId.isValid(userChatId)) {
+                    console.log('[GET /api/custom-prompts/:userChatId] Invalid userChatId provided.');
+                    return reply.status(400).send({ error: 'Invalid userChatId provided.' });
+                }
+
+                const collectionUserChat = fastify.mongo.db.collection('userChat');
+                const userChatDocument = await collectionUserChat.findOne(
+                    { _id: new fastify.mongo.ObjectId(userChatId) },
+                    { projection: { customPromptIds: 1 } }
+                );
+
+                if (!userChatDocument) {
+                    console.log('[GET /api/custom-prompts/:userChatId] User chat not found.');
+                    return reply.status(404).send({ error: 'User chat not found.' });
+                }
+
+                console.log('[GET /api/custom-prompts/:userChatId] customPromptIds:', userChatDocument.customPromptIds || []);
+                reply.send(userChatDocument.customPromptIds || []);
+
+            } catch (error) {
+                console.error('[GET /api/custom-prompts/:userChatId] Error fetching custom prompts:', error);
+                reply.status(500).send({ error: 'Internal Server Error' });
+            }
+        });
 }
 
 module.exports = routes;

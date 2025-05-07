@@ -240,7 +240,7 @@ fastify.get('/chat/:chatId', async (request, reply) => {
   const imageType = request.query.type || false;
   const newSubscription = request.query.newSubscription || false;
 
-  const promptData = await db.collection('prompts').find({}).toArray();
+  const promptData = await db.collection('prompts').find({}).sort({order: 1}).toArray();
 
   return reply.view('chat.hbs', {
     title: translations.seo.title,

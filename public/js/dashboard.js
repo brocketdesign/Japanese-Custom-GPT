@@ -2953,6 +2953,17 @@ window.handleClickRegisterOrPay = function(event, isTemporary) {
       loadPlanPage();
   }
 }
+
+window.updatePromptActivatedCounter = function() {
+  
+  const $prompts = $('.prompt-card');
+  
+  const total = $prompts.length;
+  const activated = $prompts.filter('.active').length;
+  
+  $('#prompt-activated-counter').html(`<span class="badge custom-gradient-bg">${activated}/${total}</>`);
+}
+
     // Function to update the UI when a specific custom prompt is activated
     // This is typically called via a WebSocket notification
     window.updateCustomPrompt = function(promptId) { 
@@ -2970,4 +2981,6 @@ window.handleClickRegisterOrPay = function(event, isTemporary) {
       } else {
           console.warn(`Prompt card with ID ${promptId} not found to update active state.`);
       }
+
+      updatePromptActivatedCounter();
   };

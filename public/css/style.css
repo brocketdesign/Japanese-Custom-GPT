@@ -153,10 +153,17 @@
   cursor:pointer
   }
   
-  .style-option.selected,  #imageStyleTabs .nav-link.active {
-  border:4px solid #8849ff
+  .style-option.selected,  #imageStyleTabs .nav-link.active{
+  border:4px solid #8849ff !important;
   }
-
+  .image-container {
+    transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.3s, border-color 0.3s;
+  }
+  .image-container:hover {
+    border: 1px solid #8849ff !important;
+    transform: translateY(-8px);
+    box-shadow: 0 8px 24px rgba(136, 73, 255, 0.15), 0 1.5px 8px rgba(0,0,0,0.08);
+  }
   .animated.fadeInDown .swal2-image {
   margin:0
   }
@@ -1768,7 +1775,6 @@
 
 .prompt-card.inactive {
   opacity: 0.5;
-  pointer-events: none;
 }
 .prompt-card.inactive .custom-badge {
   display: none;

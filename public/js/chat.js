@@ -317,68 +317,82 @@ $(document).ready(async function() {
         // Function to initialize the custom prompt (deactivate the ones that are not in the userChat but the first one)
         async function initializeCustomPrompts(userChatId) {
             try {
-                // Fetch the array of custom prompt IDs for this userChat
-                const res = await fetch(`/api/custom-prompts/${userChatId}`);
-                if (!res.ok) {
-                    // Fallback: if fetch fails, try to activate the first prompt card if any
-                    const $allPrompts = $('.prompt-card');
-                    if ($allPrompts.length > 0) {
-                        $allPrompts.removeClass('active').addClass('inactive');
-                        $allPrompts.first().addClass('active').removeClass('inactive');
-                    }
-                    return;
+            // If user is not temporary and has subscription, activate all prompts
+            if (!isTemporary && subscriptionStatus) {
+                const $allPrompts = $('.prompt-card');
+                if ($allPrompts.length > 0) {
+                $allPrompts.addClass('active').removeClass('inactive');
                 }
-                const promptIds = await res.json(); // promptIds can be null or an array
+                updatePromptActivatedCounter();
+                return;
+            }
 
-                const $customPrompts = $('.prompt-card');
-                if ($customPrompts.length === 0) {
-                    return;
+            // Fetch the array of custom prompt IDs for this userChat
+            const res = await fetch(`/api/custom-prompts/${userChatId}`);
+            if (!res.ok) {
+                // Fallback: if fetch fails, try to activate the first prompt card if any
+                const $allPrompts = $('.prompt-card');
+                if ($allPrompts.length > 0) {
+                $allPrompts.removeClass('active').addClass('inactive');
+                $allPrompts.first().addClass('active').removeClass('inactive');
                 }
+                updatePromptActivatedCounter();
+                return;
+            }
+            const promptIds = await res.json(); // promptIds can be null or an array
 
-                // Deactivate all prompts initially
-                $customPrompts.removeClass('active').addClass('inactive');
+            const $customPrompts = $('.prompt-card');
+            if ($customPrompts.length === 0) {
+                updatePromptActivatedCounter();
+                return;
+            }
 
-                if (!promptIds || promptIds.length === 0) {
-                    // Case 1: promptIds is empty or null
-                    // Activate only the first card
-                    $customPrompts.first().addClass('active').removeClass('inactive');
-                } else {
-                    // Case 2: promptIds is not empty
-                    let lastActivatedIndex = -1;
+            // Deactivate all prompts initially
+            $customPrompts.removeClass('active').addClass('inactive');
 
-                    $customPrompts.each(function(index) {
-                        const promptId = $(this).data('id');
-                        if (promptIds.includes(promptId)) {
-                            $(this).addClass('active').removeClass('inactive');
-                            if (index > lastActivatedIndex) {
-                               lastActivatedIndex = index;
-                            }
-                        }
-                    });
-                    
-                    // After activating all prompts from promptIds, find the actual last one that was set to active
-                    let maxIndexFromPromptIds = -1;
-                    $customPrompts.each(function(index){
-                        if(promptIds.includes($(this).data('id'))){
-                            if(index > maxIndexFromPromptIds){
-                                maxIndexFromPromptIds = index;
-                            }
-                        }
-                    });
+            if (!promptIds || promptIds.length === 0) {
+                // Case 1: promptIds is empty or null
+                // Activate only the first card
+                $customPrompts.first().addClass('active').removeClass('inactive');
+            } else {
+                // Case 2: promptIds is not empty
+                let lastActivatedIndex = -1;
 
-                    // Activate the next card after the last one found in promptIds
-                    if (maxIndexFromPromptIds !== -1 && maxIndexFromPromptIds + 1 < $customPrompts.length) {
-                        $($customPrompts[maxIndexFromPromptIds + 1]).addClass('active').removeClass('inactive');
+                $customPrompts.each(function(index) {
+                const promptId = $(this).data('id');
+                if (promptIds.includes(promptId)) {
+                    $(this).addClass('active').removeClass('inactive');
+                    if (index > lastActivatedIndex) {
+                       lastActivatedIndex = index;
                     }
                 }
-            } catch (e) {
-                // Fallback in case of other errors: try to activate the first prompt card if any
-                const $allPromptsOnError = $('.prompt-card');
-                if ($allPromptsOnError.length > 0) {
-                    $allPromptsOnError.removeClass('active').addClass('inactive');
-                    $allPromptsOnError.first().addClass('active').removeClass('inactive');
+                });
+                
+                // After activating all prompts from promptIds, find the actual last one that was set to active
+                let maxIndexFromPromptIds = -1;
+                $customPrompts.each(function(index){
+                if(promptIds.includes($(this).data('id'))){
+                    if(index > maxIndexFromPromptIds){
+                    maxIndexFromPromptIds = index;
+                    }
+                }
+                });
+
+                // Activate the next card after the last one found in promptIds
+                if (maxIndexFromPromptIds !== -1 && maxIndexFromPromptIds + 1 < $customPrompts.length) {
+                $($customPrompts[maxIndexFromPromptIds + 1]).addClass('active').removeClass('inactive');
                 }
             }
+            } catch (e) {
+            // Fallback in case of other errors: try to activate the first prompt card if any
+            const $allPromptsOnError = $('.prompt-card');
+            if ($allPromptsOnError.length > 0) {
+                $allPromptsOnError.removeClass('active').addClass('inactive');
+                $allPromptsOnError.first().addClass('active').removeClass('inactive');
+            }
+            }
+
+            updatePromptActivatedCounter();
         }
 
     async function handleChatSuccess(data, fetch_reset, fetch_userId, userChatId) {
@@ -1529,23 +1543,29 @@ $(document).ready(async function() {
     $('#close-promptContainer').on('click', function() {
         hidePrompts();
     });
+    $(document).off('click', '.prompt-card').on('click', '.prompt-card', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
 
-        $(document).find('.prompt-card').off('click').on('click', function() {
+        if ($(this).hasClass('inactive')) {
+            if (isTemporary) {
+                loadPlanPage();
+            }
+            return;
+        }
 
-            $('.prompt-card').removeClass('selected'); 
+        if ($(this).hasClass('active')) {
+            $('.prompt-card').removeClass('selected');
             $(this).addClass('selected');
 
             var promptId = $(this).data('id');
             var imageNsfw = $(this).data('nsfw') ? 'nsfw' : 'sfw';
-
             const imagePreview = new URL($(this).find('img').attr('data-src') || $(this).find('img').attr('src'), window.location.origin).href;
-           
-            const subscriptionStatus = user.subscriptionStatus == 'active';
-
 
             sendPromptImageDirectly(promptId, imageNsfw, imagePreview);
             hidePrompts();
-        });
+        }
+    });
 
     function sendPromptImageDirectly(promptId, imageNsfw, imagePreview) {
         const placeholderId = new Date().getTime() + "_" + promptId;

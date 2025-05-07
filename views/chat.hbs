@@ -830,7 +830,7 @@ $(document).ready(function() {
 /* --- Sorting and Filtering for Popular Chats --- */
 
 // Premium filter state
-let premiumChatsHidden = Cookies.get('premiumChatsHidden') === 'true' || isTemporary;
+let premiumChatsHidden = Cookies.get('premiumChatsHidden') === 'true' || (isTemporary || !subscriptionStatus);
 let currentGenderFilter = Cookies.get('currentGenderFilter') || null;
 
 // NSFW filter state

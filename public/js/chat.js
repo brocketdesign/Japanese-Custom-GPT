@@ -1548,7 +1548,7 @@ $(document).ready(async function() {
         e.stopPropagation();
 
         if ($(this).hasClass('inactive')) {
-            if (isTemporary) {
+            if (isTemporary || !subscriptionStatus) {
                 loadPlanPage();
             }
             return;

@@ -72,7 +72,6 @@
                 </div>
             </nav>
             <section id="chat-discovery" class="onchat-off mt-5 pt-3" style="display: block;">
-
                 <!-- Promo Section -->
                 <section class="is-free-user animate__animated m-3 p-3 bg-light d-none" style="display: none; overflow-x: hidden;" data-animate="animate__fadeInLeft" data-delay="0.3s">
                     <div class="container text-center">
@@ -138,7 +137,7 @@
                 <div class="mx-4 my-4" id="popular-chats-section">
                     <h5 class="fw-bold mb-3">{{translations.popularChats}}</h5>
                     <!-- Sorting Tools: Premium/Free, Gender & NSFW Filters (Responsive) -->
-                    <div class="sorting-tools mb-3"></div>
+                    <div class="sorting-tools mb-3">
                         <div class="row g-2 align-items-center">
                             <!-- Premium/Free Toggle -->
                             <div class="col-12 col-md-auto d-flex align-items-center gap-2 justify-content-start justify-content-md-start mb-2 mb-md-0">
@@ -177,7 +176,7 @@
                             </div>
                         </div>
                     </div>
-                    <div id="chat-gallery" class="row popular-chats-gallery"></div>
+                    <div id="chat-gallery" class="row popular-chats-gallery mx-0"></div>
                     <div id="popular-chats-pagination-controls" class="my-3"></div>
                 </div>
             </section>
@@ -224,8 +223,6 @@
                                 <div id="input-container" class="d-flex w-100">
                                     <div id="suggestions" class="d-flex flex-row w-100 justify-content-start" 
                                     style="overflow-x: auto; white-space: nowrap;font-size:14px;"></div>
-                                        <!-- Suggestions will be dynamically generated here -->
-                                    </div>
                                     <button id="gen-ideas" class="d-none btn btn-light px-4 border-0">💡</button>
                                     <button id="showPrompts" class="btn custom-gradient-bg px-4 border-0" data-bs-toggle="tooltip" data-bs-placement="top" title="{{translations.generateImage}}" style="display:none;"> 
                                         <i class="bi bi-image" class="animate__animated" data-animate="animate__flash"></i>

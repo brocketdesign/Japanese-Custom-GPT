@@ -318,40 +318,48 @@ async function routes(fastify, options) {
 
   const modelCardTemplate = hbs.compile(`
     {{#each models}}
-      <div class="col-md-4 mb-3 animate__animated animate__fadeIn">
-        <div class="card border-0 h-100 position-relative">
-          <div class="card-img-container" style="overflow: hidden;">
-            <img src="{{cover_url}}" class="card-img-top w-100" alt="{{model_name}}" style="object-fit: cover; height: 100%;" />
-          </div>
-          <div class="card-body d-flex justify-content-between position-absolute w-100 py-2 text-white" style="bottom: 0; background-color: rgba(0, 0, 0, 0.25);">
-            <h5 class="card-title text-truncate">{{model_name}}</h5>
+    <div class="col-sm-6 col-md-4 col-lg-3 p-2 animate__animated animate__fadeIn">
+      <div class="card model-gallery-card bg-dark text-white shadow-lg position-relative overflow-hidden" style="height: 400px;">
+        <img src="{{cover_url}}" class="card-img-top h-100 w-100" alt="{{name}}" style="object-fit: cover;">
+        <div class="card-img-overlay d-flex flex-column justify-content-end p-2" style="background-image: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0)); z-index: 1;">
+          <h5 class="card-title fs-6 fw-semibold text-truncate mb-1" title="{{name}}">{{name}}</h5>
+          <p class="card-text fs-6 text-truncate mb-1 text-light" title="{{sd_name}}">{{sd_name}}</p>
+          <div class="d-flex justify-content-between align-items-center">
             <div class="form-check form-switch">
-              <input class="form-check-input model-switch" type="checkbox" 
-                data-model-id="{{id}}" 
+              <input class="form-check-input model-switch" type="checkbox"
+                data-model-id="{{id}}"
                 data-model="{{sd_name}}"
-                data-style="{{tags.[0]}}" 
+                data-style="{{#if tags}}{{tags.[0]}}{{/if}}"
                 data-version="{{base_model}}"
-                data-image="{{cover_url}}">
+                data-image="{{cover_url}}"
+                data-name="{{name}}">
             </div>
-            <i class="bi bi-info-circle" data-bs-toggle="modal" data-bs-target="#infoModal-{{id}}" style="cursor: pointer;"></i>
+            <button class="btn btn-sm btn-outline-light model-gallery-info-btn p-1" type="button" title="View Details">
+              <i class="bi bi-info-circle"></i>
+            </button>
+          </div>
+        </div>
+        <div class="model-details-panel position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-90 p-3 d-none animate__animated overflow-auto" style="z-index: 2;">
+          <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-2 model-gallery-details-close-btn" aria-label="Close"></button>
+          <h6 class="h5 fw-bold mb-2">{{name}}</h6>
+          <p class="small mb-1"><strong>Model:</strong> {{sd_name}}</p>
+          <p class="small mb-1"><strong>Base:</strong> {{base_model}}</p>
+          <p class="small mb-1"><strong>Style:</strong> {{#if tags}}{{tags.[0]}}{{else}}N/A{{/if}}</p>
+          <p class="small mb-1"><strong>ID:</strong> <span class="text-break">{{id}}</span></p>
+          {{#if hash_sha256}}<p class="small mb-1"><strong>Hash:</strong> <span class="text-break">{{hash_sha256}}</span></p>{{/if}}
+          <p class="small mb-0"><strong>Tags:</strong></p>
+          <div class="mt-1">
+            {{#if tags}}
+              {{#each tags}}
+                <span class="badge bg-primary me-1 mb-1">{{this}}</span>
+              {{/each}}
+            {{else}}
+              <span class="small">N/A</span>
+            {{/if}}
           </div>
         </div>
       </div>
-      <div class="modal fade" id="infoModal-{{id}}" tabindex="-1">
-        <div class="modal-dialog">
-          <div class="modal-content mx-auto">
-            <div class="modal-header">
-              <h5 class="modal-title">{{name}}</h5>
-            </div>
-            <div class="modal-body">
-              <p><strong>Hash:</strong> {{hash_sha256}}</p>
-              <p><strong>Base Model:</strong> {{base_model}}</p>
-              <p><strong>Model Name:</strong> {{model_name}}</p>
-              <p><strong>Tags:</strong> {{tags}}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+    </div>
     {{/each}}
   `);
   

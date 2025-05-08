@@ -21,7 +21,49 @@
   transform: scale(1.1); /* Slight zoom on hover */
 }
 
+.model-gallery-card .card-img-top {
+  transition: transform 0.3s ease-in-out;
+}
 
+.model-gallery-card:hover .card-img-top {
+  transform: scale(1.1);
+}
+
+.model-gallery-card .model-details-panel {
+  transition: opacity 0.3s ease-in-out; /* For a fade effect */
+  /* For a slide effect with Animate.css, it will be controlled by JS */
+}
+
+/* Ensure details panel is above the overlay when visible */
+.model-gallery-card:hover .model-details-panel {
+  z-index: 3; 
+}
+
+.active-model-card .card-img-top {
+  transition: transform 0.3s ease-in-out;
+}
+
+.active-model-card:hover .card-img-top {
+  transform: scale(1.05); /* Smaller zoom for active cards */
+}
+
+/* Styling for active model cards to ensure consistency */
+#active-models .card {
+  border: 1px solid rgba(255, 255, 255, 0.125); /* Subtle border */
+}
+
+#active-models .fs-sm {
+    font-size: 0.8rem;
+}
+
+#active-models .active-model-info-btn i {
+    font-size: 0.9rem; /* Adjust icon size */
+    vertical-align: middle;
+}
+
+#active-models .active-model-info-btn {
+    line-height: 1; /* Ensure button padding is consistent */
+}
 </style>
 <section>
   <div class="container py-5">
@@ -43,19 +85,37 @@
 
     {{!-- Active Models Horizontal Scroll --}}
     <h4 class="text-white mb-2">Active Models</h4>
-    <div id="active-models" class="d-flex flex-row flex-nowrap overflow-auto mb-4">
+    <div id="active-models" class="d-flex flex-row flex-nowrap overflow-auto mb-4 pb-3">
       {{#each models}}
-      <div class="card me-2" style="min-width: 200px;">
-        <img src="{{image}}" class="card-img-top" alt="{{model}}" style="height:400px; object-fit:cover;">
-        <div class="card-body text-white" style="background-color: rgba(0,0,0,0.25);">
-          <h5 class="card-title text-truncate">{{model}}</h5>
-          <div class="form-check form-switch">
-            <input class="form-check-input model-switch" type="checkbox" checked
-              data-model-id="{{modelId}}"
-              data-model="{{model}}"
-              data-style="{{style}}"
-              data-version="{{version}}">
+      <div class="active-model-card card bg-dark text-white shadow-sm me-2 position-relative overflow-hidden animate__animated" style="min-width: 180px; width: 180px; height: 180px;">
+        <img src="{{image}}" class="card-img-top h-100 w-100" alt="{{model}}" style="object-fit: cover;">
+        
+        {{!-- Overlay for Name, Switch, and Info Button --}}
+        <div class="card-img-overlay d-flex flex-column justify-content-end p-2" style="background-image: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0)); z-index: 1;">
+          <h6 class="card-title fs-sm fw-semibold text-truncate mb-1" title="{{model}}">{{model}}</h6>
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="form-check form-switch">
+              <input class="form-check-input model-switch" type="checkbox" checked
+                data-model-id="{{modelId}}"
+                data-model="{{model}}"
+                data-style="{{style}}"
+                data-version="{{version}}"
+                data-image="{{image}}"
+                data-name="{{model}}">
+            </div>
+            <button class="btn btn-sm btn-outline-light active-model-info-btn p-1" type="button" title="View Details">
+              <i class="bi bi-info-circle"></i>
+            </button>
           </div>
+        </div>
+
+        {{!-- Hidden Details Panel --}}
+        <div class="active-model-details-panel position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-90 p-3 d-none animate__animated overflow-auto" style="z-index: 2;">
+          <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-2 active-model-details-close-btn" aria-label="Close"></button>
+          <h6 class="h5 fw-bold mb-2">{{model}}</h6>
+          <p class="small mb-1"><strong>Style:</strong> {{style}}</p>
+          <p class="small mb-1"><strong>Version:</strong> {{version}}</p>
+          <p class="small mb-1"><strong>ID:</strong> <span class="text-break">{{modelId}}</span></p>
         </div>
       </div>
       {{/each}}
@@ -82,6 +142,56 @@ $(document).ready(function(){
     if (initialSearch) {
         loadModels('', initialSearch);
     }
+
+    // Gallery Card - Info Button Click (slide from left)
+    $(document).on('click', '.model-gallery-info-btn', function() {
+        const card = $(this).closest('.model-gallery-card');
+        const detailsPanel = card.find('.model-details-panel');
+        detailsPanel.removeClass('d-none animate__fadeOutLeft').addClass('animate__fadeInLeft');
+    });
+
+    // Gallery Card - Close Button Click
+    $(document).on('click', '.model-gallery-details-close-btn', function() {
+        const detailsPanel = $(this).closest('.model-details-panel');
+        detailsPanel.removeClass('animate__fadeInLeft').addClass('animate__fadeOutLeft');
+        setTimeout(() => {
+            detailsPanel.addClass('d-none');
+        }, 500); // Match Animate.css animation duration
+    });
+
+    // Remove hover listeners for gallery cards to prevent conflict with button clicks
+    /* 
+    $(document).on('mouseenter', '.model-gallery-card', function() {
+        const detailsPanel = $(this).find('.model-details-panel');
+        detailsPanel.removeClass('d-none animate__fadeOutLeft').addClass('animate__fadeInLeft');
+    });
+
+    $(document).on('mouseleave', '.model-gallery-card', function() {
+        const detailsPanel = $(this).find('.model-details-panel');
+        detailsPanel.removeClass('animate__fadeInLeft').addClass('animate__fadeOutLeft');
+        setTimeout(() => {
+            if (!$(this).is(':hover')) {
+                 detailsPanel.addClass('d-none');
+            }
+        }, 500); 
+    });
+    */
+
+    // Active Model Card - Info Button Click (slide from top)
+    $(document).on('click', '.active-model-info-btn', function() {
+        const card = $(this).closest('.active-model-card');
+        const detailsPanel = card.find('.active-model-details-panel');
+        detailsPanel.removeClass('d-none animate__fadeOutUp').addClass('animate__fadeInDown');
+    });
+
+    // Active Model Card - Close Button Click
+    $(document).on('click', '.active-model-details-close-btn', function() {
+        const detailsPanel = $(this).closest('.active-model-details-panel');
+        detailsPanel.removeClass('animate__fadeInDown').addClass('animate__fadeOutUp');
+        setTimeout(() => {
+            detailsPanel.addClass('d-none');
+        }, 500); // Match Animate.css animation duration
+    });
 
     function loadModels(cursor, searchTerm) {
         let url = '/admin/models?';
@@ -149,10 +259,10 @@ $(document).ready(function(){
     const style = $(this).data('style');
     const image = $(this).data('image');
     const version = $(this).data('version');
-    console.log({modelId})
+    const name = $(this).data('name'); // Make sure to get name if you added it to data attributes
     const url = $(this).is(':checked') ? '/admin/models/add' : '/admin/models/remove';
     
-    $.post(url, { modelId, model, style, version, image }, function(res) {
+    $.post(url, { modelId, model, style, version, image, name }, function(res) { // Added name here
       window.showNotification(res.message, "success");
     });
   });

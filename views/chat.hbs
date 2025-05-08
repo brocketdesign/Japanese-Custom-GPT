@@ -138,9 +138,9 @@
                     <h5 class="fw-bold mb-3">{{translations.popularChats}}</h5>
                     <!-- Sorting Tools: Premium/Free, Gender & NSFW Filters (Responsive) -->
                     <div class="sorting-tools mb-3">
-                        <div class="row g-2 align-items-center">
+                        <div class="row g-3 align-items-center">
                             <!-- Premium/Free Toggle -->
-                            <div class="col-12 col-md-auto d-flex align-items-center gap-2 justify-content-start justify-content-md-start mb-2 mb-md-0">
+                            <div class="col-12 col-md-auto d-flex align-items-center gap-2 justify-content-start justify-content-md-start">
                                 <span class="me-2 text-muted" style="font-size: 15px;">
                                     {{translations.sort.premiumLabel}}
                                 </span>
@@ -149,7 +149,7 @@
                                 </button>
                             </div>
                             <!-- Gender Filter Buttons -->
-                            <div class="col-12 col-md d-flex align-items-center gap-2 flex-wrap justify-content-between justify-content-md-start">
+                            <div class="d-none col-12 col-md d-flex align-items-center gap-2 flex-wrap justify-content-between justify-content-md-start">
                                 <span class="me-2 text-muted" style="font-size: 15px;">
                                     <i class="bi bi-gender-ambiguous"></i> {{translations.sort.genderLabel}}
                                 </span>
@@ -173,6 +173,20 @@
                                 <button id="popular-chats-nsfw" class="btn btn-outline-danger px-3 py-1 flex-shrink-0" style="border-radius: 30px; font-size: 14px;">
                                     {{translations.sort.hideNSFW}}
                                 </button>
+                            </div>
+                            <!-- Style Filter Buttons -->
+                            <div class="col-12 col-md-auto d-flex align-items-center gap-2 justify-content-start justify-content-md-start">
+                                <span class="me-2 text-muted" style="font-size: 15px;">
+                                    <i class="bi bi-palette"></i> {{translations.sort.styleLabel}}
+                                </span>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button id="popular-chats-style-anime" class="btn p-0 border-0" style="border-radius: 50%; width: 50px; height: 50px; overflow: hidden;" data-bs-toggle="tooltip" data-bs-placement="top" title="{{translations.sort.anime}}">
+                                        <img src="/img/image-placeholder-anime.jpeg" alt="Anime" class="img-fluid" style="width: 100%; height: 100%; object-fit: cover;">
+                                    </button>
+                                    <button id="popular-chats-style-photorealistic" class="btn p-0 border-0" style="border-radius: 50%; width: 50px; height: 50px; overflow: hidden;" data-bs-toggle="tooltip" data-bs-placement="top" title="{{translations.sort.photorealistic}}">
+                                        <img src="/img/image-placeholder-real.jpeg" alt="Photorealistic" class="img-fluid" style="width: 100%; height: 100%; object-fit: cover;">
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -834,6 +848,9 @@ let currentGenderFilter = Cookies.get('currentGenderFilter') || null;
 // NSFW filter state
 let nsfwChatsHidden = Cookies.get('nsfwChatsHidden') === 'true';
 
+// Style filter state
+let currentStyleFilter = Cookies.get('currentStyleFilter') || null;
+
 // Restore button states on page load
 $(function() {
     // Set premium button text and state
@@ -849,6 +866,11 @@ $(function() {
     $('#popular-chats-nsfw').text(
         nsfwChatsHidden ? '{{translations.sort.showNSFW}}' : '{{translations.sort.hideNSFW}}'
     );
+    // Set style button active state
+    if (currentStyleFilter) {
+        $('.sorting-tools button').removeClass('active');
+        $(`#popular-chats-style-${currentStyleFilter}`).addClass('active');
+    }
     updateChatFilters();
 });
 
@@ -883,6 +905,22 @@ $(document).on('click', '#popular-chats-nsfw', function() {
     $(this).text(nsfwChatsHidden ? '{{translations.sort.showNSFW}}' : '{{translations.sort.hideNSFW}}');
 });
 
+// Style filter state
+$(document).on('click', '#popular-chats-style-anime, #popular-chats-style-photorealistic', function() {
+    currentStyleFilter = this.id.replace('popular-chats-style-', '');
+    Cookies.set('currentStyleFilter', currentStyleFilter, { expires: 7 });
+    $('.sorting-tools button').removeClass('active');
+    $(this).addClass('active');
+    updateChatFilters();
+});
+// Reset style filter
+$(document).on('click', '.sorting-tools .btn:not([id^="popular-chats-style-"])', function() {
+    currentStyleFilter = null;
+    Cookies.remove('currentStyleFilter');
+    $('.sorting-tools button').removeClass('active');
+    updateChatFilters();
+});
+
 // Filtering logic
 function updateChatFilters() {
     // Premium filter
@@ -891,11 +929,14 @@ function updateChatFilters() {
         const genderClass = $(this).attr('class').match(/chat-gender-([a-z]+)/);
         const gender = genderClass ? genderClass[1] : null;
         const isNSFW = $(this).hasClass('nsfw-true');
+        const styleClass = $(this).attr('class').match(/chat-style-([a-z]+)/);
+        const style = styleClass ? styleClass[1] : null;
 
         let show = true;
         if (premiumChatsHidden && isPremium) show = false;
         if (currentGenderFilter && gender !== currentGenderFilter) show = false;
         if (nsfwChatsHidden && isNSFW) show = false;
+        if (currentStyleFilter && style !== currentStyleFilter) show = false;
 
         $(this).toggle(show);
     });

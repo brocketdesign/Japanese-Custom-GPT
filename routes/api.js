@@ -2786,7 +2786,7 @@ async function routes(fastify, options) {
     fastify.get('/api/popular-chats', async (request, reply) => {
         try {
             const page = Math.max(1, parseInt(request.query.page, 10) || 1); // Default to page 1
-            const limit = 50; // Keep this consistent with caching logic
+            const limit = 100; // Keep this consistent with caching logic
             const skip = (page - 1) * limit;
             const language = request.lang; // Get language from request
 
@@ -2837,6 +2837,8 @@ async function routes(fastify, options) {
                 const pipeline = [
                     // Match language and basic requirements
                     { $match: { chatImageUrl: { $exists: true, $ne: '' }, name: { $exists: true, $ne: '' }, language } },
+                    // Add a field premium that check if the chat modelId is not in the free_model array 
+                    { $addFields: { premium: { $not: { $in: ['$modelId', free_models] } } } },
                     {
                         $lookup: {
                             from: 'gallery',
@@ -2845,21 +2847,10 @@ async function routes(fastify, options) {
                             as: 'gallery'
                         }
                     },
-                    {
-                        $addFields: {
-                            imageCount: {
-                                $cond: [
-                                    { $gt: [ { $size: '$gallery' }, 0 ] },
-                                    { $size: { $ifNull: [ { $arrayElemAt: [ '$gallery.images', 0 ] }, [] ] } },
-                                    0
-                                ]
-                            }
-                        }
-                    },
                     { $sort: { imageCount: -1, _id: -1 } },
                     { $skip: skip },
                     { $limit: limit },
-                     // Add user lookup directly in aggregation
+                    // Add user lookup directly in aggregation
                     {
                         $lookup: {
                             from: 'users',
@@ -2879,17 +2870,39 @@ async function routes(fastify, options) {
                             profileUrl: '$userInfo.profileUrl'
                         }
                     },
+                    // Add a field sampleImages to get the first 5 non-NSFW images from the gallery
+                    {
+                        $addFields: {
+                            sampleImages: {
+                                $slice: [
+                                    {
+                                        $filter: {
+                                            input: {
+                                                $ifNull: [
+                                                    { $arrayElemAt: ['$gallery.images', 0] },
+                                                    []
+                                                ]
+                                            },
+                                            as: 'image',
+                                            cond: { $and: [
+                                                { $ne: ['$$image', null] },
+                                                { $ne: ['$$image.nsfw', true] }
+                                            ]}
+                                        }
+                                    },
+                                    5
+                                ]
+                            }
+                        }
+                    },
                     {
                         $project: { // Project necessary fields
-                            _id: 1, name: 1, chatImageUrl: 1, imageCount: 1, userId: 1, nickname: 1, profileUrl: 1, language: 1,
-                            // Remove fields not needed in response
-                            gallery: 0, userInfo: 0
+                            _id: 1, name: 1, nsfw: 1, premium: 1, moderation: 1, chatImageUrl: 1, sampleImages: 1, tags: 1, imageStyle: 1, gender: 1, userId: 1, nickname: 1, profileUrl: 1, language: 1,
                         }
                     }
                 ];
 
                 chats = await chatsCollection.aggregate(pipeline).toArray();
-
                 // Count total for pagination (only if fallback is used)
                 totalCount = await chatsCollection.countDocuments({ chatImageUrl: { $exists: true, $ne: '' }, name: { $exists: true, $ne: '' }, language });
                 totalPages = Math.ceil(totalCount / limit);

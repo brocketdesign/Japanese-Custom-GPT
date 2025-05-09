@@ -29,7 +29,6 @@ fastify.post('/novita/generate-img', async (request, reply) => {
       const promptData = await getPromptById(db,promptId);
       savePromptIdtoChat(db, chatId, userChatId, promptId)
       .then((response) => {
-        console.log('Prompt ID saved to chat:', response);
         if(request.user.subscriptionStatus !== 'active'){
           fastify.sendNotificationToUser(userId, 'updateCustomPrompt', { promptId: promptId })
         }

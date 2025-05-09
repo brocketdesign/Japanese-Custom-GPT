@@ -2973,7 +2973,6 @@ window.updatePromptActivatedCounter = function() {
           const $nextPrompt = $promptCard.next('.prompt-card');
           if ($nextPrompt.length) {
               $nextPrompt.addClass('active').removeClass('inactive');
-              console.log('[updateCustomPrompt] Activated next prompt-card:', $nextPrompt);
               showNotification(translations['promptCardActivated'], 'success');
           } else {
               console.warn(`No next prompt-card found after promptId ${promptId}.`);

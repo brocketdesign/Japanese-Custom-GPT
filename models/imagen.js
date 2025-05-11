@@ -72,7 +72,7 @@ const default_prompt = {
   } 
 
 // Module to generate an image
-async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSeed, userId, chatId, userChatId, imageType, image_num, image_base64, chatCreation, placeholderId, translations, fastify, flux = false}) {
+async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSeed, regenerate, userId, chatId, userChatId, imageType, image_num, image_base64, chatCreation, placeholderId, translations, fastify, flux = false}) {
     const db = fastify.mongo.db;
   
     // Fetch the user
@@ -118,6 +118,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
         height: selectedStyle.sfw.height || params.height,
         blur: false,
         seed: imageSeed || selectedStyle.sfw.seed,
+        steps: regenerate ? params.steps + 10 : params.steps,
       };
     } else {
       image_request = {
@@ -131,6 +132,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
         height: selectedStyle.nsfw.height || params.height,
         blur: !isSubscribed,
         seed: imageSeed || selectedStyle.nsfw.seed,
+        steps: regenerate ? params.steps + 10 : params.steps,
       };
     }
 

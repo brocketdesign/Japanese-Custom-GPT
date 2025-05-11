@@ -56,7 +56,7 @@ fastify.post('/novita/generate-img', async (request, reply) => {
     if(regenerate){
       imageSeed = await getImageSeed(db, placeholderId);
     }
-    const result = generateImg({title, prompt:newPrompt, aspectRatio, imageSeed, userId, chatId, userChatId, imageType, image_num: chatCreation ? 4 : 1 , image_base64, chatCreation, placeholderId, translations:request.translations , fastify})
+    const result = generateImg({title, prompt:newPrompt, aspectRatio, imageSeed, regenerate, userId, chatId, userChatId, imageType, image_num: chatCreation ? 4 : 1 , image_base64, chatCreation, placeholderId, translations:request.translations , fastify})
     .then((response) => {
     })
     .catch((error) => {

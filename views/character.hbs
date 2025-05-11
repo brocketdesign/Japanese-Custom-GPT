@@ -183,17 +183,18 @@
       const description = chat.description
       if(!description || description.trim() === ''){
         const chatDataToString = function(data) {
-            return `
-              ${data.traits ? `<strong>${translations.characterDescription.traits}:</strong> ${data.traits.join(', ')}<br>` : ''}
-              ${data.preferences ? `<strong>${translations.characterDescription.preferences}:</strong> ${data.preferences.join(', ')}<br>` : ''}
-              ${data.expression_style ? `
-              <strong>${translations.characterDescription.expression_style}:</strong><br>
-              ${data.expression_style.tone ? `- <strong>${translations.characterDescription.tone}:</strong> ${data.expression_style.tone}<br>` : ''}
-              ${data.expression_style.vocabulary ? `- <strong>${translations.characterDescription.vocabulary}:</strong> ${data.expression_style.vocabulary}<br>` : ''}
-              ${data.expression_style.unique_feature ? `- <strong>${translations.characterDescription.unique_feature}:</strong> ${data.expression_style.unique_feature}<br>` : ''}
-              ` : ''}
-              ${data.story ? `<strong>${translations.characterDescription.story}:</strong> ${data.story}` : ''}
-            `;
+          if (!data) return '';
+          return `
+            ${data.traits ? `<strong>${translations.characterDescription.traits}:</strong> ${data.traits.join(', ')}<br>` : ''}
+            ${data.preferences ? `<strong>${translations.characterDescription.preferences}:</strong> ${data.preferences.join(', ')}<br>` : ''}
+            ${data.expression_style ? `
+            <strong>${translations.characterDescription.expression_style}:</strong><br>
+            ${data.expression_style.tone ? `- <strong>${translations.characterDescription.tone}:</strong> ${data.expression_style.tone}<br>` : ''}
+            ${data.expression_style.vocabulary ? `- <strong>${translations.characterDescription.vocabulary}:</strong> ${data.expression_style.vocabulary}<br>` : ''}
+            ${data.expression_style.unique_feature ? `- <strong>${translations.characterDescription.unique_feature}:</strong> ${data.expression_style.unique_feature}<br>` : ''}
+            ` : ''}
+            ${data.story ? `<strong>${translations.characterDescription.story}:</strong> ${data.story}` : ''}
+          `;
         }
         $('.description').html(chatDataToString(chat.base_personality));
       }

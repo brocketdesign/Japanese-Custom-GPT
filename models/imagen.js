@@ -64,15 +64,15 @@ const default_prompt = {
     height: 1024,
     sampler_name: "Euler a",
     guidance_scale: 7,
-    steps: 21,
+    steps: 30,
     image_num: 1,
     clip_skip: 0,
     strength: 0.65,
     loras: [],
-  }
+  } 
 
 // Module to generate an image
-async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, chatId, userChatId, imageType, image_num, image_base64, chatCreation, placeholderId, translations, fastify, flux = false}) {
+async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSeed, userId, chatId, userChatId, imageType, image_num, image_base64, chatCreation, placeholderId, translations, fastify, flux = false}) {
     const db = fastify.mongo.db;
   
     // Fetch the user
@@ -117,7 +117,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, 
         width: selectedStyle.sfw.width || params.width,
         height: selectedStyle.sfw.height || params.height,
         blur: false,
-        seed: selectedStyle.sfw.seed,
+        seed: imageSeed || selectedStyle.sfw.seed,
       };
     } else {
       image_request = {
@@ -130,7 +130,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, userId, 
         width: selectedStyle.nsfw.width || params.width,
         height: selectedStyle.nsfw.height || params.height,
         blur: !isSubscribed,
-        seed: selectedStyle.nsfw.seed,
+        seed: imageSeed || selectedStyle.nsfw.seed,
       };
     }
 
@@ -475,6 +475,7 @@ async function checkTaskStatus(taskId, fastify) {
       title: task.title,
       imageUrl: imageData.imageUrl,
       aspectRatio: task.aspectRatio,
+      seed: imageData.seed,
       blurredImageUrl: null,
       nsfw,
       fastify
@@ -586,7 +587,7 @@ async function fetchNovitaResult(task_id) {
           const buffer = Buffer.from(imageResponse.data, 'binary');
           const hash = createHash('md5').update(buffer).digest('hex');
           const uploadedUrl = await uploadToS3(buffer, hash, 'novita_result_image.png');
-          return { imageId: hash, imageUrl: uploadedUrl, nsfw_detection_result: image.nsfw_detection_result };
+          return { imageId: hash, imageUrl: uploadedUrl, nsfw_detection_result: image.nsfw_detection_result, seed:response.data.extra.seed };
         }));
 
         return s3Urls.length === 1 ? s3Urls[0] : s3Urls;
@@ -623,7 +624,7 @@ async function updateTitle({ taskId, newTitle, fastify, userId, chatId, placehol
   }
 }
 
-async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title, imageUrl, aspectRatio, blurredImageUrl = null, nsfw = false, fastify}) {
+async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title, imageUrl, aspectRatio, seed, blurredImageUrl = null, nsfw = false, fastify}) {
     const db = fastify.mongo.db;
     try {
       const chatsGalleryCollection = db.collection('gallery');
@@ -657,6 +658,7 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
               imageUrl, 
               blurredImageUrl, 
               aspectRatio, 
+              seed,
               isBlurred: !!blurredImageUrl,
               nsfw,
               createdAt: new Date()
@@ -746,9 +748,39 @@ async function checkImageDescription(db, chatId) {
   return { imageDescription: characterDescription };
 }
 
+async function getImageSeed(db, imageId) {
+  console.log('[getImageSeed] Called with imageId:', imageId);
+  if (!ObjectId.isValid(imageId)) {
+    console.error('[getImageSeed] Invalid imageId format:', imageId);
+    throw new Error('Invalid imageId format');
+  }
+  try {
+    const objectId = new ObjectId(imageId);
+    console.log('[getImageSeed] Searching for image with _id:', objectId);
+    const imageDocument = await db.collection('gallery').findOne(
+      { "images._id": objectId },
+      { projection: { "images.$": 1 } }
+    );
+
+    if (!imageDocument || !imageDocument.images?.length) {
+      console.warn('[getImageSeed] No image found for imageId:', imageId);
+      return null;
+    }
+
+    const image = imageDocument.images[0];
+    console.log('[getImageSeed] Found image, seed:', image.seed);
+    return Number.isInteger(image.seed) ? image.seed : parseInt(image.seed, 10);
+  }
+  catch (error) {
+    console.error('[getImageSeed] Error fetching image seed:', error);
+    return null;
+  }
+}
+
   module.exports = {
     generateImg,
     getPromptById,
+    getImageSeed,
     checkImageDescription,
     getTasks,
     deleteOldTasks,

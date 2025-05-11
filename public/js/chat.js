@@ -871,7 +871,7 @@ $(document).ready(async function() {
             return inputString.split(",,,")[1].trim();
         }
         return inputString;
-    }
+    } 
     function getImageTools({chatId, imageId, isLiked = false, title, prompt = false, nsfw = false, imageUrl = false}) {
         const subscriptionStatus = user.subscriptionStatus == 'active';
         prompt = sanitizeString(prompt);
@@ -1682,7 +1682,7 @@ window.regenImage = function(el){
     displayOrRemoveImageLoader(placeholderId, 'show');
 
     if($(el).hasClass('txt2img')){
-        novitaImageGeneration(userId, chatId, userChatId, {prompt:imagePrompt, imageNsfw, placeholderId})
+        novitaImageGeneration(userId, chatId, userChatId, {prompt:imagePrompt, imageNsfw, placeholderId, regenerate:true})
         .then(data => {
             if(data.error){
                 displayOrRemoveImageLoader(placeholderId, 'remove');

@@ -2,13 +2,13 @@ const { ObjectId } = require('mongodb');
 const axios = require('axios');
 const fs = require('fs');
 const { processPromptToTags, saveChatImageToDB } = require('../models/tool')
-const { generateImg,getPromptById,checkImageDescription,getTasks } = require('../models/imagen');
+const { generateImg, getPromptById, getImageSeed, checkImageDescription,getTasks } = require('../models/imagen');
 const { createPrompt, moderateText } = require('../models/openai');
 async function routes(fastify, options) {
 
 // Endpoint to initiate generate-img for selected image type
 fastify.post('/novita/generate-img', async (request, reply) => {
-  const { title, prompt, aspectRatio, userId, chatId, userChatId, placeholderId, promptId, customPrompt, image_base64, chatCreation } = request.body;
+  const { title, prompt, aspectRatio, userId, chatId, userChatId, placeholderId, promptId, customPrompt, image_base64, chatCreation, regenerate } = request.body;
   let imageType = request.body.imageType
   const db = fastify.mongo.db;
   const translations = request.translations
@@ -52,8 +52,11 @@ fastify.post('/novita/generate-img', async (request, reply) => {
         
       }
     }
-
-    const result = generateImg({title, prompt:newPrompt, aspectRatio, userId, chatId, userChatId, imageType, image_num: chatCreation ? 4 : 1 , image_base64, chatCreation, placeholderId, translations:request.translations , fastify})
+    let imageSeed = -1
+    if(regenerate){
+      imageSeed = await getImageSeed(db, placeholderId);
+    }
+    const result = generateImg({title, prompt:newPrompt, aspectRatio, imageSeed, userId, chatId, userChatId, imageType, image_num: chatCreation ? 4 : 1 , image_base64, chatCreation, placeholderId, translations:request.translations , fastify})
     .then((response) => {
     })
     .catch((error) => {
@@ -65,6 +68,29 @@ fastify.post('/novita/generate-img', async (request, reply) => {
     reply.status(500).send({ error: 'Error initiating image generation.' });
   }
 });
+
+  fastify.post('/novita/upscale-img', async (request, reply) => {
+      try {
+          const { userId, chatId, userChatId, originalImageId, image_base64, originalImageUrl, placeholderId, scale_factor, model_name } = request.body;
+          // console.log('Upscale request received on backend:', request.body);
+          const data = await upscaleImg({
+              userId,
+              chatId,
+              userChatId,
+              originalImageId,
+              image_base64,
+              originalImageUrl,
+              placeholderId,
+              scale_factor,
+              model_name,
+              fastify
+          });
+          reply.send(data);
+      } catch (error) {
+          console.error('Error in /novita/upscale-img:', error);
+          reply.status(500).send({ message: error.message || 'Internal Server Error' });
+      }
+  });
 fastify.get('/image/:imageId', async (request, reply) => {
   try {
     const { imageId } = request.params;

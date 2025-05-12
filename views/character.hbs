@@ -183,7 +183,7 @@
       const description = chat.description
       if(!description || description.trim() === ''){
         const chatDataToString = function(data) {
-          if (!data) return '';
+          if (!data) return ''; 
           return `
             ${data.traits ? `<strong>${translations.characterDescription.traits}:</strong> ${data.traits.join(', ')}<br>` : ''}
             ${data.preferences ? `<strong>${translations.characterDescription.preferences}:</strong> ${data.preferences.join(', ')}<br>` : ''}

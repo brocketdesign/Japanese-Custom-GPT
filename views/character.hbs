@@ -41,7 +41,7 @@
   }
   .feature-icon {
     font-size: 2rem;
-    color: var(--bs-primary); /* Use theme color */
+    color: #6E20F4;
   }
   .btn-lg-custom {
     padding: 0.75rem 1.5rem;
@@ -145,6 +145,7 @@
         <div class="container text-center">
             <h2>{{translations.why_chat_with}} {{chat.name}}?</h2>
             <hr class="w-25 mx-auto mb-4">
+            <p class="text-muted seo-text mb-4">{{translations.why_chat_seo_text}}</p>
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <i class="bi bi-emoji-smile feature-icon mb-2"></i>
@@ -170,11 +171,12 @@
         <div class="container text-center">
             <h2>{{translations.how_to_start_chatting_with}} {{chat.name}}</h2>
             <hr class="w-25 mx-auto mb-5">
+            <p class="text-muted seo-text mb-4">{{translations.how_to_chat_seo_text}}</p>
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <div class="card h-100 shadow-sm">
                         <div class="card-body">
-                            <div class="fs-1 fw-bold text-primary mb-2">1.</div>
+                            <div class="fs-1 fw-bold u-color-grad mb-2">1.</div>
                             <h4>{{#if user.isTemporary}}{{translations.create_an_account_step_title}}{{else}}{{translations.you_are_logged_in_step_title}}{{/if}}</h4>
                             <p>{{#if user.isTemporary}}{{translations.create_an_account_step_desc}}{{else}}{{translations.you_are_logged_in_step_desc}}{{/if}}</p>
                             {{#if user.isTemporary}}
@@ -188,7 +190,7 @@
                 <div class="col-md-4 mb-3">
                     <div class="card h-100 shadow-sm">
                         <div class="card-body">
-                             <div class="fs-1 fw-bold text-primary mb-2">2.</div>
+                             <div class="fs-1 fw-bold u-color-grad mb-2">2.</div>
                             <h4>{{translations.character_selected_step_title}}</h4>
                             <p>{{chat.name}} {{translations.character_selected_step_desc}}</p>
                             <a href="/character" class="btn custom-gradient-bg">
@@ -200,7 +202,7 @@
                 <div class="col-md-4 mb-3">
                     <div class="card h-100 shadow-sm">
                         <div class="card-body">
-                            <div class="fs-1 fw-bold text-primary mb-2">3.</div>
+                            <div class="fs-1 fw-bold u-color-grad mb-2">3.</div>
                             <h4>{{translations.start_conversation_step_title}}</h4>
                             <p>{{translations.start_conversation_step_desc}}</p>
                             <a {{#if user.isTemporary}}onclick="openLoginForm()"{{else}}href="/chat/{{chat._id}}"{{/if}} class="btn custom-gradient-bg">
@@ -437,7 +439,7 @@
                 
                 .accordion-button {
                     background: linear-gradient(90.9deg, rgba(210,184,255,0.2) 2.74%, rgba(130,64,255,0.2) 102.92%);
-                    color: var(--bs-primary);
+                    color: #8240FF;
                     font-weight: 600;
                 }
                 
@@ -451,7 +453,7 @@
                 }
                 
                 .section-title {
-                    color: var(--bs-primary);
+                    color: #8240FF;
                     padding: 12px 15px;
                 }
                 

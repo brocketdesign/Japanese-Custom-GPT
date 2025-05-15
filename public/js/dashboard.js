@@ -832,30 +832,59 @@ function generateUserPagination(currentPage, totalPages) {
 }
 
 window.loadChatUsers = async function (chatId, page = 1) {
-    $.ajax({
-        url: `/chat/${chatId}/users?page=${page}`,
-        method: 'GET',
-        success: function (data) {
-            let chatUsersHtml = '';
-            data.users.forEach(user => {
-                chatUsersHtml += `
-                    <div class="me-3 text-center" style="min-width: 100px;">
-                        <a href="/user/${user.userId}" class="text-decoration-none text-dark">
-                            <img src="${user.profileUrl || '/img/default-avatar.png'}" alt="${user.nickname}" class="rounded-circle mb-2" width="60px" height="60px">
-                            <div>${user.nickname}</div>
-                        </a>
-                    </div>
-                `;
-            });
+  $.ajax({
+    url: `/chat/${chatId}/users?page=${page}`,
+    method: 'GET',
+    success: function (data) {
+      // Add style once if not already present
+      if (!$('#chat-users-style').length) {
+        $('head').append(`
+          <style id="chat-users-style">
+            .user-avatar-card {
+              transition: all 0.3s ease;
+            }
+            .user-avatar-card:hover {
+              transform: translateY(-5px);
+              box-shadow: 0 8px 20px rgba(0,0,0,0.15) !important;
+            }
+            .user-avatar {
+              transition: all 0.3s ease;
+              box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            }
+          </style>
+        `);
+      }
 
-            $('#chat-users-gallery').append(chatUsersHtml);
-            // Optionally, handle pagination if needed
-            // generateChatUserPagination(data.page, data.totalPages, chatId);
-        },
-        error: function (err) {
-            console.error('Failed to load users', err);
-        }
-    });
+      let chatUsersHtml = '';
+      data.users.forEach(user => {
+        chatUsersHtml += `
+          <div class="col-auto mb-4 user-avatar-card mx-2 shadow border border-2 border-light rounded p-2">
+            <a href="/user/${user.userId}" class="text-decoration-none text-center d-block">
+              <div class="avatar-wrapper mb-2 d-flex justify-content-center">
+                <img src="${user.profileUrl || '/img/default-avatar.png'}" 
+                   alt="${user.nickname}" 
+                   class="rounded-circle border-light user-avatar"
+                   width="64" height="64">
+              </div>
+              <div class="user-name text-secondary fw-medium" style="max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                ${user.nickname}
+              </div>
+            </a>
+          </div>
+        `;
+      });
+
+      $('#chat-users-gallery').append(chatUsersHtml);
+      
+      // Generate pagination if needed
+      if ($('#chat-users-pagination-controls').length > 0) {
+        generateChatUserPagination(data.page, data.totalPages, chatId);
+      }
+    },
+    error: function (err) {
+      console.error('Failed to load users', err);
+    }
+  });
 }
 function generateChatUserPagination(currentPage, totalPages, chatId) {
     let paginationHtml = '';

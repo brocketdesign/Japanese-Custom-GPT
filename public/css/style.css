@@ -692,8 +692,29 @@
   #chat-users-gallery::-webkit-scrollbar {
   height:8px
   }
-  
-  .swal2-custom-popup {
+
+  #chat-images-gallery .card {
+  transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  overflow: hidden; /* Ensures content like scaled images respect card boundaries */
+}
+
+#chat-images-gallery .card:hover {
+  transform: translateY(-6px) scale(1.03);
+  box-shadow: 0 8px 32px rgba(110, 32, 244, 0.15), 0 1.5px 8px rgba(0, 0, 0, 0.08);
+  z-index: 10; /* To bring the hovered card above others if they overlap */
+}
+
+#chat-images-gallery .card .card-img-top {
+  transition: transform 0.35s cubic-bezier(0.23, 1, 0.32, 1), filter 0.3s;
+  will-change: transform; /* Performance hint for browsers */
+}
+
+#chat-images-gallery .card:hover .card-img-top {
+  transform: scale(1.08);
+  filter: brightness(1.05) saturate(1.05);
+}
+
+.swal2-custom-popup {
   border-radius:50px
   }
   

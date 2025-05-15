@@ -403,10 +403,6 @@ $(document).ready(function() {
 
     $(document).on('click', '#gen-ideas', function() {
         const isTemporary = $('body').attr('data-temporary-user') === 'true';
-        if($('#chat-widget-container').length == 0 && isTemporary){
-            showRegistrationForm(); return;
-        }
-
         const is_chatId = $(this).attr('data-chat-id');
         const is_userId = $(this).attr('data-user-id');
         const is_userChatId = $(this).attr('data-user-chat-id');

@@ -1149,7 +1149,7 @@ async function routes(fastify, options) {
           if (lastUserMessage.promptId) currentUserMessage.promptId = lastUserMessage.promptId
       
           // Run conversation context analysis
-          const conversationAnalysis = await analyzeConversationContext(userData.messages, userInfo, language);
+          const conversationAnalysis = false; //await analyzeConversationContext(userData.messages, userInfo, language);
 
           let genImage = {}
           let customPromptData = null

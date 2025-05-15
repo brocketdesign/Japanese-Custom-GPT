@@ -17,7 +17,6 @@ function getIdFromUrl(url) {
 let chatId = getIdFromUrl(window.location.href) 
     || sessionStorage.getItem('lastChatId') 
     || getIdFromUrl($.cookie('redirect_url')) 
-    || $(`#lamix-chat-widget`).data('id');
 
 // Ensure chatId is not a falsy string (e.g., '', null, undefined, 'null', 'undefined')
 if (!chatId || chatId === 'null' || chatId === 'undefined') {
@@ -219,26 +218,6 @@ $(document).ready(async function() {
         var urlParts = currentUrl.split('/');
         urlParts[urlParts.length - 1] = newchatId;
         var newUrl = urlParts.join('/');
-        if($('#chat-widget-container').length == 0){
-            window.history.pushState({ path: newUrl }, '', newUrl);
-        }
-
-        if($('#chat-widget-container').length == 0){
-            $('.auto-gen').each(function(){
-                $(this)
-                .attr('data-chat-id',chatId)
-                .attr('data-user-id',userId)
-                .attr('data-user-chat-id',userChatId)
-                .attr('data-thumbnail',thumbnail)
-                .attr('data-character',JSON.stringify(character))
-            })
-
-            $('#gen-ideas')
-            .attr('data-chat-id',chatId)
-            .attr('data-user-id',userId)
-            .attr('data-user-chat-id',userChatId)
-            .removeClass('done')
-        }
 
         const elementsToUpdate = ['.content .chart-button', '.content .tag-button', '.content .delete-chat'];
         elementsToUpdate.forEach(selector => {
@@ -252,10 +231,6 @@ $(document).ready(async function() {
     }
 
     window.sendMessage = function(customMessage, displayStatus = true) {
-        if ($('#chat-widget-container').length === 0 && isTemporary) {
-            showRegistrationForm();
-            return;
-        }
 
         hidePrompts();
         $('#startButtonContained, #introChat').hide();
@@ -496,10 +471,6 @@ $(document).ready(async function() {
         const today = new Date().toISOString().split('T')[0];
         if (userChat.log_success) {
             displayThankMessage();
-        }
-
-        if($('#chat-widget-container').length == 0 && isTemporary){
-            displayMessage('assistant',`<a class="btn btn-secondary custom-gradient-bg shadow-0 m-2 px-4 py-2" style="border-radius: 50px;" href="/authenticate"><i class="fas fa-sign-in-alt me-2"></i> ログイン</a>`,userChatId)
         }
     }
     
@@ -2001,7 +1972,7 @@ $(document).on('click','#menu-chat, .menu-chat-sm',function(){
 });
 
 function displayChatList(reset, userId) {
-    if ($('#chat-list').length === 0 || $('#chat-widget-container').length > 0) return;
+    if ($('#chat-list').length === 0) return;
     if (reset) {
       currentPage = 1;
       chatListData = [];
@@ -2226,9 +2197,6 @@ window.resetChatUrl = function() {
     urlParts[urlParts.length - 1] = '';
     var newUrl = urlParts.join('/');
     sessionStorage.setItem('lastChatId', null);
-    if($('#chat-widget-container').length == 0){
-        window.history.replaceState({ path: newUrl }, '', newUrl);
-    }
 }
 window.showChat = function() {
     $('.onchat-off').hide()

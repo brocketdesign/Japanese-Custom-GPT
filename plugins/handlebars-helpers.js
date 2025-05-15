@@ -72,7 +72,6 @@ module.exports = function registerHelpers() {
     });
   });
 };
-
 handlebars.registerHelper('encodeURIComponent', function(str) {
   return encodeURIComponent(str);
 });

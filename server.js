@@ -463,7 +463,7 @@ fastify.get('/character/:chatId', async (request, reply) => {
         return reply.code(404).send({ error: 'Image not found' });
       }
     }
-
+    console.log(chat)
     // Log user activity 
     const template = isModal ? 'character-modal.hbs' : 'character.hbs';
     return reply.renderWithGtm(template, {

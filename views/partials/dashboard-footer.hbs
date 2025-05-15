@@ -84,8 +84,7 @@
         </div>
     </div>
 </div>
-{{#if user.isTemporary}}
-{{else}}
+
 <div class="sticky-bottom" style="bottom:0; left:0; right:0;">
     {{#if (eq user.subscriptionStatus 'active')}}
     {{else}}
@@ -108,13 +107,13 @@
             <a class="text-white flex-fill text-center" href="/search">
                 <i class="bi bi-search fs-4"></i>
             </a>
-            <a class="text-white flex-fill text-center" href="#" onclick="loadCharacterCreationPage()">
+            <a class="text-white flex-fill text-center" href="#" {{#if user.isTemporary}} onclick="openLoginForm()"{{else}} onclick="loadCharacterCreationPage()"{{/if}}>
                 <i class="bi bi-plus-square fs-4"></i>
             </a>
             <a class="text-white flex-fill text-center" href="/character">
                 <i class="bi bi-globe fs-4"></i>
             </a>
-            <a class="text-white flex-fill text-center" href="/user/{{user._id}}">
+            <a class="text-white flex-fill text-center" {{#if user.isTemporary}} onclick="openLoginForm()"{{else}} href="/user/{{user._id}}"{{/if}}>
                 <div class="btn rounded-circle p-0 shadow-0">
                 <img src="{{#if user.profileUrl}}{{user.profileUrl}}{{else}}/img/avatar.png{{/if}}" class="rounded-circle avatar" height="35" width="35" alt="Avatar" loading="lazy" />
                 </div>
@@ -124,8 +123,6 @@
     </div>
 </div>
 
-
-{{/if}}
 <footer class="l-footer p-footer bg-dark text-light text-center onchat-off">
   <div class="bg-dark py-5">
     <div class="row mb-4 mx-0">

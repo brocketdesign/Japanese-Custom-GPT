@@ -1,15 +1,67 @@
 <!DOCTYPE html>
 <html lang="ja">
-       {{> dashboard-header}}
+<head>
+    {{> dashboard-header}}
+    <title>{{requestedUser.userName}}{{#if (eq type 'followers')}}{{translations.followers.pageTitleFollowers}}{{else}}{{translations.followers.pageTitleFollowing}}{{/if}}</title>
+    <meta name="description" content="{{#if (eq type 'followers')}}{{translations.followers.metaDescriptionFollowers}}{{else}}{{translations.followers.metaDescriptionFollowing}}{{/if}}">
+    <style>
+      .follower-card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .follower-card img {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        object-position: top;
+        border-radius: 50%;
+        margin-right: 15px;
+      }
+      .follower-info {
+        display: flex;
+        align-items: center;
+      }
+      .follower-details {
+        flex-grow: 1;
+      }
+      .follower-name {
+        font-weight: bold;
+        color: #333;
+        text-decoration: none;
+      }
+      .follower-name:hover {
+        text-decoration: underline;
+      }
+      .app-description-section {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+      }
+      .app-description-section h2, .app-description-section h3 {
+        color: #007bff; /* Or your app's primary color */
+      }
+      .app-description-section ul {
+        list-style-type: none;
+        padding-left: 0;
+      }
+      .app-description-section ul li {
+        margin-bottom: 10px;
+      }
+    </style>
+</head>
 <body>
     {{> dashboard-nav}}
 
-  <section class="container">
-
-    <div class="col-12">
-      <div class="user-profile mt-4">
-        <div class="row mb-3">
-          <div id="profileSection" class="text-center">
+  <section class="container mt-4">
+    <div class="row">
+      <div class="col-md-4">
+        <div class="user-profile text-center p-3 border rounded bg-light">
+          <div id="profileSection">
             <div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative mb-2">
               <a href="/user/{{requestedUser.userId}}" class="text-decoration-none">
                 <img id="profileImage" src="{{default requestedUser.profilePicture '/img/avatar.png'}}" alt="Profile Picture" class="rounded-circle" 
@@ -20,39 +72,6 @@
 
             <h2><a href="/user/{{requestedUser.userId}}" class="text-decoration-none text-secondary">{{requestedUser.userName}}</a></h2>
 
-            
-            <div class="d-flex justify-content-center text-center">
-              <div class="mx-2">
-                <h6 class="fw-bold">{{default requestedUser.postCount 0}}</h6>
-                <p class="text-muted small"><i class="bi bi-grid-fill"></i> 投稿</p>
-              </div>
-              <div class="mx-2">
-                <h6 class="fw-bold">{{default requestedUser.imageLikeCount 0}}</h6>
-                <p class="text-muted small"><i class="bi bi-heart-fill"></i> いいね</p>
-              </div>
-              <div class="mx-2">
-                <h6 class="fw-bold">{{default requestedUser.followCount 0}}</h6>
-                <p class="text-muted small">
-                  <a href="/follower/{{requestedUser.userId}}?type=following" class="text-decoration-none text-muted ">
-                    <i class="bi bi-person-check-fill"></i> フォロー中
-                  </a>
-                </p>
-              </div>
-              <div class="mx-2">
-                <h6 class="fw-bold">{{default requestedUser.followerCount 0}}</h6>
-                <p class="text-muted small">
-                  <a href="/follower/{{requestedUser.userId}}?type=followers" class="text-decoration-none text-muted ">
-                    <i class="bi bi-people-fill"></i> フォロワー
-                  </a>
-                </p>
-              </div>
-            </div>
-
-            <span class="btn btn-light me-2">
-              <span>🪙</span>
-              <span class="user-coins fw-bold">{{requestedUser.coins}}</span>
-            </span>
-
             {{#if (eq currentUser.userId requestedUser.userId)}}
             <!-- If current user is viewing their own profile -->
             {{else}}
@@ -60,30 +79,66 @@
               <span class="btn custom-gradient-bg me-2 follow-button {{#if requestedUser.follow}}following{{/if}}" data-user-id="{{requestedUser.userId}}">
                 <span class="user-follow fw-bold">
                   {{#if requestedUser.follow}}
-                    フォロー中 <!-- Following -->
+                    {{translations.followers.followingButton}}
                   {{else}}
-                    フォロー <!-- Follow -->
+                    {{translations.followers.followButton}}
                   {{/if}}
                 </span>
               </span>
 
               {{#if requestedUser.followedBy}}
-                <p class="text-muted small">{{requestedUser.userName}} にフォローされています</p> <!-- Followed by {{requestedUser.userName}} -->
+                <p class="text-muted small">{{requestedUser.userName}} {{translations.followers.followedByTextSuffix}}</p>
               {{/if}}
-
             {{/if}}
           </div>
         </div>
+
+        <div class="app-description-section mt-4">
+            <h3>{{translations.followers.whyLamixTitle}}</h3>
+            <p>{{translations.followers.whyLamixIntro}}</p>
+            <ul>
+                <li>{{{translations.followers.featureFree}}}</li>
+                <li>{{{translations.followers.featureMobile}}}</li>
+                <li>{{{translations.followers.featureUncensored}}}</li>
+                <li>{{{translations.followers.featureSecure}}}</li>
+            </ul>
+        </div>
+
+      </div>
+
+      <div class="col-md-8">
+        <h3 class="mb-3">{{requestedUser.userName}}{{#if (eq type 'followers')}}{{translations.followers.followersListTitleFollowers}}{{else}}{{translations.followers.followersListTitleFollowing}}{{/if}}</h3>
+        <div id="people-list" class="people-grid">
+          {{! Follower cards will be dynamically inserted here by JavaScript }}
+          {{! Example structure for a single card (to be generated by displayPeopleList):
+          <div class="follower-card">
+            <div class="follower-info">
+              <img src="/path/to/avatar.png" alt="User Avatar">
+              <div class="follower-details">
+                <a href="/user/userId" class="follower-name">UserName</a>
+                <p class="text-muted small">Optional short bio or status</p>
+              </div>
+              <button class="btn btn-sm btn-primary follow-button">Follow</button>
+            </div>
+          </div>
+          }}
+        </div>
+        <div id="pagination-controls" class="mt-3 d-flex justify-content-center"></div>
       </div>
     </div>
-
-
   </section>
-  <section class="container ">
-    <div class="mt-4 mb-5">
-      <ul id="people-list" class="list-group"></ul>
-      <div id="pagination-controls" class="mt-3"></div>
-    </div>
+
+  <section class="container mt-4 mb-5 app-description-section">
+    <h2>{{translations.followers.headline}}</h2>
+    <p>{{translations.followers.subHeadline}}</p>
+    
+    <h3 class="mt-4">{{translations.followers.howToChatTitle}}</h3>
+    <p>{{translations.followers.howToChatIntro}}</p>
+    <ul>
+        <li>{{{translations.followers.step1CreateAccount}}}</li>
+        <li>{{{translations.followers.step2ChooseAI}}}</li>
+        <li>{{{translations.followers.step3StartConversation}}}</li>
+    </ul>
   </section>
 
   <style>
@@ -93,13 +148,11 @@
   {{> dashboard-footer}}
 
   <script>
-
     $(document).ready(function () {
       const userId = `{{{requestedUser.userId}}}`;
       const type = `{{type}}`
       displayPeopleList(userId, type , 1)
     });
-
   </script>
 </body>
 </html>

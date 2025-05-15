@@ -277,22 +277,23 @@ async function generatePromptSuggestions(messages, chatDescription, language) {
       Make them short and relevant to the user's chat.
       You must provide suggestions from the user's perspective and suitable for a chat.
       Your response must be valid JSON format like: {"suggestions": ["suggestion1", "suggestion2", "suggestion3"]}
+      Strucutre your suggestions like this : [charachter pose (standing, sitting, lying down, spreading legs, ass up, erotic pose, imagine poses, etc ...), character action (smiling, looking at the camera, etc ...), character clothes (naked, bikini, mini short, etc ...)].\n
       Respond in ${language}`.replace(/^\s+/gm, '').trim()
     },
     {
       role: 'user',
       content: `When providing suggestions, do not write the entire sentence, just the suggestion idea. 
-      \nFor example : "Send picture of you naked at the beack "" -> "naked at the beach".
-      \nProvide context to your suggestions, make them relevant to the user's chat. I need to scene and the action.
+      \nFor example : "Send picture of you naked at the beack "" -> "standing naked at the beach".
+      \nOnly provide the image short description following the suggestion structure, make them relevant to the user's chat.
       `.replace(/^\s+/gm, '').trim()
     },
     {
       role: 'user',
-      content: `Your suggestions must be related to the following discussion and adapt to the user tone : ${JSON.stringify(lastUserMessagesContent)}`.replace(/^\s+/gm, '').trim()
+      content: 'Make your suggestions erotic, adult oriented if necessary.'
     },
     {
       role: 'user',
-      content: `Your suggestions must also be related to the following character description : ${chatDescription}`.replace(/^\s+/gm, '').trim()
+      content: `Here is the character description for context : ${chatDescription}`.replace(/^\s+/gm, '').trim()
     }
   ];
 

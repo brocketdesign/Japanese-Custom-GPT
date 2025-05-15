@@ -89,7 +89,7 @@ $(document).ready(async function() {
           var scrollPercent = ($(window).scrollTop() / ($(document).height() - $(window).height())) * 100;
           if (scrollPercent >= 60 && !formShown) {
             formShown = true;
-            //showRegistrationForm();
+            //openLoginForm();
           }
         });
     }
@@ -349,7 +349,7 @@ $(document).on('click', '.persona', function(e) {
     e.stopPropagation();
     e.preventDefault();
     const isTemporary = !!user.isTemporary
-    if(isTemporary){ showRegistrationForm(); return; }
+    if(isTemporary){ openLoginForm(); return; }
     const $this = $(this)
     $this.toggleClass('on');
     const $icon = $(this).find('i');
@@ -374,7 +374,7 @@ if(!isTemporary){
 
 window.togglePostFavorite = function(el) {
   const isTemporary = !!user.isTemporary;
-  if (isTemporary) { showRegistrationForm(); return; }
+  if (isTemporary) { openLoginForm(); return; }
 
   const $this = $(el);
   const postId = $this.data('id');
@@ -408,7 +408,7 @@ window.togglePostFavorite = function(el) {
 
 window.toggleImageFavorite = function(el) {
   const isTemporary = !!user.isTemporary;
-  if (isTemporary) { showRegistrationForm(); return; }
+  if (isTemporary) { openLoginForm(); return; }
 
   const $this = $(el);
   const imageId = $this.data('id');
@@ -443,7 +443,7 @@ window.toggleImageFavorite = function(el) {
 };
 window.togglePostVisibility = function(el) {
   const isTemporary = !!user.isTemporary;
-  if (isTemporary) { showRegistrationForm(); return; }
+  if (isTemporary) { openLoginForm(); return; }
 
   const $this = $(el);
   const postId = $this.data('id');
@@ -478,7 +478,7 @@ window.togglePostVisibility = function(el) {
 };
 window.toggleImageNSFW = function(el) {
   const isTemporary = !!user.isTemporary;
-  //if (isTemporary) { showRegistrationForm(); return; }
+  //if (isTemporary) { openLoginForm(); return; }
 
   const $this = $(el);
   const imageId = $this.data('id');
@@ -521,7 +521,7 @@ window.toggleImageNSFW = function(el) {
 
 window.togglePostNSFW = function(el) {
   const isTemporary = !!user.isTemporary;
-  // if (isTemporary) { showRegistrationForm(); return; }
+  // if (isTemporary) { openLoginForm(); return; }
 
   const $this = $(el);
   const postId = $this.data('id'); // Post ID is stored in data attribute
@@ -563,7 +563,7 @@ window.togglePostNSFW = function(el) {
 
 window.toggleFollow = function(el) {
   const isTemporary = !!user.isTemporary;
-  if (isTemporary) { showRegistrationForm(); return; }
+  if (isTemporary) { openLoginForm(); return; }
 
   const $this = $(el);
   const userId = $this.data('user-id');
@@ -913,18 +913,42 @@ window.displayPeopleList = async function (userId, type = 'followers', page = 1)
         // If there are followers or following users
         people.forEach(user => {
             htmlContent += `
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center">
-                    <a href="/user/${user.userId}" class="d-flex align-items-center text-decoration-none">
-                        <img src="${user.profilePicture}" alt="${user.userName}" class="rounded-circle me-3" width="50" height="50">
-                        <div class="ms-3">
-                            <h5 class="mb-0 text-dark">${user.userName}</h5>
-                            <small class="text-muted d-none">@${user.userId}</small>
-                        </div>
-                    </a>
-                </div>
-                <a href="/user/${user.userId}" class="btn btn-outline-primary btn-sm">プロフィールを見る</a>
-            </li>`;            
+            <li class="list-group-item border-0 py-3 px-2 mb-2 rounded shadow-sm people-list-item d-flex justify-content-between align-items-center transition"
+          style="background: #fff; transition: box-shadow 0.2s, transform 0.2s;">
+          <div class="d-flex align-items-center">
+              <a href="/user/${user.userId}" class="d-flex align-items-center text-decoration-none">
+            <img src="${user.profilePicture || '/img/default-avatar.png'}" alt="${user.userName}" 
+                class="rounded-circle me-3 border border-2 border-light user-avatar transition"
+                width="56" height="56"
+                style="box-shadow: 0 2px 8px rgba(0,0,0,0.07); transition: box-shadow 0.2s;">
+            <div>
+                <h6 class="mb-1 fw-semibold text-dark user-name" style="font-size: 1.1rem;">${user.userName}</h6>
+                <div class="text-muted small d-none">@${user.userId}</div>
+            </div>
+              </a>
+          </div>
+          <a href="/user/${user.userId}" class="btn btn-outline-primary btn-sm px-3 py-1 rounded-pill profile-btn transition"
+              style="font-weight: 500; letter-spacing: 0.02em;">
+              <i class="bi bi-person-lines-fill me-1"></i> プロフィールを見る
+          </a>
+            </li>`;
+        });
+
+        // Add hover effect via jQuery (or move to your CSS file)
+        $(document).off('mouseenter mouseleave', '.people-list-item').on('mouseenter', '.people-list-item', function() {
+            $(this).css({
+          'box-shadow': '0 4px 16px rgba(0,0,0,0.12)',
+          'transform': 'translateY(-2px) scale(1.015)'
+            });
+            $(this).find('.user-avatar').css('box-shadow', '0 4px 16px rgba(0,0,0,0.18)');
+            $(this).find('.profile-btn').addClass('btn-primary').removeClass('btn-outline-primary');
+        }).on('mouseleave', '.people-list-item', function() {
+            $(this).css({
+          'box-shadow': '0 2px 8px rgba(0,0,0,0.07)',
+          'transform': 'none'
+            });
+            $(this).find('.user-avatar').css('box-shadow', '0 2px 8px rgba(0,0,0,0.07)');
+            $(this).find('.profile-btn').removeClass('btn-primary').addClass('btn-outline-primary');
         });
 
         // Update the HTML content for the list
@@ -1070,49 +1094,50 @@ window.displayUserChats = async function(userId, page = 1) {
 };
 
 function generateUserChatsPagination(userId, currentPage, totalPages) {
-    let paginationHtml = '';
-    const sidePagesToShow = 2;
-    let pagesShown = new Set();
+  let paginationHtml = '';
+  const sidePagesToShow = 2;
+  let pagesShown = new Set();
 
-    // Infinite scroll
-    $(window).off('scroll').on('scroll', function() {
-        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
-            if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
-                displayUserChats(userId, currentPage + 1);
-                pagesShown.add(currentPage + 1);
-            }
-        }
-    });
+  // Infinite scroll
+  $(window).off('scroll').on('scroll', function() {
+    if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+      if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
+        displayUserChats(userId, currentPage + 1);
+        pagesShown.add(currentPage + 1);
+      }
+    }
+  });
 
-    if (currentPage >= totalPages) {
-      console.log('All Chats: No more pages to load.')
-      return;
+  if (currentPage >= totalPages) {
+    console.log('All Chats: No more pages to load.');
+    $('#user-chat-pagination-controls').empty(); // Hide spinner when all is shown
+    return;
+  }
+
+  if (totalPages > 1) {
+    paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="displayUserChats(${userId}, ${currentPage - 1})">${window.translations.prev}</button>`;
+
+    if (currentPage > sidePagesToShow + 1) {
+      paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="displayUserChats(${userId}, 1)">1</button>`;
+      if (currentPage > sidePagesToShow + 2) paginationHtml += `<span class="mx-1">...</span>`;
     }
 
-    if (totalPages > 1) {
-        paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="displayUserChats(${userId}, ${currentPage - 1})">${window.translations.prev}</button>`;
+    let startPage = Math.max(1, currentPage - sidePagesToShow);
+    let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
 
-        if (currentPage > sidePagesToShow + 1) {
-            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="displayUserChats(${userId}, 1)">1</button>`;
-            if (currentPage > sidePagesToShow + 2) paginationHtml += `<span class="mx-1">...</span>`;
-        }
-
-        let startPage = Math.max(1, currentPage - sidePagesToShow);
-        let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
-
-        for (let i = startPage; i <= endPage; i++) {
-            paginationHtml += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="displayUserChats(${userId}, ${i})">${i}</button>`;
-        }
-
-        if (currentPage < totalPages - sidePagesToShow - 1) {
-            if (currentPage < totalPages - sidePagesToShow - 2) paginationHtml += `<span class="mx-1">...</span>`;
-            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="displayUserChats(${userId}, ${totalPages})">${totalPages}</button>`;
-        }
-
-        paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="displayUserChats(${userId}, ${currentPage + 1})">${window.translations.next}</button>`;
+    for (let i = startPage; i <= endPage; i++) {
+      paginationHtml += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="displayUserChats(${userId}, ${i})">${i}</button>`;
     }
 
-    $('#user-chat-pagination-controls').html(paginationHtml);
+    if (currentPage < totalPages - sidePagesToShow - 1) {
+      if (currentPage < totalPages - sidePagesToShow - 2) paginationHtml += `<span class="mx-1">...</span>`;
+      paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="displayUserChats(${userId}, ${totalPages})">${totalPages}</button>`;
+    }
+
+    paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="displayUserChats(${userId}, ${currentPage + 1})">${window.translations.next}</button>`;
+  }
+
+  $('#user-chat-pagination-controls').html(paginationHtml);
 }
 
 // Enhanced displayPeopleChat with caching + infinite scroll
@@ -1354,7 +1379,7 @@ window.toggleChatNSFW = function(el) {
   //Avoid propagation
   event.stopPropagation();
   const isTemporary = !!user.isTemporary;
-  // if (isTemporary) { showRegistrationForm(); return; }
+  // if (isTemporary) { openLoginForm(); return; }
 
   const $this = $(el);
   const chatId = $this.data('id');
@@ -1913,70 +1938,6 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
     });
 }
 
-window.showRegistrationForm = function(messageId,callback) {
-    //window.location = "/authenticate?register=true"
-    Swal.fire({
-      title: '',
-      text: '',
-      //imageUrl: '/img/login-bg-862c043f.png', // replace with your image URL
-      imageWidth: 'auto',
-      imageHeight: 'auto',
-      position: 'bottom',
-      html: `
-            <h2>
-                <span class="u-color-grad">LAMIX ${window.translations.RegistrationForm.free}</span><br>
-                ${window.translations.RegistrationForm.loginToGenerateImages}
-            </h2>
-            <p class="text-muted mb-2 header" style="font-size: 16px;">
-                ${window.translations.RegistrationForm.startNow}
-            </p>
-            <div class="container">
-                <div class="row justify-content-center">
-                    <div class="col-md-8">
-                        <div class="card shadow-0 border-0">
-                            <div class="card-body">
-                                <a href="/user/google-auth" class="btn btn-light ico-login-button mb-3">
-                                    <img src="/img/google_logo_neutral.png" alt="Google"/>
-                                    <span class="gsi-material-button-contents">${window.translations.RegistrationForm.continueWithGoogle}</span>
-                                </a>
-                                <a href="/user/line-auth" class="btn btn-light ico-login-button mb-3">
-                                    <img src="/img/line_btn_base.png" alt="LINE"/>
-                                    <span class="gsi-material-button-contents">${window.translations.RegistrationForm.continueWithLINE}</span>
-                                </a>
-                                <p>${window.translations.RegistrationForm.or}</p>
-                                <a href="/authenticate/mail" class="btn btn-light ico-login-button mb-3 py-2">
-                                    <i class="fas fa-envelope me-3"></i>
-                                    <span>${window.translations.RegistrationForm.continueWithEmail}</span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-    `,
-      showCancelButton: false,
-      showConfirmButton: false,
-      showCloseButton: true,
-      allowOutsideClick: false,
-      showClass: {
-          popup: 'swal2-bottom-slide-in'
-      },
-      hideClass: {
-          popup: 'swal2-bottom-slide-out'
-      },
-      customClass: {
-        popup: 'animated fadeInDown'
-      }
-    }).then((result) => {
-        if (result.dismiss) {
-          if(typeof callback === 'function'){
-            callback()
-          }
-        }
-      });
-}
-
 function initializePersonaStats(personas) {
 
     if(personas){
@@ -1998,7 +1959,7 @@ window.showPremiumPopup = async function() {
     const user = user
     const isTemporary = !!user?.isTemporary
     if(isTemporary){
-        showRegistrationForm()
+        openLoginForm()
         return
     }
     const features = [

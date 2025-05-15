@@ -1,5 +1,20 @@
 {
   "lang":"en", 
+  
+  "profile_style": "Style",
+  "profile_style_desc": "Visual appearance and artistic representation style of this AI character",
+  "profile_gender": "Gender",
+  "profile_gender_desc": "Gender identity of the character for more personalized interactions",
+  "profile_character": "Character",
+  "profile_character_desc": "Unique AI personality with custom traits and conversation style",
+  "profile_messages": "Messages",
+  "profile_messages_desc": "Total number of messages exchanged with this AI character",
+  "profile_images": "Images",
+  "profile_images_desc": "Collection of AI-generated images associated with this character",
+  "profile_content_rating": "Content Rating",
+  "profile_content_rating_desc": "This character may contain mature or adult-oriented content",
+  "profile_view_full": "View Full Profile",
+
   "character_personality_seo": "Discover this unique AI character's personality traits, preferences, and expression style. Engage in AI chat conversations that adapt to each character's unique persona through advanced AI character technology and AI image generation.",
   "about_character_seo_text": "Each AI character has their own unique personality, traits and communication style. This is what makes AI chat so engaging and fun - you can experience conversations with different AI characters who respond in their own distinct way, enhanced with AI image generation capabilities.",
   "why_chat_seo_text": "Experience authentic AI chat conversations with characters designed to deliver engaging experiences. Our AI characters use advanced language models and AI image generation to create immersive interactions tailored to each character's unique personality.",

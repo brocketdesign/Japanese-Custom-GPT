@@ -129,7 +129,155 @@
             <h2>{{translations.about_the_character}} {{chat.name}}</h2>
             <hr class="w-25 mx-auto">
             <p class="text-muted seo-text mb-4">{{translations.about_character_seo_text}}</p>
-            <img src="{{default chat.chatImageUrl '/img/avatar.png'}}" alt="{{chat.name}} {{translations.profile_image_alt_text}}" class="rounded-circle mb-3 shadow-sm" style="width: 100px; height: 100px; object-fit: cover; object-position: top;">
+            <div class="card mb-4 shadow-sm profile-card">
+              <div class="card-body p-0">
+                <div class="row g-0">
+                  <!-- Left side - Image -->
+                  <div class="col-md-4 profile-image-container">
+                    <a href="/character/{{chat._id}}" class="text-decoration-none">
+                      <img src="{{default chat.chatImageUrl '/img/avatar.png'}}" alt="{{chat.name}} {{translations.profile_image_alt_text}}" 
+                           class="rounded-start profile-image" style="width: 100%; height: 100%; object-fit: cover; object-position: top;">
+                    </a>
+                  </div>
+                  
+                  <!-- Right side - Profile Details -->
+                  <div class="col-md-8">
+                    <div class="card-body py-3 shadow border-2">
+                      <h3 class="card-title mb-3">{{chat.name}}</h3>
+                      
+<ul class="list-unstyled profile-details">
+  <li class="mb-2">
+    <i class="bi bi-palette-fill text-purple me-2"></i> <strong>{{translations.profile_style}}:</strong> 
+    <span>{{default chat.imageStyle 'Standard'}}</span>
+    <p class="text-muted small mt-1">{{translations.profile_style_desc}}</p>
+  </li>
+  
+  <li class="mb-2">
+    <i class="bi bi-gender-ambiguous text-purple me-2"></i> <strong>{{translations.profile_gender}}:</strong> 
+    <span>{{default chat.gender 'Not specified'}}</span>
+    <p class="text-muted small mt-1">{{translations.profile_gender_desc}}</p>
+  </li>
+  
+  <li class="mb-2">
+    <i class="bi bi-person-badge text-purple me-2"></i> <strong>{{translations.profile_character}}:</strong> 
+    <span>{{chat.name}}</span>
+    <p class="text-muted small mt-1">{{translations.profile_character_desc}}</p>
+  </li>
+  
+  <li class="mb-2">
+    <i class="bi bi-chat-dots text-purple me-2"></i> <strong>{{translations.profile_messages}}:</strong> 
+    <span>{{default chat.messagesCount '0'}}</span>
+    <p class="text-muted small mt-1">{{translations.profile_messages_desc}}</p>
+  </li>
+  
+  <li class="mb-2">
+    <i class="bi bi-images text-purple me-2"></i> <strong>{{translations.profile_images}}:</strong> 
+    <span>{{default chat.imageCount '0'}}</span>
+    <p class="text-muted small mt-1">{{translations.profile_images_desc}}</p>
+  </li>
+  
+  {{#if chat.nsfw}}
+  <li class="mb-2">
+    <i class="bi bi-exclamation-triangle text-warning me-2"></i> <strong>{{translations.profile_content_rating}}:</strong> 
+    <span class="badge bg-warning text-dark">18+</span>
+    <p class="text-muted small mt-1">{{translations.profile_content_rating_desc}}</p>
+  </li>
+  {{/if}}
+</ul>
+
+<a href="/character/{{chat._id}}" class="btn custom-gradient-bg mt-2">
+  <i class="bi bi-chat-dots me-2"></i>{{translations.startChattingNow}}
+</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+<style>
+  .profile-card {
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background: linear-gradient(135deg, #ffffff 0%, #f0e6ff 100%);
+    box-shadow: 0 8px 15px rgba(110, 32, 244, 0.1);
+    text-align: start;
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .profile-card:hover {
+    transform: translateY(-8px) scale(1.01);
+    box-shadow: 0 15px 30px rgba(110, 32, 244, 0.2);
+  }
+  
+  .profile-image-container {
+    overflow: hidden;
+    border-right: 1px solid rgba(110, 32, 244, 0.1);
+  }
+  
+  .profile-image {
+    transition: transform 0.5s ease;
+  }
+  
+  .profile-card:hover .profile-image {
+    transform: scale(1.07);
+  }
+  
+  .profile-details li {
+    border-bottom: 1px solid rgba(110, 32, 244, 0.1);
+    padding: 6px 0;
+    font-size: 0.92rem;
+  }
+  
+  .profile-details .small {
+    font-size: 0.8rem;
+    opacity: 0.8;
+  }
+  
+  .profile-card .card-title {
+    background: linear-gradient(90deg, #6E20F4 0%, #9161fc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: bold;
+    font-size: 1.6rem;
+    margin-bottom: 0.8rem;
+  }
+  
+  .profile-card .card-body {
+    padding: 1.2rem;
+  }
+  
+  .profile-card .btn {
+    transition: all 0.3s ease;
+    transform-origin: center;
+  }
+  
+  .profile-card .btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(110, 32, 244, 0.3);
+  }
+  
+  @media (max-width: 767px) {
+    .profile-image-container {
+      max-height: 180px;
+      border-right: none;
+      border-bottom: 1px solid rgba(110, 32, 244, 0.1);
+    }
+    
+    .profile-card .card-body {
+      padding: 1rem 0.8rem;
+    }
+    
+    .profile-card .card-title {
+      font-size: 1.4rem;
+    }
+    
+    .profile-details li {
+      padding: 5px 0;
+    }
+  }
+</style>            
             <p class="description lead">{{chat.description}}</p>
             {{#if chat.rule}}
               <p class="mt-3"><strong>{{translations.character_rules_heading}}:</strong> {{chat.rule}}</p>
@@ -228,7 +376,7 @@
 
   <!-- Other Images Section -->
   {{#if chatId}}
-    <section class="section-padding shadow-sm">
+    <section id="otherImages" class="section-padding shadow-sm">
       <div class="container">
         <div class="row">
           <div class="col-12 mt-4">
@@ -438,13 +586,13 @@
                 }
                 
                 .accordion-button {
-                    background: linear-gradient(90.9deg, rgba(210,184,255,0.2) 2.74%, rgba(130,64,255,0.2) 102.92%);
+                    background: #fff;
                     color: #8240FF;
                     font-weight: 600;
                 }
                 
                 .accordion-button:not(.collapsed) {
-                    background: linear-gradient(90.9deg, rgba(210,184,255,0.4) 2.74%, rgba(130,64,255,0.4) 102.92%);
+                    background: #fff;
                     color: #8240FF;
                 }
                 

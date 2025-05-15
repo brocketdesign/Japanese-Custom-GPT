@@ -1649,7 +1649,9 @@
 .character-create-card:hover h5 {
     color: #6E20F4;
 }
-
+.text-purple{
+    color: #6E20F4;
+}
 .character-card-menu {
     width: 100%;
     padding: 10px 0;

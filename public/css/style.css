@@ -1740,7 +1740,7 @@
   
   @media (max-width: 767px) {
     .profile-image-container {
-      max-height: 180px;
+      max-height: 400px;
       border-right: none;
       border-bottom: 1px solid rgba(110, 32, 244, 0.1);
     }

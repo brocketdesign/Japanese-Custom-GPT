@@ -29,7 +29,6 @@ if (typeof peopleChatCurrentPage === 'undefined') peopleChatCurrentPage = {}
 // loadChatUsers
 // loadUsers
 
-
 async function onLanguageChange(lang) {
     const updateResponse = await $.ajax({
         url: '/api/user/update-language',
@@ -319,6 +318,7 @@ $(document).ready(async function() {
         }
         });
     }
+
     startCountdown();
     displayTags();
 });
@@ -1305,6 +1305,85 @@ function updateChatPaginationControls(totalPages, searchId) {
   }
 }
 
+window.displayLatestChats = function (chatData, targetGalleryId, modal = false) {
+  let htmlContent = '';
+  const currentUser = user; // Assuming 'user' is globally available from the template
+  const currentUserId = currentUser._id;
+  const subscriptionStatus = currentUser.subscriptionStatus === 'active';
+  const isTemporaryUser = !!currentUser?.isTemporary;
+
+  chatData.forEach(chat => {
+    const isOwner = chat.userId === currentUserId;
+    const isPremiumChat = chat.isPremium || false;
+    const isNSFW = chat.nsfw || false;
+    const genderClass = chat.gender ? `chat-gender-${chat.gender.toLowerCase()}` : '';
+    const styleClass = chat.imageStyle ? `chat-style-${chat.imageStyle.toLowerCase()}` : '';
+    let nsfwVisible = $.cookie('nsfw') === 'true';
+
+    // Using col-lg-3 col-xl-2 for potentially 5-6 cards per row on larger screens
+    let cardClass = `gallery-card col-6 col-sm-4 col-md-3 col-lg-3 col-xl-2 p-1 animate__animated animate__fadeIn ${genderClass} ${styleClass}`;
+    if (isPremiumChat) cardClass += ' premium-chat';
+    if (isNSFW) cardClass += ' nsfw-true';
+
+    let imageSrc = chat.chatImageUrl || chat.thumbnailUrl || '/img/logo.webp';
+    let nsfwOverlay = '';
+
+    // Simplified NSFW Overlay Logic - adapt to your full existing logic if more complex
+    console.log(`isNSFW: ${isNSFW}, nsfwVisible: ${nsfwVisible}, isOwner: ${isOwner}, subscriptionStatus: ${subscriptionStatus}, isTemporaryUser: ${isTemporaryUser}`);
+    if (isNSFW && !nsfwVisible) {
+        if (!isOwner && ((isTemporaryUser || !subscriptionStatus))) {
+             nsfwOverlay = `<div class="gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center" style="background: rgba(0,0,0,0.55); z-index: 2; backdrop-filter: blur(5px);">
+                                <span class="badge bg-danger mb-2" style="font-size: 0.9rem;"><i class="bi bi-exclamation-triangle"></i> NSFW</span>
+                                <button class="btn btn-sm btn-outline-light mt-2" onclick="loadPlanPage(event, ${isTemporaryUser})" style="font-size: 12px; border-radius: 50px;">
+                                    ${isTemporaryUser ? (window.translations?.register || 'Register to View') : (window.translations?.subscribe || 'Subscribe to View')}
+                                </button>
+                            </div>`;
+        } else if (!isOwner && subscriptionStatus && isPremiumChat && !nsfwVisible) {
+             nsfwOverlay = `<div class="gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center" style="background: rgba(0,0,0,0.55); z-index: 2; backdrop-filter: blur(5px);">
+                                <span class="badge bg-danger mb-2" style="font-size: 0.9rem;"><i class="bi bi-exclamation-triangle"></i> NSFW</span>
+                                <small class="text-white-50 px-2 text-center" style="font-size:0.75rem;">${window.translations?.nsfwHiddenPref || 'NSFW content hidden by preference.'}</small>
+                            </div>`;
+        }
+    }
+
+    htmlContent += `
+        <div class="${cardClass}" data-id="${chat._id}" style="cursor:pointer;" onclick="redirectToChat('${chat._id}','${imageSrc}')">
+            <div class="card gallery-hover shadow-sm border-0 h-100 position-relative overflow-hidden">
+                <div class="gallery-image-wrapper" style="aspect-ratio: 4/5; background: #f8f9fa; position: relative;">
+                  <img src="${imageSrc}" class="card-img-top gallery-img" alt="${chat.name}" style="height: 100%; width: 100%; object-fit: cover;">
+                  ${nsfwOverlay}
+                </div>
+                <div class="card-body p-2 d-flex flex-column">
+                    <h6 class="card-title small fw-bold mb-1 text-truncate" style="font-size: 0.85rem;">${chat.name}</h6>
+                    ${isPremiumChat ? '<span class="badge bg-warning text-dark position-absolute top-0 end-0 m-1 small" style="font-size: 0.6rem !important; padding: 0.2em 0.4em !important;">Premium</span>' : ''}
+                </div>
+                ${ (currentUser.isAdmin || chat.userId === currentUser._id) ? `
+                <div class="position-absolute top-0 start-0 m-1" style="z-index:3;">
+                    <button class="btn btn-sm btn-outline-secondary border-0 ${chat.nsfw ? 'nsfw' : ''}" onclick="toggleChatNSFW(this); event.stopPropagation();" data-id="${chat._id}" style="background: #00000050;color: white;padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
+                        ${chat.nsfw ? '<i class="bi bi-eye-slash-fill"></i>' : '<i class="bi bi-eye-fill"></i>'}
+                    </button>
+                </div>` : ''}
+            </div>
+        </div>
+    `;
+    
+  });
+
+  const galleryElement = $(document).find(`#${targetGalleryId}`);
+  if (galleryElement.length) {
+    galleryElement.append(htmlContent);
+  } else {
+    console.warn(`Target gallery with ID #${targetGalleryId} not found.`);
+  }
+
+  // Apply filters if it's the popular chats gallery
+  if (targetGalleryId === 'chat-gallery') { // 'chat-gallery' is the ID for popular chats
+    if (typeof updateChatFilters === "function") {
+        updateChatFilters();
+    }
+  }
+  // You can add similar filter logic for latest chats if needed
+};
 
 window.displayChats = function (chatData, searchId = null, modal = false) {
   let htmlContent = '';

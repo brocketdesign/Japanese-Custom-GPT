@@ -133,6 +133,12 @@
                     </div>
                 </div>
 
+                <!-- Latest Chats Section -->
+                <div class="mx-4 my-4" id="latest-chats-section">
+                    <h5 class="fw-bold mb-3">{{translations.latestChatsHeader}}</h5>
+                    <div id="latest-chats-gallery" class="row latest-chats-gallery flex-nowrap overflow-auto mx-0" style="flex-wrap: nowrap; overflow-x: auto; white-space: nowrap;"></div>
+                </div>
+
                 <!-- Popular chat -->
                 <div class="mx-4 my-4" id="popular-chats-section">
                     <h5 class="fw-bold mb-3">{{translations.popularChats}}</h5>
@@ -759,59 +765,61 @@ $(document).ready(function() {
     }
 
     async function loadPopularChats(page = 1, reload = false) {
-        if (popularChatsLoading) return;
+        if (popularChatsLoading && !reload) return; // Added !reload to allow forced reload
         popularChatsLoading = true;
-        $('#popular-chats-pagination-controls').html('<div class="text-center"><div class="spinner-border" role="status"></div></div>');
+        // Show spinner for popular chats
+        $('#popular-chats-pagination-controls').html('<div class="text-center my-3"><div class="spinner-border text-secondary spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>');
 
-        let cache = getPopularChatsCache();
+        if (reload) { // Added reload logic for popular chats as well
+            popularChatsPage = 1;
+            $('#chat-gallery').empty(); // 'chat-gallery' is the popular chats container
+            sessionStorage.removeItem(POPULAR_CHATS_CACHE_KEY);
+            sessionStorage.removeItem(POPULAR_CHATS_CACHE_TIME_KEY);
+        }
+
+        let cache = getPopularChatsCache(); // Ensure this function exists or adapt
         let data = cache && cache[page];
 
         if (data) {
-            if (reload) $('#popular-chats-gallery').empty();
-            // Shuffle the chats array before displaying
-            if (Array.isArray(data.chats)) {
-                data.chats = data.chats
-                    .map(value => ({ value, sort: Math.random() }))
-                    .sort((a, b) => a.sort - b.sort)
-                    .map(({ value }) => value);
-            }
-            window.displayChats(data.chats, 'popular', false);
+            // console.log(`Loading popular chats page ${page} from cache`);
+            window.displayChats(data.chats, 'chat-gallery', false); // Corrected target ID
             popularChatsTotalPages = data.totalPages || 1;
             if (page >= popularChatsTotalPages) {
                 $('#popular-chats-pagination-controls').html('');
             } else {
-                $('#popular-chats-pagination-controls').html('<div class="text-center"><div class="spinner-border" role="status"></div></div>');
+                $('#popular-chats-pagination-controls').html('<div class="text-center my-3"><div class="spinner-border text-secondary spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>');
             }
             popularChatsLoading = false;
             return;
         }
 
         try {
-            const res = await fetch(`/api/popular-chats?page=${page}`);
+            // console.log(`Fetching popular chats page ${page} from API`);
+            const res = await fetch(`/api/popular-chats?page=${page}`); // Ensure this API endpoint exists
             if (!res.ok) {
-                $('#popular-chats-pagination-controls').html('');
+                $('#popular-chats-pagination-controls').html('<div class="text-center text-danger my-3">Failed to load popular chats.</div>');
                 popularChatsLoading = false;
                 return;
             }
             data = await res.json();
-            setPopularChatsCache(page, data);
-            if (reload) $('#popular-chats-gallery').empty();
-            // Shuffle the chats array before displaying
+            setPopularChatsCache(page, data); // Ensure this function exists or adapt
+
+            // Shuffle popular chats if desired (example from your existing code)
             if (Array.isArray(data.chats)) {
                 data.chats = data.chats
                     .map(value => ({ value, sort: Math.random() }))
                     .sort((a, b) => a.sort - b.sort)
                     .map(({ value }) => value);
             }
-            window.displayChats(data.chats, 'popular', false);
+            window.displayChats(data.chats, 'chat-gallery', false); // Corrected target ID
             popularChatsTotalPages = data.totalPages || 1;
             if (page >= popularChatsTotalPages) {
                 $('#popular-chats-pagination-controls').html('');
             } else {
-                $('#popular-chats-pagination-controls').html('<div class="text-center"><div class="spinner-border" role="status"></div></div>');
+                $('#popular-chats-pagination-controls').html('<div class="text-center my-3"><div class="spinner-border text-secondary spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>');
             }
         } catch (e) {
-            $('#popular-chats-pagination-controls').html('');
+            $('#popular-chats-pagination-controls').html('<div class="text-center text-danger my-3">Error loading popular chats.</div>');
         }
         popularChatsLoading = false;
     }
@@ -830,6 +838,104 @@ $(document).ready(function() {
             loadPopularChats(popularChatsPage);
         }
     });
+
+    // Global states for Latest Chats
+    var latestChatsPage = 1;
+    var latestChatsLoading = false;
+    var latestChatsTotalPages = 1;
+    const LATEST_CHATS_CACHE_KEY = 'latestChatsCache';
+    const LATEST_CHATS_CACHE_TIME_KEY = 'latestChatsCacheTime';
+    const LATEST_CHATS_CACHE_TTL = 1 * 60 * 60 * 1000; // 1 hour in milliseconds
+
+
+    // --- Latest Chats ---
+    function getLatestChatsCache() {
+        const cache = sessionStorage.getItem(LATEST_CHATS_CACHE_KEY);
+        const cacheTime = sessionStorage.getItem(LATEST_CHATS_CACHE_TIME_KEY);
+        if (!cache || !cacheTime) return null;
+        if (Date.now() - parseInt(cacheTime, 10) > LATEST_CHATS_CACHE_TTL) {
+            sessionStorage.removeItem(LATEST_CHATS_CACHE_KEY);
+            sessionStorage.removeItem(LATEST_CHATS_CACHE_TIME_KEY);
+            return null;
+        }
+        try {
+            return JSON.parse(cache);
+        } catch {
+            return null;
+        }
+    }
+
+    function setLatestChatsCache(page, data) {
+        let cache = getLatestChatsCache() || {};
+        cache[page] = data;
+        sessionStorage.setItem(LATEST_CHATS_CACHE_KEY, JSON.stringify(cache));
+        sessionStorage.setItem(LATEST_CHATS_CACHE_TIME_KEY, Date.now().toString());
+    }
+    async function loadLatestChats(page = 1, reload = false) {
+        console.log('[LatestChats] loadLatestChats called', { page, reload, latestChatsLoading });
+        if (latestChatsLoading && !reload) {
+            console.log('[LatestChats] Already loading, aborting');
+            return;
+        }
+        latestChatsLoading = true;
+        //$('#latest-chats-pagination-controls').html('<div class="text-center my-3"><div class="spinner-border text-secondary spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+
+        if (reload) {
+            latestChatsPage = 1;
+            $('#latest-chats-gallery').empty();
+            sessionStorage.removeItem(LATEST_CHATS_CACHE_KEY);
+            sessionStorage.removeItem(LATEST_CHATS_CACHE_TIME_KEY);
+            console.log('[LatestChats] Reload triggered, cache cleared');
+        }
+
+        let cache = getLatestChatsCache();
+        let data = cache && cache[page];
+
+        if (data) { // Disable cache for now
+            console.log('[LatestChats] Using cache for page', page, data);
+            window.displayLatestChats(data.chats, 'latest-chats-gallery', false);
+            latestChatsTotalPages = data.totalPages || 1;
+            if (page >= latestChatsTotalPages) {
+                $('#latest-chats-pagination-controls').html('');
+            } else {
+                //$('#latest-chats-pagination-controls').html('<div class="text-center my-3"><div class="spinner-border text-secondary spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+            }
+            latestChatsLoading = false;
+            return;
+        }
+
+        try {
+            console.log('[LatestChats] Fetching from API', `/api/latest-chats?page=${page}`);
+            const res = await fetch(`/api/latest-chats?page=${page}`);
+            if (!res.ok) {
+                console.error('[LatestChats] Failed to load chats. Status:', res.status);
+                $('#latest-chats-pagination-controls').html('<div class="text-center text-danger my-3">Failed to load chats.</div>');
+                latestChatsLoading = false;
+                return;
+            }
+            data = await res.json();
+            console.log('[LatestChats] Data received', data);
+            setLatestChatsCache(page, data);
+
+            window.displayLatestChats(data.chats, 'latest-chats-gallery', false);
+            latestChatsTotalPages = data.totalPages || 1;
+
+            if (page >= latestChatsTotalPages) {
+                $('#latest-chats-pagination-controls').html('');
+            } else {
+                //$('#latest-chats-pagination-controls').html('<div class="text-center my-3"><div class="spinner-border text-secondary spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+            }
+        } catch (e) {
+            console.error('[LatestChats] Error loading chats:', e);
+            $('#latest-chats-pagination-controls').html('<div class="text-center text-danger my-3">Error loading chats.</div>');
+        }
+        latestChatsLoading = false;
+    }
+
+    // Initial load for Latest Chats
+    if ($('#latest-chats-section').length) {
+        loadLatestChats();
+    }
 
     // Optional: reload on tab switch or other triggers
     // Example: $('#reload-popular-chats').on('click', function(){ popularChatsPage=1; loadPopularChats(1, true); });

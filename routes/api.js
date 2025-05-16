@@ -2915,6 +2915,95 @@ async function routes(fastify, options) {
         }
     });
 
+        fastify.get('/api/latest-chats', async (request, reply) => {
+            const db = fastify.mongo.db;
+            const page = parseInt(request.query.page) || 1;
+            const limit = parseInt(request.query.limit) || 18;
+            const skip = (page - 1) * limit;
+            const nsfwLimit = Math.floor(limit / 2);
+            const sfwLimit = limit - nsfwLimit;
+
+            try {
+            console.log(`[latest-chats] page=${page} limit=${limit} skip=${skip}`);
+            const chatsCollection = db.collection('chats');
+            const baseQuery = {
+                chatImageUrl: { $exists: true, $ne: '' },
+                name: { $exists: true, $ne: '' },
+                tags: { $exists: true, $ne: [] },
+                nsfw: { $exists: true },
+                status: { $nin: ['deleted', 'private', 'rejected', 'pending'] }
+            };
+
+            // Query for NSFW chats
+            const nsfwQuery = { ...baseQuery, nsfw: true };
+            const nsfwChats = await chatsCollection.find(nsfwQuery)
+                .sort({ _id: -1 })
+                .skip(skip)
+                .limit(nsfwLimit)
+                .project({
+                name: 1,
+                chatImageUrl: 1,
+                thumbnailUrl: 1,
+                isPremium: 1,
+                nsfw: 1,
+                gender: 1,
+                imageStyle: 1,
+                userId: 1,
+                createdAt: 1
+                })
+                .toArray();
+
+            // Query for SFW chats
+            const sfwQuery = { ...baseQuery, nsfw: false };
+            const sfwChats = await chatsCollection.find(sfwQuery)
+                .sort({ _id: -1 })
+                .skip(skip)
+                .limit(sfwLimit)
+                .project({
+                name: 1,
+                chatImageUrl: 1,
+                thumbnailUrl: 1,
+                isPremium: 1,
+                nsfw: 1,
+                gender: 1,
+                imageStyle: 1,
+                userId: 1,
+                createdAt: 1
+                })
+                .toArray();
+
+            // Combine and sort by _id descending (latest first)
+            const combinedChats = [...sfwChats, ...nsfwChats].sort((a, b) => b._id - a._id);
+
+            const formattedChats = combinedChats.map(chat => ({
+                _id: chat._id,
+                name: chat.name || 'Unnamed Chat',
+                chatImageUrl: chat.chatImageUrl || chat.thumbnailUrl || '/img/default_chat_avatar.png',
+                thumbnailUrl: chat.thumbnailUrl,
+                isPremium: chat.isPremium || false,
+                nsfw: chat.nsfw || false,
+                gender: chat.gender,
+                imageStyle: chat.imageStyle,
+                userId: chat.userId,
+            }));
+
+            // For pagination info, count total chats matching baseQuery
+            const totalChats = await chatsCollection.countDocuments(baseQuery);
+            const totalPages = Math.ceil(totalChats / limit);
+
+            reply.send({
+                chats: formattedChats,
+                currentPage: page,
+                totalPages: totalPages,
+                totalChats: totalChats
+            });
+
+            } catch (error) {
+            console.log({ msg: 'Error fetching latest chats', error: error.message, stack: error.stack });
+            reply.status(500).send({ message: 'Error fetching latest chats' });
+            }
+        });
+
         fastify.get('/api/custom-prompts/:userChatId', async (request, reply) => {
             try {
                 const { userChatId } = request.params;

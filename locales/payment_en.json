@@ -1,0 +1,17 @@
+{
+  "payment_success": {
+    "one_time": "One-time",
+    "day_pass_success": "Day Pass Activated!",
+    "day_pass_expires": "Your pass expires in 24 hours",
+    "expires_in_24_hours": "Your premium features will be available for the next 24 hours.",
+    "subscription_success": "Subscription Activated!",
+    "subscription_activated": "Your premium subscription has been activated successfully.",
+    "premium_features_unlocked": "All premium features are now unlocked and ready to use.",
+    "bonus_coins_added": "Bonus: 1000 coins have been added to your account!",
+    "unlimited_chats": "Unlimited Chats",
+    "unlimited_images": "Unlimited Images",
+    "all_content": "All Content Access",
+    "new_features_unlocked": "Features Now Available",
+    "continue_to_chat": "Continue to Chat"
+  }
+}

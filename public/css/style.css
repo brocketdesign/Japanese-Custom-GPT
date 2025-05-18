@@ -503,7 +503,7 @@
   border:1px solid #e0e0e0;
   border-radius:8px;
   box-shadow:0 2px 8px #0000001a;
-  overflow:hidden;
+  /* overflow:hidden; */ /* Modified to allow badges to overflow */
   transition:box-shadow .3s ease
   }
   
@@ -1937,4 +1937,322 @@
 .prompt-card.active {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* New gradient styles for plan differentiation */
+.premium-gradient {
+  background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
+  box-shadow: 0 8px 20px rgba(130, 64, 255, 0.25);
+  /* transform: scale(1.03); */ /* Handled by .plan-card.premium-gradient specific hover if needed */
+  border: 2px solid #9e7dde;
+  z-index: 10; /* To ensure it's above others if scaled */
+}
+
+.standard-gradient {
+  background: linear-gradient(90.9deg, #B8D2FF 2.74%, #4080FF 102.92%);
+  box-shadow: 0 6px 16px rgba(64, 128, 255, 0.2);
+}
+
+.basic-gradient {
+  background: linear-gradient(90.9deg, #B8FFF0 2.74%, #40BFF2 102.92%);
+  box-shadow: 0 4px 14px rgba(64, 191, 242, 0.2);
+}
+
+.oneday-gradient {
+  background: linear-gradient(90.9deg, #FFD6B8 2.74%, #FF8C40 102.92%);
+  box-shadow: 0 4px 14px rgba(255, 140, 64, 0.2);
+}
+
+/* Feature comparison table styling */
+.plan-comparison-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  margin: 30px 0;
+}
+
+.plan-comparison-table th {
+  background-color: #f5f5f5;
+  padding: 15px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.plan-comparison-table th:first-child {
+  text-align: left;
+}
+
+.plan-comparison-table td {
+  padding: 12px 15px;
+  text-align: center;
+  border-top: 1px solid #eee;
+}
+
+.plan-comparison-table td:first-child {
+  text-align: left;
+  font-weight: 500;
+}
+
+.plan-comparison-table tr:nth-child(odd) {
+  background-color: #f9f9f9;
+}
+
+.plan-comparison-table .highlight-row {
+  background-color: #f0e6ff !important;
+}
+
+/* Badge styles */
+.popular-badge {
+  position: absolute;
+  top: -15px; /* Adjusted for better visibility */
+  right: 15px; /* Adjusted for better visibility */
+  background: linear-gradient(45deg, #FF5E7E, #FF8C40);
+  color: white;
+  padding: 6px 18px; /* Slightly larger padding */
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 0.85rem; /* Slightly larger font */
+  box-shadow: 0 4px 12px rgba(255, 94, 126, 0.35);
+  transform: rotate(3deg); /* Slight rotation for emphasis */
+  z-index: 12; /* Ensure it's above card content */
+}
+
+.guarantee-badge { /* Example, can be adapted */
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 11;
+}
+
+/* Enhanced plan cards */
+.plan-card { /* Base .plan-card already exists, this enhances it */
+  position: relative; /* Needed for absolute positioned badges */
+  transition: all 0.3s ease-in-out;
+  overflow: visible; /* Allow badges to be outside */
+  display: flex; /* For better internal alignment */
+  flex-direction: column; /* Stack content vertically */
+  justify-content: space-between; /* Push button to bottom */
+}
+
+.plan-card.premium-gradient { /* Specific styling for premium card */
+    transform: scale(1.03); /* Make premium slightly larger by default */
+}
+
+.plan-card:hover {
+  transform: translateY(-8px) scale(1.05); /* Enhanced hover effect */
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+}
+.plan-card.premium-gradient:hover {
+    transform: translateY(-10px) scale(1.08); /* More pronounced hover for premium */
+}
+
+
+.plan-features {
+  margin-top: 15px;
+  text-align: left;
+  font-size: 0.9rem;
+  padding-left: 0; /* Remove default ul padding */
+  list-style-type: none; /* Remove default list bullets */
+}
+
+.plan-features li {
+  margin-bottom: 8px; /* Increased spacing */
+  display: flex;
+  align-items: center;
+  color: #fff; /* Ensure text is visible on dark gradients */
+}
+
+.plan-features i { /* For Bootstrap Icons */
+  margin-right: 8px;
+  color: #fff; /* Default icon color, can be overridden by specific gradients */
+  font-size: 1.1em;
+}
+
+/* Specific icon colors for gradients if needed, or keep them white */
+.premium-gradient .plan-features i { color: #f0e6ff; }
+.standard-gradient .plan-features i { color: #e0eaff; }
+.basic-gradient .plan-features i { color: #d4f5fa; }
+.oneday-gradient .plan-features i { color: #ffe8d8; }
+
+
+.testimonial-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 25px; /* Increased padding */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07); /* Softer shadow */
+  margin: 15px 0;
+  position: relative;
+  height: 100%; /* Ensure cards in a row have same height */
+  display: flex;
+  flex-direction: column;
+}
+
+.testimonial-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #eee; /* Subtle border */
+}
+
+.testimonial-quote { /* Using Bootstrap icon class */
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  color: #e0e0e0;
+  font-size: 2.5rem; /* Larger quote icon */
+}
+
+.testimonial-card p {
+    flex-grow: 1; /* Allow paragraph to take available space */
+    margin-bottom: 1rem;
+}
+.testimonial-card .text-warning i { /* For Bootstrap star icons */
+    font-size: 1rem;
+}
+
+
+.cta-button {
+  display: inline-block;
+  padding: 14px 35px; /* Larger padding */
+  font-size: 1.15rem; /* Slightly larger font */
+  font-weight: bold;
+  text-align: center;
+  border-radius: 30px;
+  transition: all 0.3s ease;
+  width: 100%;
+  margin-top: 20px; /* More space above button */
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.cta-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); /* Stronger hover shadow */
+}
+
+.cta-button i { /* For Bootstrap Icons */
+    font-size: 1em; /* Match button font size */
+}
+
+.cta-button.premium {
+  background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
+  color: white;
+}
+
+.cta-button.standard {
+  background: linear-gradient(90.9deg, #B8D2FF 2.74%, #4080FF 102.92%);
+  color: white;
+}
+.cta-button.basic { /* Added for consistency */
+  background: linear-gradient(90.9deg, #B8FFF0 2.74%, #40BFF2 102.92%);
+  color: white;
+}
+
+.cta-button.oneday {
+  background: linear-gradient(90.9deg, #FFD6B8 2.74%, #FF8C40 102.92%);
+  color: white;
+}
+
+.feature-icon-container {
+  text-align: center;
+  margin: 40px 0;
+}
+
+.feature-icon-item {
+  padding: 20px; /* Increased padding */
+}
+
+.feature-icon-item i { /* For Bootstrap Icons */
+  font-size: 2.5rem; /* Larger icons */
+  margin-bottom: 15px;
+  color: #8240FF; /* Main accent color */
+}
+.feature-icon-item h4 {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+/* Limited time offer banner */
+.limited-time-offer {
+  background: linear-gradient(135deg, #FF5E7E, #FF8C40);
+  color: white;
+  text-align: center;
+  padding: 15px; /* Increased padding */
+  border-radius: 8px; /* Softer radius */
+  margin: 25px auto; /* Centered with auto margins */
+  font-weight: bold;
+  animation: pulseOffer 2s infinite;
+  box-shadow: 0 5px 20px rgba(255, 94, 126, 0.35);
+  max-width: 80%; /* Control width */
+}
+.limited-time-offer i { /* For Bootstrap Icons */
+    font-size: 1.1em;
+}
+
+@keyframes pulseOffer { /* Renamed to avoid conflict if 'pulse' is used elsewhere */
+  0% {
+    box-shadow: 0 5px 20px rgba(255, 94, 126, 0.35);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 5px 30px rgba(255, 94, 126, 0.55);
+    transform: scale(1.02);
+  }
+  100% {
+    box-shadow: 0 5px 20px rgba(255, 94, 126, 0.35);
+    transform: scale(1);
+  }
+}
+
+/* Safe test badge for one-day pass */
+.safe-test-badge {
+  background: rgba(255, 255, 255, 0.25); /* Semi-transparent white */
+  color: #fff; /* Ensure text is white and readable on orange gradient */
+  border-radius: 50px;
+  padding: 8px 15px; /* Increased padding */
+  display: inline-flex;
+  align-items: center;
+  margin-top: 12px; /* More space */
+  backdrop-filter: blur(5px);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.safe-test-badge i { /* For Bootstrap Icons */
+  margin-right: 6px;
+  font-size: 1.1em;
+}
+
+/* Accordion styling for FAQ */
+.accordion-button {
+    font-weight: 500;
+}
+.accordion-button:not(.collapsed) {
+    color: #8240FF;
+    background-color: #f0e6ff;
+}
+.accordion-item {
+    margin-bottom: 0.5rem;
+    border-radius: 0.5rem !important; /* Ensure consistent border radius */
+    border: 1px solid #eee;
+}
+.accordion-header {
+    border-radius: 0.5rem 0.5rem 0 0; /* Match item radius */
+}
+.accordion-body {
+    font-size: 0.95rem;
+    line-height: 1.6;
 }

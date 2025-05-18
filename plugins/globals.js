@@ -22,6 +22,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     fastify.decorate('getLang', getLang);
     fastify.decorate('getTranslations', getTranslations);
     fastify.decorate('getClerkTranslations', getClerkTranslations); // Add clerk translations decorator
+    fastify.decorate('getPaymentTranslations', getPaymentTranslations); // Add payment translations decorator
 
     // Attach `lang` and `user` dynamically
     Object.defineProperty(fastify, 'lang', {
@@ -37,11 +38,30 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     });
 
     // Decorate request
+    fastify.decorateRequest('lang', 'en'); // Default language
     fastify.decorateRequest('translations', null);
     fastify.decorateRequest('clerkTranslations', null); // Add clerk translations to request
-    fastify.decorateRequest('lang', null);
-    fastify.decorateRequest('user', null);
-    fastify.decorateRequest('isAdmin', null);
+    fastify.decorateRequest('paymentTranslations', null); // Add payment translations to request
+
+    // Pre-handler to set user, lang, and translations
+    fastify.addHook('preHandler', async (request, reply) => {
+        // Load translations based on the determined language
+        request.translations = getTranslations(request.lang);
+        request.clerkTranslations = getClerkTranslations(request.lang); // Load clerk translations
+        request.paymentTranslations = getPaymentTranslations(request.lang); // Load payment translations
+        
+        // Make translations available in Handlebars templates
+        reply.locals = {
+            lang: request.lang,
+            translations: request.translations,
+            clerkTranslations: request.clerkTranslations, // Make clerk translations available
+            paymentTranslations: request.paymentTranslations, // Make payment translations available
+            user: request.user, // Make user available
+            isUserAdmin: request.isUserAdmin, // Make admin status available
+            mode: process.env.MODE,
+            apiurl: process.env.API_URL
+        };
+    });
 
     // Hooks to handle language and user settings
     fastify.addHook('onRequest', setRequestLangAndUser);
@@ -69,6 +89,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
 
     /** Load translations for a specific language (cached for performance) */
     function getTranslations(currentLang) {
+        // Ensure currentLang is a valid language code (e.g., 'en', 'ja', 'fr')
         if (!currentLang) currentLang = 'en';
 
         if (!translationsCache[currentLang]) {
@@ -82,6 +103,26 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         return translationsCache[currentLang];
     }
     
+    /** Load PaymentTranslations for a specific language (cached for performance) */
+    function getPaymentTranslations(currentLang) {
+        const paymentTranslationsCache = {};
+        if (!paymentTranslationsCache[currentLang]) {
+            const translationFile = path.join(__dirname, `../locales/payment_${currentLang}.json`);
+            try {
+                if (fs.existsSync(translationFile)) {
+                    paymentTranslationsCache[currentLang] = JSON.parse(fs.readFileSync(translationFile, 'utf-8'));
+                } else {
+                    // Fallback to English if the language file doesn't exist
+                    const fallbackFile = path.join(__dirname, `../locales/payment_en.json`);
+                    paymentTranslationsCache[currentLang] = JSON.parse(fs.readFileSync(fallbackFile, 'utf-8'));
+                }
+            } catch (error) {
+                console.error(`Error loading payment translations for ${currentLang}:`, error);
+                paymentTranslationsCache[currentLang] = {}; // Fallback to empty object on error
+            }
+        }
+        return paymentTranslationsCache[currentLang];
+    }
     /** Load Clerk translations for a specific language (cached for performance) */
     function getClerkTranslations(currentLang) {
         if (!currentLang) currentLang = 'en';
@@ -105,12 +146,34 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         return clerkTranslationsCache[currentLang];
     }
 
+    /** Load Payment translations for a specific language (cached for performance) */
+    function getPaymentTranslations(currentLang) {
+        const paymentTranslationsCache = {};
+        if (!paymentTranslationsCache[currentLang]) {
+            const translationFile = path.join(__dirname, `../locales/payment_${currentLang}.json`);
+            try {
+                if (fs.existsSync(translationFile)) {
+                    paymentTranslationsCache[currentLang] = JSON.parse(fs.readFileSync(translationFile, 'utf-8'));
+                } else {
+                    // Fallback to English if the language file doesn't exist
+                    const fallbackFile = path.join(__dirname, `../locales/payment_en.json`);
+                    paymentTranslationsCache[currentLang] = JSON.parse(fs.readFileSync(fallbackFile, 'utf-8'));
+                }
+            } catch (error) {
+                console.error(`Error loading payment translations for ${currentLang}:`, error);
+                paymentTranslationsCache[currentLang] = {}; // Fallback to empty object on error
+            }
+        }
+        return paymentTranslationsCache[currentLang];
+    }
+
     /** Middleware: Set request language and user */
     async function setRequestLangAndUser(request, reply) {
         request.user = await fastify.getUser(request, reply);
         request.lang = request.user.lang || await fastify.getLang(request, reply);
         request.translations = fastify.getTranslations(request.lang);
         request.clerkTranslations = fastify.getClerkTranslations(request.lang);
+        request.paymentTranslations = fastify.getPaymentTranslations(request.lang);
         request.isAdmin = await checkUserAdmin(fastify, request.user._id) || false;
     }
 
@@ -121,6 +184,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             apiurl: process.env.API_URL,
             translations: request.translations,
             clerkTranslations: request.clerkTranslations, // Add clerk translations to locals
+            paymentTranslations: request.paymentTranslations, // Add payment translations to locals
             lang: request.lang,
             user: request.user,
             isAdmin: request.isAdmin

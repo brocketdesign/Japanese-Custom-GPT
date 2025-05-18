@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    {{> dashboard-header}}
+    <title>{{#if chat}}{{chat.name}} - {{/if}}AI Character</title>
+    <meta name="description" content="{{#if chat}}{{chat.description}}{{else}}AI character chat and images{{/if}}">
+</head>
+<body>
+    {{> dashboard-nav}}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card shadow-lg border-0 rounded-3">
+                <div class="card-body p-4 p-md-5">
+                    {{#if isDayPass}}
+                    <div class="text-center mb-4">
+                        <div class="animate__animated animate__bounceIn">
+                            <i class="bi bi-calendar-check-fill text-success" style="font-size: 4.5rem;"></i>
+                        </div>
+                        <h2 class="mt-4 mb-3 fw-bold">{{translations.payment_success.day_pass_success}}</h2>
+                        <p class="lead mb-4">{{translations.payment_success.day_pass_expires}}</p>
+                        
+                        <div class="alert alert-info d-flex align-items-center" role="alert">
+                            <i class="bi bi-info-circle-fill me-3"></i>
+                            <div>
+                                {{translations.payment_success.expires_in_24_hours}}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center justify-content-center my-4">
+                            <i class="bi bi-clock-history me-2 fs-4 text-primary"></i>
+                            <div class="countdown-container">
+                                <span id="countdown-time" class="fs-4 fw-bold text-primary">24:00:00</span>
+                            </div>
+                        </div>
+                    </div>
+                    {{else}}
+                    <div class="text-center mb-4">
+                        <div class="animate__animated animate__bounceIn">
+                            <i class="bi bi-patch-check-fill text-success" style="font-size: 4.5rem;"></i>
+                        </div>
+                        <h2 class="mt-4 mb-3 fw-bold">{{translations.payment_success.subscription_success}}</h2>
+                        <p class="lead mb-4">{{translations.payment_success.subscription_activated}}</p>
+                        
+                        <div class="alert alert-success d-flex align-items-center" role="alert">
+                            <i class="bi bi-unlock-fill me-3"></i>
+                            <div>
+                                {{translations.payment_success.premium_features_unlocked}}
+                            </div>
+                        </div>
+                        
+                        {{#if bonusCoins}}
+                        <div class="alert alert-warning d-flex align-items-center mt-3" role="alert">
+                            <i class="bi bi-coin me-3"></i>
+                            <div>
+                                {{translations.payment_success.bonus_coins_added}}
+                            </div>
+                        </div>
+                        {{/if}}
+                    </div>
+                    {{/if}}
+                    
+                    <div class="text-center mt-4">
+                        <h4 class="mb-3 fw-semibold">{{translations.payment_success.new_features_unlocked}}</h4>
+                        <div class="row mb-4 g-3">
+                            <div class="col-md-4">
+                                <div class="feature-item p-3 text-center">
+                                    <i class="bi bi-chat-left-dots-fill text-primary mb-2" style="font-size: 2.5rem;"></i>
+                                    <h5 class="fs-6 fw-medium">{{translations.payment_success.unlimited_chats}}</h5>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="feature-item p-3 text-center">
+                                    <i class="bi bi-images text-primary mb-2" style="font-size: 2.5rem;"></i>
+                                    <h5 class="fs-6 fw-medium">{{translations.payment_success.unlimited_images}}</h5>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="feature-item p-3 text-center">
+                                    <i class="bi bi-collection-play-fill text-primary mb-2" style="font-size: 2.5rem;"></i>
+                                    <h5 class="fs-6 fw-medium">{{translations.payment_success.all_content}}</h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <button id="continue-to-chat" class="btn btn-primary btn-lg py-3">
+                            <i class="bi bi-arrow-right-circle-fill me-2"></i>
+                            {{translations.payment_success.continue_to_chat}}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.feature-item {
+    border-radius: .75rem; /* 12px */
+    background-color: var(--bs-light);
+    border: 1px solid var(--bs-gray-300);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+.feature-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+.countdown-container {
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+.card {
+    transition: box-shadow 0.3s ease-in-out;
+}
+.card:hover {
+    box-shadow: 0 1rem 3rem rgba(0,0,0,.175)!important;
+}
+/* Add animate.css if not already included in your project */
+/* @import url('https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css'); */
+</style>
+{{> dashboard-footer}}
+<script>
+$(document).ready(function() {
+    // Redirect to chat when button is clicked
+    $('#continue-to-chat').on('click', function() {
+        window.location.href = '/chat/';
+    });
+    
+    let countdownEndTime;
+    {{#if isDayPass}}
+        {{#if subscriptionEndDate}}
+            countdownEndTime = new Date('{{subscriptionEndDate}}');
+        {{else}}
+            // Fallback if subscriptionEndDate is not available, though it should be
+            countdownEndTime = new Date();
+            countdownEndTime.setHours(countdownEndTime.getHours() + 24);
+        {{/if}}
+    
+        const intervalId = setInterval(function() {
+            const now = new Date().getTime();
+            const distance = countdownEndTime - now;
+            
+            if (distance < 0) {
+                clearInterval(intervalId);
+                $('#countdown-time').text('00:00:00');
+                // Optionally, add a message that the pass has expired
+                return;
+            }
+            
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            
+            const formattedHours = hours.toString().padStart(2, '0');
+            const formattedMinutes = minutes.toString().padStart(2, '0');
+            const formattedSeconds = seconds.toString().padStart(2, '0');
+            
+            $('#countdown-time').text(`${formattedHours}:${formattedMinutes}:${formattedSeconds}`);
+        }, 1000);
+    {{/if}}
+
+    // Animate entrance (ensure animate.css is linked or included)
+    $('.animate__animated').addClass('animate__bounceIn');
+
+    // Auto-redirect after 10 seconds
+    const autoRedirectTimeout = setTimeout(function() {
+        window.location.href = '/chat/';
+    }, 10000);
+
+    // Clear timeout if user clicks the button
+    $('#continue-to-chat').on('click', function() {
+        clearTimeout(autoRedirectTimeout);
+        window.location.href = '/chat/'; // Ensure redirection even if timeout was cleared
+    });
+});
+</script>
+</body>
+</html>

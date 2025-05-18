@@ -872,9 +872,7 @@ $(document).ready(function() {
         sessionStorage.setItem(LATEST_CHATS_CACHE_TIME_KEY, Date.now().toString());
     }
     async function loadLatestChats(page = 1, reload = false) {
-        console.log('[LatestChats] loadLatestChats called', { page, reload, latestChatsLoading });
         if (latestChatsLoading && !reload) {
-            console.log('[LatestChats] Already loading, aborting');
             return;
         }
         latestChatsLoading = true;
@@ -885,36 +883,29 @@ $(document).ready(function() {
             $('#latest-chats-gallery').empty();
             sessionStorage.removeItem(LATEST_CHATS_CACHE_KEY);
             sessionStorage.removeItem(LATEST_CHATS_CACHE_TIME_KEY);
-            console.log('[LatestChats] Reload triggered, cache cleared');
         }
 
         let cache = getLatestChatsCache();
         let data = cache && cache[page];
 
         if (data) { // Disable cache for now
-            console.log('[LatestChats] Using cache for page', page, data);
             window.displayLatestChats(data.chats, 'latest-chats-gallery', false);
             latestChatsTotalPages = data.totalPages || 1;
             if (page >= latestChatsTotalPages) {
                 $('#latest-chats-pagination-controls').html('');
-            } else {
-                //$('#latest-chats-pagination-controls').html('<div class="text-center my-3"><div class="spinner-border text-secondary spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>');
             }
             latestChatsLoading = false;
             return;
         }
 
         try {
-            console.log('[LatestChats] Fetching from API', `/api/latest-chats?page=${page}`);
             const res = await fetch(`/api/latest-chats?page=${page}`);
             if (!res.ok) {
-                console.error('[LatestChats] Failed to load chats. Status:', res.status);
                 $('#latest-chats-pagination-controls').html('<div class="text-center text-danger my-3">Failed to load chats.</div>');
                 latestChatsLoading = false;
                 return;
             }
             data = await res.json();
-            console.log('[LatestChats] Data received', data);
             setLatestChatsCache(page, data);
 
             window.displayLatestChats(data.chats, 'latest-chats-gallery', false);

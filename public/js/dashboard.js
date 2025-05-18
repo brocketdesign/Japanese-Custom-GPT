@@ -1329,7 +1329,6 @@ window.displayLatestChats = function (chatData, targetGalleryId, modal = false) 
     let nsfwOverlay = '';
 
     // Simplified NSFW Overlay Logic - adapt to your full existing logic if more complex
-    console.log(`isNSFW: ${isNSFW}, nsfwVisible: ${nsfwVisible}, isOwner: ${isOwner}, subscriptionStatus: ${subscriptionStatus}, isTemporaryUser: ${isTemporaryUser}`);
     if (isNSFW && !nsfwVisible) {
         if (!isOwner && ((isTemporaryUser || !subscriptionStatus))) {
              nsfwOverlay = `<div class="gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center" style="background: rgba(0,0,0,0.55); z-index: 2; backdrop-filter: blur(5px);">
@@ -2940,6 +2939,7 @@ function loadCharacterCreationPage(chatId) {
 
 // Load the plan page and open the modal
 function loadPlanPage() {
+    if(user.isTemporary) return;
     if (modalStatus.isPlanLoading) return;
     modalStatus.isPlanLoading = true;
 

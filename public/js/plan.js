@@ -1,29 +1,28 @@
-
 $(document).ready(function () {
 
-  const messages = {
-    ja: [
-      "新しい画像が作成されました！",
-      "新しいキャラクターが作成されました！",
-      "ギャラリーに画像が追加されました！",
-      "人気のポーズで画像が生成されました！",
-      "リアル風のキャラクターが生成されました！"
-    ],
-    en: [
-      "A new image has been created!",
-      "A new character has been created!",
-      "An image has been added to the gallery!",
-      "An image has been generated with a popular pose!",
-      "A realistic character has been generated!"
-    ],
-    fr: [
-      "Une nouvelle image a été créée !",
-      "Un nouveau personnage a été créé !",
-      "Une image a été ajoutée à la galerie !",
-      "Une image a été générée avec une pose populaire !",
-      "Un personnage réaliste a été généré !"
-    ]
-  };
+const messages = {
+  ja: [
+    "新規ユーザー：「プレミアムプランで毎日のチャットが無制限になりました！」",
+    "東京から：「高品質画像作成がこんなに簡単だったなんて！」",
+    "3分前：新しいユーザーがプレミアムに登録しました",
+    "大阪から：「キャラクターの作成機能が最高です！」",
+    "1分前：5人のユーザーがサブスクリプションを開始しました"
+  ],
+  en: [
+    "New user: \"Unlimited daily chats with Premium plan!\"",
+    "From Tokyo: \"Creating high-quality images is so easy now!\"",
+    "3 minutes ago: New user subscribed to Premium",
+    "From New York: \"The character creation feature is amazing!\"",
+    "1 minute ago: 5 users started their subscription"
+  ],
+  fr: [
+    "Nouvel utilisateur : \"Conversations quotidiennes illimitées avec le plan Premium !\"",
+    "De Paris : \"Créer des images de haute qualité est maintenant si facile !\"",
+    "Il y a 3 minutes : Un nouvel utilisateur s'est abonné au Premium",
+    "De Lyon : \"La fonction de création de personnages est incroyable !\"",
+    "Il y a 1 minute : 5 utilisateurs ont commencé leur abonnement"
+  ]
+};
 
   const selectedMessages = messages[lang[0]] || messages.en;
 
@@ -35,20 +34,20 @@ $(document).ready(function () {
         showNotification(message, "success");
 
         // Increment index and loop back to start if needed
-        messageIndex = (messageIndex + 1) % messages.length;
+        messageIndex = (messageIndex + 1) % selectedMessages.length; // Corrected: use selectedMessages.length
 
         // Schedule the next notification with a random interval between 5 and 10 seconds
         setTimeout(showNextNotification, Math.random() * (20000 - 10000) + 10000);
     }
 
     // Start the notification loop
-    //setTimeout(showNextNotification, Math.random() * (20000 - 10000) + 10000);
+    setTimeout(showNextNotification, 5000); // Start after 5 seconds
 });
 
 
 $(document).ready(function() {
   let plan = {};
-  let stripe
+  let stripe;
   if(window.location.href.indexOf('https://') >= 0){
     stripe = Stripe('pk_live_51PjtRbE5sP7DA1XvCkdmezori9qPGoO21y7yKSVvgkQVyrhWZfHAUkNsjPMnbwpPlp4zzoYsRjn79Ad7XN7HTHcc00UjBA9adF'); // Use your publishable key here
   }else{
@@ -63,7 +62,8 @@ $(document).ready(function() {
       dataType: 'json',
       success: function({plans,features}) {
         renderPlans(plans);
-        renderFeaturesList(features);
+        // renderFeaturesList(features); // This function seems to be unused in the new layout, plan cards will have features
+        renderComparisonTable(features, plans); // Call to render comparison table
       },
       error: function(xhr, status, error) {
         console.error('Failed to fetch plans:', error);
@@ -71,39 +71,134 @@ $(document).ready(function() {
     });
   }
 
-// Function to render plans
+// Function to render plans with improved styling and info
 function renderPlans(plans) {
   const planCardsContainer = $('#planCards');
   planCardsContainer.empty();
-  plans.forEach(plan => {
-    const planCard = `
-      <div class="plan-card mb-3 p-3 text-white cursor-pointer custom-gradient-bg col-12 col-sm-7" style="border-radius: 8px;"  data-plan-id="${plan.id}" data-billing-cycle="${plan.id}">
-        <div class="d-flex justify-content-start align-items-center">
-          <h6 class="mb-0 me-2">${plan.name}</h6>
-          <span class="badge" style="background-color: #FF5E7E;">${plan.discount}</span>
-        </div>
-        <div class="mt-2">
-          <h2 class="fw-bold">${plan.price}<span class="text-muted" style="font-size:11px;">${translations.currency}${translations.monthly}</span></h2>
-          <small class="text-decoration-line-through">${plan.originalPrice}${translations.currency}${translations.monthly}</small>
+  
+  plans.forEach((plan, index) => {
+    let gradientClass = 'standard-gradient'; // Default
+    let ctaButtonClass = 'standard';
+    let isPremium = false;
+    let isOneDay = false;
+    let popularBadge = '';
+    let oneDayBadgeHTML = '';
+
+    // Determine plan type and apply specific classes/badges
+    if (plan.name.toLowerCase().includes('premium')) {
+      gradientClass = 'premium-gradient';
+      ctaButtonClass = 'premium';
+      isPremium = true;
+      popularBadge = `<span class="popular-badge">${translations.plan_page.most_popular}</span>`;
+    } else if (plan.isOneTime) {
+      gradientClass = 'oneday-gradient';
+      ctaButtonClass = 'oneday';
+      isOneDay = true;
+      oneDayBadgeHTML = `<div class="safe-test-badge">
+                           <i class="bi bi-shield-check-fill"></i> ${translations.plan_page.safe_test}
+                         </div>`;
+    } else if (index === 0 && plans.length > 2) { // Assuming the first of multiple non-premium, non-onetime is 'basic'
+        gradientClass = 'basic-gradient';
+        ctaButtonClass = 'basic';
+    }
+    // If only one non-premium, non-onetime plan, it might be 'standard' or 'basic' depending on your naming.
+    // The logic above tries to assign basic, standard, premium, oneday gradients.
+
+    const isOneTimeBadge = plan.isOneTime ? `<span class="badge bg-info ms-2">${translations.one_time}</span>` : '';
+    const priceSuffix = plan.isOneTime ? '' : `<span class="text-muted" style="font-size:11px;">${translations.currency}${translations.monthly}</span>`;
+    
+    // Features list specific to plan type - using Bootstrap icons
+    let featuresHTML = '';
+    if (isPremium) {
+      featuresHTML = `
+        <ul class="plan-features">
+          <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.premium_feature_1}</li>
+          <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.premium_feature_2}</li>
+          <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.premium_feature_3}</li>
+          <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.premium_feature_4_new || 'Early Access to New Features'}</li>
+        </ul>`;
+    } else if (isOneDay) {
+      featuresHTML = `
+        <ul class="plan-features">
+          <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.oneday_feature_1}</li>
+          <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.oneday_feature_2}</li>
+          <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.oneday_feature_3}</li>
+          <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.oneday_feature_4_new || 'Full Access for 24 Hours'}</li>
+        </ul>`;
+    } else { // For Basic or Standard plans
+      featuresHTML = `
+        <ul class="plan-features">
+          <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.standard_feature_1}</li>
+          <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.standard_feature_2}</li>
+          <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.standard_feature_3}</li>
+        </ul>`;
+    }
+    
+    const planCardHTML = `
+      <div class="col-lg-4 col-md-6">
+        <div class="plan-card p-4 text-white cursor-pointer ${gradientClass}" style="border-radius: 15px; height: 100%;" data-plan-id="${plan.id}" data-billing-cycle="${plan.id}">
+          ${popularBadge}
+          <div>
+            <div class="d-flex justify-content-start align-items-center mb-2">
+              <h5 class="mb-0 me-2 fw-bold">${plan.name}</h5>
+              <span class="badge" style="background-color: #FF5E7E;">${plan.discount}</span>
+              ${isOneTimeBadge}
+            </div>
+            <div class="mb-3">
+              <h2 class="fw-bold mb-0">${plan.price}${priceSuffix}</h2>
+              <small class="text-decoration-line-through" style="opacity: 0.8;">${plan.originalPrice}${translations.currency}${plan.isOneTime ? '' : translations.monthly}</small>
+              ${oneDayBadgeHTML}
+            </div>
+            ${featuresHTML}
+          </div>
+          <button class="cta-button ${ctaButtonClass}">
+            ${translations.plan_page.get_started} <i class="bi bi-arrow-right-short ms-1"></i>
+          </button>
         </div>
       </div>
     `;
-    planCardsContainer.append(planCard);
+    
+    planCardsContainer.append(planCardHTML);
   });  
-  // Add event listener to plan cards
+  
   $('.plan-card').on('click', function() {
     const billingCycle = $(this).data('billing-cycle');
     createCheckoutSession(billingCycle);
   });
+}
 
+// Function to render comparison table
+function renderComparisonTable(featuresData, plans) { // featuresData might not be directly used if static
+  const tableBody = $('#planComparisonTable tbody');
+  tableBody.empty();
+  
+  const comparisonData = [
+    { feature: translations.plan_page.comparison_feature_1, free: '✓', oneDay: '✓', premium: '✓', highlight: false },
+    { feature: translations.plan_page.comparison_feature_2, free: '✓', oneDay: '✓', premium: '✓', highlight: false },
+    { feature: translations.plan_page.comparison_feature_3, free: '✗', oneDay: '✓', premium: '✓', highlight: true },
+    { feature: translations.plan_page.comparison_feature_4, free: '✗', oneDay: '✓', premium: '✓', highlight: true },
+    { feature: translations.plan_page.comparison_feature_5, free: '✗', oneDay: '✓', premium: '✓', highlight: true },
+    { feature: translations.plan_page.comparison_feature_6, free: '✗', oneDay: '✓', premium: '✓', highlight: false },
+    { feature: translations.plan_page.comparison_feature_7, free: '✗', oneDay: '✓', premium: '✓', highlight: false },
+    { feature: translations.plan_page.comparison_feature_8, free: '✗', oneDay: '✗', premium: '✓', highlight: true }
+  ];
+  
+  comparisonData.forEach(item => {
+    const rowClass = item.highlight ? 'highlight-row' : '';
+    const checkIcon = '<i class="bi bi-check-circle-fill text-success"></i>';
+    const timesIcon = '<i class="bi bi-x-circle-fill text-danger"></i>';
+    const row = `
+      <tr class="${rowClass}">
+        <td>${item.feature}</td>
+        <td>${item.free === '✓' ? checkIcon : timesIcon}</td>
+        <td>${item.oneDay === '✓' ? checkIcon : timesIcon}</td>
+        <td>${item.premium === '✓' ? checkIcon : timesIcon}</td>
+      </tr>
+    `;
+    tableBody.append(row);
+  });
 }
-// Show a list of features for the selected plan in #feature-list
-function renderFeaturesList(features){
-  const featuresList = features.map(feature => `<li class="list-group-item">✅ ${feature}</li>`).join('');
-  const featuresListContainer = $('<ul class="features-list list-group text-start col-12 col-sm-7 mx-auto"></ul>');
-  featuresListContainer.append(featuresList);
-  $('#featureList').html(featuresListContainer);
-}
+
 
 // Function to create a checkout session
 function createCheckoutSession(billingCycle) {
@@ -125,7 +220,6 @@ function createCheckoutSession(billingCycle) {
                 const planName = newPlan.name;
                 console.log('Upgrade successful:', planName);
                 
-                // SweetAlert2 for successful upgrade
                 Swal.fire({
                   icon: 'success',
                   title: translations.upgrade_successful,
@@ -135,30 +229,21 @@ function createCheckoutSession(billingCycle) {
             })
             .fail(function(xhr, status, error) {
                 console.error('Error upgrading plan:', error);
-                
-                // Extract error message from response or use a default one
-                const errorMessage = xhr.responseJSON ? xhr.responseJSON.error : 'プランのアップグレード中にエラーが発生しました';
-
-                // SweetAlert2 for upgrade error
+                const errorMessage = xhr.responseJSON ? xhr.responseJSON.error : translations.plan_page.upgrade_error; // Use new translation key
                 Swal.fire({
                     icon: 'error',
-                    title: 'エラー',
+                    title: translations.error, // Use new translation key
                     text: errorMessage,
                     confirmButtonText: 'OK'
                 });
             });
-
-            return
+            return;
         }
-      // Redirect the user to the Stripe Checkout page
       window.location.href = response.url;
     },
     error: function(xhr, status, error) {
       console.error('Failed to create subscription:', error);
-      
-      // Check if the error indicates the user is already subscribed
       if (xhr.responseJSON && xhr.responseJSON.error === 'You already have an active subscription for this plan.') {
-        // Display SweetAlert2 message in Japanese
         Swal.fire({
           title: translations.already_subscribed,
           text: translations.already_subscribed_message,
@@ -166,7 +251,6 @@ function createCheckoutSession(billingCycle) {
           showCloseButton: true
         });
       } else {
-        // Handle other errors, e.g., display a generic error message
         Swal.fire({
           title: translations.error_occurred,
           text: translations.subscription_creation_failed,
@@ -178,20 +262,21 @@ function createCheckoutSession(billingCycle) {
   });
 }
 
-
-  // Fetch and render the plans
   fetchPlans();
 
   $('#plan-switch').on('change', function() {
+    // This switch functionality might need re-evaluation if plans are fetched with yearly/monthly prices directly.
+    // For now, assuming it's for a client-side toggle that's not fully implemented with fetched plans.
     const planCardsContainer = $('#planCards');
     planCardsContainer.empty();
     const isYearly = $(this).is(':checked');
     
       if (isYearly) {
-        plan.price = plan.yearly;
+        // plan.price = plan.yearly; // This 'plan' variable is not defined in this scope correctly for this logic
       } else {
-        plan.price = plan.monthly;
+        // plan.price = plan.monthly;
       }
-    renderPlans(plan);
+    // renderPlans(plan); // This would require 'plan' to be an array of plans
+    fetchPlans(); // Re-fetch plans might be simpler if backend handles yearly/monthly pricing
   });
 });

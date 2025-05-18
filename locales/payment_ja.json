@@ -1,0 +1,17 @@
+{
+  "payment_success": {
+    "one_time": "一回きり",
+    "day_pass_success": "1日パスが有効になりました！",
+    "day_pass_expires": "パスは24時間後に期限切れになります",
+    "expires_in_24_hours": "プレミアム機能は今から24時間ご利用いただけます。",
+    "subscription_success": "サブスクリプションが有効になりました！",
+    "subscription_activated": "プレミアムサブスクリプションが正常に有効化されました。",
+    "premium_features_unlocked": "すべてのプレミアム機能がロック解除され、使用可能になりました。",
+    "bonus_coins_added": "ボーナス：1000コインがアカウントに追加されました！",
+    "unlimited_chats": "無制限チャット",
+    "unlimited_images": "無制限画像",
+    "all_content": "すべてのコンテンツにアクセス",
+    "new_features_unlocked": "利用可能になった機能",
+    "continue_to_chat": "チャットに進む"
+  }
+}

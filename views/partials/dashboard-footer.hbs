@@ -540,26 +540,7 @@ window.updatePlanStatus = function(user){
       })
   })
 }
- // Parse the URL and get query parameters
-const urlParams = new URLSearchParams(window.location.search);
 
-// Check if 'cancel-payment' parameter is true
-if (urlParams.get('cancel-payment') === 'true') {
-    // Display SweetAlert2 in Japanese
-    Swal.fire({
-        title: translations.payment_cancelled,
-        text: translations.payment_not_completed,
-        icon: 'info',
-        showCloseButton: true
-    });
-    var currentUrl = window.location.href;
-    var urlParts = currentUrl.split('?');
-    urlParts[urlParts.length - 1] = '';
-    var newUrl = urlParts.join('');
-    if($('#chat-widget-container').length == 0){
-        window.history.replaceState({ path: newUrl }, '', newUrl);
-    }
-}
 
 window.redirectToChat = function(chatId,chatImage) {
     if($(`#spinner-${chatId}`).hasClass('on')){
@@ -604,55 +585,139 @@ window.showDiscovery = function() {
     resetChatUrl();
     window.postMessage('resizeIframe', '*');
 }
+
 window.showNotification = (message, type = 'info') => {
-  // 1) Map types → bg/text classes & icons
-  const styleMap = {
-    success: { bg: 'bg-success', text: 'text-white', icon: 'bi-check-circle-fill' },
-    error:   { bg: 'bg-danger',  text: 'text-white', icon: 'bi-exclamation-triangle-fill' },
-    warning: { bg: 'bg-warning', text: 'text-dark',  icon: 'bi-exclamation-circle-fill' },
-    info:    { bg: 'bg-info',    text: 'text-dark',  icon: 'bi-info-circle-fill' },
-  };
-  const { bg, text, icon } = styleMap[type] || styleMap.info;
+    const styleMap = {
+        success: { iconColor: 'text-success', icon: 'bi-check-circle-fill', barColorClass: 'bg-success' },
+        error:   { iconColor: 'text-danger',  icon: 'bi-exclamation-triangle-fill', barColorClass: 'bg-danger' },
+        warning: { iconColor: 'text-warning', icon: 'bi-exclamation-circle-fill', barColorClass: 'bg-warning' },
+        info:    { iconColor: 'text-info',    icon: 'bi-info-circle-fill', barColorClass: 'bg-info' },
+    };
+    const { iconColor, icon, barColorClass } = styleMap[type] || styleMap.info;
+    const toastDelay = 5000; // Notification display time in ms
 
-  // 2) Ensure container exists
-  let container = document.getElementById('notification-container');
-  if (!container) {
-    container = document.createElement('div');
-    container.id = 'notification-container';
-    container.className = 'p-3'; // padding inside the container
-    document.body.appendChild(container);
-  }
+    // Ensure notification container exists and is styled
+    let container = document.getElementById('notification-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'notification-container';
+        document.body.appendChild(container);
 
-  // 3) Build the toast element
-  const toastEl = document.createElement('div');
-  toastEl.className = `toast align-items-center ${bg} ${text} border-0`;
-  toastEl.setAttribute('role', 'alert');
-  toastEl.setAttribute('aria-live', 'assertive');
-  toastEl.setAttribute('aria-atomic', 'true');
-  toastEl.innerHTML = `
-    <div class="d-flex">
-      <div class="toast-body">
-        <i class="bi ${icon} me-2"></i>${message}
-      </div>
-      <button
-        type="button"
-        class="btn-close btn-close-white me-2 m-auto"
-        data-bs-dismiss="toast"
-        aria-label="Close"
-      ></button>
-    </div>
-  `;
+        // Inject custom styles for container and toast animations once
+        if (!document.getElementById('toast-custom-styles')) {
+            const styleSheet = document.createElement("style");
+            styleSheet.id = 'toast-custom-styles';
+            styleSheet.type = "text/css";
+            styleSheet.innerText = `
+                #notification-container {
+                    position: fixed;
+                    top: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    z-index: 1060; /* Above most other elements */
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 0.75rem; /* Spacing between toasts */
+                    width: auto;
+                    max-width: 90%; /* Max width for the container */
+                }
+                #notification-container .toast {
+                    min-width: 280px; /* Minimum width for toasts */
+                    max-width: 400px; /* Maximum width for toasts */
+                    transition: transform 0.35s ease-in-out, opacity 0.35s ease-in-out;
+                    opacity: 0;
+                    transform: translateY(-30px); /* Start off-screen (top) */
+                    will-change: transform, opacity;
+                    overflow: hidden; /* Important for rounded corners with progress bar */
+                }
+                #notification-container .toast.show {
+                    opacity: 1;
+                    transform: translateY(0); /* Slide in */
+                }
+                #notification-container .toast.hiding {
+                    opacity: 0;
+                    transform: translateY(-30px); /* Slide out */
+                }
+                .toast-progress-bar-wrapper {
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 4px;
+                    background-color: rgba(0,0,0,0.1); /* Track color for the progress bar */
+                }
+                .toast-progress-bar {
+                    height: 100%;
+                    width: 100%;
+                }
+            `;
+            document.head.appendChild(styleSheet);
+        }
+    }
 
-  container.appendChild(toastEl);
+    // Build the toast element
+    const toastEl = document.createElement('div');
+    toastEl.className = 'toast bg-white text-dark border-0 shadow-lg rounded-pill';
+    toastEl.setAttribute('role', 'alert');
+    toastEl.setAttribute('aria-live', 'assertive');
+    toastEl.setAttribute('aria-atomic', 'true');
 
-  // 4) Show it
-  const toast = new bootstrap.Toast(toastEl, { delay: 3000, autohide: true });
-  toast.show();
+    toastEl.innerHTML = `
+        <div class="d-flex py-2 px-3">
+            <div class="flex-shrink-0 d-flex align-items-center">
+                <i class="bi ${icon} ${iconColor} fs-4 me-3"></i>
+            </div>
+            <div class="flex-grow-1 align-self-center">
+                ${message}
+            </div>
+            <div class="flex-shrink-0 ms-auto ps-2 align-self-center">
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+        <div class="toast-progress-bar-wrapper">
+                <div class="toast-progress-bar ${barColorClass}" style="width: 100%;"></div>
+        </div>
+    `;
 
-  // 5) Clean up when hidden
-  toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+    container.prepend(toastEl); // Add new toasts to the top of the container
+
+    const toastProgressBar = toastEl.querySelector('.toast-progress-bar');
+    const toastOptions = { delay: toastDelay, autohide: true };
+    let animationFrameId = null;
+
+    toastEl.addEventListener('shown.bs.toast', () => {
+        if (toastOptions.autohide && toastProgressBar) {
+            let startTime = performance.now();
+            const duration = toastOptions.delay;
+            
+            function animateProgressBar(currentTime) {
+                const elapsedTime = currentTime - startTime;
+                let progress = 1 - (elapsedTime / duration);
+                if (progress < 0) progress = 0;
+                
+                toastProgressBar.style.width = `${progress * 100}%`;
+
+                if (progress > 0) {
+                    animationFrameId = requestAnimationFrame(animateProgressBar);
+                } else {
+                    toastProgressBar.style.width = '0%';
+                }
+            }
+            animationFrameId = requestAnimationFrame(animateProgressBar);
+        }
+    });
+
+    toastEl.addEventListener('hidden.bs.toast', () => {
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+        }
+        toastEl.remove();
+    });
+
+    const toast = new bootstrap.Toast(toastEl, toastOptions);
+    toast.show();
 };
-
 
 window.fetchUser = async function() {
     try {
@@ -779,7 +844,25 @@ $(document).ready(function(){
     fetchAndAppendModels();
 })
 </script>
-    
+<script>
+     // Parse the URL and get query parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    // Check if 'payment_status' parameter is true
+    if (urlParams.get('payment_status') === 'cancelled') {
+        // Display notification in Japanese
+        window.showNotification(
+            `${translations.payment_cancelled}<br>${translations.payment_not_completed}`,
+            'info'
+        );
+        var currentUrl = window.location.href;
+        var urlParts = currentUrl.split('?');
+        urlParts[urlParts.length - 1] = '';
+        var newUrl = urlParts.join('');
+        if($('#chat-widget-container').length == 0){
+            window.history.replaceState({ path: newUrl }, '', newUrl);
+        }
+    }
+</script>
     <script>
         // Open authenticate page in a modal
         window.openLoginForm = function() {

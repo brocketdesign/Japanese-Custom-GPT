@@ -1,5 +1,9 @@
 {
   "lang":"en", 
+  "unlock_premium_features": "Unlock Premium Features",
+  "join_now_for_full_access": "Join now for full access to all images and characters!",
+  "sign_up_free": "Sign Up Free",
+  "login_to_view": "Login to view",
   "cancel_subscription_modal_title": "Cancel Subscription",
   "cancel_subscription_warning": "Cancelling your subscription will take effect immediately. You will lose access to premium chat features and NSFW content. Are you sure you want to proceed?",
   "why_cancel_label": "Please tell us why you are cancelling (optional):",
@@ -909,6 +913,8 @@
     "backgroundProcessing_title": "Background processing",
     "backgroundProcessing_message": "Your image generation task will continue in the background and you will be notified once it's complete."
   },
+  "previous_page": "Previous",
+  "next_page": "Next",
   "imageGenerationForm": "Image Generation Form",
   "selectImageType": "Select Image Type",
   "sfwImage": "SFW Image",

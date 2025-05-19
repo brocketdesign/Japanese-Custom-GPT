@@ -1,5 +1,11 @@
 {
   "lang":"fr",
+  "unlock_premium_features": "Débloquez les fonctionnalités Premium",
+  "join_now_for_full_access": "Rejoignez-nous maintenant pour un accès complet à toutes les images et personnages !",
+  "sign_up_free": "Inscrivez-vous gratuitement",
+  "login_to_view": "Connectez-vous pour voir",
+  "previous_page": "Page précédente",
+  "next_page": "Page suivante",
   "cancel_subscription_modal_title": "Annuler l'abonnement",
   "cancel_subscription_warning": "L'annulation de votre abonnement prendra effet immédiatement. Vous perdrez l'accès aux fonctionnalités de chat premium et au contenu NSFW. Êtes-vous sûr de vouloir continuer ?",
   "why_cancel_label": "Veuillez nous indiquer pourquoi vous annulez (facultatif) :",

@@ -78,3 +78,24 @@ handlebars.registerHelper('encodeURIComponent', function(str) {
 handlebars.registerHelper('decodeURIComponent', function(str) {
   return decodeURIComponent(str);
 });
+// math
+handlebars.registerHelper('math', function(lvalue, operator, rvalue) {
+  lvalue = parseFloat(lvalue);
+  rvalue = parseFloat(rvalue);
+
+  return {
+    '+': lvalue + rvalue,
+    '-': lvalue - rvalue,
+    '*': lvalue * rvalue,
+    '/': lvalue / rvalue,
+    '%': lvalue % rvalue,
+    '==': lvalue == rvalue,
+    '===': lvalue === rvalue,
+    '!=': lvalue != rvalue,
+    '!==': lvalue !== rvalue,
+    '<': lvalue < rvalue,
+    '>': lvalue > rvalue,
+    '<=': lvalue <= rvalue,
+    '>=': lvalue >= rvalue
+  }[operator];
+});

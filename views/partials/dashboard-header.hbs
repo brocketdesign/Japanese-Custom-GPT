@@ -5,8 +5,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="purple">
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/img/logo.webp" type="image/webp">
-    <title>{{title}}</title>
-
+    <title>{{#if seoTitle}}{{seoTitle}}{{else}}{{title}}{{/if}}</title>
+    {{#if seoDescription}}
+    <meta name="description" content="{{seoDescription}}">
+    {{/if}}
     <!-- SEO Meta Tags -->
     {{#each seo}}
     <meta {{#if name}}name="{{name}}"{{/if}} {{#if property}}property="{{property}}"{{/if}} content="{{content}}">

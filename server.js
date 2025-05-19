@@ -519,53 +519,70 @@ fastify.get('/search', async (request, reply) => {
     const db = fastify.mongo.db;
     let { translations, lang, user } = request;
     const userId = user._id;
-    user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+    console.log(`[SEARCH] Incoming request from userId: ${userId}, query params:`, request.query);
+
+    user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) }) || request.user;
+    console.log(`[SEARCH] Loaded user:`, user ? { _id: user._id, subscriptionStatus: user.subscriptionStatus } : null);
 
     const page = parseInt(request.query.page) || 1;
     const query = request.query.q || request.query.query || '';
-    const imageStyle = request.query.imageStyle || 'anime';
+    const limit = 30;
 
-    // Fetch chat results (reuse /api/chats logic)
     const baseUrl = process.env.MODE === 'local' ? 'http://localhost:3000' : `${request.protocol}://${request.hostname}`;
-    const chatRes = await fetch(`${baseUrl}/api/chats?page=${page}&style=${imageStyle}&q=${encodeURIComponent(query)}`);
-    const chatData = chatRes.ok ? await chatRes.json() : { recent: [], page: 1, totalPages: 0 };
-
-    // Compute correct nsfw for each chat
-    const processedChatResults = (chatData.recent || []).map(chat => {
-      const nsfw = chat?.nsfw || false;
-      const moderationFlagged = Array.isArray(chat?.moderation?.results) && chat.moderation.results.length > 0
-        ? !!chat.moderation.results[0].flagged
-        : false;
-      const finalNsfwResult = nsfw || moderationFlagged;
-      return { ...chat, nsfw: finalNsfwResult };
-    });
+    console.log(`[SEARCH] baseUrl resolved as: ${baseUrl}`);
 
     // Fetch image results (reuse /chats/images/search logic)
-    const imageRes = await fetch(`${baseUrl}/chats/images/search?page=${page}&query=${encodeURIComponent(query)}&style=${imageStyle}`);
+    const imageSearchUrl = `${baseUrl}/chats/images/search?page=${page}&query=${encodeURIComponent(query)}&limit=${limit}`;
+    console.log(`[SEARCH] Fetching images from: ${imageSearchUrl}`);
+    const imageRes = await fetch(imageSearchUrl);
     const imageData = imageRes.ok ? await imageRes.json() : { images: [] };
+    if (!imageRes.ok) {
+      console.warn(`[SEARCH] Image fetch failed with status: ${imageRes.status}`);
+    } else {
+      console.log(`[SEARCH] Fetched ${imageData.images?.length || 0} images`);
+    }
 
     // Compute isBlur for each image
-    const unlockedItems = (user && user.unlockedItems || []).map(id => id.toString());
     const subscriptionStatus = user && user.subscriptionStatus === 'active';
     const processedImageResults = (imageData.images || []).map(item => {
-      const unlocked = unlockedItems.includes(item._id?.toString?.());
-      const isBlur = !unlocked && item.nsfw && !subscriptionStatus;
+      const isBlur = item.nsfw && !subscriptionStatus;
       return { ...item, isBlur };
     });
-
+    console.log(`[SEARCH] Processed image results, subscriptionStatus: ${subscriptionStatus}`);
+    const totalPages = imageData.totalPages || 1;
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
+    
     let seoTitle = translations.seo_title_default; 
     let seoDescription = translations.seo_description_default;
     if (query) {
       seoTitle = translations.seo_title_query.replace('${query}', query);
       seoDescription = translations.seo_description_query.replace('${query}', query);
     }
+    console.log(`[SEARCH] SEO title: ${seoTitle}, SEO description: ${seoDescription}`);
 
+    // Fetch tags from a random page
+    const randomPage = Math.floor(Math.random() * 10) + 1;
+    const tagsUrl = `${baseUrl}/api/tags?page=${randomPage}`;
+    console.log(`[SEARCH] Fetching tags from: ${tagsUrl}`);
+    const tagsRes = await fetch(tagsUrl);
+    const tagsData = tagsRes.ok ? await tagsRes.json() : { tags: [] };
+    if (!tagsRes.ok) {
+      console.warn(`[SEARCH] Tags fetch failed with status: ${tagsRes.status}`);
+    } else {
+      console.log(`[SEARCH] Fetched ${tagsData.tags?.length || 0} tags`);
+    }
+    const tags = tagsData.tags || [];
+    console.log(`[SEARCH] Tags data:`, tags);
     return reply.renderWithGtm('search.hbs', {
       title: seoTitle,
-      chatResults: processedChatResults,
       imageResults: processedImageResults,
+      totalPages,
+      currentPage: page,
+      hasPrevPage,
+      hasNextPage,
       query,
-      imageStyle,
+      tags,
       user,
       translations,
       seo: [
@@ -577,7 +594,7 @@ fastify.get('/search', async (request, reply) => {
       ],
     });
   } catch (error) {
-    console.error(error);
+    console.error('[SEARCH] Error occurred:', error);
     return reply.status(500).send({ error: 'Internal Server Error' });
   }
 });

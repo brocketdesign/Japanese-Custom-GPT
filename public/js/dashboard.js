@@ -665,42 +665,66 @@ function handleImageSuccess(img, blob, imageUrl) {
 }
 
 function createOverlay(img, imageUrl) {
-  // Overlay matches displayChats NSFW overlay design, but keeps original text/button
-  let overlay = $('<div></div>')
+  let overlay;
+  const isTemporary = !!window.user?.isTemporary; // Access global user object
+
+  if (isTemporary) {
+    overlay = $('<div></div>')
       .addClass('gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center animate__animated animate__fadeIn')
       .css({
-          background: 'rgba(0,0,0,0.55)',
-          zIndex: 2
+        background: 'rgba(0,0,0,0.55)',
+        zIndex: 2,
+        cursor: 'pointer' // Add cursor pointer to indicate it's clickable
+      })
+      .on('click', function() {
+        openLoginForm(); // Assuming openLoginForm is a globally available function
       });
 
-  // NSFW badge (matches displayChats)
-  let badge = $('<span></span>')
+    const lockIcon = $('<i></i>').addClass('bi bi-lock-fill fs-3 text-light');
+    const loginText = $('<p></p>').addClass('mt-2 small text-light badge bg-secondary shadow ').text(window.translations?.login_to_view || 'Login to view'); // Use translations if available
+
+    overlay.append(lockIcon, loginText);
+
+  } else {
+    // Existing overlay logic for non-temporary users
+    overlay = $('<div></div>')
+      .addClass('gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center animate__animated animate__fadeIn')
+      .css({
+        background: 'rgba(0,0,0,0.55)',
+        zIndex: 2
+      });
+
+    let badge = $('<span></span>')
       .addClass('badge bg-danger mb-2')
       .css('font-size', '1rem')
       .html('<i class="bi bi-exclamation-triangle"></i> NSFW');
 
-  // Button and text (from original createOverlay)
-  let buttonElement = $('<button></button>')
-      .text(window.translations['blurButton'] || '画像を見る')
+    let buttonElement = $('<button></button>')
+      .text(window.translations?.blurButton || '画像を見る')
       .addClass('btn btn-sm btn-outline-light mt-3 animate__animated animate__pulse')
       .css({ 'font-size': '14px', 'border-radius': '50px', cursor: 'pointer' })
-      .on('click', function () {
-          // Optionally: reveal image or handle click
-          // $(img).attr('src', imageUrl);
-          // overlay.remove();
+      .on('click', function (e) {
+          e.stopPropagation(); // Prevent click from bubbling to parent if wrapped
+          // Reveal the original image by replacing the blurred one
+          // This assumes the original image URL is stored in `imageUrl`
+          // and the blurred image is the `src` of `img`
+          const parentDiv = $(img).parent();
+          $(img).attr('src', imageUrl); // Set src to original image
+          overlay.remove(); // Remove the overlay
+          // If you had other attributes on the original img tag that were removed for blurring, restore them here.
       });
 
-  let textElement = $('<div></div>')
+    let textElement = $('<div></div>')
       .addClass('fw-bold')
       .css({ 'font-size': '12px', 'text-shadow': '0 0 5px black' });
 
-  overlay.append(badge, buttonElement, textElement);
+    overlay.append(badge, buttonElement, textElement);
+  }
 
   $(img)
-      .wrap('<div style="position: relative; display: inline-block;"></div>')
-      .after(overlay);
+    .wrap('<div style="position: relative; display: inline-block;"></div>')
+    .after(overlay);
 }
-  
 async function checkIfAdmin(userId) {
     try {
       const response = await $.get(`/user/is-admin/${userId}`);
@@ -2939,7 +2963,7 @@ function loadCharacterCreationPage(chatId) {
 
 // Load the plan page and open the modal
 function loadPlanPage() {
-    if(user.isTemporary) return;
+    if(!user || user?.isTemporary) return;
     if (modalStatus.isPlanLoading) return;
     modalStatus.isPlanLoading = true;
 
@@ -3014,6 +3038,7 @@ window.openUserProfile = function() {
     console.error('Clerk is not initialized');
   }
 };
+
 window.handleClickRegisterOrPay = function(event, isTemporary) {
   event.preventDefault();
   if (isTemporary) {

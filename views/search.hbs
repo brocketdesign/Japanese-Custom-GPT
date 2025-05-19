@@ -1,144 +1,244 @@
 <!DOCTYPE html>
-<html lang="{{user.lang}}">
-  {{> dashboard-header}}
+<html lang="{{lang}}">
+  {{> dashboard-header seoTitle=seoTitle seoDescription=seoDescription}} {{!-- Pass SEO variables to header partial --}}
 <body>
     {{> dashboard-nav}}
-  <section class="container my-5">                            
-    <p class="u-color-grad" style="font-size: 54px;"><img src="/img/logo.webp" alt="" class="me-2" width="40px">Lamix</p>
-    <span class="text-muted">{{translations.ai_character_conversation}}</span>
-    <h3>{{translations.free_ai_chat_and_image_generation}}</h3>
-    <p>{{translations.seo.description}}</p>
-    <hr>
+  <main class="container my-5">                            
+    <div class="text-center mb-4">
+      <p class="u-color-grad animate__animated" data-animate="animate__fadeInDown" data-delay="0.1s" style="font-size: 54px;"><img src="/img/logo.webp" alt="Lamix Logo" class="me-2" width="40px">Lamix</p>
+      <span class="text-muted animate__animated" data-animate="animate__fadeIn" data-delay="0.2s">{{translations.ai_character_conversation}}</span>
+      <h3 class="animate__animated" data-animate="animate__fadeIn" data-delay="0.3s">{{translations.free_ai_chat_and_image_generation}}</h3>
+    </div>
 
-    <h1 class="mb-4">{{title}}</h1>
-    <form id="search-form" action="/search" method="get" class="row g-3">
-      <div class="col-md-6 col-lg-5">
-      <div class="input-group shadow-sm">
-        <span class="input-group-text bg-white border-end-0">
-        <i class="bi bi-search text-muted"></i>
-        </span>
-        <input 
-        type="text" 
-        name="q" 
-        value="{{query}}" 
-        class="form-control border-start-0" 
-        placeholder="{{translations.search_placeholder}}" 
-        aria-label="{{translations.search_placeholder}}">
-        <button type="submit" class="btn btn-primary">
-        <i class="bi bi-arrow-right-circle"></i>
-        <span class="visually-hidden">{{translations.search_button}}</span>
-        </button>
+    {{#if user.isTemporary}}
+    <div class="card mb-4 shadow border-0 animate__animated" data-animate="animate__fadeInUp" data-delay="0.4s">
+      <div class="card-body p-4 text-center">
+        <div class="row align-items-center">
+          <div class="col-md-8 text-md-start">
+            <h4 class="mb-2">{{translations.unlock_premium_features}}</h4>
+            <p class="text-muted mb-md-0">{{translations.join_now_for_full_access}}</p>
+          </div>
+          <div class="col-md-4 text-md-end mt-3 mt-md-0">
+            <a href="/auth/login" onclick="openLoginForm(); return false;" class="btn custom-gradient-bg btn-lg animate__animated" data-animate="animate__pulse" data-delay="1s">
+              <i class="bi bi-person-plus me-2"></i>{{translations.sign_up_free}}
+            </a>
+          </div>
+        </div>
       </div>
-      </div>
-    </form>
+    </div>
+    {{/if}}
 
-    <hr>
+    {{#if query}}
+      <section aria-label="search description" class="mb-4">
+        <p class="animate__animated" data-animate="animate__fadeIn" data-delay="0.5s">{{seoDescription}}</p>
+        <hr>
+      </section>
+    {{else}}
+      <hr class="animate__animated" data-animate="animate__fadeIn" data-delay="0.5s">
+    {{/if}}
+
+    <section aria-label="search section">
+      <h1 class="mb-4 animate__animated" data-animate="animate__fadeIn" data-delay="0.6s">{{seoTitle}}</h1>
+      <div class="container text-center">
+        <h2 class="text-center text-secondary mb-4" style="font-size: 1rem;">{{translations.welcomeMessage}}</h2>
+        <form id="search-form" action="/search" method="GET" class="mb-3">
+          <div class="input-group input-group-lg justify-content-center" style="max-width: 500px; margin: 0 auto;">
+            <span class="input-group-text bg-white border-0 rounded-start-pill shadow-sm px-3">
+              <i class="bi bi-search text-secondary"></i>
+            </span>
+            <input 
+              type="text" 
+              name="q" 
+              id="search-input" 
+              class="form-control rounded-end-pill shadow-sm border-0" 
+              placeholder="{{translations.searchPlaceholder}}" 
+              aria-label="Search"
+              style="background: #f8f9fa;"
+            >
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <hr class="animate__animated" data-animate="animate__fadeIn" data-delay="0.8s">
+
+    <section aria-label="search results" class="mb-4">
+      {{#if query}}
+        <h2 class="h4 mb-3 animate__animated" data-animate="animate__fadeInUp" data-delay="0.9s">
+          <i class="bi bi-image me-2 text-primary"></i>{{translations.result_image_query}} "<span class="text-primary">{{query}}</span>"
+        </h2>
+      {{else}}
+        <h2 class="h4 mb-3 animate__animated" data-animate="animate__fadeInUp" data-delay="0.9s">
+          <i class="bi bi-collection me-2 text-primary"></i>{{translations.explore_latest_images}}
+        </h2>
+      {{/if}}
+      
+      {{#if imageResults.length}}
+        <div class="all-chats-images-gallery row" data-query="{{query}}">
+          {{#each imageResults}}
+            <div class="col-6 col-md-3 col-lg-2 mb-3 animate__animated" data-animate="animate__fadeIn" data-delay="{{math @index '*' 0.1 '+' 1}}s">
+              <div class="card shadow-0 gallery-card gallery-hover h-100">
+                {{#if isBlur}}
+                  <div type="button" onclick="handleClickRegisterOrPay(event,{{../user.isTemporary}})">
+                    <div class="gallery-image-wrapper position-relative">
+                      <img data-src="{{imageUrl}}" src="{{imageUrl}}" alt="{{prompt}}" class="card-img-top gallery-img img-blur" style="object-fit: cover; height: 200px;">
+                    </div>
+                  </div>
+                {{else}}
+                  <a href="/character/{{chatId}}?imageId={{_id}}" class="text-muted text-decoration-none">
+                    <div class="gallery-image-wrapper">
+                      <img src="{{imageUrl}}" alt="{{prompt}}" class="card-img-top gallery-img" style="object-fit: cover; height: 200px;">
+                    </div>
+                  </a>
+                {{/if}}
+              </div>
+            </div>
+          {{/each}}
+        </div>
+
+        {{#if totalPages}}
+        <nav aria-label="Search results pagination" class="mt-4 animate__animated" data-animate="animate__fadeIn" data-delay="1.2s">
+            <ul class="pagination justify-content-center">
+                {{#if hasPrevPage}}
+                    <li class="page-item">
+                        <a class="page-link rounded-pill px-3" href="/search?q={{query}}&page={{math currentPage '-' 1}}">
+                          <i class="bi bi-arrow-left me-1"></i>{{translations.previous_page}}
+                        </a>
+                    </li>
+                {{else}}
+                    <li class="page-item disabled">
+                        <span class="page-link rounded-pill px-3"><i class="bi bi-arrow-left me-1"></i>{{translations.previous_page}}</span>
+                    </li>
+                {{/if}}
+
+                {{#if (gt totalPages 0)}}
+                <li class="page-item disabled">
+                    <span class="page-link custom-gradient-bg text-white rounded-pill px-3">{{currentPage}} / {{totalPages}}</span>
+                </li>
+                {{/if}}
+
+                {{#if hasNextPage}}
+                    <li class="page-item">
+                        <a class="page-link rounded-pill px-3" href="/search?q={{query}}&page={{math currentPage '+' 1}}">
+                          {{translations.next_page}}<i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </li>
+                {{else}}
+                    <li class="page-item disabled">
+                        <span class="page-link rounded-pill px-3">{{translations.next_page}}<i class="bi bi-arrow-right ms-1"></i></span>
+                    </li>
+                {{/if}}
+            </ul>
+        </nav>
+        {{/if}}
+      {{else}}
+        {{#if query}}
+          <div class="text-center my-5 py-5 animate__animated" data-animate="animate__fadeIn" data-delay="1s">
+            <i class="bi bi-search fs-1 text-muted mb-3"></i>
+            <p>{{translations.no_results_found_for}} "<span class="text-primary">{{query}}</span>".</p>
+          </div>
+        {{/if}}
+      {{/if}}
+    </section>
     
-    <h3>{{translations.chat_gallery}}</h3>
-    <p class="text-muted">{{translations.chat_gallery_description}}</p>
-    <div id="chat-gallery" class="row mx-0 mt-4">
-      {{#each chatResults}}
-        <div class="gallery-card col-12 col-sm-3 col-lg-3 mb-4 {{#if premium}}premium-chat{{/if}} {{#if gender}}chat-gender-{{gender}}{{/if}}" style="cursor: pointer;">
-          <div class="card shadow border-0 h-100 position-relative gallery-hover" style="overflow: hidden;" onclick="window.location.href='/chat/{{_id}}'">
-            <div class="gallery-image-wrapper position-relative" style="aspect-ratio: 4/5; background: #f8f9fa;">
-              <img src="{{chatImageUrl}}" alt="{{name}}" class="card-img-top gallery-img transition rounded-top" style="object-fit: cover; width: 100%; height: 100%; min-height: 220px;" loading="lazy">
-              {{#if nsfw}}
-                <div class="gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center" style="background: rgba(0,0,0,0.55); z-index:2;">
-                  <span class="badge bg-danger mb-2" style="font-size: 1rem;"><i class="bi bi-exclamation-triangle"></i> NSFW</span>
-                </div>
-              {{/if}}
-              <div class="gallery-badges position-absolute top-0 end-0 m-2 d-flex flex-column align-items-end" style="z-index:3;">
-                {{#if premium}}<span class="custom-gradient-bg badge bg-gradient-primary mb-1"> {{../translations.premium}}</span>{{/if}}
-                {{#if imageCount}}<span class="badge bg-dark mb-1"><i class="bi bi-images"></i> {{imageCount}}</span>{{/if}}
-                {{#if messagesCount}}<span class="badge bg-secondary"><i class="bi bi-chat-dots"></i> {{messagesCount}}</span>{{/if}}
-              </div>
-              {{#if tags}}
-                <div class="gallery-tags position-absolute bottom-0 start-0 w-100 px-2 pb-2 d-flex flex-wrap gap-1" style="z-index:3;">
-                  {{#each tags}}
-                    <a href="/search?q={{encodeURIComponent this}}" class="badge bg-light text-dark border text-decoration-none">#{{this}}</a>
-                  {{/each}}
-                </div>
-              {{/if}}
-            </div>
-            <div class="card-body py-3 px-3 d-flex flex-column justify-content-between">
-              <div class="d-flex align-items-center mb-2">
-                <img src="{{chatImageUrl}}" alt="{{name}}" class="rounded-circle me-2 border" width="40" height="40">
-                <div>
-                  <h5 class="card-title mb-0 fw-semibold text-truncate" title="{{name}}">{{name}}</h5>
-                  {{#if nickname}}<a href="/user/{{userId}}" class="text-muted small">@{{nickname}}</a>{{/if}}
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center mt-auto">
-                <button class="btn btn-outline-primary btn-sm persona {{#if premium}}border-warning{{/if}}" data-id="{{_id}}" title="Add to Persona">
-                  <i class="far fa-user-circle"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      {{/each}}
+    <div class="d-flex justify-content-center mt-4 animate__animated" data-animate="animate__fadeInUp" data-delay="1.3s">
+        <a href="/character" class="btn custom-gradient-bg w-100">
+          <i class="bi bi-grid-3x3-gap me-2"></i>{{translations.view_all_character}}
+        </a>
     </div>
-    <div id="chat-pagination-controls" class="d-flex justify-content-center my-3"></div>
-    <div class="d-flex justify-content-center mt-4">
-        <a href="/chat" class="btn custom-gradient-bg w-100">{{translations.startChatting}}</a>
-    </div>
-    <hr>
+    
+    <hr class="my-4 animate__animated" data-animate="animate__fadeIn" data-delay="1.4s">
 
-    <h3>{{translations.result_image_query}} | {{query}}</h3>
-    <div class="all-chats-images-gallery row" data-query="{{query}}">
-      {{#each imageResults}}
-        <div class="col-6 col-md-3 col-lg-2 mb-2">
-          <div class="card shadow-0">
-            {{#if isBlur}}
-              <div type="button" onclick="handleClickRegisterOrPay(event,{{../user.isTemporary}})">
-                <img data-src="{{imageUrl}}" class="card-img-top img-blur" style="object-fit: cover;">
-              </div>
-            {{else}}
-              <a href="/character/{{chatId}}?imageId={{_id}}" class="text-muted text-decoration-none">
-                <img src="{{imageUrl}}" alt="{{prompt}}" class="card-img-top">
-              </a>
-            {{/if}}
-          </div>
+    {{#if tags.length}}
+    <section aria-label="tags section" class="animate__animated" data-animate="animate__fadeInUp" data-delay="1.5s">
+      <h2 class="h4 mb-3">
+        <i class="bi bi-tags me-2 text-primary"></i>{{translations.search_ai_character_by_tag}}
+      </h2>
+      <div id="tags-container" class="tags-wrapper mb-4">
+        <div class="tags-cloud d-flex flex-wrap">
+          {{#each tags}}
+            <a href="/search?q={{this.name}}" class="tag-item btn btn-outline-secondary btn-sm m-1 animate__animated" data-animate="animate__fadeIn" data-delay="{{math @index '*' 0.05 '+' 1.5}}s">
+              <i class="bi bi-tag me-1"></i>{{this.name}}
+            </a>
+          {{/each}}
         </div>
-      {{/each}}
-    </div>
-    <div class="d-flex justify-content-center mt-4">
-        <a href="/character" class="btn custom-gradient-bg w-100">{{translations.view_all_character}}</a>
-    </div>
-    <hr>
+      </div>
+    </section>
+    {{/if}}
 
-    <h3>{{translations.search_ai_character_by_tag}}</h3>
-    <div id="tags-container"></div>
-    <div class="d-flex justify-content-center mt-4">
-        <a href="/tags" class="btn custom-gradient-bg w-100">{{translations.view_all_tags}}</a>
+    <div class="d-flex justify-content-center mt-4 animate__animated" data-animate="animate__fadeInUp" data-delay="1.6s">
+        <a href="/tags" class="btn custom-gradient-bg-outline w-100">
+          <i class="bi bi-tag me-2"></i>{{translations.view_all_tags}}
+        </a>
     </div>
-</section>
-    <style>
-  footer{display: inline !important;}
-  .sticky-bottom{display: inline-block !important;width: 100%;}
-  .flagged-true { display: inline-block !important; }
+
+    <!-- Schema.org structured data for search results -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SearchResultsPage",
+        "mainEntity": {
+          "@type": "ItemList",
+          "itemListElement": [
+            {{#each imageResults}}
+              {{#if @index}},{{/if}}
+              {
+                "@type": "ListItem",
+                "position": {{math @index '+' 1}},
+                "url": "{{../baseUrl}}/character/{{chatId}}?imageId={{_id}}"
+              }
+            {{/each}}
+          ]
+        },
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "{{baseUrl}}/search?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    </script>
+  </main>
+  <style>
+    footer{display: inline !important;}
+    .sticky-bottom{display: inline-block !important;width: 100%;}
+    .flagged-true { display: inline-block !important; }
+    .card-img-top {
+      width: 100%;
+      height: 200px; /* Or your desired height */
+      object-fit: cover;
+    }
   </style>
-  {{> dashboard-footer}}
   <script>
-    // Only keep tag rendering logic
-    function displayTags(imageStyle) {
-      let tags;
-      if (!tags || !tags.length) {
-          $.get(`/api/tags`, function(response) {
-          const totalPages = response.totalPages;
-          const randomPage = Math.floor(Math.random() * totalPages) + 1;
-          $.get(`/api/tags?page=${randomPage}`, function(response) {
-              tags = response.tags;
-              renderTags(tags,imageStyle);
-          });
-          });
+    document.addEventListener('DOMContentLoaded', function() {
+      // Apply animations with delay
+      document.querySelectorAll('[data-animate]').forEach(function(element) {
+        setTimeout(function() {
+          element.classList.add(element.getAttribute('data-animate'));
+        }, parseFloat(element.getAttribute('data-delay')) * 1000 || 0);
+      });
+    });
+
+    // Define handleClickRegisterOrPay function to ensure it's available
+    function handleClickRegisterOrPay(event, isTemporary) {
+      event.preventDefault();
+      console.log('handleClickRegisterOrPay called with isTemporary:', isTemporary);
+      if (isTemporary) {
+          // Use openLoginForm if it's available, otherwise redirect to login
+          if (typeof openLoginForm === 'function') {
+              openLoginForm();
+          } else {
+              window.location.href = '/auth/login?redirect=' + encodeURIComponent(window.location.href);
+          }
       } else {
-          renderTags(tags,imageStyle);
+          // Use loadPlanPage if it's available, otherwise redirect to plan page
+          if (typeof loadPlanPage === 'function') {
+              loadPlanPage();
+          } else {
+              window.location.href = '/my-plan';
+          }
       }
     }
-    $(document).ready(function() {
-      displayTags(null);
-    });
   </script>
+  {{> dashboard-footer}}
 </body>
 </html>

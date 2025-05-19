@@ -1,5 +1,6 @@
 const { ObjectId } = require('mongodb');
 const { getLanguageName } = require('../models/tool');
+const { parse } = require('handlebars');
 
 async function routes(fastify, options) {
   fastify.post('/gallery/:imageId/like-toggle', async (request, reply) => { 
@@ -173,123 +174,148 @@ async function routes(fastify, options) {
       reply.code(500).send('Internal Server Error');
     }
   });
-  fastify.get('/chats/images/search', async (request, reply) => {
-    try {
-      const user = request.user;
-      const language = getLanguageName(user?.lang);
-      const queryStr = request.query.query || '';
-      const page = parseInt(request.query.page) || 1;
-      const limit = 24;
-      const skip = (page - 1) * limit;
-      const db = fastify.mongo.db;
-      const chatsGalleryCollection = db.collection('gallery');
-      const chatsCollection = db.collection('chats');
 
-      // Prepare search words
-      const queryWords = queryStr.split(' ').filter(word => word.replace(/[^\w\s]/gi, '').trim() !== '');
+fastify.get('/chats/images/search', async (request, reply) => {
+  try {
+    const user = request.user;
+    const language = getLanguageName(user?.lang);
+    const queryStr = request.query.query || '';
+    const page = parseInt(request.query.page) || 1;
+    const limit = parseInt(request.query.limit) || 24;
+    const skip = (page - 1) * limit;
+    const db = fastify.mongo.db;
+    const chatsGalleryCollection = db.collection('gallery');
 
-      // Build match criteria for images
-      const matchCriteria = {
-        'images.imageUrl': { $exists: true, $ne: null }
-      };
-      if (queryWords.length > 0) {
-        matchCriteria.$or = queryWords.map(word => ({ 'images.prompt': { $regex: word, $options: 'i' } }));
+    // Prepare search words
+    const queryWords = queryStr.split(' ').filter(word => word.replace(/[^\w\s]/gi, '').trim() !== '');
+
+    // Match only entries with image URLs
+    const baseMatch = {
+      'images.imageUrl': { $exists: true, $ne: null }
+    };
+
+    // Language filter (via $lookup)
+    const chatLanguageMatch = [
+      {
+        $lookup: {
+          from: 'chats',
+          localField: 'chatId',
+          foreignField: '_id',
+          as: 'chat'
+        }
+      },
+      { $unwind: '$chat' },
+      {
+        $match: {
+          $or: [
+            { 'chat.language': language },
+            { 'chat.language': request.lang }
+          ]
+        }
       }
+    ];
 
-      // Only match chats with the correct language
-      const chatLanguageMatch = [
+    // Score expressions
+    const scoreExpressions = queryWords.map(word => ({
+      $cond: [
+        { $eq: [{ $type: "$images.prompt" }, "string"] },
         {
-          $lookup: {
-            from: 'chats',
-            localField: 'chatId',
-            foreignField: '_id',
-            as: 'chat'
-          }
+          $cond: [
+            { $regexMatch: { input: "$images.prompt", regex: new RegExp(word, "i") } },
+            1,
+            0
+          ]
         },
-        { $unwind: '$chat' },
-        {
-          $match: {
-            $or: [
-              { 'chat.language': language },
-              { 'chat.language': request.lang }
-            ]
-          }
-        }
-      ];
+        0
+      ]
+    }));
 
-      // Aggregate images matching prompt and chat language
-      const [allChatImagesDocs, totalCountDocs] = await Promise.all([
-        chatsGalleryCollection.aggregate([
-          { $unwind: '$images' },
-          { $match: matchCriteria },
-          ...chatLanguageMatch,
-          { $sort: { _id: -1 } },
-          { $skip: skip },
-          { $limit: limit },
-          {
-            $project: {
-              _id: 0,
-              image: '$images',
-              chatId: 1,
-              chat: 1
-            }
-          }
-        ]).toArray(),
-        chatsGalleryCollection.aggregate([
-          { $unwind: '$images' },
-          { $match: matchCriteria },
-          ...chatLanguageMatch,
-          { $count: 'total' }
-        ]).toArray()
-      ]);
+    const scoringStage = {
+      $addFields: {
+        matchScore: { $sum: scoreExpressions }
+      }
+    };
 
-      // Group images by chatId and limit 3 per chat
-      const grouped = {};
-      const limitedDocs = [];
-      for (const doc of allChatImagesDocs) {
-        const chatIdStr = String(doc.chatId);
-        if (!grouped[chatIdStr]) grouped[chatIdStr] = 0;
-        if (grouped[chatIdStr] < 3) {
-          limitedDocs.push(doc);
-          grouped[chatIdStr]++;
+    const pipeline = [
+      { $unwind: '$images' },
+      { $match: baseMatch },
+      ...chatLanguageMatch,
+      scoringStage,
+      { $match: queryWords.length > 0 ? { matchScore: { $gt: 0 } } : {} },
+      { $sort: { matchScore: -1, _id: -1 } }, // Secondary sort by _id for stability
+      { $skip: skip },
+      { $limit: limit },
+      {
+        $project: {
+          _id: 0,
+          image: '$images',
+          chatId: 1,
+          chat: 1,
+          matchScore: 1
         }
       }
+    ];
 
-      const totalImages = totalCountDocs.length ? totalCountDocs[0].total : 0;
-      const totalPages = Math.ceil(totalImages / limit);
-      if (!totalImages) {
-        return reply.code(404).send({ images: [], page, totalPages: 0 });
+    const [allChatImagesDocs, totalCountDocs] = await Promise.all([
+      chatsGalleryCollection.aggregate(pipeline).toArray(),
+      chatsGalleryCollection.aggregate([
+        { $unwind: '$images' },
+        { $match: baseMatch },
+        ...chatLanguageMatch,
+        scoringStage,
+        { $match: queryWords.length > 0 ? { matchScore: { $gt: 0 } } : {} },
+        { $count: 'total' }
+      ]).toArray()
+    ]);
+
+    // Group and limit 3 images per chat
+    const grouped = {};
+    const limitedDocs = [];
+    for (const doc of allChatImagesDocs) {
+      const chatIdStr = String(doc.chatId);
+      if (!grouped[chatIdStr]) grouped[chatIdStr] = 0;
+      if (grouped[chatIdStr] < 3) {
+        limitedDocs.push(doc);
+        grouped[chatIdStr]++;
       }
-
-      // Use chat data from aggregation result
-      const imagesWithChatData = limitedDocs.map(doc => {
-        const chat = doc.chat || {};
-        return {
-          ...doc.image,
-          chatId: doc.chatId,
-          chatName: chat.name,
-          chatImageUrl: chat.chatImageUrl || '/img/default-thumbnail.png',
-          chatTags: chat.tags || [],
-          messagesCount: chat.messagesCount || 0,
-          first_message: chat.first_message || '',
-          description: chat.description || '',
-          galleries: chat.galleries || [],
-          nickname: chat.nickname || '',
-          imageCount: chat.imageCount
-        };
-      });
-
-      reply.send({
-        images: imagesWithChatData,
-        page,
-        totalPages,
-      });
-    } catch (err) {
-      console.error('Error in /chats/images/search:', err);
-      reply.code(500).send('Internal Server Error');
     }
-  });
-  
+
+    const totalImages = totalCountDocs.length ? totalCountDocs[0].total : 0;
+    const totalPages = Math.ceil(totalImages / limit);
+    if (!totalImages) {
+      return reply.code(404).send({ images: [], page, totalPages: 0 });
+    }
+
+    const imagesWithChatData = limitedDocs.map(doc => {
+      const chat = doc.chat || {};
+      return {
+        ...doc.image,
+        chatId: doc.chatId,
+        chatName: chat.name,
+        chatImageUrl: chat.chatImageUrl || '/img/default-thumbnail.png',
+        chatTags: chat.tags || [],
+        messagesCount: chat.messagesCount || 0,
+        first_message: chat.first_message || '',
+        description: chat.description || '',
+        galleries: chat.galleries || [],
+        nickname: chat.nickname || '',
+        imageCount: chat.imageCount,
+        matchScore: doc.matchScore
+      };
+    });
+
+    reply.send({
+      images: imagesWithChatData,
+      page,
+      totalPages
+    });
+
+  } catch (err) {
+    console.error('Error in /chats/images/search:', err);
+    reply.code(500).send('Internal Server Error');
+  }
+});
+
 
   fastify.get('/chats/images', async (request, reply) => {
     try {

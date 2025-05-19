@@ -1,5 +1,11 @@
 {
   "lang": "ja",
+  "unlock_premium_features": "プレミアム機能をアンロック",
+  "join_now_for_full_access": "すべての画像とキャラクターにフルアクセスするには今すぐ参加！",
+  "sign_up_free": "無料で登録",
+  "login_to_view": "表示するにはログイン",
+  "previous_page": "前のページ",
+  "next_page": "次のページ",
   "cancel_subscription_modal_title": "サブスクリプションのキャンセル",
   "cancel_subscription_warning": "サブスクリプションをキャンセルすると、すぐに有効になります。プレミアムチャット機能とNSFWコンテンツへのアクセスができなくなります。本当にキャンセルしますか？",
   "why_cancel_label": "キャンセル理由をお聞かせください（任意）：",

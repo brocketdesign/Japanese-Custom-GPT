@@ -11,7 +11,7 @@
                       {{translations.setting.profile}}
                   </button>
               </li>
-              <li class="nav-item" role="presentation">
+              <li class="d-none nav-item" role="presentation">
                   <button class="nav-link" id="password-tab" data-bs-toggle="tab" data-bs-target="#password" type="button" role="tab" aria-controls="password" aria-selected="false">
                       {{translations.setting.password}}
                   </button>
@@ -148,7 +148,21 @@
           <!-- Subscription Tab -->
           <div class="tab-pane fade" id="subscription" role="tabpanel" aria-labelledby="subscription-tab">
             <p id="user-plan" style="display: none;"></p>
-            <button id="cancel-plan" class="btn btn-outline-secondary btn-sm" style="display: none;" data-user-id="{{user._id}}">{{translations.setting.cancelSubscription}}</button>
+            <button id="cancel-plan" class="btn btn-outline-danger btn-sm rounded-pill" style="display: none;position: absolute; bottom: 20px;font-size: 10px;opacity: 0.5;" data-user-id="{{user._id}}">{{translations.setting.cancelSubscription}}</button>
+
+            <!-- Day Pass Countdown Section -->
+            <div id="day-pass-countdown-section" class="text-center p-3 border rounded shadow-sm mt-3" style="display: none;">
+              <h4 class="mb-3"><i class="bi bi-clock-history me-2"></i>{{translations.setting.dayPassActiveTitle}}</h4>
+              <p class="lead">{{translations.setting.dayPassExpiresIn}}</p>
+              <div id="countdown-timer" class="display-4 fw-bold text-primary mb-3">
+                <span id="hours">00</span>:<span id="minutes">00</span>:<span id="seconds">00</span>
+              </div>
+              <p id="day-pass-expired-message" class="text-danger mt-2" style="display: none;">
+                {{translations.setting.dayPassExpired}} <br>
+                <button class="btn custom-gradient-bg mt-2" onclick="loadPlanPage()">{{translations.select_plan_here}}</button>
+              </p>
+            </div>
+            <!-- End Day Pass Countdown Section -->
           </div>
 
           <!-- Usage Tab -->

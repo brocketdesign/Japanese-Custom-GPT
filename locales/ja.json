@@ -1,8 +1,20 @@
 {
   "lang": "ja",
-    "one_time": "一回きり",
-    "day_pass_success": "1日パスが有効になりました！",
-    "day_pass_expires": "パスは24時間後に期限切れになります",
+  "cancel_subscription_modal_title": "サブスクリプションのキャンセル",
+  "cancel_subscription_warning": "サブスクリプションをキャンセルすると、すぐに有効になります。プレミアムチャット機能とNSFWコンテンツへのアクセスができなくなります。本当にキャンセルしますか？",
+  "why_cancel_label": "キャンセル理由をお聞かせください（任意）：",
+  "why_cancel_placeholder": "皆様からのフィードバックは、改善の参考とさせていただきます。",
+  "do_not_cancel_button": "サブスクリプションを継続",
+  "continue_cancellation_button": "キャンセルを続行",
+  "feedback_submission_error": "フィードバックを送信できませんでした。もう一度お試しください。",
+  "cancellation_initiated": "キャンセル処理を開始しました...",
+  "cancellation_feedback_thanks": "フィードバックありがとうございます。",
+  "subscription_cancelled_successfully": "サブスクリプションが正常にキャンセルされました。",
+
+  "searchPlaceholder": "キャラクター、タグ、または投稿を検索",
+  "one_time": "一回きり",
+  "day_pass_success": "1日パスが有効になりました！",
+  "day_pass_expires": "パスは24時間後に期限切れになります",
   "profile_style": "スタイル",
   "profile_style_desc": "このAIキャラクターのビジュアル外観や芸術的な表現スタイル",
   "profile_gender": "性別",
@@ -357,10 +369,11 @@
     "step2": "オプションからホーム画面に追加を選択します。"
   },
   "promo": {
-    "title": "プレミアム機能を解除",
-    "short_title": "プレミアム機能を解除",
-    "subtitle": "すべてのプレミアム機能を無制限に楽しもう。",
-    "price": "月額￥1,100のみ",
+    "title": "No.1 AIチャット＆画像生成ツール",
+    "short_title": "プレミアムをアンロック",
+    "subtitle": "すべてのプレミアム機能に無制限アクセス。",
+    "description": "無制限の画像生成、全キャラクターへのフルアクセス、NSFWコンテンツ、カスタム画像などが利用可能。",
+    "price": "月額わずか￥1,500",
     "details": "詳細を見る"
   },
   "admin": {
@@ -591,7 +604,7 @@
   "confirm": "確認",
   "ok": "OK",
   "welcome": "ようこそ",
-  "welcomeMessage": "私たちのアプリケーションへようこそ。",
+  "welcomeMessage": "AIチャットを体験し、画像を生成し、カスタムAIキャラクターとのユニークな会話を楽しもう。",
   "info": "情報",
   "edit": "編集する",
   "share":"共有する",
@@ -691,6 +704,9 @@
     "ageVerification": "私は18歳以上です"
   },
   "setting": {
+    "dayPassActiveTitle": "有効な1日パス",
+    "dayPassExpiresIn": "有効期限:",
+    "dayPassExpired": "1日パスの有効期限が切れました。",
     "imageModerationFlagged": "画像がモデレーションによってフラグ付けされました",
     "pageTitle": "設定",
     "profile": "プロフィール",

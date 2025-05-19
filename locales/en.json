@@ -1,6 +1,18 @@
 {
   "lang":"en", 
+  "cancel_subscription_modal_title": "Cancel Subscription",
+  "cancel_subscription_warning": "Cancelling your subscription will take effect immediately. You will lose access to premium chat features and NSFW content. Are you sure you want to proceed?",
+  "why_cancel_label": "Please tell us why you are cancelling (optional):",
+  "why_cancel_placeholder": "Your feedback helps us improve.",
+  "do_not_cancel_button": "Keep Subscription",
+  "continue_cancellation_button": "Continue Cancellation",
+  "feedback_submission_error": "Could not submit feedback. Please try again.",
+  "cancellation_initiated": "Cancellation process started...",
+  "cancellation_feedback_thanks": "Thank you for your feedback.",
+  "subscription_cancelled_successfully": "Subscription cancelled successfully.",
   
+  "searchPlaceholder":"Search for characters, tags, or posts",
+
   "profile_style": "Style",
   "profile_style_desc": "Visual appearance and artistic representation style of this AI character",
   "profile_gender": "Gender",
@@ -261,9 +273,10 @@
     "step2": "Select Add to Home Screen from the options."
   },
   "promo": {
-    "title": "Unlock Premium Features",
+    "title": "Your #1 AI Chat & Image Generator",
     "short_title": "Unlock Premium",
     "subtitle": "Enjoy unlimited access to all premium features.",
+    "description": "Unlimited image generation, full access to all characters, NSFW content, custom images, and more.",
     "price": "Only $10.00/month",
     "details": "View Details"
   },
@@ -512,7 +525,7 @@
   "confirm": "Confirm",
   "ok": "OK",
   "welcome": "Welcome",
-  "welcomeMessage": "Welcome to our application.",
+  "welcomeMessage": "Explore AI chat, generate images, and enjoy unique conversations with custom AI characters.",
   "info": "Info",
   "edit": "Edit",
   "share":"Share",
@@ -612,6 +625,9 @@
     "ageVerification": "I am over 18 years old"
   },
   "setting": {
+    "dayPassActiveTitle": "Active Day Pass",
+    "dayPassExpiresIn": "Expires in:",
+    "dayPassExpired": "Your day pass has expired.",
     "imageModerationFlagged": "This image has been flagged for moderation.",
     "pageTitle": "Settings",
     "profile": "Profile",

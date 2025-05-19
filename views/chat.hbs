@@ -72,26 +72,26 @@
                 </div>
             </nav>
             <section id="chat-discovery" class="onchat-off mt-5 pt-3" style="display: block;">
-                <!-- Promo Section -->
-                <section class="is-free-user animate__animated m-3 p-3 bg-light d-none" style="display: none; overflow-x: hidden;" data-animate="animate__fadeInLeft" data-delay="0.3s">
-                    <div class="container text-center">
-                        <h2 class="pricing-title fw-bold animate__animated animate__fadeInLeft" data-animate="animate__fadeInLeft" style="animation-delay: 0.3s;">
-                            <span class="u-font-manrope u-color-grad" style="font-size: 100%;">{{translations.promo.title}}</span>
-                        </h2>
-                        <h3 class="fw-bold mb-1 px-3 animate__animated animate__fadeInLeft" data-animate="animate__fadeInLeft" style="animation-delay: 0.5s;">
-                            {{translations.promo.subtitle}}
-                        </h3>
-                        <h3 class="fw-bold mb-1 px-3 u-font-manrope u-color-grad my-5 animate__animated animate__fadeInRight" data-animate="animate__fadeInRight" style="font-size: 2em; animation-delay: 0.7s;">
-                            {{translations.promo.price}}
-                        </h3>
-                    </div>
-                    <div class="is-free-user sticky-bottom py-2 mx-auto text-center animate__animated" style="display:none; bottom:0; left:0; right:0;" data-animate="animate__fadeInLeft" style="animation-delay: 0.9s;">
-                        <a href="/my-plan" class="m-2 btn border shadow-0 btn-secondary px-5 py-2 m-auto animate__animated" data-animate="animate__zoomIn" style="border-radius:40px; background: linear-gradient(90.9deg, rgba(110, 32, 244, 0.5) 2.74%, #6E20F4 102.92%);">
-                            <i class="bi bi-plus me-2"></i>{{translations.promo.details}}
-                        </a>
-                    </div>
-                </section>
-
+                <!-- Search form to /search?q={query} -->
+                <div class="container text-center">
+                    <h2 class="text-center text-secondary mb-4" style="font-size: 1rem;">{{translations.welcomeMessage}}</h2>
+                    <form id="search-form" action="/search" method="GET" class="mb-3">
+                        <div class="input-group input-group-lg justify-content-center" style="max-width: 500px; margin: 0 auto;">
+                            <span class="input-group-text bg-white border-0 rounded-start-pill shadow-sm px-3">
+                                <i class="bi bi-search text-secondary"></i>
+                            </span>
+                            <input 
+                                type="text" 
+                                name="q" 
+                                id="search-input" 
+                                class="form-control rounded-end-pill shadow-sm border-0" 
+                                placeholder="{{translations.searchPlaceholder}}" 
+                                aria-label="Search"
+                                style="background: #f8f9fa;"
+                            >
+                        </div>
+                    </form>
+                </div>
                 <!-- Card menu -->
                 <div class="card-menu-container my-3">
                     <div class="d-flex overflow-auto px-3 py-5" style="scrollbar-width: thin;justify-content: space-between;">
@@ -133,6 +133,26 @@
                     </div>
                 </div>
 
+                <!-- Promo Section -->
+                <section class="is-free-user animate__animated m-3 p-3 bg-light" style="display: none; overflow-x: hidden;" data-animate="animate__fadeInLeft" data-delay="0.3s">
+                    <div class="container text-center">
+                        <h2 class="pricing-title fw-bold animate__animated animate__fadeInLeft" data-animate="animate__fadeInLeft" style="animation-delay: 0.3s;">
+                            <span class="u-font-manrope u-color-grad" style="font-size: 100%;">{{translations.promo.title}}</span>
+                        </h2>
+                        <h3 class="fw-bold mb-1 px-3 animate__animated animate__fadeInLeft" data-animate="animate__fadeInLeft" style="animation-delay: 0.5s;">
+                            {{translations.promo.subtitle}}
+                        </h3>
+                        <h3 class="mb-3 px-3 u-font-manrope animate__animated animate__fadeInRight" data-animate="animate__fadeInRight" style="font-size: 1.5em; animation-delay: 0.7s;">
+                            {{translations.promo.description}}
+                        </h3>
+                    </div>
+                    <div class="is-free-user sticky-bottom py-2 mx-auto text-center animate__animated" style="display:none; bottom:0; left:0; right:0;" data-animate="animate__fadeInLeft" style="animation-delay: 0.9s;">
+                        <a href="#" onclick="loadPlanPage()" class="m-2 btn border shadow-0 btn-secondary px-5 py-2 m-auto animate__animated" data-animate="animate__zoomIn" style="border-radius:40px; background: linear-gradient(90.9deg, rgba(110, 32, 244, 0.5) 2.74%, #6E20F4 102.92%);">
+                            <i class="bi bi-plus me-2"></i>{{translations.promo.details}}
+                        </a>
+                    </div>
+                </section>
+
                 <!-- Latest Chats Section -->
                 <div class="mx-4 my-4" id="latest-chats-section">
                     <h5 class="fw-bold mb-3">{{translations.latestChatsHeader}}</h5>
@@ -146,7 +166,7 @@
                     <div class="sorting-tools mb-3">
                         <div class="row g-3 align-items-center">
                             <!-- Premium/Free Toggle -->
-                            <div class="col-12 col-md-auto d-flex align-items-center gap-2 justify-content-start justify-content-md-start">
+                            <div class="d-none col-12 col-md-auto d-flex align-items-center gap-2 justify-content-start justify-content-md-start">
                                 <span class="me-2 text-muted" style="font-size: 15px;">
                                     {{translations.sort.premiumLabel}}
                                 </span>
@@ -935,7 +955,7 @@ $(document).ready(function() {
 /* --- Sorting and Filtering for Popular Chats --- */
 
 // Premium filter state
-let premiumChatsHidden = Cookies.get('premiumChatsHidden') === 'true' || (isTemporary || !subscriptionStatus);
+let premiumChatsHidden = false; //Cookies.get('premiumChatsHidden') === 'true' || (isTemporary || !subscriptionStatus);
 let currentGenderFilter = Cookies.get('currentGenderFilter') || null;
 
 // NSFW filter state
@@ -943,6 +963,24 @@ let nsfwChatsHidden = Cookies.get('nsfwChatsHidden') === 'true';
 
 // Style filter state
 let currentStyleFilter = Cookies.get('currentStyleFilter') || null;
+/*
+ * Comprehensive log before calling updateChatFilters
+ */
+function logChatFilterStates(context) {
+    return
+    console.log('[ChatFilter] Context:', context);
+    console.log('[ChatFilter] premiumChatsHidden:', premiumChatsHidden);
+    console.log('[ChatFilter] currentGenderFilter:', currentGenderFilter);
+    console.log('[ChatFilter] nsfwChatsHidden:', nsfwChatsHidden);
+    console.log('[ChatFilter] currentStyleFilter:', currentStyleFilter);
+    // Optionally log cookies for debugging
+    console.log('[ChatFilter] Cookies:', {
+        premiumChatsHidden: Cookies.get('premiumChatsHidden'),
+        currentGenderFilter: Cookies.get('currentGenderFilter'),
+        nsfwChatsHidden: Cookies.get('nsfwChatsHidden'),
+        currentStyleFilter: Cookies.get('currentStyleFilter')
+    });
+}
 
 // Restore button states on page load
 $(function() {
@@ -964,22 +1002,23 @@ $(function() {
         $('.sorting-tools button').removeClass('active');
         $(`#popular-chats-style-${currentStyleFilter}`).addClass('active');
     }
+    logChatFilterStates('on page load');
     updateChatFilters();
 });
-
 $(document).on('click', '#popular-chats-premium', function() {
     premiumChatsHidden = !premiumChatsHidden;
     Cookies.set('premiumChatsHidden', premiumChatsHidden, { expires: 7 });
+    logChatFilterStates('premium toggle');
     updateChatFilters();
     $(this).text(premiumChatsHidden ? '{{translations.sort.showPremium}}' : '{{translations.sort.hidePremium}}');
 });
-
 // Gender filter state
 $(document).on('click', '#popular-chats-gender-female, #popular-chats-gender-male, #popular-chats-gender-nonbinary', function() {
     currentGenderFilter = this.id.replace('popular-chats-gender-', '');
     Cookies.set('currentGenderFilter', currentGenderFilter, { expires: 7 });
     $('.sorting-tools button').removeClass('active');
     $(this).addClass('active');
+    logChatFilterStates('gender filter');
     updateChatFilters();
 });
 // Reset gender filter
@@ -987,23 +1026,24 @@ $(document).on('click', '.sorting-tools .btn:not([id^="popular-chats-gender-"])'
     currentGenderFilter = null;
     Cookies.remove('currentGenderFilter');
     $('.sorting-tools button').removeClass('active');
+    logChatFilterStates('reset gender filter');
     updateChatFilters();
 });
-
 // NSFW filter state
 $(document).on('click', '#popular-chats-nsfw', function() {
     nsfwChatsHidden = !nsfwChatsHidden;
     Cookies.set('nsfwChatsHidden', nsfwChatsHidden, { expires: 7 });
+    logChatFilterStates('nsfw toggle');
     updateChatFilters();
     $(this).text(nsfwChatsHidden ? '{{translations.sort.showNSFW}}' : '{{translations.sort.hideNSFW}}');
 });
-
 // Style filter state
 $(document).on('click', '#popular-chats-style-anime, #popular-chats-style-photorealistic', function() {
     currentStyleFilter = this.id.replace('popular-chats-style-', '');
     Cookies.set('currentStyleFilter', currentStyleFilter, { expires: 7 });
     $('.sorting-tools button').removeClass('active');
     $(this).addClass('active');
+    logChatFilterStates('style filter');
     updateChatFilters();
 });
 // Reset style filter
@@ -1011,13 +1051,13 @@ $(document).on('click', '.sorting-tools .btn:not([id^="popular-chats-style-"])',
     currentStyleFilter = null;
     Cookies.remove('currentStyleFilter');
     $('.sorting-tools button').removeClass('active');
+    logChatFilterStates('reset style filter');
     updateChatFilters();
 });
-
 // Filtering logic
 function updateChatFilters() {
     // Premium filter
-    $('.gallery-card').each(function() {
+    $('.popular-chats-gallery .gallery-card').each(function(index) {
         const isPremium = $(this).hasClass('premium-chat');
         const genderClass = $(this).attr('class').match(/chat-gender-([a-z]+)/);
         const gender = genderClass ? genderClass[1] : null;
@@ -1026,10 +1066,25 @@ function updateChatFilters() {
         const style = styleClass ? styleClass[1] : null;
 
         let show = true;
-        if (premiumChatsHidden && isPremium) show = false;
-        if (currentGenderFilter && gender !== currentGenderFilter) show = false;
-        if (nsfwChatsHidden && isNSFW) show = false;
-        if (currentStyleFilter && style !== currentStyleFilter) show = false;
+        let reasons = [];
+
+        if (premiumChatsHidden && isPremium) {
+            show = false;
+            reasons.push('premiumChatsHidden && isPremium');
+        }
+        // Temporarily disable gender filter
+        // if (currentGenderFilter && gender !== currentGenderFilter) {
+        //     show = false;
+        //     reasons.push(`currentGenderFilter (${currentGenderFilter}) && gender (${gender}) !== currentGenderFilter`);
+        // }
+        if (nsfwChatsHidden && isNSFW) {
+            show = false;
+            reasons.push('nsfwChatsHidden && isNSFW');
+        }
+        if (currentStyleFilter && style !== currentStyleFilter) {
+            show = false;
+            reasons.push(`currentStyleFilter (${currentStyleFilter}) && style (${style}) !== currentStyleFilter`);
+        }
 
         $(this).toggle(show);
     });
@@ -1039,6 +1094,7 @@ function updateChatFilters() {
 const _displayChats = window.displayChats;
 window.displayChats = function() {
     if (typeof _displayChats === 'function') _displayChats.apply(this, arguments);
+    logChatFilterStates('after displayChats');
     updateChatFilters();
 };
 /* --- End Sorting and Filtering --- */

@@ -1,8 +1,21 @@
 {
   "lang":"fr",
-    "one_time": "Unique",
-    "day_pass_success": "Passe journalier activé !",
-    "day_pass_expires": "Votre passe expire dans 24 heures",
+  "cancel_subscription_modal_title": "Annuler l'abonnement",
+  "cancel_subscription_warning": "L'annulation de votre abonnement prendra effet immédiatement. Vous perdrez l'accès aux fonctionnalités de chat premium et au contenu NSFW. Êtes-vous sûr de vouloir continuer ?",
+  "why_cancel_label": "Veuillez nous indiquer pourquoi vous annulez (facultatif) :",
+  "why_cancel_placeholder": "Vos commentaires nous aident à nous améliorer.",
+  "do_not_cancel_button": "Conserver l'abonnement",
+  "continue_cancellation_button": "Continuer l'annulation",
+  "feedback_submission_error": "Impossible de soumettre les commentaires. Veuillez réessayer.",
+  "cancellation_initiated": "Processus d'annulation lancé...",
+  "cancellation_feedback_thanks": "Merci pour vos commentaires.",
+  "subscription_cancelled_successfully": "Abonnement annulé avec succès.",
+
+  "searchPlaceholder": "Rechercher des personnages, des tags ou des publications",
+
+  "one_time": "Unique",
+  "day_pass_success": "Passe journalier activé !",
+  "day_pass_expires": "Votre passe expire dans 24 heures",
   "profile_style": "Style",
   "profile_style_desc": "Apparence visuelle et style de représentation artistique de ce personnage IA",
   "profile_gender": "Genre",
@@ -312,10 +325,11 @@
     "step2": "Sélectionnez Ajouter à l'écran d'accueil parmi les options."
   },
   "promo": {
-    "title": "Débloquez les fonctionnalités Premium",
-    "short_title": "Go Premium",
+    "title": "Votre #1 Chat IA et Générateur d'Images",
+    "short_title": "Débloquer Premium",
     "subtitle": "Profitez d'un accès illimité à toutes les fonctionnalités premium.",
-    "price": "Seulement 10,00 €/mois",
+    "description": "Génération d'images illimitée, accès complet à tous les personnages, contenu NSFW, images personnalisées et plus encore.",
+    "price": "Seulement 10,00 $/mois",
     "details": "Voir les détails"
   },
   "admin": {
@@ -545,7 +559,7 @@
   "confirm": "Confirmer",
   "ok": "OK",
   "welcome": "Bienvenue",
-  "welcomeMessage": "Bienvenue dans notre application.",
+  "welcomeMessage": "Découvrez le chat IA, générez des images et profitez de conversations uniques avec des personnages IA personnalisés.",
   "info": "Infos",
   "edit": "Modifier",
   "share": "Partager",
@@ -645,6 +659,9 @@
     "ageVerification": "J'ai plus de 18 ans"
   },
     "setting": {
+      "dayPassActiveTitle": "Passe Journalier Actif",
+      "dayPassExpiresIn": "Expire dans:",
+      "dayPassExpired": "Votre passe journalier a expiré.",
       "imageModerationFlagged": "L'image a été signalée pour examen.",
       "pageTitle": "Paramètres",
       "profile": "Profil",

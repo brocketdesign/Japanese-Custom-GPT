@@ -24,7 +24,7 @@ const messages = {
   ]
 };
 
-  const selectedMessages = messages[lang[0]] || messages.en;
+const selectedMessages = messages[lang] || messages.en;
 
 
     let messageIndex = 0;
@@ -36,6 +36,9 @@ const messages = {
         // Increment index and loop back to start if needed
         messageIndex = (messageIndex + 1) % selectedMessages.length; // Corrected: use selectedMessages.length
 
+        // Check if modal is open
+        const planModal = document.getElementById('planUpgradeModal');
+        if(!planModal || !planModal.classList.contains('show')) return
         // Schedule the next notification with a random interval between 5 and 10 seconds
         setTimeout(showNextNotification, Math.random() * (20000 - 10000) + 10000);
     }
@@ -109,7 +112,7 @@ function renderPlans(plans) {
     
     // Features list specific to plan type - using Bootstrap icons
     let featuresHTML = '';
-    if (isPremium) {
+    if (!isOneDay) {
       featuresHTML = `
         <ul class="plan-features">
           <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.premium_feature_1}</li>

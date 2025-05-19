@@ -430,18 +430,29 @@ async function routes(fastify, options) {
   fastify.get('/user/plan/:id', async (request, reply) => {
     try {
       const userId = request.params.id;
-      if(!userId){
-        return reply.send({error:`Plan not founded`})
+      console.log(`[GET] /user/plan/:id - [user/plan] called with userId: ${userId}`);
+      if (!userId) {
+        console.warn('[user/plan] No userId provided in request params');
+        return reply.send({ error: `Plan not founded` });
       }
       // Fetch the user from the database using their ObjectId
-      existingSubscription = await fastify.mongo.db.collection('subscriptions').findOne({
-        _id: new fastify.mongo.ObjectId(userId),
+      console.log(`[user/plan] Looking up subscription for userId: ${userId}`);
+      const existingSubscription = await fastify.mongo.db.collection('subscriptions').findOne({
+        userId: new fastify.mongo.ObjectId(userId),
         subscriptionStatus: 'active',
       });
-      return reply.send({plan:existingSubscription})
+      if (!existingSubscription) {
+        console.warn(`[user/plan] No active subscription found for userId: ${userId}`);
+      } else {
+        console.log(`[user/plan] Active subscription found for userId: ${userId}`);
+        //console.log(`[user/plan] Subscription details:`, existingSubscription);
+      }
+      // Show the user object from request.user
+      //console.log(`[user/plan] User object from request.user:`, request.user);
+      return reply.send({ plan: existingSubscription });
     } catch (error) {
-      return reply.send({error:`Plan not founded`})
-      console.log(error)
+      console.error(`[user/plan] Error in /user/plan/:id:`, error);
+      return reply.send({ error: `Plan not founded` });
     }
   });
 

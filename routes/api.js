@@ -2836,7 +2836,7 @@ async function routes(fastify, options) {
                 console.log(`[API /popular-chats] Falling back to direct DB query for page ${page}, lang ${language}.`);
                 const pipeline = [
                     // Match language and basic requirements
-                    { $match: { chatImageUrl: { $exists: true, $ne: '' }, name: { $exists: true, $ne: '' }, language } },
+                    { $match: { chatImageUrl: { $exists: true, $ne: '' }, name: { $exists: true, $ne: '' }, language, imageStyle: { $exists: true, $ne: '' } } },
                     // Add a field premium that check if the chat modelId is not in the free_model array 
                     { $addFields: { premium: { $not: { $in: ['$modelId', free_models] } } } },
                     {

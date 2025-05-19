@@ -2150,20 +2150,24 @@
 .cta-button.premium {
   background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
   color: white;
+  border: 4px solid #fff;
 }
 
 .cta-button.standard {
   background: linear-gradient(90.9deg, #B8D2FF 2.74%, #4080FF 102.92%);
   color: white;
+  border: 4px solid #fff;
 }
 .cta-button.basic { /* Added for consistency */
   background: linear-gradient(90.9deg, #B8FFF0 2.74%, #40BFF2 102.92%);
   color: white;
+  border: 4px solid #fff;
 }
 
 .cta-button.oneday {
   background: linear-gradient(90.9deg, #FFD6B8 2.74%, #FF8C40 102.92%);
   color: white;
+  border: 4px solid #fff;
 }
 
 .feature-icon-container {

@@ -552,38 +552,179 @@ function getAmount(currency, billingCycle,month_count, lang) {
     }
   });
 
+  fastify.post('/plan/cancel-with-feedback', async (request, reply) => {
+    try {
+      const db = fastify.mongo.db;
+      const user = request.user; // Assuming user is authenticated and available in request
+      const { feedbackText } = request.body;
+
+      if (!user) {
+        return reply.status(401).send({ error: request.translations.unauthorized || 'User not authenticated' });
+      }
+      const userId = new fastify.mongo.ObjectId(user._id);
+
+      // 1. Save feedback
+      let feedbackId = null;
+      if (feedbackText && feedbackText.trim() !== "") {
+        const feedbackEntry = await db.collection('cancellationFeedbacks').insertOne({
+          userId: userId,
+          feedbackText: feedbackText.trim(),
+          timestamp: new Date()
+        });
+        feedbackId = feedbackEntry.insertedId;
+      }
+
+      // 2. Retrieve user's subscription from 'subscriptions' collection
+      const userSubscription = await db.collection('subscriptions').findOne({ userId: userId });
+
+      if (!userSubscription) {
+        return reply.status(404).send({ error: request.translations.subscription_not_found || 'Subscription not found' });
+      }
+
+      if (!userSubscription.stripeSubscriptionId) {
+        // If no stripeSubscriptionId, it might be a non-Stripe plan or already cancelled.
+        // For now, we'll mark it as cancelled in our DB.
+        // Consider if this case needs different handling.
+         await db.collection('subscriptions').updateOne(
+          { userId: userId },
+          {
+            $set: {
+              subscriptionStatus: 'canceled',
+              subscriptionEndDate: new Date(),
+              ...(feedbackId && { cancellationFeedbackId: feedbackId })
+            },
+            $unset: { stripeSubscriptionId: "" } // Ensure it's removed
+          }
+        );
+        await db.collection('users').updateOne(
+          { _id: userId },
+          {
+            $set: {
+              subscriptionStatus: 'canceled',
+              subscriptionEndDate: new Date(),
+              ...(feedbackId && { cancellationFeedbackId: feedbackId })
+            },
+            $unset: { stripeSubscriptionId: "" }
+          }
+        );
+        return reply.send({ 
+            message: request.translations.subscription_cancelled_successfully || 'Subscription cancelled successfully.',
+            ...(feedbackId && { feedbackThanks: request.translations.cancellation_feedback_thanks || 'Thank you for your feedback.'})
+        });
+      }
+      
+      // 3. Cancel Stripe subscription
+      try {
+        await stripe.subscriptions.cancel(userSubscription.stripeSubscriptionId);
+      } catch (stripeError) {
+        // If Stripe cancellation fails (e.g., already cancelled), log it but proceed to update DB.
+        console.error(`Stripe subscription cancellation error for user ${userId}, subscription ${userSubscription.stripeSubscriptionId}:`, stripeError.message);
+        // Depending on the error, you might want to return an error to the user.
+        // For "No such subscription", it's safe to proceed with DB update.
+        if (stripeError.code !== 'resource_missing') {
+            return reply.status(500).send({ error: request.translations.stripe_cancellation_error || 'Failed to cancel Stripe subscription.' });
+        }
+      }
+
+      // 4. Update MongoDB subscription status in 'subscriptions' collection
+      const subscriptionUpdateResult = await db.collection('subscriptions').updateOne(
+        { userId: userId },
+        {
+          $set: {
+            subscriptionStatus: 'canceled',
+            subscriptionEndDate: new Date(), // Cancellation is immediate
+            ...(feedbackId && { cancellationFeedbackId: feedbackId }) // Add feedback ID if present
+          },
+          $unset: {
+            stripeSubscriptionId: "", // Remove Stripe subscription ID
+          },
+        }
+      );
+
+      // 5. Update user's main record in 'users' collection
+      const userUpdateResult = await db.collection('users').updateOne(
+        { _id: userId },
+        {
+          $set: {
+            subscriptionStatus: 'canceled',
+            subscriptionEndDate: new Date(),
+            ...(feedbackId && { cancellationFeedbackId: feedbackId })
+          },
+          $unset: {
+            stripeSubscriptionId: "",
+          },
+        }
+      );
+
+      if (subscriptionUpdateResult.modifiedCount === 0 && userUpdateResult.modifiedCount === 0) {
+        // This might happen if already cancelled or data was identical.
+        console.log(`Subscription or user record for ${userId} was not modified, possibly already cancelled.`);
+      }
+
+      return reply.send({ 
+        message: request.translations.subscription_cancelled_successfully || 'Subscription cancelled successfully.',
+        ...(feedbackId && { feedbackThanks: request.translations.cancellation_feedback_thanks || 'Thank you for your feedback.'})
+      });
+
+    } catch (error) {
+      console.error('Error canceling subscription with feedback:', error);
+      return reply.status(500).send({ error: request.translations.internal_server_error || 'Internal server error' });
+    }
+  });
+
+  // The old /plan/cancel route can be deprecated or removed if this new flow is the standard.
+  // For now, I'll leave it, but new UI interactions should use /plan/cancel-with-feedback.
   fastify.post('/plan/cancel', async (request, reply) => {
     try {
       const db = fastify.mongo.db;
       // Retrieve user
       let user = request.user;
       if (!user) {
-        return reply.status(404).send({ error: 'ユーザーが見つかりません' }); // User not found
+        return reply.status(401).send({ error: 'User not authenticated' });
       }
       
-      const userId = user._id;
-      userSubscription = await db.collection('subscriptions').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+      const userId = new fastify.mongo.ObjectId(user._id);
+      // Corrected: Find subscription by userId
+      const userSubscription = await db.collection('subscriptions').findOne({ userId: userId });
       
       if (!userSubscription) {
-        return reply.status(404).send({ error: 'ユーザーが見つかりません' }); // User not found
+        return reply.status(404).send({ error: 'Subscription not found' });
       }
       if(!userSubscription.stripeSubscriptionId){
-        return reply.status(404).send({ error: 'サブスクリプションが見つかりません' }); // Subscription not found
+        // If no stripeSubscriptionId, it might be a non-Stripe plan or already cancelled.
+        // Mark as cancelled in DB.
+        await db.collection('subscriptions').updateOne(
+          { userId: userId },
+          { $set: { subscriptionStatus: 'canceled', subscriptionEndDate: new Date() }, $unset: { stripeSubscriptionId: "" } }
+        );
+        await db.collection('users').updateOne(
+          { _id: userId },
+          { $set: { subscriptionStatus: 'canceled', subscriptionEndDate: new Date() }, $unset: { stripeSubscriptionId: "" } }
+        );
+        return reply.send({ message: 'Subscription (non-Stripe or already processed) marked as canceled' });
       }
       // Retrieve Stripe subscription
       const stripeSubscription = await stripe.subscriptions.retrieve(userSubscription.stripeSubscriptionId);
       
       if (!stripeSubscription) {
-        return reply.status(404).send({ error: 'サブスクリプションが見つかりません' }); // Subscription not found
+        // This case should ideally be handled by the stripeSubscriptionId check above or Stripe error handling.
+        return reply.status(404).send({ error: 'Stripe subscription not found' });
       }
   
       // Cancel Stripe subscription
-      await stripe.subscriptions.cancel(stripeSubscription.id);
+      try {
+        await stripe.subscriptions.cancel(stripeSubscription.id);
+      } catch (stripeError) {
+        console.error(`Stripe subscription cancellation error for user ${userId} (direct cancel):`, stripeError.message);
+        if (stripeError.code !== 'resource_missing') {
+            return reply.status(500).send({ error: 'Failed to cancel Stripe subscription.' });
+        }
+      }
   
       // Update MongoDB subscription status
-      const updateResult = await fastify.mongo.db.collection('subscriptions').updateOne(
+      const updateResultSubscriptions = await fastify.mongo.db.collection('subscriptions').updateOne(
         { 
-          _id: new fastify.mongo.ObjectId(user._id),
+          userId: userId, // Query by userId
         },
         {
           $set: {
@@ -596,13 +737,9 @@ function getAmount(currency, billingCycle,month_count, lang) {
         }
       );
   
-      if (updateResult.modifiedCount === 0) {
-        return reply.status(500).send({ error: 'サブスクリプションの更新に失敗しました' }); // Failed to update subscription
-      }
-
       await fastify.mongo.db.collection('users').updateOne(
         { 
-          _id: new fastify.mongo.ObjectId(user._id),
+          _id: userId,
         },
         {
           $set: {
@@ -614,9 +751,15 @@ function getAmount(currency, billingCycle,month_count, lang) {
           },
         }
       );
+      
+      if (updateResultSubscriptions.modifiedCount === 0) {
+        // Log or handle if no document was modified, could mean it was already cancelled.
+        console.log(`Subscription for user ${userId} (direct cancel) was not modified, possibly already cancelled.`);
+      }
+
       return reply.send({ message: 'サブスクリプションがキャンセルされました' }); // Subscription canceled
     } catch (error) {
-      console.error('Error canceling subscription:', error);
+      console.error('Error canceling subscription (direct):', error);
       return reply.status(500).send({ error: 'サーバーエラーが発生しました' }); // Internal server error
     }
   });

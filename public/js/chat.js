@@ -414,32 +414,42 @@ $(document).ready(async function() {
         localStorage.setItem('thumbnail',thumbnail)
     }
     
-    function setupChatInterface(chat, character) {
-        const gender = determineChatGender(chat);
-        $('#chat-container').attr('data-genre', gender);
-        if(gender === 'female'){
-            $('#showPrompts').show();
-            $('#userMessage').removeClass('male').addClass('female');
-        }else{
-            $('#showPrompts').hide();
-            $('#userMessage').removeClass('female').addClass('male');
-        }
-        updateChatBackgroundImage(thumbnail);
-        $('#chat-title').text(chatName);
-        $('#input-container').show().addClass('d-flex');
-        if(user.lang == 'ja'){
-            $('#userMessage').attr('placeholder', `${chatName}${window.translations.sendMessageTo}`);
-        }else{
-            $('#userMessage').attr('placeholder', `${window.translations.sendMessageTo}${chatName}`);
-        }
-        const albumLink = $(`<a href="#" onclick="openCharacterModal('${chat._id}',event)"></a>`)
-        albumLink.attr('data-bs-toggle', 'tooltip');
-        albumLink.attr('title', `${window.translations.album || 'アルバム'}`);
-        albumLink.addClass('btn btn-light shadow-0 border')
-        albumLink.append(`<i class="bi bi-images me-1"></i><span style="font-size:12px;">${chat.imageCount ? chat.imageCount : 0}</span>`)
-        new bootstrap.Tooltip(albumLink[0]);
-        $('#chat-recommend').append(albumLink)
+function setupChatInterface(chat, character) {
+    const gender = determineChatGender(chat);
+    $('#chat-container').attr('data-genre', gender);
+    if(gender === 'female'){
+        $('#showPrompts').show();
+        $('#userMessage').removeClass('male').addClass('female');
+    }else{
+        $('#showPrompts').hide();
+        $('#userMessage').removeClass('female').addClass('male');
     }
+    updateChatBackgroundImage(thumbnail);
+    $('#chat-title').text(chatName);
+    $('#input-container').show().addClass('d-flex');
+    if(user.lang == 'ja'){
+        $('#userMessage').attr('placeholder', `${chatName}${window.translations.sendMessageTo}`);
+    }else{
+        $('#userMessage').attr('placeholder', `${window.translations.sendMessageTo}${chatName}`);
+    }
+    const albumLink = $(`<a href="#" onclick="openCharacterModal('${chat._id}',event)"></a>`);
+    albumLink.attr('data-bs-toggle', 'tooltip');
+    albumLink.attr('title', `${window.translations.album || 'アルバム'}`);
+    
+    // Remove old classes and add the new styling class
+    albumLink.removeClass('btn btn-light shadow-0 border border-3 border-dark rounded-circle shadow');
+    albumLink.addClass('album-link-styled');
+
+    // Clear any inline styles that might conflict or are now handled by the class
+    albumLink.removeAttr('style'); 
+
+    const imageCount = chat.imageCount ? chat.imageCount : 0;
+    // Set the inner HTML with the icon and the new badge structure
+    albumLink.empty().append(`<i class="bi bi-images"></i><span class="image-count-badge">${imageCount}</span>`);
+    
+    new bootstrap.Tooltip(albumLink[0]);
+    $('#chat-recommend').prepend(albumLink);
+}
     
     function determineChatGender(chat) {
         let gender = chat.gender || 'female';

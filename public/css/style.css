@@ -2170,6 +2170,59 @@
   border: 4px solid #fff;
 }
 
+.album-link-styled {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  padding: 10px 30px;
+  background: rgba(110, 32, 244, 0.4); 
+  text-decoration: none;
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+  border: none; /* Override potential Bootstrap button borders */
+  box-shadow: 0 8px 15px rgba(0,0,0,0.08); /* Base shadow similar to character-create-card */
+}
+
+.album-link-styled .bi-images {
+  font-size: 31px; 
+  transition: transform 0.3s ease; 
+  color: #fff ;
+}
+
+.album-link-styled:hover {
+  background: rgba(110, 32, 244, 0.3); /* Hover background from character-create-icon */
+  transform: scale(1.12) rotate(5deg); /* Hover transform from character-create-icon */
+  box-shadow: 0 15px 30px rgba(110, 32, 244, 0.15); /* Hover shadow similar to character-create-card */
+}
+
+.album-link-styled:hover .bi-images {
+  animation: pulse 1.5s infinite; /* Pulse animation on icon hover */
+}
+
+.album-link-styled .image-count-badge {
+  font-size: 10px;
+  position: absolute;
+  top: 5px; 
+  right: 5px; 
+  font-weight: 600;
+  background-color: rgba(255, 255, 255, 0.9); 
+  color: #333; /* Dark text for readability on light badge */
+  border-radius: 50px;
+  padding: 2px 8px;
+  border: 1px solid rgba(110, 32, 244, 0.3); 
+  line-height: 1; 
+  z-index: 1; /* Ensure badge is on top */
+  pointer-events: none; /* So it doesn't interfere with link hover */
+}
+.assistant-image-box{
+  transition: all 0.3s ease;
+}
+.assistant-image-box:hover {
+  transform: scale(1.12) rotate(5deg);
+}
 .feature-icon-container {
   text-align: center;
   margin: 40px 0;

@@ -40,13 +40,34 @@
             </div>
             <a href="/admin/users/registered" class="btn btn-secondary mt-3" id="back-to-users">Back to Users</a>
         </div>
+
+        <!-- Bootstrap Modal for Chat Preview -->
+        <div class="modal fade" id="chatPreviewModal" tabindex="-1" aria-labelledby="chatPreviewModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable mx-0">
+                <div class="modal-content chat-preview-modal-content mx-auto">
+                    <div class="modal-header chat-preview-header">
+                        <h5 class="modal-title chat-preview-title" id="chatPreviewModalLabel">Chat Preview</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body chat-preview-messages">
+                        <!-- Messages will be injected here -->
+                    </div>
+                    <div class="modal-footer chat-preview-footer">
+                         <p class="chat-preview-updated me-auto"><strong>Last Updated:</strong> <span id="chatPreviewModalUpdatedDate"></span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </body>
     {{> dashboard-footer}}
     <script>
         $(document).ready(function() {
+            var chatPreviewModal = new bootstrap.Modal(document.getElementById('chatPreviewModal'));
 
             // Function to convert dates to Japanese format
             function convertToJapaneseDate(dateString) {
+                if (!dateString) return '';
                 var options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
                 var date = new Date(dateString);
                 return date.toLocaleDateString('ja-JP', options);
@@ -59,76 +80,190 @@
                 $(this).text(japaneseDate);
             });
 
+            // Function to fetch and display image preview
+            function fetchAndDisplayImagePreview(imageId, placeholderId) {
+                $.ajax({
+                    url: `/image/${imageId}`, // Endpoint to get image details
+                    method: 'GET',
+                    success: function(response) {
+                        // Ensure the placeholder is still in the DOM (modal might have been closed)
+                        const placeholderElement = $('#' + placeholderId);
+                        if (placeholderElement.length) {
+                            if (response.imageUrl) {
+                                placeholderElement.html(`<img src="${response.imageUrl}" alt="Image Preview">`);
+                            } else {
+                                placeholderElement.html('<p style="font-size: 0.8em; color: #555;">Image not available.</p>');
+                            }
+                        }
+                    },
+                    error: function() {
+                        const placeholderElement = $('#' + placeholderId);
+                        if (placeholderElement.length) {
+                            placeholderElement.html('<p style="font-size: 0.8em; color: #d9534f;">Error loading image.</p>');
+                        }
+                    }
+                });
+            }
+
             // Handle click event on 'Preview' buttons
             $('.btn-view-chat').on('click', function() {
-                // Retrieve data attributes
                 var messages = $(this).data('messages');
                 var chatName = $(this).data('name');
                 var updatedAt = $(this).data('updatedat');
 
-                // Build HTML content for the popup
-                var chatContent = `
-                    <div class="chat-preview-container">
-                        <div style="background-color: #f9f9f9; padding: 10px; border-radius: 5px;">
-                            <h3 class="chat-preview-title">Chat Preview: ${chatName}</h3>
-                            <p class="chat-preview-updated"><strong>Last Updated:</strong> ${convertToJapaneseDate(updatedAt)}</p>
-                        </div>
-                        <div class="chat-preview-messages m-auto" style="text-align: left; max-height: 400px; overflow-y: auto;">
-                            ${messages.map(function(message) {
-                                // Escape HTML to prevent XSS
-                                var content = $('<div>').text(message.content).html().replace(/\n/g, '<br>');
-                                var bubbleClass = message.role === 'user' ? 'user-bubble' : 'assistant-bubble';
-                                return `
-                                    <div class="chat-message ${bubbleClass}">
-                                        <p class="chat-message-content">${content}</p>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    </div>
-                `;
+                var messagesHtml = messages.map(function(message, index) {
+                    var bubbleClass = message.role === 'user' ? 'user-bubble' : 'assistant-bubble';
+                    var contentHtml = '';
+                    // Use a more unique and predictable ID for placeholders
+                    var basePlaceholderId = `modal-preview-image-${index}`; 
 
-                // Display SweetAlert2 popup
-                Swal.fire({
-                    html: chatContent,
-                    width: '800px',
-                    showCloseButton: true,
-                    focusConfirm: false,
-                    showConfirmButton: false,
-                    customClass: {
-                        popup: 'animated fadeInDown'
+                    if (message.content && message.content.startsWith('[Image]')) {
+                        var imageId = message.content.replace("[Image]", "").trim();
+                        // Store imageId directly on the placeholder for easier retrieval
+                        contentHtml = `<div id="${basePlaceholderId}" class="image-preview-placeholder" data-image-id="${imageId}"><p style="font-size: 0.8em; color: #555;">Loading image...</p></div>`;
+                    } else {
+                        var textContent = message.content || "";
+                        // Escape HTML to prevent XSS, then replace newlines
+                        var escapedContent = $('<div>').text(textContent).html().replace(/\n/g, '<br>');
+                        contentHtml = `<p class="chat-message-content">${escapedContent}</p>`;
+                    }
+                    
+                    return `
+                        <div class="chat-message ${bubbleClass}">
+                            ${contentHtml}
+                        </div>
+                    `;
+                }).join('');
+
+                // Populate Bootstrap Modal
+                $('#chatPreviewModalLabel').text(`Chat Preview: ${chatName}`);
+                $('#chatPreviewModalUpdatedDate').text(convertToJapaneseDate(updatedAt));
+                $('#chatPreviewModal .chat-preview-messages').html(messagesHtml);
+                
+                // Show the modal
+                chatPreviewModal.show();
+            });
+
+            // Event listener for when the modal is shown
+            document.getElementById('chatPreviewModal').addEventListener('shown.bs.modal', function () {
+                // Find all image placeholders within the now visible modal and fetch their images
+                $(this).find('.image-preview-placeholder').each(function() {
+                    const placeholder = $(this);
+                    const imageId = placeholder.data('image-id');
+                    const placeholderId = placeholder.attr('id');
+                    if (imageId && placeholderId) {
+                        fetchAndDisplayImagePreview(imageId, placeholderId);
                     }
                 });
             });
 
-            // Helper function to convert date in popup
-            function convertToJapaneseDate(dateString) {
-                var options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
-                var date = new Date(dateString);
-                return date.toLocaleDateString('ja-JP', options);
-            }
-
+            // Removed redundant convertToJapaneseDate function
         });
     </script>
     <style>
-        .assistant-bubble {
-            background-color: #f0f0f0;
-            color: #333;
-            border-radius: 10px;
-            padding: 10px;
-            margin: 10px 0;
-            max-width: 70%;
-            word-wrap: break-word;
+        /* General modal styling */
+        .chat-preview-modal-content {
+            border-radius: 15px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
+
+        .chat-preview-header {
+            background-color: #f8f9fa;
+            color: #343a40;
+            border-bottom: 1px solid #dee2e6;
+            padding: 1rem 1.5rem; /* Adjusted padding */
+        }
+        .modal-header .btn-close {
+            padding: 0.75rem 1rem; /* Ensure close button is easily clickable */
+        }
+
+        .chat-preview-title {
+            margin: 0;
+            font-size: 1.15em;
+            font-weight: 600;
+        }
+        
+        .chat-preview-footer {
+            border-top: 1px solid #dee2e6;
+            padding: 0.75rem 1.5rem;
+            background-color: #f8f9fa;
+        }
+
+        .chat-preview-updated {
+            font-size: 0.8em;
+            color: #6c757d;
+            margin-bottom: 0; /* Align with button */
+            line-height: 1.5; /* Align with button */
+        }
+
+        .chat-preview-messages {
+            /* modal-dialog-scrollable handles height, but we can set a min/max if needed */
+            /* max-height: 70vh; /* Example if not using modal-dialog-scrollable fully */
+            padding: 15px;
+            background-color: #ffffff;
+        }
+
+        .chat-message {
+            margin-bottom: 12px;
+            display: flex;
+        }
+        
+        .chat-message .chat-message-content,
+        .chat-message .image-preview-placeholder {
+            padding: 10px 14px;
+            border-radius: 18px; /* More rounded bubbles */
+            line-height: 1.45;
+            word-wrap: break-word;
+            max-width: 85%; /* Adjusted max-width for modal context */
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Subtle shadow */
+        }
+
         .user-bubble {
-            background-color: #007bff;
-            color: #fff;
-            border-radius: 10px;
-            padding: 10px;
-            margin: 10px 0;
-            max-width: 70%;
-            word-wrap: break-word;
-            margin-left: auto;
+            justify-content: flex-end;
         }
+        .user-bubble .chat-message-content {
+            background-color: #007bff; /* Bootstrap primary blue */
+            color: white;
+            border-bottom-right-radius: 4px; /* Slightly flatter corner */
+        }
+
+        .assistant-bubble {
+            justify-content: flex-start;
+        }
+        .assistant-bubble .chat-message-content,
+        .assistant-bubble .image-preview-placeholder {
+            background-color: #e9ecef; /* Light gray, Bootstrap style */
+            color: #212529; /* Dark text */
+            border-bottom-left-radius: 4px; /* Slightly flatter corner */
+        }
+        
+        .image-preview-placeholder {
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px; /* Padding for placeholder */
+        }
+
+        .image-preview-placeholder img {
+            max-width: 100%;
+            max-height: 280px; /* Max height for images in preview */
+            border-radius: 10px; /* Rounded corners for images */
+            display: block;
+            object-fit: contain;
+            margin-top: 5px; /* Add some space if text is above */
+        }
+
+        /* Remove old SweetAlert specific styles if they are no longer needed */
+        /* .swal2-popup.chat-preview-popup { ... } */
+
+        /* Ensure modal is above other content if necessary */
+        .modal {
+            z-index: 1055; /* Default Bootstrap modal z-index, adjust if needed */
+        }
+        .modal-backdrop {
+            z-index: 1050; /* Default Bootstrap backdrop z-index */
+        }
+
     </style>
 </html>

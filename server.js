@@ -552,7 +552,7 @@ fastify.get('/search', async (request, reply) => {
     const totalPages = imageData.totalPages || 1;
     const hasNextPage = page < totalPages;
     const hasPrevPage = page > 1;
-    
+
     let seoTitle = translations.seo_title_default; 
     let seoDescription = translations.seo_description_default;
     if (query) {
@@ -573,7 +573,7 @@ fastify.get('/search', async (request, reply) => {
       console.log(`[SEARCH] Fetched ${tagsData.tags?.length || 0} tags`);
     }
     const tags = tagsData.tags || [];
-    console.log(`[SEARCH] Tags data:`, tags);
+
     return reply.renderWithGtm('search.hbs', {
       title: seoTitle,
       imageResults: processedImageResults,

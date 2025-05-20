@@ -1,5 +1,8 @@
 {
   "lang":"en", 
+
+  "about_the_image":"About the Image",
+  
   "similar_characters_title":"Similar Characters",
   "similar_characters_description":"Explore characters similar to the one you are currently viewing.",
   
@@ -364,11 +367,11 @@
     "keywords": "AI, chat, image generation, AI characters, AI beauties, AI girlfriend, AI gravure, AI image generation, AI chat, AI character",
     "title_plan": "LAMIX Premium Plan - Chat with AI Characters and Generate Images",
     "description_plan": "Subscribe to LAMIX Premium and enjoy chatting with AI characters and generating images with them! Enjoy free AI image generation while chatting with beautiful AI characters.",
-    "title_post": "Latest Posts from the Community | LAMIX",
+    "title_post": "Latest Posts from the Community - LAMIX",
     "description_post": "With Lamix, you can easily create posts using images generated during a chat with AI Gravure, for free.",
-    "title_character": "AI Characters | LAMIX",
+    "title_character": "AI Characters - LAMIX",
     "description_character": "Chat with beautiful AI characters and generate images with them! Enjoy free AI image generation while chatting with beautiful AI characters.",
-    "title_tags": "Search results for tags | LAMIX",
+    "title_tags": "Search results for tags - LAMIX",
     "description_tags": "Displaying search results for tags. Find your favorite images on Lamix."
   },
   "characterDescription": {
@@ -449,10 +452,10 @@
   "ai_gravure_description": "While chatting with AI Gravure on Lamix, captivating photos are sent one after another during the conversation. The photos sent by AI Gravure are beautiful scenes, as if you’re catching a glimpse of their world. Enjoy a unique experience, drawn into the moment, and savor special times with the character.",
   "start_with_this_plan": "Start with this plan",
   "asked_for_new_image": "I asked for a new image",
-  "seo_title_default": "Latest Posts from the Community | LAMIX",
+  "seo_title_default": "Latest Posts from the Community - LAMIX",
   "seo_description_default": "With Lamix, you can easily create posts using images generated during a chat with AI Gravure, for free.",
-  "seo_title_query": "Search results for ${query} | LAMIX",
-  "seo_description_query": "Displaying search results for ${query}. Find your favorite images on Lamix.",
+  "seo_title_query": "Free ${query} AI chat & image generation - LAMIX",
+  "seo_description_query": "The best ${query} ai images for free. Generate new images on LAMIX.",
   "ai_character_conversation": "Talk to an AI character!",
   "free_ai_chat_and_image_generation": "Free AI Chat and Image Generation Site",
   "search_placeholder": "Enter search keywords",

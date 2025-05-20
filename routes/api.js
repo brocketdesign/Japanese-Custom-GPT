@@ -2982,7 +2982,7 @@ async function routes(fastify, options) {
           });
 
           if (similarChats.length > 0) {
-            console.log(`[API/SimilarChats] Top ${similarChats.length} similar chats for ${chatIdParam}: ${JSON.stringify(similarChats.map(c => ({id: c._id, name: c.name})))}`);
+            //console.log(`[API/SimilarChats] Top ${similarChats.length} similar chats for ${chatIdParam}: ${JSON.stringify(similarChats.map(c => ({id: c._id, name: c.name})))}`);
           } else {
             console.log(`[API/SimilarChats] No similar chats found for ${chatIdParam} based on prompt matching.`);
           }

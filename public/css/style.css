@@ -1155,6 +1155,15 @@
   font-size:54px;
   line-height:1
   }
+  @media screen and (max-width: 600px) {
+    .u-color-grad {
+      font-size: 30px;
+    }
+    
+  }
+  .character-speech-bubble{
+    border-radius: 0 16px 16px 16px;
+  }
   #chat-page-list .gallery, #chat-page-list .message-count {
     display: none;
   }

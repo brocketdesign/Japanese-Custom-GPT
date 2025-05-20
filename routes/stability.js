@@ -29,6 +29,7 @@ fastify.post('/novita/generate-img', async (request, reply) => {
       const promptData = await getPromptById(db,promptId);
       savePromptIdtoChat(db, chatId, userChatId, promptId)
       .then((response) => {
+        console.log(`[generate-img] User subscription status: ${request.user.subscriptionStatus}; Send notification: ${request.user.subscriptionStatus !== 'active'}`);
         if(request.user.subscriptionStatus !== 'active'){
           fastify.sendNotificationToUser(userId, 'updateCustomPrompt', { promptId: promptId })
         }
@@ -40,16 +41,17 @@ fastify.post('/novita/generate-img', async (request, reply) => {
       
       let imageDescriptionResponse = await checkImageDescription(db, chatId);
       const imageDescription = imageDescriptionResponse.imageDescription
-      newPrompt = !!imageDescription ? imageDescription +','+ customPrompt : customPrompt; 
+      newPrompt = !!imageDescription ? imageDescription +','+ customPrompt : customPrompt;
+      newPrompt = await createPrompt(customPrompt, imageDescription, nsfw);
       // Prompt must be shorter than 900 characters
       if (newPrompt.length > 900) {
+        console.log('[generate-img] Prompt is too long, shortening it...');
         const shorterPrompt = await createPrompt(customPrompt, imageDescription, nsfw)
         if(shorterPrompt){
           newPrompt = shorterPrompt.substring(0, 900);
         }else{
           newPrompt = newPrompt.substring(0, 900);
         }
-        
       }
     }
     let imageSeed = -1
@@ -184,8 +186,6 @@ fastify.post('/novita/moderate', async (request, reply) => {
 async function savePromptIdtoChat(db, chatId, userChatId, promptId) {
   const collectionUserChats = db.collection('userChat');
 
-  console.log('[savePromptIdtoChat] called with:', { chatId, userChatId, promptId });
-
   let userChatObjectId;
   try {
       userChatObjectId = new ObjectId(userChatId);
@@ -200,7 +200,6 @@ async function savePromptIdtoChat(db, chatId, userChatId, promptId) {
         { $addToSet: { customPromptIds: promptId } }
     );
 
-    console.log('[savePromptIdtoChat] Update result for userChat collection:', userChatUpdateResult);
     if (userChatUpdateResult.matchedCount === 0) {
         const errorMessage = `指定されたユーザーチャットが見つかりませんでした (userChatId: ${userChatId})`;
         console.error(`[savePromptIdtoChat] ${errorMessage}`);

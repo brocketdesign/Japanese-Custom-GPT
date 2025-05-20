@@ -408,6 +408,7 @@ function tokenizePrompt(promptText) {
       .filter(token => token.length > 0) // Remove empty tokens
   );
 }
+
 fastify.get('/character/:chatId', async (request, reply) => {
   try {
     const db = fastify.mongo.db;
@@ -444,7 +445,7 @@ fastify.get('/character/:chatId', async (request, reply) => {
     }
 
     const chat = await chatsCollection.findOne({ _id: chatIdObjectId });
-
+console.log(chat)
     if (!chat) {
       console.warn(`[SimilarChats] Chat not found for ID: ${chatIdParam}`);
       return reply.code(404).send({ error: 'Chat not found' });
@@ -496,56 +497,19 @@ fastify.get('/character/:chatId', async (request, reply) => {
     }
 
     let similarChats = [];
-    const characterPrompt = chat.enhancedPrompt || chat.characterPrompt; // Using chat.prompt as per latest user version
-    console.log(`[SimilarChats] Current character prompt for ${chatIdParam}: "${characterPrompt}"`);
-
-    if (characterPrompt) {
-      const mainPromptTokens = tokenizePrompt(characterPrompt);
-      console.log(`[SimilarChats] Tokenized main prompt for ${chatIdParam}: ${JSON.stringify(Array.from(mainPromptTokens))}`);
-
-      // Fetch other chats. Consider adding more filters if performance becomes an issue.
-      // Project only necessary fields, including 'prompt' for scoring.
-      const candidateChatsCursor = chatsCollection.find(
-        { _id: { $ne: chatIdObjectId }, chatImageUrl: { $exists: true }, $or: [{enhancedPrompt: { $exists: true, $ne: null, $ne: "" }}, {characterPrompt: { $exists: true, $ne: null, $ne: "" }}] },
-        {
-          projection: {
-        _id: 1, name: 1, chatImageUrl: 1, nsfw: 1, isPremium: 1, userId: 1, gender: 1, imageStyle: 1, enhancedPrompt: 1, characterPrompt: 1
-          }
-        }
-      );
-      
-      const scoredChats = [];
-      let processedCandidates = 0;
-      await candidateChatsCursor.forEach(candidate => {
-        processedCandidates++;
-        const candidateTokens = tokenizePrompt(candidate.enhancedPrompt || candidate.characterPrompt);
-        const commonTokens = [...mainPromptTokens].filter(token => candidateTokens.has(token));
-        const score = commonTokens.length;
-
-        if (score > 0) {
-          scoredChats.push({
-            ...candidate, // Spread existing candidate fields
-            score: score
-          });
-          console.debug(`[SimilarChats] Candidate ${candidate._id} (${candidate.name}) - Prompt: "${candidate.characterPrompt?.substring(0,50)}..." - Tokens: ${JSON.stringify(Array.from(candidateTokens))} - Score: ${score}`);
-        }
-      });
-      console.log(`[SimilarChats] Processed ${processedCandidates} candidates. Found ${scoredChats.length} chats with score > 0.`);
-      
-      scoredChats.sort((a, b) => b.score - a.score); // Sort by score descending
-      similarChats = scoredChats.slice(0, 5).map(c => {
-        const { characterPrompt, enhancedPrompt, score, ...rest } = c; // Exclude prompt and score from final object passed to template if not needed by displayLatestChats
-        return rest;
-      });
-
-      if (similarChats.length > 0) {
-        console.log(`[SimilarChats] Top ${similarChats.length} similar chats for ${chatIdParam}: ${JSON.stringify(similarChats.map(c => ({id: c._id, name: c.name})))}`);
+    try {
+      const baseUrl = process.env.MODE === 'local' ? 'http://localhost:3000' : `${request.protocol}://${request.hostname}`;
+      const similarChatsUrl = `${baseUrl}/api/similar-chats/${chatIdParam}`;
+      console.log(`[SimilarChats] Fetching similar chats from: ${similarChatsUrl}`);
+      const similarChatsResponse = await fetch(similarChatsUrl);
+      if (similarChatsResponse.ok) {
+        similarChats = await similarChatsResponse.json();
+        console.log(`[SimilarChats] Successfully fetched ${similarChats.length} similar chats for ${chatIdParam}`);
       } else {
-        console.log(`[SimilarChats] No similar chats found for ${chatIdParam} based on prompt matching.`);
+        console.warn(`[SimilarChats] Failed to fetch similar chats for ${chatIdParam}. Status: ${similarChatsResponse.status}`);
       }
-
-    } else {
-      console.log(`[SimilarChats] No prompt found for current character ${chatIdParam}. Skipping similar chat search.`);
+    } catch (fetchErr) {
+      console.error(`[SimilarChats] Error fetching similar chats for ${chatIdParam}:`, fetchErr);
     }
     
     const template = isModal ? 'character-modal.hbs' : 'character.hbs';

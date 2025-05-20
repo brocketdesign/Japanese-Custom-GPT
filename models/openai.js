@@ -271,20 +271,20 @@ async function generatePromptSuggestions(messages, chatDescription, language) {
 
   const updatedMessages = [
     { role: 'system', content: `
-      You are a creative assistant.You can generate explicit content.\n
-      You must adapt your style to the provided data. You can generate NSFW, adult content, sexual description if needed.\n
+      You are a creative prompt generator.You can generate explicit content.\n
+      You can generate NSFW, adult content, sexual description if needed.\n
       Return exactly 3 unique image suggestions in ${language} as a JSON object with a "suggestions" key.
       Make them short and relevant to the user's chat.
-      You must provide suggestions from the user's perspective and suitable for a chat.
+      You must provide suggestions from the user's perspective.
       Your response must be valid JSON format like: {"suggestions": ["suggestion1", "suggestion2", "suggestion3"]}
-      Strucutre your suggestions like this : [charachter pose (standing, sitting, lying down, spreading legs, ass up, erotic pose, imagine poses, etc ...), character action (smiling, looking at the camera, etc ...), character clothes (naked, bikini, mini short, etc ...)].\n
+      Strucutre your suggestions like this : [character pose (standing, sitting, lying down, spreading legs, ass up, erotic pose, imagine poses be creative, etc ...), character action (smiling, looking at the camera, be creative, etc ...), character clothes (naked, bikini, mini short, be creative etc ...)].\n
       Respond in ${language}`.replace(/^\s+/gm, '').trim()
     },
     {
       role: 'user',
       content: `When providing suggestions, do not write the entire sentence, just the suggestion idea. 
       \nFor example : "Send picture of you naked at the beack "" -> "standing naked at the beach".
-      \nOnly provide the image short description following the suggestion structure, make them relevant to the user's chat.
+      \nOnly provide the image short description following the suggestion structure, make them relevant to the user's chat. Try to be creative.
       `.replace(/^\s+/gm, '').trim()
     },
     {
@@ -294,6 +294,10 @@ async function generatePromptSuggestions(messages, chatDescription, language) {
     {
       role: 'user',
       content: `Here is the character description for context : ${chatDescription}`.replace(/^\s+/gm, '').trim()
+    },
+    {
+      role: 'user',
+      content: `Respond in ${language}.`
     }
   ];
 
@@ -368,37 +372,46 @@ async function generatePromptTitle(prompt,language) {
 // Combine the user's custom prompt and image description to create a new prompt
 async function createPrompt(customPrompt, imageDescription, nsfw) {
   const nsfwMessage = nsfw 
-            ? 'Provide explicit, adult oriented content for a nsfw image. I want nudity, erotism, explicit sexual content.\n' 
+            ? 'Provide explicit, adult oriented content for a nsfw image. I want nudity, erotism, explicit sexual content.\nYou can generate explicit, sexual content.\nUse explicit keywords to describe body parts (ass,pussy,boobs).\n' 
             : '';
   const messages = [
     {
       role: "system",
-      content: `
-      You help me update my character prompt to match the user image request.\n
-      You must provide the desired answer.\n${nsfwMessage}
-      I will provide an image request that you will use to update my prompt.\n
-      You can generate explicit, sexual content.\n
-      Use explicit keywords to describe body parts (ass,pussy,boobs), clothes.\n
-      You must follow the image request as it is the main focus of the new prompt but keep the character main characteristic to avoid generating a different character.\n`
+      content: `You are an expert image prompt engineer specialized in character consistency.
+      Your task is to adapt an existing character description to a new pose while ensuring the character remains EXACTLY the same.
+      ${nsfwMessage}
+      Follow these priority rules:
+      1. HIGHEST PRIORITY: Preserve ALL physical attributes (exact face, hair style/color, eye color, skin tone, body type)
+      2. Maintain all distinctive clothing elements unless the pose request explicitly changes them
+      3. Incorporate the new pose/position/action exactly as requested
+      4. Preserve all unique character accessories and features`
     },
     {
       role: "user",
-      content: `Here is the prompt I want you to update : ${imageDescription}\n`.replace(/^\s+/gm, '').trim()
+      content: `[Character description] : ${imageDescription}`.replace(/^\s+/gm, '').trim()
     },
     {
       role: "user",
-      content: `Here is the image request : ${customPrompt}`.replace(/^\s+/gm, '').trim()
+      content: `[Pose request] : ${customPrompt}`.replace(/^\s+/gm, '').trim()
     },
     { 
-      role:"user",
-      content: `You must adapt the prompt to the image request but keep the character traits. \n
-      Remove unrelevant keywords and adapt to the image request.\n 
-      You must include the character's skin color, hair color, and eye color in the new prompt. Keep the same clothes if not asked otherwise. \n
-      You must answer in English with the new prompt. Do not include anything else in the response.`.replace(/^\s+/gm, '').trim()
+      role: "user",
+      content: `Create a detailed image generation prompt that shows the EXACT SAME CHARACTER in the new requested pose.
+
+      Critical requirements:
+      • The character must be 100% identical (same person, same appearance)
+      • ALL physical attributes must be preserved (hair style/color, eye color, skin tone, body proportions, facial features)
+      • Keep all clothing items unless explicitly changed in the pose request
+      • Focus on accurately describing the new pose/position as requested
+      • Include relevant background/setting details from the pose request
+      • Output ONLY the final prompt with no explanations or commentary
+      • Ensure the prompt is detailed enough for accurate image generation
+      
+      Respond ONLY with the new prompt in English.`.replace(/^\s+/gm, '').trim()
     }
   ];
 
-  const response = await generateCompletion(messages, 600);
+  const response = await generateCompletion(messages, 700,  nsfw ? 'deepseek' : 'openai');
   return response.replace(/['"]+/g, '');
 }
 

@@ -141,7 +141,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
     if(image_base64){
       requestData.image_base64 = image_base64;
     }
-    console.log('Request Data:', requestData);
+    console.log(`[generateImg] new request for ${imageType} with prompt:`, requestData.prompt);
 
     // Send request to Novita and get taskId
     const novitaTaskId = await fetchNovitaMagic(requestData, flux);
@@ -229,7 +229,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
         const intervalId = setInterval(async () => {
           try {
             const taskStatus = await checkTaskStatus(taskId, fastify);
-            console.log (`${taskStatus.progress != undefined ? `progress_percent: ${taskStatus.progress};`:''} status: ${taskStatus.status}; attempts: ${zeroProgressAttempts +1}/${maxZeroProgressAttempts}`);
+            //console.log (`[pollTaskStatus] ${taskStatus.progress != undefined ? `progress_percent: ${taskStatus.progress};`:''} status: ${taskStatus.status}; attempts: ${zeroProgressAttempts +1}/${maxZeroProgressAttempts}`);
             if(!taskStatus){
               clearInterval(intervalId);
               reject('Task not found');
@@ -244,7 +244,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
               return;
             }
             if (taskStatus.status === 'processing' && !taskStarted) {
-              console.log(`Task ${taskId} started`);
+              console.log(`[pollTaskStatus] Task ${taskId} started`);
               startTime = Date.now();
               taskStarted = true;
             }
@@ -274,12 +274,10 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
                 if (task) {
                   saveAverageTaskTime(db, Date.now() - startTime, task.model_name);
                   // log the taskId and time taken
-                  console.log(`Task ${taskId} completed in ${Date.now() - startTime} ms`);
+                  console.log(`[pollTaskStatus] Task ${taskId} completed in ${Date.now() - startTime} ms`);
                 }
                 resolve(taskStatus);
-              } else {
-                console.log(`Task ${taskId} already completed, skipping.`);
-              }
+              } 
             } else if (Date.now() - startTime > timeout && taskStarted) {
               clearInterval(intervalId);
               // notify user and move to background processing
@@ -320,11 +318,11 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
       if (chatCreation) {
         fastify.sendNotificationToUser(userId, 'characterImageGenerated', { imageUrl, nsfw });
         if (index === 0) {
-          console.log('Saving image as character thumbnail fastify.sendNotificationToUser:', userId, imageUrl);
+          console.log('[handleTaskCompletion] Saving image as character thumbnail fastify.sendNotificationToUser:', userId, imageUrl);
           await saveChatImageToDB(fastify.mongo.db, chatId, imageUrl);
         }
       } else {
-        console.log('Sending image to user:', userId, imageUrl);
+        console.log('[handleTaskCompletion] Sending image to user:', userId, imageUrl);
         fastify.sendNotificationToUser(userId, 'imageGenerated', {
           imageUrl,
           imageId,

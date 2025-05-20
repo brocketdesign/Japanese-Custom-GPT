@@ -42,10 +42,10 @@ const configureCronJob = (jobName, schedule, enabled, task) => {
         schedule,
         enabled: true
       };
-      console.log(`Cron job '${jobName}' configured with schedule: ${schedule}`);
+      console.log(`[configureCronJob]'${jobName}' configured with schedule: ${schedule}`);
       return true;
     } catch (error) {
-      console.error(`Error configuring cron job '${jobName}':`, error);
+      console.error(`[configureCronJob] Error configuring cron job '${jobName}':`, error);
       return false;
     }
   }
@@ -61,7 +61,7 @@ const configureCronJob = (jobName, schedule, enabled, task) => {
  */
 const createModelChatGenerationTask = (fastify) => {
   return async () => {
-    console.log('Running scheduled model chat generation task...');
+    console.log('[createModelChatGenerationTask] Running scheduled model chat generation task...');
     const db = fastify.mongo.db;
     
     try {
@@ -73,7 +73,7 @@ const createModelChatGenerationTask = (fastify) => {
       const modelChatCronSettings = await settingsCollection.findOne({ type: 'modelChatCron' });
       
       if (!modelChatCronSettings || !modelChatCronSettings.enabled) {
-        console.log('Model chat generation is disabled. Skipping task.');
+        console.log('[createModelChatGenerationTask] Model chat generation is disabled. Skipping task.');
         return;
       }
       
@@ -81,14 +81,14 @@ const createModelChatGenerationTask = (fastify) => {
       const modelsCollection = db.collection('myModels');
       const models = await modelsCollection.find({}).toArray();
       
-      console.log(`Found ${models.length} models to generate chats for`);
+      console.log(`[createModelChatGenerationTask] Found ${models.length} models to generate chats for`);
       
       // Find an admin user to use for image generation
       const usersCollection = db.collection('users');
       const adminUser = await usersCollection.findOne({ role: 'admin' });
       
       if (!adminUser) {
-        console.log('No admin user found for automated chat generation');
+        console.log('[createModelChatGenerationTask] No admin user found for automated chat generation');
         return;
       }
       
@@ -105,7 +105,7 @@ const createModelChatGenerationTask = (fastify) => {
           const prompt = await fetchRandomCivitaiPrompt(model.model, modelChatCronSettings.nsfw);
           
           if (!prompt) {
-            console.log(`No suitable prompt found for model ${model.model}. Skipping.`);
+            console.log(`[createModelChatGenerationTask] No suitable prompt found for model ${model.model}. Skipping.`);
             continue;
           }
           
@@ -115,14 +115,14 @@ const createModelChatGenerationTask = (fastify) => {
           // Wait a bit between requests to avoid rate limiting
           await new Promise(resolve => setTimeout(resolve, 5000));
         } catch (modelError) {
-          console.error(`Error processing model ${model.model}:`, modelError);
+          console.error(`[createModelChatGenerationTask] Error processing model ${model.model}:`, modelError);
           // Continue with next model
         }
       }
       
-      console.log('Scheduled chat generation completed');
+      console.log('[createModelChatGenerationTask] Scheduled chat generation completed');
     } catch (err) {
-      console.error('Failed to execute scheduled chat generation:', err);
+      console.error('[createModelChatGenerationTask] Failed to execute scheduled chat generation:', err);
     }
   };
 };
@@ -135,15 +135,15 @@ const processBackgroundTasks = (fastify) => async () => {
   const db = fastify.mongo.db;
   const tasksCollection = db.collection('tasks');
   const backgroundTasks = await tasksCollection.find({ status: 'background' }).toArray();
-  console.log(`[CRON] Found ${backgroundTasks.length} background tasks to process...`);
+  console.log(`[processBackgroundTasks] Found ${backgroundTasks.length} background tasks to process...`);
   if (!backgroundTasks.length) return;
-  console.log(`[CRON] Processing ${backgroundTasks.length} background tasks...`);
+  console.log(`[processBackgroundTasks] Processing ${backgroundTasks.length} background tasks...`);
   for (const task of backgroundTasks) {
     try {
       // Try to poll the task status again (reuse pollTaskStatus from imagen.js)
       const taskStatus = await checkTaskStatus(task.taskId, fastify);
       if (taskStatus && taskStatus.status === 'background') {
-        console.log(`[CRON] Task ${task.taskId} still in background, skipping...`);
+        console.log(`[processBackgroundTasks] Task ${task.taskId} still in background, skipping...`);
         continue;
       }
       // If successful, pollTaskStatus will update the task and notify the user
@@ -164,7 +164,7 @@ const processBackgroundTasks = (fastify) => async () => {
         );
       }
     } catch (err) {
-      console.log(`[CRON] Task ${task.taskId}:`, err?.message || err);
+      console.log(`[processBackgroundTasks] Task ${task.taskId}:`, err?.message || err);
     }
   }
 };
@@ -175,7 +175,7 @@ const processBackgroundTasks = (fastify) => async () => {
  * @param {Object} fastify - Fastify instance
  */
 const cachePopularChatsTask = (fastify) => async () => {
-  console.log('[CRON] Starting popular chats caching task...');
+  console.log('[cachePopularChatsTask] Starting popular chats caching task...');
   const db = fastify.mongo.db;
   const chatsCollection = db.collection('chats');
   const cacheCollection = db.collection('popularChatsCache');
@@ -275,13 +275,13 @@ const cachePopularChatsTask = (fastify) => async () => {
         cachedAt: new Date()
       }));
       await cacheCollection.insertMany(chatsToInsert);
-      console.log(`[CRON] Successfully cached ${chatsWithSamples.length} popular chats with non-NSFW sample images.`);
+      console.log(`[cachePopularChatsTask] Successfully cached ${chatsWithSamples.length} popular chats with non-NSFW sample images.`);
     } else {
-      console.log('[CRON] No popular chats found to cache.');
+      console.log('[cachePopularChatsTask] No popular chats found to cache.');
     }
 
   } catch (err) {
-    console.error('[CRON] Error caching popular chats:', err);
+    console.error('[cachePopularChatsTask] Error caching popular chats:', err);
   }
 };
 
@@ -310,7 +310,7 @@ const initializeCronJobs = async (fastify) => {
       };
       
       await settingsCollection.insertOne(modelChatCronSettings);
-      console.log('Created default model chat cron settings');
+      console.log('[initializeCronJobs] Created default model chat cron settings');
     }
     
     // Configure the cron job if enabled
@@ -339,10 +339,10 @@ const initializeCronJobs = async (fastify) => {
         cachePopularChatsTask(fastify)
     );
     
-    console.log('Cron jobs initialized');
+    console.log('[initializeCronJobs] Cron jobs initialized');
     
   } catch (error) {
-    console.error('Error initializing cron jobs:', error);
+    console.error('[initializeCronJobs] Error initializing cron jobs:', error);
   }
 };
 
@@ -360,7 +360,7 @@ const getNextRunTime = (jobName) => {
     const interval = parser.parseExpression(cronInfo.schedule);
     return interval.next().toDate().toLocaleString();
   } catch (error) {
-    console.error(`Error getting next run time for job '${jobName}':`, error);
+    console.error(`[getNextRunTime] Error getting next run time for job '${jobName}':`, error);
     return null;
   }
 };

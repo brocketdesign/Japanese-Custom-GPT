@@ -32,7 +32,18 @@ const { chat } = require('googleapis/build/src/apis/chat');
 const sessions = new Map();
 
 const free_models = ['293564'];
-
+// Helper function to tokenize a prompt string (can be moved to a shared utility if used elsewhere)
+function tokenizePrompt(promptText) {
+  if (!promptText || typeof promptText !== 'string') {
+    return new Set();
+  }
+  return new Set(
+    promptText
+      .toLowerCase()
+      .split(/\W+/) // Split by non-alphanumeric characters
+      .filter(token => token.length > 0) // Remove empty tokens
+  );
+}
 async function routes(fastify, options) {
 
     fastify.post('/api/init-chat', async (request, reply) => {
@@ -2915,6 +2926,77 @@ async function routes(fastify, options) {
         }
     });
 
+    fastify.get('/api/similar-chats/:chatId', async (request, reply) => {
+      try {
+        const db = fastify.mongo.db;
+        const chatsCollection = db.collection('chats');
+        const chatIdParam = request.params.chatId;
+        let chatIdObjectId;
+
+        try {
+          chatIdObjectId = new fastify.mongo.ObjectId(chatIdParam);
+        } catch (e) {
+          console.error(`[API/SimilarChats] Invalid Chat ID format: ${chatIdParam}`);
+          return reply.code(400).send({ error: 'Invalid Chat ID format' });
+        }
+
+        const chat = await chatsCollection.findOne({ _id: chatIdObjectId });
+
+        if (!chat) {
+          console.warn(`[API/SimilarChats] Chat not found for ID: ${chatIdParam}`);
+          return reply.code(404).send({ error: 'Chat not found' });
+        }
+
+        let similarChats = [];
+        const characterPrompt = chat.enhancedPrompt || chat.characterPrompt;
+
+        if (characterPrompt) {
+          const mainPromptTokens = tokenizePrompt(characterPrompt);
+          const candidateChatsCursor = chatsCollection.find(
+            { _id: { $ne: chatIdObjectId }, chatImageUrl: { $exists: true }, $or: [{enhancedPrompt: { $exists: true, $ne: null, $ne: "" }}, {characterPrompt: { $exists: true, $ne: null, $ne: "" }}] },
+            {
+              projection: {
+                _id: 1, name: 1, chatImageUrl: 1, nsfw: 1, isPremium: 1, userId: 1, gender: 1, imageStyle: 1, enhancedPrompt: 1, characterPrompt: 1
+              }
+            }
+          );
+          
+          const scoredChats = [];
+          await candidateChatsCursor.forEach(candidate => {
+            const candidateTokens = tokenizePrompt(candidate.enhancedPrompt || candidate.characterPrompt);
+            const commonTokens = [...mainPromptTokens].filter(token => candidateTokens.has(token));
+            const score = commonTokens.length;
+
+            if (score > 0) {
+              scoredChats.push({
+                ...candidate,
+                score: score
+              });
+            }
+          });
+          
+          scoredChats.sort((a, b) => b.score - a.score);
+          similarChats = scoredChats.slice(0, 5).map(c => {
+            const { characterPrompt, enhancedPrompt, score, ...rest } = c;
+            return rest;
+          });
+
+          if (similarChats.length > 0) {
+            console.log(`[API/SimilarChats] Top ${similarChats.length} similar chats for ${chatIdParam}: ${JSON.stringify(similarChats.map(c => ({id: c._id, name: c.name})))}`);
+          } else {
+            console.log(`[API/SimilarChats] No similar chats found for ${chatIdParam} based on prompt matching.`);
+          }
+        } else {
+          console.log(`[API/SimilarChats] No prompt found for current character ${chatIdParam}. Skipping similar chat search.`);
+        }
+        
+        reply.send(similarChats);
+
+      } catch (err) {
+        console.error(`[API/SimilarChats] Error in /api/similar-chats/:chatId route for ${request.params.chatId}:`, err);
+        reply.code(500).send({ error: 'Internal Server Error' });
+      }
+    });
         fastify.get('/api/latest-chats', async (request, reply) => {
             const db = fastify.mongo.db;
             const page = parseInt(request.query.page) || 1;
@@ -2929,15 +3011,21 @@ async function routes(fastify, options) {
             const baseQuery = {
                 chatImageUrl: { $exists: true, $ne: '' },
                 name: { $exists: true, $ne: '' },
-                tags: { $exists: true, $ne: [] },
                 nsfw: { $exists: true },
-                status: { $nin: ['deleted', 'private', 'rejected', 'pending'] }
+                language: request.lang,
             };
-
+            console.log(`[latest-chats] baseQuery: ${JSON.stringify(baseQuery)}`);
             // Query for NSFW chats
-            const nsfwQuery = { ...baseQuery, nsfw: true };
+            // Query for NSFW chats - handle both boolean and string values
+            const nsfwQuery = { 
+                ...baseQuery, 
+                $or: [
+                    { nsfw: true },
+                    { nsfw: 'true' }
+                ] 
+            };
             const nsfwChats = await chatsCollection.find(nsfwQuery)
-                .sort({ _id: -1 })
+                .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(nsfwLimit)
                 .project({
@@ -2954,9 +3042,16 @@ async function routes(fastify, options) {
                 .toArray();
 
             // Query for SFW chats
-            const sfwQuery = { ...baseQuery, nsfw: false };
+            // Query for SFW chats - handle both boolean and string values
+            const sfwQuery = { 
+                ...baseQuery, 
+                $or: [
+                    { nsfw: false },
+                    { nsfw: 'false' }
+                ] 
+            };
             const sfwChats = await chatsCollection.find(sfwQuery)
-                .sort({ _id: -1 })
+                .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(sfwLimit)
                 .project({

@@ -19,26 +19,26 @@ module.exports = fastifyPlugin(async function (fastify) {
       }
 
       fastify.connections.get(normalizedUserId).add(connection);
-      console.log(`Connection added for user ${normalizedUserId}. Total connections: ${fastify.connections.get(normalizedUserId).size}`);
+      console.log(`[WebSocket] Connection added for user ${normalizedUserId}. Total connections: ${fastify.connections.get(normalizedUserId).size}`);
 
       connection.on('message', (message) => {
-        console.log(`Message received from user ${normalizedUserId}:`, message.toString());
+        console.log(`[WebSocket] Message received from user ${normalizedUserId}:`, message.toString());
         try {
           connection.send(message); // Echo back the message
         } catch (err) {
-          console.error(`Error sending message to user ${normalizedUserId}:`, err);
+          console.error(`[WebSocket] Error sending message to user ${normalizedUserId}:`, err);
         }
       });
 
       connection.on('close', () => {
-        console.log(`Connection closed for user: ${normalizedUserId}`);
+        console.log(`[WebSocket] Connection closed for user: ${normalizedUserId}`);
         const userConnections = fastify.connections.get(normalizedUserId);
         if (userConnections) {
           userConnections.delete(connection);
-          console.log(`Remaining connections for user ${normalizedUserId}: ${userConnections.size}`);
+          console.log(`[WebSocket] Remaining connections for user ${normalizedUserId}: ${userConnections.size}`);
           if (userConnections.size === 0) {
             fastify.connections.delete(normalizedUserId);
-            console.log(`All connections closed for user ${normalizedUserId}. User removed.`);
+            console.log(`[WebSocket] All connections closed for user ${normalizedUserId}. User removed.`);
           }
         }
       });
@@ -60,7 +60,7 @@ module.exports = fastifyPlugin(async function (fastify) {
           conn.send(JSON.stringify({ notification }));
         }
       } else {
-        console.log(`No active connections for user ${normalizedUserId}`);
+        console.log(`[WebSocket] No active connections for user ${normalizedUserId}`);
       }
     } catch (err) {
       console.error(`Error sending notification to user ${normalizedUserId}:`, err);

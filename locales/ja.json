@@ -1,5 +1,11 @@
 {
   "lang": "ja",
+  "gridSize": "グリッドサイズ",
+  "about_the_image": "画像について",
+  
+  "similar_characters_title": "類似キャラクター",
+  "similar_characters_description": "現在表示中のキャラクターに似たキャラクターを探索しましょう。",
+  
   "unlock_premium_features": "プレミアム機能をアンロック",
   "join_now_for_full_access": "すべての画像とキャラクターにフルアクセスするには今すぐ参加！",
   "sign_up_free": "無料で登録",

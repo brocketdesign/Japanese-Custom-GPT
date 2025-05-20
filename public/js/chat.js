@@ -403,7 +403,14 @@ $(document).ready(async function() {
         updateParameters(chatId, fetch_userId, userChatId);
         showChat();
         initializeCustomPrompts(userChatId)
-        showPrompts();
+
+        // Show the prompts only once per session/ per chatid
+        if (isNew && !sessionStorage.getItem(`promptsShown_${chatId}`)) {
+            sessionStorage.setItem(`promptsShown_${chatId}`, 'true');
+            setTimeout(() => {
+                showPrompts();
+            }, 1000);
+        } 
     }
     
     function setupChatData(chat) {

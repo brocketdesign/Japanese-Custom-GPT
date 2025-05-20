@@ -1,5 +1,11 @@
 {
   "lang":"fr",
+  "gridSize": "Taille de la grille",
+  "about_the_image": "À propos de l'image",
+  
+  "similar_characters_title": "Personnages similaires",
+  "similar_characters_description": "Découvrez des personnages similaires à celui que vous consultez actuellement.",
+  
   "unlock_premium_features": "Débloquez les fonctionnalités Premium",
   "join_now_for_full_access": "Rejoignez-nous maintenant pour un accès complet à toutes les images et personnages !",
   "sign_up_free": "Inscrivez-vous gratuitement",

@@ -2425,13 +2425,149 @@ window.loadChatImages = function (chatId, page = 1, reload = false, isModal = fa
       `
     })
   
-    $('#chat-images-gallery').append(chatGalleryHtml)
+    $('#chat-images-gallery').append(chatGalleryHtml);
+    // Add a grid handler to the gallery to allow the user to use a slider to change the columns
+    gridLayout('#chat-images-gallery')
     $(document).find('.img-blur').each(function () {
       blurImage(this)
-    })
+    });
+
   }
   
-  // Infinite scroll / pagination
+function gridLayout(selector) {
+  // Check if the selector exists
+  const $container = $(selector);
+  if ($container.length === 0) {
+    return;
+  }
+
+  // Find the image items (typically in a column div)
+  const $items = $container.children('div');
+  if ($items.length === 0) return; // No items to adjust
+  
+  // If a grid controller already exists, don't create another one
+  if ($container.prev('.grid-control').length > 0) {
+    return;
+  }
+  
+  // Determine current grid size by examining the first item's classes
+  let currentValue = 3; // Default to 3 per row
+  const $firstItem = $items.first();
+  if ($firstItem.attr('class')) {
+    const classList = $firstItem.attr('class').split(/\s+/);
+    
+    // Check for various Bootstrap column classes
+    for (const className of classList) {
+      // Check for col-N classes (regular, md, lg, etc.)
+      const matches = className.match(/col-(?:xs-|sm-|md-|lg-|xl-|xxl-)?(\d+)/);
+      if (matches && matches[1]) {
+        currentValue = Math.min(6, Math.max(1, 12 / parseInt(matches[1])));
+        break;
+      }
+    }
+  }
+  
+  // Create a unique ID for the slider
+  const sliderId = `grid-slider-${Math.random().toString(36).substring(2, 11)}`;
+  
+  // Create the slider control HTML with an icon
+  const sliderHtml = `
+    <div class="grid-control mb-3">
+      <label for="${sliderId}" class="form-label d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-grid"></i> ${translations?.gridSize || 'Grid Size'}</span>
+        <span class="grid-size-display badge bg-light text-dark">${currentValue} ${translations?.perRow || 'per row'}</span>
+      </label>
+      <input type="range" class="form-range" min="1" max="6" value="${currentValue}" id="${sliderId}">
+    </div>
+  `;
+  
+  // Insert the slider before the container
+  $container.before(sliderHtml);
+  
+  // Get the slider element
+  const $slider = $(`#${sliderId}`);
+  const $sizeDisplay = $slider.closest('.grid-control').find('.grid-size-display');
+  
+function updateGrid(value) {
+  $sizeDisplay.text(`${value} ${translations?.perRow || 'per row'}`);
+
+  let effectiveValue = parseInt(value);
+  const screenWidth = window.innerWidth;
+
+  // On small screens (<768px), cap at 3 columns max
+  if (screenWidth < 768 && effectiveValue > 3) {
+    effectiveValue = 3;
+    $sizeDisplay.text(`3 ${translations?.perRow || 'per row'} (max on small screens)`);
+  }
+
+  // Remove ALL Bootstrap grid classes and custom col-20p class
+  // The improved regex captures all possible col-* classes including col-20p
+  $container.children('div').each(function() {
+    const $div = $(this);
+    const classes = $div.attr('class') ? $div.attr('class').split(/\s+/) : [];
+    const filtered = classes.filter(c =>
+      !/^col(-[a-z]{2,3})?-\d+$/.test(c) && c !== 'col-20p'
+    );
+    $div.attr('class', filtered.join(' '));
+  });
+
+  // Handle 5 columns (custom 20% width)
+  if (effectiveValue === 5) {
+    // Add the custom CSS if it doesn't exist yet
+    if (!$('#grid-custom-css').length) {
+      $('head').append(`
+        <style id="grid-custom-css">
+          .col-20p { 
+            width: 20%; 
+            flex: 0 0 20%;
+            max-width: 20%;
+            position: relative;
+            padding-right: 15px;
+            padding-left: 15px;
+          }
+        </style>
+      `);
+    }
+    $container.children('div').each(function() {
+      if (screenWidth < 768) {
+        $(this).addClass('col-6');
+      } else {
+        $(this).addClass('col-20p');
+      }
+    });
+  } else {
+    // Standard Bootstrap grid
+    if (screenWidth < 768) {
+      // 1: col-12, 2: col-6, 3: col-4
+      const colClass = `col-${12 / effectiveValue}`;
+      $container.children('div').each(function() {
+        $(this).addClass(colClass);
+      });
+    } else {
+      const colSize = Math.floor(12 / effectiveValue);
+      $container.children('div').each(function() {
+        $(this).addClass(`col-${colSize} col-sm-${colSize} col-md-${colSize} col-lg-${colSize} col-xl-${colSize}`);
+      });
+    }
+  }
+
+  localStorage.setItem('gridPreference', value);
+}
+  
+  // Check for saved preference
+  const savedPreference = localStorage.getItem('gridPreference');
+  if (savedPreference) {
+    $slider.val(savedPreference);
+    updateGrid(savedPreference);
+  }
+  
+  // Add event listener for slider changes
+  $slider.on('input', function() {
+    updateGrid($(this).val());
+  });
+}
+
+// Infinite scroll / pagination
 window.generateChatImagePagination = function (totalPages, chatId, isModal = false) {
   if (!chatLoadingStates[chatId]) chatLoadingStates[chatId] = false;
   if (!chatCurrentPageMap[chatId]) chatCurrentPageMap[chatId] = 0;

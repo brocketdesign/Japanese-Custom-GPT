@@ -11,7 +11,7 @@ const { generatePromptTitle } = require('./models/openai');
 const {
   cleanupNonRegisteredUsers,
   deleteTemporaryChats,
-} = require('./models/cleanupNonRegisteredUsers');
+} = require('./models/databasemanagement');
 const { checkUserAdmin, getUserData, updateCounter, fetchTags } = require('./models/tool');
 const { deleteOldTasks } = require('./models/imagen');
 const { createModelChat, fetchRandomCivitaiPrompt } = require('./models/civitai');

@@ -4,7 +4,7 @@ const { ObjectId } = require('mongodb');
 const axios = require('axios');
 const { createHash } = require('crypto');
 const { addNotification, saveChatImageToDB } = require('../models/tool')
-
+const slugify = require('slugify');
 const default_prompt = {
     sdxl: {
       sfw: {
@@ -164,6 +164,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
       createdAt: new Date(),
       updatedAt: new Date()
     });
+    
     // Check if the task has been saved
     if (!checkTaskValidity.insertedId) {
       console.log('Error saving task to DB');
@@ -191,12 +192,39 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
       // Update task with the title
       updateTitle({ taskId: novitaTaskId, newTitle, fastify, userId, chatId, placeholderId });
     }
-  
+
+    // Generate a slug from the prompt or title
+    let taskSlug = '';
+    if (title && typeof title === 'object') {
+      // If title is an object with language keys, use the first available title
+      const firstAvailableTitle = title.en || title.ja || title.fr || '';
+      taskSlug = slugify(firstAvailableTitle.substring(0, 50), { lower: true, strict: true });
+    } else if (title) {
+      // If title is a string
+      taskSlug = slugify(title.substring(0, 50), { lower: true, strict: true });
+    } else {
+      // Use the first 50 chars of the prompt if no title
+      taskSlug = slugify(prompt.substring(0, 50), { lower: true, strict: true });
+    }
+    if(chat.slug){
+      taskSlug = chat.slug + '-' + taskSlug;
+    }
+    // Ensure slug is unique by appending random string if needed
+    const existingTask = await db.collection('tasks').findOne({ slug: taskSlug });
+    if (existingTask) {
+      const randomStr = Math.random().toString(36).substring(2, 6);
+      taskSlug = `${taskSlug}-${randomStr}`;
+    }
+    
+    console.log(`[generateImg] Generated slug: ${taskSlug}`);
+    // Update task with the slug
+    updateSlug({ taskId: novitaTaskId, taskSlug, fastify, userId, chatId, placeholderId });
+
     // Poll the task status
     pollTaskStatus(novitaTaskId, fastify) 
     .then(taskStatus => {
       if (taskStatus.status === 'background') {
-        console.log(`Task ${taskStatus.taskId} moved to background`);
+        console.log(`[pollTaskStatus] Task ${taskStatus.taskId} moved to background`);
         return;
       }
       handleTaskCompletion(taskStatus, fastify, { chatCreation, translations, userId, chatId, placeholderId });
@@ -459,11 +487,28 @@ async function checkTaskStatus(taskId, fastify) {
     return false
   }
   const images = Array.isArray(result) ? result : [result];
-  const savedImages = await Promise.all(images.map(async (imageData) => {
+  const savedImages = await Promise.all(images.map(async (imageData, arrayIndex) => {  // Added arrayIndex parameter here
     let nsfw = task.type === 'nsfw';
     // Check if the image is NSFW with a confidence threshold of 50 and more
     if (imageData.nsfw_detection_result && imageData.nsfw_detection_result.valid && imageData.nsfw_detection_result.confidence >= 50) {
       nsfw = true;
+    }
+    
+    // Generate a unique slug for each image when there are multiple
+    let uniqueSlug = task.slug;
+    if (images.length > 1) {
+      // Append index to slug for uniqueness
+      uniqueSlug = `${task.slug}-${arrayIndex + 1}`;  // Now arrayIndex is defined!
+      
+      // Ensure slug is unique by checking against existing slugs
+      const existingWithSlug = await db.collection('gallery').findOne({
+        "images.slug": uniqueSlug
+      });
+      
+      if (existingWithSlug) {
+        const randomStr = Math.random().toString(36).substring(2, 6);
+        uniqueSlug = `${uniqueSlug}-${randomStr}`;
+      }
     }
 
     const saveResult = await saveImageToDB({
@@ -473,6 +518,7 @@ async function checkTaskStatus(taskId, fastify) {
       userChatId: task.userChatId,
       prompt: task.prompt,
       title: task.title,
+      slug: uniqueSlug,
       imageUrl: imageData.imageUrl,
       aspectRatio: task.aspectRatio,
       seed: imageData.seed,
@@ -491,6 +537,7 @@ async function checkTaskStatus(taskId, fastify) {
 
   return { taskId: task.taskId, userId: task.userId, userChatId: task.userChatId, status: 'completed', images: savedImages };
 }
+
 // Function to trigger the Novita API for text-to-image generation
 async function fetchNovitaMagic(data, flux = false) {
   try {
@@ -581,14 +628,20 @@ async function fetchNovitaResult(task_id) {
         throw new Error('No images returned from Novita API');
         }
 
-        const s3Urls = await Promise.all(images.map(async (image) => {
+        const s3Urls = await Promise.all(images.map(async (image, index) => {
           const imageUrl = image.image_url;
           const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
           const buffer = Buffer.from(imageResponse.data, 'binary');
           const hash = createHash('md5').update(buffer).digest('hex');
           const uploadedUrl = await uploadToS3(buffer, hash, 'novita_result_image.png');
-          return { imageId: hash, imageUrl: uploadedUrl, nsfw_detection_result: image.nsfw_detection_result, seed:response.data.extra.seed };
-        }));
+          return { 
+            imageId: hash, 
+            imageUrl: uploadedUrl, 
+            nsfw_detection_result: image.nsfw_detection_result, 
+            seed: response.data.extra.seed,
+            index
+          };
+          }));
 
         return s3Urls.length === 1 ? s3Urls[0] : s3Urls;
     } else if (taskStatus === 'TASK_STATUS_FAILED') {
@@ -603,6 +656,26 @@ async function fetchNovitaResult(task_id) {
     return { error: error.message, status: 'failed' };
     }
 }
+// Function to update the slug of a task
+async function updateSlug({ taskId, taskSlug, fastify, userId, chatId, placeholderId }) {
+  const db = fastify.mongo.db; 
+  const tasksCollection = db.collection('tasks');
+  const galleryCollection = db.collection('gallery');
+
+  const task = await tasksCollection.findOne({ taskId });
+  if (task && task.status !== 'completed') {
+    await tasksCollection.updateOne(
+      { taskId },
+      { $set: { slug: taskSlug, updatedAt: new Date() } }
+    );
+  } else {
+    await galleryCollection.updateOne(
+      { userId: new ObjectId(userId), chatId: new ObjectId(chatId), "images.taskId": taskId },
+      { $set: { "images.$.slug": taskSlug } }
+    );
+  }
+}
+// Function to update the title of a task
 async function updateTitle({ taskId, newTitle, fastify, userId, chatId, placeholderId }) {
   const db = fastify.mongo.db; 
   const tasksCollection = db.collection('tasks');
@@ -619,12 +692,10 @@ async function updateTitle({ taskId, newTitle, fastify, userId, chatId, placehol
       { userId: new ObjectId(userId), chatId: new ObjectId(chatId), "images.taskId": taskId },
       { $set: { "images.$.title": newTitle } }
     );
-    // Update the front end 
-    console.log('Updating title on the front end');
   }
 }
 
-async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title, imageUrl, aspectRatio, seed, blurredImageUrl = null, nsfw = false, fastify}) {
+async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title, slug, imageUrl, aspectRatio, seed, blurredImageUrl = null, nsfw = false, fastify}) {
     const db = fastify.mongo.db;
     try {
       const chatsGalleryCollection = db.collection('gallery');
@@ -635,11 +706,33 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
         chatId: new ObjectId(chatId),
         'images.imageUrl': imageUrl // Assuming imageUrl is unique per image
       });
-  
+      
+
       if (existingImage) {
         // Image already exists, return existing imageId and imageUrl
         const image = existingImage.images.find(img => img.imageUrl === imageUrl);
         return { imageId: image._id, imageUrl: image.imageUrl };
+      }
+
+      // If no slug provided, generate one
+      if (!slug) {
+        console.log(`[saveImageToDB] Generating slug for image with prompt: ${prompt}`);
+        if (title && typeof title === 'object') {
+          const firstAvailableTitle = title.en || title.ja || title.fr || '';
+          slug = slugify(firstAvailableTitle.substring(0, 50), { lower: true, strict: true });
+        } else {
+          slug = slugify(prompt.substring(0, 50), { lower: true, strict: true });
+        }
+        
+        // Ensure slug is unique
+        const existingImage_check = await chatsGalleryCollection.findOne({
+          "images.slug": slug
+        });
+        
+        if (existingImage_check) {
+          const randomStr = Math.random().toString(36).substring(2, 6);
+          slug = `${slug}-${randomStr}`;
+        }
       }
 
       const imageId = new ObjectId();
@@ -655,6 +748,7 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
               taskId,
               prompt, 
               title,
+              slug,
               imageUrl, 
               blurredImageUrl, 
               aspectRatio, 
@@ -667,6 +761,13 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
         },
         { upsert: true }
       );
+      // log the inserted image for debugging
+      console.log(`[saveImageToDB] Image saved with ID: ${imageId}`);
+      const imageData = await chatsGalleryCollection.findOne({ userId: new ObjectId(userId), chatId: new ObjectId(chatId), "images._id": imageId });
+      if (!imageData) {
+        console.log(`[saveImageToDB] Image not found after saving: ${imageId}`);
+        return false;
+      }
 
       const chatsCollection = db.collection('chats');
       await chatsCollection.updateOne(

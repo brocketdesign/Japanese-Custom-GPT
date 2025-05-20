@@ -1,4 +1,5 @@
 const { ObjectId } = require('mongodb');
+const slugify = require('slugify');
 const {
     checkImageRequest, 
     generateCompletion,
@@ -235,50 +236,84 @@ async function routes(fastify, options) {
         ];
     }
 
-    fastify.post('/api/openai-chat-creation', async (request, reply) => {
-        try {
-            // Validate request body
-            const { chatId, name, purpose, prompt, gender, details_personality, language: requestLanguage, system_generated, nsfw } = request.body;
+fastify.post('/api/openai-chat-creation', async (request, reply) => {
+    console.log('[API/openai-chat-creation] Processing request');
+    try {
+        // Validate request body
+        const { chatId, name, purpose, prompt, gender, details_personality, language: requestLanguage, system_generated, nsfw } = request.body;
 
-            if (!purpose || !gender) {
-                return reply.status(400).send({ error: 'Invalid request body. "purpose" and "gender" are required.' });
-            }
+        if (!purpose || !gender) {
+            console.log('[API/openai-chat-creation] Missing required fields: purpose or gender');
+            return reply.status(400).send({ error: 'Invalid request body. "purpose" and "gender" are required.' });
+        }
 
-            // Determine language - use request parameter, fallback to user language
-            const language = requestLanguage || request.lang;
-            
-            // Prepare payload
-            const systemPayload = createSystemPayloadChatRule(purpose, gender, name, details_personality, language);
+        // Determine language - use request parameter, fallback to user language
+        const language = requestLanguage || request.lang;
+        console.log(`[API/openai-chat-creation] Using language: ${language}`);
+        
+        // Prepare payload
+        const systemPayload = createSystemPayloadChatRule(purpose, gender, name, details_personality, language);
 
-            // Interact with OpenAI API
-            const openai = new OpenAI();
-            const completionResponse = await openai.chat.completions.create({
-                model: "gpt-4o",
-                messages: systemPayload,
-                response_format: zodResponseFormat(characterSchema, "character_data"),
-            });
+        console.log('[API/openai-chat-creation] Sending request to OpenAI API');
+        // Interact with OpenAI API
+        const openai = new OpenAI();
+        const completionResponse = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: systemPayload,
+            response_format: zodResponseFormat(characterSchema, "character_data"),
+        });
 
-            if (!completionResponse.choices || completionResponse.choices.length === 0) {
-                return reply.status(500).send({ error: 'Invalid response from OpenAI API.' });
-            }
+        if (!completionResponse.choices || completionResponse.choices.length === 0) {
+            console.error('[API/openai-chat-creation] Invalid response from OpenAI API');
+            return reply.status(500).send({ error: 'Invalid response from OpenAI API.' });
+        }
 
-            const chatData = JSON.parse(completionResponse.choices[0].message.content)
-            
-            // Respond with the validated character data
-            chatData.language = language;
-            chatData.gender = gender;
-            chatData.characterPrompt = prompt;
+        const chatData = JSON.parse(completionResponse.choices[0].message.content);
+        console.log(`[API/openai-chat-creation] Generated character: ${chatData.name}`);
+        
+        // Respond with the validated character data
+        chatData.language = language;
+        chatData.gender = gender;
+        chatData.characterPrompt = prompt;
+        
+        // Generate slug from name
+        if (name) {
+            const baseSlug = slugify(chatData.name, { lower: true, strict: true });
+            let slug = baseSlug;
             
             // If there's no chatId, just return the character data without DB operations
             if (!chatId) {
+                chatData.slug = slug;
+                console.log(`[API/openai-chat-creation] Returning character data without DB operations`);
                 return reply.send(chatData);
             }
             
-            // If chatId exists, continue with DB operations
+            // Check for duplicate slug if we'll be saving to DB
+            const collectionChats = fastify.mongo.db.collection('chats');
+            const slugExists = await collectionChats.findOne({ 
+                slug: baseSlug, 
+                _id: { $ne: new fastify.mongo.ObjectId(chatId) } 
+            });
+            
+            // If slug exists, append a short random string
+            if (slugExists) {
+                const randomStr = Math.random().toString(36).substring(2, 6);
+                slug = `${baseSlug}-${randomStr}`;
+                console.log(`[API/openai-chat-creation] Generated unique slug: ${slug}`);
+            }
+            
+            chatData.slug = slug;
+        }
+        
+        // If chatId exists, continue with DB operations
+        if (chatId) {
+            console.log(`[API/openai-chat-creation] Saving data to DB for chatId: ${chatId}`);
             
             // Save generated tags
             const tagsCollection = fastify.mongo.db.collection('tags');
             const generatedTags = chatData.tags;
+            console.log(`[API/openai-chat-creation] Saving ${generatedTags.length} tags`);
+            
             for (const tag of generatedTags) {
                 await tagsCollection.updateOne(
                     { name: tag },
@@ -288,37 +323,45 @@ async function routes(fastify, options) {
             }
 
             if (details_personality) {
+                console.log(`[API/openai-chat-creation] Storing personality details`);
                 chatData.details_personality = details_personality; // store details in the DB if provided
             }
 
             // Flag if this is a system-generated chat
             if (system_generated) {
+                console.log(`[API/openai-chat-creation] Setting system-generated flags`);
                 chatData.systemGenerated = true;
                 chatData.nsfw = nsfw;
                 chatData.visibility = 'public';
             }
+            
             const collectionChats = fastify.mongo.db.collection('chats');
+            console.log(`[API/openai-chat-creation] Updating chat document in DB with chatData: ${chatData}`);
+            
             const updateResult = await collectionChats.updateOne(
                 { _id: new fastify.mongo.ObjectId(chatId) },
-                { 
-                    $set: chatData
-                }
+                { $set: chatData }
             );
 
             if (updateResult.matchedCount === 0) {
+                console.error(`[API/openai-chat-creation] Chat not found for ID: ${chatId}`);
                 throw new Error('指定されたチャットが見つかりませんでした。');
             }
-
-            reply.send(chatData);
-        } catch (err) {
-            if (err instanceof z.ZodError) {
-            return reply.status(400).send({ error: 'Validation error in response data.', details: err.errors });
-            }
-
-            console.error(err);
-            reply.status(500).send({ error: 'An unexpected error occurred.', details: err.message });
+            
+            console.log(`[API/openai-chat-creation] Chat updated successfully: ${chatId}`);
         }
-    });
+
+        reply.send(chatData);
+    } catch (err) {
+        if (err instanceof z.ZodError) {
+            console.error('[API/openai-chat-creation] Validation error:', err.errors);
+            return reply.status(400).send({ error: 'Validation error in response data.', details: err.errors });
+        }
+
+        console.error('[API/openai-chat-creation] Error:', err);
+        reply.status(500).send({ error: 'An unexpected error occurred.', details: err.message });
+    }
+});
     
     fastify.post('/api/enhance-prompt', async (request, reply) => {
       try {
@@ -2812,7 +2855,7 @@ async function routes(fastify, options) {
             let totalCount = 0;
             let totalPages = 0;
             let usingCache = false;
-
+            
             // Check if the requested page is within the cached range
             if (page <= pagesToCache) {
                 // Try fetching from cache first, filtering by language
@@ -3014,8 +3057,7 @@ async function routes(fastify, options) {
                 nsfw: { $exists: true },
                 language: request.lang,
             };
-            console.log(`[latest-chats] baseQuery: ${JSON.stringify(baseQuery)}`);
-            // Query for NSFW chats
+
             // Query for NSFW chats - handle both boolean and string values
             const nsfwQuery = { 
                 ...baseQuery, 

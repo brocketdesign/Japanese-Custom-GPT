@@ -111,6 +111,7 @@ fastify.register(fastifyMultipart, {
 });
 
 const websocketPlugin = require('@fastify/websocket');
+const slugify = require('slugify');
 fastify.register(websocketPlugin);
 fastify.register(require('./plugins/websocket'));
 
@@ -409,24 +410,32 @@ function tokenizePrompt(promptText) {
   );
 }
 
-fastify.get('/character/:chatId', async (request, reply) => {
+fastify.get('/character/slug/:slug', async (request, reply) => {
   try {
     const db = fastify.mongo.db;
     const { translations, lang, user } = request;
-    const currentUserId = user._id; // Renamed from userId to avoid conflict
-    const chatIdParam = request.params.chatId;
-    let chatIdObjectId;
+    const currentUserId = user._id; 
+    const { slug } = request.params;
+    const imageSlug = request.query.imageSlug || null;
 
-    console.log(`[SimilarChats] Processing /character/${chatIdParam} for user ${currentUserId}`);
+    console.log(`[/character/:slug] Processing /character/${slug} for user ${currentUserId}`);
 
+    const chat = await db.collection('chats').findOne({ slug });
+    if (!chat) {
+      console.warn(`[/character/:slug] Chat not found for slug: ${slug}`);
+      return reply.code(404).send({ error: 'Chat not found' });
+    }
+    console.log(`[/character/:slug] Found current chat: ${chat.name} (ID: ${chat._id})`);
+
+    let chatIdObjectId = chat._id;
+    let chatIdParam = chat._id.toString();
     try {
       chatIdObjectId = new fastify.mongo.ObjectId(chatIdParam);
     } catch (e) {
-      console.error(`[SimilarChats] Invalid Chat ID format: ${chatIdParam}`);
+      console.error(`[/character/:slug] Invalid Chat ID format: ${chatIdParam}`);
       return reply.code(400).send({ error: 'Invalid Chat ID format' });
     }
     
-    const imageId = request.query.imageId ? new fastify.mongo.ObjectId(request.query.imageId) : null;
     const isModal = request.query.modal === 'true';
     
     const chatsCollection = db.collection('chats');
@@ -440,30 +449,32 @@ fastify.get('/character/:chatId', async (request, reply) => {
         subscriptionStatus = currentUserData.subscriptionStatus === 'active';
       } else {
         // Handle case where user might have been deleted or ID is stale
-        console.warn(`[SimilarChats] User data not found for ID: ${currentUserId}. Treating as non-subscribed.`);
+        console.warn(`[/character/:slug] User data not found for ID: ${currentUserId}. Treating as non-subscribed.`);
       }
     }
 
-    const chat = await chatsCollection.findOne({ _id: chatIdObjectId });
-
-    if (!chat) {
-      console.warn(`[SimilarChats] Chat not found for ID: ${chatIdParam}`);
-      return reply.code(404).send({ error: 'Chat not found' });
-    }
-    console.log(`[SimilarChats] Found current chat: ${chat.name} (ID: ${chat._id})`);
-
     let image = null;
     let isBlur = false;
-    if (imageId) {
+    let imageId = null;
+    if (imageSlug) {
       const imageDoc = await galleryCollection
         .aggregate([
           { $match: { chatId: chatIdObjectId } }, // Use chatIdObjectId here
           { $unwind: '$images' },
-          { $match: { 'images._id': imageId } },
+          { $match: { 'images.slug': imageSlug } },
           { $project: { image: '$images', _id: 0 } },
         ])
         .toArray();
-        
+
+        console.log(`[/character/:slug] Found image document: ${imageDoc.length} for slug: ${imageSlug}`);
+        imageId = imageDoc[0]?.image?._id || null;
+        try {
+          imageId = new fastify.mongo.ObjectId(imageId);
+        } catch (e) {
+          console.error(`[/character/:slug] Invalid Image ID format: ${imageId}`);
+          return reply.code(400).send({ error: 'Invalid Image ID format' });
+        }
+
         if (imageDoc.length > 0 && imageDoc[0].image && (!imageDoc[0].image.title || !imageDoc[0].image.title.en || !imageDoc[0].image.title.ja || !imageDoc[0].image.title.fr)) {
             const generateTitles = async () => {
               const title_en = await generatePromptTitle(imageDoc[0].image.prompt, 'english');
@@ -534,6 +545,119 @@ fastify.get('/character/:chatId', async (request, reply) => {
     console.error(`[SimilarChats] Error in /character/:chatId route for ${request.params.chatId}:`, err);
     reply.code(500).send('Internal Server Error');
   }
+});
+
+fastify.get('/character/:chatId', async (request, reply) => {
+  const db = fastify.mongo.db;
+  let chatId = request.params.chatId;
+  let chat;
+  console.log(`[character/:chatId] Incoming request for chatId: ${chatId}`);
+  try {
+    chat = await db.collection('chats').findOne({ _id: new fastify.mongo.ObjectId(chatId) });
+    console.log(`[character/:chatId] Chat lookup by ObjectId succeeded for chatId: ${chatId}`);
+  } catch (e) {
+    // If not a valid ObjectId, treat as slug
+    console.error(`[character/:chatId] Invalid Chat ID format: ${chatId}. Error:`, e);
+    return reply.redirect(`/character/`);
+  }
+  if (!chat) {
+    console.warn(`[character/:chatId] No chat found for chatId: ${chatId}. Redirecting to /character/`);
+    return reply.redirect(`/character/`);
+  }
+  
+  // Check if a slug is present; if not use slugify to create one and save it
+  if (!chat.slug) {
+    let slug = slugify(chat.name, { lower: true, strict: true });
+    // Check for duplicate slug
+    const slugExists = await db.collection('chats').findOne({ slug, _id: { $ne: chat._id } });
+    if (slugExists) {
+      // Append short random string for uniqueness
+      const randomStr = Math.random().toString(36).substring(2, 6);
+      slug = `${slug}-${randomStr}`;
+    }
+    console.log(`[character/:chatId] No slug found for chatId: ${chatId}. Generating slug: ${slug}`);
+    await db.collection('chats').updateOne({ _id: new fastify.mongo.ObjectId(chatId) }, { $set: { slug } });
+    chat.slug = slug;
+    console.log(`[character/:chatId] Slug saved for chatId: ${chatId}, slug: ${slug}`);
+  } else {
+    console.log(`[character/:chatId] Existing slug found for chatId: ${chatId}, slug: ${chat.slug}`);
+  }
+
+  let imageId = request.query.imageId ? request.query.imageId : null;
+  console.log(`[character/:chatId] Image ID from query: ${imageId}`);
+  let imageSlug;
+  if (imageId) {
+    try {
+      imageId = new fastify.mongo.ObjectId(imageId);
+      const galleryCollection = db.collection('gallery');
+      
+      // Find the image in the gallery
+      const imageDoc = await galleryCollection.aggregate([
+        { $match: { chatId: chat._id } },
+        { $unwind: '$images' },
+        { $match: { 'images._id': imageId } },
+        { $project: { image: '$images', _id: 0 } }
+      ]).toArray();
+
+      if (imageDoc.length > 0 && imageDoc[0].image) {
+        // Check if image already has a slug
+        console.log(`[character/:chatId] Found image document: ${imageDoc.length} for imageId: ${imageId}`);
+        console.log(`[character/:chatId] Image document:`, imageDoc[0].image);
+        if (!imageDoc[0].image.slug) {
+          // Get a title to use for the slug
+          const imageTitle = typeof imageDoc[0].image.title === 'string'
+            ? imageDoc[0].image.title
+            : (imageDoc[0].image.title?.en || imageDoc[0].image.title?.ja || imageDoc[0].image.title?.fr || '');
+
+          if (imageTitle) {
+            // Create slug with chat slug prefix and limit length
+            const titleSlug = slugify(imageTitle, { lower: true, strict: true });
+            // Limit the title part to 30 chars max
+            const shortTitleSlug = titleSlug.substring(0, 30);
+            imageSlug = `${chat.slug}-${shortTitleSlug}`;
+            
+            // Check if this image slug already exists
+            const slugExists = await galleryCollection.findOne({
+              'images.slug': imageSlug,
+              'images._id': { $ne: imageId }
+            });
+            
+            if (slugExists) {
+              // Add unique suffix
+              const randomStr = Math.random().toString(36).substring(2, 6);
+              imageSlug = `${imageSlug}-${randomStr}`;
+            }
+            
+            await galleryCollection.updateOne(
+              { 'images._id': imageId },
+              { $set: { 'images.$.slug': imageSlug } }
+            );
+          }
+        } else {
+          imageSlug = imageDoc[0].image.slug;
+        }
+      }
+    } catch (err) {
+      console.error(`[character/:chatId] Error processing imageId: ${imageId}`, err);
+    }
+  }
+  // Check all query parameters
+  const { modal } = request.query;
+
+  // Preserve original query parameters
+  let queryString = '';
+  if (imageSlug) {
+    queryString = `?imageSlug=${imageSlug}`;
+    if (modal) {
+      queryString += `&modal=${modal}`;
+    }
+  } else if (modal) {
+    queryString = `?modal=${modal}`;
+  }
+
+  // Redirect to slug route for SEO, keeping query params
+  console.log(`[character/:chatId] Redirecting to /character/slug/${chat.slug}${queryString} for chatId: ${chatId}`);
+  return reply.redirect(`/character/slug/${chat.slug}${queryString}`);
 });
 
 fastify.get('/tags', async (request, reply) => {

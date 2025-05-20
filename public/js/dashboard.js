@@ -1474,6 +1474,7 @@ window.displayLatestChats = function (chatData, targetGalleryId, modal = false) 
 };
 
 window.displayChats = function (chatData, searchId = null, modal = false) {
+
   let htmlContent = '';
   chatData.forEach(chat => {
       if (chat.name || chat.chatName) {

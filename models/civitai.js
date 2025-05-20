@@ -153,9 +153,9 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
       // Parse the response with Zod schema
       initialCharacterData = JSON.parse(response.choices[0].message.content);
       
-      console.log(`Initial character data generated: ${initialCharacterData.name} (${initialCharacterData.gender})`);
+      console.log(`[civitai/createModelChat] Initial character data generated: ${initialCharacterData.name} (${initialCharacterData.gender})`);
     } catch (initialError) {
-      console.error('Error generating initial character data:', initialError);
+      console.error('[civitai/createModelChat] Error generating initial character data:', initialError);
       return false;
     }
     
@@ -170,17 +170,17 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
         prompt: promptData.prompt,
         language: language,
         system_generated: true,
-        nsfw: nsfw
+        nsfw: nsfw,
       });
       
       characterData = apiResponse.data;
-      
+
       if (!characterData || !characterData.name) {
-        throw new Error('Invalid character data received from API');
+        throw new Error('[civitai/createModelChat] Invalid character data received from API');
       }
-      console.log('Full character data received from API:', characterData.name);
+      console.log('[civitai/createModelChat] Full character data received from API:', characterData.name);
     } catch (apiError) {
-      console.error('Error calling openai-chat-creation API:', apiError);
+      console.error('[civitai/createModelChat] Error calling openai-chat-creation API:', apiError);
       return false;
     }
     
@@ -213,6 +213,7 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
       createdBy: 'system',
       systemGenerated: true,
       nsfw: nsfw,
+      slug: characterData.slug,
       visibility: 'public',
       imageVersion: model.version || 'sd'
     };
@@ -230,12 +231,12 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
       );
     }
     
-    console.log(`Created new chat: ${chatData.name} with ID: ${chatId}`);
+    console.log(`[civitai/createModelChat] Created new chat: ${chatData.name} with ID: ${chatId}`);
     
     // Generate image for the chat if fastify instance is provided
     if (fastify) {
       try {
-        console.log(`Generating image for chat: ${chatId}`);
+        console.log(`[civitai/createModelChat] Generating image for chat: ${chatId}`);
         
         // Use the provided user or verify admin access
         let userId;
@@ -243,16 +244,16 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
         if (user && user._id) {
           // Use provided user if available
           userId = user._id;
-          console.log(`Using provided user ID for image generation: ${userId}`);
+          console.log(`[civitai/createModelChat] Using provided user ID for image generation: ${userId}`);
         } else {
-          console.log('No user provided for image generation, chat created but no image will be generated');
+          console.log('[civitai/createModelChat] No user provided for image generation, chat created but no image will be generated');
           return { ...chatData, _id: chatId };
         }
         
         // Verify the user is an admin before allowing image generation
         const isAdmin = await checkUserAdmin(fastify, userId);
         if (!isAdmin) {
-          console.log(`User ${userId} is not an admin, skipping image generation`);
+          console.log(`[civitai/createModelChat] User ${userId} is not an admin, skipping image generation`);
           return { ...chatData, _id: chatId };
         }
         
@@ -280,16 +281,16 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
         };
         
         await generateImg(imageConfig);
-        console.log(`Image generation initiated for chat: ${chatId}`);
+        console.log(`[civitai/createModelChat] Image generation initiated for chat: ${chatId}`);
       } catch (imageError) {
-        console.error('Error generating image for chat:', imageError);
+        console.error('[civitai/createModelChat] Error generating image for chat:', imageError);
         // Continue without image if generation fails
       }
     }
     
     return { ...chatData, _id: chatId };
   } catch (error) {
-    console.error('Error creating model chat:', error);
+    console.error('[civitai/createModelChat] Error creating model chat:', error);
     return null;
   }
 }

@@ -236,6 +236,7 @@ const cachePopularChatsTask = (fastify) => async () => {
           name: 1,
           chatImageUrl: 1,
           imageCount: 1,
+          imageStyle: 1,
           userId: 1,
           nickname: 1,
           gender: 1,

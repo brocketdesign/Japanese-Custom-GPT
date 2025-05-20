@@ -801,7 +801,6 @@ $(document).ready(function() {
 
         let cache = getPopularChatsCache(); // Ensure this function exists or adapt
         let data = cache && cache[page];
-
         if (data) {
             // console.log(`Loading popular chats page ${page} from cache`);
             window.displayChats(data.chats, 'chat-gallery', false); // Corrected target ID

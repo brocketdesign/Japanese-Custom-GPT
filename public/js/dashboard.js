@@ -1328,7 +1328,72 @@ function updateChatPaginationControls(totalPages, searchId) {
     )
   }
 }
+window.displaySimilarChats = function (chatData, targetGalleryId) {
+  let htmlContent = '';
+  const currentUser = user; // Assuming 'user' is globally available from the template
+  const currentUserId = currentUser._id;
+  const subscriptionStatus = currentUser.subscriptionStatus === 'active';
+  const isTemporaryUser = !!currentUser?.isTemporary;
 
+  chatData.forEach(chat => {
+    const isOwner = chat.userId === currentUserId;
+    const isPremiumChat = chat.isPremium || false;
+    const isNSFW = chat.nsfw || false;
+    const genderClass = chat.gender ? `chat-gender-${chat.gender.toLowerCase()}` : '';
+    const styleClass = chat.imageStyle ? `chat-style-${chat.imageStyle.toLowerCase()}` : '';
+    let nsfwVisible = $.cookie('nsfw') === 'true';
+
+    // Using col-md-4 col-lg-3 for potentially 3-4 cards per row
+    let cardClass = `gallery-card col-6 col-sm-4 col-md-3 col-lg-3 col-xl-2 p-1 animate__animated animate__fadeIn ${genderClass} ${styleClass}`;
+    if (isPremiumChat) cardClass += ' premium-chat';
+    if (isNSFW) cardClass += ' nsfw-true';
+
+    let imageSrc = chat.chatImageUrl || chat.thumbnailUrl || '/img/logo.webp';
+    let nsfwOverlay = '';
+
+    // NSFW Overlay Logic
+    if (isNSFW && !nsfwVisible) {
+        if (!isOwner && ((isTemporaryUser || !subscriptionStatus))) {
+             nsfwOverlay = `<div class="gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center" style="background: rgba(0,0,0,0.55); z-index: 2; backdrop-filter: blur(5px);">
+                                <span class="badge bg-danger mb-2" style="font-size: 0.9rem;"><i class="bi bi-exclamation-triangle"></i> NSFW</span>
+                                <button class="btn btn-sm btn-outline-light mt-2" onclick="handleClickRegisterOrPay(event,${isTemporaryUser})" style="font-size: 12px; border-radius: 50px;">
+                                    ${isTemporaryUser ? (window.translations?.register || 'Register to View') : (window.translations?.subscribe || 'Subscribe to View')}
+                                </button>
+                            </div>`;
+        }
+    }
+
+    htmlContent += `
+        <div class="${cardClass}" data-id="${chat._id}" style="cursor:pointer;">
+            <div class="card gallery-hover shadow-sm border-0 h-100 position-relative overflow-hidden">
+                <a href="/character/${chat._id}" class="text-decoration-none">
+                    <div class="gallery-image-wrapper" style="aspect-ratio: 4/5; background: #f8f9fa; position: relative;">
+                        <img src="${imageSrc}" class="card-img-top gallery-img" alt="${chat.name}" style="height: 100%; width: 100%; object-fit: cover;">
+                        ${nsfwOverlay}
+                    </div>
+                    <div class="card-body p-2 d-flex flex-column">
+                        <h6 class="card-title small fw-bold mb-1 text-truncate text-dark" style="font-size: 0.85rem;">${chat.name}</h6>
+                        ${isPremiumChat ? '<span class="badge bg-warning text-dark position-absolute top-0 end-0 m-1 small" style="font-size: 0.6rem !important; padding: 0.2em 0.4em !important;">Premium</span>' : ''}
+                    </div>
+                </a>
+                ${ (currentUser.isAdmin || chat.userId === currentUser._id) ? `
+                <div class="position-absolute top-0 start-0 m-1" style="z-index:3;">
+                    <button class="btn btn-sm btn-outline-secondary border-0 ${chat.nsfw ? 'nsfw' : ''}" onclick="toggleChatNSFW(this); event.stopPropagation();" data-id="${chat._id}" style="background: #00000050;color: white;padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
+                        ${chat.nsfw ? '<i class="bi bi-eye-slash-fill"></i>' : '<i class="bi bi-eye-fill"></i>'}
+                    </button>
+                </div>` : ''}
+            </div>
+        </div>
+    `;
+  });
+
+  const galleryElement = $(document).find(`#${targetGalleryId}`);
+  if (galleryElement.length) {
+    galleryElement.append(htmlContent);
+  } else {
+    console.warn(`Target gallery with ID #${targetGalleryId} not found.`);
+  }
+};
 window.displayLatestChats = function (chatData, targetGalleryId, modal = false) {
   let htmlContent = '';
   const currentUser = user; // Assuming 'user' is globally available from the template

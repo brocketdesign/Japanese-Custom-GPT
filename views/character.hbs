@@ -239,6 +239,20 @@
     </section>
   {{/if}} 
 
+  <!-- Similar Characters Section -->
+  {{#if similarChats.length}}
+  <section class="section-padding shadow-sm">
+    <div class="container">
+      <h3 class="text-center">{{translations.similar_characters_title}}</h3>
+      <p class="text-center text-muted mb-4">{{translations.similar_characters_description}}</p>
+      <hr class="w-25 mx-auto">
+      <div class="row mx-0" id="similar-characters-gallery" style="justify-content: center;">
+        <!-- Similar characters will be appended here by displayLatestChats -->
+      </div>
+    </div>
+  </section>
+  {{/if}}
+
   <!-- Other Images Section -->
   {{#if chatId}}
     <section id="otherImages" class="section-padding shadow-sm">
@@ -531,6 +545,12 @@
       }
       loadChatImages(chatId, 1, true);
       loadChatUsers(chatId);
+    }
+
+    // Load similar characters if data is available
+    const similarChatsData = {{#if similarChats}}{{{json similarChats}}}{{else}}null{{/if}};
+    if (similarChatsData && similarChatsData.length > 0) {
+      window.displaySimilarChats(similarChatsData, 'similar-characters-gallery');
     }
 
     // Function to share image and title on SNS

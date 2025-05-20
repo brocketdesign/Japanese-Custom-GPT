@@ -395,13 +395,36 @@ fastify.get('/character', async (request, reply) => {
   }
 });
 
+
+// Helper function to tokenize a prompt string
+function tokenizePrompt(promptText) {
+  if (!promptText || typeof promptText !== 'string') {
+    return new Set();
+  }
+  return new Set(
+    promptText
+      .toLowerCase()
+      .split(/\W+/) // Split by non-alphanumeric characters
+      .filter(token => token.length > 0) // Remove empty tokens
+  );
+}
 fastify.get('/character/:chatId', async (request, reply) => {
   try {
     const db = fastify.mongo.db;
+    const { translations, lang, user } = request;
+    const currentUserId = user._id; // Renamed from userId to avoid conflict
+    const chatIdParam = request.params.chatId;
+    let chatIdObjectId;
+
+    console.log(`[SimilarChats] Processing /character/${chatIdParam} for user ${currentUserId}`);
+
+    try {
+      chatIdObjectId = new fastify.mongo.ObjectId(chatIdParam);
+    } catch (e) {
+      console.error(`[SimilarChats] Invalid Chat ID format: ${chatIdParam}`);
+      return reply.code(400).send({ error: 'Invalid Chat ID format' });
+    }
     
-    let { translations, lang, user } = request;
-    const userId = user._id;
-    const chatId = new fastify.mongo.ObjectId(request.params.chatId);
     const imageId = request.query.imageId ? new fastify.mongo.ObjectId(request.query.imageId) : null;
     const isModal = request.query.modal === 'true';
     
@@ -409,29 +432,38 @@ fastify.get('/character/:chatId', async (request, reply) => {
     const galleryCollection = db.collection('gallery');
 
     let subscriptionStatus = false;
-    if (!user.isTemporary && userId) {
-      user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-      subscriptionStatus = user.subscriptionStatus === 'active';
+    let currentUserData = user; // Use 'user' from request as initial current user data
+    if (!currentUserData.isTemporary && currentUserId) {
+      currentUserData = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(currentUserId) });
+      if (currentUserData) {
+        subscriptionStatus = currentUserData.subscriptionStatus === 'active';
+      } else {
+        // Handle case where user might have been deleted or ID is stale
+        console.warn(`[SimilarChats] User data not found for ID: ${currentUserId}. Treating as non-subscribed.`);
+      }
     }
 
-    const chat = await chatsCollection.findOne({ _id: chatId });
+    const chat = await chatsCollection.findOne({ _id: chatIdObjectId });
+
     if (!chat) {
+      console.warn(`[SimilarChats] Chat not found for ID: ${chatIdParam}`);
       return reply.code(404).send({ error: 'Chat not found' });
     }
+    console.log(`[SimilarChats] Found current chat: ${chat.name} (ID: ${chat._id})`);
 
     let image = null;
     let isBlur = false;
     if (imageId) {
       const imageDoc = await galleryCollection
         .aggregate([
-          { $match: { chatId: chatId } },
+          { $match: { chatId: chatIdObjectId } }, // Use chatIdObjectId here
           { $unwind: '$images' },
           { $match: { 'images._id': imageId } },
           { $project: { image: '$images', _id: 0 } },
         ])
         .toArray();
-        // Generate prompt title if it doesn't exist and save it to the image doc in the db then send it using websocket
-        if (!imageDoc[0].image.title || !imageDoc[0].image.title.en || !imageDoc[0].image.title.ja || !imageDoc[0].image.title.fr) {
+        
+        if (imageDoc.length > 0 && imageDoc[0].image && (!imageDoc[0].image.title || !imageDoc[0].image.title.en || !imageDoc[0].image.title.ja || !imageDoc[0].image.title.fr)) {
             const generateTitles = async () => {
               const title_en = await generatePromptTitle(imageDoc[0].image.prompt, 'english');
               const title_ja = await generatePromptTitle(imageDoc[0].image.prompt, 'japanese');
@@ -444,48 +476,101 @@ fastify.get('/character/:chatId', async (request, reply) => {
             };
 
             generateTitles().then((title) => {
-
               galleryCollection.updateOne(
                 { 'images._id': imageId },
                 { $set: { 'images.$.title': title } }
               );
-
-              fastify.sendNotificationToUser(userId, 'updateImageTitle', { title });
+              fastify.sendNotificationToUser(currentUserId, 'updateImageTitle', { title });
             }).catch((err) => {
-            console.error('Failed to generate titles:', err);
+              console.error('[SimilarChats] Failed to generate titles for image:', err);
             });
         }
       if (imageDoc.length > 0) {
         image = imageDoc[0].image;
-        const unlockedItem = user?.unlockedItems?.map((id) => id.toString()).includes(imageId.toString());
+        const unlockedItem = currentUserData?.unlockedItems?.map((id) => id.toString()).includes(imageId.toString());
         isBlur = unlockedItem ? false : image?.nsfw && !subscriptionStatus;
       } else {
-        return reply.code(404).send({ error: 'Image not found' });
+        console.warn(`[SimilarChats] Image not found for ID: ${imageId} in chat ${chatIdParam}`);
+        // Not returning 404 for image not found, page can still render without it.
       }
     }
-    // Log user activity 
+
+    let similarChats = [];
+    const characterPrompt = chat.enhancedPrompt || chat.characterPrompt; // Using chat.prompt as per latest user version
+    console.log(`[SimilarChats] Current character prompt for ${chatIdParam}: "${characterPrompt}"`);
+
+    if (characterPrompt) {
+      const mainPromptTokens = tokenizePrompt(characterPrompt);
+      console.log(`[SimilarChats] Tokenized main prompt for ${chatIdParam}: ${JSON.stringify(Array.from(mainPromptTokens))}`);
+
+      // Fetch other chats. Consider adding more filters if performance becomes an issue.
+      // Project only necessary fields, including 'prompt' for scoring.
+      const candidateChatsCursor = chatsCollection.find(
+        { _id: { $ne: chatIdObjectId }, chatImageUrl: { $exists: true }, $or: [{enhancedPrompt: { $exists: true, $ne: null, $ne: "" }}, {characterPrompt: { $exists: true, $ne: null, $ne: "" }}] },
+        {
+          projection: {
+        _id: 1, name: 1, chatImageUrl: 1, nsfw: 1, isPremium: 1, userId: 1, gender: 1, imageStyle: 1, enhancedPrompt: 1, characterPrompt: 1
+          }
+        }
+      );
+      
+      const scoredChats = [];
+      let processedCandidates = 0;
+      await candidateChatsCursor.forEach(candidate => {
+        processedCandidates++;
+        const candidateTokens = tokenizePrompt(candidate.enhancedPrompt || candidate.characterPrompt);
+        const commonTokens = [...mainPromptTokens].filter(token => candidateTokens.has(token));
+        const score = commonTokens.length;
+
+        if (score > 0) {
+          scoredChats.push({
+            ...candidate, // Spread existing candidate fields
+            score: score
+          });
+          console.debug(`[SimilarChats] Candidate ${candidate._id} (${candidate.name}) - Prompt: "${candidate.characterPrompt?.substring(0,50)}..." - Tokens: ${JSON.stringify(Array.from(candidateTokens))} - Score: ${score}`);
+        }
+      });
+      console.log(`[SimilarChats] Processed ${processedCandidates} candidates. Found ${scoredChats.length} chats with score > 0.`);
+      
+      scoredChats.sort((a, b) => b.score - a.score); // Sort by score descending
+      similarChats = scoredChats.slice(0, 5).map(c => {
+        const { characterPrompt, enhancedPrompt, score, ...rest } = c; // Exclude prompt and score from final object passed to template if not needed by displayLatestChats
+        return rest;
+      });
+
+      if (similarChats.length > 0) {
+        console.log(`[SimilarChats] Top ${similarChats.length} similar chats for ${chatIdParam}: ${JSON.stringify(similarChats.map(c => ({id: c._id, name: c.name})))}`);
+      } else {
+        console.log(`[SimilarChats] No similar chats found for ${chatIdParam} based on prompt matching.`);
+      }
+
+    } else {
+      console.log(`[SimilarChats] No prompt found for current character ${chatIdParam}. Skipping similar chat search.`);
+    }
+    
     const template = isModal ? 'character-modal.hbs' : 'character.hbs';
     return reply.renderWithGtm(template, {
       title: `${chat.name} | ${translations.seo.title_character}`,
       chat,
       image,
-      chatId,
+      chatId: chatIdParam,
       isBlur,
+      similarChats, // Pass scored and sorted similar chats
+      user: currentUserData, // Pass potentially updated currentUserData
       seo: [
-        { name: 'description', content: ` ${image?.title?.[request.lang] ?? ''} | ${translations.seo.description_character}` },
+        { name: 'description', content: ` ${image?.title?.[request.lang] ?? chat.description ?? ''} | ${translations.seo.description_character}` },
         { name: 'keywords', content: translations.seo.keywords },
         { property: 'og:title', content: `${chat.name} | ${translations.seo.title_character}` },
-        { property: 'og:description', content: `${image?.title?.[request.lang] ?? ''} | ${translations.seo.description_character}` },
-        { property: 'og:image', content: '/img/share.png' },
-        { property: 'og:url', content: 'https://chatlamix/' },
+        { property: 'og:description', content: `${image?.title?.[request.lang] ?? chat.description ?? ''} | ${translations.seo.description_character}` },
+        { property: 'og:image', content: chat.chatImageUrl || '/img/share.png' },
+        { property: 'og:url', content: `https://chatlamix/character/${chatIdParam}` },
       ],
     });
   } catch (err) {
-    console.error(err);
+    console.error(`[SimilarChats] Error in /character/:chatId route for ${request.params.chatId}:`, err);
     reply.code(500).send('Internal Server Error');
   }
 });
-
 
 fastify.get('/tags', async (request, reply) => {
   try {

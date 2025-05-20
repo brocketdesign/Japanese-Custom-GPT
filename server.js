@@ -511,11 +511,9 @@ fastify.get('/character/slug/:slug', async (request, reply) => {
     try {
       const baseUrl = process.env.MODE === 'local' ? 'http://localhost:3000' : `${request.protocol}://${request.hostname}`;
       const similarChatsUrl = `${baseUrl}/api/similar-chats/${chatIdParam}`;
-      console.log(`[SimilarChats] Fetching similar chats from: ${similarChatsUrl}`);
       const similarChatsResponse = await fetch(similarChatsUrl);
       if (similarChatsResponse.ok) {
         similarChats = await similarChatsResponse.json();
-        console.log(`[SimilarChats] Successfully fetched ${similarChats.length} similar chats for ${chatIdParam}`);
       } else {
         console.warn(`[SimilarChats] Failed to fetch similar chats for ${chatIdParam}. Status: ${similarChatsResponse.status}`);
       }
@@ -579,8 +577,6 @@ fastify.get('/character/:chatId', async (request, reply) => {
     await db.collection('chats').updateOne({ _id: new fastify.mongo.ObjectId(chatId) }, { $set: { slug } });
     chat.slug = slug;
     console.log(`[character/:chatId] Slug saved for chatId: ${chatId}, slug: ${slug}`);
-  } else {
-    console.log(`[character/:chatId] Existing slug found for chatId: ${chatId}, slug: ${chat.slug}`);
   }
 
   let imageId = request.query.imageId ? request.query.imageId : null;
@@ -602,7 +598,6 @@ fastify.get('/character/:chatId', async (request, reply) => {
       if (imageDoc.length > 0 && imageDoc[0].image) {
         // Check if image already has a slug
         console.log(`[character/:chatId] Found image document: ${imageDoc.length} for imageId: ${imageId}`);
-        console.log(`[character/:chatId] Image document:`, imageDoc[0].image);
         if (!imageDoc[0].image.slug) {
           // Get a title to use for the slug
           const imageTitle = typeof imageDoc[0].image.title === 'string'
@@ -692,7 +687,7 @@ fastify.get('/search', async (request, reply) => {
     const db = fastify.mongo.db;
     let { translations, lang, user } = request;
     const userId = user._id;
-    console.log(`[SEARCH] Incoming request from userId: ${userId}, query params:`, request.query);
+    console.log(`[SEARCH] Incoming request from userId: ${userId}, query: ${request.query.q || request.query.query}, page: ${request.query.page}`);
 
     user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) }) || request.user;
     console.log(`[SEARCH] Loaded user:`, user ? { _id: user._id, subscriptionStatus: user.subscriptionStatus } : null);
@@ -732,7 +727,6 @@ fastify.get('/search', async (request, reply) => {
       seoTitle = translations.seo_title_query.replace('${query}', query);
       seoDescription = translations.seo_description_query.replace('${query}', query);
     }
-    console.log(`[SEARCH] SEO title: ${seoTitle}, SEO description: ${seoDescription}`);
 
     // Fetch tags from a random page
     const randomPage = Math.floor(Math.random() * 10) + 1;
@@ -742,9 +736,7 @@ fastify.get('/search', async (request, reply) => {
     const tagsData = tagsRes.ok ? await tagsRes.json() : { tags: [] };
     if (!tagsRes.ok) {
       console.warn(`[SEARCH] Tags fetch failed with status: ${tagsRes.status}`);
-    } else {
-      console.log(`[SEARCH] Fetched ${tagsData.tags?.length || 0} tags`);
-    }
+    } 
     const tags = tagsData.tags || [];
 
     return reply.renderWithGtm('search.hbs', {

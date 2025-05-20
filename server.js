@@ -445,7 +445,7 @@ fastify.get('/character/:chatId', async (request, reply) => {
     }
 
     const chat = await chatsCollection.findOne({ _id: chatIdObjectId });
-console.log(chat)
+
     if (!chat) {
       console.warn(`[SimilarChats] Chat not found for ID: ${chatIdParam}`);
       return reply.code(404).send({ error: 'Chat not found' });
@@ -495,7 +495,7 @@ console.log(chat)
         // Not returning 404 for image not found, page can still render without it.
       }
     }
-console.log(image)
+
     let similarChats = [];
     try {
       const baseUrl = process.env.MODE === 'local' ? 'http://localhost:3000' : `${request.protocol}://${request.hostname}`;

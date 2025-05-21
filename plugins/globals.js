@@ -77,6 +77,45 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     fastify.addHook('onRequest', setRequestLangAndUser);
     fastify.addHook('preHandler', setReplyLocals);
 
+    // PreHandler to refresh user data for critical subscription-dependent routes
+    fastify.addHook('preHandler', async (request, reply) => {
+    // Get the current URL path without query parameters
+    const currentPath = request.raw.url.split('?')[0];
+    
+    // Only refresh data for specific endpoints that need fresh subscription info
+    const refreshRoutes = [
+        '/novita/generate-img',
+        '/api/generate-img',
+        '/chat',
+        '/chat/',
+        '/api/chat/',
+        '/api/openai-chat-completion'
+    ];
+        
+    // Check if the current path starts with any of the refresh routes
+    const needsRefresh = refreshRoutes.some(route => currentPath === route || currentPath.startsWith(`${route}/`));
+
+    if (needsRefresh && request.user && !request.user.isTemporary) {
+        try {      
+        // Get fresh user data
+        const refreshedUser = await fastify.mongo.db.collection('users').findOne(
+            { _id: new fastify.mongo.ObjectId(request.user._id) }
+        );
+        
+        if (refreshedUser) {
+            // Update the request.user with fresh data
+            request.user = refreshedUser;
+            
+            // Also update reply.locals to ensure templates get fresh data
+            if (reply.locals) {
+            reply.locals.user = refreshedUser;
+            }
+        }
+        } catch (error) {
+        console.error('[PreHandler] Error refreshing user data:', error);
+        }
+    }
+    });
     // Redirect to HTTPS in production
     fastify.addHook('onRequest', async (req, reply) => {
         if (process.env.MODE !== 'local' && req.headers['x-forwarded-proto'] !== 'https') {

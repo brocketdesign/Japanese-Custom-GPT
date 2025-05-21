@@ -571,7 +571,7 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
             // Check if imageModel is free. Retrieve the modelId from myModels
             const model = await fastify.mongo.db.collection('myModels').findOne({ model: chat.imageModel });
             const premiumModel = model ? !free_models.includes(model.modelId) : false;
-            //response.premium = premiumModel;
+            response.premium = premiumModel;
 
             return reply.send(response);
         } catch (error) {

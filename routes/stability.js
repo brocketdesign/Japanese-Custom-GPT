@@ -13,11 +13,20 @@ fastify.post('/novita/generate-img', async (request, reply) => {
   const db = fastify.mongo.db;
   const translations = request.translations
   try {
-    const all_tasks =  await getTasks(db,null, userId)
-    if(request.user.subscriptionStatus !== 'active' && all_tasks.length >= 5){
+    // Get fresh user data from database to check subscription
+    const freshUserData = await db.collection('users').findOne(
+      { _id: new fastify.mongo.ObjectId(userId) },
+      { projection: { subscriptionStatus: 1 } }
+    );
+    
+    const subscriptionStatus = freshUserData?.subscriptionStatus;
+    const all_tasks = await getTasks(db, null, userId)
+    
+    if(subscriptionStatus !== 'active' && all_tasks.length >= 5){
       fastify.sendNotificationToUser(userId, 'loadPlanPage')
       return reply.status(500).send({ error: 'You reached the limit of the free usage' });
     }
+
     const pending_taks =  await getTasks(db, 'pending', userId)
     if(pending_taks.length > 10){
       fastify.sendNotificationToUser(userId, 'showNotification', { message:request.translations.too_many_pending_images , icon:'warning' })
@@ -29,8 +38,7 @@ fastify.post('/novita/generate-img', async (request, reply) => {
       const promptData = await getPromptById(db,promptId);
       savePromptIdtoChat(db, chatId, userChatId, promptId)
       .then((response) => {
-        console.log(`[generate-img] User subscription status: ${request.user.subscriptionStatus}; Send notification: ${request.user.subscriptionStatus !== 'active'}`);
-        if(request.user.subscriptionStatus !== 'active'){
+        if(subscriptionStatus !== 'active'){
           fastify.sendNotificationToUser(userId, 'updateCustomPrompt', { promptId: promptId })
         }
       })

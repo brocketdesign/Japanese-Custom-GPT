@@ -279,25 +279,4 @@ $(document).ready(function() {
     $('#cancel-plan').hide();
     $('#day-pass-countdown-section').hide();
   });
-
-  // Display user limits
-  $.get('/user/limit/'+user._id,function(data){
-    data = data.limits
-    $('#user-limit').html(`
-    <ul class="list-group">
-      <li class="list-group-item">
-        <i class="fa fa-comment me-2"></i>
-        ${data.messageCountDoc ? data.messageCountDoc.count : 0}/${data.messageLimit}
-      </li>
-      <li class="list-group-item">
-        <i class="fas fa-lightbulb me-2"></i>
-        ${data.messageIdeasCountDoc? data.messageIdeasCountDoc.count : 0}/${data.messageIdeasLimit}
-      </li>
-      <li class="list-group-item">
-        <i class="fa fa-image me-2"></i>
-        ${data.imageCountDoc? data.imageCountDoc.count : 0}/${data.imageLimit}
-      </li>
-    </ul>
-    `)
-  })
 });

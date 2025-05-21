@@ -6,7 +6,8 @@ function initializeWebSocket() {
 
   let socket;
   if (MODE === 'local') {
-    socket = new WebSocket(`ws://localhost:3000/ws?userId=${user._id}`);
+    const ip = location.hostname;
+    socket = new WebSocket(`ws://${ip}:3000/ws?userId=${user._id}`);
   } else {
     socket = new WebSocket(`wss://app.chatlamix.com/ws?userId=${user._id}`);
   }
@@ -48,13 +49,6 @@ function initializeWebSocket() {
 
           if($('#chatContainer').is(':visible')) {
             fetchChatData(chatId,user._id)
-          }
-          break;
-        }
-        case 'updateRelation': {
-          const { relation, userChatId } = data.notification;
-          if (relation && userChatId) {
-            $(`#relationshipStatus[data-id="${userChatId}"]`).text(relation).show();
           }
           break;
         }

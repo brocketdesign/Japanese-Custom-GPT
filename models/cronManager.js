@@ -52,7 +52,46 @@ const configureCronJob = (jobName, schedule, enabled, task) => {
   
   return false; 
 };
-
+/**
+ * Clean up expired audio files that weren't deleted by the setTimeout
+ * @param {Object} fastify - Fastify instance
+ */
+const cleanupExpiredAudioFiles = (fastify) => async () => {
+  console.log('[cleanupExpiredAudioFiles] Checking for expired audio files...');
+  const db = fastify.mongo.db;
+  const cleanupCollection = db.collection('audioFileCleanup');
+  
+  try {
+    // Find all expired files
+    const expiredFiles = await cleanupCollection.find({
+      expiresAt: { $lt: new Date() }
+    }).toArray();
+    
+    console.log(`[cleanupExpiredAudioFiles] Found ${expiredFiles.length} expired audio files`);
+    
+    // Delete each expired file
+    for (const fileRecord of expiredFiles) {
+      try {
+        const filePath = fileRecord.filePath;
+        if (fs.existsSync(filePath)) {
+          await fs.promises.unlink(filePath);
+          console.log(`[cleanupExpiredAudioFiles] Deleted expired file: ${fileRecord.filename}`);
+        }
+        
+        // Remove from the tracking collection
+        await cleanupCollection.deleteOne({ _id: fileRecord._id });
+      } catch (err) {
+        console.error(`[cleanupExpiredAudioFiles] Error deleting file ${fileRecord.filename}:`, err);
+        // If the file doesn't exist, still remove from tracking
+        if (err.code === 'ENOENT') {
+          await cleanupCollection.deleteOne({ _id: fileRecord._id });
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[cleanupExpiredAudioFiles] Error cleaning up expired audio files:', err);
+  }
+};
 /**
  * Create a model chat generation task
  * 
@@ -339,7 +378,13 @@ const initializeCronJobs = async (fastify) => {
         true, // Enable this job
         cachePopularChatsTask(fastify)
     );
-    
+    // Add audio files cleanup task (runs every 15 minutes)
+    configureCronJob(
+        'audioFilesCleanup',
+        '*/15 * * * *', // Runs every 15 minutes
+        true,
+        cleanupExpiredAudioFiles(fastify)
+    );
     console.log('[initializeCronJobs] Cron jobs initialized');
     
   } catch (error) {

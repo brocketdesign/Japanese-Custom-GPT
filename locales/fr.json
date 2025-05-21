@@ -1,5 +1,16 @@
 {
   "lang":"fr",
+  "translateTo":"Traduire vers",
+  
+  "translate": "Traduire",
+  "english": "Anglais",
+  "japanese": "Japonais",
+  "korean": "Coréen",
+  "chinese": "Chinois",
+  "french": "Français",
+  "german": "Allemand",
+
+  "loading_suggestions": "Chargement des suggestions...",
   "gridSize": "Taille de la grille",
   "about_the_image": "À propos de l'image",
   

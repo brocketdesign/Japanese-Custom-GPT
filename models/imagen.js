@@ -5,6 +5,7 @@ const axios = require('axios');
 const { createHash } = require('crypto');
 const { addNotification, saveChatImageToDB } = require('../models/tool')
 const slugify = require('slugify');
+const sharp = require('sharp');
 const default_prompt = {
     sdxl: {
       sfw: {
@@ -139,7 +140,13 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
     // Prepare params
     let requestData = { ...params, ...image_request, image_num };
     if(image_base64){
-      requestData.image_base64 = image_base64;
+      // Get target dimensions from the selected style
+      const targetWidth = image_request.width;
+      const targetHeight = image_request.height;
+      
+      // Center crop the image to match the target aspect ratio
+      const croppedImage = await centerCropImage(image_base64, targetWidth, targetHeight);
+      requestData.image_base64 = croppedImage;
     }
     console.log(`[generateImg] new request for ${imageType} with prompt:`, requestData.prompt);
 
@@ -241,6 +248,48 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
 
   }
 
+// Add this function to your code
+async function centerCropImage(base64Image, targetWidth, targetHeight) {
+  try {
+    // Decode base64 image
+    const imageBuffer = Buffer.from(base64Image.split(',')[1], 'base64');
+    
+    // Get image metadata
+    const metadata = await sharp(imageBuffer).metadata();
+    
+    // Calculate target aspect ratio
+    const targetRatio = targetWidth / targetHeight;
+    const sourceRatio = metadata.width / metadata.height;
+    
+    let extractWidth, extractHeight, left, top;
+    
+    if (sourceRatio > targetRatio) {
+      // Source image is wider than target, crop width
+      extractHeight = metadata.height;
+      extractWidth = Math.round(metadata.height * targetRatio);
+      top = 0;
+      left = Math.round((metadata.width - extractWidth) / 2);
+    } else {
+      // Source image is taller than target, crop height
+      extractWidth = metadata.width;
+      extractHeight = Math.round(metadata.width / targetRatio);
+      left = 0;
+      top = Math.round((metadata.height - extractHeight) / 2);
+    }
+    
+    // Extract the center portion and resize to target dimensions
+    const croppedImageBuffer = await sharp(imageBuffer)
+      .extract({ left, top, width: extractWidth, height: extractHeight })
+      .resize(targetWidth, targetHeight)
+      .toBuffer();
+    
+    // Convert back to base64
+    return `data:image/${metadata.format};base64,${croppedImageBuffer.toString('base64')}`;
+  } catch (error) {
+    console.error('Error cropping image:', error);
+    return base64Image; // Return original if error occurs
+  }
+}
     // Module to check the status of a task at regular intervals
     const completedTasks = new Set();
 

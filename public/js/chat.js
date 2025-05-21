@@ -1,3 +1,4 @@
+
 const audioCache = new Map();
 const audioPool = [];
 
@@ -117,7 +118,16 @@ $(document).ready(async function() {
             });
         }
     });
-
+    window.addEventListener('message', function(event) {
+        if (event.data.event === 'fetchChatData') {
+            const fetch_chatId = event.data.chatId
+            const fetch_userId = event.data.userId
+            const fetch_reset = event.data.reset
+            fetchChatData(fetch_chatId, fetch_userId, fetch_reset,function(){ 
+                $(`#spinner-${fetch_chatId}`).removeClass('on').hide()
+            });
+        }
+    });
     let count_proposal = 0
     const subscriptionStatus = user.subscriptionStatus == 'active'
 
@@ -200,7 +210,7 @@ $(document).ready(async function() {
         resizeTextarea(this);
     });
 
-    function resizeTextarea(element){
+    window.resizeTextarea = function(element){
         element.style.height = 'auto';
         element.style.height = (element.scrollHeight - 20 ) + 'px';  
     }
@@ -211,7 +221,6 @@ $(document).ready(async function() {
         if(userChatId){
             sessionStorage.setItem('userChatId', userChatId);
             $('#chatContainer').attr('data-id',userChatId)
-            $('#relationshipStatus').attr('data-id',userChatId).hide();
         }
 
         var currentUrl = window.location.href;
@@ -393,12 +402,6 @@ $(document).ready(async function() {
         } else {
             displayInitialChatInterface(data.chat);
         }
-    
-        if (data.chat.galleries && data.chat.galleries.length > 0) {
-            displayGalleries(thumbnail, data.chat.galleries, data.chat.blurred_galleries, chatId, fetch_userId);
-        }else{
-            $('#galleries-open').hide();
-        }
 
         updateParameters(chatId, fetch_userId, userChatId);
         showChat();
@@ -433,7 +436,6 @@ function setupChatInterface(chat, character) {
     }
     updateChatBackgroundImage(thumbnail);
     $('#chat-title').text(chatName);
-    $('#input-container').show().addClass('d-flex');
     if(user.lang == 'ja'){
         $('#userMessage').attr('placeholder', `${chatName}${window.translations.sendMessageTo}`);
     }else{
@@ -476,12 +478,6 @@ function setupChatInterface(chat, character) {
                 $('#chatContainer').animate({
                     scrollTop: $('#chatContainer').prop("scrollHeight") + 500
                 }, 500);
-
-                const lastAssistantRelationship = userChat.messages[userChat.messages.length - 1]?.custom_relation;
-                if (lastAssistantRelationship) {
-                    $(`#relationshipStatus[data-id="${userChatId}"]`).show();
-                    $(`#relationshipStatus[data-id="${userChatId}"]`).text(lastAssistantRelationship);
-                }
             }, 1000);
         });
 
@@ -495,99 +491,7 @@ function setupChatInterface(chat, character) {
         displayStarter(chat);
     }
     
-    function displayGalleries(thumbnail, galleries, blurred_galleries, chatId, fetch_userId) {
-        const isLocalMode = MODE === 'local';
-    
-        $('#galleries-open').show();
-    
-        const createAlbum = (gallery, index) => ({
-            chatId,
-            userId: fetch_userId,
-            name: gallery.name,
-            price: gallery.price,
-            description: gallery.description,
-            blurredImages: [gallery.images[0], ...blurred_galleries[index].images],
-            images: gallery.images,
-        });
-    
-        galleries.forEach((gallery, index) => {
-            if (gallery.images && gallery.images.length > 0) {
-                const album = createAlbum(gallery, index);
-                displayAlbumThumb(thumbnail, album);
-            }
-        });
-    
-        $('#galleries-open').on('click', function () {
-            let galleryThumbnails = '';
-    
-            galleries.forEach((gallery, index) => {
-                const album = createAlbum(gallery, index);
-    
-                galleryThumbnails += `
-                    <div class="col-3 col-sm-4 col-lg-2">
-                        <div data-index="${index}" style="background-image:url(${album.images[0]}); border-radius: 5px !important;border:1px solid white; cursor:pointer;" 
-                                id="open-album-${album.chatId}-${index}" class="card-img-top rounded-avatar position-relative m-auto shadow" alt="${album.name}">
-                        </div>
-                        <span style="font-size: 12px;color: #fff;">${album.name}</span>
-                        <span class="text-muted" style="font-size: 12px;">(${album.images.length}枚)</span>
-                    </div>`;
-                
-            });
-    
-            Swal.fire({
-                html: `
-                    <div style="top: 0;left: 0;right: 0;border-radius: 40px 40px 0 0;background: linear-gradient(to top, rgba(0, 0, 0, 0), rgba(46, 44, 72, 0.91) 45%);" class="sticky-top pt-3">
-                        <h5 class="mb-0 text-white">${chatName}のアルバム</h5>
-                    </div>
-                    <div class="row no-gutters pt-3 ps-3 mx-0">
-                        ${galleryThumbnails}
-                    </div>`,
-                showClass: { popup: 'animate__animated animate__slideInUp' },
-                hideClass: { popup: 'animate__animated animate__slideOutDown' },
-                position: 'bottom',
-                backdrop: 'rgba(43, 43, 43, 0.2)',
-                showCloseButton: true,
-                showConfirmButton: false,
-                customClass: { 
-                    container: 'p-0', 
-                    popup: 'album-popup shadow', 
-                    htmlContainer:'position-relative', 
-                    closeButton: 'position-absolute me-3' 
-                },
-                didOpen: () => {
-                    galleries.forEach((gallery, index) => {
-                        const album = createAlbum(gallery, index);
-                        $(`#open-album-${album.chatId}-${index}`).on('click', function () {
-                            displayAlbum(album);
-                        });
-                    });
-                }
-            });
-        });
-    }
-    
-    
-    function displayAlbumThumb(thumbnail, album){
-        var card = $(`
-            <div class="card custom-card bg-transparent shadow-0 border-0 px-1 mx-1" style="cursor:pointer;">
-                <div style="background-image:url(${album.images[0]});border:4px solid white;" class="card-img-top rounded-avatar position-relative m-auto shadow" alt="${album.name}">
-                </div>
-            </div>
-        `);
-        card.on('click', function() {
-            displayAlbum(album)
-        });
-        $('#chat-recommend').append(card);
-    }    
-    function displayImagesThumb(){
-        const images = $('.assistant-image-box img').map(function() {
-            return $(this).attr('src');
-        }).get();
 
-        images.forEach(imageUrl => {
-            displayImageThumb(imageUrl)
-        });
-    }
     function displayImageThumb(imageUrl,origineUserChatId = null){
         const messageContainer = $(`#chatContainer[data-id=${origineUserChatId}]`)
         if(origineUserChatId && messageContainer.length == 0){
@@ -777,10 +681,11 @@ function setupChatInterface(chat, character) {
     
     async function displayChat(userChat, persona, callback) {
 
-        $('#progress-container').show();
+        $('body').css('overflow', 'hidden');
         $('#stability-gen-button').show();
         $('.auto-gen').each(function() { $(this).show(); });
         $('#audio-play').show();
+
     
         let chatContainer = $('#chatContainer');
         chatContainer.empty();
@@ -1159,14 +1064,22 @@ function setupChatInterface(chat, character) {
             }
             return result.isConfirmed;
         });
-    }       
-    function stopAllAudios() {
+    }    
+
+    window.stopAllAudios = function() {
         audioPool.forEach(audio => {
-            audio.pause();
-            audio.currentTime = 0;
+            if (!audio.paused) {
+                audio.pause();
+                audio.currentTime = 0;
+                
+                // Update the UI for the control element if it exists
+                if (audio.controlElement) {
+                    const duration = audio.controlElement.attr('data-audio-duration') || 0;
+                    audio.controlElement.html(`► ${Math.round(duration)}"`);
+                }
+            }
         });
     }
-    
     function getAvailableAudio() {
         const idleAudio = audioPool.find(a => a.paused && a.currentTime === 0);
         if (idleAudio) {
@@ -1181,64 +1094,70 @@ function setupChatInterface(chat, character) {
     $(document).on('click', function() {
         getAvailableAudio();
     });
-
-    
-    $(document).on('click', '.message-container', function(event) {
-        event.stopPropagation();
         
-        const $el = $(this).find('.audio-content');
-        const message = $el.attr('data-content');
-        
-        if (!message) {
-            return;
-        }
-        
-        stopAllAudios();
-        
-        (function() {
-            const duration = $el.attr('data-audio-duration');
-            if (duration) {
-                $el.html('► ' + Math.round(duration) + '"');
-            }
-        })();
-        
-        //initAudio($el, message);
-    });
-    
-    
     $(document).on('click', '.audio-controller .audio-content', function(event) {
         event.stopPropagation();
         const $el = $(this);
         const message = $el.attr('data-content');
+        
+        // Check if audio is already playing
+        const audioId = $el.attr('id');
+        const audio = audioPool.find(a => a.controlElement && a.controlElement.attr('id') === audioId);
+        
+        if (audio && !audio.paused) {
+            // If audio is playing, stop it
+            audio.pause();
+            audio.currentTime = 0;
+            $el.html(`► ${Math.round($el.attr('data-audio-duration') || 0)}"`);
+            return;
+        }
+        
+        // If no audio is playing, start a new one
         stopAllAudios();
-    
+
         (function() {
             const duration = $el.attr('data-audio-duration');
             if (duration) $el.html('► ' + Math.round(duration) + '"');
         })();
-    
+
         initAudio($el, message);
     });
-    
-    function initAudio($el, message) {
+        
+    window.initAudio = function($el, message) {
+
+        if(!subscriptionStatus){
+            loadPlanPage();
+            return;
+        }
+
         requestAudioPermission().then(isAllowed => {
             if (!isAllowed) {
                 return $el.html('再生がキャンセルされました');
             }
-    
-            $el.html('<div class="spinner-grow spinner-grow-sm" role="status"><span class="visually-hidden">Loading...</span></div>');
-            const voiceUrl = getVoiceUrl(message);
-    
-            $.post(voiceUrl, response => {
-                if (response.errno !== 0) {
-                    return $el.html('エラーが発生しました');
-                }
-    
-                const audioUrl = response.data.audio_url;
-                audioCache.set(message, audioUrl);
+            
+            // Check if audio is already cached
+            const cachedUrl = audioCache.get(message);
+            
+            if (cachedUrl) {
+                // Audio already cached, play it directly
                 const audio = getAvailableAudio();
-                playAudio($el, audio, audioUrl);
-            });
+                playAudio($el, audio, cachedUrl, message);
+            } else {
+                // Audio not cached, show loading state and fetch
+                $el.html('<div class="spinner-grow spinner-grow-sm" role="status"><span class="visually-hidden">Loading...</span></div>');
+                const voiceUrl = getVoiceUrl(message);
+                
+                $.post(voiceUrl, response => {
+                    if (response.errno !== 0) {
+                        return $el.html('エラーが発生しました');
+                    }
+                    
+                    const audioUrl = response.data.audio_url;
+                    audioCache.set(message, audioUrl);
+                    const audio = getAvailableAudio();
+                    playAudio($el, audio, audioUrl, message);
+                });
+            }
         });
     }
     
@@ -1253,58 +1172,85 @@ function setupChatInterface(chat, character) {
             : `${baseUrl}${params}&robot_id=1533008511&ts=1724029265&t_secret=58573&sign=3beb590d1261bc75d6687176f50470eb`;
     }
 
-    function playAudio($el, audio, audioUrl) {
+    function setupMessageContainerClickHandling($el, audio, message) {
+        // Handle clicks on the audio control button
+        $el.off('click').on('click', function(event) {
+            event.stopPropagation();
+            
+            const audioDuration = $el.attr('data-audio-duration');
+            const cachedUrl = audioCache.get(message);
+            
+            if (audio.paused) {
+                // Resume playback
+                audio.muted = false;
+                audio.play();
+                $el.html(`❚❚ ${Math.round(audioDuration)}"`);
+            } else {
+                // Pause playback
+                audio.pause();
+                audio.currentTime = 0;
+                $el.html(`► ${Math.round(audioDuration)}"`);
+            }
+        });
+        
+        // Also set up the parent message container to control this audio
+        const messageContainer = $el.closest('.message-container');
+        messageContainer.off('click.audio').on('click.audio', function(event) {
+            // Only handle if not clicking directly on the audio control
+            if (!$(event.target).closest('.audio-controller').length) {
+                if (!audio.paused) {
+                    // If playing, stop it
+                    audio.pause();
+                    audio.currentTime = 0;
+                    $el.html(`► ${Math.round($el.attr('data-audio-duration'))}"`);
+                }
+            }
+        });
+    }
+
+    function playAudio($el, audio, audioUrl, message) {
+        // Track the current playing audio element to support toggling
+        const currentlyPlaying = audio.src === audioUrl && !audio.paused;
+        
         // Mute all other audios
         audioPool.forEach(a => {
             if (a !== audio) {
                 a.muted = true;
+                a.pause();
             }
         });
-    
+        
+        if (currentlyPlaying) {
+            // If this audio is already playing, pause it
+            audio.pause();
+            audio.currentTime = 0;
+            const duration = $el.attr('data-audio-duration') || 0;
+            $el.html(`► ${Math.round(duration)}"`);
+            return;
+        }
+        
+        // Otherwise, set up and play
         if (audio.src !== audioUrl) audio.src = audioUrl;
-    
+        
         audio.muted = false;
         audio.play();
-    
-        audio.onloadedmetadata = () => 
-            $el.attr('data-audio-duration', audio.duration).html(`❚❚ ${Math.round(audio.duration)}"`);
-    
-        audio.onended = () => 
+        
+        audio.onloadedmetadata = () => {
+            const duration = audio.duration;
+            $el.attr('data-audio-duration', duration)
+            .html(`❚❚ ${Math.round(duration)}"`);
+            
+            // Store which element is controlling this audio
+            audio.controlElement = $el;
+        }
+        
+        audio.onended = () => {
             $el.html(`► ${Math.round(audio.duration)}"`);
-    
-        $el.off('click').on('click', (event) => {
-            event.stopPropagation();
+        }
         
-            const message = $el.attr('data-content');
-            const audioDuration = $el.attr('data-audio-duration');
-            const cachedUrl = audioCache.get(message);
-            let currentAudio = audioPool.find(a => a.src === cachedUrl) || getAvailableAudio();
-        
-            // Mute all other audios
-            audioPool.forEach(a => {
-                if (a !== currentAudio) {
-                    a.muted = true;
-                }
-            });
-        
-            if (currentAudio.src !== cachedUrl) {
-                currentAudio.src = cachedUrl;
-            }
-        
-            if (currentAudio.paused) {
-                currentAudio.muted = false;
-                currentAudio.play();
-                $el.html(`❚❚ ${Math.round(audioDuration)}"`);
-            } else {
-                currentAudio.pause();
-                currentAudio.currentTime = 0;
-                currentAudio.muted = true;
-                $el.html(`► ${Math.round(audioDuration)}"`);
-            }
-        });
+        // Set up message container click handling
+        setupMessageContainerClickHandling($el, audio, message);
     }
-    
-    
     
     function removeContentBetweenStars(str) {
         if (!str) { return str; }
@@ -1354,7 +1300,7 @@ function setupChatInterface(chat, character) {
             afterStreamEnd(uniqueId, $(`#completion-${uniqueId}`).text());
           }
         }
-      
+        autoPlayMessageAudio(uniqueId, message);
         requestAnimationFrame(renderChunk);
       };
       
@@ -1685,12 +1631,16 @@ window.regenImage = function(el){
     }
 };
 
-function displaySuggestions(suggestions, uniqueId) {
+window.displaySuggestions = function(suggestions, uniqueId) {
     const suggestionContainer = $(`#suggestions`);
 
+    if(!suggestionContainer.hasClass('init')){
+        suggestionContainer.addClass('init');
+        suggestionContainer.empty();
+    }
     // Add new suggestions smoothly one by one
     suggestions.forEach((suggestion, index) => {
-        const button = $(`<button class="btn shadow m-1 rounded-pill text-capitalize text-white" style="background: color(srgb 0.2567 0.2909 0.325 / 0.81);">${suggestion}</button>`);
+        const button = $(`<button class="btn shadow m-1 rounded-pill text-capitalize text-white col-auto" style="background:#151213b0;">${suggestion}</button>`);
         button.on('click', function() {
             sendMessage(suggestion);
             $(this).fadeOut();
@@ -1702,18 +1652,6 @@ function displaySuggestions(suggestions, uniqueId) {
 // call fetchchatdata function accross other scripts
 function callFetchChatData(fetch_chatId, fetch_userId, fetch_reset, callback){
     fetchChatData(fetch_chatId, fetch_userId, fetch_reset, callback);
-}
-function updateProgress(messagesCount, maxMessages) {
-    if(messagesCount>maxMessages){return}
-    // Calculate fill percentage out of 100
-    const fillPercentage = Math.min((messagesCount / maxMessages) * 100, 100);
-    const fillHeight = 500 - (500 * fillPercentage / 100);
-
-    // Adjust the y-position of the GIF to create the moving fill effect
-    $('#heart-gif').attr('y', fillHeight);
-
-    // Update the progress label with the current count
-    $('#progress-label').text(`${messagesCount}/${maxMessages}`);
 }
 
 window.enableToggleDropdown = function(el) {
@@ -2233,12 +2171,41 @@ window.showChat = function() {
 
 window.initializeAudio = function() {
     let autoPlay = localStorage.getItem('audioAutoPlay') === 'true';
-    console.log('[initializeAudio] autoPlay:', autoPlay);
-    $('#audio-icon').addClass(autoPlay ? 'fa-volume-up' : 'fa-volume-mute');
+    $('#audio-icon').addClass(autoPlay ? 'bi-volume-up' : 'bi-volume-mute');
     $('#audio-play').click(function() {
+        if(!subscriptionStatus){
+            loadPlanPage();
+            return;
+        }
         autoPlay = !autoPlay;
         localStorage.setItem('audioAutoPlay', autoPlay);
-        console.log('[audio-play click] autoPlay toggled to:', autoPlay);
-        $('#audio-icon').toggleClass('fa-volume-up fa-volume-mute');
+        $('#audio-icon').toggleClass('bi-volume-up bi-volume-mute');
     });
 };
+
+// Add this function to automatically play audio for new messages
+function autoPlayMessageAudio(uniqueId, message) {
+    if (!message) return;
+    
+    const autoPlay = localStorage.getItem('audioAutoPlay') === 'true';
+    if (!autoPlay) return;
+    
+    // Find the audio button element for this message
+    const $el = $(`#play-${uniqueId}`);
+    if ($el.length === 0) return;
+    
+    // Set the audio content attribute if not already set
+    if (!$el.attr('data-content')) {
+        $el.attr('data-content', message);
+    }
+    
+    // Add a small delay to ensure the DOM is fully rendered
+    setTimeout(() => {
+        stopAllAudios();
+        
+        // Initialize and play the audio
+        initAudio($el, message);
+    }, 800);
+}
+
+initializeAudio()

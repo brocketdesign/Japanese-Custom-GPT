@@ -111,6 +111,7 @@
 </div>
 
 <div class="sticky-bottom" style="bottom:0; left:0; right:0;">
+    {{> chat-footer promptData=promptData}}
     {{#if (eq user.subscriptionStatus 'active')}}
     {{else}}
     <div class="text-center onchat-off" style="bottom:0;left:0;right:0;">
@@ -236,7 +237,6 @@
 <script>
     window.clerkTranslations = {{{json clerkTranslations}}};
 </script>
-<script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -579,9 +579,14 @@ window.redirectToChat = function(chatId,chatImage) {
     const userId = user._id
     // if on chat page fetchChatData else redirect to chat/${chatID}
     if (window.location.pathname.includes('/chat/')) {
-        fetchChatData(chatId,userId,null,function(){
-            $(`#spinner-${chatId}`).removeClass('on').hide()
-        })
+        //send message to parent window fetchChatData
+        window.parent.postMessage({
+            event: 'fetchChatData',
+            chatId: chatId,
+            userId: userId,
+            reset:null
+        }, '*');
+
     } else {
         window.location.href = `/chat/${chatId}`;
     }
@@ -591,6 +596,8 @@ window.showDiscovery = function() {
     if (!window.location.pathname.includes('/chat/')) {
         window.location.href = '/chat/';
     }
+    $('body').css('overflow', 'visible');
+    
     $('.onchat-on').hide()
     $('.onchat-on').addClass('d-none').css({
         'opacity': 0,
@@ -847,8 +854,7 @@ window.handleClerkUserUpdate = function() {
     .then(response => response.json())
     .then(data => {
         if (data.status) {
-            console.log('User data synchronized successfully');
-            // Refresh user data if needed
+          // Refresh user data if needed
             if (window.fetchUser) {
                 window.fetchUser().then(userData => {
                     if (userData) {

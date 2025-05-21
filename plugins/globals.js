@@ -4,6 +4,16 @@ const jwt = require('jsonwebtoken');
 const fastifyPlugin = require('fastify-plugin');
 const { ObjectId } = require('mongodb');
 const  { checkUserAdmin } = require('../models/tool');
+const ip = require('ip');
+
+function getApiUrl(){
+    // Use process.env.API_URL to get the port and the get the current iP to reconstruct the URL
+    const port = process.env.API_URL.split(':')[2];
+    const host = ip.address();
+    const protocol = process.env.MODE === 'local' ? 'http' : 'https';
+    return `${protocol}://${host}:${port}`;
+}
+const apiUrl = getApiUrl();
 
 module.exports = fastifyPlugin(async function (fastify, opts) {
     // Decorate Fastify with a render function that includes GTM
@@ -59,7 +69,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             user: request.user, // Make user available
             isUserAdmin: request.isUserAdmin, // Make admin status available
             mode: process.env.MODE,
-            apiurl: process.env.API_URL
+            apiurl: apiUrl
         };
     });
 
@@ -181,7 +191,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     async function setReplyLocals(request, reply) {
         reply.locals = {
             mode: process.env.MODE,
-            apiurl: process.env.API_URL,
+            apiurl: apiUrl,
             translations: request.translations,
             clerkTranslations: request.clerkTranslations, // Add clerk translations to locals
             paymentTranslations: request.paymentTranslations, // Add payment translations to locals

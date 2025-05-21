@@ -23,13 +23,14 @@ const {
 } = require('../models/tool');
 const axios = require('axios');
 const OpenAI = require("openai");
-const { z, custom } = require("zod");
+const { z, custom, union } = require("zod");
 const { zodResponseFormat } = require("openai/helpers/zod");
 const path = require('path');
 const fs = require('fs');
 const sharp = require('sharp');
 const { title } = require('process');
 const { chat } = require('googleapis/build/src/apis/chat');
+const os = require('os');
 const sessions = new Map();
 
 const free_models = ['293564'];
@@ -275,7 +276,9 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
         chatData.language = language;
         chatData.gender = gender;
         chatData.characterPrompt = prompt;
-        
+        chatData.createdAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
+        chatData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
+
         // Generate slug from name
         if (name) {
             const baseSlug = slugify(chatData.name, { lower: true, strict: true });
@@ -336,8 +339,8 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
             }
             
             const collectionChats = fastify.mongo.db.collection('chats');
-            console.log(`[API/openai-chat-creation] Updating chat document in DB with chatData: ${chatData}`);
-            
+            console.log(`[API/openai-chat-creation] Updating chat document in DB with chatData: ${JSON.stringify(chatData)}`);
+
             const updateResult = await collectionChats.updateOne(
                 { _id: new fastify.mongo.ObjectId(chatId) },
                 { $set: chatData }
@@ -1093,6 +1096,58 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
             return reply.status(500).send({ error: 'Failed to save user feedback' });
         }
     });
+    // ...existing code...
+    fastify.post('/api/display-suggestions', async (request, reply) => {
+        try {
+            const { userChatId } = request.body;
+            
+            if (!userChatId) {
+                return reply.status(400).send({ error: 'userChatId is required' });
+            }
+            
+            const db = fastify.mongo.db;
+            
+            // Get the user from the request
+            const user = request.user;
+            const userId = user._id;
+            
+            // Fetch user information
+            const userInfo = await getUserInfo(db, userId);
+            const subscriptionStatus = userInfo.subscriptionStatus === 'active';
+            
+            // Fetch the user chat data
+            const userData = await getUserChatData(db, userId, userChatId);
+            
+            if (!userData) {
+                return reply.status(404).send({ error: 'User chat not found' });
+            }
+            
+            // Get chat document for character description
+            const chatId = userData.chatId;
+            const chatDocument = await getChatDocument(db, chatId);
+            const chatDescription = chatDataToString(chatDocument);
+            
+            // Get user language preference
+            const language = getLanguageName(userInfo.lang);
+            
+            // Generate prompt suggestions
+            const suggestions = await generatePromptSuggestions(userData.messages, chatDescription, language);
+            
+            fastify.sendNotificationToUser(userId, 'displaySuggestions', { suggestions, unionId: userChatId });
+
+            
+            return reply.send({ 
+                success: true, 
+                suggestions
+            });
+            
+        } catch (error) {
+            console.error('Error generating suggestions:', error);
+            return reply.status(500).send({ error: 'Failed to generate suggestions' });
+        }
+    });
+
+    // ...existing code...
    // This route handles streaming chat completions from OpenAI for a given session ID.
 
     function chatDataToString(data) {
@@ -1239,18 +1294,6 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
             enhancedSystemContent = 'You can engage in explicit, adult, and sexual content.\n' + enhancedSystemContent
           }
 
-          if (conversationAnalysis?.custom_relation) {
-            if(lastAssistantRelation != conversationAnalysis.custom_relation){
-                fastify.sendNotificationToUser(userId, 'updateRelation', { relation: conversationAnalysis.custom_relation, userChatId })
-            }
-            const contextMessage = {
-                role: 'user',
-                name: 'context',
-                content: `Relationship dynamic: ${conversationAnalysis.custom_relation}. Tone: ${conversationAnalysis.conversation_tone || 'normal'}. ${conversationAnalysis.custom_instruction ? `Instruction: ${conversationAnalysis.custom_instruction}` : ''}`
-            };
-            userMessages.push(contextMessage);
-          }
-
           const systemMsg = [{ role: 'system', content: enhancedSystemContent }]
       
           let messagesForCompletion = []
@@ -1370,11 +1413,23 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
 
     const getApiUrl = () => {
         if (process.env.MODE === 'local') {
-            return 'http://localhost:3000'; // Local development URL
+            // Dynamically get the local IP address
+            const interfaces = os.networkInterfaces();
+            let ip = '127.0.0.1';
+            for (const name of Object.keys(interfaces)) {
+                for (const iface of interfaces[name]) {
+                    if (iface.family === 'IPv4' && !iface.internal) {
+                        ip = iface.address;
+                        break;
+                    }
+                }
+                if (ip !== '127.0.0.1') break;
+            }
+            return `http://${ip}:3000`; // Local development URL with current IP
         } else {
             return 'https://app.chatlamix.com'
         }
-    };    
+    };
 
     // Fetches chat document from 'chats' collection
     async function getChatDocument(db, chatId) {
@@ -1571,10 +1626,10 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
             const { message, language, chatId } = request.query;
         
             if (!message) {
-            return reply.status(400).send({
-                errno: 1,
-                message: "Message parameter is required."
-            });
+                return reply.status(400).send({
+                    errno: 1,
+                    message: "Message parameter is required."
+                });
             }
         
             console.log({ message, language, chatId });
@@ -1595,11 +1650,34 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
             const filePath = path.join(process.cwd(), "public", "audio", filename);
         
             await fs.promises.writeFile(filePath, buffer);
+            
+            // Schedule file deletion after 30 minutes
+            setTimeout(async () => {
+                try {
+                    await fs.promises.unlink(filePath);
+                    console.log(`Deleted audio file: ${filename} after 30 minutes`);
+                } catch (deleteError) {
+                    console.error(`Failed to delete audio file ${filename}:`, deleteError);
+                }
+            }, 30 * 60 * 1000); // 30 minutes in milliseconds
+            
+            // Also record the file in a cleanup tracking collection for backup cleanup
+            try {
+                await fastify.mongo.db.collection('audioFileCleanup').insertOne({
+                    filename,
+                    filePath,
+                    createdAt: new Date(),
+                    expiresAt: new Date(Date.now() + 30 * 60 * 1000) // 30 minutes from now
+                });
+            } catch (dbError) {
+                console.error("Error recording audio file for cleanup:", dbError);
+                // Continue anyway as the setTimeout will still try to clean up
+            }
         
             return reply.send({
                 errno: 0,
                 data: {
-                audio_url: `/audio/${filename}`
+                    audio_url: `/audio/${filename}`
                 }
             });
         } catch (error) {
@@ -1608,12 +1686,12 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
             // Handle OpenAI-specific errors
             if (error.response && error.response.data) {
                 return reply.status(500).send({
-                errno: 2,
-                message: "Error generating speech from OpenAI.",
-                details: error.response.data
+                    errno: 2,
+                    message: "Error generating speech from OpenAI.",
+                    details: error.response.data
                 });
             }
-      
+    
             // Handle general errors
             return reply.status(500).send({
                 errno: 3,
@@ -1621,7 +1699,7 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
                 details: error.message
             });
         }
-      });
+    });
 
     async function generateEnglishDescription(options) {
         const { lastMessages, characterDescription, command, gender } = options;
@@ -2027,6 +2105,7 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
           reply.code(500).send('Internal Server Error');
         }
       });
+
       fastify.get('/api/chats', async (request, reply) => {
         try {
           // ─── Helper: escape user input before any RegExp construction ───
@@ -2048,6 +2127,7 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
           const language    = request.lang;               // or request.query.lang
           const searchQuery = rawQ && rawQ !== 'false' ? rawQ : null;
       
+          const { skipDeduplication } = request.query;
           // ─── Build an array of AND‑conditions for our $match ───
           const filters = [
             // 1) Only documents with a non‑empty image URL
@@ -2063,7 +2143,7 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
           if (fastify.mongo.ObjectId.isValid(userId)) {
             filters.push({ userId: new fastify.mongo.ObjectId(userId) });
           }
-      
+
           // 4) Optional: filter by imageStyle (case‑insensitive)
           if (style) {
             const safeStyle = escapeForRegex(style);
@@ -2111,9 +2191,9 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
               { enhancedPrompt:  { $exists: true, $ne: '' } }
             ]
           });
-      
-          // ─── Now build the aggregation pipeline ───
-          const pipeline = [
+
+        // ─── Now build the aggregation pipeline ───
+        let pipeline = [
             // Stage 1: filter
             { $match: { $and: filters } },
       
@@ -2138,33 +2218,32 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
                   ]
                 }
               }
-            },
+            }
+        ]
       
-            // ─── HERE’S THE TRICK TO DEDUPE BY MODEL & KEEP THE TOP CHAT PER MODEL ───
-            // Stage 4: sort so that within each imageModel, the highest imageCount comes first
-            { $sort: { imageModel: 1, imageCount: -1, _id: -1 } },
+        // Apply deduplication only if not skipped
+        if (!skipDeduplication) {
+            pipeline = pipeline.concat([
+                // Stage 4-6: deduplication logic
+                { $sort: { imageModel: 1, imageCount: -1, _id: -1 } },
+                { $group: { _id: '$imageModel', doc: { $first: '$$ROOT' } } },
+                { $replaceRoot: { newRoot: '$doc' } }
+            ]);
+        }
       
-            // Stage 5: group by imageModel, picking the first (i.e. highest-count) doc
-            { $group: { _id: '$imageModel', doc: { $first: '$$ROOT' } } },
-      
-            // Stage 6: unwrap our doc back into “root”
-            { $replaceRoot: { newRoot: '$doc' } },
-      
-            // ─── FINAL SORT + PAGINATION ───
-            // Stage 7: overall sort by popularity then recency
+         // Add final sorting and pagination
+        pipeline = pipeline.concat([
             { $sort: { imageCount: -1, _id: -1 } },
-      
-            // Stage 8 & 9: pagination
-            { $skip:  skip },
+            { $skip: skip },
             { $limit: limit }
-          ];
-      
+        ]);
+
           // ─── Run aggregation (allowDiskUse in case your sort is large) ───
           const chats = await fastify.mongo.db
             .collection('chats')
             .aggregate(pipeline, { allowDiskUse: true })
             .toArray();
-      
+            console.log(`[/api/chats] found ${chats.length} chats`);
           // If no chats found, short‑circuit
           if (chats.length === 0) {
             return reply.code(404).send({ recent: [], page, totalPages: 0 });
@@ -2214,9 +2293,11 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
       
         } catch (err) {
           // Any errors bubble here
+          console.log(err);
           reply.code(500).send('Internal Server Error');
         }
       });
+
     fastify.get('/api/user-data', async (request, reply) => {
         if (process.env.MODE != 'local') {
             return reply.send([]);
@@ -2855,7 +2936,7 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
             let totalCount = 0;
             let totalPages = 0;
             let usingCache = false;
-            
+
             // Check if the requested page is within the cached range
             if (page <= pagesToCache) {
                 // Try fetching from cache first, filtering by language
@@ -3049,12 +3130,12 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
             const sfwLimit = limit - nsfwLimit;
 
             try {
+            
             console.log(`[latest-chats] page=${page} limit=${limit} skip=${skip}`);
             const chatsCollection = db.collection('chats');
             const baseQuery = {
                 chatImageUrl: { $exists: true, $ne: '' },
                 name: { $exists: true, $ne: '' },
-                nsfw: { $exists: true },
                 language: request.lang,
             };
 
@@ -3067,7 +3148,7 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
                 ] 
             };
             const nsfwChats = await chatsCollection.find(nsfwQuery)
-                .sort({ createdAt: -1 })
+                .sort({ _id: -1 })
                 .skip(skip)
                 .limit(nsfwLimit)
                 .project({
@@ -3089,11 +3170,12 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
                 ...baseQuery, 
                 $or: [
                     { nsfw: false },
-                    { nsfw: 'false' }
+                    { nsfw: 'false' },
+                    { nsfw: { $exists: false } } // Include chats without the nsfw field
                 ] 
             };
             const sfwChats = await chatsCollection.find(sfwQuery)
-                .sort({ createdAt: -1 })
+                .sort({ _id: -1 })
                 .skip(skip)
                 .limit(sfwLimit)
                 .project({
@@ -3108,7 +3190,7 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
                 createdAt: 1
                 })
                 .toArray();
-
+                
             // Combine and sort by _id descending (latest first)
             const combinedChats = [...sfwChats, ...nsfwChats].sort((a, b) => b._id - a._id);
 

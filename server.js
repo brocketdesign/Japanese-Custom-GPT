@@ -79,6 +79,7 @@ fastify.register(require('@fastify/static'), {
   prefix: '/',
 });
 
+// Create partials for Handlebars
 const dashboardHeader = fs.readFileSync('views/partials/dashboard-header.hbs', 'utf8');
 handlebars.registerPartial('dashboard-header', dashboardHeader);
 const dashboardNav = fs.readFileSync('views/partials/dashboard-nav.hbs', 'utf8');
@@ -87,6 +88,10 @@ const dashboardFooter = fs.readFileSync('views/partials/dashboard-footer.hbs', '
 handlebars.registerPartial('dashboard-footer', dashboardFooter);
 const dashboardAvatar = fs.readFileSync('views/partials/dashboard-avatar.hbs', 'utf8');
 handlebars.registerPartial('dashboard-avatar', dashboardAvatar);
+const chatHeader = fs.readFileSync('views/partials/chat-header.hbs', 'utf8');
+handlebars.registerPartial('chat-header', chatHeader);
+const chatFooter = fs.readFileSync('views/partials/chat-footer.hbs', 'utf8'); 
+handlebars.registerPartial('chat-footer', chatFooter);
 
 fastify.register(require('@fastify/view'), {
   engine: { handlebars: require('handlebars') },
@@ -509,7 +514,7 @@ fastify.get('/character/slug/:slug', async (request, reply) => {
 
     let similarChats = [];
     try {
-      const baseUrl = process.env.MODE === 'local' ? 'http://localhost:3000' : `${request.protocol}://${request.hostname}`;
+      const baseUrl = process.env.MODE === 'local' ? `http://${ip.address()}:3000` : `${request.protocol}://${request.hostname}`;
       const similarChatsUrl = `${baseUrl}/api/similar-chats/${chatIdParam}`;
       const similarChatsResponse = await fetch(similarChatsUrl);
       if (similarChatsResponse.ok) {
@@ -696,7 +701,7 @@ fastify.get('/search', async (request, reply) => {
     const query = request.query.q || request.query.query || '';
     const limit = 30;
 
-    const baseUrl = process.env.MODE === 'local' ? 'http://localhost:3000' : `${request.protocol}://${request.hostname}`;
+    const baseUrl = process.env.MODE === 'local' ? `http://${ip.address()}:3000` : `${request.protocol}://${request.hostname}`;
     console.log(`[SEARCH] baseUrl resolved as: ${baseUrl}`);
 
     // Fetch image results (reuse /chats/images/search logic)

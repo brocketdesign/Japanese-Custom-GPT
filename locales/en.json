@@ -1,5 +1,16 @@
 {
-  "lang":"en", 
+  "lang":"en",
+  
+  "translateTo": "Translate to",
+  "translate": "Translate",
+  "english": "English",
+  "japanese": "Japanese",
+  "korean": "Korean",
+  "chinese": "Chinese",
+  "french": "French",
+  "german": "German",
+
+  "loading_suggestions": "Loading suggestions...",
   "gridSize":"Grid Size",
   "about_the_image":"About the Image",
   

@@ -439,14 +439,11 @@ fastify.get('/character/slug/:slug', async (request, reply) => {
     const { slug } = request.params;
     const imageSlug = request.query.imageSlug || null;
 
-    console.log(`[/character/:slug] Processing /character/${slug} for user ${currentUserId}`);
-
     const chat = await db.collection('chats').findOne({ slug });
     if (!chat) {
       console.warn(`[/character/:slug] Chat not found for slug: ${slug}`);
       return reply.code(404).send({ error: 'Chat not found' });
     }
-    console.log(`[/character/:slug] Found current chat: ${chat.name} (ID: ${chat._id})`);
 
     let chatIdObjectId = chat._id;
     let chatIdParam = chat._id.toString();
@@ -487,7 +484,6 @@ fastify.get('/character/slug/:slug', async (request, reply) => {
         ])
         .toArray();
 
-        console.log(`[/character/:slug] Found image document: ${imageDoc.length} for slug: ${imageSlug}`);
         imageId = imageDoc[0]?.image?._id || null;
         try {
           imageId = new fastify.mongo.ObjectId(imageId);
@@ -570,10 +566,8 @@ fastify.get('/character/:chatId', async (request, reply) => {
   const db = fastify.mongo.db;
   let chatId = request.params.chatId;
   let chat;
-  console.log(`[character/:chatId] Incoming request for chatId: ${chatId}`);
   try {
     chat = await db.collection('chats').findOne({ _id: new fastify.mongo.ObjectId(chatId) });
-    console.log(`[character/:chatId] Chat lookup by ObjectId succeeded for chatId: ${chatId}`);
   } catch (e) {
     // If not a valid ObjectId, treat as slug
     console.error(`[character/:chatId] Invalid Chat ID format: ${chatId}. Error:`, e);
@@ -594,14 +588,13 @@ fastify.get('/character/:chatId', async (request, reply) => {
       const randomStr = Math.random().toString(36).substring(2, 6);
       slug = `${slug}-${randomStr}`;
     }
-    console.log(`[character/:chatId] No slug found for chatId: ${chatId}. Generating slug: ${slug}`);
+
     await db.collection('chats').updateOne({ _id: new fastify.mongo.ObjectId(chatId) }, { $set: { slug } });
     chat.slug = slug;
-    console.log(`[character/:chatId] Slug saved for chatId: ${chatId}, slug: ${slug}`);
+
   }
 
   let imageId = request.query.imageId ? request.query.imageId : null;
-  console.log(`[character/:chatId] Image ID from query: ${imageId}`);
   let imageSlug;
   if (imageId) {
     try {
@@ -618,7 +611,6 @@ fastify.get('/character/:chatId', async (request, reply) => {
 
       if (imageDoc.length > 0 && imageDoc[0].image) {
         // Check if image already has a slug
-        console.log(`[character/:chatId] Found image document: ${imageDoc.length} for imageId: ${imageId}`);
         if (!imageDoc[0].image.slug) {
           // Get a title to use for the slug
           const imageTitle = typeof imageDoc[0].image.title === 'string'
@@ -672,7 +664,6 @@ fastify.get('/character/:chatId', async (request, reply) => {
   }
 
   // Redirect to slug route for SEO, keeping query params
-  console.log(`[character/:chatId] Redirecting to /character/slug/${chat.slug}${queryString} for chatId: ${chatId}`);
   return reply.redirect(`/character/slug/${chat.slug}${queryString}`);
 });
 

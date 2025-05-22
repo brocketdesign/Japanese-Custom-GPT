@@ -223,7 +223,6 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
       taskSlug = `${taskSlug}-${randomStr}`;
     }
     
-    console.log(`[generateImg] Generated slug: ${taskSlug}`);
     // Update task with the slug
     updateSlug({ taskId: novitaTaskId, taskSlug, fastify, userId, chatId, placeholderId });
 

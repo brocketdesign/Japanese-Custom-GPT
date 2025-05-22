@@ -238,7 +238,7 @@ async function routes(fastify, options) {
     }
 
 fastify.post('/api/openai-chat-creation', async (request, reply) => {
-    console.log('[API/openai-chat-creation] Processing request');
+
     try {
         // Validate request body
         const { chatId, name, purpose, prompt, gender, details_personality, language: requestLanguage, system_generated, nsfw } = request.body;
@@ -250,12 +250,10 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
 
         // Determine language - use request parameter, fallback to user language
         const language = requestLanguage || request.lang;
-        console.log(`[API/openai-chat-creation] Using language: ${language}`);
         
         // Prepare payload
         const systemPayload = createSystemPayloadChatRule(purpose, gender, name, details_personality, language);
 
-        console.log('[API/openai-chat-creation] Sending request to OpenAI API');
         // Interact with OpenAI API
         const openai = new OpenAI();
         const completionResponse = await openai.chat.completions.create({
@@ -270,7 +268,6 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
         }
 
         const chatData = JSON.parse(completionResponse.choices[0].message.content);
-        console.log(`[API/openai-chat-creation] Generated character: ${chatData.name}`);
         
         // Respond with the validated character data
         chatData.language = language;
@@ -310,12 +307,10 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
         
         // If chatId exists, continue with DB operations
         if (chatId) {
-            console.log(`[API/openai-chat-creation] Saving data to DB for chatId: ${chatId}`);
             
             // Save generated tags
             const tagsCollection = fastify.mongo.db.collection('tags');
             const generatedTags = chatData.tags;
-            console.log(`[API/openai-chat-creation] Saving ${generatedTags.length} tags`);
             
             for (const tag of generatedTags) {
                 await tagsCollection.updateOne(
@@ -326,20 +321,17 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
             }
 
             if (details_personality) {
-                console.log(`[API/openai-chat-creation] Storing personality details`);
                 chatData.details_personality = details_personality; // store details in the DB if provided
             }
 
             // Flag if this is a system-generated chat
             if (system_generated) {
-                console.log(`[API/openai-chat-creation] Setting system-generated flags`);
                 chatData.systemGenerated = true;
                 chatData.nsfw = nsfw;
                 chatData.visibility = 'public';
             }
             
             const collectionChats = fastify.mongo.db.collection('chats');
-            console.log(`[API/openai-chat-creation] Updating chat document in DB with chatData: ${JSON.stringify(chatData)}`);
 
             const updateResult = await collectionChats.updateOne(
                 { _id: new fastify.mongo.ObjectId(chatId) },
@@ -351,7 +343,6 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
                 throw new Error('指定されたチャットが見つかりませんでした。');
             }
             
-            console.log(`[API/openai-chat-creation] Chat updated successfully: ${chatId}`);
         }
 
         reply.send(chatData);
@@ -1124,7 +1115,7 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
             
             // Get chat document for character description
             const chatId = userData.chatId;
-            const chatDocument = await getChatDocument(db, chatId);
+            const chatDocument = await getChatDocument(request, db, chatId);
             const chatDescription = chatDataToString(chatDocument);
             
             // Get user language preference

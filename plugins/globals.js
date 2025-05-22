@@ -106,8 +106,6 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             if (reply.locals) {
             reply.locals.user = refreshedUser;
             }
-
-            console.log(`[PreHandler] User data refreshed for ${request.user._id}`);
         }
         } catch (error) {
         console.error('[PreHandler] Error refreshing user data:', error);

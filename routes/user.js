@@ -203,9 +203,7 @@ async function routes(fastify, options) {
 
         if (result.modifiedCount === 0) {
           console.warn(`User with clerkId ${clerkId} not updated`);
-        } else {
-          console.log(`Database user with clerkId ${clerkId} updated successfully`);
-        }
+        } 
 
         // If user has updated their nickname in our system, update it in Clerk too
         if (user.nickname && user.nickname !== clerkUserData.username) {
@@ -243,7 +241,6 @@ async function routes(fastify, options) {
         return false;
       }
       
-      console.log(`Clerk username updated to ${username} for user ${clerkId}`);
       return true;
     } catch (error) {
       console.error('Error updating Clerk username:', error.message);

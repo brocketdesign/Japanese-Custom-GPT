@@ -3249,9 +3249,7 @@ function loadCharacterCreationPage(chatId) {
 
 // Load the plan page and open the modal
 function loadPlanPage() {
-    console.log('loadPlanPage called');
-    if(!user) {
-      console.log(user)
+    if(!user || isTemporary) {
       console.log('User is not logged in or is temporary, aborting loadPlanPage.');
       return;
     }

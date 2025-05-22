@@ -212,7 +212,7 @@ $(document).ready(async function() {
 
     window.resizeTextarea = function(element){
         element.style.height = 'auto';
-        element.style.height = (element.scrollHeight - 20 ) + 'px';  
+        element.style.height = (element.scrollHeight) + 'px';  
     }
 
     function updateParameters(newchatId, newuserId, userChatId){
@@ -769,7 +769,7 @@ function setupChatInterface(chat, character) {
   
         prompt = sanitizeString(prompt);
         return `
-            <div class="bg-white py-2 rounded mt-1 d-flex justify-content-between">
+            <div class="bg-white py-2 d-flex justify-content-around image-tools">
                 <div class="d-flex justify-content-around w-100">
                     <span class="badge bg-white text-secondary image-fav ${isLiked ? 'liked' : ''}" data-id="${imageId}"
                     onclick="${subscriptionStatus ? 'toggleImageFavorite(this)' : 'loadPlanPage()'}" 
@@ -848,7 +848,7 @@ function setupChatInterface(chat, character) {
                     <div class="ms-3 position-relative">
                         <div 
                         onclick="showImagePreview(this)"
-                        class="ps-0 text-start assistant-image-box">
+                        class="ps-0 text-start assistant-image-box vertical-transition">
                             <img id="image-${imageId}" src="${placeholderImageUrl}" alt="Loading image...">
                             <div class="nsfw-badge-container badge" style="display:none;">NSFW<div>
                         </div>
@@ -1372,7 +1372,7 @@ function setupChatInterface(chat, character) {
                     <div class="ms-3 position-relative">
                         <div 
                         onclick="showImagePreview(this)" 
-                        class="ps-0 text-start assistant-image-box ${!subscriptionStatus && imageNsfw ? 'isBlurred' : '' }" data-id="${imageId}">
+                        class="ps-0 text-start assistant-image-box vertical-transition ${!subscriptionStatus && imageNsfw ? 'isBlurred' : '' }" data-id="${imageId}">
                             ${message.outerHTML}
                             ${imageNsfw ? `<div class="nsfw-badge-container badge">NSFW</div>` : ''}
                         </div>
@@ -1401,7 +1401,7 @@ function setupChatInterface(chat, character) {
                     <div class="ms-3 position-relative">
                         <div 
                             onclick="showImagePreview(this)"
-                            class="text-start assistant-image-box" data-id="${imageId}">
+                            class="text-start assistant-image-box vertical-transition" data-id="${imageId}">
                             ${message.outerHTML}
                             ${imageNsfw ? `<div class="nsfw-badge-container badge">NSFW</div>` : ''}
                         </div>
@@ -1421,7 +1421,7 @@ function setupChatInterface(chat, character) {
                     <div class="ms-3 position-relative">
                         <div 
                         onclick="showImagePreview(this)"
-                        class="text-start assistant-image-box">
+                        class="text-start assistant-image-box vertical-transition">
                             ${message.outerHTML}
                         </div>
                         <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">

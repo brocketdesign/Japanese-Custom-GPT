@@ -892,7 +892,7 @@
   
   .assistant-image-box img {
   width:100%;
-  border-radius:5px;
+  border-radius:0.25em 0.25em 0 0;
   max-width:200px;
   cursor:pointer
   }
@@ -2222,9 +2222,16 @@
 }
 .assistant-image-box{
   transition: all 0.3s ease;
+  max-width: 100% !important;
+}
+.image-tools{
+  max-width: 100% !important;
 }
 .assistant-image-box:hover {
   transform: scale(1.12) rotate(5deg);
+}
+.vertical-transition:hover {
+  transform: translateY(-3%) !important;
 }
 .feature-icon-container {
   text-align: center;

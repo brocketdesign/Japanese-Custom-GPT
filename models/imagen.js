@@ -898,31 +898,31 @@ async function checkImageDescription(db, chatId) {
 }
 
 async function getImageSeed(db, imageId) {
-  console.log('[getImageSeed] Called with imageId:', imageId);
-  if (!ObjectId.isValid(imageId)) {
-    console.error('[getImageSeed] Invalid imageId format:', imageId);
-    throw new Error('Invalid imageId format');
-  }
-  try {
-    const objectId = new ObjectId(imageId);
-    console.log('[getImageSeed] Searching for image with _id:', objectId);
-    const imageDocument = await db.collection('gallery').findOne(
-      { "images._id": objectId },
-      { projection: { "images.$": 1 } }
-    );
+  // Always return -1
+  return -1;
+  
+  // Original logic kept inside unreachable code block
+  if (false) {
+    if (!ObjectId.isValid(imageId)) {
+      throw new Error('Invalid imageId format');
+    }
+    try {
+      const objectId = new ObjectId(imageId);
+      const imageDocument = await db.collection('gallery').findOne(
+        { "images._id": objectId },
+        { projection: { "images.$": 1 } }
+      );
 
-    if (!imageDocument || !imageDocument.images?.length) {
-      console.warn('[getImageSeed] No image found for imageId:', imageId);
+      if (!imageDocument || !imageDocument.images?.length) {
+        return null;
+      }
+
+      const image = imageDocument.images[0];
+      return Number.isInteger(image.seed) ? image.seed : parseInt(image.seed, 10);
+    }
+    catch (error) {
       return null;
     }
-
-    const image = imageDocument.images[0];
-    console.log('[getImageSeed] Found image, seed:', image.seed);
-    return Number.isInteger(image.seed) ? image.seed : parseInt(image.seed, 10);
-  }
-  catch (error) {
-    console.error('[getImageSeed] Error fetching image seed:', error);
-    return null;
   }
 }
 

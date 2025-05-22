@@ -1601,9 +1601,7 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
                     message: "Message parameter is required."
                 });
             }
-        
-            console.log({ message, language, chatId });
-        
+                
             // Initialize OpenAI (ensure you have set your API key in environment variables)
             const openai = new OpenAI({
                 apiKey: process.env.OPENAI_API_KEY

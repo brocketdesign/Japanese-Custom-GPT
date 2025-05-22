@@ -148,7 +148,6 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
       const croppedImage = await centerCropImage(image_base64, targetWidth, targetHeight);
       requestData.image_base64 = croppedImage;
     }
-    console.log(`[generateImg] new request for ${imageType} with prompt:`, requestData.prompt);
 
     // Send request to Novita and get taskId
     const novitaTaskId = await fetchNovitaMagic(requestData, flux);

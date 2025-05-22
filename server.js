@@ -110,10 +110,17 @@ fastify.register(require('@fastify/cors'), {
     // In local development, you might want to allow your specific local frontend origin
     // For production, you'd list your allowed frontend domains
     const allowedOrigins = [
-      'http://localhost:3000', // Example: Your local frontend
-      'http://127.0.0.1:3000', // Example: Your local frontend
-      `http://${ip.address()}:3000`, // Dynamically allow your local IP if needed for testing
-      'https://app.chatlamix.com' // Your production frontend
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      `http://${ip.address()}:3000`,
+      'https://app.chatlamix.com',
+      'https://chat.lamixapp.com',
+      'https://chatlamix.com',
+      'https://en.chatlamix.com',
+      'https://fr.chatlamix.com',
+      'https://ja.chatlamix.com',
+      'https://jp.chatlamix.com',
+      'https://www.chatlamix.com'
     ];
     if (allowedOrigins.indexOf(origin) !== -1 || process.env.MODE === 'local') {
       cb(null, true);

@@ -4,7 +4,7 @@ const { createHash } = require('crypto');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const axios = require('axios');
-const { checkLimits, checkUserAdmin, getUserData, updateUserLang, listFiles, uploadToS3 } = require('../models/tool');
+const { checkLimits, checkUserAdmin, getUserData, updateUserLang, listFiles, uploadToS3, getApiUrl } = require('../models/tool');
 const { moderateImage } = require('../models/openai');
 const { refreshAccessToken, addContactToCampaign } = require('../models/zohomail');
 
@@ -495,7 +495,7 @@ async function routes(fastify, options) {
         title: `${userData.nickname}さんのプロフィール`,
         translations,
         mode: process.env.MODE,
-        apiurl: process.env.API_URL,
+        apiurl: getApiUrl(request),
         isAdmin,
         isMyProfile,
         user: request.user,
@@ -718,7 +718,7 @@ async function routes(fastify, options) {
       return reply.view('follower.hbs', {
         title,translations,
       mode: process.env.MODE,
-      apiurl: process.env.API_URL,
+      apiurl: getApiUrl(request),
         currentUser: {
           userId: currentUserId,
           userName: currentUser?.nickname,

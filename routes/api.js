@@ -1132,7 +1132,6 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
             
             // Generate prompt suggestions
             const suggestions = await generatePromptSuggestions(userData.messages, chatDescription, language);
-            
             fastify.sendNotificationToUser(userId, 'displaySuggestions', { suggestions, unionId: userChatId });
 
             
@@ -1234,7 +1233,7 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
           const subscriptionStatus = userInfo.subscriptionStatus == 'active' ? true : false
           if (!userData) { return reply.status(404).send({ error: 'User data not found' }) }
           const isAdmin = await checkUserAdmin(fastify, userId)
-          const chatDocument = await getChatDocument(db, chatId)
+          const chatDocument = await getChatDocument(request, db, chatId)
           const chatDescription = chatDataToString(chatDocument)
           const characterDescription = chatDocument.enhancedPrompt || chatDocument?.imageDescription || chatDocument.characterPrompt;
           const language = getLanguageName(userInfo.lang)
@@ -1412,7 +1411,7 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
     }
 
     // Fetches chat document from 'chats' collection
-    async function getChatDocument(db, chatId) {
+    async function getChatDocument(request, db, chatId) {
         let chatdoc = await db.collection('chats').findOne({ _id: new fastify.mongo.ObjectId(chatId)})
         // Check if chatdoc is updated to the new format
         if(!chatdoc?.system_prompt){
@@ -1420,7 +1419,7 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
 
             const purpose = `Her name is, ${chatdoc.name}.\nShe looks like :${chatdoc.enhancedPrompt ? chatdoc.enhancedPrompt : chatdoc.characterPrompt}.\n\n${chatdoc.rule}`
             const language = chatdoc.language
-            const apiUrl = getApiUrl();        
+            const apiUrl = getApiUrl(request);        
             const response = await axios.post(apiUrl+'/api/openai-chat-creation', {
                 chatId,
                 name:chatdoc.name,
@@ -2476,19 +2475,21 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
     });
 
 
-    fastify.get('/api/user', async (request,reply) => {
+    fastify.get('/api/user', async (request, reply) => {
         try {
             let user = request.user;
             const userId = user._id;
-            if (userId && !user.isTemporary){
+            if (userId && !user.isTemporary) {
                 const collection = fastify.mongo.db.collection('users');
                 user = await collection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
             }
-            return reply.send({user})
+            return reply.send({ user });
         } catch (error) {
-            console.log(error)
+            console.error('[GET /api/user] Error:', error);
+            return reply.status(500).send({ error: 'Failed to fetch user', details: error.message });
         }
-    })
+    });
+
     fastify.get('/api/mode', async (request,reply) => {
         return {mode:process.env.MODE}
     })

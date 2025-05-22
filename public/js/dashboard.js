@@ -33,6 +33,9 @@ async function onLanguageChange(lang) {
     const updateResponse = await $.ajax({
         url: '/api/user/update-language',
         method: 'POST',
+        xhrFields: {
+            withCredentials: true
+        },
         contentType: 'application/json',
         data: JSON.stringify({ lang })
     });
@@ -76,6 +79,13 @@ subscriptionStatus = user.subscriptionStatus == 'active'
 
 const userLang = user.lang
 $(document).ready(async function() {
+
+    $.ajaxSetup({
+        xhrFields: {
+            withCredentials: true
+        }
+    });
+        
     const urlParams = new URLSearchParams(window.location.search);
     const success = urlParams.get('success');
     const sessionId = urlParams.get('session_id');
@@ -97,6 +107,9 @@ $(document).ready(async function() {
         $.ajax({
             url: `/plan/update-${success}`,
             method: 'POST',
+        xhrFields: {
+            withCredentials: true
+        },
             data: { sessionId, priceId },
             success: function(response) {
                 if (response.success) {
@@ -230,6 +243,9 @@ $(document).ready(async function() {
     
         $.ajax({
             type: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
             url: `/plan/list?lang=${lang}`,//?update=true
             dataType: 'json',
         success: function(response) {
@@ -387,6 +403,9 @@ window.togglePostFavorite = function(el) {
   $.ajax({
     url: `/posts/${postId}/like-toggle`, // Single endpoint
     method: 'POST',
+        xhrFields: {
+            withCredentials: true
+        },
     data: { action: action }, // Send action (like/unlike) in the request body
     success: function () {
       // Show success notification in Japanese
@@ -420,6 +439,9 @@ window.toggleImageFavorite = function(el) {
   $.ajax({
     url: `/gallery/${imageId}/like-toggle`, // Single endpoint
     method: 'POST',
+        xhrFields: {
+            withCredentials: true
+        },
     data: { action: action }, // Send action (like/unlike) in the request body
     success: function() {
       // Show success notification in Japanese
@@ -454,6 +476,9 @@ window.togglePostVisibility = function(el) {
   $.ajax({
     url: `/posts/${postId}/set-private`, // Single endpoint for both public and private
     method: 'POST',
+        xhrFields: {
+            withCredentials: true
+        },
     data: { isPrivate: newPrivacyState },
     success: function() {
       // Toggle private/public button state
@@ -498,6 +523,9 @@ window.toggleImageNSFW = function(el) {
   $.ajax({
     url: `/images/${imageId}/nsfw`, // Endpoint for updating NSFW status
     method: 'PUT',
+        xhrFields: {
+            withCredentials: true
+        },
     contentType: 'application/json',
     data: JSON.stringify({ nsfw: nsfwStatus }), // Send NSFW status in request body
     success: function () {
@@ -541,6 +569,9 @@ window.togglePostNSFW = function(el) {
   $.ajax({
       url: `/user/posts/${postId}/nsfw`, // Endpoint for updating NSFW status
       method: 'PUT',
+        xhrFields: {
+            withCredentials: true
+        },
       contentType: 'application/json',
       data: JSON.stringify({ nsfw: nsfwStatus }), // Send NSFW status in request body
       success: function () {
@@ -575,6 +606,9 @@ window.toggleFollow = function(el) {
   $.ajax({
     url: `/user/${userId}/follow-toggle`, // Single endpoint for both follow/unfollow
     method: 'POST',
+        xhrFields: {
+            withCredentials: true
+        },
     data: { action: action }, // Send action (follow/unfollow) in the request body
     success: function () {
       // Update the button text
@@ -614,6 +648,9 @@ function fetchBlurredImage(img, imageUrl) {
     $.ajax({
         url: '/blur-image?url=' + encodeURIComponent(imageUrl),
         method: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
         xhrFields: { responseType: 'blob' },
         success: function(blob) { handleImageSuccess(img, blob, imageUrl); },
         error: function() { console.error("Failed to load blurred image."); }
@@ -626,6 +663,9 @@ window.updateChatImage = function(el) {
   $.ajax({
     url: `/chat/${chatId}/image`,
     type: 'PUT',
+        xhrFields: {
+            withCredentials: true
+        },
     data: { imageUrl },
     success: function(response) {
       updateChatBackgroundImage(imageUrl);
@@ -785,6 +825,9 @@ window.loadUsers = async function (page = 1) {
     $.ajax({
         url: `/users/?page=${page}`,
         method: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
         success: function (data) {
             let usersHtml = '';
             data.users.forEach(user => {
@@ -858,6 +901,9 @@ window.loadChatUsers = async function (chatId, page = 1) {
   $.ajax({
     url: `/chat/${chatId}/users?page=${page}`,
     method: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
     success: function (data) {
       // Add style once if not already present
       if (!$('#chat-users-style').length) {
@@ -1598,6 +1644,9 @@ window.toggleChatNSFW = function(el) {
   $.ajax({
     url: `/api/chat/${chatId}/nsfw`, // Endpoint for updating NSFW status
     method: 'PUT',
+        xhrFields: {
+            withCredentials: true
+        },
     contentType: 'application/json',
     data: JSON.stringify({ nsfw: nsfwStatus }), // Send NSFW status in request body
     success: function () {
@@ -1627,6 +1676,9 @@ window.loadAllUserPosts = async function (page = 1) {
     $.ajax({
       url: `/user/posts?page=${page}`,
       method: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
       success: function (data) {
         let galleryHtml = '';
         data.posts.forEach(item => {
@@ -1717,6 +1769,9 @@ window.resultImageSearch = async function (page = 1,query,style = 'anime', callb
     $.ajax({
       url: `/chats/images/search?page=${page}&query=${query}&style=${style}`,
       method: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
       success: function (data) {
         let chatGalleryHtml = '';
         data.images.forEach(item => {
@@ -1808,6 +1863,9 @@ window.loadAllChatImages = function (page = 1, reload = false) {
       $.ajax({
         url: `/chats/images?page=${page}`,
         method: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
         success: (data) => {
           appendAllChatsImages(data.images, subscriptionStatus, isAdmin)
   
@@ -1949,6 +2007,9 @@ window.loadUserImages = function (userId, page = 1, reload = false) {
       $.ajax({
         url: `/user/${userId}/liked-images?page=${page}`,
         method: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
         success: (data) => {
           appendImages(data.images)
   
@@ -2067,6 +2128,9 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
     $.ajax({
       url: `/user/${userId}/posts?page=${page}&like=${like}`,
       method: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
       success: function (data) {
         let galleryHtml = '';
         data.posts.forEach(item => {
@@ -2263,6 +2327,9 @@ window.generateCompletion = async function(systemPrompt, userMessage) {
             url: '/api/generate-completion',
             type: 'POST',
             contentType: 'application/json',
+            xhrFields: {
+                withCredentials: true
+            },
             data: JSON.stringify({ systemPrompt: systemPrompt, userMessage: userMessage })
         });
         return response.completion;
@@ -2354,6 +2421,9 @@ window.loadChatImages = function (chatId, page = 1, reload = false, isModal = fa
       $.ajax({
         url: `/chat/${chatId}/images?page=${page}`,
         method: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
         success: (data) => {
           chatCurrentPageMap[chatId] = data.page
   
@@ -2650,6 +2720,9 @@ $(document).ready(function () {
       $.ajax({
         url: `/chats/horizontal-gallery?page=${page}`,
         method: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
         success: function (data) {
           let chatsHtml = '';
   
@@ -2793,6 +2866,9 @@ $(document).ready(function () {
           $.ajax({
             url: `/chats/${chatId}/images?skip=${currentImages}`,
             method: 'GET',
+            xhrFields: {
+                withCredentials: true
+            },
             success: function (data) {
               let additionalImagesHtml = '';
   
@@ -3087,6 +3163,9 @@ function loadSettingsPage() {
     $.ajax({
         url: '/settings',
         method: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
         success: function(data) {
             $('#settings-container').html(data);
             const script = document.createElement('script');
@@ -3107,6 +3186,7 @@ function loadSettingsPage() {
     });
 }
 
+
 // Function to load character creation page & execute scripts & open #characterCreationModal
 function loadCharacterCreationPage(chatId) {
     if (modalStatus.isCharacterCreationLoading) return;
@@ -3126,6 +3206,9 @@ function loadCharacterCreationPage(chatId) {
     $.ajax({
         url: redirectUrl,
         method: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
         success: function(data) {
             if(!data){
                 $('#characterCreationModal').one('shown.bs.modal', () => {
@@ -3187,6 +3270,9 @@ function loadPlanPage() {
     $.ajax({
         url: '/my-plan',
         method: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
         success: function(data) {
             $('#plan-container').html(data);
             const script = document.createElement('script');
@@ -3225,6 +3311,9 @@ function openCharacterModal(modalChatId, event) {
     $.ajax({
         url: url,
         method: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
         success: function(data) {
             $('#character-modal-container').html(data);
             $(document).ready(function () {

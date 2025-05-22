@@ -13,17 +13,20 @@ const apiDetails = {
   },
   novita: {
     apiUrl: 'https://api.novita.ai/v3/openai/chat/completions',
-    model: 'meta-llama/llama-3.2-3b-instruct',
-    key: process.env.NOVITA_API_KEY
-  },
-  deepseek: {
-    apiUrl: 'https://api.novita.ai/v3/openai/chat/completions',
-    model: 'deepseek/deepseek-v3-turbo',
-    key: process.env.NOVITA_API_KEY
+    key: process.env.NOVITA_API_KEY,
+    models: {
+      llama: 'meta-llama/llama-3.2-3b-instruct',
+      gemma: 'google/gemma-2-9b-it',
+      deepseek: 'deepseek/deepseek-v3-turbo',
+    }
   },
 };
 
-let currentModel = apiDetails.novita;
+// Default model config
+let currentModelConfig = {
+  provider: 'novita',
+  modelName: 'gemma'
+};
 
 const moderateText = async (text) => {
   try {
@@ -60,31 +63,63 @@ const moderateImage = async (imageUrl) => {
   }
 };
 
-async function generateCompletion(messages, maxToken = 1000, model = null, lang = 'en') {
-  const selectedModel = model ? apiDetails[model] : currentModel;
-  const finalModel = lang === 'ja' ? apiDetails.deepseek : selectedModel;
 
+async function generateCompletion(messages, maxToken = 1000, model = null, lang = 'en') {
+  // Determine which model configuration to use
+  let modelConfig = { ...currentModelConfig };
+  
+  if (model) {
+    if (apiDetails[model]) {
+      // Direct provider like 'openai'
+      modelConfig.provider = model;
+      modelConfig.modelName = null;
+    } else {
+      // Specific model like 'gemma', 'deepseek'
+      for (const provider in apiDetails) {
+        if (apiDetails[provider].models && apiDetails[provider].models[model]) {
+          modelConfig.provider = provider;
+          modelConfig.modelName = model;
+          break;
+        }
+      }
+    }
+  }
+  
+  // Override for Japanese
+  if (lang === 'ja') {
+    modelConfig.provider = 'novita';
+    modelConfig.modelName = 'gemma';
+  }
+  
+  // Get the API details
+  const provider = apiDetails[modelConfig.provider];
+  const modelName = modelConfig.modelName ? 
+    provider.models[modelConfig.modelName] : 
+    provider.model;
+    
+  console.log(`[generateCompletion] Using provider: ${modelConfig.provider}, model: ${modelName}`);
+  
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      const response = await fetch(finalModel.apiUrl, {
+      const response = await fetch(provider.apiUrl, {
         headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${finalModel.key}`
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${provider.key}`
         },
         method: "POST",
         body: JSON.stringify({
-            model: finalModel.model,
-            messages,
-            temperature: 0.85,
-            top_p: 0.95,
-            frequency_penalty: 0,
-            presence_penalty: 0,
-            max_tokens: maxToken,
-            stream: false,
-            n: 1,
+          model: modelName,
+          messages,
+          temperature: 0.85,
+          top_p: 0.95,
+          frequency_penalty: 0,
+          presence_penalty: 0,
+          max_tokens: maxToken,
+          stream: false,
+          n: 1,
         }),
       });
-
+      // Rest of your function remains the same
       if (!response.ok) {
         if (attempt === 2) {
           const errorData = await response.json().catch(() => ({}));
@@ -95,7 +130,6 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
       }
 
       const data = await response.json();
-      const filter = data.choices[0]?.content_filter_results;
       return data.choices[0].message.content.trim();
     } catch (error) {
       if (attempt === 2) {

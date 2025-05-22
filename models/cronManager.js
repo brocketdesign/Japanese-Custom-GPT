@@ -385,7 +385,6 @@ const initializeCronJobs = async (fastify) => {
         true,
         cleanupExpiredAudioFiles(fastify)
     );
-    console.log('[initializeCronJobs] Cron jobs initialized');
     
   } catch (error) {
     console.error('[initializeCronJobs] Error initializing cron jobs:', error);

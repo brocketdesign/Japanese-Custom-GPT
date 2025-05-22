@@ -255,34 +255,34 @@
 ></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 <script>
-    
-    document.addEventListener('DOMContentLoaded', function() {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.remove('hidden'); // Remove the hidden class
-                    entry.target.classList.add('animate__animated');
 
-                    const sanitizedAnimate = entry.target.dataset.animate.replace(/[^a-zA-Z0-9-_]/g, '');
-                    entry.target.classList.add(sanitizedAnimate); // Apply sanitized animation class
+document.addEventListener('DOMContentLoaded', function() {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.remove('hidden'); // Remove the hidden class
+                entry.target.classList.add('animate__animated');
 
-                    if (entry.target.dataset.delay && entry.target.dataset.delay !== '') {
-                        const sanitizedDelay = entry.target.dataset.delay.replace(/[^a-zA-Z0-9-_]/g, '');
-                        entry.target.classList.add(sanitizedDelay); // Apply sanitized delay
-                    }
+                const sanitizedAnimate = entry.target.dataset.animate.replace(/[^a-zA-Z0-9-_]/g, '');
+                entry.target.classList.add(sanitizedAnimate); // Apply sanitized animation class
 
-                    observer.unobserve(entry.target); // Stop observing after animation
+                if (entry.target.dataset.delay && entry.target.dataset.delay !== '') {
+                    const sanitizedDelay = entry.target.dataset.delay.replace(/[^a-zA-Z0-9-_]/g, '');
+                    entry.target.classList.add(sanitizedDelay); // Apply sanitized delay
                 }
-            });
-        }, {
-            threshold: 0.1 // Adjust the threshold as needed
-        });
 
-        document.querySelectorAll('[data-animate]').forEach(element => {
-            element.classList.add('hidden'); // Add the hidden class initially
-            observer.observe(element);
+                observer.unobserve(entry.target); // Stop observing after animation
+            }
         });
+    }, {
+        threshold: 0.1 // Adjust the threshold as needed
     });
+
+    document.querySelectorAll('[data-animate]').forEach(element => {
+        element.classList.add('hidden'); // Add the hidden class initially
+        observer.observe(element);
+    });
+});
 
 window.loadTranslations = async function (lang) {
     const localTranslations = localStorage.getItem('translations');
@@ -753,18 +753,36 @@ window.showNotification = (message, type = 'info') => {
 
 window.fetchUser = async function() {
     try {
-        const response = await fetch(`${API_URL}/api/user`, { method: 'GET' });
-        if (!response.ok) throw new Error('Network response was not ok');
+        const url = `${API_URL}/api/user`;
+   
+        const response = await fetch(url, { 
+            method: 'GET',
+            credentials: 'include' 
+        });
+
+        if (!response.ok) {
+            console.error(`[fetchUser] Network response was not ok. Status: ${response.status} ${response.statusText}`);
+            throw new Error('Network response was not ok');
+        }
         const data = await response.json();
+
+        if (data && data.user) {
+        } else {
+            console.warn('[fetchUser] No user object found in response:', data);
+        }
         return data.user;
     } catch (error) {
-        console.error('Error fetching user:', error);
+        console.error('[fetchUser] Error fetching user:', error);
         return null;
     }
 };
+
 window.fetchMode = async function() {
     try {
-        const response = await fetch('/api/mode', { method: 'GET' });
+        const response = await fetch('/api/mode', { 
+            method: 'GET',
+            credentials: 'include' ,
+        });
         if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
         return data.mode;
@@ -826,6 +844,7 @@ window.handleClerkSignIn = function(Clerk) {
     // Send request to backend with Clerk session token
     fetch('/user/clerk-auth', {
         method: 'GET',
+        credentials: 'include' ,
         headers: {
             'x-clerk-user-id': Clerk.user.id
         }
@@ -841,33 +860,46 @@ window.handleClerkSignIn = function(Clerk) {
     });
     return false; // Prevent Clerk's default redirect
 }
-
 window.handleClerkUserUpdate = function() {
-    // Send user data to backend
+    
+    if (!window.Clerk?.user) {
+        console.warn('[handleClerkUserUpdate] No Clerk user data available');
+        return;
+    }
+    
     fetch('/user/clerk-update', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-Clerk-Session-Id': window.Clerk?.session?.id || '',
         },
+        credentials: 'include',
         body: JSON.stringify(window.Clerk.user)
     })
     .then(response => response.json())
     .then(data => {
         if (data.status) {
-          // Refresh user data if needed
+            
+            // Refresh user data if needed
             if (window.fetchUser) {
                 window.fetchUser().then(userData => {
-                    if (userData) {
+                    if (userData && !userData.isTemporary) {
                         window.user = userData;
+                    } else {
+                        console.warn('[handleClerkUserUpdate] User data not available or still temporary');
                     }
+                }).catch(error => {
+                    console.error('[handleClerkUserUpdate] Error fetching updated user data:', error);
                 });
+            } else {
+                console.error('[handleClerkUserUpdate] User fetch function not available');
             }
         } else if (data.error) {
-            console.error('Error synchronizing user data:', data.error);
+            console.error('[handleClerkUserUpdate] Server error:', data.error);
         }
     })
     .catch(error => {
-        console.error('Failed to update user data:', error);
+        console.error('[handleClerkUserUpdate] Failed to update user data:', error);
     });
 }
 
@@ -936,7 +968,11 @@ $(document).ready(function(){
             }
             
             // Call route after updating user info
-            Clerk.closeUserProfile(handleClerkUserUpdate());
+            Clerk.addListener(({ user }) => {
+                if (user) {
+                    handleClerkUserUpdate();
+                }
+            });
 
             // Attach logoutUser to .logout
             $('.logout').on('click', function(e) {
@@ -966,4 +1002,4 @@ $(document).ready(function(){
             // Assign Clerk to window
             window.Clerk = Clerk;
         })
-    </script>
+</script>

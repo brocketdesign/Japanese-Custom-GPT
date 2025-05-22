@@ -3,21 +3,10 @@ const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const fastifyPlugin = require('fastify-plugin');
 const { ObjectId } = require('mongodb');
-const  { checkUserAdmin } = require('../models/tool');
+const  { checkUserAdmin, getApiUrl } = require('../models/tool');
 const ip = require('ip');
 
-function getApiUrl() {
-    if (process.env.MODE === 'local') {
-        // For local mode, use IP address and port
-        const port = process.env.API_URL ? process.env.API_URL.split(':')[2] : '3000';
-        const host = ip.address();
-        return `http://${host}:${port}`;
-    } else {
-        // For production, use hostname from environment or default
-        return 'https://app.chatlamix.com';
-    }
-}
-const apiUrl = getApiUrl();
+
 
 module.exports = fastifyPlugin(async function (fastify, opts) {
     // Decorate Fastify with a render function that includes GTM
@@ -59,6 +48,8 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
 
     // Pre-handler to set user, lang, and translations
     fastify.addHook('preHandler', async (request, reply) => {
+        const apiUrl = getApiUrl(request);
+
         // Load translations based on the determined language
         request.translations = getTranslations(request.lang);
         request.clerkTranslations = getClerkTranslations(request.lang); // Load clerk translations
@@ -106,7 +97,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         const refreshedUser = await fastify.mongo.db.collection('users').findOne(
             { _id: new fastify.mongo.ObjectId(request.user._id) }
         );
-        
+
         if (refreshedUser) {
             // Update the request.user with fresh data
             request.user = refreshedUser;
@@ -115,6 +106,8 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             if (reply.locals) {
             reply.locals.user = refreshedUser;
             }
+
+            console.log(`[PreHandler] User data refreshed for ${request.user._id}`);
         }
         } catch (error) {
         console.error('[PreHandler] Error refreshing user data:', error);
@@ -233,6 +226,8 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
 
     /** Middleware: Set reply.locals */
     async function setReplyLocals(request, reply) {
+        const apiUrl = getApiUrl(request);
+        
         reply.locals = {
             mode: process.env.MODE,
             apiurl: apiUrl,
@@ -249,7 +244,9 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     async function getAuthenticatedUser(request, userCollection) {
         const token = request?.cookies?.token;
 
-        if (!token) return null;
+        if (!token) {
+            return null;
+        }
 
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -265,10 +262,17 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
 
     /** Create or retrieve a temporary user */
     async function getOrCreateTempUser(request, reply, userCollection) {
+        // Skip temporary user creation for static resources
+        const path = request.raw.url;
+        if (path.match(/\.(png|jpg|jpeg|gif|webp|ico|css|js|svg|woff|woff2|ttf|eot|map)(\?.*)?$/i)) {
+            // Return a minimal anonymous user for static resources without setting cookies
+           return true;
+        }
         const mode = process.env.MODE || 'local';
         let tempUser = request?.cookies?.tempUser;
-
+        console.log(`[getOrCreateTempUser] tempUser: ${tempUser}`);
         if (!tempUser) {
+            console.log(`[getOrCreateTempUser] Creating new temporary user`);
             const lang = await fastify.getLang(request, reply);
             const tempUserId = new ObjectId().toString();
 

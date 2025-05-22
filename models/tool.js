@@ -561,23 +561,29 @@ async function saveChatImageToDB(db, chatId, imageUrl) {
 
     return updateResult;
 }
-    const getApiUrl = () => {
+    const getApiUrl = (req) => {
         if (process.env.MODE === 'local') {
-            // Dynamically get the local IP address
-            const interfaces = os.networkInterfaces();
-            let ip = '127.0.0.1';
-            for (const name of Object.keys(interfaces)) {
-                for (const iface of interfaces[name]) {
-                    if (iface.family === 'IPv4' && !iface.internal) {
-                        ip = iface.address;
-                        break;
+            // Get the host from the request or use default local IP detection
+            if (req && req.headers && req.headers.host) {
+                const host = req.headers.host;
+                return `http://${host}`;
+            } else {
+                // Fallback to dynamically getting the local IP address
+                const interfaces = os.networkInterfaces();
+                let ip = 'localhost';
+                for (const name of Object.keys(interfaces)) {
+                    for (const iface of interfaces[name]) {
+                        if (iface.family === 'IPv4' && !iface.internal) {
+                            ip = iface.address;
+                            break;
+                        }
                     }
+                    if (ip !== 'localhost') break;
                 }
-                if (ip !== '127.0.0.1') break;
+                return `http://${ip}:3000`;
             }
-            return `http://${ip}:3000`; // Local development URL with current IP
         } else {
-            return 'https://app.chatlamix.com'
+            return 'https://app.chatlamix.com';
         }
     };
 module.exports = {

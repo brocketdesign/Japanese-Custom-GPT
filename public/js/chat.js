@@ -766,7 +766,7 @@ function setupChatInterface(chat, character) {
         return inputString;
     } 
     function getImageTools({chatId, imageId, isLiked = false, title, prompt = false, nsfw = false, imageUrl = false}) {
-        const subscriptionStatus = user.subscriptionStatus == 'active';
+  
         prompt = sanitizeString(prompt);
         return `
             <div class="bg-white py-2 rounded mt-1 d-flex justify-content-between">
@@ -1303,7 +1303,11 @@ function setupChatInterface(chat, character) {
         autoPlayMessageAudio(uniqueId, message);
         requestAnimationFrame(renderChunk);
       };
-      
+
+    window.hideCompletionMessage = function(uniqueId) {
+        $(`#completion-${uniqueId}`).closest('message-container').closest('div').fadeOut().remove();
+    }
+
     
     function generateCompletion(callback, isHidden = false) {
         const uniqueId = `${currentStep}-${Date.now()}`;
@@ -1637,16 +1641,16 @@ window.displaySuggestions = function(suggestions, uniqueId) {
     if(!suggestionContainer.hasClass('init')){
         suggestionContainer.addClass('init');
         suggestionContainer.empty();
-    }
-    // Add new suggestions smoothly one by one
-    suggestions.forEach((suggestion, index) => {
-        const button = $(`<button class="btn shadow m-1 rounded-pill text-capitalize text-white col-auto" style="background:#151213b0;">${suggestion}</button>`);
-        button.on('click', function() {
-            sendMessage(suggestion);
-            $(this).fadeOut();
+        // Add new suggestions smoothly one by one, allow only one click per suggestion
+        suggestions.forEach((suggestion, index) => {
+            const button = $(`<button class="btn shadow m-1 rounded-pill text-capitalize text-white col-auto" style="background:#151213b0;">${suggestion}</button>`);
+            button.one('click', function() { // use .one for single click
+                sendMessage(suggestion);
+                $(this).fadeOut();
+            });
+            suggestionContainer.prepend(button.hide().fadeIn());
         });
-        suggestionContainer.prepend(button.hide().fadeIn());
-    });
+    }
 }
 
 // call fetchchatdata function accross other scripts

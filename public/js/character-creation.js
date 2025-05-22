@@ -7,9 +7,6 @@ $(document).ready(function() {
     if  (typeof isTemporaryChat === 'undefined') {  
         window.isTemporaryChat = true;
     }
-    console.log('isTemporaryChat', isTemporaryChat);
-    console.log('chatCreationId', chatCreationId);
-    
     // Add a small delay before accessing DOM elements
     setTimeout(function() {
         const uploadArea = document.getElementById('uploadArea');
@@ -82,7 +79,6 @@ $(document).ready(function() {
 });
 
 $(document).ready(function() {
-    console.log('chatCreationId', chatCreationId);
     if (chatCreationId && chatCreationId.trim() !== '') {
         $(".chatRedirection").show();
         $(document).on('click','#redirectToChat', function() {

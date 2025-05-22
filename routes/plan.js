@@ -210,7 +210,7 @@ function getAmount(currency, billingCycle,month_count, lang) {
   
   fastify.post('/plan/subscribe', async (request, reply) => {
     try {
-      const frontEnd = getApiUrl();
+      const frontEnd = getApiUrl(request);
 
       // Retrieve user information
       let user = request.user;
@@ -316,7 +316,7 @@ function getAmount(currency, billingCycle,month_count, lang) {
   // Renamed from /plan/success to /plan/subscription-success
   fastify.get('/plan/subscription-success', async (request, reply) => {
     try {
-      const frontEnd = getApiUrl();
+      const frontEnd = getApiUrl(request);
       console.log('[plan/subscription-success] Initiated. Query:', request.query);
       // Extract the session ID from the query parameters
       const query = request.query; // Fastify automatically parses query strings
@@ -440,7 +440,7 @@ function getAmount(currency, billingCycle,month_count, lang) {
   
   fastify.get('/plan/day-pass-success', async (request, reply) => {
     try {
-      const frontEnd = getApiUrl();
+      const frontEnd = getApiUrl(request);
       console.log('[plan/day-pass-success] Initiated. Query:', request.query);
       const query = request.query;
       const sessionId = query.session_id;
@@ -537,7 +537,7 @@ function getAmount(currency, billingCycle,month_count, lang) {
 
   fastify.get('/plan/cancel-payment', async (request, reply) => {
     try {
-      const frontEnd = getApiUrl();
+      const frontEnd = getApiUrl(request);
       // You can log this event or notify the user if needed
       console.log('[plan/cancel-payment] User canceled the payment process.');
 
@@ -939,7 +939,7 @@ fastify.post('/user/daily-bonus-coins', async (request, reply) => {
 
   fastify.post('/plan/create-checkout-session', async (request, reply) => {
       const { buttonId, userId } = request.body;
-      const frontEnd = getApiUrl();
+      const frontEnd = getApiUrl(request);
 
       const user = await fastify.mongo.db.collection('users').findOne({
         _id: new fastify.mongo.ObjectId(userId),
@@ -996,7 +996,7 @@ fastify.post('/user/daily-bonus-coins', async (request, reply) => {
   });
   fastify.post('/album/create-checkout-session', async (request, reply) => {
     const { priceId, userId, chatId } = request.body;
-    const frontEnd = getApiUrl();
+    const frontEnd = getApiUrl(request);
     const user = await fastify.mongo.db.collection('users').findOne({
         _id: new fastify.mongo.ObjectId(userId),
     });

@@ -424,6 +424,7 @@ fastify.get('/chats/images/search', async (request, reply) => {
           language: 1,
           description: 1,
           first_message: 1,
+          slug: 1,
         })
         .sort({ _id: -1 }) // Sort by _id in descending order for latest first
         .skip(skip)

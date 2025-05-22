@@ -498,28 +498,37 @@ fastify.get('/character/slug/:slug', async (request, reply) => {
           return reply.code(400).send({ error: 'Invalid Image ID format' });
         }
 
-        if (imageDoc.length > 0 && imageDoc[0].image && (!imageDoc[0].image.title || !imageDoc[0].image.title.en || !imageDoc[0].image.title.ja || !imageDoc[0].image.title.fr)) {
-            const generateTitles = async () => {
-              const title_en = await generatePromptTitle(imageDoc[0].image.prompt, 'english');
-              const title_ja = await generatePromptTitle(imageDoc[0].image.prompt, 'japanese');
-              const title_fr = await generatePromptTitle(imageDoc[0].image.prompt, 'french');
-              return {
-                en: title_en,
-                ja: title_ja,
-                fr: title_fr
-              };
-            };
+        if (
+          imageDoc.length > 0 &&
+          imageDoc[0].image &&
+          (
+            !imageDoc[0].image.title ||
+            typeof imageDoc[0].image.title !== 'object' ||
+            !imageDoc[0].image.title.en ||
+            !imageDoc[0].image.title.ja ||
+            !imageDoc[0].image.title.fr
+          )
+        ) {
+          const existingTitle = imageDoc[0].image.title || {};
+          const generateTitles = async () => {
+            const title = { ...existingTitle };
+            if (!title.en) title.en = await generatePromptTitle(imageDoc[0].image.prompt, 'english');
+            if (!title.ja) title.ja = await generatePromptTitle(imageDoc[0].image.prompt, 'japanese');
+            if (!title.fr) title.fr = await generatePromptTitle(imageDoc[0].image.prompt, 'french');
+            return title;
+          };
 
-            generateTitles().then((title) => {
-              galleryCollection.updateOne(
-                { 'images._id': imageId },
-                { $set: { 'images.$.title': title } }
-              );
-              fastify.sendNotificationToUser(currentUserId, 'updateImageTitle', { title });
-            }).catch((err) => {
-              console.error('[SimilarChats] Failed to generate titles for image:', err);
-            });
-        }
+          generateTitles().then((title) => {
+            galleryCollection.updateOne(
+              { 'images._id': imageId },
+              { $set: { 'images.$.title': title } }
+            );
+            fastify.sendNotificationToUser(currentUserId, 'updateImageTitle', { title });
+          }).catch((err) => {
+            console.error('[SimilarChats] Failed to generate titles for image:', err);
+          });
+      }
+      
       if (imageDoc.length > 0) {
         image = imageDoc[0].image;
         const unlockedItem = currentUserData?.unlockedItems?.map((id) => id.toString()).includes(imageId.toString());

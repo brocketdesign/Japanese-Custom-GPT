@@ -1636,6 +1636,9 @@ window.regenImage = function(el){
 };
 
 window.displaySuggestions = function(suggestions, uniqueId) {
+    if (!suggestions || suggestions.length === 0) {
+        return;
+    }
     const suggestionContainer = $(`#suggestions`);
 
     if(!suggestionContainer.hasClass('init')){

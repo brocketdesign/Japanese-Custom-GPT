@@ -25,7 +25,7 @@ const {
 const axios = require('axios');
 const OpenAI = require("openai");
 const { z, custom, union } = require("zod");
-const { zodResponseFormat } = require("openai/helpers/zod");
+const { zodResponseFormat, zodResponsesFunction } = require("openai/helpers/zod");
 const path = require('path');
 const fs = require('fs');
 const sharp = require('sharp');
@@ -2435,7 +2435,7 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
             const { lang } = request.body;
             const mode = process.env.MODE || 'local';
             const user = request.user;
-            const userLang = lang || 'ja';
+            const userLang = lang || 'en';
             
             if (user.isTemporary) {
                 // Update tempUser lang
@@ -2448,12 +2448,11 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
                     maxAge: 3600
                 });
 
-            } else {
-                // Update user's lang in the database
+            } else {zodResponsesFunction
                 await fastify.mongo.db.collection('users').updateOne(
                     { _id: user._id },
                     { $set: { lang: userLang } }
-                );
+                );           
             }
 
             return reply.send({ success: true, lang: userLang });

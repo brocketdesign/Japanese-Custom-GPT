@@ -3,7 +3,7 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const { ObjectId } = require('mongodb');
 const axios = require('axios');
 const { createHash } = require('crypto');
-const { addNotification, saveChatImageToDB } = require('../models/tool')
+const { addNotification, saveChatImageToDB, getLanguageName } = require('../models/tool')
 const slugify = require('slugify');
 const sharp = require('sharp');
 const default_prompt = {
@@ -184,10 +184,9 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
 
     let newTitle = title;
     if (!title) {
-      const lang = user.language || 'english';
-      // Only generate title for user's language
+      const lang = getLanguageName(user.lang || 'en');
       const userLangTitle = await generatePromptTitle(requestData.prompt, lang);
-      
+      console.log(`[generateImg] Generated title for ${lang}: ${userLangTitle}`);
       // Create title object with just the user's language
       newTitle = {
         en: lang === 'english' ? userLangTitle : '',

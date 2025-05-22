@@ -382,6 +382,7 @@ async function generatePromptSuggestions(messages, chatDescription, language) {
 }
 
 async function generatePromptTitle(prompt,language) {
+
     const messages = [
           {
             role: "system",
@@ -400,7 +401,7 @@ async function generatePromptTitle(prompt,language) {
           },
     ]
 
-    const completionMessage = await generateCompletion(messages, 600, 'deepseek');
+    const completionMessage = await generateCompletion(messages, 600, 'mistral');
     return completionMessage.replace(/['"]+/g, '');
     
 }

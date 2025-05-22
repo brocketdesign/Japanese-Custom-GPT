@@ -18,6 +18,7 @@ const apiDetails = {
       llama: 'meta-llama/llama-3.2-3b-instruct',
       gemma: 'google/gemma-2-9b-it',
       deepseek: 'deepseek/deepseek-v3-turbo',
+      mistral: 'mistralai/mistral-nemo',
     }
   },
 };
@@ -25,7 +26,7 @@ const apiDetails = {
 // Default model config
 let currentModelConfig = {
   provider: 'novita',
-  modelName: 'gemma'
+  modelName: 'mistral'
 };
 
 const moderateText = async (text) => {

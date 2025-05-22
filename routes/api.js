@@ -3060,7 +3060,7 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
             { _id: { $ne: chatIdObjectId }, chatImageUrl: { $exists: true }, $or: [{enhancedPrompt: { $exists: true, $ne: null, $ne: "" }}, {characterPrompt: { $exists: true, $ne: null, $ne: "" }}] },
             {
               projection: {
-                _id: 1, name: 1, chatImageUrl: 1, nsfw: 1, isPremium: 1, userId: 1, gender: 1, imageStyle: 1, enhancedPrompt: 1, characterPrompt: 1
+                _id: 1, slug: 1, name: 1, chatImageUrl: 1, nsfw: 1, isPremium: 1, userId: 1, gender: 1, imageStyle: 1, enhancedPrompt: 1, characterPrompt: 1
               }
             }
           );

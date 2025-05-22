@@ -505,7 +505,8 @@ fastify.get('/chats/images/search', async (request, reply) => {
         ])
         .toArray()
 
-        // Get total image count for pagination info
+
+      // Get total image count for pagination info
       const totalImagesCount = await chatsGalleryCollection
         .aggregate([
           { $match: { chatId } },
@@ -526,10 +527,11 @@ fastify.get('/chats/images/search', async (request, reply) => {
       const imagesWithChatData = chatImagesDocs.map(doc => ({
         ...doc.image,
         chatId: chat._id,
+        chatSlug: chat.slug,
         chatName: chat.name,
         thumbnail: chat?.thumbnail || chat?.thumbnailUrl || '/img/default-thumbnail.png',
       }));
-  
+
       // Send the paginated images response
       return reply.send({
         images: imagesWithChatData,

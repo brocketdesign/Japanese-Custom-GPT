@@ -6,12 +6,16 @@ const { ObjectId } = require('mongodb');
 const  { checkUserAdmin } = require('../models/tool');
 const ip = require('ip');
 
-function getApiUrl(){
-    // Use process.env.API_URL to get the port and the get the current iP to reconstruct the URL
-    const port = process.env.API_URL.split(':')[2];
-    const host = ip.address();
-    const protocol = process.env.MODE === 'local' ? 'http' : 'https';
-    return `${protocol}://${host}:${port}`;
+function getApiUrl() {
+    if (process.env.MODE === 'local') {
+        // For local mode, use IP address and port
+        const port = process.env.API_URL ? process.env.API_URL.split(':')[2] : '3000';
+        const host = ip.address();
+        return `http://${host}:${port}`;
+    } else {
+        // For production, use hostname from environment or default
+        return 'https://app.chatlamix.com';
+    }
 }
 const apiUrl = getApiUrl();
 

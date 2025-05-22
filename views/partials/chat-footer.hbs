@@ -460,7 +460,7 @@
                 }, 100);
             });
 
-                        // Add CSS to handle keyboard visibility
+            // Add CSS to handle keyboard visibility
             $('head').append(`
                 <style>
                     body.keyboard-open {
@@ -490,12 +490,6 @@
                 </style>
             `);
             
-            // Listen for orientation changes and window resizes
-            $(window).on('orientationchange resize', function() {
-                if (!$('body').hasClass('keyboard-open')) {
-                    window.scrollTo(0, 0);
-                }
-            });
             
             // Add keyboard detection and repositioning
             let viewportHeight = window.innerHeight;

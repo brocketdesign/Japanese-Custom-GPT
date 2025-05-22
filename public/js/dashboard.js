@@ -1109,7 +1109,7 @@ window.displayUserChats = async function(userId, page = 1, skipDeduplication) {
                           ${(chat.tags || []).length ? `<div class="tags d-flex justify-content-between align-items-center flex-wrap">${chat.tags.map(tag => `<span class="badge bg-dark">${tag}</span>`).join('')}</div>` : ''}
                         </div>
                         <div class="position-absolute text-end" style="top:10px;right:10px">
-                          <a href="/character/${chat._id}">
+                          <a href="/character/slug/${chat.slug}">
                             <div class="gallery" style="color: rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
                               <span class="btn btn-dark"><i class="bi bi-image me-1"></i><span style="font-size:12px;">${chat.imageCount || 0}</span></span>
                             </div>
@@ -1121,12 +1121,12 @@ window.displayUserChats = async function(userId, page = 1, skipDeduplication) {
                       <div class="card-body bg-transparent border-0 pb-0 text-start">
                         <div class="row align-items-center">
                           <div class="col-auto text-center">
-                            <a href="/character/${chat._id}" style="text-decoration: none;">
+                            <a href="/character/slug/${chat.slug}" style="text-decoration: none;">
                               <img src="${chat.chatImageUrl || '/img/avatar.png'}" alt="${chat.name}" class="rounded-circle" width="40" height="40">
                             </a>
                           </div>
                           <div class="col-auto">
-                            <a href="/character/${chat._id}" class="text-muted" style="text-decoration: none;">
+                            <a href="/character/slug/${chat.slug}" class="text-muted" style="text-decoration: none;">
                               <h5 class="card-title character-title mb-0">${chat.name}</h5>
                             </a>
                           </div>
@@ -1366,7 +1366,7 @@ window.displaySimilarChats = function (chatData, targetGalleryId) {
     htmlContent += `
         <div class="${cardClass}" data-id="${chat._id}" style="cursor:pointer;">
             <div class="card gallery-hover shadow-sm border-0 h-100 position-relative overflow-hidden">
-                <a href="/character/${chat._id}" class="text-decoration-none">
+                <a href="/character/slug/${chat.slug}" class="text-decoration-none">
                     <div class="gallery-image-wrapper" style="aspect-ratio: 4/5; background: #f8f9fa; position: relative;">
                         <img src="${imageSrc}" class="card-img-top gallery-img" alt="${chat.name}" style="height: 100%; width: 100%; object-fit: cover;">
                         ${nsfwOverlay}
@@ -1733,7 +1733,7 @@ window.resultImageSearch = async function (page = 1,query,style = 'anime', callb
                             <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" >
                         </div>
                         ` : `
-                        <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
+                        <a href="/character/slug/${item.slug}?imageSlug=${item.slug}" class="text-muted text-decoration-none">
                             <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
                         </a>
                         <div class="d-none card-body p-2 d-flex align-items-center justify-content-between">
@@ -1886,11 +1886,11 @@ window.loadAllChatImages = function (page = 1, reload = false) {
             ${
               isBlur
                 ? `<div type="button" onclick="handleClickRegisterOrPay(event,${isTemporary})">
-                      <a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
+                      <a href="/character/slug/${item.slug}?imageSlug=${item.slug}" class="text-muted text-decoration-none">
                         <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
                       </a>
                    </div>`
-                : `<a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
+                : `<a href="/character/slug/${item.slug}?imageSlug=${item.slug}" class="text-muted text-decoration-none">
                      <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
                    </a>
                    <div class="${!isAdmin ? 'd-none' : ''} card-body p-2 d-flex align-items-center justify-content-between">
@@ -2027,10 +2027,10 @@ window.loadUserImages = function (userId, page = 1, reload = false) {
         <div class="col-6 col-md-3 col-lg-2 mb-2">
           <div class="card">
             <div class="d-flex align-items-center p-2">
-              <a href="/character/${item.chatId}?imageId=${item._id}">
+              <a href="/character/slug/${item.slug}?imageSlug=${item.slug}">
                 <img src="${item.thumbnail}" alt="" class="rounded-circle me-2" width="40" height="40">
               </a>
-              <a href="/character/${item.chatId}?imageId=${item._id}" class="text-decoration-none text-dark">
+              <a href="/character/slug/${item.slug}?imageSlug=${item.slug}" class="text-decoration-none text-dark">
                 <strong>${item.chatName}</strong>
               </a>
             </div>
@@ -2039,7 +2039,7 @@ window.loadUserImages = function (userId, page = 1, reload = false) {
                 ? `<div type="button" onclick=handleClickRegisterOrPay(event,${isTemp})>
                      <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
                    </div>`
-                : `<a href="/character/${item.chatId}?imageId=${item._id}" class="text-muted text-decoration-none">
+                : `<a href="/character/slug/${item.slug}?imageSlug=${item.slug}" class="text-muted text-decoration-none">
                      <img data-src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top lazy-image" loading="lazy">
                    </a>
                    <div class="d-none card-body p-2 d-flex align-items-center justify-content-between">
@@ -2400,11 +2400,11 @@ window.loadChatImages = function (chatId, page = 1, reload = false, isModal = fa
             ${
               isBlur
                 ? `<div type="button" onclick="handleClickRegisterOrPay(event,${isTemporary})">
-                      <a href="/character/${item.chatId}?imageId=${item._id}" data-index="${index}">
+                      <a href="/character/slug/${item.slug}?imageSlug=${item.slug}" data-index="${index}">
                         <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
                       </a>
                    </div>`
-                : `<a href="/character/${item.chatId}?imageId=${item._id}" data-index="${index}">
+                : `<a href="/character/slug/${item.slug}?imageSlug=${item.slug}" data-index="${index}">
                      <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
                    </a>
                    <div class="${!isAdmin ? 'd-none' : ''} card-body p-2 row mx-0 px-0 align-items-center justify-content-between">
@@ -2682,7 +2682,7 @@ $(document).ready(function () {
                             onclick="handleClickRegisterOrPay(event,${isTemporary})"
                           >
                           <a 
-                            href="/character/${chat._id}?imageId=${item._id}" 
+                            href="/character/slug/${chat.slug}?imageSlug=${item.slug}" 
                             class="text-muted text-decoration-none"
                             data-index="${index}"
                           >
@@ -2697,7 +2697,7 @@ $(document).ready(function () {
                         : `
                           <!-- Unblurred Image -->
                           <a 
-                            href="/character/${chat._id}?imageId=${item._id}" 
+                            href="/character/slug/${chat.slug}?imageSlug=${item.slug}" 
                             class="text-muted text-decoration-none"
                             data-index="${index}"
                           >
@@ -2743,8 +2743,8 @@ $(document).ready(function () {
             chatsHtml += `
               <div class="chat-item mb-4">
                 <div class="d-flex justify-content-start align-items-center">
-                    <a href="/character/${chat._id}"><span style="font-size: 18px; font-weight: 700;">${chat.name}</span></a>
-                    <a href="/character/${chat._id}"><span class="badge custom-gradient-bg ms-2">${chat.imageCount}</span></a>
+                    <a href="/character/slug/${chat.slug}"><span style="font-size: 18px; font-weight: 700;">${chat.name}</span></a>
+                    <a href="/character/slug/${chat.slug}"><span class="badge custom-gradient-bg ms-2">${chat.imageCount}</span></a>
                 </div>
                 <p>${chat?.first_message || chat.description}</p>
                 <!-- Horizontal scrolling container -->
@@ -2824,7 +2824,7 @@ $(document).ready(function () {
                           `
                           : `
                             <a 
-                              href="/character/${item.chatId}?imageId=${item._id}" 
+                              href="/character/slug/${item.slug}?imageSlug=${item.slug}" 
                               class="text-muted text-decoration-none"
                             >
                               <img 

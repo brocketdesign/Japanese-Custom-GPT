@@ -1,6 +1,7 @@
 const { ObjectId } = require('mongodb');
 const qs = require('qs');
 const stripe = process.env.MODE == 'local' ? require('stripe')(process.env.STRIPE_SECRET_KEY_TEST) : require('stripe')(process.env.STRIPE_SECRET_KEY)
+const { getApiUrl } = require('../models/tool');
 
 async function routes(fastify, options) {
 
@@ -209,9 +210,7 @@ function getAmount(currency, billingCycle,month_count, lang) {
   
   fastify.post('/plan/subscribe', async (request, reply) => {
     try {
-      const frontEnd = process.env.MODE === 'local' 
-      ? 'http://localhost:3000' 
-      : `https://${request.headers.host}`;
+      const frontEnd = getApiUrl();
 
       // Retrieve user information
       let user = request.user;
@@ -317,9 +316,7 @@ function getAmount(currency, billingCycle,month_count, lang) {
   // Renamed from /plan/success to /plan/subscription-success
   fastify.get('/plan/subscription-success', async (request, reply) => {
     try {
-      const frontEnd = process.env.MODE === 'local' 
-      ? 'http://localhost:3000' 
-      : `https://${request.headers.host}`;
+      const frontEnd = getApiUrl();
       console.log('[plan/subscription-success] Initiated. Query:', request.query);
       // Extract the session ID from the query parameters
       const query = request.query; // Fastify automatically parses query strings
@@ -340,8 +337,9 @@ function getAmount(currency, billingCycle,month_count, lang) {
       }
       console.log('[plan/subscription-success] Stripe session retrieved:', session.id, 'Payment Status:', session.payment_status);
       // Find the user in your database
+      const userId = session.metadata.userId ? new fastify.mongo.ObjectId(session.metadata.userId) : null;
       const userFromDb = await fastify.mongo.db.collection('users').findOne({
-        email: session.customer_email,
+        _id: new ObjectId(userId),
       });
   
       if (!userFromDb) {
@@ -404,6 +402,9 @@ function getAmount(currency, billingCycle,month_count, lang) {
         // Consider if redirecting to error is appropriate or if it's a non-critical log.
       } else {
         console.log(`[plan/subscription-success] User document updated for user ID: ${userFromDb._id}`);
+        // Log the user document update
+        const newUser = await fastify.mongo.db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userFromDb._id) });
+        console.log(`[plan/subscription-success] Updated user document:`, newUser);
       }
 
       let bonusCoins = 0;
@@ -439,9 +440,7 @@ function getAmount(currency, billingCycle,month_count, lang) {
   
   fastify.get('/plan/day-pass-success', async (request, reply) => {
     try {
-      const frontEnd = process.env.MODE === 'local' 
-      ? 'http://localhost:3000' 
-      : `https://${request.headers.host}`;
+      const frontEnd = getApiUrl();
       console.log('[plan/day-pass-success] Initiated. Query:', request.query);
       const query = request.query;
       const sessionId = query.session_id;
@@ -470,8 +469,8 @@ function getAmount(currency, billingCycle,month_count, lang) {
 
       if (userId) {
         userFromDb = await fastify.mongo.db.collection('users').findOne({ _id: userId });
-      } else if (session.customer_email) { // Fallback to email if userId not in metadata (though it should be)
-        userFromDb = await fastify.mongo.db.collection('users').findOne({ email: session.customer_email });
+      } else {
+        console.log(`[plan/day-pass-success] User ID not found in session metadata. Email: ${session.customer_email}`);
       }
 
       if (!userFromDb) {
@@ -538,9 +537,7 @@ function getAmount(currency, billingCycle,month_count, lang) {
 
   fastify.get('/plan/cancel-payment', async (request, reply) => {
     try {
-      const frontEnd = process.env.MODE === 'local' 
-      ? 'http://localhost:3000' 
-      : `https://${request.headers.host}`;
+      const frontEnd = getApiUrl();
       // You can log this event or notify the user if needed
       console.log('[plan/cancel-payment] User canceled the payment process.');
 
@@ -942,10 +939,7 @@ fastify.post('/user/daily-bonus-coins', async (request, reply) => {
 
   fastify.post('/plan/create-checkout-session', async (request, reply) => {
       const { buttonId, userId } = request.body;
-      console.log({ buttonId, userId })
-      const frontEnd = process.env.MODE === 'local' 
-      ? 'http://localhost:3000' 
-      : `https://${request.headers.host}`;
+      const frontEnd = getApiUrl();
 
       const user = await fastify.mongo.db.collection('users').findOne({
         _id: new fastify.mongo.ObjectId(userId),
@@ -1002,11 +996,7 @@ fastify.post('/user/daily-bonus-coins', async (request, reply) => {
   });
   fastify.post('/album/create-checkout-session', async (request, reply) => {
     const { priceId, userId, chatId } = request.body;
-
-    const frontEnd = process.env.MODE === 'local' 
-      ? 'http://localhost:3000' 
-      : `https://${request.headers.host}`;
-
+    const frontEnd = getApiUrl();
     const user = await fastify.mongo.db.collection('users').findOne({
         _id: new fastify.mongo.ObjectId(userId),
     });

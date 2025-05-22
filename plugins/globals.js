@@ -93,7 +93,8 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         '/chat',
         '/chat/',
         '/api/chat/',
-        '/api/openai-chat-completion'
+        '/api/openai-chat-completion',
+        '/chat/edit/'
     ];
         
     // Check if the current path starts with any of the refresh routes

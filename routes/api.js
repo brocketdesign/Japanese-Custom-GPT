@@ -19,7 +19,8 @@ const {
     fetchTags,
     processPromptToTags,
     saveChatImageToDB,
-    checkUserAdmin
+    checkUserAdmin,
+    getApiUrl
 } = require('../models/tool');
 const axios = require('axios');
 const OpenAI = require("openai");
@@ -30,7 +31,6 @@ const fs = require('fs');
 const sharp = require('sharp');
 const { title } = require('process');
 const { chat } = require('googleapis/build/src/apis/chat');
-const os = require('os');
 const sessions = new Map();
 
 const free_models = ['293564'];
@@ -1410,26 +1410,6 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
             _id: new fastify.mongo.ObjectId(userChatId) 
         });
     }
-
-    const getApiUrl = () => {
-        if (process.env.MODE === 'local') {
-            // Dynamically get the local IP address
-            const interfaces = os.networkInterfaces();
-            let ip = '127.0.0.1';
-            for (const name of Object.keys(interfaces)) {
-                for (const iface of interfaces[name]) {
-                    if (iface.family === 'IPv4' && !iface.internal) {
-                        ip = iface.address;
-                        break;
-                    }
-                }
-                if (ip !== '127.0.0.1') break;
-            }
-            return `http://${ip}:3000`; // Local development URL with current IP
-        } else {
-            return 'https://app.chatlamix.com'
-        }
-    };
 
     // Fetches chat document from 'chats' collection
     async function getChatDocument(db, chatId) {

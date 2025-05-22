@@ -1,7 +1,51 @@
 $(document).ready(function() {
     fetchAndAppendModels();
-});
 
+    if (typeof chatCreationId === 'undefined') {
+            window.chatCreationId = '';
+    }         
+    if  (typeof isTemporaryChat === 'undefined') {  
+        window.isTemporaryChat = true;
+    }
+    console.log('isTemporaryChat', isTemporaryChat);
+    console.log('chatCreationId', chatCreationId);
+    
+    // Add a small delay before accessing DOM elements
+    setTimeout(function() {
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('imageUpload');
+
+        const subscriptionStatus = user.subscriptionStatus == 'active';
+        if(subscriptionStatus && fileInput){
+            $('#imageUpload').prop('disabled', false);
+        }
+        
+        // Only access uploadArea if it exists in the DOM
+        if (uploadArea) {
+            if (!uploadArea.hasEventListener) {
+                uploadArea.addEventListener('dragover', (event) => {
+                    event.preventDefault();
+                    uploadArea.classList.add('dragover');
+                });
+
+                uploadArea.addEventListener('dragleave', () => {
+                    uploadArea.classList.remove('dragover');
+                });
+
+                uploadArea.addEventListener('drop', (event) => {
+                    event.preventDefault();
+                    uploadArea.classList.remove('dragover');
+                    fileInput.files = event.dataTransfer.files;
+                    previewImage(event);
+                });
+
+                uploadArea.hasEventListener = true;
+            }
+        } else {
+            console.log('Upload area element not found in DOM yet');
+        }
+    }, 500); // 500ms delay to ensure DOM is fully rendered
+});
 $(document).off().on('click', '.add-tag', function() {
     const tag = $(this).text();
     const $characterPrompt = $('#characterPrompt');
@@ -38,7 +82,7 @@ $(document).ready(function() {
 });
 
 $(document).ready(function() {
-
+    console.log('chatCreationId', chatCreationId);
     if (chatCreationId && chatCreationId.trim() !== '') {
         $(".chatRedirection").show();
         $(document).on('click','#redirectToChat', function() {
@@ -440,34 +484,6 @@ $(document).ready(function() {
        
 });
 
-$(document).ready(function() {
-    const uploadArea = document.getElementById('uploadArea');
-    const fileInput = document.getElementById('imageUpload');
-
-    const subscriptionStatus = user.subscriptionStatus == 'active'
-    if(subscriptionStatus){
-        $('#imageUpload').prop('disabled', false);
-    }
-    if (!uploadArea.hasEventListener) {
-        uploadArea.addEventListener('dragover', (event) => {
-            event.preventDefault();
-            uploadArea.classList.add('dragover');
-        });
-
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
-        });
-
-        uploadArea.addEventListener('drop', (event) => {
-            event.preventDefault();
-            uploadArea.classList.remove('dragover');
-            fileInput.files = event.dataTransfer.files;
-            previewImage(event);
-        });
-
-        uploadArea.hasEventListener = true;
-    }
-});
 
 function previewImage(event) {
     const reader = new FileReader();

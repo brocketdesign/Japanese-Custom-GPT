@@ -7,6 +7,7 @@ const stream = require('stream');
 const { promisify } = require('util');
 const fs = require('fs').promises;
 const path = require('path');
+const os = require('os');
 
 const adminEmails = ['akamatsutaro07@gmail.com','japanclassicstore@gmail.com','didier@line.com','didier@hatoltd.com','e2@gmail.com','hotta.yuki@hatoltd.com']; // Add your admin emails here
 
@@ -560,7 +561,25 @@ async function saveChatImageToDB(db, chatId, imageUrl) {
 
     return updateResult;
 }
-
+    const getApiUrl = () => {
+        if (process.env.MODE === 'local') {
+            // Dynamically get the local IP address
+            const interfaces = os.networkInterfaces();
+            let ip = '127.0.0.1';
+            for (const name of Object.keys(interfaces)) {
+                for (const iface of interfaces[name]) {
+                    if (iface.family === 'IPv4' && !iface.internal) {
+                        ip = iface.address;
+                        break;
+                    }
+                }
+                if (ip !== '127.0.0.1') break;
+            }
+            return `http://${ip}:3000`; // Local development URL with current IP
+        } else {
+            return 'https://app.chatlamix.com'
+        }
+    };
 module.exports = {
     getCounter,
     updateCounter,
@@ -583,5 +602,6 @@ module.exports = {
     listFiles,
     addNotification,
     saveChatImageToDB,
-    addAdminEmails
+    addAdminEmails,
+    getApiUrl
 };

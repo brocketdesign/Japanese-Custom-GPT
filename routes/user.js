@@ -190,7 +190,7 @@ async function routes(fastify, options) {
         const subscriptionInfo = await fastify.mongo.db.collection('users').findOne({
           _id: new ObjectId(user._id)
         });
-        console.log(`Subscription info for user ${user._id}:`, subscriptionInfo.subscriptionStatus);
+        console.log(`[user/clerk-update] Subscription info for user ${user._id}:`, subscriptionInfo.subscriptionStatus);
         if (subscriptionInfo && subscriptionInfo.subscriptionStatus === 'active') {
           updateData.subscriptionStatus = 'active';
         } else {

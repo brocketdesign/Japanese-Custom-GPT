@@ -150,7 +150,8 @@ async function routes(fastify, options) {
       const imagesWithChatData = likedImagesDocs.map(doc => {
         const image = doc.image;
         const chat = chats.find(c => c._id.equals(doc.chatId));
-
+        image.chatSlug =  chat?.slug || ''
+        
         return {
           ...image,
           chatId: chat?._id,

@@ -708,27 +708,22 @@ fastify.get('/search', async (request, reply) => {
     const db = fastify.mongo.db;
     let { translations, lang, user } = request;
     const userId = user._id;
-    console.log(`[SEARCH] Incoming request from userId: ${userId}, query: ${request.query.q || request.query.query}, page: ${request.query.page}`);
 
     user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) }) || request.user;
-    console.log(`[SEARCH] Loaded user:`, user ? { _id: user._id, subscriptionStatus: user.subscriptionStatus } : null);
 
     const page = parseInt(request.query.page) || 1;
     const query = request.query.q || request.query.query || '';
     const limit = 30;
 
     const baseUrl = process.env.MODE === 'local' ? `http://${ip.address()}:3000` : `${request.protocol}://${request.hostname}`;
-    console.log(`[SEARCH] baseUrl resolved as: ${baseUrl}`);
 
     // Fetch image results (reuse /chats/images/search logic)
     const imageSearchUrl = `${baseUrl}/chats/images/search?page=${page}&query=${encodeURIComponent(query)}&limit=${limit}`;
-    console.log(`[SEARCH] Fetching images from: ${imageSearchUrl}`);
+
     const imageRes = await fetch(imageSearchUrl);
     const imageData = imageRes.ok ? await imageRes.json() : { images: [] };
     if (!imageRes.ok) {
       console.warn(`[SEARCH] Image fetch failed with status: ${imageRes.status}`);
-    } else {
-      console.log(`[SEARCH] Fetched ${imageData.images?.length || 0} images`);
     }
 
     // Compute isBlur for each image
@@ -737,7 +732,7 @@ fastify.get('/search', async (request, reply) => {
       const isBlur = item.nsfw && !subscriptionStatus;
       return { ...item, isBlur };
     });
-    console.log(`[SEARCH] Processed image results, subscriptionStatus: ${subscriptionStatus}`);
+
     const totalPages = imageData.totalPages || 1;
     const hasNextPage = page < totalPages;
     const hasPrevPage = page > 1;
@@ -752,7 +747,6 @@ fastify.get('/search', async (request, reply) => {
     // Fetch tags from a random page
     const randomPage = Math.floor(Math.random() * 10) + 1;
     const tagsUrl = `${baseUrl}/api/tags?page=${randomPage}`;
-    console.log(`[SEARCH] Fetching tags from: ${tagsUrl}`);
     const tagsRes = await fetch(tagsUrl);
     const tagsData = tagsRes.ok ? await tagsRes.json() : { tags: [] };
     if (!tagsRes.ok) {

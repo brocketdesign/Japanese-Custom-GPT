@@ -270,7 +270,6 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         }
         const mode = process.env.MODE || 'local';
         let tempUser = request?.cookies?.tempUser;
-        console.log(`[getOrCreateTempUser] tempUser: ${tempUser}`);
         if (!tempUser) {
             console.log(`[getOrCreateTempUser] Creating new temporary user`);
             const lang = await fastify.getLang(request, reply);

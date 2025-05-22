@@ -835,7 +835,6 @@ window.handleSignOut = function() {
 }
 window.handleClerkSignIn = function(Clerk) {
     if(!Clerk.session){
-        console.error('Clerk session not found');
         return
     }
     // Get session token from Clerk

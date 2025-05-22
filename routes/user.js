@@ -13,10 +13,9 @@ async function routes(fastify, options) {
   fastify.get('/user/clerk-auth', async (request, reply) => {
     try {
       const clerkId = request.headers['x-clerk-user-id'];
-      console.log(`clerkId from header: ${clerkId}`);
   
       if (!clerkId) {
-        console.warn('No clerkId found in header');
+        console.warn('[/user/clerk-auth] No clerkId found in header');
         return reply.status(401).send({ error: 'Unauthorized' });
       }
   
@@ -25,7 +24,7 @@ async function routes(fastify, options) {
       const clerkSecretKey = process.env.CLERK_SECRET_KEY;
   
       if (!clerkSecretKey) {
-        console.error('CLERK_SECRET_KEY is not set in environment variables.');
+        console.error('[/user/clerk-auth] CLERK_SECRET_KEY is not set in environment variables.');
         return reply.status(500).send({ error: 'Clerk secret key not configured' });
       }
   
@@ -39,19 +38,19 @@ async function routes(fastify, options) {
         });
   
         if (response.status !== 200) {
-          console.error(`Failed to fetch user data from Clerk API. Status: ${response.status}`);
+          console.error(`[/user/clerk-auth] Failed to fetch user data from Clerk API. Status: ${response.status}`);
           return reply.status(500).send({ error: 'Failed to fetch user data from Clerk' });
         }
   
         clerkUserData = response.data;
       } catch (axiosError) {
-        console.error('Error fetching user data from Clerk:', axiosError.message);
+        console.error('[/user/clerk-auth] Error fetching user data from Clerk:', axiosError.message);
         return reply.status(500).send({ error: 'Failed to fetch user data from Clerk' });
       }
   
       const usersCollection = fastify.mongo.db.collection('users');
       let user = await usersCollection.findOne({ clerkId });
-      console.log(`User found with clerkId ${clerkId}: ${!!user}`);
+      console.log(`[/user/clerk-auth] User found with clerkId ${clerkId}: ${!!user}`);
   
       if (!user) {
         // Create a new user with Clerk data
@@ -91,7 +90,7 @@ async function routes(fastify, options) {
   
           // Update the user object with the new data
           Object.assign(user, updateData);
-          console.log(`Updated user with clerkId ${clerkId} to match Clerk data`);
+          console.log(`[/user/clerk-auth] Updated user with clerkId ${clerkId} to match Clerk data`);
         }
   
         // Check for subscription status if not present
@@ -118,7 +117,7 @@ async function routes(fastify, options) {
   
       await updateUserLang(fastify.mongo.db, user._id, request.lang);
       const token = jwt.sign({ _id: user._id, clerkId: user.clerkId }, process.env.JWT_SECRET, { expiresIn: '24h' });
-      console.log(`JWT token created for user ${user._id}`);
+      console.log(`[user] JWT token created for user ${user._id}`);
   
       // Set the cookie and redirect
       reply.setCookie('token', token, { path: '/', httpOnly: true });

@@ -2741,7 +2741,7 @@ $(document).ready(function () {
                 : false;
               
               chatImagesHtml += `
-                <div class="horizontal-image-wrapper col-12 col-md-4 col-lg-2 mb-2">
+                <div class="horizontal-image-wrapper vertical-transition col-6 col-md-4 col-lg-2 mb-2 px-1">
                   <div class="card shadow-0">
                     ${
                       isBlur

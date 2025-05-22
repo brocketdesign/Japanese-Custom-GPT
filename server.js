@@ -400,8 +400,7 @@ fastify.get('/character', async (request, reply) => {
     user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
     return reply.renderWithGtm('character.hbs', {
-      title: 'AIグラビアから送られてくる特別な写真 | LAMIX | 日本語 | 無料AI画像生成 | 無料AIチャット',
-
+      title: translations.seo.title_character || 'Ai images generator & Ai chat',
       seo: [
         { name: 'description', content: translations.seo.description_character },
         { name: 'keywords', content: translations.seo.keywords },

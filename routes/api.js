@@ -932,7 +932,7 @@ async function routes(fastify, options) {
             const purpose = `Her name is, ${chatdoc.name}.\nShe looks like :${chatdoc.enhancedPrompt ? chatdoc.enhancedPrompt : chatdoc.characterPrompt}.\n\n${chatdoc.rule}`
             const language = chatdoc.language
             const apiUrl = getApiUrl(request);        
-            const response = await axios.post(apiUrl+'/api/openai-chat-creation', {
+            const response = await axios.post(apiUrl+'/api/generate-character-comprehensive', {
                 chatId,
                 name:chatdoc.name,
                 prompt:chatdoc.characterPrompt,
@@ -942,7 +942,7 @@ async function routes(fastify, options) {
                 purpose,
                 language
             });
-            chatdoc = response.data
+            chatdoc = response.chatData
         }
 
         return chatdoc;

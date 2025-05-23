@@ -202,7 +202,7 @@
   background:linear-gradient(90.9deg,#D2B8FF 2.74%,#8240FF 102.92%);
   color:#fff;
   border:none;
-  border-radius:5px;
+  border-radius:15px;
   cursor:pointer;
   position:relative;
   overflow:hidden;
@@ -227,7 +227,9 @@
   }
   
   .custom-gradient-bg:hover {
-  color:#fff
+  color:#fff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
   }
   
   #chatImage {

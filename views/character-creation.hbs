@@ -1,0 +1,158 @@
+<script>
+    chatCreationId = '{{chatId}}';
+    window.isTemporaryChat = {{isTemporaryChat}};
+</script>
+
+<!-- 1. キャラクター画像 -->
+<div id="step1" class="step">
+    <!-- Character Creation Form with Modal Sidebar Layout -->
+    <div id="characterCreationForm" class="character-creation-sidebar-layout">
+        
+        <!-- Modal Sidebar (Left Column) -->
+        <div class="modal-sidebar-fixed">
+            <!-- Scrollable Content -->
+            <div class="modal-sidebar-content">
+                <!-- Image Style Selection -->
+                <div class="section-container">
+                    <h4 class="section-header">{{translations.newCharacter.imageStyleSelectionTitle}}</h4>
+                    <div class="section-content">
+                        <p class="text-muted mb-3">
+                            {{translations.newCharacter.imageStyleSelectionDescription}}
+                        </p>
+                        <label class="form-label fw-semibold">{{translations.newCharacter.image_model}}</label>
+                        <div id="imageStyleSelectionCharacterCreation" class="d-flex flex-row flex-nowrap overflow-auto mb-3"></div>
+                        <input type="hidden" id="modelId" name="modelId" required>
+                        <input type="hidden" id="imageStyle" name="imageStyle" required>
+                        <input type="hidden" id="imageModel" name="imageModel" required>
+                        <input type="hidden" id="imageVersion" name="imageVersion" required>
+                    </div>
+                </div>
+
+                <div class="section-container character-generator">
+                    <h4 class="section-header">{{translations.newCharacter.characterPhysicalDescriptionTitle}}</h4>
+                    <div class="section-content">
+                        <p class="text-muted mb-4">
+                            {{translations.newCharacter.characterPhysicalDescriptionDescription}}
+                        </p>
+
+                        <!-- Gender -->
+                        <div class="mb-3">
+                            <label for="gender" class="form-label fw-semibold"><i class="bi bi-asterisk text-danger me-2"></i>{{translations.newCharacter.genderLabel}}:</label>
+                            <select class="form-select" id="gender" name="gender">
+                                <option value="female">{{translations.newCharacter.female}}</option>
+                                <option value="male">{{translations.newCharacter.male}}</option>
+                                <option value="nonBinary">{{translations.newCharacter.nonBinary}}</option>
+                            </select>
+                        </div>
+
+                        <!-- Character Prompt Input -->
+                        <div class="mb-3">
+                            <label for="characterPrompt" class="form-label fw-semibold"><i class="bi bi-asterisk text-danger me-2"></i>{{translations.newCharacter.character_prompt}}</label>
+                            <!-- List of tags -->
+                            <div class="mb-2">
+                                <div class="scroll-container">
+                                    {{#each tags}}
+                                        <span type="button" class="badge bg-light text-secondary me-1 add-tag fw-light border">{{this}}</span>
+                                    {{/each}}
+                                </div>
+                            </div>
+                            <textarea
+                                class="form-control"
+                                id="characterPrompt"
+                                name="characterPrompt"
+                                rows="4"
+                                maxlength="500"
+                                placeholder="{{translations.newCharacter.character_appearance_description}}"
+                            ></textarea>
+
+                            <!-- Character Personality Input -->
+                            <div class="form-check mb-1 ms-1 mt-2">
+                                <input type="checkbox" class="form-check-input" id="enableEnhancedPrompt" name="enableEnhancedPrompt" checked>
+                                <label class="form-check-label" for="enableEnhancedPrompt">{{translations.newCharacter.enable_enhanced_prompt}}</label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 d-none">
+                            <textarea
+                                class="form-control"
+                                id="enhancedPrompt"
+                                name="enhancedPrompt"
+                                rows="3"
+                                readonly
+                            ></textarea>
+                        </div>
+
+                        <!-- Field to upload an image with an area -->
+                        <div class="mb-3">
+                            <label for="imageUpload" class="form-label fw-semibold">{{translations.imageForm.uploadAreaLabel}}</label>
+                            <div class="upload-area" id="uploadArea">
+                                <input type="file" class="form-control" id="imageUpload" name="imageUpload" accept="image/*" onchange="previewImage(event)" disabled>
+                            </div>
+                            <img id="imagePreview" src="#" alt="Image Preview" style="display: none; max-width: 100%; margin-top: 10px;">
+                            <a href="#" onclick="loadPlanPage()" class="is-premium card p-2 custom-gradient-bg mt-3 rounded">{{translations.unlock_more_customization_fields}}</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-container character-personnality-">
+                    <!-- 3. Character Personality -->
+                    <h4 class="section-header">{{translations.newCharacter.characterPersonalityTitle}}</h4>
+                    <div class="section-content">
+                        <p class="text-muted">
+                            {{translations.newCharacter.characterPersonalityDescription}}
+                        </p>
+                        <p class="text-muted fw-bold mb-4">
+                            <i class="bi bi-magic text-danger me-2"></i>{{translations.newCharacter.ai_generate_if_empty}}
+                        </p>
+                        <!-- Name -->
+                        <div class="mb-3">
+                            <label for="chatName" class="form-label fw-semibold">{{translations.newCharacter.nameLabel}}:</label>
+                            <input type="text" class="form-control" id="chatName" name="chatName" placeholder="{{translations.newCharacter.namePlaceholder}}">
+                        </div>
+                            
+                        <div id="chatPurpose-container" class="mb-3">
+                            <label for="chatPurpose" class="form-label fw-semibold">{{translations.newCharacter.characterDetailsLabel}}</label>
+                            <textarea class="form-control" id="chatPurpose" name="content" rows="3" placeholder="{{translations.newCharacter.characterDetailsPlaceholder}}"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                                    
+            <!-- Sticky Generate Button -->
+            <div class="modal-sidebar-footer">
+                <button type="button" id="generateButton" class="btn custom-gradient-bg btn-lg text-white d-flex align-items-center justify-content-center w-100">
+                    <i class="bi bi-magic me-2"></i>{{translations.newCharacter.generate_with_AI}}
+                </button>
+                <span class="w-100 text-center text-muted genexp mt-2" style="font-size: 12px;display:none;">{{translations.newCharacter.image_generation_message}}</span>
+            </div>
+        </div>
+
+        <!-- Modal Main Content Area (Right Column) -->
+        <div class="modal-main-content pb-0">
+            <!-- Scrollable Content -->
+            <div class="modal-main-content-scrollable">
+                <!-- 3. Generated Image Display -->
+                <label class="form-label d-block mb-3 text-center fw-semibold">{{translations.newCharacter.generatedImageLabel}}</label>
+                <div id="imageContainer" class="mb-4 w-100 text-center">
+                    <img
+                        id="generatedImage"
+                        src="/img/default-character.png"
+                        alt="{{translations.newCharacter.generatedImageAlt}}"
+                        class="img-fluid"
+                    >
+                </div>
+                <div id="imageUploaderContainer" class="w-100" style="cursor: pointer;">
+                    <!-- You can add an image uploader here if needed -->
+                </div>
+            </div>
+            
+            <!-- Fixed Chat Redirection Footer -->
+            <div class="modal-main-content-footer">
+                <div class="chatRedirection w-100 text-center" style="display:none;">
+                    <button type="button" id="redirectToChat" class="btn custom-gradient-bg btn-lg fw-bold">{{translations.newCharacter.start_chat_and_image_generation}}</button>
+                    <p class="text-muted mt-1 mb-0">{{translations.newCharacter.start_chat_and_image_generation_description}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

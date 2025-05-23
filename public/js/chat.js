@@ -25,14 +25,28 @@ if (!chatId || chatId === 'null' || chatId === 'undefined') {
 }
 
 let userChatId = sessionStorage.getItem('userChatId');
+let persona;
+let isNew = true;
+
+// Listen for persona added event from PersonaModule
+window.onPersonaAdded = function(personaObj) {
+    persona = {
+        name: personaObj.name,
+        id: personaObj.id,
+        chatImageUrl: personaObj.chatImageUrl
+    };
+    // if the current chat is new
+    console.log(`[onPersonaAdded] Persona added: ${persona.name}; isNew: ${isNew}`);
+    if (isNew) {
+        generateChatCompletion();
+    }
+};
 
 $(document).ready(async function() {
-    let persona
     let currentStep = 0;
     let totalSteps = 0;
     let chatData = {};
     let character = {}
-    let isNew = true;
     let feedback = false
     let thumbnail = false
     let isTemporary = !!user.isTemporary
@@ -52,7 +66,7 @@ $(document).ready(async function() {
                         console.error('Error adding message:', error);
                     } else {
                         if(completion){
-                            generateCompletion();
+                            generateChatCompletion();
                         }
                         if(image && messageId){
                             const loaderElement = $(`
@@ -78,7 +92,7 @@ $(document).ready(async function() {
             if(!message)return
             addMessageToChat(chatId, userChatId, {role, message},function(){
                 if(completion){
-                    generateCompletion()
+                    generateChatCompletion()
                 }
             });
         }
@@ -96,7 +110,7 @@ $(document).ready(async function() {
             const prompt = event.data.prompt
             const message = '[imageStart]'+ prompt
             addMessageToChat(chatId, userChatId, {role:'user', message}, function(){
-                generateCompletion(null,true)
+                generateChatCompletion(null,true)
             });
         }
     });
@@ -105,7 +119,7 @@ $(document).ready(async function() {
             const prompt = event.data.prompt
             const message = '[imageDone]'+ prompt
             addMessageToChat(chatId, userChatId, {role:'user', message}, function(){
-                generateCompletion()
+                generateChatCompletion()
             });
         }
     });
@@ -114,7 +128,7 @@ $(document).ready(async function() {
             const error = event?.data?.error || ''
             let message = `[master] There way an error. The image could not be generated ${error}.`
             addMessageToChat(chatId, userChatId, {role:'user', message},function(){
-                generateCompletion()
+                generateChatCompletion()
             });
         }
     });
@@ -288,7 +302,7 @@ $(document).ready(async function() {
             if (displayStatus) displayMessage('user', message, userChatId);
             $('#userMessage').val('');
             addMessageToChat(chatId, userChatId, { role: 'user', message: finalMessage }, () => {
-                generateCompletion(null, true);
+                generateChatCompletion(null, true);
             });
         }
         cleanup();
@@ -508,81 +522,6 @@ function setupChatInterface(chat, character) {
         $('#chat-recommend').append(card);
     }
 
-        async function displayAlbum(album) {
-            try {
-        
-                const images = subscriptionStatus ? album.images : album.blurredImages;
-
-                let imagesHTML = images.map((url, index) => `<img src="${album.images[0]}" class="img-fluid rounded shadow m-1" style="width:auto;height: auto;object-fit:contain;" data-index="${index}">`).join('');
-            
-                Swal.fire({
-                    html: `
-                        <div>
-                            <div style="top: 0;left: 0;right: 0;border-radius: 40px 40px 0 0;background: linear-gradient(to top, rgba(0, 0, 0, 0), rgba(46, 44, 72, 0.91) 45%);" class="sticky-top pt-3">
-                                <h5 class="mb-0 text-white">${album.name} (${album.images.length}枚)</h5>
-                            </div>
-                            <p style="color: white;font-size: 12px;" class="p-4">${album.description}</p>
-                            <div class="text-start">
-                                <span type="button" id="toggle-grid-${album.chatId}" class="btn btn-light mx-3"><i class="bi bi-grid"></i></span>
-                            </div>
-                            <div id="album-container" class="position-relative text-white pt-2 px-3 w-100" style="min-height:200px;overflow: hidden;">
-                                <div class="images" data-id="${album.chatId}">
-                                    <div class="row wrapper">
-                                        ${images.map((url, index) => `
-                                            <div class="slide col-3">
-                                                <img src="${url}" class="img-fluid rounded shadow m-1" style="width:auto;max-height:400pxobject-fit:contain;" data-index="${index}">
-                                            </div>`).join('')}
-                                    </div>
-                                </div>
-                            </div>
-                            ${!subscriptionStatus && !isTemporary ? `
-                                <div style="bottom: 20px;z-index: 100;" class="mx-auto mt-4 position-fixed w-100">
-                                    <a href="/my-plan" class="btn btn-lg custom-gradient-bg" style="border-radius:50px;"><i class="bi bi-images me-2"></i>プレミアムに登録する</a>
-                                    <a href="/my-plan" class="d-block mt-1 text-white">Lamixプレミアムなら見放題</a>
-                                </div>`:''
-                            }
-                        </div>
-                    `,
-                    showClass: { popup: 'animate__animated animate__slideInUp' },
-                    hideClass: { popup: 'animate__animated animate__slideOutDown' },
-                    position: 'bottom',
-                    backdrop: 'rgba(43, 43, 43, 0.2)',
-                    showCloseButton: true,
-                    showConfirmButton: false,
-                    customClass: { container: 'p-0', popup: 'album-popup h-90vh shadow', htmlContainer:'position-relative', closeButton: 'position-absolute  me-3' }
-                });
-
-                const colSizes = [ 2, 3, 6, 12]; // Allowed col sizes
-
-                // Toggle and save to localStorage
-                $(document).on('click', `#toggle-grid-${album.chatId}`, function(){
-                    const container = $(document).find(`.images[data-id="${album.chatId}"]`);
-                    const currentClass = container.find('.slide').first().attr('class').match(/col-\d+/)[0];
-                    const currentCol = parseInt(currentClass.split('-')[1]);
-                    let nextIndex = colSizes.indexOf(currentCol) + 1;
-                    if (nextIndex >= colSizes.length) nextIndex = 0; // Loop back to the first column size
-                
-                    const nextCol = colSizes[nextIndex];
-                
-                    container.find('.slide').each(function(){
-                        $(this).removeClass(currentClass).addClass(`col-${nextCol}`);
-                    });
-                
-                    // Save user preference in localStorage
-                    localStorage.setItem(`gridPreference`, nextCol);
-                });
-
-                // Initialize on page load based on saved preference
-                const savedCol = localStorage.getItem(`gridPreference`) || 3; // Default to col-3
-                const container = $(document).find(`.images[data-id="${album.chatId}"]`);
-                container.find('.slide').each(function(){
-                    $(this).removeClass().addClass(`col-${savedCol} slide`); // Initialize with saved col class
-                });
-
-            } catch (error) {
-                console.error('Error displaying album:', error);
-            }
-        }
 
     function displayThankMessage(){
         const customPrompt = {
@@ -662,9 +601,15 @@ function setupChatInterface(chat, character) {
 
                 userChatId = response.userChatId
                 chatId = response.chatId
-                isNew = false;
+                if (window.PersonaModule) {
+                    PersonaModule.currentUserChatId = userChatId;
+                }
+                sessionStorage.setItem('userChatId', userChatId);
+                sessionStorage.setItem('lastChatId', chatId);
+                sessionStorage.setItem('chatId', chatId);
+                console.log(`[init-chat] Chat ID: ${chatId}, User Chat ID: ${userChatId}`);
                 
-                generateCompletion();
+                PersonaModule.showFloatingContainer();
 
                 updateCurrentChat(chatId,userId);
 
@@ -680,7 +625,7 @@ function setupChatInterface(chat, character) {
     }
     
     async function displayChat(userChat, persona, callback) {
-
+        console.log(persona)
         $('body').css('overflow', 'hidden');
         $('#stability-gen-button').show();
         $('.auto-gen').each(function() { $(this).show(); });
@@ -1005,7 +950,7 @@ function setupChatInterface(chat, character) {
                 });
             })
         }else{
-            generateCompletion()
+            generateChatCompletion()
         }
     }
 
@@ -1309,7 +1254,7 @@ function setupChatInterface(chat, character) {
     }
 
     
-    function generateCompletion(callback, isHidden = false) {
+    window.generateChatCompletion = function(callback, isHidden = false) {
         const uniqueId = `${currentStep}-${Date.now()}`;
         const container = createBotResponseContainer(uniqueId);
 
@@ -1579,7 +1524,11 @@ function setupChatInterface(chat, character) {
 
 //.reset-chat,.new-chat
 window.handleChatReset = function(el) {
-    chatId = $(el).data('id');
+    chatId = $(el).data('id') || localStorage.getItem('chatId');
+    if (chatId == null) {
+        console.error('[handleChatReset] No chatId found in localStorage');
+        return;
+    }
     fetchChatData(chatId, userId, true);
 };
 //.user-chat-history
@@ -1882,27 +1831,7 @@ window.addCoinsToUser = function(coinsToAdd) {
         }
     });
 };
-window.updatePersona = function(personaId,isAdding,callback,callbackError){
-    $.post('/api/user/personas', { personaId: personaId, action: isAdding ? 'add' : 'remove' }, function() {
-        const message = isAdding ? 'ペルソナが追加されました' : 'ペルソナが削除されました';
-        const status = 'success';
-        showNotification(message, status);
-        if(typeof callback =='function'){
-            callback()
-        }
 
-        $('#user-profile-page').attr('src', function(i, val) { return val; });
-    }).fail(function(jqXHR) {
-        const message = jqXHR.responseJSON && jqXHR.responseJSON.error 
-            ? jqXHR.responseJSON.error 
-            : (isAdding ? 'ペルソナの追加に失敗しました' : 'ペルソナの削除に失敗しました');
-        const status = 'error';
-        showNotification(message, status);
-        if(typeof callbackError =='function'){
-            callbackError()
-        }
-    });
-}
 window.getUserChatHistory = async function(chatId) {
     try {
         const response = await fetch(`/api/chat-history/${chatId}`);
@@ -1911,7 +1840,7 @@ window.getUserChatHistory = async function(chatId) {
         const lastChat = data.find(chat => !chat.isWidget);
         if (lastChat) {
             const userChatId = lastChat._id;
-            localStorage.setItem('userChatId', userChatId);
+            sessionStorage.setItem('userChatId', userChatId);
             return lastChat;
         }
     } catch (error) {
@@ -2042,6 +1971,10 @@ function displayChatList(reset, userId) {
 
 
 function updateCurrentChat(chatId, userId) {
+    if(!chatId) {
+        console.log('No chatId provided');
+        return;
+    }
     let currentChat = chatListData.find(chat => chat._id === chatId);
 
     if (currentChat) {
@@ -2085,6 +2018,7 @@ function updateChatListDisplay(currentChat) {
     $('#chat-list').prepend(chatHtml);
 }
 function constructChatItemHtml(chat, isActive) {
+    const isOwner = chat.userId === userId;
     return `
         <div class="${isActive ? 'active' : ''} chat-list item user-chat d-flex align-items-center justify-content-between p-1 mx-2 rounded bg-transparent" 
             data-id="${chat._id}">
@@ -2119,9 +2053,9 @@ function constructChatItemHtml(chat, isActive) {
                         </button>
                         <ul class="dropdown-menu dropdown-menu-start chat-option-menu bg-light shadow rounded mx-3" aria-labelledby="dropdownMenuButton_${chat._id}">
                             <li>
-                                <a href="#" class="dropdown-item text-secondary" onclick="loadCharacterCreationPage('${chat._id}')">
+                                <a href="#" class="dropdown-item text-secondary" onclick="${ !isOwner ? `loadCharacterCreationPage('${chat._id}'})` : `loadCharacterUpdatePage('${chat._id}')`} ">
                                     <i class="bi bi-pencil me-2"></i>
-                                    <span class="text-muted" style="font-size:12px;">${window.translations.edit}</span>
+                                    <span class="text-muted" style="font-size:12px;">${ !isOwner ? window.translations.edit : window.translations.update}</span>
                                 </a>
                             </li>
                             <li>

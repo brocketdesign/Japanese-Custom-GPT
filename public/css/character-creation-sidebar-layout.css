@@ -1,0 +1,282 @@
+/* Character Creation Modal Sidebar Layout */
+
+/* Container for sidebar layout within modal */
+.character-creation-sidebar-layout {
+  display: flex;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+/* Modal sidebar (left column) with sticky button */
+.character-creation-sidebar-layout .modal-sidebar-fixed {
+  width: 480px;
+  height: 100%;
+  background-color: #f8f9fa;
+  border-right: 1px solid #dee2e6;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scrollable content area within sidebar */
+.character-creation-sidebar-layout .modal-sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1.5rem;
+  padding-bottom: 0;
+}
+
+/* Sticky generate button container */
+.character-creation-sidebar-layout .modal-sidebar-footer {
+  padding: 1rem 1.5rem;
+  background-color: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+  flex-shrink: 0;
+}
+
+/* Modal main content area (right column) */
+.character-creation-sidebar-layout .modal-main-content {
+  flex: 1;
+  height: 100%;
+  background-color: #ffffff;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scrollable content area within main content */
+.character-creation-sidebar-layout .modal-main-content-scrollable {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1.5rem;
+  padding-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Fixed bottom section for chat redirection */
+.character-creation-sidebar-layout .modal-main-content-footer {
+  padding: 1rem 0rem;
+  background-color: #ffffff;
+  border-top: 1px solid #dee2e6;
+  flex-shrink: 0;
+}
+
+/* Modern section styling */
+.character-creation-sidebar-layout .section-container {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.character-creation-sidebar-layout .section-container:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Modern section headers - STICKY */
+.character-creation-sidebar-layout .section-header {
+  background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+  color: white;
+  padding: 1rem 1.5rem;
+  margin: 0;
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.025em;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border: none;
+}
+
+.character-creation-sidebar-layout .section-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0.3) 100%);
+}
+
+.character-creation-sidebar-layout .section-content {
+  padding: 1.5rem;
+}
+
+/* Scrollbar styling for modal sidebar */
+.character-creation-sidebar-layout .modal-sidebar-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.character-creation-sidebar-layout .modal-sidebar-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.character-creation-sidebar-layout .modal-sidebar-content::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #c1c1c1 0%, #a8a8a8 100%);
+  border-radius: 3px;
+}
+
+.character-creation-sidebar-layout .modal-sidebar-content::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #a8a8a8 0%, #888888 100%);
+}
+
+/* Ensure modal scrollbar styling for main content */
+.character-creation-sidebar-layout .modal-main-content-scrollable::-webkit-scrollbar {
+  width: 6px;
+}
+
+.character-creation-sidebar-layout .modal-main-content-scrollable::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.character-creation-sidebar-layout .modal-main-content-scrollable::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #c1c1c1 0%, #a8a8a8 100%);
+  border-radius: 3px;
+}
+
+.character-creation-sidebar-layout .modal-main-content-scrollable::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #a8a8a8 0%, #888888 100%);
+}
+
+/* Responsive design for modal */
+@media (max-width: 1200px) {
+  .character-creation-sidebar-layout .modal-sidebar-fixed {
+    width: 400px;
+  }
+}
+
+@media (max-width: 992px) {
+  .character-creation-sidebar-layout .modal-sidebar-fixed {
+    width: 350px;
+  }
+}
+
+@media (max-width: 768px) {
+  .character-creation-sidebar-layout {
+    flex-direction: column;
+    max-height: 90vh;
+  }
+  
+  .character-creation-sidebar-layout .modal-sidebar-fixed {
+    width: 100%;
+    height: auto;
+    max-height: 50vh;
+    border-right: none;
+    border-bottom: 1px solid #dee2e6;
+    flex-shrink: 1;
+  }
+  
+  .character-creation-sidebar-layout .modal-main-content {
+    flex: 1;
+    min-height: 40vh;
+  }
+  
+  .character-creation-sidebar-layout .modal-main-content-scrollable {
+    padding: 1rem;
+  }
+  
+  .character-creation-sidebar-layout .modal-main-content-footer {
+    padding: 0.75rem 1rem;
+  }
+  
+  .character-creation-sidebar-layout .modal-sidebar-content {
+    padding: 1rem;
+  }
+  
+  .character-creation-sidebar-layout .modal-sidebar-footer {
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* Smooth scrolling */
+.character-creation-sidebar-layout .modal-sidebar-content {
+  scroll-behavior: smooth;
+}
+
+/* Content spacing within modal sidebar */
+.character-creation-sidebar-layout .modal-sidebar-content .row {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* Button styling within modal sidebar */
+.character-creation-sidebar-layout .modal-sidebar-content .btn {
+  transition: all 0.3s ease;
+}
+
+.character-creation-sidebar-layout .modal-sidebar-content .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Form elements spacing in modal sidebar */
+.character-creation-sidebar-layout .modal-sidebar-content .form-control,
+.character-creation-sidebar-layout .modal-sidebar-content .form-select {
+  margin-bottom: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.character-creation-sidebar-layout .modal-sidebar-content .form-control:focus,
+.character-creation-sidebar-layout .modal-sidebar-content .form-select:focus {
+  border-color: #6c757d;
+  box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25);
+}
+
+/* Generate button styling */
+.character-creation-sidebar-layout .modal-sidebar-footer .btn {
+  border-radius: 12px;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  transition: all 0.3s ease;
+}
+
+.character-creation-sidebar-layout .modal-sidebar-footer .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Image container adjustments for modal */
+.character-creation-sidebar-layout .modal-main-content-scrollable #imageContainer {
+  position: sticky;
+  top: 1rem;
+  width: 100%;
+  text-align: center;
+}
+
+.character-creation-sidebar-layout .modal-main-content-scrollable #generatedImage {
+  max-width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.character-creation-sidebar-layout .text-muted{
+    font-size: 12px;
+}
+/* Mobile optimizations */
+@media (max-width: 576px) {
+  .character-creation-sidebar-layout {
+    height: 85vh;
+    max-height: 85vh;
+  }
+  
+  .character-creation-sidebar-layout .section-content {
+    padding: 1rem;
+  }
+  
+  .character-creation-sidebar-layout .section-header {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+}

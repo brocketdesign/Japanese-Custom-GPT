@@ -316,6 +316,178 @@ async function routes(fastify, options) {
     }
   });
 
+  fastify.post('/api/prompts/create', async (request, reply) => {
+      try {
+        const db = fastify.mongo.db;
+        const collection = db.collection('prompts');
+        const parts = request.parts();
+        let title = '';
+        let promptText = '';
+        let nsfw = false; // Default to false
+        let gender = '';
+        let imageUrl = '';
+        
+        // Calculate order for the new prompt
+        const order = await collection.countDocuments({});
+
+        for await (const part of parts) {
+          if (part.file && part.fieldname === 'image') {
+            imageUrl = await handleFileUpload(part, db);
+          } else if (part.fieldname === 'title') {
+            title = part.value;
+          } else if (part.fieldname === 'prompt') {
+            promptText = part.value;
+          } else if (part.fieldname === 'nsfw') {
+            nsfw = true; // Checkbox was checked
+          } else if (part.fieldname === 'gender') {
+            gender = part.value;
+          }
+        }
+        
+        if (!title || !promptText || !imageUrl) {
+          return reply.status(400).send({ success: false, message: 'Title, prompt, and image are required.' });
+        }
+
+        await collection.insertOne({
+          title,
+          prompt: promptText,
+          nsfw,
+          gender,
+          image: imageUrl,
+          order, // Add order field
+          createdAt: new Date(),
+        });
+        
+        reply.send({ success: true, message: 'Prompt created successfully' });
+      } catch (error) {
+        console.error('Error creating prompt:', error);
+        reply.status(500).send({ success: false, message: 'Error creating prompt' });
+      }
+    });
+    
+    // Get All Prompts (Optional)
+    fastify.get('/api/prompts', async (request, reply) => {
+        try {
+        const db = fastify.mongo.db;
+        // Sort by order, then by _id for consistent ordering if order numbers are not unique (though they should be)
+        const prompts = await db.collection('prompts').find({}).sort({order: 1, _id: -1}).toArray();
+        reply.send(prompts);
+        } catch (error) {
+        console.error('Error fetching prompts:', error);
+        reply.status(500).send({ success: false, message: 'Error fetching prompts' });
+        }
+    });
+    
+    // Get Single Prompt
+    fastify.get('/api/prompts/:id', async (request, reply) => {
+        try {
+        const db = fastify.mongo.db;
+        const { id } = request.params;
+        // Assuming getPromptById is a simple findOne
+        const prompt = await db.collection('prompts').findOne({ _id: new fastify.mongo.ObjectId(id) });
+        if (!prompt) {
+            return reply.status(404).send({ success: false, message: 'Prompt not found' });
+        }
+        reply.send(prompt);
+        } catch (error) {
+        console.error('Error fetching prompt:', error);
+        reply.status(500).send({ success: false, message: 'Error fetching prompt' });
+        }
+    });
+    
+    // Update Prompt
+    fastify.put('/api/prompts/:id', async (request, reply) => {
+        try {
+            const db = fastify.mongo.db;
+            const { id } = request.params;
+            const parts = request.parts();
+            
+            const updatePayload = { $set: { updatedAt: new Date() } };
+            let nsfwFromPayload = false; // Assume false unless checkbox is checked
+            let imageFieldPresent = false;
+
+            for await (const part of parts) {
+                if (part.file) {
+                    if (part.fieldname === 'image' && part.file.filename) {
+                        const imageUrl = await handleFileUpload(part, db);
+                        if (imageUrl) updatePayload.$set.image = imageUrl;
+                        imageFieldPresent = true;
+                    }
+                } else {
+                    // Non-file parts
+                    if (part.fieldname === 'title') updatePayload.$set.title = part.value;
+                    if (part.fieldname === 'prompt') updatePayload.$set.prompt = part.value;
+                    if (part.fieldname === 'gender') updatePayload.$set.gender = part.value;
+                    if (part.fieldname === 'nsfw') nsfwFromPayload = true; // 'on' if checked
+                }
+            }
+            updatePayload.$set.nsfw = nsfwFromPayload;
+
+            // If 'image' was not part of the form data at all, don't try to update it (even to null)
+            // The logic with handleFileUpload should ensure image is only set if a file is uploaded.
+            // If no image is sent, updatePayload.$set.image will not be set, preserving the old one.
+
+            const result = await db.collection('prompts').updateOne(
+                { _id: new fastify.mongo.ObjectId(id) },
+                updatePayload
+            );
+    
+            if (result.matchedCount === 0) {
+                return reply.status(404).send({ success: false, message: 'Prompt not found' });
+            }
+    
+            reply.send({ success: true, message: 'Prompt updated successfully' });
+        } catch (error) {
+            console.error('Error updating prompt:', error);
+            reply.status(500).send({ success: false, message: 'Error updating prompt' });
+        }
+    });
+
+    fastify.delete('/api/prompts/:id', async (request, reply) => {
+        try {
+        const db = fastify.mongo.db;
+        const { id } = request.params;
+        const result = await db.collection('prompts').deleteOne({ _id: new fastify.mongo.ObjectId(id) });
+        if (result.deletedCount === 0) {
+            return reply.status(404).send({ success: false, message: 'Prompt not found' });
+        }
+        reply.send({ success: true, message: 'Prompt deleted successfully' });
+        } catch (error) {
+        console.error('Error deleting prompt:', error);
+        reply.status(500).send({ success: false, message: 'Error deleting prompt' });
+        }
+    });
+
+    fastify.post('/api/prompts/reorder', async (request, reply) => {
+      try {
+        const db = fastify.mongo.db;
+        const { orderedIds } = request.body; // Changed from promptIds to orderedIds
+
+        if (!Array.isArray(orderedIds)) { // Changed from promptIds to orderedIds
+          return reply.status(400).send({ success: false, message: 'Invalid payload: orderedIds must be an array.' });
+        }
+
+        const collection = db.collection('prompts');
+        const operations = orderedIds.map((id, index) => { // Changed from promptIds to orderedIds
+          return {
+            updateOne: {
+              filter: { _id: new fastify.mongo.ObjectId(id) },
+              update: { $set: { order: index } }
+            }
+          };
+        });
+
+        if (operations.length > 0) {
+          await collection.bulkWrite(operations);
+        }
+
+        reply.send({ success: true, message: 'Prompts reordered successfully.' });
+      } catch (error) {
+        console.error('Error reordering prompts:', error);
+        reply.status(500).send({ success: false, message: 'Error reordering prompts.' });
+      }
+    });
+
   const modelCardTemplate = hbs.compile(`
     {{#each models}}
     <div class="col-sm-6 col-md-4 col-lg-3 p-2 animate__animated animate__fadeIn">

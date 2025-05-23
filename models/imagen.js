@@ -186,7 +186,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
     if (!title) {
       const lang = getLanguageName(user.lang || 'en');
       const userLangTitle = await generatePromptTitle(requestData.prompt, lang);
-      console.log(`[generateImg] Generated title for ${lang}: ${userLangTitle}`);
+
       // Create title object with just the user's language
       newTitle = {
         en: lang === 'english' ? userLangTitle : '',
@@ -223,6 +223,10 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
     
     // Update task with the slug
     updateSlug({ taskId: novitaTaskId, taskSlug, fastify, userId, chatId, placeholderId });
+
+    if(chatCreation){
+      fastify.sendNotificationToUser(userId, 'showNotification', { message:translations.character_image_generation_starter , icon:'success' });
+    }
 
     // Poll the task status
     pollTaskStatus(novitaTaskId, fastify) 

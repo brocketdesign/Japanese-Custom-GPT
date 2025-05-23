@@ -11,6 +11,9 @@
                         <button type="button" class="toolbar-btn" id="text-input-toggle">
                             <i class="bi bi-chat-dots"></i>
                         </button>
+                        <button type="button" class="toolbar-btn" id="show-personas-btn">
+                            <i class="bi bi-person-lines-fill"></i>
+                        </button>
                         <button type="button" class="toolbar-btn" id="showPrompts">
                             <i class="bi bi-image"></i>
                         </button>
@@ -22,6 +25,9 @@
                         </button>
                         <button type="button" class="toolbar-btn" id="translation-toggle">
                             <i class="bi bi-translate"></i>
+                        </button>
+                        <button type="button" class="toolbar-btn reset-chat" id="reset-chat-btn" onclick="handleChatReset(this)">
+                            <i class="bi bi-plus-square"></i>
                         </button>
                     </div>
                     
@@ -87,6 +93,22 @@
             </div>
         </div>
 
+        <div id="personas-overlay">
+            <div id="personas-container" class="shadow" style="position: absolute; bottom: -10px; width: 95%; margin: auto; max-height: 55vh; background: rgb(255, 255, 255); overflow-y: auto; left: 0; right: 0; z-index: 10; border-radius: 15px 15px 0 0; display: none;">
+                <button id="close-personas-container" class="btn shadow-0 position-absolute top-0 end-0"><i class="bi bi-x"></i></button>
+                <div id="personas-list" class="row mx-0 my-5">
+                    <h4 class="text-center w-100 mt-2">{{translations.personas.selectPersona}}</h4>
+                    <p class="text-center text-muted w-100">{{translations.personas.selectPersona_description}}</p>
+                    <div id="persona-activated-counter" class="text-center fw-bold my-2"></div>
+                    <div class="loading-spinner text-center mt-4">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div id="promptContainer" class="shadow" style="position: absolute; bottom: -10px; width: 95%; margin: auto; max-height: 55vh; background: rgb(255, 255, 255); overflow-y: auto;left: 0;right: 0;z-index: 10;border-radius: 15px 15px 0 0;display:none;">
             <button id="close-promptContainer" class="btn shadow-0 position-absolute top-0 end-0"><i class="bi bi-x"></i></button>
             <div id="promptList" class="row mx-0 my-5">
@@ -112,406 +134,6 @@
 
             </div>
         </div>
-
-        <style>
-            .chat-toolbar-wrapper {
-                width: 100%;
-                padding: 5px 15px;
-                background: rgba(252, 250, 255, 0.64);
-                border-radius: 20px !important;
-                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-                backdrop-filter: blur(5px);
-                border: 1px solid rgba(137, 83, 253, 0.2);
-                min-height: 60px;
-            }
-            
-            .chat-toolbar-container {
-                width: 100%;
-                overflow: hidden;
-                position: relative;
-            }
-            
-            .chat-toolbar {
-                display: flex;
-                align-items: center;
-                padding: 0;
-                min-height: 50px;
-            }
-            
-            .toolbar-scroll-container {
-                display: flex;
-                flex-wrap: nowrap;
-                overflow-x: auto;
-                width: 100%;
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: none;
-                padding: 0 5px;
-                gap: 10px;
-            }
-            
-            .toolbar-scroll-container::-webkit-scrollbar {
-                display: none;
-            }
-            
-            .toolbar-btn {
-                flex: 0 0 auto;
-                width: 48px;
-                height: 48px;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                border-radius: 50%;
-                background: rgba(110, 32, 244, 0.1);
-                color: #6E20F4;
-                border: none;
-                font-size: 20px;
-                transition: all 0.3s ease;
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-                cursor: pointer;
-            }
-            
-            .toolbar-btn:hover, .toolbar-btn.active {
-                background: rgba(110, 32, 244, 0.2);
-                transform: translateY(-3px);
-                box-shadow: 0 6px 12px rgba(110, 32, 244, 0.15);
-            }
-            
-            /* Content views */
-            .toolbar-content-view {
-                width: 100%;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-            
-            .toolbar-back-btn {
-                background: rgba(110, 32, 244, 0.1);
-                border: none;
-                color: #6E20F4;
-                font-size: 18px;
-                cursor: pointer;
-                width: 48px;
-                height: 48px;
-                min-width: 48px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                border-radius: 50%;
-                transition: all 0.3s ease;
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-            }
-            
-            .toolbar-back-btn:hover {
-                background: rgba(110, 32, 244, 0.2);
-                transform: translateY(-3px);
-                box-shadow: 0 6px 12px rgba(110, 32, 244, 0.15);
-            }
-            
-            .toolbar-title {
-                font-weight: 500;
-                color: #6E20F4;
-                margin-right: 10px;
-                white-space: nowrap;
-            }
-            
-            /* Emoji styles */
-            .emoji-scroll-container {
-                display: flex;
-                flex-wrap: nowrap;
-                overflow-x: auto;
-                gap: 10px;
-                scrollbar-width: none;
-                -webkit-overflow-scrolling: touch;
-                flex-grow: 1;
-                padding: 0 5px;
-            }
-            
-            .emoji-scroll-container::-webkit-scrollbar {
-                display: none;
-            }
-            
-            .emoji-btn {
-                flex: 0 0 auto;
-                width: 40px;
-                height: 40px;
-                font-size: 20px;
-                background: #f5f5f5;
-                border: none;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                transition: transform 0.2s;
-            }
-            
-            .emoji-btn:hover {
-                transform: scale(1.2);
-                background: #e9e9e9;
-            }
-            
-            /* Translation styles */
-            .translation-scroll-container {
-                display: flex;
-                flex-wrap: nowrap;
-                overflow-x: auto;
-                gap: 10px;
-                scrollbar-width: none;
-                -webkit-overflow-scrolling: touch;
-                flex-grow: 1;
-                padding: 0 5px;
-            }
-            
-            .translation-scroll-container::-webkit-scrollbar {
-                display: none;
-            }
-            
-            .translation-btn {
-                flex: 0 0 auto;
-                padding: 8px 15px;
-                background: #f5f5f5;
-                border: none;
-                border-radius: 50px;
-                font-size: 14px;
-                transition: all 0.2s;
-                white-space: nowrap;
-            }
-            
-            .translation-btn:hover, .translation-btn.active {
-                background: rgba(110, 32, 244, 0.1);
-                color: #6E20F4;
-            }
-            
-            /* Suggestions styles */
-            .suggestions-scroll-container {
-                display: flex;
-                flex-wrap: nowrap;
-                overflow-x: auto;
-                gap: 10px;
-                scrollbar-width: none;
-                -webkit-overflow-scrolling: touch;
-                flex-grow: 1;
-                padding: 0 5px;
-            }
-            
-            .suggestions-scroll-container::-webkit-scrollbar {
-                display: none;
-            }
-            
-            @media (max-width: 576px) {
-                .toolbar-btn, .toolbar-back-btn {
-                    width: 42px;
-                    height: 42px;
-                    font-size: 18px;
-                }
-                
-                .emoji-btn {
-                    width: 36px;
-                    height: 36px;
-                    font-size: 18px;
-                }
-            }
-        </style>
-
     </div>
 </div>
 
-<script>
-    $(document).ready(function() {
-        // Toggle emoji tone view
-        $('#emoji-tone-btn').on('click', function() {
-            showToolContentView('toolbar-emoji-tone');
-        });
-        
-        // Toggle suggestions view
-        $('#suggestions-toggle').on('click', function() {
-            const suggestionsContainer = $('#suggestions');
-            if (suggestionsContainer.is(':empty')) {
-                const userChatId = $('#chatContainer').data('id');
-                if (userChatId) {
-                    // Show a loading indicator
-                    suggestionsContainer.html('<div class="text-center w-100 my-2"><i class="bi bi-hourglass-split"></i>'+translations.loading_suggestions+'</div>');
-                    
-                    // Make API request to trigger suggestion generation via websocket
-                    $.ajax({
-                        url: '/api/display-suggestions',
-                        type: 'POST',
-                        contentType: 'application/json',
-                        data: JSON.stringify({ 
-                            userChatId: userChatId,
-                            uniqueId: new Date().getTime() // Generate a unique ID for the websocket response
-                        })
-                    });
-                } else {
-                    suggestionsContainer.html('<div class="text-center w-100 my-2">No chat selected</div>');
-                }
-            }
-            showToolContentView('toolbar-suggestions');
-        });
-        
-        // Toggle translation view
-        $('#translation-toggle').on('click', function() {
-            const subscriptionStatus = user.subscriptionStatus == 'active'
-            if(!subscriptionStatus) {
-                loadPlanPage();
-                return;
-            }
-            showToolContentView('toolbar-translation');
-        });
-        
-        // Toggle text input view
-        $('#text-input-toggle').on('click', function() {
-            showToolContentView('toolbar-text-input');
-            resizeTextarea($('#userMessage')[0]);
-        });
-        
-        // Handle back buttons for all tool content views
-        $('.toolbar-back-btn').on('click', function() {
-            hideToolContentView($(this).closest('.toolbar-content-view').attr('id'));
-        });
-        
-        // Handle emoji selection
-        $('.emoji-btn').on('click', function() {
-            const tone = $(this).data('tone');
-            const emoji = $(this).text();
-            sendMessage(emoji);
-        });
-        
-        // Handle translation button click
-        $('.translation-btn').on('click', function() {
-            $(this).addClass('active').siblings().removeClass('active');
-            const translation_lang = $(this).data('lang');
-            // Use translations.doTranslate for dynamic translation text
-            switch (translation_lang) {
-                case 'en':
-                    sendMessage(translations.translateTo + ' ' + translations.english);
-                    break;
-                case 'ja':
-                    sendMessage(translations.translateTo + ' ' + translations.japanese);
-                    break;
-                case 'ko':
-                    sendMessage(translations.translateTo + ' ' + translations.korean);
-                    break;
-                case 'zh':
-                    sendMessage(translations.translateTo + ' ' + translations.chinese);
-                    break;
-                case 'fr':
-                    sendMessage(translations.translateTo + ' ' + translations.french);
-                    break;
-                case 'de':
-                    sendMessage(translations.translateTo + ' ' + translations.german);
-                    break;
-                default:
-                    console.log('Language not supported');
-            }
-        });
-        
-        // Function to show a specific tool content view
-        function showToolContentView(viewId) {
-            // Hide the main toolbar with animation
-            $('#toolbar-main').addClass('animate__fadeOutLeft');
-            setTimeout(() => {
-                $('#toolbar-main').hide().removeClass('animate__fadeOutLeft');
-                
-                // Show the selected tool content view with animation
-                $('#' + viewId).addClass('animate__fadeInRight').show();
-            }, 200);
-        }
-        
-        // Function to hide a tool content view and show the main toolbar
-        function hideToolContentView(viewId) {
-            // Hide the tool content view with animation
-            $('#' + viewId).addClass('animate__fadeOutLeft');
-            setTimeout(() => {
-                $('#' + viewId).hide().removeClass('animate__fadeInRight animate__fadeOutLeft');
-                
-                // Show the main toolbar with animation
-                $('#toolbar-main').addClass('animate__fadeInRight').show();
-                setTimeout(() => {
-                    $('#toolbar-main').removeClass('animate__fadeInRight');
-                }, 500);
-            }, 200);
-        }
-        
-        // Show prompts (keeping original functionality)
-        $('#showPrompts').on('click', function() {
-            $('#promptContainer').slideToggle();
-        });
-
-
-        // iOS Safari keyboard fix
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-        if (isIOS) {
-            // Focus event - when keyboard appears
-            $('#userMessage').on('focus', function() {
-                // Save the current scroll position
-                window.scrollPosition = window.pageYOffset;
-                // Add a class to fix the body height
-                $('body').addClass('keyboard-open');
-            });
-
-            // Blur event - when keyboard disappears
-            $('#userMessage').on('blur', function() {
-                // Remove the fixed height class
-                $('body').removeClass('keyboard-open');
-                // Restore scroll position
-                setTimeout(function() {
-                    window.scrollTo(0, window.scrollPosition || 0);
-                }, 100);
-            });
-
-            // Add CSS to handle keyboard visibility
-            $('head').append(`
-                <style>
-                    body.keyboard-open {
-                        height: 100%;
-                        position: fixed;
-                        overflow: hidden;
-                        width: 100%;
-                    }
-                    
-                    /* Make sure chat container doesn't get hidden behind keyboard */
-                    body.keyboard-open #chat-container {
-                        height: calc(100% - 60px) !important;
-                    }
-                    
-                    /* Ensure the chat input stays visible above the keyboard */
-                    body.keyboard-open #chatInput {
-                        position: fixed;
-                        bottom: auto;
-                        top: 50%; /* Position in the middle of the screen */
-                        z-index: 1050;
-                        background-color: rgba(252, 250, 255, 0.95);
-                        border-radius: 20px;
-                        padding: 10px;
-                        box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.1);
-                        margin: 0 auto;
-                    }
-                </style>
-            `);
-            
-            
-            // Add keyboard detection and repositioning
-            let viewportHeight = window.innerHeight;
-            window.addEventListener('resize', function() {
-                // If height is smaller, keyboard is likely visible
-                if (window.innerHeight < viewportHeight && $('.keyboard-open').length) {
-                    // Calculate approximate keyboard height
-                    const keyboardHeight = viewportHeight - window.innerHeight;
-                    // Position the input above the keyboard with some padding
-                    $('#chatInput').css({
-                        'top': `calc(100% - ${keyboardHeight + 120}px)`
-                    });
-                } else {
-                    viewportHeight = window.innerHeight;
-                    // Reset when keyboard is hidden
-                    if (!$('.keyboard-open').length) {
-                        $('#chatInput').css({
-                            'top': 'auto'
-                        });
-                    }
-                }
-            });
-        }
-    });
-</script>

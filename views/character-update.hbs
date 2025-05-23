@@ -1,0 +1,507 @@
+<!-- Character Update Form -->
+<div class="character-update-header">
+    <h5 class="modal-title">
+        <i class="bi bi-person-gear me-2"></i>
+        {{translations.characterUpdate.title}}
+    </h5>
+    <div class="character-info">
+        <img id="characterImage" class="character-image" src="/img/default-character.png" alt="Character" style="display: none;">
+        <div class="character-details">
+            <h6 id="characterName">
+                <i class="bi bi-person-circle me-2"></i>
+                Loading...
+            </h6>
+            <p>
+                <i class="bi bi-gender-ambiguous me-1"></i>
+                <span id="characterGender">Unknown</span> • 
+                <i class="bi bi-clock-history ms-2 me-1"></i>
+                {{translations.characterUpdate.lastModified}}
+            </p>
+        </div>
+    </div>
+</div>
+
+<form class="character-update-form pt-3">
+    <!-- Physical Appearance Section -->
+    <div class="form-section appearance-section">
+        <div class="form-section-header" data-bs-toggle="collapse" data-bs-target="#appearanceSection">
+            <span>
+                <i class="bi bi-person-standing me-2"></i>
+                {{translations.characterUpdate.physicalAppearance}}
+            </span>
+            <i class="bi bi-chevron-down"></i>
+        </div>
+        <div id="appearanceSection" class="collapse show">
+            <div class="form-section-content">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="appearance_age" class="form-label">
+                            <i class="bi bi-calendar3 me-1"></i>
+                            {{translations.characterUpdate.age}}
+                        </label>
+                        <input type="text" class="form-control" id="appearance_age" name="appearance_age" placeholder="e.g., 25, Early 20s">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="appearance_ethnicity" class="form-label">
+                            <i class="bi bi-globe me-1"></i>
+                            {{translations.characterUpdate.ethnicity}}
+                        </label>
+                        <input type="text" class="form-control" id="appearance_ethnicity" name="appearance_ethnicity" placeholder="e.g., Japanese, Mixed">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="appearance_height" class="form-label">
+                            <i class="bi bi-rulers me-1"></i>
+                            {{translations.characterUpdate.height}}
+                        </label>
+                        <input type="text" class="form-control" id="appearance_height" name="appearance_height" placeholder="e.g., 165cm, 5'5\"">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="appearance_weight" class="form-label">
+                            <i class="bi bi-speedometer2 me-1"></i>
+                            {{translations.characterUpdate.weight}}
+                        </label>
+                        <input type="text" class="form-control" id="appearance_weight" name="appearance_weight" placeholder="e.g., 55kg, 120lbs">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="appearance_bodyType" class="form-label">
+                            <i class="bi bi-person me-1"></i>
+                            {{translations.characterUpdate.bodyType}}
+                        </label>
+                        <select class="form-select" id="appearance_bodyType" name="appearance_bodyType">
+                            <option value="">{{translations.characterUpdate.selectOption}}</option>
+                            <option value="slim">{{translations.characterUpdate.slim}}</option>
+                            <option value="athletic">{{translations.characterUpdate.athletic}}</option>
+                            <option value="average">{{translations.characterUpdate.average}}</option>
+                            <option value="curvy">{{translations.characterUpdate.curvy}}</option>
+                            <option value="muscular">{{translations.characterUpdate.muscular}}</option>
+                            <option value="heavy">{{translations.characterUpdate.heavy}}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Facial Features Section -->
+    <div class="form-section face-section">
+        <div class="form-section-header" data-bs-toggle="collapse" data-bs-target="#faceSection">
+            <span>
+                <i class="bi bi-emoji-smile me-2"></i>
+                {{translations.characterUpdate.facialFeatures}}
+            </span>
+            <i class="bi bi-chevron-down"></i>
+        </div>
+        <div id="faceSection" class="collapse">
+            <div class="form-section-content">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="face_faceShape" class="form-label">
+                            <i class="bi bi-circle me-1"></i>
+                            {{translations.characterUpdate.faceShape}}
+                        </label>
+                        <select class="form-select" id="face_faceShape" name="face_faceShape">
+                            <option value="">{{translations.characterUpdate.selectOption}}</option>
+                            <option value="oval">{{translations.characterUpdate.oval}}</option>
+                            <option value="round">{{translations.characterUpdate.round}}</option>
+                            <option value="square">{{translations.characterUpdate.square}}</option>
+                            <option value="heart">{{translations.characterUpdate.heart}}</option>
+                            <option value="long">{{translations.characterUpdate.long}}</option>
+                            <option value="diamond">{{translations.characterUpdate.diamond}}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="face_skinColor" class="form-label">
+                            <i class="bi bi-palette me-1"></i>
+                            {{translations.characterUpdate.skinColor}}
+                        </label>
+                        <input type="text" class="form-control" id="face_skinColor" name="face_skinColor" placeholder="e.g., Fair, Olive, Dark">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="face_eyeColor" class="form-label">
+                            <i class="bi bi-eye me-1"></i>
+                            {{translations.characterUpdate.eyeColor}}
+                        </label>
+                        <input type="text" class="form-control" id="face_eyeColor" name="face_eyeColor" placeholder="e.g., Brown, Blue, Green">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="face_eyeShape" class="form-label">
+                            <i class="bi bi-eye-fill me-1"></i>
+                            {{translations.characterUpdate.eyeShape}}
+                        </label>
+                        <select class="form-select" id="face_eyeShape" name="face_eyeShape">
+                            <option value="">{{translations.characterUpdate.selectOption}}</option>
+                            <option value="almond">{{translations.characterUpdate.almond}}</option>
+                            <option value="round">{{translations.characterUpdate.round}}</option>
+                            <option value="hooded">{{translations.characterUpdate.hooded}}</option>
+                            <option value="monolid">{{translations.characterUpdate.monolid}}</option>
+                            <option value="upturned">{{translations.characterUpdate.upturned}}</option>
+                            <option value="downturned">{{translations.characterUpdate.downturned}}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="face_eyeSize" class="form-label">
+                            <i class="bi bi-zoom-in me-1"></i>
+                            {{translations.characterUpdate.eyeSize}}
+                        </label>
+                        <select class="form-select" id="face_eyeSize" name="face_eyeSize">
+                            <option value="">{{translations.characterUpdate.selectOption}}</option>
+                            <option value="small">{{translations.characterUpdate.small}}</option>
+                            <option value="medium">{{translations.characterUpdate.medium}}</option>
+                            <option value="large">{{translations.characterUpdate.large}}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="face_facialFeatures" class="form-label">
+                            <i class="bi bi-person-lines-fill me-1"></i>
+                            {{translations.characterUpdate.facialFeatures}}
+                        </label>
+                        <textarea class="form-control" id="face_facialFeatures" name="face_facialFeatures" rows="2" placeholder="Describe distinctive facial features"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="face_makeup" class="form-label">
+                            <i class="bi bi-brush me-1"></i>
+                            {{translations.characterUpdate.makeup}}
+                        </label>
+                        <textarea class="form-control" id="face_makeup" name="face_makeup" rows="2" placeholder="Describe makeup style"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hair Section -->
+    <div class="form-section hair-section">
+        <div class="form-section-header" data-bs-toggle="collapse" data-bs-target="#hairSection">
+            <span>
+                <i class="bi bi-scissors me-2"></i>
+                {{translations.characterUpdate.hair}}
+            </span>
+            <i class="bi bi-chevron-down"></i>
+        </div>
+        <div id="hairSection" class="collapse">
+            <div class="form-section-content">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="hair_hairColor" class="form-label">
+                            <i class="bi bi-palette2 me-1"></i>
+                            {{translations.characterUpdate.hairColor}}
+                        </label>
+                        <input type="text" class="form-control" id="hair_hairColor" name="hair_hairColor" placeholder="e.g., Black, Brown, Blonde">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="hair_hairLength" class="form-label">
+                            <i class="bi bi-rulers me-1"></i>
+                            {{translations.characterUpdate.hairLength}}
+                        </label>
+                        <select class="form-select" id="hair_hairLength" name="hair_hairLength">
+                            <option value="">{{translations.characterUpdate.selectOption}}</option>
+                            <option value="very short">{{translations.characterUpdate.veryShort}}</option>
+                            <option value="short">{{translations.characterUpdate.short}}</option>
+                            <option value="medium">{{translations.characterUpdate.medium}}</option>
+                            <option value="long">{{translations.characterUpdate.long}}</option>
+                            <option value="very long">{{translations.characterUpdate.veryLong}}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="hair_hairStyle" class="form-label">
+                            <i class="bi bi-brush-fill me-1"></i>
+                            {{translations.characterUpdate.hairStyle}}
+                        </label>
+                        <input type="text" class="form-control" id="hair_hairStyle" name="hair_hairStyle" placeholder="e.g., Ponytail, Bob, Braids">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="hair_hairTexture" class="form-label">
+                            <i class="bi bi-water me-1"></i>
+                            {{translations.characterUpdate.hairTexture}}
+                        </label>
+                        <select class="form-select" id="hair_hairTexture" name="hair_hairTexture">
+                            <option value="">{{translations.characterUpdate.selectOption}}</option>
+                            <option value="straight">{{translations.characterUpdate.straight}}</option>
+                            <option value="wavy">{{translations.characterUpdate.wavy}}</option>
+                            <option value="curly">{{translations.characterUpdate.curly}}</option>
+                            <option value="coily">{{translations.characterUpdate.coily}}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Body Features Section -->
+    <div class="form-section body-section">
+        <div class="form-section-header" data-bs-toggle="collapse" data-bs-target="#bodySection">
+            <span>
+                <i class="bi bi-person-arms-up me-2"></i>
+                {{translations.characterUpdate.bodyFeatures}}
+            </span>
+            <i class="bi bi-chevron-down"></i>
+        </div>
+        <div id="bodySection" class="collapse">
+            <div class="form-section-content">
+                <!-- Female-specific fields -->
+                <div class="female-specific">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label for="body_breastSize" class="form-label">
+                                <i class="bi bi-person-dress me-1"></i>
+                                {{translations.characterUpdate.breastSize}}
+                            </label>
+                            <select class="form-select" id="body_breastSize" name="body_breastSize">
+                                <option value="">{{translations.characterUpdate.selectOption}}</option>
+                                <option value="small">{{translations.characterUpdate.small}}</option>
+                                <option value="medium">{{translations.characterUpdate.medium}}</option>
+                                <option value="large">{{translations.characterUpdate.large}}</option>
+                                <option value="very large">{{translations.characterUpdate.veryLarge}}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="body_assSize" class="form-label">
+                                <i class="bi bi-person-standing-dress me-1"></i>
+                                {{translations.characterUpdate.assSize}}
+                            </label>
+                            <select class="form-select" id="body_assSize" name="body_assSize">
+                                <option value="">{{translations.characterUpdate.selectOption}}</option>
+                                <option value="small">{{translations.characterUpdate.small}}</option>
+                                <option value="medium">{{translations.characterUpdate.medium}}</option>
+                                <option value="large">{{translations.characterUpdate.large}}</option>
+                                <option value="very large">{{translations.characterUpdate.veryLarge}}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="body_bodyCurves" class="form-label">
+                                <i class="bi bi-bezier me-1"></i>
+                                {{translations.characterUpdate.bodyCurves}}
+                            </label>
+                            <select class="form-select" id="body_bodyCurves" name="body_bodyCurves">
+                                <option value="">{{translations.characterUpdate.selectOption}}</option>
+                                <option value="minimal">{{translations.characterUpdate.minimal}}</option>
+                                <option value="subtle">{{translations.characterUpdate.subtle}}</option>
+                                <option value="pronounced">{{translations.characterUpdate.pronounced}}</option>
+                                <option value="very pronounced">{{translations.characterUpdate.veryPronounced}}</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Male-specific fields -->
+                <div class="male-specific">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label for="body_chestBuild" class="form-label">
+                                <i class="bi bi-person-fill me-1"></i>
+                                {{translations.characterUpdate.chestBuild}}
+                            </label>
+                            <select class="form-select" id="body_chestBuild" name="body_chestBuild">
+                                <option value="">{{translations.characterUpdate.selectOption}}</option>
+                                <option value="slim">{{translations.characterUpdate.slim}}</option>
+                                <option value="average">{{translations.characterUpdate.average}}</option>
+                                <option value="muscular">{{translations.characterUpdate.muscular}}</option>
+                                <option value="broad">{{translations.characterUpdate.broad}}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="body_shoulderWidth" class="form-label">
+                                <i class="bi bi-distribute-horizontal me-1"></i>
+                                {{translations.characterUpdate.shoulderWidth}}
+                            </label>
+                            <select class="form-select" id="body_shoulderWidth" name="body_shoulderWidth">
+                                <option value="">{{translations.characterUpdate.selectOption}}</option>
+                                <option value="narrow">{{translations.characterUpdate.narrow}}</option>
+                                <option value="average">{{translations.characterUpdate.average}}</option>
+                                <option value="broad">{{translations.characterUpdate.broad}}</option>
+                                <option value="very broad">{{translations.characterUpdate.veryBroad}}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="body_absDefinition" class="form-label">
+                                <i class="bi bi-grid-3x3-gap me-1"></i>
+                                {{translations.characterUpdate.absDefinition}}
+                            </label>
+                            <select class="form-select" id="body_absDefinition" name="body_absDefinition">
+                                <option value="">{{translations.characterUpdate.selectOption}}</option>
+                                <option value="none">{{translations.characterUpdate.none}}</option>
+                                <option value="slight">{{translations.characterUpdate.slight}}</option>
+                                <option value="defined">{{translations.characterUpdate.defined}}</option>
+                                <option value="very defined">{{translations.characterUpdate.veryDefined}}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="body_armMuscles" class="form-label">
+                                <i class="bi bi-symmetry-horizontal me-1"></i>
+                                {{translations.characterUpdate.armMuscles}}
+                            </label>
+                            <select class="form-select" id="body_armMuscles" name="body_armMuscles">
+                                <option value="">{{translations.characterUpdate.selectOption}}</option>
+                                <option value="slim">{{translations.characterUpdate.slim}}</option>
+                                <option value="toned">{{translations.characterUpdate.toned}}</option>
+                                <option value="muscular">{{translations.characterUpdate.muscular}}</option>
+                                <option value="very muscular">{{translations.characterUpdate.veryMuscular}}</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Style & Fashion Section -->
+    <div class="form-section style-section">
+        <div class="form-section-header" data-bs-toggle="collapse" data-bs-target="#styleSection">
+            <span>
+                <i class="bi bi-bag-heart me-2"></i>
+                {{translations.characterUpdate.styleFashion}}
+            </span>
+            <i class="bi bi-chevron-down"></i>
+        </div>
+        <div id="styleSection" class="collapse">
+            <div class="form-section-content">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="style_clothingStyle" class="form-label">
+                            <i class="bi bi-basket me-1"></i>
+                            {{translations.characterUpdate.clothingStyle}}
+                        </label>
+                        <textarea class="form-control" id="style_clothingStyle" name="style_clothingStyle" rows="2" placeholder="Describe clothing style preferences"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="style_accessories" class="form-label">
+                            <i class="bi bi-gem me-1"></i>
+                            {{translations.characterUpdate.accessories}}
+                        </label>
+                        <textarea class="form-control" id="style_accessories" name="style_accessories" rows="2" placeholder="Describe accessories worn"></textarea>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="style_tattoos" class="form-label">
+                            <i class="bi bi-star me-1"></i>
+                            {{translations.characterUpdate.tattoos}}
+                        </label>
+                        <textarea class="form-control" id="style_tattoos" name="style_tattoos" rows="2" placeholder="Describe any tattoos"></textarea>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="style_piercings" class="form-label">
+                            <i class="bi bi-circle me-1"></i>
+                            {{translations.characterUpdate.piercings}}
+                        </label>
+                        <textarea class="form-control" id="style_piercings" name="style_piercings" rows="2" placeholder="Describe any piercings"></textarea>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="style_scars" class="form-label">
+                            <i class="bi bi-bandaid me-1"></i>
+                            {{translations.characterUpdate.scars}}
+                        </label>
+                        <textarea class="form-control" id="style_scars" name="style_scars" rows="2" placeholder="Describe any scars or marks"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Personality Section -->
+    <div class="form-section personality-section">
+        <div class="form-section-header" data-bs-toggle="collapse" data-bs-target="#personalitySection">
+            <span>
+                <i class="bi bi-heart me-2"></i>
+                {{translations.characterUpdate.personalityCharacter}}
+            </span>
+            <i class="bi bi-chevron-down"></i>
+        </div>
+        <div id="personalitySection" class="collapse">
+            <div class="form-section-content">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="personality_personality" class="form-label">
+                            <i class="bi bi-emoji-laughing me-1"></i>
+                            {{translations.characterUpdate.personality}}
+                        </label>
+                        <textarea class="form-control" id="personality_personality" name="personality_personality" rows="3" placeholder="Describe personality traits"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="personality_background" class="form-label">
+                            <i class="bi bi-book me-1"></i>
+                            {{translations.characterUpdate.background}}
+                        </label>
+                        <textarea class="form-control" id="personality_background" name="personality_background" rows="3" placeholder="Describe character background"></textarea>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="personality_occupation" class="form-label">
+                            <i class="bi bi-briefcase me-1"></i>
+                            {{translations.characterUpdate.occupation}}
+                        </label>
+                        <input type="text" class="form-control" id="personality_occupation" name="personality_occupation" placeholder="e.g., Student, Teacher, Artist">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="personality_hobbies" class="form-label">
+                            <i class="bi bi-controller me-1"></i>
+                            {{translations.characterUpdate.hobbies}}
+                        </label>
+                        <input type="text" class="form-control array-field" id="personality_hobbies" name="personality_hobbies" placeholder="Separate with commas">
+                        <div class="field-description">
+                            <i class="bi bi-info-circle me-1"></i>
+                            {{translations.characterUpdate.separateWithCommas}}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="personality_interests" class="form-label">
+                            <i class="bi bi-lightbulb me-1"></i>
+                            {{translations.characterUpdate.interests}}
+                        </label>
+                        <input type="text" class="form-control array-field" id="personality_interests" name="personality_interests" placeholder="Separate with commas">
+                        <div class="field-description">
+                            <i class="bi bi-info-circle me-1"></i>
+                            {{translations.characterUpdate.separateWithCommas}}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="personality_likes" class="form-label">
+                            <i class="bi bi-hand-thumbs-up me-1"></i>
+                            {{translations.characterUpdate.likes}}
+                        </label>
+                        <input type="text" class="form-control array-field" id="personality_likes" name="personality_likes" placeholder="Separate with commas">
+                        <div class="field-description">
+                            <i class="bi bi-info-circle me-1"></i>
+                            {{translations.characterUpdate.separateWithCommas}}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="personality_dislikes" class="form-label">
+                            <i class="bi bi-hand-thumbs-down me-1"></i>
+                            {{translations.characterUpdate.dislikes}}
+                        </label>
+                        <input type="text" class="form-control array-field" id="personality_dislikes" name="personality_dislikes" placeholder="Separate with commas">
+                        <div class="field-description">
+                            <i class="bi bi-info-circle me-1"></i>
+                            {{translations.characterUpdate.separateWithCommas}}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <label for="personality_specialAbilities" class="form-label">
+                            <i class="bi bi-magic me-1"></i>
+                            {{translations.characterUpdate.specialAbilities}}
+                        </label>
+                        <input type="text" class="form-control array-field" id="personality_specialAbilities" name="personality_specialAbilities" placeholder="Separate with commas">
+                        <div class="field-description">
+                            <i class="bi bi-info-circle me-1"></i>
+                            {{translations.characterUpdate.separateWithCommas}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>

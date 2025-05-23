@@ -99,6 +99,7 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
     provider.model;
     
   console.log(`[generateCompletion] Using provider: ${modelConfig.provider}, model: ${modelName}`);
+  console.log(`[generateCompletion] System message: ${messages[0].content.slice(0, 100)}...`);
   
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
@@ -298,7 +299,7 @@ const analyzeConversationContext = async (messages, userInfo, language) => {
   }
 };
 
-async function generatePromptSuggestions(messages, chatDescription, language) {
+async function generatePromptSuggestions(messages, chatDescription, language, model = 'deepseek') {
   // Get the last user message
   let lastUserMessagesContent = messages
     .filter(m => m.content && !m.content.startsWith('[Image]') && m.role !== 'system')
@@ -338,7 +339,7 @@ async function generatePromptSuggestions(messages, chatDescription, language) {
 
   try {
     // Use deepseek model with generateCompletion
-    const response = await generateCompletion(updatedMessages, 500, 'deepseek');
+    const response = await generateCompletion(updatedMessages, 500, model);
     if (!response) {
       throw new Error("Failed to generate suggestions");
     }

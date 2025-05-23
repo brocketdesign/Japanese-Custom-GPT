@@ -313,6 +313,7 @@ $(document).ready(function() {
 
         const prompt = characterPrompt = $('#characterPrompt').val().trim();
         const gender = $('#gender').val();
+        const name = $('#chatName').val().trim();
         let modelId = $('#modelId').val();
 
         if(!modelId){
@@ -334,162 +335,97 @@ $(document).ready(function() {
             return;
         }
 
-        const isEnhanceEnabled = $('#enableEnhancedPrompt').is(':checked');
-
         const $button = $(this);
         $button.prop('disabled', true);
 
-        // ボタンテキストを更新
-        if(isEnhanceEnabled){
-            $button.html(`<div class="me-2 spinner-border spinner-border-sm" role="status">
-            <span class="visually-hidden">Loading...</span>
-            </div>${translations.newCharacter.enhancing_prompt}`);
-        } else {
-            $button.html(`<div class="me-2 spinner-border spinner-border-sm" role="status">
-            <span class="visually-hidden">Loading...</span>
-            </div>${translations.imageForm.generatingImages}`);
-        }
+        // Update button text for comprehensive generation
+        $button.html(`<div class="me-2 spinner-border spinner-border-sm" role="status">
+        <span class="visually-hidden">Loading...</span>
+        </div>${translations.newCharacter.comprehensive_generation_started}`);
 
         $('#characterPrompt').prop('disabled', true);
         $('#chatName').prop('disabled', true);
         $('#chatPurpose').prop('disabled', true);
+        
         let moderationResult = {flagged: false};
         try {
-
-            // Call moderation function on enhancedPrompt content
-            moderationResult = await moderateContent(chatCreationId,prompt);
+            // Call moderation function on prompt content
+            moderationResult = await moderateContent(chatCreationId, prompt);
+            
             // Check if the content is NSFW
             if (moderationResult.flagged) {
                 if (false && !subscriptionStatus) { // Allow user to generate NSFW prompt
                     showUpgradePopup('nsfw-prompt');
-                    // Enable buttons and reset text
-                    $button.prop('disabled', false);
-                    $button.html('<i class="bi bi-magic me-2"></i>' + translations.newCharacter.generate_with_AI);
-                    $('#characterPrompt').prop('disabled', false);
-                    $('#chatName').prop('disabled', false);
-                    $('#chatPurpose').prop('disabled', false);
+                    resetCharacterForm();
                     return
                 }
             }
 
-            let enhanceResponse = {enhancedPrompt:''}
-
-            if(isEnhanceEnabled){
-                if($('#enhancedPrompt').val().trim() != ''){
-                    enhanceResponse.enhancedPrompt = $('#enhancedPrompt').val()
-                }else{
-                    let customData = {
-                        prompt,
-                        gender,
-                        chatId:chatCreationId,
-                    };
-
-                    customData = JSON.stringify(customData);
-
-                    // プロンプトを強化するリクエスト
-                    enhanceResponse = await $.ajax({
-                        url: '/api/enhance-prompt',
-                        method: 'POST',
-                        contentType: 'application/json',
-                        data: customData
-                    });
-                }
-
-                if (enhanceResponse && enhanceResponse.enhancedPrompt) {
-                    $('#enhancedPrompt').val(enhanceResponse.enhancedPrompt);
-                } else {
-                    $button.prop('disabled', false);
-                    $button.html(`<i class="bi bi-magic me-2"></i>${translations.newCharacter.generate_with_AI}`);
-                    $('#characterPrompt').prop('disabled', false);
-                    $('#chatName').prop('disabled', false);
-                    $('#chatPurpose').prop('disabled', false);
-                    return;
-                }
-            } else {
-                // プロンプトをそのまま使用
-                enhanceResponse.enhancedPrompt = prompt;
-            }
-
-            // ボタンテキストを「画像を生成中...」に更新
-            $button.html(`<div class="me-2 spinner-border spinner-border-sm" role="status">
-            <span class="visually-hidden">Loading...</span>
-            </div>${translations.imageForm.generatingImages}`);
-            $('.genexp').fadeIn()
-
-            const imageType = moderationResult.flagged ? 'nsfw' : 'sfw';
-            // Check if #imageUpload has a file
-            const file = $('#imageUpload')[0].files[0];
-                
-            novitaImageGeneration(userId, chatCreationId, null, { prompt:enhanceResponse.enhancedPrompt, imageType, file, chatCreation: true})
-            .catch((error) => {
-                console.error('Error generating image:', error);
-            })
-            
-			generateCharacterPersonnality(function(response){
-                $('.chatRedirection').show();
-            });
-
-        } catch (error) {
-            console.error('Error:', error);
-            $button.prop('disabled', false);
-            $button.html('<i class="bi bi-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
-            $('#characterPrompt').prop('disabled', false);
-            $('#chatName').prop('disabled', false);
-            $('#chatPurpose').prop('disabled', false);
-        }
-    });
-
-
-        async function generateCharacterPersonnality(callback) {
-            let name = $('#chatName').val();
-            let purpose = $('#chatPurpose').val().trim() !== '' ? $('#chatPurpose').val().trim() : $('#characterPrompt').val().trim();   
-            let prompt = $('#characterPrompt').val().trim();
-            let gender = $('#gender').val();
-            
-            if(purpose.length == 0){
-                return
-            } 
-            let customData = {
+            // Use new comprehensive generation route
+            const comprehensiveData = {
                 prompt,
-                purpose,
-                name,
                 gender,
-                chatId:chatCreationId,
+                name,
+                chatId: chatCreationId,
+                language: lang
             };
 
-            customData = JSON.stringify(customData);
-
-            $.ajax({
-                url: '/api/openai-chat-creation',
+            const comprehensiveResponse = await $.ajax({
+                url: '/api/generate-character-comprehensive',
                 method: 'POST',
                 contentType: 'application/json',
-                data: customData,
-                success: function(response) {
-                    $('#chatName').val(response.name);
-                    $('#chatPurpose').val(response?.short_intro);
-                    resizeTextarea($('#chatPurpose')[0]);
-                    if (typeof callback === 'function') {
-                        callback(response);
-                    }
-                },
-                error: function(error) {
-                    console.error('Error:', error);
-                }
+                data: JSON.stringify(comprehensiveData)
             });
+
+            if (comprehensiveResponse && comprehensiveResponse.success) {
+                // Update form fields with generated data
+                const chatData = comprehensiveResponse.chatData;
+                const enhancedPrompt = comprehensiveResponse.enhancedPrompt;
+                
+                $('#chatName').val(chatData.name);
+                $('#chatPurpose').val(chatData.short_intro);
+                $('#enhancedPrompt').val(enhancedPrompt);
+                
+                resizeTextarea($('#chatPurpose')[0]);
+                
+                console.log('Comprehensive character generation completed:', comprehensiveResponse);
+                
+                // Start image generation with enhanced prompt
+                $button.html(`<div class="me-2 spinner-border spinner-border-sm" role="status">
+                <span class="visually-hidden">Loading...</span>
+                </div>${translations.imageForm.generatingImages}`);
+                $('.genexp').fadeIn();
+
+                const imageType = moderationResult.flagged ? 'nsfw' : 'sfw';
+                const file = $('#imageUpload')[0].files[0];
+                    
+                novitaImageGeneration(userId, chatCreationId, null, { 
+                    prompt: enhancedPrompt, 
+                    imageType, 
+                    file, 
+                    chatCreation: true
+                })
+                .then(() => {
+                    $('.chatRedirection').show();
+                    resetCharacterForm();
+                })
+                .catch((error) => {
+                    console.error('Error generating image:', error);
+                    resetCharacterForm();
+                });
+                
+            } else {
+                resetCharacterForm();
+                showNotification(translations.newCharacter.character_generation_error, 'error');
+            }
+
+        } catch (error) {
+            console.error('Comprehensive generation error:', error);
+            resetCharacterForm();
+            showNotification(translations.newCharacter.character_generation_error, 'error');
         }
-       
+    });
 });
-
-
-function previewImage(event) {
-    const reader = new FileReader();
-    const imagePreview = document.getElementById('imagePreview');
-    reader.onload = function() {
-        imagePreview.src = reader.result;
-        imagePreview.style.display = 'block';
-    };
-    reader.readAsDataURL(event.target.files[0]);
-}
 
 function previewImage(event) {
     const file = event.target.files[0];
@@ -506,7 +442,7 @@ function previewImage(event) {
         };
         reader.readAsDataURL(file);
     } else {
-        showNotification(translations.imageForm.image_invalid, 'error');
+        showNotification(translations.imageForm.image_invalid_format, 'error');
     }
 }
 
@@ -541,7 +477,7 @@ window.generateCharacterImage = function( url, nsfw) {
     $('#generatedImage').remove();
 
     // For each image URL, create an image element and append to the container
-    const colDiv = $('<div>').addClass('col-12 col-md-6 mb-3');
+    const colDiv = $('<div>').addClass('col-12 mb-3');
     const imgElement = $('<img>')
         .attr('src', url)
         .addClass('img-fluid img-thumbnail')
@@ -585,3 +521,25 @@ window.resetCharacterForm = function(){
 window.updateCharacterGenerationMessage = function(message){
     $('.genexp').text(message)
 }
+
+// Add character update functionality
+window.loadCharacterUpdatePage = function(chatId) {
+    if (!chatId) {
+        showNotification('Character ID is required', 'error');
+        return;
+    }
+    
+    // Load the character update form
+    $.ajax({
+        url: `/character-update/${chatId}`,
+        method: 'GET',
+        success: function(html) {
+            $('#character-update-container').html(html);
+            $('#characterUpdateModal').modal('show');
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading character update page:', error);
+            showNotification('Failed to load character update form', 'error');
+        }
+    });
+};

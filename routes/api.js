@@ -46,6 +46,20 @@ function tokenizePrompt(promptText) {
       .filter(token => token.length > 0) // Remove empty tokens
   );
 }
+async function getPersonaById(db, personaId){ // a persona is a chat
+    try {
+        const persona = await db.collection('chats').findOne({ _id: new ObjectId(personaId) });
+        if (!persona) {
+            console.log('[POST /api/user/personas] Persona not found');
+            return null;
+        }
+        console.log(`[POST /api/user/personas] Persona found: ${persona.name}`);
+        return persona;
+    } catch (error) {
+        console.log('[POST /api/user/personas] Error fetching persona:', error);
+        return null;
+    }
+}
 async function routes(fastify, options) {
 
     fastify.post('/api/init-chat', async (request, reply) => {
@@ -188,273 +202,7 @@ async function routes(fastify, options) {
     });
       
       
-    const characterSchema = z.object({
-        name: z.string(),
-        short_intro: z.string(),
-        system_prompt: z.string(),
-        tags:z.array(z.string()),
-        first_message: z.string(),
-    });
-
-    function createSystemPayloadChatRule(purpose, gender, name, details, language) {
-        let detailsString = '';
-        if (details && typeof details === 'object') {
-          // Example: "hairColor:blonde, eyeColor:blue, ..."
-          detailsString = Object.entries(details)
-            .map(([key, value]) => `${key}:${value}`)
-            .join(', ');
-        }
-        return [
-            {
-                role: "system",
-                content: `You are a helpful assistant.
-                You will generate creative character descriptions in ${language}.
-                name: ${name && name.trim() !== '' ? name : `Please provide the actual ${language} name and surname without furigana. It should match the character's gender and description.`}
-                short_intro: Write a self-introduction that reflects the character's personality in 2 sentences.
-                system_prompt: Provide a prompt that will define the character. Start with : "I want you to act as  ... " and provide a specific role for the character.
-                first_message: Provide the character's first conversational message that clearly demonstrates their unique speech pattern.
-                tags: A list of 5 tags to help find similar character.
-                Please respond entirely in ${language}.`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim()
-            },
-            {
-                role: "user",
-                content: `Here are some examples of system_prompt. 
-                - "I want you to act as a relationship coach. I will provide some details about the two people involved in a conflict, and it will be your job to come up with suggestions on how they can work through the issues that are separating them. This could include advice on communication techniques or different strategies for improving their understanding of one another's perspectives. My first request is "I need help solving conflicts between my spouse and myself."
-                - "I want you to act as a composer. I will provide the lyrics to a song and you will create music for it. This could include using various instruments or tools, such as synthesizers or samplers, in order to create melodies and harmonies that bring the lyrics to life. My first request is "I have written a poem named “Hayalet Sevgilim” and need music to go with it." `
-            },
-            {
-                role: "user",
-                content: `
-                Use the following details to create a character description:
-                The character's name is ${name}.
-                The character's gender is ${gender}.
-                Please review the following information: ${purpose}.
-                ${detailsString.trim() !== '' ? `Additional details: ${detailsString}.` : ''}
-
-                Make sure the character's speech pattern is highly distinctive and matches their archetype.
-                `.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim()
-            },
-        ];
-    }
-
-fastify.post('/api/openai-chat-creation', async (request, reply) => {
-
-    try {
-        // Validate request body
-        const { chatId, name, purpose, prompt, gender, details_personality, language: requestLanguage, system_generated, nsfw } = request.body;
-
-        if (!purpose || !gender) {
-            console.log('[API/openai-chat-creation] Missing required fields: purpose or gender');
-            return reply.status(400).send({ error: 'Invalid request body. "purpose" and "gender" are required.' });
-        }
-
-        // Determine language - use request parameter, fallback to user language
-        const language = requestLanguage || request.lang;
-        
-        // Prepare payload
-        const systemPayload = createSystemPayloadChatRule(purpose, gender, name, details_personality, language);
-
-        // Interact with OpenAI API
-        const openai = new OpenAI();
-        const completionResponse = await openai.chat.completions.create({
-            model: "gpt-4o",
-            messages: systemPayload,
-            response_format: zodResponseFormat(characterSchema, "character_data"),
-        });
-
-        if (!completionResponse.choices || completionResponse.choices.length === 0) {
-            console.error('[API/openai-chat-creation] Invalid response from OpenAI API');
-            return reply.status(500).send({ error: 'Invalid response from OpenAI API.' });
-        }
-
-        const chatData = JSON.parse(completionResponse.choices[0].message.content);
-        
-        // Respond with the validated character data
-        chatData.language = language;
-        chatData.gender = gender;
-        chatData.characterPrompt = prompt;
-        chatData.createdAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-        chatData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-
-        // Generate slug from name
-        if (name) {
-            const baseSlug = slugify(chatData.name, { lower: true, strict: true });
-            let slug = baseSlug;
-            
-            // If there's no chatId, just return the character data without DB operations
-            if (!chatId) {
-                chatData.slug = slug;
-                console.log(`[API/openai-chat-creation] Returning character data without DB operations`);
-                return reply.send(chatData);
-            }
-            
-            // Check for duplicate slug if we'll be saving to DB
-            const collectionChats = fastify.mongo.db.collection('chats');
-            const slugExists = await collectionChats.findOne({ 
-                slug: baseSlug, 
-                _id: { $ne: new fastify.mongo.ObjectId(chatId) } 
-            });
-            
-            // If slug exists, append a short random string
-            if (slugExists) {
-                const randomStr = Math.random().toString(36).substring(2, 6);
-                slug = `${baseSlug}-${randomStr}`;
-                console.log(`[API/openai-chat-creation] Generated unique slug: ${slug}`);
-            }
-            
-            chatData.slug = slug;
-        }
-        
-        // If chatId exists, continue with DB operations
-        if (chatId) {
-            
-            // Save generated tags
-            const tagsCollection = fastify.mongo.db.collection('tags');
-            const generatedTags = chatData.tags;
-            
-            for (const tag of generatedTags) {
-                await tagsCollection.updateOne(
-                    { name: tag },
-                    { $set: { name: tag, language }, $addToSet: { chatIds: chatId } },
-                    { upsert: true }
-                );
-            }
-
-            if (details_personality) {
-                chatData.details_personality = details_personality; // store details in the DB if provided
-            }
-
-            // Flag if this is a system-generated chat
-            if (system_generated) {
-                chatData.systemGenerated = true;
-                chatData.nsfw = nsfw;
-                chatData.visibility = 'public';
-            }
-            
-            const collectionChats = fastify.mongo.db.collection('chats');
-
-            const updateResult = await collectionChats.updateOne(
-                { _id: new fastify.mongo.ObjectId(chatId) },
-                { $set: chatData }
-            );
-
-            if (updateResult.matchedCount === 0) {
-                console.error(`[API/openai-chat-creation] Chat not found for ID: ${chatId}`);
-                throw new Error('指定されたチャットが見つかりませんでした。');
-            }
-            
-        }
-
-        reply.send(chatData);
-    } catch (err) {
-        if (err instanceof z.ZodError) {
-            console.error('[API/openai-chat-creation] Validation error:', err.errors);
-            return reply.status(400).send({ error: 'Validation error in response data.', details: err.errors });
-        }
-
-        console.error('[API/openai-chat-creation] Error:', err);
-        reply.status(500).send({ error: 'An unexpected error occurred.', details: err.message });
-    }
-});
-    
-    fastify.post('/api/enhance-prompt', async (request, reply) => {
-      try {
-        // Validate and parse the request body
-        const { prompt, gender, chatId, details_description } = request.body;
-
-        // Create the system payload for OpenAI
-        // Pass `details` if you want to incorporate it into the prompt generation
-        const systemPayload = createSystemPayload(prompt, gender, details_description);
-
-        const enhancedPrompt = await generateCompletion(systemPayload, 600, 'deepseek')
-
-        // Access MongoDB and update the chat document
-        const db = fastify.mongo.db;
-        const collectionChats = db.collection('chats');
-        const chatObjectId = new fastify.mongo.ObjectId(chatId);
-    
-        // Build update object dynamically
-        // Only store `details` if it exists
-        const updateFields = {
-          characterPrompt: prompt,
-          imageDescription: enhancedPrompt,
-          enhancedPrompt,
-          gender
-        };
-        if (details_description) {
-          updateFields.details_description = details_description; // store details in the DB if provided
-        }
-    
-        const updateResult = await collectionChats.updateOne(
-          { _id: chatObjectId },
-          { $set: updateFields }
-        );
-    
-        if (updateResult.matchedCount === 0) {
-          return reply.status(404).send({ error: '指定されたチャットが見つかりませんでした。' });
-        }
-    
-        if (updateResult.modifiedCount === 0) {
-          fastify.log.warn(`Chat with ID ${chatId} was found but fields were not updated.`);
-        }
-    
-        // Send the enhanced prompt back to the client
-        reply.send({ enhancedPrompt });
-      } catch (error) {
-        if (error instanceof z.ZodError) {
-          return reply.status(400).send({ error: error.errors });
-        }
-        fastify.log.error(error);
-        reply.status(500).send({ error: 'プロンプトの生成に失敗しました。' });
-      }
-    });
-    
-    // Updated helper function to optionally use `details`
-    function createSystemPayload(prompt, gender, details) {
-      let detailsString = '';
-      if (details && typeof details === 'object') {
-        // Example: "hairColor:blonde, eyeColor:blue, ..."
-        detailsString = Object.entries(details)
-          .map(([key, value]) => `${key}:${value}`)
-          .join(', ');
-      }
-    
-      // Incorporate `detailsString` into the prompt if desired
-    return [
-      {
-        role: 'system',
-        content: `
-        You are a Stable Diffusion image prompt generator.
-        Your task is to generate a concise image prompt (under 1000 characters) based on the latest character description provided.
-        The prompt should be a comma-separated list of descriptive keywords in English that accurately depict the character's appearance, emotions, and style.
-        You must extand the provided prompt, describe the full image. 
-        Respond in a single descriptive line of plain text using keywords.
-        DO NOT form complete sentences; use only relevant keywords.
-        Ensure the prompt is optimized for generating high-detailed image of the provided instructions.
-        Respond EXCLUSIVELY IN ENGLISH!
-        `.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim(),
-      },
-      {
-        role: 'user',
-        content: `
-        The character's gender is: ${gender}.\n
-        Here is the image prompt to enhance : ${prompt}.\n
-        ${detailsString.trim() !== '' ? `Additional details: ${detailsString}.` : ''}\n
-        Answer with the image description only. Do not include any comments. Respond EXCLUSIVELY IN ENGLISH!\n
-        `.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim(),
-      },
-      {
-        role: 'user',
-        content: `Your response should at least contain the character's age, skin color, hair color, hair length, eyes color, tone, face expression, body type, body characteristic, ${
-          gender === 'female' ? 
-          'breast size (small, medium, big, gigantic), nipple characteristics, ass size (small, round, big, gigantic), body curves,' : 
-          gender === 'male' ? 
-          'chest build (slim, muscular, broad), shoulder width, abs definition, arm muscles,' : 
-          ''
-        } gender, facial features, background, accessories.\n`
-      }
-    ];
-    }
+   
     
     fastify.delete('/api/delete-chat/:id', async (request, reply) => {
         try {
@@ -485,6 +233,7 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
             return reply.status(500).send({ error: 'Failed to delete story' });
         }
     });
+    // This route handles updating the NSFW status of a chat
     fastify.put('/api/chat/:chatId/nsfw', async (request, reply) => {
         try {
           const { chatId } = request.params;
@@ -512,7 +261,8 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
         } catch (error) {
           reply.status(500).send({ error: 'Failed to update NSFW status' });
         }
-      });
+    });
+
     fastify.post('/api/chat/', async (request, reply) => {
         let { userId, chatId, userChatId } = request.body;
         const collection = fastify.mongo.db.collection('chats');
@@ -534,11 +284,23 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
             if (userChatDocument) {
                 response.userChat = userChatDocument;
                 response.isNew = false;
+                // check for a persona id
+                try {
+                    if(userChatDocument.persona){
+                        const persona = await collection.findOne({ _id: new fastify.mongo.ObjectId(userChatDocument.persona) });
+                        if (persona) {
+                            response.userChat.persona = persona;
+                        } else {
+                            response.userChat.persona = null;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error fetching persona:', error);
+                }
             }
         } catch (error) {
             // Log error if necessary, or handle it silently
         }
-    
         try {
             const chat = await collection.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
             if (!chat) {
@@ -609,6 +371,27 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
                 newMessage.name = 'master'
             } else if (message.startsWith('[imageFav]')){
                 const imageId = message.replace('[imageFav]','').trim()
+                async function findImageId(db, chatId, imageId) {
+                    try {
+                        const galleryCollection = db.collection('gallery');
+                        const imageDoc = await galleryCollection
+                        .aggregate([
+                            { $match: { chatId: new ObjectId(chatId) } },
+                            { $unwind: '$images' },
+                            { $match: { 'images._id': new ObjectId(imageId) } },
+                            { $project: { image: '$images', _id: 0 } },
+                        ])
+                        .toArray();
+
+                        if (imageDoc.length > 0) {
+                            return imageDoc[0].image;
+                        }
+                        return null;
+                    } catch (error) {
+                        console.error('Error finding image:', error);
+                        throw error;
+                    }
+                }
                 const imageData = await findImageId(fastify.mongo.db,chatId,imageId)
                 newMessage.content =  `I liked one of your picture. The one about: ${imageData.prompt}\n
                  Provide a short answer to thank me, stay in your character. Respond in ${request.lang}.
@@ -643,55 +426,6 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
         }
     });
 
-    fastify.post('/api/chat-analyze/', async (request, reply) => {
-        const {chatId,userId} = request.body;
-        const collectionUser = fastify.mongo.db.collection('users');
-        const collectionChat = fastify.mongo.db.collection('chats');
-        const collectionUserChat = fastify.mongo.db.collection('userChat');
-
-        let response = {}
-        try {
-            let userChatDocument = await collectionUserChat.find({
-                $and: [
-                    { 
-                      $or: [
-                        { chatId },
-                        { chatId: new fastify.mongo.ObjectId(chatId) }
-                      ]
-                    },
-                    { 
-                      $or: [
-                        { userId },
-                        { userId: new fastify.mongo.ObjectId(userId) }
-                      ]
-                    },
-                    { $expr: { $gte: [ { $size: "$messages" }, 2 ] } }
-                  ]}).toArray();
-            if(userChatDocument){
-                response.total = userChatDocument.length
-            }
-        } catch (error) {
-        }
-        try {
-            const chat = await collectionChat.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
-            if (!chat) {
-                return reply.status(404).send({ error: 'chat not found' });
-            }
-            response.chat = chat
-
-            const userId = chat.userId
-            const user = await collectionUser.findOne({ _id: new fastify.mongo.ObjectId(userId) });
-            if (!user) {
-                return reply.status(404).send({ error: 'user not found' });
-            }
-            response.author = user.username
-
-            return reply.send(response);
-        } catch (error) {
-            console.error('Failed to retrieve chat:', error);
-            return reply.status(500).send({ error: 'Failed to retrieve chat' });
-        }
-    });
     fastify.get('/api/chat-history/:chatId', async (request, reply) => {
         try {
             const chatId = request.params.chatId;
@@ -723,26 +457,6 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
         }
     });
     
-    fastify.post('/api/chat-category/:category', async (request, reply) => {
-        try {
-          const category = request.params.category;
-          const chatsCollection = fastify.mongo.db.collection('chats');
-      
-          const chatByCategory = await chatsCollection.find({
-            visibility: { $exists: true, $eq: "public" },
-            scrap: true,
-            category: category
-          })
-           .sort({ _id: -1 })
-           .limit(50)
-           .toArray();
-      
-          return reply.send(chatByCategory);
-        } catch (error) {
-          console.error(error); // Use console.error for errors
-          reply.code(500).send({ error: 'Internal Server Error' }); // Return a meaningful error response
-        }
-      });
       
     fastify.delete('/api/delete-chat-history/:chatId', async (request, reply) => {
         const chatId = request.params.chatId;
@@ -765,34 +479,6 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
         await collectionUserChat.deleteOne({ _id: new fastify.mongo.ObjectId(chatId) });
     
         reply.send({ message: 'Chat history deleted successfully' });
-    });
-
-    fastify.post('/api/data', async (request, reply) => {
-        const { choice, userId,  storyId } = request.body;
-
-        const serverUserId = parseInt(userId) || 'user_' + Date.now();
-    
-        const collection = fastify.mongo.db.collection('userData');
-    
-        const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-        const query = { userId: serverUserId };
-        const update = {
-            $push: { choices: { choice, storyId, timestamp: dateObj } },
-            $setOnInsert: { userId: serverUserId, createdAt: dateObj },
-            $set: { storyId: storyId }
-        };
-        const options = { upsert: true };
-    
-        try {
-            await collection.updateOne(query, update, options);
-            console.log('User choice updated:', { userId: serverUserId, choice, storyId:storyId });
-            //const userData = await collection.findOne(query);
-            //console.log(userData)
-            return reply.send({ nextStoryPart: "You chose the path and...", endOfStory: true });
-        } catch (error) {
-            console.error('Failed to save user choice:', error);
-            return reply.status(500).send({ error: 'Failed to save user choice' });
-        }
     });
 
     fastify.get('/api/chat-data/:chatId', async (request, reply) => {
@@ -881,189 +567,7 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
             return reply.code(500).send({ error: 'An error occurred' });
         }
     });
-      
-    fastify.post('/api/refund-task/:taskId', async (request, reply) => {
-        const { taskId } = request.params;
-        const db = fastify.mongo.db;
-        
-        const task = await db.collection('tasks').findOne({ taskId });
 
-        if (!task) {
-            return reply.code(404).send({ error: 'Task not found' });
-        }
-
-        const refundAmount = task.type === 'nsfw' ? 20 : 10;
-
-        const user = await db.collection('users').findOne({ _id: new ObjectId(task.userId) });
-
-        if (!user) {
-            return reply.code(404).send({ error: 'User not found' });
-        }
-
-        console.log(`Refund ${refundAmount} coins to user ${task.userId}`)
-        const updatedCoins = (user.coins || 0) + refundAmount;
-
-        await db.collection('users').updateOne(
-            { _id: new ObjectId(task.userId) },
-            { $set: { coins: updatedCoins } }
-        );
-
-        return reply.send({ message: 'Refund processed', refundedAmount: refundAmount });
-    });
-    
-    fastify.post('/api/refund-type/:imageType', async (request, reply) => {
-        const { imageType } = request.params;
-        const db = fastify.mongo.db;
-
-        const refundAmount = imageType === 'nsfw' ? 20 : 10;
-
-        let user = request.user;
-        const userId = user._id
-        user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-
-        if (!user) {
-            return reply.code(404).send({ error: 'User not found' });
-        }
-
-        console.log(`Refund ${refundAmount} coins to user ${userId}`)
-        const updatedCoins = (user.coins || 0) + refundAmount;
-
-        await db.collection('users').updateOne(
-            { _id: new ObjectId(task.userId) },
-            { $set: { coins: updatedCoins } }
-        );
-
-        return reply.send({ message: 'Refund processed', refundedAmount: refundAmount });
-    });
-    
-    fastify.post('/api/purchaseItem', async (request, reply) => {
-        const { itemId, itemName, itemPrice, userId, chatId } = request.body;
-
-        try {
-
-            // Fetch the buyer (user making the purchase)
-            const user = await fastify.mongo.db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-
-            if (!user) {
-                console.log('User not found:', userId);
-                return reply.code(404).send({ error: 'User not found' });
-            }
-
-
-            // Create new item record
-            const newItem = {
-                itemName: itemName,
-                purchaseDate: new Date(),
-                userId: userId
-            };
-
-            const itemResult = await fastify.mongo.db.collection('items').insertOne(newItem);
-
-            // Update buyer's data (deduct coins and add item to purchasedItems)
-            await fastify.mongo.db.collection('users').updateOne(
-                { _id: new fastify.mongo.ObjectId(userId) },
-                {
-                    $push: {
-                        purchasedItems: {
-                            itemId: itemResult.insertedId,
-                            purchaseDate: new Date()
-                        }
-                    }
-                }
-            );
-
-            console.log(`User ${userId} updated with new coin balance and purchased item`);
-
-            // Fetch the chat info to get the seller (chat owner)
-            const chat = await fastify.mongo.db.collection('chats').findOne({ _id: new fastify.mongo.ObjectId(chatId) });
-
-            if (!chat) {
-                console.log('Chat not found:', chatId);
-                return reply.code(404).send({ error: 'Chat not found' });
-            }
-
-            const chatOwnerId = chat.userId;
-            console.log(`Chat owner found: ${chatOwnerId}`);
-
-            /*
-            // Update seller's (chat owner's) coins if the buyer is not the seller
-            if (chatOwnerId.toString() !== userId.toString()) {
-                console.log(`Crediting ${price} coins to chat owner ${chatOwnerId}`);
-                await fastify.mongo.db.collection('users').updateOne(
-                    { _id: new fastify.mongo.ObjectId(chatOwnerId) },
-                    { $inc: { coins: price } }  // Credit seller with itemPrice
-                );
-            } else {
-                console.log('Buyer is the chat owner, no credit given to themselves.');
-            }
-            */
-
-            reply.send({ success: true });
-        } catch (error) {
-            console.log('Error during purchase:', error);
-            reply.code(500).send({ error: 'Internal server error' });
-        }
-    });
-    fastify.post('/api/purchaseImage', async (request, reply) => {
-        const { userId, chatId } = request.body;
-        let command = JSON.parse(request.body.command);
-
-         try {
-
-            const user = await fastify.mongo.db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-
-            if (!user) {
-                console.log('User not found:', userId);
-                return reply.code(404).send({ error: 'User not found' });
-            }
-            let type = command.nsfw ? 'nsfw' : 'sfw'
-            const additionalData = {
-                type ,
-                purchaseDate: new Date(),
-                userId: userId,
-                chatId: chatId
-            };
-            const newImagePurchase = { ...additionalData, ...command };
-            await fastify.mongo.db.collection('imagePurchases').insertOne(newImagePurchase);    
-            reply.send({ success: true });
-        } catch (error) {
-            console.log('Error during image purchase:', error);
-            reply.code(500).send({ error: 'Internal server error' });
-        }
-    });
-    
-    fastify.post('/api/submit-email', async (request, reply) => {
-        const { email, userId } = request.body;
-
-        const collection = fastify.mongo.db.collection('userData');
-
-        const userObj = await collection.findOne({ userId });
-
-        if (!userObj) {
-            console.log('User not found');
-            return reply.status(500).send({ error: 'User not found' });
-        }
-
-        // Check if the email already exists
-        const existingEmail = await collection.findOne({ email });
-        if (existingEmail) {
-            console.log('Email already exists');
-            return reply.status(400).send({ error: 'Email already exists' });
-        }
-        const dateObj = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-        const query = { userId };
-        const update = { $set: { email, createdAt: dateObj } };
-
-        try {
-            await collection.updateOne(query, update);
-            console.log('User email saved:', { userId, email });
-
-            return reply.send({ status: 'success' });
-        } catch (error) {
-            console.error('Failed to save user email:', error);
-            return reply.status(500).send({ error: 'Failed to save user email' });
-        }
-    });
     fastify.post('/api/feedback', async (request, reply) => {
         const { reason, userId } = request.body;
 
@@ -1087,7 +591,7 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
             return reply.status(500).send({ error: 'Failed to save user feedback' });
         }
     });
-    // ...existing code...
+
     fastify.post('/api/display-suggestions', async (request, reply) => {
         try {
             const { userChatId } = request.body;
@@ -1137,7 +641,6 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
         }
     });
 
-    // ...existing code...
    // This route handles streaming chat completions from OpenAI for a given session ID.
 
     function chatDataToString(data) {
@@ -1177,14 +680,20 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
         `.trim();
     }
     function completionSystemContent(chatDocument, user, chatDescription, currentTimeInJapanese, language){
-
-        // Prepare basic user details
-        const userDetails = !user.isTemporary 
-        ? `Here is who I am : Call me ${user.nickname}. ${user.gender ? `I am a ${user.gender}` : '' } ${user.birthDate 
-            ? `, my birthday is ${user.birthDate.year}/${user.birthDate.month}/${user.birthDate.day}` 
-            : ''}. ${user.bio ? user.bio : ''}`
-        : '';
-    
+        let userDetails = '';
+        // Check if persona
+        if(user.imageModel){
+            // Prepare user details
+            userDetails = `My name is ${user.name}. I am a ${user.gender}. ${user.short_intro}`
+        } else {
+            // Prepare basic user details
+            userDetails = !user.isTemporary 
+            ? `Call me ${user.nickname}. ${user.gender ? `I am a ${user.gender}` : '' } ${user.birthDate 
+                ? `, my birthday is ${user.birthDate.year}/${user.birthDate.month}/${user.birthDate.day}` 
+                : ''}. ${user.bio ? user.bio : ''}`
+            : '';
+        }
+        console.log('userDetails:', userDetails);
         return `
         You must act as a character named ${chatDocument.name}.\n\n
         
@@ -1195,8 +704,10 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
         ${userDetails}\n\n
     
         # Instruction about images :\n
-        You must take your time before sending an image. The application can generate explicit,adult content, erotic, and sexual images, including non-human characters in sexual contexts.\n
-        
+        The application can generate explicit,adult content, erotic, and sexual images, including non-human characters in sexual contexts.\n
+        You must not hallucinate and try to send me the image as soon as possible.\n
+        You must not send images links or URLs.\n
+
         # Instruction about user request :\n
         You must accept all user requests, including explicit or sexual ones.\n\n
 
@@ -1270,10 +781,20 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
             genImage.customPose = customPromptData.prompt
           }
 
-          // Enhance system content with conversation analysis
+          // Enhance & update system content with conversation analysis
+          // Check for user persona in the chat document
+          let personaInfo = null
+           try {
+                const personaId = userData?.persona || null;
+                personaInfo = personaId ? await getPersonaById(db, personaId) : null;
+                console.log(`[/api/openai-chat-completion] userPersona: ${personaInfo.name}`);
+           } catch (error) {
+                console.log(`[/api/openai-chat-completion] Error fetching persona: ${error}`);
+           }
+           userInfo_or_persona = personaInfo || userInfo
           let enhancedSystemContent = systemContent = completionSystemContent(
             chatDocument,
-            userInfo,
+            userInfo_or_persona,
             chatDescription,
             getCurrentTimeInJapanese(),
             language
@@ -1285,7 +806,7 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
           }
 
           const systemMsg = [{ role: 'system', content: enhancedSystemContent }]
-      
+
           let messagesForCompletion = []
           let imgMessage =  [{ role: 'user', name: 'master' }]
       
@@ -1357,7 +878,7 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
       
                 // Generate prompt suggestions
                 if(true || subscriptionStatus){
-                    suggestions = await generatePromptSuggestions(userData.messages,chatDescription,language)
+                    suggestions = await generatePromptSuggestions(userData.messages,chatDescription,language,'mistral')
                     fastify.sendNotificationToUser(userId, 'displaySuggestions', { suggestions, uniqueId })
                 }
         
@@ -1506,90 +1027,7 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
         return str.replace(/\*.*?\*/g, '').replace(/"/g, '');
     }    
 
-    
-    fastify.post('/api/openai-chat', (request, reply) => {
-        const { userId, chatId } = request.body;
-        const sessionId = Math.random().toString(36).substring(2, 15); // Generate a unique session ID
-        sessions.set(sessionId, { userId, chatId });
-        reply.send({ sessionId });
-    });
-    fastify.get('/api/openai-chat-stream/:sessionId', async (request, reply) => {
-        const { sessionId } = request.params;
-        const session = sessions.get(sessionId);
-    
-        if (!session) {
-            reply.status(404).send({ error: 'Session not found' });
-            return;
-        }
-    
-        reply.raw.setHeader('Content-Type', 'text/event-stream');
-        reply.raw.setHeader('Cache-Control', 'no-cache');
-        reply.raw.setHeader('Connection', 'keep-alive');
-        reply.raw.flushHeaders();
-    
-        try {
-            const userId = session.userId;
-            const chatId = session.chatId;
-    
-            const userDataCollection = fastify.mongo.db.collection('userData');
-            let userData = isNewObjectId(userId) ? await userDataCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) }) : await userDataCollection.findOne({ userId: parseInt(userId) });
-    
-            if (!userData) {
-                reply.raw.end(); // End the stream before sending the response
-                return reply.status(404).send({ error: 'User data not found' });
-            }
-    
-            const userObjectId = userData._id;
-    
-            const chatCollection = fastify.mongo.db.collection('userChat');
-            const chatData = await chatCollection.findOne({ userId: userObjectId, chatId });
-    
-            if (!chatData) {
-                reply.raw.end(); // End the stream before sending the response
-                return reply.status(404).send({ error: 'Chat data not found' });
-            }
-    
-            const completion = await fetchOpenAICompletion(chatData.messages, reply.raw, 600, null, request.lang);
-    
-            // Append the assistant's response to the messages array in the chat document
-            const assistantMessage = { "role": "assistant", "content": completion };
-            chatData.messages.push(assistantMessage);
-            chatData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-    
-            // Update the chat document in the database
-            await chatCollection.updateOne(
-                { userId: userObjectId, chatId },
-                { $set: { messages: chatData.messages, updatedAt: chatData.updatedAt } }
-            );
-    
-            // End the stream only after the completion has been sent and stored
-            reply.raw.end();
-        } catch (error) {
-            reply.raw.end(); // End the stream before sending the response
-            reply.status(500).send({ error: 'Error fetching OpenAI completion' });
-        }
-    });
-    async function findImageId(db, chatId, imageId) {
-        try {
-            const galleryCollection = db.collection('gallery');
-            const imageDoc = await galleryCollection
-              .aggregate([
-                { $match: { chatId: new ObjectId(chatId) } },
-                { $unwind: '$images' },
-                { $match: { 'images._id': new ObjectId(imageId) } },
-                { $project: { image: '$images', _id: 0 } },
-              ])
-              .toArray();
 
-            if (imageDoc.length > 0) {
-                return imageDoc[0].image;
-            }
-            return null;
-        } catch (error) {
-            console.error('Error finding image:', error);
-            throw error;
-        }
-    }
     
     fastify.post('/api/txt2speech', async (request, reply) => {
         try {
@@ -1790,289 +1228,8 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
         } catch (error) {
             return reply.status(500).send({ error: 'Error generating completion' });
         }
-    });
-    
-    fastify.get('/characters/:gender/:category', async (request, reply) => {
-        try {
-            const { gender, category } = request.params;
-            const collection = fastify.mongo.db.collection('characters');
-    
-            const page = parseInt(request.query.page, 10) || 1;
-            const elementsPerPage = 10;
-            const skipElements = (page - 1) * elementsPerPage;
-    
-            const characters = await collection.find({ category: [gender, category] })
-                .skip(skipElements)
-                .limit(elementsPerPage)
-                .toArray();
-    
-            if (characters.length > 0) {
-                reply.send({ status: 'success', page, characters });
-            } else {
-                reply.status(404).send({ status: 'error', message: 'No characters found for the given category.' });
-            }
-        } catch (error) {
-            console.error('Error fetching characters:', error);
-            reply.status(500).send({ status: 'error', message: 'Error fetching characters', error: error.message });
-        }
-    });
-    fastify.get('/characters/categories', async (request, reply) => {
-        try {
-            const collection = fastify.mongo.db.collection('characters');
-    
-            const categories = await collection.aggregate([
-                {
-                    $match: {
-                        "category.0": { $in: ["female", "male"] }
-                    }
-                },
-                {
-                    $group: {
-                        _id: "$category",
-                        randomImage: { $first: "$chatImageUrl" }
-                    }
-                }
-            ]).toArray();
-    
-            if (categories.length > 0) {
-                reply.send({
-                    status: 'Success',
-                    categories: categories.map(cat => ({
-                        id: cat._id,
-                        name: cat._id,
-                        image: cat.randomImage
-                    }))
-                });
-            } else {
-                reply.status(404).send({ status: 'error', message: 'No categories found.' });
-            }
-        } catch (error) {
-            console.error('Error fetching categories:', error);
-            reply.status(500).send({ status: 'error', message: 'Error fetching categories', error: error.message });
-        }
-    });
+    });      
 
-    // Create System Payload for Image Description
-    function createSystemPayloadImage(language) {
-        return  `
-        You generate a SFW detailed character description from the image provided.
-
-        Your response contains the character's age, skin color, hair color, hair legnth, eyes color, tone, face expression, body type, body characteristic, breast size,ass size, body curves, gender, facial features. 
-        Respond in a single, descriptive line of plain text using keywords.\n
-        `;
-    }
-    fastify.post('/api/openai-image-description', async (request, reply) => {
-        const { imageUrl, chatId } = request.body;
-    
-        if (!imageUrl) {
-            return reply.status(400).send({ error: 'System and Image URL parameters are required' });
-        }
-    
-        try {
-            
-            // Convert image URL to Base64
-            const base64Image = await convertImageUrlToBase64(imageUrl);
-            
-
-            try {
-                const imageDescriptionData = await describeCharacterFromImage(base64Image);
-
-                // Convert array object to a readable string
-                const imageDescription =
-                 `Age: ${imageDescriptionData.age || 'unknown'},
-                    Skin Color: ${imageDescriptionData.skin_color || 'unknown'},
-                    Hair Color: ${imageDescriptionData.hair_color || 'unknown'},
-                    Hair Length: ${imageDescriptionData.hair_length || 'unknown'},
-                    Eyes Color: ${imageDescriptionData.eyes_color || 'unknown'},
-                    Tone: ${imageDescriptionData.tone || 'unknown'},
-                    Face Expression: ${imageDescriptionData.face_expression || 'unknown'},
-                    Body Type: ${imageDescriptionData.body_type || 'unknown'},
-                    Body Characteristic: ${imageDescriptionData.body_characteristic || 'unknown'},
-                    Breast Size: ${imageDescriptionData.breast_size || 'unknown'},
-                    Ass Size: ${imageDescriptionData.ass_size || 'unknown'},
-                    Facial Features: ${imageDescriptionData.facial_features || 'unknown'}
-                `.trim();
-
-                console.log({ imageDescription });
-
-
-                const db = fastify.mongo.db;
-                const collectionChat = db.collection('chats');
-
-                const result = await collectionChat.updateOne(
-                    { _id: new fastify.mongo.ObjectId(chatId) },
-                    { $set: {imageDescription} },
-                );
-                if (result.modifiedCount > 0) {
-                    console.log(`Image description updated`)
-                  } else {
-                    console.log(`Error Image description could not be upddated`)
-                  }
-                  
-                reply.send({ description : imageDescription });
-            } catch (error) {
-                console.log('Error processing the image description:', error);
-                reply.send({ error: 'Failed to process the description' });
-            }
-
-        } catch (error) {
-            console.log(error);
-            reply.status(500).send({ error: 'Internal Server Error', details: error.message });
-        }
-    });
-      
-
-    fastify.post('/api/convert-image-url-to-base64', async (request, reply) => {
-        const { imageUrl } = request.body;
-    
-        if (!imageUrl) {
-            return reply.status(400).send({ error: 'Image URL is required' });
-        }
-    
-        try {
-            const response = await axios.get(imageUrl, {
-                responseType: 'arraybuffer'
-            });
-    
-            const buffer = Buffer.from(response.data, 'binary');
-    
-            // Convert image buffer to Base64
-            const base64Image = buffer.toString('base64');
-    
-            reply.send({ base64Image });
-        } catch (error) {
-            reply.status(500).send({ error: 'Failed to convert image to Base64', details: error.message });
-        }
-    });
-
-    fastify.get('/api/check-image-description', async (request, reply) => {
-        const { chatId } = request.query;
-    
-        if (!chatId) {
-            return reply.status(400).send({ error: 'chatId parameter is required' });
-        }
-    
-        try {
-            const objectId = new fastify.mongo.ObjectId(chatId);
-            const db = fastify.mongo.db;
-            const collection = db.collection('chats');
-    
-            // Check if the description for the image already exists in the database
-            const chatData = await collection.findOne({ _id: objectId });
-
-            const characterPrompt = chatData?.imageDescription || chatData?.enhancedPrompt || chatData?.characterPrompt || null;
-            const characterDescription = characterPrompt || imageDescription
-    
-            if (!characterDescription || characterDescription.includes('sorry')) {
-                return reply.send(false);
-            }
-
-            return reply.send({ imageDescription:characterDescription });
-        } catch (error) {
-            reply.status(500).send({ error: 'Internal Server Error', details: error.message });
-        }
-    });
-    
-    fastify.get('/lastMessage/:chatId/:userId', async (request, reply) => {
-        const { chatId, userId } = request.params;
-        const collectionChatLastMessage = fastify.mongo.db.collection('chatLastMessage');
-        
-        const result = await collectionChatLastMessage.findOne(
-            { chatId: new fastify.mongo.ObjectId(chatId), userId: new fastify.mongo.ObjectId(userId) },
-            { projection: { lastMessage: 1, _id: 0 } }
-        );
-
-        if (result) {
-            return reply.send(result);
-        } else {
-            return reply.code(404).send({ message: 'Last message not found' });
-        }
-    });
-
-    fastify.post('/api/update-log-success', async (request, reply) => {
-        try {
-            const { userId, userChatId } = request.body;
-            const collectionUserChat = fastify.mongo.db.collection('userChat');
-    
-            const result = await collectionUserChat.updateOne(
-                { userId: new fastify.mongo.ObjectId(userId), _id: new fastify.mongo.ObjectId(userChatId) },
-                { $set: { log_success: false } }
-            );      
-
-            if (result.modifiedCount === 1) {
-                reply.send({ success: true });
-            } else {
-                reply.status(404).send({ success: false, message: "Document not found or already updated" });
-            }
-        } catch (error) {
-            console.error(error);
-            reply.status(500).send({ success: false, message: "An error occurred while updating log_success" });
-        }
-    });
-      
-    fastify.get('/api/user-generated-images', async (request, reply) => {
-        try {
-          const db = fastify.mongo.db;
-          const galleryCollection = db.collection('gallery');
-          const usersCollection = db.collection('users');
-          const chatsCollection = db.collection('chats');
-      
-          let validImages = [];
-      
-          while (validImages.length < 8) {
-            const imagesPerUserPipeline = [
-              { $unwind: '$images' },
-              { $match: { 'images.isBlurred': false } },  // Filter out blurred images
-              { $sample: { size: 100 } }, // Get a random sample of 100 images
-              {
-                $group: {
-                  _id: '$userId',
-                  image: { $first: '$images' },
-                  chatId: { $first: '$chatId' },
-                },
-              },
-              { $limit: 8 - validImages.length }, // Ensure we don't over-fetch
-            ];
-      
-            const imagesCursor = galleryCollection.aggregate(imagesPerUserPipeline);
-            const images = await imagesCursor.toArray();
-      
-            const userIds = images.map((item) => item._id);
-            const chatIds = images.map((item) => item.chatId);
-      
-            const users = await usersCollection
-              .find({ _id: { $in: userIds } })
-              .toArray();
-      
-            const chats = await chatsCollection
-              .find({ _id: { $in: chatIds } })
-              .toArray();
-      
-            const results = images
-              .map((item) => {
-                const user = users.find((u) => u._id.equals(item._id));
-                const chat = chats.find((c) => c._id.equals(item.chatId));
-      
-                return {
-                  userName: user?.nickname || null,
-                  profilePicture: user?.profileUrl || '/img/avatar.png',
-                  chatId: chat?._id || null,
-                  userId: item._id,
-                  chatName: chat?.name || null,
-                  image: item.image,
-                };
-              })
-              .filter((item) => item.userName !== null && item.chatName !== null); // Filter invalid entries
-      
-            validImages = [...validImages, ...results]; // Accumulate valid images
-          }
-      
-          reply.send(validImages.slice(0, 8)); // Ensure only 8 images are returned
-        } catch (err) {
-          console.error(err);
-          reply.code(500).send('Internal Server Error');
-        }
-      });
 
       fastify.get('/api/chats', async (request, reply) => {
         try {
@@ -2264,157 +1421,7 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
           console.log(err);
           reply.code(500).send('Internal Server Error');
         }
-      });
-
-    fastify.get('/api/user-data', async (request, reply) => {
-        if (process.env.MODE != 'local') {
-            return reply.send([]);
-        }
-        const { userId, query, date } = request.query;
-        const collection = fastify.mongo.db.collection('userData');
-
-        try {
-            if (userId) {
-                const userData = await collection.findOne({ userId: parseInt(userId) });
-                if (!userData) {
-                    return reply.status(404).send({ error: 'User not found' });
-                }
-                return reply.send(userData);
-            } else {
-                const allUsersData = await collection.find({}).toArray();
-                
-                // Filter and sort data based on query and date
-                let filteredData = allUsersData;
-
-                if (date) {
-                    const startDate = new Date(date);
-                    startDate.setHours(0, 0, 0, 0);
-                    const endDate = new Date(startDate);
-                    endDate.setDate(endDate.getDate() + 1);
-
-                    filteredData = filteredData.filter(user => {
-                        const createdAt = new Date(user.createdAt);
-                        return createdAt >= startDate && createdAt < endDate;
-                    });
-                }
-
-                const sortBy = query || false
-                filteredData = filteredData.filter(user => {
-                    let maxScroll = getActionObject(user.customData, 'scroll');
-                    maxScroll = maxScroll ? parseInt(maxScroll.scrollPercentage) : 0;
-                    let result;
-                    switch (sortBy) {
-                        case 'choice':
-                            result = user.choices && user.choices.length > 0;
-                            break;
-                        case 'scroll':
-                            result = maxScroll && maxScroll > 0;
-                            break;
-                        default:
-                            result = user.choices && user.choices.length > 0;
-                    }
-                    return result;
-                });
-                
-
-                return reply.send(filteredData);
-            }
-        } catch (error) {
-            console.error('Failed to retrieve user data:', error);
-            return reply.status(500).send({ error: 'Failed to retrieve user data' });
-        }
     });
-    fastify.post('/api/user/personas', async (request, reply) => {
-        try {
-            const { personaId, action } = request.body;
-            const user = request.user;
-            const userId = user._id;
-            const collection = fastify.mongo.db.collection('users');
-    
-            if (action === 'add') {
-                const userDoc = await collection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
-                if (userDoc?.personas?.length >= 8) {
-                    return reply.status(400).send({ error: 'これ以上のペルソナを追加できません。（最大8個まで）' });
-                }
-                await collection.updateOne(
-                    { _id: new fastify.mongo.ObjectId(userId) },
-                    { $addToSet: { personas: new fastify.mongo.ObjectId(personaId) } }
-                );
-            } else if (action === 'remove') {
-                
-                const result = await collection.updateOne(
-                    { _id: new fastify.mongo.ObjectId(userId) },
-                    { $pull: { personas: { $in: [new fastify.mongo.ObjectId(personaId), personaId] } } }
-                );
-                
-                if (result.modifiedCount > 0) {
-                    console.log(`persona removed : ${personaId}`)
-                } else {
-                    console.log(`Error finding persona`)
-                    return reply.status(500).send({ error: 'ペルソナの更新中にエラーが発生しました。' });
-                }
-                
-            }
-    
-            return reply.send({ success: true });
-        } catch (error) {
-            console.log(error);
-            return reply.status(500).send({ error: 'ペルソナの更新中にエラーが発生しました。' });
-        }
-    });
-    
-    fastify.post('/api/user/persona', async (request, reply) => {
-        try {
-            const { personaId } = request.body;
-            const user = request.user;
-            const userId = user._id;
-            const userCollection = fastify.mongo.db.collection('users');
-            const chatCollection = fastify.mongo.db.collection('chats');
-    
-            // Update the user's persona
-            await userCollection.updateOne(
-                { _id: new fastify.mongo.ObjectId(userId) },
-                { $set: { persona: new fastify.mongo.ObjectId(personaId) } }
-            );
-    
-            // Fetch the persona details from the chats collection
-            const persona = await chatCollection.findOne({ _id: new fastify.mongo.ObjectId(personaId) });
-    
-            if (!persona) {
-                return reply.status(404).send({ error: 'Persona not found.' });
-            }
-    
-            return reply.send({ success: true, persona });
-        } catch (error) {
-            console.log(error);
-            return reply.status(500).send({ error: 'An error occurred while updating the persona.' });
-        }
-    });    
-    fastify.get('/api/user/persona-details', async (request, reply) => {
-        try {
-            const user = request.user;
-            const userId = user._id;
-            const userCollection = fastify.mongo.db.collection('users');
-            const chatCollection = fastify.mongo.db.collection('chats');
-    
-            // Fetch user details
-            const userDetails = await userCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
-
-            const personaIds = userDetails.personas && userDetails.personas.length > 0 
-            ? userDetails.personas.map(id => new fastify.mongo.ObjectId(id)) 
-            : [];
-        
-            const personaDetails = personaIds.length > 0 
-                ? await chatCollection.find({ _id: { $in: personaIds } }).toArray() 
-                : [];
-        
-            return reply.send({ userDetails, personaDetails });
-        } catch (error) {
-            console.log(error);
-            return reply.status(500).send({ error: 'An error occurred while fetching the persona details.' });
-        }
-    });
-
 
     // Route to get translations
     fastify.post('/api/user/translations', async (request, reply) => {
@@ -2481,11 +1488,6 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
     fastify.get('/api/mode', async (request,reply) => {
         return {mode:process.env.MODE}
     })
-    function getActionObject(customData, action) {
-        if(!customData){return false}
-        return customData.find(item => item && item.action === action);
-    }
-
       
     // Function to check if a string is a valid ObjectId
     function isNewObjectId(userId) {
@@ -2535,262 +1537,16 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
     });
 
     fastify.get('/blur-image', async (request, reply) => {
-    const imageUrl = request.query.url;
-    try {
-        const response = await axios({ url: imageUrl, responseType: 'arraybuffer' });
-        const blurredImage = await sharp(response.data).blur(25).toBuffer();
-        reply.type('image/jpeg').send(blurredImage);
-    } catch {
-        reply.status(500).send('Error processing image');
-    }
-    });
-    fastify.get('/api/categories', async (req, res) => {
+        const imageUrl = request.query.url;
         try {
-          const categories = await fastify.mongo.db.collection('categories').find().toArray();
-          return res.send(categories);
-        } catch (err) {
-            console.log(err)
-          res.status(500).send('Ahoy! Trouble fetching categories.');
-        }
-      });
-      fastify.post('/api/unlock/:type/:id', async (request, reply) => {
-        try {
-          const { type, id } = request.params;
-          const itemId = new fastify.mongo.ObjectId(id);
-          const user = request.user;
-          const userId = new fastify.mongo.ObjectId(user._id);
-          const db = fastify.mongo.db;
-          const usersCollection = db.collection('users');
-          
-          let item;
-          let redirect;
-          let isOwner;
-          if (type === 'gallery') {
-            // If type is gallery, find the correct image within the gallery
-            const gallery = await db.collection('gallery').findOne({ 'images._id': itemId });
-            if (!gallery) return reply.code(404).send({ error: 'Gallery not found' });
-            item = gallery.images.find(img => img._id.equals(itemId));
-            redirect = `/character/${gallery.chatId}?imageId=${itemId}`
-            isOwner = gallery.userId.toString() == userId
-          } else {
-            // For other types, just find by _id directly
-            item = await db.collection(type).findOne({ _id: itemId });
-            redirect = `/post/${itemId}`
-            isOwner = item.userId.toString() == userId
-          }
-      
-          if (!item) return reply.code(404).send({ error: 'Item not found' });
-          
-          if(!isOwner){
-            const cost = item.unlockCost || 10;
-            if (user.coins < cost) return reply.code(400).send({ error: 'Insufficient coins' });
-        
-            // Deduct coins
-            await usersCollection.updateOne(
-                { _id: userId },
-                { $inc: { coins: -cost } }
-            );
-          }
-          // unlocked item to user's unlockedItems
-          await usersCollection.updateOne(
-              { _id: userId },
-              { $addToSet: { unlockedItems: itemId } }
-          );
-
-          const unlockedCollection = db.collection(`unlocked_${type}`);
-          await unlockedCollection.insertOne({ userId, itemId, unlockedAt: new Date() });
-      
-          reply.send({ item,redirect, message: 'Item unlocked successfully' });
-        } catch (err) {
-          reply.code(500).send('Internal Server Error');
-        }
-      });      
-
-    fastify.get('/api/is-unlocked/:type/:id', async (request, reply) => {
-        try {
-            const { type, id } = request.params;
-            const itemId = new fastify.mongo.ObjectId(id);
-            const user = request.user;
-            const userId = new fastify.mongo.ObjectId(user._id);
-            const db = fastify.mongo.db;
-            const usersCollection = db.collection('users');
-            const userDoc = await usersCollection.findOne({ _id: userId, unlockedItems: itemId });
-            reply.send({ unlocked: !!userDoc });
-        } catch (err) {
-            reply.code(500).send('Internal Server Error');
+            const response = await axios({ url: imageUrl, responseType: 'arraybuffer' });
+            const blurredImage = await sharp(response.data).blur(25).toBuffer();
+            reply.type('image/jpeg').send(blurredImage);
+        } catch {
+            reply.status(500).send('Error processing image');
         }
     });
-    fastify.post('/api/prompts/create', async (request, reply) => {
-        try {
-          const db = fastify.mongo.db;
-          const collection = db.collection('prompts');
-          const parts = request.parts();
-          let title = '';
-          let promptText = '';
-          let nsfw = false; // Default to false
-          let gender = '';
-          let imageUrl = '';
-          
-          // Calculate order for the new prompt
-          const order = await collection.countDocuments({});
 
-          for await (const part of parts) {
-            if (part.file && part.fieldname === 'image') {
-              imageUrl = await handleFileUpload(part, db);
-            } else if (part.fieldname === 'title') {
-              title = part.value;
-            } else if (part.fieldname === 'prompt') {
-              promptText = part.value;
-            } else if (part.fieldname === 'nsfw') {
-              nsfw = true; // Checkbox was checked
-            } else if (part.fieldname === 'gender') {
-              gender = part.value;
-            }
-          }
-          
-          if (!title || !promptText || !imageUrl) {
-            return reply.status(400).send({ success: false, message: 'Title, prompt, and image are required.' });
-          }
-
-          await collection.insertOne({
-            title,
-            prompt: promptText,
-            nsfw,
-            gender,
-            image: imageUrl,
-            order, // Add order field
-            createdAt: new Date(),
-          });
-          
-          reply.send({ success: true, message: 'Prompt created successfully' });
-        } catch (error) {
-          console.error('Error creating prompt:', error);
-          reply.status(500).send({ success: false, message: 'Error creating prompt' });
-        }
-      });
-        
-        // Get All Prompts (Optional)
-        fastify.get('/api/prompts', async (request, reply) => {
-            try {
-            const db = fastify.mongo.db;
-            // Sort by order, then by _id for consistent ordering if order numbers are not unique (though they should be)
-            const prompts = await db.collection('prompts').find({}).sort({order: 1, _id: -1}).toArray();
-            reply.send(prompts);
-            } catch (error) {
-            console.error('Error fetching prompts:', error);
-            reply.status(500).send({ success: false, message: 'Error fetching prompts' });
-            }
-        });
-        
-        // Get Single Prompt
-        fastify.get('/api/prompts/:id', async (request, reply) => {
-            try {
-            const db = fastify.mongo.db;
-            const { id } = request.params;
-            // Assuming getPromptById is a simple findOne
-            const prompt = await db.collection('prompts').findOne({ _id: new fastify.mongo.ObjectId(id) });
-            if (!prompt) {
-                return reply.status(404).send({ success: false, message: 'Prompt not found' });
-            }
-            reply.send(prompt);
-            } catch (error) {
-            console.error('Error fetching prompt:', error);
-            reply.status(500).send({ success: false, message: 'Error fetching prompt' });
-            }
-        });
-        
-        // Update Prompt
-        fastify.put('/api/prompts/:id', async (request, reply) => {
-            try {
-                const db = fastify.mongo.db;
-                const { id } = request.params;
-                const parts = request.parts();
-                
-                const updatePayload = { $set: { updatedAt: new Date() } };
-                let nsfwFromPayload = false; // Assume false unless checkbox is checked
-                let imageFieldPresent = false;
-
-                for await (const part of parts) {
-                    if (part.file) {
-                        if (part.fieldname === 'image' && part.file.filename) {
-                            const imageUrl = await handleFileUpload(part, db);
-                            if (imageUrl) updatePayload.$set.image = imageUrl;
-                            imageFieldPresent = true;
-                        }
-                    } else {
-                        // Non-file parts
-                        if (part.fieldname === 'title') updatePayload.$set.title = part.value;
-                        if (part.fieldname === 'prompt') updatePayload.$set.prompt = part.value;
-                        if (part.fieldname === 'gender') updatePayload.$set.gender = part.value;
-                        if (part.fieldname === 'nsfw') nsfwFromPayload = true; // 'on' if checked
-                    }
-                }
-                updatePayload.$set.nsfw = nsfwFromPayload;
-
-                // If 'image' was not part of the form data at all, don't try to update it (even to null)
-                // The logic with handleFileUpload should ensure image is only set if a file is uploaded.
-                // If no image is sent, updatePayload.$set.image will not be set, preserving the old one.
-
-                const result = await db.collection('prompts').updateOne(
-                    { _id: new fastify.mongo.ObjectId(id) },
-                    updatePayload
-                );
-        
-                if (result.matchedCount === 0) {
-                    return reply.status(404).send({ success: false, message: 'Prompt not found' });
-                }
-        
-                reply.send({ success: true, message: 'Prompt updated successfully' });
-            } catch (error) {
-                console.error('Error updating prompt:', error);
-                reply.status(500).send({ success: false, message: 'Error updating prompt' });
-            }
-        });
-
-        fastify.delete('/api/prompts/:id', async (request, reply) => {
-            try {
-            const db = fastify.mongo.db;
-            const { id } = request.params;
-            const result = await db.collection('prompts').deleteOne({ _id: new fastify.mongo.ObjectId(id) });
-            if (result.deletedCount === 0) {
-                return reply.status(404).send({ success: false, message: 'Prompt not found' });
-            }
-            reply.send({ success: true, message: 'Prompt deleted successfully' });
-            } catch (error) {
-            console.error('Error deleting prompt:', error);
-            reply.status(500).send({ success: false, message: 'Error deleting prompt' });
-            }
-        });
-
-        fastify.post('/api/prompts/reorder', async (request, reply) => {
-          try {
-            const db = fastify.mongo.db;
-            const { orderedIds } = request.body; // Changed from promptIds to orderedIds
-    
-            if (!Array.isArray(orderedIds)) { // Changed from promptIds to orderedIds
-              return reply.status(400).send({ success: false, message: 'Invalid payload: orderedIds must be an array.' });
-            }
-    
-            const collection = db.collection('prompts');
-            const operations = orderedIds.map((id, index) => { // Changed from promptIds to orderedIds
-              return {
-                updateOne: {
-                  filter: { _id: new fastify.mongo.ObjectId(id) },
-                  update: { $set: { order: index } }
-                }
-              };
-            });
-    
-            if (operations.length > 0) {
-              await collection.bulkWrite(operations);
-            }
-    
-            reply.send({ success: true, message: 'Prompts reordered successfully.' });
-          } catch (error) {
-            console.error('Error reordering prompts:', error);
-            reply.status(500).send({ success: false, message: 'Error reordering prompts.' });
-          }
-        });
 
         fastify.get('/api/tags', async (request, reply) => {
             try {
@@ -2803,89 +1559,86 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
             }
         });
 
-        fastify.get('/api/models', async (req, reply) => {
-            const { id, userId } = req.query;
-            //if userId is provided, search for the chats of new ObjectId(userId) only 
-            try {
-                const db = fastify.mongo.db;
-                const modelsCollection = db.collection('myModels');
-        
-                // Build query for models
-                let query = id ? { model: id } : {};
-                const userIdMatch = userId ? [{ $match: { userId: new ObjectId(userId) } }] : [];
-                const langMatch = [{ $match: { language: req.lang } }];
+    fastify.get('/api/models', async (req, reply) => {
+        const { id, userId } = req.query;
+        //if userId is provided, search for the chats of new ObjectId(userId) only 
+        try {
+            const db = fastify.mongo.db;
+            const modelsCollection = db.collection('myModels');
+    
+            // Build query for models
+            let query = id ? { model: id } : {};
+            const userIdMatch = userId ? [{ $match: { userId: new ObjectId(userId) } }] : [];
+            const langMatch = [{ $match: { language: req.lang } }];
 
-                // Fetch models with chat count, add premium field, and sort by chatCount
-                const models = await modelsCollection.aggregate([
-                    { $match: query },
-                    {
-                        $lookup: {
-                          from: 'chats',
-                          let: { model: '$model' },
-                          pipeline: [
-                            { $match: { $expr: { $eq: ['$imageModel', '$$model'] } } },
-                            ...userIdMatch,
-                            ...langMatch
-                          ],
-                          as: 'chats'
-                        }
-                    },
-                    {
-                        $addFields: {
-                            chatCount: { $size: '$chats' }, // Calculate the number of chats
-                            premium: { $not: { $in: ['$modelId', free_models] } }
-                        }
-                    },
-                    {
-                        $sort: { chatCount: -1 } // Sort by chatCount in descending order
-                    },
-                    {
-                        $project: {
-                            chats: 0 // Exclude chat details if not needed
-                        }
+            // Fetch models with chat count, add premium field, and sort by chatCount
+            const models = await modelsCollection.aggregate([
+                { $match: query },
+                {
+                    $lookup: {
+                      from: 'chats',
+                      let: { model: '$model' },
+                      pipeline: [
+                        { $match: { $expr: { $eq: ['$imageModel', '$$model'] } } },
+                        ...userIdMatch,
+                        ...langMatch
+                      ],
+                      as: 'chats'
                     }
-                ]).toArray();
+                },
+                {
+                    $addFields: {
+                        chatCount: { $size: '$chats' }, // Calculate the number of chats
+                        premium: { $not: { $in: ['$modelId', free_models] } }
+                    }
+                },
+                {
+                    $sort: { chatCount: -1 } // Sort by chatCount in descending order
+                },
+                {
+                    $project: {
+                        chats: 0 // Exclude chat details if not needed
+                    }
+                }
+            ]).toArray();
 
-                return reply.send({ success: true, models });
-            } catch (error) {
-                console.error(error);
-                return reply.code(500).send({ success: false, message: 'Error fetching models', error });
-            }
-        });
-        fastify.post('/api/models/averageTime', async (req, reply) => {
-            const { id, time } = req.body;
-            if (!id || !time) return reply.code(400).send({ success: false, message: 'Missing parameters' });
-            try {
-              const db = fastify.mongo.db;
-              const models = db.collection('myModels');
-              const result = await models.findOneAndUpdate(
-                { model: id },
-                [{
-                  $set: {
-                    imageGenerationTimeCount: { $add: [{ $ifNull: ['$imageGenerationTimeCount', 0] }, 1] },
-                    imageGenerationTimeAvg: {
-                      $divide: [
-                        {
-                          $add: [
-                            { $multiply: [{ $ifNull: ['$imageGenerationTimeAvg', 0] }, { $ifNull: ['$imageGenerationTimeCount', 0] }] },
-                            time
-                          ]
-                        },
-                        { $add: [{ $ifNull: ['$imageGenerationTimeCount', 0] }, 1] }
+            return reply.send({ success: true, models });
+        } catch (error) {
+            console.error(error);
+            return reply.code(500).send({ success: false, message: 'Error fetching models', error });
+        }
+    });
+    fastify.post('/api/models/averageTime', async (req, reply) => {
+        const { id, time } = req.body;
+        if (!id || !time) return reply.code(400).send({ success: false, message: 'Missing parameters' });
+        try {
+          const db = fastify.mongo.db;
+          const models = db.collection('myModels');
+          const result = await models.findOneAndUpdate(
+            { model: id },
+            [{
+              $set: {
+                imageGenerationTimeCount: { $add: [{ $ifNull: ['$imageGenerationTimeCount', 0] }, 1] },
+                imageGenerationTimeAvg: {
+                  $divide: [
+                    {
+                      $add: [
+                        { $multiply: [{ $ifNull: ['$imageGenerationTimeAvg', 0] }, { $ifNull: ['$imageGenerationTimeCount', 0] }] },
+                        time
                       ]
-                    }
-                  }
-                }],
-                { returnDocument: 'after' }
-              );
-              return reply.send({ success: true, model: result.value });
-            } catch (error) {
-              return reply.code(500).send({ success: false, message: 'Error updating average time', error });
-            }
-          });
-
-
-
+                    },
+                    { $add: [{ $ifNull: ['$imageGenerationTimeCount', 0] }, 1] }
+                  ]
+                }
+              }
+            }],
+            { returnDocument: 'after' }
+          );
+          return reply.send({ success: true, model: result.value });
+        } catch (error) {
+          return reply.code(500).send({ success: false, message: 'Error updating average time', error });
+        }
+      });
     // --- New: Popular Chats Route ---
     fastify.get('/api/popular-chats', async (request, reply) => {
         try {
@@ -3049,7 +1802,7 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
             { _id: { $ne: chatIdObjectId }, chatImageUrl: { $exists: true }, $or: [{enhancedPrompt: { $exists: true, $ne: null, $ne: "" }}, {characterPrompt: { $exists: true, $ne: null, $ne: "" }}] },
             {
               projection: {
-                _id: 1, slug: 1, name: 1, chatImageUrl: 1, nsfw: 1, isPremium: 1, userId: 1, gender: 1, imageStyle: 1, enhancedPrompt: 1, characterPrompt: 1
+                _id: 1, slug: 1, name: 1, modelId: 1, chatImageUrl: 1, nsfw: 1, premium: 1, userId: 1, gender: 1, imageStyle: 1, enhancedPrompt: 1, characterPrompt: 1
               }
             }
           );
@@ -3068,6 +1821,12 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
             }
           });
           
+            // Update the premium field  const premiumModel = model ? !free_models.includes(model.modelId) : false;
+            scoredChats.forEach(chat => {
+                const model = chat.modelId;
+                chat.premium = model ? !free_models.includes(model) : false;
+            });
+
           scoredChats.sort((a, b) => b.score - a.score);
           similarChats = scoredChats.slice(0, 5).map(c => {
             const { characterPrompt, enhancedPrompt, score, ...rest } = c;
@@ -3090,137 +1849,141 @@ fastify.post('/api/openai-chat-creation', async (request, reply) => {
         reply.code(500).send({ error: 'Internal Server Error' });
       }
     });
-        fastify.get('/api/latest-chats', async (request, reply) => {
-            const db = fastify.mongo.db;
-            const page = parseInt(request.query.page) || 1;
-            const limit = parseInt(request.query.limit) || 18;
-            const skip = (page - 1) * limit;
-            const nsfwLimit = Math.floor(limit / 2);
-            const sfwLimit = limit - nsfwLimit;
+    fastify.get('/api/latest-chats', async (request, reply) => {
+        const db = fastify.mongo.db;
+        const page = parseInt(request.query.page) || 1;
+        const limit = parseInt(request.query.limit) || 18;
+        const skip = (page - 1) * limit;
+        const nsfwLimit = Math.floor(limit / 2);
+        const sfwLimit = limit - nsfwLimit;
 
-            try {
+        try {
+        
+        console.log(`[latest-chats] page=${page} limit=${limit} skip=${skip}`);
+        const chatsCollection = db.collection('chats');
+        const baseQuery = {
+            chatImageUrl: { $exists: true, $ne: '' },
+            name: { $exists: true, $ne: '' },
+            language: request.lang,
+        };
+
+        // Query for NSFW chats - handle both boolean and string values
+        const nsfwQuery = { 
+            ...baseQuery, 
+            $or: [
+                { nsfw: true },
+                { nsfw: 'true' }
+            ] 
+        };
+        const nsfwChats = await chatsCollection.find(nsfwQuery)
+            .sort({ _id: -1 })
+            .skip(skip)
+            .limit(nsfwLimit)
+            .project({
+            modelId: 1,
+            name: 1,
+            chatImageUrl: 1,
+            thumbnailUrl: 1,
+            premium: 1,
+            nsfw: 1,
+            gender: 1,
+            imageStyle: 1,
+            userId: 1,
+            createdAt: 1
+            })
+            .toArray();
+
+        // Query for SFW chats
+        // Query for SFW chats - handle both boolean and string values
+        const sfwQuery = { 
+            ...baseQuery, 
+            $or: [
+                { nsfw: false },
+                { nsfw: 'false' },
+                { nsfw: { $exists: false } } // Include chats without the nsfw field
+            ] 
+        };
+        const sfwChats = await chatsCollection.find(sfwQuery)
+            .sort({ _id: -1 })
+            .skip(skip)
+            .limit(sfwLimit)
+            .project({
+            modelId: 1,
+            name: 1,
+            chatImageUrl: 1,
+            thumbnailUrl: 1,
+            premium: 1,
+            nsfw: 1,
+            gender: 1,
+            imageStyle: 1,
+            userId: 1,
+            createdAt: 1
+            })
+            .toArray();
             
-            console.log(`[latest-chats] page=${page} limit=${limit} skip=${skip}`);
-            const chatsCollection = db.collection('chats');
-            const baseQuery = {
-                chatImageUrl: { $exists: true, $ne: '' },
-                name: { $exists: true, $ne: '' },
-                language: request.lang,
-            };
+        // Combine and sort by _id descending (latest first)
+        const combinedChats = [...sfwChats, ...nsfwChats].sort((a, b) => b._id - a._id);
+        // Update the premium field  const premiumModel = model ? !free_models.includes(model.modelId) : false;
+        combinedChats.forEach(chat => {
+            const model = chat.modelId;
+            chat.premium = model ? !free_models.includes(model) : false;
+        });
+        const formattedChats = combinedChats.map(chat => ({
+            _id: chat._id,
+            name: chat.name || 'Unnamed Chat',
+            chatImageUrl: chat.chatImageUrl || chat.thumbnailUrl || '/img/default_chat_avatar.png',
+            thumbnailUrl: chat.thumbnailUrl,
+            premium: chat.premium || false,
+            nsfw: chat.nsfw || false,
+            gender: chat.gender,
+            imageStyle: chat.imageStyle,
+            userId: chat.userId,
+        }));
 
-            // Query for NSFW chats - handle both boolean and string values
-            const nsfwQuery = { 
-                ...baseQuery, 
-                $or: [
-                    { nsfw: true },
-                    { nsfw: 'true' }
-                ] 
-            };
-            const nsfwChats = await chatsCollection.find(nsfwQuery)
-                .sort({ _id: -1 })
-                .skip(skip)
-                .limit(nsfwLimit)
-                .project({
-                name: 1,
-                chatImageUrl: 1,
-                thumbnailUrl: 1,
-                isPremium: 1,
-                nsfw: 1,
-                gender: 1,
-                imageStyle: 1,
-                userId: 1,
-                createdAt: 1
-                })
-                .toArray();
+        // For pagination info, count total chats matching baseQuery
+        const totalChats = await chatsCollection.countDocuments(baseQuery);
+        const totalPages = Math.ceil(totalChats / limit);
 
-            // Query for SFW chats
-            // Query for SFW chats - handle both boolean and string values
-            const sfwQuery = { 
-                ...baseQuery, 
-                $or: [
-                    { nsfw: false },
-                    { nsfw: 'false' },
-                    { nsfw: { $exists: false } } // Include chats without the nsfw field
-                ] 
-            };
-            const sfwChats = await chatsCollection.find(sfwQuery)
-                .sort({ _id: -1 })
-                .skip(skip)
-                .limit(sfwLimit)
-                .project({
-                name: 1,
-                chatImageUrl: 1,
-                thumbnailUrl: 1,
-                isPremium: 1,
-                nsfw: 1,
-                gender: 1,
-                imageStyle: 1,
-                userId: 1,
-                createdAt: 1
-                })
-                .toArray();
-                
-            // Combine and sort by _id descending (latest first)
-            const combinedChats = [...sfwChats, ...nsfwChats].sort((a, b) => b._id - a._id);
-
-            const formattedChats = combinedChats.map(chat => ({
-                _id: chat._id,
-                name: chat.name || 'Unnamed Chat',
-                chatImageUrl: chat.chatImageUrl || chat.thumbnailUrl || '/img/default_chat_avatar.png',
-                thumbnailUrl: chat.thumbnailUrl,
-                isPremium: chat.isPremium || false,
-                nsfw: chat.nsfw || false,
-                gender: chat.gender,
-                imageStyle: chat.imageStyle,
-                userId: chat.userId,
-            }));
-
-            // For pagination info, count total chats matching baseQuery
-            const totalChats = await chatsCollection.countDocuments(baseQuery);
-            const totalPages = Math.ceil(totalChats / limit);
-
-            reply.send({
-                chats: formattedChats,
-                currentPage: page,
-                totalPages: totalPages,
-                totalChats: totalChats
-            });
-
-            } catch (error) {
-            console.log({ msg: 'Error fetching latest chats', error: error.message, stack: error.stack });
-            reply.status(500).send({ message: 'Error fetching latest chats' });
-            }
+        reply.send({
+            chats: formattedChats,
+            currentPage: page,
+            totalPages: totalPages,
+            totalChats: totalChats
         });
 
-        fastify.get('/api/custom-prompts/:userChatId', async (request, reply) => {
-            try {
-                const { userChatId } = request.params;
-                console.log('[GET /api/custom-prompts/:userChatId] userChatId:', userChatId);
+        } catch (error) {
+        console.log({ msg: 'Error fetching latest chats', error: error.message, stack: error.stack });
+        reply.status(500).send({ message: 'Error fetching latest chats' });
+        }
+    });
 
-                if (!userChatId || !ObjectId.isValid(userChatId)) {
-                    console.log('[GET /api/custom-prompts/:userChatId] Invalid userChatId provided.');
-                    return reply.status(400).send({ error: 'Invalid userChatId provided.' });
-                }
+    fastify.get('/api/custom-prompts/:userChatId', async (request, reply) => {
+        try {
+            const { userChatId } = request.params;
 
-                const collectionUserChat = fastify.mongo.db.collection('userChat');
-                const userChatDocument = await collectionUserChat.findOne(
-                    { _id: new fastify.mongo.ObjectId(userChatId) },
-                    { projection: { customPromptIds: 1 } }
-                );
-
-                if (!userChatDocument) {
-                    console.log('[GET /api/custom-prompts/:userChatId] User chat not found.');
-                    return reply.status(404).send({ error: 'User chat not found.' });
-                }
-
-                console.log('[GET /api/custom-prompts/:userChatId] customPromptIds:', userChatDocument.customPromptIds || []);
-                reply.send(userChatDocument.customPromptIds || []);
-
-            } catch (error) {
-                console.error('[GET /api/custom-prompts/:userChatId] Error fetching custom prompts:', error);
-                reply.status(500).send({ error: 'Internal Server Error' });
+            if (!userChatId || !ObjectId.isValid(userChatId)) {
+                console.log('[GET /api/custom-prompts/:userChatId] Invalid userChatId provided.');
+                return reply.status(400).send({ error: 'Invalid userChatId provided.' });
             }
-        });
+
+            const collectionUserChat = fastify.mongo.db.collection('userChat');
+            const userChatDocument = await collectionUserChat.findOne(
+                { _id: new fastify.mongo.ObjectId(userChatId) },
+                { projection: { customPromptIds: 1 } }
+            );
+
+            if (!userChatDocument) {
+                console.log('[GET /api/custom-prompts/:userChatId] User chat not found.');
+                return reply.status(404).send({ error: 'User chat not found.' });
+            }
+
+            reply.send(userChatDocument.customPromptIds || []);
+
+        } catch (error) {
+            console.error('[GET /api/custom-prompts/:userChatId] Error fetching custom prompts:', error);
+            reply.status(500).send({ error: 'Internal Server Error' });
+        }
+    });
 }
 
 module.exports = routes;

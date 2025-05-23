@@ -1,0 +1,194 @@
+/* Personas Overlay */
+.personas-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    z-index: 1050;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.3s ease;
+}
+
+/* Floating Container */
+.floating-personas-container {
+    background: white;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    transform: translateY(50px);
+    opacity: 0;
+    transition: transform 0.4s ease, opacity 0.3s ease;
+    padding: 20px;
+}
+
+.floating-personas-container.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+/* Header */
+.personas-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.personas-header h5 {
+    margin: 0;
+    font-weight: 600;
+}
+
+/* Personas Grid */
+.personas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 15px;
+    padding: 10px 0;
+}
+
+/* Individual Persona */
+.floating-persona {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.floating-persona:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.05);
+}
+
+.persona-avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-bottom: 8px;
+    border: 2px solid #e9ecef;
+    transition: border-color 0.2s ease;
+}
+
+.floating-persona:hover .persona-avatar {
+    border-color: #6c757d;
+}
+
+.persona-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.persona-name {
+    font-size: 0.85rem;
+    text-align: center;
+    color: #212529;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Loading and Errors */
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    grid-column: 1 / -1;
+}
+
+.error-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    color: #842029;
+    background-color: #f8d7da;
+    border-radius: 10px;
+    grid-column: 1 / -1;
+}
+
+.error-message i {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.no-personas {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    color: #6c757d;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    grid-column: 1 / -1;
+}
+
+.no-personas i {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+/* Persona badges for chat */
+.persona {
+    display: inline-block;
+    border-radius: 50px;
+    padding: 5px 15px;
+    margin: 5px;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+}
+
+.persona i {
+    margin-right: 5px;
+    color: #adb5bd;
+}
+
+.persona.on {
+    background-color: #e7f5ff;
+    border-color: #74c0fc;
+}
+
+.persona.on i {
+    color: #339af0;
+}
+
+/* Animations for mobile */
+@media (max-width: 768px) {
+    .floating-personas-container {
+        width: 100%;
+        max-width: none;
+        height: 70vh;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        border-radius: 20px 20px 0 0;
+        transform: translateY(100%);
+    }
+    
+    .floating-personas-container.show {
+        transform: translateY(0);
+    }
+}

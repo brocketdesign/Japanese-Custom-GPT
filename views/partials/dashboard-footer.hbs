@@ -44,14 +44,16 @@
 </div>
 <!-- Character Creation Modal -->
 <div class="modal fade" id="characterCreationModal" tabindex="-1" aria-labelledby="characterCreationModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable mx-0">
+    <div class="modal-dialog modal-xl mx-0">
         <div class="modal-content mx-auto">
             <div class="modal-header">
                 <h5 class="modal-title" id="characterCreationModalLabel">{{translations.newCharacter.characterCreationForm}}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body position-relative">
-                <div id="character-creation-container"></div>
+            <div class="modal-body p-0 position-relative" style="overflow: hidden;">
+                <div id="character-creation-container" class="character-creation-sidebar-layout">
+                    <!-- Sidebar layout will be injected here -->
+                </div>
             </div>
         </div>
     </div>
@@ -105,6 +107,36 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{translations.do_not_cancel_button}}</button>
                 <button type="button" class="btn btn-danger" id="confirmCancelSubscriptionButton">{{translations.continue_cancellation_button}}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Character Update Modal -->
+<div class="modal fade character-update-modal" id="characterUpdateModal" tabindex="-1" aria-labelledby="characterUpdateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable mx-0">
+        <div class="modal-content mx-auto">
+            <div class="modal-header p-0">
+                <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close" style="z-index: 10;"></button>
+            </div>
+            <div class="modal-body">
+                <div id="character-update-container">
+                    <!-- Character update form will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" id="clearCharacterForm">
+                    <i class="bi bi-eraser me-2"></i>{{translations.characterUpdate.clearForm}}
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="resetCharacterForm">
+                    <i class="bi bi-arrow-counterclockwise me-2"></i>{{translations.characterUpdate.resetForm}}
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg me-2"></i>{{translations.characterUpdate.cancel}}
+                </button>
+                <button type="button" class="btn custom-gradient-bg text-white" id="saveCharacterUpdate">
+                    <i class="bi bi-check-lg me-2"></i>{{translations.characterUpdate.saveChanges}}
+                </button>
             </div>
         </div>
     </div>
@@ -245,10 +277,12 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://js.stripe.com/v3/"></script>
 <script src="/js/moment-with-locales.js"></script>
+<script src="/js/personas.js"></script>
 <script src="/js/dashboard.js"></script>
 <script src="/js/stability.js"></script>
 <script src="/js/notifications.js"></script>
 <script src="/js/websocket.js"></script>
+<script src="/js/chat-footer.js"></script>
 <script
   type="text/javascript"
   src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/7.3.2/mdb.umd.min.js"

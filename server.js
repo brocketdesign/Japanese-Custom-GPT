@@ -146,6 +146,9 @@ fastify.register(require('./plugins/websocket'));
 fastify.register(require('fastify-sse'));
 fastify.register(require('@fastify/formbody'));
 fastify.register(require('./routes/api'));
+fastify.register(require('./routes/character-creation-api'));
+fastify.register(require('./routes/character-update-api'));
+fastify.register(require('./routes/personas-api'));
 fastify.register(require('./routes/stability'));
 fastify.register(require('./routes/plan'));
 fastify.register(require('./routes/user'));
@@ -321,7 +324,7 @@ fastify.get('/chat/edit/:chatId', async (request, reply) => {
     const uniqueTags = [...new Set(tags.map(tag => tag.toLowerCase()))];
     
 
-    return reply.view('add-chat.hbs', {
+    return reply.view('character-creation.hbs', {
       title: 'AIフレンズ',
       tags,
       chatId,
@@ -334,6 +337,39 @@ fastify.get('/chat/edit/:chatId', async (request, reply) => {
     return reply.status(500).send({ error: 'Failed to retrieve chatId' });
   }
 });
+
+fastify.get('/character-update/:chatId', async (request, reply) => {
+  try {
+    const db = fastify.mongo.db;
+    let { translations, lang, user } = request;
+    const userId = user._id;
+    const { chatId } = request.params;
+    console.log(`[/character-update/:chatId] User ID: ${userId}, Chat ID: ${chatId}`);
+    if (!fastify.mongo.ObjectId.isValid(chatId)) {
+      return reply.status(400).send({ error: 'Invalid chat ID' });
+    }
+
+    // Check if user owns this character
+    const chat = await db.collection('chats').findOne({
+      _id: new fastify.mongo.ObjectId(chatId),
+      userId: new fastify.mongo.ObjectId(userId)
+    });
+
+    if (!chat) {
+      return reply.status(404).send({ error: 'Character not found or access denied' });
+    }
+
+    return reply.view('character-update.hbs', {
+      title: `${translations.characterUpdate?.updateCharacter || 'Update Character'} - ${chat.name}`,
+      chatId,
+      chat
+    });
+  } catch (error) {
+    console.error('Error loading character update page:', error);
+    return reply.status(500).send({ error: 'Failed to load character update page' });
+  }
+});
+
 fastify.get('/post', async (request, reply) => {
   try {
     const db = fastify.mongo.db;

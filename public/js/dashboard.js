@@ -1118,68 +1118,7 @@ window.displayUserChats = async function(userId, page = 1, skipDeduplication) {
 
         let userChats = data.recent || [];
         let htmlContent = '';
-
-        userChats.forEach(chat => {
-            let galleryIco = '';
-            let image_count = 0;
-
-            // Handle galleries
-            if (chat.galleries && chat.galleries.length > 0) {
-                chat.galleries.forEach(gallery => {
-                    if (gallery.images && gallery.images.length > 0) {
-                        image_count += gallery.images.length;
-                    }
-                });
-                if (image_count > 0) {
-                    galleryIco = `
-                        <div class="gallery" style="color: rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
-                            <span class="badge bg-dark"><i class="bi bi-images me-1"></i>${image_count}</span>
-                        </div>
-                    `;
-                }
-            }
-
-            // Render chat card
-            htmlContent += `
-                  <div class="col-12 col-sm-4 col-lg-3 mb-2">
-                    <div 
-                    class="card custom-card bg-transparent shadow-0 border-0 my-3 px-1 pb-3 redirectToChatPage" 
-                    style="cursor:pointer;" data-id="${chat._id}" 
-                    data-image="${chat.chatImageUrl}"
-                    onclick="redirectToChatPage(this)"
-                    >
-                      <div style="background-image:url('${chat.chatImageUrl || '/img/logo.webp'}')" class="card-img-top girls_avatar position-relative" alt="${chat.name}">
-                        <div id="spinner-${chat._id}" class="position-absolute spinner-grow spinner-grow-sm text-light" role="status" style="top:5px;left: 5px;display:none;"></div>
-                        <div class="position-absolute" style="color: rgb(165 164 164);opacity:0.8; bottom:10px;left:10px;right:10px;">
-                          ${(chat.tags || []).length ? `<div class="tags d-flex justify-content-between align-items-center flex-wrap">${chat.tags.map(tag => `<span class="badge bg-dark">${tag}</span>`).join('')}</div>` : ''}
-                        </div>
-                        <div class="position-absolute text-end" style="top:10px;right:10px">
-                          <a href="/character/slug/${chat.slug}">
-                            <div class="gallery" style="color: rgb(165 164 164);opacity:0.8;" data-id="${chat._id}">
-                              <span class="btn btn-dark"><i class="bi bi-image me-1"></i><span style="font-size:12px;">${chat.imageCount || 0}</span></span>
-                            </div>
-                          </a>
-                          ${galleryIco}
-                          ${chat.messagesCount ? `<span class="badge bg-dark message-count"><i class="bi bi-chat-dots me-2"></i>${chat.messagesCount}</span>` : ''}
-                        </div>
-                      </div>
-                      <div class="card-body bg-transparent border-0 pb-0 text-start">
-                        <div class="row align-items-center">
-                          <div class="col-auto text-center">
-                            <a href="/character/slug/${chat.slug}" style="text-decoration: none;">
-                              <img src="${chat.chatImageUrl || '/img/avatar.png'}" alt="${chat.name}" class="rounded-circle" width="40" height="40">
-                            </a>
-                          </div>
-                          <div class="col-auto">
-                            <a href="/character/slug/${chat.slug}" class="text-muted" style="text-decoration: none;">
-                              <h5 class="card-title character-title mb-0">${chat.name}</h5>
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>`;
-        });
+        displayChats(userChats, 'user-chat-gallery');
 
         // Update the gallery HTML
         $('#user-chat-gallery').append(htmlContent);
@@ -1380,7 +1319,7 @@ window.displaySimilarChats = function (chatData, targetGalleryId) {
 
   chatData.forEach(chat => {
     const isOwner = chat.userId === currentUserId;
-    const isPremiumChat = chat.isPremium || false;
+    const isPremiumChat = chat.premium || false;
     const isNSFW = chat.nsfw || false;
     const genderClass = chat.gender ? `chat-gender-${chat.gender.toLowerCase()}` : '';
     const styleClass = chat.imageStyle ? `chat-style-${chat.imageStyle.toLowerCase()}` : '';
@@ -1446,7 +1385,7 @@ window.displayLatestChats = function (chatData, targetGalleryId, modal = false) 
 
   chatData.forEach(chat => {
     const isOwner = chat.userId === currentUserId;
-    const isPremiumChat = chat.isPremium || false;
+    const isPremiumChat = chat.premium || false;
     const isNSFW = chat.nsfw || false;
     const genderClass = chat.gender ? `chat-gender-${chat.gender.toLowerCase()}` : '';
     const styleClass = chat.imageStyle ? `chat-style-${chat.imageStyle.toLowerCase()}` : '';
@@ -1482,10 +1421,11 @@ window.displayLatestChats = function (chatData, targetGalleryId, modal = false) 
           <div class="gallery-image-wrapper" style="aspect-ratio: 4/5; background: #f8f9fa; position: relative;">
             <img src="${imageSrc}" class="card-img-top gallery-img" alt="${chat.name}" style="height: 100%; width: 100%; object-fit: cover;">
             ${nsfwOverlay}
+            ${isPremiumChat ? `<span class="custom-gradient-bg badge bg-gradient-primary mb-1 position-absolute" style="position: absolute; left: 5px; top: 5px;"> ${translations.premium}</span>` : ''}
+
           </div>
           <div class="card-body p-2 d-flex flex-column">
             <h6 class="card-title small fw-bold mb-1 text-truncate" style="font-size: 0.85rem;">${chat.name}</h6>
-            ${isPremiumChat ? '<span class="badge bg-warning text-dark position-absolute top-0 end-0 m-1 small" style="font-size: 0.6rem !important; padding: 0.2em 0.4em !important;">Premium</span>' : ''}
           </div>
           ${ isOwner ? `
           <div class="position-absolute top-0 end-0 m-1" style="z-index:3;">
@@ -1532,7 +1472,8 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
             ? !!chat.moderation.results[0].flagged
             : false;
             const finalNsfwResult = nsfw || moderationFlagged;
-            chat.premium = (chat.premium || finalNsfwResult)
+            chat.premium = (chat.premium || finalNsfwResult);
+            const isOwner = chat.userId === user._id;
           // --- Begin: Random sample image selection logic ---
           let sampleImages = [];
           // Prefer chat.sampleImages if present (from backend cache), fallback to empty array
@@ -1572,10 +1513,16 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
               <span class="badge bg-danger mb-2" style="font-size: 1rem;"><i class="bi bi-exclamation-triangle"></i> NSFW</span>
               </div>
               ` : ''}
+              <div class="position-absolute top-0 start-0 m-1" style="z-index:3;">
+              ${isOwner ? `<span class="badge bg-light text-secondary shadow" style="opacity:0.8; font-size: 1rem !important; padding: 0.2em 0.4em !important;" onclick="loadCharacterUpdatePage('${chat.chatId || chat._id}',event)"><i class="bi bi-pencil-square"></i></span>` : ''}
+              </div>
               <div class="gallery-badges position-absolute top-0 end-0 m-2 d-flex flex-column align-items-end" style="z-index:3;">
-              ${chat.premium ? `<span class="custom-gradient-bg badge bg-gradient-primary mb-1"> ${translations.premium}</span>` : ''}
-              ${chat.imageCount ? `<span class="badge bg-dark mb-1"><i class="bi bi-images"></i> ${chat.imageCount}</span>` : ''}
-              ${chat.messagesCount ? `<span class="badge bg-secondary"><i class="bi bi-chat-dots"></i> ${chat.messagesCount}</span>` : ''}
+              ${chat.premium ? `<span class="custom-gradient-bg badge bg-gradient-primary mb-1 mx-2"> ${translations.premium}</span>` : ''}
+              <button class="save-as-persona btn btn-sm btn-light rounded mb-1 mx-2" data-id="${chat.chatId || chat._id}" title="Add to Persona">
+                <i class="bi bi-person-plus"></i>
+              </button>
+              ${chat.imageCount ? `<span class="badge bg-dark mb-1 me-2 py-2 px-3"><i class="bi bi-images"></i> ${chat.imageCount}</span>` : ''}
+              ${chat.messagesCount ? `<span class="badge bg-dark mb-1 me-2 py-2 px-3"><i class="bi bi-chat-dots"></i> ${chat.messagesCount}</span>` : ''}
               </div>
               ${(chat.tags || chat.chatTags || []).length ? `
               <div class="gallery-tags position-absolute bottom-0 start-0 w-100 px-2 pb-2 d-flex flex-wrap gap-1" style="z-index:3;">
@@ -1614,7 +1561,11 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
   });
   if(searchId == 'top-free'){
     $('#top-free-chats-gallery').append(htmlContent);
-    return
+    return;
+  }
+  if($(`#${searchId}`).length > 0){ 
+    $(`#${searchId}`).append(htmlContent);
+    return;
   }
   // Append the generated HTML to the gallery
   $(document).find('#chat-gallery').append(htmlContent);
@@ -3136,7 +3087,7 @@ const modalStatus = {
 
 // Function to close any opened modal
 window.closeAllModals = function() {
-    const modals = ['settingsModal', 'characterCreationModal', 'planUpgradeModal', 'characterModal', 'loginModal'];
+    const modals = ['characterUpdateModal', 'settingsModal', 'characterCreationModal', 'planUpgradeModal', 'characterModal', 'loginModal'];
     modals.forEach(modalId => {
         const modalElement = document.getElementById(modalId);
         if (modalElement) {
@@ -3148,6 +3099,73 @@ window.closeAllModals = function() {
     });
 
 }
+// Function to load character update page & execute scripts & open #characterUpdateModal
+function loadCharacterUpdatePage(chatId, event = null) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    if (!chatId) {
+        showNotification('Invalid character ID', 'error');
+        return;
+    }
+    // Set the chatId in the cookie for access in the modal
+    $.cookie('character-update-id', chatId, { path: '/' });
+    // Add an event listener to the modal close event to remove the cookie
+    $('#characterUpdateModal').on('hidden.bs.modal', function () {
+        $.removeCookie('character-update-id', { path: '/' });
+    });
+    if (modalStatus.isCharacterUpdateLoading) return;
+    modalStatus.isCharacterUpdateLoading = true;
+
+    closeAllModals();
+
+    const characterUpdateModal = new bootstrap.Modal(document.getElementById('characterUpdateModal'));
+    $('#character-update-container').html('<div class="position-absolute d-flex justify-content-center align-items-center" style="inset:0;"><div class="spinner-border" role="status"></div></div>');
+    characterUpdateModal.show();
+
+    $.ajax({
+        url: `/character-update/${chatId}`,
+        method: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
+        success: function(data) {
+            $('#character-update-container').html(data);
+            
+            // Load CSS
+            const cssLink = document.createElement('link');
+            cssLink.rel = 'stylesheet';
+            cssLink.href = '/css/character-update.css';
+            document.head.appendChild(cssLink);
+            
+            // Load the character update script
+            const script = document.createElement('script');
+            script.src = '/js/character-update.js';
+            script.onload = function() {
+                modalStatus.isCharacterUpdateLoading = false;
+                // Initialize the character update functionality
+                if (typeof window.initCharacterUpdate === 'function') {
+                    window.initCharacterUpdate(chatId);
+                }
+            };
+            script.onerror = function() {
+                console.error('Failed to load character-update.js script.');
+                modalStatus.isCharacterUpdateLoading = false;
+            };
+            document.body.appendChild(script);
+        },
+        error: function(err) {
+            console.error('Failed to load character update page', err);
+            modalStatus.isCharacterUpdateLoading = false;
+        }
+    });
+}
+
+// Expose the function globally
+window.openCharacterUpdateModal = function(chatId) {
+    loadCharacterUpdatePage(chatId);
+};
 
 // Function to load settings page & execute script settings.js & open #settingsModal
 function loadSettingsPage() {
@@ -3224,6 +3242,11 @@ function loadCharacterCreationPage(chatId) {
             link.rel = 'stylesheet';
             link.href = '/css/image-uploader.css';
             document.head.appendChild(link);
+            
+            const sidebarLink = document.createElement('link');
+            sidebarLink.rel = 'stylesheet';
+            sidebarLink.href = '/css/character-creation-sidebar-layout.css';
+            document.head.appendChild(sidebarLink);
 
             const imageUploaderScript = document.createElement('script');
             imageUploaderScript.src = '/js/image-uploader.js';
@@ -3337,8 +3360,8 @@ window.openUserProfile = function() {
   }
 };
 
-window.handleClickRegisterOrPay = function(event, isTemporary) {
-  event.preventDefault();
+window.handleClickRegisterOrPay = function(event = null , isTemporary) {
+  if (event) event.preventDefault();
   if (isTemporary) {
       openLoginForm();
   } else {

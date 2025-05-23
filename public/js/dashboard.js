@@ -1495,68 +1495,81 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
           // Pick a random sample image
           const randomSampleImage = sampleImages[Math.floor(Math.random() * sampleImages.length)];
           // --- End: Random sample image selection logic ---
-            htmlContent += `
-            <div class="gallery-card ${searchId == 'top-free' ? 'col-6' : 'col-12'} col-sm-3 col-lg-3 mb-4 ${chat.premium ? "premium-chat":''} ${chat.gender ? 'chat-gender-'+chat.gender:''} ${chat.imageStyle ? 'chat-style-'+chat.imageStyle : ''} nsfw-${finalNsfwResult} " style="cursor: pointer;">
-            <div class="card shadow border-0 h-100 position-relative gallery-hover" style="overflow: hidden;" 
-              onclick="${chat.premium ? `(window.user && window.user.subscriptionStatus === 'active' ? redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}') : loadPlanPage())` : `redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')`}">
-              <div class="gallery-image-wrapper position-relative" style="aspect-ratio: 4/5; background: #f8f9fa;">
-              <img 
-              src="${randomSampleImage}" 
-              alt="${chat.name || chat.chatName}" 
-              class="card-img-top gallery-img transition rounded-top"
-              style="object-fit: cover; width: 100%; height: 100%; min-height: 220px;"
-              loading="lazy"
-              >
-              ${finalNsfwResult && (window.user && window.user.subscriptionStatus !== 'active') ? `
-              <div data-finalNsfwResult=${finalNsfwResult} class="gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center" style="background: rgba(0,0,0,0.55); z-index:2;">
-              <span class="badge bg-danger mb-2" style="font-size: 1rem;"><i class="bi bi-exclamation-triangle"></i> NSFW</span>
+          htmlContent += `
+              <div class="gallery-card ${searchId == 'top-free' ? 'col-6' : 'col-12'} col-sm-3 col-lg-3 mb-4 ${chat.premium ? "premium-chat":''} ${chat.gender ? 'chat-gender-'+chat.gender:''} ${chat.imageStyle ? 'chat-style-'+chat.imageStyle : ''} nsfw-${finalNsfwResult}">
+                  <div class="card shadow border-0 h-100 position-relative gallery-hover" style="overflow: hidden;">
+                      <!-- Clickable image area -->
+                      <div class="gallery-image-wrapper position-relative chat-card-clickable-area" style="aspect-ratio: 4/5; background: #f8f9fa; cursor: pointer;"
+                          onclick="${chat.premium ? `(window.user && window.user.subscriptionStatus === 'active' ? redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}') : loadPlanPage())` : `redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')`}">
+                          <img 
+                              src="${randomSampleImage}" 
+                              alt="${chat.name || chat.chatName}" 
+                              class="card-img-top gallery-img transition rounded-top"
+                              style="object-fit: cover; width: 100%; height: 100%; min-height: 220px;"
+                              loading="lazy"
+                          >
+                          ${finalNsfwResult && (window.user && window.user.subscriptionStatus !== 'active') ? `
+                          <div data-finalNsfwResult=${finalNsfwResult} class="gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center" style="background: rgba(0,0,0,0.55); z-index:2;">
+                              <span class="badge bg-danger mb-2" style="font-size: 1rem;"><i class="bi bi-exclamation-triangle"></i> NSFW</span>
+                          </div>
+                          ` : ''}
+                          
+                          ${(chat.tags || chat.chatTags || []).length ? `
+                          <div class="gallery-tags position-absolute bottom-0 start-0 w-100 px-2 pb-2 d-flex flex-wrap gap-1" style="z-index:3;">
+                              ${(chat.tags ? chat.tags : chat.chatTags).map(tag => `<a href="/search?q=${encodeURIComponent(tag)}" class="badge bg-light text-dark border text-decoration-none">#${tag}</a>`).join('')}
+                          </div>
+                          ` : ''}
+                      </div>
+                      
+                      <!-- Non-clickable controls that overlay the image -->
+                      <div class="position-absolute top-0 start-0 m-1" style="z-index:3;">
+                          ${isOwner ? `<span class="badge bg-light text-secondary shadow" style="opacity:0.8; font-size: 1rem !important; padding: 0.2em 0.4em !important;" onclick="loadCharacterUpdatePage('${chat.chatId || chat._id}',event)"><i class="bi bi-pencil-square"></i></span>` : ''}
+                      </div>
+                      <div class="gallery-badges position-absolute top-0 end-0 m-2 d-flex flex-column align-items-end" style="z-index:3;">
+                          ${chat.premium ? `<span class="custom-gradient-bg badge bg-gradient-primary mb-1 mx-2"> ${translations.premium}</span>` : ''}
+                          <button class="save-as-persona btn btn-sm btn-light rounded mb-1 mx-2" data-id="${chat.chatId || chat._id}" title="Add to Persona">
+                              <i class="bi bi-person-plus"></i>
+                          </button>
+                          ${chat.imageCount ? `<span class="badge bg-dark mb-1 me-2 py-2 px-3"><i class="bi bi-images"></i> ${chat.imageCount}</span>` : ''}
+                          ${chat.messagesCount ? `<span class="badge bg-dark mb-1 me-2 py-2 px-3"><i class="bi bi-chat-dots"></i> ${chat.messagesCount}</span>` : ''}
+                      </div>
+                      
+                      <!-- Card body (clickable for navigation) -->
+                      <div class="${searchId == 'top-free' ? 'd-none' : ''} card-body py-3 px-3 d-flex flex-column justify-content-between">
+                          <div class="d-flex align-items-center mb-2 chat-card-clickable-area" style="cursor: pointer;"
+                              onclick="${chat.premium ? `(window.user && window.user.subscriptionStatus === 'active' ? redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}') : loadPlanPage())` : `redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')`}">
+                              <img src="${chat.chatImageUrl || '/img/avatar.png'}" alt="${chat.name || chat.chatName}" class="rounded-circle me-2 border" width="40" height="40">
+                              <div>
+                                  <h5 class="card-title mb-0 fw-semibold text-truncate" title="${chat.name || chat.chatName}">${chat.name || chat.chatName}</h5>
+                                  ${chat.nickname ? `<a href="/user/${chat.userId}" class="text-muted small user-link">@${chat.nickname}</a>` : ''}
+                              </div>
+                          </div>
+                          
+                          <!-- Non-clickable button controls -->
+                          <div class="d-flex justify-content-between align-items-center mt-auto">
+                              <button class="btn btn-outline-primary btn-sm persona ${chat.premium ? 'border-warning' : ''}" data-id="${chat.chatId || chat._id}" title="Add to Persona">
+                                  <i class="far fa-user-circle"></i>
+                              </button>
+                              ${
+                              window.isAdmin
+                                  ? `<button 
+                                  class="btn btn-light ms-2 chat-nsfw-toggle ${finalNsfwResult ? 'nsfw' : 'sfw'}" 
+                                  data-id="${chat.chatId || chat._id}" 
+                                  onclick="toggleChatNSFW(this)">
+                                  <i class="bi ${finalNsfwResult ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
+                                  </button>`
+                                  : ''
+                              }
+                          </div>
+                      </div>
+                  </div>
               </div>
-              ` : ''}
-              <div class="position-absolute top-0 start-0 m-1" style="z-index:3;">
-              ${isOwner ? `<span class="badge bg-light text-secondary shadow" style="opacity:0.8; font-size: 1rem !important; padding: 0.2em 0.4em !important;" onclick="loadCharacterUpdatePage('${chat.chatId || chat._id}',event)"><i class="bi bi-pencil-square"></i></span>` : ''}
-              </div>
-              <div class="gallery-badges position-absolute top-0 end-0 m-2 d-flex flex-column align-items-end" style="z-index:3;">
-              ${chat.premium ? `<span class="custom-gradient-bg badge bg-gradient-primary mb-1 mx-2"> ${translations.premium}</span>` : ''}
-              <button class="save-as-persona btn btn-sm btn-light rounded mb-1 mx-2" data-id="${chat.chatId || chat._id}" title="Add to Persona">
-                <i class="bi bi-person-plus"></i>
-              </button>
-              ${chat.imageCount ? `<span class="badge bg-dark mb-1 me-2 py-2 px-3"><i class="bi bi-images"></i> ${chat.imageCount}</span>` : ''}
-              ${chat.messagesCount ? `<span class="badge bg-dark mb-1 me-2 py-2 px-3"><i class="bi bi-chat-dots"></i> ${chat.messagesCount}</span>` : ''}
-              </div>
-              ${(chat.tags || chat.chatTags || []).length ? `
-              <div class="gallery-tags position-absolute bottom-0 start-0 w-100 px-2 pb-2 d-flex flex-wrap gap-1" style="z-index:3;">
-              ${(chat.tags ? chat.tags : chat.chatTags).map(tag => `<a href="/search?q=${encodeURIComponent(tag)}" class="badge bg-light text-dark border text-decoration-none">#${tag}</a>`).join('')}
-              </div>
-              ` : ''}
-              </div>
-              <div class="${searchId == 'top-free' ? 'd-none' : ''} card-body py-3 px-3 d-flex flex-column justify-content-between">
-              <div class="d-flex align-items-center mb-2">
-              <img src="${chat.chatImageUrl || '/img/avatar.png'}" alt="${chat.name || chat.chatName}" class="rounded-circle me-2 border" width="40" height="40">
-              <div>
-              <h5 class="card-title mb-0 fw-semibold text-truncate" title="${chat.name || chat.chatName}">${chat.name || chat.chatName}</h5>
-              ${chat.nickname ? `<a href="/user/${chat.userId}" class="text-muted small">@${chat.nickname}</a>` : ''}
-              </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center mt-auto">
-              <button class="btn btn-outline-primary btn-sm persona ${chat.premium ? 'border-warning' : ''}" data-id="${chat.chatId || chat._id}" title="Add to Persona">
-              <i class="far fa-user-circle"></i>
-              </button>
-              ${
-              window.isAdmin
-                ? `<button 
-                  class="btn btn-light ms-2 chat-nsfw-toggle ${finalNsfwResult ? 'nsfw' : 'sfw'}" 
-                  data-id="${chat.chatId || chat._id}" 
-                  onclick="toggleChatNSFW(this)">
-                  <i class="bi ${finalNsfwResult ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
-                </button>`
-                : ''
-              }
-              </div>
-              </div>
-            </div>
-            </div>
-            `;
+          `;
       }
+  });
+  // Prevent username links from triggering card click navigation
+  $(document).on('click', '.user-link', function(e) {
+      e.stopPropagation();
   });
   if(searchId == 'top-free'){
     $('#top-free-chats-gallery').append(htmlContent);

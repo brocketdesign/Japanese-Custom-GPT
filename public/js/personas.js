@@ -138,8 +138,8 @@ const PersonaModule = {
     handleSaveAsPersona(e) {
         e.preventDefault();
         e.stopPropagation();
-
-        if(!subscriptionStatus && userId){
+        console.log({subscriptionStatus})
+        if(!subscriptionStatus){
             handleClickRegisterOrPay(e);
             return;
         }

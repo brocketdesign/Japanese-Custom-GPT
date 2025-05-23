@@ -152,9 +152,7 @@ const PersonaModule = {
         
         // First add to personas collection in the database
         this.updatePersona(chatId, true, () => {
-            // Then show confirmation and update UI
-            showNotification(window.translations?.personas?.characterSavedAsPersona || 'キャラクターがペルソナとして保存されました', 'success');
-            
+            this.clearPersonasCache();
             // Update the UI to reflect the new persona state
             $(`.persona[data-id="${chatId}"]`).addClass('on').find('i').removeClass('far').addClass('fas');
         });

@@ -1417,29 +1417,28 @@ window.displayLatestChats = function (chatData, targetGalleryId, modal = false) 
     }
     htmlContent += `
       <div class="${cardClass}" data-id="${chat._id}" style="cursor:pointer;" onclick="redirectToChat('${chat._id}','${imageSrc}')">
-        <div class="card gallery-hover shadow-sm border-0 h-100 position-relative overflow-hidden">
-          <div class="gallery-image-wrapper" style="aspect-ratio: 4/5; background: #f8f9fa; position: relative;">
-            <img src="${imageSrc}" class="card-img-top gallery-img" alt="${chat.name}" style="height: 100%; width: 100%; object-fit: cover;">
-            ${nsfwOverlay}
-            ${isPremiumChat ? `<span class="custom-gradient-bg badge bg-gradient-primary mb-1 position-absolute" style="position: absolute; left: 5px; top: 5px;"> ${translations.premium}</span>` : ''}
-
-          </div>
-          <div class="card-body p-2 d-flex flex-column">
-            <h6 class="card-title small fw-bold mb-1 text-truncate" style="font-size: 0.85rem;">${chat.name}</h6>
-          </div>
-          ${ isOwner ? `
-          <div class="position-absolute top-0 end-0 m-1" style="z-index:3;">
-            <span class="badge bg-light text-secondary shadow" style="font-size: 0.6rem !important; padding: 0.2em 0.4em !important;opacity:0.8;">
-              <i class="bi bi-person-fill"></i>
-            </span>
-          </div>` : ''}
-          ${ (isAdmin) ? `
-          <div class="position-absolute top-0 start-0 m-1" style="z-index:3;">
-            <button class="btn btn-sm btn-outline-secondary border-0 ${chat.nsfw ? 'nsfw' : ''}" onclick="toggleChatNSFW(this); event.stopPropagation();" data-id="${chat._id}" style="background: #00000050;color: white;padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
-              ${chat.nsfw ? '<i class="bi bi-eye-slash-fill"></i>' : '<i class="bi bi-eye-fill"></i>'}
-            </button>
-          </div>` : ''}
+      <div class="card gallery-hover shadow-sm border-0 h-100 position-relative overflow-hidden">
+        <div class="gallery-image-wrapper" style="aspect-ratio: 4/5; background: #f8f9fa; position: relative;">
+        <img src="${imageSrc}" class="card-img-top gallery-img" alt="${chat.name}" style="height: 100%; width: 100%; object-fit: cover;">
+        ${nsfwOverlay}
         </div>
+        <div class="card-body p-2 d-flex flex-column">
+        <h6 class="card-title small fw-bold mb-1 text-truncate" style="font-size: 0.85rem;">${chat.name}</h6>
+        </div>
+        <div class="position-absolute top-0 start-0 m-1 d-flex flex-column align-items-start" style="z-index:3;">
+        ${isOwner ? `
+          <span class="badge bg-light text-secondary shadow" style="font-size: 0.6rem !important; padding: 0.2em 0.4em !important;opacity:0.8;">
+          <i class="bi bi-person-fill"></i>
+          </span>
+        ` : ''}
+        ${isPremiumChat ? `<span class="custom-gradient-bg badge bg-gradient-primary mb-1"> ${translations.premium}</span>` : ''}
+        ${(isAdmin) ? `
+          <button class="btn btn-sm btn-outline-secondary border-0 ${chat.nsfw ? 'nsfw' : ''}" onclick="toggleChatNSFW(this); event.stopPropagation();" data-id="${chat._id}" style="background: #00000050;color: white;padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
+          ${chat.nsfw ? '<i class="bi bi-eye-slash-fill"></i>' : '<i class="bi bi-eye-fill"></i>'}
+          </button>
+        ` : ''}
+        </div>
+      </div>
       </div>
     `;
     

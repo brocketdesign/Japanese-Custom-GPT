@@ -859,9 +859,9 @@ async function routes(fastify, options) {
                 ...userMessages
             ]
           }
-          const customModel = request.lang === 'ja' || 'japanese' ? 'deepseek' : null;
-          console.log(`[/api/openai-chat-completion] current lang ${request.lang}, customModel: ${customModel}`);
-          generateCompletion(messagesForCompletion, 600, customModel, request.lang).then(async (completion) => {
+          const customModel = language === 'ja' || 'japanese' ? 'deepseek' : null;
+          console.log(`[/api/openai-chat-completion] current lang ${language}, customModel: ${customModel}`);
+          generateCompletion(messagesForCompletion, 600, customModel, language).then(async (completion) => {
             if(completion){
                 fastify.sendNotificationToUser(userId, 'displayCompletionMessage', { message: completion, uniqueId })
                 const newAssitantMessage = { role: 'assistant', content: completion, timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) , custom_relation: conversationAnalysis.custom_relation }

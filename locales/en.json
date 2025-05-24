@@ -1,5 +1,14 @@
 {
   "lang":"en",
+  "reconnect": {
+    "title": "Connection Lost",
+    "message": "The connection to the server has been lost. You can try to reconnect or refresh the page.",
+    "retry": "Try Reconnecting",
+    "refresh": "Refresh Page", 
+    "attempting": "Attempting to reconnect...",
+    "success": "Successfully reconnected!",
+    "failed": "Connection failed. Please refresh the page."
+  },
   "personas": {
     "noPersonas": "No personas available",
     "selectPersona": "Select a persona",

@@ -1,8 +1,10 @@
 let reconnectAttempts = 0;
-const maxReconnectAttempts = 10;
-const reconnectInterval = 3000; // 10 seconds
+const maxReconnectAttempts = 5;
+const reconnectInterval = 3000;
+let currentSocket = null;
+let isConnected = false;
 
-function initializeWebSocket() {
+function initializeWebSocket(onConnectionResult = null) {
 
   let socket;
   if (MODE === 'local') {
@@ -12,11 +14,32 @@ function initializeWebSocket() {
     socket = new WebSocket(`wss://app.chatlamix.com/ws?userId=${user._id}`);
   }
 
-  socket.onopen = () => {
-    reconnectAttempts = 0; // Reset reconnect attempts
+  currentSocket = socket;
 
-    if($('#chatContainer').is(':visible')) {
-      fetchChatData(chatId,user._id)
+  socket.onopen = () => {
+    reconnectAttempts = 0; 
+   if($('#chatContainer').is(':visible')) {
+      // Call fetchChatData function to load chat data onyl once per reconnectInterval
+      // This is to avoid multiple calls to fetchChatData when the user is on the chat page
+      setTimeout(() => {
+        if (!isConnected) {
+          fetchChatData(chatId,user._id)
+        }
+      }, reconnectInterval);
+    }
+    isConnected = true;
+    // Notify reconnection attempt of success
+    if (onConnectionResult) {
+      onConnectionResult(true);
+    }
+  };
+
+  socket.onerror = (error) => {
+    console.error('[Websocket] Connection error:', error);
+    isConnected = false;
+    // Notify reconnection attempt of failure
+    if (onConnectionResult) {
+      onConnectionResult(false);
     }
   };
 
@@ -141,20 +164,100 @@ function initializeWebSocket() {
   };
 
   socket.onclose = () => {
+    isConnected = false;
     if (reconnectAttempts < maxReconnectAttempts) {
+      console.warn(`[Websocket] Connection closed. Attempting to reconnect... ${reconnectAttempts + 1}/${maxReconnectAttempts}`);
       setTimeout(() => {
         reconnectAttempts++;
         initializeWebSocket();
       }, reconnectInterval);
     } else {
       console.error('Max reconnect attempts reached. Could not reconnect to WebSocket.');
+      // Call a module to ask the user to retry or refresh the page
+      if (window.showReconnectPrompt) {
+        window.showReconnectPrompt();
+      } else {
+        console.error('No reconnect prompt function available.');
+      }
     }
   };
 
   socket.onerror = (error) => {
-    console.error('WebSocket error:', error);
-  };
+    isConnected = false;
+  }
 }
 
 // Initialize WebSocket
 initializeWebSocket();
+
+// Handle reconnect attempts after a failed connection
+window.showReconnectPrompt = function() {
+    const modal = new bootstrap.Modal(document.getElementById('reconnectModal'), {
+        backdrop: 'static',
+        keyboard: false
+    });
+    
+    const retryBtn = document.getElementById('retryConnectionBtn');
+    const refreshBtn = document.getElementById('refreshPageBtn');
+    const statusDiv = document.getElementById('reconnectStatus');
+    const statusText = document.getElementById('reconnectStatusText');
+    
+    let retryAttempts = 0;
+    const maxRetryAttempts = 5;
+    
+    // Reset button states
+    retryBtn.disabled = false;
+    refreshBtn.disabled = false;
+    statusDiv.style.display = 'none';
+    
+    // Retry connection handler
+    retryBtn.onclick = function() {
+        retryBtn.disabled = true;
+        refreshBtn.disabled = true;
+        statusDiv.style.display = 'block';
+        retryAttempts = 0;
+        
+        attemptReconnection();
+    };
+    
+    // Refresh page handler
+    refreshBtn.onclick = function() {
+        window.location.reload();
+    };
+    
+    function attemptReconnection() {
+        if (retryAttempts >= maxRetryAttempts) {
+            statusText.textContent = window.translations.reconnect.failed;
+            statusDiv.querySelector('.spinner-border').style.display = 'none';
+            retryBtn.disabled = false;
+            refreshBtn.disabled = false;
+            return;
+        }
+        
+        retryAttempts++;
+        statusText.textContent = `${window.translations.reconnect.attempting} (${retryAttempts}/${maxRetryAttempts})`;
+        
+        // Reset reconnect attempts counter for websocket
+        reconnectAttempts = 0;
+        
+        // Try to initialize websocket with callback
+        try {
+            initializeWebSocket((success) => {
+                if (success) {
+                    // Successfully reconnected, close modal
+                    modal.hide();
+                    window.showNotification(window.translations.reconnect.success, 'success');
+                } else {
+                    // Connection failed, try again after delay
+                    setTimeout(attemptReconnection, 2000);
+                }
+            });
+            
+        } catch (error) {
+            console.error('Reconnection attempt failed:', error);
+            setTimeout(attemptReconnection, 2000);
+        }
+    }
+    
+    modal.show();
+};

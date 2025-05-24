@@ -1,5 +1,14 @@
 {
   "lang":"fr",
+  "reconnect": {
+    "title": "Connexion perdue",
+    "message": "La connexion au serveur a été perdue. Vous pouvez essayer de vous reconnecter ou de rafraîchir la page.",
+    "retry": "Réessayer la reconnexion",
+    "refresh": "Rafraîchir la page",
+    "attempting": "Tentative de reconnexion...",
+    "success": "Reconnecté avec succès !",
+    "failed": "Échec de la connexion. Veuillez rafraîchir la page."
+  },
   "personas": {
     "noPersonas": "Aucune persona trouvée",
     "selectPersona": "Sélectionner une persona",

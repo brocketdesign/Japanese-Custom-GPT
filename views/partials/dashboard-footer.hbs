@@ -1,3 +1,33 @@
+<!-- Reconnect Prompt Modal -->
+<div class="modal fade" id="reconnectModal" tabindex="-1" aria-labelledby="reconnectModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered mx-0">
+        <div class="modal-content mx-auto">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reconnectModalLabel">
+                    <i class="bi bi-wifi-off text-warning me-2"></i>{{translations.reconnect.title}}
+                </h5>
+            </div>
+            <div class="modal-body text-center">
+                <p class="mb-3">{{translations.reconnect.message}}</p>
+                <div id="reconnectStatus" class="mb-3" style="display: none;">
+                    <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span id="reconnectStatusText">{{translations.reconnect.attempting}}</span>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-primary" id="retryConnectionBtn">
+                    <i class="bi bi-arrow-clockwise me-2"></i>{{translations.reconnect.retry}}
+                </button>
+                <button type="button" class="btn btn-secondary" id="refreshPageBtn">
+                    <i class="bi bi-arrow-counterclockwise me-2"></i>{{translations.reconnect.refresh}}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Share Modal -->
 <div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="openShareModal" aria-hidden="true">
     <div class="modal-dialog mx-0">

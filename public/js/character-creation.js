@@ -582,7 +582,7 @@ window.resetCharacterForm = function(){
     $('#generateButton').html('<i class="bi bi-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
 }
 
-window.updateCharacterGenerationMessage = function(message){
+window.updateCharacterGenerationMess = function(message){
     $('.genexp').text(message)
 }
 

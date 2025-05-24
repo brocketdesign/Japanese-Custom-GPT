@@ -859,7 +859,8 @@ async function routes(fastify, options) {
                 ...userMessages
             ]
           }
-          const customModel = request.lang === 'ja' ? 'deepseek' : null;
+          const customModel = request.lang === 'ja' || 'japanese' ? 'deepseek' : null;
+          console.log(`[/api/openai-chat-completion] current lang ${request.lang}, customModel: ${customModel}`);
           generateCompletion(messagesForCompletion, 600, customModel, request.lang).then(async (completion) => {
             if(completion){
                 fastify.sendNotificationToUser(userId, 'displayCompletionMessage', { message: completion, uniqueId })

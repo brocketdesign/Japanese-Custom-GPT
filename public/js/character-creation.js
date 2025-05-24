@@ -30,6 +30,8 @@ $(document).ready(function() {
     // Initialize mobile view
     if (isMobileScreen()) {
         showLeftColumn();
+        $('.modal-sidebar-fixed').addClass('mobile');
+        $('.modal-main-content').addClass('mobile');
     }
 
     // Handle window resize
@@ -37,6 +39,12 @@ $(document).ready(function() {
         if (!isMobileScreen()) {
             $('.modal-sidebar-fixed').show();
             $('.modal-main-content').show();
+            $('.modal-sidebar-fixed').removeClass('mobile');
+            $('.modal-main-content').removeClass('mobile');
+        } else {
+            showLeftColumn();
+            $('.modal-sidebar-fixed').addClass('mobile');
+            $('.modal-main-content').addClass('mobile');
         }
     });
 
@@ -414,6 +422,13 @@ $(document).ready(function() {
                 }
             }
 
+            // Start image generation with enhanced prompt
+            $button.html(`<div class="me-2 spinner-border spinner-border-sm" role="status">
+            <span class="visually-hidden">Loading...</span>
+            </div>${translations.imageForm.generatingImages}`);
+            $('.genexp').fadeIn();
+            showImageSpinner(); // Show spinner overlay
+
             // Use new comprehensive generation route
             const comprehensiveData = {
                 prompt,
@@ -443,13 +458,6 @@ $(document).ready(function() {
                 
                 console.log('Comprehensive character generation completed:', comprehensiveResponse);
                 
-                // Start image generation with enhanced prompt
-                $button.html(`<div class="me-2 spinner-border spinner-border-sm" role="status">
-                <span class="visually-hidden">Loading...</span>
-                </div>${translations.imageForm.generatingImages}`);
-                $('.genexp').fadeIn();
-                showImageSpinner(); // Show spinner overlay
-
                 const imageType = moderationResult.flagged ? 'nsfw' : 'sfw';
                 const file = $('#imageUpload')[0].files[0];
                     

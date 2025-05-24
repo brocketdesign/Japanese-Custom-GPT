@@ -18,7 +18,9 @@
   display: flex;
   flex-direction: column;
 }
-
+.modal-sidebar-fixed.mobile, .modal-main-content.mobile{
+  max-height: 77vh;
+}
 /* Scrollable content area within sidebar */
 .character-creation-sidebar-layout .modal-sidebar-content {
   flex: 1;
@@ -169,7 +171,6 @@
   .character-creation-sidebar-layout .modal-sidebar-fixed {
     width: 100%;
     height: auto;
-    max-height: 50vh;
     border-right: none;
     border-bottom: 1px solid #dee2e6;
     flex-shrink: 1;

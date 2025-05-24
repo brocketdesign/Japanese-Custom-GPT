@@ -35,13 +35,16 @@ window.onPersonaAdded = function(personaObj) {
         id: personaObj.id,
         chatImageUrl: personaObj.chatImageUrl
     };
-    // if the current chat is new
-    console.log(`[onPersonaAdded] Persona added: ${persona.name}; isNew: ${isNew}`);
     if (isNew) {
         generateChatCompletion();
     }
 };
-
+// On close of the persona module check if the chat is new
+window.onPersonaModuleClose = function() {
+    if (isNew) {
+        generateChatCompletion();
+    }
+};
 $(document).ready(async function() {
     let currentStep = 0;
     let totalSteps = 0;

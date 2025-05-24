@@ -123,7 +123,6 @@
                 <button type="button" id="generateButton" class="btn custom-gradient-bg btn-lg text-white d-flex align-items-center justify-content-center w-100">
                     <i class="bi bi-magic me-2"></i>{{translations.newCharacter.generate_with_AI}}
                 </button>
-                <span class="w-100 text-center text-muted genexp mt-2" style="font-size: 12px;display:none;">{{translations.newCharacter.image_generation_message}}</span>
             </div>
         </div>
 
@@ -133,7 +132,13 @@
             <div class="modal-main-content-scrollable">
                 <!-- 3. Generated Image Display -->
                 <label class="form-label d-block mb-3 text-center fw-semibold">{{translations.newCharacter.generatedImageLabel}}</label>
-                <div id="imageContainer" class="mb-4 w-100 text-center">
+                <div id="imageContainer" class="mb-4 w-100 text-center position-relative">
+                    <!-- Spinner overlay -->
+                    <div id="imageGenerationSpinner" class="position-absolute top-50 start-50 translate-middle" style="display: none; z-index: 10;">
+                        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
                     <img
                         id="generatedImage"
                         src="/img/default-character.png"
@@ -141,6 +146,8 @@
                         class="img-fluid"
                     >
                 </div>
+                <!-- Move genexp here under the image -->
+                <span class="w-100 text-center text-muted genexp mt-2" style="font-size: 12px;display:none;">{{translations.newCharacter.image_generation_message}}</span>
                 <div id="imageUploaderContainer" class="w-100" style="cursor: pointer;">
                     <!-- You can add an image uploader here if needed -->
                 </div>

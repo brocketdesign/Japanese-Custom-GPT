@@ -81,11 +81,17 @@ function initializeWebSocket() {
         case 'characterImageGenerated':
           if ($('#imageContainer').length > 0) {
             const { imageUrl, nsfw } = data.notification;
+            if (window.hideImageSpinner) {
+              window.hideImageSpinner();
+            }
             generateCharacterImage(imageUrl,nsfw);
           }
           break;
         case 'resetCharacterForm':
           if ($('#imageContainer').length > 0) {
+            if (window.hideImageSpinner) {
+              window.hideImageSpinner();
+            }
             resetCharacterForm();
           }
           break;

@@ -7,6 +7,56 @@ $(document).ready(function() {
     if  (typeof isTemporaryChat === 'undefined') {  
         window.isTemporaryChat = true;
     }
+
+    // Mobile column switching functionality
+    function isMobileScreen() {
+        return window.innerWidth <= 768;
+    }
+
+    function showLeftColumn() {
+        if (isMobileScreen()) {
+            $('.modal-sidebar-fixed').show();
+            $('.modal-main-content').hide();
+        }
+    }
+
+    function showRightColumn() {
+        if (isMobileScreen()) {
+            $('.modal-sidebar-fixed').hide();
+            $('.modal-main-content').show();
+        }
+    }
+
+    // Initialize mobile view
+    if (isMobileScreen()) {
+        showLeftColumn();
+    }
+
+    // Handle window resize
+    $(window).on('resize', function() {
+        if (!isMobileScreen()) {
+            $('.modal-sidebar-fixed').show();
+            $('.modal-main-content').show();
+        }
+    });
+
+    // Show/hide spinner overlay
+    function showImageSpinner() {
+        $('#imageGenerationSpinner').show();
+        $('#generatedImage').css('opacity', '0.5');
+    }
+
+    function hideImageSpinner() {
+        $('#imageGenerationSpinner').hide();
+        $('#generatedImage').css('opacity', '1');
+    }
+
+    // Add these functions to window for global access
+    window.showImageSpinner = showImageSpinner;
+    window.hideImageSpinner = hideImageSpinner;
+    window.showRightColumn = showRightColumn;
+    window.showLeftColumn = showLeftColumn;
+
     // Add a small delay before accessing DOM elements
     setTimeout(function() {
         const uploadArea = document.getElementById('uploadArea');
@@ -338,6 +388,9 @@ $(document).ready(function() {
         const $button = $(this);
         $button.prop('disabled', true);
 
+        // Switch to right column on mobile when generation starts
+        showRightColumn();
+
         // Update button text for comprehensive generation
         $button.html(`<div class="me-2 spinner-border spinner-border-sm" role="status">
         <span class="visually-hidden">Loading...</span>
@@ -395,6 +448,7 @@ $(document).ready(function() {
                 <span class="visually-hidden">Loading...</span>
                 </div>${translations.imageForm.generatingImages}`);
                 $('.genexp').fadeIn();
+                showImageSpinner(); // Show spinner overlay
 
                 const imageType = moderationResult.flagged ? 'nsfw' : 'sfw';
                 const file = $('#imageUpload')[0].files[0];
@@ -407,10 +461,12 @@ $(document).ready(function() {
                 })
                 .then(() => {
                     $('.chatRedirection').show();
+                    hideImageSpinner(); // Hide spinner overlay
                     resetCharacterForm();
                 })
                 .catch((error) => {
                     console.error('Error generating image:', error);
+                    hideImageSpinner(); // Hide spinner overlay
                     resetCharacterForm();
                 });
                 

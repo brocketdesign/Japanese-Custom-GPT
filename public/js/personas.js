@@ -175,6 +175,11 @@ const PersonaModule = {
         $('#personas-container').removeClass('visible').slideUp('fast');
         $('#personas-overlay').fadeOut(300);
         this.isFloatingContainerVisible = false;
+        
+        // Trigger the onPersonaModuleClose callback if it exists
+        if (typeof window.onPersonaModuleClose === 'function') {
+            window.onPersonaModuleClose();
+        }
     },
 
     toggleFloatingContainer() {

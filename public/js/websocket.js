@@ -190,6 +190,15 @@ function initializeWebSocket(onConnectionResult = null) {
 // Initialize WebSocket
 initializeWebSocket();
 
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    if (!currentSocket || currentSocket.readyState === WebSocket.CLOSED) {
+      console.log("Tab resumed. Attempting to reconnect WebSocket...");
+      initializeWebSocket();
+    }
+  }
+});
+
 // Handle reconnect attempts after a failed connection
 window.showReconnectPrompt = function() {
     const modal = new bootstrap.Modal(document.getElementById('reconnectModal'), {

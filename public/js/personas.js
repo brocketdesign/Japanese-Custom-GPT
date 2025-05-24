@@ -213,7 +213,6 @@ const PersonaModule = {
     handleSaveAsPersona(e) {
         e.preventDefault();
         e.stopPropagation();
-        console.log({subscriptionStatus})
         if(!subscriptionStatus){
             handleClickRegisterOrPay(e);
             return;
@@ -399,7 +398,6 @@ const PersonaModule = {
         const personaImageUrl = $persona.find('img').attr('src');
 
         if (this.currentUserChatId) {
-            console.log(`[PersonaModule] Adding persona ${personaName} to chat ID ${this.currentUserChatId}`);
             this.addPersonaToUserChat(personaId, personaName, personaImageUrl);
         } else {
             console.error('[PersonaModule] No current user chat ID found');

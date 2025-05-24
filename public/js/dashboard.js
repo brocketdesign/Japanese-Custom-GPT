@@ -3289,7 +3289,6 @@ function loadPlanPage() {
       return;
     }
     if (modalStatus.isPlanLoading) {
-      console.log('Plan modal is already loading, aborting duplicate loadPlanPage.');
       return;
     }
     modalStatus.isPlanLoading = true;

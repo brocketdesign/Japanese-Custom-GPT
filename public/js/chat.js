@@ -612,10 +612,8 @@ function setupChatInterface(chat, character) {
                 sessionStorage.setItem('userChatId', userChatId);
                 sessionStorage.setItem('lastChatId', chatId);
                 sessionStorage.setItem('chatId', chatId);
-                console.log(`[init-chat] Chat ID: ${chatId}, User Chat ID: ${userChatId}`);
                 
                 const personaCount = await PersonaModule.checkPersonaCount();
-                console.log(`[displayStarter] Persona count: ${personaCount}`);
                 if(personaCount > 0){
                     PersonaModule.showFloatingContainer();
                 }else{

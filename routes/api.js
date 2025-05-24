@@ -859,8 +859,8 @@ async function routes(fastify, options) {
                 ...userMessages
             ]
           }
-
-          generateCompletion(messagesForCompletion, 600, null, request.lang).then(async (completion) => {
+          const customModel = request.lang === 'ja' ? 'deepseek' : null;
+          generateCompletion(messagesForCompletion, 600, customModel, request.lang).then(async (completion) => {
             if(completion){
                 fastify.sendNotificationToUser(userId, 'displayCompletionMessage', { message: completion, uniqueId })
                 const newAssitantMessage = { role: 'assistant', content: completion, timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) , custom_relation: conversationAnalysis.custom_relation }

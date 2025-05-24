@@ -85,13 +85,7 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
       }
     }
   }
-  
-  // Override for Japanese
-  if (lang === 'ja') {
-    modelConfig.provider = 'novita';
-    modelConfig.modelName = 'gemma';
-  }
-  
+
   // Get the API details
   const provider = apiDetails[modelConfig.provider];
   const modelName = modelConfig.modelName ? 

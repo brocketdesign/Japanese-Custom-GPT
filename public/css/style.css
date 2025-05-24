@@ -1457,7 +1457,8 @@
   height:50px;
   font-size:14px;
   padding-left:20px;
-  resize:none
+  resize:none;
+  max-height:100px;
   }
   
   #userMessage:focus {

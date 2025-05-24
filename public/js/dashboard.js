@@ -1496,7 +1496,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
           const randomSampleImage = sampleImages[Math.floor(Math.random() * sampleImages.length)];
           // --- End: Random sample image selection logic ---
           htmlContent += `
-              <div class="gallery-card ${searchId == 'top-free' ? 'col-6' : 'col-12'} col-sm-3 col-lg-3 mb-4 ${chat.premium ? "premium-chat":''} ${chat.gender ? 'chat-gender-'+chat.gender:''} ${chat.imageStyle ? 'chat-style-'+chat.imageStyle : ''} nsfw-${finalNsfwResult}">
+              <div class="gallery-card ${searchId == 'top-free' ? 'col-6' : 'col-12'} col-sm-6 col-lg-3 mb-4 ${chat.premium ? "premium-chat":''} ${chat.gender ? 'chat-gender-'+chat.gender:''} ${chat.imageStyle ? 'chat-style-'+chat.imageStyle : ''} nsfw-${finalNsfwResult}">
                   <div class="card shadow border-0 h-100 position-relative gallery-hover" style="overflow: hidden;">
                       <!-- Clickable image area -->
                       <div class="gallery-image-wrapper position-relative chat-card-clickable-area" style="aspect-ratio: 4/5; background: #f8f9fa; cursor: pointer;"

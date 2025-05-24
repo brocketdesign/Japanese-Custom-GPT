@@ -20,6 +20,9 @@ const PersonaModule = {
         $(document).on('click', '#personas-overlay', this.hideFloatingContainer.bind(this));
         $(document).on('click', '.persona-card', this.handleFloatingPersonaClick.bind(this));
         $(document).on('click', '#close-personas-container', this.hideFloatingContainer.bind(this));
+
+        // Bind remove persona button (prevent propagation)
+        $(document).on('click', '.remove-persona', this.handleRemovePersona.bind(this));
         
         // Save character as persona button
         $(document).on('click', '.save-as-persona', this.handleSaveAsPersona.bind(this));
@@ -43,6 +46,7 @@ const PersonaModule = {
         }
 
         const $this = $(e.currentTarget);
+        const isAdding = !$this.hasClass('on');
         $this.toggleClass('on');
         
         const $icon = $this.find('i');
@@ -64,6 +68,42 @@ const PersonaModule = {
         }
     },
 
+    handleRemovePersona(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const personaId = $(e.currentTarget).data('id');
+        if (!personaId) {
+            console.error('No persona ID found for removal');
+            return;
+        }
+        
+        this.removePersonaFromCollection(personaId);
+    },
+
+    removePersonaFromCollection(personaId) {
+        this.updatePersona(personaId, false, () => {
+            // Success callback - persona was removed
+            console.log(`Persona ${personaId} removed successfully`);
+        }, () => {
+            // Error callback - handle removal failure
+            console.error(`Failed to remove persona ${personaId}`);
+        });
+    },
+
+    checkPersonaCount() {
+        return new Promise((resolve, reject) => {
+            $.get('/api/user/personas', (response) => {
+                if (response.success) {
+                    resolve(response.personas.length);
+                } else {
+                    reject(new Error(response.error || 'Failed to fetch personas'));
+                }
+            }).fail((xhr) => {
+                reject(new Error(xhr.responseJSON?.error || 'Network error while fetching personas'));
+            });
+        });
+    },
     updatePersona(personaId, isAdding, callback, callbackError) {
         $.post('/api/user/personas', { 
             personaId: personaId, 
@@ -83,6 +123,42 @@ const PersonaModule = {
                         user.personas = user.personas.filter(id => id !== personaId);
                     }
                 }
+                
+                // Update UI based on action
+                if (isAdding) {
+                    // Update any existing persona element with this ID
+                    $(`.persona[data-id="${personaId}"]`).addClass('on')
+                        .find('i').removeClass('far').addClass('fas');
+                } else {
+                    // If removing from floating container
+                    const $personaCard = $(`.persona-card[data-id="${personaId}"]`);
+                    if ($personaCard.length) {
+                        $personaCard.fadeOut(300, function() {
+                            $(this).remove();
+                            
+                            // Show "no personas" message if this was the last one
+                            const $list = $('#personas-list');
+                            if ($list.find('.persona-card').length === 0) {
+                                $list.append(`
+                                    <div class="no-personas text-center w-100 mt-4">
+                                        <i class="bi bi-person-plus" style="font-size: 2rem;"></i>
+                                        <p>${window.translations.personas.noPersonas || 'ペルソナがありません'}</p>
+                                    </div>
+                                `);
+                            }
+                            
+                            // Update counter
+                            PersonaModule.updatePersonaActivatedCounter();
+                        });
+                    }
+                    
+                    // Also update any persona buttons elsewhere on the page
+                    $(`.persona[data-id="${personaId}"]`).removeClass('on')
+                        .find('i').removeClass('fas').addClass('far');
+                }
+                
+                // Clear cache to ensure fresh data next time
+                this.clearPersonasCache();
                 
                 // Execute callback if provided
                 if (typeof callback === 'function') {
@@ -108,7 +184,6 @@ const PersonaModule = {
             }
         });
     },
-
     initializePersonaStats(personas = []) {
         if (!personas || !personas.length) {
             personas = user?.personas || [];
@@ -272,7 +347,7 @@ const PersonaModule = {
             $list.append(`
                 <div class="no-personas text-center w-100 mt-4">
                     <i class="bi bi-person-plus" style="font-size: 2rem;"></i>
-                    <p>${window.translations?.noPersonas || 'ペルソナがありません'}</p>
+                    <p>${window.translations?.personas.noPersonas || 'ペルソナがありません'}</p>
                 </div>
             `);
             return;
@@ -284,6 +359,12 @@ const PersonaModule = {
                     data-id="${persona._id}" 
                     data-name="${persona.name}" 
                     style="cursor:pointer; min-height: 200px;">
+                    <button type="button" class="btn-close remove-persona position-absolute top-0 end-0 m-1" 
+                        data-id="${persona._id}" 
+                        aria-label="Remove" 
+                        style="z-index: 10; background-color: rgba(255,255,255,0.7); border-radius: 50%; padding: 0.25rem;"
+                        title="${window.translations?.personas?.removePersona || 'ペルソナを削除する'}">
+                    </button>
                     <div class="image-container d-inline-flex align-items-center justify-content-center p-0 m-0 rounded border" style="background:transparent; padding:0; margin:0;">
                         <img 
                             src="${persona.chatImageUrl || '/img/default-avatar.png'}" 
@@ -307,6 +388,11 @@ const PersonaModule = {
         $('#persona-activated-counter').html(`<span class="badge custom-gradient-bg">${total}</span>`);
     },
     handleFloatingPersonaClick(e) {
+        // Prevent click if it's on the remove button
+        if ($(e.target).hasClass('remove-persona') || $(e.target).closest('.remove-persona').length) {
+            return;
+        }
+        
         const $persona = $(e.currentTarget);
         const personaId = $persona.data('id');
         const personaName = $persona.data('name');

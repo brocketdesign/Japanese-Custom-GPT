@@ -37,12 +37,14 @@ window.onPersonaAdded = function(personaObj) {
     };
     if (isNew) {
         generateChatCompletion();
+        isNew = false;
     }
 };
 // On close of the persona module check if the chat is new
 window.onPersonaModuleClose = function() {
     if (isNew) {
         generateChatCompletion();
+        isNew = false;
     }
 };
 $(document).ready(async function() {
@@ -600,7 +602,7 @@ function setupChatInterface(chat, character) {
                 chatId, 
                 isNew: true
             }),
-            success: function(response) {
+            success: async function(response) {
 
                 userChatId = response.userChatId
                 chatId = response.chatId
@@ -612,7 +614,13 @@ function setupChatInterface(chat, character) {
                 sessionStorage.setItem('chatId', chatId);
                 console.log(`[init-chat] Chat ID: ${chatId}, User Chat ID: ${userChatId}`);
                 
-                PersonaModule.showFloatingContainer();
+                const personaCount = await PersonaModule.checkPersonaCount();
+                console.log(`[displayStarter] Persona count: ${personaCount}`);
+                if(personaCount > 0){
+                    PersonaModule.showFloatingContainer();
+                }else{
+                    generateChatCompletion();
+                }
 
                 updateCurrentChat(chatId,userId);
 

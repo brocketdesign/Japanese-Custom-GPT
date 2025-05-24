@@ -1345,6 +1345,7 @@ window.displaySimilarChats = function (chatData, targetGalleryId) {
         }
     }
 
+    
     htmlContent += `
         <div class="${cardClass}" data-id="${chat._id}" style="cursor:pointer;">
             <div class="card gallery-hover shadow-sm border-0 h-100 position-relative overflow-hidden">
@@ -1355,15 +1356,21 @@ window.displaySimilarChats = function (chatData, targetGalleryId) {
                     </div>
                     <div class="card-body p-2 d-flex flex-column">
                         <h6 class="card-title small fw-bold mb-1 text-truncate text-dark" style="font-size: 0.85rem;">${chat.name}</h6>
-                        ${isPremiumChat ? '<span class="badge bg-warning text-dark position-absolute top-0 end-0 m-1 small" style="font-size: 0.6rem !important; padding: 0.2em 0.4em !important;">Premium</span>' : ''}
                     </div>
                 </a>
-                ${ (isAdmin) ? `
-                <div class="position-absolute top-0 start-0 m-1" style="z-index:3;">
+                <div class="position-absolute top-0 start-0 m-1 d-flex flex-column align-items-start" style="z-index:3;">
+                    ${isOwner ? `
+                    <span class="badge bg-light text-secondary shadow" style="font-size: 0.6rem !important; padding: 0.2em 0.4em !important;opacity:0.8;">
+                        <i class="bi bi-person-fill"></i>
+                    </span>
+                    ` : ''}
+                    ${isPremiumChat ? `<span class="custom-gradient-bg badge bg-gradient-primary mb-1"> ${translations.premium}</span>` : ''}
+                    ${(isAdmin) ? `
                     <button class="btn btn-sm btn-outline-secondary border-0 ${chat.nsfw ? 'nsfw' : ''}" onclick="toggleChatNSFW(this); event.stopPropagation();" data-id="${chat._id}" style="background: #00000050;color: white;padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
                         ${chat.nsfw ? '<i class="bi bi-eye-slash-fill"></i>' : '<i class="bi bi-eye-fill"></i>'}
                     </button>
-                </div>` : ''}
+                    ` : ''}
+                </div>
             </div>
         </div>
     `;
@@ -1407,11 +1414,6 @@ window.displayLatestChats = function (chatData, targetGalleryId, modal = false) 
                                 <button class="btn btn-sm btn-outline-light mt-2" onclick="loadPlanPage(event, ${isTemporaryUser})" style="font-size: 12px; border-radius: 50px;">
                                     ${isTemporaryUser ? (window.translations?.register || 'Register to View') : (window.translations?.subscribe || 'Subscribe to View')}
                                 </button>
-                            </div>`;
-        } else if (!isOwner && subscriptionStatus && isPremiumChat && !nsfwVisible) {
-             nsfwOverlay = `<div class="gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center" style="background: rgba(0,0,0,0.55); z-index: 2; backdrop-filter: blur(5px);">
-                                <span class="badge bg-danger mb-2" style="font-size: 0.9rem;"><i class="bi bi-exclamation-triangle"></i> NSFW</span>
-                                <small class="text-white-50 px-2 text-center" style="font-size:0.75rem;">${window.translations?.nsfwHiddenPref || 'NSFW content hidden by preference.'}</small>
                             </div>`;
         }
     }

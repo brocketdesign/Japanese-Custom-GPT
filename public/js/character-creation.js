@@ -354,6 +354,10 @@ $(document).ready(function() {
     }
 
     $('#generateButton').on('click', async function() {
+
+        const $button = $(this);
+        $button.prop('disabled', true);
+
         resetInfiniteScroll();
         let newchatId = await checkChat(chatCreationId)
 
@@ -392,9 +396,6 @@ $(document).ready(function() {
             showNotification(translations.newCharacter.allFieldsRequired, 'error');
             return;
         }
-
-        const $button = $(this);
-        $button.prop('disabled', true);
 
         // Switch to right column on mobile when generation starts
         showRightColumn();
@@ -469,7 +470,6 @@ $(document).ready(function() {
                 })
                 .then(() => {
                     $('.chatRedirection').show();
-                    hideImageSpinner(); // Hide spinner overlay
                     resetCharacterForm();
                 })
                 .catch((error) => {

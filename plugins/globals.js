@@ -66,6 +66,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             mode: process.env.MODE,
             apiurl: apiUrl
         };
+
     });
 
     // Hooks to handle language and user settings

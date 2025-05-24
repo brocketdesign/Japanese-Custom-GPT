@@ -32,6 +32,7 @@
                 scrollbar-width: none;
                 padding: 0 5px;
                 gap: 10px;
+                justify-content: center;
             }
             
             .toolbar-scroll-container::-webkit-scrollbar {

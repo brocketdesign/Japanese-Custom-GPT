@@ -1087,7 +1087,7 @@ function setupChatInterface(chat, character) {
             return;
         }
 
-        requestAudioPermission().then(isAllowed => {
+        requestAudioPermission().then(async isAllowed => {
             if (!isAllowed) {
                 return $el.html('再生がキャンセルされました');
             }
@@ -1102,31 +1102,67 @@ function setupChatInterface(chat, character) {
             } else {
                 // Audio not cached, show loading state and fetch
                 $el.html('<div class="spinner-grow spinner-grow-sm" role="status"><span class="visually-hidden">Loading...</span></div>');
-                const voiceUrl = getVoiceUrl(message);
+                const voiceUrl = await getVoiceUrl(message);
                 
-                $.post(voiceUrl, response => {
+                fetch(voiceUrl, {
+                    method: 'POST',
+                    credentials: 'omit' // Do not send cookies or credentials
+                })
+                .then(response => response.json())
+                .then(response => {
                     if (response.errno !== 0) {
                         return $el.html('エラーが発生しました');
                     }
-                    
                     const audioUrl = response.data.audio_url;
                     audioCache.set(message, audioUrl);
                     const audio = getAvailableAudio();
                     playAudio($el, audio, audioUrl, message);
+                })
+                .catch(() => {
+                    $el.html('エラーが発生しました');
                 });
             }
         });
     }
-    
-    function getVoiceUrl(message) {
-        if(language != 'japanese'){
-            return `/api/txt2speech?message=${message}&language=${language}&chatId=${chatId}`
+        
+    async function getVoiceUrl(message) {
+        if (language !== 'japanese') {
+            return `/api/txt2speech?message=${encodeURIComponent(message)}&language=${language}&chatId=${chatId}`;
         }
+
         const baseUrl = 'https://api.synclubaichat.com/aichat/h5/tts/msg2Audio';
-        const params = `?device=web_desktop&product=aichat&sys_lang=en-US&country=&referrer=&zone=9&languageV2=ja&uuid=&app_version=1.6.4&message=${encodeURIComponent(message)}&voice_actor=default_voice`;
-        return $('#chat-container').attr('data-genre') == 'male' 
-            ? `${baseUrl}${params}&robot_id=1533008538&ts=1723632421&t_secret=661712&sign=9e2bfc4903b8c1176f7e2c973538908b` 
-            : `${baseUrl}${params}&robot_id=1533008511&ts=1724029265&t_secret=58573&sign=3beb590d1261bc75d6687176f50470eb`;
+        const genre = $('#chat-container').attr('data-genre');
+        
+        const robot_id = genre === 'male' ? '1533008538' : '1533008511';
+        const t_secret = genre === 'male' ? '661712' : '58573';
+
+        const ts = Math.floor(Date.now() / 1000);
+
+        const sign = generateMD5(robot_id + ts + t_secret);
+
+        const params = new URLSearchParams({
+            device: 'web_desktop',
+            product: 'aichat',
+            sys_lang: 'en-US',
+            country: '',
+            referrer: '',
+            zone: '9',
+            languageV2: 'ja',
+            uuid: '',
+            app_version: '1.6.4',
+            message: message,
+            voice_actor: 'default_voice',
+            robot_id,
+            ts,
+            t_secret,
+            sign
+        });
+
+        return `${baseUrl}?${params.toString()}`;
+    }
+
+    function generateMD5(text) {
+        return md5(text); // blueimp-md5 provides the md5() function globally
     }
 
     function setupMessageContainerClickHandling($el, audio, message) {

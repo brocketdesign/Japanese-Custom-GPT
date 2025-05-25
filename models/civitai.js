@@ -13,7 +13,7 @@ const { zodResponseFormat } = require("openai/helpers/zod");
  * @param {boolean} nsfw - Whether to include NSFW content
  * @returns {Promise<Object|false>} - A prompt object from Civitai or false if none found
  */
-async function fetchRandomCivitaiPrompt(modelData, nsfw = false) {
+async function fetchRandomCivitaiPrompt(modelData, nsfw = false, page = 1 , promptIndex = 0) {
   try {
     // Extract the base model name by removing any version numbers and file extensions
     const baseModelName = modelData.model.replace(/\.safetensors$/, '').replace(/v\d+/, '').trim();
@@ -22,14 +22,14 @@ async function fetchRandomCivitaiPrompt(modelData, nsfw = false) {
     const nsfwParam = nsfw == 'true' ? '&nsfw=true' : '&nsfw=false';
     const maxAttempts = 5; // Maximum number of attempts to find a prompt
     
-    //console.log(`Fetching Civitai prompts for model: ${baseModelName}`);
+    console.log(`Fetching Civitai prompts for model: ${baseModelName}, page: ${page}, promptIndex: ${promptIndex}, nsfw: ${nsfw}`);
     
     // Try multiple pages with a small limit to find a valid prompt
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      const page = Math.floor(Math.random() * 10) + 1; // Random page between 1 and 10
+      page = page || 1 //Math.floor(Math.random() * 10) + 1; // Random page between 1 and 10
       const limit = 30;
       const url = `https://civitai.com/api/v1/images?limit=${limit}&page=${page}&modelVersionId=${encodeURIComponent(modelId)}${nsfwParam}`;
-            
+
       const response = await axios.get(url, {
         headers: {
           'Content-Type': 'application/json'
@@ -44,10 +44,10 @@ async function fetchRandomCivitaiPrompt(modelData, nsfw = false) {
         );
 
         // Select a random item from the filtered valid items
+        const randomIndex = parseInt(promptIndex) + 1 || 1 ///Math.floor(Math.random() * validItems.length);
         const validItem = validItems.length > 0 ? 
-          validItems[Math.floor(Math.random() * validItems.length)] : 
+          validItems[randomIndex] : 
           undefined;
-        
         if (validItem) {          
           function processString(input) { 
             try {
@@ -77,7 +77,9 @@ async function fetchRandomCivitaiPrompt(modelData, nsfw = false) {
             modelId,
             sampler: validItem.meta?.sampler || 'Euler a',
             cfgScale: validItem.meta?.cfgScale || 7,
-            steps: validItem.meta?.steps || 30
+            steps: validItem.meta?.steps || 30,
+            page,
+            promptIndex: randomIndex,
           };
         }
       }
@@ -89,6 +91,7 @@ async function fetchRandomCivitaiPrompt(modelData, nsfw = false) {
     return false;
     
   } catch (error) {
+    console.log(error)
     console.error('Error fetching Civitai prompt:', error.message);
     return false;
   }
@@ -163,8 +166,7 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
     let characterData;
     try {
       // API call to the openai-chat-creation endpoint
-      const apiResponse = await axios.post(`${process.env.API_URL || 'http://localhost:3000'}/api/openai-chat-creation`, {
-        purpose: promptData.prompt,
+      const apiResponse = await axios.post(`${process.env.API_URL || 'http://localhost:3000'}/api/generate-character-comprehensive`, {
         gender: initialCharacterData.gender,
         name: initialCharacterData.name,
         prompt: promptData.prompt,
@@ -173,7 +175,7 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
         nsfw: nsfw,
       });
       
-      characterData = apiResponse.data;
+      characterData = apiResponse.data.chatData;
 
       if (!characterData || !characterData.name) {
         throw new Error('[civitai/createModelChat] Invalid character data received from API');

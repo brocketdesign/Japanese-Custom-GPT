@@ -771,7 +771,7 @@ async function routes(fastify, options) {
         return reply.status(403).send({ error: 'Access denied' });
       }
 
-      const { modelId, modelName, nsfw } = request.body;
+      const { modelId, modelName, nsfw, page = 1, promptIndex = 1 } = request.body;
       let modelNameToSearch = modelName;
       
       // If modelId is provided, look up the actual model name from the database
@@ -789,9 +789,9 @@ async function routes(fastify, options) {
       }
       
       // Fetch a random prompt from Civitai with NSFW parameter
-      const prompt = await fetchRandomCivitaiPrompt(modelNameToSearch, nsfw);
-      
-      if (!prompt) {
+      const promptData = await fetchRandomCivitaiPrompt(modelNameToSearch, nsfw, page, promptIndex);
+
+      if (!promptData) {
         return reply.status(404).send({ error: 'No suitable prompt found for this model' });
       }
       
@@ -804,14 +804,14 @@ async function routes(fastify, options) {
       
       await promptsCache.insertOne({
         key: promptKey,
-        prompt: prompt,
+        prompt: promptData.prompt,
         modelId,
         createdAt: new Date(),
         expiresAt: new Date(Date.now() + 30 * 60 * 1000) // Expires in 30 minutes
       });
       
       // Return the prompt with its image URL and the key
-      return reply.send({ prompt, promptKey });
+      return reply.send({ prompt:promptData, promptKey });
     } catch (error) {
       console.error('Error fetching preview prompt:', error);
       return reply.status(500).send({ error: 'Internal server error' });
@@ -861,6 +861,7 @@ async function routes(fastify, options) {
         }
         
         // Create a new chat - Pass the current user for image generation
+        console.log(`Creating chat for model ${model.model} with prompt:`, civitaiData);
         const chat = await createModelChat(db, model, civitaiData, request.lang, fastify, request.user, nsfw);
 
         if (!chat) {

@@ -3,7 +3,7 @@ const { ObjectId } = require('mongodb');
  const {
      generateCompletion,
  } = require('../models/openai')
- 
+ const { getApiUrl } = require('../models/tool');
  const axios = require('axios');
  const OpenAI = require("openai");
  const { z, custom, union } = require("zod");
@@ -226,17 +226,36 @@ async function routes(fastify, options) {
         console.log('[API/generate-character-comprehensive] Starting comprehensive character generation');
         
         try {
-            const { chatId, prompt, gender, name, language: requestLanguage } = request.body;
+            const { prompt, gender, name, language: requestLanguage } = request.body;
+            let chatId = request.body.chatId || request.query.chatId || request.params.chatId || null;
             const userId = request.user._id;
             const language = requestLanguage || request.lang;
-
+ 
             console.log(`[API/generate-character-comprehensive] Input parameters - chatId: ${chatId}, gender: ${gender}, language: ${language}`);
             
-            if (!prompt || !gender || !chatId) {
+            if (!prompt || !gender) {
                 console.log('[API/generate-character-comprehensive] Missing required fields');
-                return reply.status(400).send({ error: 'Missing required fields: prompt, gender, and chatId are required.' });
+                return reply.status(400).send({ error: 'Missing required fields: prompt, gender are required.' });
             }
-
+            if(!chatId || !ObjectId.isValid(chatId)) {
+                console.log('[API/generate-character-comprehensive] Invalid chatId');
+                const apiUrl = getApiUrl(request);   
+                const checkChat = async (chatCreationId) => {
+                    try {
+                        const response = await axios.post(apiUrl + '/api/check-chat', { chatId: chatCreationId });
+                        if (response.data.message === 'Chat exists') {
+                            return false;
+                        } else {
+                            return response.data.chatId;
+                        }
+                    } catch (error) {
+                        console.error('Request failed:', error);
+                        throw error;
+                    }
+                };
+                chatId = await checkChat(chatId);
+                console.log(`[API/generate-character-comprehensive] Validated chatId: ${chatId}`);
+            }
             // Step 1: Extract details from prompt
             console.log('[API/generate-character-comprehensive] Step 1: Extracting details from prompt');
             fastify.sendNotificationToUser(userId, 'showNotification', { 

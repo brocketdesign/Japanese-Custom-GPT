@@ -153,70 +153,98 @@
   
   <!-- Modal for character generation preview -->
   <div class="modal fade" id="generateChatModal" tabindex="-1" aria-labelledby="generateChatModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg mx-0">
+    <div class="modal-dialog modal-xl">
       <div class="modal-content mx-auto">
         <div class="modal-header">
           <h5 class="modal-title" id="generateChatModalLabel">Generating Chat</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body bg-light">
-          <div class="d-flex justify-content-between align-items-center">
-            <div class="text-start mb-3" id="modelInfo">
-              <strong>Model:</strong> <span id="modelName"></span>
-            </div>
-            <button id="getAnotherPreview" class="btn btn-secondary mb-3">
-              <i class="bi bi-arrow-repeat"></i> Get Another Preview
-            </button>
-          </div>
-          <div id="loadingPrompt" class="text-center">
-            <div class="spinner-border" role="status">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-            <p>Fetching prompt...</p>
-          </div>
-          
-          <div id="promptPreview" class="d-none">
-            <div class="row">
-              <div class="col-md-6">
-                <div class="card mb-3">
-                  <img id="promptImage" src="" class="card-img-top" alt="Character preview" style="max-height: 400px; object-fit: contain;">
-                  <div class="card-body">
-                    <h5 class="card-title">Preview</h5>
-                    <p class="card-text"><small class="text-muted">Source: Civitai</small></p>
+        <div class="modal-body p-0" style="height: 70vh;">
+          <div class="container-fluid h-100 d-flex">
+            <div class="row h-100 flex-nowrap w-100">
+              <!-- Left column - Image preview (fixed on desktop, hidden on mobile when content is shown) -->
+              <div class="col-lg-5 d-flex align-items-center justify-content-center border-end" id="imageColumn" style="background-color: #f8f9fa;">
+                <div id="loadingPrompt" class="text-center">
+                  <div class="spinner-border mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                  <p class="text-muted">Fetching prompt...</p>
+                </div>
+                
+                <div id="imagePreview" class="d-none text-center">
+                  <img id="promptImage" src="" class="img-fluid rounded shadow" alt="Character preview" style="max-height: 400px; max-width: 100%; object-fit: contain;">
+                </div>
+                
+                <div id="noPrompt" class="alert alert-warning d-none">
+                  <i class="bi bi-exclamation-triangle"></i> No prompt available.
+                </div>
+                
+                <div id="errorFetching" class="alert alert-danger d-none">
+                  <i class="bi bi-exclamation-circle"></i> Error fetching prompt.
+                </div>
+              </div>
+              
+              <!-- Right column - Content (scrollable) -->
+              <div class="col-lg-7 h-100 d-flex flex-column p-0" id="contentColumn">
+                <div class="p-3 border-bottom bg-light">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div id="modelInfo">
+                      <strong>Model:</strong> <span id="modelName" class="text-primary"></span>
+                    </div>
+                    <button id="getAnotherPreview" class="btn btn-sm btn-outline-secondary d-none">
+                      <i class="bi bi-arrow-repeat"></i> Get Another
+                    </button>
+                  </div>
+                </div>
+                
+                <div class="flex-grow-1 overflow-auto p-3" id="scrollableContent" style="height: calc(100% - 60px);">
+                  <div id="promptDetails" class="d-none">
+                    <!-- Mobile image preview (shown only on mobile) -->
+                    <div class="d-lg-none mb-3 text-center">
+                      <img id="promptImageMobile" src="" class="img-fluid rounded shadow" alt="Character preview" style="max-height: 250px; object-fit: contain;">
+                    </div>
+                    
+                    <div class="mb-4">
+                      <h6 class="fw-bold text-secondary mb-2">
+                        <i class="bi bi-chat-text"></i> Prompt
+                      </h6>
+                      <div class="bg-white border rounded p-3" style="max-height: 150px; overflow-y: auto;">
+                        <p id="promptText" class="mb-0 small"></p>
+                      </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                      <h6 class="fw-bold text-secondary mb-2">
+                        <i class="bi bi-x-circle"></i> Negative Prompt
+                      </h6>
+                      <div class="bg-white border rounded p-3" style="max-height: 150px; overflow-y: auto;">
+                        <p id="promptNegative" class="mb-0 small text-muted"></p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div id="generationResult" class="alert d-none">
+                    <div class="d-flex align-items-start">
+                      <div class="flex-grow-1">
+                        <p id="generationMessage" class="mb-2"></p>
+                        <a id="viewCharacterLink" href="#" target="_blank" class="btn btn-primary btn-sm d-none">
+                          <i class="bi bi-eye"></i> View Character
+                        </a>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-              <div class="col-md-6">
-                <h5>Prompt:</h5>
-                <div class="bg-white border p-3 mb-3" style="max-height: 100px; overflow-y: auto;">
-                  <p id="promptText"></p>
-                </div>
-                <h5>Negative Prompt:</h5>
-                <div class="bg-white border p-3" style="max-height: 100px; overflow-y: auto;">
-                  <p id="promptNegative"></p> 
-                </div>
-              </div>
             </div>
           </div>
-          
-          <div id="noPrompt" class="alert alert-warning d-none">
-            No prompt available.
-          </div>
-          
-          <div id="errorFetching" class="alert alert-danger d-none">
-            Error fetching prompt.
-          </div>
-          
-          <div id="generationResult" class="alert d-none">
-            <p id="generationMessage"></p>
-            <a id="viewCharacterLink" href="#" target="_blank" class="btn btn-primary d-none">
-              View Character
-            </a>
-          </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" id="generateBtn" class="btn btn-primary d-none">Generate</button>
+        <div class="modal-footer border-top">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Close
+          </button>
+          <button type="button" id="generateBtn" class="btn btn-primary d-none">
+            <i class="bi bi-play-fill"></i> Generate
+          </button>
         </div>
       </div>
     </div>
@@ -237,6 +265,66 @@
     </div>
   </div>
   
+  <style>
+    @media (max-width: 991.98px) {
+      #generateChatModal .modal-dialog {
+        margin: 0.5rem;
+      }
+      
+      #generateChatModal .modal-body {
+        height: 80vh;
+      }
+      
+      #imageColumn {
+        display: none;
+      }
+      
+      #contentColumn {
+        height: 100% !important;
+        width: 100% !important;
+      }
+    }
+    
+    #generateChatModal .modal-xl {
+      max-width: 1000px;
+    }
+    
+    #scrollableContent::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    #scrollableContent::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 3px;
+    }
+    
+    #scrollableContent::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 3px;
+    }
+    
+    #scrollableContent::-webkit-scrollbar-thumb:hover {
+      background: #a8a8a8;
+    }
+    
+    /* Additional styles for fixing the scrolling issue */
+    #generateChatModal .modal-content {
+      height: 100%;
+    }
+    
+    #generateChatModal .modal-body {
+      overflow: hidden;
+    }
+    
+    #scrollableContent {
+      min-height: 0;  /* This is crucial for flex containers with scrolling children */
+      overflow-y: auto;
+    }
+    
+    .row.h-100.flex-nowrap {
+      margin: 0;
+    }
+  </style>
   {{>dashboard-footer}}
   
   <script>
@@ -329,20 +417,33 @@
       
       // Extract prompt fetching into a separate function that can be reused
       function fetchPreviewPrompt(modelId, modelName, nsfw) {
+        // Reset all states
         $('#loadingPrompt').removeClass('d-none');
-        $('#promptPreview').addClass('d-none');
+        $('#imagePreview').addClass('d-none');
+        $('#promptDetails').addClass('d-none');
+        $('#noPrompt').addClass('d-none');
+        $('#errorFetching').addClass('d-none');
+        $('#generationResult').addClass('d-none');
         $('#generateBtn').addClass('d-none');
-        
+        $('#getAnotherPreview').addClass('d-none');
+
+        let page = promptIndex = 1;
+        const modelJson = JSON.parse(sessionStorage.getItem(`civitai-${modelId}-json`));
+        if (modelJson) {
+          page = modelJson.page || 1;
+          promptIndex = modelJson.promptIndex || 1;
+        }
         $.ajax({
           url: '/api/preview-prompt',
           type: 'POST',
-          data: { modelId, modelName, nsfw },
+          data: { modelId, modelName, nsfw, page, promptIndex},
           dataType: 'json',
           success: function(data) {
+            console.log(data)
             $('#loadingPrompt').addClass('d-none');
             
             if (data.error) {
-              $('#errorFetching').removeClass('d-none').text(data.error);
+              $('#errorFetching').removeClass('d-none');
               return;
             }
             
@@ -353,16 +454,33 @@
             
             // Store the promptKey for later use
             promptKey = data.promptKey;
+
+            console.log(`[Model Chat] new index: ${data.prompt.promptIndex}, page: ${data.prompt.page}, modelId: ${modelId}, promptKey: ${promptKey}`);
+            // update the session storage with model data
+            sessionStorage.setItem(`civitai-${modelId}-json`, JSON.stringify({
+              modelId,
+              modelName,
+              page: data.prompt.page,
+              promptIndex: data.prompt.promptIndex,
+              promptKey
+            }));
             
-            // Show prompt preview
-            $('#promptPreview').removeClass('d-none');
+            // Show image preview
+            $('#imagePreview').removeClass('d-none');
             $('#promptImage').attr('src', data.prompt.imageUrl);
+            $('#promptImageMobile').attr('src', data.prompt.imageUrl);
+            
+            // Show prompt details
+            $('#promptDetails').removeClass('d-none');
             $('#promptText').text(data.prompt.prompt);
             $('#promptNegative').text(data.prompt.negativePrompt);
+            
+            // Show action buttons
             $('#generateBtn').removeClass('d-none')
               .data('model-id', modelId)
               .data('nsfw', nsfw)
               .data('prompt-key', promptKey);
+            $('#getAnotherPreview').removeClass('d-none');
           },
           error: function() {
             $('#loadingPrompt').addClass('d-none');

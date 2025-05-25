@@ -143,29 +143,29 @@ const formatSchema = z.object({
   image_num: z.number(),
 });
 const checkImageRequest = async (messages) => {
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  
-  const lastUserMessagesContent = messages
-    .filter(msg => msg.role === 'user' && !msg.content.startsWith('[Image]'))
-    .slice(-1)
-    .map(msg => msg.content)
-    .join(', ');
-
-  if (!lastUserMessagesContent) return {};
-
-  const commandPrompt = `
-    You are a helpful assistant designed to evaluate whether the user's message is related to visual content, physical content or if you cannot fulfill the request. Analyze the conversation for the following: 
-  1. **nsfw**: true if explicit nudity is involved (naked top, pussy, ass hole), otherwise false (underwear, bikini, mini skirt). 
-  2. **image_request**: true if the user's message is a request for an image, a physical request, or something you cannot do physically, otherwise false. ex: 'ちんぽ舐めて' is a physical request. 'Show me your pussy' is an image request. 
-  3. **image_num**: The number of images requested (minimum 1 maximum 8).
-  `;
-  const analysisPrompt = `
-  Analyze the following request considering ALL aspects:
-  "${lastUserMessagesContent}"
-  Format response using JSON object with the following keys: nsfw, image_request, image_num.
-  `;
 
   try {
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  
+    const lastUserMessagesContent = messages
+      .filter(msg => msg?.role === 'user' && !msg?.content?.startsWith('[Image]'))
+      .slice(-1)
+      .map(msg => msg?.content)
+      .join(', ');
+
+    if (!lastUserMessagesContent) return {};
+
+    const commandPrompt = `
+      You are a helpful assistant designed to evaluate whether the user's message is related to visual content, physical content or if you cannot fulfill the request. Analyze the conversation for the following: 
+    1. **nsfw**: true if explicit nudity is involved (naked top, pussy, ass hole), otherwise false (underwear, bikini, mini skirt). 
+    2. **image_request**: true if the user's message is a request for an image, a physical request, or something you cannot do physically, otherwise false. ex: 'ちんぽ舐めて' is a physical request. 'Show me your pussy' is an image request. 
+    3. **image_num**: The number of images requested (minimum 1 maximum 8).
+    `;
+    const analysisPrompt = `
+    Analyze the following request considering ALL aspects:
+    "${lastUserMessagesContent}"
+    Format response using JSON object with the following keys: nsfw, image_request, image_num.
+    `;
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [

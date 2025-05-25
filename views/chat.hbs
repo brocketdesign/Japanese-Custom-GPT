@@ -3,6 +3,15 @@
     {{> dashboard-header}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 <body>
+    <!-- Fullscreen overlay with loading spinner -->
+    <div class="fullscreen-overlay justify-content-center align-items-center" id="loadingOverlay">
+        <div style="position: relative; display: inline-block;"> <!-- Wrapper for logo and spinner -->
+            <div class="loading-circle shadow" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <img src="/img/logo.png" alt="Logo" class="logo" style="width: 100px; height: auto; display: block;">
+        </div>
+    </div>
     <div id="swup-none">
         <div class="sidebar-history hidden shadow">
             <div class="d-flex justify-content-between">
@@ -232,11 +241,6 @@
             </div>  
         </div>
     </div>
-<style>
-    body{
-        display:none
-    }
-</style>
  {{> dashboard-footer}}
 <script src="/js/chat.js"></script>
 <!-- Include the Swiper JS library -->

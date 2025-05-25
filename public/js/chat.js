@@ -435,8 +435,7 @@ $(document).ready(async function() {
             }, 1000);
         } 
 
-        console.log(`[DEBUG handleChatSuccess] Chat ID: ${chatId}, show body}`);
-        $('body').css('display', 'block');
+        $('.fullscreen-overlay').fadeOut(); 
     }
     
     function setupChatData(chat) {

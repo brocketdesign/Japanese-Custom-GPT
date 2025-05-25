@@ -1,3 +1,4 @@
+
 <!-- Reconnect Prompt Modal -->
 <div class="modal fade" id="reconnectModal" tabindex="-1" aria-labelledby="reconnectModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered mx-0">
@@ -660,7 +661,7 @@ window.showDiscovery = function() {
     if (!window.location.pathname.includes('/chat/')) {
         window.location.href = '/chat/';
     }
-    $('body').css('display', 'block');
+    $('.fullscreen-overlay').fadeOut(); 
     $('body').css('overflow', 'visible');
     
     $('.onchat-on').hide()

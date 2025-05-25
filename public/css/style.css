@@ -27,7 +27,18 @@
   .cursor-pointer {
   cursor:pointer
   }
-  
+  .fullscreen-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #fff; /* Semi-transparent black background */
+  z-index: 1050; /* Ensure it's above most other content */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
   #adviceCarousel .carousel-inner .carousel-item .container {
   width:100%;
   height:100%;
@@ -197,7 +208,44 @@
   opacity:0
   }
   }
-  
+
+.loading-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #D2B8FF 0deg,
+    #8240FF 90deg,
+    #D2B8FF 180deg,
+    #8240FF 270deg,
+    #D2B8FF 360deg
+  );
+  animation: loadingRotate 2s linear infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.loading-circle + img.logo {
+  position: relative;
+  z-index: 3;
+}
+
+@keyframes loadingRotate {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
   .custom-gradient-bg {
   background:linear-gradient(90.9deg,#D2B8FF 2.74%,#8240FF 102.92%);
   color:#fff;

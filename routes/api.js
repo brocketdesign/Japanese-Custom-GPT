@@ -33,7 +33,7 @@ const { title } = require('process');
 const { chat } = require('googleapis/build/src/apis/chat');
 const sessions = new Map();
 
-const free_models = ['293564'];
+const free_models = false // ['293564']; // [DEBUG] Disable temporary
 // Helper function to tokenize a prompt string (can be moved to a shared utility if used elsewhere)
 function tokenizePrompt(promptText) {
   if (!promptText || typeof promptText !== 'string') {
@@ -94,8 +94,11 @@ async function routes(fastify, options) {
             let startMessage = { role: 'user', name: 'master' };
 
             if (!isLoggedIn) {
+                // [DEBUG] Disable temporary
+                /*
                 startMessage.content =
                 "Start with a greeting and prompt the user to log in. Do not start with a confirmation, but directly greet and ask the user to log in.";
+                */
             } else {
                 const subscriptionActive = user?.subscriptionStatus === 'active';
                 const userChat = await collectionUserChat
@@ -323,7 +326,7 @@ async function routes(fastify, options) {
             }
             // Check if imageModel is free. Retrieve the modelId from myModels
             const model = await fastify.mongo.db.collection('myModels').findOne({ model: chat.imageModel });
-            const premiumModel = model ? !free_models.includes(model.modelId) : false;
+            const premiumModel = model ? (free_models && !free_models.includes(model)) : false;
             response.premium = premiumModel;
 
             return reply.send(response);
@@ -1590,7 +1593,7 @@ async function routes(fastify, options) {
                 {
                     $addFields: {
                         chatCount: { $size: '$chats' }, // Calculate the number of chats
-                        premium: { $not: { $in: ['$modelId', free_models] } }
+                        // premium: { $not: { $in: ['$modelId', free_models] } }
                     }
                 },
                 {
@@ -1696,7 +1699,7 @@ async function routes(fastify, options) {
                     // Match language and basic requirements
                     { $match: { chatImageUrl: { $exists: true, $ne: '' }, name: { $exists: true, $ne: '' }, language, imageStyle: { $exists: true, $ne: '' } } },
                     // Add a field premium that check if the chat modelId is not in the free_model array 
-                    { $addFields: { premium: { $not: { $in: ['$modelId', free_models] } } } },
+                    // { $addFields: { premium: { $not: { $in: ['$modelId', free_models] } } } },
                     {
                         $lookup: {
                             from: 'gallery',
@@ -1825,7 +1828,7 @@ async function routes(fastify, options) {
             // Update the premium field  const premiumModel = model ? !free_models.includes(model.modelId) : false;
             scoredChats.forEach(chat => {
                 const model = chat.modelId;
-                chat.premium = model ? !free_models.includes(model) : false;
+                chat.premium = model ? (free_models && !free_models.includes(model)) : false;
             });
 
           scoredChats.sort((a, b) => b.score - a.score);
@@ -1924,10 +1927,10 @@ async function routes(fastify, options) {
             
         // Combine and sort by _id descending (latest first)
         const combinedChats = [...sfwChats, ...nsfwChats].sort((a, b) => b._id - a._id);
-        // Update the premium field  const premiumModel = model ? !free_models.includes(model.modelId) : false;
+        // Update the premium field
         combinedChats.forEach(chat => {
             const model = chat.modelId;
-            chat.premium = model ? !free_models.includes(model) : false;
+            chat.premium = model ? (free_models && !free_models.includes(model)) : false;
         });
         const formattedChats = combinedChats.map(chat => ({
             _id: chat._id,

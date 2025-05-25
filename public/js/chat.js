@@ -198,9 +198,9 @@ $(document).ready(async function() {
     }            
 
     if(chatId){
-        fetchChatData(chatId, userId)
+        fetchChatData(chatId, userId);
     }else{
-        showDiscovery()
+        showDiscovery();
     }
     
     $('textarea').each(function() {
@@ -434,6 +434,9 @@ $(document).ready(async function() {
                 showPrompts();
             }, 1000);
         } 
+
+        console.log(`[DEBUG handleChatSuccess] Chat ID: ${chatId}, show body}`);
+        $('body').css('display', 'block');
     }
     
     function setupChatData(chat) {
@@ -635,7 +638,7 @@ function setupChatInterface(chat, character) {
     }
     
     async function displayChat(userChat, persona, callback) {
-        console.log(persona)
+
         $('body').css('overflow', 'hidden');
         $('#stability-gen-button').show();
         $('.auto-gen').each(function() { $(this).show(); });
@@ -656,7 +659,7 @@ function setupChatInterface(chat, character) {
                 if (!isStarter && !isHidden) {
                     messageHtml = `
                         <div class="d-flex flex-row justify-content-end mb-4 message-container" style="position: relative;">
-                            <div class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
+                            <div class="p-3 me-3 border-0 text-start user-message" style="border-radius: 15px; background-color: #fbfbfbdb;">
                                 ${marked.parse(chatMessage.content)}
                             </div>
                             ${persona ? `<img src="${persona.chatImageUrl || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">` : ''}
@@ -1292,7 +1295,7 @@ function setupChatInterface(chat, character) {
                 message = message.replace('[Hidden]','').replace('[user] ','').replace('[context] ','')
                 messageElement = $(`
                     <div class="d-flex flex-row justify-content-end mb-4 message-container ${messageClass} ${animationClass}">
-                        <div class="p-3 me-3 border-0 text-start" style="border-radius: 15px; background-color: #fbfbfbdb;">
+                        <div class="p-3 me-3 border-0 text-start user-message" style="border-radius: 15px; background-color: #fbfbfbdb;">
                             <span>${message}</span>
                         </div>
                         ${persona ? `<img src="${persona.chatImageUrl || '/img/logo.webp'}" alt="avatar" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">` : ''}

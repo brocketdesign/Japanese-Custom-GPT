@@ -17,7 +17,7 @@
   max-width:100vw!important;
   overflow-x:hidden!important;
   padding:0;
-  margin:0
+  margin:0;
   }
   
   .isAdmin {
@@ -1013,8 +1013,8 @@
   height:70px;
   border-radius:50%
   }
-  .message-container div {
-    max-width: 81%;
+.message-container .assistant-chat-box,.message-container .user-message {
+    max-width: 79%;
   }
   .assistant-chat-box {
   border-radius:0 15px 15px 15px;

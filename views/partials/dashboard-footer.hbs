@@ -660,6 +660,7 @@ window.showDiscovery = function() {
     if (!window.location.pathname.includes('/chat/')) {
         window.location.href = '/chat/';
     }
+    $('body').css('display', 'block');
     $('body').css('overflow', 'visible');
     
     $('.onchat-on').hide()

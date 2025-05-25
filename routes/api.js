@@ -1043,16 +1043,34 @@ async function routes(fastify, options) {
                     message: "Message parameter is required."
                 });
             }
-                
+
+            let system_tone = '';
+            try {
+                const system_tone_message = [
+                    {
+                        role: 'system',
+                        content: `You are a ${language} text-to-speech specialist. Briefly describe the tone and style you would use to speak the following message, without repeating the message itself.`
+                    },
+                    {
+                        role: 'user',
+                        content: message
+                    }
+                ]
+                system_tone = await generateCompletion(system_tone_message, 100, 'openai');
+                console.log(`System tone for TTS: ${system_tone}`);
+            } catch (error) {
+                console.log(error);
+            }
             // Initialize OpenAI (ensure you have set your API key in environment variables)
             const openai = new OpenAI({
                 apiKey: process.env.OPENAI_API_KEY
             });
         
             const mp3 = await openai.audio.speech.create({
-                model: "tts-1",
-                voice: "nova",
-                input: message
+                model: "gpt-4o-mini-tts",
+                voice: "sage",
+                input: message,
+                instructions:system_tone
             });
         
             const buffer = Buffer.from(await mp3.arrayBuffer());

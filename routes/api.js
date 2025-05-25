@@ -789,7 +789,9 @@ async function routes(fastify, options) {
           let personaInfo = null
            try {
                 const personaId = userData?.persona || null;
+                console.log(`[/api/openai-chat-completion] personaId: ${personaId}`);
                 personaInfo = personaId ? await getPersonaById(db, personaId) : null;
+                console.log(`[/api/openai-chat-completion] personaInfo: ${JSON.stringify(personaInfo)}`);
                 console.log(`[/api/openai-chat-completion] userPersona: ${personaInfo.name}`);
            } catch (error) {
                 console.log(`[/api/openai-chat-completion] Error fetching persona: ${error}`);

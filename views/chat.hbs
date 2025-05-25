@@ -366,15 +366,16 @@ $(document).ready(function() {
     })
     
     window.showImagePreview = function(el) {
-    if($(el).hasClass('isBlurred')){
-        loadPlanPage();
+        if($(el).hasClass('isBlurred')){
+            loadPlanPage();
             return;
         }
 
-        // Get all images from the chat
-        const images = $('.assistant-image-box img').map(function() {
-            return $(this).attr('src');
-        }).get();
+        // Get all images from the chat, filter out placeholder
+        const images = $('.assistant-image-box img')
+            .map((_, img) => $(img).attr('src') || $(img).attr('data-src'))
+            .get()
+            .filter(src => src && !src.includes('placeholder')); // Exclude placeholder images
 
         const clickedImageUrl = $(el).find('img').attr('src') || $(el).attr('data-src');
         

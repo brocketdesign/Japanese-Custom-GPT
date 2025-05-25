@@ -2304,9 +2304,6 @@ window.generateCompletion = async function(systemPrompt, userMessage) {
     }
 }
 
-
-
-
 function updateSwiperSlides(images) {
     // Ensure Swiper container exists
     const swiperContainer = document.querySelector('.swiper-container');

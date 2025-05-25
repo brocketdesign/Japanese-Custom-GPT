@@ -73,7 +73,7 @@ const default_prompt = {
   } 
 
 // Module to generate an image
-async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSeed, regenerate, userId, chatId, userChatId, imageType, image_num, image_base64, chatCreation, placeholderId, translations, fastify, flux = false}) {
+async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSeed, regenerate, userId, chatId, userChatId, imageType, image_num, image_base64, chatCreation, placeholderId, translations, fastify, flux = false, customPromptId = null}) {
     const db = fastify.mongo.db;
   
     // Fetch the user
@@ -153,23 +153,31 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
     const novitaTaskId = await fetchNovitaMagic(requestData, flux);
     
     // Store task details in DB
-    const checkTaskValidity = await db.collection('tasks').insertOne({
-      taskId: novitaTaskId,
-      type: imageType,
-      status: 'pending',
-      prompt: prompt,
-      title: {},
-      negative_prompt: image_request.negative_prompt,
-      aspectRatio: aspectRatio,
-      userId: new ObjectId(userId),
-      chatId: new ObjectId(chatId),
-      userChatId: userChatId ? new ObjectId(userChatId) : null,
-      blur: image_request.blur,
-      chatCreation,
-      placeholderId,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    });
+    const taskData = {
+        taskId: novitaTaskId,
+        type: imageType,
+        status: 'pending',
+        prompt: prompt,
+        title: {},
+        negative_prompt: image_request.negative_prompt,
+        aspectRatio: aspectRatio,
+        userId: new ObjectId(userId),
+        chatId: new ObjectId(chatId),
+        userChatId: userChatId ? new ObjectId(userChatId) : null,
+        blur: image_request.blur,
+        chatCreation,
+        placeholderId,
+        createdAt: new Date(),
+        updatedAt: new Date()
+    };
+    
+    // Add custom prompt ID if provided
+    if (customPromptId) {
+        taskData.customPromptId = customPromptId;
+        console.log(`[generateImg] Custom prompt ID provided for task ${novitaTaskId}: ${customPromptId}`);
+    }
+    
+    const checkTaskValidity = await db.collection('tasks').insertOne(taskData);
     
     // Check if the task has been saved
     if (!checkTaskValidity.insertedId) {
@@ -301,7 +309,7 @@ async function centerCropImage(base64Image, targetWidth, targetHeight) {
       let taskStarted = false;
       const db = fastify.mongo.db;
       let zeroProgressAttempts = 0;
-      const maxZeroProgressAttempts = 5;
+      const maxZeroProgressAttempts = 0;
 
       return new Promise((resolve, reject) => {
         const intervalId = setInterval(async () => {

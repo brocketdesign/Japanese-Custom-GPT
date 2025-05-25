@@ -138,19 +138,30 @@ window.handleRegenSpin = function (imageId, spin) {
         $(`.txt2img[data-id=${imageId}]`).removeClass('spin');
     }
 }
+
 // Display and remove image loader with provided data-id
 window.displayOrRemoveImageLoader = function (imageId, action, imagePreview) {
     if (action === 'remove') {
         $(`#chat-recommend [data-id=${imageId}]`).remove();
     } else {
         const loadingSpinerGif = "/img/image-placeholder.gif";
+        
+        // Check if imagePreview is provided (custom prompt case)
+        const hasCustomPrompt = imagePreview && imagePreview.trim() !== '';
+        
+        // Build the background style
+        const backgroundStyle = hasCustomPrompt 
+            ? `background-image:url(${imagePreview});border:4px solid white;background-size:cover;` 
+            : 'border:4px solid white;';
+        
         const card = $(`
             <div data-id="${imageId}" class="assistant-image-box card custom-card bg-transparent shadow-0 border-0 px-1 mx-1 col-auto" style="cursor:pointer;">
-            <div style="background-image:url(${imagePreview});border:4px solid white;background-size:cover;" class="card-img-top rounded-avatar position-relative m-auto">
-                <img src="${loadingSpinerGif}" alt="Loading..." class="position-absolute top-50 start-50 translate-middle" style="z-index:2;"/>
-            </div>
+                <div style="${backgroundStyle}" class="card-img-top rounded-avatar position-relative m-auto">
+                    <img src="${loadingSpinerGif}" alt="Loading..." class="position-absolute top-50 start-50 translate-middle" style="z-index:2;${hasCustomPrompt ? 'opacity:0.8;' : ''}"/>
+                </div>
             </div>
         `);
+        
         $('#chat-recommend').append(card);
         $('#chat-recommend').scrollLeft($('#chat-recommend')[0].scrollWidth);
     }

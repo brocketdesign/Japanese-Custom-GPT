@@ -199,14 +199,6 @@ const PersonaModule = {
             });
         }
         
-        this.updatePromptActivatedCounter();
-    },
-
-    updatePromptActivatedCounter() {
-        const $prompts = $('.persona');
-        const total = $prompts.length;
-        
-        $('#prompt-activated-counter').html(`<span class="badge custom-gradient-bg">$${total}</span>`);
     },
 
     // Save a chat as a persona

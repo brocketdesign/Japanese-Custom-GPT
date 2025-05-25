@@ -399,6 +399,82 @@ $(document).ready(async function() {
             updatePromptActivatedCounter();
         }
 
+    async function checkBackgroundTasks(chatId, userChatId) {
+        try {
+            const response = await fetch(`/api/background-tasks/${userChatId}`);
+            const data = await response.json();
+            
+            if (data.tasks && data.tasks.length > 0) {
+                data.tasks.forEach(task => {
+                    if (task.status === 'pending' || task.status === 'processing' || task.status === 'background') {
+                        // Display placeholder for background task
+                        displayBackgroundTaskPlaceholder(task);
+                        
+                        // Start polling for this specific task
+                        pollBackgroundTask(task.taskId, task.placeholderId);
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error checking background tasks:', error);
+        }
+    }
+
+    function displayBackgroundTaskPlaceholder(task) {
+        const placeholderId = task.placeholderId;
+        
+        // Check if custom prompt was used
+        if (task.customPromptId) {
+            // Get the custom prompt image preview
+            const promptCard = $(`.prompt-card[data-id="${task.customPromptId}"]`);
+            if (promptCard.length > 0) {
+                const imagePreview = promptCard.find('img').attr('data-src') || promptCard.find('img').attr('src');
+                displayOrRemoveImageLoader(placeholderId, 'show', imagePreview);
+            } else {
+                displayOrRemoveImageLoader(placeholderId, 'show');
+            }
+        } else {
+            displayOrRemoveImageLoader(placeholderId, 'show');
+        }
+    }
+
+    async function pollBackgroundTask(taskId, placeholderId) {
+        const pollInterval = setInterval(async () => {
+            try {
+                const response = await fetch(`/api/task-status/${taskId}`);
+                const taskStatus = await response.json();
+                
+                if (taskStatus.status === 'completed') {
+                    clearInterval(pollInterval);
+                    displayOrRemoveImageLoader(placeholderId, 'remove');
+                    
+                    // Display the completed images
+                    if (taskStatus.images && taskStatus.images.length > 0) {
+                        taskStatus.images.forEach(image => {
+                            window.parent.postMessage({
+                                event: 'imageGenerated',
+                                imageUrl: image.imageUrl,
+                                imageId: image.imageId,
+                                userChatId: taskStatus.userChatId,
+                                title: image.title,
+                                prompt: image.prompt,
+                                nsfw: image.nsfw
+                            }, '*');
+                        });
+                    }
+                } else if (taskStatus.status === 'failed') {
+                    clearInterval(pollInterval);
+                    displayOrRemoveImageLoader(placeholderId, 'remove');
+                    showNotification(window.translations.image_generation_failed || 'Image generation failed', 'error');
+                }
+            } catch (error) {
+                console.error('Error polling background task:', error);
+                clearInterval(pollInterval);
+                displayOrRemoveImageLoader(placeholderId, 'remove');
+            }
+        }, 5000); // Poll every 5 seconds for background tasks
+    }
+
     async function handleChatSuccess(data, fetch_reset, fetch_userId, userChatId) {
         $(document).find(`.chat-list.item[data-id="${chatId}"]`).addClass('active').siblings().removeClass('active');
 
@@ -419,6 +495,7 @@ $(document).ready(async function() {
 
         if (!isNew) {
             displayExistingChat(data.userChat, data.character);
+            await checkBackgroundTasks(chatId, userChatId);
         } else {
             displayInitialChatInterface(data.chat);
         }
@@ -745,13 +822,13 @@ function setupChatInterface(chat, character) {
                     <span type="button" class="badge bg-white text-secondary" data-bs-toggle="modal" data-bs-target="#modal-${imageId}">
                         <i class="bi bi-info-circle"></i>
                     </span>
-                    <div style="height: 70vh;" class="modal fade" id="modal-${imageId}" tabindex="-1" aria-labelledby="modal-${imageId}-label" aria-hidden="true" data-bs-backdrop="false">
-                        <div class="modal-dialog" style="bottom: 80px;position: fixed;">
-                            <div class="modal-content border-0 shadow mx-auto" style="height: auto;">
+                    <div style="height: 50vh;" class="modal fade" id="modal-${imageId}" tabindex="-1" aria-labelledby="modal-${imageId}-label" aria-hidden="true" data-bs-backdrop="false">
+                        <div class="modal-dialog" style="bottom: 20vh;position: fixed;">
+                            <div class="modal-content border-0 shadow mx-auto" style="height: auto; width: 90%; max-width: 600px;">
                                 <div class="modal-header">
                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
-                                <div class="modal-body">
+                                <div class="modal-body" style="max-height: 25vh; overflow-y: auto;">
                                     <p>${prompt}</p>
                                 </div>
                             </div>

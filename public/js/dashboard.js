@@ -743,14 +743,10 @@ function createOverlay(img, imageUrl) {
       .addClass('btn btn-sm btn-outline-light mt-3 animate__animated animate__pulse')
       .css({ 'font-size': '14px', 'border-radius': '50px', cursor: 'pointer' })
       .on('click', function (e) {
-          e.stopPropagation(); // Prevent click from bubbling to parent if wrapped
-          // Reveal the original image by replacing the blurred one
-          // This assumes the original image URL is stored in `imageUrl`
-          // and the blurred image is the `src` of `img`
+          e.stopPropagation();
+          loadPlanPage(); 
           const parentDiv = $(img).parent();
-          $(img).attr('src', imageUrl); // Set src to original image
-          overlay.remove(); // Remove the overlay
-          // If you had other attributes on the original img tag that were removed for blurring, restore them here.
+          $(img).attr('src', imageUrl);
       });
 
     let textElement = $('<div></div>')
@@ -1338,7 +1334,7 @@ window.displaySimilarChats = function (chatData, targetGalleryId) {
         if (!isOwner && ((isTemporaryUser || !subscriptionStatus))) {
              nsfwOverlay = `<div class="gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center" style="background: rgba(0,0,0,0.55); z-index: 2; backdrop-filter: blur(5px);">
                                 <span class="badge bg-danger mb-2" style="font-size: 0.9rem;"><i class="bi bi-exclamation-triangle"></i> NSFW</span>
-                                <button class="btn btn-sm btn-outline-light mt-2" onclick="handleClickRegisterOrPay(event,${isTemporaryUser})" style="font-size: 12px; border-radius: 50px;">
+                                <button class="btn btn-sm btn-outline-light mt-2" onclick="event.stopPropagation(); handleClickRegisterOrPay(event,${isTemporaryUser})" style="font-size: 12px; border-radius: 50px;">
                                     ${isTemporaryUser ? (window.translations?.register || 'Register to View') : (window.translations?.subscribe || 'Subscribe to View')}
                                 </button>
                             </div>`;
@@ -1408,38 +1404,38 @@ window.displayLatestChats = function (chatData, targetGalleryId, modal = false) 
 
     // Simplified NSFW Overlay Logic - adapt to your full existing logic if more complex
     if (isNSFW && !nsfwVisible) {
-        if (!isOwner && ((isTemporaryUser || !subscriptionStatus))) {
-             nsfwOverlay = `<div class="gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center" style="background: rgba(0,0,0,0.55); z-index: 2; backdrop-filter: blur(5px);">
-                                <span class="badge bg-danger mb-2" style="font-size: 0.9rem;"><i class="bi bi-exclamation-triangle"></i> NSFW</span>
-                                <button class="btn btn-sm btn-outline-light mt-2" onclick="loadPlanPage(event, ${isTemporaryUser})" style="font-size: 12px; border-radius: 50px;">
-                                    ${isTemporaryUser ? (window.translations?.register || 'Register to View') : (window.translations?.subscribe || 'Subscribe to View')}
-                                </button>
-                            </div>`;
-        }
+      if (!isOwner && ((isTemporaryUser || !subscriptionStatus))) {
+         nsfwOverlay = `<div class="gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center" style="background: rgba(0,0,0,0.55); z-index: 2; backdrop-filter: blur(5px);" onclick="event.stopPropagation();">
+                  <span class="badge bg-danger mb-2" style="font-size: 0.9rem;"><i class="bi bi-exclamation-triangle"></i> NSFW</span>
+                  <button class="btn btn-sm btn-outline-light mt-2" onclick="event.stopPropagation(); handleClickRegisterOrPay(event, ${isTemporaryUser});" style="font-size: 12px; border-radius: 50px;">
+                    ${isTemporaryUser ? (window.translations?.register || 'Register to View') : (window.translations?.subscribe || 'Subscribe to View')}
+                  </button>
+                </div>`;
+      }
     }
     htmlContent += `
       <div class="${cardClass}" data-id="${chat._id}" style="cursor:pointer;" onclick="redirectToChat('${chat._id}','${imageSrc}')">
       <div class="card gallery-hover shadow-sm border-0 h-100 position-relative overflow-hidden">
-        <div class="gallery-image-wrapper" style="aspect-ratio: 4/5; background: #f8f9fa; position: relative;">
-        <img src="${imageSrc}" class="card-img-top gallery-img" alt="${chat.name}" style="height: 100%; width: 100%; object-fit: cover;">
-        ${nsfwOverlay}
-        </div>
-        <div class="card-body p-2 d-flex flex-column">
-        <h6 class="card-title small fw-bold mb-1 text-truncate" style="font-size: 0.85rem;">${chat.name}</h6>
-        </div>
-        <div class="position-absolute top-0 start-0 m-1 d-flex flex-column align-items-start" style="z-index:3;">
-        ${isOwner ? `
-          <span class="badge bg-light text-secondary shadow" style="font-size: 0.6rem !important; padding: 0.2em 0.4em !important;opacity:0.8;">
-          <i class="bi bi-person-fill"></i>
-          </span>
-        ` : ''}
-        ${isPremiumChat ? `<span class="custom-gradient-bg badge bg-gradient-primary mb-1"> ${translations.premium}</span>` : ''}
-        ${(isAdmin) ? `
-          <button class="btn btn-sm btn-outline-secondary border-0 ${chat.nsfw ? 'nsfw' : ''}" onclick="toggleChatNSFW(this); event.stopPropagation();" data-id="${chat._id}" style="background: #00000050;color: white;padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
-          ${chat.nsfw ? '<i class="bi bi-eye-slash-fill"></i>' : '<i class="bi bi-eye-fill"></i>'}
-          </button>
-        ` : ''}
-        </div>
+      <div class="gallery-image-wrapper" style="aspect-ratio: 4/5; background: #f8f9fa; position: relative;">
+      <img src="${imageSrc}" class="card-img-top gallery-img" alt="${chat.name}" style="height: 100%; width: 100%; object-fit: cover;">
+      ${nsfwOverlay}
+      </div>
+      <div class="card-body p-2 d-flex flex-column">
+      <h6 class="card-title small fw-bold mb-1 text-truncate" style="font-size: 0.85rem;">${chat.name}</h6>
+      </div>
+      <div class="position-absolute top-0 start-0 m-1 d-flex flex-column align-items-start" style="z-index:3;">
+      ${isOwner ? `
+        <span class="badge bg-light text-secondary shadow" style="font-size: 0.6rem !important; padding: 0.2em 0.4em !important;opacity:0.8;">
+        <i class="bi bi-person-fill"></i>
+        </span>
+      ` : ''}
+      ${isPremiumChat ? `<span class="custom-gradient-bg badge bg-gradient-primary mb-1"> ${translations.premium}</span>` : ''}
+      ${(isAdmin) ? `
+        <button class="btn btn-sm btn-outline-secondary border-0 ${chat.nsfw ? 'nsfw' : ''}" onclick="toggleChatNSFW(this); event.stopPropagation();" data-id="${chat._id}" style="background: #00000050;color: white;padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
+        ${chat.nsfw ? '<i class="bi bi-eye-slash-fill"></i>' : '<i class="bi bi-eye-fill"></i>'}
+        </button>
+      ` : ''}
+      </div>
       </div>
       </div>
     `;
@@ -1746,7 +1742,7 @@ window.resultImageSearch = async function (page = 1,query,style = 'anime', callb
                 <div class="col-6 col-md-3 col-lg-2 mb-2">
                     <div class="card shadow-0">
                         ${isBlur ? `
-                        <div type="button" onclick="handleClickRegisterOrPay(event,${isTemporary})">
+                        <div type="button" onclick="event.stopPropagation();handleClickRegisterOrPay(event,${isTemporary})">
                             <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" >
                         </div>
                         ` : `
@@ -1905,10 +1901,8 @@ window.loadAllChatImages = function (page = 1, reload = false) {
           <div class="card shadow-0">
             ${
               isBlur
-                ? `<div type="button" onclick="handleClickRegisterOrPay(event,${isTemporary})">
-                      <a href="/character/slug/${item.chatSlug}?imageSlug=${item.slug}" class="text-muted text-decoration-none">
+                ? `<div type="button" onclick="event.stopPropagation();handleClickRegisterOrPay(event,${isTemporary})">
                         <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
-                      </a>
                    </div>`
                 : `<a href="/character/slug/${item.chatSlug}?imageSlug=${item.slug}" class="text-muted text-decoration-none">
                      <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
@@ -2059,7 +2053,7 @@ window.loadUserImages = function (userId, page = 1, reload = false) {
             </div>
             ${
               blurred
-                ? `<div type="button" onclick=handleClickRegisterOrPay(event,${isTemp})>
+                ? `<div type="button" onclick="event.stopPropagation();handleClickRegisterOrPay(event,${isTemporary})">
                      <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
                    </div>`
                 : `<a href="/character/slug/${item.chatSlug}?imageSlug=${item.slug}" class="text-muted text-decoration-none">
@@ -2113,7 +2107,7 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
                         </a>
                     </div>
                     ${isBlur ? `
-                    <div type="button" handleClickRegisterOrPay(event,${isTemporary})>
+                    <div type="button" onclick="event.stopPropagation();handleClickRegisterOrPay(event,${isTemporary})")>
                         <img data-src="${item.image.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" >
                     </div>
                     ` : `
@@ -2428,10 +2422,8 @@ window.loadChatImages = function (chatId, page = 1, reload = false, isModal = fa
           <div class="card shadow-0">
             ${
               isBlur
-                ? `<div type="button" onclick="handleClickRegisterOrPay(event,${isTemporary})">
-                      <a href="/character/slug/${item.chatSlug}?imageSlug=${item.slug}" data-index="${index}">
+                ? `<div type="button" onclick="event.stopPropagation();handleClickRegisterOrPay(event,${isTemporary})">
                         <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
-                      </a>
                    </div>`
                 : `<a href="/character/slug/${item.chatSlug}?imageSlug=${item.slug}" data-index="${index}">
                      <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
@@ -2711,12 +2703,7 @@ $(document).ready(function () {
                           <!-- Blurred Image -->
                           <div 
                             type="button" 
-                            onclick="handleClickRegisterOrPay(event,${isTemporary})"
-                          >
-                          <a 
-                            href="/character/slug/${chat.slug}?imageSlug=${item.slug}" 
-                            class="text-muted text-decoration-none"
-                            data-index="${index}"
+                            onclick="event.stopPropagation();handleClickRegisterOrPay(event,${isTemporary})"
                           >
                             <img 
                               data-src="${item.imageUrl}" 
@@ -2724,7 +2711,6 @@ $(document).ready(function () {
                               style="object-fit: cover;"
                             >
                           </div>
-                          </a>
                         `
                         : `
                           <!-- Unblurred Image -->
@@ -2848,7 +2834,7 @@ $(document).ready(function () {
                           ? `
                             <div 
                               type="button" 
-                              onclick="handleClickRegisterOrPay(event,${isTemporary})"
+                              onclick="event.stopPropagation();handleClickRegisterOrPay(event,${isTemporary})"
                             >
                               <img 
                                 data-src="${item.imageUrl}" 

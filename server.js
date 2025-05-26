@@ -150,6 +150,7 @@ fastify.register(require('./routes/character-creation-api'));
 fastify.register(require('./routes/character-update-api'));
 fastify.register(require('./routes/personas-api'));
 fastify.register(require('./routes/stability'));
+fastify.register(require('./routes/img2video-api'));
 fastify.register(require('./routes/plan'));
 fastify.register(require('./routes/user'));
 fastify.register(require('./routes/admin'));

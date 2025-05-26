@@ -832,7 +832,13 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
         { _id: new ObjectId(chatId) },
         { $inc: { imageCount: 1 } }
       );
-  
+
+      const usersCollection = db.collection('users');
+      await usersCollection.updateOne(
+          { _id: new ObjectId(userId) },
+          { $inc: { imageCount: 1 } }
+      );
+      
       if (!userChatId || !ObjectId.isValid(userChatId)) {
         return { imageUrl };
       }

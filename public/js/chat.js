@@ -1,4 +1,3 @@
-
 const audioCache = new Map();
 const audioPool = [];
 
@@ -47,13 +46,13 @@ window.onPersonaModuleClose = function() {
         isNew = false;
     }
 };
+window.thumbnail = false
 $(document).ready(async function() {
     let currentStep = 0;
     let totalSteps = 0;
     let chatData = {};
     let character = {}
     let feedback = false
-    let thumbnail = false
     let isTemporary = !!user.isTemporary
 
     language = getLanguageName(user.lang) || getLanguageName(lang) || getLanguageName('ja');
@@ -401,6 +400,7 @@ $(document).ready(async function() {
 
     async function checkBackgroundTasks(chatId, userChatId) {
         try {
+            // Check image generation tasks
             const response = await fetch(`/api/background-tasks/${userChatId}`);
             const data = await response.json();
             
@@ -412,6 +412,22 @@ $(document).ready(async function() {
                         
                         // Start polling for this specific task
                         pollBackgroundTask(task.taskId, task.placeholderId);
+                    }
+                });
+            }
+
+            // Check video generation tasks
+            const videoResponse = await fetch(`/api/background-video-tasks/${userChatId}`);
+            const videoData = await videoResponse.json();
+            
+            if (videoData.tasks && videoData.tasks.length > 0) {
+                videoData.tasks.forEach(task => {
+                    if (task.status === 'pending' || task.status === 'processing' || task.status === 'background') {
+                        // Display placeholder for background video task
+                        displayVideoLoader(task.placeholderId, task.imageId);
+                        
+                        // Note: No polling needed here since backend handles it via WebSocket
+                        console.log(`Background video task found: ${task.taskId}, loader displayed`);
                     }
                 });
             }
@@ -744,8 +760,10 @@ function setupChatInterface(chat, character) {
                     `;
                 }
             } else if (chatMessage.role === "assistant") {
+
                 const isNarratorMessage = chatMessage.content.startsWith("[Narrator]");
-                const isImage = chatMessage.content.startsWith("[Image]");
+                const isImage = chatMessage.content.startsWith("[Image]") || chatMessage.content.startsWith("[image]");
+                const isVideo = chatMessage.content.startsWith("[Video]") || chatMessage.content.startsWith("[video]");
                 const designStep = Math.floor(i / 2) + 1;
     
                 if (isNarratorMessage) {
@@ -758,9 +776,13 @@ function setupChatInterface(chat, character) {
                         </div>
                     `;
                 } else if (isImage) {
-                    const imageId = chatMessage.content.replace("[Image]", "").trim();
+                    const imageId = chatMessage.content.replace("[Image]", "").replace("[image]", "").trim();
                     const imageData = await getImageUrlById(imageId, designStep, thumbnail);
-                    messageHtml = imageData.messageHtml
+                    messageHtml = imageData ? imageData.messageHtml : '';
+                } else if (isVideo) {
+                    const videoId = chatMessage.content.replace("[Video]", "").replace("[video]", "").trim();
+                    const videoData = await getVideoUrlById(videoId, designStep, thumbnail);
+                    messageHtml = videoData.messageHtml;
                 } else {
                     const isHidden = chatMessage.content.startsWith("[Hidden]");
                     if (chatMessage.content && !isHidden) {
@@ -818,6 +840,14 @@ function setupChatInterface(chat, character) {
                     style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
                         <i class="bi bi-arrow-clockwise"></i>
                     </span>
+                    <span class="badge bg-white text-secondary img2video-btn" 
+                    onclick="${subscriptionStatus ? `generateVideoFromImage('${imageId}', '${chatId}', '${userChatId}')` : 'loadPlanPage()'}" 
+                    data-id="${imageId}" 
+                    data-chat-id="${chatId}"
+                    style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;"
+                    title="${window.translations?.convert_to_video || 'Convert to Video'}">
+                        <i class="bi bi-play-circle"></i>
+                    </span>
                     ${window.isAdmin ? `
                     <span type="button" class="badge bg-white text-secondary" data-bs-toggle="modal" data-bs-target="#modal-${imageId}">
                         <i class="bi bi-info-circle"></i>
@@ -863,13 +893,93 @@ function setupChatInterface(chat, character) {
         $('#twitterShareButton').off('click').on('click', () => shareOnTwitter(title, url));
         $('#facebookShareButton').off('click').on('click', () => shareOnFacebook(title, url));
         $('#shareModal').modal('show');
-      }
-      function shareOnTwitter(title, url) {
+    }
+    function shareOnTwitter(title, url) {
         window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`, '_blank');
-      }
-      function shareOnFacebook(title, url) {
+    }
+    function shareOnFacebook(title, url) {
         window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
-      }
+    }
+                    
+    function getVideoUrlById(videoId, designStep, thumbnail) {
+        const placeholderVideoUrl = '/img/video-placeholder.gif'; // Placeholder video URL
+
+        // Return immediately with placeholder and update asynchronously
+        return new Promise((resolve) => {
+            const placeholderHtml = `
+            <div id="container-${designStep}">
+                <div class="d-flex flex-row justify-content-start mb-4 message-container">
+                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
+                    <div class="ms-3 position-relative" style="max-width: 200px;">
+                        <div class="ps-0 text-start assistant-video-box">
+                            <div id="video-${videoId}" class="video-loading-placeholder">
+                                <img src="${placeholderVideoUrl}" alt="Loading video...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+            resolve({ messageHtml: placeholderHtml, videoUrl: placeholderVideoUrl });
+
+            // Fetch video asynchronously and update the DOM
+            $.ajax({
+                url: `/api/video/${videoId}`,
+                method: 'GET',
+                success: function(response) {
+                    if (response.videoUrl) {
+                        // Replace placeholder with actual video
+                        const videoHtml = `
+                            <video 
+                                controls 
+                                class="generated-video" 
+                                style="max-width: 100%; border-radius: 15px;"
+                                data-video-id="${videoId}"
+                            >
+                                <source src="${response.videoUrl}" type="video/mp4">
+                                ${window.translations?.video_not_supported || 'Your browser does not support the video tag.'}
+                            </video>
+                        `;
+                        
+                        $(`#video-${videoId}`).replaceWith(videoHtml);
+                        
+                        // Add video tools
+                        const toolsHtml = getVideoTools(response.videoUrl, response.duration, videoId);
+                        $(`[data-video-id="${videoId}"]`).closest('.assistant-video-box').after(toolsHtml);
+                    } else {
+                        console.error('No video URL returned');
+                        $(`#video-${videoId}`).html('<div class="text-muted">Video unavailable</div>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching video URL:', error);
+                    $(`#video-${videoId}`).html('<div class="text-muted">Error loading video</div>');
+                }
+            });
+        });
+    }
+
+    function getVideoTools(videoUrl, duration, videoId) {
+        return `
+        <div class="bg-white py-2 d-flex justify-content-around video-tools">
+            <div class="d-flex justify-content-around w-100">
+                <span class="badge bg-white text-secondary download-video" style="cursor: pointer;">
+                    <a href="${videoUrl}" download="generated_video_${videoId}.mp4" style="color:inherit; text-decoration: none;">
+                        <i class="bi bi-download"></i>
+                    </a>
+                </span>
+                <span class="badge bg-white text-secondary share-video" 
+                      onclick="shareVideo('${videoUrl}')" 
+                      style="cursor: pointer;">
+                    <i class="bi bi-share"></i>
+                </span>
+                ${duration ? `<span class="badge bg-white text-secondary">
+                    <i class="bi bi-clock"></i> ${Math.round(duration)}s
+                </span>` : ''}
+            </div>
+        </div>
+    `;
+    }
+
     function getImageUrlById(imageId, designStep, thumbnail) {
         const placeholderImageUrl = '/img/placeholder-image-2.gif'; // Placeholder image URL
 
@@ -933,6 +1043,7 @@ function setupChatInterface(chat, character) {
                         }
                     } else {
                         console.error('No image URL returned');
+                        return false;
                     }
                 },
                 error: function(xhr, status, error) {

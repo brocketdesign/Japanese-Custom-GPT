@@ -209,6 +209,180 @@ const processBackgroundTasks = (fastify) => async () => {
 };
 
 /**
+ * Process background video generation tasks
+ * @param {Object} fastify - Fastify instance
+ */
+const processBackgroundVideoTasks = (fastify) => async () => {
+  console.log('[processBackgroundVideoTasks] Starting background video task processing...');
+  const db = fastify.mongo.db;
+
+    // Add this check at the beginning
+    if (!fastify.sendNotificationToUser) {
+      console.warn('[processBackgroundVideoTasks] sendNotificationToUser method not available');
+    }
+
+  try {
+    // Find incomplete video tasks
+    const backgroundVideoTasks = await db.collection('tasks').find({ 
+      type: 'img2video',
+      status: { $in: ['pending', 'processing', 'background'] }
+    }).toArray();
+    
+    console.log(`[processBackgroundVideoTasks] Found ${backgroundVideoTasks.length} video tasks to process...`);
+    
+    if (!backgroundVideoTasks.length) {
+      console.log('[processBackgroundVideoTasks] No background video tasks found, skipping...');
+      return;
+    }
+    
+    const { checkVideoTaskStatus, handleVideoTaskCompletion } = require('./img2video-utils');
+    
+    for (const task of backgroundVideoTasks) {
+      console.log(`[processBackgroundVideoTasks] Processing task ${task.taskId} (status: ${task.status})`);
+      console.log(`[processBackgroundVideoTasks] Task details:`, {
+        taskId: task.taskId,
+        userId: task.userId,
+        chatId: task.chatId,
+        placeholderId: task.placeholderId,
+        status: task.status,
+        createdAt: task.createdAt,
+        updatedAt: task.updatedAt
+      });
+      
+      try {
+        console.log(`[processBackgroundVideoTasks] Checking status for video task ${task.taskId}`);
+        
+        // Check the current status of the video generation
+        const taskStatus = await checkVideoTaskStatus(task.taskId);
+        
+        console.log(`[processBackgroundVideoTasks] Task ${task.taskId} status check result:`, JSON.stringify(taskStatus, null, 2));
+        
+        if (!taskStatus) {
+          console.error(`[processBackgroundVideoTasks] No status returned for task ${task.taskId}`);
+          await db.collection('tasks').updateOne(
+            { _id: task._id },
+            { 
+              $set: { 
+                status: 'failed', 
+                result: { error: 'No status returned from API' },
+                updatedAt: new Date() 
+              } 
+            }
+          );
+          continue;
+        }
+        
+        if (taskStatus.status === 'processing' || taskStatus.status === 'pending') {
+          console.log(`[processBackgroundVideoTasks] Task ${task.taskId} still processing (${taskStatus.status}), will check again next cycle`);
+          
+          // Update task status and progress if changed
+          await db.collection('tasks').updateOne(
+            { _id: task._id },
+            { 
+              $set: { 
+                status: taskStatus.status,
+                progress: taskStatus.progress || 0,
+                updatedAt: new Date() 
+              } 
+            }
+          );
+          continue;
+        }
+        
+        if (taskStatus.status === 'failed') {
+          console.error(`[processBackgroundVideoTasks] Task ${task.taskId} failed:`, taskStatus.error);
+          
+          // Update task as failed
+          await db.collection('tasks').updateOne(
+            { _id: task._id },
+            { 
+              $set: { 
+                status: 'failed', 
+                result: { error: taskStatus.error },
+                updatedAt: new Date() 
+              } 
+            }
+          );
+          
+          // Notify user of failure
+          if (task.userId && fastify.sendNotificationToUser) {
+            console.log(`[processBackgroundVideoTasks] Notifying user ${task.userId} of task failure`);
+            fastify.sendNotificationToUser(task.userId.toString(), 'handleVideoLoader', { 
+              videoId: task.placeholderId, 
+              action: 'remove' 
+            });
+            fastify.sendNotificationToUser(task.userId.toString(), 'showNotification', {
+              message: 'Video generation failed',
+              icon: 'error'
+            });
+          }
+          continue;
+        }
+        
+        if (taskStatus.status === 'completed') {
+          console.log(`[processBackgroundVideoTasks] Task ${task.taskId} completed successfully!`);
+          
+          // Handle task completion with all necessary data
+          await handleVideoTaskCompletion(
+            { ...taskStatus, taskId: task.taskId },
+            fastify,
+            {
+              userId: task.userId.toString(),
+              chatId: task.chatId.toString(),
+              userChatId: task.userChatId,
+              placeholderId: task.placeholderId,
+              imageId: task.imageId.toString(),
+              prompt: task.prompt
+            }
+          );
+          
+          console.log(`[processBackgroundVideoTasks] Task ${task.taskId} completion handling finished`);
+          continue;
+        }
+        
+        console.log(`[processBackgroundVideoTasks] Task ${task.taskId} has unknown status: ${taskStatus.status}`);
+        
+      } catch (err) {
+        console.error(`[processBackgroundVideoTasks] Error processing video task ${task.taskId}:`, err);
+        
+        // Mark task as failed if we can't process it
+        try {
+          await db.collection('tasks').updateOne(
+            { _id: task._id },
+            { 
+              $set: { 
+                status: 'failed', 
+                result: { error: err.message || 'Processing error' },
+                updatedAt: new Date() 
+              } 
+            }
+          );
+          
+          // Notify user of error
+          if (task.userId && fastify.sendNotificationToUser) {
+            console.log(`[processBackgroundVideoTasks] Notifying user ${task.userId} of processing error`);
+            fastify.sendNotificationToUser(task.userId.toString(), 'handleVideoLoader', { 
+              videoId: task.placeholderId, 
+              action: 'remove' 
+            });
+            fastify.sendNotificationToUser(task.userId.toString(), 'showNotification', {
+              message: 'Video generation encountered an error',
+              icon: 'error'
+            });
+          }
+        } catch (updateErr) {
+          console.error(`[processBackgroundVideoTasks] Failed to update task ${task.taskId} as failed:`, updateErr);
+        }
+      }
+    }
+    
+    console.log('[processBackgroundVideoTasks] Background video task processing completed');
+  } catch (err) {
+    console.error('[processBackgroundVideoTasks] Error processing background video tasks:', err);
+  }
+};
+
+/**
  * Cache popular chats task
  * Fetches top popular chats and stores them in a cache collection, including up to 5 non-NSFW sample images per chat.
  * @param {Object} fastify - Fastify instance
@@ -371,6 +545,14 @@ const initializeCronJobs = async (fastify) => {
       processBackgroundTasks(fastify)
     );
 
+    // Add video background task processor (every minute)
+    configureCronJob(
+      'videoBackgroundTaskProcessor',
+      '*/1 * * * *',
+      true,
+      processBackgroundVideoTasks(fastify)
+    );
+
     // Add popular chats caching task (daily at 1 AM)
     configureCronJob(
         'popularChatsCacher',
@@ -434,6 +616,7 @@ module.exports = {
   initializeCronJobs,
   createModelChatGenerationTask,
   processBackgroundTasks,
+  processBackgroundVideoTasks,
   cachePopularChatsTask,
   getJobInfo,
   getNextRunTime

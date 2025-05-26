@@ -44,122 +44,175 @@ function initializeWebSocket(onConnectionResult = null) {
   };
 
   socket.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    if (data.notification) {
-      switch (data.notification.type) {
-        case 'log':
-          console.log(data.notification.message);
-          break;
-        case 'showNotification': {
-          const { message, icon } = data.notification;
-          showNotification(message, icon);
-          break;
-        }
-        case 'imageModerationFlagged': {
-          const { flagged, currentUserId } = data.notification;
-          if(flagged){
-            $(`[data-user-id="${currentUserId}"] #imageModerationFlagged`).show();
-            $(`[data-user-id="${currentUserId}"] #profileImage`).addClass('flagged');
-            $(`[data-user-id="${currentUserId}"] #profileImage`).attr('src', '/img/avatar.png');
-          }else{
-            $(`[data-user-id="${currentUserId}"] #imageModerationFlagged`).hide();
+    // Removed console.log('[WebSocket] Raw message received:', event.data);
+    
+    try {
+      const data = JSON.parse(event.data);
+      // Removed console.log('[WebSocket] Parsed message data:', data);
+      
+      if (data.notification) {
+        // Removed console.log('[WebSocket] Processing notification type:', data.notification.type);
+        
+        switch (data.notification.type) {
+          case 'log':
+            // Removed console.log(data.notification.message);
+            break;
+          case 'showNotification': {
+            const { message, icon } = data.notification;
+            showNotification(message, icon);
+            break;
           }
-          break;
-        }
-        case 'updateNotificationCountOnLoad': {
-          const { userId } = data.notification;
-          updateNotificationCountOnLoad(userId);
+          case 'imageModerationFlagged': {
+            const { flagged, currentUserId } = data.notification;
+            if(flagged){
+              $(`[data-user-id="${currentUserId}"] #imageModerationFlagged`).show();
+              $(`[data-user-id="${currentUserId}"] #profileImage`).addClass('flagged');
+              $(`[data-user-id="${currentUserId}"] #profileImage`).attr('src', '/img/avatar.png');
+            }else{
+              $(`[data-user-id="${currentUserId}"] #imageModerationFlagged`).hide();
+            }
+            break;
+          }
+          case 'updateNotificationCountOnLoad': {
+            const { userId } = data.notification;
+            updateNotificationCountOnLoad(userId);
 
-          if($('#chatContainer').is(':visible')) {
-            fetchChatData(chatId,user._id)
-          }
-          break;
-        }
-        case 'addIconToLastUserMessage':
-          addIconToLastUserMessage();
-          break;
-        case 'handleLoader': {
-          const {imageId, action } = data.notification;
-          displayOrRemoveImageLoader(imageId, action);
-          break;
-        }
-        case 'handleRegenSpin': {
-          const {imageId, spin} = data.notification;
-          handleRegenSpin(imageId, spin);
-          break;
-        }
-        case 'imageGenerated': {
-          const { userChatId, imageId, imageUrl, title, prompt, nsfw } = data.notification;
-          generateImage({
-            userChatId,
-            url: imageUrl,
-            id:imageId,
-            title,
-            prompt,
-            imageId, 
-            nsfw
-          });
-          break;
-        }
-        case 'characterImageGenerated':
-          if ($('#imageContainer').length > 0) {
-            const { imageUrl, nsfw } = data.notification;
-            if (window.hideImageSpinner) {
-              window.hideImageSpinner();
+            if($('#chatContainer').is(':visible')) {
+              fetchChatData(chatId,user._id)
             }
-            generateCharacterImage(imageUrl,nsfw);
+            break;
           }
-          break;
-        case 'resetCharacterForm':
-          if ($('#imageContainer').length > 0) {
-            if (window.hideImageSpinner) {
-              window.hideImageSpinner();
+          case 'addIconToLastUserMessage':
+            addIconToLastUserMessage();
+            break;
+          case 'handleLoader': {
+            const {imageId, action } = data.notification;
+            displayOrRemoveImageLoader(imageId, action);
+            break;
+          }
+          case 'handleVideoLoader': {
+            console.log('[WebSocket] Handling handleVideoLoader:', data.notification);
+            const { videoId, action } = data.notification;
+            
+            if (action === 'remove') {
+              console.log('[WebSocket] Removing video loader for:', videoId);
+              removeVideoLoader(videoId);
             }
-            resetCharacterForm();
+            break;
           }
-          break;
-        case 'updateImageTitle': {
-          const { imageId, title } = data.notification;
-          updateImageTitle(imageId, title);
-          break;
-        }
-        case 'updateCharacterGenerationMessage':
-          if ($('.genexp').length) {
-            const { mess } = data.notification;
-            updateCharacterGenerationMess(mess);
+          case 'videoGenerated': {
+            // Removed console.log('[WebSocket] Handling videoGenerated:', data.notification);
+            const { videoId, videoUrl, duration, userChatId, placeholderId, taskId } = data.notification;
+            
+            // Removed console.log('[WebSocket] Current userChatId:', window.userChatId);
+            // Removed console.log('[WebSocket] Notification userChatId:', userChatId);
+            console.log(`[WebSocket] Processing video generation for videoId: ${videoId}, userChatId: ${userChatId}, window.userChatId: ${window.userChatId}, taskId: ${taskId}`);
+            console.log(`[videoGenerated] checking if userChatId matches window.userChatId: ${userChatId === window.userChatId}`);
+            
+            if (userChatId === window.userChatId) {
+              console.log('[WebSocket] UserChatId matches, processing video generation');
+              
+              // Remove any existing loader for this placeholder
+              console.log('[WebSocket] Removing loader for placeholderId:', placeholderId);
+              removeVideoLoader(placeholderId);
+              
+              // Display the generated video
+              console.log('[WebSocket] Displaying generated video');
+              displayGeneratedVideo({
+                videoUrl,
+                duration,
+                userChatId,
+                placeholderId,
+                taskId
+              });
+              
+              showNotification(window.translations.video_generation_completed || 'Video generated successfully!', 'success');
+            } else {
+              // Removed console.log('[WebSocket] UserChatId mismatch, ignoring notification');
+            }
+            break;
           }
-          break;
-        case 'displayCompletionMessage': {
-          const { message, uniqueId } = data.notification;
-          displayCompletionMessage(message, uniqueId);
-          break;
-        }
-        case 'hideCompletionMessage': {
-          const { uniqueId } = data.notification;
-          hideCompletionMessage(uniqueId);
-          break;
-        }
-        case 'displaySuggestions': {
-          const { suggestions, uniqueId } = data.notification;
-          displaySuggestions(suggestions, uniqueId);
-          break;
-        }
-        case 'loadPlanPage':
-          loadPlanPage();
-          break;
-        case 'updateCustomPrompt': {
-          const { promptId } = data.notification;
-          if (window.updateCustomPrompt) {
-            window.updateCustomPrompt(promptId);
+          case 'handleRegenSpin': {
+            const {imageId, spin} = data.notification;
+            handleRegenSpin(imageId, spin);
+            break;
           }
-          break;
+          case 'imageGenerated': {
+            const { userChatId, imageId, imageUrl, title, prompt, nsfw } = data.notification;
+            generateImage({
+              userChatId,
+              url: imageUrl,
+              id:imageId,
+              title,
+              prompt,
+              imageId, 
+              nsfw
+            });
+            break;
+          }
+          case 'characterImageGenerated':
+            if ($('#imageContainer').length > 0) {
+              const { imageUrl, nsfw } = data.notification;
+              if (window.hideImageSpinner) {
+                window.hideImageSpinner();
+              }
+              generateCharacterImage(imageUrl,nsfw);
+            }
+            break;
+          case 'resetCharacterForm':
+            if ($('#imageContainer').length > 0) {
+              if (window.hideImageSpinner) {
+                window.hideImageSpinner();
+              }
+              resetCharacterForm();
+            }
+            break;
+          case 'updateImageTitle': {
+            const { imageId, title } = data.notification;
+            updateImageTitle(imageId, title);
+            break;
+          }
+          case 'updateCharacterGenerationMessage':
+            if ($('.genexp').length) {
+              const { mess } = data.notification;
+              updateCharacterGenerationMess(mess);
+            }
+            break;
+          case 'displayCompletionMessage': {
+            const { message, uniqueId } = data.notification;
+            displayCompletionMessage(message, uniqueId);
+            break;
+          }
+          case 'hideCompletionMessage': {
+            const { uniqueId } = data.notification;
+            hideCompletionMessage(uniqueId);
+            break;
+          }
+          case 'displaySuggestions': {
+            const { suggestions, uniqueId } = data.notification;
+            displaySuggestions(suggestions, uniqueId);
+            break;
+          }
+          case 'loadPlanPage':
+            loadPlanPage();
+            break;
+          case 'updateCustomPrompt': {
+            const { promptId } = data.notification;
+            if (window.updateCustomPrompt) {
+              window.updateCustomPrompt(promptId);
+            }
+            break;
+          }
+          default:
+            // Removed console.log('[WebSocket] Unhandled notification type:', data.notification.type);
+            break;
         }
-        default:
-          //console.log('Message from server:', event.data);
-          break;
+      } else {
+        // Removed console.log('[WebSocket] Message without notification property:', data);
       }
-    } else {
-      //console.log('Message from server:', event.data);
+    } catch (error) {
+      console.error('[WebSocket] Error parsing message:', error);
+      // Removed console.log('[WebSocket] Raw message that failed to parse:', event.data);
     }
   };
 
@@ -193,7 +246,7 @@ initializeWebSocket();
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") {
     if (!currentSocket || currentSocket.readyState === WebSocket.CLOSED) {
-      console.log("Tab resumed. Attempting to reconnect WebSocket...");
+      // Removed console.log("Tab resumed. Attempting to reconnect WebSocket...");
       initializeWebSocket();
     }
   }

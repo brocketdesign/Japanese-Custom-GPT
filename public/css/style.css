@@ -245,7 +245,10 @@
     transform: translate(-50%, -50%) rotate(360deg);
   }
 }
-
+.video-generation-loader {
+width: 90vw;
+max-width: 600px;
+}
   .custom-gradient-bg {
   background:linear-gradient(90.9deg,#D2B8FF 2.74%,#8240FF 102.92%);
   color:#fff;
@@ -940,7 +943,11 @@
   max-width:200px;
   cursor:pointer
   }
-  
+  .assistant-video-box.video-container video {
+  width:100%;
+  max-width: 200px;
+  border-radius:0.25em 0.25em 0 0;
+  }
   .isLoading .fa-image {
   display:none
   }

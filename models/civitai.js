@@ -166,7 +166,8 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
     let characterData;
     try {
       // API call to the openai-chat-creation endpoint
-      const apiResponse = await axios.post(`${process.env.API_URL || 'http://localhost:3000'}/api/generate-character-comprehensive`, {
+      const apiUrl = process.env.MODE === 'local' ? 'http://localhost:3000' :  'https://app.chatlamix.com';
+      const apiResponse = await axios.post(`${apiUrl}/api/generate-character-comprehensive`, {
         gender: initialCharacterData.gender,
         name: initialCharacterData.name,
         prompt: promptData.prompt,

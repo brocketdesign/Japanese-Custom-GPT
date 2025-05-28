@@ -189,7 +189,13 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
         // Update the chatdData with systemGenerated true
         const result = await fastify.mongo.db.collection('chats').updateOne(
           { _id: new ObjectId(apiResponse.data.chatId) },
-          { $set: { systemGenerated: true } }
+          { $set: { 
+            systemGenerated: true,
+            imageModel: model.model,
+            civitaiModelId: model.modelId,
+            modelName: model.model,
+            modelId: model.modelId,
+          } }
         );
         if (result.modifiedCount === 0) {
           console.warn('[civitai/createModelChat] No chat updated with systemGenerated flag');

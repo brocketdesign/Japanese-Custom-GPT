@@ -604,7 +604,7 @@ async function routes(fastify, options) {
         systemGenerated: true,
         chatImageUrl: { $exists: true },
         // Remove the createdAt filter for now
-      }).sort({ createdAt: -1 }).limit(100).toArray(); // Get more results for filtering
+      }).sort({ _id: -1 }).limit(100).toArray(); // Get more results for filtering
 
       // Filter in JavaScript to handle both date formats
       const filteredChats = recentChats.filter(chat => {

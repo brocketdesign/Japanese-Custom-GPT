@@ -181,6 +181,8 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
       });
 
       const chatData = apiResponse.data.chatData;
+      const chatId = apiResponse.data.chatId;
+
       if (!chatData || !chatData.name) {
         throw new Error('[civitai/createModelChat] Invalid character data received from API');
       }
@@ -188,7 +190,7 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
       try {
         // Update the chatdData with systemGenerated true
         const result = await fastify.mongo.db.collection('chats').updateOne(
-          { _id: new ObjectId(apiResponse.data.chatId) },
+          { _id: new ObjectId(chatId) },
           { $set: { 
             systemGenerated: true,
             imageModel: model.model,
@@ -213,12 +215,12 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
           negativePrompt: promptData.negativePrompt,
           aspectRatio: "portrait",
           userId: user ? user._id : null,
-          chatId: apiResponse.data.chatId,
+          chatId: chatId,
           userChatId: null,
           imageType: imageType,
           image_num: 4, // Generate 2 images for system-generated chats
           chatCreation: true,
-          placeholderId: apiResponse.data.chatId.toString(),
+          placeholderId: chatId.toString(),
           translations: {
             newCharacter: {
               imageCompletionDone_title: 'Character Image Generated',
@@ -234,7 +236,7 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
         console.log('[civitai/createModelChat] Error generating character image:', error);
       }
 
-      return { ...chatData, _id: chatData.chatId, slug: chatData.slug };
+      return { ...chatData, _id: chatId, slug: chatData.slug };
     } catch (apiError) {
       console.error('[civitai/createModelChat] Error calling openai-chat-creation API:', apiError);
       return false;

@@ -450,7 +450,7 @@ async function routes(fastify, options) {
             console.log(`[API/generate-character-comprehensive] Process completed successfully in ${totalTime}ms`);
             
             fastify.sendNotificationToUser(userId, 'showNotification', { 
-                message: request.translations.newCharacter.character_generation_complete, 
+                message: request.translations.newCharacter.character_generation_complete || 'Character generation completed successfully!', 
                 icon: 'success' 
             });
 

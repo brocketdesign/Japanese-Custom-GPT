@@ -820,7 +820,7 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
         { upsert: true }
       );
       // log the inserted image for debugging
-      console.log(`[saveImageToDB] Image saved with ID: ${imageId}`);
+      console.log(`[saveImageToDB] Image saved chatId: ${chatId}, imageId: ${imageId}`);
       const imageData = await chatsGalleryCollection.findOne({ userId: new ObjectId(userId), chatId: new ObjectId(chatId), "images._id": imageId });
       if (!imageData) {
         console.log(`[saveImageToDB] Image not found after saving: ${imageId}`);

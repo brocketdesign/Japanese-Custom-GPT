@@ -2,7 +2,7 @@
  * Cron Job Manager utility for handling system cron jobs
  */
 const cron = require('node-cron');
-const { fetchRandomCivitaiPrompt, createModelChat } = require('./civitai');
+const { fetchRandomCivitaiPrompt, createModelChat } = require('./civitai-utils');
 const parser = require('cron-parser');
 const { pollTaskStatus } = require('./imagen');
 const { handleTaskCompletion, checkTaskStatus } = require('./imagen'); // <-- import the handler

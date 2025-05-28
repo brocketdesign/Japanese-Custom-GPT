@@ -156,7 +156,7 @@
     <div class="modal-dialog modal-xl">
       <div class="modal-content mx-auto">
         <div class="modal-header">
-          <h5 class="modal-title" id="generateChatModalLabel">Generating Chat</h5>
+          <h5 class="modal-title" id="generateChatModalLabel">Generate Character Preview</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body p-0" style="height: 70vh;">
@@ -176,11 +176,11 @@
                 </div>
                 
                 <div id="noPrompt" class="alert alert-warning d-none">
-                  <i class="bi bi-exclamation-triangle"></i> No prompt available.
+                  <i class="bi bi-exclamation-triangle"></i> No more unused prompts available for this model.
                 </div>
                 
                 <div id="errorFetching" class="alert alert-danger d-none">
-                  <i class="bi bi-exclamation-circle"></i> Error fetching prompt.
+                  <i class="bi bi-exclamation-circle"></i> Error fetching prompt. Please try again.
                 </div>
               </div>
               
@@ -189,11 +189,16 @@
                 <div class="p-3 border-bottom bg-light">
                   <div class="d-flex justify-content-between align-items-center">
                     <div id="modelInfo">
-                      <strong>Model:</strong> <span id="modelName" class="text-primary"></span>
+                      <strong>Model:</strong> <span id="modelName" class="text-primary truncate"></span>
                     </div>
-                    <button id="getAnotherPreview" class="btn btn-sm btn-outline-secondary d-none">
-                      <i class="bi bi-arrow-repeat"></i> Get Another
-                    </button>
+                    <div class="btn-group" role="group">
+                      <button id="prevPreview" class="btn btn-sm btn-outline-secondary" disabled>
+                        <i class="bi bi-arrow-left"></i> Previous
+                      </button>
+                      <button id="nextPreview" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-arrow-right"></i> Next
+                      </button>
+                    </div>
                   </div>
                 </div>
                 
@@ -241,6 +246,9 @@
         <div class="modal-footer border-top">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
             <i class="bi bi-x-lg"></i> Close
+          </button>
+          <button type="button" id="skipBtn" class="btn btn-warning d-none">
+            <i class="bi bi-skip-forward"></i> Skip
           </button>
           <button type="button" id="generateBtn" class="btn btn-primary d-none">
             <i class="bi bi-play-fill"></i> Generate
@@ -329,6 +337,13 @@
   
   <script>
     $(document).ready(function() {
+      let currentModelId = null;
+      let currentModelName = null;
+      let currentNsfw = false;
+      let currentPage = 1;
+      let currentPromptIndex = 0;
+      let currentPromptKey = null;
+
       // Cron settings form submission
       $('#cronSettingsForm').on('submit', function(e) {
         e.preventDefault();
@@ -340,7 +355,7 @@
         };
         
         $.ajax({
-          url: '/admin/model-chats/cron-settings',
+          url: '/civitai/model-chats/cron-settings',
           type: 'POST',
           data: settings,
           dataType: 'json',
@@ -385,7 +400,6 @@
       $('.generate-chat-btn').on('click', function() {
         const modelId = $(this).data('model-id');
         const modelName = $(this).data('model-name');
-        let promptKey = null;
         
         // Ask about NSFW first
         Swal.fire({
@@ -398,26 +412,25 @@
         }).then((nsfwResult) => {
           const nsfw = nsfwResult.isConfirmed;
           
-          // After NSFW choice, show modal and fetch preview
-          $('#modelName').text(modelName);
-          $('#loadingPrompt').removeClass('d-none');
-          $('#promptPreview').addClass('d-none');
-          $('#noPrompt').addClass('d-none');
-          $('#errorFetching').addClass('d-none');
-          $('#generationResult').addClass('d-none');
-          $('#generateBtn').addClass('d-none');
-          $('#viewCharacterLink').addClass('d-none');
+          // Store current state
+          currentModelId = modelId;
+          currentModelName = modelName;
+          currentNsfw = nsfw;
+          currentPage = 1;
+          currentPromptIndex = 0;
           
+          // Show modal and fetch preview
+          $('#modelName').text(modelName);
+          resetModalState();
           $('#generateChatModal').modal('show');
           
-          // Fetch a preview prompt with NSFW parameter
-          fetchPreviewPrompt(modelId, modelName, nsfw);
+          // Fetch first preview
+          fetchPreviewPrompt('current');
         });
       });
       
-      // Extract prompt fetching into a separate function that can be reused
-      function fetchPreviewPrompt(modelId, modelName, nsfw) {
-        // Reset all states
+      function resetModalState() {
+        console.log('[resetModalState] Resetting modal state');
         $('#loadingPrompt').removeClass('d-none');
         $('#imagePreview').addClass('d-none');
         $('#promptDetails').addClass('d-none');
@@ -425,45 +438,79 @@
         $('#errorFetching').addClass('d-none');
         $('#generationResult').addClass('d-none');
         $('#generateBtn').addClass('d-none');
-        $('#getAnotherPreview').addClass('d-none');
+        $('#skipBtn').addClass('d-none');
+        $('#prevPreview').prop('disabled', true);
+        $('#nextPreview').prop('disabled', false);
+        currentPromptKey = null;
+      }
 
-        let page = promptIndex = 1;
-        const modelJson = JSON.parse(sessionStorage.getItem(`civitai-${modelId}-json`));
-        if (modelJson) {
-          page = modelJson.page || 1;
-          promptIndex = modelJson.promptIndex || 1;
+      // Navigation buttons
+      $('#prevPreview').on('click', function() {
+        if (!$(this).prop('disabled')) {
+          console.log('[prevPreview] Navigating to previous prompt');
+          fetchPreviewPrompt('prev');
         }
+      });
+
+      $('#nextPreview').on('click', function() {
+        if (!$(this).prop('disabled')) {
+          console.log('[nextPreview] Navigating to next prompt');
+          fetchPreviewPrompt('next');
+        }
+      });
+
+      // Extract prompt fetching into a separate function that can be reused
+      function fetchPreviewPrompt(direction = 'current') {
+        console.log(`[fetchPreviewPrompt] Fetching with direction: ${direction}, page: ${currentPage}, promptIndex: ${currentPromptIndex}`);
+        
+        // Reset certain states but keep navigation enabled
+        $('#loadingPrompt').removeClass('d-none');
+        $('#imagePreview').addClass('d-none');
+        $('#promptDetails').addClass('d-none');
+        $('#noPrompt').addClass('d-none');
+        $('#errorFetching').addClass('d-none');
+        $('#generationResult').addClass('d-none');
+        $('#generateBtn').addClass('d-none');
+        $('#skipBtn').addClass('d-none');
+        
+        // Reset skip button state specifically
+        $('#skipBtn').prop('disabled', false).html('<i class="bi bi-skip-forward"></i> Skip');
+
         $.ajax({
           url: '/api/preview-prompt',
           type: 'POST',
-          data: { modelId, modelName, nsfw, page, promptIndex},
+          data: { 
+            modelId: currentModelId, 
+            modelName: currentModelName, 
+            nsfw: currentNsfw, 
+            page: currentPage, 
+            promptIndex: currentPromptIndex,
+            direction: direction
+          },
           dataType: 'json',
           success: function(data) {
-            console.log(data)
+            console.log('[fetchPreviewPrompt] Response received:', data);
+            
             $('#loadingPrompt').addClass('d-none');
             
             if (data.error) {
+              console.error('[fetchPreviewPrompt] Error in response:', data.error);
               $('#errorFetching').removeClass('d-none');
               return;
             }
             
             if (!data.prompt) {
+              console.log('[fetchPreviewPrompt] No prompt data received');
               $('#noPrompt').removeClass('d-none');
               return;
             }
             
-            // Store the promptKey for later use
-            promptKey = data.promptKey;
-
-            console.log(`[Model Chat] new index: ${data.prompt.promptIndex}, page: ${data.prompt.page}, modelId: ${modelId}, promptKey: ${promptKey}`);
-            // update the session storage with model data
-            sessionStorage.setItem(`civitai-${modelId}-json`, JSON.stringify({
-              modelId,
-              modelName,
-              page: data.prompt.page,
-              promptIndex: data.prompt.promptIndex,
-              promptKey
-            }));
+            // Update current state
+            currentPage = data.prompt.page;
+            currentPromptIndex = data.prompt.promptIndex;
+            currentPromptKey = data.promptKey;
+            
+            console.log(`[fetchPreviewPrompt] Updated state - page: ${currentPage}, promptIndex: ${currentPromptIndex}, promptKey: ${currentPromptKey}`);
             
             // Show image preview
             $('#imagePreview').removeClass('d-none');
@@ -475,46 +522,116 @@
             $('#promptText').text(data.prompt.prompt);
             $('#promptNegative').text(data.prompt.negativePrompt);
             
-            // Show action buttons
+            // Show action buttons with proper state reset
             $('#generateBtn').removeClass('d-none')
-              .data('model-id', modelId)
-              .data('nsfw', nsfw)
-              .data('prompt-key', promptKey);
-            $('#getAnotherPreview').removeClass('d-none');
+              .prop('disabled', false)
+              .html('<i class="bi bi-play-fill"></i> Generate')
+              .data('prompt-key', currentPromptKey);
+              
+            $('#skipBtn').removeClass('d-none')
+              .prop('disabled', false)
+              .html('<i class="bi bi-skip-forward"></i> Skip')
+              .data('prompt-key', currentPromptKey);
+            
+            // Update navigation buttons
+            $('#prevPreview').prop('disabled', currentPromptIndex <= 0);
+            $('#nextPreview').prop('disabled', false); // Always allow next for now
           },
-          error: function() {
+          error: function(xhr, status, error) {
+            console.error('[fetchPreviewPrompt] Error:', error);
             $('#loadingPrompt').addClass('d-none');
             $('#errorFetching').removeClass('d-none');
+            
+            // Reset button states on error too
+            $('#skipBtn').prop('disabled', false).html('<i class="bi bi-skip-forward"></i> Skip');
+            $('#generateBtn').prop('disabled', false).html('<i class="bi bi-play-fill"></i> Generate');
           }
         });
       }
       
-      // Get another preview button
-      $('#getAnotherPreview').on('click', function() {
-        const modelId = $('#generateBtn').data('model-id');
-        const nsfw = $('#generateBtn').data('nsfw');
-        const modelName = $('#modelName').text();
+      // Skip button functionality
+      $('#skipBtn').on('click', function() {
+        const promptKey = $(this).data('prompt-key');
         
-        // Fetch another preview for the same model
-        fetchPreviewPrompt(modelId, modelName, nsfw);
+        if (!promptKey) {
+          console.error('[skipBtn] No prompt key available');
+          return;
+        }
+        
+        console.log(`[skipBtn] Skipping prompt: ${promptKey}`);
+        
+        $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Skipping...');
+        
+        $.ajax({
+          url: '/api/skip-prompt',
+          type: 'POST',
+          data: { promptKey },
+          dataType: 'json',
+          success: function(data) {
+            console.log('[skipBtn] Skip response:', data);
+            
+            if (data.success) {
+              // Fetch next prompt automatically - the fetchPreviewPrompt function will reset button states
+              fetchPreviewPrompt('next');
+            } else {
+              console.error('[skipBtn] Skip failed:', data.error);
+              Swal.fire({
+                title: 'Error!',
+                text: data.error || 'Failed to skip prompt',
+                icon: 'error',
+                confirmButtonText: 'OK'
+              });
+              // Reset button state on error
+              $('#skipBtn').prop('disabled', false).html('<i class="bi bi-skip-forward"></i> Skip');
+            }
+          },
+          error: function(xhr) {
+            console.error('[skipBtn] Skip error:', xhr.responseJSON);
+            Swal.fire({
+              title: 'Error!',
+              text: xhr.responseJSON?.error || 'An error occurred while skipping',
+              icon: 'error',
+              confirmButtonText: 'OK'
+            });
+            // Reset button state on error
+            $('#skipBtn').prop('disabled', false).html('<i class="bi bi-skip-forward"></i> Skip');
+          }
+        });
       });
       
       // Generate button in modal click
       $('#generateBtn').on('click', function() {
-        const modelId = $(this).data('model-id');
-        const nsfw = $(this).data('nsfw');
         const promptKey = $(this).data('prompt-key');
+        
+        if (!promptKey) {
+          console.error('[generateBtn] No prompt key available');
+          Swal.fire({
+            title: 'Error!',
+            text: 'No prompt selected for generation',
+            icon: 'error',
+            confirmButtonText: 'OK'
+          });
+          return;
+        }
+        
+        console.log(`[generateBtn] Generating chat with promptKey: ${promptKey}`);
         
         $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...');
         
-        // Generate the chat using the same prompt as the preview
+        // Generate the chat using the cached prompt
         $.ajax({
-          url: '/admin/model-chats/generate',
+          url: '/civitai/model-chats/generate',
           type: 'POST',
-          data: { modelId, nsfw, promptKey },
+          data: { 
+            modelId: currentModelId, 
+            nsfw: currentNsfw, 
+            promptKey: promptKey 
+          },
           dataType: 'json',
           success: function(data) {
-            $('#generateBtn').prop('disabled', false).text('Generate');
+            console.log('[generateBtn] Generation response:', data);
+            
+            $('#generateBtn').prop('disabled', false).html('<i class="bi bi-play-fill"></i> Generate');
             
             if (data.error) {
               $('#generationResult').removeClass('d-none alert-success').addClass('alert-danger');
@@ -526,10 +643,14 @@
               const chat = data.chat;
               $('#generationResult').removeClass('d-none alert-danger').addClass('alert-success');
               $('#generationMessage').text('Character generated successfully!');
-              
-              if (chat && chat._id) {
-                $('#viewCharacterLink').removeClass('d-none').attr('href', '/character/' + chat._id);
+
+              if (chat && chat.slug) {
+                $('#viewCharacterLink').removeClass('d-none').attr('href', '/character/slug/' + chat.slug);
               }
+              
+              // Hide generation button since we've successfully generated
+              $('#generateBtn').addClass('d-none');
+              $('#skipBtn').addClass('d-none');
               
             } else {
               $('#generationResult').removeClass('d-none alert-success').addClass('alert-danger');
@@ -537,7 +658,9 @@
             }
           },
           error: function(xhr) {
-            $('#generateBtn').prop('disabled', false).text('Generate');
+            console.error('[generateBtn] Generation error:', xhr.responseJSON);
+            
+            $('#generateBtn').prop('disabled', false).html('<i class="bi bi-play-fill"></i> Generate');
             $('#generationResult').removeClass('d-none alert-success').addClass('alert-danger');
             $('#generationMessage').text(xhr.responseJSON?.error || 'An unknown error occurred');
           }
@@ -546,6 +669,8 @@
       
       // Generate all chats button click
       $('#generateAllChats').on('click', function() {
+        console.log('[generateAllChats] Starting generation for all models');
+        
         Swal.fire({
           title: 'Generate All Model Chats?',
           text: 'This will generate chats for all models and may take some time.',
@@ -566,15 +691,19 @@
             }).then((nsfwResult) => {
               const nsfw = nsfwResult.isConfirmed;
               
+              console.log(`[generateAllChats] Generating all chats with NSFW: ${nsfw}`);
+              
               // Show loading indicator
               $('#loadingModal').modal('show');
               
               $.ajax({
-                url: '/admin/model-chats/generate',
+                url: '/civitai/model-chats/generate',
                 type: 'POST',
                 data: { nsfw },
                 dataType: 'json',
                 success: function(data) {
+                  console.log('[generateAllChats] Generation complete:', data);
+                  
                   $('#loadingModal').modal('hide');
                   
                   if (data.success) {
@@ -599,6 +728,8 @@
                   }
                 },
                 error: function(xhr) {
+                  console.error('[generateAllChats] Error:', xhr.responseJSON);
+                  
                   $('#loadingModal').modal('hide');
                   
                   Swal.fire({

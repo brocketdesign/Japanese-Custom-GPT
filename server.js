@@ -14,8 +14,7 @@ const {
 } = require('./models/databasemanagement');
 const { checkUserAdmin, getUserData, updateCounter, fetchTags } = require('./models/tool');
 const { deleteOldTasks } = require('./models/imagen');
-const { createModelChat, fetchRandomCivitaiPrompt } = require('./models/civitai');
-const { cronJobs, configureCronJob, initializeCronJobs, cachePopularChatsTask } = require('./models/cronManager');
+const { cronJobs, configureCronJob, initializeCronJobs } = require('./models/cronManager');
 
 // Expose cron jobs and configuration to routes
 fastify.decorate('cronJobs', cronJobs);
@@ -154,6 +153,7 @@ fastify.register(require('./routes/img2video-api'));
 fastify.register(require('./routes/plan'));
 fastify.register(require('./routes/user'));
 fastify.register(require('./routes/admin'));
+fastify.register(require('./routes/civitai-api'));
 fastify.register(require('./routes/post'));
 fastify.register(require('./routes/notifications'));
 fastify.register(require('./routes/gallery'));
@@ -482,7 +482,11 @@ fastify.get('/character/slug/:slug', async (request, reply) => {
     const { slug } = request.params;
     const imageSlug = request.query.imageSlug || null;
 
-    const chat = await db.collection('chats').findOne({ slug });
+    const chat = await db.collection('chats').findOne(
+      { 
+        slug,
+        chatImageUrl: { $exists: true, $ne: null },
+      });
     if (!chat) {
       console.warn(`[/character/:slug] Chat not found for slug: ${slug}`);
       return reply.code(404).send({ error: 'Chat not found' });
@@ -499,7 +503,6 @@ fastify.get('/character/slug/:slug', async (request, reply) => {
     
     const isModal = request.query.modal === 'true';
     
-    const chatsCollection = db.collection('chats');
     const galleryCollection = db.collection('gallery');
 
     let subscriptionStatus = false;
@@ -589,7 +592,7 @@ fastify.get('/character/slug/:slug', async (request, reply) => {
     } catch (fetchErr) {
       console.error(`[SimilarChats] Error fetching similar chats for ${chatIdParam}:`, fetchErr);
     }
-    
+
     const template = isModal ? 'character-modal.hbs' : 'character.hbs';
     return reply.renderWithGtm(template, {
       title: `${chat.name} | ${translations.seo.title_character}`,

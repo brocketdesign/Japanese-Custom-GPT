@@ -193,7 +193,7 @@ function createSystemPayload(prompt, gender, details) {
 }
 
 // Enhanced function for extracting details from prompt
-function extractDetailsFromPrompt(prompt, gender) {
+function extractDetailsFromPrompt(prompt, gender ='female') {
     return [
         {
             role: "system",
@@ -213,7 +213,6 @@ function extractDetailsFromPrompt(prompt, gender) {
         {
             role: "user", 
             content: `Character Description: ${prompt}
-            Gender: ${gender}
             
             Extract and structure all available details from this description.`
         }
@@ -231,12 +230,14 @@ async function routes(fastify, options) {
             const userId = request.user._id;
             const language = requestLanguage || request.lang;
  
-            console.log(`[API/generate-character-comprehensive] Input parameters - chatId: ${chatId}, gender: ${gender}, language: ${language}`);
+            console.log(`[API/generate-character-comprehensive] Input parameters - chatId: ${chatId || 'undefined'}, gender: ${gender || 'undefined'}, language: ${language}, prompt: ${prompt ? prompt.substring(0, 50) + '...' : 'undefined'}, name: ${name || 'undefined'}`);
             
-            if (!prompt || !gender) {
+            if (!prompt || prompt.trim() === '') {
+                fastify.sendNotificationToUser(userId, 'showNotification', { message: 'Please provide a valid prompt.', icon: 'error' });
                 console.log('[API/generate-character-comprehensive] Missing required fields');
-                return reply.status(400).send({ error: 'Missing required fields: prompt, gender are required.' });
+                return reply.status(400).send({ error: 'Missing required fields: prompt is required.' });
             }
+
             if(!chatId || !ObjectId.isValid(chatId)) {
                 console.log('[API/generate-character-comprehensive] Invalid chatId');
                 const apiUrl = getApiUrl(request);   
@@ -455,6 +456,7 @@ async function routes(fastify, options) {
 
             reply.send({
                 success: true,
+                chatId,
                 chatData,
                 extractedDetails,
                 enhancedPrompt,

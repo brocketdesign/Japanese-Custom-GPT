@@ -2400,14 +2400,21 @@ function autoPlayMessageAudio(uniqueId, message) {
 
 window.upscaleImage = async function(imageId, imageUrl, chatId, userChatId) {
     try {
+        const upscaleButton = $(`.upscale-img[data-id="${imageId}"]`);
         if (!imageId || !imageUrl) {
             showNotification('Invalid image data', 'error');
             return;
         }
-
+        if( upscaleButton.hasClass('disabled')) {
+            showNotification(window.translations?.upscaling_in_progress || 'Upscaling in progress...', 'warning');
+            return;
+        }
         // Show loading notification
         showNotification(window.translations?.upscaling_image || 'Upscaling image...', 'info');
 
+        // Disable the button
+        upscaleButton.addClass('disabled').attr('disabled', true);
+        
         // Convert image URL to base64
         const base64Response = await fetch('/api/convert-url-to-base64', {
             method: 'POST',

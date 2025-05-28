@@ -242,9 +242,9 @@ async function routes(fastify, options) {
   }); 
 
   // Add the new route to handle cron settings update
-  fastify.post('/admin/model-chats/cron-settings', async (request, reply) => {
+  fastify.post('/civitai/model-chats/cron-settings', async (request, reply) => {
     try {
-      console.log('[/admin/model-chats/cron-settings] Starting cron settings update');
+      console.log('[/civitai/model-chats/cron-settings] Starting cron settings update');
       
       const isAdmin = await checkUserAdmin(fastify, request.user._id);
       if (!isAdmin) {
@@ -355,7 +355,7 @@ async function routes(fastify, options) {
       const settings = await settingsCollection.findOne({ type: 'modelChatCron' });
       const lastRun = settings?.lastRun ? settings.lastRun.toLocaleString() : null;
 
-      console.log(`[/admin/model-chats/cron-settings] Successfully updated cron settings. Enabled: ${isEnabled}, Next run: ${nextRun}`);
+      console.log(`[/civitai/model-chats/cron-settings] Successfully updated cron settings. Enabled: ${isEnabled}, Next run: ${nextRun}`);
 
       return reply.send({ 
         success: true, 
@@ -364,7 +364,7 @@ async function routes(fastify, options) {
         lastRun
       });
     } catch (error) {
-      console.error('[/admin/model-chats/cron-settings] Error updating cron settings:', error);
+      console.error('[/civitai/model-chats/cron-settings] Error updating cron settings:', error);
       return reply.status(500).send({ error: 'Internal server error' });
     }
   });

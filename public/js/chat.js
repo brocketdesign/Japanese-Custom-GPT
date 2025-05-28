@@ -823,70 +823,81 @@ function setupChatInterface(chat, character) {
     } 
     function getImageTools({chatId, imageId, isLiked = false, title, prompt = false, nsfw = false, imageUrl = false}) {
   
-        prompt = sanitizeString(prompt);
-        return `
-            <div class="bg-white py-2 d-flex justify-content-around image-tools">
-                <div class="d-flex justify-content-around w-100">
-                    <span class="badge bg-white text-secondary image-fav ${isLiked ? 'liked' : ''}" data-id="${imageId}"
-                    onclick="${subscriptionStatus ? 'toggleImageFavorite(this)' : 'loadPlanPage()'}" 
-                    style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
-                        <i class="bi bi-heart-fill"></i>
-                    </span>
-                    <span class="badge bg-white text-secondary txt2img regen-img" 
-                    onclick="${subscriptionStatus ? 'regenImage(this)' : 'loadPlanPage()'}" 
-                    data-prompt="${prompt}" 
-                    data-nsfw="${nsfw}" 
-                    data-id="${imageId}" 
-                    style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;">
-                        <i class="bi bi-arrow-clockwise"></i>
-                    </span>
-                    <span class="badge bg-white text-secondary img2video-btn" 
-                    onclick="${subscriptionStatus ? `generateVideoFromImage('${imageId}', '${chatId}', '${userChatId}')` : 'loadPlanPage()'}" 
-                    data-id="${imageId}" 
-                    data-chat-id="${chatId}"
-                    style="cursor: pointer;bottom:5px;right:5px;opacity:0.8;"
-                    title="${window.translations?.convert_to_video || 'Convert to Video'}">
-                        <i class="bi bi-play-circle"></i>
-                    </span>
-                    ${window.isAdmin ? `
-                    <span type="button" class="badge bg-white text-secondary" data-bs-toggle="modal" data-bs-target="#modal-${imageId}">
-                        <i class="bi bi-info-circle"></i>
-                    </span>
-                    <div style="height: 50vh;" class="modal fade" id="modal-${imageId}" tabindex="-1" aria-labelledby="modal-${imageId}-label" aria-hidden="true" data-bs-backdrop="false">
-                        <div class="modal-dialog" style="bottom: 20vh;position: fixed;">
-                            <div class="modal-content border-0 shadow mx-auto" style="height: auto; width: 90%; max-width: 600px;">
-                                <div class="modal-header">
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body" style="max-height: 25vh; overflow-y: auto;">
-                                    <p>${prompt}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>` : ''}
-                    <span class="badge bg-white text-secondary share d-none"
-                            data-title="${title}"
-                            data-url="${imageUrl}"
-                            style="cursor: pointer; bottom:5px; right:5px; opacity:0.8;"
-                            onclick="openShareModal(this)">
-                        <i class="bi bi-box-arrow-up"></i>
-                    </span>
-
-                    <span class="badge bg-white text-secondary download-image" style="cursor: pointer; bottom:5px; right:5px; opacity:0.8;">
-                        <a href="${imageUrl}" download="${title}.png" style="color:inherit;"><i class="bi bi-download"></i></a>
-                    </span>
-                    ${window.isAdmin ? `
-                    <span class="badge bg-white text-secondary update-chat-image" onclick="${subscriptionStatus ? 'updateChatImage(this)' : 'loadPlanPage()'}" data-id="${chatId}" data-img="${imageUrl}" style="cursor: pointer; bottom:5px; right:5px; opacity:0.8;">
-                        <i class="bi bi-image"></i>
-                    </span>` : ''}
+    prompt = sanitizeString(prompt);
+    return `
+        <div class="bg-white py-2 image-tools">
+            <div class="d-flex overflow-auto" style="scrollbar-width: none; -ms-overflow-style: none;">
+                <style>
+                    .image-tools .d-flex::-webkit-scrollbar { display: none; }
+                </style>
+                <span class="badge bg-white text-secondary image-fav ${isLiked ? 'liked' : ''} flex-shrink-0 me-2" data-id="${imageId}"
+                onclick="${subscriptionStatus ? 'toggleImageFavorite(this)' : 'loadPlanPage()'}" 
+                style="cursor: pointer; opacity:0.8;">
+                    <i class="bi bi-heart-fill"></i>
+                </span>
+                <span class="badge bg-white text-secondary txt2img regen-img flex-shrink-0 me-2" 
+                onclick="${subscriptionStatus ? 'regenImage(this)' : 'loadPlanPage()'}" 
+                data-prompt="${prompt}" 
+                data-nsfw="${nsfw}" 
+                data-id="${imageId}" 
+                style="cursor: pointer; opacity:0.8;">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </span>
+                <span class="badge bg-white text-secondary upscale-img flex-shrink-0 me-2" 
+                onclick="${subscriptionStatus ? `upscaleImage('${imageId}', '${imageUrl}', '${chatId}', '${userChatId}')` : 'loadPlanPage()'}" 
+                data-id="${imageId}" 
+                data-url="${imageUrl}"
+                style="cursor: pointer; opacity:0.8;"
+                title="${window.translations?.upscale_image || 'Upscale Image'}">
+                    <i class="bi bi-arrows-fullscreen"></i>
+                </span>
+                <span class="badge bg-white text-secondary img2video-btn flex-shrink-0 me-2" 
+                onclick="${subscriptionStatus ? `generateVideoFromImage('${imageId}', '${chatId}', '${userChatId}')` : 'loadPlanPage()'}" 
+                data-id="${imageId}" 
+                data-chat-id="${chatId}"
+                style="cursor: pointer; opacity:0.8;"
+                title="${window.translations?.convert_to_video || 'Convert to Video'}">
+                    <i class="bi bi-play-circle"></i>
+                </span>
+                ${window.isAdmin ? `
+                <span type="button" class="badge bg-white text-secondary flex-shrink-0 me-2" data-bs-toggle="modal" data-bs-target="#modal-${imageId}">
+                    <i class="bi bi-info-circle"></i>
+                </span>` : ''}
+                <span class="badge bg-white text-secondary share d-none flex-shrink-0 me-2"
+                        data-title="${title}"
+                        data-url="${imageUrl}"
+                        style="cursor: pointer; opacity:0.8;"
+                        onclick="openShareModal(this)">
+                    <i class="bi bi-box-arrow-up"></i>
+                </span>
+                <span class="badge bg-white text-secondary download-image flex-shrink-0 me-2" style="cursor: pointer; opacity:0.8;">
+                    <a href="${imageUrl}" download="${title}.png" style="color:inherit;"><i class="bi bi-download"></i></a>
+                </span>
+                ${window.isAdmin ? `
+                <span class="badge bg-white text-secondary update-chat-image flex-shrink-0 me-2" onclick="${subscriptionStatus ? 'updateChatImage(this)' : 'loadPlanPage()'}" data-id="${chatId}" data-img="${imageUrl}" style="cursor: pointer; opacity:0.8;">
+                    <i class="bi bi-image"></i>
+                </span>` : ''}
+            </div>
+        </div>
+        <div class="title assistant-chat-box py-1 px-3 ${title && title !== 'undefined' ? '': 'd-none'}" style="border-radius: 0px 0px 15px 15px;max-width: 200px;">
+            <p class="text-white" style="font-size: 12px;">${title}</p>
+        </div>
+        ${window.isAdmin ? `
+        <div style="height: 50vh;" class="modal fade" id="modal-${imageId}" tabindex="-1" aria-labelledby="modal-${imageId}-label" aria-hidden="true" data-bs-backdrop="false">
+            <div class="modal-dialog" style="bottom: 20vh;position: fixed;">
+                <div class="modal-content border-0 shadow mx-auto" style="height: auto; width: 90%; max-width: 600px;">
+                    <div class="modal-header">
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" style="max-height: 25vh; overflow-y: auto;">
+                        <p>${prompt}</p>
+                    </div>
                 </div>
             </div>
-            <div class="title assistant-chat-box py-1 px-3 ${title && title !== 'undefined' ? '': 'd-none'}" style="border-radius: 0px 0px 15px 15px;max-width: 200px;">
-                <p class="text-white" style="font-size: 12px;">${title}</p>
-            </div>
-        `;
-    }
-    
+        </div>` : ''}
+    `;
+}
+
     window.openShareModal = function(el) {
         const title = $(el).data('title');
         const url = $(el).data('url');
@@ -1745,6 +1756,8 @@ function setupChatInterface(chat, character) {
 
     }
 
+    initializeAudio();
+
     // Check if 'newSubscription' is true
     if (newSubscription) {
         // Display SweetAlert2 in Japanese
@@ -2385,4 +2398,59 @@ function autoPlayMessageAudio(uniqueId, message) {
     }, 800);
 }
 
-initializeAudio()
+window.upscaleImage = async function(imageId, imageUrl, chatId, userChatId) {
+    try {
+        if (!imageId || !imageUrl) {
+            showNotification('Invalid image data', 'error');
+            return;
+        }
+
+        // Show loading notification
+        showNotification(window.translations?.upscaling_image || 'Upscaling image...', 'info');
+
+        // Convert image URL to base64
+        const base64Response = await fetch('/api/convert-url-to-base64', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: imageUrl })
+        });
+
+        if (!base64Response.ok) {
+            throw new Error('Failed to convert image to base64');
+        }
+
+        const { base64Image } = await base64Response.json();
+
+        // Create placeholder for upscaled image
+        const placeholderId = `upscale_${Date.now()}_${imageId}`;
+        displayOrRemoveImageLoader(placeholderId, 'show');
+
+        // Call upscale API
+        const upscaleResponse = await fetch('/novita/upscale-img', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userId,
+                chatId,
+                userChatId,
+                originalImageId: imageId,
+                image_base64: base64Image,
+                originalImageUrl: imageUrl,
+                placeholderId,
+                scale_factor: 2,
+                model_name: 'RealESRGAN_x4plus_anime_6B'
+            })
+        });
+
+        if (!upscaleResponse.ok) {
+            throw new Error('Failed to start upscale process');
+        }
+
+        const result = await upscaleResponse.json();
+        console.log('Upscale initiated:', result);
+        
+    } catch (error) {
+        console.error('Error upscaling image:', error);
+        showNotification(window.translations?.upscale_error || 'Failed to upscale image', 'error');
+    }
+};

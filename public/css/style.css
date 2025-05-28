@@ -247,7 +247,7 @@
 }
 .video-generation-loader {
 width: 90vw;
-max-width: 600px;
+max-width: 200px !important;
 }
   .custom-gradient-bg {
   background:linear-gradient(90.9deg,#D2B8FF 2.74%,#8240FF 102.92%);
@@ -2282,7 +2282,7 @@ max-width: 600px;
   max-width: 100% !important;
 }
 .image-tools{
-  max-width: 100% !important;
+  max-width: 200px !important;
 }
 .assistant-image-box:hover {
   transform: scale(1.12) rotate(5deg);

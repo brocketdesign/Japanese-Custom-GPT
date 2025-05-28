@@ -3,8 +3,7 @@ const slugify = require('slugify');
 const {
     checkImageRequest, 
     generateCompletion,
-    generatePromptSuggestions,
-    analyzeConversationContext
+    generatePromptSuggestions
 } = require('../models/openai')
 const { 
     generateImg,
@@ -24,14 +23,9 @@ const {
 } = require('../models/tool');
 const axios = require('axios');
 const OpenAI = require("openai");
-const { z, custom, union } = require("zod");
-const { zodResponseFormat, zodResponsesFunction } = require("openai/helpers/zod");
 const path = require('path');
 const fs = require('fs');
 const sharp = require('sharp');
-const { title } = require('process');
-const { chat } = require('googleapis/build/src/apis/chat');
-const sessions = new Map();
 
 const free_models = false // ['293564']; // [DEBUG] Disable temporary
 // Helper function to tokenize a prompt string (can be moved to a shared utility if used elsewhere)
@@ -737,8 +731,8 @@ async function routes(fastify, options) {
           let userData = await getUserChatData(db, userId, userChatId)
           const subscriptionStatus = userInfo.subscriptionStatus == 'active' ? true : false
           if (!userData) { return reply.status(404).send({ error: 'User data not found' }) }
-          const isAdmin = await checkUserAdmin(fastify, userId)
-          const chatDocument = await getChatDocument(request, db, chatId)
+          const isAdmin = await checkUserAdmin(fastify, userId);
+          const chatDocument = await getChatDocument(request, db, chatId);
           const chatDescription = chatDataToString(chatDocument)
           const characterDescription = chatDocument.enhancedPrompt || chatDocument?.imageDescription || chatDocument.characterPrompt;
           const language = getLanguageName(userInfo.lang)

@@ -523,38 +523,70 @@ fastify.get('/character/slug/:slug', async (request, reply) => {
     if (imageSlug) {
       const imageDoc = await galleryCollection
         .aggregate([
-          { $match: { chatId: chatIdObjectId } }, // Use chatIdObjectId here
+          { $match: { chatId: chatIdObjectId } },
           { $unwind: '$images' },
           { $match: { 'images.slug': imageSlug } },
           { $project: { image: '$images', _id: 0 } },
         ])
         .toArray();
 
-        imageId = imageDoc[0]?.image?._id || null;
-        try {
-          imageId = new fastify.mongo.ObjectId(imageId);
-        } catch (e) {
-          console.error(`[/character/:slug] Invalid Image ID format: ${imageId}`);
-          return reply.code(400).send({ error: 'Invalid Image ID format' });
+      imageId = imageDoc[0]?.image?._id || null;
+      try {
+        imageId = new fastify.mongo.ObjectId(imageId);
+      } catch (e) {
+        console.error(`[/character/:slug] Invalid Image ID format: ${imageId}`);
+        return reply.code(400).send({ error: 'Invalid Image ID format' });
+      }
+
+      if (imageDoc.length > 0) {
+        image = imageDoc[0].image;
+        
+        // Check if this is an upscaled image with an originalImageId
+        if (image.isUpscaled && image.originalImageId) {
+          try {
+            const originalImageId = new fastify.mongo.ObjectId(image.originalImageId);
+            
+            // Find the original image in the gallery
+            const originalImageDoc = await galleryCollection
+              .aggregate([
+                { $match: { chatId: chatIdObjectId } },
+                { $unwind: '$images' },
+                { $match: { 'images._id': originalImageId } },
+                { $project: { image: '$images', _id: 0 } },
+              ])
+              .toArray();
+            
+            if (originalImageDoc.length > 0 && originalImageDoc[0].image.slug) {
+              // Redirect to the original image with the same query parameters
+              const { modal } = request.query;
+              let queryString = `?imageSlug=${originalImageDoc[0].image.slug}`;
+              if (modal) {
+                queryString += `&modal=${modal}`;
+              }
+              
+              console.log(`[/character/:slug] Redirecting from upscaled image to original: ${originalImageDoc[0].image.slug}`);
+              return reply.redirect(`/character/slug/${chat.slug}${queryString}`);
+            }
+          } catch (err) {
+            console.error(`[/character/:slug] Error processing originalImageId: ${image.originalImageId}`, err);
+            // Continue with the upscaled image if we can't find the original
+          }
         }
 
+        // Continue with existing title generation logic
         if (
-          imageDoc.length > 0 &&
-          imageDoc[0].image &&
-          (
-            !imageDoc[0].image.title ||
-            typeof imageDoc[0].image.title !== 'object' ||
-            !imageDoc[0].image.title.en ||
-            !imageDoc[0].image.title.ja ||
-            !imageDoc[0].image.title.fr
-          )
+          !image.title ||
+          typeof image.title !== 'object' ||
+          !image.title.en ||
+          !image.title.ja ||
+          !image.title.fr
         ) {
-          const existingTitle = imageDoc[0].image.title || {};
+          const existingTitle = image.title || {};
           const generateTitles = async () => {
             const title = { ...existingTitle };
-            if (!title.en) title.en = await generatePromptTitle(imageDoc[0].image.prompt, 'english');
-            if (!title.ja) title.ja = await generatePromptTitle(imageDoc[0].image.prompt, 'japanese');
-            if (!title.fr) title.fr = await generatePromptTitle(imageDoc[0].image.prompt, 'french');
+            if (!title.en) title.en = await generatePromptTitle(image.prompt, 'english');
+            if (!title.ja) title.ja = await generatePromptTitle(image.prompt, 'japanese');
+            if (!title.fr) title.fr = await generatePromptTitle(image.prompt, 'french');
             return title;
           };
 
@@ -567,15 +599,12 @@ fastify.get('/character/slug/:slug', async (request, reply) => {
           }).catch((err) => {
             console.error('[SimilarChats] Failed to generate titles for image:', err);
           });
-      }
-      
-      if (imageDoc.length > 0) {
-        image = imageDoc[0].image;
+        }
+        
         const unlockedItem = currentUserData?.unlockedItems?.map((id) => id.toString()).includes(imageId.toString());
         isBlur = unlockedItem ? false : image?.nsfw && !subscriptionStatus;
       } else {
         console.warn(`[SimilarChats] Image not found for ID: ${imageId} in chat ${chatIdParam}`);
-        // Not returning 404 for image not found, page can still render without it.
       }
     }
 

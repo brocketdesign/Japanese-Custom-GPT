@@ -4,6 +4,7 @@ const fs = require('fs');
 const { processPromptToTags, saveChatImageToDB } = require('../models/tool')
 const { generateImg, getPromptById, getImageSeed, checkImageDescription,getTasks } = require('../models/imagen');
 const { createPrompt, moderateText } = require('../models/openai');
+const { upscaleImg } = require('../models/upscale-utils');
 
 async function routes(fastify, options) {
 

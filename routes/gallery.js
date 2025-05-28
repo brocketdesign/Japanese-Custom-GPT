@@ -495,11 +495,12 @@ fastify.get('/chats/images/search', async (request, reply) => {
         return reply.code(404).send({ error: 'Chat not found' });
       }
   
-      // Find the chat document and paginate the images
+      // Find the chat document and paginate the images & filter out image with a scale_factor
       const chatImagesDocs = await chatsGalleryCollection
         .aggregate([
           { $match: { chatId } },           // Match the document by chatId
           { $unwind: '$images' },           // Unwind the images array
+          { $match: { 'images.isUpscaled': true} }, // Filter out images with scale_factor
           { $sort: { 'images.createdAt': -1 } }, // Sort by createdAt in descending order
           { $skip: skip },                  // Skip for pagination
           { $limit: limit },                // Limit the results to the page size

@@ -952,5 +952,5 @@ async function getImageSeed(db, imageId) {
     deleteAllTasks,
     pollTaskStatus,
     handleTaskCompletion,
-    checkTaskStatus
+    checkTaskStatus,
   };

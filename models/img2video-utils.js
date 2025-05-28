@@ -347,8 +347,7 @@ async function handleVideoTaskCompletion(taskStatus, fastify, options = {}) {
       };
       console.log(`[handleVideoTaskCompletion] Video notification data:`, JSON.stringify(videoNotificationData, null, 2));
       
-        fastify.sendNotificationToUser(userId, 'videoGenerated', videoNotificationData);
-      console.log(`[handleVideoTaskCompletion] Video notification sent, result:`, videoResult);
+      fastify.sendNotificationToUser(userId, 'videoGenerated', videoNotificationData);
 
       console.log(`[handleVideoTaskCompletion] Video completion handling finished successfully for task ${taskStatus.taskId}`);
 

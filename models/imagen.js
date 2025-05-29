@@ -852,21 +852,28 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
       if (!userData) {
         throw new Error('User data not found');
       }
-  
-      const imageMessage = { role: "assistant", content: `[Image] ${imageId}` };
-      await userDataCollection.updateOne(
-        { 
-          userId: new ObjectId(userId), 
-          _id: new ObjectId(userChatId) 
-        },
-        { 
-          $push: { messages: imageMessage }, 
-          $set: { updatedAt: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) } 
-        }
-      );
-  
+      // Register helper 
+      const addMessageTochat = async (message) => {
+        await userDataCollection.updateOne(
+          { 
+            userId: new ObjectId(userId), 
+            _id: new ObjectId(userChatId) 
+          },
+          { 
+            $push: { messages: message }, 
+            $set: { updatedAt: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) } 
+          }
+        );
+      }
+
+      const imageIdMessage = { role: "assistant", content: `[Image] ${imageId}` };
+      addMessageTochat(imageIdMessage)
+      // Add context for the assisant
+      const imageMessage = {role: "assistant", content: `${title}`}
+      addMessageTochat(imageMessage)
+
       return { imageId, imageUrl };
-  
+      
     } catch (error) {
       console.log(error);
       console.log('Error saving image to DB:', error.message);

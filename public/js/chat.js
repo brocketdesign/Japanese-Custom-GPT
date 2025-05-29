@@ -1004,7 +1004,7 @@ function setupChatInterface(chat, character) {
                         <div 
                         onclick="showImagePreview(this)"
                         class="ps-0 text-start assistant-image-box vertical-transition">
-                            <img id="image-${imageId}" src="${placeholderImageUrl}" alt="Loading image...">
+                            <img id="image-${imageId}" data-id="${imageId}" src="${placeholderImageUrl}" alt="Loading image...">
                             <div class="nsfw-badge-container badge" style="display:none;">NSFW<div>
                         </div>
                     </div>
@@ -1018,7 +1018,6 @@ function setupChatInterface(chat, character) {
                 method: 'GET',
                 success: function(response) {
                     if (response.imageUrl) {
-                        
                         // Update the placeholder image
                         if(!subscriptionStatus && response.nsfw){
                             $(`#image-${imageId}`).attr('data-src', response.imageUrl).addClass('img-blur').fadeIn();
@@ -1034,10 +1033,12 @@ function setupChatInterface(chat, character) {
                         $(`#image-${imageId}`).attr('data-prompt', response.imagePrompt);
                         // Add tools or badges if applicable
                         if (!response.isBlur) {
-                            const toolsHtml = getImageTools({chatId, imageId, isLiked:response?.likedBy?.some(id => id.toString() === userId.toString()),title:response?.title?.[lang], prompt:response.imagePrompt, nsfw:response.nsfw, imageUrl:response.imageUrl});
-                            $(`#image-${imageId}`).closest('.assistant-image-box').after(toolsHtml);
-                            if(response.nsfw){
-                                $(`#image-${imageId}`).closest('.assistant-image-box').find('.nsfw-badge-container').show();
+                            if(!response.isUpscaled){
+                                const toolsHtml = getImageTools({chatId, imageId, isLiked:response?.likedBy?.some(id => id.toString() === userId.toString()),title:response?.title?.[lang], prompt:response.imagePrompt, nsfw:response.nsfw, imageUrl:response.imageUrl});
+                                $(`#image-${imageId}`).closest('.assistant-image-box').after(toolsHtml);
+                                if(response.nsfw){
+                                    $(`#image-${imageId}`).closest('.assistant-image-box').find('.nsfw-badge-container').show();
+                                }
                             }
                         } else {
                             const blurBadgeHtml = `
@@ -1548,7 +1549,8 @@ function setupChatInterface(chat, character) {
             const title = message.getAttribute('alt');
             const prompt = message.getAttribute('data-prompt');
             const imageUrl = message.getAttribute('src');
-
+            const isUpscaled = message.getAttribute('data-isUpscaled') == 'true'
+            
             if(!subscriptionStatus && imageNsfw){
                 // Remove src attribute to prevent loading the image
                 message.removeAttribute('src');
@@ -1568,7 +1570,7 @@ function setupChatInterface(chat, character) {
                             ${message.outerHTML}
                             ${imageNsfw ? `<div class="nsfw-badge-container badge">NSFW</div>` : ''}
                         </div>
-                        ${getImageTools({chatId:origineUserChatId, imageId,isLiked:false,title,prompt,imageNsfw,imageUrl})}
+                        ${!isUpscaled ? getImageTools({chatId, imageId, isLiked:false, title, prompt, imageNsfw, imageUrl}) : ''}
                     </div>
                 </div>      
             `).hide();
@@ -1597,7 +1599,7 @@ function setupChatInterface(chat, character) {
                             ${message.outerHTML}
                             ${imageNsfw ? `<div class="nsfw-badge-container badge">NSFW</div>` : ''}
                         </div>
-                        ${getImageTools({chatId:origineUserChatId, imageId,isLiked:false,title,prompt,imageNsfw,imageUrl})}
+                        ${getImageTools({chatId, imageId, isLiked:false, title, prompt, imageNsfw, imageUrl})}
                     </div>  
             `).hide();
             $(`#${messageId}`).find('.load').remove()
@@ -2397,6 +2399,8 @@ function autoPlayMessageAudio(uniqueId, message) {
         initAudio($el, message);
     }, 800);
 }
+// Add this at the top of the file with other global variables
+const upscaledImages = new Set();
 
 window.upscaleImage = async function(imageId, imageUrl, chatId, userChatId) {
     try {
@@ -2405,10 +2409,21 @@ window.upscaleImage = async function(imageId, imageUrl, chatId, userChatId) {
             showNotification('Invalid image data', 'error');
             return;
         }
+        
+        // Check if image has already been upscaled
+        if (upscaledImages.has(imageId)) {
+            showNotification(window.translations?.already_upscaled || 'This image has already been upscaled', 'warning');
+            return;
+        }
+        
         if( upscaleButton.hasClass('disabled')) {
             showNotification(window.translations?.upscaling_in_progress || 'Upscaling in progress...', 'warning');
             return;
         }
+        
+        // Add to upscaled set to prevent duplicate upscaling
+        upscaledImages.add(imageId);
+
         // Show loading notification
         showNotification(window.translations?.upscaling_image || 'Upscaling image...', 'info');
 
@@ -2454,10 +2469,11 @@ window.upscaleImage = async function(imageId, imageUrl, chatId, userChatId) {
         }
 
         const result = await upscaleResponse.json();
-        console.log('Upscale initiated:', result);
         
     } catch (error) {
         console.error('Error upscaling image:', error);
+        // Remove from upscaled set if there was an error
+        upscaledImages.delete(imageId);
         showNotification(window.translations?.upscale_error || 'Failed to upscale image', 'error');
     }
 };

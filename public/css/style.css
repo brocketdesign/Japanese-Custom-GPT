@@ -248,6 +248,11 @@
 .video-generation-loader {
 width: 90vw;
 max-width: 200px !important;
+border-radius: .25rem .25rem 0 0;
+position: absolute;
+top: 0;
+bottom: 0;
+opacity: 0.8;
 }
   .custom-gradient-bg {
   background:linear-gradient(90.9deg,#D2B8FF 2.74%,#8240FF 102.92%);

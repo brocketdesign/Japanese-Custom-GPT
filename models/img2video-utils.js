@@ -294,6 +294,17 @@ async function handleVideoTaskCompletion(taskStatus, fastify, options = {}) {
     console.log(`[handleVideoTaskCompletion] Video URL found, saving to database for task ${taskStatus.taskId || placeholderId}`);
     
     try {
+        // Check if already processed to prevent duplicate notifications
+        const existingTask = await db.collection('tasks').findOne({ 
+            taskId: taskStatus.taskId || placeholderId, 
+            status: 'completed' 
+        });
+        
+        if (existingTask) {
+            console.log(`Task ${taskStatus.taskId? taskStatus.taskId : placeholderId} already completed, skipping duplicate processing`);
+            return;
+        }
+
       // Save video to database
       const savedVideo = await saveVideoToDB({
         taskId: taskStatus.taskId || placeholderId,

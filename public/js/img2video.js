@@ -53,7 +53,7 @@ window.generateVideoFromImage = async function(imageId, chatId, userChatId, prom
                 prompt
             })
         });
-        console.log('[generateVideoFromImage] API response:', response);
+
         const data = await response.json();
 
         if (!response.ok) {
@@ -63,9 +63,6 @@ window.generateVideoFromImage = async function(imageId, chatId, userChatId, prom
 
         if (data.success) {
             showNotification(window.translations.video_generation_started || 'Video generation started', 'success');
-            
-            // No need to poll - backend will handle everything and notify via WebSocket
-            console.log(`Video generation started with task ID: ${data.taskId}`);
         } else {
             throw new Error(data.message || 'Video generation failed');
         }
@@ -116,7 +113,7 @@ function displayVideoLoader(placeholderId, imageId) {
     console.log('[displayVideoLoader] Creating loader for:', placeholderId, 'imageId:', imageId);
     
     const loaderHtml = `
-        <div id="video-loader-${placeholderId}" class="video-generation-loader bg-light d-flex align-items-center justify-content-center p-3 mb-3 mx-auto rounded shadow-sm" style="max-width: 500px;">
+        <div id="video-loader-${placeholderId}" class="video-generation-loader bg-dark d-flex align-items-center justify-content-center p-3 mx-auto shadow-sm" style="max-width: 500px;">
             <div class="text-center">
                 <div class="spinner-border text-secondary" role="status">
                     <span class="visually-hidden">Loading...</span>
@@ -130,24 +127,17 @@ function displayVideoLoader(placeholderId, imageId) {
 
     // Insert loader after the image container
     const imageContainer = $(`[data-id="${imageId}"]`).closest('.assistant-image-box');
-    console.log('[displayVideoLoader] Found image container:', imageContainer.length);
     
     if (imageContainer.length > 0) {
-        imageContainer.after(loaderHtml);
-        console.log('[displayVideoLoader] Loader inserted after image container');
+        imageContainer.append(loaderHtml);
     } else {
         // Fallback: append to chat container
         const chatContainer = $('#chatContainer');
-        console.log('[displayVideoLoader] Fallback: appending to chat container:', chatContainer.length);
         chatContainer.append(loaderHtml);
+        // Scroll to show the loader
+        $('#chatContainer').animate({ scrollTop: $('#chatContainer')[0].scrollHeight }, 500);
     }
 
-    // Verify loader was created
-    const createdLoader = $(`#video-loader-${placeholderId}`);
-    console.log('[displayVideoLoader] Loader created successfully:', createdLoader.length > 0);
-
-    // Scroll to show the loader
-    $('#chatContainer').animate({ scrollTop: $('#chatContainer')[0].scrollHeight }, 500);
 }
 
 /**

@@ -173,6 +173,17 @@ async function pollUpscaleTask(taskId, fastify) {
             
             if (result.status === 'completed') {
                 clearInterval(pollInterval);
+    
+                // Check if already processed to prevent duplicate notifications
+                const existingTask = await db.collection('upscale_tasks').findOne({ 
+                    taskId, 
+                    status: 'completed' 
+                });
+                
+                if (existingTask) {
+                    console.log(`Task ${taskId} already completed, skipping duplicate processing`);
+                    return;
+                }
                 
                 // Update task status
                 await db.collection('upscale_tasks').updateOne(
@@ -214,6 +225,7 @@ async function pollUpscaleTask(taskId, fastify) {
                     userChatId: task.userChatId,
                     title: { en: 'Upscaled Image', ja: 'アップスケール画像' },
                     prompt: `Upscaled version (${task.scale_factor}x)`,
+                    isUpscaled: true,
                     nsfw: false
                 });
 

@@ -108,8 +108,9 @@ function initializeWebSocket(onConnectionResult = null) {
             // Removed console.log('[WebSocket] Notification userChatId:', userChatId);
             console.log(`[WebSocket] Processing video generation for videoId: ${videoId}, userChatId: ${userChatId}, window.userChatId: ${window.userChatId}, taskId: ${taskId}`);
             console.log(`[videoGenerated] checking if userChatId matches window.userChatId: ${userChatId === window.userChatId}`);
+            console.log(`userChatId: ${userChatId}, window.userChatId: ${window.userChatId} `)
+            console.log(`SessionStorage.userChatId : ${sessionStorage.getItem('userChatId')}`)
             
-            if (userChatId === window.userChatId) {
               console.log('[WebSocket] UserChatId matches, processing video generation');
               
               // Remove any existing loader for this placeholder
@@ -127,9 +128,7 @@ function initializeWebSocket(onConnectionResult = null) {
               });
               
               showNotification(window.translations.video_generation_completed || 'Video generated successfully!', 'success');
-            } else {
-              // Removed console.log('[WebSocket] UserChatId mismatch, ignoring notification');
-            }
+            
             break;
           }
           case 'handleRegenSpin': {
@@ -138,7 +137,7 @@ function initializeWebSocket(onConnectionResult = null) {
             break;
           }
           case 'imageGenerated': {
-            const { userChatId, imageId, imageUrl, title, prompt, nsfw } = data.notification;
+            const { userChatId, imageId, imageUrl, title, prompt, nsfw, isUpscaled } = data.notification;
             generateImage({
               userChatId,
               url: imageUrl,
@@ -146,7 +145,8 @@ function initializeWebSocket(onConnectionResult = null) {
               title,
               prompt,
               imageId, 
-              nsfw
+              nsfw, 
+              isUpscaled
             });
             break;
           }

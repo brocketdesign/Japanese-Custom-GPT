@@ -170,9 +170,9 @@ window.displayOrRemoveImageLoader = function (imageId, action, imagePreview) {
 const sentImageIds = new Set();
 window.generateImage = async function(data) {
     if (!data || !data.userChatId || !data.url || !data.id || !data.prompt || sentImageIds.has(data.id)) return;
-
-    const { url: imageUrl, id: imageId, nsfw: imageNsfw, prompt: imagePrompt } = data;
-    sentImageIds.add(imageId);
+    
+    const { url: imageUrl, id: imageId, nsfw: imageNsfw, prompt: imagePrompt, isUpscaled } = data;
+    sentImageIds.add(data.id);
 
     const img = document.createElement('img');
     img.setAttribute('src', imageUrl);
@@ -181,6 +181,7 @@ window.generateImage = async function(data) {
     img.setAttribute('class', 'm-auto');
     img.setAttribute('data-id', imageId);
     img.setAttribute('data-nsfw', imageNsfw);
+    img.setAttribute('data-isUpscaled', !!isUpscaled)
 
     displayMessage('bot-image', img, data.userChatId);
 };

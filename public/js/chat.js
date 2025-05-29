@@ -969,27 +969,6 @@ function setupChatInterface(chat, character) {
         });
     }
 
-    function getVideoTools(videoUrl, duration, videoId) {
-        return `
-        <div class="bg-white py-2 d-flex justify-content-around video-tools">
-            <div class="d-flex justify-content-around w-100">
-                <span class="badge bg-white text-secondary download-video" style="cursor: pointer;">
-                    <a href="${videoUrl}" download="generated_video_${videoId}.mp4" style="color:inherit; text-decoration: none;">
-                        <i class="bi bi-download"></i>
-                    </a>
-                </span>
-                <span class="badge bg-white text-secondary share-video" 
-                      onclick="shareVideo('${videoUrl}')" 
-                      style="cursor: pointer;">
-                    <i class="bi bi-share"></i>
-                </span>
-                ${duration ? `<span class="badge bg-white text-secondary">
-                    <i class="bi bi-clock"></i> ${Math.round(duration)}s
-                </span>` : ''}
-            </div>
-        </div>
-    `;
-    }
 
     function getImageUrlById(imageId, designStep, thumbnail) {
         const placeholderImageUrl = '/img/placeholder-image-2.gif'; // Placeholder image URL

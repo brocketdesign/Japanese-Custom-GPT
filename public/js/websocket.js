@@ -101,24 +101,14 @@ function initializeWebSocket(onConnectionResult = null) {
             break;
           }
           case 'videoGenerated': {
-            // Removed console.log('[WebSocket] Handling videoGenerated:', data.notification);
             const { videoId, videoUrl, duration, userChatId, placeholderId, taskId } = data.notification;
-            
-            // Removed console.log('[WebSocket] Current userChatId:', window.userChatId);
-            // Removed console.log('[WebSocket] Notification userChatId:', userChatId);
-            console.log(`[WebSocket] Processing video generation for videoId: ${videoId}, userChatId: ${userChatId}, window.userChatId: ${window.userChatId}, taskId: ${taskId}`);
-            console.log(`[videoGenerated] checking if userChatId matches window.userChatId: ${userChatId === window.userChatId}`);
-            console.log(`userChatId: ${userChatId}, window.userChatId: ${window.userChatId} `)
-            console.log(`SessionStorage.userChatId : ${sessionStorage.getItem('userChatId')}`)
-            
-              console.log('[WebSocket] UserChatId matches, processing video generation');
+
+            if( userChatId == sessionStorage.getItem('userChatId')) {
               
               // Remove any existing loader for this placeholder
-              console.log('[WebSocket] Removing loader for placeholderId:', placeholderId);
               removeVideoLoader(placeholderId);
               
               // Display the generated video
-              console.log('[WebSocket] Displaying generated video');
               displayGeneratedVideo({
                 videoUrl,
                 duration,
@@ -128,7 +118,9 @@ function initializeWebSocket(onConnectionResult = null) {
               });
               
               showNotification(window.translations.video_generation_completed || 'Video generated successfully!', 'success');
-            
+            } else {
+              console.warn(`[WebSocket] UserChatId does not match. Ignoring video generation for videoId: ${videoId}`);
+            }
             break;
           }
           case 'handleRegenSpin': {

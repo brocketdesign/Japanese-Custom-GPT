@@ -166,20 +166,13 @@ function updateVideoProgress(placeholderId, progress) {
         `);
     }
 }
-
 /**
  * Display generated video in chat
  * @param {Object} videoData - Video information
  */
 function displayGeneratedVideo(videoData) {
-    console.log('[displayGeneratedVideo] Starting with data:', videoData);
     const { videoUrl, duration, userChatId, placeholderId, videoId } = videoData;
-    
-    console.log('[displayGeneratedVideo] Video URL:', videoUrl);
-    console.log('[displayGeneratedVideo] Duration:', duration);
-    console.log('[displayGeneratedVideo] UserChatId:', userChatId);
-    console.log('[displayGeneratedVideo] PlaceholderId:', placeholderId);
-    
+
     // Check if we have the required variables
     if (typeof thumbnail === 'undefined') {
         console.warn('[displayGeneratedVideo] thumbnail variable not defined, using default');
@@ -188,43 +181,43 @@ function displayGeneratedVideo(videoData) {
         console.warn('[displayGeneratedVideo] chatId variable not defined');
     }
     
+    // Generate a design step similar to getVideoUrlById
+    const designStep = `generated-${Date.now()}`;
+    
     const videoHtml = `
-        <div class="d-flex flex-row justify-content-start mb-4 message-container bot-video animate__animated animate__slideInUp">
-            <img src="${thumbnail || '/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId || ''}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
-            <div class="ms-3 position-relative">
-                <div class="assistant-video-box video-container">
-                    <video 
-                        controls 
-                        class="generated-video" 
-                        style="max-width: 100%; border-radius: 15px;"
-                        data-placeholder-id="${placeholderId}"
-                        data-video-id="${videoId}"
-                    >
-                        <source src="${videoUrl}" type="video/mp4">
-                        ${window.translations.video_not_supported || 'Your browser does not support the video tag.'}
-                    </video>
+        <div id="container-${designStep}">
+            <div class="d-flex flex-row justify-content-start mb-4 message-container">
+                <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId || ''}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
+                <div class="ms-3 position-relative" style="max-width: 200px;">
+                    <div class="ps-0 text-start assistant-video-box">
+                        <video 
+                            controls 
+                            class="generated-video" 
+                            style="max-width: 100%; border-radius: 15px;"
+                            data-video-id="${videoId}"
+                            data-placeholder-id="${placeholderId}"
+                        >
+                            <source src="${videoUrl}" type="video/mp4">
+                            ${window.translations?.video_not_supported || 'Your browser does not support the video tag.'}
+                        </video>
+                    </div>
+                    ${getVideoTools(videoUrl, duration, videoId)}
                 </div>
-                ${getVideoTools(videoUrl, duration, videoId)}
             </div>
         </div>
     `;
 
-    console.log('[displayGeneratedVideo] Generated HTML:', videoHtml);
     
     const chatContainer = $('#chatContainer');
-    console.log('[displayGeneratedVideo] Chat container found:', chatContainer.length > 0);
     
     if (chatContainer.length > 0) {
-        chatContainer.append(videoHtml);
-        console.log('[displayGeneratedVideo] Video HTML appended to chat container');
+        chatContainer.append($(videoHtml).hide().fadeIn());
         
         // Scroll to bottom
         chatContainer.animate({ scrollTop: chatContainer[0].scrollHeight }, 500);
-        console.log('[displayGeneratedVideo] Scrolled to bottom');
     } else {
         console.error('[displayGeneratedVideo] Chat container not found!');
     }
-
 }
 
 /**
@@ -234,34 +227,27 @@ function displayGeneratedVideo(videoData) {
  * @param {string} videoId - Video ID
  * @returns {string} HTML for video tools
  */
-function getVideoTools(videoUrl, duration, videoId) {
-    return `
+window.getVideoTools = function(videoUrl, duration, videoId) {
+        return `
         <div class="bg-white py-2 d-flex justify-content-around video-tools">
             <div class="d-flex justify-content-around w-100">
                 <span class="badge bg-white text-secondary download-video" style="cursor: pointer;">
                     <a href="${videoUrl}" download="generated_video_${videoId}.mp4" style="color:inherit; text-decoration: none;">
-                        <i class="bi bi-download"></i> ${window.translations.download || 'Download'}
+                        <i class="bi bi-download"></i>
                     </a>
                 </span>
                 <span class="badge bg-white text-secondary share-video" 
                       onclick="shareVideo('${videoUrl}')" 
                       style="cursor: pointer;">
-                    <i class="bi bi-share"></i> ${window.translations.share || 'Share'}
+                    <i class="bi bi-share"></i>
                 </span>
-                ${duration ? `<span class="badge bg-white text-secondary">
+                ${duration && !Math.round(duration).isNan() ? `<span class="badge bg-white text-secondary">
                     <i class="bi bi-clock"></i> ${Math.round(duration)}s
                 </span>` : ''}
-                <span class="badge bg-white text-secondary regenerate-video" 
-                      onclick="regenerateVideo('${videoId}')" 
-                      style="cursor: pointer;"
-                      title="${window.translations?.regenerate_video || 'Regenerate Video'}">
-                    <i class="bi bi-arrow-clockwise"></i>
-                </span>
             </div>
         </div>
     `;
-}
-
+    }
 /**
  * Regenerate video from existing video data
  * @param {string} videoId - Video ID to regenerate

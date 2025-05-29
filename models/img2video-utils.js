@@ -22,6 +22,7 @@ async function generateVideoFromImage({ imageUrl, prompt, userId, chatId, placeh
     guidance_scale: 0.5,
   };
   console.log(`[generateVideoFromImage] RequestData: ${JSON.stringify(requestData)}`);
+
   try {
     const response = await axios.post(apiUrl, requestData, {
       headers: {

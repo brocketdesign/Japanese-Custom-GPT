@@ -50,7 +50,7 @@ async function img2videoRoutes(fastify) {
                 console.warn(`[img2video] User already has a video generation task in progress: ${existingTask.taskId}`);
                 fastify.sendNotificationToUser(userId, 'showNotification', {
                     icon: 'warning',
-                    message: 'You already have a video generation task in progress.'
+                    message: request.img2videoTranslations?.notifications?.alreadyInProgress || 'You already have a video generation task in progress.'
                 });
                 return reply.status(429).send({ error: 'Video generation already in progress' });
             }

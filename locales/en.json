@@ -1,5 +1,6 @@
 {
   "lang":"en",
+  "download_success":"Download Successful",
   "reconnect": {
     "title": "Connection Lost",
     "message": "The connection to the server has been lost. You can try to reconnect or refresh the page.",

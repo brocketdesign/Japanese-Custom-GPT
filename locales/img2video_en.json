@@ -1,0 +1,8 @@
+{
+  "notifications": {
+    "alreadyInProgress": "You already have a video generation task in progress.",
+    "generationFailed": "Video generation failed to start",
+    "videoSaveFailed": "Video generated but failed to save",
+    "noVideoUrl": "Video generation completed but no video URL received"
+  }
+}

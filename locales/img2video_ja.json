@@ -1,0 +1,8 @@
+{
+  "notifications": {
+    "alreadyInProgress": "既に動画生成タスクが進行中です。",
+    "generationFailed": "動画生成の開始に失敗しました",
+    "videoSaveFailed": "動画は生成されましたが、保存に失敗しました",
+    "noVideoUrl": "動画生成は完了しましたが、動画URLを受信できませんでした"
+  }
+}

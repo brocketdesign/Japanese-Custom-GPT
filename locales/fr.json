@@ -1,5 +1,6 @@
 {
   "lang":"fr",
+  "download_success":"Téléchargement réussi",
   "reconnect": {
     "title": "Connexion perdue",
     "message": "La connexion au serveur a été perdue. Vous pouvez essayer de vous reconnecter ou de rafraîchir la page.",

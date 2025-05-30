@@ -266,8 +266,9 @@ async function pollVideoTaskStatus(taskId, fastify, options = {}) {
         videoId: options.placeholderId, 
         action: 'remove' 
       });
+      const img2videoTranslations = fastify.getImg2videoTranslations(fastify.request?.lang || 'en');
       fastify.sendNotificationToUser(options.userId, 'showNotification', {
-        message: 'Video generation failed to start',
+        message: img2videoTranslations?.notifications?.generationFailed || 'Video generation failed to start',
         icon: 'error'
       });
     }
@@ -295,6 +296,7 @@ async function handleVideoTaskCompletion(taskStatus, fastify, options = {}) {
     console.log(`[handleVideoTaskCompletion] Video URL found, saving to database for task ${taskStatus.taskId || placeholderId}`);
     
     try {
+        const db = fastify.mongo.db;
         // Check if already processed to prevent duplicate notifications
         const existingTask = await db.collection('tasks').findOne({ 
             taskId: taskStatus.taskId || placeholderId, 
@@ -322,7 +324,6 @@ async function handleVideoTaskCompletion(taskStatus, fastify, options = {}) {
       console.log(`[handleVideoTaskCompletion] Video saved to database with ID: ${savedVideo._id}`);
 
       // Update task as completed in database
-      const db = fastify.mongo.db;
       const taskUpdateResult = await db.collection('tasks').updateOne(
         { taskId: taskStatus.taskId || placeholderId },
         { 
@@ -372,8 +373,9 @@ async function handleVideoTaskCompletion(taskStatus, fastify, options = {}) {
         videoId: placeholderId, 
         action: 'remove' 
       });
+      const img2videoTranslations = fastify.getImg2videoTranslations(fastify.request?.lang || 'en');
       fastify.sendNotificationToUser(userId, 'showNotification', {
-        message: 'Video generated but failed to save',
+        message: img2videoTranslations?.notifications?.videoSaveFailed || 'Video generated but failed to save',
         icon: 'error'
       });
     }
@@ -386,8 +388,9 @@ async function handleVideoTaskCompletion(taskStatus, fastify, options = {}) {
       videoId: placeholderId, 
       action: 'remove' 
     });
+    const img2videoTranslations = fastify.getImg2videoTranslations(fastify.request?.lang || 'en');
     fastify.sendNotificationToUser(userId, 'showNotification', {
-      message: 'Video generation completed but no video URL received',
+      message: img2videoTranslations?.notifications?.noVideoUrl || 'Video generation completed but no video URL received',
       icon: 'error'
     });
   }

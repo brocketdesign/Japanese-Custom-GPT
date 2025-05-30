@@ -1255,7 +1255,9 @@ opacity: 0.8;
   .onchat-off,.onchat-on {
     display:none
     }
-    
+  .loading-overlay.on{
+    display: flex;
+  }
     .avatar {
     object-fit:cover;
     object-position:top;

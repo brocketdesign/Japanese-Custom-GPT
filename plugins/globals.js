@@ -19,6 +19,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     // Cache translations to avoid redundant file reads
     const translationsCache = {};
     const clerkTranslationsCache = {}; // Add cache for clerk translations
+    const img2videoTranslationsCache = {}; // Add cache for img2video translations
 
     // Decorate Fastify with user, lang, and translations functions
     fastify.decorate('getUser', getUser);
@@ -26,6 +27,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     fastify.decorate('getTranslations', getTranslations);
     fastify.decorate('getClerkTranslations', getClerkTranslations); // Add clerk translations decorator
     fastify.decorate('getPaymentTranslations', getPaymentTranslations); // Add payment translations decorator
+    fastify.decorate('getImg2videoTranslations', getImg2videoTranslations); // Add img2video translations decorator
 
     // Attach `lang` and `user` dynamically
     Object.defineProperty(fastify, 'lang', {
@@ -45,6 +47,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     fastify.decorateRequest('translations', null);
     fastify.decorateRequest('clerkTranslations', null); // Add clerk translations to request
     fastify.decorateRequest('paymentTranslations', null); // Add payment translations to request
+    fastify.decorateRequest('img2videoTranslations', null); // Add img2video translations to request
 
     // Pre-handler to set user, lang, and translations
     fastify.addHook('preHandler', async (request, reply) => {
@@ -54,6 +57,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         request.translations = getTranslations(request.lang);
         request.clerkTranslations = getClerkTranslations(request.lang); // Load clerk translations
         request.paymentTranslations = getPaymentTranslations(request.lang); // Load payment translations
+        request.img2videoTranslations = getImg2videoTranslations(request.lang); // Load img2video translations
         
         // Make translations available in Handlebars templates
         reply.locals = {
@@ -61,6 +65,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             translations: request.translations,
             clerkTranslations: request.clerkTranslations, // Make clerk translations available
             paymentTranslations: request.paymentTranslations, // Make payment translations available
+            img2videoTranslations: request.img2videoTranslations, // Make img2video translations available
             user: request.user, // Make user available
             isUserAdmin: request.isUserAdmin, // Make admin status available
             mode: process.env.MODE,
@@ -192,25 +197,24 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         return clerkTranslationsCache[currentLang];
     }
 
-    /** Load Payment translations for a specific language (cached for performance) */
-    function getPaymentTranslations(currentLang) {
-        const paymentTranslationsCache = {};
-        if (!paymentTranslationsCache[currentLang]) {
-            const translationFile = path.join(__dirname, `../locales/payment_${currentLang}.json`);
-            try {
-                if (fs.existsSync(translationFile)) {
-                    paymentTranslationsCache[currentLang] = JSON.parse(fs.readFileSync(translationFile, 'utf-8'));
-                } else {
-                    // Fallback to English if the language file doesn't exist
-                    const fallbackFile = path.join(__dirname, `../locales/payment_en.json`);
-                    paymentTranslationsCache[currentLang] = JSON.parse(fs.readFileSync(fallbackFile, 'utf-8'));
+    /** Load Img2video translations for a specific language (cached for performance) */
+    function getImg2videoTranslations(currentLang) {
+        if (!currentLang) currentLang = 'en';
+        
+        if (!img2videoTranslationsCache[currentLang]) {
+            const img2videoTranslationFile = path.join(__dirname, '..', 'locales', `img2video_${currentLang}.json`);
+            if (fs.existsSync(img2videoTranslationFile)) {
+                try {
+                    img2videoTranslationsCache[currentLang] = JSON.parse(fs.readFileSync(img2videoTranslationFile, 'utf-8'));
+                } catch (e) {
+                    fastify.log.error(`Error reading img2video translations for ${currentLang}:`, e);
+                    img2videoTranslationsCache[currentLang] = {};
                 }
-            } catch (error) {
-                console.error(`Error loading payment translations for ${currentLang}:`, error);
-                paymentTranslationsCache[currentLang] = {}; // Fallback to empty object on error
+            } else {
+                img2videoTranslationsCache[currentLang] = {}; // Fallback to empty object if translation file is missing
             }
         }
-        return paymentTranslationsCache[currentLang];
+        return img2videoTranslationsCache[currentLang];
     }
 
     /** Middleware: Set request language and user */
@@ -220,6 +224,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         request.translations = fastify.getTranslations(request.lang);
         request.clerkTranslations = fastify.getClerkTranslations(request.lang);
         request.paymentTranslations = fastify.getPaymentTranslations(request.lang);
+        request.img2videoTranslations = fastify.getImg2videoTranslations(request.lang);
         request.isAdmin = await checkUserAdmin(fastify, request.user._id) || false;
     }
 
@@ -233,6 +238,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             translations: request.translations,
             clerkTranslations: request.clerkTranslations, // Add clerk translations to locals
             paymentTranslations: request.paymentTranslations, // Add payment translations to locals
+            img2videoTranslations: request.img2videoTranslations, // Add img2video translations to locals
             lang: request.lang,
             user: request.user,
             isAdmin: request.isAdmin

@@ -1256,7 +1256,7 @@ opacity: 0.8;
     display:none
     }
   .loading-overlay.on{
-    display: flex;
+    display: flex !important;
   }
     .avatar {
     object-fit:cover;

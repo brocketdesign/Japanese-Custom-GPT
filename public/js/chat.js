@@ -102,14 +102,6 @@ $(document).ready(async function() {
         }
     });
     window.addEventListener('message', function(event) {
-        if (event.data.event === 'imageFav') {
-            const imageId = event.data.imageId
-            if(!imageId)return
-            let message = `[imageFav] ${imageId}`
-            addMessageToChat(chatId, userChatId, {role:'user', message});
-        }
-    });
-    window.addEventListener('message', function(event) {
         if (event.data.event === 'imageStart') {
             const prompt = event.data.prompt
             const message = '[imageStart]'+ prompt
@@ -743,7 +735,6 @@ function setupChatInterface(chat, character) {
         for (let i = 0; i < userChat.length; i++) {
             let messageHtml = '';
             let chatMessage = userChat[i];
-                console.log(chatMessage)
     
             if (chatMessage.role === "user") {
                 const isStarter = chatMessage?.content?.startsWith("[Starter]") || chatMessage?.content?.startsWith("Invent a situation") || chatMessage?.content?.startsWith("Here is your character description");

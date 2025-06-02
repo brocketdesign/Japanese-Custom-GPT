@@ -430,6 +430,7 @@ window.toggleImageFavorite = function(el) {
   if (isTemporary) { openLoginForm(); return; }
 
   const $this = $(el);
+  const userChatId = $(`#chatContainer`).is(':visible') ? $(`#chatContainer`).attr('data-id') : null;
   const imageId = $this.data('id');
   const isLiked = $this.hasClass('liked'); // Check if already liked
 
@@ -442,13 +443,14 @@ window.toggleImageFavorite = function(el) {
         xhrFields: {
             withCredentials: true
         },
-    data: { action: action }, // Send action (like/unlike) in the request body
+    data: { 
+      action, 
+      userChatId 
+    }, // Send action (like/unlike) in the request body
     success: function() {
       // Show success notification in Japanese
       if (action === 'like') {
         $this.find('.ct').text(parseInt($this.find('.ct').text()) + 1);
-
-        window.postMessage({ event: 'imageFav', imageId }, '*');
       } else {
         showNotification('いいねを取り消しました！', 'success');
         $this.find('.ct').text(parseInt($this.find('.ct').text()) - 1);

@@ -366,34 +366,6 @@ async function routes(fastify, options) {
                 Do not include the image description in your answer. Provide a concice and short answer.\n
                 Stay in your character, keep the same tone as before. Respond in ${request.lang}.`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim();
                 newMessage.name = 'master'
-            } else if (message.startsWith('[imageFav]')){
-                const imageId = message.replace('[imageFav]','').trim()
-                async function findImageId(db, chatId, imageId) {
-                    try {
-                        const galleryCollection = db.collection('gallery');
-                        const imageDoc = await galleryCollection
-                        .aggregate([
-                            { $match: { chatId: new ObjectId(chatId) } },
-                            { $unwind: '$images' },
-                            { $match: { 'images._id': new ObjectId(imageId) } },
-                            { $project: { image: '$images', _id: 0 } },
-                        ])
-                        .toArray();
-
-                        if (imageDoc.length > 0) {
-                            return imageDoc[0].image;
-                        }
-                        return null;
-                    } catch (error) {
-                        console.error('Error finding image:', error);
-                        throw error;
-                    }
-                }
-                const imageData = await findImageId(fastify.mongo.db,chatId,imageId)
-                newMessage.content =  `I liked one of your picture. The one about: ${imageData.prompt}\n
-                 Provide a short answer to thank me, stay in your character. Respond in ${request.lang}.
-                 `.replace(/^\s+/gm, '').trim();
-                newMessage.name = 'master'
             } else if (message.startsWith('[promptImage]')){
                 const [promptId, userMessage, nsfw] = message.replace('[promptImage]', '').split(';;;');
                 newMessage.content = userMessage;

@@ -6,7 +6,7 @@ async function routes(fastify, options) {
   fastify.post('/gallery/:imageId/like-toggle', async (request, reply) => { 
     try {
       const imageId = new fastify.mongo.ObjectId(request.params.imageId);
-      const { action } = request.body; // 'like' or 'unlike'
+      const { action, userChatId } = request.body; // 'like' or 'unlike'
       const user = request.user;
       const userId = new fastify.mongo.ObjectId(user._id);
 
@@ -14,6 +14,38 @@ async function routes(fastify, options) {
       const galleryCollection = db.collection('gallery');
       const imagesLikesCollection = db.collection('images_likes');
       const usersCollection = db.collection('users'); // Collection to update user's imageLikeCount
+      const collectionUserChat = db.collection('userChat');
+
+      // Declare a function that will find the object with content that starts with [Image] or [image] followed by a space and then the imageId and update it with the like action field
+      const findImageMessageandUpdate = async (userChatId, userChatMessages, imageId, action) => {
+        if (!userChatMessages || !userChatMessages.messages) return;
+        const messageIndex = userChatMessages.messages.findIndex(msg => {
+          const content = msg.content || '';
+          return content.startsWith('[Image] ' + imageId.toString()) || content.startsWith('[image] ' + imageId.toString());
+        });
+        if (messageIndex !== -1) {
+          console.log(`Found image message at index ${messageIndex} for imageId: ${imageId}`);
+          const message = userChatMessages.messages[messageIndex];
+          if (action === 'like') {
+            // If the message already has a like action, do nothing
+            if (message.action && message.action.type === 'like') return;
+            // Update the message with the like action
+            console.log(`Updating message at index ${messageIndex} with like action for imageId: ${imageId}`);
+            userChatMessages.messages[messageIndex].action = { like: true, date: new Date() };
+          } else if (action === 'unlike') {
+            // If the message has a like action, remove it
+            if (message.action && message.action.type === 'like') {
+              delete userChatMessages.messages[messageIndex].action;
+            }
+          }
+          // Update the userChatMessages in the database
+          await collectionUserChat.updateOne(
+            { _id: new fastify.mongo.ObjectId(userChatId) },
+            { $set: { messages: userChatMessages.messages } }
+          );
+          console.log(`User chat messages updated for imageId: ${imageId}`);
+        }
+      }
 
       if (action === 'like') {
         // Check if the user already liked the image
@@ -48,7 +80,12 @@ async function routes(fastify, options) {
           { _id: userId },
           { $inc: { imageLikeCount: 1 } }
         );
-  
+        
+        if(userChatId){
+          const userChatMessages = await collectionUserChat.findOne({ _id: new fastify.mongo.ObjectId(userChatId) });
+          findImageMessageandUpdate(userChatId, userChatMessages, imageId, 'like');
+        }
+
         return reply.send({ message: 'Image liked successfully' });
   
       } else if (action === 'unlike') {
@@ -88,7 +125,12 @@ async function routes(fastify, options) {
               { $inc: { imageLikeCount: -1 } }
             );
           }
-  
+          
+          if(userChatId){
+            const userChatMessages = await collectionUserChat.findOne({ _id: new fastify.mongo.ObjectId(userChatId) });
+            findImageMessageandUpdate(userChatId, userChatMessages, imageId, 'unlike');
+          }
+
           return reply.send({ message: 'Image unliked successfully' });
         } else {
           return reply.code(400).send({ error: 'Cannot decrease like count below 0' });

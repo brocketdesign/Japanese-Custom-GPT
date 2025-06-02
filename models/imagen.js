@@ -869,7 +869,9 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
       const imageIdMessage = { role: "assistant", content: `[Image] ${imageId}` };
       addMessageTochat(imageIdMessage)
       // Add context for the assisant
-      const imageMessage = {role: "assistant", content: `${title}`}
+      const firstAvailableTitle = title.en || title.ja || title.fr || '';
+      console.log(`[saveImageToDB] Adding image message to chat: ${firstAvailableTitle}`);
+      const imageMessage = {role: "assistant", content: `${firstAvailableTitle}`, hidden: true };
       addMessageTochat(imageMessage)
 
       return { imageId, imageUrl };

@@ -447,6 +447,7 @@ window.toggleImageFavorite = function(el) {
       // Show success notification in Japanese
       if (action === 'like') {
         $this.find('.ct').text(parseInt($this.find('.ct').text()) + 1);
+
         window.postMessage({ event: 'imageFav', imageId }, '*');
       } else {
         showNotification('いいねを取り消しました！', 'success');

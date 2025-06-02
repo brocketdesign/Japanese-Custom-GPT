@@ -743,6 +743,7 @@ function setupChatInterface(chat, character) {
         for (let i = 0; i < userChat.length; i++) {
             let messageHtml = '';
             let chatMessage = userChat[i];
+                console.log(chatMessage)
     
             if (chatMessage.role === "user") {
                 const isStarter = chatMessage?.content?.startsWith("[Starter]") || chatMessage?.content?.startsWith("Invent a situation") || chatMessage?.content?.startsWith("Here is your character description");
@@ -765,7 +766,6 @@ function setupChatInterface(chat, character) {
                 const isImage = chatMessage.content.startsWith("[Image]") || chatMessage.content.startsWith("[image]");
                 const isVideo = chatMessage.content.startsWith("[Video]") || chatMessage.content.startsWith("[video]");
                 const designStep = Math.floor(i / 2) + 1;
-    
                 if (isNarratorMessage) {
                     const narrationContent = chatMessage.content.replace("[Narrator]", "").trim();
                     messageHtml = `
@@ -784,7 +784,7 @@ function setupChatInterface(chat, character) {
                     const videoData = await getVideoUrlById(videoId, designStep, thumbnail);
                     messageHtml = videoData.messageHtml;
                 } else {
-                    const isHidden = chatMessage.content.startsWith("[Hidden]");
+                    const isHidden = chatMessage.content.startsWith("[Hidden]") || chatMessage.hidden === true;
                     if (chatMessage.content && !isHidden) {
                         let message = removeContentBetweenStars(chatMessage.content);
                         messageHtml = `

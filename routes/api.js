@@ -642,7 +642,9 @@ async function routes(fastify, options) {
 
     function chatDataToString(data) {
         
-        const system_prompt = data.system_prompt;
+        if(!data) return "";
+        
+        const system_prompt = data?.system_prompt;
         
         if(system_prompt){
             return `
@@ -736,10 +738,12 @@ async function routes(fastify, options) {
           const chatDescription = chatDataToString(chatDocument)
           const characterDescription = chatDocument.enhancedPrompt || chatDocument?.imageDescription || chatDocument.characterPrompt;
           const language = getLanguageName(userInfo.lang)
+
           const userMessages = userData.messages
             .filter(m => m.content && !m.content.startsWith('[Image]') && m.role !== 'system' && m.name !== 'context')
             .filter((m,i,a) => m.name !== 'master' || i === a.findLastIndex(x => x.name === 'master')) // Keep the last master message only
             .filter((m) => m.image_request != true )
+        console.log('userMessages:', userMessages);
             
           const lastMsgIndex = userData.messages.length - 1
           const lastUserMessage = userData.messages[lastMsgIndex]

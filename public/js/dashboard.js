@@ -847,50 +847,51 @@ window.loadUsers = async function (page = 1) {
         }
     });
 }
-
 function generateUserPagination(currentPage, totalPages) {
-    let paginationHtml = '';
-    const sidePagesToShow = 2;
-    let pagesShown = new Set();
+  let paginationHtml = '';
+  const sidePagesToShow = 2;
+  let pagesShown = new Set();
 
-    $(window).off('scroll').on('scroll', function() {
-        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
-            if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
-                loadUsers(currentPage + 1);
-                pagesShown.add(currentPage + 1);
-            }
-        }
-    });
+  // Use namespaced event to avoid conflicts
+  const eventName = 'scroll.userPagination';
+  $(window).off(eventName).on(eventName, function() {
+    if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+      if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
+        loadUsers(currentPage + 1);
+        pagesShown.add(currentPage + 1);
+      }
+    }
+  });
 
-    if (currentPage >= totalPages) {
-      console.log('All Chats: No more pages to load.')
-      return;
+  if (currentPage >= totalPages) {
+    console.log('All Users: No more pages to load.')
+    return;
+  }
+
+  if (totalPages > 1) {
+    paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadUsers(${currentPage - 1})">${window.translations.prev}</button>`;
+
+    if (currentPage > sidePagesToShow + 1) {
+      paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadUsers(1)">1</button>`;
+      if (currentPage > sidePagesToShow + 2) paginationHtml += `<span class="mx-1">...</span>`;
     }
 
-    if (totalPages > 1) {
-        paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="loadUsers(${currentPage - 1})">${window.translations.prev}</button>`;
+    let startPage = Math.max(1, currentPage - sidePagesToShow);
+    let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
 
-        if (currentPage > sidePagesToShow + 1) {
-            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadUsers(${currentPage - sidePagesToShow})">1</button>`;
-            if (currentPage > sidePagesToShow + 2) paginationHtml += `<span class="mx-1">...</span>`;
-        }
-
-        let startPage = Math.max(1, currentPage - sidePagesToShow);
-        let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
-
-        for (let i = startPage; i <= endPage; i++) {
-            paginationHtml += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadUsers(${i})">${i}</button>`;
-        }
-
-        if (currentPage < totalPages - sidePagesToShow - 1) {
-            if (currentPage < totalPages - sidePagesToShow - 2) paginationHtml += `<span class="mx-1">...</span>`;
-            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadUsers(${totalPages})">${totalPages}</button>`;
-        }
-
-        paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadUsers(${currentPage + 1})">${window.translations.next}</button>`;
+    for (let i = startPage; i <= endPage; i++) {
+      paginationHtml += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="loadUsers(${i})">${i}</button>`;
     }
 
-    $('#users-pagination-controls').html(paginationHtml);
+    if (currentPage < totalPages - sidePagesToShow - 1) {
+      if (currentPage < totalPages - sidePagesToShow - 2) paginationHtml += `<span class="mx-1">...</span>`;
+      paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="loadUsers(${totalPages})">${totalPages}</button>`;
+    }
+
+    paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadUsers(${currentPage + 1})">${window.translations.next}</button>`;
+  }
+
+  $('#users-pagination-controls').html(paginationHtml);
 }
 
 window.loadChatUsers = async function (chatId, page = 1) {
@@ -951,12 +952,15 @@ window.loadChatUsers = async function (chatId, page = 1) {
     }
   });
 }
+
 function generateChatUserPagination(currentPage, totalPages, chatId) {
     let paginationHtml = '';
     const sidePagesToShow = 2;
     let pagesShown = new Set();
 
-    $(window).off('scroll').on('scroll', function() {
+    // Use namespaced event to avoid conflicts
+    const eventName = `scroll.chatUserPagination_${chatId}`;
+    $(window).off(eventName).on(eventName, function() {
         if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
             if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
                 loadChatUsers(chatId, currentPage + 1);
@@ -966,8 +970,8 @@ function generateChatUserPagination(currentPage, totalPages, chatId) {
     });
 
     if (currentPage >= totalPages) {
-      console.log('All Chats: No more pages to load.')
-      return;
+        console.log('Chat Users: No more pages to load.');
+        return;
     }
 
     if (totalPages > 1) {
@@ -1058,53 +1062,54 @@ window.displayPeopleList = async function (userId, type = 'followers', page = 1)
     }
 };
 function generatePagination(currentPage, totalPages, userId, type) {
-    let paginationHtml = '';
-    const maxPagesToShow = 5;
-    const sidePagesToShow = 2;
-    let pagesShown = new Set();  // Track the pages already displayed
+  let paginationHtml = '';
+  const maxPagesToShow = 5;
+  const sidePagesToShow = 2;
+  let pagesShown = new Set();  // Track the pages already displayed
 
-    // Scroll event listener to trigger infinite scroll
-    $(window).off('scroll').on('scroll', function() {
-        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
-            if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
-                displayPeopleList(userId, type, currentPage + 1);
-                pagesShown.add(currentPage + 1);  // Mark page as shown
-            }
-        }
-    });
+  // Use namespaced event to avoid conflicts
+  const eventName = `scroll.peoplePagination_${userId}_${type}`;
+  $(window).off(eventName).on(eventName, function() {
+    if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+      if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
+        displayPeopleList(userId, type, currentPage + 1);
+        pagesShown.add(currentPage + 1);  // Mark page as shown
+      }
+    }
+  });
 
-    // If more than one page, generate pagination buttons
-    if (totalPages > 1) {
-        paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="displayPeopleList('${userId}', '${type}', ${currentPage - 1})">${window.translations.prev}</button>`;
+  // If more than one page, generate pagination buttons
+  if (totalPages > 1) {
+    paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="displayPeopleList('${userId}', '${type}', ${currentPage - 1})">${window.translations.prev}</button>`;
 
-        if (currentPage > sidePagesToShow + 1) {
-            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="displayPeopleList('${userId}', '${type}', 1)">1</button>`;
-            if (currentPage > sidePagesToShow + 2) {
-                paginationHtml += `<span class="mx-1">...</span>`;
-            }
-        }
-
-        let startPage = Math.max(1, currentPage - sidePagesToShow);
-        let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
-
-        for (let i = startPage; i <= endPage; i++) {
-            paginationHtml += `
-            <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="displayPeopleList('${userId}', '${type}', ${i})">
-                ${i}
-            </button>`;
-        }
-
-        if (currentPage < totalPages - sidePagesToShow - 1) {
-            if (currentPage < totalPages - sidePagesToShow - 2) {
-                paginationHtml += `<span class="mx-1">...</span>`;
-            }
-            paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="displayPeopleList('${userId}', '${type}', ${totalPages})">${totalPages}</button>`;
-        }
-
-        paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="displayPeopleList('${userId}', '${type}', ${currentPage + 1})">${window.translations.next}</button>`;
+    if (currentPage > sidePagesToShow + 1) {
+      paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="displayPeopleList('${userId}', '${type}', 1)">1</button>`;
+      if (currentPage > sidePagesToShow + 2) {
+        paginationHtml += `<span class="mx-1">...</span>`;
+      }
     }
 
-    $('#pagination-controls').html(paginationHtml);
+    let startPage = Math.max(1, currentPage - sidePagesToShow);
+    let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
+
+    for (let i = startPage; i <= endPage; i++) {
+      paginationHtml += `
+      <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="displayPeopleList('${userId}', '${type}', ${i})">
+        ${i}
+      </button>`;
+    }
+
+    if (currentPage < totalPages - sidePagesToShow - 1) {
+      if (currentPage < totalPages - sidePagesToShow - 2) {
+        paginationHtml += `<span class="mx-1">...</span>`;
+      }
+      paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="displayPeopleList('${userId}', '${type}', ${totalPages})">${totalPages}</button>`;
+    }
+
+    paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="displayPeopleList('${userId}', '${type}', ${currentPage + 1})">${window.translations.next}</button>`;
+  }
+
+  $('#pagination-controls').html(paginationHtml);
 }
 
 window.displayUserChats = async function(userId, page = 1, skipDeduplication) {
@@ -1125,14 +1130,14 @@ window.displayUserChats = async function(userId, page = 1, skipDeduplication) {
         console.error('Failed to load user chats', err);
     }
 };
-
 function generateUserChatsPagination(userId, currentPage, totalPages) {
   let paginationHtml = '';
   const sidePagesToShow = 2;
   let pagesShown = new Set();
 
-  // Infinite scroll
-  $(window).off('scroll').on('scroll', function() {
+  // Use namespaced event to avoid conflicts
+  const eventName = `scroll.userChatsPagination_${userId}`;
+  $(window).off(eventName).on(eventName, function() {
     if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
       if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
         displayUserChats(userId, currentPage + 1);
@@ -1255,7 +1260,6 @@ window.displayPeopleChat = async function (page = 1, option = {}, callback, relo
     if (typeof callback === 'function') callback([])
   }
 }
-
 // Infinite scroll + pagination
 window.generateChatsPagination = function (totalPages, option = {}) {
   const { imageStyle, imageModel, query = '', userId = '' } = option
@@ -1264,7 +1268,9 @@ window.generateChatsPagination = function (totalPages, option = {}) {
   if (!peopleChatLoadingState[searchId]) peopleChatLoadingState[searchId] = false
   if (!peopleChatCurrentPage[searchId]) peopleChatCurrentPage[searchId] = 0
 
-  $(window).off('scroll').on('scroll', () => {
+  // Use namespaced event to avoid conflicts
+  const eventName = `scroll.chatsPagination_${searchId.replace(/[^a-zA-Z0-9]/g, '_')}`;
+  $(window).off(eventName).on(eventName, () => {
     if (
       !peopleChatLoadingState[searchId] &&
       peopleChatCurrentPage[searchId] < totalPages &&
@@ -1860,7 +1866,9 @@ window.loadAllChatImages = function (page = 1, reload = false) {
   
   // Infinite scroll + pagination for All Chats images
   window.generateAllChatsImagePagination = function (totalPages) {
-    $(window).off('scroll').on('scroll', () => {
+    // Use namespaced event to avoid conflicts
+    const eventName = 'scroll.allChatsImagePagination';
+    $(window).off(eventName).on(eventName, () => {
       if (
         !allChatsLoadingState &&
         allChatsCurrentPage < totalPages &&
@@ -2003,7 +2011,9 @@ window.loadUserImages = function (userId, page = 1, reload = false) {
     if (!loadingStates[userId]) loadingStates[userId] = false
     if (!currentPageMap[userId]) currentPageMap[userId] = 0
   
-    $(window).off('scroll').on('scroll', () => {
+    // Use namespaced event to avoid conflicts
+    const eventName = `scroll.imagePagination_${userId}`;
+    $(window).off(eventName).on(eventName, () => {
       // If near bottom & still have pages left
       if (
         !loadingStates[userId] &&
@@ -2348,136 +2358,40 @@ function updateSwiperSlides(images) {
     swiperInstance.slideTo(currentSwiperIndex, 0);
 }
 
-// Load chat images (with cache + infinite scroll)
-window.loadChatImages = function (chatId, page = 1, reload = false, isModal = false) {  
-    return new Promise(async (resolve, reject) => {
-      const cacheKey = `chatImages_${chatId}`
-      const currentUserId = user._id
-      const subscriptionStatus = user.subscriptionStatus === 'active'
-      const isAdmin = await checkIfAdmin(currentUserId)
-      const isTemporary = !!user.isTemporary
-  
-      // Retrieve or init cache
-      let cacheData = JSON.parse(localStorage.getItem(cacheKey) || '{}')
-      if (!cacheData.pages) cacheData.pages = {}
-      chatImagesCache[chatId] = cacheData.pages
-  
-      // Show which pages are cached
-      let cachedPages = Object.keys(chatImagesCache[chatId]).map(Number).sort((a, b) => a - b)
-      let maxCachedPage = cachedPages.length ? Math.max(...cachedPages) : 0
-  
-      // If reload => render all cached pages in ascending order, update currentPage
-      if (reload) {
-        cachedPages.forEach((p) => {
-          appendChatImages(chatImagesCache[chatId][p], subscriptionStatus, isAdmin, isTemporary)
-        })
-        chatCurrentPageMap[chatId] = maxCachedPage
-        if (maxCachedPage > 0) page = maxCachedPage + 1 // optionally refresh the last cached page
-      }
-  
-      // If already cached and NOT reload => skip server call
-      if (chatImagesCache[chatId][page] && !reload) {
-        appendChatImages(chatImagesCache[chatId][page], subscriptionStatus, isAdmin, isTemporary)
-        chatCurrentPageMap[chatId] = page
-        generateChatImagePaginationFromCache(chatId) // update spinner/back-to-top if needed
-        return resolve()
-      }
-  
-      // Otherwise fetch from server
-      $.ajax({
-        url: `/chat/${chatId}/images?page=${page}`,
-        method: 'GET',
-        xhrFields: {
-            withCredentials: true
-        },
-        success: (data) => {
-          chatCurrentPageMap[chatId] = data.page
-  
-          // Append
-          appendChatImages(data.images, subscriptionStatus, isAdmin, isTemporary)
-  
-          // Cache
-          chatImagesCache[chatId][data.page] = data.images
-          cacheData.pages = chatImagesCache[chatId]
-          localStorage.setItem(cacheKey, JSON.stringify(cacheData))
-  
-          // Set up infinite scroll
-          generateChatImagePagination(data.totalPages, chatId, isModal)
-          resolve()
-        },
-        error: (err) => {
-          reject(err)
-        },
-      })
-    })
-  }
-  
-  // Minimal helper to append chat images
-  function appendChatImages(images, subscriptionStatus, isAdmin, isTemporary) {
-    const currentUserId = user._id
-    let chatGalleryHtml = ''
-
-    images.forEach(async(item) => {
-      const isBlur = item?.nsfw && !subscriptionStatus
-      const isLiked = item?.likedBy?.some((id) => id.toString() === currentUserId.toString())
-
-      // If not blurred & not in loadedImages => push into loadedImages
-      if (!isBlur && !loadedImages.some((img) => img._id === item._id)) {
-        loadedImages.push(item)
-      }
-      let index = loadedImages.length - 1
-  
-      chatGalleryHtml += `
-        <div class="col-6 col-md-3 col-lg-2 mb-2">
-          <div class="card shadow-0">
-            ${
-              isBlur
-                ? `<div type="button" onclick="event.stopPropagation();handleClickRegisterOrPay(event,${isTemporary})">
-                        <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
-                   </div>`
-                : `<a href="/character/slug/${item.chatSlug}?imageSlug=${item.slug}" data-index="${index}">
-                     <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
-                   </a>
-                   <div class="${!isAdmin ? 'd-none' : ''} card-body p-2 row mx-0 px-0 align-items-center justify-content-between">
-                     <button 
-                     class="btn btn-light col-6 image-nsfw-toggle ${!isAdmin ? 'd-none' : ''} ${item?.nsfw ? 'nsfw' : 'sfw'}" 
-                     data-id="${item._id}"
-                      onclick="toggleImageNSFW(this)"
-                      >
-                       <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
-                     </button>
-                     <span 
-                      class="btn btn-light float-end col-6 image-fav ${isLiked ? 'liked' : ''}" 
-                      data-id="${item._id}"
-                      onclick="toggleImageFavorite(this)"
-                      >
-                       <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
-                     </span>
-                   </div>`
-            }
-          </div>
-        </div>
-      `
-    })
-  
-    $('#chat-images-gallery').append(chatGalleryHtml);
-    // Add a grid handler to the gallery to allow the user to use a slider to change the columns
-    gridLayout('#chat-images-gallery')
-    $(document).find('.img-blur').each(function () {
-      blurImage(this)
-    });
-
-  }
-  
 function gridLayout(selector) {
   // Check if the selector exists
   const $container = $(selector);
   if ($container.length === 0) {
     return;
   }
-
   // Find the image items (typically in a column div)
   const $items = $container.children('div');
+
+  // Use delegation to handle dynamically added elements
+  const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+        // Check if new items were added
+        const hasNewItems = Array.from(mutation.addedNodes).some(node => 
+          node.nodeType === Node.ELEMENT_NODE && node.tagName === 'DIV'
+        );
+        if (hasNewItems) {
+          // Re-apply grid layout to new items
+          const currentValue = $slider.val();
+          updateGrid(currentValue);
+        }
+      }
+    });
+  });
+
+  // Start observing the container for changes
+  observer.observe($container[0], {
+    childList: true,
+    subtree: false
+  });
+
+  // Store observer reference for cleanup if needed
+  $container.data('gridObserver', observer);
   if ($items.length === 0) return; // No items to adjust
   
   // If a grid controller already exists, don't create another one
@@ -2601,58 +2515,6 @@ function updateGrid(value) {
     updateGrid($(this).val());
   });
 }
-
-// Infinite scroll / pagination
-window.generateChatImagePagination = function (totalPages, chatId, isModal = false) {
-  if (!chatLoadingStates[chatId]) chatLoadingStates[chatId] = false;
-  if (!chatCurrentPageMap[chatId]) chatCurrentPageMap[chatId] = 0;
-
-  const scrollContainer = isModal ? $('#characterModal .modal-body') : $(window);
-
-  scrollContainer.off('scroll').on('scroll', function () {
-      const currentScrollPosition = isModal ? scrollContainer.scrollTop() : $(window).scrollTop();
-      const containerHeight = isModal ? scrollContainer.innerHeight() : $(window).height();
-      const contentHeight = isModal ? scrollContainer[0].scrollHeight : $(document).height();
-
-      if (
-          !chatLoadingStates[chatId] &&
-          chatCurrentPageMap[chatId] < totalPages &&
-          currentScrollPosition + containerHeight >= contentHeight - 100
-      ) {
-          console.log(`Infinite scroll => next page: ${chatCurrentPageMap[chatId] + 1}`);
-          chatLoadingStates[chatId] = true;
-          loadChatImages(chatId, chatCurrentPageMap[chatId] + 1, false)
-              .then(() => {
-                  chatLoadingStates[chatId] = false;
-                  console.log(`Finished loading page ${chatCurrentPageMap[chatId]}`);
-              })
-              .catch((err) => {
-                  chatLoadingStates[chatId] = false;
-                  console.error('Failed to load the next page:', err);
-              });
-      }
-  });
-
-  updateChatPaginationControls(totalPages, chatId);
-};
-
-  // If we skip the server call due to cache only
-  function generateChatImagePaginationFromCache(chatId) {
-    console.log(`generateChatImagePaginationFromCache => chatId:${chatId}`)
-    // If you don't store totalPages, set a large number or store it somewhere else
-    updateChatPaginationControls(9999, chatId)
-  }
-  
-  // Spinner or back-to-top
-  function updateChatPaginationControls(totalPages, chatId) {
-    if (chatCurrentPageMap[chatId] >= totalPages) {
-      console.log('All Chats: No more pages to load.')
-    } else {
-      $('#chat-images-pagination-controls').html(
-        '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
-      )
-    }
-  }
 
 $(document).ready(function () {
     let currentPage = 1;
@@ -2936,66 +2798,68 @@ window.getLanguageName = function(langCode) {
     return langMap[langCode] || "japanese";
 }
 
-
 // Pagination logic simplified with loadingStates
 function generateUserPostsPagination(totalPages) {
-    if (typeof loadingStates === 'undefined') loadingStates = {};
-    if (typeof currentPageMap === 'undefined') currentPageMap = {};
+  if (typeof loadingStates === 'undefined') loadingStates = {};
+  if (typeof currentPageMap === 'undefined') currentPageMap = {};
 
-    if (typeof loadingStates['userPosts'] === 'undefined') loadingStates['userPosts'] = false;
-    if (typeof currentPageMap['userPosts'] === 'undefined') currentPageMap['userPosts'] = 1;
+  if (typeof loadingStates['userPosts'] === 'undefined') loadingStates['userPosts'] = false;
+  if (typeof currentPageMap['userPosts'] === 'undefined') currentPageMap['userPosts'] = 1;
 
-    $(window).off('scroll').on('scroll', function() {
-        if (!loadingStates['userPosts'] && currentPageMap['userPosts'] < totalPages && $(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
-            loadingStates['userPosts'] = true;
-            loadAllUserPosts(currentPageMap['userPosts'] + 1).then(() => {
-                currentPageMap['userPosts']++;
-                loadingStates['userPosts'] = false;
-            }).catch(() => {
-                loadingStates['userPosts'] = false;
-            });
-        }
-    });
-
-    if (currentPageMap['userPosts'] >= totalPages) {
-      console.log('All Chats: No more pages to load.')
-    } else {
-        $('#user-posts-pagination-controls').html(
-            '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
-        );
+  // Use namespaced event to avoid conflicts
+  const eventName = 'scroll.userPostsPagination';
+  $(window).off(eventName).on(eventName, function() {
+    if (!loadingStates['userPosts'] && currentPageMap['userPosts'] < totalPages && $(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+      loadingStates['userPosts'] = true;
+      loadAllUserPosts(currentPageMap['userPosts'] + 1).then(() => {
+        currentPageMap['userPosts']++;
+        loadingStates['userPosts'] = false;
+      }).catch(() => {
+        loadingStates['userPosts'] = false;
+      });
     }
-}
+  });
 
+  if (currentPageMap['userPosts'] >= totalPages) {
+    console.log('All Chats: No more pages to load.')
+  } else {
+    $('#user-posts-pagination-controls').html(
+      '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
+    );
+  }
+}
 function generateUserPostsPagination(userId, totalPages) {
-    if (typeof loadingStates === 'undefined') loadingStates = {}; // Ensure the loadingStates object exists
-    if (typeof currentPageMap === 'undefined') currentPageMap = {}; // Ensure the currentPageMap object exists
+  if (typeof loadingStates === 'undefined') loadingStates = {}; // Ensure the loadingStates object exists
+  if (typeof currentPageMap === 'undefined') currentPageMap = {}; // Ensure the currentPageMap object exists
 
-    if (typeof loadingStates[userId] === 'undefined') loadingStates[userId] = false;
-    if (typeof currentPageMap[userId] === 'undefined') currentPageMap[userId] = 1; // Initialize the current page for the user
+  if (typeof loadingStates[userId] === 'undefined') loadingStates[userId] = false;
+  if (typeof currentPageMap[userId] === 'undefined') currentPageMap[userId] = 1; // Initialize the current page for the user
 
-    // Scroll event listener for infinite scroll
-    $(window).off('scroll').on('scroll', function() {
-        if (!loadingStates[userId] && currentPageMap[userId] < totalPages && $(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
-            loadingStates[userId] = true;
-            loadAllUserPosts(currentPageMap[userId] + 1).then(() => {
-                currentPageMap[userId]++; // Increment the page after successful loading
-                loadingStates[userId] = false; // Reset the loading state
-            }).catch(() => {
-                // Handle errors if needed
-                loadingStates[userId] = false;
-            });
-        }
-    });
-
-    // Display spinner if more pages are available, otherwise show a back-to-top button
-    if (currentPageMap[userId] >= totalPages) {
-      console.log('All Chats: No more pages to load.')
-    } else {
-        $('#user-posts-pagination-controls').html(
-            '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
-        );
+  // Use namespaced event to avoid conflicts
+  const eventName = `scroll.userPostsPagination_${userId}`;
+  $(window).off(eventName).on(eventName, function() {
+    if (!loadingStates[userId] && currentPageMap[userId] < totalPages && $(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+      loadingStates[userId] = true;
+      loadAllUserPosts(currentPageMap[userId] + 1).then(() => {
+        currentPageMap[userId]++; // Increment the page after successful loading
+        loadingStates[userId] = false; // Reset the loading state
+      }).catch(() => {
+        // Handle errors if needed
+        loadingStates[userId] = false;
+      });
     }
+  });
+
+  // Display spinner if more pages are available, otherwise show a back-to-top button
+  if (currentPageMap[userId] >= totalPages) {
+    console.log('All User Posts: No more pages to load.')
+  } else {
+    $('#user-posts-pagination-controls').html(
+      '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
+    );
+  }
 }
+
 window.startCountdown = function() {
   const countdownElements = $('.countdown-timer');
   let storedEndTime = localStorage.getItem('countdownEndTime');

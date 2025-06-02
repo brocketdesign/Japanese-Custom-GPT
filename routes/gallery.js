@@ -480,52 +480,59 @@ fastify.get('/chats/images/search', async (request, reply) => {
   
   fastify.get('/chat/:chatId/images', async (request, reply) => {
     try {
+      console.log('[GET] /chat/:chatId/images called with params:', request.params, 'query:', request.query);
+
       const chatId = new fastify.mongo.ObjectId(request.params.chatId);
       const page = parseInt(request.query.page) || 1;
       const limit = 12; // Number of images per page
       const skip = (page - 1) * limit;
-  
+
       const db = fastify.mongo.db;
       const chatsGalleryCollection = db.collection('gallery');
       const chatsCollection = db.collection('chats');
-  
+
       // Fetch the chat data (chatName and thumbnail)
       const chat = await chatsCollection.findOne({ _id: chatId });
       if (!chat) {
+        console.log('Chat not found for chatId:', chatId);
         return reply.code(404).send({ error: 'Chat not found' });
       }
-  
+
       // Find the chat document and paginate the images & filter out image with a scale_factor
+      console.log('Fetching images for chatId:', chatId, 'skip:', skip, 'limit:', limit);
       const chatImagesDocs = await chatsGalleryCollection
         .aggregate([
           { $match: { chatId } },           // Match the document by chatId
           { $unwind: '$images' },           // Unwind the images array
-          { $match: { 'images.isUpscaled': true} }, // Filter out images with scale_factor
+          { $match: { 'images.isUpscaled': { $ne: true }} }, // Filter out images with scale_factor
           { $sort: { 'images.createdAt': -1 } }, // Sort by createdAt in descending order
           { $skip: skip },                  // Skip for pagination
           { $limit: limit },                // Limit the results to the page size
           { $project: { _id: 0, image: '$images', chatId: 1 } }  // Project image and chatId
         ])
-        .toArray()
+        .toArray();
 
+      console.log('Fetched', chatImagesDocs.length, 'images for chatId:', chatId);
 
       // Get total image count for pagination info
       const totalImagesCount = await chatsGalleryCollection
         .aggregate([
           { $match: { chatId } },
           { $unwind: '$images' },
+          { $match: { 'images.isUpscaled': { $ne: true } } }, // Ensure count matches filter above
           { $count: 'total' }
         ])
         .toArray();
-  
+
       const totalImages = totalImagesCount.length > 0 ? totalImagesCount[0].total : 0;
       const totalPages = Math.ceil(totalImages / limit);
-  
+
       // If no images found
       if (chatImagesDocs.length === 0) {
+        console.log('No images found for chatId:', chatId);
         return reply.code(404).send({ images: [], page, totalPages: 0 });
       }
-      
+
       // Map the chat data to the images
       const imagesWithChatData = chatImagesDocs.map(doc => ({
         ...doc.image,
@@ -536,16 +543,18 @@ fastify.get('/chats/images/search', async (request, reply) => {
       }));
 
       // Send the paginated images response
+      console.log('Returning', imagesWithChatData.length, 'images for chatId:', chatId, 'page:', page, 'totalPages:', totalPages);
       return reply.send({
         images: imagesWithChatData,
         page,
         totalPages
       });
     } catch (err) {
-      console.error(err);
+      console.error('Error in /chat/:chatId/images:', err);
       reply.code(500).send('Internal Server Error');
     }
   });  
+  
   fastify.get('/chat/:chatId/users', async (request, reply) => {
     try {
       // Extract chatId from URL parameters and validate it

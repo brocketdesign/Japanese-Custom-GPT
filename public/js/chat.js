@@ -852,7 +852,6 @@ function setupChatInterface(chat, character) {
         return inputString;
     } 
     function getImageTools({chatId, imageId, isLiked = false, title, prompt = false, nsfw = false, imageUrl = false}) {
-    
         prompt = sanitizeString(prompt);
         return `
             <div class="bg-white py-2 image-tools">
@@ -1617,7 +1616,7 @@ function setupChatInterface(chat, character) {
                             ${message.outerHTML}
                             ${imageNsfw ? `<div class="nsfw-badge-container badge">NSFW</div>` : ''}
                         </div>
-                        ${!isUpscaled ? getImageTools({chatId, imageId, isLiked:false, title, prompt, imageNsfw, imageUrl}) : ''}
+                        ${!isUpscaled ? getImageTools({chatId, imageId, isLiked:false, title, prompt, nsfw: imageNsfw, imageUrl}) : ''}
                     </div>
                 </div>      
             `).hide();
@@ -1646,7 +1645,7 @@ function setupChatInterface(chat, character) {
                             ${message.outerHTML}
                             ${imageNsfw ? `<div class="nsfw-badge-container badge">NSFW</div>` : ''}
                         </div>
-                        ${getImageTools({chatId, imageId, isLiked:false, title, prompt, imageNsfw, imageUrl})}
+                        ${getImageTools({chatId, imageId, isLiked:false, title, prompt, nsfw: imageNsfw, imageUrl})}
                     </div>  
             `).hide();
             $(`#${messageId}`).find('.load').remove()

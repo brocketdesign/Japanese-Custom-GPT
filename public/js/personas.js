@@ -2,6 +2,7 @@
 const PersonaModule = {
     currentUserChatId: sessionStorage.getItem('userChatId') || null,
     isFloatingContainerVisible: false,
+    personaWasSelected: false, // Track if a persona was selected
     CACHE_KEY: 'userPersonasCache',
     CACHE_TIMESTAMP_KEY: 'userPersonasCacheTimestamp',
     CACHE_DURATION: 5 * 60 * 1000, // 5 minutes in milliseconds
@@ -242,10 +243,13 @@ const PersonaModule = {
         $('#personas-overlay').fadeOut(300);
         this.isFloatingContainerVisible = false;
         
-        // Trigger the onPersonaModuleClose callback if it exists
-        if (typeof window.onPersonaModuleClose === 'function') {
+        // Only trigger onPersonaModuleClose if no persona was selected
+        if (!this.personaWasSelected && typeof window.onPersonaModuleClose === 'function') {
             window.onPersonaModuleClose();
         }
+        
+        // Reset the flag for next time
+        this.personaWasSelected = false;
     },
 
     toggleFloatingContainer() {
@@ -383,6 +387,9 @@ const PersonaModule = {
         if ($(e.target).hasClass('remove-persona') || $(e.target).closest('.remove-persona').length) {
             return;
         }
+        
+        // Set flag to indicate a persona was selected
+        this.personaWasSelected = true;
         
         const $persona = $(e.currentTarget);
         const personaId = $persona.data('id');

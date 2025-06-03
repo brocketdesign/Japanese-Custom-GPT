@@ -488,9 +488,8 @@ $(document).ready(async function() {
 
     async function handleChatSuccess(data, fetch_reset, fetch_userId, userChatId) {
         $(document).find(`.chat-list.item[data-id="${chatId}"]`).addClass('active').siblings().removeClass('active');
-
-        isNew = fetch_reset || data.isNew;
-
+        isNew = (typeof fetch_reset !== 'undefined') ? fetch_reset : data.isNew;
+        console.log(`Chat is new: ${isNew}`);
         if (!data.chat) {
             showDiscovery();
             return;

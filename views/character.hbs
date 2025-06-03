@@ -253,6 +253,11 @@
             </div>
           </div>
         </div>
+        <div class="d-flex justify-content-center mt-4">
+          <a id="load-more-similar" class="btn custom-gradient-bg" href="/character">
+            <i class="bi bi-globe me-2"></i> {{translations.discover.seeAll}}
+          </a>
+        </div>
       </div>
     </section>
   {{/if}} 
@@ -566,12 +571,16 @@
         const response = await fetch(`/api/similar-chats/${chatId}`);
         if (response.ok) {
           const similarChats = await response.json();
-          if (similarChats && similarChats.length > 0) {
+          if (similarChats) {
             window.displaySimilarChats(similarChats);
           }
+        } else {
+          console.error('Failed to fetch similar chats:', response.statusText);
+          $('#similar-characters-gallery-loader').removeClass('d-flex').hide();
         }
       } catch (error) {
-        console.error('Failed to fetch similar chats:', error);
+          console.error('Failed to fetch similar chats:', error);
+          $('#similar-characters-gallery-loader').removeClass('d-flex').hide();
       }
     };
 

@@ -520,7 +520,6 @@ fastify.get('/chats/images/search', async (request, reply) => {
   
   fastify.get('/chat/:chatId/images', async (request, reply) => {
     try {
-      console.log('[GET] /chat/:chatId/images called with params:', request.params, 'query:', request.query);
 
       const chatId = new fastify.mongo.ObjectId(request.params.chatId);
       const page = parseInt(request.query.page) || 1;
@@ -539,7 +538,6 @@ fastify.get('/chats/images/search', async (request, reply) => {
       }
 
       // Find the chat document and paginate the images & filter out image with a scale_factor
-      console.log('Fetching images for chatId:', chatId, 'skip:', skip, 'limit:', limit);
       const chatImagesDocs = await chatsGalleryCollection
         .aggregate([
           { $match: { chatId } },           // Match the document by chatId
@@ -552,7 +550,6 @@ fastify.get('/chats/images/search', async (request, reply) => {
         ])
         .toArray();
 
-      console.log('Fetched', chatImagesDocs.length, 'images for chatId:', chatId);
 
       // Get total image count for pagination info
       const totalImagesCount = await chatsGalleryCollection
@@ -583,7 +580,6 @@ fastify.get('/chats/images/search', async (request, reply) => {
       }));
 
       // Send the paginated images response
-      console.log('Returning', imagesWithChatData.length, 'images for chatId:', chatId, 'page:', page, 'totalPages:', totalPages);
       return reply.send({
         images: imagesWithChatData,
         page,

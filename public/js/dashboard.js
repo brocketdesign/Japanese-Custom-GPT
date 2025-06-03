@@ -1325,6 +1325,19 @@ window.displaySimilarChats = function (chatData, targetGalleryIdParam) {
 
   const loader = $(`#${targetGalleryId}-loader`);
 
+  if(chatData.length === 0) {
+    loader.removeClass('d-flex').hide(); // Hide the loader if it exists
+    const galleryElement = $(document).find(`#${targetGalleryId}`);
+    if (galleryElement.length) {
+      galleryElement.append(`
+        <div class="alert alert-info text-center" role="alert">
+        ${window.translations?.similarChatsNotFound || 'No similar chats found.'}
+        </div>
+      `);
+    } 
+    return;
+  }
+  
   chatData.forEach(chat => {
     const isOwner = chat.userId === currentUserId;
     const isPremiumChat = chat.premium || false;
@@ -1397,7 +1410,7 @@ window.displaySimilarChats = function (chatData, targetGalleryIdParam) {
   } else {
     console.warn(`Target gallery with ID #${targetGalleryId} not found.`);
     galleryElement.append(`
-      <div class="alert alert-warning" role="alert">
+      <div class="alert alert-warning text-center" role="alert">
         ${window.translations?.similarChatsNotFound || 'No similar chats found.'}
       </div>
     `);

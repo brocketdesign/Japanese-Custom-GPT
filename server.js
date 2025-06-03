@@ -52,6 +52,7 @@ fastify.ready(async () => {
 
   // Initialize configured cron jobs
   await initializeCronJobs(fastify);
+
 });
 
 // Every 3 cron jobs for cleanup and maintenance
@@ -63,11 +64,12 @@ cron.schedule('0 0 * * *', async () => {
     console.log('Database connection is healthy.');
 
     // Call your cleanup and update functions
-    await cleanupNonRegisteredUsers(db);
-    await deleteTemporaryChats(db);
-    await deleteOldTasks(db);
-    await updateCounter(db, 0);
-    console.log('Counter has been reset to 0.');
+    cleanupNonRegisteredUsers(db);
+    deleteTemporaryChats(db);
+    deleteOldTasks(db);
+    updateCounter(db, 0);
+    
+
   } catch (err) {
     console.log('Failed to execute cron tasks or access database:', err);
   }

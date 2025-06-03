@@ -866,12 +866,10 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
         );
       }
 
-      const imageIdMessage = { role: "assistant", content: `[Image] ${imageId}` };
-      addMessageTochat(imageIdMessage)
       // Add context for the assisant
       const firstAvailableTitle = title.en || title.ja || title.fr || '';
       console.log(`[saveImageToDB] Adding image message to chat: ${firstAvailableTitle}`);
-      const imageMessage = {role: "assistant", content: `${firstAvailableTitle}`, hidden: true };
+      const imageMessage = {role: "assistant", content: `${firstAvailableTitle}`, hidden: true, type: "image", imageId, imageUrl, prompt, slug, aspectRatio, seed, nsfw};
       addMessageTochat(imageMessage)
 
       return { imageId, imageUrl };

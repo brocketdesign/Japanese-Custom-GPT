@@ -159,6 +159,24 @@ async function saveVideoToDB({
   const db = fastify.mongo.db;
   const videosCollection = db.collection('videos');
 
+  // Check multiple conditions to prevent duplicates
+  const existingVideo = await videosCollection.findOne({
+    $or: [
+      { taskId: taskId },
+      { 
+        userId: new ObjectId(userId),
+        imageId: new ObjectId(imageId),
+        videoUrl: videoUrl
+      }
+    ]
+  });
+  
+  console.log(`[saveVideoToDB] Checking for existing video with taskId ${taskId} or matching user/image/url`);
+  if (existingVideo) {
+    console.log(`[saveVideoToDB] Video already exists with ID ${existingVideo._id}, returning existing video`);
+    return existingVideo;
+  }
+
   const videoData = {
     taskId,
     userId: new ObjectId(userId),
@@ -171,44 +189,62 @@ async function saveVideoToDB({
     createdAt: new Date()
   };
 
-    // Add 1 to the video count for the chat and the user
-    const chatsCollection = db.collection('chats');
-    await chatsCollection.updateOne(
-        { _id: new ObjectId(chatId) },
-        { $inc: { videoCount: 1 } }
-    );
+  // Insert the video document first
+  const result = await videosCollection.insertOne(videoData);
+  console.log(`[saveVideoToDB] Video saved with ID: ${result.insertedId}`);
 
-    const usersCollection = db.collection('users');
-    await usersCollection.updateOne(
-        { _id: new ObjectId(userId) },
-        { $inc: { videoCount: 1 } }
-    );
-    // Update user chat with new video message
-    const userDataCollection = db.collection('userChat');
-    const userData = await userDataCollection.findOne({ 
+  // Check if message already exists in userChat to prevent duplicate messages
+  const userDataCollection = db.collection('userChat');
+  const userData = await userDataCollection.findOne({ 
+    userId: new ObjectId(userId), 
+    _id: new ObjectId(userChatId),
+    $or: [
+      { 'messages.videoId': result.insertedId },
+      { 'messages.content': `[Video] ${result.insertedId}` }
+    ]
+  });
+
+  if (userData) {
+    console.log(`[saveVideoToDB] Video message already exists in userChat for videoId ${result.insertedId}`);
+  } else {
+    // Only add message if it doesn't exist
+    const videoMessage = { 
+      role: "assistant", 
+      content: `[Video] ${result.insertedId}`, 
+      hidden: true, 
+      type: "video", 
+      videoId: result.insertedId, 
+      videoUrl, 
+      duration, 
+      prompt 
+    };
+    
+    await userDataCollection.updateOne(
+      { 
         userId: new ObjectId(userId), 
         _id: new ObjectId(userChatId) 
-    });
-
-    if (!userData) {
-        throw new Error('User data not found');
-    }
-
-    const result = await videosCollection.insertOne(videoData);
-
-    const videoMessage = { role: "assistant", content: `[Video] ${result.insertedId}` };
-    await userDataCollection.updateOne(
-        { 
-            userId: new ObjectId(userId), 
-            _id: new ObjectId(userChatId) 
-        },
-        { 
-            $push: { messages: videoMessage }, 
-            $set: { updatedAt: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) } 
-        }
+      },
+      { 
+        $push: { messages: videoMessage }, 
+        $set: { updatedAt: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) } 
+      }
     );
+    console.log(`[saveVideoToDB] Video message added to userChat for videoId ${result.insertedId}`);
+  }
 
-    console.log(`[saveVideoToDB] Video saved with ID: ${result.insertedId}`);
+  // Update counts only if this is a new video
+  const chatsCollection = db.collection('chats');
+  await chatsCollection.updateOne(
+    { _id: new ObjectId(chatId) },
+    { $inc: { videoCount: 1 } }
+  );
+
+  const usersCollection = db.collection('users');
+  await usersCollection.updateOne(
+    { _id: new ObjectId(userId) },
+    { $inc: { videoCount: 1 } }
+  );
+
   return { ...videoData, _id: result.insertedId };
 }
 
@@ -299,12 +335,14 @@ async function handleVideoTaskCompletion(taskStatus, fastify, options = {}) {
         const db = fastify.mongo.db;
         // Check if already processed to prevent duplicate notifications
         const existingTask = await db.collection('tasks').findOne({ 
-            taskId: taskStatus.taskId || placeholderId, 
-            status: 'completed' 
+            $or: [
+                { taskId: taskStatus.taskId, status: 'completed' },
+                { placeholderId: placeholderId, status: 'completed' }
+            ]
         });
         
         if (existingTask) {
-            console.log(`Task ${taskStatus.taskId? taskStatus.taskId : placeholderId} already completed, skipping duplicate processing`);
+            console.log(`Task ${taskStatus.taskId || placeholderId} already completed, skipping duplicate processing`);
             return;
         }
 
@@ -323,9 +361,14 @@ async function handleVideoTaskCompletion(taskStatus, fastify, options = {}) {
 
       console.log(`[handleVideoTaskCompletion] Video saved to database with ID: ${savedVideo._id}`);
 
-      // Update task as completed in database
+      // Update task as completed in database using both taskId and placeholderId
       const taskUpdateResult = await db.collection('tasks').updateOne(
-        { taskId: taskStatus.taskId || placeholderId },
+        { 
+          $or: [
+            { taskId: taskStatus.taskId },
+            { placeholderId: placeholderId }
+          ]
+        },
         { 
           $set: { 
             status: 'completed', 
@@ -341,10 +384,10 @@ async function handleVideoTaskCompletion(taskStatus, fastify, options = {}) {
 
       console.log(`[handleVideoTaskCompletion] Task updated in database. Update result:`, taskUpdateResult);
 
-      // Remove loader via WebSocket
+      // Remove loader via WebSocket using placeholderId
       console.log(`[handleVideoTaskCompletion] Sending handleVideoLoader notification to user ${userId}`);
       fastify.sendNotificationToUser(userId, 'handleVideoLoader', { 
-        videoId: placeholderId, 
+        placeholderId: placeholderId, 
         action: 'remove' 
       });
 
@@ -370,7 +413,7 @@ async function handleVideoTaskCompletion(taskStatus, fastify, options = {}) {
       // Remove loader and show error
       console.log(`[handleVideoTaskCompletion] Sending error notifications to user ${userId}`);
       fastify.sendNotificationToUser(userId, 'handleVideoLoader', { 
-        videoId: placeholderId, 
+        placeholderId: placeholderId, 
         action: 'remove' 
       });
       const img2videoTranslations = fastify.getImg2videoTranslations(fastify.request?.lang || 'en');
@@ -385,7 +428,7 @@ async function handleVideoTaskCompletion(taskStatus, fastify, options = {}) {
     // Remove loader and show error
     console.log(`[handleVideoTaskCompletion] Sending no-video-URL error notifications to user ${userId}`);
     fastify.sendNotificationToUser(userId, 'handleVideoLoader', { 
-      videoId: placeholderId, 
+      placeholderId: placeholderId, 
       action: 'remove' 
     });
     const img2videoTranslations = fastify.getImg2videoTranslations(fastify.request?.lang || 'en');

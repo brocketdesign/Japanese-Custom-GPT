@@ -5,6 +5,8 @@
 
 // Store for tracking video generation requests
 const videoGenerationRequests = new Set();
+const sentVideoIds = new Set();
+const activePlaceholderIds = new Set(); // Add this to track active placeholders
 
 /**
  * Generate video from image
@@ -25,18 +27,35 @@ window.generateVideoFromImage = async function(imageId, chatId, userChatId, prom
         return;
     }
 
-    // Prevent duplicate requests
-    const requestKey = `${imageId}_${chatId}`;
+    // Use consistent request key format
+    const requestKey = `${imageId}_${userChatId}`;
     if (videoGenerationRequests.has(requestKey)) {
-        showNotification(window.translations.video_generation_in_progress || 'Video generation in progress', 'warning');
+        showNotification(window.translations.img2video.video_generation_in_progress || 'Video generation in progress', 'warning');
+        return;
+    }
+
+    // Show prompt modal
+    const userPrompt = await showVideoPromptModal();
+    
+    // If user cancelled, return
+    if (userPrompt === null) {
+        return;
+    }
+
+    // Generate consistent placeholder ID once
+    const placeholderId = `video_${Date.now()}_${imageId}_${userChatId}`;
+    
+    // Check if this placeholder is already active
+    if (activePlaceholderIds.has(placeholderId)) {
+        console.warn('[generateVideoFromImage] Placeholder already active:', placeholderId);
         return;
     }
 
     try {
         videoGenerationRequests.add(requestKey);
+        activePlaceholderIds.add(placeholderId);
 
-        // Show loader
-        const placeholderId = `video_${Date.now()}_${imageId}`;
+        // Show loader with consistent ID
         displayVideoLoader(placeholderId, imageId);
 
         // Call API to start video generation
@@ -50,7 +69,8 @@ window.generateVideoFromImage = async function(imageId, chatId, userChatId, prom
                 imageId,
                 chatId,
                 userChatId,
-                prompt
+                prompt: userPrompt || prompt,
+                placeholderId
             })
         });
 
@@ -62,21 +82,118 @@ window.generateVideoFromImage = async function(imageId, chatId, userChatId, prom
         }
 
         if (data.success) {
-            showNotification(window.translations.video_generation_started || 'Video generation started', 'success');
+            showNotification(window.translations.img2video.video_generation_started || 'Video generation started', 'success');
         } else {
             throw new Error(data.message || 'Video generation failed');
         }
 
     } catch (error) {
         console.error('Error generating video:', error);
-        showNotification(error.message || window.translations.video_generation_failed || 'Video generation failed', 'error');
+        showNotification(error.message || window.translations.img2video.video_generation_failed || 'Video generation failed', 'error');
         
         // Remove loader on error
         removeVideoLoader(placeholderId);
     } finally {
         videoGenerationRequests.delete(requestKey);
+        activePlaceholderIds.delete(placeholderId);
     }
 };
+
+/**
+ * Show modal for video prompt input
+ * @returns {Promise<string|null>} User prompt or null if cancelled
+ */
+function showVideoPromptModal() {
+    return new Promise((resolve) => {
+        // Create modal HTML
+        const modalHtml = `
+            <div class="modal fade" id="videoPromptModal" tabindex="-1" aria-labelledby="videoPromptModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content mx-auto" style="height: auto;">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="videoPromptModalLabel">
+                                <i class="bi bi-camera-video me-2"></i>
+                                ${window.translations.img2video.video_prompt_title || 'Video Generation Prompt'}
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="videoPromptTextarea" class="form-label">
+                                    ${window.translations.img2video.video_prompt_description || 'Describe the video motion or style (optional)'}
+                                </label>
+                                <textarea 
+                                    class="form-control" 
+                                    style="min-height: 90px;"
+                                    id="videoPromptTextarea" 
+                                    rows="4" 
+                                    maxlength="200" 
+                                    placeholder="${window.translations.img2video.video_prompt_placeholder || 'e.g., slow zoom in, dramatic lighting, smooth camera movement...'}"
+                                ></textarea>
+                                <div class="form-text">
+                                    <span id="charCount">0</span>/200 ${window.translations.img2video.characters || 'characters'}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                ${window.translations.img2video.cancel || 'Cancel'}
+                            </button>
+                            <button type="button" class="btn btn-primary" id="generateVideoBtn">
+                                <i class="bi bi-play-circle me-2"></i>
+                                ${window.translations.img2video.generate_video || 'Generate Video'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Remove existing modal if any
+        $('#videoPromptModal').remove();
+        
+        // Add modal to body
+        $('body').append(modalHtml);
+        
+        const modal = new bootstrap.Modal(document.getElementById('videoPromptModal'));
+        const textarea = $('#videoPromptTextarea');
+        const charCount = $('#charCount');
+        const generateBtn = $('#generateVideoBtn');
+
+        // Character counter
+        textarea.on('input', function() {
+            const length = $(this).val().length;
+            charCount.text(length);
+            
+            if (length > 200) {
+                charCount.addClass('text-danger');
+            } else {
+                charCount.removeClass('text-danger');
+            }
+        });
+
+        // Generate button click
+        generateBtn.on('click', function() {
+            const prompt = textarea.val().trim();
+            modal.hide();
+            resolve(prompt);
+        });
+
+        // Modal close events
+        $('#videoPromptModal').on('hidden.bs.modal', function() {
+            $(this).remove();
+            resolve(null);
+        });
+
+        // Show modal
+        modal.show();
+        
+        // Focus textarea
+        $('#videoPromptModal').on('shown.bs.modal', function() {
+            textarea.focus();
+        });
+    });
+}
 
 /**
  * Remove video generation loader
@@ -92,9 +209,13 @@ function removeVideoLoader(placeholderId) {
         loader.fadeOut(300, function() {
             $(this).remove();
             console.log('[removeVideoLoader] Loader removed successfully');
+            // Clean up tracking
+            activePlaceholderIds.delete(placeholderId);
         });
     } else {
         console.warn('[removeVideoLoader] No loader found with ID:', `video-loader-${placeholderId}`);
+        // Clean up tracking anyway
+        activePlaceholderIds.delete(placeholderId);
         // Try to find any video loaders
         const allLoaders = $('.video-generation-loader');
         console.log('[removeVideoLoader] Total video loaders found:', allLoaders.length);
@@ -110,7 +231,6 @@ function removeVideoLoader(placeholderId) {
  * @param {string} imageId - Related image ID
  */
 function displayVideoLoader(placeholderId, imageId) {
-    console.log('[displayVideoLoader] Creating loader for:', placeholderId, 'imageId:', imageId);
     
     const loaderHtml = `
         <div id="video-loader-${placeholderId}" class="video-generation-loader bg-dark d-flex align-items-center justify-content-center p-3 mx-auto shadow-sm" style="max-width: 500px;">
@@ -119,7 +239,7 @@ function displayVideoLoader(placeholderId, imageId) {
                     <span class="visually-hidden">Loading...</span>
                 </div>
                 <div class="mt-2">
-                    <small class="text-muted">${window.translations.generating_video || 'Generating video...'}</small>
+                    <small class="text-muted">${window.translations.img2video.generating_video || 'Generating video...'}</small>
                 </div>
             </div>
         </div>
@@ -150,7 +270,7 @@ function updateVideoProgress(placeholderId, progress) {
         <div class="progress mt-2" style="height: 4px;">
             <div class="progress-bar" role="progressbar" style="width: ${progress}%"></div>
         </div>
-        <small class="text-muted">${Math.round(progress)}% ${window.translations.complete || 'complete'}</small>
+        <small class="text-muted">${Math.round(progress)}% ${window.translations.img2video.complete || 'complete'}</small>
     `;
     
     const loader = $(document).find(`#video-loader-${placeholderId}`);
@@ -160,7 +280,7 @@ function updateVideoProgress(placeholderId, progress) {
                 <span class="visually-hidden">Loading...</span>
             </div>
             <div class="mt-2">
-                <small class="text-muted">${window.translations.generating_video || 'Generating video...'}</small>
+                <small class="text-muted">${window.translations.img2video.generating_video || 'Generating video...'}</small>
             </div>
             ${progressHtml}
         `);
@@ -171,7 +291,23 @@ function updateVideoProgress(placeholderId, progress) {
  * @param {Object} videoData - Video information
  */
 function displayGeneratedVideo(videoData) {
+    console.log('[displayGeneratedVideo] Video data received:', videoData);
     const { videoUrl, duration, userChatId, placeholderId, videoId } = videoData;
+    console.log(sentVideoIds)
+    
+    // Use videoId for duplicate prevention, not placeholderId
+    if (!videoData || !videoId || sentVideoIds.has(videoId.toString())) {
+        console.log('[displayGeneratedVideo] Video already displayed or invalid data:', videoId);
+        return;
+    }
+    
+    // Add videoId to the set to prevent future duplicates
+    sentVideoIds.add(videoId.toString());
+    
+    // Clean up placeholder tracking
+    if (placeholderId) {
+        activePlaceholderIds.delete(placeholderId);
+    }
 
     // Check if we have the required variables
     if (typeof thumbnail === 'undefined') {
@@ -198,7 +334,7 @@ function displayGeneratedVideo(videoData) {
                             data-placeholder-id="${placeholderId}"
                         >
                             <source src="${videoUrl}" type="video/mp4">
-                            ${window.translations?.video_not_supported || 'Your browser does not support the video tag.'}
+                            ${window.translations.img2video?.video_not_supported || 'Your browser does not support the video tag.'}
                         </video>
                     </div>
                     ${getVideoTools(videoUrl, duration, videoId)}
@@ -219,7 +355,6 @@ function displayGeneratedVideo(videoData) {
         console.error('[displayGeneratedVideo] Chat container not found!');
     }
 }
-
 /**
  * Get video tools (download, share, etc.)
  * @param {string} videoUrl - Video URL
@@ -267,11 +402,11 @@ window.regenerateVideo = async function(videoId) {
             // Regenerate using the original image
             generateVideoFromImage(videoData.imageId, chatId, userChatId, videoData.prompt);
         } else {
-            showNotification(window.translations.regeneration_failed || 'Cannot regenerate this video', 'error');
+            showNotification(window.translations.img2video.regeneration_failed || 'Cannot regenerate this video', 'error');
         }
     } catch (error) {
         console.error('Error regenerating video:', error);
-        showNotification(window.translations.regeneration_failed || 'Failed to regenerate video', 'error');
+        showNotification(window.translations.img2video.regeneration_failed || 'Failed to regenerate video', 'error');
     }
 };
 
@@ -282,15 +417,15 @@ window.regenerateVideo = async function(videoId) {
 window.shareVideo = function(videoUrl) {
     if (navigator.share) {
         navigator.share({
-            title: window.translations.generated_video || 'Generated Video',
+            title: window.translations.img2video.generated_video || 'Generated Video',
             url: videoUrl
         }).catch(console.error);
     } else {
         // Fallback: copy to clipboard
         navigator.clipboard.writeText(videoUrl).then(() => {
-            showNotification(window.translations.video_link_copied || 'Video link copied to clipboard', 'success');
+            showNotification(window.translations.img2video.video_link_copied || 'Video link copied to clipboard', 'success');
         }).catch(() => {
-            showNotification(window.translations.share_failed || 'Failed to share video', 'error');
+            showNotification(window.translations.img2video.share_failed || 'Failed to share video', 'error');
         });
     }
 };

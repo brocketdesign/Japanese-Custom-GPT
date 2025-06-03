@@ -24,13 +24,11 @@ async function routes(fastify, options) {
           return content.startsWith('[Image] ' + imageId.toString()) || content.startsWith('[image] ' + imageId.toString());
         });
         if (messageIndex !== -1) {
-          console.log(`Found image message at index ${messageIndex} for imageId: ${imageId}`);
           const message = userChatMessages.messages[messageIndex];
           if (action === 'like') {
             // If the message already has a like action, do nothing
             if (message.action && message.action.type === 'like') return;
             // Update the message with the like action
-            console.log(`Updating message at index ${messageIndex} with like action for imageId: ${imageId}`);
             userChatMessages.messages[messageIndex].action = { like: true, date: new Date() };
           } else if (action === 'unlike') {
             // If the message has a like action, remove it

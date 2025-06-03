@@ -1,5 +1,8 @@
 const audioCache = new Map();
 const audioPool = [];
+const displayedMessageIds = new Set();
+const displayedImageIds = new Set();
+const displayedVideoIds = new Set();
 
 let language
 
@@ -720,7 +723,7 @@ function setupChatInterface(chat, character) {
             }                    
         });
     }
-    
+        
     async function displayChat(userChat, persona, callback) {
 
         $('body').css('overflow', 'hidden');
@@ -728,14 +731,26 @@ function setupChatInterface(chat, character) {
         $('.auto-gen').each(function() { $(this).show(); });
         $('#audio-play').show();
 
-    
         let chatContainer = $('#chatContainer');
         chatContainer.empty();
+
+        // Clear the tracking sets when displaying a new chat
+        displayedMessageIds.clear();
+        displayedImageIds.clear();
+        displayedVideoIds.clear();
 
         for (let i = 0; i < userChat.length; i++) {
             let messageHtml = '';
             let chatMessage = userChat[i];
-    
+            
+            // Create a unique identifier for each message
+            const messageId = chatMessage._id || `${chatMessage.role}_${i}_${chatMessage.content ? chatMessage.content.substring(0, 50) : ''}`;
+            
+            // Skip if this message has already been displayed
+            if (displayedMessageIds.has(messageId)) {
+                continue;
+            }
+
             if (chatMessage.role === "user") {
                 const isStarter = chatMessage?.content?.startsWith("[Starter]") || chatMessage?.content?.startsWith("Invent a situation") || chatMessage?.content?.startsWith("Here is your character description");
                 const isHidden = chatMessage?.content?.startsWith("[Hidden]") || chatMessage?.name === 'master';
@@ -750,13 +765,15 @@ function setupChatInterface(chat, character) {
                             ${image_request ? `<i class="bi bi-image message-icon" style="position: absolute; top: 0; right: 25px;opacity: 0.7;"></i>` : ''}
                         </div>
                     `;
+                    displayedMessageIds.add(messageId);
                 }
             } else if (chatMessage.role === "assistant") {
 
                 const isNarratorMessage = chatMessage.content.startsWith("[Narrator]");
-                const isImage = chatMessage.content.startsWith("[Image]") || chatMessage.content.startsWith("[image]");
-                const isVideo = chatMessage.content.startsWith("[Video]") || chatMessage.content.startsWith("[video]");
+                const isImage = !!chatMessage?.imageId || chatMessage.content.startsWith("[Image]") || chatMessage.content.startsWith("[image]");
+                const isVideo = !!chatMessage?.videoId || chatMessage.content.startsWith("[Video]") || chatMessage.content.startsWith("[video]");
                 const designStep = Math.floor(i / 2) + 1;
+            
                 if (isNarratorMessage) {
                     const narrationContent = chatMessage.content.replace("[Narrator]", "").trim();
                     messageHtml = `
@@ -766,14 +783,36 @@ function setupChatInterface(chat, character) {
                             </div>
                         </div>
                     `;
+                    displayedMessageIds.add(messageId);
                 } else if (isImage) {
-                    const imageId = chatMessage.content.replace("[Image]", "").replace("[image]", "").trim();
+                    const imageId = chatMessage?.imageId || chatMessage.content.replace("[Image]", "").replace("[image]", "").trim();
+                    
+                    // Skip if this image has already been displayed
+                    if (displayedImageIds.has(imageId)) {
+                        continue;
+                    }
+                    
                     const imageData = await getImageUrlById(imageId, designStep, thumbnail);
                     messageHtml = imageData ? imageData.messageHtml : '';
+                    
+                    if (messageHtml) {
+                        displayedImageIds.add(imageId);
+                        displayedMessageIds.add(messageId);
+                    }
                 } else if (isVideo) {
-                    const videoId = chatMessage.content.replace("[Video]", "").replace("[video]", "").trim();
+                    const videoId = chatMessage?.videoId || chatMessage.content.replace("[Video]", "").replace("[video]", "").trim();
+                    // Skip if this video has already been displayed
+                    if (displayedVideoIds.has(videoId)) {
+                        continue;
+                    }
+                    
                     const videoData = await getVideoUrlById(videoId, designStep, thumbnail);
                     messageHtml = videoData.messageHtml;
+                    
+                    if (messageHtml) {
+                        displayedVideoIds.add(videoId);
+                        displayedMessageIds.add(messageId);
+                    }
                 } else {
                     const isHidden = chatMessage.content.startsWith("[Hidden]") || chatMessage.hidden === true;
                     if (chatMessage.content && !isHidden) {
@@ -791,10 +830,11 @@ function setupChatInterface(chat, character) {
                                 </div>
                             </div>
                         `;
+                        displayedMessageIds.add(messageId);
                     }
                 }
             }
-    
+
             if (messageHtml) {
                 chatContainer.append($(messageHtml).hide().fadeIn());
             }
@@ -842,7 +882,7 @@ function setupChatInterface(chat, character) {
                     title="${window.translations?.upscale_image || 'Upscale Image'}">
                         <i class="bi bi-badge-hd"></i>
                     </span>
-                    <span class="badge bg-white text-secondary img2video-btn flex-shrink-0 me-2" 
+                    <span class="${nsfw ? 'd-none' : ''} badge bg-white text-secondary img2video-btn flex-shrink-0 me-2" 
                     onclick="${subscriptionStatus ? `generateVideoFromImage('${imageId}', '${chatId}', '${userChatId}')` : 'loadPlanPage()'}" 
                     data-id="${imageId}" 
                     data-chat-id="${chatId}"

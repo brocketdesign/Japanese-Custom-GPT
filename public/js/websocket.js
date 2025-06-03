@@ -91,13 +91,8 @@ function initializeWebSocket(onConnectionResult = null) {
             break;
           }
           case 'handleVideoLoader': {
-            console.log('[WebSocket] Handling handleVideoLoader:', data.notification);
-            const { videoId, action } = data.notification;
-            
-            if (action === 'remove') {
-              console.log('[WebSocket] Removing video loader for:', videoId);
-              removeVideoLoader(videoId);
-            }
+            const { placeholderId, action } = data.notification; // Use placeholderId consistently
+            displayOrRemoveImageLoader(placeholderId, action);
             break;
           }
           case 'videoGenerated': {
@@ -110,6 +105,7 @@ function initializeWebSocket(onConnectionResult = null) {
               
               // Display the generated video
               displayGeneratedVideo({
+                videoId,
                 videoUrl,
                 duration,
                 userChatId,

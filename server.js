@@ -621,31 +621,7 @@ fastify.get('/character/slug/:slug', async (request, reply) => {
       }
     }
 
-    // Non-blocking similar chats fetch
-    const similarChatsPromise = (async () => {
-      try {
-        const baseUrl = process.env.MODE === 'local' ? `http://${ip.address()}:3000` : `${request.protocol}://${request.hostname}`;
-        const similarChatsUrl = `${baseUrl}/api/similar-chats/${chatIdParam}`;
-        
-        const similarChatsResponse = await fetch(similarChatsUrl);
-        
-        if (similarChatsResponse.ok) {
-          const result = await similarChatsResponse.json();
-
-          return result;
-        } else {
-          console.warn(`[SimilarChats] Failed to fetch similar chats for ${chatIdParam}. Status: ${similarChatsResponse.status}`);
-          const errorText = await similarChatsResponse.text();
-          console.warn(`[SimilarChats] Error response:`, errorText);
-          return [];
-        }
-      } catch (fetchErr) {
-        console.error(`[SimilarChats] Error fetching similar chats for ${chatIdParam}:`, fetchErr);
-        return [];
-      }
-    })();
-
-    // Don't await similar chats - render immediately
+    // Render immediately
     const template = isModal ? 'character-modal.hbs' : 'character.hbs';
     const response = reply.renderWithGtm(template, {
       title: `${chat.name} | ${translations.seo.title_character}`,
@@ -664,27 +640,6 @@ fastify.get('/character/slug/:slug', async (request, reply) => {
         { property: 'og:url', content: `https://chatlamix/character/${chatIdParam}` },
       ],
     });
-
-    // Send similar chats when ready (non-blocking)
-    similarChatsPromise.then(similarChats => {
-      if (similarChats && Array.isArray(similarChats) && similarChats.length > 0) {
-        
-        const result = fastify.sendNotificationToUser(
-          currentUserId, 
-          'displaySimilarChats', 
-          { chatId: chatIdParam, similarChats },
-          { 
-            queue: true,           // Enable queueing
-            maxAge: 5 * 60 * 1000, // Keep for 5 minutes
-            maxQueueSize: 5        // Max 5 notifications per user
-          }
-        );
-        
-      }
-    }).catch(err => {
-      console.error(`[/character/slug/:slug] Similar chats promise rejected:`, err);
-    });
-
     
     return response;
 

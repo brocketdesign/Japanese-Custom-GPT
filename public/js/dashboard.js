@@ -1236,9 +1236,7 @@ window.displayPeopleChat = async function (page = 1, option = {}, callback, relo
       `/api/chats?page=${page}&style=${imageStyle}&model=${imageModel}&modelId=${modelId}&q=${query}&userId=${userId}&nsfw=${nsfw}`
     )
     const data = await response.json()
-    data.premium = premium
-    //Set premium status to all recent chats
-    data.recent.forEach(chat => chat.premium = premium)
+    
     // Display and callback
     if (data.recent) {
       window.displayChats(data.recent, searchId, modal)
@@ -1340,8 +1338,8 @@ window.displaySimilarChats = function (chatData, targetGalleryIdParam) {
   
   chatData.forEach(chat => {
     const isOwner = chat.userId === currentUserId;
-    const isPremiumChat = chat.premium || false;
-    const isNSFW = chat.nsfw || false;
+    const isPremiumChat = false //chat.premium || false;
+    const isNSFW = false //chat.nsfw || false;
     const genderClass = chat.gender ? `chat-gender-${chat.gender.toLowerCase()}` : '';
     const styleClass = chat.imageStyle ? `chat-style-${chat.imageStyle.toLowerCase()}` : '';
     let nsfwVisible = $.cookie('nsfw') === 'true';
@@ -1426,8 +1424,8 @@ window.displayLatestChats = function (chatData, targetGalleryId, modal = false) 
 
   chatData.forEach(chat => {
     const isOwner = chat.userId === currentUserId;
-    const isPremiumChat = chat.premium || false;
-    const isNSFW = chat.nsfw || false;
+    const isPremiumChat = false //chat.premium || false;
+    const isNSFW = false //chat.nsfw || false;
     const genderClass = chat.gender ? `chat-gender-${chat.gender.toLowerCase()}` : '';
     const styleClass = chat.imageStyle ? `chat-style-${chat.imageStyle.toLowerCase()}` : '';
     let nsfwVisible = $.cookie('nsfw') === 'true';
@@ -1511,8 +1509,8 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
             const moderationFlagged = Array.isArray(chat?.moderation?.results) && chat.moderation.results.length > 0
             ? !!chat.moderation.results[0].flagged
             : false;
-            const finalNsfwResult = nsfw || moderationFlagged;
-            chat.premium = (chat.premium || finalNsfwResult);
+            const finalNsfwResult = false //nsfw || moderationFlagged;
+            chat.premium = false //(chat.premium || finalNsfwResult);
             const isOwner = chat.userId === user._id;
           // --- Begin: Random sample image selection logic ---
           let sampleImages = [];

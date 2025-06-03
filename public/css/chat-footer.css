@@ -1,6 +1,7 @@
 
             .chat-toolbar-wrapper {
                 max-width: 100%;
+                min-width: 25vw;
                 padding: 5px 15px;
                 background: rgba(252, 250, 255, 0.64);
                 border-radius: 20px !important;
@@ -10,7 +11,12 @@
                 min-height: 60px;
                 transition: all 0.3s ease;
             }
-            
+            @media screen and (max-width: 768px) {
+                .chat-toolbar-wrapper {
+                    min-width: 100%;
+                }
+                
+            }
             .chat-toolbar-container {
                 width: 100%;
                 overflow: hidden;

@@ -103,6 +103,7 @@ async function routes(fastify, options) {
                 .toArray();
 
                 if (userChat.length > 0) {
+                    startMessage.sendImage = true;
                     startMessage.content =
                         "Start by welcoming me back. Inform me that you enjoy our chats and ask if I would like to see another image.";
                 } else {
@@ -318,10 +319,7 @@ async function routes(fastify, options) {
                     response.character = null;
                 }
             }
-            // Check if imageModel is free. Retrieve the modelId from myModels
-            const model = await fastify.mongo.db.collection('myModels').findOne({ model: chat.imageModel });
-            const premiumModel = model ? (free_models && !free_models.includes(model)) : false;
-            response.premium = premiumModel;
+        
 
             return reply.send(response);
         } catch (error) {
@@ -1562,7 +1560,6 @@ async function routes(fastify, options) {
             const userIdMatch = userId ? [{ $match: { userId: new ObjectId(userId) } }] : [];
             const langMatch = [{ $match: { language: req.lang } }];
 
-            // Fetch models with chat count, add premium field, and sort by chatCount
             const models = await modelsCollection.aggregate([
                 { $match: query },
                 {
@@ -1579,8 +1576,7 @@ async function routes(fastify, options) {
                 },
                 {
                     $addFields: {
-                        chatCount: { $size: '$chats' }, // Calculate the number of chats
-                        // premium: { $not: { $in: ['$modelId', free_models] } }
+                        chatCount: { $size: '$chats' },
                     }
                 },
                 {
@@ -1685,8 +1681,6 @@ async function routes(fastify, options) {
                 const pipeline = [
                     // Match language and basic requirements
                     { $match: { chatImageUrl: { $exists: true, $ne: '' }, name: { $exists: true, $ne: '' }, language, imageStyle: { $exists: true, $ne: '' } } },
-                    // Add a field premium that check if the chat modelId is not in the free_model array 
-                    // { $addFields: { premium: { $not: { $in: ['$modelId', free_models] } } } },
                     {
                         $lookup: {
                             from: 'gallery',
@@ -1745,7 +1739,7 @@ async function routes(fastify, options) {
                     },
                     {
                         $project: { // Project necessary fields
-                            _id: 1, name: 1, nsfw: 1, premium: 1, moderation: 1, chatImageUrl: 1, sampleImages: 1, tags: 1, imageStyle: 1, gender: 1, userId: 1, nickname: 1, profileUrl: 1, language: 1,
+                            _id: 1, name: 1, nsfw: 1, moderation: 1, chatImageUrl: 1, sampleImages: 1, tags: 1, imageStyle: 1, gender: 1, userId: 1, nickname: 1, profileUrl: 1, language: 1,
                         }
                     }
                 ];
@@ -1820,7 +1814,7 @@ async function routes(fastify, options) {
                 {
                 projection: {
                     _id: 1, slug: 1, name: 1, modelId: 1, chatImageUrl: 1, 
-                    nsfw: 1, premium: 1, userId: 1, gender: 1, imageStyle: 1, 
+                    nsfw: 1, userId: 1, gender: 1, imageStyle: 1, 
                     enhancedPrompt: 1, characterPrompt: 1
                 }
                 }
@@ -1850,12 +1844,6 @@ async function routes(fastify, options) {
                     score: jaccardScore
                 });
                 }
-            });
-            
-            // Update premium field for each chat
-            scoredChats.forEach(chat => {
-                const model = chat.modelId;
-                chat.premium = model ? (free_models && !free_models.includes(model)) : false;
             });
 
             // Sort by score and take top 6
@@ -1930,7 +1918,6 @@ async function routes(fastify, options) {
             name: 1,
             chatImageUrl: 1,
             thumbnailUrl: 1,
-            premium: 1,
             nsfw: 1,
             gender: 1,
             imageStyle: 1,
@@ -1958,7 +1945,6 @@ async function routes(fastify, options) {
             name: 1,
             chatImageUrl: 1,
             thumbnailUrl: 1,
-            premium: 1,
             nsfw: 1,
             gender: 1,
             imageStyle: 1,
@@ -1969,17 +1955,12 @@ async function routes(fastify, options) {
             
         // Combine and sort by _id descending (latest first)
         const combinedChats = [...sfwChats, ...nsfwChats].sort((a, b) => b._id - a._id);
-        // Update the premium field
-        combinedChats.forEach(chat => {
-            const model = chat.modelId;
-            chat.premium = model ? (free_models && !free_models.includes(model)) : false;
-        });
+
         const formattedChats = combinedChats.map(chat => ({
             _id: chat._id,
             name: chat.name || 'Unnamed Chat',
             chatImageUrl: chat.chatImageUrl || chat.thumbnailUrl || '/img/default_chat_avatar.png',
             thumbnailUrl: chat.thumbnailUrl,
-            premium: chat.premium || false,
             nsfw: chat.nsfw || false,
             gender: chat.gender,
             imageStyle: chat.imageStyle,

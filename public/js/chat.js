@@ -490,14 +490,10 @@ $(document).ready(async function() {
         $(document).find(`.chat-list.item[data-id="${chatId}"]`).addClass('active').siblings().removeClass('active');
         isNew = (typeof fetch_reset !== 'undefined') ? fetch_reset : data.isNew;
         if(isNew == null || isNew == undefined){ isNew = true; }
-        
+
         if (!data.chat) {
             showDiscovery();
             return;
-        }
-        if(data.premium && !subscriptionStatus && !isTemporary){
-            loadPlanPage()
-            return
         }
 
         setupChatData(data.chat);
@@ -861,7 +857,7 @@ function setupChatInterface(chat, character) {
                         .image-tools .d-flex::-webkit-scrollbar { display: none; }
                     </style>
                     <span class="badge bg-white text-secondary image-fav ${isLiked ? 'liked' : ''} flex-shrink-0 me-2" data-id="${imageId}"
-                    onclick="${subscriptionStatus ? 'toggleImageFavorite(this)' : 'loadPlanPage()'}" 
+                    onclick="toggleImageFavorite(this)" 
                     style="cursor: pointer; opacity:0.8;">
                         <i class="bi bi-heart-fill"></i>
                     </span>
@@ -1066,13 +1062,8 @@ function setupChatInterface(chat, character) {
                 success: function(response) {
                     if (response.imageUrl) {
                         // Update the placeholder image
-                        if(!subscriptionStatus && response.nsfw){
-                            $(`#image-${imageId}`).attr('data-src', response.imageUrl).addClass('img-blur').fadeIn();
-                            blurImage($(`#image-${imageId}`));
-                        }else{
-                            displayImageThumb(response.imageUrl)
-                            $(`#image-${imageId}`).attr('src', response.imageUrl).fadeIn();
-                        }
+                        displayImageThumb(response.imageUrl)
+                        $(`#image-${imageId}`).attr('src', response.imageUrl).fadeIn();
                         // Update the alt text
                         const title = response?.title?.[lang]?.trim() || '';
                         $(`#image-${imageId}`).attr('alt', title).fadeIn();
@@ -1592,7 +1583,7 @@ function setupChatInterface(chat, character) {
     
         else if (messageClass === 'bot-image' && message instanceof HTMLElement) {
             const imageId = message.getAttribute('data-id');
-            const imageNsfw = message.getAttribute('data-nsfw') == 'true';
+            const imageNsfw = false //message.getAttribute('data-nsfw') == 'true';
             const title = message.getAttribute('alt');
             const prompt = message.getAttribute('data-prompt');
             const imageUrl = message.getAttribute('src');
@@ -1623,12 +1614,7 @@ function setupChatInterface(chat, character) {
             `).hide();
             messageContainer.append(messageElement);
             messageElement.addClass(animationClass).fadeIn();
-            if(!subscriptionStatus){
-                const image = messageElement.find('img[data-id="'+imageId+'"]');
-                blurImage(image)
-            }else{
-                displayImageThumb(imageUrl,origineUserChatId)
-            }
+            displayImageThumb(imageUrl,origineUserChatId)
         } 
 
         else if (messageClass.startsWith('new-image-') && message instanceof HTMLElement) {

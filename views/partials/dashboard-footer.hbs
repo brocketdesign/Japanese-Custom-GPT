@@ -657,6 +657,17 @@ window.redirectToChat = function(chatId,chatImage) {
         window.location.href = `/chat/${chatId}`;
     }
 }
+window.redirectToCharacter = function(characterId, characterSlug) {
+    if($(`#spinner-${characterId}`).hasClass('on')){
+        return
+    }
+    $(`#spinner-${characterId}`).addClass('on').show()
+    if(characterSlug){
+        window.location.href = `/character/slug/${characterSlug}`;
+        return
+    }
+    window.location.href = `/character/${characterId}`;
+}
 
 window.showDiscovery = function() {
     if (!window.location.pathname.includes('/chat/')) {

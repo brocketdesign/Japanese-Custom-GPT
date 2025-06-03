@@ -1,3 +1,4 @@
+
 // Global states
 var swiperInstance;
 var currentSwiperIndex = 0;
@@ -973,7 +974,6 @@ function generateChatUserPagination(currentPage, totalPages, chatId) {
     });
 
     if (currentPage >= totalPages) {
-        console.log('Chat Users: No more pages to load.');
         return;
     }
 
@@ -1315,12 +1315,15 @@ function updateChatPaginationControls(totalPages, searchId) {
     )
   }
 }
-window.displaySimilarChats = function (chatData, targetGalleryId) {
+window.displaySimilarChats = function (chatData, targetGalleryIdParam) {
   let htmlContent = '';
   const currentUser = user; // Assuming 'user' is globally available from the template
   const currentUserId = currentUser._id;
   const subscriptionStatus = currentUser.subscriptionStatus === 'active';
   const isTemporaryUser = !!currentUser?.isTemporary;
+  const targetGalleryId = targetGalleryIdParam || 'similar-characters-gallery';
+
+  const loader = $(`#${targetGalleryId}-loader`);
 
   chatData.forEach(chat => {
     const isOwner = chat.userId === currentUserId;
@@ -1353,16 +1356,16 @@ window.displaySimilarChats = function (chatData, targetGalleryId) {
     
     htmlContent += `
         <div class="${cardClass}" data-id="${chat._id}" style="cursor:pointer;">
-            <div class="card gallery-hover shadow-sm border-0 h-100 position-relative overflow-hidden">
-                <a href="/character/slug/${chat.slug}" class="text-decoration-none">
-                    <div class="gallery-image-wrapper" style="aspect-ratio: 4/5; background: #f8f9fa; position: relative;">
-                        <img src="${imageSrc}" class="card-img-top gallery-img" alt="${chat.name}" style="height: 100%; width: 100%; object-fit: cover;">
-                        ${nsfwOverlay}
-                    </div>
-                    <div class="card-body p-2 d-flex flex-column">
-                        <h6 class="card-title small fw-bold mb-1 text-truncate text-dark" style="font-size: 0.85rem;">${chat.name}</h6>
-                    </div>
-                </a>
+            <div 
+            class="card gallery-hover shadow-sm border-0 h-100 position-relative overflow-hidden"
+            onclick="redirectToCharacter('${chat._id}', '${chat.slug}'); event.stopPropagation();">
+                <div class="gallery-image-wrapper" style="aspect-ratio: 4/5; background: #f8f9fa; position: relative;">
+                    <img src="${imageSrc}" class="card-img-top gallery-img" alt="${chat.name}" style="height: 100%; width: 100%; object-fit: cover;">
+                    ${nsfwOverlay}
+                </div>
+                <div class="card-body p-2 d-flex flex-column">
+                    <h6 class="card-title small fw-bold mb-1 text-truncate text-dark" style="font-size: 0.85rem;">${chat.name}</h6>
+                </div>
                 <div class="position-absolute top-0 start-0 m-1 d-flex flex-column align-items-start" style="z-index:3;">
                     ${isOwner ? `
                     <span class="badge bg-light text-secondary shadow" style="font-size: 0.6rem !important; padding: 0.2em 0.4em !important;opacity:0.8;">
@@ -1376,18 +1379,31 @@ window.displaySimilarChats = function (chatData, targetGalleryId) {
                     </button>
                     ` : ''}
                 </div>
+
+                <div id="spinner-${chat._id}" class="loading-overlay position-absolute top-0 start-0 w-100 h-100 justify-content-center align-items-center" style="background: rgba(255,255,255,0.8); z-index: 1; display: none;">
+                    <div class="spinner-border text-purple" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
             </div>
         </div>
     `;
   });
 
+  loader.removeClass('d-flex').hide(); // Hide the loader if it exists
   const galleryElement = $(document).find(`#${targetGalleryId}`);
   if (galleryElement.length) {
     galleryElement.append(htmlContent);
   } else {
     console.warn(`Target gallery with ID #${targetGalleryId} not found.`);
+    galleryElement.append(`
+      <div class="alert alert-warning" role="alert">
+        ${window.translations?.similarChatsNotFound || 'No similar chats found.'}
+      </div>
+    `);
   }
 };
+
 window.displayLatestChats = function (chatData, targetGalleryId, modal = false) {
   let htmlContent = '';
   const currentUser = user; 
@@ -3271,3 +3287,12 @@ window.updatePromptActivatedCounter = function() {
 
       updatePromptActivatedCounter();
   };
+  window.updateImageTitle = function(imageId, localizedTitle) {
+    console.log(`[updateImageTitle] Updating image card with ID ${imageId} to title: ${localizedTitle}`);
+    if ($('#about_image').length) {
+      $('#about_image').text(localizedTitle);
+    } else {
+      console.warn(`Image card with ID ${imageId} not found to update title.`);
+    }
+  }
+    

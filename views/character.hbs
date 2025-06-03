@@ -241,7 +241,6 @@
   {{/if}} 
 
   <!-- Similar Characters Section -->
-  {{#if similarChats.length}}
   <section class="section-padding shadow-sm">
     <div class="container">
       <h3 class="text-center">{{translations.similar_characters_title}}</h3>
@@ -249,10 +248,14 @@
       <hr class="w-25 mx-auto">
       <div class="row mx-0" id="similar-characters-gallery" style="justify-content: center;">
         <!-- Similar characters will be appended here by displayLatestChats -->
+        <div id="similar-characters-gallery-loader" class="d-flex justify-content-center">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
       </div>
     </div>
   </section>
-  {{/if}}
 
   <!-- Other Images Section -->
   {{#if chatId}}

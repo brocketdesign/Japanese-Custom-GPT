@@ -1718,8 +1718,8 @@ opacity: 0.8;
 .character-create-card:hover h5 {
     color: #6E20F4;
 }
-.text-purple{
-    color: #6E20F4;
+.text-purple, .text-primary{
+    color: #6E20F4 !important;
 }
 .character-card-menu {
     width: 100%;

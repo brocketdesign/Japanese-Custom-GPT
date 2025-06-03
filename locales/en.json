@@ -1,5 +1,6 @@
 {
   "lang":"en",
+  "similarChatsNotFound":"No similar chats found",
   "download_success":"Download Successful",
   "reconnect": {
     "title": "Connection Lost",

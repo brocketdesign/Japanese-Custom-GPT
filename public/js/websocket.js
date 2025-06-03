@@ -191,6 +191,14 @@ function initializeWebSocket(onConnectionResult = null) {
             }
             break;
           }
+          case 'displaySimilarChats': {
+            const { chatId, similarChats } = data.notification;
+            console.log('[WebSocket] Displaying similar chats for chatId:', chatId, 'with data:', similarChats);
+            if (window.displaySimilarChats) {
+              window.displaySimilarChats(similarChats);
+            }
+            break;
+          }
           default:
             // Removed console.log('[WebSocket] Unhandled notification type:', data.notification.type);
             break;

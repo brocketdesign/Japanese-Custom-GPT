@@ -2,6 +2,7 @@ const fastifyPlugin = require('fastify-plugin');
 
 module.exports = fastifyPlugin(async function (fastify) {
   fastify.decorate('connections', new Map());
+  fastify.decorate('pendingNotifications', new Map()); // Store pending notifications
 
   fastify.get('/ws', { websocket: true }, (connection, request) => {
     try {
@@ -20,6 +21,22 @@ module.exports = fastifyPlugin(async function (fastify) {
 
       fastify.connections.get(normalizedUserId).add(connection);
 
+      // Send any pending notifications when user connects
+      const pendingNotifications = fastify.pendingNotifications.get(normalizedUserId);
+      if (pendingNotifications && pendingNotifications.length > 0) {
+        
+        pendingNotifications.forEach(notification => {
+          try {
+            connection.send(JSON.stringify({ notification }));
+          } catch (err) {
+            console.error(`[WebSocket] Error sending pending notification to user ${normalizedUserId}:`, err);
+          }
+        });
+        
+        // Clear pending notifications after sending
+        fastify.pendingNotifications.delete(normalizedUserId);
+      }
+
       connection.on('message', (message) => {
         try {
           connection.send(message); // Echo back the message
@@ -34,6 +51,7 @@ module.exports = fastifyPlugin(async function (fastify) {
           userConnections.delete(connection);
           if (userConnections.size === 0) {
             fastify.connections.delete(normalizedUserId);
+            console.log(`[WebSocket] User ${normalizedUserId} disconnected - no active connections`);
           }
         }
       });
@@ -42,46 +60,137 @@ module.exports = fastifyPlugin(async function (fastify) {
     }
   });
 
-  fastify.decorate('sendNotificationToUser', (userId, type, additionalData) => {
+  fastify.decorate('sendNotificationToUser', (userId, type, additionalData, options = {}) => {
     try {
       const normalizedUserId = userId.toString();
       const userConnections = fastify.connections.get(normalizedUserId);
-      if (userConnections) {
-        const notification = {
-          type,
-          ...additionalData
-        };
+      
+      const notification = {
+        type,
+        ...additionalData,
+        timestamp: new Date().toISOString() // Add timestamp for debugging
+      };
+
+      if (userConnections && userConnections.size > 0) {
+        // User is connected - send immediately
+        console.log(`[WebSocket] Sending immediate notification '${type}' to connected user ${normalizedUserId}`);
+        
         for (const conn of userConnections) {
-          conn.send(JSON.stringify({ notification }));
+          try {
+            if (conn.readyState === 1) { // WebSocket.OPEN
+              conn.send(JSON.stringify({ notification }));
+            }
+          } catch (connErr) {
+            console.error(`[WebSocket] Error sending to specific connection for user ${normalizedUserId}:`, connErr);
+          }
         }
-      } 
+        
+        return { status: 'sent', method: 'immediate' };
+      } else {
+        // User not connected - queue notification
+        const { 
+          queue = true, 
+          maxAge = 5 * 60 * 1000, // 5 minutes default
+          maxQueueSize = 10 
+        } = options;
+        
+        if (queue) {
+          
+          if (!fastify.pendingNotifications.has(normalizedUserId)) {
+            fastify.pendingNotifications.set(normalizedUserId, []);
+          }
+          
+          const pendingQueue = fastify.pendingNotifications.get(normalizedUserId);
+          
+          // Add expiry time
+          notification.expiresAt = Date.now() + maxAge;
+          
+          // Prevent queue from growing too large
+          if (pendingQueue.length >= maxQueueSize) {
+            pendingQueue.shift(); // Remove oldest notification
+          }
+          
+          pendingQueue.push(notification);
+          
+          return { status: 'queued', queueSize: pendingQueue.length };
+        } else {
+          console.log(`[WebSocket] User ${normalizedUserId} not connected and queueing disabled - notification '${type}' dropped`);
+          return { status: 'dropped', reason: 'user_not_connected' };
+        }
+      }
     } catch (err) {
-      console.error(`Error sending notification to user ${normalizedUserId}:`, err);
+      console.error(`[WebSocket] Error in sendNotificationToUser for user ${normalizedUserId}:`, err);
+      return { status: 'error', error: err.message };
     }
   });
 
-  // Example route that uses the decorated connections
-  fastify.get('/active-connections', async (request, reply) => {
-    const activeConnections = Array.from(fastify.connections.keys());
-    reply.send({ activeConnections });
-  });
+  // Clean up expired notifications every minute
+  setInterval(() => {
+    const now = Date.now();
+    let totalCleaned = 0;
+    
+    for (const [userId, notifications] of fastify.pendingNotifications.entries()) {
+      const beforeCount = notifications.length;
+      
+      // Filter out expired notifications
+      const validNotifications = notifications.filter(notification => {
+        return !notification.expiresAt || notification.expiresAt > now;
+      });
+      
+      if (validNotifications.length !== beforeCount) {
+        const cleanedCount = beforeCount - validNotifications.length;
+        totalCleaned += cleanedCount;
+        
+        if (validNotifications.length === 0) {
+          fastify.pendingNotifications.delete(userId);
+        } else {
+          fastify.pendingNotifications.set(userId, validNotifications);
+        }
+        
+        console.log(`[WebSocket] Cleaned ${cleanedCount} expired notifications for user ${userId}`);
+      }
+    }
+    
+    if (totalCleaned > 0) {
+      console.log(`[WebSocket] Cleanup: Removed ${totalCleaned} expired notifications total`);
+    }
+  }, 60000); // Every minute
 
-  // Example route to send a notification to a user
-  fastify.post('/notify-user', async (request, reply) => {
-    const { userId, notification } = request.body;
-    fastify.sendNotificationToUser(userId, notification);
-    reply.send({ status: 'Notification sent' });
-  });
-  
-  // Ping all connections every 30 seconds
+  // Enhanced ping with queue size info
   setInterval(() => {
     for (const [userId, connections] of fastify.connections.entries()) {
+      const queueSize = fastify.pendingNotifications.get(userId)?.length || 0;
+      
       for (const conn of connections) {
         if (conn.readyState === 1) {
-          conn.send(JSON.stringify({ type: 'ping' }));
+          conn.send(JSON.stringify({ 
+            type: 'ping',
+            queueSize // Let client know if there are pending notifications
+          }));
         }
       }
     }
   }, 30000);
-  
+
+  // Debug routes
+  fastify.get('/active-connections', async (request, reply) => {
+    const activeConnections = Array.from(fastify.connections.keys());
+    const pendingCounts = {};
+    
+    for (const [userId, notifications] of fastify.pendingNotifications.entries()) {
+      pendingCounts[userId] = notifications.length;
+    }
+    
+    reply.send({ 
+      activeConnections,
+      pendingNotifications: pendingCounts,
+      totalPending: Array.from(fastify.pendingNotifications.values()).reduce((sum, arr) => sum + arr.length, 0)
+    });
+  });
+
+  fastify.post('/notify-user', async (request, reply) => {
+    const { userId, type, data, options } = request.body;
+    const result = fastify.sendNotificationToUser(userId, type, data, options);
+    reply.send({ result });
+  });
 });

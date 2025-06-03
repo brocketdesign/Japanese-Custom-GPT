@@ -476,19 +476,31 @@ function tokenizePrompt(promptText) {
   );
 }
 
+// Route to handle character slug
 fastify.get('/character/slug/:slug', async (request, reply) => {
+  const startTime = Date.now();
+  
   try {
     const db = fastify.mongo.db;
     const { translations, lang, user } = request;
     const currentUserId = user._id; 
     const { slug } = request.params;
     const imageSlug = request.query.imageSlug || null;
+    const isModal = request.query.modal === 'true';
 
-    const chat = await db.collection('chats').findOne(
-      { 
+    console.time(`character-slug-${slug}`);
+
+    // Parallel query execution for independent data
+    const [chat, currentUserData] = await Promise.all([
+      db.collection('chats').findOne({ 
         slug,
         chatImageUrl: { $exists: true, $ne: null },
-      });
+      }),
+      !user.isTemporary && currentUserId ? 
+        db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(currentUserId) }) : 
+        Promise.resolve(user)
+    ]);
+
     if (!chat) {
       console.warn(`[/character/:slug] Chat not found for slug: ${slug}`);
       return reply.code(404).send({ error: 'Chat not found' });
@@ -502,71 +514,69 @@ fastify.get('/character/slug/:slug', async (request, reply) => {
       console.error(`[/character/:slug] Invalid Chat ID format: ${chatIdParam}`);
       return reply.code(400).send({ error: 'Invalid Chat ID format' });
     }
-    
-    const isModal = request.query.modal === 'true';
-    
-    const galleryCollection = db.collection('gallery');
 
+    // Determine subscription status
     let subscriptionStatus = false;
-    let currentUserData = user; // Use 'user' from request as initial current user data
-    if (!currentUserData.isTemporary && currentUserId) {
-      currentUserData = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(currentUserId) });
-      if (currentUserData) {
-        subscriptionStatus = currentUserData.subscriptionStatus === 'active';
-      } else {
-        // Handle case where user might have been deleted or ID is stale
-        console.warn(`[/character/:slug] User data not found for ID: ${currentUserId}. Treating as non-subscribed.`);
-      }
+    if (currentUserData && !currentUserData.isTemporary) {
+      subscriptionStatus = currentUserData.subscriptionStatus === 'active';
     }
 
+    // Optimized image lookup
     let image = null;
     let isBlur = false;
     let imageId = null;
+    
     if (imageSlug) {
-      const imageDoc = await galleryCollection
-        .aggregate([
-          { $match: { chatId: chatIdObjectId } },
-          { $unwind: '$images' },
-          { $match: { 'images.slug': imageSlug } },
-          { $project: { image: '$images', _id: 0 } },
-        ])
-        .toArray();
+      // More efficient image query using findOne with array filtering
+      const gallery = await db.collection('gallery').findOne(
+        { 
+          chatId: chatIdObjectId,
+          'images.slug': imageSlug 
+        },
+        { 
+          projection: { 
+            'images.$': 1 // This returns only the matching image
+          } 
+        }
+      );
 
-      imageId = imageDoc[0]?.image?._id || null;
-      try {
-        imageId = new fastify.mongo.ObjectId(imageId);
-      } catch (e) {
-        console.error(`[/character/:slug] Invalid Image ID format: ${imageId}`);
-        return reply.code(400).send({ error: 'Invalid Image ID format' });
-      }
+      if (gallery?.images?.[0]) {
+        image = gallery.images[0];
+        imageId = image._id;
 
-      if (imageDoc.length > 0) {
-        image = imageDoc[0].image;
-        
+        try {
+          imageId = new fastify.mongo.ObjectId(imageId);
+        } catch (e) {
+          console.error(`[/character/:slug] Invalid Image ID format: ${imageId}`);
+          return reply.code(400).send({ error: 'Invalid Image ID format' });
+        }
+
         // Check if this is an upscaled image with an originalImageId
         if (image.isUpscaled && image.originalImageId) {
           try {
             const originalImageId = new fastify.mongo.ObjectId(image.originalImageId);
             
             // Find the original image in the gallery
-            const originalImageDoc = await galleryCollection
-              .aggregate([
-                { $match: { chatId: chatIdObjectId } },
-                { $unwind: '$images' },
-                { $match: { 'images._id': originalImageId } },
-                { $project: { image: '$images', _id: 0 } },
-              ])
-              .toArray();
+            const originalGallery = await db.collection('gallery').findOne(
+              { 
+                chatId: chatIdObjectId,
+                'images._id': originalImageId 
+              },
+              { 
+                projection: { 
+                  'images.$': 1
+                } 
+              }
+            );
             
-            if (originalImageDoc.length > 0 && originalImageDoc[0].image.slug) {
+            if (originalGallery?.images?.[0]?.slug) {
               // Redirect to the original image with the same query parameters
               const { modal } = request.query;
-              let queryString = `?imageSlug=${originalImageDoc[0].image.slug}`;
+              let queryString = `?imageSlug=${originalGallery.images[0].slug}`;
               if (modal) {
                 queryString += `&modal=${modal}`;
               }
               
-              console.log(`[/character/:slug] Redirecting from upscaled image to original: ${originalImageDoc[0].image.slug}`);
               return reply.redirect(`/character/slug/${chat.slug}${queryString}`);
             }
           } catch (err) {
@@ -575,7 +585,7 @@ fastify.get('/character/slug/:slug', async (request, reply) => {
           }
         }
 
-        // Continue with existing title generation logic
+        // Async title generation (non-blocking)
         if (
           !image.title ||
           typeof image.title !== 'object' ||
@@ -587,17 +597,18 @@ fastify.get('/character/slug/:slug', async (request, reply) => {
           const generateTitles = async () => {
             const title = { ...existingTitle };
             if (!title.en) title.en = await generatePromptTitle(image.prompt, 'english');
-            if (!title.ja) title.ja = await generatePromptTitle(image.prompt, 'japanese');
+            if (!title.ja) title.ja = await generatePromptTitle(image.prompt, 'japanese');  
             if (!title.fr) title.fr = await generatePromptTitle(image.prompt, 'french');
             return title;
           };
 
+          // Don't await this - let it run in background
           generateTitles().then((title) => {
-            galleryCollection.updateOne(
+            db.collection('gallery').updateOne(
               { 'images._id': imageId },
               { $set: { 'images.$.title': title } }
             );
-            fastify.sendNotificationToUser(currentUserId, 'updateImageTitle', { title });
+
           }).catch((err) => {
             console.error('[SimilarChats] Failed to generate titles for image:', err);
           });
@@ -606,33 +617,44 @@ fastify.get('/character/slug/:slug', async (request, reply) => {
         const unlockedItem = currentUserData?.unlockedItems?.map((id) => id.toString()).includes(imageId.toString());
         isBlur = unlockedItem ? false : image?.nsfw && !subscriptionStatus;
       } else {
-        console.warn(`[SimilarChats] Image not found for ID: ${imageId} in chat ${chatIdParam}`);
+        console.warn(`[SimilarChats] Image not found for slug: ${imageSlug} in chat ${chatIdParam}`);
       }
     }
 
-    let similarChats = [];
-    try {
-      const baseUrl = process.env.MODE === 'local' ? `http://${ip.address()}:3000` : `${request.protocol}://${request.hostname}`;
-      const similarChatsUrl = `${baseUrl}/api/similar-chats/${chatIdParam}`;
-      const similarChatsResponse = await fetch(similarChatsUrl);
-      if (similarChatsResponse.ok) {
-        similarChats = await similarChatsResponse.json();
-      } else {
-        console.warn(`[SimilarChats] Failed to fetch similar chats for ${chatIdParam}. Status: ${similarChatsResponse.status}`);
-      }
-    } catch (fetchErr) {
-      console.error(`[SimilarChats] Error fetching similar chats for ${chatIdParam}:`, fetchErr);
-    }
+    // Non-blocking similar chats fetch
+    const similarChatsPromise = (async () => {
+      try {
+        const baseUrl = process.env.MODE === 'local' ? `http://${ip.address()}:3000` : `${request.protocol}://${request.hostname}`;
+        const similarChatsUrl = `${baseUrl}/api/similar-chats/${chatIdParam}`;
+        
+        const similarChatsResponse = await fetch(similarChatsUrl);
+        
+        if (similarChatsResponse.ok) {
+          const result = await similarChatsResponse.json();
 
+          return result;
+        } else {
+          console.warn(`[SimilarChats] Failed to fetch similar chats for ${chatIdParam}. Status: ${similarChatsResponse.status}`);
+          const errorText = await similarChatsResponse.text();
+          console.warn(`[SimilarChats] Error response:`, errorText);
+          return [];
+        }
+      } catch (fetchErr) {
+        console.error(`[SimilarChats] Error fetching similar chats for ${chatIdParam}:`, fetchErr);
+        return [];
+      }
+    })();
+
+    // Don't await similar chats - render immediately
     const template = isModal ? 'character-modal.hbs' : 'character.hbs';
-    return reply.renderWithGtm(template, {
+    const response = reply.renderWithGtm(template, {
       title: `${chat.name} | ${translations.seo.title_character}`,
       chat,
       image,
       chatId: chatIdParam,
       isBlur,
-      similarChats, // Pass scored and sorted similar chats
-      user: currentUserData, // Pass potentially updated currentUserData
+      similarChats: [], // Will be populated via websocket
+      user: currentUserData,
       seo: [
         { name: 'description', content: ` ${image?.title?.[request.lang] ?? chat.description ?? ''} | ${translations.seo.description_character}` },
         { name: 'keywords', content: translations.seo.keywords },
@@ -642,8 +664,33 @@ fastify.get('/character/slug/:slug', async (request, reply) => {
         { property: 'og:url', content: `https://chatlamix/character/${chatIdParam}` },
       ],
     });
+
+    // Send similar chats when ready (non-blocking)
+    similarChatsPromise.then(similarChats => {
+      if (similarChats && Array.isArray(similarChats) && similarChats.length > 0) {
+        
+        const result = fastify.sendNotificationToUser(
+          currentUserId, 
+          'displaySimilarChats', 
+          { chatId: chatIdParam, similarChats },
+          { 
+            queue: true,           // Enable queueing
+            maxAge: 5 * 60 * 1000, // Keep for 5 minutes
+            maxQueueSize: 5        // Max 5 notifications per user
+          }
+        );
+        
+      }
+    }).catch(err => {
+      console.error(`[/character/slug/:slug] Similar chats promise rejected:`, err);
+    });
+
+    
+    return response;
+
   } catch (err) {
-    console.error(`[SimilarChats] Error in /character/:chatId route for ${request.params.chatId}:`, err);
+    console.log(`[/character/slug/:slug] Request failed after: ${Date.now() - startTime}ms`);
+    console.error(`[SimilarChats] Error in /character/slug/:slug route for ${request.params.slug}:`, err);
     reply.code(500).send('Internal Server Error');
   }
 });

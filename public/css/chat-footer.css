@@ -1,6 +1,6 @@
 
             .chat-toolbar-wrapper {
-                width: 100%;
+                max-width: 100%;
                 padding: 5px 15px;
                 background: rgba(252, 250, 255, 0.64);
                 border-radius: 20px !important;

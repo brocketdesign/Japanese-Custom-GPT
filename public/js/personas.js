@@ -308,7 +308,6 @@ const PersonaModule = {
         // First check if we have cached data
         const cachedPersonas = this.getCachedPersonas();
         if (cachedPersonas) {
-            console.log('Loading personas from cache');
             this.renderPersonas(cachedPersonas);
             return;
         }

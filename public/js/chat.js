@@ -787,8 +787,8 @@ function setupChatInterface(chat, character) {
                     if (displayedImageIds.has(imageId)) {
                         continue;
                     }
-                    let action  = chatMessage.action || null
-                    const imageData = await getImageUrlById(imageId, designStep, thumbnail, action);
+                    let actions  = chatMessage.actions || null
+                    const imageData = await getImageUrlById(imageId, designStep, thumbnail, actions);
                     messageHtml = imageData ? imageData.messageHtml : '';
                     
                     if (messageHtml) {
@@ -896,7 +896,7 @@ function setupChatInterface(chat, character) {
         window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
     }
 
-    function getImageUrlById(imageId, designStep, thumbnail, action = null) {
+    function getImageUrlById(imageId, designStep, thumbnail, actions = null) {
         const placeholderImageUrl = '/img/placeholder-image-2.gif'; // Placeholder image URL
 
         // Return immediately with placeholder and update asynchronously
@@ -942,7 +942,7 @@ function setupChatInterface(chat, character) {
                                     prompt: response.imagePrompt, 
                                     nsfw: response.nsfw, 
                                     imageUrl: response.imageUrl,
-                                    action
+                                    actions
                                 });
                                 $(`#image-${imageId}`).closest('.assistant-image-box').after(toolsHtml);
                                 if(response.nsfw){
@@ -974,13 +974,18 @@ function setupChatInterface(chat, character) {
         });
     }
 
-    function getImageTools({chatId, imageId, isLiked = false, title, prompt = false, nsfw = false, imageUrl = false, action = null}) {
+
+    function getImageTools({chatId, imageId, isLiked = false, title, prompt = false, nsfw = false, imageUrl = false, actions = []}) {
         prompt = sanitizeString(prompt);
-        console.log(`[getImageTools] Action:`, action);
         // Check if actions exist and determine icon states
-        const hasVideoAction = action && action.type === 'video_generated';
-        const hasUpscaleAction = action && action.type === 'upscaled';
-        const hasLikeAction = action && action.type === 'like';
+        const hasVideoAction = actions?.some(action => action.type === 'video_generated');
+        const hasUpscaleAction = actions?.some(action => action.type === 'upscaled');
+        const hasLikeAction = actions?.some(action => action.type === 'like');
+        
+        // Get specific action objects
+        const videoAction = actions?.find(action => action.type === 'video_generated');
+        const upscaleAction = actions?.find(action => action.type === 'upscaled');
+        const likeAction = actions?.find(action => action.type === 'like');
         
         // Determine icon classes based on actions
         const videoIconClass = hasVideoAction ? 'bi-play-circle-fill text-success' : 'bi-play-circle';
@@ -993,11 +998,11 @@ function setupChatInterface(chat, character) {
         
         // Get additional info for tooltips
         const videoTooltip = hasVideoAction ? 
-            `${window.translations?.video_already_generated || 'Video already generated'} - ID: ${action.videoId}` : 
+            `${window.translations?.video_already_generated || 'Video already generated'} - ID: ${videoAction?.videoId}` : 
             `${window.translations?.convert_to_video || 'Convert to Video'}`;
         
         const upscaleTooltip = hasUpscaleAction ? 
-            `${window.translations?.already_upscaled || 'Already upscaled'} (${action.scale_factor}x) - ID: ${action.upscaledImageId}` : 
+            `${window.translations?.already_upscaled || 'Already upscaled'} (${upscaleAction?.scale_factor}x) - ID: ${upscaleAction?.upscaledImageId}` : 
             `${window.translations?.upscale_image || 'Upscale Image'}`;
 
         return `
@@ -1058,12 +1063,18 @@ function setupChatInterface(chat, character) {
                         <i class="bi bi-image"></i>
                     </span>` : ''}
                 </div>
-                ${action ? `
-                <div class="action-info text-muted px-3 py-1" style="font-size: 11px;">
-                    ${action.type === 'video_generated' ? `<i class="bi bi-play-circle-fill text-success me-1"></i>Video generated` : ''}
-                    ${action.type === 'upscaled' ? `<i class="bi bi-badge-hd-fill text-success me-1"></i>Upscaled ${action.scale_factor}x` : ''}
-                    ${action.type === 'like' ? `<i class="bi bi-heart-fill text-danger me-1"></i>Liked` : ''}
-                    ${action.date ? ` on ${new Date(action.date).toLocaleDateString()}` : ''}
+                ${actions && actions.length > 0 ? `
+                <div class="actions-info text-muted px-3 py-1" style="font-size: 11px;">
+                    ${actions.map(action => {
+                        if (action.type === 'video_generated') {
+                            return `<div><i class="bi bi-play-circle-fill text-success me-1"></i>Video generated ${action.date ? `on ${new Date(action.date).toLocaleDateString()}` : ''}</div>`;
+                        } else if (action.type === 'upscaled') {
+                            return `<div><i class="bi bi-badge-hd-fill text-success me-1"></i>Upscaled ${action.scale_factor}x ${action.date ? `on ${new Date(action.date).toLocaleDateString()}` : ''}</div>`;
+                        } else if (action.type === 'like') {
+                            return `<div><i class="bi bi-heart-fill text-danger me-1"></i>Liked ${action.date ? `on ${new Date(action.date).toLocaleDateString()}` : ''}</div>`;
+                        }
+                        return '';
+                    }).join('')}
                 </div>` : ''}
             </div>
             <div class="title assistant-chat-box py-1 px-3 ${title && title !== 'undefined' ? '': 'd-none'}" style="border-radius: 0px 0px 15px 15px;max-width: 200px;">
@@ -1078,14 +1089,18 @@ function setupChatInterface(chat, character) {
                         </div>
                         <div class="modal-body" style="max-height: 25vh; overflow-y: auto;">
                             <p>${prompt}</p>
-                            ${action ? `
+                            ${actions && actions.length > 0 ? `
                             <hr>
-                            <h6>Action Information:</h6>
-                            <p><strong>Type:</strong> ${action.type}</p>
-                            ${action.videoId ? `<p><strong>Video ID:</strong> ${action.videoId}</p>` : ''}
-                            ${action.upscaledImageId ? `<p><strong>Upscaled Image ID:</strong> ${action.upscaledImageId}</p>` : ''}
-                            ${action.scale_factor ? `<p><strong>Scale Factor:</strong> ${action.scale_factor}x</p>` : ''}
-                            ${action.date ? `<p><strong>Date:</strong> ${new Date(action.date).toLocaleString()}</p>` : ''}
+                            <h6>Actions History:</h6>
+                            ${actions.map(action => `
+                                <div class="mb-2">
+                                    <strong>Type:</strong> ${action.type}<br>
+                                    ${action.videoId ? `<strong>Video ID:</strong> ${action.videoId}<br>` : ''}
+                                    ${action.upscaledImageId ? `<strong>Upscaled Image ID:</strong> ${action.upscaledImageId}<br>` : ''}
+                                    ${action.scale_factor ? `<strong>Scale Factor:</strong> ${action.scale_factor}x<br>` : ''}
+                                    ${action.date ? `<strong>Date:</strong> ${new Date(action.date).toLocaleString()}<br>` : ''}
+                                </div>
+                            `).join('')}
                             ` : ''}
                         </div>
                     </div>
@@ -1093,7 +1108,6 @@ function setupChatInterface(chat, character) {
             </div>` : ''}
         `;
     }
-
      
     function getVideoUrlById(videoId, designStep, thumbnail) {
         const placeholderVideoUrl = '/img/video-placeholder.gif'; // Placeholder video URL
@@ -1873,7 +1887,7 @@ window.handleUserChatHistoryClick = function(el) {
     }
     chatId = $(el).data('id');
     userChatId = $(el).data('chat');
-    postChatData(chatId, userId, userChatId, null, null);
+    postChatData(chatId, userId, userChatId, false, null);
 };
 //.chat-list.item.user-chat .user-chat-content
 window.handleChatListItemClick = function(el) {
@@ -2513,7 +2527,7 @@ window.upscaleImage = async function(imageId, imageUrl, chatId, userChatId) {
 
         // Disable the button
         upscaleButton.addClass('disabled').attr('disabled', true);
-        upscaleButton.find('i').removeClass('bi-badge-hd').addClass('bi-badge-hd-fill');
+        upscaleButton.find('i').removeClass('bi-badge-hd').addClass('bi-badge-hd-fill text-success');
         
         // Convert image URL to base64
         const base64Response = await fetch('/api/convert-url-to-base64', {

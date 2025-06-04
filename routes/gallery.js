@@ -17,7 +17,7 @@ async function routes(fastify, options) {
       const collectionUserChat = db.collection('userChat');
 
       // Declare a function that will find the object with content that starts with [Image] or [image] followed by a space and then the imageId and update it with the like action field
-      const findImageMessageandUpdate = async (userChatId, userChatMessages, imageId, action) => {
+      const findImageMessageandUpdateLikeAction = async (userChatId, userChatMessages, imageId, action) => {
         if (!userChatMessages || !userChatMessages.messages) return;
         const messageIndex = userChatMessages.messages.findIndex(msg => {
           const content = msg.content || '';
@@ -25,17 +25,27 @@ async function routes(fastify, options) {
         });
         if (messageIndex !== -1) {
           const message = userChatMessages.messages[messageIndex];
-          if (action === 'like') {
-            // If the message already has a like action, do nothing
-            if (message.action && message.action.type === 'like') return;
-            // Update the message with the like action
-            userChatMessages.messages[messageIndex].action = { like: true, date: new Date() };
-          } else if (action === 'unlike') {
-            // If the message has a like action, remove it
-            if (message.action && message.action.type === 'like') {
-              delete userChatMessages.messages[messageIndex].action;
-            }
+          
+          // Initialize actions array if it doesn't exist
+          if (!message.actions) {
+            message.actions = [];
           }
+          
+          if (action === 'like') {
+            // Check if like action already exists
+            const existingLikeAction = message.actions.find(action => action.type === 'like');
+            if (!existingLikeAction) {
+              // Add like action to the actions array
+              message.actions.push({
+                type: 'like',
+                date: new Date()
+              });
+            }
+          } else if (action === 'unlike') {
+            // Remove like action from actions array
+            message.actions = message.actions.filter(action => action.type !== 'like');
+          }
+          
           // Update the userChatMessages in the database
           await collectionUserChat.updateOne(
             { _id: new fastify.mongo.ObjectId(userChatId) },
@@ -78,10 +88,9 @@ async function routes(fastify, options) {
           { _id: userId },
           { $inc: { imageLikeCount: 1 } }
         );
-        
         if(userChatId){
           const userChatMessages = await collectionUserChat.findOne({ _id: new fastify.mongo.ObjectId(userChatId) });
-          findImageMessageandUpdate(userChatId, userChatMessages, imageId, 'like');
+          findImageMessageandUpdateLikeAction(userChatId, userChatMessages, imageId, 'like');
         }
 
         return reply.send({ message: 'Image liked successfully' });
@@ -126,7 +135,7 @@ async function routes(fastify, options) {
           
           if(userChatId){
             const userChatMessages = await collectionUserChat.findOne({ _id: new fastify.mongo.ObjectId(userChatId) });
-            findImageMessageandUpdate(userChatId, userChatMessages, imageId, 'unlike');
+            findImageMessageandUpdateLikeAction(userChatId, userChatMessages, imageId, 'unlike');
           }
 
           return reply.send({ message: 'Image unliked successfully' });

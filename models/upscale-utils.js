@@ -287,7 +287,7 @@ async function pollUpscaleTask(taskId, fastify) {
  */
 const findImageMessageAndUpdateWithUpscaleAction = async (userChatId, userChatMessages, originalImageId, upscaledImageId, scale_factor, fastify) => {
   if (!userChatMessages || !userChatMessages.messages) return;
-  
+
   const messageIndex = userChatMessages.messages.findIndex(msg => {
     const content = msg.content || '';
     return (msg.type == "image" && msg.imageId == originalImageId) || content.startsWith('[Image] ' + originalImageId.toString()) || content.startsWith('[image] ' + originalImageId.toString());
@@ -295,21 +295,33 @@ const findImageMessageAndUpdateWithUpscaleAction = async (userChatId, userChatMe
   
   if (messageIndex !== -1) {
     const message = userChatMessages.messages[messageIndex];
-    // Add upscale action to the image message
-    userChatMessages.messages[messageIndex].action = { 
-      type: 'upscaled',
-      upscaledImageId: upscaledImageId,
-      scale_factor: scale_factor,
-      date: new Date() 
-    };
     
-    // Update the userChatMessages in the database
-    const collectionUserChat = fastify.mongo.db.collection('userChat');
-    await collectionUserChat.updateOne(
-      { _id: new fastify.mongo.ObjectId(userChatId) },
-      { $set: { messages: userChatMessages.messages } }
-    );
-    console.log(`User chat messages updated with upscale action for originalImageId: ${originalImageId}, upscaledImageId: ${upscaledImageId}, scale: ${scale_factor}x`);
+    // Initialize actions array if it doesn't exist
+    if (!message.actions) {
+      message.actions = [];
+    }
+    
+    // Check if upscale action already exists
+    const existingUpscaleAction = message.actions.find(action => action.type === 'upscaled');
+    if (!existingUpscaleAction) {
+      // Add upscale action to the actions array
+      message.actions.push({
+        type: 'upscaled',
+        upscaledImageId: upscaledImageId,
+        scale_factor: scale_factor,
+        date: new Date()
+      });
+      
+      // Update the userChatMessages in the database
+      const collectionUserChat = fastify.mongo.db.collection('userChat');
+      await collectionUserChat.updateOne(
+        { _id: new fastify.mongo.ObjectId(userChatId) },
+        { $set: { messages: userChatMessages.messages } }
+      );
+      console.log(`User chat messages updated with upscale action for originalImageId: ${originalImageId}, upscaledImageId: ${upscaledImageId}, scale: ${scale_factor}x`);
+    } else {
+      console.log(`Upscale action already exists for originalImageId: ${originalImageId}`);
+    }
   }
 };
 

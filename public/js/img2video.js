@@ -53,7 +53,7 @@ window.generateVideoFromImage = async function(imageId, chatId, userChatId, prom
 
     // Replace icon to fill
     const iconElement = $(`.img2video-btn[data-id="${imageId}"]`).find('i');
-    iconElement.removeClass('bi-play-circle').addClass('bi-play-circle-fill');
+    iconElement.removeClass('bi-play-circle').addClass('bi-play-circle-fill text-success');
     try {
         videoGenerationRequests.add(requestKey);
         activePlaceholderIds.add(placeholderId);
@@ -290,7 +290,6 @@ function updateVideoProgress(placeholderId, progress) {
  * @param {Object} videoData - Video information
  */
 function displayGeneratedVideo(videoData) {
-    console.log('[displayGeneratedVideo] Video data received:', videoData);
     const { videoUrl, duration, userChatId, placeholderId, videoId } = videoData;
     console.log(sentVideoIds)
     

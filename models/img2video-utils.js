@@ -157,20 +157,32 @@ const findImageMessageAndUpdateWithVideoAction = async (userChatId, userChatMess
   
   if (messageIndex !== -1) {
     const message = userChatMessages.messages[messageIndex];
-    // Add video generation action to the image message
-    userChatMessages.messages[messageIndex].action = { 
-      type: 'video_generated',
-      videoId: videoId,
-      date: new Date() 
-    };
     
-    // Update the userChatMessages in the database
-    const collectionUserChat = fastify.mongo.db.collection('userChat');
-    await collectionUserChat.updateOne(
-      { _id: new fastify.mongo.ObjectId(userChatId) },
-      { $set: { messages: userChatMessages.messages } }
-    );
-    console.log(`User chat messages updated with video action for imageId: ${imageId}, videoId: ${videoId}`);
+    // Initialize actions array if it doesn't exist
+    if (!message.actions) {
+      message.actions = [];
+    }
+    
+    // Check if video action already exists
+    const existingVideoAction = message.actions.find(action => action.type === 'video_generated');
+    if (!existingVideoAction) {
+      // Add video generation action to the actions array
+      message.actions.push({
+        type: 'video_generated',
+        videoId: videoId,
+        date: new Date()
+      });
+      
+      // Update the userChatMessages in the database
+      const collectionUserChat = fastify.mongo.db.collection('userChat');
+      await collectionUserChat.updateOne(
+        { _id: new fastify.mongo.ObjectId(userChatId) },
+        { $set: { messages: userChatMessages.messages } }
+      );
+      console.log(`User chat messages updated with video action for imageId: ${imageId}, videoId: ${videoId}`);
+    } else {
+      console.log(`Video action already exists for imageId: ${imageId}`);
+    }
   }
 };
 

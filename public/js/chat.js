@@ -787,8 +787,8 @@ function setupChatInterface(chat, character) {
                     if (displayedImageIds.has(imageId)) {
                         continue;
                     }
-                    
-                    const imageData = await getImageUrlById(imageId, designStep, thumbnail);
+                    let action  = chatMessage.action || null
+                    const imageData = await getImageUrlById(imageId, designStep, thumbnail, action);
                     messageHtml = imageData ? imageData.messageHtml : '';
                     
                     if (messageHtml) {
@@ -848,86 +848,6 @@ function setupChatInterface(chat, character) {
         }
         return inputString;
     } 
-    function getImageTools({chatId, imageId, isLiked = false, title, prompt = false, nsfw = false, imageUrl = false}) {
-        prompt = sanitizeString(prompt);
-        return `
-            <div class="bg-white py-2 image-tools">
-                <div class="d-flex overflow-auto" style="scrollbar-width: none; -ms-overflow-style: none;">
-                    <style>
-                        .image-tools .d-flex::-webkit-scrollbar { display: none; }
-                    </style>
-                    <span class="badge bg-white text-secondary image-fav ${isLiked ? 'liked' : ''} flex-shrink-0 me-2" data-id="${imageId}"
-                    onclick="toggleImageFavorite(this)" 
-                    style="cursor: pointer; opacity:0.8;">
-                        <i class="bi bi-heart-fill"></i>
-                    </span>
-                    <span class="badge bg-white text-secondary txt2img regen-img flex-shrink-0 me-2" 
-                    onclick="${subscriptionStatus ? 'regenImage(this)' : 'loadPlanPage()'}" 
-                    data-prompt="${prompt}" 
-                    data-nsfw="${nsfw}" 
-                    data-id="${imageId}" 
-                    style="cursor: pointer; opacity:0.8;">
-                        <i class="bi bi-arrow-clockwise"></i>
-                    </span>
-                    <span class="badge bg-white text-secondary upscale-img flex-shrink-0 me-2" 
-                    onclick="${subscriptionStatus ? `upscaleImage('${imageId}', '${imageUrl}', '${chatId}', '${userChatId}')` : 'loadPlanPage()'}" 
-                    data-id="${imageId}" 
-                    data-url="${imageUrl}"
-                    style="cursor: pointer; opacity:0.8;"
-                    title="${window.translations?.upscale_image || 'Upscale Image'}">
-                        <i class="bi bi-badge-hd"></i>
-                    </span>
-                    <span class="${nsfw ? 'd-none' : ''} badge bg-white text-secondary img2video-btn flex-shrink-0 me-2" 
-                    onclick="${subscriptionStatus ? `generateVideoFromImage('${imageId}', '${chatId}', '${userChatId}')` : 'loadPlanPage()'}" 
-                    data-id="${imageId}" 
-                    data-chat-id="${chatId}"
-                    style="cursor: pointer; opacity:0.8;"
-                    title="${window.translations?.convert_to_video || 'Convert to Video'}">
-                        <i class="bi bi-play-circle"></i>
-                    </span>
-                    ${window.isAdmin ? `
-                    <span type="button" class="badge bg-white text-secondary flex-shrink-0 me-2" data-bs-toggle="modal" data-bs-target="#modal-${imageId}">
-                        <i class="bi bi-info-circle"></i>
-                    </span>` : ''}
-                    <span class="badge bg-white text-secondary share d-none flex-shrink-0 me-2"
-                            data-title="${title}"
-                            data-url="${imageUrl}"
-                            style="cursor: pointer; opacity:0.8;"
-                            onclick="openShareModal(this)">
-                        <i class="bi bi-box-arrow-up"></i>
-                    </span>
-                    <span class="badge bg-white text-secondary download-image flex-shrink-0 me-2" style="cursor: pointer; opacity:0.8;"
-                        data-src="${imageUrl}"
-                        data-title="${title}"
-                        data-id="${imageId}"
-                        onclick="downloadImage(this)">
-                        <i class="bi bi-download"></i></a>
-                    </span>
-                    ${window.isAdmin ? `
-                    <span class="badge bg-white text-secondary update-chat-image flex-shrink-0 me-2" onclick="${subscriptionStatus ? 'updateChatImage(this)' : 'loadPlanPage()'}" data-id="${chatId}" data-img="${imageUrl}" style="cursor: pointer; opacity:0.8;">
-                        <i class="bi bi-image"></i>
-                    </span>` : ''}
-                </div>
-            </div>
-            <div class="title assistant-chat-box py-1 px-3 ${title && title !== 'undefined' ? '': 'd-none'}" style="border-radius: 0px 0px 15px 15px;max-width: 200px;">
-                <p class="text-white" style="font-size: 12px;">${title}</p>
-            </div>
-            ${window.isAdmin ? `
-            <div style="height: 50vh;" class="modal fade" id="modal-${imageId}" tabindex="-1" aria-labelledby="modal-${imageId}-label" aria-hidden="true" data-bs-backdrop="false">
-                <div class="modal-dialog" style="bottom: 20vh;position: fixed;">
-                    <div class="modal-content border-0 shadow mx-auto" style="height: auto; width: 90%; max-width: 600px;">
-                        <div class="modal-header">
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body" style="max-height: 25vh; overflow-y: auto;">
-                            <p>${prompt}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>` : ''}
-        `;
-    }
-
     window.downloadImage = function(element) {
         const $element = $(element);
         const imageUrl = $element.attr('data-src') || $element.attr('src');
@@ -975,7 +895,206 @@ function setupChatInterface(chat, character) {
     function shareOnFacebook(title, url) {
         window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
     }
-                    
+
+    function getImageUrlById(imageId, designStep, thumbnail, action = null) {
+        const placeholderImageUrl = '/img/placeholder-image-2.gif'; // Placeholder image URL
+
+        // Return immediately with placeholder and update asynchronously
+        return new Promise((resolve) => {
+            const placeholderHtml = `
+            <div id="container-${designStep}">
+                <div class="d-flex flex-row justify-content-start mb-4 message-container">
+                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
+                    <div class="ms-3 position-relative">
+                        <div 
+                        onclick="showImagePreview(this)"
+                        class="ps-0 text-start assistant-image-box vertical-transition">
+                            <img id="image-${imageId}" data-id="${imageId}" src="${placeholderImageUrl}" alt="Loading image...">
+                            <div class="nsfw-badge-container badge" style="display:none;">NSFW<div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+            resolve({ messageHtml: placeholderHtml, imageUrl: placeholderImageUrl });
+
+            // Fetch image asynchronously and update the DOM
+            $.ajax({
+                url: `/image/${imageId}`,
+                method: 'GET',
+                success: function(response) {
+                    if (response.imageUrl) {
+                        // Update the placeholder image
+                        displayImageThumb(response.imageUrl)
+                        $(`#image-${imageId}`).attr('src', response.imageUrl).fadeIn();
+                        // Update the alt text
+                        const title = response?.title?.[lang]?.trim() || '';
+                        $(`#image-${imageId}`).attr('alt', title).fadeIn();
+                        //update the image prompt
+                        $(`#image-${imageId}`).attr('data-prompt', response.imagePrompt);
+                        // Add tools or badges if applicable
+                        if (!response.isBlur) {
+                            if(!response.isUpscaled){
+                                const toolsHtml = getImageTools({
+                                    chatId, 
+                                    imageId, 
+                                    isLiked: response?.likedBy?.some(id => id.toString() === userId.toString()),
+                                    title: response?.title?.[lang], 
+                                    prompt: response.imagePrompt, 
+                                    nsfw: response.nsfw, 
+                                    imageUrl: response.imageUrl,
+                                    action
+                                });
+                                $(`#image-${imageId}`).closest('.assistant-image-box').after(toolsHtml);
+                                if(response.nsfw){
+                                    $(`#image-${imageId}`).closest('.assistant-image-box').find('.nsfw-badge-container').show();
+                                }
+                            }
+                        } else {
+                            const blurBadgeHtml = `
+                            <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
+                                <span type="button" class="badge bg-danger text-white" style="padding: 5px; border-radius: 5px;">
+                                    <i class="bi bi-lock"></i> 成人向け
+                                </span>
+                            </div>`;
+                            $(`#image-${imageId}`).closest('.assistant-image-box').append(blurBadgeHtml);
+                        }
+                        // Add blur effect if not subscribed
+                        if(!subscriptionStatus){
+                            $(`#image-${imageId}`).closest('.assistant-image-box').addClass('isBlurred');
+                        }
+                    } else {
+                        console.error('No image URL returned');
+                        return false;
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching image URL:', error);
+                }
+            });
+        });
+    }
+
+    function getImageTools({chatId, imageId, isLiked = false, title, prompt = false, nsfw = false, imageUrl = false, action = null}) {
+        prompt = sanitizeString(prompt);
+        console.log(`[getImageTools] Action:`, action);
+        // Check if actions exist and determine icon states
+        const hasVideoAction = action && action.type === 'video_generated';
+        const hasUpscaleAction = action && action.type === 'upscaled';
+        const hasLikeAction = action && action.type === 'like';
+        
+        // Determine icon classes based on actions
+        const videoIconClass = hasVideoAction ? 'bi-play-circle-fill text-success' : 'bi-play-circle';
+        const upscaleIconClass = hasUpscaleAction ? 'bi-badge-hd-fill text-success' : 'bi-badge-hd';
+        const likeIconClass = (isLiked || hasLikeAction) ? 'text-danger' : '';
+        
+        // Determine if buttons should be disabled
+        const videoDisabled = hasVideoAction ? 'style="opacity:0.5; pointer-events:none;"' : '';
+        const upscaleDisabled = hasUpscaleAction ? 'style="opacity:0.5; pointer-events:none;"' : '';
+        
+        // Get additional info for tooltips
+        const videoTooltip = hasVideoAction ? 
+            `${window.translations?.video_already_generated || 'Video already generated'} - ID: ${action.videoId}` : 
+            `${window.translations?.convert_to_video || 'Convert to Video'}`;
+        
+        const upscaleTooltip = hasUpscaleAction ? 
+            `${window.translations?.already_upscaled || 'Already upscaled'} (${action.scale_factor}x) - ID: ${action.upscaledImageId}` : 
+            `${window.translations?.upscale_image || 'Upscale Image'}`;
+
+        return `
+            <div class="bg-white py-2 image-tools">
+                <div class="d-flex overflow-auto" style="scrollbar-width: none; -ms-overflow-style: none;">
+                    <style>
+                        .image-tools .d-flex::-webkit-scrollbar { display: none; }
+                    </style>
+                    <span class="badge bg-white text-secondary image-fav ${isLiked || hasLikeAction ? 'liked' : ''} ${likeIconClass} flex-shrink-0 me-2" data-id="${imageId}"
+                    onclick="toggleImageFavorite(this)" 
+                    style="cursor: pointer; opacity:0.8;">
+                        <i class="bi bi-heart-fill"></i>
+                    </span>
+                    <span class="badge bg-white text-secondary txt2img regen-img flex-shrink-0 me-2" 
+                    onclick="${subscriptionStatus ? 'regenImage(this)' : 'loadPlanPage()'}" 
+                    data-prompt="${prompt}" 
+                    data-nsfw="${nsfw}" 
+                    data-id="${imageId}" 
+                    style="cursor: pointer; opacity:0.8;">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </span>
+                    <span class="badge bg-white text-secondary upscale-img flex-shrink-0 me-2" 
+                    onclick="${!hasUpscaleAction && subscriptionStatus ? `upscaleImage('${imageId}', '${imageUrl}', '${chatId}', '${userChatId}')` : hasUpscaleAction ? '' : 'loadPlanPage()'}" 
+                    data-id="${imageId}" 
+                    data-url="${imageUrl}"
+                    ${upscaleDisabled}
+                    title="${upscaleTooltip}">
+                        <i class="bi ${upscaleIconClass}"></i>
+                    </span>
+                    <span class="${nsfw ? 'd-none' : ''} badge bg-white text-secondary img2video-btn flex-shrink-0 me-2" 
+                    onclick="${!hasVideoAction && subscriptionStatus ? `generateVideoFromImage('${imageId}', '${chatId}', '${userChatId}')` : hasVideoAction ? '' : 'loadPlanPage()'}" 
+                    data-id="${imageId}" 
+                    data-chat-id="${chatId}"
+                    ${videoDisabled}
+                    title="${videoTooltip}">
+                        <i class="bi ${videoIconClass}"></i>
+                    </span>
+                    ${window.isAdmin ? `
+                    <span type="button" class="badge bg-white text-secondary flex-shrink-0 me-2" data-bs-toggle="modal" data-bs-target="#modal-${imageId}">
+                        <i class="bi bi-info-circle"></i>
+                    </span>` : ''}
+                    <span class="badge bg-white text-secondary share d-none flex-shrink-0 me-2"
+                            data-title="${title}"
+                            data-url="${imageUrl}"
+                            style="cursor: pointer; opacity:0.8;"
+                            onclick="openShareModal(this)">
+                        <i class="bi bi-box-arrow-up"></i>
+                    </span>
+                    <span class="badge bg-white text-secondary download-image flex-shrink-0 me-2" style="cursor: pointer; opacity:0.8;"
+                        data-src="${imageUrl}"
+                        data-title="${title}"
+                        data-id="${imageId}"
+                        onclick="downloadImage(this)">
+                        <i class="bi bi-download"></i></a>
+                    </span>
+                    ${window.isAdmin ? `
+                    <span class="badge bg-white text-secondary update-chat-image flex-shrink-0 me-2" onclick="${subscriptionStatus ? 'updateChatImage(this)' : 'loadPlanPage()'}" data-id="${chatId}" data-img="${imageUrl}" style="cursor: pointer; opacity:0.8;">
+                        <i class="bi bi-image"></i>
+                    </span>` : ''}
+                </div>
+                ${action ? `
+                <div class="action-info text-muted px-3 py-1" style="font-size: 11px;">
+                    ${action.type === 'video_generated' ? `<i class="bi bi-play-circle-fill text-success me-1"></i>Video generated` : ''}
+                    ${action.type === 'upscaled' ? `<i class="bi bi-badge-hd-fill text-success me-1"></i>Upscaled ${action.scale_factor}x` : ''}
+                    ${action.type === 'like' ? `<i class="bi bi-heart-fill text-danger me-1"></i>Liked` : ''}
+                    ${action.date ? ` on ${new Date(action.date).toLocaleDateString()}` : ''}
+                </div>` : ''}
+            </div>
+            <div class="title assistant-chat-box py-1 px-3 ${title && title !== 'undefined' ? '': 'd-none'}" style="border-radius: 0px 0px 15px 15px;max-width: 200px;">
+                <p class="text-white" style="font-size: 12px;">${title}</p>
+            </div>
+            ${window.isAdmin ? `
+            <div style="height: 50vh;" class="modal fade" id="modal-${imageId}" tabindex="-1" aria-labelledby="modal-${imageId}-label" aria-hidden="true" data-bs-backdrop="false">
+                <div class="modal-dialog" style="bottom: 20vh;position: fixed;">
+                    <div class="modal-content border-0 shadow mx-auto" style="height: auto; width: 90%; max-width: 600px;">
+                        <div class="modal-header">
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body" style="max-height: 25vh; overflow-y: auto;">
+                            <p>${prompt}</p>
+                            ${action ? `
+                            <hr>
+                            <h6>Action Information:</h6>
+                            <p><strong>Type:</strong> ${action.type}</p>
+                            ${action.videoId ? `<p><strong>Video ID:</strong> ${action.videoId}</p>` : ''}
+                            ${action.upscaledImageId ? `<p><strong>Upscaled Image ID:</strong> ${action.upscaledImageId}</p>` : ''}
+                            ${action.scale_factor ? `<p><strong>Scale Factor:</strong> ${action.scale_factor}x</p>` : ''}
+                            ${action.date ? `<p><strong>Date:</strong> ${new Date(action.date).toLocaleString()}</p>` : ''}
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>` : ''}
+        `;
+    }
+
+     
     function getVideoUrlById(videoId, designStep, thumbnail) {
         const placeholderVideoUrl = '/img/video-placeholder.gif'; // Placeholder video URL
 
@@ -1034,75 +1153,7 @@ function setupChatInterface(chat, character) {
     }
 
 
-    function getImageUrlById(imageId, designStep, thumbnail) {
-        const placeholderImageUrl = '/img/placeholder-image-2.gif'; // Placeholder image URL
 
-        // Return immediately with placeholder and update asynchronously
-        return new Promise((resolve) => {
-            const placeholderHtml = `
-            <div id="container-${designStep}">
-                <div class="d-flex flex-row justify-content-start mb-4 message-container">
-                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
-                    <div class="ms-3 position-relative">
-                        <div 
-                        onclick="showImagePreview(this)"
-                        class="ps-0 text-start assistant-image-box vertical-transition">
-                            <img id="image-${imageId}" data-id="${imageId}" src="${placeholderImageUrl}" alt="Loading image...">
-                            <div class="nsfw-badge-container badge" style="display:none;">NSFW<div>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-            resolve({ messageHtml: placeholderHtml, imageUrl: placeholderImageUrl });
-    
-            // Fetch image asynchronously and update the DOM
-            $.ajax({
-                url: `/image/${imageId}`,
-                method: 'GET',
-                success: function(response) {
-                    if (response.imageUrl) {
-                        // Update the placeholder image
-                        displayImageThumb(response.imageUrl)
-                        $(`#image-${imageId}`).attr('src', response.imageUrl).fadeIn();
-                        // Update the alt text
-                        const title = response?.title?.[lang]?.trim() || '';
-                        $(`#image-${imageId}`).attr('alt', title).fadeIn();
-                        //update the image prompt
-                        $(`#image-${imageId}`).attr('data-prompt', response.imagePrompt);
-                        // Add tools or badges if applicable
-                        if (!response.isBlur) {
-                            if(!response.isUpscaled){
-                                const toolsHtml = getImageTools({chatId, imageId, isLiked:response?.likedBy?.some(id => id.toString() === userId.toString()),title:response?.title?.[lang], prompt:response.imagePrompt, nsfw:response.nsfw, imageUrl:response.imageUrl});
-                                $(`#image-${imageId}`).closest('.assistant-image-box').after(toolsHtml);
-                                if(response.nsfw){
-                                    $(`#image-${imageId}`).closest('.assistant-image-box').find('.nsfw-badge-container').show();
-                                }
-                            }
-                        } else {
-                            const blurBadgeHtml = `
-                            <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
-                                <span type="button" class="badge bg-danger text-white" style="padding: 5px; border-radius: 5px;">
-                                    <i class="bi bi-lock"></i> 成人向け
-                                </span>
-                            </div>`;
-                            $(`#image-${imageId}`).closest('.assistant-image-box').append(blurBadgeHtml);
-                        }
-                        // Add blur effect if not subscribed
-                        if(!subscriptionStatus){
-                            $(`#image-${imageId}`).closest('.assistant-image-box').addClass('isBlurred');
-                        }
-                    } else {
-                        console.error('No image URL returned');
-                        return false;
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error fetching image URL:', error);
-                }
-            });
-        });
-    }
-    
     
     $(document).on('click','.comment-badge', function (e) {
         e.stopPropagation()
@@ -2462,6 +2513,7 @@ window.upscaleImage = async function(imageId, imageUrl, chatId, userChatId) {
 
         // Disable the button
         upscaleButton.addClass('disabled').attr('disabled', true);
+        upscaleButton.find('i').removeClass('bi-badge-hd').addClass('bi-badge-hd-fill');
         
         // Convert image URL to base64
         const base64Response = await fetch('/api/convert-url-to-base64', {

@@ -138,7 +138,7 @@ async function routes(fastify, options) {
       }
 
       const image = imageDocument.images[0];
-      const { imageUrl, prompt: imagePrompt, isUpscaled, title, nsfw, likedBy = [] } = image;
+      const { imageUrl, prompt: imagePrompt, isUpscaled, title, nsfw, likedBy = [], action } = image;
       const { chatId } = imageDocument;
 
       let chatData = {};
@@ -149,7 +149,7 @@ async function routes(fastify, options) {
         ) || {};
       }
 
-      return reply.status(200).send({ imageUrl, imagePrompt, isUpscaled, title, likedBy, nsfw, ...chatData });
+      return reply.status(200).send({ imageUrl, imagePrompt, isUpscaled, title, likedBy, nsfw, action, ...chatData });
     } catch (error) {
       console.error('Error fetching image details:', error);
       return reply.status(500).send({ error: 'An error occurred while fetching the image details' });

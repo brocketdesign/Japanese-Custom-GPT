@@ -140,6 +140,41 @@ async function saveVideoTask({
 }
 
 /**
+ * Find and update image message with video generation action
+ * @param {string} userChatId - User chat ID
+ * @param {Object} userChatMessages - User chat messages object
+ * @param {string} imageId - Image ID that was used to generate video
+ * @param {string} videoId - Generated video ID
+ * @param {Object} fastify - Fastify instance
+ */
+const findImageMessageAndUpdateWithVideoAction = async (userChatId, userChatMessages, imageId, videoId, fastify) => {
+  if (!userChatMessages || !userChatMessages.messages) return;
+  
+  const messageIndex = userChatMessages.messages.findIndex(msg => {
+    const content = msg.content || '';
+    return (msg.type == "image" && msg.imageId == imageId) || content.startsWith('[Image] ' + imageId.toString()) || content.startsWith('[image] ' + imageId.toString());
+  });
+  
+  if (messageIndex !== -1) {
+    const message = userChatMessages.messages[messageIndex];
+    // Add video generation action to the image message
+    userChatMessages.messages[messageIndex].action = { 
+      type: 'video_generated',
+      videoId: videoId,
+      date: new Date() 
+    };
+    
+    // Update the userChatMessages in the database
+    const collectionUserChat = fastify.mongo.db.collection('userChat');
+    await collectionUserChat.updateOne(
+      { _id: new fastify.mongo.ObjectId(userChatId) },
+      { $set: { messages: userChatMessages.messages } }
+    );
+    console.log(`User chat messages updated with video action for imageId: ${imageId}, videoId: ${videoId}`);
+  }
+};
+
+/**
  * Save completed video to database
  * @param {Object} params - Video data parameters
  * @param {Object} fastify - Fastify instance
@@ -231,6 +266,13 @@ async function saveVideoToDB({
     );
     console.log(`[saveVideoToDB] Video message added to userChat for videoId ${result.insertedId}`);
   }
+
+  // Update the original image message with video generation action
+  if (userChatId) {
+    const userChatMessages = await userDataCollection.findOne({ _id: new ObjectId(userChatId) });
+    await findImageMessageAndUpdateWithVideoAction(userChatId, userChatMessages, imageId, result.insertedId, fastify);
+  }
+
 
   // Update counts only if this is a new video
   const chatsCollection = db.collection('chats');
@@ -493,5 +535,6 @@ module.exports = {
   saveVideoToDB,
   pollVideoTaskStatus,
   handleVideoTaskCompletion,
-  resumeIncompleteVideoTasks
+  resumeIncompleteVideoTasks,
+  findImageMessageAndUpdateWithVideoAction
 };

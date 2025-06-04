@@ -276,6 +276,43 @@ async function pollUpscaleTask(taskId, fastify) {
     }, 3000);
 }
 
+/**
+ * Find and update image message with upscale action
+ * @param {string} userChatId - User chat ID
+ * @param {Object} userChatMessages - User chat messages object
+ * @param {string} originalImageId - Original image ID that was upscaled
+ * @param {string} upscaledImageId - Generated upscaled image ID
+ * @param {number} scale_factor - Scale factor used for upscaling
+ * @param {Object} fastify - Fastify instance
+ */
+const findImageMessageAndUpdateWithUpscaleAction = async (userChatId, userChatMessages, originalImageId, upscaledImageId, scale_factor, fastify) => {
+  if (!userChatMessages || !userChatMessages.messages) return;
+  
+  const messageIndex = userChatMessages.messages.findIndex(msg => {
+    const content = msg.content || '';
+    return (msg.type == "image" && msg.imageId == originalImageId) || content.startsWith('[Image] ' + originalImageId.toString()) || content.startsWith('[image] ' + originalImageId.toString());
+  });
+  
+  if (messageIndex !== -1) {
+    const message = userChatMessages.messages[messageIndex];
+    // Add upscale action to the image message
+    userChatMessages.messages[messageIndex].action = { 
+      type: 'upscaled',
+      upscaledImageId: upscaledImageId,
+      scale_factor: scale_factor,
+      date: new Date() 
+    };
+    
+    // Update the userChatMessages in the database
+    const collectionUserChat = fastify.mongo.db.collection('userChat');
+    await collectionUserChat.updateOne(
+      { _id: new fastify.mongo.ObjectId(userChatId) },
+      { $set: { messages: userChatMessages.messages } }
+    );
+    console.log(`User chat messages updated with upscale action for originalImageId: ${originalImageId}, upscaledImageId: ${upscaledImageId}, scale: ${scale_factor}x`);
+  }
+};
+
 async function saveUpscaledImage({
     taskId,
     userId,
@@ -350,6 +387,13 @@ async function saveUpscaledImage({
                     $set: { updatedAt: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) } 
                 }
             );
+        }
+
+        // Update the original image message with upscale action
+        if (userChatId && ObjectId.isValid(userChatId)) {
+            const userDataCollection = db.collection('userChat');
+            const userChatMessages = await userDataCollection.findOne({ _id: new ObjectId(userChatId) });
+            await findImageMessageAndUpdateWithUpscaleAction(userChatId, userChatMessages, originalImageId, imageId, scale_factor, fastify);
         }
 
         return { imageId, imageUrl };

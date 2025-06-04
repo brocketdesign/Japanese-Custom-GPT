@@ -21,7 +21,7 @@ async function routes(fastify, options) {
         if (!userChatMessages || !userChatMessages.messages) return;
         const messageIndex = userChatMessages.messages.findIndex(msg => {
           const content = msg.content || '';
-          return content.startsWith('[Image] ' + imageId.toString()) || content.startsWith('[image] ' + imageId.toString());
+          return (msg.type == "image" && msg.imageId == imageId) || content.startsWith('[Image] ' + imageId.toString()) || content.startsWith('[image] ' + imageId.toString());
         });
         if (messageIndex !== -1) {
           const message = userChatMessages.messages[messageIndex];

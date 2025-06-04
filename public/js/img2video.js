@@ -51,6 +51,9 @@ window.generateVideoFromImage = async function(imageId, chatId, userChatId, prom
         return;
     }
 
+    // Replace icon to fill
+    const iconElement = $(`.img2video-btn[data-id="${imageId}"]`).find('i');
+    iconElement.removeClass('bi-play-circle').addClass('bi-play-circle-fill');
     try {
         videoGenerationRequests.add(requestKey);
         activePlaceholderIds.add(placeholderId);
@@ -200,15 +203,11 @@ function showVideoPromptModal() {
  * @param {string} placeholderId - Placeholder ID
  */
 function removeVideoLoader(placeholderId) {
-    console.log('[removeVideoLoader] Attempting to remove loader for:', placeholderId);
     const loader = $(document).find(`#video-loader-${placeholderId}`);
-    console.log('[removeVideoLoader] Found loader elements:', loader.length);
     
     if (loader.length > 0) {
-        console.log('[removeVideoLoader] Removing loader element');
         loader.fadeOut(300, function() {
             $(this).remove();
-            console.log('[removeVideoLoader] Loader removed successfully');
             // Clean up tracking
             activePlaceholderIds.delete(placeholderId);
         });

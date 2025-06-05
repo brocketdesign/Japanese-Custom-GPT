@@ -583,7 +583,12 @@ async function saveChatImageToDB(db, chatId, imageUrl) {
                 return `http://${ip}:3000`;
             }
         } else {
-            return 'https://app.chatlamix.com';
+            if (req && req.headers && req.headers.host) {
+                const host = req.headers.host;
+                return `http://${host}`;
+            } else {
+                return 'https://app.chatlamix.com';
+            }
         }
     };
 module.exports = {

@@ -1,5 +1,81 @@
 {
   "lang":"en",
+  "settings": {
+    "saveSettings": "Save Settings",
+    "title": "Settings",
+    "imageSettings": "Image Settings",
+    "minImagesToSend": "Minimum Images to Send",
+    "videoSettings": "Video Settings",
+    "defaultVideoPrompt": "Default Video Prompt",
+    "videoPromptPlaceholder": "Enter video generation prompt...",
+    "defaultVideoPromptText": "Generate a short, engaging video with smooth transitions and vibrant colors.",
+    "characterTone": "Character & Tone",
+    "characterToneLabel": "Character Tone",
+    "relationshipType": "Relationship Type",
+    "voiceSettings": "Voice Settings",
+    "selectVoice": "Select Voice",
+    "tones": {
+      "friendly": "Friendly",
+      "casual": "Casual",
+      "professional": "Professional",
+      "playful": "Playful",
+      "romantic": "Romantic",
+      "mysterious": "Mysterious"
+    },
+    "relationships": {
+      "friend": "Friend",
+      "companion": "Companion",
+      "mentor": "Mentor",
+      "partner": "Partner",
+      "assistant": "Assistant"
+    },
+    "voices": {
+      "nova": {
+        "name": "Nova",
+        "description": "A bright and cheerful female voice"
+      },
+      "alloy": {
+        "name": "Alloy", 
+        "description": "A balanced and versatile voice"
+      },
+      "shimmer": {
+        "name": "Shimmer",
+        "description": "A warm and expressive female voice"
+      },
+      "echo": {
+        "name": "Echo",
+        "description": "A clear and articulate male voice"
+      },
+      "onyx": {
+        "name": "Onyx",
+        "description": "A deep and rich male voice"
+      },
+      "fable": {
+        "name": "Fable",
+        "description": "A storytelling voice with character"
+      },
+      "coral": {
+        "name": "Coral",
+        "description": "A smooth and natural voice"
+      },
+      "verse": {
+        "name": "Verse",
+        "description": "A rhythmic and expressive voice"
+      },
+      "ballad": {
+        "name": "Ballad",
+        "description": "A melodic and flowing voice"
+      },
+      "ash": {
+        "name": "Ash",
+        "description": "A calm and steady voice"
+      },
+      "sage": {
+        "name": "Sage",
+        "description": "A wise and thoughtful voice"
+      }
+    }
+  },
   "gifts": {
     "selectGift": "Select a gift",
     "selectGift_description": "Choose a gift to send to the character."

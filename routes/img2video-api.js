@@ -5,8 +5,10 @@ const {
   checkVideoTaskStatus,
   saveVideoTask,
   pollVideoTaskStatus,
-  handleVideoTaskCompletion
 } = require('../models/img2video-utils');
+const {
+    getUserVideoPrompt
+} = require('../models/chat-tool-settings-utils');
 const { generateCompletion } = require('../models/openai')
 /**
  * Image to Video API Routes
@@ -102,6 +104,14 @@ async function img2videoRoutes(fastify) {
                         content: `Here is a description of the image: ${image.prompt || 'No description provided'}`
                     }
                 ]
+                // Add userdefaul prompt if available
+                const userVideoPrompt = await getUserVideoPrompt(fastify.mongo.db, userId, chatId);
+                if (userVideoPrompt && userVideoPrompt.trim() !== '') {
+                    systemPrompt.push({
+                        role: 'user',
+                        content: `Use the following user-defined video prompt as a base: ${userVideoPrompt}`
+                    });
+                }
                 if( prompt && prompt.trim() !== '' ) {
                     systemPrompt.push({
                         role: 'user',

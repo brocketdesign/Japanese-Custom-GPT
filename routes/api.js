@@ -21,6 +21,11 @@ const {
     checkUserAdmin,
     getApiUrl
 } = require('../models/tool');
+const {
+    getUserChatToolSettings,
+    applyUserSettingsToPrompt,
+    getVoiceSettings
+} = require('../models/chat-tool-settings-utils');
 const axios = require('axios');
 const OpenAI = require("openai");
 const path = require('path');
@@ -728,9 +733,6 @@ async function routes(fastify, options) {
           if (lastUserMessage.nsfw) currentUserMessage.nsfw = lastUserMessage.nsfw
           if (lastUserMessage.promptId) currentUserMessage.promptId = lastUserMessage.promptId
       
-          // Run conversation context analysis
-          const conversationAnalysis = false; //await analyzeConversationContext(userData.messages, userInfo, language);
-
           let genImage = {}
           let customPromptData = null
       
@@ -770,12 +772,12 @@ async function routes(fastify, options) {
             getCurrentTimeInJapanese(),
             language
           )
-          
-          // Add relationship and tone information if available
-          if(conversationAnalysis?.nsfw){
-            enhancedSystemContent = 'You can engage in explicit, adult, and sexual content.\n' + enhancedSystemContent
-          }
 
+        // Add user settings to the system prompt
+        const userSettings = await getUserChatToolSettings(fastify.mongo.db, userId, chatId);
+        enhancedSystemContent = await applyUserSettingsToPrompt(fastify.mongo.db, userId, chatId, systemContent);
+        
+        const custom_relation = await userSettings.relationshipType || lastAssistantRelation || 'Casual';
           const systemMsg = [{ role: 'system', content: enhancedSystemContent }]
 
           let messagesForCompletion = []
@@ -835,7 +837,7 @@ async function routes(fastify, options) {
           generateCompletion(messagesForCompletion, 600, customModel, language).then(async (completion) => {
             if(completion){
                 fastify.sendNotificationToUser(userId, 'displayCompletionMessage', { message: completion, uniqueId })
-                const newAssitantMessage = { role: 'assistant', content: completion, timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) , custom_relation: conversationAnalysis.custom_relation }
+                const newAssitantMessage = { role: 'assistant', content: completion, timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) , custom_relation: custom_relation ? custom_relation : 'Casual' }
                 if(currentUserMessage.name){
                     newAssitantMessage.name = currentUserMessage.name
                 }
@@ -1003,8 +1005,8 @@ async function routes(fastify, options) {
     
     fastify.post('/api/txt2speech', async (request, reply) => {
         try {
-            const { message, language, chatId } = request.query;
-        
+            const { message, language, chatId, userId } = request.query;
+            
             if (!message) {
                 return reply.status(400).send({
                     errno: 1,
@@ -1025,7 +1027,6 @@ async function routes(fastify, options) {
                     }
                 ]
                 system_tone = await generateCompletion(system_tone_message, 100, 'openai');
-                console.log(`System tone for TTS: ${system_tone}`);
             } catch (error) {
                 console.log(error);
             }
@@ -1033,11 +1034,16 @@ async function routes(fastify, options) {
             const openai = new OpenAI({
                 apiKey: process.env.OPENAI_API_KEY
             });
-        
+
+            // Get user prefered voice
+            const voiceConfig = await getVoiceSettings(fastify.mongo.db, userId, chatId);
+            // Clear message from any special tags and emojis and remove text between square brackets or stars
+            const sanitizedMessage = message.replace(/(\[.*?\]|\*.*?\*)/g, '').replace(/[\uD83C-\uDBFF\uDC00-\uDFFF]/g, '').trim();
+            
             const mp3 = await openai.audio.speech.create({
                 model: "gpt-4o-mini-tts",
-                voice: "sage",
-                input: message,
+                voice: voiceConfig.voice || "sage",
+                input: sanitizedMessage,
                 instructions:system_tone
             });
         

@@ -4,6 +4,7 @@ const { ObjectId } = require('mongodb');
 const axios = require('axios');
 const { createHash } = require('crypto');
 const { addNotification, saveChatImageToDB, getLanguageName } = require('../models/tool')
+const { getUserMinImages } = require('../models/chat-tool-settings-utils')
 const slugify = require('slugify');
 const sharp = require('sharp');
 const default_prompt = {
@@ -137,8 +138,13 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
       };
     }
 
+    // Add number of images to request
+    const userMinImage = await getUserMinImages(db, userId, chatId);
+    image_num = Math.max(image_num || 1, userMinImage || 1); // Ensure at least 1 image is requested and respect user setting
+
     // Prepare params
     let requestData = { ...params, ...image_request, image_num };
+
     if(image_base64){
       // Get target dimensions from the selected style
       const targetWidth = image_request.width;

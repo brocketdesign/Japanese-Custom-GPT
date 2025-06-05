@@ -41,7 +41,7 @@
                             <i class="bi bi-plus-square"></i>
                             <span class="tool-label">{{translations.toolbar.reset}}</span>
                         </button>
-                        <button type="button" class="d-none toolbar-btn settings-toggle" id="settings-toggle">
+                        <button type="button" class="toolbar-btn settings-toggle" id="settings-toggle">
                             <i class="bi bi-gear"></i>
                             <span class="tool-label">{{translations.toolbar.settings}}</span>
                         </button>
@@ -183,6 +183,140 @@
                     </div>
                 {{/each}}
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Settings Modal -->
+<div id="settings-modal-overlay" class="settings-modal-overlay">
+    <div class="settings-modal">
+        <div class="settings-modal-header">
+            <h3 class="settings-modal-title">
+                <i class="bi bi-gear"></i>
+                {{translations.settings.title}}
+            </h3>
+            <button type="button" class="settings-close-btn" id="settings-close-btn">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+        <div class="settings-modal-body">
+            <!-- Image Settings -->
+            <div class="settings-section">
+                <div class="settings-section-title">
+                    <i class="bi bi-image"></i>
+                    {{translations.settings.imageSettings}}
+                </div>
+                <div class="settings-field">
+                    <label class="settings-label" for="min-images-range">
+                        {{translations.settings.minImagesToSend}}
+                    </label>
+                    <div class="settings-range-container">
+                        <input type="range" id="min-images-range" class="settings-range" 
+                               min="1" max="5" value="1" step="1">
+                        <div class="settings-range-value" id="min-images-value">3</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video Settings -->
+            <div class="settings-section">
+                <div class="settings-section-title">
+                    <i class="bi bi-camera-video"></i>
+                    {{translations.settings.videoSettings}}
+                </div>
+                <div class="settings-field">
+                    <label class="settings-label" for="video-prompt">
+                        {{translations.settings.defaultVideoPrompt}}
+                    </label>
+                    <textarea id="video-prompt" class="settings-textarea" 
+                              placeholder="{{translations.settings.videoPromptPlaceholder}}">{{translations.settings.defaultVideoPromptText}}</textarea>
+                </div>
+            </div>
+
+            <!-- Tone & Relationship Settings -->
+            <div class="settings-section">
+                <div class="settings-section-title">
+                    <i class="bi bi-heart"></i>
+                    {{translations.settings.characterTone}}
+                </div>
+                <div class="settings-field">
+                    <label class="settings-label">{{translations.settings.characterToneLabel}}</label>
+                    <div class="settings-tone-grid">
+                        <div class="settings-tone-option" data-tone="friendly">
+                            😊 {{translations.settings.tones.friendly}}
+                        </div>
+                        <div class="settings-tone-option selected" data-tone="casual">
+                            😎 {{translations.settings.tones.casual}}
+                        </div>
+                        <div class="settings-tone-option" data-tone="professional">
+                            💼 {{translations.settings.tones.professional}}
+                        </div>
+                        <div class="settings-tone-option" data-tone="playful">
+                            😜 {{translations.settings.tones.playful}}
+                        </div>
+                        <div class="settings-tone-option" data-tone="romantic">
+                            ❤️ {{translations.settings.tones.romantic}}
+                        </div>
+                        <div class="settings-tone-option" data-tone="mysterious">
+                            🌙 {{translations.settings.tones.mysterious}}
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-field">
+                    <label class="settings-label" for="relationship-select">
+                        {{translations.settings.relationshipType}}
+                    </label>
+                    <select id="relationship-select" class="settings-select">
+                        <option value="friend">{{translations.settings.relationships.friend}}</option>
+                        <option value="companion" selected>{{translations.settings.relationships.companion}}</option>
+                        <option value="mentor">{{translations.settings.relationships.mentor}}</option>
+                        <option value="partner">{{translations.settings.relationships.partner}}</option>
+                        <option value="assistant">{{translations.settings.relationships.assistant}}</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Voice Settings -->
+            <div class="settings-section">
+                <div class="settings-section-title">
+                    <i class="bi bi-mic"></i>
+                    {{translations.settings.voiceSettings}}
+                </div>
+                <div class="settings-field">
+                    <label class="settings-label">{{translations.settings.selectVoice}}</label>
+                    <div class="settings-voice-grid">
+                        <div class="settings-voice-option selected" data-voice="nova">
+                            <div class="settings-voice-name">{{translations.settings.voices.nova.name}}</div>
+                            <div class="settings-voice-description">{{translations.settings.voices.nova.description}}</div>
+                        </div>
+                        <div class="settings-voice-option" data-voice="alloy">
+                            <div class="settings-voice-name">{{translations.settings.voices.alloy.name}}</div>
+                            <div class="settings-voice-description">{{translations.settings.voices.alloy.description}}</div>
+                        </div>
+                        <div class="settings-voice-option" data-voice="shimmer">
+                            <div class="settings-voice-name">{{translations.settings.voices.shimmer.name}}</div>
+                            <div class="settings-voice-description">{{translations.settings.voices.shimmer.description}}</div>
+                        </div>
+                        <div class="settings-voice-option" data-voice="echo">
+                            <div class="settings-voice-name">{{translations.settings.voices.echo.name}}</div>
+                            <div class="settings-voice-description">{{translations.settings.voices.echo.description}}</div>
+                        </div>
+                        <div class="settings-voice-option" data-voice="onyx">
+                            <div class="settings-voice-name">{{translations.settings.voices.onyx.name}}</div>
+                            <div class="settings-voice-description">{{translations.settings.voices.onyx.description}}</div>
+                        </div>
+                        <div class="settings-voice-option" data-voice="fable">
+                            <div class="settings-voice-name">{{translations.settings.voices.fable.name}}</div>
+                            <div class="settings-voice-description">{{translations.settings.voices.fable.description}}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="settings-save-btn" id="settings-save-btn">
+                <i class="bi bi-check-circle"></i>
+                {{translations.settings.saveSettings}}
+            </button>
         </div>
     </div>
 </div>

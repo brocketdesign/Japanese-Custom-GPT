@@ -1,5 +1,53 @@
 {
   "lang": "ja",
+  "settings": {
+    "title": "設定",
+    "imageSettings": "画像設定",
+    "minImagesToSend": "送信する最小画像数",
+    "videoSettings": "動画設定",
+    "defaultVideoPrompt": "デフォルトの動画プロンプト",
+    "videoPromptPlaceholder": "動画プロンプトを入力してください...",
+    "defaultVideoPromptText": "動画の動きやスタイルを説明してください（任意）",
+    "characterTone": "キャラクターのトーン",
+    "characterToneLabel": "キャラクターのトーンを選択",
+    "tones": {
+      "friendly": "フレンドリー",
+      "casual": "カジュアル",
+      "professional": "プロフェッショナル",
+      "playful": "遊び心のある",
+      "romantic": "ロマンチック",
+      "mysterious": "ミステリアス"
+    },
+    "relationshipType": "関係の種類",
+    "relationships": {
+      "friend": "友達",
+      "companion": "仲間",
+      "mentor": "メンター",
+      "partner": "パートナー",
+      "assistant": "アシスタント"
+    },
+    "voiceSettings": "音声設定",
+    "selectVoice": "音声を選択",
+    "voices": {
+      "sakura": {
+        "name": "さくら",
+        "description": "柔らかく落ち着いた声。"
+      },
+      "yuki": {
+        "name": "ゆき",
+        "description": "明るく元気な声。"
+      },
+      "hana": {
+        "name": "はな",
+        "description": "暖かく親しみやすい声。"
+      },
+      "rei": {
+        "name": "れい",
+        "description": "深くて神秘的な声。"
+      }
+    },
+    "saveSettings": "設定を保存"
+  },
   "gifts": {
     "selectGift": "ギフトを選択",
     "selectGift_description": "キャラクターに送るギフトを選んでください。"

@@ -1,5 +1,53 @@
 {
   "lang":"fr",
+  "settings": {
+    "title": "Paramètres",
+    "imageSettings": "Paramètres d'image",
+    "minImagesToSend": "Nombre minimum d'images à envoyer",
+    "videoSettings": "Paramètres vidéo",
+    "defaultVideoPrompt": "Invite vidéo par défaut",
+    "videoPromptPlaceholder": "Entrez une invite vidéo...",
+    "defaultVideoPromptText": "Décrivez le mouvement ou le style de la vidéo (optionnel)",
+    "characterTone": "Ton du personnage",
+    "characterToneLabel": "Sélectionnez le ton du personnage",
+    "tones": {
+      "friendly": "Amical",
+      "casual": "Décontracté",
+      "professional": "Professionnel",
+      "playful": "Enjoué",
+      "romantic": "Romantique",
+      "mysterious": "Mystérieux"
+    },
+    "relationshipType": "Type de relation",
+    "relationships": {
+      "friend": "Ami",
+      "companion": "Compagnon",
+      "mentor": "Mentor",
+      "partner": "Partenaire",
+      "assistant": "Assistant"
+    },
+    "voiceSettings": "Paramètres de voix",
+    "selectVoice": "Sélectionnez une voix",
+    "voices": {
+      "sakura": {
+        "name": "Sakura",
+        "description": "Une voix douce et apaisante."
+      },
+      "yuki": {
+        "name": "Yuki",
+        "description": "Une voix joyeuse et énergique."
+      },
+      "hana": {
+        "name": "Hana",
+        "description": "Une voix chaleureuse et amicale."
+      },
+      "rei": {
+        "name": "Rei",
+        "description": "Une voix profonde et mystérieuse."
+      }
+    },
+    "saveSettings": "Enregistrer les paramètres"
+  },
   "gifts": {
     "selectGift": "Sélectionner un cadeau",
     "selectGift_description": "Choisissez un cadeau à offrir au personnage."

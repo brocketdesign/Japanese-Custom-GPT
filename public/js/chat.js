@@ -1436,7 +1436,7 @@ function setupChatInterface(chat, character) {
         
     async function getVoiceUrl(message) {
         if (language !== 'japanese') {
-            return `/api/txt2speech?message=${encodeURIComponent(message)}&language=${language}&chatId=${chatId}`;
+            return `/api/txt2speech?message=${encodeURIComponent(message)}&language=${language}&chatId=${chatId}&userId=${userId}`;
         }
 
         const baseUrl = 'https://api.synclubaichat.com/aichat/h5/tts/msg2Audio';
@@ -1559,21 +1559,92 @@ function setupChatInterface(chat, character) {
         return str.replace(/\*.*?\*/g, '').replace(/"/g, '');
     }   
 
-    const activeStreams = {};      
-    let attemptCount = 2;
+    // Add a global variable to track active rendering processes
+    const activeRenderProcesses = new Set();
 
+    // Display completion message character by character
+    window.displayCompletionMessage = function(message, uniqueId) {
+        // Check if this message is already being rendered
+        if (activeRenderProcesses.has(uniqueId)) {
+            console.warn(`Message ${uniqueId} is already being rendered, skipping duplicate`);
+            return;
+        }
+        
+        // Add this process to active renders
+        activeRenderProcesses.add(uniqueId);
+        
+        const completionElement = $(`#completion-${uniqueId}`);
+        
+        // Check if the message has already been fully rendered
+        const currentText = completionElement.text().trim();
+        if (currentText === message.trim()) {
+            console.log(`Message ${uniqueId} already fully rendered, skipping`);
+            activeRenderProcesses.delete(uniqueId);
+            afterStreamEnd(uniqueId, message);
+            return;
+        }
+        
+        // Clear any existing content except loading gif
+        completionElement.find('img').fadeOut().remove();
+        
+        // Get already rendered text length to continue from where we left off
+        const alreadyRendered = currentText.length;
+        const graphemes = [...message.slice(alreadyRendered)];
+        const CHUNK_SIZE = 1;
+    
+        function renderChunk() {
+            // Double-check if process is still active (in case of cleanup)
+            if (!activeRenderProcesses.has(uniqueId)) {
+                return;
+            }
+            
+            // Check if element still exists
+            if (!$(`#completion-${uniqueId}`).length) {
+                activeRenderProcesses.delete(uniqueId);
+                return;
+            }
+            
+            for (let i = 0; i < CHUNK_SIZE && graphemes.length; i++) {
+                const textNode = document.createTextNode(graphemes.shift());
+                $(`#completion-${uniqueId}`).append(textNode);
+            }
+            
+            if (graphemes.length > 0) {
+                requestAnimationFrame(renderChunk);
+            } else {
+                // Rendering complete, clean up
+                activeRenderProcesses.delete(uniqueId);
+                afterStreamEnd(uniqueId, $(`#completion-${uniqueId}`).text());
+            }
+        }
+        
+        autoPlayMessageAudio(uniqueId, message);
+        requestAnimationFrame(renderChunk);
+    };
+
+    // Add cleanup function for when containers are removed
+    window.hideCompletionMessage = function(uniqueId) {
+        // Clean up active render process
+        activeRenderProcesses.delete(uniqueId);
+        $(`#completion-${uniqueId}`).closest('message-container').closest('div').fadeOut().remove();
+    }
+
+    // Also add cleanup when creating new bot response containers
     function createBotResponseContainer(uniqueId) {
-    const container = $(`
-        <div id="container-${uniqueId}">
-        <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
-            <img src="${thumbnail ? thumbnail : '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width:45px;width:45px;height:45px;border-radius:15%;object-fit:cover;object-position:top;cursor:pointer;">
-            <div class="audio-controller"><button id="play-${uniqueId}" class="audio-content badge bg-dark">►</button></div>
-            <div id="completion-${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box"><img src="/img/load-dot.gif" width="50px"></div>
-        </div>
-        </div>`).hide();
-    $('#chatContainer').append(container);
-    container.addClass('animate__animated animate__slideInUp').fadeIn();
-    return container;
+        // Clean up any existing process with same ID
+        activeRenderProcesses.delete(uniqueId);
+        
+        const container = $(`
+            <div id="container-${uniqueId}">
+            <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
+                <img src="${thumbnail ? thumbnail : '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width:45px;width:45px;height:45px;border-radius:15%;object-fit:cover;object-position:top;cursor:pointer;">
+                <div class="audio-controller"><button id="play-${uniqueId}" class="audio-content badge bg-dark">►</button></div>
+                <div id="completion-${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box"><img src="/img/load-dot.gif" width="50px"></div>
+            </div>
+            </div>`).hide();
+        $('#chatContainer').append(container);
+        container.addClass('animate__animated animate__slideInUp').fadeIn();
+        return container;
     }
 
     function afterStreamEnd(uniqueId, markdownContent) {
@@ -1581,34 +1652,13 @@ function setupChatInterface(chat, character) {
       $(`#play-${uniqueId}`).attr('data-content', msg);
       $(`#play-${uniqueId}`).closest('.audio-controller').show();
     }
+
     // Hide the completion message container
     window.hideCompletion = function(uniqueId) {
         $(`#completion-${uniqueId}`).fadeOut();
     };
-    // Display completion message character by character
-    window.displayCompletionMessage = function(message, uniqueId) {
-        $(`#completion-${uniqueId}`).find('img').fadeOut().remove();
-        const graphemes = [...message];
-        const CHUNK_SIZE = 1;
-      
-        function renderChunk() {
-          for (let i = 0; i < CHUNK_SIZE && graphemes.length; i++) {
-            const textNode = document.createTextNode(graphemes.shift());
-            $(`#completion-${uniqueId}`).append(textNode);
-          }
-          if (graphemes.length > 0) {
-            requestAnimationFrame(renderChunk);
-          } else {
-            afterStreamEnd(uniqueId, $(`#completion-${uniqueId}`).text());
-          }
-        }
-        autoPlayMessageAudio(uniqueId, message);
-        requestAnimationFrame(renderChunk);
-      };
 
-    window.hideCompletionMessage = function(uniqueId) {
-        $(`#completion-${uniqueId}`).closest('message-container').closest('div').fadeOut().remove();
-    }
+
 
     
     window.generateChatCompletion = function(callback, isHidden = false) {

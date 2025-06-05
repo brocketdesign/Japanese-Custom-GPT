@@ -84,7 +84,6 @@ async function routes(fastify, options) {
         const imageDescription = imageDescriptionResponse.imageDescription
         newPrompt = !!imageDescription ? imageDescription + ',' + giftPrompt : giftPrompt;
         newPrompt = await createPrompt(giftPrompt, imageDescription, false); // Assuming gifts are SFW by default
-        console.log('[generate-img] New prompt after gift processing:', newPrompt);
         // Prompt must be shorter than 900 characters
         if (newPrompt.length > 900) {
           console.log('[generate-img] Gift prompt is too long, shortening it...');

@@ -1,5 +1,21 @@
 {
   "lang":"en",
+  "gifts": {
+    "selectGift": "Select a gift",
+    "selectGift_description": "Choose a gift to send to the character."
+  },
+  "toolbar": {
+    "audio": "Audio",
+    "chat": "Chat",
+    "persona": "Persona",
+    "image": "Image",
+    "emojis": "Emojis",
+    "ideas": "Ideas",
+    "translate": "Translate",
+    "reset": "Reset",
+    "gifts": "Gifts",
+    "settings": "Settings"
+  },
   "similarChatsNotFound":"No similar chats found",
   "download_success":"Download Successful",
   "reconnect": {
@@ -420,7 +436,8 @@
         "prompts": "Prompts",
         "notifications": "Notifications",
         "models": "Models",
-        "mails" : "Mails"
+        "mails" : "Mails",
+        "gifts": "Gifts"
   },
   "admin_user": {
     "delete_confirm": "You are about to delete a user. This action is irreversible.",

@@ -1,5 +1,21 @@
 {
   "lang":"fr",
+  "gifts": {
+    "selectGift": "Sélectionner un cadeau",
+    "selectGift_description": "Choisissez un cadeau à offrir au personnage."
+  },
+  "toolbar": {
+    "audio": "Audio",
+    "chat": "Discussion",
+    "persona": "Persona",
+    "image": "Image",
+    "emojis": "Émojis",
+    "ideas": "Idées",
+    "translate": "Traduire",
+    "reset": "Réinitialiser",
+    "gifts": "Cadeaux",
+    "settings": "Paramètres"
+  },
   "similarChatsNotFound": "Aucun chat similaire trouvé",
   "download_success":"Téléchargement réussi",
   "reconnect": {
@@ -475,7 +491,8 @@
         "prompts": "Invites",
         "notifications": "Notifications",
         "models": "Models",
-        "mails" : "Mails"
+        "mails" : "Mails",
+        "gifts": "Cadeaux"
   },
   "admin_user": {
     "delete_confirm": "Vous êtes sur le point de supprimer un utilisateur. Cette action est irréversible.",

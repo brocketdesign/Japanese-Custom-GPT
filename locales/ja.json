@@ -1,5 +1,21 @@
 {
   "lang": "ja",
+  "gifts": {
+    "selectGift": "ギフトを選択",
+    "selectGift_description": "キャラクターに送るギフトを選んでください。"
+  },
+  "toolbar":{
+    "audio": "音声",
+    "chat": "チャット",
+    "persona": "ペルソナ",
+    "image": "画像",
+    "emojis": "絵文字",
+    "ideas": "提案",
+    "translate": "翻訳",
+    "reset": "リセット",
+    "gifts": "ギフト",
+    "settings": "設定"
+  },
   "similarChatsNotFound": "類似のチャットが見つかりませんでした",
   "download_success": "ダウンロードが成功しました！",
   "reconnect": {
@@ -653,7 +669,8 @@
         "prompts": "プロンプト",
         "notifications": "通知",
         "models": "モデル",
-        "mails" : "メール"
+        "mails" : "メール",
+        "gifts": "ギフト"
   },
   "admin_user": {
     "delete_confirm": "ユーザーを削除しようとしています。この操作は元に戻せません。",

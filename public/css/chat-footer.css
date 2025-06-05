@@ -14,8 +14,13 @@
             @media screen and (max-width: 768px) {
                 .chat-toolbar-wrapper {
                     min-width: 100%;
+                    padding-left: 0 !important;  /* Remove side padding */
+                    padding-right: 0 !important;
                 }
-                
+                .toolbar-scroll-container {
+                    padding-left: 0 !important;  /* Remove side padding */
+                    padding-right: 0 !important;
+                }
             }
             .chat-toolbar-container {
                 width: 100%;
@@ -30,17 +35,19 @@
                 min-height: 50px;
             }
             
-            .toolbar-scroll-container {
-                display: flex;
-                flex-wrap: nowrap;
-                overflow-x: auto;
-                width: 100%;
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: none;
-                padding: 0 5px;
-                gap: 10px;
-                justify-content: center;
-            }
+.toolbar-scroll-container {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 0 5px;
+    gap: 10px;
+    justify-content: center;
+    scroll-padding-left: 10px; /* Add this for better scroll start */
+    scroll-padding-right: 10px;
+}
             
             .toolbar-scroll-container::-webkit-scrollbar {
                 display: none;
@@ -48,12 +55,12 @@
             
             .toolbar-btn {
                 flex: 0 0 auto;
-                width: 48px;
+                width: auto;
                 height: 48px;
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                border-radius: 50%;
+                border-radius: 0.25em;
                 background: rgba(110, 32, 244, 0.1);
                 color: #6E20F4;
                 border: none;
@@ -68,7 +75,14 @@
                 transform: translateY(-3px);
                 box-shadow: 0 6px 12px rgba(110, 32, 244, 0.15);
             }
-            
+            .tool-label {
+            font-size: 12px;
+            margin-left: 5px;
+            min-width: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            }
             /* Content views */
             .toolbar-content-view {
                 width: 100%;
@@ -78,7 +92,8 @@
             }
             
             .toolbar-back-btn {
-                background: rgba(110, 32, 244, 0.1);
+                background: transparent;
+                box-shadow: none !important;
                 border: none;
                 color: #6E20F4;
                 font-size: 18px;
@@ -95,9 +110,8 @@
             }
             
             .toolbar-back-btn:hover {
-                background: rgba(110, 32, 244, 0.2);
                 transform: translateY(-3px);
-                box-shadow: 0 6px 12px rgba(110, 32, 244, 0.15);
+                box-shadow: none;
             }
             
             .toolbar-title {
@@ -193,7 +207,7 @@
             
             @media (max-width: 576px) {
                 .toolbar-btn, .toolbar-back-btn {
-                    width: 42px;
+                    width: auto;
                     height: 42px;
                     font-size: 18px;
                 }

@@ -160,6 +160,7 @@ fastify.register(require('./routes/post'));
 fastify.register(require('./routes/notifications'));
 fastify.register(require('./routes/gallery'));
 fastify.register(require('./routes/zohomail'));
+fastify.register(require('./routes/chat-tool-gifts-api'));
 
 fastify.get('/', async (request, reply) => {
   const db = fastify.mongo.db;
@@ -276,6 +277,7 @@ fastify.get('/chat/:chatId', async (request, reply) => {
   const newSubscription = request.query.newSubscription || false;
 
   const promptData = await db.collection('prompts').find({}).sort({order: 1}).toArray();
+  const giftData = await db.collection('gifts').find({}).sort({order: 1}).toArray();
 
   return reply.view('chat.hbs', {
     title: translations.seo.title,
@@ -287,6 +289,7 @@ fastify.get('/chat/:chatId', async (request, reply) => {
     chatId,
     userData,
     promptData,
+    giftData,
     seo: [
       { name: 'description', content: translations.seo.description },
       { name: 'keywords', content: translations.seo.keywords },

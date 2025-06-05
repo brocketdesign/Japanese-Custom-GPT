@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  {{> dashboard-header}}
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <style>
+    /* Optional: Custom styles for sortable dragging */
+    .sortable-ghost {
+      opacity: 0.4;
+      background-color: #f0f0f0;
+    }
+    .sortable-chosen {
+      /* Styles for the chosen item */
+    }
+    .handle {
+      cursor: grab;
+    }
+  </style>
+</head>
+<body class="bg-gray-100">
+{{> dashboard-nav}}
+
+<div class="container mx-auto mt-8 p-4">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-gray-800">ギフト管理</h1>
+    <div>
+      <button id="reorderGiftsBtn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out mr-2">
+        Change Order
+      </button>
+      <button id="newGiftBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out">
+        New Gift
+      </button>
+    </div>
+  </div>
+
+  <div class="bg-white shadow-md rounded-lg overflow-hidden">
+    <table class="min-w-full leading-normal">
+      <thead>
+        <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+          <th class="py-3 px-4 text-left">Order</th>
+          <th class="py-3 px-4 text-left">画像</th>
+          <th class="py-3 px-4 text-left">タイトル</th>
+          <th class="py-3 px-4 text-left">説明 (抜粋)</th>
+            <th class="py-3 px-4 text-left">プロンプト (抜粋)</th>
+          <th class="py-3 px-4 text-left">コスト</th>
+          <th class="py-3 px-4 text-center">アクション</th>
+        </tr>
+      </thead>
+      <tbody id="giftsTableBody" class="text-gray-700 text-sm">
+        {{! Gifts will be rendered here by JavaScript }}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Reorder Modal -->
+<div id="reorderModal" style="z-index: 10000;" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+  <div class="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center pb-3 border-b">
+      <h3 class="text-xl font-semibold text-gray-900">Reorder Gifts</h3>
+      <button id="closeReorderModal" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center">
+        <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 111.414 1.414L11.414 10l4.293 4.293a1 1 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+        <span class="sr-only">Close modal</span>
+      </button>
+    </div>
+    <div id="reorderGiftsGrid" class="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 p-4 max-h-96 overflow-y-auto">
+      {{! Gift items will be dynamically inserted here for reordering }}
+    </div>
+    <div class="mt-6 flex justify-end space-x-3 border-t pt-4">
+      <button id="cancelReorderBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
+        Cancel
+      </button>
+      <button id="saveOrderBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        Save Order
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Preview Modal -->
+<div id="previewModal" style="z-index: 10000;" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+  <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center pb-3">
+      <h3 class="text-xl font-semibold text-gray-900">ギフトプレビュー</h3>
+      <button id="closePreviewModal" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 111.414 1.414L11.414 10l4.293 4.293a1 1 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+      </button>
+    </div>
+    <div class="mt-2">
+      <img id="previewImage" src="" alt="Preview" class="w-full h-auto rounded mb-4">
+      <h5 id="previewTitle" class="text-lg font-bold text-gray-800 mb-2"></h5>
+      <p id="previewDescription" class="text-sm text-gray-600 mb-2"></p>
+        <p id="previewPrompt" class="text-sm text-gray-500 mb-2 italic"></p>
+      <p id="previewCost" class="text-sm font-bold text-blue-600"></p>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" style="z-index: 10000;" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+  <div class="relative top-10 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
+    <form id="editForm" enctype="multipart/form-data">
+      <div class="flex justify-between items-center pb-3">
+        <h3 class="text-xl font-semibold text-gray-900">ギフト編集</h3>
+        <button id="closeEditModal" type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 111.414 1.414L11.414 10l4.293 4.293a1 1 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+        </button>
+      </div>
+      <div class="mt-2 space-y-4">
+        <input type="hidden" id="editId" name="id">
+        <div>
+          <label for="editTitle" class="block text-sm font-medium text-gray-700">タイトル</label>
+          <input type="text" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" id="editTitle" name="title" required>
+        </div>
+        <div>
+          <label for="editDescription" class="block text-sm font-medium text-gray-700">説明</label>
+          <textarea class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" id="editDescription" name="description" rows="3" required></textarea>
+        </div>
+        <div>
+            <label for="editPrompt" class="block text-sm font-medium text-gray-700">画像生成プロンプト</label>
+            <textarea class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" id="editPrompt" name="prompt" rows="3" placeholder="画像生成に使用するプロンプトを入力してください"></textarea>
+        </div>
+        <div>
+          <label for="editCost" class="block text-sm font-medium text-gray-700">コスト</label>
+          <input type="number" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" id="editCost" name="cost" min="0" required>
+        </div>
+        <div>
+          <label for="editImage" class="block text-sm font-medium text-gray-700">画像をアップロード (変更する場合のみ)</label>
+          <input type="file" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" id="editImage" name="image" accept="image/*">
+        </div>
+      </div>
+      <div class="mt-6 flex justify-end space-x-3">
+        <button type="button" id="cancelEditBtn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">キャンセル</button>
+        <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">保存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- New Gift Modal -->
+<div id="newGiftModal" style="z-index: 10000;" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+  <div class="relative top-10 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center pb-3 border-b">
+      <h3 class="text-xl font-semibold text-gray-900">新しいギフトを作成する</h3>
+      <button id="closeNewGiftModal" type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 111.414 1.414L11.414 10l4.293 4.293a1 1 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+      </button>
+    </div>
+    <form id="newGiftForm" enctype="multipart/form-data">
+      <div class="mt-4 space-y-4">
+        <div>
+          <label for="newTitle" class="block text-sm font-medium text-gray-700">タイトル</label>
+          <input type="text" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" id="newTitle" name="title" required>
+        </div>
+        <div>
+          <label for="newDescription" class="block text-sm font-medium text-gray-700">説明</label>
+          <textarea class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" id="newDescription" name="description" rows="3" required></textarea>
+        </div>
+        <div>
+          <label for="newPrompt" class="block text-sm font-medium text-gray-700">画像生成プロンプト</label>
+          <textarea class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" id="newPrompt" name="prompt" rows="3" placeholder="画像生成に使用するプロンプトを入力してください"></textarea>
+        </div>
+        <div>
+          <label for="newCost" class="block text-sm font-medium text-gray-700">コスト</label>
+          <input type="number" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" id="newCost" name="cost" min="0" required>
+        </div>
+        <div>
+          <label for="newImage" class="block text-sm font-medium text-gray-700">画像をアップロード</label>
+          <input type="file" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" id="newImage" name="image" accept="image/*" required>
+        </div>
+      </div>
+      <div class="mt-6 flex justify-end space-x-3 border-t pt-4">
+        <button type="button" id="cancelNewGiftBtn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">キャンセル</button>
+        <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">保存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" style="z-index: 10000;" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+  <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center pb-3 border-b">
+      <h3 class="text-xl font-semibold text-gray-900">削除確認</h3>
+      <button id="closeDeleteModal" type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 111.414 1.414L11.414 10l4.293 4.293a1 1 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+      </button>
+    </div>
+    <div class="mt-4">
+      <div class="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>
+      </div>
+      <h4 class="text-lg font-medium text-gray-900 text-center mb-2">本当に削除しますか？</h4>
+      <p class="text-sm text-gray-500 text-center">この操作は元に戻せません。</p>
+    </div>
+    <div class="mt-6 flex justify-end space-x-3 border-t pt-4">
+      <button type="button" id="cancelDeleteBtn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">キャンセル</button>
+      <button type="button" id="confirmDeleteBtn" class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">削除</button>
+    </div>
+  </div>
+</div>
+
+<!-- Notification Modal -->
+<div id="notificationModal"  style="z-index: 10000;" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+  <div class="relative top-20 mx-auto p-5 border w-full max-w-sm shadow-lg rounded-md bg-white">
+    <div class="text-center">
+      <div id="notificationIcon" class="w-12 h-12 mx-auto mb-4 rounded-full flex items-center justify-center">
+        <!-- Icon will be inserted here -->
+      </div>
+      <h3 id="notificationTitle" class="text-lg font-medium text-gray-900 mb-2"></h3>
+      <p id="notificationMessage" class="text-sm text-gray-500 mb-4"></p>
+      <button id="closeNotificationBtn" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">閉じる</button>
+    </div>
+  </div>
+</div>
+
+{{> dashboard-footer}}
+
+<script>
+  // Helper function for notifications (using custom Tailwind modal)
+  function showNotification(message, type = 'success') {
+    const modal = $('#notificationModal');
+    const icon = $('#notificationIcon');
+    const title = $('#notificationTitle');
+    const messageEl = $('#notificationMessage');
+    
+    title.text(type === 'success' ? '成功' : 'エラー');
+    messageEl.text(message);
+    
+    if (type === 'success') {
+      icon.removeClass('bg-red-100').addClass('bg-green-100');
+      icon.html('<svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>');
+    } else {
+      icon.removeClass('bg-green-100').addClass('bg-red-100');
+      icon.html('<svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>');
+    }
+    
+    modal.removeClass('hidden');
+    
+    // Auto-hide after 2 seconds for success messages
+    if (type === 'success') {
+      setTimeout(() => {
+        modal.addClass('hidden');
+      }, 2000);
+    }
+  }
+
+  // Store gifts data globally for easier access
+  let currentGifts = [];
+  let reorderSortable = null;
+  let deleteGiftId = null;
+  const reorderModal = $('#reorderModal');
+  const newGiftModal = $('#newGiftModal');
+  const deleteModal = $('#deleteModal');
+
+  function renderGiftsTable(gifts) {
+    const tableBody = $('#giftsTableBody');
+    tableBody.empty();
+    if (!gifts || gifts.length === 0) {
+        tableBody.append('<tr><td colspan="7" class="text-center py-4">No gifts found.</td></tr>');
+      return;
+    }
+    // Ensure gifts are sorted by the 'order' field before rendering
+    const sortedGifts = gifts.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+    sortedGifts.forEach(gift => {
+      const row = `
+        <tr data-id="${gift._id}" class="border-b border-gray-200 hover:bg-gray-100">
+          <td class="py-3 px-4 text-left handle"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 inline-block mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg> ${gift.order !== undefined ? gift.order : 'N/A'}</td>
+          <td class="py-3 px-4 text-left"><img src="${gift.image || '/img/placeholder-image-2.gif'}" alt="${gift.title}" class="w-20 h-20 object-cover rounded"></td>
+          <td class="py-3 px-4 text-left font-semibold">${gift.title}</td>
+          <td class="py-3 px-4 text-left truncate max-w-xs">${gift.description || ''}</td>
+              <td class="py-3 px-4 text-left truncate max-w-xs">${gift.prompt || ''}</td>
+          <td class="py-3 px-4 text-left font-bold text-blue-600">${gift.cost || 0}</td>
+          <td class="py-3 px-4 text-center">
+            <button class="preview-btn text-blue-500 hover:text-blue-700 mr-2" data-id="${gift._id}">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 inline-block"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+            </button>
+            <button class="edit-btn text-yellow-500 hover:text-yellow-700 mr-2" data-id="${gift._id}">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 inline-block"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
+            </button>
+            <button class="delete-btn text-red-500 hover:text-red-700" data-id="${gift._id}">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 inline-block"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12.56 0c1.153 0 2.243.096 3.222.261m3.478-.397L12 4.648l-1.176-.754M12 4.648V2.25m0 0l-.375.375M12 2.25l.375.375M12 15.75v2.25M12 21v-2.25" /></svg>
+            </button>
+          </td>
+        </tr>
+      `;
+      tableBody.append(row);
+    });
+    attachActionListeners();
+  }
+
+  function attachActionListeners() {
+    $('.preview-btn').off('click').on('click', function() {
+      var id = $(this).data('id');
+      $.ajax({
+        url: '/api/gifts/' + id,
+        type: 'GET',
+        success: function(gift) {
+          $('#previewImage').attr('src', gift.image || '/img/placeholder-image-2.gif');
+          $('#previewTitle').text(gift.title);
+          $('#previewDescription').text(gift.description || '');
+                $('#previewPrompt').text('プロンプト: ' + (gift.prompt || '未設定'));
+          $('#previewCost').text('コスト: ' + (gift.cost || 0));
+          $('#previewModal').removeClass('hidden');
+        },
+        error: function() {
+          showNotification('Error fetching gift details.', 'error');
+        }
+      });
+    });
+
+    $('.edit-btn').off('click').on('click', function() {
+      var id = $(this).data('id');
+      $.ajax({
+        url: '/api/gifts/' + id,
+        type: 'GET',
+        success: function(gift) {
+          $('#editId').val(gift._id);
+          $('#editTitle').val(gift.title);
+          $('#editDescription').val(gift.description || '');
+            $('#editPrompt').val(gift.prompt || '');
+          $('#editCost').val(gift.cost || 0);
+          $('#editImage').val('');
+          $('#editModal').removeClass('hidden');
+        },
+        error: function() {
+          showNotification('Error fetching gift details for editing.', 'error');
+        }
+      });
+    });
+
+    $('.delete-btn').off('click').on('click', function() {
+      deleteGiftId = $(this).data('id');
+      deleteModal.removeClass('hidden');
+    });
+
+    $('#reorderGiftsBtn').on('click', function() {
+      const grid = $('#reorderGiftsGrid');
+      grid.empty();
+      const sortedGiftsForModal = [...currentGifts].sort((a, b) => (a.order || 0) - (b.order || 0));
+
+      sortedGiftsForModal.forEach(gift => {
+        const item = `
+          <div data-id="${gift._id}" class="border p-2 rounded shadow-sm bg-white cursor-grab flex flex-col items-center text-center">
+            <img src="${gift.image || '/img/placeholder-image-2.gif'}" alt="${gift.title}" class="w-24 h-24 object-cover rounded mb-2">
+            <p class="text-xs font-semibold">${gift.title}</p>
+            <p class="text-xs text-gray-500">Order: ${gift.order !== undefined ? gift.order : 'N/A'}</p>
+            <p class="text-xs text-blue-600">Cost: ${gift.cost || 0}</p>
+          </div>
+        `;
+        grid.append(item);
+      });
+
+      if (reorderSortable) {
+        reorderSortable.destroy();
+      }
+      reorderSortable = new Sortable(document.getElementById('reorderGiftsGrid'), {
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+      });
+      reorderModal.removeClass('hidden');
+    });
+
+    $('#closeReorderModal, #cancelReorderBtn').on('click', function() {
+      reorderModal.addClass('hidden');
+    });
+
+    $('#saveOrderBtn').on('click', function() {
+      if (!reorderSortable) return;
+      const orderedIds = reorderSortable.toArray();
+
+      $.ajax({
+        url: '/api/gifts/reorder',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ orderedIds: orderedIds }),
+        success: function(response) {
+          showNotification('Gifts reordered successfully.');
+          reorderModal.addClass('hidden');
+          $.ajax({
+            url: '/api/gifts',
+            type: 'GET',
+            success: function(gifts) {
+              currentGifts = gifts;
+              renderGiftsTable(currentGifts);
+            },
+            error: function() {
+              showNotification('Error re-fetching gifts after reorder.', 'error');
+            }
+          });
+        },
+        error: function(xhr) {
+          const errorMsg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error reordering gifts.';
+          showNotification(errorMsg, 'error');
+        }
+      });
+    });
+  }
+
+  $(document).ready(function() {
+    const previewModal = $('#previewModal');
+    const editModal = $('#editModal');
+
+    // Load gifts on page load
+    $.ajax({
+      url: '/api/gifts',
+      type: 'GET',
+      success: function(gifts) {
+        currentGifts = gifts.sort((a, b) => (a.order || 0) - (b.order || 0));
+        renderGiftsTable(currentGifts);
+      },
+      error: function() {
+        showNotification('Error fetching gifts.', 'error');
+        renderGiftsTable([]);
+      }
+    });
+
+    $('#closePreviewModal').on('click', function() {
+      previewModal.addClass('hidden');
+    });
+
+    $('#newGiftBtn').on('click', function() {
+      newGiftModal.removeClass('hidden');
+    });
+
+    $('#closeNewGiftModal, #cancelNewGiftBtn').on('click', function() {
+      newGiftModal.addClass('hidden');
+      document.getElementById('newGiftForm').reset();
+    });
+
+    $('#newGiftForm').on('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      
+      $.ajax({
+        url: '/api/gifts/create',
+        type: 'POST',
+        data: formData,
+        contentType: false,
+        processData: false,
+        success: function() {
+          showNotification('ギフトが作成されました。', 'success');
+          newGiftModal.addClass('hidden');
+          document.getElementById('newGiftForm').reset();
+          setTimeout(() => location.reload(), 1500);
+        },
+        error: function() {
+          showNotification('ギフトの作成中にエラーが発生しました。', 'error');
+        }
+      });
+    });
+
+    $('#closeDeleteModal, #cancelDeleteBtn').on('click', function() {
+      deleteModal.addClass('hidden');
+      deleteGiftId = null;
+    });
+
+    $('#confirmDeleteBtn').on('click', function() {
+      if (deleteGiftId) {
+        $.ajax({
+          url: '/api/gifts/' + deleteGiftId,
+          type: 'DELETE',
+          success: function() {
+            showNotification('Gift deleted successfully.');
+            currentGifts = currentGifts.filter(g => g._id !== deleteGiftId);
+            renderGiftsTable(currentGifts);
+            deleteModal.addClass('hidden');
+            deleteGiftId = null;
+          },
+          error: function() {
+            showNotification('Error deleting gift.', 'error');
+          }
+        });
+      }
+    });
+
+    $('#closeNotificationBtn').on('click', function() {
+      $('#notificationModal').addClass('hidden');
+    });
+
+    $(document).on('keydown', function(event) {
+        if (event.key === "Escape") {
+            if (!previewModal.hasClass('hidden')) {
+                previewModal.addClass('hidden');
+            }
+            if (!editModal.hasClass('hidden')) {
+                editModal.addClass('hidden');
+            }
+            if (!reorderModal.hasClass('hidden')) {
+                reorderModal.addClass('hidden');
+            }
+            if (!newGiftModal.hasClass('hidden')) {
+                newGiftModal.addClass('hidden');
+                document.getElementById('newGiftForm').reset();
+            }
+            if (!deleteModal.hasClass('hidden')) {
+                deleteModal.addClass('hidden');
+                deleteGiftId = null;
+            }
+            if (!$('#notificationModal').hasClass('hidden')) {
+                $('#notificationModal').addClass('hidden');
+            }
+        }
+    });
+  });
+</script>
+</body>
+</html>

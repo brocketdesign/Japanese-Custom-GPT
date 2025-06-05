@@ -987,6 +987,31 @@ async function routes(fastify, options) {
       return reply.status(500).send({ error: 'Failed to get bulk progress' });
     }
   });
+  
+  fastify.get('/admin/gifts', async (request, reply) => {
+    try {
+      let user = request.user;
+      const userId = user._id;
+      const isAdmin = await checkUserAdmin(fastify, userId);
+      if (!isAdmin) {
+          return reply.status(403).send({ error: 'Access denied' });
+      }
+      const db = fastify.mongo.db;
+      user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+      const translations = request.translations
+
+      const gifts = await db.collection('gifts').find().toArray();
+
+      return reply.view('/admin/gifts', {
+        title: 'ギフト管理 | LAMIX | 日本語 | 無料AI画像生成 | 無料AIチャット',
+        user,
+        gifts,
+        translations
+      });
+    } catch (error) {
+      console.log(error)
+    }
+  });
 }
 
 module.exports = routes;

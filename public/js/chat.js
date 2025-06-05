@@ -511,6 +511,11 @@ $(document).ready(async function() {
         showChat();
         initializeCustomPrompts(userChatId)
 
+        // Add gift initialization
+        if (window.initializeGiftPermissions) {
+            window.initializeGiftPermissions(userChatId);
+        }
+        
         // Show the prompts only once per session/ per chatid
         if (isNew && !sessionStorage.getItem(`promptsShown_${chatId}`)) {
             sessionStorage.setItem(`promptsShown_${chatId}`, 'true');
@@ -977,6 +982,7 @@ function setupChatInterface(chat, character) {
 
     function getImageTools({chatId, imageId, isLiked = false, title, prompt = false, nsfw = false, imageUrl = false, actions = []}) {
         prompt = sanitizeString(prompt);
+
         // Check if actions exist and determine icon states
         const hasVideoAction = actions?.some(action => action.type === 'video_generated');
         const hasUpscaleAction = actions?.some(action => action.type === 'upscaled');
@@ -990,7 +996,7 @@ function setupChatInterface(chat, character) {
         // Determine icon classes based on actions
         const videoIconClass = hasVideoAction ? 'bi-play-circle-fill text-success' : 'bi-play-circle';
         const upscaleIconClass = hasUpscaleAction ? 'bi-badge-hd-fill text-success' : 'bi-badge-hd';
-        const likeIconClass = (isLiked || hasLikeAction) ? 'text-danger' : '';
+        const likeIconClass = (isLiked || hasLikeAction) ? 'bi-heart-fill text-danger' : 'bi-heart';
         
         // Determine if buttons should be disabled
         const videoDisabled = hasVideoAction ? 'style="opacity:0.5; pointer-events:none;"' : '';
@@ -1011,10 +1017,10 @@ function setupChatInterface(chat, character) {
                     <style>
                         .image-tools .d-flex::-webkit-scrollbar { display: none; }
                     </style>
-                    <span class="badge bg-white text-secondary image-fav ${isLiked || hasLikeAction ? 'liked' : ''} ${likeIconClass} flex-shrink-0 me-2" data-id="${imageId}"
+                    <span class="badge bg-white text-secondary image-fav flex-shrink-0 me-2" data-id="${imageId}"
                     onclick="toggleImageFavorite(this)" 
                     style="cursor: pointer; opacity:0.8;">
-                        <i class="bi bi-heart-fill"></i>
+                        <i class="bi ${likeIconClass}"></i>
                     </span>
                     <span class="badge bg-white text-secondary txt2img regen-img flex-shrink-0 me-2" 
                     onclick="${subscriptionStatus ? 'regenImage(this)' : 'loadPlanPage()'}" 

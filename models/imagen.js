@@ -73,7 +73,7 @@ const default_prompt = {
   } 
 
 // Module to generate an image
-async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSeed, regenerate, userId, chatId, userChatId, imageType, image_num, image_base64, chatCreation, placeholderId, translations, fastify, flux = false, customPromptId = null}) {
+async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSeed, regenerate, userId, chatId, userChatId, imageType, image_num, image_base64, chatCreation, placeholderId, translations, fastify, flux = false, customPromptId = null, customGiftId = null}) {
     const db = fastify.mongo.db;
   
     // Fetch the user
@@ -177,6 +177,11 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
         console.log(`[generateImg] Custom prompt ID provided for task ${novitaTaskId}: ${customPromptId}`);
     }
     
+    // Add custom gift ID if provided
+    if (customGiftId) {
+        taskData.customGiftId = customGiftId;
+        console.log(`[generateImg] Custom gift ID provided for task ${novitaTaskId}: ${customGiftId}`);
+    }
     const checkTaskValidity = await db.collection('tasks').insertOne(taskData);
     
     // Check if the task has been saved
@@ -881,6 +886,7 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
     }
   }
 
+// Function to get a prompt by its ID
 async function getPromptById(db, id) {
   try {
     // Validate and parse the id

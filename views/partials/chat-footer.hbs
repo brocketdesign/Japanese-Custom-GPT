@@ -4,30 +4,46 @@
             <div class="chat-toolbar-container">
                 <!-- Main Toolbar -->
                 <div class="chat-toolbar animate__animated animate__slideInUp">
-                    <div id="toolbar-main" class="toolbar-scroll-container">
+                    <div id="toolbar-main" class="toolbar-scroll-container mx-2">
                         <button type="button" class="toolbar-btn" id="audio-play">
                             <i class="bi" id="audio-icon"></i>
+                            <span class="tool-label">{{translations.toolbar.audio}}</span>
                         </button>
                         <button type="button" class="toolbar-btn" id="text-input-toggle">
                             <i class="bi bi-chat-dots"></i>
+                            <span class="tool-label">{{translations.toolbar.chat}}</span>
                         </button>
                         <button type="button" class="toolbar-btn" id="show-personas-btn">
                             <i class="bi bi-person-lines-fill"></i>
+                            <span class="tool-label">{{translations.toolbar.persona}}</span>
                         </button>
                         <button type="button" class="toolbar-btn" id="showPrompts">
                             <i class="bi bi-image"></i>
+                            <span class="tool-label">{{translations.toolbar.image}}</span>
+                        </button>
+                        <button type="button" class="toolbar-btn" id="gifts-toggle">
+                            <i class="bi bi-gift"></i>
+                            <span class="tool-label">{{translations.toolbar.gifts}}</span>
                         </button>
                         <button type="button" class="toolbar-btn" id="emoji-tone-btn">
                             <i class="bi bi-emoji-smile"></i>
+                            <span class="tool-label">{{translations.toolbar.emojis}}</span>
                         </button>
                         <button type="button" class="toolbar-btn" id="suggestions-toggle">
                             <i class="bi bi-lightbulb"></i>
+                            <span class="tool-label">{{translations.toolbar.ideas}}</span>
                         </button>
                         <button type="button" class="toolbar-btn" id="translation-toggle">
                             <i class="bi bi-translate"></i>
+                            <span class="tool-label">{{translations.toolbar.translate}}</span>
                         </button>
                         <button type="button" class="toolbar-btn reset-chat" id="reset-chat-btn" onclick="handleChatReset(this)">
                             <i class="bi bi-plus-square"></i>
+                            <span class="tool-label">{{translations.toolbar.reset}}</span>
+                        </button>
+                        <button type="button" class="d-none toolbar-btn settings-toggle" id="settings-toggle">
+                            <i class="bi bi-gear"></i>
+                            <span class="tool-label">{{translations.toolbar.settings}}</span>
                         </button>
                     </div>
                     
@@ -38,7 +54,7 @@
                             <i class="bi bi-arrow-left"></i>
                         </button>
                         <div class="toolbar-title">選択トーン</div>
-                        <div class="emoji-scroll-container">
+                        <div class="emoji-scroll-container mx-2">
                             <button class="emoji-btn" data-tone="happy">😊</button>
                             <button class="emoji-btn" data-tone="funny">😂</button>
                             <button class="emoji-btn" data-tone="romantic">❤️</button>
@@ -68,7 +84,7 @@
                             <i class="bi bi-arrow-left"></i>
                         </button>
                         <div class="toolbar-title">提案</div>
-                        <div id="suggestions" class="suggestions-scroll-container">
+                        <div id="suggestions" class="suggestions-scroll-container mx-2">
                             <!-- Suggestions will be dynamically added here -->
                         </div>
                     </div>
@@ -79,7 +95,7 @@
                             <i class="bi bi-arrow-left"></i>
                         </button>
                         <div class="toolbar-title">{{translations.translate}}</div>
-                        <div class="translation-scroll-container">
+                        <div class="translation-scroll-container mx-2">
                             <button class="translation-btn" data-lang="en">{{translations.english}}</button>
                             <button class="translation-btn" data-lang="ja">{{translations.japanese}}</button>
                             <button class="translation-btn" data-lang="ko">{{translations.korean}}</button>
@@ -143,6 +159,29 @@
                     </div>
                 {{/each}}
 
+            </div>
+        </div>
+        <div id="giftsOverlay" class="shadow" style="position: absolute; bottom: -10px; width: 95%; margin: auto; max-height: 55vh; background: rgb(255, 255, 255); overflow-y: auto; left: 0; right: 0; z-index: 10; border-radius: 15px 15px 0 0; display: none;">
+            <button id="close-giftsOverlay" class="btn shadow-0 position-absolute top-0 end-0"><i class="bi bi-x"></i></button>
+            <div id="giftsList" class="row mx-0 my-5">
+                <h4 class="text-center w-100 mt-2">{{translations.gifts.selectGift}}</h4>
+                <p class="text-center text-muted w-100">{{translations.gifts.selectGift_description}}</p>
+                <!-- Gifts will be dynamically generated here -->
+                {{#each giftData}}
+                    <div class="gift-card col-6 col-sm-3 border-0 shadow-0 mb-1 position-relative inactive d-flex justify-content-center align-items-center"
+                        data-id="{{_id}}" 
+                        data-nsfw="{{eq nsfw 'on'}}" 
+                        style="cursor:pointer; min-height: 200px;">
+                        <div class="image-container d-inline-flex align-items-center justify-content-center p-0 m-0 rounded border" style="background:transparent; padding:0; margin:0;">
+                            <img 
+                                src="/img/image-placeholder-1.gif"
+                                data-src="{{image}}" 
+                                class="lazy-image rounded"
+                                alt="{{title}}" 
+                                style="display:block; max-width:100%; max-height:200px; object-fit:contain;">
+                        </div>
+                    </div>
+                {{/each}}
             </div>
         </div>
     </div>

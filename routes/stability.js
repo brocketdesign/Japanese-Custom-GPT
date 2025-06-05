@@ -2,7 +2,7 @@ const { ObjectId } = require('mongodb');
 const axios = require('axios');
 const fs = require('fs');
 const { processPromptToTags, saveChatImageToDB } = require('../models/tool')
-const { generateImg, getPromptById, getImageSeed, checkImageDescription,getTasks } = require('../models/imagen');
+const { generateImg, getPromptById, getImageSeed, checkImageDescription, getTasks } = require('../models/imagen');
 const { createPrompt, moderateText } = require('../models/openai');
 const { upscaleImg } = require('../models/upscale-utils');
 
@@ -10,7 +10,7 @@ async function routes(fastify, options) {
 
   // Endpoint to initiate generate-img for selected image type
   fastify.post('/novita/generate-img', async (request, reply) => {
-    const { title, prompt, aspectRatio, userId, chatId, userChatId, placeholderId, promptId, customPrompt, image_base64, chatCreation, regenerate } = request.body;
+    const { title, prompt, aspectRatio, userId, chatId, userChatId, placeholderId, promptId, giftId, customPrompt, image_base64, chatCreation, regenerate } = request.body;
     let imageType = request.body.imageType
     const db = fastify.mongo.db;
     const translations = request.translations
@@ -57,6 +57,38 @@ async function routes(fastify, options) {
         if (newPrompt.length > 900) {
           console.log('[generate-img] Prompt is too long, shortening it...');
           const shorterPrompt = await createPrompt(customPrompt, imageDescription, nsfw)
+          if(shorterPrompt){
+            newPrompt = shorterPrompt.substring(0, 900);
+          }else{
+            newPrompt = newPrompt.substring(0, 900);
+          }
+        }
+      } else if(giftId) {
+        // New gift handling logic
+        const giftData = await getGiftById(db, giftId);
+        if (!giftData) {
+          return reply.status(404).send({ error: 'Gift not found' });
+        }
+        
+        saveGiftIdToChat(db, chatId, userChatId, giftId)
+        .then((response) => {
+          if(subscriptionStatus !== 'active'){
+            fastify.sendNotificationToUser(userId, 'updateCustomGift', { giftId: giftId })
+          }
+        })
+        
+        const giftPrompt = giftData.prompt || giftData.description;
+        processPromptToTags(db, giftPrompt);
+        
+        let imageDescriptionResponse = await checkImageDescription(db, chatId);
+        const imageDescription = imageDescriptionResponse.imageDescription
+        newPrompt = !!imageDescription ? imageDescription + ',' + giftPrompt : giftPrompt;
+        newPrompt = await createPrompt(giftPrompt, imageDescription, false); // Assuming gifts are SFW by default
+        console.log('[generate-img] New prompt after gift processing:', newPrompt);
+        // Prompt must be shorter than 900 characters
+        if (newPrompt.length > 900) {
+          console.log('[generate-img] Gift prompt is too long, shortening it...');
+          const shorterPrompt = await createPrompt(giftPrompt, imageDescription, false)
           if(shorterPrompt){
             newPrompt = shorterPrompt.substring(0, 900);
           }else{
@@ -210,6 +242,56 @@ async function routes(fastify, options) {
     }
   });
 
+// Add helper functions
+async function getGiftById(db, id) {
+  try {
+    if (!fastify.mongo.ObjectId.isValid(id)) {
+      throw new Error('Invalid ID format');
+    }
+
+    const gift = await db.collection('gifts').findOne({ _id: new fastify.mongo.ObjectId(id) });
+
+    if (!gift) {
+      return { success: false, message: 'Gift not found', data: null };
+    }
+
+    return gift;
+  } catch (error) {
+    console.error('Error fetching gift:', error);
+    throw new Error('Error fetching gift');
+  }
+}
+
+async function saveGiftIdToChat(db, chatId, userChatId, giftId) {
+  const collectionUserChats = db.collection('userChat');
+
+  let userChatObjectId;
+  try {
+      userChatObjectId = new ObjectId(userChatId);
+  } catch (error) {
+      console.error('[saveGiftIdToChat] Invalid userChatId:', userChatId, error);
+      throw new Error(`Invalid ID format (userChatId: ${userChatId})`);
+  }
+
+  try {
+    const userChatUpdateResult = await collectionUserChats.updateOne(
+        { _id: userChatObjectId },
+        { $addToSet: { giftId } }
+    );
+
+    if (userChatUpdateResult.matchedCount === 0) {
+        const errorMessage = `User chat not found (userChatId: ${userChatId})`;
+        console.error(`[saveGiftIdToChat] ${errorMessage}`);
+        throw new Error(errorMessage);
+    }
+    
+    return { userChatUpdateResult };
+
+  } catch (err) {
+    console.error('[saveGiftIdToChat] Error during database update:', err.message);
+    throw err; 
+  }
+}
   async function savePromptIdtoChat(db, chatId, userChatId, promptId) {
     const collectionUserChats = db.collection('userChat');
 

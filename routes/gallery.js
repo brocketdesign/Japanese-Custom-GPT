@@ -36,6 +36,7 @@ async function routes(fastify, options) {
             const existingLikeAction = message.actions.find(action => action.type === 'like');
             if (!existingLikeAction) {
               // Add like action to the actions array
+              console.log(`Adding like action to message for imageId: ${imageId}`);
               message.actions.push({
                 type: 'like',
                 date: new Date()

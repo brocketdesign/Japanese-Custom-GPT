@@ -433,10 +433,11 @@ window.toggleImageFavorite = function(el) {
   const $this = $(el);
   const userChatId = $(`#chatContainer`).is(':visible') ? $(`#chatContainer`).attr('data-id') : null;
   const imageId = $this.data('id');
-  const isLiked = $this.hasClass('liked'); // Check if already liked
+  const isLiked = $this.find('i').hasClass('bi-heart-fill'); // Check if already liked
 
   const action = isLiked ? 'unlike' : 'like'; // Determine action
-  $this.toggleClass('liked');
+  const likeIconClass = (isLiked || action) ? 'bi-heart-fill text-danger' : 'bi-heart';
+  $this.find('i').removeClass('bi-heart bi-heart-fill').addClass(likeIconClass); // Toggle icon class
 
   $.ajax({
     url: `/gallery/${imageId}/like-toggle`, // Single endpoint
@@ -449,11 +450,10 @@ window.toggleImageFavorite = function(el) {
       userChatId 
     }, // Send action (like/unlike) in the request body
     success: function() {
-      // Show success notification in Japanese
+      
       if (action === 'like') {
         $this.find('.ct').text(parseInt($this.find('.ct').text()) + 1);
       } else {
-        showNotification('いいねを取り消しました！', 'success');
         $this.find('.ct').text(parseInt($this.find('.ct').text()) - 1);
       }
       // delete the local storage item userImages_${userId}
@@ -462,8 +462,7 @@ window.toggleImageFavorite = function(el) {
       localStorage.removeItem(cacheKey);
     },
     error: function() {
-      $this.toggleClass('liked');
-      showNotification('リクエストに失敗しました。', 'error');
+      
     }
   });
 };

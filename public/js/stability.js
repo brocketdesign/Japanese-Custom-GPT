@@ -29,6 +29,7 @@ window.novitaImageGeneration = async function(userId, chatId, userChatId, option
             placeholderId = option.placeholderId || null,
             customPrompt = option.customPrompt || false,
             promptId = option.promptId || null,
+            giftId = option.giftId || null,
             chatCreation = option.chatCreation || false,
             regenerate = option.regenerate || false,
         } = option;
@@ -53,8 +54,9 @@ window.novitaImageGeneration = async function(userId, chatId, userChatId, option
                 imageType,
                 placeholderId,
                 customPrompt,
-                image_base64,
                 promptId,
+                giftId,
+                image_base64,
                 regenerate,
                 chatCreation
             })

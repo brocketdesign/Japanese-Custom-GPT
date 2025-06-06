@@ -2387,3 +2387,59 @@ opacity: 0.8;
     font-size: 0.95rem;
     line-height: 1.6;
 }
+
+/* Compact chat list support for narrow sidebar */
+.chat-list-container {
+    padding: 0 4px; /* Reduced padding for narrow sidebar */
+}
+
+.chat-list-container .spinner-border {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+/* Override existing chat list styles for compact design */
+.chat-list .thumb img {
+    width: 40px; /* Reduced from 40px to match new design */
+    height: 40px;
+    object-fit: cover;
+    overflow: hidden;
+    object-position: top;
+    border-radius: 50%; /* Make fully circular */
+}
+
+.chat-list.item {
+    margin-bottom: 4px; /* Reduced spacing */
+    border-radius: 8px; /* Smaller radius */
+}
+
+.chat-list.item:hover, .user-chat-history:hover {
+    background-color: #f0f0f0 !important; /* Lighter hover color */
+}
+
+.chat-list.item.active, .user-chat-history.active {
+    background-color: #e6d3ff !important; /* Purple active state */
+}
+
+/* Adjust dropdown for narrow sidebar */
+.chat-option-menu .dropdown-item {
+    padding: 4px 8px; /* Reduced padding */
+    font-size: 0.8rem; /* Smaller font */
+}
+
+.chat-option-menu li {
+    padding: 1px 4px; /* Reduced padding */
+}
+
+/* Make sure text doesn't overflow in narrow sidebar */
+.online-text {
+    width: 100px; /* Reduced from 150px */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Compact user chat count */
+#user-chat-count {
+    font-size: 0.75rem;
+}

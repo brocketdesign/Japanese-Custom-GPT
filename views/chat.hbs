@@ -13,44 +13,7 @@
         </div>
     </div>
     <div id="swup-none">
-        <div class="sidebar-history hidden shadow">
-            <div class="d-flex justify-content-between">
-                <h5 class="my-2 mx-3">チャット履歴</h5>
-                <button type="button" class="btn btn-light">
-                    <i class="bi bi-chevron-left"></i>
-                </button>
-            </div>
-            <div id="chat-history"></div>
-        </div>
-        <div class="sidebar hidden bg-light shadow-0 d-flex flex-column">
-            <div class="tools d-flex align-items-start flex-column sticky-top bg-light py-2">
-                <div class="d-none w-100 m-2">
-                    <button class="menu-chat-sm d-sm-none btn bg-dark shadow-0"><i class="bi bi-list"></i></button>
-                    <button 
-                    class="new-chat d-sm-none btn btn-light"
-                    onclick="handleChatReset(this)"
-                    ><i class="bi bi-pencil-square"></i></button>
-                </div>
-                <div>
-                    <span onclick="showDiscovery()" class="m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius: 40px;">
-                        <i class="bi bi-chat me-2"></i>{{translations.chatList}}
-                    </span>
-                    <a href="/character" class="{{default isAdmin 'd-inline-block'}} m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius:40px;">
-                        <i class="bi bi-globe me-2"></i>{{translations.explore}}
-                    </a>
-                    <a href="#" onclick="loadCharacterCreationPage()" class="{{default isAdmin 'd-inline-block'}} m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary text-start" style="border-radius:40px;">
-                        <i class="bi bi-plus me-2"></i>{{translations.createCharacter}}
-                    </a>
-                </div>
-                <span class="text-dark ps-4 fw-bold" style="font-size: 12px;">{{translations.chatList}} <span id="user-chat-count" >{{chats.length}}</span></span>
-            </div>
-            <div id="chat-list" class="mt-1 pb-3 position-relative" style="flex-grow: 1;overflow-y: scroll;overflow-x: hidden;border-top:1px solid #cccccc6b;">
-                <!-- Spinner -->
-                <div id="chat-list-spinner" class="spinner-border text-secondary" role="status" style="position: absolute; top: 45%; left: 45%; display: none;">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>
-        </div>
+        {{> chat-history-sidebar}}
         <div id="overlay" class="d-sm-none bg-dark" style="position: fixed; inset: 0; z-index: 1033; display: none; opacity: 0.4; overflow: hidden;"></div>
         <div class="content collapsed">
             <nav class="navbar navbar-expand-lg navbar-white bg-transparent fixed-top shadow-0 flex-column">
@@ -245,6 +208,7 @@
 <script src="https://cdn.jsdelivr.net/npm/blueimp-md5@2.19.0/js/md5.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script src="/js/chat.js"></script>
+<script src="/js/chat-tool-history-sidebar.js"></script>
 <script src="/js/txt2speech.js"></script>
 <script src="/js/chat-tool-gifts.js"></script>
 <script src="/js/chat-tool-settings.js"></script>
@@ -333,6 +297,7 @@ $(document).ready(function() {
 
     $(document).on('click','.history-chat', function(){
         const chatId = $(this).data('id')
+        console.log(`[Chat History] Opening chat history for chat ID: ${chatId} for userId: ${userId}`);
         if(chatId && userId){ 
             getUserChatHistory(chatId, userId) 
         }
@@ -454,102 +419,6 @@ $(document).ready(function() {
         const imageModal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
         imageModal.show();
     }
-
-    $(document).on('click', '.tag-button', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        const user = {{{json user}}}
-        const isTemporary = !!user.isTemporary
-        const subscriptionStatus = user.subscriptionStatus == 'active'
-        if(isTemporary || !subscriptionStatus){
-            showUpgradePopup()
-            return
-        }
-        var dataId = $(this).attr('data-id');
-        var codeToCopy = `<div id="lamix-chat-widget" data-id="${dataId}"></div><script src="https://lamix.hatoltd.com/js/chat-widget.js"></` + `script>`;
-
-        // Create a temporary textarea element to copy the text
-        var $temp = $('<textarea>');
-        $('body').append($temp);
-        $temp.val(codeToCopy).select();
-        document.execCommand('copy');
-        $temp.remove();
-
-        // Show SweetAlert2 notification
-        Swal.fire({
-            title: 'コピー完了',
-            text: 'タグをコピーしました。チャットボットを設置したい場所にタグを貼り付けてください。',
-            icon:'success',
-            confirmButtonText: 'OK'
-        });
-    });
-    $(document).on('click', '.delete-chat', function(e) {
-        e.preventDefault()
-        e.stopPropagation();
-        const chatId = $(this).data('id');
-        const user = {{{json user}}}
-        const userId = user._id
-        Swal.fire({
-            title: '本当に削除しますか？',
-            text: "この操作は元に戻せません！",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'はい、削除します！',
-            cancelButtonText: 'キャンセル'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: `/api/delete-chat/${chatId}`,
-                    type: 'DELETE',
-                    data: { chatId },
-                    success: function(response) {
-                        renderChatList(userId)
-                    },
-                    error: function(xhr, status, error) {
-                        Swal.fire(
-                            'エラー',
-                            'チャットの削除に失敗しました。',
-                            'error'
-                        );
-                    }
-                });
-            }
-        });
-    });
-    $(document).on('click', '.delete-chat-history', function(e) {
-        e.preventDefault()
-        e.stopPropagation();
-        const selectedChatId = $(this).data('id');
-        Swal.fire({
-            title: '本当に削除しますか？',
-            text: "この操作は元に戻せません！",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'はい、削除します！',
-            cancelButtonText: 'キャンセル'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: `/api/delete-chat-history/${selectedChatId}`,
-                    type: 'DELETE',
-                    success: function(response) {
-                        $(document).find(`.user-chat-history[data-chat="${selectedChatId}"]`).fadeOut().remove()
-                    },
-                    error: function(xhr, status, error) {
-                        Swal.fire(
-                            'エラー',
-                            'チャットの削除に失敗しました。',
-                            'error'
-                        );
-                    }
-                });
-            }
-        });
-    });
 
     $('.nav-link').on('click', function(e) {
         e.preventDefault();

@@ -92,6 +92,8 @@ const chatHeader = fs.readFileSync('views/partials/chat-header.hbs', 'utf8');
 handlebars.registerPartial('chat-header', chatHeader);
 const chatFooter = fs.readFileSync('views/partials/chat-footer.hbs', 'utf8'); 
 handlebars.registerPartial('chat-footer', chatFooter);
+const chatHistorySidebar = fs.readFileSync('views/partials/chat-history-sidebar.hbs', 'utf8');
+handlebars.registerPartial('chat-history-sidebar', chatHistorySidebar);
 
 fastify.register(require('@fastify/view'), {
   engine: { handlebars: require('handlebars') },
@@ -889,43 +891,6 @@ fastify.get('/about', async (request, reply) => {
   });
 });
 
-fastify.get('/chat/list/:id', async (request, reply) => {
-  try {
-    const db = fastify.mongo.db;
-    const userId = new fastify.mongo.ObjectId(request.params.id);
-    const user = await db.collection('users').findOne({ _id: userId });
-
-    let query = { userId, visibility: 'public' };
-    const currentUser = request.user;
-
-    if (currentUser._id.toString() === request.params.id.toString()) {
-      query = { userId };
-    }
-
-    const chatsCollection = db.collection('chats');
-    const sortedChats = await chatsCollection.find(query).sort({ updatedAt: -1 }).toArray();
-    
-
-    return reply.view('chat-list', {
-      title: translations.seo.title,
-      
-      
-      chats: sortedChats,
-      
-      seo: [
-        { name: 'description', content: translations.seo.description },
-        { name: 'keywords', content: translations.seo.keywords },
-        { property: 'og:title', content: translations.seo.title },
-        { property: 'og:description', content: translations.seo.description },
-        { property: 'og:image', content: '/img/share.png' },
-        { property: 'og:url', content: 'https://chatlamix/' },
-      ],
-    });
-  } catch (err) {
-    console.log(err);
-    return reply.status(500).send({ error: 'Failed to retrieve chat list' });
-  }
-});
 
 fastify.get('/discover', async (request, reply) => {
   const db = fastify.mongo.db;

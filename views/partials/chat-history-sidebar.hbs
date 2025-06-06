@@ -1,0 +1,48 @@
+<!-- Main Chat List Sidebar -->
+<div class="sidebar hidden bg-light shadow-0 d-flex flex-column">
+    <div class="tools d-flex align-items-start flex-column sticky-top bg-light py-2">
+        <div class="d-none w-100 m-2">
+            <button class="menu-chat-sm d-sm-none btn bg-dark shadow-0"><i class="bi bi-list"></i></button>
+            <button 
+            class="new-chat d-sm-none btn btn-light"
+            onclick="handleChatReset(this)"
+            ><i class="bi bi-pencil-square"></i></button>
+        </div>
+        <div>
+            <span onclick="showDiscovery()" class="m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius: 40px;">
+                <i class="bi bi-chat me-2"></i>{{translations.chatList}}
+            </span>
+            <a href="/character" class="{{default isAdmin 'd-inline-block'}} m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary" style="border-radius:40px;">
+                <i class="bi bi-globe me-2"></i>{{translations.explore}}
+            </a>
+            <a href="#" onclick="loadCharacterCreationPage()" class="{{default isAdmin 'd-inline-block'}} m-2 btn px-4 py-2 border shadow-0 btn-outline-secondary text-start" style="border-radius:40px;">
+                <i class="bi bi-plus me-2"></i>{{translations.createCharacter}}
+            </a>
+        </div>
+        <span class="text-dark ps-4 fw-bold" style="font-size: 12px;">{{translations.chatList}} <span id="user-chat-count">{{chats.length}}</span></span>
+    </div>
+    <div id="chat-list" class="mt-1 pb-3 position-relative chat-list-container" style="flex-grow: 1;overflow-y: scroll;overflow-x: hidden;border-top:1px solid #cccccc6b;">
+        <!-- Professional Loading State -->
+        <div id="chat-list-spinner" class="chat-loading-state" style="display: none;">
+            <div class="loading-card">
+                <div class="loading-header">
+                    <div class="loading-pulse-icon">
+                        <i class="bi bi-chat-dots"></i>
+                    </div>
+                    <div class="loading-text">
+                        <h6 class="mb-1">{{translations.loadingChats}}</h6>
+                        <small class="text-muted">{{translations.pleaseWait}}</small>
+                    </div>
+                </div>
+                <div class="loading-progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+                <div class="loading-dots-container">
+                    <div class="loading-dot"></div>
+                    <div class="loading-dot"></div>
+                    <div class="loading-dot"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

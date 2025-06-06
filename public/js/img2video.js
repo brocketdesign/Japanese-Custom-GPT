@@ -245,7 +245,7 @@ function displayVideoLoader(placeholderId, imageId) {
     `;
 
     // Insert loader after the image container
-    const imageContainer = $(`[data-id="${imageId}"]`).closest('.assistant-image-box');
+    const imageContainer = $('#chat-container ').find(`[data-id="${imageId}"]`).closest('.assistant-image-box');
     
     if (imageContainer.length > 0) {
         imageContainer.append(loaderHtml);

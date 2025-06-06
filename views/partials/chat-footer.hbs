@@ -351,6 +351,7 @@
     </div>
 </div>
 
+
 <script>
 // Ensure toolbar scrolling works properly on mobile
 document.addEventListener('DOMContentLoaded', function() {
@@ -371,6 +372,35 @@ document.addEventListener('DOMContentLoaded', function() {
             if (isScrolling) e.preventDefault();
         }, true);
     }
+});
+
+// Ensure proper modal management
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle chat history click from list items
+    $(document).on('click', '.user-chat-history', function() {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('chatHistoryModal'));
+        if (modal) {
+            modal.hide();
+        }
+    });
+
+    // Ensure modal backdrop is properly positioned
+    $('#chatHistoryModal').on('show.bs.modal', function() {
+        // Force high z-index
+        setTimeout(() => {
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.style.zIndex = '1055';
+            }
+            this.style.zIndex = '1060';
+        }, 10);
+    });
+
+    // Clean up when modal is hidden
+    $('#chatHistoryModal').on('hidden.bs.modal', function() {
+        // Clear any loading states
+        $('#chat-history-list').empty();
+    });
 });
 </script>
 

@@ -1,15 +1,24 @@
 {
   "lang": "ja",
   "settings": {
+    "saveSettings": "設定を保存",
     "title": "設定",
     "imageSettings": "画像設定",
     "minImagesToSend": "送信する最小画像数",
     "videoSettings": "動画設定",
     "defaultVideoPrompt": "デフォルトの動画プロンプト",
-    "videoPromptPlaceholder": "動画プロンプトを入力してください...",
-    "defaultVideoPromptText": "動画の動きやスタイルを説明してください（任意）",
-    "characterTone": "キャラクターのトーン",
-    "characterToneLabel": "キャラクターのトーンを選択",
+    "videoPromptPlaceholder": "動画生成プロンプトを入力してください...",
+    "defaultVideoPromptText": "スムーズなトランジションと鮮やかな色彩を持つ短く魅力的な動画を生成してください。",
+    "characterTone": "キャラクターとトーン",
+    "characterToneLabel": "キャラクタートーン",
+    "relationshipType": "関係の種類",
+    "voiceSettings": "音声設定",
+    "voiceProvider": "音声プロバイダー",
+    "openAI": "OpenAI",
+    "evenLabs": "EvenLabs",
+    "selectOpenAIVoice": "OpenAIの音声を選択",
+    "selectEvenLabsVoice": "EvenLabsの音声を選択",
+    "selectVoice": "音声を選択",
     "tones": {
       "friendly": "フレンドリー",
       "casual": "カジュアル",
@@ -18,7 +27,6 @@
       "romantic": "ロマンチック",
       "mysterious": "ミステリアス"
     },
-    "relationshipType": "関係の種類",
     "relationships": {
       "friend": "友達",
       "companion": "仲間",
@@ -26,27 +34,60 @@
       "partner": "パートナー",
       "assistant": "アシスタント"
     },
-    "voiceSettings": "音声設定",
-    "selectVoice": "音声を選択",
     "voices": {
+      "nova": {
+        "name": "ノヴァ",
+        "description": "明るくエネルギッシュな女性の声"
+      },
+      "alloy": {
+        "name": "アロイ", 
+        "description": "バランスが取れた多用途な声"
+      },
+      "shimmer": {
+        "name": "シマー",
+        "description": "暖かく表現力豊かな女性の声"
+      },
+      "echo": {
+        "name": "エコー",
+        "description": "明瞭で明確な男性の声"
+      },
+      "onyx": {
+        "name": "オニキス",
+        "description": "深みがあり豊かな男性の声"
+      },
+      "fable": {
+        "name": "フェイブル",
+        "description": "キャラクター性のある物語風の声"
+      },
       "sakura": {
         "name": "さくら",
-        "description": "柔らかく落ち着いた声。"
+        "description": "自然な日本語の女性の声"
       },
-      "yuki": {
-        "name": "ゆき",
-        "description": "明るく元気な声。"
+      "mat": {
+        "name": "マット",
+        "description": "プロフェッショナルな英語の男性の声"
       },
-      "hana": {
-        "name": "はな",
-        "description": "暖かく親しみやすい声。"
+      "coral": {
+        "name": "コーラル",
+        "description": "滑らかで自然な声"
       },
-      "rei": {
-        "name": "れい",
-        "description": "深くて神秘的な声。"
+      "verse": {
+        "name": "ヴァース",
+        "description": "リズミカルで表現力豊かな声"
+      },
+      "ballad": {
+        "name": "バラード",
+        "description": "メロディアスで流れるような声"
+      },
+      "ash": {
+        "name": "アッシュ",
+        "description": "穏やかで安定した声"
+      },
+      "sage": {
+        "name": "セージ",
+        "description": "賢明で思慮深い声"
       }
-    },
-    "saveSettings": "設定を保存"
+    }
   },
   "gifts": {
     "selectGift": "ギフトを選択",

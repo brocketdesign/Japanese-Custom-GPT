@@ -244,7 +244,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
     updateSlug({ taskId: novitaTaskId, taskSlug, fastify, userId, chatId, placeholderId });
 
     if(chatCreation){
-      fastify.sendNotificationToUser(userId, 'showNotification', { message:translations.character_image_generation_starter , icon:'success' });
+      fastify.sendNotificationToUser(userId, 'showNotification', { message:translations.character_image_generation_started , icon:'success' });
     }
 
     // Poll the task status
@@ -831,7 +831,6 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
         { upsert: true }
       );
       // log the inserted image for debugging
-      console.log(`[saveImageToDB] Image saved chatId: ${chatId}, imageId: ${imageId}`);
       const imageData = await chatsGalleryCollection.findOne({ userId: new ObjectId(userId), chatId: new ObjectId(chatId), "images._id": imageId });
       if (!imageData) {
         console.log(`[saveImageToDB] Image not found after saving: ${imageId}`);
@@ -879,7 +878,6 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
 
       // Add context for the assisant
       const firstAvailableTitle = title.en || title.ja || title.fr || '';
-      console.log(`[saveImageToDB] Adding image message to chat: ${firstAvailableTitle}`);
       const imageMessage = {role: "assistant", content: `${firstAvailableTitle}`, hidden: true, type: "image", imageId, imageUrl, prompt, slug, aspectRatio, seed, nsfw};
       addMessageTochat(imageMessage)
 

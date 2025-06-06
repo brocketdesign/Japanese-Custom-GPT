@@ -13,6 +13,11 @@
     "characterToneLabel": "Character Tone",
     "relationshipType": "Relationship Type",
     "voiceSettings": "Voice Settings",
+    "voiceProvider": "Voice Provider",
+    "openAI": "OpenAI",
+    "evenLabs": "EvenLabs",
+    "selectOpenAIVoice": "Select OpenAI Voice",
+    "selectEvenLabsVoice": "Select EvenLabs Voice",
     "selectVoice": "Select Voice",
     "tones": {
       "friendly": "Friendly",
@@ -32,27 +37,35 @@
     "voices": {
       "nova": {
         "name": "Nova",
-        "description": "A bright and cheerful female voice"
+        "description": "Bright and energetic female voice"
       },
       "alloy": {
         "name": "Alloy", 
-        "description": "A balanced and versatile voice"
+        "description": "Balanced and versatile voice"
       },
       "shimmer": {
         "name": "Shimmer",
-        "description": "A warm and expressive female voice"
+        "description": "Warm and expressive female voice"
       },
       "echo": {
         "name": "Echo",
-        "description": "A clear and articulate male voice"
+        "description": "Clear and articulate male voice"
       },
       "onyx": {
         "name": "Onyx",
-        "description": "A deep and rich male voice"
+        "description": "Deep and rich male voice"
       },
       "fable": {
         "name": "Fable",
-        "description": "A storytelling voice with character"
+        "description": "Storytelling voice with character"
+      },
+      "sakura": {
+        "name": "Sakura",
+        "description": "Natural Japanese female voice"
+      },
+      "mat": {
+        "name": "Mat",
+        "description": "Professional English male voice"
       },
       "coral": {
         "name": "Coral",

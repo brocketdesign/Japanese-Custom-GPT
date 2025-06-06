@@ -697,6 +697,10 @@ window.showDiscovery = function() {
 }
 
 window.showNotification = (message, type = 'info') => {
+    if(!message || typeof message !== 'string' || message.trim() === '' || message == 'undefined') {
+        console.warn('Invalid message for notification:', message);
+        return;
+    }
     const styleMap = {
         success: { iconColor: 'text-success', icon: 'bi-check-circle-fill', barColorClass: 'bg-success' },
         error:   { iconColor: 'text-danger',  icon: 'bi-exclamation-triangle-fill', barColorClass: 'bg-danger' },

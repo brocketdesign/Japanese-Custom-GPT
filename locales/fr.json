@@ -1,15 +1,24 @@
 {
   "lang":"fr",
   "settings": {
+    "saveSettings": "Enregistrer les paramètres",
     "title": "Paramètres",
     "imageSettings": "Paramètres d'image",
     "minImagesToSend": "Nombre minimum d'images à envoyer",
     "videoSettings": "Paramètres vidéo",
     "defaultVideoPrompt": "Invite vidéo par défaut",
-    "videoPromptPlaceholder": "Entrez une invite vidéo...",
-    "defaultVideoPromptText": "Décrivez le mouvement ou le style de la vidéo (optionnel)",
-    "characterTone": "Ton du personnage",
-    "characterToneLabel": "Sélectionnez le ton du personnage",
+    "videoPromptPlaceholder": "Entrez l'invite de génération de vidéo...",
+    "defaultVideoPromptText": "Générez une courte vidéo engageante avec des transitions fluides et des couleurs vibrantes.",
+    "characterTone": "Personnage & Ton",
+    "characterToneLabel": "Ton du personnage",
+    "relationshipType": "Type de relation",
+    "voiceSettings": "Paramètres de voix",
+    "voiceProvider": "Fournisseur de voix",
+    "openAI": "OpenAI",
+    "evenLabs": "EvenLabs",
+    "selectOpenAIVoice": "Sélectionner une voix OpenAI",
+    "selectEvenLabsVoice": "Sélectionner une voix EvenLabs",
+    "selectVoice": "Sélectionner une voix",
     "tones": {
       "friendly": "Amical",
       "casual": "Décontracté",
@@ -18,7 +27,6 @@
       "romantic": "Romantique",
       "mysterious": "Mystérieux"
     },
-    "relationshipType": "Type de relation",
     "relationships": {
       "friend": "Ami",
       "companion": "Compagnon",
@@ -26,27 +34,60 @@
       "partner": "Partenaire",
       "assistant": "Assistant"
     },
-    "voiceSettings": "Paramètres de voix",
-    "selectVoice": "Sélectionnez une voix",
     "voices": {
+      "nova": {
+        "name": "Nova",
+        "description": "Voix féminine lumineuse et énergique"
+      },
+      "alloy": {
+        "name": "Alloy", 
+        "description": "Voix équilibrée et polyvalente"
+      },
+      "shimmer": {
+        "name": "Shimmer",
+        "description": "Voix féminine chaleureuse et expressive"
+      },
+      "echo": {
+        "name": "Echo",
+        "description": "Voix masculine claire et articulée"
+      },
+      "onyx": {
+        "name": "Onyx",
+        "description": "Voix masculine profonde et riche"
+      },
+      "fable": {
+        "name": "Fable",
+        "description": "Voix narrative avec du caractère"
+      },
       "sakura": {
         "name": "Sakura",
-        "description": "Une voix douce et apaisante."
+        "description": "Voix féminine japonaise naturelle"
       },
-      "yuki": {
-        "name": "Yuki",
-        "description": "Une voix joyeuse et énergique."
+      "mat": {
+        "name": "Mat",
+        "description": "Voix masculine anglaise professionnelle"
       },
-      "hana": {
-        "name": "Hana",
-        "description": "Une voix chaleureuse et amicale."
+      "coral": {
+        "name": "Coral",
+        "description": "Une voix douce et naturelle"
       },
-      "rei": {
-        "name": "Rei",
-        "description": "Une voix profonde et mystérieuse."
+      "verse": {
+        "name": "Verse",
+        "description": "Une voix rythmée et expressive"
+      },
+      "ballad": {
+        "name": "Ballad",
+        "description": "Une voix mélodique et fluide"
+      },
+      "ash": {
+        "name": "Ash",
+        "description": "Une voix calme et stable"
+      },
+      "sage": {
+        "name": "Sage",
+        "description": "Une voix sage et réfléchie"
       }
-    },
-    "saveSettings": "Enregistrer les paramètres"
+    }
   },
   "gifts": {
     "selectGift": "Sélectionner un cadeau",

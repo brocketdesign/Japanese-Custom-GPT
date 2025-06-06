@@ -5,7 +5,71 @@ const { fetchRandomCivitaiPrompt, createModelChat, markPromptStatus } = require(
 
 async function routes(fastify, options) {
 
-  // New endpoint for preview prompt with navigation
+  // New endpoint for managing forbidden words
+  fastify.get('/civitai/forbidden-words', async (request, reply) => {
+    try {
+      const isAdmin = await checkUserAdmin(fastify, request.user._id);
+      if (!isAdmin) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+
+      const db = fastify.mongo.db;
+      const settingsCollection = db.collection('systemSettings');
+      const forbiddenWordsSettings = await settingsCollection.findOne({ type: 'forbiddenWords' });
+      
+      const words = forbiddenWordsSettings?.words || [];
+      return reply.send({ success: true, words });
+    } catch (error) {
+      console.error('[/civitai/forbidden-words] Error fetching forbidden words:', error);
+      return reply.status(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  fastify.post('/civitai/forbidden-words', async (request, reply) => {
+    try {
+      const isAdmin = await checkUserAdmin(fastify, request.user._id);
+      if (!isAdmin) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+
+      const { words } = request.body;
+      
+      if (!Array.isArray(words)) {
+        return reply.status(400).send({ error: 'Words must be an array' });
+      }
+
+      // Clean and validate words
+      const cleanWords = words
+        .filter(word => word && typeof word === 'string')
+        .map(word => word.trim())
+        .filter(word => word.length > 0);
+
+      const db = fastify.mongo.db;
+      const settingsCollection = db.collection('systemSettings');
+      
+      await settingsCollection.updateOne(
+        { type: 'forbiddenWords' },
+        {
+          $set: {
+            words: cleanWords,
+            updatedAt: new Date()
+          },
+          $setOnInsert: {
+            createdAt: new Date()
+          }
+        },
+        { upsert: true }
+      );
+
+      console.log(`[/civitai/forbidden-words] Updated forbidden words list: ${cleanWords.length} words`);
+      return reply.send({ success: true, words: cleanWords });
+    } catch (error) {
+      console.error('[/civitai/forbidden-words] Error updating forbidden words:', error);
+      return reply.status(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // Enhanced preview endpoint with better retry logic
   fastify.post('/api/preview-prompt', async (request, reply) => {
     try {
       console.log('[/api/preview-prompt] Starting prompt preview request');
@@ -42,19 +106,19 @@ async function routes(fastify, options) {
 
       console.log(`[/api/preview-prompt] Fetching prompt with newPage=${newPage}, newPromptIndex=${newPromptIndex}`);
 
-      // Fetch prompt with exclusion of used/skipped prompts
+      // Fetch prompt with strict exclusion of used/skipped prompts and forbidden words filtering
       const promptData = await fetchRandomCivitaiPrompt(
         model, 
         nsfw, 
         newPage, 
         newPromptIndex, 
-        true, // excludeUsed = true
+        true, // excludeUsed = true (strict exclusion)
         db
       );
 
       if (!promptData) {
-        console.log('[/api/preview-prompt] No suitable prompt found');
-        return reply.send({ error: 'No suitable prompt found for this model' });
+        console.log('[/api/preview-prompt] No suitable prompt found after exhaustive search');
+        return reply.send({ error: 'No more unused prompts available for this model. All prompts have been used or contain forbidden words.' });
       }
 
       // Store the prompt temporarily in database for later generation
@@ -169,15 +233,15 @@ async function routes(fastify, options) {
           return reply.status(404).send({ error: 'Model not found' });
         }
         
-        // If we don't have a cached prompt, get a new one
+        // If we don't have a cached prompt, get a new one with strict filtering
         if (!civitaiData) {
-          console.log('[/civitai/model-chats/generate] No cached prompt, fetching new one');
+          console.log('[/civitai/model-chats/generate] No cached prompt, fetching new one with strict filtering');
           civitaiData = await fetchRandomCivitaiPrompt(model, nsfw, 1, 0, true, db);
         }
 
         if (!civitaiData) {
-          console.log('[/civitai/model-chats/generate] No suitable prompt found');
-          return reply.status(404).send({ error: 'No suitable prompt found for this model' });
+          console.log('[/civitai/model-chats/generate] No suitable prompt found after exhaustive search');
+          return reply.status(404).send({ error: 'No more unused prompts available for this model. All prompts have been used or contain forbidden words.' });
         }
         
         // Create a new chat - Pass the current user for image generation
@@ -194,7 +258,7 @@ async function routes(fastify, options) {
         console.log(`[/civitai/model-chats/generate] Successfully created chat: ${chat._id}`);
         return reply.send({ success: true, chat });
       } else {
-        // Generate for all models
+        // Generate for all models with enhanced error handling
         console.log('[/civitai/model-chats/generate] Generating for all models');
         const modelsCollection = db.collection('myModels');
         const models = await modelsCollection.find({}).toArray();
@@ -204,17 +268,17 @@ async function routes(fastify, options) {
           try {
             console.log(`[/civitai/model-chats/generate] Processing model: ${model.model}`);
             
-            // Get prompt from Civitai with exclusion of used prompts
+            // Get prompt from Civitai with strict exclusion and forbidden words filtering
             const prompt = await fetchRandomCivitaiPrompt(model, nsfw, 1, 0, true, db);
             
             if (!prompt) {
               console.log(`[/civitai/model-chats/generate] No suitable prompt found for model: ${model.model}`);
-              results.push({ model: model.model, status: 'failed', reason: 'No suitable prompt found' });
+              results.push({ model: model.model, status: 'failed', reason: 'No more unused prompts available or all contain forbidden words' });
               continue;
             }
             
             // Create a new chat - Pass current user for image generation
-            const chat = await createModelChat(db, model, prompt, request.lang, fastify, request.user);
+            const chat = await createModelChat(db, model, prompt, request.lang, fastify, request.user, nsfw);
             
             if (!chat) {
               console.log(`[/civitai/model-chats/generate] Failed to create chat for model: ${model.model}`);

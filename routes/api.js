@@ -667,7 +667,7 @@ async function routes(fastify, options) {
                 : ''}. ${user.bio ? user.bio : ''}`
             : '';
         }
-        console.log('userDetails:', userDetails);
+
         return `
         You must act as a character named ${chatDocument.name}.\n\n
         

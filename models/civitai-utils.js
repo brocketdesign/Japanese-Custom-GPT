@@ -8,9 +8,50 @@ const { OpenAI } = require("openai");
 const { zodResponseFormat } = require("openai/helpers/zod");
 
 /**
+ * Check if prompt contains forbidden words
+ * @param {string} prompt - The prompt text to check
+ * @param {Array<string>} forbiddenWords - Array of forbidden words/phrases
+ * @returns {boolean} - True if prompt contains forbidden words
+ */
+function containsForbiddenWords(prompt, forbiddenWords = []) {
+  if (!forbiddenWords || forbiddenWords.length === 0) return false;
+  
+  const lowerPrompt = prompt.toLowerCase();
+  return forbiddenWords.some(word => {
+    const lowerWord = word.toLowerCase().trim();
+    return lowerWord && lowerPrompt.includes(lowerWord);
+  });
+}
+
+/**
+ * Get forbidden words from database
+ * @param {Object} db - MongoDB database connection
+ * @returns {Promise<Array<string>>} - Array of forbidden words
+ */
+async function getForbiddenWords(db) {
+  try {
+    const settingsCollection = db.collection('systemSettings');
+    const forbiddenWordsSettings = await settingsCollection.findOne({ type: 'forbiddenWords' });
+    
+    if (forbiddenWordsSettings && forbiddenWordsSettings.words) {
+      return forbiddenWordsSettings.words.filter(word => word && word.trim().length > 0);
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('[getForbiddenWords] Error fetching forbidden words:', error);
+    return [];
+  }
+}
+
+/**
  * Fetch a random prompt from Civitai API based on model name
- * @param {string} modelName - The name of the model to search for
+ * @param {string} modelData - The model data object
  * @param {boolean} nsfw - Whether to include NSFW content
+ * @param {number} page - Page number to fetch
+ * @param {number} promptIndex - Index of prompt within the page
+ * @param {boolean} excludeUsed - Whether to exclude used/skipped prompts
+ * @param {Object} db - MongoDB database connection
  * @returns {Promise<Object|false>} - A prompt object from Civitai or false if none found
  */
 async function fetchRandomCivitaiPrompt(modelData, nsfw = false, page = 1, promptIndex = 0, excludeUsed = true, db = null) {
@@ -18,106 +59,149 @@ async function fetchRandomCivitaiPrompt(modelData, nsfw = false, page = 1, promp
     const baseModelName = modelData.model.replace(/\.safetensors$/, '').replace(/v\d+/, '').trim();
     const modelId = modelData.modelId;
     const nsfwParam = nsfw == 'true' ? '&nsfw=true' : '&nsfw=false';
-    const maxAttempts = 5;
+    const maxRetries = 10; // Try up to 10 different prompts/pages
+    const maxPagesPerAttempt = 5; // Try up to 5 pages per attempt
+    let currentPage = page || 1;
+    let currentPromptIndex = promptIndex || 0;
     
-    console.log(`[fetchRandomCivitaiPrompt] Fetching Civitai prompts for model: ${baseModelName}, page: ${page}, promptIndex: ${promptIndex}, nsfw: ${nsfw}, excludeUsed: ${excludeUsed}`);
+    console.log(`[fetchRandomCivitaiPrompt] Starting search for model: ${baseModelName}, page: ${currentPage}, promptIndex: ${currentPromptIndex}, nsfw: ${nsfw}, excludeUsed: ${excludeUsed}`);
     
-    // Get used/skipped prompts if db is provided and excludeUsed is true
+    // Get used/skipped prompts and forbidden words
     let usedPrompts = new Set();
-    if (db && excludeUsed) {
-      const promptTrackingCollection = db.collection('promptTracking');
-      const usedPromptsData = await promptTrackingCollection.find({
-        modelId,
-        $or: [{ status: 'used' }, { status: 'skipped' }]
-      }).toArray();
-      usedPrompts = new Set(usedPromptsData.map(p => p.promptHash));
-      console.log(`[fetchRandomCivitaiPrompt] Found ${usedPrompts.size} used/skipped prompts for model ${modelId}`);
-    }
+    let forbiddenWords = [];
     
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      page = page || 1;
-      const limit = 30;
-      const url = `https://civitai.com/api/v1/images?limit=${limit}&page=${page}&modelVersionId=${encodeURIComponent(modelId)}${nsfwParam}`;
-
-      console.log(`[fetchRandomCivitaiPrompt] Attempt ${attempt}: Fetching from ${url}`);
-
-      const response = await axios.get(url, {
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        timeout: 10000
-      });
-      
-      if (response.data.items && response.data.items.length > 0) {        
-        // Filter all items with valid prompts
-        let validItems = response.data.items.filter(item => 
-          item.meta?.prompt && typeof item.meta.prompt === 'string' && item.meta.prompt.trim().length > 0
-        );
-
-        // If excludeUsed is true, filter out used/skipped prompts
-        if (excludeUsed && usedPrompts.size > 0) {
-          validItems = validItems.filter(item => {
-            const promptHash = require('crypto').createHash('md5').update(item.meta.prompt).digest('hex');
-            return !usedPrompts.has(promptHash);
-          });
-          console.log(`[fetchRandomCivitaiPrompt] After filtering used prompts: ${validItems.length} valid items remaining`);
-        }
-
-        const randomIndex = parseInt(promptIndex) + 1 || 1;
-        const validItem = validItems.length > 0 ? validItems[randomIndex] : undefined;
-        
-        if (validItem) {          
-          function processString(input) { 
-            try {
-              if (!input || typeof input !== 'string' || input.length === 0) {
-                return false;
-              }
-              return [...new Set(input.slice(0, 900).split(',').map(s => s.trim()))].join(', '); 
-            } catch (error) {
-              console.error('[fetchRandomCivitaiPrompt/processString] Error processing string:', error);
-              console.log({input});
-              return false;
-            }
-          }
-          
-          const processedPrompt = processString(validItem.meta.prompt);
-          
-          if (!processedPrompt) {
-            console.log('[fetchRandomCivitaiPrompt] Prompt processing failed, continuing to next attempt');
-            continue;
-          }
-
-          // Generate prompt hash for tracking
-          const promptHash = require('crypto').createHash('md5').update(processedPrompt).digest('hex');
-          
-          console.log(`[fetchRandomCivitaiPrompt] Successfully found valid prompt with hash: ${promptHash}`);
-          
-          return {
-            imageUrl: validItem.url || "",
-            prompt: processedPrompt,
-            promptHash,
-            negativePrompt: validItem.meta?.negativePrompt || 'low quality, bad anatomy, worst quality',
-            model: validItem.meta?.Model || baseModelName,
-            modelId,
-            sampler: validItem.meta?.sampler || 'Euler a',
-            cfgScale: validItem.meta?.cfgScale || 7,
-            steps: validItem.meta?.steps || 30,
-            page,
-            promptIndex: randomIndex,
-            totalItems: validItems.length
-          };
-        }
+    if (db) {
+      if (excludeUsed) {
+        const promptTrackingCollection = db.collection('promptTracking');
+        const usedPromptsData = await promptTrackingCollection.find({
+          modelId,
+          $or: [{ status: 'used' }, { status: 'skipped' }]
+        }).toArray();
+        usedPrompts = new Set(usedPromptsData.map(p => p.promptHash));
+        console.log(`[fetchRandomCivitaiPrompt] Found ${usedPrompts.size} used/skipped prompts for model ${modelId}`);
       }
       
-      console.log(`[fetchRandomCivitaiPrompt] No valid prompts found in attempt ${attempt}, trying again...`);
+      // Get forbidden words
+      forbiddenWords = await getForbiddenWords(db);
+      console.log(`[fetchRandomCivitaiPrompt] Found ${forbiddenWords.length} forbidden words`);
     }
     
-    console.log(`[fetchRandomCivitaiPrompt] No valid prompts found after ${maxAttempts} attempts for model: ${baseModelName}`);
+    // Try up to maxRetries times to find a suitable prompt
+    for (let retry = 0; retry < maxRetries; retry++) {
+      console.log(`[fetchRandomCivitaiPrompt] Retry ${retry + 1}/${maxRetries} - Page: ${currentPage}, Index: ${currentPromptIndex}`);
+      
+      try {
+        const limit = 30;
+        const url = `https://civitai.com/api/v1/images?limit=${limit}&page=${currentPage}&modelVersionId=${encodeURIComponent(modelId)}${nsfwParam}`;
+
+        console.log(`[fetchRandomCivitaiPrompt] Fetching from ${url}`);
+
+        const response = await axios.get(url, {
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        });
+        
+        if (response.data.items && response.data.items.length > 0) {        
+          // Filter all items with valid prompts
+          let validItems = response.data.items.filter(item => 
+            item.meta?.prompt && typeof item.meta.prompt === 'string' && item.meta.prompt.trim().length > 0
+          );
+
+          console.log(`[fetchRandomCivitaiPrompt] Found ${validItems.length} items with valid prompts`);
+
+          // Process each item to check if it's suitable
+          for (let i = currentPromptIndex; i < validItems.length; i++) {
+            const item = validItems[i];
+            const rawPrompt = item.meta.prompt;
+            
+            // Process the prompt
+            const processedPrompt = processString(rawPrompt);
+            if (!processedPrompt) {
+              console.log(`[fetchRandomCivitaiPrompt] Prompt processing failed for index ${i}, skipping`);
+              continue;
+            }
+
+            // Generate prompt hash for tracking
+            const promptHash = require('crypto').createHash('md5').update(processedPrompt).digest('hex');
+            
+            // Check if prompt was already used/skipped
+            if (excludeUsed && usedPrompts.has(promptHash)) {
+              console.log(`[fetchRandomCivitaiPrompt] Prompt already used/skipped (hash: ${promptHash}), skipping`);
+              continue;
+            }
+            
+            // Check for forbidden words
+            if (containsForbiddenWords(processedPrompt, forbiddenWords)) {
+              console.log(`[fetchRandomCivitaiPrompt] Prompt contains forbidden words, marking as skipped`);
+              // Mark as skipped so we never see it again
+              if (db) {
+                await markPromptStatus(db, modelId, promptHash, 'skipped');
+              }
+              continue;
+            }
+            
+            // Found a suitable prompt!
+            console.log(`[fetchRandomCivitaiPrompt] Found suitable prompt at page ${currentPage}, index ${i}`);
+            
+            return {
+              imageUrl: item.url || "",
+              prompt: processedPrompt,
+              promptHash,
+              negativePrompt: item.meta?.negativePrompt || 'low quality, bad anatomy, worst quality',
+              model: item.meta?.Model || baseModelName,
+              modelId,
+              sampler: item.meta?.sampler || 'Euler a',
+              cfgScale: item.meta?.cfgScale || 7,
+              steps: item.meta?.steps || 30,
+              page: currentPage,
+              promptIndex: i,
+              totalItems: validItems.length
+            };
+          }
+          
+          // If we didn't find anything on this page, try the next page
+          currentPage++;
+          currentPromptIndex = 0; // Reset index for new page
+          
+          // If we've tried too many pages in this attempt, break
+          if (currentPage > (page + maxPagesPerAttempt)) {
+            console.log(`[fetchRandomCivitaiPrompt] Reached max pages per attempt, moving to next retry`);
+            currentPage = Math.max(1, page + retry); // Try different starting pages
+            currentPromptIndex = 0;
+          }
+        } else {
+          console.log(`[fetchRandomCivitaiPrompt] No items found on page ${currentPage}, trying next page`);
+          currentPage++;
+          currentPromptIndex = 0;
+        }
+      } catch (pageError) {
+        console.error(`[fetchRandomCivitaiPrompt] Error fetching page ${currentPage}:`, pageError.message);
+        // Try next page on error
+        currentPage++;
+        currentPromptIndex = 0;
+      }
+    }
+    
+    console.log(`[fetchRandomCivitaiPrompt] No suitable prompts found after ${maxRetries} retries for model: ${baseModelName}`);
     return false;
     
   } catch (error) {
     console.error('[fetchRandomCivitaiPrompt] Error fetching Civitai prompt:', error.message);
     return false;
+  }
+  
+  function processString(input) { 
+    try {
+      if (!input || typeof input !== 'string' || input.length === 0) {
+        return false;
+      }
+      return [...new Set(input.slice(0, 900).split(',').map(s => s.trim()))].join(', '); 
+    } catch (error) {
+      console.error('[fetchRandomCivitaiPrompt/processString] Error processing string:', error);
+      return false;
+    }
   }
 }
 

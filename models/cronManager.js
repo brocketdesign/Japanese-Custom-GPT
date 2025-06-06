@@ -52,6 +52,7 @@ const configureCronJob = (jobName, schedule, enabled, task) => {
   
   return false; 
 };
+
 /**
  * Clean up expired audio files that weren't deleted by the setTimeout
  * @param {Object} fastify - Fastify instance
@@ -92,6 +93,7 @@ const cleanupExpiredAudioFiles = (fastify) => async () => {
     console.error('[cleanupExpiredAudioFiles] Error cleaning up expired audio files:', err);
   }
 };
+
 /**
  * Create a model chat generation task
  * 
@@ -140,16 +142,31 @@ const createModelChatGenerationTask = (fastify) => {
       // Create chat for each model
       for (const model of models) {
         try {
-          // Get prompt from Civitai
-          const prompt = await fetchRandomCivitaiPrompt(model.model, modelChatCronSettings.nsfw);
+          console.log(`[createModelChatGenerationTask] Processing model: ${model.model}`);
+          
+          // Get prompt from Civitai with strict exclusion of used/skipped prompts and forbidden words filtering
+          const prompt = await fetchRandomCivitaiPrompt(
+            model, 
+            modelChatCronSettings.nsfw, 
+            1, // Start from page 1
+            0, // Start from index 0
+            true, // excludeUsed = true (critical for cron jobs - strictly exclude used/skipped prompts)
+            db
+          );
           
           if (!prompt) {
-            console.log(`[createModelChatGenerationTask] No suitable prompt found for model ${model.model}. Skipping.`);
+            console.log(`[createModelChatGenerationTask] No suitable prompt found for model ${model.model} after exhaustive search. All prompts may have been used or contain forbidden words. Skipping.`);
             continue;
           }
           
           // Create a new chat - Pass admin user for image generation
-          await createModelChat(db, model, prompt, 'en', fastify, adminUser, modelChatCronSettings.nsfw);
+          const createdChat = await createModelChat(db, model, prompt, 'en', fastify, adminUser, modelChatCronSettings.nsfw);
+          
+          if (createdChat) {
+            console.log(`[createModelChatGenerationTask] Successfully created chat for model ${model.model}: ${createdChat._id}`);
+          } else {
+            console.log(`[createModelChatGenerationTask] Failed to create chat for model ${model.model}`);
+          }
           
           // Wait a bit between requests to avoid rate limiting
           await new Promise(resolve => setTimeout(resolve, 5000));
@@ -498,7 +515,6 @@ const cachePopularChatsTask = (fastify) => async () => {
     console.error('[cachePopularChatsTask] Error caching popular chats:', err);
   }
 };
-
 
 /**
  * Initialize cron jobs from database settings

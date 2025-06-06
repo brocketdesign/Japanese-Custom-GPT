@@ -15,6 +15,56 @@
         <h2>Model Chats Management</h2>
         <p>Generate daily AI character chats for each model in your system.</p>
         
+        <!-- Forbidden Words Management Section -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">Forbidden Words Management</h5>
+              <button id="loadForbiddenWords" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-arrow-clockwise"></i> Reload
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-8">
+                <div class="mb-3">
+                  <label for="forbiddenWordsInput" class="form-label">Forbidden Words/Phrases</label>
+                  <textarea class="form-control" id="forbiddenWordsInput" rows="4" 
+                            placeholder="Enter forbidden words or phrases, one per line. Prompts containing these words will be automatically skipped."></textarea>
+                  <div class="form-text">
+                    <i class="bi bi-info-circle"></i> Any prompt containing these words will be automatically marked as skipped and never shown again. 
+                    Case-insensitive matching. Use phrases like "realistic photo" to block specific combinations.
+                  </div>
+                </div>
+                <button id="saveForbiddenWords" class="btn btn-primary">
+                  <i class="bi bi-floppy"></i> Save Forbidden Words
+                </button>
+              </div>
+              <div class="col-md-4">
+                <div class="card">
+                  <div class="card-body">
+                    <h6 class="card-title">Quick Actions</h6>
+                    <div class="d-grid gap-2">
+                      <button id="clearForbiddenWords" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-trash"></i> Clear All
+                      </button>
+                      <button id="addCommonForbidden" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-plus-circle"></i> Add Common Terms
+                      </button>
+                    </div>
+                    <div class="mt-3">
+                      <small class="text-muted">
+                        <strong>Current Count:</strong> <span id="forbiddenWordsCount">0</span> words
+                      </small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
         <div class="card mb-4">
           <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
@@ -191,7 +241,7 @@
                     <div id="modelInfo">
                       <strong>Model:</strong> <span id="modelName" class="text-primary truncate"></span>
                     </div>
-                    <div class="btn-group" role="group">
+                    <div class="btn-group d-none d-lg-flex" role="group">
                       <button id="prevPreview" class="btn btn-sm btn-outline-secondary" disabled>
                         <i class="bi bi-arrow-left"></i> Previous
                       </button>
@@ -204,9 +254,19 @@
                 
                 <div class="flex-grow-1 overflow-auto p-3" id="scrollableContent" style="height: calc(100% - 60px);">
                   <div id="promptDetails" class="d-none">
-                    <!-- Mobile image preview (shown only on mobile) -->
-                    <div class="d-lg-none mb-3 text-center">
-                      <img id="promptImageMobile" src="" class="img-fluid rounded shadow" alt="Character preview" style="max-height: 250px; object-fit: contain;">
+                    <!-- Mobile image preview (shown only on mobile) with carousel navigation -->
+                    <div class="d-lg-none mb-3 position-relative">
+                      <div class="text-center">
+                        <img id="promptImageMobile" src="" class="img-fluid rounded shadow" alt="Character preview" style="max-height: 250px; object-fit: contain;">
+                      </div>
+                      
+                      <!-- Mobile carousel navigation arrows -->
+                      <button id="prevPreviewMobile" class="btn btn-dark btn-sm position-absolute top-50 start-0 translate-middle-y ms-2 opacity-75" style="z-index: 10;" disabled>
+                        <i class="bi bi-chevron-left"></i>
+                      </button>
+                      <button id="nextPreviewMobile" class="btn btn-dark btn-sm position-absolute top-50 end-0 translate-middle-y me-2 opacity-75" style="z-index: 10;">
+                        <i class="bi bi-chevron-right"></i>
+                      </button>
                     </div>
                     
                     <div class="mb-4">
@@ -290,6 +350,28 @@
       #contentColumn {
         height: 100% !important;
         width: 100% !important;
+      }
+      
+      /* Mobile carousel arrows styling */
+      #prevPreviewMobile,
+      #nextPreviewMobile {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        transition: opacity 0.2s ease;
+      }
+      
+      #prevPreviewMobile:hover,
+      #nextPreviewMobile:hover {
+        opacity: 1 !important;
+      }
+      
+      #prevPreviewMobile:disabled,
+      #nextPreviewMobile:disabled {
+        opacity: 0.3 !important;
+        cursor: not-allowed;
       }
     }
     
@@ -459,6 +541,21 @@
         }
       });
 
+      // Mobile carousel navigation
+      $('#prevPreviewMobile').on('click', function() {
+        if (!$(this).prop('disabled')) {
+          console.log('[prevPreviewMobile] Navigating to previous prompt');
+          fetchPreviewPrompt('prev');
+        }
+      });
+
+      $('#nextPreviewMobile').on('click', function() {
+        if (!$(this).prop('disabled')) {
+          console.log('[nextPreviewMobile] Navigating to next prompt');
+          fetchPreviewPrompt('next');
+        }
+      });
+
       // Extract prompt fetching into a separate function that can be reused
       function fetchPreviewPrompt(direction = 'current') {
         console.log(`[fetchPreviewPrompt] Fetching with direction: ${direction}, page: ${currentPage}, promptIndex: ${currentPromptIndex}`);
@@ -536,6 +633,10 @@
             // Update navigation buttons
             $('#prevPreview').prop('disabled', currentPromptIndex <= 0);
             $('#nextPreview').prop('disabled', false); // Always allow next for now
+            
+            // Update mobile navigation buttons
+            $('#prevPreviewMobile').prop('disabled', currentPromptIndex <= 0);
+            $('#nextPreviewMobile').prop('disabled', false); // Always allow next for now
           },
           error: function(xhr, status, error) {
             console.error('[fetchPreviewPrompt] Error:', error);
@@ -743,6 +844,123 @@
             });
           }
         });
+      });
+      
+      // Forbidden Words Management
+      let forbiddenWords = [];
+      
+      // Load forbidden words on page load
+      loadForbiddenWords();
+      
+      function loadForbiddenWords() {
+        $.ajax({
+          url: '/civitai/forbidden-words',
+          type: 'GET',
+          dataType: 'json',
+          success: function(data) {
+            if (data.success) {
+              forbiddenWords = data.words || [];
+              $('#forbiddenWordsInput').val(forbiddenWords.join('\n'));
+              updateForbiddenWordsCount();
+            } else {
+              console.error('Failed to load forbidden words:', data.error);
+            }
+          },
+          error: function(xhr) {
+            console.error('Error loading forbidden words:', xhr.responseJSON);
+            Swal.fire({
+              title: 'Error!',
+              text: 'Failed to load forbidden words',
+              icon: 'error',
+              confirmButtonText: 'OK'
+            });
+          }
+        });
+      }
+      
+      function updateForbiddenWordsCount() {
+        $('#forbiddenWordsCount').text(forbiddenWords.length);
+      }
+      
+      // Reload forbidden words
+      $('#loadForbiddenWords').on('click', function() {
+        loadForbiddenWords();
+      });
+      
+      // Save forbidden words
+      $('#saveForbiddenWords').on('click', function() {
+        const wordsText = $('#forbiddenWordsInput').val();
+        const words = wordsText.split('\n')
+          .map(word => word.trim())
+          .filter(word => word.length > 0);
+        
+        $.ajax({
+          url: '/civitai/forbidden-words',
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({ words: words }),
+          dataType: 'json',
+          success: function(data) {
+            if (data.success) {
+              forbiddenWords = data.words;
+              updateForbiddenWordsCount();
+              Swal.fire({
+                title: 'Success!',
+                text: `Saved ${data.words.length} forbidden words. Prompts containing these words will be automatically skipped.`,
+                icon: 'success',
+                confirmButtonText: 'Great!'
+              });
+            } else {
+              Swal.fire({
+                title: 'Error!',
+                text: data.error || 'Failed to save forbidden words',
+                icon: 'error',
+                confirmButtonText: 'OK'
+              });
+            }
+          },
+          error: function(xhr) {
+            Swal.fire({
+              title: 'Error!',
+              text: xhr.responseJSON?.error || 'An error occurred while saving',
+              icon: 'error',
+              confirmButtonText: 'OK'
+            });
+          }
+        });
+      });
+      
+      // Clear all forbidden words
+      $('#clearForbiddenWords').on('click', function() {
+        Swal.fire({
+          title: 'Clear All Forbidden Words?',
+          text: 'This will remove all forbidden words. Previously skipped prompts will remain skipped.',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Yes, clear all',
+          cancelButtonText: 'Cancel'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            $('#forbiddenWordsInput').val('');
+            $('#saveForbiddenWords').click();
+          }
+        });
+      });
+      
+      // Add common forbidden terms
+      $('#addCommonForbidden').on('click', function() {
+        const commonTerms = [
+          'realistic photo',
+          'photograph',
+          'real person',
+          'photorealistic',
+          'hyperrealistic',
+          'actual photo'
+        ];
+        
+        const currentText = $('#forbiddenWordsInput').val();
+        const newText = currentText ? currentText + '\n' + commonTerms.join('\n') : commonTerms.join('\n');
+        $('#forbiddenWordsInput').val(newText);
       });
     });
   </script>

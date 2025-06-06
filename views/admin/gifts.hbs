@@ -266,13 +266,14 @@
     const sortedGifts = gifts.sort((a, b) => (a.order || 0) - (b.order || 0));
 
     sortedGifts.forEach(gift => {
+      console.log('Rendering gift:', gift);
       const row = `
         <tr data-id="${gift._id}" class="border-b border-gray-200 hover:bg-gray-100">
           <td class="py-3 px-4 text-left handle"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 inline-block mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg> ${gift.order !== undefined ? gift.order : 'N/A'}</td>
           <td class="py-3 px-4 text-left"><img src="${gift.image || '/img/placeholder-image-2.gif'}" alt="${gift.title}" class="w-20 h-20 object-cover rounded"></td>
           <td class="py-3 px-4 text-left font-semibold">${gift.title}</td>
           <td class="py-3 px-4 text-left truncate max-w-xs">${gift.description || ''}</td>
-              <td class="py-3 px-4 text-left truncate max-w-xs">${gift.prompt || ''}</td>
+          <td class="py-3 px-4 text-left max-w-xs">${gift.prompt || ''}</td>
           <td class="py-3 px-4 text-left font-bold text-blue-600">${gift.cost || 0}</td>
           <td class="py-3 px-4 text-center">
             <button class="preview-btn text-blue-500 hover:text-blue-700 mr-2" data-id="${gift._id}">

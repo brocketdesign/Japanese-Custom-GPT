@@ -107,7 +107,27 @@ async function applyUserSettingsToPrompt(db, userId, chatId, basePrompt) {
         return basePrompt;
     }
 }
-
+//getUserVideoPrompt
+/**
+ * Get user-specific video prompt or default if not set
+ * @param {Object} db - MongoDB database instance
+ * @param {string} userId - User ID
+ * @param {string} chatId - Optional chat ID
+ * @returns {string} Video prompt for the user
+ */
+async function getUserVideoPrompt(db, userId, chatId = null) {
+    try {
+        const settings = await getUserChatToolSettings(db, userId, chatId);
+        console.log(`[getUserVideoPrompt] User settings:`, settings);
+        
+        // Return user-specific video prompt or default if not set
+        return settings.videoPrompt || DEFAULT_SETTINGS.videoPrompt;
+        
+    } catch (error) {
+        console.error('[getUserVideoPrompt] Error getting video prompt:', error);
+        return DEFAULT_SETTINGS.videoPrompt;
+    }
+}
 /**
  * Get voice settings for TTS generation
  * @param {Object} db - MongoDB database instance
@@ -187,6 +207,7 @@ module.exports = {
     DEFAULT_SETTINGS,
     getUserChatToolSettings,
     applyUserSettingsToPrompt,
+    getUserVideoPrompt,
     getVoiceSettings,
     getUserMinImages
 };

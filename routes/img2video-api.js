@@ -104,7 +104,7 @@ async function img2videoRoutes(fastify) {
                         content: `Here is a description of the image: ${image.prompt || 'No description provided'}`
                     }
                 ]
-                // Add userdefaul prompt if available
+                // Add user defaul prompt if available
                 const userVideoPrompt = await getUserVideoPrompt(fastify.mongo.db, userId, chatId);
                 if (userVideoPrompt && userVideoPrompt.trim() !== '') {
                     systemPrompt.push({

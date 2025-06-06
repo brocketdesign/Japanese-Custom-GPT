@@ -351,3 +351,26 @@
     </div>
 </div>
 
+<script>
+// Ensure toolbar scrolling works properly on mobile
+document.addEventListener('DOMContentLoaded', function() {
+    const toolbarContainer = document.getElementById('toolbar-main');
+    if (toolbarContainer && window.innerWidth <= 768) {
+        // Reset scroll position to start
+        toolbarContainer.scrollLeft = 0;
+        
+        // Add touch scroll enhancement
+        let isScrolling = false;
+        toolbarContainer.addEventListener('touchstart', () => isScrolling = true);
+        toolbarContainer.addEventListener('touchend', () => {
+            setTimeout(() => isScrolling = false, 100);
+        });
+        
+        // Prevent click events during scrolling
+        toolbarContainer.addEventListener('click', (e) => {
+            if (isScrolling) e.preventDefault();
+        }, true);
+    }
+});
+</script>
+

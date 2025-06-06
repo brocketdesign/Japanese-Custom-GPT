@@ -13,12 +13,23 @@
             @media screen and (max-width: 768px) {
                 .chat-toolbar-wrapper {
                     min-width: 100%;
-                    padding-left: 0 !important;  /* Remove side padding */
-                    padding-right: 0 !important;
+                    padding-left: 5px !important;
+                    padding-right: 5px !important;
+                    margin-left: 0;
+                    margin-right: 0;
                 }
                 .toolbar-scroll-container {
-                    padding-left: 0 !important;  /* Remove side padding */
+                    padding-left: 0 !important;
                     padding-right: 0 !important;
+                    margin-left: 0 !important;
+                    margin-right: 0 !important;
+                    justify-content: flex-start;
+                    scroll-snap-type: x mandatory;
+                }
+                .toolbar-btn {
+                    scroll-snap-align: start;
+                    min-width: 120px;
+                    flex-shrink: 0;
                 }
             }
             .chat-toolbar-container {
@@ -38,14 +49,17 @@
     display: flex;
     flex-wrap: nowrap;
     overflow-x: auto;
+    overflow-y: hidden;
     width: 100%;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
-    padding: 0 5px;
-    gap: 10px;
-    justify-content: center;
-    scroll-padding-left: 10px; /* Add this for better scroll start */
+    padding: 5px 10px;
+    gap: 8px;
+    justify-content: flex-start;
+    scroll-padding-left: 10px;
     scroll-padding-right: 10px;
+    scroll-behavior: smooth;
+    position: relative;
 }
             
             .toolbar-scroll-container::-webkit-scrollbar {
@@ -54,6 +68,7 @@
             
             .toolbar-btn {
                 flex: 0 0 auto;
+                min-width: 110px;
                 width: auto;
                 height: 48px;
                 display: flex;
@@ -67,6 +82,8 @@
                 transition: all 0.3s ease;
                 box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
                 cursor: pointer;
+                padding: 0 12px;
+                white-space: nowrap;
             }
             
             .toolbar-btn:hover, .toolbar-btn.active {
@@ -654,16 +671,29 @@
 }
 
 @media (max-width: 576px) {
-    .toolbar-btn, .toolbar-back-btn {
-        width: auto;
-        height: 42px;
-        font-size: 18px;
+    .toolbar-scroll-container {
+        padding: 5px 5px;
+        gap: 6px;
+        margin-left: -5px;
+        margin-right: -5px;
+        width: calc(100% + 10px);
     }
     
-    .emoji-btn {
-        width: 36px;
-        height: 36px;
-        font-size: 18px;
+    .toolbar-btn, .toolbar-back-btn {
+        min-width: 100px;
+        height: 42px;
+        font-size: 16px;
+        padding: 0 8px;
+    }
+    
+    .tool-label {
+        font-size: 11px;
+        min-width: 50px;
+    }
+    
+    .chat-toolbar-wrapper {
+        padding: 5px !important;
+        margin: 0;
     }
     
     .settings-modal {
@@ -679,5 +709,30 @@
     .settings-tone-grid,
     .settings-voice-grid {
         grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* Add scroll indicators for mobile */
+@media (max-width: 768px) {
+    .toolbar-scroll-container::before,
+    .toolbar-scroll-container::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 20px;
+        pointer-events: none;
+        z-index: 1;
+        transition: opacity 0.3s ease;
+    }
+    
+    .toolbar-scroll-container::before {
+        left: 0;
+        background: linear-gradient(to right, rgba(252, 250, 255, 0.8), transparent);
+    }
+    
+    .toolbar-scroll-container::after {
+        right: 0;
+        background: linear-gradient(to left, rgba(252, 250, 255, 0.8), transparent);
     }
 }

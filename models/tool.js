@@ -566,7 +566,7 @@ async function saveChatImageToDB(db, chatId, imageUrl) {
             // Get the host from the request or use default local IP detection
             if (req && req.headers && req.headers.host) {
                 const host = req.headers.host;
-                return `https://${host}`;
+                return `http://${host}`;
             } else {
                 // Fallback to dynamically getting the local IP address
                 const interfaces = os.networkInterfaces();

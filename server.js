@@ -49,7 +49,6 @@ fastify.ready(async () => {
       console.log(obj.result.n + " document(s) deleted");
     }
   });
-
   // Initialize configured cron jobs
   await initializeCronJobs(fastify);
 

@@ -282,32 +282,62 @@
                     <i class="bi bi-mic"></i>
                     {{translations.settings.voiceSettings}}
                 </div>
+                
+                <!-- Voice Provider Switch -->
                 <div class="settings-field">
-                    <label class="settings-label">{{translations.settings.selectVoice}}</label>
+                    <label class="settings-label">Voice Provider</label>
+                    <div class="settings-switch-container">
+                        <span class="settings-switch-label openai-label">OpenAI</span>
+                        <label class="settings-switch">
+                            <input type="checkbox" id="voice-provider-switch">
+                            <span class="settings-switch-slider"></span>
+                        </label>
+                        <span class="settings-switch-label evenlab-label">EvenLabs</span>
+                    </div>
+                </div>
+
+                <!-- OpenAI Voices -->
+                <div class="settings-field" id="openai-voices">
+                    <label class="settings-label">Select OpenAI Voice</label>
                     <div class="settings-voice-grid">
                         <div class="settings-voice-option selected" data-voice="nova">
-                            <div class="settings-voice-name">{{translations.settings.voices.nova.name}}</div>
-                            <div class="settings-voice-description">{{translations.settings.voices.nova.description}}</div>
+                            <div class="settings-voice-name">Nova</div>
+                            <div class="settings-voice-description">Bright and energetic female voice</div>
                         </div>
                         <div class="settings-voice-option" data-voice="alloy">
-                            <div class="settings-voice-name">{{translations.settings.voices.alloy.name}}</div>
-                            <div class="settings-voice-description">{{translations.settings.voices.alloy.description}}</div>
+                            <div class="settings-voice-name">Alloy</div>
+                            <div class="settings-voice-description">Neutral and balanced voice</div>
                         </div>
                         <div class="settings-voice-option" data-voice="shimmer">
-                            <div class="settings-voice-name">{{translations.settings.voices.shimmer.name}}</div>
-                            <div class="settings-voice-description">{{translations.settings.voices.shimmer.description}}</div>
+                            <div class="settings-voice-name">Shimmer</div>
+                            <div class="settings-voice-description">Warm and gentle female voice</div>
                         </div>
                         <div class="settings-voice-option" data-voice="echo">
-                            <div class="settings-voice-name">{{translations.settings.voices.echo.name}}</div>
-                            <div class="settings-voice-description">{{translations.settings.voices.echo.description}}</div>
+                            <div class="settings-voice-name">Echo</div>
+                            <div class="settings-voice-description">Clear and articulate male voice</div>
                         </div>
                         <div class="settings-voice-option" data-voice="onyx">
-                            <div class="settings-voice-name">{{translations.settings.voices.onyx.name}}</div>
-                            <div class="settings-voice-description">{{translations.settings.voices.onyx.description}}</div>
+                            <div class="settings-voice-name">Onyx</div>
+                            <div class="settings-voice-description">Deep and resonant male voice</div>
                         </div>
                         <div class="settings-voice-option" data-voice="fable">
-                            <div class="settings-voice-name">{{translations.settings.voices.fable.name}}</div>
-                            <div class="settings-voice-description">{{translations.settings.voices.fable.description}}</div>
+                            <div class="settings-voice-name">Fable</div>
+                            <div class="settings-voice-description">Expressive storytelling voice</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EvenLabs Voices -->
+                <div class="settings-field" id="evenlab-voices" style="display: none;">
+                    <label class="settings-label">Select EvenLabs Voice</label>
+                    <div class="settings-voice-grid">
+                        <div class="settings-evenlab-voice-option selected" data-voice="sakura">
+                            <div class="settings-voice-name">Sakura</div>
+                            <div class="settings-voice-description">Natural Japanese female voice</div>
+                        </div>
+                        <div class="settings-evenlab-voice-option" data-voice="mat">
+                            <div class="settings-voice-name">Mat</div>
+                            <div class="settings-voice-description">Professional English male voice</div>
                         </div>
                     </div>
                 </div>

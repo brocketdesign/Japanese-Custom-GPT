@@ -5,7 +5,9 @@ class ChatToolSettings {
             videoPrompt: 'Generate a short, engaging video with smooth transitions and vibrant colors.',
             characterTone: 'casual',
             relationshipType: 'companion',
-            selectedVoice: 'nova'
+            selectedVoice: 'nova',
+            voiceProvider: 'openai',
+            evenLabVoice: 'sakura'
         };
         
         this.isLoading = false;
@@ -64,6 +66,23 @@ class ChatToolSettings {
         document.querySelectorAll('.settings-voice-option').forEach(option => {
             option.addEventListener('click', () => this.selectVoice(option));
         });
+
+        // EvenLab voice selection - Use event delegation to handle dynamic content
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.settings-evenlab-voice-option')) {
+                this.selectEvenLabVoice(e.target.closest('.settings-evenlab-voice-option'));
+            }
+        });
+
+        // Voice provider switch
+        const voiceProviderSwitch = document.getElementById('voice-provider-switch');
+        if (voiceProviderSwitch) {
+            voiceProviderSwitch.addEventListener('change', (e) => {
+                this.settings.voiceProvider = e.target.checked ? 'evenlab' : 'openai';
+                this.toggleVoiceProviderUI();
+                this.updateSwitchLabels();
+            });
+        }
 
         // Relationship select
         const relationshipSelect = document.getElementById('relationship-select');
@@ -143,6 +162,47 @@ class ChatToolSettings {
         
         // Update settings
         this.settings.selectedVoice = selectedOption.dataset.voice;
+    }
+
+    selectEvenLabVoice(selectedOption) {
+        // Remove selected class from all EvenLab voice options
+        document.querySelectorAll('.settings-evenlab-voice-option').forEach(option => {
+            option.classList.remove('selected');
+        });
+        
+        // Add selected class to clicked option
+        selectedOption.classList.add('selected');
+        
+        // Update settings
+        this.settings.evenLabVoice = selectedOption.dataset.voice;
+        
+        console.log('EvenLab voice selected:', this.settings.evenLabVoice);
+    }
+
+    toggleVoiceProviderUI() {
+        const openaiVoices = document.getElementById('openai-voices');
+        const evenlabVoices = document.getElementById('evenlab-voices');
+        
+        if (this.settings.voiceProvider === 'evenlab') {
+            openaiVoices.style.display = 'none';
+            evenlabVoices.style.display = 'block';
+        } else {
+            openaiVoices.style.display = 'block';
+            evenlabVoices.style.display = 'none';
+        }
+    }
+
+    updateSwitchLabels() {
+        const openaiLabel = document.querySelector('.openai-label');
+        const evenlabLabel = document.querySelector('.evenlab-label');
+        
+        if (this.settings.voiceProvider === 'evenlab') {
+            if (openaiLabel) openaiLabel.style.color = '#666';
+            if (evenlabLabel) evenlabLabel.style.color = '#28a745';
+        } else {
+            if (openaiLabel) openaiLabel.style.color = '#6E20F4';
+            if (evenlabLabel) evenlabLabel.style.color = '#666';
+        }
     }
 
     async saveSettings() {
@@ -232,9 +292,6 @@ class ChatToolSettings {
             if (response.ok && data.success) {
                 this.settings = { ...this.settings, ...data.settings };
                 this.applySettingsToUI();
-                
-                // Log whether we're using chat-specific or global settings
-                console.log('Loaded settings:', data.isChatSpecific ? 'chat-specific' : 'global');
             } else {
                 console.warn('Failed to load settings, using defaults');
             }
@@ -338,6 +395,19 @@ class ChatToolSettings {
             option.classList.toggle('selected', option.dataset.voice === this.settings.selectedVoice);
         });
 
+        // Update EvenLab voice selection
+        document.querySelectorAll('.settings-evenlab-voice-option').forEach(option => {
+            option.classList.toggle('selected', option.dataset.voice === this.settings.evenLabVoice);
+        });
+
+        // Update voice provider switch
+        const voiceProviderSwitch = document.getElementById('voice-provider-switch');
+        if (voiceProviderSwitch) {
+            voiceProviderSwitch.checked = this.settings.voiceProvider === 'evenlab';
+            this.toggleVoiceProviderUI();
+            this.updateSwitchLabels();
+        }
+
         // Update relationship select
         const relationshipSelect = document.getElementById('relationship-select');
         if (relationshipSelect) {
@@ -438,6 +508,14 @@ class ChatToolSettings {
 
     getSelectedVoice() {
         return this.settings.selectedVoice;
+    }
+
+    getVoiceProvider() {
+        return this.settings.voiceProvider;
+    }
+
+    getEvenLabVoice() {
+        return this.settings.evenLabVoice;
     }
 
     // Method to get chat-specific settings

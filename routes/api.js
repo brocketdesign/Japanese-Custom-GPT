@@ -711,7 +711,7 @@ async function routes(fastify, options) {
           const isAdmin = await checkUserAdmin(fastify, userId);
           const chatDocument = await getChatDocument(request, db, chatId);
           const chatDescription = chatDataToString(chatDocument)
-          const characterDescription = chatDocument.enhancedPrompt || chatDocument?.imageDescription || chatDocument.characterPrompt;
+          const characterDescription = chatDocument ? (chatDocument.enhancedPrompt || chatDocument?.imageDescription || chatDocument.characterPrompt) : null;
           const language = getLanguageName(userInfo.lang)
 
           const userMessages = userData.messages
@@ -1037,6 +1037,7 @@ async function routes(fastify, options) {
 
             // Get user prefered voice
             const voiceConfig = await getVoiceSettings(fastify.mongo.db, userId, chatId);
+            console.log('[openAi txt2speech] voiceConfig:', voiceConfig);
             // Clear message from any special tags and emojis and remove text between square brackets or stars
             const sanitizedMessage = message.replace(/(\[.*?\]|\*.*?\*)/g, '').replace(/[\uD83C-\uDBFF\uDC00-\uDFFF]/g, '').trim();
             

@@ -24,7 +24,9 @@ async function routes(fastify, options) {
                     videoPrompt: 'Generate a short, engaging video with smooth transitions and vibrant colors.',
                     characterTone: 'casual',
                     relationshipType: 'companion',
-                    selectedVoice: 'nova'
+                    selectedVoice: 'nova',
+                    voiceProvider: 'openai', // new field
+                    evenLabVoice: 'sakura' // new field
                 };
                 return reply.send({ success: true, settings: defaultSettings });
             }
@@ -65,7 +67,9 @@ async function routes(fastify, options) {
                 videoPrompt: String(settings.videoPrompt || 'Generate a short, engaging video with smooth transitions and vibrant colors.'),
                 characterTone: String(settings.characterTone || 'casual'),
                 relationshipType: String(settings.relationshipType || 'companion'),
-                selectedVoice: String(settings.selectedVoice || 'nova')
+                selectedVoice: String(settings.selectedVoice || 'nova'),
+                voiceProvider: String(settings.voiceProvider || 'openai'),
+                evenLabVoice: String(settings.evenLabVoice || 'sakura')
             };
 
             // Validate ranges and constraints
@@ -148,7 +152,9 @@ async function routes(fastify, options) {
                 videoPrompt: 'Generate a short, engaging video with smooth transitions and vibrant colors.',
                 characterTone: 'casual',
                 relationshipType: 'companion',
-                selectedVoice: 'nova'
+                selectedVoice: 'nova',
+                voiceProvider: 'openai',
+                evenLabVoice: 'sakura'
             };
 
             reply.send({ 
@@ -203,7 +209,9 @@ async function routes(fastify, options) {
                 videoPrompt: 'Generate a short, engaging video with smooth transitions and vibrant colors.',
                 characterTone: 'casual',
                 relationshipType: 'companion',
-                selectedVoice: 'nova'
+                selectedVoice: 'nova',
+                voiceProvider: 'openai',
+                evenLabVoice: 'sakura'
             };
 
             reply.send({ success: true, settings: defaultSettings, isChatSpecific: false });

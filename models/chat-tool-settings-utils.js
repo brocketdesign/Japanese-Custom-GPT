@@ -113,36 +113,58 @@ async function applyUserSettingsToPrompt(db, userId, chatId, basePrompt) {
  * @param {Object} db - MongoDB database instance
  * @param {string} userId - User ID
  * @param {string} chatId - Optional chat ID
- * @returns {Object} Voice configuration
+ * @returns {Object} Voice configuration with provider info
  */
 async function getVoiceSettings(db, userId, chatId = null) {
     try {
         const settings = await getUserChatToolSettings(db, userId, chatId);
-        const selectedVoice = settings.selectedVoice;
-
-        // Map voice names to TTS configurations using supported OpenAI voices
-        const voiceConfig = {
-            alloy: { voice: 'alloy', language: 'ja-JP', gender: 'neutral' },
-            echo: { voice: 'echo', language: 'ja-JP', gender: 'male' },
-            fable: { voice: 'fable', language: 'ja-JP', gender: 'neutral' },
-            onyx: { voice: 'onyx', language: 'ja-JP', gender: 'male' },
-            nova: { voice: 'nova', language: 'ja-JP', gender: 'female' },
-            shimmer: { voice: 'shimmer', language: 'ja-JP', gender: 'female' },
-            coral: { voice: 'coral', language: 'ja-JP', gender: 'female' },
-            verse: { voice: 'verse', language: 'ja-JP', gender: 'neutral' },
-            ballad: { voice: 'ballad', language: 'ja-JP', gender: 'neutral' },
-            ash: { voice: 'ash', language: 'ja-JP', gender: 'neutral' },
-            sage: { voice: 'sage', language: 'ja-JP', gender: 'neutral' },
-            default: { voice: 'nova', language: 'ja-JP', gender: 'female' }
-        };
+        console.log(`[getVoiceSettings] User settings:`, settings);
         
-        const voiceReturned = voiceConfig[selectedVoice] || voiceConfig.default;
-
-        return voiceReturned;
+        const voiceProvider = settings.voiceProvider || 'openai';
+        
+        if (voiceProvider === 'evenlab') {
+            // Return EvenLab voice configuration
+            const evenLabVoice = settings.evenLabVoice || 'sakura';
+            return {
+                provider: 'evenlab',
+                voice: evenLabVoice,
+                voiceName: evenLabVoice
+            };
+        } else {
+            // Return OpenAI voice configuration
+            const selectedVoice = settings.selectedVoice || 'nova';
+            
+            // Map voice names to TTS configurations using supported OpenAI voices
+            const voiceConfig = {
+                alloy: { voice: 'alloy', gender: 'neutral' },
+                echo: { voice: 'echo', gender: 'male' },
+                fable: { voice: 'fable', gender: 'neutral' },
+                onyx: { voice: 'onyx', gender: 'male' },
+                nova: { voice: 'nova', gender: 'female' },
+                shimmer: { voice: 'shimmer', gender: 'female' },
+                coral: { voice: 'coral', gender: 'female' },
+                verse: { voice: 'verse', gender: 'neutral' },
+                ballad: { voice: 'ballad', gender: 'neutral' },
+                ash: { voice: 'ash', gender: 'neutral' },
+                sage: { voice: 'sage', gender: 'neutral' },
+                default: { voice: 'nova', gender: 'female' }
+            };
+            
+            const voiceConfig_ = voiceConfig[selectedVoice] || voiceConfig.default;
+            
+            return {
+                provider: 'openai',
+                ...voiceConfig_
+            };
+        }
         
     } catch (error) {
         console.error('[getVoiceSettings] Error getting voice settings:', error);
-        return { voice: 'nova', language: 'ja-JP', gender: 'female' };
+        return { 
+            provider: 'openai',
+            voice: 'nova', 
+            gender: 'female' 
+        };
     }
 }
 /*

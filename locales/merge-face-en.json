@@ -1,0 +1,23 @@
+{
+  "title": "Merge Face",
+  "description": "Replace the face in this image with another face",
+  "uploadNewFace": "Upload New Face",
+  "selectExistingFace": "Select Existing Face",
+  "uploadInstructions": "Upload a clear image with a visible face. The image will be optimized automatically.",
+  "processing": "Merging faces...",
+  "success": "Face merge completed successfully!",
+  "error": "Face merge failed. Please try again.",
+  "invalidFile": "Please upload a valid image file (JPG, PNG, WebP).",
+  "fileTooLarge": "File is too large. Please upload an image smaller than 10MB.",
+  "noFaceDetected": "No face detected in the uploaded image. Please try another image.",
+  "cancel": "Cancel",
+  "merge": "Merge Face",
+  "selectImage": "Select Image",
+  "dragDropHere": "Drag & drop an image here or click to select",
+  "supportedFormats": "Supported formats: JPG, PNG, WebP (max 10MB)",
+  "previousFaces": "Previously Uploaded Faces",
+  "noFacesUploaded": "No faces uploaded yet",
+  "mergingInProgress": "Face merging in progress...",
+  "mergeCompleted": "Face merge completed",
+  "alreadyMerged": "Face already merged"
+}

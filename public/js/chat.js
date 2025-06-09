@@ -722,14 +722,14 @@ function setupChatInterface(chat, character) {
             }                    
         });
     }
-        
-    async function displayChat(userChat, persona, callback) {
 
+
+    async function displayChat(userChat, persona, callback) {
         $('body').css('overflow', 'hidden');
         $('#stability-gen-button').show();
         $('.auto-gen').each(function() { $(this).show(); });
         $('#audio-play').show();
-
+        console.log(userChat)
         let chatContainer = $('#chatContainer');
         chatContainer.empty();
 
@@ -771,6 +771,7 @@ function setupChatInterface(chat, character) {
                 const isNarratorMessage = chatMessage.content.startsWith("[Narrator]");
                 const isImage = !!chatMessage?.imageId || chatMessage.content.startsWith("[Image]") || chatMessage.content.startsWith("[image]");
                 const isVideo = !!chatMessage?.videoId || chatMessage.content.startsWith("[Video]") || chatMessage.content.startsWith("[video]");
+                const isMergeFace = !!chatMessage?.mergeId || chatMessage.content.startsWith("[MergeFace]");
                 const designStep = Math.floor(i / 2) + 1;
             
                 if (isNarratorMessage) {
@@ -783,6 +784,60 @@ function setupChatInterface(chat, character) {
                         </div>
                     `;
                     displayedMessageIds.add(messageId);
+                } else if (isMergeFace) {
+                    const mergeId = chatMessage?.mergeId || chatMessage.content.replace("[MergeFace]", "").replace("[mergeface]", "").trim();
+                    console.log(`Processing merge face with ID: ${mergeId}`);
+                                        
+                    // Skip if this specific merge face instance has already been displayed
+                    const uniqueMergeIdentifier = `${mergeId}_${i}_${messageId}`;
+                    if (displayedImageIds.has(uniqueMergeIdentifier)) {
+                        continue;
+                    }
+                    
+                    // If this is a stored merged image (from database), display it directly
+                    if (chatMessage.imageUrl && chatMessage.isMerged) {
+                        messageHtml = `
+                            <div id="container-${designStep}">
+                                <div class="d-flex flex-row justify-content-start mb-4 message-container">
+                                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
+                                    <div class="ms-3 position-relative">
+                                        <div 
+                                        onclick="showImagePreview(this)"
+                                        class="ps-0 text-start assistant-image-box vertical-transition">
+                                            <img id="merge-${mergeId}" data-id="${mergeId}" src="${chatMessage.imageUrl}" alt="Merged Face Result" data-prompt="Face merge completed">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>`;
+                            
+                        // Add tools for the merged image
+                        setTimeout(() => {
+                            const toolsHtml = getImageTools({
+                                chatId, 
+                                imageId: mergeId, 
+                                isLiked: false,
+                                title: chatMessage.title || '[displayChat 822] Auto Merged Image', 
+                                prompt: chatMessage.prompt || '[displayChat 823] Auto merged image', 
+                                nsfw: false, 
+                                imageUrl: chatMessage.imageUrl,
+                                isMergeFace: true
+                            });
+                            $(`#merge-${mergeId}`).closest('.assistant-image-box').after(toolsHtml);
+                        }, 100);
+                        
+                        displayImageThumb(chatMessage.imageUrl);
+                        displayedImageIds.add(uniqueMergeIdentifier);
+                        displayedMessageIds.add(messageId);
+                    } else {
+                        // Legacy handling for old merge face references
+                        const mergeData = await getMergeFaceUrlById(mergeId, designStep, thumbnail);
+                        messageHtml = mergeData ? mergeData.messageHtml : '';
+                    }
+                    
+                    if (messageHtml) {
+                        displayedImageIds.add(uniqueMergeIdentifier);
+                        displayedMessageIds.add(messageId);
+                    }
                 } else if (isImage) {
                     const imageId = chatMessage?.imageId || chatMessage.content.replace("[Image]", "").replace("[image]", "").trim();
                     
@@ -790,9 +845,51 @@ function setupChatInterface(chat, character) {
                     if (displayedImageIds.has(imageId)) {
                         continue;
                     }
-                    let actions  = chatMessage.actions || null
-                    const imageData = await getImageUrlById(imageId, designStep, thumbnail, actions);
-                    messageHtml = imageData ? imageData.messageHtml : '';
+                    
+                    // Check if this is actually a merged image stored as regular image
+                    if (chatMessage.isMerged && chatMessage.imageUrl) {
+                        // This is a merged image stored in the database, display it directly
+                        messageHtml = `
+                            <div id="container-${designStep}">
+                                <div class="d-flex flex-row justify-content-start mb-4 message-container">
+                                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
+                                    <div class="ms-3 position-relative">
+                                        <div 
+                                        onclick="showImagePreview(this)"
+                                        class="ps-0 text-start assistant-image-box vertical-transition">
+                                            <img id="image-${imageId}" data-id="${imageId}" src="${chatMessage.imageUrl}" alt="${chatMessage.title || 'Merged Image'}" data-prompt="${chatMessage.prompt || 'Auto merged image'}">
+                                            <div class="nsfw-badge-container badge" style="display:none;">NSFW</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>`;
+                        
+                        // Add tools for the merged image
+                        setTimeout(() => {
+                            const toolsHtml = getImageTools({
+                                chatId, 
+                                imageId, 
+                                isLiked: false,
+                                title: chatMessage.title || '[displayhat 874] Auto Merged Image', 
+                                prompt: chatMessage.prompt || '[displayhat 875] Auto merged image', 
+                                nsfw: chatMessage.nsfw || false, 
+                                imageUrl: chatMessage.imageUrl,
+                                isMergeFace: true
+                            });
+                            $(`#image-${imageId}`).closest('.assistant-image-box').after(toolsHtml);
+                            
+                            if (chatMessage.nsfw) {
+                                $(`#image-${imageId}`).closest('.assistant-image-box').find('.nsfw-badge-container').show();
+                            }
+                        }, 100);
+                        
+                        displayImageThumb(chatMessage.imageUrl);
+                    } else {
+                        // Regular image handling - fetch from API
+                        let actions = chatMessage.actions || null;
+                        const imageData = await getImageUrlById(imageId, designStep, thumbnail, actions);
+                        messageHtml = imageData ? imageData.messageHtml : '';
+                    }
                     
                     if (messageHtml) {
                         displayedImageIds.add(imageId);
@@ -842,15 +939,7 @@ function setupChatInterface(chat, character) {
             callback()
         }
     }
-  
-    function sanitizeString(inputString) {
-        if(!inputString)return ''
-        inputString.replace(/\s+/g, ' ').trim();  
-        if (inputString.includes(",,,")){
-            return inputString.split(",,,")[1].trim();
-        }
-        return inputString;
-    } 
+
     window.downloadImage = function(element) {
         const $element = $(element);
         const imageUrl = $element.attr('data-src') || $element.attr('src');
@@ -899,6 +988,66 @@ function setupChatInterface(chat, character) {
         window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
     }
 
+    function getMergeFaceUrlById(mergeId, designStep, thumbnail) {
+        console.log(`[getMergeFaceUrlById] Fetching merge face for ID: ${mergeId}, design step: ${designStep}`);
+        const placeholderImageUrl = '/img/placeholder-image-2.gif';
+
+        return new Promise((resolve) => {
+            const placeholderHtml = `
+            <div id="container-${designStep}">
+                <div class="d-flex flex-row justify-content-start mb-4 message-container">
+                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
+                    <div class="ms-3 position-relative">
+                        <div 
+                        onclick="showImagePreview(this)"
+                        class="ps-0 text-start assistant-image-box vertical-transition">
+                            <img id="merge-${mergeId}" data-id="${mergeId}" src="${placeholderImageUrl}" alt="Loading merged image...">
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+            resolve({ messageHtml: placeholderHtml, imageUrl: placeholderImageUrl });
+
+            // Fetch merged image asynchronously using the new route
+            $.ajax({
+                url: `/api/merge-face/result/${mergeId}`, // Use the new route
+                method: 'GET',
+                success: function(response) {
+                    if (response.success && response.result) {
+                        const mergeResult = response.result;
+                        const mergedImageUrl = mergeResult.mergedImageUrl;
+                        console.log(response)
+                        // Update the placeholder image
+                        displayImageThumb(mergedImageUrl);
+                        $(`#merge-${mergeId}`).attr('src', mergedImageUrl).fadeIn();
+                        $(`#merge-${mergeId}`).attr('alt', 'Merged Face Result').fadeIn();
+                        $(`#merge-${mergeId}`).attr('data-prompt', 'Face merge completed');
+                        
+                        // Add tools for merged face image
+                        const toolsHtml = getImageTools({
+                            chatId, 
+                            imageId: mergeId, 
+                            isLiked: false,
+                            title: 'Merged Face Result', 
+                            prompt: 'Face merge completed', 
+                            nsfw: false, 
+                            imageUrl: mergedImageUrl,
+                            isMergeFace: true
+                        });
+                        $(`#merge-${mergeId}`).closest('.assistant-image-box').after(toolsHtml);
+        
+                    } else {
+                        console.error('No merged image URL returned');
+                        $(`#merge-${mergeId}`).attr('src', '/img/error-placeholder.png');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching merged image URL:', error);
+                    $(`#merge-${mergeId}`).attr('src', '/img/error-placeholder.png');
+                }
+            });
+        });
+    }
     function getImageUrlById(imageId, designStep, thumbnail, actions = null) {
         const placeholderImageUrl = '/img/placeholder-image-2.gif'; // Placeholder image URL
 
@@ -913,7 +1062,7 @@ function setupChatInterface(chat, character) {
                         onclick="showImagePreview(this)"
                         class="ps-0 text-start assistant-image-box vertical-transition">
                             <img id="image-${imageId}" data-id="${imageId}" src="${placeholderImageUrl}" alt="Loading image...">
-                            <div class="nsfw-badge-container badge" style="display:none;">NSFW<div>
+                            <div class="nsfw-badge-container badge" style="display:none;">NSFW</div>
                         </div>
                     </div>
                 </div>
@@ -945,6 +1094,7 @@ function setupChatInterface(chat, character) {
                                     prompt: response.imagePrompt, 
                                     nsfw: response.nsfw, 
                                     imageUrl: response.imageUrl,
+                                    isMergeFace: response.isMergeFace,
                                     actions
                                 });
                                 $(`#image-${imageId}`).closest('.assistant-image-box').after(toolsHtml);
@@ -976,143 +1126,6 @@ function setupChatInterface(chat, character) {
             });
         });
     }
-
-
-    function getImageTools({chatId, imageId, isLiked = false, title, prompt = false, nsfw = false, imageUrl = false, actions = []}) {
-        prompt = sanitizeString(prompt);
-
-        // Check if actions exist and determine icon states
-        const hasVideoAction = actions?.some(action => action.type === 'video_generated');
-        const hasUpscaleAction = actions?.some(action => action.type === 'upscaled');
-        const hasLikeAction = actions?.some(action => action.type === 'like');
-        
-        // Get specific action objects
-        const videoAction = actions?.find(action => action.type === 'video_generated');
-        const upscaleAction = actions?.find(action => action.type === 'upscaled');
-        const likeAction = actions?.find(action => action.type === 'like');
-        
-        // Determine icon classes based on actions
-        const videoIconClass = hasVideoAction ? 'bi-play-circle-fill text-success' : 'bi-play-circle';
-        const upscaleIconClass = hasUpscaleAction ? 'bi-badge-hd-fill text-success' : 'bi-badge-hd';
-        const likeIconClass = (isLiked || hasLikeAction) ? 'bi-heart-fill text-danger' : 'bi-heart';
-        
-        // Determine if buttons should be disabled
-        const videoDisabled = hasVideoAction ? 'style="opacity:0.5; pointer-events:none;"' : '';
-        const upscaleDisabled = hasUpscaleAction ? 'style="opacity:0.5; pointer-events:none;"' : '';
-        
-        // Get additional info for tooltips
-        const videoTooltip = hasVideoAction ? 
-            `${window.translations?.video_already_generated || 'Video already generated'} - ID: ${videoAction?.videoId}` : 
-            `${window.translations?.convert_to_video || 'Convert to Video'}`;
-        
-        const upscaleTooltip = hasUpscaleAction ? 
-            `${window.translations?.already_upscaled || 'Already upscaled'} (${upscaleAction?.scale_factor}x) - ID: ${upscaleAction?.upscaledImageId}` : 
-            `${window.translations?.upscale_image || 'Upscale Image'}`;
-
-        return `
-            <div class="bg-white py-2 image-tools">
-                <div class="d-flex overflow-auto" style="scrollbar-width: none; -ms-overflow-style: none;">
-                    <style>
-                        .image-tools .d-flex::-webkit-scrollbar { display: none; }
-                    </style>
-                    <span class="badge bg-white text-secondary image-fav flex-shrink-0 me-2" data-id="${imageId}"
-                    onclick="toggleImageFavorite(this)" 
-                    style="cursor: pointer; opacity:0.8;">
-                        <i class="bi ${likeIconClass}"></i>
-                    </span>
-                    <span class="badge bg-white text-secondary txt2img regen-img flex-shrink-0 me-2" 
-                    onclick="${subscriptionStatus ? 'regenImage(this)' : 'loadPlanPage()'}" 
-                    data-prompt="${prompt}" 
-                    data-nsfw="${nsfw}" 
-                    data-id="${imageId}" 
-                    style="cursor: pointer; opacity:0.8;">
-                        <i class="bi bi-arrow-clockwise"></i>
-                    </span>
-                    <span class="badge bg-white text-secondary upscale-img flex-shrink-0 me-2" 
-                    onclick="${!hasUpscaleAction && subscriptionStatus ? `upscaleImage('${imageId}', '${imageUrl}', '${chatId}', '${userChatId}')` : hasUpscaleAction ? '' : 'loadPlanPage()'}" 
-                    data-id="${imageId}" 
-                    data-url="${imageUrl}"
-                    ${upscaleDisabled}
-                    title="${upscaleTooltip}">
-                        <i class="bi ${upscaleIconClass}"></i>
-                    </span>
-                    <span class="${nsfw ? 'd-none' : ''} badge bg-white text-secondary img2video-btn flex-shrink-0 me-2" 
-                    onclick="${!hasVideoAction && subscriptionStatus ? `generateVideoFromImage('${imageId}', '${chatId}', '${userChatId}')` : hasVideoAction ? '' : 'loadPlanPage()'}" 
-                    data-id="${imageId}" 
-                    data-chat-id="${chatId}"
-                    ${videoDisabled}
-                    title="${videoTooltip}">
-                        <i class="bi ${videoIconClass}"></i>
-                    </span>
-                    ${window.isAdmin ? `
-                    <span type="button" class="badge bg-white text-secondary flex-shrink-0 me-2" data-bs-toggle="modal" data-bs-target="#modal-${imageId}">
-                        <i class="bi bi-info-circle"></i>
-                    </span>` : ''}
-                    <span class="badge bg-white text-secondary share d-none flex-shrink-0 me-2"
-                            data-title="${title}"
-                            data-url="${imageUrl}"
-                            style="cursor: pointer; opacity:0.8;"
-                            onclick="openShareModal(this)">
-                        <i class="bi bi-box-arrow-up"></i>
-                    </span>
-                    <span class="badge bg-white text-secondary download-image flex-shrink-0 me-2" style="cursor: pointer; opacity:0.8;"
-                        data-src="${imageUrl}"
-                        data-title="${title}"
-                        data-id="${imageId}"
-                        onclick="downloadImage(this)">
-                        <i class="bi bi-download"></i></a>
-                    </span>
-                    ${window.isAdmin ? `
-                    <span class="badge bg-white text-secondary update-chat-image flex-shrink-0 me-2" onclick="${subscriptionStatus ? 'updateChatImage(this)' : 'loadPlanPage()'}" data-id="${chatId}" data-img="${imageUrl}" style="cursor: pointer; opacity:0.8;">
-                        <i class="bi bi-image"></i>
-                    </span>` : ''}
-                </div>
-                ${actions && actions.length > 0 ? `
-                <div class="actions-info text-muted px-3 py-1" style="font-size: 11px;">
-                    ${actions.map(action => {
-                        if (action.type === 'video_generated') {
-                            return `<div><i class="bi bi-play-circle-fill text-success me-1"></i>Video generated ${action.date ? `on ${new Date(action.date).toLocaleDateString()}` : ''}</div>`;
-                        } else if (action.type === 'upscaled') {
-                            return `<div><i class="bi bi-badge-hd-fill text-success me-1"></i>Upscaled ${action.scale_factor}x ${action.date ? `on ${new Date(action.date).toLocaleDateString()}` : ''}</div>`;
-                        } else if (action.type === 'like') {
-                            return `<div><i class="bi bi-heart-fill text-danger me-1"></i>Liked ${action.date ? `on ${new Date(action.date).toLocaleDateString()}` : ''}</div>`;
-                        }
-                        return '';
-                    }).join('')}
-                </div>` : ''}
-            </div>
-            <div class="title assistant-chat-box py-1 px-3 ${title && title !== 'undefined' ? '': 'd-none'}" style="border-radius: 0px 0px 15px 15px;max-width: 200px;">
-                <p class="text-white" style="font-size: 12px;">${title}</p>
-            </div>
-            ${window.isAdmin ? `
-            <div style="height: 50vh;" class="modal fade" id="modal-${imageId}" tabindex="-1" aria-labelledby="modal-${imageId}-label" aria-hidden="true" data-bs-backdrop="false">
-                <div class="modal-dialog" style="bottom: 20vh;position: fixed;">
-                    <div class="modal-content border-0 shadow mx-auto" style="height: auto; width: 90%; max-width: 600px;">
-                        <div class="modal-header">
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body" style="max-height: 25vh; overflow-y: auto;">
-                            <p>${prompt}</p>
-                            ${actions && actions.length > 0 ? `
-                            <hr>
-                            <h6>Actions History:</h6>
-                            ${actions.map(action => `
-                                <div class="mb-2">
-                                    <strong>Type:</strong> ${action.type}<br>
-                                    ${action.videoId ? `<strong>Video ID:</strong> ${action.videoId}<br>` : ''}
-                                    ${action.upscaledImageId ? `<strong>Upscaled Image ID:</strong> ${action.upscaledImageId}<br>` : ''}
-                                    ${action.scale_factor ? `<strong>Scale Factor:</strong> ${action.scale_factor}x<br>` : ''}
-                                    ${action.date ? `<strong>Date:</strong> ${new Date(action.date).toLocaleString()}<br>` : ''}
-                                </div>
-                            `).join('')}
-                            ` : ''}
-                        </div>
-                    </div>
-                </div>
-            </div>` : ''}
-        `;
-    }
-     
     function getVideoUrlById(videoId, designStep, thumbnail) {
         const placeholderVideoUrl = '/img/video-placeholder.gif'; // Placeholder video URL
 
@@ -1449,7 +1462,8 @@ function setupChatInterface(chat, character) {
             const prompt = message.getAttribute('data-prompt');
             const imageUrl = message.getAttribute('src');
             const isUpscaled = message.getAttribute('data-isUpscaled') == 'true'
-            
+            const isMergeFace = message.getAttribute('data-isMergeFace') == 'true'
+
             if(!subscriptionStatus && imageNsfw){
                 // Remove src attribute to prevent loading the image
                 message.removeAttribute('src');
@@ -1469,7 +1483,7 @@ function setupChatInterface(chat, character) {
                             ${message.outerHTML}
                             ${imageNsfw ? `<div class="nsfw-badge-container badge">NSFW</div>` : ''}
                         </div>
-                        ${!isUpscaled ? getImageTools({chatId, imageId, isLiked:false, title, prompt, nsfw: imageNsfw, imageUrl}) : ''}
+                        ${!isUpscaled ? getImageTools({chatId, imageId, isLiked:false, title, prompt, nsfw: imageNsfw, imageUrl, isMergeFace}) : ''}
                     </div>
                 </div>      
             `).hide();
@@ -1777,6 +1791,7 @@ window.enableToggleDropdown = function(el) {
   
 window.addMessageToChat = function(chatId, userChatId, option, callback) {
     const { message, role, image_request } = option;
+    console.log('[addMessageToChat] Adding message to chat:', chatId, userChatId, role, message, image_request);
     $.ajax({
         url: '/api/chat/add-message',
         type: 'POST',

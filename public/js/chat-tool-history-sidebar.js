@@ -321,9 +321,9 @@ function constructChatItemHtml(chat, isActive) {
     const lastMessageTime = chat.updatedAt ? new Date(chat.updatedAt).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' }) : '';
     
     return `
-        <div class="${isActive ? 'active' : ''} chat-list item user-chat chat-item-enhanced d-flex align-items-center justify-content-between mx-1 mb-2 rounded-2 shadow-sm" 
+        <div class="${isActive ? 'active' : ''} chat-list item user-chat chat-item-enhanced d-flex align-items-center justify-content-between mx-1 mb-2 rounded-2 shadow-sm w-100" 
             data-id="${chat._id}">
-            <div class="d-flex align-items-center w-100">
+            <div class="d-flex align-items-center justify-content-between  w-100">
                 <div class="user-chat-content d-flex align-items-center flex-1"
                 onclick="handleChatListItemClick(this)">
                     <div class="chat-avatar-container position-relative me-2">
@@ -333,7 +333,7 @@ function constructChatItemHtml(chat, isActive) {
                              style="width: 40px; height: 40px; object-fit: cover;">
                         <div class="chat-status-indicator ${isActive ? 'active' : ''}"></div>
                     </div>
-                    <div class="chat-content flex-grow-1 min-w-0">
+                    <div class="chat-content flex-grow-1 min-w-0" style="align-items: start; display: flex; flex-direction: column; justify-content: center;">
                         <div class="d-flex justify-content-between align-items-start mb-1">
                             <h6 class="chat-name mb-0 fw-semibold text-truncate pe-1" style="max-width: 100px; font-size: 0.85rem;">${chat.name}</h6>
                             <small class="chat-time text-muted flex-shrink-0" style="font-size: 0.7rem;">${lastMessageTime}</small>

@@ -92,9 +92,6 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
     provider.models[modelConfig.modelName] : 
     provider.model;
     
-  console.log(`[generateCompletion] Using provider: ${modelConfig.provider}, model: ${modelName}`);
-  console.log(`[generateCompletion] System message: ${messages[0].content.slice(0, 100)}...`);
-  
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
       const response = await fetch(provider.apiUrl, {

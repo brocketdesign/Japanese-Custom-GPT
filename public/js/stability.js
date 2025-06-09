@@ -40,7 +40,7 @@ window.novitaImageGeneration = async function(userId, chatId, userChatId, option
         }
 
         const API_ENDPOINT = `${API_URL}/novita/generate-img`;
-
+        console.log(`[novitaImageGeneration] Sending request to ${API_ENDPOINT} with placeholderId: ${placeholderId}`)
         const response = await fetch(API_ENDPOINT, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -171,20 +171,56 @@ window.displayOrRemoveImageLoader = function (imageId, action, imagePreview) {
 
 const sentImageIds = new Set();
 window.generateImage = async function(data) {
-    if (!data || !data.userChatId || !data.url || !data.id || !data.prompt || sentImageIds.has(data.id)) return;
+    console.log('[generateImage] Received data:', data);
     
-    const { url: imageUrl, id: imageId, nsfw: imageNsfw, prompt: imagePrompt, isUpscaled } = data;
-    sentImageIds.add(data.id);
+    // Validate essential data
+    if (!data || !data.userChatId || !data.imageUrl && !data.url) {
+        console.error('[generateImage] Missing essential data:', {
+            hasData: !!data,
+            hasUserChatId: !!(data && data.userChatId),
+            hasImageUrl: !!(data && data.imageUrl),
+            hasUrl: !!(data && data.url)
+        });
+        return;
+    }
+    
+    // Use either imageUrl or url for backward compatibility
+    const imageUrl = data.imageUrl || data.url;
+    const imageId = data.imageId || data.id;
+    
+    if (!imageId || sentImageIds.has(imageId)) {
+        console.log('[generateImage] Skipping - no imageId or already sent:', { imageId, alreadySent: sentImageIds.has(imageId) });
+        return;
+    }
+    
+    const { 
+        nsfw: imageNsfw = data.nsfw, 
+        prompt: imagePrompt = data.prompt, 
+        isUpscaled = data.isUpscaled, 
+        isMergeFace = data.isMergeFace || data.isMerged 
+    } = data;
+    
+    console.log('[generateImage] Processing image:', {
+        imageId,
+        hasImageUrl: !!imageUrl,
+        hasPrompt: !!imagePrompt,
+        hasTitle: !!(data.title),
+        nsfw: imageNsfw,
+        isMergeFace,
+        isAutoMerge: data.isAutoMerge
+    });
+    
+    sentImageIds.add(imageId);
 
     const img = document.createElement('img');
     img.setAttribute('src', imageUrl);
-    img.setAttribute('alt', data.title[lang]);
-    img.setAttribute('data-prompt', imagePrompt);
+    img.setAttribute('alt', data.title && data.title[lang] ? data.title[lang] : 'Generated Image');
+    img.setAttribute('data-prompt', imagePrompt || '');
     img.setAttribute('class', 'm-auto');
     img.setAttribute('data-id', imageId);
-    img.setAttribute('data-nsfw', imageNsfw);
-    img.setAttribute('data-isUpscaled', !!isUpscaled)
+    img.setAttribute('data-nsfw', imageNsfw || false);
+    img.setAttribute('data-isUpscaled', !!isUpscaled);
+    img.setAttribute('data-isMergeFace', !!isMergeFace);
 
     displayMessage('bot-image', img, data.userChatId);
 };
- 

@@ -1,0 +1,23 @@
+{
+  "title": "Fusionner les Visages",
+  "description": "Remplacer le visage de cette image par un autre visage",
+  "uploadNewFace": "Télécharger un Nouveau Visage",
+  "selectExistingFace": "Sélectionner un Visage Existant",
+  "uploadInstructions": "Téléchargez une image claire avec un visage visible. L'image sera optimisée automatiquement.",
+  "processing": "Fusion des visages en cours...",
+  "success": "Fusion des visages terminée avec succès !",
+  "error": "La fusion des visages a échoué. Veuillez réessayer.",
+  "invalidFile": "Veuillez télécharger un fichier d'image valide (JPG, PNG, WebP).",
+  "fileTooLarge": "Le fichier est trop volumineux. Veuillez télécharger une image de moins de 10 Mo.",
+  "noFaceDetected": "Aucun visage détecté dans l'image téléchargée. Veuillez essayer une autre image.",
+  "cancel": "Annuler",
+  "merge": "Fusionner le Visage",
+  "selectImage": "Sélectionner l'Image",
+  "dragDropHere": "Glissez-déposez une image ici ou cliquez pour sélectionner",
+  "supportedFormats": "Formats supportés : JPG, PNG, WebP (max 10 Mo)",
+  "previousFaces": "Visages Précédemment Téléchargés",
+  "noFacesUploaded": "Aucun visage téléchargé pour le moment",
+  "mergingInProgress": "Fusion des visages en cours...",
+  "mergeCompleted": "Fusion des visages terminée",
+  "alreadyMerged": "Visage déjà fusionné"
+}

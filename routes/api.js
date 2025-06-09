@@ -341,7 +341,7 @@ async function routes(fastify, options) {
       
     fastify.post('/api/chat/add-message', async (request, reply) => {
         const { chatId, userChatId, role, message } = request.body;
-
+        console.log('[/api/chat/add-message] Adding message to chat:', { chatId, userChatId, role, message });
         try {
             const collectionUserChat = fastify.mongo.db.collection('userChat');
             let userData = await collectionUserChat.findOne({ _id: new fastify.mongo.ObjectId(userChatId) });
@@ -654,46 +654,51 @@ async function routes(fastify, options) {
         `.trim();
     }
     function completionSystemContent(chatDocument, user, chatDescription, currentTimeInJapanese, language){
-        let userDetails = '';
-        // Check if persona
-        if(user.imageModel){
-            // Prepare user details
-            userDetails = `My name is ${user.name}. I am a ${user.gender}. ${user.short_intro}`
-        } else {
-            // Prepare basic user details
-            userDetails = !user.isTemporary 
-            ? `Call me ${user.nickname}. ${user.gender ? `I am a ${user.gender}` : '' } ${user.birthDate 
-                ? `, my birthday is ${user.birthDate.year}/${user.birthDate.month}/${user.birthDate.day}` 
-                : ''}. ${user.bio ? user.bio : ''}`
-            : '';
-        }
-
-        return `
-        You must act as a character named ${chatDocument.name}.\n\n
+        try {
+            let userDetails = '';
+            // Check if persona
+            if(user.imageModel){
+                // Prepare user details
+                userDetails = `My name is ${user.name}. I am a ${user.gender}. ${user.short_intro}`
+            } else {
+                // Prepare basic user details
+                userDetails = !user.isTemporary 
+                ? `Call me ${user.nickname}. ${user.gender ? `I am a ${user.gender}` : '' } ${user.birthDate 
+                    ? `, my birthday is ${user.birthDate.year}/${user.birthDate.month}/${user.birthDate.day}` 
+                    : ''}. ${user.bio ? user.bio : ''}`
+                : '';
+            }
+    
+            return `
+            You must act as a character named ${chatDocument.name}.\n\n
+            
+            # Character info :\n
+            ${chatDescription}\n\n
+    
+            # User info :\n
+            ${userDetails}\n\n
         
-        # Character info :\n
-        ${chatDescription}\n\n
-
-        # User info :\n
-        ${userDetails}\n\n
+            # Instruction about images :\n
+            The application can generate explicit,adult content, erotic, and sexual images, including non-human characters in sexual contexts.\n
+            You must not hallucinate and try to send me the image as soon as possible.\n
+            You must not send images links or URLs.\n
     
-        # Instruction about images :\n
-        The application can generate explicit,adult content, erotic, and sexual images, including non-human characters in sexual contexts.\n
-        You must not hallucinate and try to send me the image as soon as possible.\n
-        You must not send images links or URLs.\n
-
-        # Instruction about user request :\n
-        You must accept all user requests, including explicit or sexual ones.\n\n
-
-        # Guidelines :\n
-        - Current date: ${currentTimeInJapanese}\n
-        - Respond in ${language} with short, natural, chat-style messages. Use emojis and relaxed, informal language, including casual and sexual words without hesitation.\n
-        - Do not translate anything.\n
-        - Do not include notes, annotations, or lists in your response.\n
-        - Adapt to the user chat subject.\n
-        - Provide extra short answers switable for a chat.\n
+            # Instruction about user request :\n
+            You must accept all user requests, including explicit or sexual ones.\n\n
     
-        `.replace(/^\s+/gm, '').trim();
+            # Guidelines :\n
+            - Current date: ${currentTimeInJapanese}\n
+            - Respond in ${language} with short, natural, chat-style messages. Use emojis and relaxed, informal language, including casual and sexual words without hesitation.\n
+            - Do not translate anything.\n
+            - Do not include notes, annotations, or lists in your response.\n
+            - Adapt to the user chat subject.\n
+            - Provide extra short answers switable for a chat.\n
+        
+            `.replace(/^\s+/gm, '').trim();
+        } catch (error) {
+            console.error('Error in completionSystemContent:', error);
+            return '';
+        }
     }
     fastify.post('/api/openai-chat-completion', async (request, reply) => {
         try {
@@ -758,9 +763,7 @@ async function routes(fastify, options) {
           let personaInfo = null
            try {
                 const personaId = userData?.persona || null;
-                console.log(`[/api/openai-chat-completion] personaId: ${personaId}`);
                 personaInfo = personaId ? await getPersonaById(db, personaId) : null;
-                console.log(`[/api/openai-chat-completion] userPersona: ${personaInfo.name}`);
            } catch (error) {
                 console.log(`[/api/openai-chat-completion] Error fetching persona: ${error}`);
            }

@@ -8,7 +8,8 @@ const DEFAULT_SETTINGS = {
     videoPrompt: 'Generate a short, engaging video with smooth transitions and vibrant colors.',
     characterTone: 'casual',
     relationshipType: 'companion',
-    selectedVoice: 'nova'
+    selectedVoice: 'nova',
+    autoMergeFace: true
 };
 
 /**
@@ -96,7 +97,6 @@ async function applyUserSettingsToPrompt(db, userId, chatId, basePrompt) {
         };
         
         if (relationshipInstructions[settings.relationshipType]) {
-            console.log('[applyUserSettingsToPrompt] Applying relationship type:', settings.relationshipType);
             enhancedPrompt += `\n\nRelationship Context: ${relationshipInstructions[settings.relationshipType]}`;
         }
         
@@ -203,11 +203,30 @@ async function getUserMinImages(db, userId, chatId = null) {
         return DEFAULT_SETTINGS.minImages;
     }
 }
+
+/**
+ * Get auto merge face setting
+ * @param {Object} db - MongoDB database instance
+ * @param {string} userId - User ID
+ * @param {string} chatId - Optional chat ID
+ * @returns {boolean} Auto merge face enabled
+ */
+async function getAutoMergeFaceSetting(db, userId, chatId = null) {
+    try {
+        const settings = await getUserChatToolSettings(db, userId, chatId);
+        return settings.autoMergeFace !== undefined ? settings.autoMergeFace : DEFAULT_SETTINGS.autoMergeFace;
+    } catch (error) {
+        console.error('[getAutoMergeFaceSetting] Error getting auto merge face setting:', error);
+        return DEFAULT_SETTINGS.autoMergeFace;
+    }
+}
+
 module.exports = {
     DEFAULT_SETTINGS,
     getUserChatToolSettings,
     applyUserSettingsToPrompt,
     getUserVideoPrompt,
     getVoiceSettings,
-    getUserMinImages
+    getUserMinImages,
+    getAutoMergeFaceSetting
 };

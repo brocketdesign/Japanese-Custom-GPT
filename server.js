@@ -164,6 +164,7 @@ fastify.register(require('./routes/zohomail'));
 fastify.register(require('./routes/chat-tool-gifts-api'));
 fastify.register(require('./routes/chat-tool-settings-api'));
 fastify.register(require('./routes/eventlab-api'));
+fastify.register(require('./routes/merge-face-api'));
 
 fastify.get('/', async (request, reply) => {
   const db = fastify.mongo.db;

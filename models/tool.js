@@ -66,7 +66,7 @@ async function getCounter(db) {
 };
 
 const uploadToS3 = async (buffer, hash, filename) => {
-    const key = `${hash}/${filename}`;
+    const key = `${hash}_${filename}`;
     const params = {
         Bucket: process.env.AWS_S3_BUCKET_NAME,
         Key: key,
@@ -76,11 +76,9 @@ const uploadToS3 = async (buffer, hash, filename) => {
     };
 
     try {
-        console.log("Uploading to S3:", key);
         const command = new PutObjectCommand(params);
         await s3.send(command);
         const location = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
-        console.log("S3 Upload Successful:", location);
         return location;
     } catch (error) {
         console.error("S3 Upload Error:", error.message);
@@ -310,11 +308,11 @@ const createBlurredImage = async (imageUrl, db) => {
         }
 
         // Upload the blurred image to S3
-        const filename = `${hash}_${urlParts[urlParts.length - 1]}`;
+        const filename = `blurred_${urlParts[urlParts.length - 1]}`;
         const uploadUrl = await uploadToS3(processedImageBuffer, hash, filename);
 
         // Save the blurred image key and hash in the database
-        await awsimages.insertOne({ key: filename, hash });
+        await awsimages.insertOne({ key: `${hash}_${filename}`, hash });
 
         return uploadUrl;
     } catch (error) {

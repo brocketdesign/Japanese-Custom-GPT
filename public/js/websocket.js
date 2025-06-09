@@ -3,6 +3,8 @@ const maxReconnectAttempts = 5;
 const reconnectInterval = 3000;
 let currentSocket = null;
 let isConnected = false;
+let reconnectModal = null; // Track modal instance
+let isReconnectModalShown = false; // Track modal state
 
 function initializeWebSocket(onConnectionResult = null) {
 
@@ -125,7 +127,7 @@ function initializeWebSocket(onConnectionResult = null) {
             break;
           }
           case 'imageGenerated': {
-            const { userChatId, imageId, imageUrl, title, prompt, nsfw, isUpscaled } = data.notification;
+            const { userChatId, imageId, imageUrl, title, prompt, nsfw, isUpscaled, isMergeFace } = data.notification;
             generateImage({
               userChatId,
               url: imageUrl,
@@ -134,7 +136,8 @@ function initializeWebSocket(onConnectionResult = null) {
               prompt,
               imageId, 
               nsfw, 
-              isUpscaled
+              isUpscaled,
+              isMergeFace
             });
             break;
           }
@@ -250,7 +253,24 @@ document.addEventListener("visibilitychange", () => {
 
 // Handle reconnect attempts after a failed connection
 window.showReconnectPrompt = function() {
-    const modal = new bootstrap.Modal(document.getElementById('reconnectModal'), {
+    // Prevent multiple modals from being created
+    if (isReconnectModalShown) {
+        return;
+    }
+    
+    // Dispose of any existing modal instance
+    if (reconnectModal) {
+        reconnectModal.dispose();
+        reconnectModal = null;
+    }
+    
+    // Remove any existing backdrop manually
+    const existingBackdrops = document.querySelectorAll('.modal-backdrop');
+    existingBackdrops.forEach(backdrop => backdrop.remove());
+    
+    isReconnectModalShown = true;
+    
+    reconnectModal = new bootstrap.Modal(document.getElementById('reconnectModal'), {
         backdrop: 'static',
         keyboard: false
     });
@@ -303,7 +323,7 @@ window.showReconnectPrompt = function() {
             initializeWebSocket((success) => {
                 if (success) {
                     // Successfully reconnected, close modal
-                    modal.hide();
+                    reconnectModal.hide();
                     window.showNotification(window.translations.reconnect.success, 'success');
                 } else {
                     // Connection failed, try again after delay
@@ -317,5 +337,17 @@ window.showReconnectPrompt = function() {
         }
     }
     
-    modal.show();
+    // Handle modal cleanup when hidden
+    reconnectModal._element.addEventListener('hidden.bs.modal', function() {
+        isReconnectModalShown = false;
+        if (reconnectModal) {
+            reconnectModal.dispose();
+            reconnectModal = null;
+        }
+        // Ensure backdrop is removed
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(backdrop => backdrop.remove());
+    });
+    
+    reconnectModal.show();
 };

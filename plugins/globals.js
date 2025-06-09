@@ -20,6 +20,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     const translationsCache = {};
     const clerkTranslationsCache = {}; // Add cache for clerk translations
     const img2videoTranslationsCache = {}; // Add cache for img2video translations
+    const mergeFaceTranslationsCache = {}; // Add cache for merge face translations
 
     // Decorate Fastify with user, lang, and translations functions
     fastify.decorate('getUser', getUser);
@@ -28,6 +29,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     fastify.decorate('getClerkTranslations', getClerkTranslations); // Add clerk translations decorator
     fastify.decorate('getPaymentTranslations', getPaymentTranslations); // Add payment translations decorator
     fastify.decorate('getImg2videoTranslations', getImg2videoTranslations); // Add img2video translations decorator
+    fastify.decorate('getMergeFaceTranslations', getMergeFaceTranslations); // Add merge face translations decorator
 
     // Attach `lang` and `user` dynamically
     Object.defineProperty(fastify, 'lang', {
@@ -48,6 +50,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     fastify.decorateRequest('clerkTranslations', null); // Add clerk translations to request
     fastify.decorateRequest('paymentTranslations', null); // Add payment translations to request
     fastify.decorateRequest('img2videoTranslations', null); // Add img2video translations to request
+    fastify.decorateRequest('mergeFaceTranslations', null); // Add merge face translations to request
 
     // Pre-handler to set user, lang, and translations
     fastify.addHook('preHandler', async (request, reply) => {
@@ -58,6 +61,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         request.clerkTranslations = getClerkTranslations(request.lang); // Load clerk translations
         request.paymentTranslations = getPaymentTranslations(request.lang); // Load payment translations
         request.img2videoTranslations = getImg2videoTranslations(request.lang); // Load img2video translations
+        request.mergeFaceTranslations = getMergeFaceTranslations(request.lang); // Load merge face translations
         
         // Make translations available in Handlebars templates
         reply.locals = {
@@ -66,6 +70,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             clerkTranslations: request.clerkTranslations, // Make clerk translations available
             paymentTranslations: request.paymentTranslations, // Make payment translations available
             img2videoTranslations: request.img2videoTranslations, // Make img2video translations available
+            mergeFaceTranslations: request.mergeFaceTranslations, // Make merge face translations available
             user: request.user, // Make user available
             isUserAdmin: request.isUserAdmin, // Make admin status available
             mode: process.env.MODE,
@@ -217,6 +222,26 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         return img2videoTranslationsCache[currentLang];
     }
 
+    /** Load MergeFace translations for a specific language (cached for performance) */
+    function getMergeFaceTranslations(currentLang) {
+        if (!currentLang) currentLang = 'en';
+        
+        if (!mergeFaceTranslationsCache[currentLang]) {
+            const mergeFaceTranslationFile = path.join(__dirname, '..', 'locales', `merge_face_${currentLang}.json`);
+            if (fs.existsSync(mergeFaceTranslationFile)) {
+                try {
+                    mergeFaceTranslationsCache[currentLang] = JSON.parse(fs.readFileSync(mergeFaceTranslationFile, 'utf-8'));
+                } catch (e) {
+                    fastify.log.error(`Error reading merge face translations for ${currentLang}:`, e);
+                    mergeFaceTranslationsCache[currentLang] = {};
+                }
+            } else {
+                mergeFaceTranslationsCache[currentLang] = {}; // Fallback to empty object if translation file is missing
+            }
+        }
+        return mergeFaceTranslationsCache[currentLang];
+    }
+
     /** Middleware: Set request language and user */
     async function setRequestLangAndUser(request, reply) {
         request.user = await fastify.getUser(request, reply);
@@ -225,6 +250,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         request.clerkTranslations = fastify.getClerkTranslations(request.lang);
         request.paymentTranslations = fastify.getPaymentTranslations(request.lang);
         request.img2videoTranslations = fastify.getImg2videoTranslations(request.lang);
+        request.mergeFaceTranslations = fastify.getMergeFaceTranslations(request.lang);
         request.isAdmin = await checkUserAdmin(fastify, request.user._id) || false;
     }
 
@@ -239,6 +265,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             clerkTranslations: request.clerkTranslations, // Add clerk translations to locals
             paymentTranslations: request.paymentTranslations, // Add payment translations to locals
             img2videoTranslations: request.img2videoTranslations, // Add img2video translations to locals
+            mergeFaceTranslations: request.mergeFaceTranslations, // Add merge face translations to locals
             lang: request.lang,
             user: request.user,
             isAdmin: request.isAdmin

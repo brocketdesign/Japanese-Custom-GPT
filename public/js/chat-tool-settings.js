@@ -7,7 +7,8 @@ class ChatToolSettings {
             relationshipType: 'companion',
             selectedVoice: 'nova',
             voiceProvider: 'openai',
-            evenLabVoice: 'sakura'
+            evenLabVoice: 'sakura',
+            autoMergeFace: true
         };
         
         this.isLoading = false;
@@ -97,6 +98,14 @@ class ChatToolSettings {
         if (videoPrompt) {
             videoPrompt.addEventListener('input', (e) => {
                 this.settings.videoPrompt = e.target.value;
+            });
+        }
+
+        // Auto merge face switch
+        const autoMergeFaceSwitch = document.getElementById('auto-merge-face-switch');
+        if (autoMergeFaceSwitch) {
+            autoMergeFaceSwitch.addEventListener('change', (e) => {
+                this.settings.autoMergeFace = e.target.checked;
             });
         }
     }
@@ -413,6 +422,12 @@ class ChatToolSettings {
         if (relationshipSelect) {
             relationshipSelect.value = this.settings.relationshipType;
         }
+
+        // Update auto merge face switch
+        const autoMergeFaceSwitch = document.getElementById('auto-merge-face-switch');
+        if (autoMergeFaceSwitch) {
+            autoMergeFaceSwitch.checked = this.settings.autoMergeFace !== undefined ? this.settings.autoMergeFace : true;
+        }
     }
 
     applySettings() {
@@ -516,6 +531,11 @@ class ChatToolSettings {
 
     getEvenLabVoice() {
         return this.settings.evenLabVoice;
+    }
+
+    // Public method to get auto merge face setting
+    getAutoMergeFace() {
+        return this.settings.autoMergeFace;
     }
 
     // Method to get chat-specific settings

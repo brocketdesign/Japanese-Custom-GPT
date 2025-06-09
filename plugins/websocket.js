@@ -72,9 +72,7 @@ module.exports = fastifyPlugin(async function (fastify) {
       };
 
       if (userConnections && userConnections.size > 0) {
-        // User is connected - send immediately
-        console.log(`[WebSocket] Sending immediate notification '${type}' to connected user ${normalizedUserId}`);
-        
+        // User is connected - send immediately        
         for (const conn of userConnections) {
           try {
             if (conn.readyState === 1) { // WebSocket.OPEN

@@ -99,7 +99,9 @@
         "name": "Sage",
         "description": "A wise and thoughtful voice"
       }
-    }
+    },
+    "autoMergeFace": "Auto Merge Face",
+    "autoMergeFaceDescription": "Automatically merge your face with generated photorealistic images"
   },
   "gifts": {
     "selectGift": "Select a gift",

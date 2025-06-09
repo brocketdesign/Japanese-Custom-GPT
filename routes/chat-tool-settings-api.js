@@ -26,7 +26,8 @@ async function routes(fastify, options) {
                     relationshipType: 'companion',
                     selectedVoice: 'nova',
                     voiceProvider: 'openai', // new field
-                    evenLabVoice: 'sakura' // new field
+                    evenLabVoice: 'sakura', // new field
+                    autoMergeFace: true // new field
                 };
                 return reply.send({ success: true, settings: defaultSettings });
             }
@@ -69,7 +70,8 @@ async function routes(fastify, options) {
                 relationshipType: String(settings.relationshipType || 'companion'),
                 selectedVoice: String(settings.selectedVoice || 'nova'),
                 voiceProvider: String(settings.voiceProvider || 'openai'),
-                evenLabVoice: String(settings.evenLabVoice || 'sakura')
+                evenLabVoice: String(settings.evenLabVoice || 'sakura'),
+                autoMergeFace: Boolean(settings.autoMergeFace !== undefined ? settings.autoMergeFace : true)
             };
 
             // Validate ranges and constraints
@@ -154,7 +156,8 @@ async function routes(fastify, options) {
                 relationshipType: 'companion',
                 selectedVoice: 'nova',
                 voiceProvider: 'openai',
-                evenLabVoice: 'sakura'
+                evenLabVoice: 'sakura',
+                autoMergeFace: true
             };
 
             reply.send({ 
@@ -211,7 +214,8 @@ async function routes(fastify, options) {
                 relationshipType: 'companion',
                 selectedVoice: 'nova',
                 voiceProvider: 'openai',
-                evenLabVoice: 'sakura'
+                evenLabVoice: 'sakura',
+                autoMergeFace: true
             };
 
             reply.send({ success: true, settings: defaultSettings, isChatSpecific: false });

@@ -198,6 +198,7 @@ const processBackgroundTasks = (fastify) => async () => {
     try {
       // Try to poll the task status again (reuse pollTaskStatus from imagen.js)
       const taskStatus = await checkTaskStatus(task.taskId, fastify);
+
       if (taskStatus && taskStatus.status === 'background') {
         console.log(`[processBackgroundTasks] Task ${task.taskId} still in background, skipping...`);
         continue;
@@ -207,6 +208,16 @@ const processBackgroundTasks = (fastify) => async () => {
       if (taskStatus && taskStatus.status === 'completed') {
         const userDoc = await db.collection('users').findOne({ _id: task.userId });
         const translations = fastify.getTranslations(userDoc.language || 'en');
+        
+        console.log(`[processBackgroundTasks] Handling completion for task ${task.taskId}:`, {
+          userId: task.userId.toString(),
+          chatId: task.chatId.toString(),
+          placeholderId: task.placeholderId,
+          chatCreation: task.chatCreation,
+          hasImages: !!(taskStatus.result && taskStatus.result.images),
+          imageCount: taskStatus.result?.images?.length || 0
+        });
+        
         await handleTaskCompletion(
           { ...taskStatus, userId: task.userId, userChatId: task.userChatId },
           fastify,

@@ -158,7 +158,12 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
 
     // Send request to Novita and get taskId
     const novitaTaskId = await fetchNovitaMagic(requestData, flux);
-    
+
+    // Find modelId style
+    let modelData = await db.collection('myModels').findOne({ model: imageModel }); 
+    imageStyle = modelData ? modelData.style : 'anime';
+    chat.imageStyle = chat.imageStyle || imageStyle; // Use chat image style or default to model style
+
     // Check if auto merge should be applied
     const autoMergeFaceEnabled = await getAutoMergeFaceSetting(db, userId.toString(), chatId.toString());
     console.log(`[generateImg] autoMergeFaceEnabled: ${autoMergeFaceEnabled}, userId: ${userId}, chatId: ${chatId}`);
@@ -166,7 +171,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
     console.log(`[generateImg] isPhotorealistic: ${isPhotorealistic}, chat.imageStyle: ${chat.imageStyle}`);
     const shouldAutoMerge = !chatCreation && autoMergeFaceEnabled && isPhotorealistic && chat.chatImageUrl.length > 0;
     console.log(`[generateImg] shouldAutoMerge: ${shouldAutoMerge}, chat.chatImageUrl: ${chat.chatImageUrl}`);
-
+return
     // Store task details in DB
     const taskData = {
         taskId: novitaTaskId,

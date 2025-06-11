@@ -171,7 +171,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
     console.log(`[generateImg] isPhotorealistic: ${isPhotorealistic}, chat.imageStyle: ${chat.imageStyle}`);
     const shouldAutoMerge = !chatCreation && autoMergeFaceEnabled && isPhotorealistic && chat.chatImageUrl.length > 0;
     console.log(`[generateImg] shouldAutoMerge: ${shouldAutoMerge}, chat.chatImageUrl: ${chat.chatImageUrl}`);
-return
+
     // Store task details in DB
     const taskData = {
         taskId: novitaTaskId,

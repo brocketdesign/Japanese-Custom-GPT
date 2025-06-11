@@ -161,9 +161,11 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
     
     // Check if auto merge should be applied
     const autoMergeFaceEnabled = await getAutoMergeFaceSetting(db, userId.toString(), chatId.toString());
-    const isPhotorealistic = chat && chat.imageStyle === 'photorealistic';
+    console.log(`[generateImg] autoMergeFaceEnabled: ${autoMergeFaceEnabled}, userId: ${userId}, chatId: ${chatId}`);
+    const isPhotorealistic = chat && chat.imageStyle === 'photorealistic' || chat && chat.imageStyle !== 'anime';
+    console.log(`[generateImg] isPhotorealistic: ${isPhotorealistic}, chat.imageStyle: ${chat.imageStyle}`);
     const shouldAutoMerge = !chatCreation && autoMergeFaceEnabled && isPhotorealistic && chat.chatImageUrl.length > 0;
-    console.log({shouldAutoMerge})
+    console.log(`[generateImg] shouldAutoMerge: ${shouldAutoMerge}, chat.chatImageUrl: ${chat.chatImageUrl}`);
 
     // Store task details in DB
     const taskData = {

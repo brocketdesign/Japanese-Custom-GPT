@@ -685,7 +685,9 @@
         font-size: 16px;
         padding: 0 8px;
     }
-    
+    .toolbar-back-btn{
+        min-width: unset;
+    }
     .tool-label {
         font-size: 11px;
         min-width: 50px;

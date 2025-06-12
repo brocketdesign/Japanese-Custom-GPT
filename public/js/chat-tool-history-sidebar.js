@@ -136,10 +136,6 @@ function displayChatList(reset, userId) {
     if (reset) {
         resetCache();
         $('#chat-list').empty();
-        $('#chat-list').append(`
-            <div id="chat-list-spinner" class="spinner-border text-secondary" role="status" style="position: absolute; top: 45%; left: 45%; display: none;">
-                <span class="visually-hidden">Loading...</span>
-            </div>`);
     }
 
     fetchChatListData(chatCache.currentPage);
@@ -164,10 +160,7 @@ function displayChatList(reset, userId) {
                 // For subsequent pages, append new chats
                 if (page === 1) {
                     chatCache.data = chats;
-                    $('#chat-list').empty().append(`
-                        <div id="chat-list-spinner" class="spinner-border text-secondary" role="status" style="position: absolute; top: 45%; left: 45%; display: none;">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>`);
+                    $('#chat-list').empty();
                 } else {
                     // Filter out any duplicates before adding new chats
                     const newChats = chats.filter(newChat => 

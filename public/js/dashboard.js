@@ -26,9 +26,225 @@ if (typeof peopleChatCache === 'undefined') peopleChatCache = {}
 if (typeof peopleChatLoadingState === 'undefined') peopleChatLoadingState = {}
 if (typeof peopleChatCurrentPage === 'undefined') peopleChatCurrentPage = {}
 
+// Global states for Latest Video Chats
+var latestVideoChatsPage = 1;
+var latestVideoChatsLoading = false;
+var latestVideoChatsState = 1;
+const LATEST_VIDEO_CHATS_CACHE_KEY = 'latestVideoChatsCache';
+const LATEST_VIDEO_CHATS_CACHE_TIME_KEY = 'latestVideoChatsaCacheTime';
+const LATEST_VIDEO_CHATS_CACHE_TTL = 1 * 60 * 60 * 1000; // 1 hour in milliseconds
+
+
 // loadUserPosts 
 // loadChatUsers
 // loadUsers
+
+// Helper functions for video chats cache
+function getLatestVideoChatsCache() {
+    const cache = sessionStorage.getItem(LATEST_VIDEO_CHATS_CACHE_KEY);
+    const cacheTime = sessionStorage.getItem(LATEST_VIDEO_CHATS_CACHE_TIME_KEY);
+    if (!cache || !cacheTime) return null;
+    if (Date.now() - parseInt(cacheTime, 10) > LATEST_VIDEO_CHATS_CACHE_TTL) {
+        sessionStorage.removeItem(LATEST_VIDEO_CHATS_CACHE_KEY);
+        sessionStorage.removeItem(LATEST_VIDEO_CHATS_CACHE_TIME_KEY);
+        return null;
+    }
+    try {
+        return JSON.parse(cache);
+    } catch {
+        return null;
+    }
+}
+
+function setLatestVideoChatsCache(page, data) {
+    let cache = getLatestVideoChatsCache() || {};
+    cache[page] = data;
+    sessionStorage.setItem(LATEST_VIDEO_CHATS_CACHE_KEY, JSON.stringify(cache));
+    sessionStorage.setItem(LATEST_VIDEO_CHATS_CACHE_TIME_KEY, Date.now().toString());
+}
+
+window.loadLatestVideoChats = async function(page = 1, reload = false) {
+    if (latestVideoChatsLoading && !reload) {
+        return;
+    }
+    latestVideoChatsLoading = true;
+
+    if (reload) {
+        latestVideoChatsPage = 1;
+        $('#latest-video-chats-gallery').empty();
+        sessionStorage.removeItem(LATEST_VIDEO_CHATS_CACHE_KEY);
+        sessionStorage.removeItem(LATEST_VIDEO_CHATS_CACHE_TIME_KEY);
+    }
+
+    let cache = getLatestVideoChatsCache();
+    let data = cache && cache[page];
+
+    if (data) {
+        displayLatestVideoChats(data.videoChats, 'latest-video-chats-gallery');
+        latestVideoChatsState = data.totalPages || 1;
+        latestVideoChatsLoading = false;
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/latest-video-chats?page=${page}`);
+        if (!res.ok) {
+            $('#latest-video-chats-pagination-controls').html('<div class="text-center text-danger my-3">Failed to load video chats.</div>');
+            latestVideoChatsLoading = false;
+            return;
+        }
+        data = await res.json();
+        setLatestVideoChatsCache(page, data);
+
+        displayLatestVideoChats(data.videoChats, 'latest-video-chats-gallery');
+        latestVideoChatsState = data.totalPages || 1;
+
+        if (page >= latestVideoChatsState) {
+            $('#latest-video-chats-pagination-controls').html('');
+        }
+    } catch (e) {
+        console.error('[LatestVideoChats] Error loading video chats:', e);
+        $('#latest-video-chats-pagination-controls').html('<div class="text-center text-danger my-3">Error loading video chats.</div>');
+    }
+    latestVideoChatsLoading = false;
+}
+
+window.displayLatestVideoChats = function(videoChatsData, targetGalleryId) {
+    let htmlContent = '';
+    const currentUser = user;
+    const currentUserId = currentUser._id;
+    const subscriptionStatus = currentUser.subscriptionStatus === 'active';
+    const isTemporaryUser = !!currentUser?.isTemporary;
+
+    videoChatsData.forEach(videoChat => {
+        const isOwner = videoChat.chat.userId === currentUserId;
+        const isPremiumChat = false; // video chats don't have premium status
+        const isNSFW = videoChat.chat.nsfw || false;
+        const genderClass = videoChat.chat.gender ? `chat-gender-${videoChat.chat.gender.toLowerCase()}` : '';
+        const styleClass = videoChat.chat.imageStyle ? `chat-style-${videoChat.chat.imageStyle.toLowerCase()}` : '';
+
+        // Video card with thumbnail and play button
+        htmlContent += `
+            <div class="video-chat-card flex-shrink-0" data-chat-id="${videoChat.chatId}" style="width: 200px; cursor: pointer;" onclick="redirectToChat('${videoChat.chatId}')">
+                <div class="card shadow-sm border-0 h-100 position-relative overflow-hidden">
+                    <!-- Video thumbnail with play button -->
+                    <div class="video-thumbnail-wrapper position-relative" style="aspect-ratio: 9/16; background: #f8f9fa;">
+                        <video 
+                            class="card-img-top video-thumbnail" 
+                            style="height: 100%; width: 100%; object-fit: cover;" 
+                            muted 
+                            loop
+                            onmouseenter="this.play()" 
+                            onmouseleave="this.pause(); this.currentTime = 0;"
+                            onclick="event.stopPropagation(); playVideoModal('${videoChat.videoUrl}', '${videoChat.chat.name}')">
+                            <source src="${videoChat.videoUrl}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        
+                        <!-- Play button overlay -->
+                        <div class="play-button-overlay position-absolute top-50 start-50 translate-middle" 
+                             onclick="event.stopPropagation(); playVideoModal('${videoChat.videoUrl}', '${videoChat.chat.name}')"
+                             style="z-index: 2;">
+                            <div class="btn btn-light rounded-circle p-3 shadow" style="opacity: 0.9; height: 50px; width: 50px; padding: 8px 15px !important;">
+                                <i class="bi bi-play-fill fs-4"></i>
+                            </div>
+                        </div>
+                        
+                        <!-- Duration badge -->
+                        ${videoChat.duration ? `
+                            <div class="position-absolute bottom-0 end-0 m-2" style="z-index: 3;">
+                                <span class="badge bg-dark">${Math.round(videoChat.duration)}s</span>
+                            </div>
+                        ` : ''}
+                        
+                        <!-- NSFW overlay if needed -->
+                        ${isNSFW && (!subscriptionStatus || isTemporaryUser) ? `
+                            <div class="gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center" style="background: rgba(0,0,0,0.55); z-index:2;">
+                                <span class="badge bg-danger mb-2" style="font-size: 1rem;"><i class="bi bi-exclamation-triangle"></i> NSFW</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <!-- Card body with character info -->
+                    <div class="card-body p-2">
+                        <div class="d-flex align-items-center">
+                            <img src="${videoChat.chat.chatImageUrl}" alt="${videoChat.chat.name}" 
+                                 class="rounded-circle me-2 border" width="30" height="30">
+                            <div class="flex-grow-1">
+                                <h6 class="card-title mb-0 fw-semibold text-truncate small" title="${videoChat.chat.name}">
+                                    ${videoChat.chat.name}
+                                </h6>
+                                ${videoChat.user.nickname ? `
+                                    <small class="text-muted">@${videoChat.user.nickname}</small>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Top badges -->
+                    <div class="position-absolute top-0 start-0 m-1" style="z-index:3;">
+                        ${isOwner ? `
+                            <span class="badge bg-light text-secondary shadow" style="opacity:0.8; font-size: 0.7rem;">
+                                <i class="bi bi-person-fill"></i>
+                            </span>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    const galleryElement = $(document).find(`#${targetGalleryId}`);
+    if (galleryElement.length) {
+        galleryElement.append(htmlContent);
+    } else {
+        console.warn(`Target gallery with ID #${targetGalleryId} not found.`);
+    }
+};
+
+// Function to play video in modal
+window.playVideoModal = function(videoUrl, chatName) {
+    // Create modal if it doesn't exist
+    if ($('#videoPlayModal').length === 0) {
+        const modalHTML = `
+            <div class="modal fade" id="videoPlayModal" tabindex="-1" aria-labelledby="videoPlayModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content bg-transparent shadow-0 border-0 mx-auto w-auto">
+                        <div class="modal-header border-0 bg-dark">
+                            <h5 class="modal-title text-white" id="videoPlayModalLabel"></h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body p-0 text-center">
+                            <video id="modalVideo" class="w-auto" loop autoplay muted style="max-height: 70vh;border-radius: 0 0 0.5em 0.5em;">
+                                <source src="" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        $('body').append(modalHTML);
+        
+        // Pause video when modal is closed
+        $('#videoPlayModal').on('hidden.bs.modal', function() {
+            const video = document.getElementById('modalVideo');
+            if (video) {
+                video.pause();
+                video.currentTime = 0;
+            }
+        });
+    }
+    
+    // Set video source and title
+    $('#modalVideo source').attr('src', videoUrl);
+    $('#modalVideo')[0].load();
+    $('#videoPlayModalLabel').text(chatName);
+    
+    // Show modal
+    const videoModal = new bootstrap.Modal(document.getElementById('videoPlayModal'));
+    videoModal.show();
+};
 
 async function onLanguageChange(lang) {
     const updateResponse = await $.ajax({
@@ -336,7 +552,6 @@ $(document).ready(async function() {
         });
     }
 
-    startCountdown();
     displayTags();
 });
 
@@ -1387,6 +1602,9 @@ window.displaySimilarChats = function (chatData, targetGalleryIdParam) {
                     <button class="btn btn-sm btn-outline-secondary border-0 ${chat.nsfw ? 'nsfw' : ''}" onclick="toggleChatNSFW(this); event.stopPropagation();" data-id="${chat._id}" style="background: #00000050;color: white;padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
                         ${chat.nsfw ? '<i class="bi bi-eye-slash-fill"></i>' : '<i class="bi bi-eye-fill"></i>'}
                     </button>
+                    <button class="btn btn-sm btn-danger border-0 ms-1" data-id="${chat._id}" onclick="deleteChat(this); event.stopPropagation();" title="Delete Chat" style="padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
+                      <i class="bi bi-trash"></i>
+                    </button>
                     ` : ''}
                 </div>
 
@@ -1452,24 +1670,31 @@ window.displayLatestChats = function (chatData, targetGalleryId, modal = false) 
       <div class="${cardClass}" data-id="${chat._id}" style="cursor:pointer;" onclick="redirectToChat('${chat._id}','${imageSrc}')">
         <div class="card gallery-hover shadow-sm border-0 h-100 position-relative overflow-hidden">
           <div class="gallery-image-wrapper" style="aspect-ratio: 4/5; background: #f8f9fa; position: relative;">
-          <img src="${imageSrc}" class="card-img-top gallery-img" alt="${chat.name}" style="height: 100%; width: 100%; object-fit: cover;">
-          ${nsfwOverlay}
+            <img src="${imageSrc}" class="card-img-top gallery-img" alt="${chat.name}" style="height: 100%; width: 100%; object-fit: cover;">
+            ${nsfwOverlay}
           </div>
           <div class="card-body p-2 d-flex flex-column">
-          <h6 class="card-title small fw-bold mb-1 text-truncate" style="font-size: 0.85rem;">${chat.name}</h6>
+            <h6 class="card-title small fw-bold mb-1 text-truncate" style="font-size: 0.85rem;">${chat.name}</h6>
           </div>
-          <div class="position-absolute top-0 start-0 m-1 d-flex flex-column align-items-start" style="z-index:3;">
-            ${isOwner ? `
-              <span class="badge bg-light text-secondary shadow" style="font-size: 0.6rem !important; padding: 0.2em 0.4em !important;opacity:0.8;">
-              <i class="bi bi-person-fill"></i>
-              </span>
-            ` : ''}
-            ${isPremiumChat ? `<span class="custom-gradient-bg badge bg-gradient-primary mb-1"> ${translations.premium}</span>` : ''}
-            ${(isAdmin) ? `
-              <button class="btn btn-sm btn-outline-secondary border-0 ${chat.nsfw ? 'nsfw' : ''}" onclick="toggleChatNSFW(this); event.stopPropagation();" data-id="${chat._id}" style="background: #00000050;color: white;padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
-              ${chat.nsfw ? '<i class="bi bi-eye-slash-fill"></i>' : '<i class="bi bi-eye-fill"></i>'}
-              </button>
-            ` : ''}
+          <div class="position-absolute top-0 start-0 w-100 px-2 pt-2 d-flex justify-content-between align-items-center" style="z-index:3;">
+            <div class="d-flex align-items-center gap-1">
+              ${isOwner ? `
+                <span class="badge bg-light text-secondary shadow" style="font-size: 0.6rem !important; padding: 0.2em 0.4em !important;opacity:0.8;">
+                  <i class="bi bi-person-fill"></i>
+                </span>
+              ` : ''}
+              ${isPremiumChat ? `<span class="custom-gradient-bg badge bg-gradient-primary mb-1">${translations.premium}</span>` : ''}
+            </div>
+            <div class="d-flex align-items-center gap-1">
+              ${(isAdmin) ? `
+                <button class="btn btn-sm btn-outline-secondary border-0 ${chat.nsfw ? 'nsfw' : ''}" onclick="toggleChatNSFW(this); event.stopPropagation();" data-id="${chat._id}" title="NSFW Toggle" style="background: #00000050;color: white;padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
+                  ${chat.nsfw ? '<i class="bi bi-eye-slash-fill"></i>' : '<i class="bi bi-eye-fill"></i>'}
+                </button>
+                <button class="btn btn-sm btn-danger border-0 ms-1" data-id="${chat._id}" onclick="deleteChat(this); event.stopPropagation();" title="Delete Chat" style="padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
+                  <i class="bi bi-trash"></i>
+                </button>
+              ` : ''}
+            </div>
           </div>
           <div id="spinner-${chat._id}" class="loading-overlay position-absolute top-0 start-0 w-100 h-100 justify-content-center align-items-center" style="background: rgba(255,255,255,0.8); z-index: 1; display: none;">
             <div class="spinner-border text-purple" role="status">
@@ -1600,7 +1825,12 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                                   data-id="${chat.chatId || chat._id}" 
                                   onclick="toggleChatNSFW(this)">
                                   <i class="bi ${finalNsfwResult ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
+                                  </button>
+                                  
+                                  <button class="btn btn-sm btn-danger border-0 ms-1" data-id="${chat._id}" onclick="deleteChat(this); event.stopPropagation();" title="Delete Chat" style="padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
+                                    <i class="bi bi-trash"></i>
                                   </button>`
+                                  
                                   : ''
                               }
                           </div>
@@ -1625,7 +1855,26 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
   // Append the generated HTML to the gallery
   $(document).find('#chat-gallery').append(htmlContent);
 };
+// Call /api/delete-chat/:chatId to delete a chat
+window.deleteChat = function(el) {
 
+  event.stopPropagation();
+  const chatId = $(el).data('id');
+  $.ajax({
+    url: `/api/delete-chat/${chatId}`,
+    method: 'DELETE',
+    xhrFields: {
+      withCredentials: true
+    },
+    success: function() {
+      showNotification('Successfully deleted chat.', 'success');
+      $(`.gallery-card[data-id="${chatId}"]`).remove();
+    },
+    error: function() {
+      showNotification('Failed to delete chat.', 'error');
+    }
+  });
+}
 window.toggleChatNSFW = function(el) {
   //Avoid propagation
   event.stopPropagation();
@@ -2890,6 +3139,7 @@ function generateUserPostsPagination(userId, totalPages) {
 }
 
 window.startCountdown = function() {
+  return
   const countdownElements = $('.countdown-timer');
   let storedEndTime = localStorage.getItem('countdownEndTime');
   const now = Date.now();

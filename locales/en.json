@@ -1,5 +1,7 @@
 {
   "lang":"en",
+  "latestVideoChatsHeader": "Latest Video Chats",
+  "upgrade": "💎 Upgrade",
   "loadingChats": "Loading chats...",
   "pleaseWait": "Please wait...",
   "loading": "Loading...",

@@ -226,7 +226,7 @@ function initializeWebSocket(onConnectionResult = null) {
     } else {
       console.error('Max reconnect attempts reached. Could not reconnect to WebSocket.');
       // Call a module to ask the user to retry or refresh the page
-      if (window.showReconnectPrompt) {
+      if (window.showReconnectPrompt && window.MODE === 'local') {
         window.showReconnectPrompt();
       } else {
         console.error('No reconnect prompt function available.');

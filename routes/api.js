@@ -215,25 +215,24 @@ async function routes(fastify, options) {
 
             // Access the MongoDB collection
             const chatCollection = fastify.mongo.db.collection('chats');
-            const story = await chatCollection.findOne(
+            const chat = await chatCollection.findOne(
                 { 
-                    _id: new fastify.mongo.ObjectId(chatId),
-                    userId : new fastify.mongo.ObjectId(userId)
+                    _id: new fastify.mongo.ObjectId(chatId)
                  }
             );
-    
-            if (!story) {
-                return reply.status(404).send({ error: 'Story not found' });
+
+            if (!chat) {
+                return reply.status(404).send({ error: 'Chat not found' });
             }
-    
-            // Delete the story from MongoDB
+
+            // Delete the chat from MongoDB
             await chatCollection.deleteOne({ _id: new fastify.mongo.ObjectId(chatId) });
 
-            return reply.send({ message: 'Story deleted successfully' });
+            return reply.send({ message: 'Chat deleted successfully' });
         } catch (error) {
             // Handle potential errors
-            console.error('Failed to delete story:', error);
-            return reply.status(500).send({ error: 'Failed to delete story' });
+            console.error('Failed to delete chat:', error);
+            return reply.status(500).send({ error: 'Failed to delete chat' });
         }
     });
     // This route handles updating the NSFW status of a chat
@@ -1891,7 +1890,156 @@ async function routes(fastify, options) {
             reply.code(500).send({ error: 'Internal Server Error' });
         }
         });
-    
+
+    fastify.get('/api/latest-video-chats', async (request, reply) => {
+        const db = fastify.mongo.db;
+        const page = parseInt(request.query.page) || 1;
+        const limit = parseInt(request.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        try {
+            console.log(`[latest-video-chats] page=${page} limit=${limit} skip=${skip}`);
+            
+            const videosCollection = db.collection('videos');
+            const chatsCollection = db.collection('chats');
+            
+            // First, get the latest videos with their chat info
+            const latestVideos = await videosCollection.aggregate([
+                {
+                    $lookup: {
+                        from: 'chats',
+                        localField: 'chatId',
+                        foreignField: '_id',
+                        as: 'chat'
+                    }
+                },
+                {
+                    $unwind: '$chat'
+                },
+                {
+                    $match: {
+                        'chat.language': request.lang,
+                        'chat.name': { $exists: true, $ne: '' },
+                        'chat.chatImageUrl': { $exists: true, $ne: '' }
+                    }
+                },
+                {
+                    $sort: { createdAt: -1 }
+                },
+                {
+                    $group: {
+                        _id: '$chatId',
+                        latestVideo: { $first: '$$ROOT' }
+                    }
+                },
+                {
+                    $sort: { 'latestVideo.createdAt': -1 }
+                },
+                {
+                    $skip: skip
+                },
+                {
+                    $limit: limit
+                },
+                {
+                    $project: {
+                        _id: '$latestVideo._id',
+                        videoUrl: '$latestVideo.videoUrl',
+                        duration: '$latestVideo.duration',
+                        prompt: '$latestVideo.prompt',
+                        createdAt: '$latestVideo.createdAt',
+                        chatId: '$latestVideo.chatId',
+                        userId: '$latestVideo.userId',
+                        chat: {
+                            _id: '$latestVideo.chat._id',
+                            name: '$latestVideo.chat.name',
+                            chatImageUrl: '$latestVideo.chat.chatImageUrl',
+                            thumbnailUrl: '$latestVideo.chat.thumbnailUrl',
+                            gender: '$latestVideo.chat.gender',
+                            imageStyle: '$latestVideo.chat.imageStyle',
+                            nsfw: '$latestVideo.chat.nsfw'
+                        }
+                    }
+                }
+            ]).toArray();
+
+            // Get user info for each video
+            const usersCollection = db.collection('users');
+            const formattedVideoChats = await Promise.all(
+                latestVideos.map(async (video) => {
+                    const user = await usersCollection.findOne(
+                        { _id: video.userId },
+                        { projection: { nickname: 1, profileUrl: 1 } }
+                    );
+
+                    return {
+                        _id: video._id,
+                        videoUrl: video.videoUrl,
+                        duration: video.duration,
+                        prompt: video.prompt,
+                        createdAt: video.createdAt,
+                        chatId: video.chatId,
+                        chat: {
+                            _id: video.chat._id,
+                            name: video.chat.name,
+                            chatImageUrl: video.chat.chatImageUrl || video.chat.thumbnailUrl,
+                            gender: video.chat.gender,
+                            imageStyle: video.chat.imageStyle,
+                            nsfw: video.chat.nsfw || false
+                        },
+                        user: {
+                            nickname: user?.nickname,
+                            profileUrl: user?.profileUrl
+                        }
+                    };
+                })
+            );
+
+            // Count total unique chats with videos for pagination
+            const totalChatsWithVideos = await videosCollection.aggregate([
+                {
+                    $lookup: {
+                        from: 'chats',
+                        localField: 'chatId',
+                        foreignField: '_id',
+                        as: 'chat'
+                    }
+                },
+                {
+                    $unwind: '$chat'
+                },
+                {
+                    $match: {
+                        'chat.language': request.lang,
+                        'chat.name': { $exists: true, $ne: '' },
+                        'chat.chatImageUrl': { $exists: true, $ne: '' }
+                    }
+                },
+                {
+                    $group: {
+                        _id: '$chatId'
+                    }
+                },
+                {
+                    $count: 'total'
+                }
+            ]).toArray();
+
+            const totalCount = totalChatsWithVideos[0]?.total || 0;
+            const totalPages = Math.ceil(totalCount / limit);
+
+            reply.send({
+                videoChats: formattedVideoChats,
+                currentPage: page,
+                totalPages: totalPages,
+                totalCount: totalCount
+            });
+
+        } catch (error) {
+            console.log({ msg: 'Error fetching latest video chats', error: error.message, stack: error.stack });
+            reply.status(500).send({ message: 'Error fetching latest video chats' });
+        }
+    });
 
     fastify.get('/api/latest-chats', async (request, reply) => {
         const db = fastify.mongo.db;

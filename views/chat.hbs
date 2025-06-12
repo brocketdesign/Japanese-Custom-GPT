@@ -134,6 +134,17 @@
                     <div id="latest-chats-gallery" class="row latest-chats-gallery flex-nowrap overflow-auto mx-0" style="flex-wrap: nowrap; overflow-x: auto; white-space: nowrap;"></div>
                 </div>
 
+                <!-- Latest Video Chats Section -->
+                <div class="mx-4 my-4" id="latest-video-chats-section">
+                    <h5 class="fw-bold mb-3">{{translations.latestVideoChatsHeader}}
+                        <i class="bi bi-arrow-counterclockwise" onclick="loadLatestVideoChats(1, true)" style="cursor: pointer;"></i>
+                    </h5>
+                    <div id="latest-video-chats-gallery" class="d-flex overflow-auto pb-3" style="gap: 15px; scroll-behavior: smooth;">
+                        <!-- Video chats will be loaded here -->
+                    </div>
+                    <div id="latest-video-chats-pagination-controls" class="text-center mt-3"></div>
+                </div>
+
                 <!-- Popular chat -->
                 <div class="mx-4 my-4" id="popular-chats-section">
                     <h5 class="fw-bold mb-3">{{translations.popularChats}}</h5>
@@ -207,13 +218,13 @@
  {{> dashboard-footer}}
 <script src="https://cdn.jsdelivr.net/npm/blueimp-md5@2.19.0/js/md5.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-<script src="/js/chat.js"></script>
 <script src="/js/chat-tool-toolbar.js"></script>
 <script src="/js/merge-face.js"></script>
 <script src="/js/chat-tool-history-sidebar.js"></script>
 <script src="/js/txt2speech.js"></script>
 <script src="/js/chat-tool-gifts.js"></script>
 <script src="/js/chat-tool-settings.js"></script>
+<script src="/js/chat.js"></script>
 <script src="/js/img2video.js"></script>
 <script>
     const newSubscription = {{newSubscription}};
@@ -629,7 +640,10 @@ $(document).ready(function() {
     if ($('#latest-chats-section').length) {
         loadLatestChats();
     }
-
+    // Initial load for Latest Video Chats
+    if ($('#latest-video-chats-section').length) {
+        loadLatestVideoChats();
+    }
     // Optional: reload on tab switch or other triggers
     // Example: $('#reload-popular-chats').on('click', function(){ popularChatsPage=1; loadPopularChats(1, true); });
 

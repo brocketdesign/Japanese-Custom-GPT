@@ -2443,3 +2443,41 @@ opacity: 0.8;
 #user-chat-count {
     font-size: 0.75rem;
 }
+
+.video-chat-card .video-thumbnail-wrapper {
+    overflow: hidden;
+}
+
+.video-chat-card .play-button-overlay {
+    transition: opacity 0.3s ease;
+}
+
+.video-chat-card:hover .play-button-overlay {
+    opacity: 0.7;
+}
+
+.video-chat-card .video-thumbnail {
+    transition: transform 0.3s ease;
+}
+
+.video-chat-card:hover .video-thumbnail {
+    transform: scale(1.05);
+}
+
+#latest-video-chats-gallery::-webkit-scrollbar {
+    height: 8px;
+}
+
+#latest-video-chats-gallery::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+#latest-video-chats-gallery::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+#latest-video-chats-gallery::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}

@@ -215,7 +215,8 @@ window.playVideoModal = function(videoUrl, chatName) {
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body p-0 text-center">
-                            <video id="modalVideo" class="w-auto" loop autoplay muted style="max-height: 70vh;border-radius: 0 0 0.5em 0.5em;">
+                            <video id="modalVideo" class="w-auto" loop autoplay muted 
+                            style="max-height: 70vh; border-radius: 0 0 0.5em 0.5em; max-width: 90vw;">
                                 <source src="" type="video/mp4">
                                 Your browser does not support the video tag.
                             </video>

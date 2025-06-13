@@ -179,11 +179,6 @@ function initializeWebSocket(onConnectionResult = null) {
             hideCompletionMessage(uniqueId);
             break;
           }
-          case 'displaySuggestions': {
-            const { suggestions, uniqueId } = data.notification;
-            displaySuggestions(suggestions, uniqueId);
-            break;
-          }
           case 'loadPlanPage':
             loadPlanPage();
             break;

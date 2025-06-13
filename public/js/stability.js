@@ -40,7 +40,7 @@ window.novitaImageGeneration = async function(userId, chatId, userChatId, option
         }
 
         const API_ENDPOINT = `${API_URL}/novita/generate-img`;
-        console.log(`[novitaImageGeneration] Sending request to ${API_ENDPOINT} with placeholderId: ${placeholderId}`)
+
         const response = await fetch(API_ENDPOINT, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -171,7 +171,6 @@ window.displayOrRemoveImageLoader = function (imageId, action, imagePreview) {
 
 const sentImageIds = new Set();
 window.generateImage = async function(data) {
-    console.log('[generateImage] Received data:', data);
     
     // Validate essential data
     if (!data || !data.userChatId || !data.imageUrl && !data.url) {
@@ -200,15 +199,6 @@ window.generateImage = async function(data) {
         isMergeFace = data.isMergeFace || data.isMerged 
     } = data;
     
-    console.log('[generateImage] Processing image:', {
-        imageId,
-        hasImageUrl: !!imageUrl,
-        hasPrompt: !!imagePrompt,
-        hasTitle: !!(data.title),
-        nsfw: imageNsfw,
-        isMergeFace,
-        isAutoMerge: data.isAutoMerge
-    });
     
     sentImageIds.add(imageId);
 

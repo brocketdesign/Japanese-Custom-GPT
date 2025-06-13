@@ -714,6 +714,150 @@
     }
 }
 
+/* Enhanced Suggestions Styles */
+.suggestions-scroll-container {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 10px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    flex-grow: 1;
+    padding: 0 5px;
+}
+
+.suggestions-scroll-container::-webkit-scrollbar {
+    display: none;
+}
+
+.suggestion-btn {
+    flex: 0 0 auto;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 1px solid rgba(110, 32, 244, 0.1);
+    border-radius: 25px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #495057;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+.suggestion-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(110, 32, 244, 0.1), transparent);
+    transition: left 0.5s;
+}
+
+.suggestion-btn:hover {
+    background: linear-gradient(135deg, #6E20F4 0%, #8B4CF8 100%);
+    color: white;
+    border-color: #6E20F4;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(110, 32, 244, 0.25);
+}
+
+.suggestion-btn:hover::before {
+    left: 100%;
+}
+
+.suggestion-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(110, 32, 244, 0.15);
+}
+
+/* Professional list design for suggestions container */
+#suggestionsList .suggestion-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 8px;
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 15px 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    position: relative;
+    overflow: hidden;
+}
+
+#suggestionsList .suggestion-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 4px;
+    background: linear-gradient(135deg, #6E20F4 0%, #8B4CF8 100%);
+    transform: scaleY(0);
+    transition: transform 0.3s ease;
+}
+
+#suggestionsList .suggestion-card:hover {
+    transform: translateX(8px);
+    box-shadow: 0 8px 25px rgba(110, 32, 244, 0.15);
+    border-color: rgba(110, 32, 244, 0.2);
+}
+
+#suggestionsList .suggestion-card:hover::before {
+    transform: scaleY(1);
+}
+
+#suggestionsList .suggestion-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: #495057;
+    margin: 0;
+    transition: color 0.3s ease;
+}
+
+#suggestionsList .suggestion-card:hover .suggestion-text {
+    color: #6E20F4;
+}
+
+#suggestionsList .suggestion-icon {
+    color: #6E20F4;
+    font-size: 16px;
+    margin-right: 12px;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+#suggestionsList .suggestion-card:hover .suggestion-icon {
+    opacity: 1;
+}
+
+/* Loading state for suggestions */
+#suggestionsList .loading-spinner {
+    padding: 40px 0;
+}
+
+#suggestionsList .loading-spinner .spinner-border {
+    color: #6E20F4;
+    width: 2rem;
+    height: 2rem;
+}
+
+/* Empty state */
+#suggestionsList .empty-suggestions {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6c757d;
+}
+
+#suggestionsList .empty-suggestions i {
+    font-size: 48px;
+    color: #dee2e6;
+    margin-bottom: 16px;
+}
 /* Add scroll indicators for mobile */
 @media (max-width: 768px) {
     .toolbar-scroll-container::before,

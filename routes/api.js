@@ -349,34 +349,7 @@ async function routes(fastify, options) {
                 return reply.status(404).send({ error: 'User data not found' });
             }
             let newMessage = { role: role };    
-            if(message.startsWith('[master]')){
-                newMessage.content = message.replace('[master]','')
-                newMessage.name = 'master'
-            } else if (message.startsWith('[context]')){
-                newMessage.content = message.replace('[context]','')
-                newMessage.name = 'context'
-            } else if (message.startsWith('[imageDone]')) {
-                const prompt = message.replace('[imageDone]','').trim()
-                newMessage.content =  `I just received an image of you about : ${prompt}. \n 
-                Provide a short comment and ask me what I think of it.\n
-                Stay in your character, keep the same tone as before. Respond in ${request.lang}.`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim();
-                newMessage.name = 'master'
-            } else if (message.startsWith('[imageStart]')){
-                const prompt = message.replace('[imageStart]','').trim()
-                newMessage.content =  `I just aksed for a new image about ${prompt}. \n 
-                Inform me that you received my request and that the image generation process is starting.\n
-                Do not include the image description in your answer. Provide a concice and short answer.\n
-                Stay in your character, keep the same tone as before. Respond in ${request.lang}.`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim();
-                newMessage.name = 'master'
-            } else if (message.startsWith('[promptImage]')){
-                const [promptId, userMessage, nsfw] = message.replace('[promptImage]', '').split(';;;');
-                newMessage.content = userMessage;
-                newMessage.promptId = promptId;
-                newMessage.nsfw = nsfw;
-                newMessage.trigger_image_request = true;
-            } else {
-                newMessage.content = message
-            }    
+            newMessage.content = message
             newMessage.timestamp = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
             userData.messages.push(newMessage);
             userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
@@ -598,8 +571,6 @@ async function routes(fastify, options) {
             
             // Generate prompt suggestions
             const suggestions = await generatePromptSuggestions(userData.messages, chatDescription, language);
-            fastify.sendNotificationToUser(userId, 'displaySuggestions', { suggestions, unionId: userChatId });
-
             
             return reply.send({ 
                 success: true, 
@@ -834,7 +805,7 @@ async function routes(fastify, options) {
                 ...userMessages
             ]
           }
-          const customModel = language === 'ja' || 'japanese' ? 'deepseek' : null;
+          const customModel = (language === 'ja' || language === 'japanese') ? 'deepseek' : 'mistral';
           console.log(`[/api/openai-chat-completion] current lang ${language}, customModel: ${customModel}`);
           generateCompletion(messagesForCompletion, 600, customModel, language).then(async (completion) => {
             if(completion){
@@ -851,12 +822,6 @@ async function routes(fastify, options) {
                 await updateMessagesCount(db, chatId, userId, currentUserMessage, userData.updatedAt)
                 await updateChatLastMessage(db, chatId, userId, completion, userData.updatedAt)
                 await updateUserChat(db, userId, userChatId, userData.messages, userData.updatedAt)
-      
-                // Generate prompt suggestions
-                if(true || subscriptionStatus){
-                    suggestions = await generatePromptSuggestions(userData.messages,chatDescription,language,'mistral')
-                    fastify.sendNotificationToUser(userId, 'displaySuggestions', { suggestions, uniqueId })
-                }
         
             }else{
                 fastify.sendNotificationToUser(userId, 'hideCompletionMessage', { uniqueId })
@@ -1121,7 +1086,7 @@ async function routes(fastify, options) {
         let imageInstructionMessage = generateImagePrompt({command, characterDescription, gender, dialogue});
         imageInstructionMessage = sanitizeMessages(imageInstructionMessage)
 
-        const completionMessage = await generateCompletion(imageInstructionMessage, 600, 'deepseek')
+        const completionMessage = await generateCompletion(imageInstructionMessage, 600, 'mistral')
 
         return completionMessage;
     }
@@ -1222,7 +1187,7 @@ async function routes(fastify, options) {
     fastify.post('/api/generate-completion', async (request, reply) => {
         const { systemPrompt, userMessage } = request.body;
         try {
-            const completion = await generateCompletion(systemPrompt, userMessage, 'deepseek');
+            const completion = await generateCompletion(systemPrompt, userMessage, 'mistral');
             return reply.send({ completion });
         } catch (error) {
             return reply.status(500).send({ error: 'Error generating completion' });

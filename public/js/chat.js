@@ -103,33 +103,6 @@ $(document).ready(async function() {
         }
     });
     window.addEventListener('message', function(event) {
-        if (event.data.event === 'imageStart') {
-            const prompt = event.data.prompt
-            const message = '[imageStart]'+ prompt
-            addMessageToChat(chatId, userChatId, {role:'user', message}, function(){
-                generateChatCompletion(null,true)
-            });
-        }
-    });
-    window.addEventListener('message', function(event) {
-        if (event.data.event === 'imageDone') {
-            const prompt = event.data.prompt
-            const message = '[imageDone]'+ prompt
-            addMessageToChat(chatId, userChatId, {role:'user', message}, function(){
-                generateChatCompletion()
-            });
-        }
-    });
-    window.addEventListener('message', function(event) {
-        if (event.data.event === 'imageError') {
-            const error = event?.data?.error || ''
-            let message = `[master] There way an error. The image could not be generated ${error}.`
-            addMessageToChat(chatId, userChatId, {role:'user', message},function(){
-                generateChatCompletion()
-            });
-        }
-    });
-    window.addEventListener('message', function(event) {
         if (event.data.event === 'fetchChatData') {
             const fetch_chatId = event.data.chatId
             const fetch_userId = event.data.userId
@@ -267,34 +240,9 @@ $(document).ready(async function() {
             }, 500);
         };
     
-        const isPromptImage = $('#userMessage').hasClass('prompt-image');
         const message = customMessage || $('#userMessage').val();
         let finalMessage = message;
     
-        if (isPromptImage) {
-            const promptId = $('#userMessage').attr('data-prompt-id');
-            const imageNsfw = $('#userMessage').attr('data-nsfw');
-            if (!promptId) {
-                console.error('Prompt ID not found.');
-                cleanup();
-                return;
-            }
-            if (finalMessage.trim() === '') {
-                const placeholderId = new Date().getTime() + "_" + promptId;
-                displayOrRemoveImageLoader(placeholderId, 'show');
-                novitaImageGeneration(userId, chatId, userChatId, { placeholderId, imageNsfw, promptId, customPrompt: true })
-                    .then(data => {
-                        if (data.error) displayOrRemoveImageLoader(placeholderId, 'remove');
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        displayOrRemoveImageLoader(placeholderId, 'remove');
-                    });
-                cleanup();
-                return;
-            }
-            finalMessage = `[promptImage]${promptId};;;${message};;;${imageNsfw}`;
-        }
     
         if (finalMessage.trim() !== '') {
             if (displayStatus) displayMessage('user', message, userChatId);
@@ -669,7 +617,8 @@ function setupChatInterface(chat, character) {
                     <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
                         <img src="${ thumbnail ? thumbnail : '/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
                         <div class="audio-controller">
-                            <button id="play-${uniqueId}" class="audio-content badge bg-dark">►</button>
+                            <button id="play-${uniqueId}" 
+                            class="audio-content badge bg-dark rounded-pill shadow-sm border-light">►</button>
                         </div>
                         <div id="completion-${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">
                             <img src="/img/load-dot.gif" width="50px">
@@ -729,7 +678,7 @@ function setupChatInterface(chat, character) {
         $('#stability-gen-button').show();
         $('.auto-gen').each(function() { $(this).show(); });
         $('#audio-play').show();
-        console.log(userChat)
+ 
         let chatContainer = $('#chatContainer');
         chatContainer.empty();
 
@@ -760,7 +709,7 @@ function setupChatInterface(chat, character) {
                             <div class="p-3 me-3 border-0 text-start user-message" style="border-radius: 15px; background-color: #fbfbfbdb;">
                                 ${marked.parse(chatMessage.content)}
                             </div>
-                            ${persona ? `<img src="${persona.chatImageUrl || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">` : ''}
+                            ${persona ? `<img src="${persona.chatImageUrl || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">` : ''}
                             ${image_request ? `<i class="bi bi-image message-icon" style="position: absolute; top: 0; right: 25px;opacity: 0.7;"></i>` : ''}
                         </div>
                     `;
@@ -913,15 +862,22 @@ function setupChatInterface(chat, character) {
                     const isHidden = chatMessage.content.startsWith("[Hidden]") || chatMessage.hidden === true;
                     if (chatMessage.content && !isHidden) {
                         let message = removeContentBetweenStars(chatMessage.content);
+                        
+                        // Check if this is the last assistant message
+                        const isLastMessage = i === userChat.length - 1 && chatMessage.role === "assistant";
+                        const messageActions = chatMessage.actions || [];
+                        
                         messageHtml = `
                             <div id="container-${designStep}">
                                 <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
                                     <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
                                     <div class="audio-controller">
-                                        <button id="play-${designStep}" class="audio-content badge bg-dark" data-content="${message}">►</button>
+                                        <button id="play-${designStep}" 
+                                        class="audio-content badge bg-dark rounded-pill shadow-sm border-light" data-content="${message}">►</button>
                                     </div>
-                                    <div id="message-${designStep}" class="p-3 ms-3 text-start assistant-chat-box">
+                                    <div id="message-${designStep}" class="p-3 ms-3 text-start assistant-chat-box position-relative">
                                         ${marked.parse(chatMessage.content)}
+                                        ${getMessageTools(i, messageActions, isLastMessage, true)}
                                     </div>
                                 </div>
                             </div>
@@ -1382,18 +1338,25 @@ function setupChatInterface(chat, character) {
         $(`#completion-${uniqueId}`).closest('message-container').closest('div').fadeOut().remove();
     }
 
-    // Also add cleanup when creating new bot response containers
+
+    // Update the createBotResponseContainer function to use the new structure
     function createBotResponseContainer(uniqueId) {
         // Clean up any existing process with same ID
         activeRenderProcesses.delete(uniqueId);
         
         const container = $(`
             <div id="container-${uniqueId}">
-            <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
-                <img src="${thumbnail ? thumbnail : '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width:45px;width:45px;height:45px;border-radius:15%;object-fit:cover;object-position:top;cursor:pointer;">
-                <div class="audio-controller"><button id="play-${uniqueId}" class="audio-content badge bg-dark">►</button></div>
-                <div id="completion-${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box"><img src="/img/load-dot.gif" width="50px"></div>
-            </div>
+                <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
+                    <img src="${thumbnail ? thumbnail : '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width:45px;width:45px;height:45px;border-radius:15%;object-fit:cover;object-position:top;cursor:pointer;">
+                    <div class="audio-controller">
+                        <button id="play-${uniqueId}" 
+                        class="audio-content badge bg-dark rounded-pill shadow-sm border-light">►</button>
+                    </div>
+                    <div class="ms-3 p-3 text-start assistant-chat-box flex-grow-1 position-relative">
+                        <div id="completion-${uniqueId}""><img src="/img/load-dot.gif" width="50px"></div>
+                        <!-- Message tools will be added here after streaming completes -->
+                    </div>
+                </div>
             </div>`).hide();
         $('#chatContainer').append(container);
         container.addClass('animate__animated animate__slideInUp').fadeIn();
@@ -1401,9 +1364,30 @@ function setupChatInterface(chat, character) {
     }
 
     function afterStreamEnd(uniqueId, markdownContent) {
-      let msg = removeContentBetweenStars(markdownContent);
-      $(`#play-${uniqueId}`).attr('data-content', msg);
-      $(`#play-${uniqueId}`).closest('.audio-controller').show();
+        let msg = removeContentBetweenStars(markdownContent);
+        $(`#play-${uniqueId}`).attr('data-content', msg);
+        $(`#play-${uniqueId}`).closest('.audio-controller').show();
+        
+        // Add message tools after streaming is complete
+        const messageContainer = $(`#container-${uniqueId}`);
+        if (messageContainer.length) {
+            // Get the current message index (count of all messages in the chat)
+            const currentMessageIndex = $('#chatContainer .message-container').length - 1;
+            
+            // Check if this is the last message (should be true for new messages)
+            const isLastMessage = true;
+            
+            // Add message tools
+            const toolsHtml = getMessageTools(currentMessageIndex, [], isLastMessage, true);
+            
+            // Find the position-relative container and add tools to it
+            const relativeContainer = messageContainer.find('.position-relative').last();
+            if (relativeContainer.length && !relativeContainer.find('.message-tools-controller').length) {
+                relativeContainer.append(toolsHtml);
+            }
+
+            updateAllMessageTools();
+        }
     }
 
     // Hide the completion message container
@@ -1411,9 +1395,6 @@ function setupChatInterface(chat, character) {
         $(`#completion-${uniqueId}`).fadeOut();
     };
 
-
-
-    
     window.generateChatCompletion = function(callback, isHidden = false) {
         const uniqueId = `${currentStep}-${Date.now()}`;
         const container = createBotResponseContainer(uniqueId);
@@ -1544,17 +1525,28 @@ function setupChatInterface(chat, character) {
                 <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container ${animationClass}">
                     <img src="${thumbnail || '/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top; cursor:pointer;">
                     <div class="audio-controller">
-                        <button id="play-${uniqueId}" class="audio-content badge bg-dark" data-content="${message}">►</button>
+                        <button id="play-${uniqueId}" 
+                        class="audio-content badge bg-dark rounded-pill shadow-sm border-light" 
+                        data-content="${message}">►</button>
                     </div>
-                    <div id="${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">
-                        ${message}
+                    <div id="${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box position-relative">
+                        ${marked.parse(message)}
                     </div>
                 </div>
             `).hide();
             messageContainer.append(messageElement);
             messageElement.show().addClass(animationClass);
+            
+            // Add message tools immediately for non-streaming messages
+            setTimeout(() => {
+                const currentMessageIndex = $('#chatContainer .message-container').length - 1;
+                const toolsHtml = getMessageTools(currentMessageIndex, [], true, true);
+                messageElement.find('.assistant-chat-box').append(toolsHtml);
+            }, 100);
         }
     
+        updateAllMessageTools();
+
         if (typeof callback === 'function') {
             callback();
         }
@@ -1618,7 +1610,6 @@ function setupChatInterface(chat, character) {
                 console.error('Error:', error);
                 displayOrRemoveImageLoader(placeholderId, 'remove');
             });
-        // Optionally clear prompt selection or UI here if needed
     }
     // Add the prompt image to the #userMessage textarea and update the value
     function addPromptToMessage(id, imageNsfw, imagePreview) {
@@ -1720,26 +1711,6 @@ window.regenImage = function(el){
     }
 };
 
-window.displaySuggestions = function(suggestions, uniqueId) {
-    if (!suggestions || suggestions.length === 0) {
-        return;
-    }
-    const suggestionContainer = $(`#suggestions`);
-
-    if(!suggestionContainer.hasClass('init')){
-        suggestionContainer.addClass('init');
-        suggestionContainer.empty();
-        // Add new suggestions smoothly one by one, allow only one click per suggestion
-        suggestions.forEach((suggestion, index) => {
-            const button = $(`<button class="btn shadow m-1 rounded-pill text-capitalize text-white col-auto" style="background:#151213b0;">${suggestion}</button>`);
-            button.one('click', function() { // use .one for single click
-                sendMessage(suggestion);
-                $(this).fadeOut();
-            });
-            suggestionContainer.prepend(button.hide().fadeIn());
-        });
-    }
-}
 
 // call fetchchatdata function accross other scripts
 function callFetchChatData(fetch_chatId, fetch_userId, fetch_reset, callback){

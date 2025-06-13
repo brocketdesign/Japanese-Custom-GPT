@@ -1,36 +1,191 @@
+$(document).ready(function() {
+        // Track used suggestions to prevent showing them again
+        let usedSuggestions = new Set();
 
-    $(document).ready(function() {
         // Toggle emoji tone view
         $('#emoji-tone-btn').on('click', function() {
             showToolContentView('toolbar-emoji-tone');
         });
         
-        // Toggle suggestions view
+
+        // Toggle suggestions view - Updated
         $('#suggestions-toggle').on('click', function() {
-            const suggestionsContainer = $('#suggestions');
-            if (suggestionsContainer.is(':empty')) {
+            // Show the suggestions container (like promptContainer)
+            $('#suggestionsContainer').slideToggle();
+            
+            const suggestionsContainer = $('#suggestionsList');
+            if (suggestionsContainer.find('.suggestion-card').length === 0) {
                 const userChatId = $('#chatContainer').data('id');
                 if (userChatId) {
-                    // Show a loading indicator
-                    suggestionsContainer.html('<div class="text-center w-100 my-2"><i class="bi bi-hourglass-split"></i>'+translations.loading_suggestions+'</div>');
-                    
-                    // Make API request to trigger suggestion generation via websocket
-                    $.ajax({
-                        url: '/api/display-suggestions',
-                        type: 'POST',
-                        contentType: 'application/json',
-                        data: JSON.stringify({ 
-                            userChatId: userChatId,
-                            uniqueId: new Date().getTime() // Generate a unique ID for the websocket response
-                        })
-                    });
+                    fetchNewSuggestions(userChatId, suggestionsContainer);
                 } else {
-                    suggestionsContainer.html('<div class="text-center w-100 my-2">No chat selected</div>');
+                    showEmptySuggestions();
                 }
             }
-            showToolContentView('toolbar-suggestions');
         });
-        
+
+        // Close suggestions container
+        $('#close-suggestionsContainer').on('click', function() {
+            $('#suggestionsContainer').slideUp();
+        });
+
+        // New function to fetch suggestions with exclusions
+        function fetchNewSuggestions(userChatId, suggestionsContainer) {
+            // Show loading state
+            suggestionsContainer.html(`
+                <div class="loading-spinner text-center mt-4 d-flex flex-column align-items-center justify-content-center">
+                    <div class="spinner-border mb-3" role="status">
+                        <span class="visually-hidden">${translations.loading}</span>
+                    </div>
+                    <p class="text-muted">${translations.loading_suggestions}</p>
+                </div>
+            `);     
+            
+            // Make API request with excluded suggestions
+            $.ajax({
+                url: '/api/display-suggestions',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ 
+                    userChatId: userChatId,
+                    uniqueId: new Date().getTime(),
+                    excludeSuggestions: Array.from(usedSuggestions)
+                }),
+                success: function(response) {
+                    if (response.success && response.suggestions) {
+                        displaySuggestionsInContainer(response.suggestions, userChatId);
+                    } else {
+                        showEmptySuggestions();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching suggestions:', error);
+                    showSuggestionsError();
+                }
+            });
+        }
+
+        // New function to display suggestions in the professional container
+        window.displaySuggestionsInContainer = function(suggestions, uniqueId) {
+            if (!suggestions || Object.keys(suggestions).length === 0) {
+                showEmptySuggestions();
+                return;
+            }
+            
+            const suggestionContainer = $('#suggestionsList');
+            
+            // Create header
+            let html = `
+                <h4 class="text-center w-100 mt-2">${translations.toolbar.ideas}</h4>
+            `;
+            
+            // Define category configuration with emojis and translations
+            const categoryConfig = {
+                images: {
+                    emoji: '📸',
+                    title: translations.suggestions?.images || 'Images'
+                },
+                chat: {
+                    emoji: '💬',
+                    title: translations.suggestions?.chat || 'Chat'
+                },
+                feelings: {
+                    emoji: '💭',
+                    title: translations.suggestions?.feelings || 'Feelings'
+                },
+                scenarios: {
+                    emoji: '🎭',
+                    title: translations.suggestions?.scenarios || 'Scenarios'
+                }
+            };
+            
+            // Add suggestion cards by category
+            Object.keys(categoryConfig).forEach(categoryKey => {
+                if (suggestions[categoryKey] && Array.isArray(suggestions[categoryKey]) && suggestions[categoryKey].length > 0) {
+                    const config = categoryConfig[categoryKey];
+                    
+                    // Add category header
+                    html += `
+                        <div class="suggestion-category-header mt-3 mb-2">
+                            <h6 class="text-muted text-center">
+                                ${config.emoji} ${config.title}
+                            </h6>
+                        </div>
+                    `;
+                    
+                    // Add suggestions for this category
+                    suggestions[categoryKey].forEach((suggestion, index) => {
+                        html += `
+                            <div class="suggestion-card w-100" data-suggestion="${suggestion}" data-category="${categoryKey}">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-lightbulb suggestion-icon"></i>
+                                    <p class="suggestion-text flex-grow-1">${suggestion}</p>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            });
+            
+            suggestionContainer.html(html);
+            
+            // Add click handlers with removal and tracking
+            $('.suggestion-card').on('click', function() {
+                const suggestion = $(this).data('suggestion');
+                const $card = $(this);
+                
+                // Add to used suggestions
+                usedSuggestions.add(suggestion);
+                
+                // Send the message
+                sendMessage(suggestion);
+                
+                // Hide the suggestions container
+                $('#suggestionsContainer').slideUp();
+                
+                // Remove the card with animation
+                $card.fadeOut(300, function() {
+                    $card.remove();
+                    
+                    // Check if this was the last suggestion
+                    const remainingCards = $('#suggestionsList .suggestion-card');
+                    if (remainingCards.length === 0) {
+                        // Fetch new suggestions
+                        const userChatId = $('#chatContainer').data('id');
+                        if (userChatId) {
+                            fetchNewSuggestions(userChatId, $('#suggestionsList'));
+                        } else {
+                            showEmptySuggestions();
+                        }
+                    }
+                });
+            });
+        }
+
+        // Function to show empty suggestions state
+        function showEmptySuggestions() {
+            const suggestionContainer = $('#suggestionsList');
+            suggestionContainer.html(`
+                <div class="empty-suggestions">
+                    <i class="bi bi-lightbulb"></i>
+                    <h5>${translations.toolbar.ideas}</h5>
+                    <p class="text-muted">${translations.similarChatsNotFound}</p>
+                </div>
+            `);
+        }
+
+        // Function to show error state
+        function showSuggestionsError() {
+            const suggestionContainer = $('#suggestionsList');
+            suggestionContainer.html(`
+                <div class="empty-suggestions">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <h5>${translations.error}</h5>
+                    <p class="text-muted">${translations.errorOccurred}</p>
+                </div>
+            `);
+        }
+
         // Toggle translation view
         $('#translation-toggle').on('click', function() {
             const subscriptionStatus = user.subscriptionStatus == 'active'

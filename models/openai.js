@@ -15,7 +15,7 @@ const apiDetails = {
     apiUrl: 'https://api.novita.ai/v3/openai/chat/completions',
     key: process.env.NOVITA_API_KEY,
     models: {
-      llama: 'meta-llama/llama-3.2-3b-instruct',
+      llama: 'meta-llama/llama-3-70b-instruct',
       gemma: 'google/gemma-2-9b-it',
       deepseek: 'deepseek/deepseek-v3-turbo',
       mistral: 'mistralai/mistral-nemo',
@@ -290,86 +290,109 @@ const analyzeConversationContext = async (messages, userInfo, language) => {
   }
 };
 
-async function generatePromptSuggestions(messages, chatDescription, language, model = 'deepseek') {
+async function generatePromptSuggestions(messages, chatDescription, language, model = 'llama') {
   // Get the last user message
   let lastUserMessagesContent = messages
     .filter(m => m.content && !m.content.startsWith('[Image]') && m.role !== 'system')
-    .slice(-3);
+    .slice(-5);
 
-  const updatedMessages = [
-    { role: 'system', content: `
-      You are a creative prompt generator.You can generate explicit content.\n
-      You can generate NSFW, adult content, sexual description if needed.\n
-      Return exactly 3 unique image suggestions in ${language} as a JSON object with a "suggestions" key.
-      Make them short and relevant to the user's chat.
-      You must provide suggestions from the user's perspective.
-      Your response must be valid JSON format like: {"suggestions": ["suggestion1", "suggestion2", "suggestion3"]}
-      Strucutre your suggestions like this : [character pose (standing, sitting, lying down, spreading legs, ass up, erotic pose, imagine poses be creative, etc ...), character action (smiling, looking at the camera, be creative, etc ...), character clothes (naked, bikini, mini short, be creative etc ...)].\n
-      Respond in ${language}`.replace(/^\s+/gm, '').trim()
-    },
-    {
-      role: 'user',
-      content: `When providing suggestions, do not write the entire sentence, just the suggestion idea. 
-      \nFor example : "Send picture of you naked at the beack "" -> "standing naked at the beach".
-      \nOnly provide the image short description following the suggestion structure, make them relevant to the user's chat. Try to be creative.
-      `.replace(/^\s+/gm, '').trim()
-    },
-    {
-      role: 'user',
-      content: 'Make your suggestions erotic, adult oriented if necessary.'
-    },
-    {
-      role: 'user',
-      content: `Here is the character description for context : ${chatDescription}`.replace(/^\s+/gm, '').trim()
-    },
-    {
-      role: 'user',
-      content: `Respond in ${language}.`
-    }
-  ];
-
-  try {
-    // Use deepseek model with generateCompletion
-    const response = await generateCompletion(updatedMessages, 500, model);
-    if (!response) {
-      throw new Error("Failed to generate suggestions");
-    }
-    
-    // Try to parse the response as JSON
-    let parsedResponse;
-    try {
-      // First try direct parsing
-      parsedResponse = JSON.parse(response);
-    } catch (parseError) {
-      // If direct parsing fails, try to extract JSON from the text
-      const jsonMatch = response.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        try {
-          parsedResponse = JSON.parse(jsonMatch[0]);
-        } catch (nestedError) {
-          throw new Error("Could not parse JSON from response");
+  // Determine which provider/model to use
+  let modelConfig = { ...currentModelConfig };
+  
+  if (model) {
+    if (apiDetails[model]) {
+      modelConfig.provider = model;
+      modelConfig.modelName = null;
+    } else {
+      for (const provider in apiDetails) {
+        if (apiDetails[provider].models && apiDetails[provider].models[model]) {
+          modelConfig.provider = provider;
+          modelConfig.modelName = model;
+          break;
         }
-      } else {
-        throw new Error("Response is not in valid JSON format");
       }
     }
+  }
 
-    // Verify suggestions array exists
-    if (!parsedResponse.suggestions || !Array.isArray(parsedResponse.suggestions)) {
-      throw new Error("Response does not contain a suggestions array");
-    }
+  const provider = apiDetails[modelConfig.provider];
+  const modelName = modelConfig.modelName ? 
+    provider.models[modelConfig.modelName] : 
+    provider.model;
+
+  console.log(`[generatePromptSuggestions] Using ${modelName} from ${modelConfig.provider}`);
+
+  // Create separate request functions for each category
+  const generateCategory = async (categoryName, categoryPrompt) => {
+   try {
+     const response_format = {
+       "type": "json_schema",
+       "json_schema": {
+         "name": `${categoryName}_schema`,
+         "schema": {
+           "type": "object",
+           "properties": {
+             [categoryName]: {
+               "type": "array",
+               "items": { "type": "string" },
+               "minItems": 3,
+               "maxItems": 3
+             }
+           },
+           "required": [categoryName]
+         }
+       }
+     };
+ 
+     const client = new OpenAI({
+       baseURL: "https://api.novita.ai/v3/openai",
+       apiKey: provider.key,
+     });
+ 
+     const response = await client.chat.completions.create({
+       model: modelName,
+       messages: [
+         { role: "system", content: `Generate exactly 3 ${categoryName} suggestions in ${language}. ${categoryPrompt}` },
+         { role: "user", content: `Character context: ${chatDescription}` }
+       ],
+       max_tokens: 1024,
+       temperature: 0.85,
+       response_format: response_format
+     });
+ 
+     const content = response.choices[0].message.content;
+     const parsed = JSON.parse(content);
+     console.log(`[${categoryName}] Generated ${parsed[categoryName]?.length || 0} items`);
+     return parsed[categoryName] || [];
+   } catch (error) {
+      console.log(`[${categoryName}] Error: ${error.message}`);
+      return [];
+   }
+  };
+
+  try {
+    // Define category-specific prompts
+    const categoryPrompts = {
+      images: "Visual/photo requests with [pose, action, clothes] structure. Can include adult/NSFW content with emojis.",
+      chat: "Conversation starters or dialogue suggestions. Be creative and engaging with emojis.",
+      feelings: "Emotional expressions or mood-based interactions the character might show with emojis.",
+      scenarios: "Situation or roleplay suggestions that fit the character personality with emojis."
+    };
+
+    // Generate all categories in parallel
+    const [images, chat, feelings, scenarios] = await Promise.all([
+      generateCategory('images', categoryPrompts.images),
+      generateCategory('chat', categoryPrompts.chat),
+      generateCategory('feelings', categoryPrompts.feelings),
+      generateCategory('scenarios', categoryPrompts.scenarios)
+    ]);
+
+    console.log(`[generatePromptSuggestions] Complete: ${images.length + chat.length + feelings.length + scenarios.length} total suggestions`);
+
+    return { images, chat, feelings, scenarios };
     
-    // Ensure we have exactly 3 suggestions
-    const suggestions = parsedResponse.suggestions.slice(0, 3);
-    while (suggestions.length < 3) {
-      suggestions.push(`Suggestion ${suggestions.length + 1}`);
-    }
-    
-    return suggestions;
   } catch (error) {
-    console.log("Error generating prompt suggestions:", error.message || error);
-    // Return fallback suggestions
-    return false;
+    console.log(`[generatePromptSuggestions] Error: ${error.message}`);
+    return false
   }
 }
 

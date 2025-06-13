@@ -78,13 +78,14 @@
                         </div>
                     </div>
                     
+
                     <!-- Suggestions view -->
                     <div id="toolbar-suggestions" class="toolbar-content-view animate__animated" style="display: none;">
                         <button type="button" class="toolbar-back-btn">
                             <i class="bi bi-arrow-left"></i>
                         </button>
-                        <div class="toolbar-title">提案</div>
-                        <div id="suggestions" class="suggestions-scroll-container mx-2">
+                        <div class="toolbar-title">{{translations.toolbar.ideas}}</div>
+                        <div class="suggestions-scroll-container mx-2">
                             <!-- Suggestions will be dynamically added here -->
                         </div>
                     </div>
@@ -121,6 +122,20 @@
             </div>
         </div>
 
+
+        <div id="suggestionsContainer" class="shadow" style="position: absolute; bottom: -10px; width: 95%; margin: auto; max-height: 55vh; background: rgb(255, 255, 255); overflow-y: auto; left: 0; right: 0; z-index: 10; border-radius: 15px 15px 0 0; display: none;">
+            <button id="close-suggestionsContainer" class="btn shadow-0 position-absolute top-0 end-0"><i class="bi bi-x"></i></button>
+            <div id="suggestionsList" class="row mx-0 my-5">
+                <h4 class="text-center w-100 mt-2">{{translations.toolbar.ideas}}</h4>
+                <p class="text-center text-muted w-100">{{translations.loading_suggestions}}</p>
+                <div class="loading-spinner text-center mt-4">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">{{translations.loading}}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <div id="personas-overlay">
             <div id="personas-container" class="shadow" style="position: absolute; bottom: -10px; width: 95%; margin: auto; max-height: 55vh; background: rgb(255, 255, 255); overflow-y: auto; left: 0; right: 0; z-index: 10; border-radius: 15px 15px 0 0; display: none;">
                 <button id="close-personas-container" class="btn shadow-0 position-absolute top-0 end-0"><i class="bi bi-x"></i></button>

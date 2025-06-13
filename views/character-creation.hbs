@@ -6,7 +6,7 @@
 <!-- 1. キャラクター画像 -->
 <div id="step1" class="step">
     <!-- Character Creation Form with Modal Sidebar Layout -->
-    <div id="characterCreationForm" class="character-creation-sidebar-layout">
+    <div id="characterCreationForm" class="character-creation-sidebar-layout" style="overflow-y: scroll;">
         
         <!-- Modal Sidebar (Left Column) -->
         <div class="modal-sidebar-fixed">
@@ -139,6 +139,7 @@
                         alt="{{translations.newCharacter.generatedImageAlt}}"
                         class="img-fluid"
                     >
+                    <p id="imageGenerationDescription" class="text-muted mt-1 mb-0" style="display:none;">{{translations.newCharacter.start_chat_and_image_generation_description}}</p>
                 </div>
                 <!-- Move genexp here under the image -->
                 <span class="w-100 text-center text-muted genexp mt-2" style="font-size: 12px;display:none;">{{translations.newCharacter.image_generation_message}}</span>
@@ -148,10 +149,9 @@
             </div>
             
             <!-- Fixed Chat Redirection Footer -->
-            <div class="modal-main-content-footer">
+            <div class="modal-main-content-footer" style="min-height: 78.5px;">
                 <div class="chatRedirection w-100 text-center" style="display:none;">
                     <button type="button" id="redirectToChat" class="btn custom-gradient-bg btn-lg fw-bold">{{translations.newCharacter.start_chat_and_image_generation}}</button>
-                    <p class="text-muted mt-1 mb-0">{{translations.newCharacter.start_chat_and_image_generation_description}}</p>
                 </div>
             </div>
         </div>

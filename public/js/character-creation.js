@@ -8,46 +8,6 @@ $(document).ready(function() {
         window.isTemporaryChat = true;
     }
 
-    // Mobile column switching functionality
-    function isMobileScreen() {
-        return window.innerWidth <= 768;
-    }
-
-    function showLeftColumn() {
-        if (isMobileScreen()) {
-            $('.modal-sidebar-fixed').show();
-            $('.modal-main-content').hide();
-        }
-    }
-
-    function showRightColumn() {
-        if (isMobileScreen()) {
-            $('.modal-sidebar-fixed').hide();
-            $('.modal-main-content').show();
-        }
-    }
-
-    // Initialize mobile view
-    if (isMobileScreen()) {
-        showLeftColumn();
-        $('.modal-sidebar-fixed').addClass('mobile');
-        $('.modal-main-content').addClass('mobile');
-    }
-
-    // Handle window resize
-    $(window).on('resize', function() {
-        if (!isMobileScreen()) {
-            $('.modal-sidebar-fixed').show();
-            $('.modal-main-content').show();
-            $('.modal-sidebar-fixed').removeClass('mobile');
-            $('.modal-main-content').removeClass('mobile');
-        } else {
-            showLeftColumn();
-            $('.modal-sidebar-fixed').addClass('mobile');
-            $('.modal-main-content').addClass('mobile');
-        }
-    });
-
     // Show/hide spinner overlay
     function showImageSpinner() {
         $('#imageGenerationSpinner').show();
@@ -62,8 +22,6 @@ $(document).ready(function() {
     // Add these functions to window for global access
     window.showImageSpinner = showImageSpinner;
     window.hideImageSpinner = hideImageSpinner;
-    window.showRightColumn = showRightColumn;
-    window.showLeftColumn = showLeftColumn;
 
     // Add a small delay before accessing DOM elements
     setTimeout(function() {
@@ -397,8 +355,7 @@ $(document).ready(function() {
             return;
         }
 
-        // Switch to right column on mobile when generation starts
-        showRightColumn();
+        $('#imageGenerationDescription').show();
 
         // Update button text for comprehensive generation
         $button.html(`<div class="me-2 spinner-border spinner-border-sm" role="status">
@@ -539,7 +496,8 @@ window.saveSelectedImage = function(imageUrl, callback) {
 window.generateCharacterImage = function( url, nsfw) {
     // Clear the container
     $('#generatedImage').remove();
-
+    $('#imageGenerationDescription').hide();
+    
     // For each image URL, create an image element and append to the container
     const colDiv = $('<div>').addClass('col-12 mb-3');
     const imgElement = $('<img>')

@@ -334,8 +334,7 @@ async function routes(fastify, options) {
 
             // [SKIP] Step 4: Optional debrided enhancement
             const skip_step_4 = true; // Set to true to skip debrided enhancement
-            if(skip_step_4){
-                console.log('[API/generate-character-comprehensive] Step 4: Skipping debrided enhancement');
+            if(!skip_step_4){
                 try {
                     console.log('[API/generate-character-comprehensive] Step 4: Attempting debrided enhancement');
                     fastify.sendNotificationToUser(userId, 'showNotification', { 
@@ -388,6 +387,8 @@ async function routes(fastify, options) {
                         icon: 'warning' 
                     });
                 }
+            } else {
+                console.log('[API/generate-character-comprehensive] Skipping debrided enhancement step');
             }
 
             // Step 5: Save to database

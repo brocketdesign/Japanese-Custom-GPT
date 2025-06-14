@@ -332,58 +332,62 @@ async function routes(fastify, options) {
                 icon: 'success' 
             });
 
-            // Step 4: Optional debrided enhancement
-            try {
-                console.log('[API/generate-character-comprehensive] Step 4: Attempting debrided enhancement');
-                fastify.sendNotificationToUser(userId, 'showNotification', { 
-                    message: request.translations.newCharacter.debrided_generation_started, 
-                    icon: 'info' 
-                });
-
-                const debridedSystemMessage = [
-                    {
-                        role: "system",
-                        content: `You are a helpful NSFW assistant. You will take a JSON object and update it to make it more human-like and spicy. You must answer with a JSON object.`
-                    },
-                    {
-                        role: "user",
-                        content: `Here is the JSON object to enhance: ${JSON.stringify(chatData)}
-                        Make it more human-like and spicy.`
-                    },
-                ];
-                
-                let debridedResponse = await generateCompletion(debridedSystemMessage, 1000, 'mistral', language);
-                console.log(`[API/generate-character-comprehensive] Debrided response received`);
-                
-                const JSONCleaner = (str) => {  
-                    const start = str.indexOf('{');
-                    const end = str.lastIndexOf('}');
-                    if (start === -1 || end === -1) {
-                        return null;
-                    }
-                    return str.substring(start, end + 1);
-                };
-                
-                debridedResponse = JSONCleaner(debridedResponse);
-                const debridedChatData = JSON.parse(debridedResponse);
-                const validationResult = characterSchema.safeParse(debridedChatData);
-                
-                if (!validationResult.success) {
-                    console.log('[API/generate-character-comprehensive] Validation error in debrided response:', validationResult.error);
-                } else {
-                    chatData = debridedChatData;
-                    console.log('[API/generate-character-comprehensive] Debrided enhancement successful');
+            // [SKIP] Step 4: Optional debrided enhancement
+            const skip_step_4 = true; // Set to true to skip debrided enhancement
+            if(skip_step_4){
+                console.log('[API/generate-character-comprehensive] Step 4: Skipping debrided enhancement');
+                try {
+                    console.log('[API/generate-character-comprehensive] Step 4: Attempting debrided enhancement');
                     fastify.sendNotificationToUser(userId, 'showNotification', { 
-                        message: request.translations.newCharacter.debridedChatData_complete, 
-                        icon: 'success' 
+                        message: request.translations.newCharacter.debrided_generation_started, 
+                        icon: 'info' 
+                    });
+
+                    const debridedSystemMessage = [
+                        {
+                            role: "system",
+                            content: `You are a helpful NSFW assistant. You will take a JSON object and update it to make it more human-like and spicy. You must answer with a JSON object.`
+                        },
+                        {
+                            role: "user",
+                            content: `Here is the JSON object to enhance: ${JSON.stringify(chatData)}
+                            Make it more human-like and spicy.`
+                        },
+                    ];
+                    
+                    let debridedResponse = await generateCompletion(debridedSystemMessage, 1000, 'mistral', language);
+                    console.log(`[API/generate-character-comprehensive] Debrided response received`);
+                    
+                    const JSONCleaner = (str) => {  
+                        const start = str.indexOf('{');
+                        const end = str.lastIndexOf('}');
+                        if (start === -1 || end === -1) {
+                            return null;
+                        }
+                        return str.substring(start, end + 1);
+                    };
+                    
+                    debridedResponse = JSONCleaner(debridedResponse);
+                    const debridedChatData = JSON.parse(debridedResponse);
+                    const validationResult = characterSchema.safeParse(debridedChatData);
+                    
+                    if (!validationResult.success) {
+                        console.log('[API/generate-character-comprehensive] Validation error in debrided response:', validationResult.error);
+                    } else {
+                        chatData = debridedChatData;
+                        console.log('[API/generate-character-comprehensive] Debrided enhancement successful');
+                        fastify.sendNotificationToUser(userId, 'showNotification', { 
+                            message: request.translations.newCharacter.debridedChatData_complete, 
+                            icon: 'success' 
+                        });
+                    }
+                } catch (error) {
+                    console.log('[API/generate-character-comprehensive] Error in debrided enhancement:', error);
+                    fastify.sendNotificationToUser(userId, 'showNotification', { 
+                        message: request.translations.newCharacter.debrided_generation_error, 
+                        icon: 'warning' 
                     });
                 }
-            } catch (error) {
-                console.log('[API/generate-character-comprehensive] Error in debrided enhancement:', error);
-                fastify.sendNotificationToUser(userId, 'showNotification', { 
-                    message: request.translations.newCharacter.debrided_generation_error, 
-                    icon: 'warning' 
-                });
             }
 
             // Step 5: Save to database

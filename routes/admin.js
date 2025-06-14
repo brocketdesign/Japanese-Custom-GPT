@@ -314,7 +314,33 @@ async function routes(fastify, options) {
       console.log(error)
     }
   });
+  fastify.get('/admin/system-prompts', async (request, reply) => {
+    try {
+      let user = request.user;
+      const userId = user._id;
+      const isAdmin = await checkUserAdmin(fastify, userId);
+      if (!isAdmin) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+      
+      const db = fastify.mongo.db;
+      user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+      const translations = request.translations;
 
+      // Get system prompts from database
+      const systemPrompts = await db.collection('systemPrompts').find().sort({ createdAt: -1 }).toArray();
+
+      return reply.view('/admin/system-prompt', {
+        title: translations.system_prompt?.title || 'System Prompt Management',
+        user,
+        systemPrompts,
+        translations
+      });
+    } catch (error) {
+      console.error('Error loading system prompts:', error);
+      return reply.status(500).send({ error: error.message });
+    }
+  });
   fastify.post('/api/prompts/create', async (request, reply) => {
       try {
         const db = fastify.mongo.db;

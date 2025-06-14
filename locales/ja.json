@@ -768,12 +768,13 @@
     "details": "詳細を見る"
   },
   "admin": {
-        "users": "ユーザー",
-        "prompts": "プロンプト",
-        "notifications": "通知",
-        "models": "モデル",
-        "mails" : "メール",
-        "gifts": "ギフト"
+    "system_prompts": "システムプロンプト",
+    "users": "ユーザー",
+    "prompts": "プロンプト",
+    "notifications": "通知",
+    "models": "モデル",
+    "mails" : "メール",
+    "gifts": "ギフト"
   },
   "admin_user": {
     "delete_confirm": "ユーザーを削除しようとしています。この操作は元に戻せません。",

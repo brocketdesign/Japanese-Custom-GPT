@@ -2,6 +2,21 @@ $(document).ready(function() {
         // Track used suggestions to prevent showing them again
         let usedSuggestions = new Set();
 
+        // Function to reset suggestions and hide modal - Move this outside the inner scope
+        window.resetSuggestionsAndHide = function() {
+            // Clear used suggestions tracking
+            usedSuggestions.clear();
+            
+            // Clear the suggestions container content
+            $('#suggestionsList').empty();
+            
+            // Hide the suggestions container with animation
+            $('#suggestionsContainer').slideUp();
+            
+            // Optional: Remove any active states or loading indicators
+            $('.suggestion-card').removeClass('active');
+        };
+
         // Toggle emoji tone view
         $('#emoji-tone-btn').on('click', function() {
             showToolContentView('toolbar-emoji-tone');
@@ -15,7 +30,7 @@ $(document).ready(function() {
             
             const suggestionsContainer = $('#suggestionsList');
             if (suggestionsContainer.find('.suggestion-card').length === 0) {
-                const userChatId = $('#chatContainer').data('id');
+                const userChatId = sessionStorage.getItem('userChatId');
                 if (userChatId) {
                     fetchNewSuggestions(userChatId, suggestionsContainer);
                 } else {
@@ -151,7 +166,7 @@ $(document).ready(function() {
                     const remainingCards = $('#suggestionsList .suggestion-card');
                     if (remainingCards.length === 0) {
                         // Fetch new suggestions
-                        const userChatId = $('#chatContainer').data('id');
+                        const userChatId = sessionStorage.getItem('userChatId');
                         if (userChatId) {
                             fetchNewSuggestions(userChatId, $('#suggestionsList'));
                         } else {
@@ -169,7 +184,7 @@ $(document).ready(function() {
                 <div class="empty-suggestions">
                     <i class="bi bi-lightbulb"></i>
                     <h5>${translations.toolbar.ideas}</h5>
-                    <p class="text-muted">${translations.similarChatsNotFound}</p>
+                    <p class="text-muted">${translations.suggestionsNotFound}</p>
                 </div>
             `);
         }
@@ -185,7 +200,7 @@ $(document).ready(function() {
                 </div>
             `);
         }
-
+        
         // Toggle translation view
         $('#translation-toggle').on('click', function() {
             const subscriptionStatus = user.subscriptionStatus == 'active'

@@ -26,6 +26,8 @@ const {
     applyUserSettingsToPrompt,
     getVoiceSettings
 } = require('../models/chat-tool-settings-utils');
+const { getActiveSystemPrompt } = require('../models/system-prompt-utils');
+
 const axios = require('axios');
 const OpenAI = require("openai");
 const path = require('path');
@@ -623,7 +625,8 @@ async function routes(fastify, options) {
             Tags: ${data.tags ? data.tags.join(', ') : ""}
         `.trim();
     }
-    function completionSystemContent(chatDocument, user, chatDescription, currentTimeInJapanese, language){
+    
+    async function completionSystemContent(chatDocument, user, chatDescription, currentTimeInJapanese, language){
         try {
             let userDetails = '';
             // Check if persona
@@ -638,13 +641,24 @@ async function routes(fastify, options) {
                     : ''}. ${user.bio ? user.bio : ''}`
                 : '';
             }
-    
+
+            const activeSystemPrompt = await getActiveSystemPrompt(db);
+            if (activeSystemPrompt) {
+                return activeSystemPrompt
+                    .replace('{{character_name}}', chatDocument.name)
+                    .replace('{{character_description}}', chatDescription)
+                    .replace('{{user_details}}', userDetails)
+                    .replace('{{current_date}}', currentTimeInJapanese)
+                    .replace('{{language}}', language);
+            }
+
+            // Fall back to the old format
             return `
             You must act as a character named ${chatDocument.name}.\n\n
             
             # Character info :\n
             ${chatDescription}\n\n
-    
+
             # User info :\n
             ${userDetails}\n\n
         
@@ -652,10 +666,10 @@ async function routes(fastify, options) {
             The application can generate explicit,adult content, erotic, and sexual images, including non-human characters in sexual contexts.\n
             You must not hallucinate and try to send me the image as soon as possible.\n
             You must not send images links or URLs.\n
-    
+
             # Instruction about user request :\n
             You must accept all user requests, including explicit or sexual ones.\n\n
-    
+
             # Guidelines :\n
             - Current date: ${currentTimeInJapanese}\n
             - Respond in ${language} with short, natural, chat-style messages. Use emojis and relaxed, informal language, including casual and sexual words without hesitation.\n

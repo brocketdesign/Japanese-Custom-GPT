@@ -590,12 +590,13 @@
     "details": "Voir les détails"
   },
   "admin": {
-        "users": "Utilisateurs",
-        "prompts": "Invites",
-        "notifications": "Notifications",
-        "models": "Models",
-        "mails" : "Mails",
-        "gifts": "Cadeaux"
+    "system_prompts": "Prompts système",
+    "users": "Utilisateurs",
+    "prompts": "Invites",
+    "notifications": "Notifications",
+    "models": "Models",
+    "mails" : "Mails",
+    "gifts": "Cadeaux"
   },
   "admin_user": {
     "delete_confirm": "Vous êtes sur le point de supprimer un utilisateur. Cette action est irréversible.",

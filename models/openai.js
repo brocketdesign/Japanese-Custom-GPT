@@ -290,109 +290,99 @@ const analyzeConversationContext = async (messages, userInfo, language) => {
   }
 };
 
-async function generatePromptSuggestions(messages, chatDescription, language, model = 'llama') {
+async function generatePromptSuggestions(messages, chatDescription, language, model = 'mistral') {
+
   // Get the last user message
   let lastUserMessagesContent = messages
     .filter(m => m.content && !m.content.startsWith('[Image]') && m.role !== 'system')
     .slice(-5);
 
-  // Determine which provider/model to use
-  let modelConfig = { ...currentModelConfig };
-  
-  if (model) {
-    if (apiDetails[model]) {
-      modelConfig.provider = model;
-      modelConfig.modelName = null;
-    } else {
-      for (const provider in apiDetails) {
-        if (apiDetails[provider].models && apiDetails[provider].models[model]) {
-          modelConfig.provider = provider;
-          modelConfig.modelName = model;
-          break;
-        }
-      }
-    }
-  }
+  console.log(`[generatePromptSuggestions] Using OpenAI GPT-4o for stable structured output`);
 
-  const provider = apiDetails[modelConfig.provider];
-  const modelName = modelConfig.modelName ? 
-    provider.models[modelConfig.modelName] : 
-    provider.model;
+  // Define Zod schemas for each category
+  const imageSchema = z.object({
+    images: z.array(z.string()).length(3)
+  });
 
-  console.log(`[generatePromptSuggestions] Using ${modelName} from ${modelConfig.provider}`);
+  const chatSchema = z.object({
+    chat: z.array(z.string()).length(3)
+  });
 
-  // Create separate request functions for each category
-  const generateCategory = async (categoryName, categoryPrompt) => {
-   try {
-     const response_format = {
-       "type": "json_schema",
-       "json_schema": {
-         "name": `${categoryName}_schema`,
-         "schema": {
-           "type": "object",
-           "properties": {
-             [categoryName]: {
-               "type": "array",
-               "items": { "type": "string" },
-               "minItems": 3,
-               "maxItems": 3
-             }
-           },
-           "required": [categoryName]
-         }
-       }
-     };
- 
-     const client = new OpenAI({
-       baseURL: "https://api.novita.ai/v3/openai",
-       apiKey: provider.key,
-     });
- 
-     const response = await client.chat.completions.create({
-       model: modelName,
-       messages: [
-         { role: "system", content: `Generate exactly 3 ${categoryName} suggestions in ${language}. ${categoryPrompt}` },
-         { role: "user", content: `Character context: ${chatDescription}` }
-       ],
-       max_tokens: 1024,
-       temperature: 0.85,
-       response_format: response_format
-     });
- 
-     const content = response.choices[0].message.content;
-     const parsed = JSON.parse(content);
-     console.log(`[${categoryName}] Generated ${parsed[categoryName]?.length || 0} items`);
-     return parsed[categoryName] || [];
-   } catch (error) {
+  const feelingsSchema = z.object({
+    feelings: z.array(z.string()).length(3)
+  });
+
+  const scenariosSchema = z.object({
+    scenarios: z.array(z.string()).length(3)
+  });
+
+  // Create separate request functions for each category using OpenAI
+  const generateCategory = async (categoryName, categoryPrompt, schema) => {
+    try {
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { 
+            role: "system", 
+            content: `Generate exactly 3 ${categoryName} suggestions in ${language}. ${categoryPrompt} Be creative and engaging. Include emojis for visual appeal. From the user point of view.` 
+          },
+          { 
+            role: "user", 
+            content: `Character context: ${chatDescription}\n\nGenerate 3 unique ${categoryName} suggestions that fit this character's personality.` 
+          },
+          {
+            role: 'user',
+            content: 'Provide concise suggestions. One short sentence. Use first person for your sentence. The user is sending the messages.'
+          }
+        ],
+        max_tokens: 800,
+        temperature: 0.85,
+        response_format: zodResponseFormat(schema, `${categoryName}_suggestions`)
+      });
+
+      const parsed = JSON.parse(response.choices[0].message.content);
+      const items = parsed[categoryName] || [];
+      console.log(`[${categoryName}] Generated ${items.length} items`);
+      return items;
+    } catch (error) {
       console.log(`[${categoryName}] Error: ${error.message}`);
       return [];
-   }
+    }
   };
 
   try {
     // Define category-specific prompts
     const categoryPrompts = {
-      images: "Visual/photo requests with [pose, action, clothes] structure. Can include adult/NSFW content with emojis.",
-      chat: "Conversation starters or dialogue suggestions. Be creative and engaging with emojis.",
-      feelings: "Emotional expressions or mood-based interactions the character might show with emojis.",
-      scenarios: "Situation or roleplay suggestions that fit the character personality with emojis."
+      images: "Visual/photo requests following [pose, action, clothes] structure. Can include adult/NSFW content when appropriate.",
+      chat: "Conversation starters or dialogue suggestions that would engage the user.",
+      feelings: "Emotional expressions or mood-based interactions the character might show.",
+      scenarios: "Situation or roleplay suggestions that fit the character's personality."
     };
 
-    // Generate all categories in parallel
+    // Generate all categories in parallel using OpenAI
     const [images, chat, feelings, scenarios] = await Promise.all([
-      generateCategory('images', categoryPrompts.images),
-      generateCategory('chat', categoryPrompts.chat),
-      generateCategory('feelings', categoryPrompts.feelings),
-      generateCategory('scenarios', categoryPrompts.scenarios)
+      generateCategory('images', categoryPrompts.images, imageSchema),
+      generateCategory('chat', categoryPrompts.chat, chatSchema),
+      generateCategory('feelings', categoryPrompts.feelings, feelingsSchema),
+      generateCategory('scenarios', categoryPrompts.scenarios, scenariosSchema)
     ]);
 
-    console.log(`[generatePromptSuggestions] Complete: ${images.length + chat.length + feelings.length + scenarios.length} total suggestions`);
+    const total = images.length + chat.length + feelings.length + scenarios.length;
+    console.log(`[generatePromptSuggestions] Complete: ${total} total suggestions`);
 
-    return { images, chat, feelings, scenarios };
+    // Ensure we have fallbacks if any category failed
+    return {
+      images: images.length > 0 ? images : ["Standing pose, smiling, casual outfit", "Sitting pose, looking at camera, comfortable clothes", "Relaxed pose, happy expression, favorite outfit"],
+      chat: chat.length > 0 ? chat : ["How was your day?", "What are you thinking about?", "Tell me something interesting"],
+      feelings: feelings.length > 0 ? feelings : ["Happy and cheerful", "Curious and playful", "Warm and caring"],
+      scenarios: scenarios.length > 0 ? scenarios : ["Casual conversation", "Getting to know each other", "Sharing thoughts and feelings"]
+    };
     
   } catch (error) {
     console.log(`[generatePromptSuggestions] Error: ${error.message}`);
-    return false
+    return false;
   }
 }
 

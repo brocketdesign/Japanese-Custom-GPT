@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  {{> dashboard-header}}
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    /* Optional: Custom styles for sortable dragging */
+    .sortable-ghost {
+      opacity: 0.4;
+      background-color: #f0f0f0;
+    }
+    .sortable-chosen {
+      /* Styles for the chosen item */
+    }
+    .handle {
+      cursor: grab;
+    }
+  </style>
+</head>
+<body class="bg-gray-100">
+{{> dashboard-nav}}
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-2xl font-bold mb-6">{{translations.system_prompt.title}}</h1>
+  
+  <!-- System Prompt List Section -->
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-semibold">{{translations.system_prompt.list_title}}</h2>
+      <button id="createPromptBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition">
+        {{translations.system_prompt.create_new}}
+      </button>
+    </div>
+    
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+        <thead class="bg-gray-50 dark:bg-gray-700">
+          <tr>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              {{translations.system_prompt.name}}
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              {{translations.system_prompt.description}}
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              {{translations.system_prompt.status}}
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              {{translations.system_prompt.updated_at}}
+            </th>
+            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              {{translations.system_prompt.actions}}
+            </th>
+          </tr>
+        </thead>
+        <tbody id="promptTableBody" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          <!-- Table rows will be populated dynamically -->
+          <tr>
+            <td colspan="5" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+              {{translations.system_prompt.loading}}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+  <!-- System Prompt Form Modal -->
+  <div id="promptModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white dark:bg-gray-800">
+      <div class="flex justify-between items-center mb-6">
+        <h2 id="formTitle" class="text-2xl font-bold text-gray-900 dark:text-white">{{translations.system_prompt.create_title}}</h2>
+        <button id="closeModalBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      
+      <form id="promptForm" class="space-y-6">
+        <input type="hidden" id="promptId" name="id">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="promptName" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              {{translations.system_prompt.name}}
+            </label>
+            <input type="text" id="promptName" name="name" required
+              class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors">
+          </div>
+          
+          <div>
+            <label for="promptDescription" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              {{translations.system_prompt.description}}
+            </label>
+            <input type="text" id="promptDescription" name="description" required
+              class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors">
+          </div>
+        </div>
+        
+        <div>
+          <label for="promptContent" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            {{translations.system_prompt.content}}
+          </label>
+          <textarea id="promptContent" name="content" required rows="12"
+            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors resize-none"></textarea>
+          
+          <!-- Available Variables Section -->
+          <div class="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+            <h4 class="text-sm font-bold text-blue-900 dark:text-blue-200 mb-3 flex items-center">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+              </svg>
+              {{translations.system_prompt.available_variables}}
+            </h4>
+            <p class="text-xs text-blue-700 dark:text-blue-300 mb-3">Click on any variable to insert it into the content:</p>
+            <div class="flex flex-wrap gap-2">
+              <button type="button" class="variable-tag bg-white dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-blue-800 text-blue-800 dark:text-blue-200 px-3 py-2 rounded-full text-xs font-medium cursor-pointer transition-all duration-200 border border-blue-200 dark:border-blue-600 hover:border-blue-300 dark:hover:border-blue-500 shadow-sm hover:shadow-md" data-variable="character_name">
+                character_name
+              </button>
+              <button type="button" class="variable-tag bg-white dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-blue-800 text-blue-800 dark:text-blue-200 px-3 py-2 rounded-full text-xs font-medium cursor-pointer transition-all duration-200 border border-blue-200 dark:border-blue-600 hover:border-blue-300 dark:hover:border-blue-500 shadow-sm hover:shadow-md" data-variable="character_description">
+                character_description
+              </button>
+              <button type="button" class="variable-tag bg-white dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-blue-800 text-blue-800 dark:text-blue-200 px-3 py-2 rounded-full text-xs font-medium cursor-pointer transition-all duration-200 border border-blue-200 dark:border-blue-600 hover:border-blue-300 dark:hover:border-blue-500 shadow-sm hover:shadow-md" data-variable="user_details">
+                user_details
+              </button>
+              <button type="button" class="variable-tag bg-white dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-blue-800 text-blue-800 dark:text-blue-200 px-3 py-2 rounded-full text-xs font-medium cursor-pointer transition-all duration-200 border border-blue-200 dark:border-blue-600 hover:border-blue-300 dark:hover:border-blue-500 shadow-sm hover:shadow-md" data-variable="current_date">
+                current_date
+              </button>
+              <button type="button" class="variable-tag bg-white dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-blue-800 text-blue-800 dark:text-blue-200 px-3 py-2 rounded-full text-xs font-medium cursor-pointer transition-all duration-200 border border-blue-200 dark:border-blue-600 hover:border-blue-300 dark:hover:border-blue-500 shadow-sm hover:shadow-md" data-variable="language">
+                language
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="flex items-center">
+          <input type="checkbox" id="promptActive" name="active" class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+          <label for="promptActive" class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            {{translations.system_prompt.set_active}}
+          </label>
+        </div>
+        
+        <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-600">
+          <button type="button" id="cancelBtn" class="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors font-medium">
+            {{translations.system_prompt.cancel}}
+          </button>
+          <button type="submit" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 font-medium shadow-lg hover:shadow-xl">
+            {{translations.system_prompt.save}}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Preview Modal -->
+  <div id="previewModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white dark:bg-gray-800">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{translations.system_prompt.preview_title}}</h2>
+        <button id="closePreviewModalBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      
+      <div id="previewContent" class="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg whitespace-pre-wrap font-mono text-sm max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-600"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const translations_system_prompt = '{{{json translations.system_prompt}}}';
+  const translations = JSON.parse(translations_system_prompt);
+  
+  // Client-side JavaScript for handling the system prompt admin interface
+  $(document).ready(function() {
+    // DOM elements
+    const createPromptBtn = $('#createPromptBtn');
+    const promptForm = $('#promptForm');
+    const formTitle = $('#formTitle');
+    const promptTableBody = $('#promptTableBody');
+    const cancelBtn = $('#cancelBtn');
+    const previewContent = $('#previewContent');
+    
+    // Form elements
+    const promptId = $('#promptId');
+    const promptName = $('#promptName');
+    const promptDescription = $('#promptDescription');
+    const promptContent = $('#promptContent');
+    const promptActive = $('#promptActive');
+    
+    // State
+    let prompts = [];
+    
+    // Load prompts on page load
+    loadPrompts();
+    
+    // Event listeners
+    createPromptBtn.on('click', showCreateForm);
+    $('#closeModalBtn').on('click', hideModal);
+    cancelBtn.on('click', hideModal);
+    promptForm.on('submit', handleFormSubmit);
+    $('#closePreviewModalBtn').on('click', hidePreviewModal);
+    
+    // Close modal when clicking outside
+    $('#promptModal').on('click', function(e) {
+      if (e.target === this) hideModal();
+    });
+    
+    $('#previewModal').on('click', function(e) {
+      if (e.target === this) hidePreviewModal();
+    });
+    
+    // Add event listeners for variable tags using jQuery
+    $(document).on('click', '.variable-tag', function(e) {
+      e.preventDefault();
+      const variable = $(this).data('variable');
+      console.log('Variable clicked:', variable);
+      insertVariableIntoContent(variable);
+    });
+    
+    // Functions
+    async function loadPrompts() {
+      try {
+        promptTableBody.html(`<tr>
+          <td colspan="5" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+            ${translations.loading}
+          </td>
+        </tr>`);
+        
+        const response = await fetch('/api/admin/system-prompts');
+        const result = await response.json();
+        
+        if (result.success) {
+          prompts = result.data || [];
+          renderPromptsTable();
+        } else {
+          throw new Error(result.error || 'Failed to load prompts');
+        }
+      } catch (error) {
+        console.error('Error loading prompts:', error);
+        promptTableBody.html(`<tr>
+          <td colspan="5" class="px-6 py-4 text-center text-red-500">
+            ${error.message || translations.load_error}
+          </td>
+        </tr>`);
+      }
+    }
+    
+    function renderPromptsTable() {
+      if (prompts.length === 0) {
+        promptTableBody.html(`<tr>
+          <td colspan="5" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+            ${translations.no_prompts}
+          </td>
+        </tr>`);
+        return;
+      }
+      
+      promptTableBody.html(prompts.map(prompt => `
+        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+            ${escapeHtml(prompt.name)}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+            ${escapeHtml(prompt.description)}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+            ${prompt.active ? 
+              `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
+                ${translations.active}
+              </span>` : 
+              `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                ${translations.inactive}
+              </span>`
+            }
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+            ${new Date(prompt.updatedAt).toLocaleString()}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+            <button class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3" 
+                    onclick="previewPrompt('${prompt._id}')">
+              ${translations.preview}
+            </button>
+            <button class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3" 
+                    onclick="editPrompt('${prompt._id}')">
+              ${translations.edit}
+            </button>
+            ${prompt.active ? '' : `
+              <button class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 mr-3" 
+                      onclick="activatePrompt('${prompt._id}')">
+                ${translations.activate}
+              </button>
+            `}
+            ${prompt.active ? '' : `
+              <button class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" 
+                      onclick="deletePrompt('${prompt._id}')">
+                ${translations.delete}
+              </button>
+            `}
+          </td>
+        </tr>
+      `).join(''));
+    }
+    
+    function showCreateForm() {
+      resetForm();
+      formTitle.text(translations.create_title);
+      $('#promptModal').removeClass('hidden');
+      $('body').css('overflow', 'hidden');
+    }
+    
+    function hideModal() {
+      $('#promptModal').addClass('hidden');
+      $('body').css('overflow', '');
+      resetForm();
+    }
+    
+    function resetForm() {
+      promptId.val('');
+      promptName.val('');
+      promptDescription.val('');
+      promptContent.val('');
+      promptActive.prop('checked', false);
+    }
+    
+    async function handleFormSubmit(event) {
+      event.preventDefault();
+      
+      const formData = {
+        name: promptName.val().trim(),
+        description: promptDescription.val().trim(),
+        content: promptContent.val().trim(),
+        active: promptActive.is(':checked')
+      };
+      
+      try {
+        let url = '/api/admin/system-prompts';
+        let method = 'POST';
+        
+        if (promptId.val()) {
+          url += `/${promptId.val()}`;
+          method = 'PUT';
+        }
+        
+        const response = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to save prompt');
+        }
+        
+        // If setting as active, make sure it's active
+        if (formData.active) {
+          await fetch(`/api/admin/system-prompts/${result.data._id}/activate`, {
+            method: 'PUT'
+          });
+        }
+        
+        hideModal();
+        await loadPrompts();
+        
+        // Show success message
+        showNotification(translations.save_success, 'success');
+      } catch (error) {
+        console.error('Error saving prompt:', error);
+        showNotification(error.message || translations.save_error, 'error');
+      }
+    }
+    
+    function showPreview(prompt) {
+      previewContent.text(prompt.content);
+      $('#previewModal').removeClass('hidden');
+      $('body').css('overflow', 'hidden');
+    }
+    
+    function hidePreviewModal() {
+      $('#previewModal').addClass('hidden');
+      $('body').css('overflow', '');
+    }
+    
+    // Helper functions
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
+    function insertVariableIntoContent(variable) {
+      console.log('Inserting variable:', variable);
+      
+      const $modal = $('#promptModal');
+      const $textarea = $('#promptContent');
+      
+      if ($modal.hasClass('hidden')) {
+        console.log('Modal hidden - aborting');
+        return;
+      }
+      
+      if (!$textarea.length) {
+        console.log('Textarea not found - aborting');
+        return;
+      }
+      
+      const textarea = $textarea[0];
+      const startPos = textarea.selectionStart;
+      const endPos = textarea.selectionEnd;
+      const currentValue = $textarea.val();
+      
+      console.log('Current position:', startPos);
+      console.log('Current value length:', currentValue.length);
+      
+      const textBefore = currentValue.substring(0, startPos);
+      const textAfter = currentValue.substring(endPos);
+      const variableText = '{{' + variable + '}}';
+      
+      console.log('Inserting:', variableText);
+      
+      const newValue = textBefore + variableText + textAfter;
+      $textarea.val(newValue);
+      
+      // Set cursor position after the inserted variable
+      const newCursorPos = startPos + variableText.length;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+      $textarea.focus();
+      
+      console.log('New value length:', newValue.length);
+      console.log('Variable inserted successfully');
+    }
+    
+    // Expose functions to global scope for inline event handlers
+    window.editPrompt = function(id) {
+      const prompt = prompts.find(p => p._id === id);
+      if (!prompt) return;
+      
+      promptId.val(prompt._id);
+      promptName.val(prompt.name);
+      promptDescription.val(prompt.description);
+      promptContent.val(prompt.content);
+      promptActive.prop('checked', prompt.active);
+      
+      formTitle.text(translations.edit_title);
+      $('#promptModal').removeClass('hidden');
+      $('body').css('overflow', 'hidden');
+    };
+    
+    window.deletePrompt = async function(id) {
+      if (!confirm(translations.delete_confirm)) return;
+      
+      try {
+        const response = await fetch(`/api/admin/system-prompts/${id}`, {
+          method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to delete prompt');
+        }
+        
+        await loadPrompts();
+        showNotification(translations.delete_success, 'success');
+      } catch (error) {
+        console.error('Error deleting prompt:', error);
+        showNotification(error.message || translations.delete_error, 'error');
+      }
+    };
+    
+    window.activatePrompt = async function(id) {
+      try {
+        const response = await fetch(`/api/admin/system-prompts/${id}/activate`, {
+          method: 'PUT'
+        });
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to activate prompt');
+        }
+        
+        await loadPrompts();
+        showNotification(translations.activate_success, 'success');
+      } catch (error) {
+        console.error('Error activating prompt:', error);
+        showNotification(error.message || translations.activate_error, 'error');
+      }
+    };
+    
+    window.previewPrompt = function(id) {
+      const prompt = prompts.find(p => p._id === id);
+      if (!prompt) return;
+      
+      showPreview(prompt);
+    };
+  });
+</script>
+</body>
+</html>

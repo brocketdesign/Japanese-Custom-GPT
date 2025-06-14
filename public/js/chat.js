@@ -471,6 +471,8 @@ $(document).ready(async function() {
         } 
 
         $('.fullscreen-overlay').fadeOut(); 
+
+        resetSuggestionsAndHide();
     }
     
     function setupChatData(chat) {

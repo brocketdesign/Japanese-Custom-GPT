@@ -83,6 +83,18 @@
                                 <input type="file" class="form-control" id="imageUpload" name="imageUpload" accept="image/*" onchange="previewImage(event)" disabled>
                             </div>
                             <img id="imagePreview" src="#" alt="Image Preview" style="display: none; max-width: 100%; margin-top: 10px;">
+                            
+                            <!-- Merge Face Toggle -->
+                            <div class="mt-3" id="mergeFaceContainer" style="display: none;">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="enableMergeFace" name="enableMergeFace" disabled>
+                                    <label class="form-check-label fw-semibold" for="enableMergeFace">
+                                        <i class="bi bi-person-check me-2"></i>{{translations.newCharacter.enableMergeFace}}
+                                    </label>
+                                </div>
+                                <small class="text-muted">{{translations.newCharacter.mergeFaceDescription}}</small>
+                            </div>
+                            
                             <a href="#" onclick="loadPlanPage()" class="is-premium card p-2 custom-gradient-bg mt-3 rounded">{{translations.unlock_more_customization_fields}}</a>
                         </div>
                     </div>

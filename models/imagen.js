@@ -74,7 +74,7 @@ const default_prompt = {
   } 
 
 // Module to generate an image
-async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSeed, regenerate, userId, chatId, userChatId, imageType, image_num, image_base64, chatCreation, placeholderId, translations, fastify, flux = false, customPromptId = null, customGiftId = null}) {
+async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSeed, regenerate, userId, chatId, userChatId, imageType, image_num, image_base64, chatCreation, placeholderId, translations, fastify, flux = false, customPromptId = null, customGiftId = null, enableMergeFace = false}) {
     const db = fastify.mongo.db;
 
     // Fetch the user
@@ -169,8 +169,13 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
     console.log(`[generateImg] autoMergeFaceEnabled: ${autoMergeFaceEnabled}, userId: ${userId}, chatId: ${chatId}`);
     const isPhotorealistic = chat && chat.imageStyle === 'photorealistic' || chat && chat.imageStyle !== 'anime';
     console.log(`[generateImg] isPhotorealistic: ${isPhotorealistic}, chat.imageStyle: ${chat.imageStyle}`);
-    const shouldAutoMerge = !chatCreation && autoMergeFaceEnabled && isPhotorealistic && chat.chatImageUrl.length > 0;
-    console.log(`[generateImg] shouldAutoMerge: ${shouldAutoMerge}, chat.chatImageUrl: ${chat.chatImageUrl}`);
+    
+    // For character creation, use enableMergeFace setting if provided, otherwise use auto merge logic
+    const shouldAutoMerge = chatCreation 
+        ? (enableMergeFace && image_base64) // Only merge on character creation if explicitly enabled and has uploaded image
+        : (!chatCreation && autoMergeFaceEnabled && isPhotorealistic && chat.chatImageUrl.length > 0); // Regular auto merge logic for non-character creation
+    
+    console.log(`[generateImg] shouldAutoMerge: ${!!shouldAutoMerge}, chatCreation: ${chatCreation}, enableMergeFace: ${enableMergeFace}, hasUploadedImage: ${!!image_base64}`);
 
     // Store task details in DB
     const taskData = {
@@ -189,8 +194,17 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
         placeholderId,
         createdAt: new Date(),
         updatedAt: new Date(),
-        shouldAutoMerge
+        shouldAutoMerge,
+        enableMergeFace: enableMergeFace || false
     };
+    
+    // Store original request data for character creation tasks with merge face enabled
+    if (chatCreation && enableMergeFace && image_base64) {
+        taskData.originalRequestData = {
+            image_base64: image_base64
+        };
+        console.log('[generateImg] Stored original request data for character creation merge');
+    }
     
     // Add custom prompt ID if provided
     if (customPromptId) {
@@ -506,6 +520,89 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
 }
 
 /**
+ * Perform auto merge face with base64 image data (for character creation)
+ * @param {Object} originalImage - Original generated image object
+ * @param {string} faceImageBase64 - Base64 face image data
+ * @param {Object} fastify - Fastify instance
+ * @returns {Object} Merged image object or null if failed
+ */
+async function performAutoMergeFaceWithBase64(originalImage, faceImageBase64, fastify) {
+  try {
+    const { 
+      mergeFaceWithNovita, 
+      optimizeImageForMerge, 
+      saveMergedImageToS3
+    } = require('./merge-face-utils');
+
+    // Convert generated image URL to base64 (original image)
+    const axios = require('axios');
+    const generatedImageResponse = await axios.get(originalImage.imageUrl, { 
+      responseType: 'arraybuffer',
+      timeout: 30000
+    });
+    const generatedImageBuffer = Buffer.from(generatedImageResponse.data);
+    const optimizedGeneratedImage = await optimizeImageForMerge(generatedImageBuffer, 2048);
+    const originalImageBase64 = optimizedGeneratedImage.base64Image;
+
+    // Merge the faces using Novita API
+    const mergeResult = await mergeFaceWithNovita({
+      faceImageBase64,
+      originalImageBase64
+    });
+
+    if (!mergeResult || !mergeResult.success) {
+      console.error('[performAutoMergeFaceWithBase64] Face merge failed:', mergeResult?.error || 'Unknown error');
+      return null;
+    }
+
+    // Generate unique merge ID
+    const mergeId = new ObjectId();
+
+    // Save merged image to S3
+    const mergedImageUrl = await saveMergedImageToS3(
+      `data:image/${mergeResult.imageType};base64,${mergeResult.imageBase64}`,
+      mergeId.toString(),
+      fastify
+    );
+
+    // Return merged image data with ALL original fields preserved
+    return {
+      ...originalImage, // Preserve all original image data
+      imageUrl: mergedImageUrl, // Update with merged URL
+      mergeId: mergeId.toString(),
+      originalImageUrl: originalImage.imageUrl, // Keep reference to original
+      isMerged: true
+    };
+
+  } catch (error) {
+    console.error('[performAutoMergeFaceWithBase64] Error in auto merge:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch original task data including uploaded image base64
+ * @param {string} taskId - Task ID
+ * @param {Object} db - Database instance
+ * @returns {Object} Original task request data or null
+ */
+async function fetchOriginalTaskData(taskId, db) {
+  try {
+    const task = await db.collection('tasks').findOne({ taskId });
+    
+    if (!task || !task.originalRequestData) {
+      console.log('[fetchOriginalTaskData] No original request data found for task:', taskId);
+      return null;
+    }
+
+    return task.originalRequestData;
+  } catch (error) {
+    console.error('[fetchOriginalTaskData] Error fetching original task data:', error);
+    return null;
+  }
+}
+
+/**
  * Perform auto merge face with chat image (standalone function)
  * @param {Object} originalImage - Original generated image object
  * @param {string} chatImageUrl - Chat character image URL
@@ -705,37 +802,95 @@ const images = Array.isArray(result) ? result : [result];
   // Process auto merge for ALL images if enabled
   let processedImages = images;
   if (task.shouldAutoMerge) {
-    processedImages = await Promise.all(images.map(async (imageData, arrayIndex) => {
-      try {
-        const mergedResult = await performAutoMergeFace(
-          { 
-            imageUrl: imageData.imageUrl, 
-            imageId: null,
-            seed: imageData.seed,
-            nsfw_detection_result: imageData.nsfw_detection_result
-          }, 
-          chat.chatImageUrl, 
-          fastify
-        );
+    // For character creation with merge face, we need to get the uploaded image data
+    if (task.chatCreation && task.enableMergeFace) {
+      console.log('[checkTaskStatus] Character creation merge enabled, getting uploaded face image');
+      
+      // Get the original task data to access the uploaded image
+      const originalTaskRequest = await fetchOriginalTaskData(task.taskId, db);
+      
+      if (originalTaskRequest && originalTaskRequest.image_base64) {
+        // Use the uploaded image as the face source for merging
+        const mergedImages = [];
         
-        if (mergedResult && mergedResult.imageUrl) {
-          return {
-            ...imageData, // Preserve original data
-            ...mergedResult, // Apply merge updates
-            isMerged: true
-          };
-        } else {
-          return { ...imageData, isMerged: false };
+        for (const imageData of images) {
+          try {
+            const mergedResult = await performAutoMergeFaceWithBase64(
+              { 
+                imageUrl: imageData.imageUrl, 
+                imageId: null,
+                seed: imageData.seed,
+                nsfw_detection_result: imageData.nsfw_detection_result
+              }, 
+              originalTaskRequest.image_base64, 
+              fastify
+            );
+            
+            if (mergedResult && mergedResult.imageUrl) {
+              // Only keep the merged image
+              mergedImages.push({
+                ...mergedResult,
+                isMerged: true,
+                originalImageUrl: imageData.imageUrl // Keep reference to original
+              });
+            } else {
+              // If merge fails, fall back to original
+              mergedImages.push({ ...imageData, isMerged: false });
+            }
+          } catch (error) {
+            console.error(`Character creation merge error:`, error.message);
+            // If merge fails, fall back to original
+            mergedImages.push({ ...imageData, isMerged: false });
+          }
         }
-      } catch (error) {
-        console.error(`Auto merge error:`, error.message);
-        return { ...imageData, isMerged: false };
+        
+        processedImages = mergedImages; // Only use merged images
+      } else {
+        console.log('[checkTaskStatus] No uploaded image found for character creation merge, skipping merge');
+        processedImages = images.map(imageData => ({ ...imageData, isMerged: false }));
       }
-    }));
+    } else {
+      // Regular auto merge logic for existing chats
+      const faceImageUrl = chat.chatImageUrl;
+      
+      if (!faceImageUrl || faceImageUrl.length === 0) {
+        console.log('[checkTaskStatus] No chat image available for auto merge, skipping merge');
+        processedImages = images.map(imageData => ({ ...imageData, isMerged: false }));
+      } else {
+        processedImages = await Promise.all(images.map(async (imageData, arrayIndex) => {
+          try {
+            const mergedResult = await performAutoMergeFace(
+              { 
+                imageUrl: imageData.imageUrl, 
+                imageId: null,
+                seed: imageData.seed,
+                nsfw_detection_result: imageData.nsfw_detection_result
+              }, 
+              faceImageUrl, 
+              fastify
+            );
+            
+            if (mergedResult && mergedResult.imageUrl) {
+              return {
+                ...imageData, // Preserve original data
+                ...mergedResult, // Apply merge updates
+                isMerged: true
+              };
+            } else {
+              return { ...imageData, isMerged: false };
+            }
+          } catch (error) {
+            console.error(`Auto merge error:`, error.message);
+            return { ...imageData, isMerged: false };
+          }
+        }));
+      }
+    }
   } else {
     // Ensure all images have isMerged flag set to false when no auto merge
     processedImages = images.map(imageData => ({ ...imageData, isMerged: false }));
   }
+  
   // Save processed images to database
   const savedImages = await Promise.all(processedImages.map(async (imageData, arrayIndex) => {
     let nsfw = task.type === 'nsfw';
@@ -810,6 +965,17 @@ const images = Array.isArray(result) ? result : [result];
   if (!updateResult.value) {
     const existingTask = await tasksCollection.findOne({ taskId: task.taskId });
     
+    // FIXED: Always return the processed/merged images for character creation
+    if (task.chatCreation && task.shouldAutoMerge) {
+      return { 
+        taskId: task.taskId, 
+        userId: task.userId, 
+        userChatId: task.userChatId, 
+        status: 'completed', 
+        images: savedImages, // Use our processed merged images
+        result: { images: savedImages }
+      };
+    }
     // CRITICAL FIX: If the existing task has proper merge data, return it
     // If not, return our processed result
     if (existingTask?.result?.images?.some(img => img.isMerged !== undefined)) {
@@ -1300,10 +1466,12 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
     handleTaskCompletion,
     checkTaskStatus,
     performAutoMergeFace,
+    performAutoMergeFaceWithBase64,
     centerCropImage,
     saveImageToDB,
     updateSlug,
     updateTitle,
     fetchNovitaMagic,
-    fetchNovitaResult
+    fetchNovitaResult,
+    fetchOriginalTaskData
   };

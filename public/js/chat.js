@@ -1861,20 +1861,6 @@ window.showChat = function() {
     }); 
 }
 
-window.initializeAudio = function() {
-    let autoPlay = localStorage.getItem('audioAutoPlay') === 'true';
-    $('#audio-icon').addClass(autoPlay ? 'bi-volume-up' : 'bi-volume-mute');
-    $('#audio-play').click(function() {
-        if(!subscriptionStatus){
-            loadPlanPage();
-            return;
-        }
-        autoPlay = !autoPlay;
-        localStorage.setItem('audioAutoPlay', autoPlay);
-        $('#audio-icon').toggleClass('bi-volume-up bi-volume-mute');
-    });
-};
-
 // Add this at the top of the file with other global variables
 const upscaledImages = new Set();
 

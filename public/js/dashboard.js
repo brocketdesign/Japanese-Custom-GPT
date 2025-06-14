@@ -2612,7 +2612,7 @@ function updateSwiperSlides(images) {
         const slide = document.createElement('div');
         slide.className = 'swiper-slide';
         slide.setAttribute('data-index', index);
-        slide.innerHTML = `<img src="${image.imageUrl}" alt="${image.prompt}" class="card-img-top rounded shadow m-auto" style="object-fit: contain;height: 100%;width: 100%;">`;
+        slide.innerHTML = `<img src="${image.imageUrl}" alt="${image.prompt}" class="card-img-top rounded shadow m-auto" style="object-fit: contain;height: 100vh;width: 100%;">`;
         swiperWrapper.appendChild(slide);
     });
 

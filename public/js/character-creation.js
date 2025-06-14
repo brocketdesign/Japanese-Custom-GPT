@@ -418,12 +418,14 @@ $(document).ready(function() {
                 
                 const imageType = moderationResult.flagged ? 'nsfw' : 'sfw';
                 const file = $('#imageUpload')[0].files[0];
-                    
+                const enableMergeFace = $('#enableMergeFace').is(':checked');
+                
                 novitaImageGeneration(userId, chatCreationId, null, { 
                     prompt: enhancedPrompt, 
                     imageType, 
                     file, 
-                    chatCreation: true
+                    chatCreation: true,
+                    enableMergeFace: enableMergeFace
                 })
                 .then(() => {
                     $('.chatRedirection').show();
@@ -460,10 +462,17 @@ function previewImage(event) {
         reader.onload = function() {
             imagePreview.src = reader.result;
             imagePreview.style.display = 'block';
+            
+            // Show and enable merge face toggle when image is uploaded
+            $('#mergeFaceContainer').show();
+            $('#enableMergeFace').prop('disabled', false);
         };
         reader.readAsDataURL(file);
     } else {
         showNotification(translations.imageForm.image_invalid_format, 'error');
+        // Hide merge face toggle for invalid files
+        $('#mergeFaceContainer').hide();
+        $('#enableMergeFace').prop('disabled', true).prop('checked', false);
     }
 }
 
@@ -540,9 +549,7 @@ window.resetCharacterForm = function(){
     $('#generateButton').html('<i class="bi bi-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
 }
 
-window.updateCharacterGenerationMess = function(message){
-    $('.genexp').text(message)
-}
+// ...existing code...
 
 // Add character update functionality
 window.loadCharacterUpdatePage = function(chatId) {

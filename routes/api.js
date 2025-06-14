@@ -642,14 +642,18 @@ async function routes(fastify, options) {
                 : '';
             }
 
-            const activeSystemPrompt = await getActiveSystemPrompt(db);
-            if (activeSystemPrompt) {
-                return activeSystemPrompt
-                    .replace('{{character_name}}', chatDocument.name)
-                    .replace('{{character_description}}', chatDescription)
-                    .replace('{{user_details}}', userDetails)
-                    .replace('{{current_date}}', currentTimeInJapanese)
-                    .replace('{{language}}', language);
+            try {
+                const activeSystemPrompt = await getActiveSystemPrompt(fastify.mongo.db);
+                if (activeSystemPrompt) {
+                    return activeSystemPrompt
+                        .replace('{{character_name}}', chatDocument.name)
+                        .replace('{{character_description}}', chatDescription)
+                        .replace('{{user_details}}', userDetails)
+                        .replace('{{current_date}}', currentTimeInJapanese)
+                        .replace('{{language}}', language);
+                }
+            } catch (error) {
+                console.error('Error in getting active system prompt:', error);
             }
 
             // Fall back to the old format

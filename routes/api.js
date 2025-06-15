@@ -1945,11 +1945,24 @@ async function routes(fastify, options) {
                     }
                 }
             ]).toArray();
-
+            // Function to check if video fetch was successful   
+            async function checkIfVideoFetchWasSuccessful(videoUrl) {
+                try {
+                    const response = await axios.head(videoUrl);
+                    return response.status === 200; // Check if the video URL is accessible
+                } catch (error) {
+                    console.error(`[API/latest-video-chats] Error fetching video URL: ${videoUrl}`, error.message);
+                    return false; // Return false if there's an error fetching the video URL
+                }
+            }
             // Get user info for each video
             const usersCollection = db.collection('users');
-            const formattedVideoChats = await Promise.all(
+            let formattedVideoChats = await Promise.all(
                 latestVideos.map(async (video) => {
+                    const videoFetch = await checkIfVideoFetchWasSuccessful(video.videoUrl);
+                    if (!videoFetch) {
+                        return null;
+                    }
                     const user = await usersCollection.findOne(
                         { _id: video.userId },
                         { projection: { nickname: 1, profileUrl: 1 } }
@@ -1977,6 +1990,8 @@ async function routes(fastify, options) {
                     };
                 })
             );
+            // Filter out any null values (failed video fetches)
+            formattedVideoChats = formattedVideoChats.filter(video => video !== null);
 
             // Count total unique chats with videos for pagination
             const totalChatsWithVideos = await videosCollection.aggregate([

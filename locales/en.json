@@ -1059,6 +1059,7 @@
   "next":"Next",
   "prev":"Previous",
   "newCharacter": {
+    "navigateToImageButton": "Navigate to Image Generation",
     "regenerating_images": "Regenerating images...",
     "regeneration_error": "An error occurred while regenerating the image.",
     "images_regenerated": "Images have been regenerated.",

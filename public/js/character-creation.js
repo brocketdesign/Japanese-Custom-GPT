@@ -131,7 +131,9 @@ $(document).ready(function() {
 
     if (isTemporaryChat == 'false' || isTemporaryChat == false) {
         fetchchatCreationData(chatCreationId,function(){
+            $('.chatRedirection').show();
              $('.regenerateImages').show();
+             $('#navigateToImageButton').show();
              // Initialize mobile view after data is loaded
              setTimeout(function() {
                  if (window.isMobile && window.isMobile()) {
@@ -321,6 +323,20 @@ $(document).ready(function() {
             $generateButton.prop('disabled', false);
         }
 
+        // After the image is generated, save the image and redirect to the chat
+        function resetCharacterForm(){
+            // Enable buttons and reset text
+            $('.chatRedirection').show();
+            $('#characterPrompt').prop('disabled', false);
+            $('#chatName').prop('disabled', false);
+            $('#chatPurpose').prop('disabled', false);
+            $('#generateButton').prop('disabled', false);
+            $('#generateButton').html('<i class="bi bi-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
+            
+            // Reset regenerate button if it was disabled
+            resetRegenerateButton();
+        }
+
         function resetInfiniteScroll(){
             const imageStyle = $('.style-option.selected').data('style')
             const imageModel = $('.style-option.selected').data('model')
@@ -388,7 +404,9 @@ $(document).ready(function() {
         }
     }
     
-
+    $('#navigateToImageButton').on('click', function() {
+        showMobileRightColumn();
+    });
     $('#generateButton').on('click', async function() {
 
         const $button = $(this);
@@ -491,9 +509,7 @@ $(document).ready(function() {
                 $('#enhancedPrompt').val(enhancedPrompt);
                 
                 resizeTextarea($('#chatPurpose')[0]);
-                
-                console.log('Comprehensive character generation completed:', comprehensiveResponse);
-                
+                                
                 const imageType = moderationResult.flagged ? 'nsfw' : 'sfw';
                 const file = $('#imageUpload')[0].files[0];
                 const enableMergeFace = $('#enableMergeFace').is(':checked');
@@ -507,7 +523,8 @@ $(document).ready(function() {
                 })
                 .then(() => {
                     $('.chatRedirection').show();
-                    $('.regenerateImages').show(); // Show regenerate button after first generation
+                    $('.regenerateImages').show(); 
+                    $('#navigateToImageButton').show();
                     resetCharacterForm();
                     
                     // Ensure we're showing the right column on mobile after generation
@@ -636,20 +653,6 @@ window.generateCharacterImage = function( url, nsfw) {
     $('#imageContainer').append(colDiv);
 
     //getTimer(chatCreationId)
-}
-
-// After the image is generated, save the image and redirect to the chat
-window.resetCharacterForm = function(){
-    // Enable buttons and reset text
-    $('.chatRedirection').show();
-    $('#characterPrompt').prop('disabled', false);
-    $('#chatName').prop('disabled', false);
-    $('#chatPurpose').prop('disabled', false);
-    $('#generateButton').prop('disabled', false);
-    $('#generateButton').html('<i class="bi bi-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
-    
-    // Reset regenerate button if it was disabled
-    resetRegenerateButton();
 }
 
 // Add character update functionality

@@ -6,7 +6,7 @@
 <!-- 1. キャラクター画像 -->
 <div id="step1" class="step">
     <!-- Character Creation Form with Modal Sidebar Layout -->
-    <div id="characterCreationForm" class="character-creation-sidebar-layout" style="overflow-y: scroll;">
+    <div id="characterCreationForm" class="character-creation-sidebar-layout" style="overflow-y: hidden;">
         
         <!-- Modal Sidebar (Left Column) -->
         <div class="modal-sidebar-fixed">
@@ -122,8 +122,18 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Button to navigate to the generated image -->
+                <div class="text-center my-4 d-lg-none">
+                    <span 
+                    type="button" 
+                    id="navigateToImageButton" 
+                    class="badge bg-transparent text-secondary shadow-sm border-light align-items-center justify-content-center mx-auto"
+                    style="display: none;cursor: pointer;">
+                        <i class="bi bi-arrow-right me-2"></i>{{translations.newCharacter.navigateToImageButton}}
+                    </span>
+                </div>
             </div>
-                                    
             <!-- Sticky Generate Button -->
             <div class="modal-sidebar-footer">
                 <button type="button" id="generateButton" class="btn custom-gradient-bg btn-lg text-white d-flex align-items-center justify-content-center w-100">
@@ -135,18 +145,16 @@
         <!-- Modal Main Content Area (Right Column) -->
         <div class="modal-main-content pb-0" id="modalMainContent">
             <!-- Mobile Navigation Header -->
-            <div class="modal-main-content-header">
-                <button type="button" class="btn-back" id="backToSidebar">
+            <div class="modal-main-content-header d-flex justify-content-start mt-2 d-lg-none">
+                <span type="button" class="btn-back badge text-secondary shadow-sm border ms-4 me-2" id="backToSidebar">
                     <i class="bi bi-arrow-left"></i>
-                </button>
-                <h5 class="mb-0 fw-semibold">{{translations.newCharacter.generatedImageLabel}}</h5>
-                <div style="width: 40px;"></div> <!-- Spacer for centering -->
+                </span>
+                <label class="mb-0 fw-semibold">{{translations.newCharacter.generatedImageLabel}}</label>
             </div>
             
             <!-- Scrollable Content -->
             <div class="modal-main-content-scrollable">
                 <!-- 3. Generated Image Display -->
-                <label class="form-label d-block mb-3 text-center fw-semibold d-none d-md-block">{{translations.newCharacter.generatedImageLabel}}</label>
                 <div id="imageContainer" class="mb-4 w-100 text-center position-relative">
                     <!-- Spinner overlay -->
                     <div id="imageGenerationSpinner" class="position-absolute top-50 start-50 translate-middle" style="display: none; z-index: 10;">
@@ -171,9 +179,13 @@
                 
                 <!-- Regenerate Images Button -->
                 <div class="regenerateImages w-100 text-center my-3" style="display:none;">
-                    <button type="button" id="regenerateImagesButton" class="btn btn-outline-primary btn-lg">
+                    <span 
+                    type="button" 
+                    id="regenerateImagesButton" 
+                    class="badge bg-transparent shadow-sm text-secondary border-light align-items-center justify-content-center mx-auto"
+                    style="cursor: pointer;">
                         <i class="bi bi-arrow-clockwise me-2"></i>{{translations.newCharacter.regenerate_images}}
-                    </button>
+                    </span>
                 </div>
             </div>
             

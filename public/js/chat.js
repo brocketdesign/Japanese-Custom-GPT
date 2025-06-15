@@ -1764,7 +1764,6 @@ window.enableToggleDropdown = function(el) {
   
 window.addMessageToChat = function(chatId, userChatId, option, callback) {
     const { message, role, image_request } = option;
-    console.log('[addMessageToChat] Adding message to chat:', chatId, userChatId, role, message, image_request);
     $.ajax({
         url: '/api/chat/add-message',
         type: 'POST',

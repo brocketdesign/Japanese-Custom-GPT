@@ -41,7 +41,23 @@ window.novitaImageGeneration = async function(userId, chatId, userChatId, option
         }
 
         const API_ENDPOINT = `${API_URL}/novita/generate-img`;
-
+        console.log(`[novitaImageGeneration] Sending request to ${API_ENDPOINT} with data:`, {
+            title,
+            prompt,
+            aspectRatio,
+            userId,
+            chatId,
+            userChatId,
+            imageType,
+            placeholderId,
+            customPrompt,
+            promptId,
+            giftId,
+            image_base64,
+            regenerate,
+            chatCreation,
+            enableMergeFace
+        });
         const response = await fetch(API_ENDPOINT, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

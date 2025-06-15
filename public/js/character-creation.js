@@ -130,7 +130,15 @@ $(document).ready(function() {
     }
 
     if (isTemporaryChat == 'false' || isTemporaryChat == false) {
-        fetchchatCreationData(chatCreationId);
+        fetchchatCreationData(chatCreationId,function(){
+             $('.regenerateImages').show();
+             // Initialize mobile view after data is loaded
+             setTimeout(function() {
+                 if (window.isMobile && window.isMobile()) {
+                     showMobileRightColumn();
+                 }
+             }, 200);
+        });
     }
 
     $('textarea').each(function() {
@@ -244,6 +252,75 @@ $(document).ready(function() {
             }
             });
         }
+
+        // Add new function for regenerating images
+        function regenerateImages() {
+            const $button = $('#regenerateImagesButton');
+            const $generateButton = $('#generateButton');
+            
+            // Disable regenerate button during generation
+            $button.prop('disabled', true);
+            $button.html(`<div class="me-2 spinner-border spinner-border-sm" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>${translations.newCharacter.regenerating_images}`);
+            
+            // Also disable main generate button
+            $generateButton.prop('disabled', true);
+            
+            // Show spinner overlay
+            showImageSpinner();
+            
+            // Get current enhanced prompt and other settings
+            const enhancedPrompt = $('#enhancedPrompt').val().trim();
+            const file = $('#imageUpload')[0].files[0];
+            const enableMergeFace = $('#enableMergeFace').is(':checked');
+            
+            // Check if we have the necessary data
+            if (!enhancedPrompt || !chatCreationId) {
+                showNotification(translations.newCharacter.regeneration_error, 'error');
+                resetRegenerateButton();
+                hideImageSpinner();
+                return;
+            }
+            
+            // Determine image type based on previous moderation (you might want to store this)
+            const imageType = 'sfw'; // Default to sfw, you can enhance this later
+            
+            // Reset infinite scroll cache for new generation
+            resetInfiniteScroll();
+            
+            // Generate new images with existing prompt
+            novitaImageGeneration(userId, chatCreationId, null, { 
+                prompt: enhancedPrompt, 
+                imageType, 
+                file, 
+                chatCreation: true,
+                enableMergeFace: enableMergeFace,
+                regeneration: true // Flag to indicate this is a regeneration
+            })
+            .then(() => {
+                resetRegenerateButton();
+                showNotification(translations.newCharacter.images_regenerated, 'success');
+            })
+            .catch((error) => {
+                console.error('Error regenerating images:', error);
+                hideImageSpinner();
+                resetRegenerateButton();
+                showNotification(translations.newCharacter.regeneration_error, 'error');
+            });
+        }
+
+        // Helper function to reset regenerate button state
+        function resetRegenerateButton() {
+            const $button = $('#regenerateImagesButton');
+            const $generateButton = $('#generateButton');
+            
+            $button.prop('disabled', false);
+            $button.html('<i class="bi bi-arrow-clockwise me-2"></i>' + translations.newCharacter.regenerate_images);
+            
+            $generateButton.prop('disabled', false);
+        }
+
         function resetInfiniteScroll(){
             const imageStyle = $('.style-option.selected').data('style')
             const imageModel = $('.style-option.selected').data('model')
@@ -310,6 +387,7 @@ $(document).ready(function() {
             throw error;
         }
     }
+    
 
     $('#generateButton').on('click', async function() {
 
@@ -429,12 +507,23 @@ $(document).ready(function() {
                 })
                 .then(() => {
                     $('.chatRedirection').show();
+                    $('.regenerateImages').show(); // Show regenerate button after first generation
                     resetCharacterForm();
+                    
+                    // Ensure we're showing the right column on mobile after generation
+                    if (isMobile()) {
+                        showMobileRightColumn();
+                    }
                 })
                 .catch((error) => {
                     console.error('Error generating image:', error);
                     hideImageSpinner(); // Hide spinner overlay
                     resetCharacterForm();
+                    
+                    // Return to left column on mobile if there was an error
+                    if (isMobile()) {
+                        showMobileLeftColumn();
+                    }
                 });
                 
             } else {
@@ -448,6 +537,17 @@ $(document).ready(function() {
             showNotification(translations.newCharacter.character_generation_error, 'error');
         }
     });
+
+    // Add regenerate images functionality
+    $('#regenerateImagesButton').on('click', function() {
+        // Stay on right column during regeneration on mobile
+        regenerateImages();
+    });
+
+    // Make mobile navigation functions globally available
+    window.isMobile = isMobile;
+    window.showMobileLeftColumn = showMobileLeftColumn;
+    window.showMobileRightColumn = showMobileRightColumn;
 });
 
 function previewImage(event) {
@@ -547,9 +647,10 @@ window.resetCharacterForm = function(){
     $('#chatPurpose').prop('disabled', false);
     $('#generateButton').prop('disabled', false);
     $('#generateButton').html('<i class="bi bi-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
+    
+    // Reset regenerate button if it was disabled
+    resetRegenerateButton();
 }
-
-// ...existing code...
 
 // Add character update functionality
 window.loadCharacterUpdatePage = function(chatId) {
@@ -572,3 +673,68 @@ window.loadCharacterUpdatePage = function(chatId) {
         }
     });
 };
+
+// Mobile navigation state
+let isMobileViewInitialized = false;
+
+// Check if we're on mobile
+function isMobile() {
+    return window.innerWidth <= 768;
+}
+
+// Initialize mobile view based on chat data availability
+function initializeMobileView() {
+    if (!isMobile() || isMobileViewInitialized) return;
+    
+    isMobileViewInitialized = true;
+    
+    // Check if chat data exists (image or other data)
+    const hasExistingImage = $('#generatedImage').attr('src') !== '/img/default-character.png';
+    const hasRegenerateButton = $('.regenerateImages').is(':visible');
+    
+    if (hasExistingImage || hasRegenerateButton || (isTemporaryChat === 'false' || isTemporaryChat === false)) {
+        // Show right column first if chat data exists
+        showMobileRightColumn();
+    } else {
+        // Show left column first for new character creation
+        showMobileLeftColumn();
+    }
+}
+
+// Show mobile left column (form)
+function showMobileLeftColumn() {
+    if (!isMobile()) return;
+    
+    $('.modal-sidebar-fixed').removeClass('mobile-hidden');
+    $('.modal-main-content').removeClass('mobile-visible mobile-visible-initial');
+}
+
+// Show mobile right column (image)
+function showMobileRightColumn() {
+    if (!isMobile()) return;
+    
+    $('.modal-sidebar-fixed').addClass('mobile-hidden');
+    $('.modal-main-content').addClass('mobile-visible');
+}
+
+// Back button functionality
+$(document).on('click', '#backToSidebar', function() {
+    showMobileLeftColumn();
+});
+
+// Handle window resize
+$(window).on('resize', function() {
+    if (!isMobile()) {
+        // Reset mobile classes when not on mobile
+        $('.modal-sidebar-fixed').removeClass('mobile-hidden');
+        $('.modal-main-content').removeClass('mobile-visible mobile-visible-initial');
+        isMobileViewInitialized = false;
+    } else {
+        initializeMobileView();
+    }
+});
+
+// Initialize mobile view on page load
+setTimeout(function() {
+    initializeMobileView();
+}, 100);

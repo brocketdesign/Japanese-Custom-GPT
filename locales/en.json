@@ -1059,6 +1059,10 @@
   "next":"Next",
   "prev":"Previous",
   "newCharacter": {
+    "regenerating_images": "Regenerating images...",
+    "regeneration_error": "An error occurred while regenerating the image.",
+    "images_regenerated": "Images have been regenerated.",
+    "regenerate_images": "Regenerate Images",
     "enableMergeFace": "Enable Merge Face",
     "mergeFaceDescription": "Use the face of the uploaded image as the character's face.",
     "ai_generate_if_empty": "Ai generate if empty",

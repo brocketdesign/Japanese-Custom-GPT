@@ -133,11 +133,20 @@
         </div>
 
         <!-- Modal Main Content Area (Right Column) -->
-        <div class="modal-main-content pb-0">
+        <div class="modal-main-content pb-0" id="modalMainContent">
+            <!-- Mobile Navigation Header -->
+            <div class="modal-main-content-header">
+                <button type="button" class="btn-back" id="backToSidebar">
+                    <i class="bi bi-arrow-left"></i>
+                </button>
+                <h5 class="mb-0 fw-semibold">{{translations.newCharacter.generatedImageLabel}}</h5>
+                <div style="width: 40px;"></div> <!-- Spacer for centering -->
+            </div>
+            
             <!-- Scrollable Content -->
             <div class="modal-main-content-scrollable">
                 <!-- 3. Generated Image Display -->
-                <label class="form-label d-block mb-3 text-center fw-semibold">{{translations.newCharacter.generatedImageLabel}}</label>
+                <label class="form-label d-block mb-3 text-center fw-semibold d-none d-md-block">{{translations.newCharacter.generatedImageLabel}}</label>
                 <div id="imageContainer" class="mb-4 w-100 text-center position-relative">
                     <!-- Spinner overlay -->
                     <div id="imageGenerationSpinner" class="position-absolute top-50 start-50 translate-middle" style="display: none; z-index: 10;">
@@ -150,6 +159,7 @@
                         src="/img/default-character.png"
                         alt="{{translations.newCharacter.generatedImageAlt}}"
                         class="img-fluid"
+                        style="width: 100%;"
                     >
                     <p id="imageGenerationDescription" class="text-muted mt-1 mb-0" style="display:none;">{{translations.newCharacter.start_chat_and_image_generation_description}}</p>
                 </div>
@@ -157,6 +167,13 @@
                 <span class="w-100 text-center text-muted genexp mt-2" style="font-size: 12px;display:none;">{{translations.newCharacter.image_generation_message}}</span>
                 <div id="imageUploaderContainer" class="w-100" style="cursor: pointer;">
                     <!-- You can add an image uploader here if needed -->
+                </div>
+                
+                <!-- Regenerate Images Button -->
+                <div class="regenerateImages w-100 text-center my-3" style="display:none;">
+                    <button type="button" id="regenerateImagesButton" class="btn btn-outline-primary btn-lg">
+                        <i class="bi bi-arrow-clockwise me-2"></i>{{translations.newCharacter.regenerate_images}}
+                    </button>
                 </div>
             </div>
             

@@ -212,8 +212,8 @@
         <div class="modal-body p-0" style="height: 70vh;">
           <div class="container-fluid h-100 d-flex">
             <div class="row h-100 flex-nowrap w-100">
-              <!-- Left column - Image preview (fixed on desktop, hidden on mobile when content is shown) -->
-              <div class="col-lg-5 d-flex align-items-center justify-content-center border-end" id="imageColumn" style="background-color: #f8f9fa;">
+              <!-- Desktop layout - Left column for image -->
+              <div class="col-lg-5 d-none d-lg-flex align-items-center justify-content-center border-end" id="imageColumn" style="background-color: #f8f9fa;">
                 <div id="loadingPrompt" class="text-center">
                   <div class="spinner-border mb-3" role="status">
                     <span class="visually-hidden">Loading...</span>
@@ -235,7 +235,7 @@
               </div>
               
               <!-- Right column - Content (scrollable) -->
-              <div class="col-lg-7 h-100 d-flex flex-column p-0" id="contentColumn">
+              <div class="col-lg-7 col-12 h-100 d-flex flex-column p-0" id="contentColumn">
                 <div class="p-3 border-bottom bg-light">
                   <div class="d-flex justify-content-between align-items-center">
                     <div id="modelInfo">
@@ -254,19 +254,52 @@
                 
                 <div class="flex-grow-1 overflow-auto p-3" id="scrollableContent" style="height: calc(100% - 60px);">
                   <div id="promptDetails" class="d-none">
-                    <!-- Mobile image preview (shown only on mobile) with carousel navigation -->
-                    <div class="d-lg-none mb-3 position-relative">
-                      <div class="text-center">
-                        <img id="promptImageMobile" src="" class="img-fluid rounded shadow" alt="Character preview" style="max-height: 250px; object-fit: contain;">
+                    <!-- Mobile image preview with full width and overlay arrows -->
+                    <div class="d-lg-none mb-3 position-relative" id="mobileImageContainer" style="height:55vh; background-color: #f8f9fa; border-radius: 8px; overflow: hidden;">
+                      <!-- Loading state for mobile -->
+                      <div id="loadingPromptMobile" class="d-flex align-items-center justify-content-center h-100">
+                        <div class="text-center">
+                          <div class="spinner-border mb-2" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                          </div>
+                          <p class="text-muted small">Fetching prompt...</p>
+                        </div>
                       </div>
                       
-                      <!-- Mobile carousel navigation arrows -->
-                      <button id="prevPreviewMobile" class="btn btn-dark btn-sm position-absolute top-50 start-0 translate-middle-y ms-2 opacity-75" style="z-index: 10;" disabled>
-                        <i class="bi bi-chevron-left"></i>
-                      </button>
-                      <button id="nextPreviewMobile" class="btn btn-dark btn-sm position-absolute top-50 end-0 translate-middle-y me-2 opacity-75" style="z-index: 10;">
-                        <i class="bi bi-chevron-right"></i>
-                      </button>
+                      <!-- Image container -->
+                      <div id="mobileImageWrapper" class="w-100 h-100 d-flex align-items-center justify-content-center d-none">
+                        <img id="promptImageMobile" src="" class="img-fluid" alt="Character preview" style="max-height: 100%; max-width: 100%; width: 100%; object-fit: cover;">
+                      </div>
+                      
+                      <!-- Error states for mobile -->
+                      <div id="noPromptMobile" class="d-flex align-items-center justify-content-center h-100 d-none">
+                        <div class="alert alert-warning m-3">
+                          <i class="bi bi-exclamation-triangle"></i> No more unused prompts available.
+                        </div>
+                      </div>
+                      
+                      <div id="errorFetchingMobile" class="d-flex align-items-center justify-content-center h-100 d-none">
+                        <div class="alert alert-danger m-3">
+                          <i class="bi bi-exclamation-circle"></i> Error fetching prompt.
+                        </div>
+                      </div>
+                      
+                      <!-- Navigation arrows overlay -->
+                      <div class="position-absolute top-50 start-0 translate-middle-y" style="z-index: 10;">
+                        <button id="prevPreviewMobile" class="btn btn-dark btn-lg opacity-75 ms-3" style="border-radius: 50%; width: 50px; height: 50px;" disabled>
+                          <i class="bi bi-chevron-left"></i>
+                        </button>
+                      </div>
+                      <div class="position-absolute top-50 end-0 translate-middle-y" style="z-index: 10;">
+                        <button id="nextPreviewMobile" class="btn btn-dark btn-lg opacity-75 me-3" style="border-radius: 50%; width: 50px; height: 50px;">
+                          <i class="bi bi-chevron-right"></i>
+                        </button>
+                      </div>
+                      
+                      <!-- Prompt indicator -->
+                      <div class="position-absolute bottom-0 start-50 translate-middle-x mb-3">
+                        <span class="badge bg-dark bg-opacity-75" id="promptIndicator">1 / ?</span>
+                      </div>
                     </div>
                     
                     <div class="mb-4">
@@ -303,16 +336,16 @@
             </div>
           </div>
         </div>
-        <div class="modal-footer border-top">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <div class="modal-footer border-top" style="font-size: 1em !important;">
+          <div type="button" class="badge bg-secondary" data-bs-dismiss="modal">
             <i class="bi bi-x-lg"></i> Close
-          </button>
-          <button type="button" id="skipBtn" class="btn btn-warning d-none">
+          </div>
+          <div type="button" id="skipBtn" class="badge bg-warning d-none">
             <i class="bi bi-skip-forward"></i> Skip
-          </button>
-          <button type="button" id="generateBtn" class="btn btn-primary d-none">
+          </div>
+          <div type="button" id="generateBtn" class="badge bg-primary d-none">
             <i class="bi bi-play-fill"></i> Generate
-          </button>
+          </div>
         </div>
       </div>
     </div>
@@ -337,41 +370,37 @@
     @media (max-width: 991.98px) {
       #generateChatModal .modal-dialog {
         margin: 0.5rem;
+        max-width: calc(100vw - 1rem);
       }
       
       #generateChatModal .modal-body {
         height: 80vh;
       }
       
-      #imageColumn {
-        display: none;
-      }
-      
-      #contentColumn {
-        height: 100% !important;
-        width: 100% !important;
-      }
-      
       /* Mobile carousel arrows styling */
       #prevPreviewMobile,
       #nextPreviewMobile {
-        width: 35px;
-        height: 35px;
-        border-radius: 50%;
-        border: none;
         box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        transition: opacity 0.2s ease;
+        transition: opacity 0.2s ease, transform 0.1s ease;
+        border: 2px solid rgba(255,255,255,0.3);
       }
       
       #prevPreviewMobile:hover,
       #nextPreviewMobile:hover {
         opacity: 1 !important;
+        transform: scale(1.05);
       }
       
       #prevPreviewMobile:disabled,
       #nextPreviewMobile:disabled {
         opacity: 0.3 !important;
         cursor: not-allowed;
+        transform: none;
+      }
+      
+      #prevPreviewMobile:active,
+      #nextPreviewMobile:active {
+        transform: scale(0.95);
       }
     }
     
@@ -414,6 +443,12 @@
     .row.h-100.flex-nowrap {
       margin: 0;
     }
+    
+    /* Prompt indicator styling */
+    #promptIndicator {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+    }
   </style>
   {{>dashboard-footer}}
   
@@ -425,6 +460,7 @@
       let currentPage = 1;
       let currentPromptIndex = 0;
       let currentPromptKey = null;
+      let totalPrompts = 0;
 
       // Cron settings form submission
       $('#cronSettingsForm').on('submit', function(e) {
@@ -513,45 +549,50 @@
       
       function resetModalState() {
         console.log('[resetModalState] Resetting modal state');
+        
+        // Desktop states
         $('#loadingPrompt').removeClass('d-none');
         $('#imagePreview').addClass('d-none');
-        $('#promptDetails').addClass('d-none');
         $('#noPrompt').addClass('d-none');
         $('#errorFetching').addClass('d-none');
+        
+        // Mobile states
+        $('#loadingPromptMobile').removeClass('d-none');
+        $('#mobileImageWrapper').addClass('d-none');
+        $('#noPromptMobile').addClass('d-none');
+        $('#errorFetchingMobile').addClass('d-none');
+        
+        // Common states
+        $('#promptDetails').addClass('d-none');
         $('#generationResult').addClass('d-none');
         $('#generateBtn').addClass('d-none');
         $('#skipBtn').addClass('d-none');
         $('#prevPreview').prop('disabled', true);
         $('#nextPreview').prop('disabled', false);
+        $('#prevPreviewMobile').prop('disabled', true);
+        $('#nextPreviewMobile').prop('disabled', false);
+        
         currentPromptKey = null;
+        totalPrompts = 0;
       }
 
-      // Navigation buttons
-      $('#prevPreview').on('click', function() {
+      // Navigation buttons - Fixed logic
+      $('#prevPreview, #prevPreviewMobile').on('click', function() {
         if (!$(this).prop('disabled')) {
-          console.log('[prevPreview] Navigating to previous prompt');
+          console.log('[prevPreview] Current promptIndex before:', currentPromptIndex);
+          if (currentPromptIndex > 0) {
+            currentPromptIndex--;
+          }
+          console.log('[prevPreview] New promptIndex:', currentPromptIndex);
           fetchPreviewPrompt('prev');
         }
       });
 
-      $('#nextPreview').on('click', function() {
+      $('#nextPreview, #nextPreviewMobile').on('click', function() {
         if (!$(this).prop('disabled')) {
-          console.log('[nextPreview] Navigating to next prompt');
-          fetchPreviewPrompt('next');
-        }
-      });
-
-      // Mobile carousel navigation
-      $('#prevPreviewMobile').on('click', function() {
-        if (!$(this).prop('disabled')) {
-          console.log('[prevPreviewMobile] Navigating to previous prompt');
-          fetchPreviewPrompt('prev');
-        }
-      });
-
-      $('#nextPreviewMobile').on('click', function() {
-        if (!$(this).prop('disabled')) {
-          console.log('[nextPreviewMobile] Navigating to next prompt');
+          console.log('[nextPreview] Current promptIndex before:', currentPromptIndex);
+          currentPromptIndex++;
+          console.log('[nextPreview] New promptIndex:', currentPromptIndex);
           fetchPreviewPrompt('next');
         }
       });
@@ -560,12 +601,16 @@
       function fetchPreviewPrompt(direction = 'current') {
         console.log(`[fetchPreviewPrompt] Fetching with direction: ${direction}, page: ${currentPage}, promptIndex: ${currentPromptIndex}`);
         
-        // Reset certain states but keep navigation enabled
+        // Reset loading states
         $('#loadingPrompt').removeClass('d-none');
         $('#imagePreview').addClass('d-none');
+        $('#loadingPromptMobile').removeClass('d-none');
+        $('#mobileImageWrapper').addClass('d-none');
         $('#promptDetails').addClass('d-none');
         $('#noPrompt').addClass('d-none');
         $('#errorFetching').addClass('d-none');
+        $('#noPromptMobile').addClass('d-none');
+        $('#errorFetchingMobile').addClass('d-none');
         $('#generationResult').addClass('d-none');
         $('#generateBtn').addClass('d-none');
         $('#skipBtn').addClass('d-none');
@@ -588,31 +633,40 @@
           success: function(data) {
             console.log('[fetchPreviewPrompt] Response received:', data);
             
+            // Hide loading states
             $('#loadingPrompt').addClass('d-none');
+            $('#loadingPromptMobile').addClass('d-none');
             
             if (data.error) {
               console.error('[fetchPreviewPrompt] Error in response:', data.error);
               $('#errorFetching').removeClass('d-none');
+              $('#errorFetchingMobile').removeClass('d-none');
               return;
             }
             
             if (!data.prompt) {
               console.log('[fetchPreviewPrompt] No prompt data received');
               $('#noPrompt').removeClass('d-none');
+              $('#noPromptMobile').removeClass('d-none');
               return;
             }
             
-            // Update current state
+            // Update current state from server response
             currentPage = data.prompt.page;
             currentPromptIndex = data.prompt.promptIndex;
             currentPromptKey = data.promptKey;
+            totalPrompts = data.prompt.totalItems || 0;
             
-            console.log(`[fetchPreviewPrompt] Updated state - page: ${currentPage}, promptIndex: ${currentPromptIndex}, promptKey: ${currentPromptKey}`);
+            console.log(`[fetchPreviewPrompt] Updated state - page: ${currentPage}, promptIndex: ${currentPromptIndex}, promptKey: ${currentPromptKey}, totalPrompts: ${totalPrompts}`);
             
             // Show image preview
             $('#imagePreview').removeClass('d-none');
             $('#promptImage').attr('src', data.prompt.imageUrl);
+            $('#mobileImageWrapper').removeClass('d-none');
             $('#promptImageMobile').attr('src', data.prompt.imageUrl);
+            
+            // Update prompt indicator
+            $('#promptIndicator').text(`${currentPromptIndex + 1} / ${totalPrompts > 0 ? totalPrompts : '?'}`);
             
             // Show prompt details
             $('#promptDetails').removeClass('d-none');
@@ -631,17 +685,20 @@
               .data('prompt-key', currentPromptKey);
             
             // Update navigation buttons
-            $('#prevPreview').prop('disabled', currentPromptIndex <= 0);
-            $('#nextPreview').prop('disabled', false); // Always allow next for now
+            const canGoPrev = currentPromptIndex > 0;
+            const canGoNext = currentPromptIndex < (totalPrompts - 1) || totalPrompts === 0; // Allow next if we don't know total or if not at end
             
-            // Update mobile navigation buttons
-            $('#prevPreviewMobile').prop('disabled', currentPromptIndex <= 0);
+            $('#prevPreview').prop('disabled', !canGoPrev);
+            $('#nextPreview').prop('disabled', false); // Always allow next for now, server will handle limits
+            $('#prevPreviewMobile').prop('disabled', !canGoPrev);
             $('#nextPreviewMobile').prop('disabled', false); // Always allow next for now
           },
           error: function(xhr, status, error) {
             console.error('[fetchPreviewPrompt] Error:', error);
             $('#loadingPrompt').addClass('d-none');
+            $('#loadingPromptMobile').addClass('d-none');
             $('#errorFetching').removeClass('d-none');
+            $('#errorFetchingMobile').removeClass('d-none');
             
             // Reset button states on error too
             $('#skipBtn').prop('disabled', false).html('<i class="bi bi-skip-forward"></i> Skip');

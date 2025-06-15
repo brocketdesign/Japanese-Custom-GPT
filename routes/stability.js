@@ -14,6 +14,7 @@ async function routes(fastify, options) {
     let imageType = request.body.imageType
     const db = fastify.mongo.db;
     const translations = request.translations
+    console.log(`[generate-img] Request received with userId: ${userId}, chatId: ${chatId}, promptId: ${promptId}, giftId: ${giftId}`);
     try {
       // Get fresh user data from database to check subscription
       const freshUserData = await db.collection('users').findOne(

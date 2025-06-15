@@ -60,9 +60,9 @@ async function fetchRandomCivitaiPrompt(modelData, nsfw = false, page = 1, promp
     const modelId = modelData.modelId;
     const nsfwParam = nsfw == 'true' ? '&nsfw=true' : '&nsfw=false';
     const maxRetries = 10; // Try up to 10 different prompts/pages
-    const maxPagesPerAttempt = 5; // Try up to 5 pages per attempt
     let currentPage = page || 1;
     let currentPromptIndex = promptIndex || 0;
+    let targetIndex = promptIndex || 0; // Keep track of the target index we're looking for
     
     console.log(`[fetchRandomCivitaiPrompt] Starting search for model: ${baseModelName}, page: ${currentPage}, promptIndex: ${currentPromptIndex}, nsfw: ${nsfw}, excludeUsed: ${excludeUsed}`);
     
@@ -86,9 +86,9 @@ async function fetchRandomCivitaiPrompt(modelData, nsfw = false, page = 1, promp
       console.log(`[fetchRandomCivitaiPrompt] Found ${forbiddenWords.length} forbidden words`);
     }
     
-    // Try up to maxRetries times to find a suitable prompt
+    // Try to find the prompt at the specific index first
     for (let retry = 0; retry < maxRetries; retry++) {
-      console.log(`[fetchRandomCivitaiPrompt] Retry ${retry + 1}/${maxRetries} - Page: ${currentPage}, Index: ${currentPromptIndex}`);
+      console.log(`[fetchRandomCivitaiPrompt] Retry ${retry + 1}/${maxRetries} - Page: ${currentPage}, Looking for index: ${targetIndex}`);
       
       try {
         const limit = 30;
@@ -109,10 +109,12 @@ async function fetchRandomCivitaiPrompt(modelData, nsfw = false, page = 1, promp
             item.meta?.prompt && typeof item.meta.prompt === 'string' && item.meta.prompt.trim().length > 0
           );
 
-          console.log(`[fetchRandomCivitaiPrompt] Found ${validItems.length} items with valid prompts`);
+          console.log(`[fetchRandomCivitaiPrompt] Found ${validItems.length} items with valid prompts on page ${currentPage}`);
 
-          // Process each item to check if it's suitable
-          for (let i = currentPromptIndex; i < validItems.length; i++) {
+          // Create an array to track which items are suitable (not used/skipped, no forbidden words)
+          let suitableItems = [];
+          
+          for (let i = 0; i < validItems.length; i++) {
             const item = validItems[i];
             const rawPrompt = item.meta.prompt;
             
@@ -142,45 +144,59 @@ async function fetchRandomCivitaiPrompt(modelData, nsfw = false, page = 1, promp
               continue;
             }
             
-            // Found a suitable prompt!
-            console.log(`[fetchRandomCivitaiPrompt] Found suitable prompt at page ${currentPage}, index ${i}`);
-            
-            return {
-              imageUrl: item.url || "",
-              prompt: processedPrompt,
-              promptHash,
-              negativePrompt: item.meta?.negativePrompt || 'low quality, bad anatomy, worst quality',
-              model: item.meta?.Model || baseModelName,
-              modelId,
-              sampler: item.meta?.sampler || 'Euler a',
-              cfgScale: item.meta?.cfgScale || 7,
-              steps: item.meta?.steps || 30,
-              page: currentPage,
-              promptIndex: i,
-              totalItems: validItems.length
-            };
+            // This item is suitable
+            suitableItems.push({
+              index: i,
+              item,
+              processedPrompt,
+              promptHash
+            });
           }
           
-          // If we didn't find anything on this page, try the next page
-          currentPage++;
-          currentPromptIndex = 0; // Reset index for new page
+          console.log(`[fetchRandomCivitaiPrompt] Found ${suitableItems.length} suitable items on page ${currentPage}`);
           
-          // If we've tried too many pages in this attempt, break
-          if (currentPage > (page + maxPagesPerAttempt)) {
-            console.log(`[fetchRandomCivitaiPrompt] Reached max pages per attempt, moving to next retry`);
-            currentPage = Math.max(1, page + retry); // Try different starting pages
-            currentPromptIndex = 0;
+          // If we have suitable items, try to find the one at our target index
+          if (suitableItems.length > 0) {
+            // If targetIndex is within range of suitable items, use it
+            if (targetIndex < suitableItems.length) {
+              const suitableItem = suitableItems[targetIndex];
+              console.log(`[fetchRandomCivitaiPrompt] Found suitable prompt at target index ${targetIndex} (actual index ${suitableItem.index}) on page ${currentPage}`);
+              
+              return {
+                imageUrl: suitableItem.item.url || "",
+                prompt: suitableItem.processedPrompt,
+                promptHash: suitableItem.promptHash,
+                negativePrompt: suitableItem.item.meta?.negativePrompt || 'low quality, bad anatomy, worst quality',
+                model: suitableItem.item.meta?.Model || baseModelName,
+                modelId,
+                sampler: suitableItem.item.meta?.sampler || 'Euler a',
+                cfgScale: suitableItem.item.meta?.cfgScale || 7,
+                steps: suitableItem.item.meta?.steps || 30,
+                page: currentPage,
+                promptIndex: targetIndex,
+                totalItems: suitableItems.length
+              };
+            } else {
+              // Target index is beyond this page, try next page
+              console.log(`[fetchRandomCivitaiPrompt] Target index ${targetIndex} beyond page ${currentPage} (has ${suitableItems.length} items), trying next page`);
+              currentPage++;
+              targetIndex = targetIndex - suitableItems.length; // Adjust target index for next page
+              continue;
+            }
+          } else {
+            // No suitable items on this page, try next page
+            console.log(`[fetchRandomCivitaiPrompt] No suitable items on page ${currentPage}, trying next page`);
+            currentPage++;
+            continue;
           }
         } else {
           console.log(`[fetchRandomCivitaiPrompt] No items found on page ${currentPage}, trying next page`);
           currentPage++;
-          currentPromptIndex = 0;
         }
       } catch (pageError) {
         console.error(`[fetchRandomCivitaiPrompt] Error fetching page ${currentPage}:`, pageError.message);
         // Try next page on error
         currentPage++;
-        currentPromptIndex = 0;
       }
     }
     

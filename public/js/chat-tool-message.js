@@ -64,7 +64,7 @@ function getMessageTools(messageIndex, actions = [], isLastMessage = false, isAs
 window.handleMessageAction = function(button, action) {
     const messageIndex = $(button).data('message-index');
     const $button = $(button);
-    const $messageTools = $button.closest('.message-tools');
+    const $messageTools = $button.closest('.message-tools-controller');
     const $likeBtn = $messageTools.find('[data-action="like"]');
     const $dislikeBtn = $messageTools.find('[data-action="dislike"]');
     

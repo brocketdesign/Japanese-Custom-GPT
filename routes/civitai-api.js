@@ -97,14 +97,9 @@ async function routes(fastify, options) {
       let newPage = parseInt(page);
       let newPromptIndex = parseInt(promptIndex);
 
-      // Handle navigation
-      if (direction === 'next') {
-        newPromptIndex++;
-      } else if (direction === 'prev' && newPromptIndex > 0) {
-        newPromptIndex--;
-      }
-
-      console.log(`[/api/preview-prompt] Fetching prompt with newPage=${newPage}, newPromptIndex=${newPromptIndex}`);
+      // DO NOT modify navigation here - let the client handle it
+      // The client is already sending the correct promptIndex
+      console.log(`[/api/preview-prompt] Using client-provided indices: page=${newPage}, promptIndex=${newPromptIndex}`);
 
       // Fetch prompt with strict exclusion of used/skipped prompts and forbidden words filtering
       const promptData = await fetchRandomCivitaiPrompt(

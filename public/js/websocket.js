@@ -197,6 +197,30 @@ function initializeWebSocket(onConnectionResult = null) {
             }
             break;
           }
+          case 'likeRewardNotification': {
+            const { 
+              userId, 
+              points, 
+              reason, 
+              source, 
+              isMilestone, 
+              milestoneMessage, 
+              totalLikes 
+            } = data.notification;
+            
+            // Only show notification for the current user
+            if (userId === user._id && window.userPointsManager) {
+              window.userPointsManager.showSpecialRewardNotification({
+                points,
+                reason,
+                source,
+                isMilestone,
+                milestoneMessage,
+                totalLikes
+              });
+            }
+            break;
+          }
           default:
             // Removed console.log('[WebSocket] Unhandled notification type:', data.notification.type);
             break;

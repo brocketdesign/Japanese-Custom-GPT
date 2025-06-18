@@ -571,6 +571,390 @@ class UserPointsManager {
   showSetPointsModal() {
     console.log('Use the admin controls in the points modal instead');
   }
+
+  /**
+   * Show special point reward notification with animations
+   * @param {Object} rewardData - Reward information
+   */
+  showSpecialRewardNotification(rewardData) {
+    const {
+      points,
+      reason,
+      source,
+      isMilestone = false,
+      milestoneMessage = '',
+      totalLikes = 0
+    } = rewardData;
+
+    // Remove any existing reward notifications
+    $('.special-reward-notification').remove();
+
+    // Create the notification HTML
+    const notificationHtml = `
+      <div class="special-reward-notification">
+        <div class="reward-backdrop"></div>
+        <div class="reward-container">
+          <div class="reward-content">
+            <div class="reward-icon-container">
+              <i class="bi bi-star-fill reward-star star-1"></i>
+              <i class="bi bi-star-fill reward-star star-2"></i>
+              <i class="bi bi-star-fill reward-star star-3"></i>
+              <div class="reward-main-icon">
+                ${isMilestone ? '<i class="bi bi-trophy-fill"></i>' : '<i class="bi bi-heart-fill"></i>'}
+              </div>
+            </div>
+            <div class="reward-text">
+              <h3 class="reward-title">
+                ${isMilestone ? '🎉 Milestone Achieved!' : '❤️ Like Reward!'}
+              </h3>
+              <p class="reward-message">
+                ${milestoneMessage || reason}
+              </p>
+              <div class="reward-points">
+                <span class="points-earned">+${points}</span>
+                <span class="points-label">points</span>
+              </div>
+              ${totalLikes > 0 ? `<div class="reward-meta">Total likes: ${totalLikes}</div>` : ''}
+            </div>
+            <div class="reward-particles">
+              <div class="particle particle-1"></div>
+              <div class="particle particle-2"></div>
+              <div class="particle particle-3"></div>
+              <div class="particle particle-4"></div>
+              <div class="particle particle-5"></div>
+              <div class="particle particle-6"></div>
+            </div>
+          </div>
+          <button class="reward-close-btn" onclick="window.userPointsManager.closeRewardNotification()">
+            <i class="bi bi-x"></i>
+          </button>
+        </div>
+      </div>
+    `;
+
+    // Add to body
+    $('body').append(notificationHtml);
+
+    // Add styles if not already present
+    if (!$('#reward-notification-styles').length) {
+      this.addRewardNotificationStyles();
+    }
+
+    // Trigger entrance animation
+    setTimeout(() => {
+      $('.special-reward-notification').addClass('show');
+    }, 100);
+
+    // Auto-close after 5 seconds
+    setTimeout(() => {
+      this.closeRewardNotification();
+    }, 5000);
+
+    // Update points display
+    this.updatePointsDisplay();
+
+    // Play sound effect if available
+    this.playRewardSound(isMilestone);
+  }
+
+  /**
+   * Close the special reward notification
+   */
+  closeRewardNotification() {
+    const $notification = $('.special-reward-notification');
+    if ($notification.length) {
+      $notification.addClass('hiding');
+      setTimeout(() => {
+        $notification.remove();
+      }, 300);
+    }
+  }
+
+  /**
+   * Add CSS styles for reward notifications
+   */
+  addRewardNotificationStyles() {
+    const styles = `
+      <style id="reward-notification-styles">
+        .special-reward-notification {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          z-index: 9999;
+          opacity: 0;
+          visibility: hidden;
+          transition: all 0.3s ease;
+        }
+
+        .special-reward-notification.show {
+          opacity: 1;
+          visibility: visible;
+        }
+
+        .special-reward-notification.hiding {
+          opacity: 0;
+          transform: scale(0.8);
+        }
+
+        .reward-backdrop {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.7);
+          backdrop-filter: blur(5px);
+        }
+
+        .reward-container {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%) scale(0.8);
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border-radius: 20px;
+          padding: 40px;
+          max-width: 400px;
+          width: 90%;
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+          transition: all 0.3s ease;
+          overflow: hidden;
+          position: relative;
+        }
+
+        .special-reward-notification.show .reward-container {
+          transform: translate(-50%, -50%) scale(1);
+        }
+
+        .reward-content {
+          text-align: center;
+          color: white;
+          position: relative;
+          z-index: 2;
+        }
+
+        .reward-icon-container {
+          position: relative;
+          margin-bottom: 20px;
+          height: 80px;
+        }
+
+        .reward-main-icon {
+          font-size: 3rem;
+          color: #ffd700;
+          animation: bounceIn 0.8s ease-out;
+        }
+
+        .reward-star {
+          position: absolute;
+          color: #ffd700;
+          font-size: 1.2rem;
+          animation: twinkle 2s infinite;
+        }
+
+        .star-1 {
+          top: 10px;
+          left: 20px;
+          animation-delay: 0.2s;
+        }
+
+        .star-2 {
+          top: 5px;
+          right: 30px;
+          animation-delay: 0.5s;
+        }
+
+        .star-3 {
+          bottom: 10px;
+          left: 30px;
+          animation-delay: 0.8s;
+        }
+
+        .reward-title {
+          font-size: 1.8rem;
+          font-weight: bold;
+          margin-bottom: 10px;
+          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .reward-message {
+          font-size: 1.1rem;
+          margin-bottom: 20px;
+          opacity: 0.9;
+        }
+
+        .reward-points {
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 15px;
+          padding: 15px;
+          margin-bottom: 15px;
+          backdrop-filter: blur(10px);
+        }
+
+        .points-earned {
+          font-size: 2.5rem;
+          font-weight: bold;
+          color: #ffd700;
+          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+          animation: pointsGlow 2s infinite alternate;
+        }
+
+        .points-label {
+          display: block;
+          font-size: 1rem;
+          opacity: 0.8;
+          margin-top: 5px;
+        }
+
+        .reward-meta {
+          font-size: 0.9rem;
+          opacity: 0.7;
+        }
+
+        .reward-close-btn {
+          position: absolute;
+          top: 15px;
+          right: 15px;
+          background: rgba(255, 255, 255, 0.2);
+          border: none;
+          color: white;
+          width: 35px;
+          height: 35px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          backdrop-filter: blur(10px);
+        }
+
+        .reward-close-btn:hover {
+          background: rgba(255, 255, 255, 0.3);
+          transform: scale(1.1);
+        }
+
+        .reward-particles {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+          overflow: hidden;
+        }
+
+        .particle {
+          position: absolute;
+          width: 8px;
+          height: 8px;
+          background: #ffd700;
+          border-radius: 50%;
+          opacity: 0;
+          animation: particleFloat 3s infinite;
+        }
+
+        .particle-1 { left: 10%; animation-delay: 0.2s; }
+        .particle-2 { left: 25%; animation-delay: 0.8s; }
+        .particle-3 { left: 50%; animation-delay: 0.4s; }
+        .particle-4 { left: 75%; animation-delay: 1.2s; }
+        .particle-5 { left: 85%; animation-delay: 0.6s; }
+        .particle-6 { left: 40%; animation-delay: 1.0s; }
+
+        @keyframes bounceIn {
+          0% { transform: scale(0); opacity: 0; }
+          50% { transform: scale(1.2); opacity: 1; }
+          100% { transform: scale(1); }
+        }
+
+        @keyframes twinkle {
+          0%, 100% { opacity: 0.4; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        @keyframes pointsGlow {
+          0% { text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); }
+          100% { text-shadow: 0 2px 20px rgba(255, 215, 0, 0.8); }
+        }
+
+        @keyframes particleFloat {
+          0% { transform: translateY(100%); opacity: 0; }
+          20% { opacity: 1; }
+          80% { opacity: 1; }
+          100% { transform: translateY(-100%); opacity: 0; }
+        }
+
+        @media (max-width: 480px) {
+          .reward-container {
+            padding: 30px 20px;
+            max-width: 350px;
+          }
+
+          .reward-title {
+            font-size: 1.5rem;
+          }
+
+          .points-earned {
+            font-size: 2rem;
+          }
+
+          .reward-main-icon {
+            font-size: 2.5rem;
+          }
+        }
+      </style>
+    `;
+    
+    $('head').append(styles);
+  }
+
+  /**
+   * Play reward sound effect
+   */
+  playRewardSound(isMilestone = false) {
+    try {
+      // Create audio context for sound effects
+      if (window.AudioContext || window.webkitAudioContext) {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        if (isMilestone) {
+          // Play celebration sound for milestones
+          this.playTone(audioContext, 523.25, 0.1, 0.3); // C5
+          setTimeout(() => this.playTone(audioContext, 659.25, 0.1, 0.3), 150); // E5
+          setTimeout(() => this.playTone(audioContext, 783.99, 0.2, 0.4), 300); // G5
+        } else {
+          // Play simple notification sound for regular likes
+          this.playTone(audioContext, 800, 0.1, 0.2);
+        }
+      }
+    } catch (error) {
+      // Silently fail if audio context is not available
+      console.log('Audio not available:', error);
+    }
+  }
+
+  /**
+   * Play a tone
+   */
+  playTone(audioContext, frequency, duration, volume = 0.3) {
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = frequency;
+    oscillator.type = 'sine';
+    
+    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+    gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.01);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + duration);
+  }
 }
 
 // Initialize points manager when DOM is ready

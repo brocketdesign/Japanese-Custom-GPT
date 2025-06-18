@@ -2492,5 +2492,5 @@ opacity: 0.8;
   resize: vertical;
 }
 .message-action-btn, .message-regenerate-btn {
-padding: 5px !important;
+  padding: 5px !important;
 }

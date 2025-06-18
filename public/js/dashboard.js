@@ -652,6 +652,7 @@ window.toggleImageFavorite = function(el) {
   const isLiked = $this.find('i').hasClass('bi-heart-fill'); // Check if already liked
 
   const action = isLiked ? 'unlike' : 'like'; // Determine action
+  console.log({action})
   const likeIconClass = (isLiked || action) ? 'bi-heart-fill text-danger' : 'bi-heart';
   $this.find('i').removeClass('bi-heart bi-heart-fill').addClass(likeIconClass); // Toggle icon class
 
@@ -1977,7 +1978,7 @@ window.loadAllUserPosts = async function (page = 1) {
                                 data-id="${item.post.postId}"
                                 onclick="togglePostFavorite(this)"
                                 > 
-                                    <i class="bi bi-heart-fill me-2"></i>いいね 
+                                    <i class="bi bi-heart me-2"></i>いいね 
                                     <span class="ct">${item.post.likes || 0}</span>
                                 </button>
                             </div>
@@ -2054,7 +2055,7 @@ window.resultImageSearch = async function (page = 1,query,style = 'anime', callb
                             data-id="${item._id}" 
                             onclick="toggleImageFavorite(this)"
                             >
-                                <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
+                                <i class="bi bi-heart" style="cursor: pointer;"></i>
                             </span>
                         </div>
                         `}
@@ -2216,7 +2217,7 @@ window.loadAllChatImages = function (page = 1, reload = false) {
                      data-id="${item._id}" 
                      onclick="toggleImageFavorite(this)" 
                      >
-                       <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
+                       <i class="bi bi-heart" style="cursor: pointer;"></i>
                      </span>
                    </div>`
             }
@@ -2367,7 +2368,7 @@ window.loadUserImages = function (userId, page = 1, reload = false) {
                      data-id="${item._id}" 
                      onclick="toggleImageFavorite(this)"
                      >
-                       <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
+                       <i class="bi bi-heart" style="cursor: pointer;"></i>
                      </span>
                    </div>`
             }
@@ -2423,7 +2424,7 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
                                 class="btn btn-light shadow-0 post-fav  ${isLiked ? 'liked' : ''}" 
                                 data-id="${item._id}
                                 onclick="togglePostFavorite(this)"> 
-                                    <i class="bi bi-heart-fill me-2"></i>いいね 
+                                    <i class="bi bi-heart me-2"></i>いいね 
                                     <span class="ct">${item.likes || 0}</span>
                                 </button>
                                 <span 
@@ -2898,7 +2899,7 @@ $(document).ready(function () {
                               data-id="${item._id}"
                               onclick="toggleImageFavorite(this)"
                             >
-                              <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
+                              <i class="bi bi-heart" style="cursor: pointer;"></i>
                             </span>
                           </div>
                         `
@@ -3026,7 +3027,7 @@ $(document).ready(function () {
                                 data-id="${item._id}"
                                 onclick="toggleImageFavorite(this)"
                               >
-                                <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
+                                <i class="bi bi-heart" style="cursor: pointer;"></i>
                               </span>
                             </div>
                           `

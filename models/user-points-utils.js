@@ -292,6 +292,126 @@ async function getPointsLeaderboard(db, limit = 10) {
     .toArray();
 }
 
+/**
+ * Like Reward Management Functions
+ * Handle rewards for user engagement with likes
+ */
+
+/**
+ * Award points for liking images based on milestones
+ * @param {Object} db - MongoDB database instance
+ * @param {string|ObjectId} userId - User ID
+ * @param {Object} fastify - Fastify instance for sending notifications
+ * @returns {Object} Reward result with points awarded
+ */
+async function awardLikeMilestoneReward(db, userId, fastify = null) {
+  const usersCollection = db.collection('users');
+  const imagesLikesCollection = db.collection('images_likes');
+  
+  // Get current user data
+  const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+  if (!user) throw new Error('User not found');
+  
+  // Count total likes by user
+  const totalLikes = await imagesLikesCollection.countDocuments({ userId: new ObjectId(userId) });
+  // Define milestone rewards (likes -> points)
+  const milestones = {
+    1: { points: 5, message: 'First like!' },
+    5: { points: 10, message: '5 likes milestone!' },
+    10: { points: 15, message: '10 likes milestone!' },
+    25: { points: 25, message: '25 likes milestone!' },
+    50: { points: 50, message: '50 likes milestone!' },
+    100: { points: 100, message: '100 likes milestone!' },
+    250: { points: 150, message: '250 likes milestone!' },
+    500: { points: 250, message: '500 likes milestone!' },
+    1000: { points: 500, message: '1000 likes milestone!' }
+  };
+  
+  // Check if current like count hits a milestone
+  const milestone = milestones[totalLikes];
+  if (!milestone) {
+    return {
+      success: false,
+      totalLikes,
+      message: 'No milestone reached'
+    };
+  }
+  
+  // Award milestone points
+  const result = await addUserPoints(
+    db, 
+    userId, 
+    milestone.points, 
+    `Like milestone: ${milestone.message}`, 
+    'like_milestone'
+  );
+  
+  // Send websocket notification for milestone reward
+  if (fastify && fastify.sendNotificationToUser) {
+    try {
+      await fastify.sendNotificationToUser(userId.toString(), 'likeRewardNotification', {
+        userId: userId.toString(),
+        points: milestone.points,
+        reason: milestone.message,
+        source: 'like_milestone',
+        isMilestone: true,
+        milestoneMessage: milestone.message,
+        totalLikes: totalLikes
+      });
+    } catch (notificationError) {
+      console.error('Error sending milestone reward notification:', notificationError);
+    }
+  }
+  
+  return {
+    success: true,
+    totalLikes,
+    pointsAwarded: milestone.points,
+    milestoneMessage: milestone.message,
+    ...result
+  };
+}
+
+/**
+ * Award small points for each like action (optional base reward)
+ * @param {Object} db - MongoDB database instance
+ * @param {string|ObjectId} userId - User ID
+ * @param {Object} fastify - Fastify instance for sending notifications
+ * @returns {Object} Reward result
+ */
+async function awardLikeActionReward(db, userId, fastify = null) {
+  const basePoints = 1; // 1 point per like
+  
+  const result = await addUserPoints(
+    db, 
+    userId, 
+    basePoints, 
+    'Liked an image', 
+    'like_action'
+  );
+  
+  // Send websocket notification for action reward
+  if (fastify && fastify.sendNotificationToUser) {
+    try {
+      await fastify.sendNotificationToUser(userId.toString(), 'likeRewardNotification', {
+        userId: userId.toString(),
+        points: basePoints,
+        reason: 'Liked an image',
+        source: 'like_action',
+        isMilestone: false
+      });
+    } catch (notificationError) {
+      console.error('Error sending like action reward notification:', notificationError);
+    }
+  }
+  
+  return {
+    success: true,
+    pointsAwarded: basePoints,
+    ...result
+  };
+}
+
 module.exports = {
   addUserPoints,
   removeUserPoints,
@@ -300,5 +420,8 @@ module.exports = {
   setUserPoints,
   checkUserPoints,
   awardDailyLoginBonus,
-  getPointsLeaderboard
+  getPointsLeaderboard,
+  // Like reward functions
+  awardLikeMilestoneReward,
+  awardLikeActionReward
 };

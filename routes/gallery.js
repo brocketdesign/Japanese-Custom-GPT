@@ -1,6 +1,7 @@
 const { ObjectId } = require('mongodb');
 const { getLanguageName } = require('../models/tool');
 const { parse } = require('handlebars');
+const { awardLikeMilestoneReward, awardLikeActionReward } = require('../models/user-points-utils');
 
 async function routes(fastify, options) {
   fastify.post('/gallery/:imageId/like-toggle', async (request, reply) => { 
@@ -18,11 +19,18 @@ async function routes(fastify, options) {
 
       // Declare a function that will find the object with content that starts with [Image] or [image] followed by a space and then the imageId and update it with the like action field
       const findImageMessageandUpdateLikeAction = async (userChatId, userChatMessages, imageId, action) => {
-        if (!userChatMessages || !userChatMessages.messages) return;
+        if (!userChatMessages || !userChatMessages.messages) {
+          return;
+        }
+        
         const messageIndex = userChatMessages.messages.findIndex(msg => {
           const content = msg.content || '';
-          return (msg.type == "image" && msg.imageId == imageId) || content.startsWith('[Image] ' + imageId.toString()) || content.startsWith('[image] ' + imageId.toString());
+          const isMatch = (msg.type == "image" && msg.imageId == imageId) || 
+                         content.startsWith('[Image] ' + imageId.toString()) || 
+                         content.startsWith('[image] ' + imageId.toString());
+          return isMatch;
         });
+        
         if (messageIndex !== -1) {
           const message = userChatMessages.messages[messageIndex];
           
@@ -34,9 +42,9 @@ async function routes(fastify, options) {
           if (action === 'like') {
             // Check if like action already exists
             const existingLikeAction = message.actions.find(action => action.type === 'like');
+            
             if (!existingLikeAction) {
               // Add like action to the actions array
-              console.log(`Adding like action to message for imageId: ${imageId}`);
               message.actions.push({
                 type: 'like',
                 date: new Date()
@@ -52,7 +60,6 @@ async function routes(fastify, options) {
             { _id: new fastify.mongo.ObjectId(userChatId) },
             { $set: { messages: userChatMessages.messages } }
           );
-          console.log(`User chat messages updated for imageId: ${imageId}`);
         }
       }
 
@@ -63,7 +70,7 @@ async function routes(fastify, options) {
         if (existingLike) {
           return reply.code(400).send({ error: 'User has already liked this image' });
         }
-  
+
         // Add like to the gallery collection
         const result = await galleryCollection.updateOne(
           { 'images._id': imageId },
@@ -72,30 +79,43 @@ async function routes(fastify, options) {
             $addToSet: { 'images.$.likedBy': userId }
           }
         );
-  
+
         if (result.matchedCount === 0) {
           return reply.code(404).send({ error: 'Image not found' });
         }
-  
+
         // Add like to the images_likes collection
-        await imagesLikesCollection.insertOne({
+        const likeDoc = {
           imageId,
           userId,
           likedAt: new Date(),
-        });
-  
+        };
+        await imagesLikesCollection.insertOne(likeDoc);
+
         // Increment user's imageLikeCount
         await usersCollection.updateOne(
           { _id: userId },
           { $inc: { imageLikeCount: 1 } }
         );
-        if(userChatId){
+
+        // Award points for like action and check for milestones
+        try {
+          await Promise.all([
+            awardLikeActionReward(db, userId, fastify),
+            awardLikeMilestoneReward(db, userId, fastify)
+          ]);
+        } catch (rewardError) {
+          console.error('Error awarding like rewards:', rewardError);
+          // Don't fail the like action if reward fails
+        }
+
+        if(userChatId && userChatId.trim() != ''){
           const userChatMessages = await collectionUserChat.findOne({ _id: new fastify.mongo.ObjectId(userChatId) });
-          findImageMessageandUpdateLikeAction(userChatId, userChatMessages, imageId, 'like');
+          await findImageMessageandUpdateLikeAction(userChatId, userChatMessages, imageId, 'like');
         }
 
         return reply.send({ message: 'Image liked successfully' });
-  
+
       } else if (action === 'unlike') {
         // Check if the user has already liked the image
         const existingLike = await imagesLikesCollection.findOne({ imageId, userId });
@@ -103,11 +123,11 @@ async function routes(fastify, options) {
         if (!existingLike) {
           return reply.code(400).send({ error: 'User has not liked this image yet' });
         }
-  
+
         // Fetch the current likes count to ensure it doesn't go below 0
         const image = await galleryCollection.findOne({ 'images._id': imageId });
         const likes = image ? image.images.find(img => img._id.equals(imageId)).likes : 0;
-  
+
         if (likes > 0) {
           // Remove like from the gallery collection
           const result = await galleryCollection.updateOne(
@@ -117,16 +137,17 @@ async function routes(fastify, options) {
               $pull: { 'images.$.likedBy': userId }
             }
           );
-  
+
           if (result.matchedCount === 0) {
             return reply.code(404).send({ error: 'Image not found' });
           }
-  
+
           // Remove like from the images_likes collection
           await imagesLikesCollection.deleteOne({ imageId, userId });
-  
+
           // Decrement user's imageLikeCount, ensuring it doesn't go below 0
           const userDoc = await usersCollection.findOne({ _id: userId });
+          
           if (userDoc.imageLikeCount > 0) {
             await usersCollection.updateOne(
               { _id: userId },
@@ -134,9 +155,9 @@ async function routes(fastify, options) {
             );
           }
           
-          if(userChatId){
+          if(userChatId && userChatId.trim() != ''){
             const userChatMessages = await collectionUserChat.findOne({ _id: new fastify.mongo.ObjectId(userChatId) });
-            findImageMessageandUpdateLikeAction(userChatId, userChatMessages, imageId, 'unlike');
+            await findImageMessageandUpdateLikeAction(userChatId, userChatMessages, imageId, 'unlike');
           }
 
           return reply.send({ message: 'Image unliked successfully' });
@@ -147,7 +168,7 @@ async function routes(fastify, options) {
         return reply.code(400).send({ error: 'Invalid action' });
       }
     } catch (err) {
-      console.error(err);
+      console.error('Error in like-toggle endpoint:', err);
       reply.code(500).send('Internal Server Error');
     }
   });
@@ -529,28 +550,26 @@ fastify.get('/chats/images/search', async (request, reply) => {
   });
   
   fastify.get('/chat/:chatId/images', async (request, reply) => {
+    const { chatId } = request.params;
+    const page = parseInt(request.query.page) || 1;
+    const limit = 12;
+    const skip = (page - 1) * limit;
+
     try {
-
-      const chatId = new fastify.mongo.ObjectId(request.params.chatId);
-      const page = parseInt(request.query.page) || 1;
-      const limit = 12; // Number of images per page
-      const skip = (page - 1) * limit;
-
       const db = fastify.mongo.db;
       const chatsGalleryCollection = db.collection('gallery');
       const chatsCollection = db.collection('chats');
 
       // Fetch the chat data (chatName and thumbnail)
-      const chat = await chatsCollection.findOne({ _id: chatId });
+      const chat = await chatsCollection.findOne({ _id: new ObjectId(chatId) });
       if (!chat) {
-        console.log('Chat not found for chatId:', chatId);
         return reply.code(404).send({ error: 'Chat not found' });
       }
 
       // Find the chat document and paginate the images & filter out image with a scale_factor
       const chatImagesDocs = await chatsGalleryCollection
         .aggregate([
-          { $match: { chatId } },           // Match the document by chatId
+          { $match: { chatId: new ObjectId(chatId) } },           // Match the document by chatId
           { $unwind: '$images' },           // Unwind the images array
           { $match: { 'images.isUpscaled': { $ne: true }} }, // Filter out images with scale_factor
           { $sort: { 'images.createdAt': -1 } }, // Sort by createdAt in descending order
@@ -564,7 +583,7 @@ fastify.get('/chats/images/search', async (request, reply) => {
       // Get total image count for pagination info
       const totalImagesCount = await chatsGalleryCollection
         .aggregate([
-          { $match: { chatId } },
+          { $match: { chatId: new ObjectId(chatId) } },
           { $unwind: '$images' },
           { $match: { 'images.isUpscaled': { $ne: true } } }, // Ensure count matches filter above
           { $count: 'total' }
@@ -576,7 +595,6 @@ fastify.get('/chats/images/search', async (request, reply) => {
 
       // If no images found
       if (chatImagesDocs.length === 0) {
-        console.log('No images found for chatId:', chatId);
         return reply.code(404).send({ images: [], page, totalPages: 0 });
       }
 
